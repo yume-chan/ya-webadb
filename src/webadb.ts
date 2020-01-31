@@ -6,7 +6,7 @@ export const AdbDeviceFilter: USBDeviceFilter = { classCode: 0xFF, subclassCode:
 
 export class WebAdb {
     public static async open() {
-        const device = await navigator.usb.requestDevice({ filters: [] });
+        const device = await navigator.usb.requestDevice({ filters: [AdbDeviceFilter] });
         await device.open();
 
         const webadb = new WebAdb(device);
