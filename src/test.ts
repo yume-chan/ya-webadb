@@ -1,5 +1,6 @@
 import { Terminal } from 'xterm';
 import { WebAdb } from './webadb.js';
+import 'xterm/css/xterm.css';
 
 document.getElementById('start')!.onclick = async () => {
     const adb = await WebAdb.open();
