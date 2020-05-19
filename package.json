@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@yume-chan/async-operation-manager": "^1.0.1",
-    "tslib": "^1.10.0",
+    "tslib": "^2.0.0",
     "xterm": "^4.3.0"
   }
 }
