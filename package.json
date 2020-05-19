@@ -23,7 +23,7 @@
     "@rollup/plugin-node-resolve": "7.0.0",
     "@rollup/plugin-typescript": "4.1.1",
     "@types/w3c-web-usb": "1.0.4",
-    "http-server": "0.12.1",
+    "http-server": "0.12.3",
     "rollup": "2.10.4",
     "rollup-plugin-css-only": "2.0.0",
     "typescript": "3.9.2"
