@@ -8,6 +8,9 @@ document.getElementById('start')!.onclick = async () => {
 
     const textEncoder = new TextEncoder();
 
+    const output = await adb.shell('echo', '1');
+    console.log(output);
+
     const shell = await adb.shell();
 
     const terminal = new Terminal({

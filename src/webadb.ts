@@ -22,7 +22,9 @@ export class WebAdb {
     private _alive = true;
     private _looping = false;
 
-    private _streamInitializer = new AsyncOperationManager();
+    // ADB requires stream id to start from 1
+    // (0 means open failed)
+    private _streamInitializer = new AsyncOperationManager(1);
     private _streams = new Map<number, AdbStream>();
 
     public constructor(device: USBDevice) {
@@ -68,13 +70,20 @@ export class WebAdb {
             const response = await this.receiveMessage();
             switch (response.command) {
                 case 'OKAY':
+                    // OKAY has two meanings
+                    // 1. The device has created the Stream
                     this._streamInitializer.resolve(response.arg1, response.arg0);
+                    // 2. The device has received last WRTE to the Stream
                     this._streams.get(response.arg1)?.ack();
                     break;
                 case 'CLSE':
+                    // CLSE also has two meanings
                     if (response.arg0 === 0) {
+                        // 1. The device don't want to create the Stream
                         this._streamInitializer.reject(response.arg1, new Error('open failed'));
                     } else {
+                        // 2. The device has closed the Stream
+                        this._streams.get(response.arg1)?.onCloseEvent.fire();
                         this._streams.delete(response.arg1);
                     }
                     break;
@@ -119,15 +128,24 @@ export class WebAdb {
         }
     }
 
-    public async shell(): Promise<AdbStream> {
-        const { id: localId, promise: initializer } = this._streamInitializer.add<number>();
-        await this.sendMessage('OPEN', localId, 0, 'shell:');
-        this.receiveLoop();
-
-        const remoteId = await initializer;
-        const stream = new AdbStream(this, localId, remoteId);
-        this._streams.set(localId, stream);
-        return stream;
+    public async shell(command: string, ...args: string[]): Promise<string>;
+    public async shell(): Promise<AdbStream>;
+    public async shell(command?: string, ...args: string[]): Promise<AdbStream | string> {
+        if (!command) {
+            return this.createStream('shell:');
+        } else {
+            const stream = await this.createStream(`shell,v2,raw:${command} ${args.join(' ')}`);
+            return new Promise<string>((resolve) => {
+                let output = '';
+                const decoder = new TextDecoder();
+                stream.onData((data) => {
+                    output += decoder.decode(data);
+                });
+                stream.onClose(() => {
+                    resolve(output);
+                });
+            })
+        }
     }
 
     public async sendMessage(command: string, arg0: number, arg1: number, payload?: string | ArrayBuffer): Promise<void> {
@@ -137,6 +155,17 @@ export class WebAdb {
         if (packet.payloadLength !== 0) {
             await this._device.transferOut(this._outEndpointNumber, packet.payload!);
         }
+    }
+
+    public async createStream(command: string): Promise<AdbStream> {
+        const { id: localId, promise: initializer } = this._streamInitializer.add<number>();
+        await this.sendMessage('OPEN', localId, 0, command);
+        this.receiveLoop();
+
+        const remoteId = await initializer;
+        const stream = new AdbStream(this, localId, remoteId);
+        this._streams.set(localId, stream);
+        return stream;
     }
 
     public async receiveMessage() {

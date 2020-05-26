@@ -91,6 +91,9 @@ export class AdbStream {
     public onDataEvent: EventEmitter<ArrayBuffer> = new EventEmitter();
     public get onData(): IEvent<ArrayBuffer> { return this.onDataEvent.event; }
 
+    public onCloseEvent: EventEmitter<void> = new EventEmitter();
+    public get onClose(): IEvent<void> { return this.onCloseEvent.event; }
+
     private _adb: WebAdb;
 
     public localId: number;
