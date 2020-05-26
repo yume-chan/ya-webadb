@@ -11,9 +11,6 @@ export default {
         typescript(),
         commonjs({
             extensions: ['.js', '.ts'],
-            namedExports: {
-                'xterm': ['Terminal'],
-            },
         }),
     ],
     output: {
