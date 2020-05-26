@@ -24,8 +24,7 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm i -g pnpm
-    - run: pnpm i
+    - run: npm i
       env:
         CI: true
     - run: npm run build --if-present
