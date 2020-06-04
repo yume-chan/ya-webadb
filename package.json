@@ -26,7 +26,7 @@
     "http-server": "0.12.3",
     "rollup": "2.13.1",
     "rollup-plugin-css-only": "2.1.0",
-    "typescript": "3.9.3"
+    "typescript": "3.9.5"
   },
   "dependencies": {
     "@yume-chan/async-operation-manager": "^1.0.3",
