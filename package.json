@@ -24,7 +24,7 @@
     "@rollup/plugin-typescript": "3.1.1",
     "@types/w3c-web-usb": "1.0.4",
     "http-server": "0.12.3",
-    "rollup": "2.13.1",
+    "rollup": "2.14.0",
     "rollup-plugin-css-only": "2.1.0",
     "typescript": "3.9.5"
   },
