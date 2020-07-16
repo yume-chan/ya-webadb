@@ -21,7 +21,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "14.0.0",
     "@rollup/plugin-node-resolve": "8.4.0",
-    "@rollup/plugin-typescript": "3.1.1",
+    "@rollup/plugin-typescript": "5.0.2",
     "@types/w3c-web-usb": "1.0.4",
     "http-server": "0.12.3",
     "rollup": "2.21.0",
