@@ -21,7 +21,7 @@
     "url": "https://github.com/yume-chan/ya-webadb/issues"
   },
   "devDependencies": {
-    "typescript": "^3.9.7"
+    "typescript": "3.9.7"
   },
   "dependencies": {
     "tslib": "^2.0.1"

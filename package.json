@@ -9,6 +9,6 @@
     "start:demo": "lerna run --scope demo --stream start"
   },
   "devDependencies": {
-    "lerna": "^3.22.1"
+    "lerna": "3.22.1"
   }
 }
