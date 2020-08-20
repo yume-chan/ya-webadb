@@ -10,7 +10,7 @@ Currently only the interactive shell (`adb shell`) is implemented, but I think i
 
 WebUSB API gives JavaScript running in supported web browsers access to USB devices, including Android phones.
 
-ADB uses a fairly simple protocol to commnunicate, so it's pretty easy to reimplement with JavaScript.
+ADB uses a fairly simple protocol to communicate, so it's pretty easy to reimplement with JavaScript.
 
 `adb shell`, the interactive shell, uses plain PTY protocol, and [xterm.js](https://github.com/xtermjs/xterm.js/) can handle it very well.
 
@@ -28,7 +28,7 @@ npm start
 
 And navigate to `http://localhost:8080/test.html`.
 
-WebUSB API requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (basicly means HTTPS).
+WebUSB API requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (basically means HTTPS).
 
 Chrome will treat `localhost` as one, but if you want to access test server running on another machine, you can configure you Chrome as following:
 

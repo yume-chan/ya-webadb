@@ -1,37 +1,14 @@
 {
-  "name": "webadb.js",
-  "version": "1.0.0",
-  "description": "``` let webusb = await Adb.open(\"WebUSB\"); let adb = await webusb.connectAdb(\"host::\"); let shell = await adb.shell(\"uname -a\"); console.log(await shell.receive()); ```",
-  "main": "webadb.js",
+  "name": "root",
+  "private": true,
   "scripts": {
-    "start": "hs",
-    "build": "rollup -c"
+    "postinstall": "lerna bootstrap",
+    "build": "lerna run --scope @yume-chan/webadb build",
+    "build:watch": "lerna run --scope @yume-chan/webadb --stream build:watch",
+    "build:demo": "lerna run --scope demo --stream build",
+    "start:demo": "lerna run --scope demo --stream start"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/webadb/webadb.js.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/webadb/webadb.js/issues"
-  },
-  "homepage": "https://github.com/webadb/webadb.js#readme",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "14.0.0",
-    "@rollup/plugin-node-resolve": "8.4.0",
-    "@rollup/plugin-typescript": "3.1.1",
-    "@types/w3c-web-usb": "1.0.4",
-    "http-server": "0.12.3",
-    "rollup": "2.23.0",
-    "rollup-plugin-css-only": "2.1.0",
-    "typescript": "3.9.7"
-  },
-  "dependencies": {
-    "@yume-chan/async-operation-manager": "^1.0.3",
-    "tslib": "^2.0.0",
-    "xterm": "^4.6.0",
-    "xterm-addon-search": "0.7.0"
+    "lerna": "^3.22.1"
   }
 }
