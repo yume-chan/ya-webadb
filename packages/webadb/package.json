@@ -1,0 +1,33 @@
+{
+  "name": "@yume-chan/webadb",
+  "version": "0.0.1",
+  "description": "ADB (Android Debugging Bridge) for Web browsers",
+  "keywords": [
+    "adb",
+    "webusb"
+  ],
+  "author": "Simon Chan <cnsimonchan@live.com>",
+  "homepage": "https://github.com/yume-chan/ya-webadb#readme",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yume-chan/ya-webadb.git"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "build:watch": "tsc -b -w"
+  },
+  "bugs": {
+    "url": "https://github.com/yume-chan/ya-webadb/issues"
+  },
+  "devDependencies": {
+    "typescript": "^3.9.7"
+  },
+  "dependencies": {
+    "@types/w3c-web-usb": "^1.0.4",
+    "@yume-chan/async-operation-manager": "^1.0.3",
+    "@yume-chan/event": "^0.0.1",
+    "tslib": "^2.0.1"
+  }
+}

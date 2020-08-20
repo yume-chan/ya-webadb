@@ -4,9 +4,9 @@ const textDecoder = new TextDecoder();
 // TextEncoder.prototype.encodeInto added in Chrome 74
 // Edge for Android 44 is still using Chromium 73
 if (!TextEncoder.prototype.encodeInto) {
-    TextEncoder.prototype.encodeInto = function (source: string, destniation: Uint8Array) {
+    TextEncoder.prototype.encodeInto = function (source: string, destination: Uint8Array) {
         const array = this.encode(source);
-        destniation.set(array);
+        destination.set(array);
         return { read: source.length, written: array.length };
     }
 }
