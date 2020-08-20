@@ -19,26 +19,26 @@
     "url": "https://github.com/yume-chan/ya-webadb/issues"
   },
   "devDependencies": {
-    "@types/react": "^16.9.46",
-    "@types/react-dom": "^16.9.8",
-    "@types/react-router-dom": "^5.1.5",
-    "css-loader": "^4.2.1",
-    "mini-css-extract-plugin": "^0.10.0",
-    "ts-loader": "^8.0.2",
-    "typescript": "^3.9.7",
-    "webpack": "^4.44.1",
-    "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.11.0"
+    "@types/react": "16.9.46",
+    "@types/react-dom": "16.9.8",
+    "@types/react-router-dom": "5.1.5",
+    "css-loader": "4.2.1",
+    "mini-css-extract-plugin": "0.10.0",
+    "ts-loader": "8.0.2",
+    "typescript": "3.9.7",
+    "webpack": "4.44.1",
+    "webpack-cli": "3.3.12",
+    "webpack-dev-server": "3.11.0"
   },
   "dependencies": {
-    "@fluentui/react": "^7.129.0",
-    "@uifabric/react-hooks": "^7.9.0",
+    "@fluentui/react": "7.129.0",
+    "@uifabric/react-hooks": "7.9.0",
     "@yume-chan/webadb": "^0.0.1",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-router-dom": "^5.2.0",
-    "xterm": "^4.8.1",
-    "xterm-addon-fit": "^0.4.0",
-    "xterm-addon-search": "^0.7.0"
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "react-router-dom": "5.2.0",
+    "xterm": "4.8.1",
+    "xterm-addon-fit": "0.4.0",
+    "xterm-addon-search": "0.7.0"
   }
 }
