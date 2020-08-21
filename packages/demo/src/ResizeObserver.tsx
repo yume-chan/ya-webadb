@@ -1,4 +1,5 @@
 import React, { CSSProperties, HTMLAttributes, PropsWithChildren, useCallback, useRef } from 'react';
+import withDisplayName from './withDisplayName';
 
 export interface ResizeObserverProps extends HTMLAttributes<HTMLDivElement>, PropsWithChildren<{}> {
     onResize: () => void;
@@ -13,7 +14,12 @@ const iframeStyle: CSSProperties = {
     visibility: 'hidden',
 };
 
-export default function ResizeObserver({ onResize, style, children, ...rest }: ResizeObserverProps): JSX.Element | null {
+export default withDisplayName('ResizeObserver', ({
+    onResize,
+    style,
+    children,
+    ...rest
+}: ResizeObserverProps): JSX.Element | null => {
     const onResizeRef = useRef<() => void>(onResize);
     onResizeRef.current = onResize;
 
@@ -45,4 +51,4 @@ export default function ResizeObserver({ onResize, style, children, ...rest }: R
             {children}
         </div>
     )
-}
+});

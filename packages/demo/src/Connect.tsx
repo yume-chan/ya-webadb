@@ -2,6 +2,7 @@ import { DefaultButton, Dialog, DialogFooter, DialogType, PrimaryButton, Progres
 import { useBoolean } from '@uifabric/react-hooks';
 import { WebAdb, WebUsbTransportation } from '@yume-chan/webadb';
 import React, { useCallback, useEffect, useState } from 'react';
+import withDisplayName from './withDisplayName';
 
 interface ConnectProps {
     device: WebAdb | undefined;
@@ -9,10 +10,10 @@ interface ConnectProps {
     onDeviceChange: (device: WebAdb | undefined) => void;
 }
 
-export default function Connect({
+export default withDisplayName('Connect', ({
     device,
     onDeviceChange,
-}: ConnectProps): JSX.Element | null {
+}: ConnectProps): JSX.Element | null => {
     const [connecting, setConnecting] = useState(false);
 
     const [errorDialogVisible, { setTrue: showErrorDialog, setFalse: hideErrorDialog }] = useBoolean(false);
@@ -97,4 +98,4 @@ export default function Connect({
             </Dialog>
         </>
     );
-}
+});
