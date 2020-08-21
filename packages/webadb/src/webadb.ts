@@ -87,7 +87,7 @@ export class WebAdb {
                     break;
                 default:
                     this._transportation.dispose();
-                    throw new Error('unknown command');
+                    throw new Error('Device not in correct state. Reconnect your device and try again');
             }
         }
     }

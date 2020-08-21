@@ -1,10 +1,11 @@
-import { DefaultButton, Dialog, DialogFooter, DialogType, Link, Label, MessageBar, Nav, PrimaryButton, ProgressIndicator, Separator, Stack, StackItem, Text, TextField, IStackItemComponent } from '@fluentui/react';
+import { Label, Link, MessageBar, Nav, PrimaryButton, Separator, Stack, StackItem, Text, TextField } from '@fluentui/react';
 import { useId } from '@uifabric/react-hooks';
-import { WebAdb, WebUsbTransportation } from '@yume-chan/webadb';
+import { WebAdb } from '@yume-chan/webadb';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { HashRouter, Redirect, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Redirect, Route, Switch, useLocation } from 'react-router-dom';
+import Connect from './Connect';
 import './index.css';
 import Shell from './Shell';
 
@@ -12,36 +13,11 @@ initializeIcons();
 
 function App(): JSX.Element | null {
     const location = useLocation();
-    const [device, setDevice] = React.useState<WebAdb | undefined>();
 
-    const [connecting, setConnecting] = React.useState(false);
-    const [connectError, setConnectError] = React.useState<string | undefined>(undefined);
-    const handleConnectClick = React.useCallback(async () => {
-        try {
-            const transportation = await WebUsbTransportation.pickDevice();
-            if (transportation) {
-                const device = new WebAdb(transportation);
-                setConnecting(true);
-                await device.connect();
-                setDevice(device);
-            }
-        } catch (e) {
-            setConnectError(e.message);
-        } finally {
-            setConnecting(false);
-        }
-    }, []);
-    const disconnect = useCallback(async () => {
-        try {
-            await device?.dispose();
-        } catch (e) {
-            console.log(e);
-        }
-        setDevice(undefined);
-    }, [device]);
+    const [device, setDevice] = useState<WebAdb | undefined>();
 
-    const [tcpPort, setTcpPort] = React.useState<number | undefined>();
-    const queryTcpPort = React.useCallback(async () => {
+    const [tcpPort, setTcpPort] = useState<number | undefined>();
+    const queryTcpPort = useCallback(async () => {
         if (!device) {
             return;
         }
@@ -50,9 +26,9 @@ function App(): JSX.Element | null {
         setTcpPort(Number.parseInt(result, 10));
     }, [device]);
 
-    const [tcpPortValue, setTcpPortValue] = React.useState('5555');
+    const [tcpPortValue, setTcpPortValue] = useState('5555');
     const tcpPortInputId = useId('tcpPort');
-    const enableTcp = React.useCallback(async () => {
+    const enableTcp = useCallback(async () => {
         if (!device) {
             return;
         }
@@ -61,7 +37,7 @@ function App(): JSX.Element | null {
         console.log(result);
     }, [device, tcpPortValue]);
 
-    const disableTcp = React.useCallback(async () => {
+    const disableTcp = useCallback(async () => {
         if (!device) {
             return;
         }
@@ -76,17 +52,7 @@ function App(): JSX.Element | null {
                 <Text variant="xxLarge">WebADB Demo</Text>
             </StackItem>
             <StackItem>
-                <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8, padding: 8 }}>
-                    {!device && <StackItem>
-                        <PrimaryButton text="Connect" onClick={handleConnectClick} />
-                    </StackItem>}
-                    {device && <StackItem>
-                        <DefaultButton text="Disconnect" onClick={disconnect} />
-                    </StackItem>}
-                    <StackItem>
-                        {device && `Connected to ${device.name}`}
-                    </StackItem>
-                </Stack>
+                <Connect device={device} onDeviceChange={setDevice} />
             </StackItem>
             <StackItem>
                 <Separator />
@@ -106,72 +72,89 @@ function App(): JSX.Element | null {
                             selectedKey={location.pathname}
                         />
                     </StackItem>
-                    <StackItem grow styles={{ root: { minHeight: 0 } }}>
-                        <Route path="/intro">
-                            <Stack tokens={{ childrenGap: 8, padding: 8 }}>
-                                <Text block>
-                                    This demo can connect to your Android devices using the{' '}
-                                    <Link href="https://developer.mozilla.org/en-US/docs/Web/API/USB" target="_blank">WebUSB</Link>{' '}
-                                    API.
-                                </Text>
-                                <Text block>
-                                    Before start, please make sure your adb server is not running (`adb kill-server`), as there can be only one connection to your device at same time.
-                                </Text>
-                            </Stack>
-                        </Route>
-                        <Route path="/adb-over-wifi">
-                            <Stack verticalFill tokens={{ childrenGap: 8, padding: 8 }}>
-                                <StackItem>
-                                    <MessageBar >
-                                        <Text>Although WebADB can enable ADB over WiFi for you, it can't connect to your device wirelessly.</Text>
-                                    </MessageBar>
-                                </StackItem>
-                                <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
-                                    <StackItem>
-                                        <PrimaryButton text="Update Status" disabled={!device} onClick={queryTcpPort} />
-                                    </StackItem>
-                                    <StackItem>
-                                        {tcpPort !== undefined &&
-                                            (tcpPort !== 0
-                                                ? `Enabled at port ${tcpPort}`
-                                                : 'Disabled')}
-                                    </StackItem>
+                    <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden' } }}>
+                        <Switch>
+                            <Route path="/intro">
+                                <Stack
+                                    verticalFill
+                                    styles={{ root: { overflow: 'auto' } }}
+                                    tokens={{ childrenGap: 8, padding: 8 }}
+                                >
+                                    <Text block>
+                                        This demo can connect to your Android devices using the{' '}
+                                        <Link href="https://developer.mozilla.org/en-US/docs/Web/API/USB" target="_blank">WebUSB</Link>{' '}
+                                        API.
+                                    </Text>
+                                    <Text block>
+                                        Before start, please make sure your adb server is not running (`adb kill-server`), as there can be only one connection to your device at same time.
+                                    </Text>
                                 </Stack>
-                                <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
+                            </Route>
+                            <Route path="/adb-over-wifi">
+                                <Stack
+                                    verticalFill
+                                    styles={{ root: { overflow: 'auto' } }}
+                                    tokens={{ childrenGap: 8, padding: 8 }}
+                                >
                                     <StackItem>
-                                        <Label htmlFor={tcpPortInputId}>Port: </Label>
+                                        <MessageBar >
+                                            <Text>Although WebADB can enable ADB over WiFi for you, it can't connect to your device wirelessly.</Text>
+                                        </MessageBar>
                                     </StackItem>
                                     <StackItem>
-                                        <TextField
-                                            id={tcpPortInputId}
-                                            width={300}
-                                            disabled={!device}
-                                            value={tcpPortValue}
-                                            onChange={(e, value) => setTcpPortValue(value!)}
-                                        />
+                                        <MessageBar >
+                                            <Text>Your device will disconnect after changing ADB over WiFi config.</Text>
+                                        </MessageBar>
                                     </StackItem>
+                                    <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
+                                        <StackItem>
+                                            <PrimaryButton text="Update Status" disabled={!device} onClick={queryTcpPort} />
+                                        </StackItem>
+                                        <StackItem>
+                                            {tcpPort !== undefined &&
+                                                (tcpPort !== 0
+                                                    ? `Enabled at port ${tcpPort}`
+                                                    : 'Disabled')}
+                                        </StackItem>
+                                    </Stack>
+                                    <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
+                                        <StackItem>
+                                            <Label htmlFor={tcpPortInputId}>Port: </Label>
+                                        </StackItem>
+                                        <StackItem>
+                                            <TextField
+                                                id={tcpPortInputId}
+                                                width={300}
+                                                disabled={!device}
+                                                value={tcpPortValue}
+                                                onChange={(e, value) => setTcpPortValue(value!)}
+                                            />
+                                        </StackItem>
+                                        <StackItem>
+                                            <PrimaryButton
+                                                text="Enable"
+                                                disabled={!device}
+                                                onClick={enableTcp}
+                                            />
+                                        </StackItem>
+                                    </Stack>
                                     <StackItem>
                                         <PrimaryButton
-                                            text="Enable"
-                                            disabled={!device}
-                                            onClick={enableTcp}
+                                            text="Disable"
+                                            disabled={!device || tcpPort === undefined || tcpPort === 0}
+                                            onClick={disableTcp}
                                         />
                                     </StackItem>
                                 </Stack>
-                                <StackItem>
-                                    <PrimaryButton
-                                        text="Disable"
-                                        disabled={!device || tcpPort === undefined || tcpPort === 0}
-                                        onClick={disableTcp}
-                                    />
-                                </StackItem>
-                            </Stack>
-                        </Route>
+                            </Route>
+                            <Route path="/shell" />
+                            <Redirect to="/intro" />
+                        </Switch>
                         <Route path="/shell" >
                             {({ match }) => (
                                 <Stack
                                     verticalFill
-                                    styles={{ root: { visibility: match ? 'visible' : 'hidden' } }}
+                                    styles={{ root: { overflow: 'auto', visibility: match ? 'visible' : 'collapse' } }}
                                     tokens={{ childrenGap: 8, padding: 8 }}
                                 >
                                     <StackItem grow styles={{ root: { minHeight: 0 } }}>
@@ -183,38 +166,16 @@ function App(): JSX.Element | null {
                     </StackItem>
                 </Stack>
             </StackItem>
-
-            <Dialog
-                hidden={!connecting}
-                dialogContentProps={{
-                    title: 'Connecting',
-                    subText: 'Please authorize the connection on your device'
-                }}
-            >
-                <ProgressIndicator />
-            </Dialog>
-
-            <Dialog
-                hidden={!connectError}
-                dialogContentProps={{
-                    type: DialogType.normal,
-                    title: 'Connection Error',
-                    subText: connectError,
-                }}
-            >
-                <DialogFooter>
-                    <PrimaryButton text="OK" onClick={() => setConnectError(undefined)} />
-                </DialogFooter>
-            </Dialog>
         </Stack>
     )
 }
 
 ReactDOM.render(
-    <HashRouter>
-        <App />
-        <Redirect to='/intro' />
-    </HashRouter>,
+    <React.StrictMode>
+        <HashRouter>
+            <App />
+        </HashRouter>
+    </React.StrictMode>,
     document.getElementById('container'));
 
 // document.getElementById('start')!.onclick = async () => {
