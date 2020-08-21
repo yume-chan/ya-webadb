@@ -5,9 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 var path_1 = __importDefault(require("path"));
 var mini_css_extract_plugin_1 = __importDefault(require("mini-css-extract-plugin"));
 var context = path_1.default.resolve(process.cwd());
-var config = {
+var config = function (env, argv) { return ({
     mode: 'development',
-    devtool: 'eval-source-map',
+    devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
     context: context,
     target: 'web',
     entry: {
@@ -38,5 +38,5 @@ var config = {
         contentBase: path_1.default.resolve(context, 'www'),
         port: 9000
     },
-};
+}); };
 module.exports = config;

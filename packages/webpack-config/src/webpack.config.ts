@@ -4,9 +4,12 @@ import webpack from 'webpack';
 
 const context = path.resolve(process.cwd());
 
-const config: webpack.Configuration = {
+const config: webpack.ConfigurationFactory = (
+    env: unknown,
+    argv: webpack.CliConfigOptions
+): webpack.Configuration => ({
     mode: 'development',
-    devtool: 'eval-source-map',
+    devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
     context,
     target: 'web',
     entry: {
@@ -37,6 +40,6 @@ const config: webpack.Configuration = {
         contentBase: path.resolve(context, 'www'),
         port: 9000
     },
-};
+});
 
 export = config;
