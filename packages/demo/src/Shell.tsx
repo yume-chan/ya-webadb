@@ -1,13 +1,21 @@
 import { WebAdb } from '@yume-chan/webadb';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouteMatch } from 'react-router-dom';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 // import { SearchAddon } from 'xterm-addon-search';
 import 'xterm/css/xterm.css';
 import ResizeObserver from './ResizeObserver';
+import withDisplayName from './withDisplayName';
 
-export default function Shell({ device }: { device?: WebAdb }): JSX.Element | null {
+const containerStyle: CSSProperties = {
+    width: '100%',
+    height: '100%',
+};
+
+export default withDisplayName('Shell', ({
+    device
+}: { device?: WebAdb }): JSX.Element | null => {
     const routeMatch = useRouteMatch();
     const [cached, setCached] = useState(false);
     useEffect(() => {
@@ -69,8 +77,8 @@ export default function Shell({ device }: { device?: WebAdb }): JSX.Element | nu
     }
 
     return (
-        <ResizeObserver onResize={handleResize}>
+        <ResizeObserver style={containerStyle} onResize={handleResize}>
             <div ref={handleContainerRef} style={{ height: '100%' }} />
         </ResizeObserver>
     )
-}
+});
