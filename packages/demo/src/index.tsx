@@ -65,6 +65,7 @@ function App(): JSX.Element | null {
                             groups={[{
                                 links: [
                                     { key: '/intro', name: 'Introduction', url: '#/intro' },
+                                    { key: '/device-info', name: 'Device Info', url: '#/device-info' },
                                     { key: '/adb-over-wifi', name: 'ADB over WiFi', url: '#/adb-over-wifi' },
                                     { key: '/shell', name: 'Interactive Shell', url: '#/shell' },
                                 ]
@@ -88,6 +89,20 @@ function App(): JSX.Element | null {
                                     <Text block>
                                         Before start, please make sure your adb server is not running (`adb kill-server`), as there can be only one connection to your device at same time.
                                     </Text>
+                                </Stack>
+                            </Route>
+                            <Route path='/device-info'>
+                                <Stack
+                                    verticalFill
+                                    styles={{ root: { overflow: 'auto' } }}
+                                    tokens={{ childrenGap: 8, padding: 8 }}
+                                >
+                                    <StackItem>
+                                        Product: {device?.product}<br />
+                                        Model: {device?.model}<br />
+                                        Device: {device?.device}<br />
+                                        Features: {device?.features?.join(',')}<br />
+                                    </StackItem>
                                 </Stack>
                             </Route>
                             <Route path="/adb-over-wifi">
@@ -158,7 +173,7 @@ function App(): JSX.Element | null {
                                     tokens={{ childrenGap: 8, padding: 8 }}
                                 >
                                     <StackItem grow styles={{ root: { minHeight: 0 } }}>
-                                        <Shell device={device} />
+                                        <Shell device={device} visible={!!match} />
                                     </StackItem>
                                 </Stack>
                             )}
@@ -171,12 +186,13 @@ function App(): JSX.Element | null {
 }
 
 ReactDOM.render(
-    <React.StrictMode>
-        <HashRouter>
-            <App />
-        </HashRouter>
-    </React.StrictMode>,
-    document.getElementById('container'));
+    <HashRouter>
+        <App />
+    </HashRouter>,
+    document.getElementById('container')
+);
+
+// (new WebAdb({} as any) as any).getPublicKey();
 
 // document.getElementById('start')!.onclick = async () => {
 //     const transportation = await WebUsbTransportation.pickDevice();

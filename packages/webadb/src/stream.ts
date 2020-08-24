@@ -53,11 +53,11 @@ export class AdbStream {
 
     public async write(data: ArrayBuffer): Promise<void> {
         await this._writeMutex.wait();
-        await this._adb.sendMessage('WRTE', this.localId, this.remoteId, data);
+        await this._adb.sendPacket('WRTE', this.localId, this.remoteId, data);
     }
 
     public async close(): Promise<void> {
-        await this._adb.sendMessage('CLSE', this.localId, this.remoteId);
+        await this._adb.sendPacket('CLSE', this.localId, this.remoteId);
     }
 
     public ack(): void {

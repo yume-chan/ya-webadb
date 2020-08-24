@@ -1,19 +1,8 @@
-const textEncoder = new TextEncoder();
-const textDecoder = new TextDecoder();
-
-// TextEncoder.prototype.encodeInto added in Chrome 74
-// Edge for Android 44 is still using Chromium 73
-if (!TextEncoder.prototype.encodeInto) {
-    TextEncoder.prototype.encodeInto = function (source: string, destination: Uint8Array) {
-        const array = this.encode(source);
-        destination.set(array);
-        return { read: source.length, written: array.length };
-    }
-}
+import { decode, encode, encodeInto } from './decode';
 
 export class AdbPacket {
     public static parse(buffer: ArrayBuffer): AdbPacket {
-        const command = textDecoder.decode(buffer.slice(0, 4));
+        const command = decode(buffer.slice(0, 4));
 
         const view = new DataView(buffer);
         const arg0 = view.getUint32(4, true);
@@ -39,12 +28,17 @@ export class AdbPacket {
     public set payload(value: ArrayBuffer | undefined) {
         if (value !== undefined) {
             this._payloadLength = value.byteLength;
+            this._payloadString = decode(value);
             this._payload = value;
         } else {
             this._payloadLength = 0;
+            this._payloadString = undefined;
             this._payload = undefined;
         }
     }
+
+    private _payloadString: string | undefined;
+    public get payloadString(): string | undefined { return this._payloadString; }
 
     public constructor(command: string, arg0: number, arg1: number, payload?: string | ArrayBuffer) {
         if (command.length !== 4) {
@@ -56,7 +50,7 @@ export class AdbPacket {
         this.arg1 = arg1;
 
         if (typeof payload === "string") {
-            this.payload = textEncoder.encode(payload + '\0').buffer;
+            this.payload = encode(payload);
         } else {
             this.payload = payload;
         }
@@ -67,7 +61,7 @@ export class AdbPacket {
         const array = new Uint8Array(buffer);
         const view = new DataView(buffer);
 
-        textEncoder.encodeInto(this.command, array);
+        encodeInto(this.command, array);
 
         view.setUint32(4, this.arg0, true);
         view.setUint32(8, this.arg1, true);
