@@ -12,7 +12,7 @@ for (const [begin, end] of pairs) {
 }
 characterSet.push('+', '/');
 
-export default function toBase64(buffer: ArrayBuffer) {
+export default function base64Encode(buffer: ArrayBuffer) {
     const array = new Uint8Array(buffer);
     const length = buffer.byteLength;
     const remainder = length % 3;
@@ -52,7 +52,7 @@ export default function toBase64(buffer: ArrayBuffer) {
         const b = ((x & 0b11) << 4) | (y >> 4);
         const c = ((y & 0b1111) << 2);
 
-        result = characterSet[a] + characterSet[b] + characterSet[c] + '=';
+        result += characterSet[a] + characterSet[b] + characterSet[c] + '=';
     }
 
     return result;

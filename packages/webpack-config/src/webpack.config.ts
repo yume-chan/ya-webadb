@@ -1,6 +1,6 @@
 import path from 'path';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-import webpack from 'webpack';
+import type webpack from 'webpack';
 
 const context = path.resolve(process.cwd());
 

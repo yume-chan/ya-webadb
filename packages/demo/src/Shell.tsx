@@ -1,6 +1,5 @@
 import { WebAdb } from '@yume-chan/webadb';
 import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
-import { useRouteMatch } from 'react-router-dom';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 // import { SearchAddon } from 'xterm-addon-search';
@@ -13,16 +12,24 @@ const containerStyle: CSSProperties = {
     height: '100%',
 };
 
+export interface ShellProps {
+    device: WebAdb | undefined;
+
+    visible: boolean;
+}
+
 export default withDisplayName('Shell', ({
-    device
-}: { device?: WebAdb }): JSX.Element | null => {
-    const routeMatch = useRouteMatch();
+    device,
+    visible,
+}: ShellProps): JSX.Element | null => {
     const [cached, setCached] = useState(false);
     useEffect(() => {
-        setCached(true);
-    }, [routeMatch]);
+        if (visible) {
+            setCached(true);
+        }
+    }, [visible]);
 
-    const terminalRef = useRef<Terminal>();
+    const [terminal, setTerminal] = useState<Terminal>();
     const fitAddonRef = useRef<FitAddon>();
     const handleContainerRef = useCallback((element: HTMLDivElement | null) => {
         if (!element) {
@@ -37,36 +44,36 @@ export default withDisplayName('Shell', ({
         fitAddonRef.current = fitAddon;
         terminal.loadAddon(fitAddon);
 
-        terminalRef.current = terminal;
+        setTerminal(terminal);
         terminal.open(element);
         fitAddon.fit();
     }, []);
     useEffect(() => {
-        return () => terminalRef.current?.dispose();
+        return () => terminal?.dispose();
     }, []);
 
     useEffect(() => {
-        if (!device || !terminalRef.current) {
+        if (!device || !terminal) {
             return;
         }
 
         (async () => {
             const shell = await device.shell();
             const textEncoder = new TextEncoder();
-            terminalRef.current!.onData(data => {
+            terminal.onData(data => {
                 const { buffer } = textEncoder.encode(data);
                 shell.write(buffer);
             });
             shell.onData(data => {
-                terminalRef.current!.write(new Uint8Array(data));
+                terminal.write(new Uint8Array(data));
             });
         })();
 
         return () => {
-            terminalRef.current!.reset();
-            terminalRef.current!.clear();
+            terminal.reset();
+            terminal.clear();
         };
-    }, [device, terminalRef.current]);
+    }, [device, visible, terminal]);
 
     const handleResize = useCallback(() => {
         fitAddonRef.current?.fit();

@@ -15,59 +15,66 @@ export const WebUsbDeviceFilter: USBDeviceFilter = {
 };
 
 export class WebUsbTransportation implements WebAdbTransportation {
-    public static async pickDevice() {
+    public static async fromDevice(device: USBDevice) {
+        await device.open();
+
         try {
-            const device = await navigator.usb.requestDevice({ filters: [WebUsbDeviceFilter] });
-            await device.open();
+            await device.reset();
+        } catch (e) {
+            // ignore
+        }
 
-            let inEndpointNumber!: number;
-            let outEndpointNumber!: number;
+        for (const configuration of device.configurations) {
+            for (const interface_ of configuration.interfaces) {
+                for (const alternate of interface_.alternates) {
+                    if (alternate.interfaceSubclass === WebUsbDeviceFilter.subclassCode &&
+                        alternate.interfaceClass === WebUsbDeviceFilter.classCode &&
+                        alternate.interfaceSubclass === WebUsbDeviceFilter.subclassCode) {
+                        if (device.configuration?.configurationValue !== configuration.configurationValue) {
+                            await device.selectConfiguration(configuration.configurationValue);
+                        }
 
-            for (const configuration of device.configurations) {
-                for (const interface_ of configuration.interfaces) {
-                    for (const alternate of interface_.alternates) {
-                        if (alternate.interfaceSubclass === WebUsbDeviceFilter.subclassCode &&
-                            alternate.interfaceClass === WebUsbDeviceFilter.classCode &&
-                            alternate.interfaceSubclass === WebUsbDeviceFilter.subclassCode) {
-                            if (device.configuration?.configurationValue !== configuration.configurationValue) {
-                                await device.selectConfiguration(configuration.configurationValue);
-                            }
+                        if (!interface_.claimed) {
+                            await device.claimInterface(interface_.interfaceNumber);
+                        }
 
-                            if (!interface_.claimed) {
-                                await device.claimInterface(interface_.interfaceNumber);
-                            }
+                        if (interface_.alternate.alternateSetting !== alternate.alternateSetting) {
+                            await device.selectAlternateInterface(interface_.interfaceNumber, alternate.alternateSetting);
+                        }
 
-                            if (interface_.alternate.alternateSetting !== alternate.alternateSetting) {
-                                await device.selectAlternateInterface(interface_.interfaceNumber, alternate.alternateSetting);
-                            }
+                        let inEndpointNumber: number | undefined;
+                        let outEndpointNumber: number | undefined;
 
-                            for (const endpoint of alternate.endpoints) {
-                                switch (endpoint.direction) {
-                                    case 'in':
-                                        inEndpointNumber = endpoint.endpointNumber;
-                                        if (outEndpointNumber !== undefined) {
-                                            return new WebUsbTransportation(device, inEndpointNumber, outEndpointNumber);
-                                        }
-                                        break;
-                                    case 'out':
-                                        outEndpointNumber = endpoint.endpointNumber;
-                                        if (inEndpointNumber !== undefined) {
-                                            return new WebUsbTransportation(device, inEndpointNumber, outEndpointNumber);
-                                        }
-                                        break;
-                                }
-
+                        for (const endpoint of alternate.endpoints) {
+                            switch (endpoint.direction) {
+                                case 'in':
+                                    inEndpointNumber = endpoint.endpointNumber;
+                                    if (outEndpointNumber !== undefined) {
+                                        return new WebUsbTransportation(device, inEndpointNumber, outEndpointNumber);
+                                    }
+                                    break;
+                                case 'out':
+                                    outEndpointNumber = endpoint.endpointNumber;
+                                    if (inEndpointNumber !== undefined) {
+                                        return new WebUsbTransportation(device, inEndpointNumber, outEndpointNumber);
+                                    }
+                                    break;
                             }
                         }
                     }
                 }
             }
+        }
 
-            throw new Error('Unknown error');
+        throw new Error('Unknown error');
+    }
+
+    public static async pickDevice() {
+        try {
+            const device = await navigator.usb.requestDevice({ filters: [WebUsbDeviceFilter] });
+            return WebUsbTransportation.fromDevice(device);
         } catch (e) {
             switch (e.name) {
-                case 'NetworkError':
-                    throw new Error('Cannot connect to device. Make sure ADB is not running');
                 case 'NotFoundError':
                     return undefined;
                 default:
