@@ -25,7 +25,3 @@ export function encodeInto(string: string, buffer: Uint8Array): void {
 export function stringToArrayBuffer(input: string): ArrayBuffer {
     return new Uint8Array(Array.from(input, c => c.charCodeAt(0))).buffer;
 }
-
-export function arrayBufferToString(input: ArrayBuffer): string {
-    return Array.from(new Uint8Array(input), i => String.fromCharCode(i)).join('');
-}

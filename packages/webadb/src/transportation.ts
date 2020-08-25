@@ -18,12 +18,6 @@ export class WebUsbTransportation implements WebAdbTransportation {
     public static async fromDevice(device: USBDevice) {
         await device.open();
 
-        try {
-            await device.reset();
-        } catch (e) {
-            // ignore
-        }
-
         for (const configuration of device.configurations) {
             for (const interface_ of configuration.interfaces) {
                 for (const alternate of interface_.alternates) {
