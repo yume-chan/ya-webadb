@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@types/w3c-web-usb": "^1.0.4",
-    "@yume-chan/async-operation-manager": "^1.0.3",
+    "@yume-chan/async-operation-manager": "^2.0.0",
     "@yume-chan/event": "^0.0.1",
     "tslib": "^2.0.1"
   }
