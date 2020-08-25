@@ -73,7 +73,7 @@ export class WebAdb {
         ].join(',');
 
         const resolver = new PromiseResolver<void>();
-        const authHandler = new AdbAuthHandler([SignatureAuthMethod, PublicKeyAuthMethod]);
+        const authHandler = new AdbAuthHandler([new SignatureAuthMethod(), PublicKeyAuthMethod]);
         const removeListener = this.streamDispatcher.onPacket(async (e) => {
             e.handled = true;
 
@@ -93,7 +93,8 @@ export class WebAdb {
                             throw new Error('Unknown auth type');
                         }
 
-                        await this.streamDispatcher.sendPacket(await authHandler.tryNext(e.packet));
+                        const authPacket = await authHandler.tryNextAuth(e.packet);
+                        await this.streamDispatcher.sendPacket(authPacket);
                         break;
                     case AdbCommand.Close:
                         // Last connection was interrupted

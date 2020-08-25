@@ -31,6 +31,7 @@ const config: webpack.ConfigurationFactory = (
     ],
     module: {
         rules: [
+            { test: /\.js$/, enforce: 'pre', loader: ['source-map-loader'], },
             { test: /.css$/i, loader: [MiniCssExtractPlugin.loader, 'css-loader'] },
             { test: /.tsx?$/i, loader: 'ts-loader' },
         ],

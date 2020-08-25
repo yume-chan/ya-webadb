@@ -5,27 +5,39 @@ import { AdbPacket } from './packet';
 import { AdbAuthType, AdbCommand } from './webadb';
 
 export interface AdbAuthMethod {
-    auth(packet: AdbPacket): Promise<AdbPacket | undefined>;
+    tryAuth(packet: AdbPacket): Promise<AdbPacket | undefined>;
 }
 
 const PublicKeyStorageKey = 'public-key';
 const PrivateKeyStorageKey = 'private-key';
 
-export const SignatureAuthMethod: AdbAuthMethod = {
-    async auth(packet: AdbPacket): Promise<AdbPacket | undefined> {
+export class SignatureAuthMethod implements AdbAuthMethod {
+    private keys: string[] = [];
+
+    private index = 0;
+
+    public constructor() {
         const privateKeyBase64 = window.localStorage.getItem(PrivateKeyStorageKey);
-        if (!privateKeyBase64) {
-            return undefined;
+        if (privateKeyBase64) {
+            this.keys.push(privateKeyBase64);
+        }
+    }
+
+    public async tryAuth(packet: AdbPacket): Promise<AdbPacket | undefined> {
+        if (this.index === this.keys.length) {
+            return undefined
         }
 
-        const privateKey = stringToArrayBuffer(atob(privateKeyBase64));
+        const privateKey = stringToArrayBuffer(atob(this.keys[this.index]));
+        this.index += 1;
+
         const signature = sign(privateKey, packet.payload!);
         return new AdbPacket(AdbCommand.Auth, AdbAuthType.Signature, 0, signature);
     }
 }
 
 export const PublicKeyAuthMethod: AdbAuthMethod = {
-    async auth(): Promise<AdbPacket> {
+    async tryAuth(): Promise<AdbPacket> {
         let publicKeyBase64 = window.localStorage.getItem(PublicKeyStorageKey);
         if (!publicKeyBase64) {
             const [privateKey, publicKey] = await generateKey();
@@ -37,7 +49,8 @@ export const PublicKeyAuthMethod: AdbAuthMethod = {
             window.localStorage.setItem(PrivateKeyStorageKey, privateKeyBase64);
         }
 
-        return new AdbPacket(AdbCommand.Auth, AdbAuthType.PublicKey, 0, publicKeyBase64);
+        // adbd needs the extra null character
+        return new AdbPacket(AdbCommand.Auth, AdbAuthType.PublicKey, 0, publicKeyBase64 + '\0');
     }
 }
 
@@ -50,13 +63,14 @@ export class AdbAuthHandler {
         this.methods = methods;
     }
 
-    public async tryNext(packet: AdbPacket): Promise<AdbPacket> {
+    public async tryNextAuth(packet: AdbPacket): Promise<AdbPacket> {
         while (this.index < this.methods.length) {
-            const result = await this.methods[this.index].auth(packet);
-            this.index += 1;
+            const result = await this.methods[this.index].tryAuth(packet);
             if (result) {
                 return result;
             }
+
+            this.index += 1;
         }
 
         throw new Error('Cannot authenticate with device');

@@ -1,12 +1,12 @@
 "use strict";
-var tslib_1 = require("tslib");
-var path_1 = tslib_1.__importDefault(require("path"));
-var mini_css_extract_plugin_1 = tslib_1.__importDefault(require("mini-css-extract-plugin"));
-var context = path_1.default.resolve(process.cwd());
-var config = function (env, argv) { return ({
+const tslib_1 = require("tslib");
+const path_1 = tslib_1.__importDefault(require("path"));
+const mini_css_extract_plugin_1 = tslib_1.__importDefault(require("mini-css-extract-plugin"));
+const context = path_1.default.resolve(process.cwd());
+const config = (env, argv) => ({
     mode: 'development',
     devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
-    context: context,
+    context,
     target: 'web',
     entry: {
         index: './src/index.tsx',
@@ -27,6 +27,7 @@ var config = function (env, argv) { return ({
     ],
     module: {
         rules: [
+            { test: /\.js$/, enforce: 'pre', loader: ['source-map-loader'], },
             { test: /.css$/i, loader: [mini_css_extract_plugin_1.default.loader, 'css-loader'] },
             { test: /.tsx?$/i, loader: 'ts-loader' },
         ],
@@ -36,5 +37,5 @@ var config = function (env, argv) { return ({
         contentBase: path_1.default.resolve(context, 'www'),
         port: 9000
     },
-}); };
+});
 module.exports = config;
