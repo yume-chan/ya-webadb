@@ -1,4 +1,5 @@
 import { decode, encode, encodeInto } from './decode';
+import { WebAdbTransportation } from './transportation';
 
 export class AdbPacket {
     public static parse(buffer: ArrayBuffer): AdbPacket {
@@ -56,7 +57,7 @@ export class AdbPacket {
         }
     }
 
-    public toBuffer(): ArrayBuffer {
+    public async writeTo(transportation: WebAdbTransportation): Promise<void> {
         const buffer = new ArrayBuffer(24);
         const array = new Uint8Array(buffer);
         const view = new DataView(buffer);
@@ -69,6 +70,10 @@ export class AdbPacket {
         view.setUint32(16, /* checksum */ 0, true);
         view.setUint32(20, /* magic */ view.getUint32(0, true) ^ 0xFFFFFFFF, true);
 
-        return buffer;
+        await transportation.write(buffer);
+
+        if (this.payload) {
+            await transportation.write(this.payload);
+        }
     }
 }

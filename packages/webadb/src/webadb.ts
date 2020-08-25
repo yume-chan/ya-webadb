@@ -1,9 +1,7 @@
-import AsyncOperationManager from '@yume-chan/async-operation-manager';
-import base64Encode from './base64';
-import { generateKey, sign } from './crypto';
-import { stringToArrayBuffer } from './decode';
+import { PromiseResolver } from '@yume-chan/async-operation-manager';
+import { AdbAuthHandler, PublicKeyAuthMethod, SignatureAuthMethod } from './auth';
 import { AdbPacket } from './packet';
-import { AdbStream } from './stream';
+import { AdbStream, AdbStreamDispatcher } from './stream';
 import { WebAdbTransportation } from './transportation';
 
 export enum AdbCommand {
@@ -12,6 +10,7 @@ export enum AdbCommand {
     OK = 'OKAY',
     Close = 'CLSE',
     Write = 'WRTE',
+    Open = 'OPEN',
 }
 
 export enum AdbAuthType {
@@ -44,20 +43,16 @@ export class WebAdb {
     private _features: string[] | undefined;
     public get features() { return this._features; }
 
-    private _alive = true;
-    private _looping = false;
-
-    // ADB requires stream id to start from 1
-    // (0 means open failed)
-    private _streamInitializer = new AsyncOperationManager(1);
-    private _streams = new Map<number, AdbStream>();
+    private streamDispatcher: AdbStreamDispatcher;
 
     public constructor(transportation: WebAdbTransportation) {
         this._transportation = transportation;
+        this.streamDispatcher = new AdbStreamDispatcher(transportation);
     }
 
     public async connect() {
         const version = 0x01000001;
+
         const features = [
             'shell_v2',
             'cmd',
@@ -77,42 +72,48 @@ export class WebAdb {
             'sendrecv_v2_dry_run_send',
         ].join(',');
 
-        await this.sendPacket(AdbCommand.Connect, version, 0x100000, `host::features=${features}`);
+        const resolver = new PromiseResolver<void>();
+        const authHandler = new AdbAuthHandler([SignatureAuthMethod, PublicKeyAuthMethod]);
+        const removeListener = this.streamDispatcher.onPacket(async (e) => {
+            e.handled = true;
 
-        let triedSignatureAuth = false;
-        while (true) {
-            const response = await this.receiveMessage();
-            switch (response.command) {
-                case AdbCommand.Connect:
-                    if (response.arg0 !== version) {
-                        await this.dispose();
-                        throw new Error('version mismatch');
-                    }
-
-                    this.parseBanner(response.payloadString!);
-                    return;
-                case AdbCommand.Auth:
-                    if (response.arg0 !== AdbAuthType.Token) {
-                        await this.dispose();
-                        throw new Error('unknown auth type');
-                    }
-
-                    if (!triedSignatureAuth) {
-                        triedSignatureAuth = true;
-                        const signature = await this.signToken(response.payload!);
-                        if (signature) {
-                            await this.sendPacket(AdbCommand.Auth, AdbAuthType.Signature, 0, signature);
-                            break;
+            const { packet } = e;
+            try {
+                switch (packet.command) {
+                    case AdbCommand.Connect:
+                        if (packet.arg0 !== version) {
+                            throw new Error('Version mismatch');
                         }
-                    }
 
-                    const publicKey = await this.getPublicKey();
-                    await this.sendPacket(AdbCommand.Auth, AdbAuthType.PublicKey, 0, publicKey + ' @unknown' + '\0');
-                    break;
-                default:
-                    await this.dispose();
-                    throw new Error('Device not in correct state. Reconnect your device and try again');
+                        this.parseBanner(packet.payloadString!);
+                        resolver.resolve();
+                        break;
+                    case AdbCommand.Auth:
+                        if (packet.arg0 !== AdbAuthType.Token) {
+                            throw new Error('Unknown auth type');
+                        }
+
+                        await this.streamDispatcher.sendPacket(await authHandler.tryNext(e.packet));
+                        break;
+                    case AdbCommand.Close:
+                        // Last connection was interrupted
+                        // Ignore this packet, device will recover
+                        break;
+                    default:
+                        throw new Error('Device not in correct state. Reconnect your device and try again');
+                }
+            } catch (e) {
+                await this.dispose();
+                resolver.reject(e);
             }
+        });
+
+        await this.streamDispatcher.sendPacket(new AdbPacket(AdbCommand.Connect, version, 0x100000, `host::features=${features}`));
+
+        try {
+            await resolver.promise;
+        } finally {
+            removeListener();
         }
     }
 
@@ -155,154 +156,29 @@ export class WebAdb {
         if (!command) {
             return this.createStream('shell:');
         } else {
-            return this.createStreamAndWait(`shell:${command} ${args.join(' ')}`);
+            return this.createStreamAndReadAll(`shell:${command} ${args.join(' ')}`);
         }
     }
 
     public async tcpip(port = 5555): Promise<string> {
-        return this.createStreamAndWait(`tcpip:${port}`);
+        return this.createStreamAndReadAll(`tcpip:${port}`);
     }
 
-    public async usb(): Promise<string> {
-        return this.createStreamAndWait('usb:');
+    public usb(): Promise<string> {
+        return this.createStreamAndReadAll('usb:');
     }
 
-    public async sendPacket(command: string, arg0: number, arg1: number, payload?: string | ArrayBuffer): Promise<void> {
-        const packet = new AdbPacket(command, arg0, arg1, payload);
-        console.log('send',
-            command,
-            `0x${arg0.toString(16)}`,
-            `0x${arg1.toString(16)}`,
-            payload
-        );
-        await this._transportation.write(packet.toBuffer());
-        if (packet.payloadLength !== 0) {
-            await this._transportation.write(packet.payload!);
-        }
+    public async createStream(payload: string): Promise<AdbStream> {
+        return this.streamDispatcher.createStream(payload);
     }
 
-    private async receiveLoop(): Promise<void> {
-        if (this._looping) {
-            return;
-        }
-
-        this._looping = true;
-
-        while (this._alive) {
-            const response = await this.receiveMessage();
-            switch (response.command) {
-                case AdbCommand.OK:
-                    // OKAY has two meanings
-                    // 1. The device has created the Stream
-                    this._streamInitializer.resolve(response.arg1, response.arg0);
-                    // 2. The device has received last WRTE to the Stream
-                    this._streams.get(response.arg1)?.ack();
-                    break;
-                case AdbCommand.Close:
-                    // CLSE also has two meanings
-                    if (response.arg0 === 0) {
-                        // 1. The device don't want to create the Stream
-                        this._streamInitializer.reject(response.arg1, new Error('open failed'));
-                    } else {
-                        // 2. The device has closed the Stream
-                        this._streams.get(response.arg1)?.onCloseEvent.fire();
-                        this._streams.delete(response.arg1);
-                    }
-                    break;
-                case AdbCommand.Write:
-                    this._streams.get(response.arg1)?.onDataEvent.fire(response.payload!);
-                    await this.sendPacket('OKAY', response.arg1, response.arg0);
-                    break;
-                default:
-                    await this.dispose();
-                    throw new Error('unknown command');
-            }
-        }
-    }
-
-    public async createStream(command: string): Promise<AdbStream> {
-        const { id: localId, promise: initializer } = this._streamInitializer.add<number>();
-        await this.sendPacket('OPEN', localId, 0, command);
-        this.receiveLoop();
-
-        const remoteId = await initializer;
-        const stream = new AdbStream(this, localId, remoteId);
-        this._streams.set(localId, stream);
-        return stream;
-    }
-
-    public async createStreamAndWait(command: string): Promise<string> {
-        const stream = await this.createStream(command);
-        return new Promise<string>((resolve) => {
-            let output = '';
-            const decoder = new TextDecoder();
-            stream.onData((data) => {
-                output += decoder.decode(data);
-            });
-            stream.onClose(() => {
-                resolve(output);
-            });
-        });
-    }
-
-    public async receiveMessage() {
-        console.log('receiving');
-
-        const header = await this.receiveData(24);
-        const packet = AdbPacket.parse(header);
-
-        if (packet.payloadLength !== 0) {
-            packet.payload = await this.receiveData(packet.payloadLength);
-        }
-
-        console.log('received',
-            packet.command,
-            `0x${packet.arg0.toString(16)}`,
-            `0x${packet.arg1.toString(16)}`,
-            packet.payload
-        );
-        return packet;
-    }
-
-    private async receiveData(length: number): Promise<ArrayBuffer> {
-        return await this._transportation.read(length);
-    }
-
-    private async signToken(token: ArrayBuffer): Promise<ArrayBuffer | undefined> {
-        if (token.byteLength !== 20) {
-            return undefined;
-        }
-
-        const privateKeyBase64 = window.localStorage.getItem('private-key');
-        if (!privateKeyBase64) {
-            return undefined;
-        }
-
-        const privateKey = stringToArrayBuffer(atob(privateKeyBase64));
-        return sign(privateKey, token);
-    }
-
-    private async getPublicKey(): Promise<string> {
-        const value = window.localStorage.getItem('public-key');
-        if (value) {
-            return value;
-        }
-
-        const [privateKey, publicKey] = await generateKey();
-
-        const publicKeyBase64 = base64Encode(publicKey);
-        window.localStorage.setItem('public-key', publicKeyBase64);
-
-        const privateKeyBase64 = base64Encode(privateKey);
-        window.localStorage.setItem('private-key', privateKeyBase64);
-
-        return publicKeyBase64;
+    public async createStreamAndReadAll(payload: string): Promise<string> {
+        const stream = await this.createStream(payload);
+        return stream.readAll();
     }
 
     public async dispose() {
-        for (const [localId, stream] of this._streams) {
-            await stream.close();
-        }
+        await this.streamDispatcher.dispose();
         await this._transportation.dispose();
     }
 }

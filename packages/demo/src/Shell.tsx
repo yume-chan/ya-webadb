@@ -73,7 +73,7 @@ export default withDisplayName('Shell', ({
             terminal.reset();
             terminal.clear();
         };
-    }, [device, visible, terminal]);
+    }, [device, terminal]);
 
     const handleResize = useCallback(() => {
         fitAddonRef.current?.fit();

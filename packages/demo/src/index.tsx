@@ -2,7 +2,7 @@ import { Label, Link, MessageBar, Nav, PrimaryButton, Separator, Stack, StackIte
 import { useId } from '@uifabric/react-hooks';
 import { WebAdb } from '@yume-chan/webadb';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { HashRouter, Redirect, Route, Switch, useLocation } from 'react-router-dom';
 import Connect from './Connect';
@@ -17,6 +17,11 @@ function App(): JSX.Element | null {
     const [device, setDevice] = useState<WebAdb | undefined>();
 
     const [tcpPort, setTcpPort] = useState<number | undefined>();
+    useEffect(() => {
+        if (!device) {
+            setTcpPort(undefined);
+        }
+    }, [device]);
     const queryTcpPort = useCallback(async () => {
         if (!device) {
             return;
