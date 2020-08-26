@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "postinstall": "lerna bootstrap",
-    "build": "lerna run --scope @yume-chan/webadb build",
-    "build:watch": "lerna run --scope @yume-chan/webadb --stream build:watch",
+    "build": "lerna run --scope @yume-chan/adb-webusb build",
+    "build:watch": "lerna run --scope @yume-chan/adb-webusb --stream build:watch",
     "build:demo": "lerna run --scope demo --stream build",
     "start:demo": "lerna run --scope demo --stream start"
   },

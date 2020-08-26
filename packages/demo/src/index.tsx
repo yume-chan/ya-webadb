@@ -1,6 +1,6 @@
 import { Label, Link, MessageBar, Nav, PrimaryButton, Separator, Stack, StackItem, Text, TextField } from '@fluentui/react';
 import { useId } from '@uifabric/react-hooks';
-import { WebAdb } from '@yume-chan/webadb';
+import { Adb } from '@yume-chan/adb';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
@@ -14,12 +14,12 @@ initializeIcons();
 function App(): JSX.Element | null {
     const location = useLocation();
 
-    const [device, setDevice] = useState<WebAdb | undefined>();
+    const [device, setDevice] = useState<Adb | undefined>();
 
-    const [tcpPort, setTcpPort] = useState<number | undefined>();
+    const [tcpPort, setTcpAddresses] = useState<string[] | undefined>();
     useEffect(() => {
         if (!device) {
-            setTcpPort(undefined);
+            setTcpAddresses(undefined);
         }
     }, [device]);
     const queryTcpPort = useCallback(async () => {
@@ -27,8 +27,8 @@ function App(): JSX.Element | null {
             return;
         }
 
-        const result = await device.shell('getprop service.adb.tcp.port');
-        setTcpPort(Number.parseInt(result, 10));
+        const result = await device.getDaemonTcpAddresses();
+        setTcpAddresses(result);
     }, [device]);
 
     const [tcpPortValue, setTcpPortValue] = useState('5555');
@@ -38,7 +38,7 @@ function App(): JSX.Element | null {
             return;
         }
 
-        const result = await device.tcpip(Number.parseInt(tcpPortValue, 10));
+        const result = await device.setDaemonTcpPort(Number.parseInt(tcpPortValue, 10));
         console.log(result);
     }, [device, tcpPortValue]);
 
@@ -47,7 +47,7 @@ function App(): JSX.Element | null {
             return;
         }
 
-        const result = await device.usb();
+        const result = await device.disableDaemonTcp();
         console.log(result);
     }, [device]);
 
@@ -132,8 +132,8 @@ function App(): JSX.Element | null {
                                         </StackItem>
                                         <StackItem>
                                             {tcpPort !== undefined &&
-                                                (tcpPort !== 0
-                                                    ? `Enabled at port ${tcpPort}`
+                                                (tcpPort.length !== 0
+                                                    ? `Enabled at ${tcpPort.join(', ')}`
                                                     : 'Disabled')}
                                         </StackItem>
                                     </Stack>
@@ -161,7 +161,7 @@ function App(): JSX.Element | null {
                                     <StackItem>
                                         <PrimaryButton
                                             text="Disable"
-                                            disabled={!device || tcpPort === undefined || tcpPort === 0}
+                                            disabled={!device || tcpPort === undefined || tcpPort.length === 0}
                                             onClick={disableTcp}
                                         />
                                     </StackItem>

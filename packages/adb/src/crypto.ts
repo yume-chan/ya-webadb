@@ -113,21 +113,7 @@ export function modInverse(a: number, m: number) {
     return (y % m + m) % m
 }
 
-export async function generateKey(): Promise<[privateKey: ArrayBuffer, publicKey: ArrayBuffer]> {
-    const keyPair = await crypto.subtle.generateKey(
-        {
-            name: 'RSASSA-PKCS1-v1_5',
-            modulusLength: 2048,
-            // 65537
-            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-            hash: 'SHA-1',
-        },
-        true,
-        ['sign', 'verify']
-    );
-
-    const privateKey = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
-
+export function calculatePublicKey(privateKey: ArrayBuffer): ArrayBuffer {
     // Android has its own public key generation algorithm
     // See https://github.com/aosp-mirror/platform_system_core/blob/e5c9bbd45381d7bd72fef232d1c6668946253ac8/libcrypto_utils/android_pubkey.cpp#L111
 
@@ -170,7 +156,7 @@ export async function generateKey(): Promise<[privateKey: ArrayBuffer, publicKey
     // exponent
     publicKeyView.setUint32(8 + 256 + 256, 65537, true);
 
-    return [privateKey, publicKey];
+    return publicKey;
 }
 
 export const Sha1DigestLength = 20;
