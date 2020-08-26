@@ -1,12 +1,5 @@
-export interface WebAdbTransportation {
-    readonly name: string | undefined;
-
-    write(buffer: ArrayBuffer): void | Promise<void>;
-
-    read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
-
-    dispose(): void | Promise<void>;
-}
+import { AdbBackend, decodeBase64, encodeBase64 } from '@yume-chan/adb';
+import { EventEmitter } from '@yume-chan/event';
 
 export const WebUsbDeviceFilter: USBDeviceFilter = {
     classCode: 0xFF,
@@ -14,7 +7,12 @@ export const WebUsbDeviceFilter: USBDeviceFilter = {
     protocolCode: 1,
 };
 
-export class WebUsbTransportation implements WebAdbTransportation {
+const PrivateKeyStorageKey = 'private-key';
+
+const Utf8Encoder = new TextEncoder();
+const Utf8Decoder = new TextDecoder();
+
+export class WebUsbAdbBackend implements AdbBackend {
     public static async fromDevice(device: USBDevice) {
         await device.open();
 
@@ -44,13 +42,13 @@ export class WebUsbTransportation implements WebAdbTransportation {
                                 case 'in':
                                     inEndpointNumber = endpoint.endpointNumber;
                                     if (outEndpointNumber !== undefined) {
-                                        return new WebUsbTransportation(device, inEndpointNumber, outEndpointNumber);
+                                        return new WebUsbAdbBackend(device, inEndpointNumber, outEndpointNumber);
                                     }
                                     break;
                                 case 'out':
                                     outEndpointNumber = endpoint.endpointNumber;
                                     if (inEndpointNumber !== undefined) {
-                                        return new WebUsbTransportation(device, inEndpointNumber, outEndpointNumber);
+                                        return new WebUsbAdbBackend(device, inEndpointNumber, outEndpointNumber);
                                     }
                                     break;
                             }
@@ -66,7 +64,7 @@ export class WebUsbTransportation implements WebAdbTransportation {
     public static async pickDevice() {
         try {
             const device = await navigator.usb.requestDevice({ filters: [WebUsbDeviceFilter] });
-            return WebUsbTransportation.fromDevice(device);
+            return WebUsbAdbBackend.fromDevice(device);
         } catch (e) {
             switch (e.name) {
                 case 'NotFoundError':
@@ -81,6 +79,9 @@ export class WebUsbTransportation implements WebAdbTransportation {
 
     public get name() { return this._device.productName; }
 
+    private readonly onDisconnectedEvent = new EventEmitter<void>();
+    public readonly onDisconnected = this.onDisconnectedEvent.event;
+
     private _inEndpointNumber!: number;
     private _outEndpointNumber!: number;
 
@@ -90,21 +91,63 @@ export class WebUsbTransportation implements WebAdbTransportation {
         this._outEndpointNumber = outEndPointNumber;
     }
 
+    public *iterateKeys(): Generator<ArrayBuffer, void, void> {
+        const privateKey = window.localStorage.getItem(PrivateKeyStorageKey);
+        if (privateKey) {
+            yield decodeBase64(privateKey);
+        }
+    }
+
+    public async generateKey(): Promise<ArrayBuffer> {
+        const { privateKey: cryptoKey } = await crypto.subtle.generateKey(
+            {
+                name: 'RSASSA-PKCS1-v1_5',
+                modulusLength: 2048,
+                // 65537
+                publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+                hash: 'SHA-1',
+            },
+            true,
+            ['sign', 'verify']
+        );
+
+        const privateKey = await crypto.subtle.exportKey('pkcs8', cryptoKey);
+        window.localStorage.setItem(PrivateKeyStorageKey, encodeBase64(privateKey));
+        return privateKey;
+    }
+
+    public encodeUtf8(input: string): ArrayBuffer {
+        return Utf8Encoder.encode(input);
+    }
+
+    public decodeUtf8(buffer: ArrayBuffer): string {
+        return Utf8Decoder.decode(buffer);
+    }
+
     public async write(buffer: ArrayBuffer): Promise<void> {
         await this._device.transferOut(this._outEndpointNumber, buffer);
     }
 
     public async read(length: number): Promise<ArrayBuffer> {
-        const result = await this._device.transferIn(this._inEndpointNumber, length);
+        try {
+            const result = await this._device.transferIn(this._inEndpointNumber, length);
 
-        if (result.status === 'stall') {
-            await this._device.clearHalt('in', this._inEndpointNumber);
+            if (result.status === 'stall') {
+                await this._device.clearHalt('in', this._inEndpointNumber);
+            }
+
+            return result.data!.buffer;
+        } catch (e) {
+            if (e instanceof Error && e.name === 'NotFoundError') {
+                this.onDisconnectedEvent.fire();
+            }
+
+            throw e;
         }
-
-        return result.data!.buffer;
     }
 
     public async dispose() {
+        this.onDisconnectedEvent.dispose();
         await this._device.close();
     }
 }

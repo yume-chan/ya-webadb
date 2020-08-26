@@ -1,4 +1,4 @@
-import { WebAdb } from '@yume-chan/webadb';
+import { Adb } from '@yume-chan/adb';
 import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -13,7 +13,7 @@ const containerStyle: CSSProperties = {
 };
 
 export interface ShellProps {
-    device: WebAdb | undefined;
+    device: Adb | undefined;
 
     visible: boolean;
 }

@@ -1,13 +1,14 @@
 import { DefaultButton, Dialog, DialogFooter, DialogType, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
 import { useBoolean } from '@uifabric/react-hooks';
-import { WebAdb, WebUsbTransportation } from '@yume-chan/webadb';
+import { Adb } from '@yume-chan/adb';
+import { WebUsbAdbBackend } from '@yume-chan/adb-webusb';
 import React, { useCallback, useEffect, useState } from 'react';
 import withDisplayName from './withDisplayName';
 
 interface ConnectProps {
-    device: WebAdb | undefined;
+    device: Adb | undefined;
 
-    onDeviceChange: (device: WebAdb | undefined) => void;
+    onDeviceChange: (device: Adb | undefined) => void;
 }
 
 export default withDisplayName('Connect', ({
@@ -21,12 +22,17 @@ export default withDisplayName('Connect', ({
 
     const connect = useCallback(async () => {
         try {
-            const transportation = await WebUsbTransportation.pickDevice();
-            if (transportation) {
-                const device = new WebAdb(transportation);
-                setConnecting(true);
-                await device.connect();
-                onDeviceChange(device);
+            const backend = await WebUsbAdbBackend.pickDevice();
+            if (backend) {
+                const device = new Adb(backend);
+                try {
+                    setConnecting(true);
+                    await device.connect();
+                    onDeviceChange(device);
+                } catch (e) {
+                    device.dispose();
+                    throw e;
+                }
             }
         } catch (e) {
             setErrorMessage(e.message);
@@ -47,17 +53,9 @@ export default withDisplayName('Connect', ({
     }, [device]);
 
     useEffect(() => {
-        function handler(e: USBConnectionEvent) {
-            if (e.device.productName === device?.name) {
-                onDeviceChange(undefined);
-            }
-        }
-
-        window.navigator.usb.addEventListener('disconnect', handler);
-
-        return () => {
-            window.navigator.usb.removeEventListener('disconnect', handler);
-        };
+        return device?.onDisconnected(() => {
+            onDeviceChange(undefined);
+        });
     }, [device, onDeviceChange]);
 
     return (

@@ -1,65 +1,68 @@
 import AsyncOperationManager, { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { AutoDisposable, Disposable, Event, EventEmitter } from '@yume-chan/event';
-import { decode } from './decode';
 import { AdbPacket } from './packet';
-import { WebAdbTransportation } from './transportation';
-import { AdbCommand } from './webadb';
+import { AdbBackend } from './backend';
+import { AdbCommand } from './packet';
 
-class AutoResetEvent {
-    private _list: PromiseResolver<void>[] = [];
+class AutoResetEvent implements Disposable {
+    private readonly list: PromiseResolver<void>[] = [];
 
-    private _blocking: boolean = false;
+    private blocking: boolean = false;
 
     public wait(): Promise<void> {
-        if (!this._blocking) {
-            this._blocking = true;
+        if (!this.blocking) {
+            this.blocking = true;
 
-            if (this._list.length === 0) {
+            if (this.list.length === 0) {
                 return Promise.resolve();
             }
         }
 
         const resolver = new PromiseResolver<void>();
-        this._list.push(resolver);
+        this.list.push(resolver);
         return resolver.promise;
     }
 
     public notify() {
-        if (this._list.length !== 0) {
-            this._list.pop()!.resolve();
+        if (this.list.length !== 0) {
+            this.list.pop()!.resolve();
         } else {
-            this._blocking = false;
+            this.blocking = false;
         }
+    }
+
+    public dispose() {
+        for (const item of this.list) {
+            item.reject(new Error('The AutoResetEvent has been disposed'));
+        }
+        this.list.length = 0;
     }
 }
 
 export class AdbStreamController extends AutoDisposable {
-    private dispatcher: AdbStreamDispatcher;
+    private readonly writeLock = this.addDisposable(new AutoResetEvent());
 
-    private writeLock = new AutoResetEvent();
+    public readonly dispatcher: AdbPacketDispatcher;
 
-    private _localId: number;
-    public get localId() { return this._localId; }
+    public readonly localId: number;
 
-    private _remoteId: number;
-    public get remoteId() { return this._remoteId; }
+    public readonly remoteId: number;
 
-    public onDataEvent = this.addDisposable(new EventEmitter<ArrayBuffer>());
+    public readonly onDataEvent = this.addDisposable(new EventEmitter<ArrayBuffer>());
 
-    public onCloseEvent = this.addDisposable(new EventEmitter<void>());
+    public readonly onCloseEvent = this.addDisposable(new EventEmitter<void>());
 
-    public constructor(localId: number, remoteId: number, dispatcher: AdbStreamDispatcher) {
+    public constructor(localId: number, remoteId: number, dispatcher: AdbPacketDispatcher) {
         super();
 
-        this._localId = localId;
-        this._remoteId = remoteId;
+        this.localId = localId;
+        this.remoteId = remoteId;
         this.dispatcher = dispatcher;
-        dispatcher.addStreamController(this);
     }
 
     public async write(data: ArrayBuffer): Promise<void> {
         await this.writeLock.wait();
-        await this.dispatcher.sendPacket(new AdbPacket(AdbCommand.Write, this.localId, this.remoteId, data));
+        await this.dispatcher.sendPacket(AdbCommand.Write, this.localId, this.remoteId, data);
     }
 
     public ack() {
@@ -67,49 +70,75 @@ export class AdbStreamController extends AutoDisposable {
     }
 
     public close() {
-        return this.dispatcher.sendPacket(new AdbPacket(AdbCommand.Close, this.localId, this.remoteId));
+        return this.dispatcher.sendPacket(AdbCommand.Close, this.localId, this.remoteId);
     }
 }
 
-export interface OnAdbPacketEventArgs {
+export interface AdbPacketArrivedEventArgs {
     handled: boolean;
 
     packet: AdbPacket;
 }
 
-export class AdbStreamDispatcher implements Disposable {
-    private transportation: WebAdbTransportation;
+export class AdbPacketDispatcher extends AutoDisposable {
+    public readonly backend: AdbBackend;
 
     // ADB requires stream id to start from 1
     // (0 means open failed)
-    private initializers = new AsyncOperationManager(1);
-    private streams = new Map<number, AdbStreamController>();
+    private readonly initializers = new AsyncOperationManager(1);
+    private readonly streams = new Map<number, AdbStreamController>();
 
-    private onPacketEvent = new EventEmitter<OnAdbPacketEventArgs>();
-    public get onPacket() { return this.onPacketEvent.event; }
+    private readonly onPacketEvent = this.addDisposable(new EventEmitter<AdbPacketArrivedEventArgs>());
+    public readonly onPacket = this.onPacketEvent.event;
+
+    private readonly onReceiveErrorEvent = this.addDisposable(new EventEmitter<Error>());
+    public readonly onReceiveError = this.onReceiveErrorEvent.event;
 
     private _running = true;
     public get running() { return this._running; }
 
-    public constructor(transportation: WebAdbTransportation) {
-        this.transportation = transportation;
+    public constructor(backend: AdbBackend) {
+        super();
+
+        this.backend = backend;
         this.receiveLoop();
     }
 
-    public async createStream(payload: string): Promise<AdbStream> {
+    public async createStream(service: string): Promise<AdbStream> {
         const [localId, initializer] = this.initializers.add<number>();
-        await this.sendPacket(new AdbPacket(AdbCommand.Open, localId, 0, payload));
+        await this.sendPacket(AdbCommand.Open, localId, 0, service);
 
         const remoteId = await initializer;
-        return new AdbStream(localId, remoteId, this);
-    }
-
-    public addStreamController(controller: AdbStreamController) {
+        const controller = new AdbStreamController(localId, remoteId, this);
         this.streams.set(controller.localId, controller);
+
+        return new AdbStream(controller);
     }
 
-    public sendPacket(packet: AdbPacket): Promise<void> {
-        return packet.writeTo(this.transportation);
+    public sendPacket(packet: AdbPacket): Promise<void>;
+    public sendPacket(
+        command: AdbCommand,
+        arg0: number,
+        arg1: number,
+        payload?: string | ArrayBuffer
+    ): Promise<void>;
+    public sendPacket(
+        packetOrCommand: AdbPacket | AdbCommand,
+        arg0?: number,
+        arg1?: number,
+        payload?: string | ArrayBuffer
+    ): Promise<void> {
+        if (arguments.length === 1) {
+            return (packetOrCommand as AdbPacket).send();
+        } else {
+            return AdbPacket.send(
+                this.backend,
+                packetOrCommand as AdbCommand,
+                arg0 as number,
+                arg1 as number,
+                payload
+            );
+        }
     }
 
     public async dispose() {
@@ -121,23 +150,14 @@ export class AdbStreamDispatcher implements Disposable {
             stream.dispose();
         }
         this.streams.clear();
-    }
 
-    private async receivePacket() {
-        const header = await this.transportation.read(24);
-        const packet = AdbPacket.parse(header);
-
-        if (packet.payloadLength !== 0) {
-            packet.payload = await this.transportation.read(packet.payloadLength);
-        }
-
-        return packet;
+        super.dispose();
     }
 
     private async receiveLoop() {
         while (this._running) {
             try {
-                const packet = await this.receivePacket();
+                const packet = await AdbPacket.parse(this.backend);
                 let handled = false;
                 switch (packet.command) {
                     case AdbCommand.OK:
@@ -152,7 +172,7 @@ export class AdbStreamDispatcher implements Disposable {
                             // Last connection sent an OPEN to device,
                             // device now sent OKAY to this connection
                             // tell the device to close the stream
-                            this.sendPacket(new AdbPacket(AdbCommand.Close, packet.arg1, packet.arg0));
+                            this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
                         }
                         break;
                     case AdbCommand.Close:
@@ -175,14 +195,14 @@ export class AdbStreamDispatcher implements Disposable {
                     case AdbCommand.Write:
                         if (this.streams.has(packet.arg1)) {
                             this.streams.get(packet.arg1)!.onDataEvent.fire(packet.payload!);
-                            await this.sendPacket(new AdbPacket(AdbCommand.OK, packet.arg1, packet.arg0));
+                            await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
                             handled = true;
                         }
                         break;
                 }
 
                 if (!handled) {
-                    const args: OnAdbPacketEventArgs = {
+                    const args: AdbPacketArrivedEventArgs = {
                         handled: false,
                         packet,
                     }
@@ -197,7 +217,7 @@ export class AdbStreamDispatcher implements Disposable {
                     // ignore error
                 }
 
-                throw e;
+                this.onReceiveErrorEvent.fire(e);
             }
         }
     }
@@ -214,15 +234,15 @@ export class AdbStream {
 
     public get onClose(): Event<void> { return this.controller.onCloseEvent.event; }
 
-    public constructor(localId: number, remoteId: number, dispatcher: AdbStreamDispatcher) {
-        this.controller = new AdbStreamController(localId, remoteId, dispatcher);
+    public constructor(controller: AdbStreamController) {
+        this.controller = controller;
     }
 
     public async readAll(): Promise<string> {
         const resolver = new PromiseResolver<string>();
         let output = '';
         this.onData((data) => {
-            output += decode(data);
+            output += this.controller.dispatcher.backend.decodeUtf8(data);
         });
         this.onClose(() => {
             resolver.resolve(output);

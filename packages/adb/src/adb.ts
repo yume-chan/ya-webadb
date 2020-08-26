@@ -1,23 +1,9 @@
 import { PromiseResolver } from '@yume-chan/async-operation-manager';
-import { AdbAuthHandler, PublicKeyAuthMethod, SignatureAuthMethod } from './auth';
-import { AdbPacket } from './packet';
-import { AdbStream, AdbStreamDispatcher } from './stream';
-import { WebAdbTransportation } from './transportation';
-
-export enum AdbCommand {
-    Connect = 'CNXN',
-    Auth = 'AUTH',
-    OK = 'OKAY',
-    Close = 'CLSE',
-    Write = 'WRTE',
-    Open = 'OPEN',
-}
-
-export enum AdbAuthType {
-    Token = 1,
-    Signature = 2,
-    PublicKey = 3,
-}
+import { AutoDisposable, DisposableList } from '@yume-chan/event';
+import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
+import { AdbBackend } from './backend';
+import { AdbCommand } from './packet';
+import { AdbPacketDispatcher, AdbStream } from './stream';
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -26,10 +12,15 @@ export enum AdbPropKey {
     Features = 'features',
 }
 
-export class WebAdb {
-    private _transportation: WebAdbTransportation;
+export class Adb {
+    private backend: AdbBackend;
 
-    public get name() { return this._transportation.name; }
+    public get onDisconnected() { return this.backend.onDisconnected; }
+
+    private _connected = false;
+    public get connected() { return this._connected; }
+
+    public get name() { return this.backend.name; }
 
     private _product: string | undefined;
     public get product() { return this._product; }
@@ -43,14 +34,16 @@ export class WebAdb {
     private _features: string[] | undefined;
     public get features() { return this._features; }
 
-    private streamDispatcher: AdbStreamDispatcher;
+    private packetDispatcher: AdbPacketDispatcher;
 
-    public constructor(transportation: WebAdbTransportation) {
-        this._transportation = transportation;
-        this.streamDispatcher = new AdbStreamDispatcher(transportation);
+    public constructor(backend: AdbBackend) {
+        this.backend = backend;
+        this.packetDispatcher = new AdbPacketDispatcher(backend);
+
+        backend.onDisconnected(this.dispose, this);
     }
 
-    public async connect() {
+    public async connect(authenticators = AdbDefaultAuthenticators) {
         const version = 0x01000001;
 
         const features = [
@@ -73,8 +66,9 @@ export class WebAdb {
         ].join(',');
 
         const resolver = new PromiseResolver<void>();
-        const authHandler = new AdbAuthHandler([new SignatureAuthMethod(), PublicKeyAuthMethod]);
-        const removeListener = this.streamDispatcher.onPacket(async (e) => {
+        const authHandler = new AdbAuthenticationHandler(authenticators, this.backend);
+        const disposableList = new DisposableList();
+        disposableList.add(this.packetDispatcher.onPacket(async (e) => {
             e.handled = true;
 
             const { packet } = e;
@@ -89,12 +83,8 @@ export class WebAdb {
                         resolver.resolve();
                         break;
                     case AdbCommand.Auth:
-                        if (packet.arg0 !== AdbAuthType.Token) {
-                            throw new Error('Unknown auth type');
-                        }
-
                         const authPacket = await authHandler.tryNextAuth(e.packet);
-                        await this.streamDispatcher.sendPacket(authPacket);
+                        await this.packetDispatcher.sendPacket(authPacket);
                         break;
                     case AdbCommand.Close:
                         // Last connection was interrupted
@@ -104,17 +94,26 @@ export class WebAdb {
                         throw new Error('Device not in correct state. Reconnect your device and try again');
                 }
             } catch (e) {
-                await this.dispose();
                 resolver.reject(e);
             }
-        });
+        }));
 
-        await this.streamDispatcher.sendPacket(new AdbPacket(AdbCommand.Connect, version, 0x100000, `host::features=${features}`));
+        disposableList.add(this.packetDispatcher.onReceiveError(e => {
+            resolver.reject(e);
+        }));
+
+        await this.packetDispatcher.sendPacket(
+            AdbCommand.Connect,
+            version,
+            0x100000,
+            `host::features=${features}`
+        );
 
         try {
             await resolver.promise;
+            this._connected = true;
         } finally {
-            removeListener();
+            disposableList.dispose();
         }
     }
 
@@ -151,9 +150,9 @@ export class WebAdb {
         }
     }
 
-    public async shell(command: string, ...args: string[]): Promise<string>;
-    public async shell(): Promise<AdbStream>;
-    public async shell(command?: string, ...args: string[]): Promise<AdbStream | string> {
+    public shell(command: string, ...args: string[]): Promise<string>;
+    public shell(): Promise<AdbStream>;
+    public shell(command?: string, ...args: string[]): Promise<AdbStream | string> {
         if (!command) {
             return this.createStream('shell:');
         } else {
@@ -161,16 +160,35 @@ export class WebAdb {
         }
     }
 
-    public async tcpip(port = 5555): Promise<string> {
+    public async getDaemonTcpAddresses(): Promise<string[]> {
+        const propAddr = (await this.shell('getprop', 'service.adb.listen_addrs')).trim();
+        if (propAddr) {
+            return propAddr.split(',');
+        }
+
+        let port = (await this.shell('getprop', 'service.adb.tcp.port')).trim();
+        if (port) {
+            return [`0.0.0.0:${port}`];
+        }
+
+        port = (await this.shell('getprop', 'persist.adb.tcp.port')).trim();
+        if (port) {
+            return [`0.0.0.0:${port}`];
+        }
+
+        return [];
+    }
+
+    public setDaemonTcpPort(port = 5555): Promise<string> {
         return this.createStreamAndReadAll(`tcpip:${port}`);
     }
 
-    public usb(): Promise<string> {
+    public disableDaemonTcp(): Promise<string> {
         return this.createStreamAndReadAll('usb:');
     }
 
-    public async createStream(payload: string): Promise<AdbStream> {
-        return this.streamDispatcher.createStream(payload);
+    public async createStream(service: string): Promise<AdbStream> {
+        return this.packetDispatcher.createStream(service);
     }
 
     public async createStreamAndReadAll(payload: string): Promise<string> {
@@ -179,7 +197,7 @@ export class WebAdb {
     }
 
     public async dispose() {
-        await this.streamDispatcher.dispose();
-        await this._transportation.dispose();
+        await this.packetDispatcher.dispose();
+        await this.backend.dispose();
     }
 }

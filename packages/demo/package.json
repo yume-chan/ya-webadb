@@ -34,7 +34,8 @@
   "dependencies": {
     "@fluentui/react": "7.130.0",
     "@uifabric/react-hooks": "7.9.1",
-    "@yume-chan/webadb": "^0.0.1",
+    "@yume-chan/adb": "^0.0.1",
+    "@yume-chan/adb-webusb": "^0.0.1",
     "react": "16.13.1",
     "react-dom": "16.13.1",
     "react-router-dom": "5.2.0",
