@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@fluentui/react": "7.133.0",
-    "@uifabric/react-hooks": "7.11.0",
+    "@uifabric/react-hooks": "7.12.0",
     "@yume-chan/adb": "^0.0.1",
     "@yume-chan/adb-webusb": "^0.0.1",
     "react": "16.13.1",
