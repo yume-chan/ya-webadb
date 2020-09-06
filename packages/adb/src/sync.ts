@@ -20,33 +20,65 @@ export enum AdbSyncResponseId {
     Ok = 'OKAY',
 }
 
-export abstract class AdbSyncRequest {
-    public readonly id!: AdbSyncRequestId;
+export abstract class AdbSyncRequestBase<T extends AdbSyncRequestId = AdbSyncRequestId> {
+    public readonly id: T;
+
+    public constructor(id: T) {
+        this.id = id;
+    }
 
     public abstract toBuffer(backend: AdbBackend): ArrayBuffer;
 }
 
-export class AdbSyncListRequest extends AdbSyncRequest {
-    public readonly id = AdbSyncRequestId.List;
+export type AdbSyncNumberRequestId =
+    AdbSyncRequestId.Done;
 
-    public path: string;
+export class AdbSyncNumberRequest extends AdbSyncRequestBase<AdbSyncNumberRequestId> {
+    public readonly value: number;
 
-    public constructor(path: string) {
-        super();
-        this.path = path;
+    public constructor(id: AdbSyncNumberRequestId, value: number) {
+        super(id);
+        this.value = value;
     }
 
-    public toBuffer(backend: AdbBackend) {
-        const pathBuffer = backend.encodeUtf8(this.path);
-        const array = new Uint8Array(8 + pathBuffer.byteLength);
+    public toBuffer(backend: AdbBackend): ArrayBuffer {
+        const array = new Uint8Array(8);
 
         const idBuffer = backend.encodeUtf8(this.id);
         array.set(new Uint8Array(idBuffer));
 
         const view = new DataView(array.buffer);
-        view.setUint32(4, pathBuffer.byteLength, true);
+        view.setUint32(4, this.value, true);
 
-        array.set(new Uint8Array(pathBuffer), 8);
+        return array.buffer;
+    }
+}
+
+export type AdbSyncStringRequestId =
+    AdbSyncRequestId.List |
+    AdbSyncRequestId.Send |
+    AdbSyncRequestId.Stat |
+    AdbSyncRequestId.Receive;
+
+export class AdbSyncStringRequest extends AdbSyncRequestBase<AdbSyncStringRequestId> {
+    public value: string;
+
+    public constructor(id: AdbSyncStringRequestId, value: string) {
+        super(id);
+        this.value = value;
+    }
+
+    public toBuffer(backend: AdbBackend) {
+        const valueBuffer = backend.encodeUtf8(this.value);
+        const array = new Uint8Array(8 + valueBuffer.byteLength);
+
+        const idBuffer = backend.encodeUtf8(this.id);
+        array.set(new Uint8Array(idBuffer));
+
+        const view = new DataView(array.buffer);
+        view.setUint32(4, valueBuffer.byteLength, true);
+
+        array.set(new Uint8Array(valueBuffer), 8);
 
         return array.buffer;
     }
@@ -92,6 +124,24 @@ export class AdbSyncEntryResponse {
     }
 }
 
+export class AdbSyncDataResponse {
+    public static async parse(stream: AdbBufferedStream): Promise<AdbSyncDataResponse> {
+        const buffer = await stream.read(4);
+        const view = new DataView(buffer);
+        const length = view.getUint32(0, true);
+        const data = await stream.read(length);
+        return new AdbSyncDataResponse(data);
+    }
+
+    public readonly id = AdbSyncResponseId.Data;
+
+    public readonly data: ArrayBuffer;
+
+    public constructor(data: ArrayBuffer) {
+        this.data = data;
+    }
+}
+
 export class AdbSyncDoneResponse {
     public readonly id = AdbSyncResponseId.Done;
 }
@@ -101,6 +151,8 @@ async function parseResponse(stream: AdbBufferedStream) {
     switch (id) {
         case AdbSyncResponseId.Entry:
             return await AdbSyncEntryResponse.parse(stream);
+        case AdbSyncResponseId.Data:
+            return await AdbSyncDataResponse.parse(stream);
         case AdbSyncResponseId.Done:
             await stream.read(4);
             return new AdbSyncDoneResponse();
@@ -124,7 +176,7 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            await this.write(new AdbSyncListRequest(path));
+            await this.write(new AdbSyncStringRequest(AdbSyncRequestId.List, path));
 
             const results: AdbSyncEntryResponse[] = [];
             while (true) {
@@ -135,6 +187,30 @@ export class AdbSync extends AutoDisposable {
                         break;
                     case AdbSyncResponseId.Done:
                         return results;
+                    default:
+                        throw new Error('Unexpected response id');
+                }
+            }
+        } finally {
+            this.sendLock.notify();
+        }
+    }
+
+    public async *receive(path: string): AsyncGenerator<ArrayBuffer, void, void> {
+        await this.sendLock.wait();
+
+        try {
+            await this.write(new AdbSyncStringRequest(AdbSyncRequestId.Receive, path));
+            while (true) {
+                const response = await parseResponse(this.stream);
+                switch (response.id) {
+                    case AdbSyncResponseId.Data:
+                        yield response.data;
+                        break;
+                    case AdbSyncResponseId.Done:
+                        return;
+                    default:
+                        throw new Error('Unexpected response id');
                 }
             }
         } finally {
@@ -147,7 +223,7 @@ export class AdbSync extends AutoDisposable {
         this.stream.close();
     }
 
-    private write(request: AdbSyncRequest) {
+    private write(request: AdbSyncRequestBase) {
         return this.stream.write(request.toBuffer(this.stream.backend));
     }
 }
