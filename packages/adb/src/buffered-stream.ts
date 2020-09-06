@@ -117,8 +117,11 @@ export class AdbBufferedStream implements AsyncIterable<ArrayBuffer>{
                 resetEvent.notify();
             }));
 
+            this.mode = 'iterate';
+
             return (buffers) => {
                 this.extraBuffers = buffers;
+                this.mode = 'none';
                 disposable.dispose();
             };
         })[Symbol.asyncIterator]();

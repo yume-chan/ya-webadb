@@ -1,4 +1,19 @@
-import { Breadcrumb, concatStyleSets, DetailsHeader, DetailsListLayoutMode, IBreadcrumbItem, IColumn, Icon, IDetailsHeaderProps, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
+import {
+    Breadcrumb,
+    concatStyleSets,
+    DetailsHeader,
+    DetailsListLayoutMode,
+    IBreadcrumbItem,
+    IColumn,
+    Icon,
+    IDetailsHeaderProps,
+    Layer,
+    Link,
+    Overlay,
+    ShimmeredDetailsList,
+    Stack,
+    StackItem
+} from '@fluentui/react';
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@uifabric/file-type-icons';
 import { Adb, AdbSyncEntryResponse, LinuxFileType } from '@yume-chan/adb';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -22,65 +37,14 @@ function formatSize(value: number): string {
     return value.toLocaleString(undefined, { maximumFractionDigits: 2 }) + units[index];
 }
 
-const ListColumns: IColumn[] = [
-    {
-        key: 'type',
-        name: 'File Type',
-        iconName: 'Page',
-        isIconOnly: true,
-        minWidth: 20,
-        maxWidth: 20,
-        isCollapsible: true,
-        onRender(item: AdbSyncEntryResponse) {
-            switch (item.type) {
-                case LinuxFileType.Link:
-                    return <Icon {...getFileTypeIconProps({ size: 20, type: FileIconType.linkedFolder })} />;
-                case LinuxFileType.Directory:
-                    return <Icon {...getFileTypeIconProps({ size: 20, type: FileIconType.folder })} />;
-                default:
-                    return <Icon {...getFileTypeIconProps({ size: 20, extension: 'txt' })} />;
-            }
-        }
-    },
-    {
-        key: 'name',
-        name: 'Name',
-        fieldName: 'name',
-        minWidth: 0,
-        isRowHeader: true,
-        isSorted: true,
-    },
-    {
-        key: 'mode',
-        name: 'Mode',
-        fieldName: 'mode',
-        minWidth: 0,
-        onRender(item: AdbSyncEntryResponse) {
-            return `0${(item.mode >> 6 & 0b100).toString(8)}${(item.mode >> 3 & 0b100).toString(8)}${(item.mode & 0b100).toString(8)}`;
-        }
-    },
-    {
-        key: 'size',
-        name: 'Size',
-        fieldName: 'size',
-        minWidth: 0,
-        onRender(item: AdbSyncEntryResponse) {
-            if (item.type === LinuxFileType.File) {
-                return formatSize(item.size);
-            }
-            return '';
-        }
-    },
-    {
-        key: 'lastModifiedTime',
-        name: 'Last Modified Time',
-        fieldName: 'lastModifiedTime',
-        minWidth: 150,
-        onRender(item: AdbSyncEntryResponse) {
-            return new Date(item.lastModifiedTime * 1000).toLocaleString();
-        },
-    },
-];
+function extensionName(fileName: string): string {
+    const index = fileName.lastIndexOf('.');
+    if (index === -1) {
+        return '';
+    } else {
+        return fileName.slice(index);
+    }
+}
 
 function renderDetailsHeader(props?: IDetailsHeaderProps) {
     if (!props) {
@@ -93,6 +57,39 @@ function renderDetailsHeader(props?: IDetailsHeaderProps) {
             styles={concatStyleSets(props.styles, { root: { paddingTop: 0 } })}
         />
     );
+}
+
+function combinePath(...segments: string[]): string {
+    return segments.reduce((result, item) => {
+        if (result.endsWith('/')) {
+            return `${result}${item}`;
+        } else {
+            return `${result}/${item}`;
+        }
+    }, '');
+}
+
+function createReadableStreamFromBufferIterator(iterator: AsyncIterator<ArrayBuffer>) {
+    return new ReadableStream({
+        async pull(controller) {
+            const { desiredSize } = controller;
+            if (!desiredSize || desiredSize < 0) {
+                return;
+            }
+
+            let written = 0;
+            while (written < desiredSize) {
+                const result = await iterator.next();
+                if (result.done) {
+                    controller.close();
+                    return;
+                }
+
+                controller.enqueue(new Uint8Array(result.value));
+                written += result.value.byteLength;
+            }
+        },
+    });
 }
 
 export default withDisplayName('Sync', ({
@@ -146,13 +143,118 @@ export default withDisplayName('Sync', ({
         })();
     }, [cached, device, path]);
 
-    const gotoFolder = useCallback((item: AdbSyncEntryResponse) => {
-        if (path === '/') {
-            setPath('/' + item.name);
-        } else {
-            setPath(path + '/' + item.name);
+    const [previewUrl, setPreviewUrl] = useState<string | undefined>();
+    const previewImage = useCallback(async (path: string) => {
+        const sync = await device!.sync();
+        try {
+            const readableStream = createReadableStreamFromBufferIterator(sync.receive(path));
+            const response = new Response(readableStream);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            setPreviewUrl(url);
+        } finally {
+            setLoading(false);
+            sync.dispose();
         }
-    }, [path]);
+    }, [device]);
+    const hidePreview = useCallback(() => {
+        setPreviewUrl(undefined);
+    }, []);
+
+    const handleItemInvoked = useCallback((item: AdbSyncEntryResponse) => {
+        switch (item.type) {
+            case LinuxFileType.Link:
+            case LinuxFileType.Directory:
+                setPath(combinePath(path, item.name));
+                break;
+            case LinuxFileType.File:
+                switch (extensionName(item.name)) {
+                    case '.jpg':
+                    case '.png':
+                    case '.svg':
+                    case '.gif':
+                        previewImage(combinePath(path, item.name));
+                        break;
+                }
+                break;
+        }
+    }, [path, previewImage]);
+
+    const columns = useMemo((): IColumn[] => [
+        {
+            key: 'type',
+            name: 'File Type',
+            iconName: 'Page',
+            isIconOnly: true,
+            minWidth: 20,
+            maxWidth: 20,
+            isCollapsible: true,
+            onRender(item: AdbSyncEntryResponse) {
+                switch (item.type) {
+                    case LinuxFileType.Link:
+                        return <Icon {...getFileTypeIconProps({ size: 20, type: FileIconType.linkedFolder })} />;
+                    case LinuxFileType.Directory:
+                        return <Icon {...getFileTypeIconProps({ size: 20, type: FileIconType.folder })} />;
+                    case LinuxFileType.File:
+                        return <Icon {...getFileTypeIconProps({ size: 20, extension: extensionName(item.name) })} />;
+                    default:
+                        return <Icon {...getFileTypeIconProps({ size: 20, extension: 'txt' })} />;
+                }
+            }
+        },
+        {
+            key: 'name',
+            name: 'Name',
+            fieldName: 'name',
+            minWidth: 0,
+            isRowHeader: true,
+            isSorted: true,
+            onRender(item: AdbSyncEntryResponse) {
+                return (
+                    <Link onClick={() => handleItemInvoked(item)} styles={{
+                        root: {
+                            color: 'inherit',
+                            '&:active, &:hover, &:active:hover, &:focus': {
+                                color: 'inherit',
+                            }
+                        }
+                    }} >
+                        {item.name}
+                    </Link>
+                );
+            }
+        },
+        {
+            key: 'mode',
+            name: 'Mode',
+            fieldName: 'mode',
+            minWidth: 0,
+            onRender(item: AdbSyncEntryResponse) {
+                return `0${(item.mode >> 6 & 0b100).toString(8)}${(item.mode >> 3 & 0b100).toString(8)}${(item.mode & 0b100).toString(8)}`;
+            }
+        },
+        {
+            key: 'size',
+            name: 'Size',
+            fieldName: 'size',
+            minWidth: 0,
+            onRender(item: AdbSyncEntryResponse) {
+                if (item.type === LinuxFileType.File) {
+                    return formatSize(item.size);
+                }
+                return '';
+            }
+        },
+        {
+            key: 'lastModifiedTime',
+            name: 'Last Modified Time',
+            fieldName: 'lastModifiedTime',
+            minWidth: 150,
+            onRender(item: AdbSyncEntryResponse) {
+                return new Date(item.lastModifiedTime * 1000).toLocaleString();
+            },
+        },
+    ], [handleItemInvoked]);
 
     const getKey = useCallback((item: AdbSyncEntryResponse, index?: number) => {
         return item?.name ?? index?.toString() ?? '';
@@ -193,22 +295,33 @@ export default withDisplayName('Sync', ({
             styles={{ root: { overflow: 'auto' } }}
             tokens={{ childrenGap: 8, padding: 8 }}
         >
-            <StackItem >
-                <Breadcrumb items={breadcrumb} />
-            </StackItem>
+            {device && (
+                <StackItem >
+                    <Breadcrumb items={breadcrumb} />
+                </StackItem>
+            )}
             <StackItem grow styles={{ root: { minHeight: 0 } }}>
                 <ShimmeredDetailsList
                     items={items}
-                    columns={ListColumns}
+                    columns={columns}
                     getKey={getKey}
                     setKey={path}
                     layoutMode={DetailsListLayoutMode.justified}
                     enableShimmer={loading}
-                    onItemInvoked={gotoFolder}
+                    onItemInvoked={handleItemInvoked}
                     onRenderDetailsHeader={renderDetailsHeader}
                     usePageCache
                 />
             </StackItem>
+            {previewUrl && (
+                <Layer>
+                    <Overlay onClick={hidePreview}>
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src={previewUrl} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                        </div>
+                    </Overlay>
+                </Layer>
+            )}
         </Stack>
     );
 });
