@@ -3,7 +3,7 @@ import { useBoolean } from '@uifabric/react-hooks';
 import { Adb } from '@yume-chan/adb';
 import { WebUsbAdbBackend } from '@yume-chan/adb-webusb';
 import React, { useCallback, useEffect, useState } from 'react';
-import withDisplayName from './withDisplayName';
+import withDisplayName from './with-display-name';
 
 interface ConnectProps {
     device: Adb | undefined;

@@ -1,7 +1,8 @@
+import { AutoDisposable, Disposable } from '@yume-chan/event';
 import { AdbBackend, AdbKeyIterator } from './backend';
-import { encodeBase64 } from './base64';
 import { calculatePublicKey, sign } from './crypto';
 import { AdbCommand, AdbPacket } from './packet';
+import { encodeBase64 } from './utils';
 
 export enum AdbAuthType {
     Token = 1,
@@ -9,7 +10,7 @@ export enum AdbAuthType {
     PublicKey = 3,
 }
 
-export interface AdbAuthenticator {
+export interface AdbAuthenticator extends Disposable {
     tryAuth(packet: AdbPacket): Promise<AdbPacket | undefined>;
 }
 
@@ -21,6 +22,8 @@ export class AdbSignatureAuthenticator implements AdbAuthenticator {
     private readonly backend: AdbBackend;
 
     private readonly iterator: AdbKeyIterator;
+
+    private iteratorDone = false;
 
     public constructor(backend: AdbBackend) {
         this.backend = backend;
@@ -34,6 +37,7 @@ export class AdbSignatureAuthenticator implements AdbAuthenticator {
 
         const next = await this.iterator.next();
         if (next.done) {
+            this.iteratorDone = true;
             return undefined;
         }
 
@@ -45,6 +49,12 @@ export class AdbSignatureAuthenticator implements AdbAuthenticator {
             0,
             signature
         );
+    }
+
+    public dispose() {
+        if (!this.iteratorDone) {
+            this.iterator.return?.();
+        }
     }
 }
 
@@ -62,6 +72,7 @@ export class AdbPublicKeyAuthenticator implements AdbAuthenticator {
         const next = await iterator.next();
         if (!next.done) {
             privateKey = next.value;
+            await iterator.return?.();
         } else {
             privateKey = await this.backend.generateKey();
         }
@@ -76,6 +87,10 @@ export class AdbPublicKeyAuthenticator implements AdbAuthenticator {
             encodeBase64(publicKey) + '\0'
         );
     }
+
+    public dispose() {
+        // do nothing
+    }
 }
 
 export const AdbDefaultAuthenticators: AdbAuthenticatorConstructor[] = [
@@ -83,7 +98,7 @@ export const AdbDefaultAuthenticators: AdbAuthenticatorConstructor[] = [
     AdbPublicKeyAuthenticator
 ];
 
-export class AdbAuthenticationHandler {
+export class AdbAuthenticationHandler extends AutoDisposable {
     public readonly authenticators: readonly AdbAuthenticator[];
 
     private index = 0;
@@ -92,7 +107,11 @@ export class AdbAuthenticationHandler {
         authenticators: readonly AdbAuthenticatorConstructor[],
         backend: AdbBackend
     ) {
-        this.authenticators = authenticators.map(Constructor => new Constructor(backend));
+        super();
+
+        this.authenticators = authenticators.map(
+            Constructor => this.addDisposable(new Constructor(backend))
+        );
     }
 
     public async tryNextAuth(packet: AdbPacket): Promise<AdbPacket> {
