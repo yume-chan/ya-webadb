@@ -86,31 +86,31 @@ export function parsePrivateKey(key: ArrayBuffer): [n: bigint, d: bigint] {
 // Only used with numbers less than 2^32 so doesn't need BigInt
 export function modInverse(a: number, m: number) {
     // validate inputs
-    [a, m] = [Number(a), Number(m)]
+    [a, m] = [Number(a), Number(m)];
     if (Number.isNaN(a) || Number.isNaN(m)) {
-        return NaN // invalid input
+        return NaN; // invalid input
     }
-    a = (a % m + m) % m
+    a = (a % m + m) % m;
     if (!a || m < 2) {
-        return NaN // invalid input
+        return NaN; // invalid input
     }
     // find the gcd
-    const s = []
-    let b = m
+    const s = [];
+    let b = m;
     while (b) {
-        [a, b] = [b, a % b]
-        s.push({ a, b })
+        [a, b] = [b, a % b];
+        s.push({ a, b });
     }
     if (a !== 1) {
-        return NaN // inverse does not exists
+        return NaN; // inverse does not exists
     }
     // find the inverse
-    let x = 1
-    let y = 0
+    let x = 1;
+    let y = 0;
     for (let i = s.length - 2; i >= 0; --i) {
-        [x, y] = [y, x - y * Math.floor(s[i].a / s[i].b)]
+        [x, y] = [y, x - y * Math.floor(s[i].a / s[i].b)];
     }
-    return (y % m + m) % m
+    return (y % m + m) % m;
 }
 
 export function calculatePublicKey(privateKey: ArrayBuffer): ArrayBuffer {
@@ -142,7 +142,7 @@ export function calculatePublicKey(privateKey: ArrayBuffer): ArrayBuffer {
 
     // Calculate `n0inv`
     // Don't know why need to multiple -1
-    // Didn't exist in original Android code
+    // Didn't exist in Android codebase
     const n0inv = modInverse(Number(BigInt.asUintN(32, n) * BigInt(-1)), 2 ** 32);
     publicKeyView.setUint32(4, n0inv, true);
 
@@ -158,23 +158,6 @@ export function calculatePublicKey(privateKey: ArrayBuffer): ArrayBuffer {
 
     return publicKey;
 }
-
-export const Sha1DigestLength = 20;
-
-export const Asn1Sequence = 0x30;
-export const Asn1OctetString = 0x04;
-export const Asn1Null = 0x05;
-export const Asn1Oid = 0x06;
-
-// PKCS#1 SHA-1 hash digest info
-export const Sha1DigestInfo = [
-    Asn1Sequence, 0x0d + Sha1DigestLength,
-    Asn1Sequence, 0x09,
-    // SHA-1 (1 3 14 3 2 26)
-    Asn1Oid, 0x05, 1 * 40 + 3, 14, 3, 2, 26,
-    Asn1Null, 0x00,
-    Asn1OctetString, Sha1DigestLength
-];
 
 // Modular exponentiation
 // See https://en.wikipedia.org/wiki/Modular_exponentiation#Implementation_in_Lua
@@ -198,8 +181,25 @@ export function powMod(base: bigint, exponent: bigint, modulus: bigint): bigint 
     return r;
 }
 
+export const Sha1DigestLength = 20;
+
+export const Asn1Sequence = 0x30;
+export const Asn1OctetString = 0x04;
+export const Asn1Null = 0x05;
+export const Asn1Oid = 0x06;
+
+// PKCS#1 SHA-1 hash digest info
+export const Sha1DigestInfo = [
+    Asn1Sequence, 0x0d + Sha1DigestLength,
+    Asn1Sequence, 0x09,
+    // SHA-1 (1 3 14 3 2 26)
+    Asn1Oid, 0x05, 1 * 40 + 3, 14, 3, 2, 26,
+    Asn1Null, 0x00,
+    Asn1OctetString, Sha1DigestLength
+];
+
 // SubtleCrypto.sign() will hash the given data and sign the hash
-// But we don't need the extra hash
+// But we don't need the hashing step
 // (In another word, ADB just requires the client to
 // encrypt the given data with its private key)
 // However SubtileCrypto.encrypt() doesn't accept 'RSASSA-PKCS1-v1_5' algorithm

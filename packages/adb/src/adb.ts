@@ -1,9 +1,11 @@
 import { PromiseResolver } from '@yume-chan/async-operation-manager';
-import { AutoDisposable, DisposableList } from '@yume-chan/event';
+import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
+import { AdbBufferedStream } from './buffered-stream';
 import { AdbCommand } from './packet';
 import { AdbPacketDispatcher, AdbStream } from './stream';
+import { AdbSync } from './sync';
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -187,17 +189,23 @@ export class Adb {
         return this.createStreamAndReadAll('usb:');
     }
 
+    public async sync(): Promise<AdbSync> {
+        const stream = await this.createStream('sync:\0');
+        return new AdbSync(stream);
+    }
+
     public async createStream(service: string): Promise<AdbStream> {
         return this.packetDispatcher.createStream(service);
     }
 
     public async createStreamAndReadAll(payload: string): Promise<string> {
         const stream = await this.createStream(payload);
-        return stream.readAll();
+        const buffered = new AdbBufferedStream(stream);
+        return buffered.readAll();
     }
 
     public async dispose() {
-        await this.packetDispatcher.dispose();
+        this.packetDispatcher.dispose();
         await this.backend.dispose();
     }
 }

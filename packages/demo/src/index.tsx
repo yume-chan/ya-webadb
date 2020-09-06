@@ -1,13 +1,14 @@
 import { Label, Link, MessageBar, Nav, PrimaryButton, Separator, Stack, StackItem, Text, TextField } from '@fluentui/react';
+import { initializeIcons } from '@uifabric/icons';
 import { useId } from '@uifabric/react-hooks';
 import { Adb } from '@yume-chan/adb';
-import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { HashRouter, Redirect, Route, Switch, useLocation } from 'react-router-dom';
-import Connect from './Connect';
+import Connect from './connect';
 import './index.css';
-import Shell from './Shell';
+import Shell from './shell';
+import Sync from './sync';
 
 initializeIcons();
 
@@ -73,6 +74,7 @@ function App(): JSX.Element | null {
                                     { key: '/device-info', name: 'Device Info', url: '#/device-info' },
                                     { key: '/adb-over-wifi', name: 'ADB over WiFi', url: '#/adb-over-wifi' },
                                     { key: '/shell', name: 'Interactive Shell', url: '#/shell' },
+                                    { key: '/sync', name: 'File Manager', url: '#/sync' },
                                 ]
                             }]}
                             selectedKey={location.pathname}
@@ -167,14 +169,17 @@ function App(): JSX.Element | null {
                                     </StackItem>
                                 </Stack>
                             </Route>
+
                             <Route path="/shell" />
+                            <Route path="/sync" />
+
                             <Redirect to="/intro" />
                         </Switch>
                         <Route path="/shell" >
                             {({ match }) => (
                                 <Stack
                                     verticalFill
-                                    styles={{ root: { overflow: 'auto', visibility: match ? 'visible' : 'collapse' } }}
+                                    styles={{ root: { overflow: 'auto', display: match ? 'flex' : 'none' } }}
                                     tokens={{ childrenGap: 8, padding: 8 }}
                                 >
                                     <StackItem grow styles={{ root: { minHeight: 0 } }}>
@@ -183,11 +188,24 @@ function App(): JSX.Element | null {
                                 </Stack>
                             )}
                         </Route>
+                        <Route path="/sync" >
+                            {({ match }) => (
+                                <Stack
+                                    verticalFill
+                                    styles={{ root: { overflow: 'auto', display: match ? 'flex' : 'none' } }}
+                                    tokens={{ childrenGap: 8, padding: 8 }}
+                                >
+                                    <StackItem grow styles={{ root: { minHeight: 0 } }}>
+                                        <Sync device={device} visible={!!match} />
+                                    </StackItem>
+                                </Stack>
+                            )}
+                        </Route>
                     </StackItem>
                 </Stack>
             </StackItem>
         </Stack>
-    )
+    );
 }
 
 ReactDOM.render(

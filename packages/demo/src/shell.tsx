@@ -4,8 +4,8 @@ import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 // import { SearchAddon } from 'xterm-addon-search';
 import 'xterm/css/xterm.css';
-import ResizeObserver from './ResizeObserver';
-import withDisplayName from './withDisplayName';
+import ResizeObserver from './resize-observer';
+import withDisplayName from './with-display-name';
 
 const containerStyle: CSSProperties = {
     width: '100%',
@@ -87,5 +87,5 @@ export default withDisplayName('Shell', ({
         <ResizeObserver style={containerStyle} onResize={handleResize}>
             <div ref={handleContainerRef} style={{ height: '100%' }} />
         </ResizeObserver>
-    )
+    );
 });

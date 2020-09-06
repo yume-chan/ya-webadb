@@ -41,12 +41,22 @@ ranges = ranges.sort((a, b) => a.end - b.end);
 
 function toValue(char: string): number {
     const charCode = char.charCodeAt(0);
-    for (const range of ranges) {
-        if (charCode <= range.end) {
+
+    let start = 0;
+    let end = ranges.length - 1;
+    let i = end >> 1;
+
+    while (true) {
+        const range = ranges[i];
+        if (charCode < range.start) {
+            end = i - 1;
+        } else if (charCode > range.end) {
+            start = i + 1;
+        } else {
             return charCode - range.offset;
         }
+        i = (start + end) >> 1;
     }
-    throw new Error('Unknown Character');
 }
 
 export function encodeBase64(buffer: ArrayBuffer): string {
