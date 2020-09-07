@@ -1,8 +1,37 @@
-import path from 'path';
+import { CleanWebpackPlugin } from 'clean-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import path from 'path';
 import type webpack from 'webpack';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 
 const context = path.resolve(process.cwd());
+
+const plugins: webpack.Plugin[] = [
+    new CleanWebpackPlugin(),
+    new MiniCssExtractPlugin({
+        filename: '[name].[contenthash].css',
+        esModule: true,
+    }),
+    new CopyPlugin({
+        patterns: [
+            {
+                context: path.dirname(require.resolve('streamsaver')),
+                from: '(mitm.html|sw.js)',
+                to: 'streamsaver'
+            },
+        ],
+    }),
+    new HtmlWebpackPlugin({
+        template: 'www/index.html',
+        scriptLoading: 'defer',
+    }),
+];
+
+if (process.env.ANALYZE) {
+    plugins.push(new BundleAnalyzerPlugin());
+}
 
 const config: webpack.ConfigurationFactory = (
     env: unknown,
@@ -16,19 +45,13 @@ const config: webpack.ConfigurationFactory = (
         index: './src/index.tsx',
     },
     output: {
-        publicPath: '/lib/',
         path: path.resolve(context, 'lib'),
-        filename: '[name].js',
+        filename: '[name].[contenthash].js',
     },
     resolve: {
         extensions: ['.ts', '.tsx', '.js'],
     },
-    plugins: [
-        new MiniCssExtractPlugin({
-            filename: '[name].css',
-            esModule: true,
-        }),
-    ],
+    plugins,
     module: {
         rules: [
             { test: /\.js$/, enforce: 'pre', loader: ['source-map-loader'], },
@@ -36,9 +59,20 @@ const config: webpack.ConfigurationFactory = (
             { test: /.tsx?$/i, loader: 'ts-loader' },
         ],
     },
+    optimization: {
+        moduleIds: 'hashed',
+        splitChunks: {
+            cacheGroups: {
+                vendor: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendor',
+                    chunks: 'all',
+                },
+            },
+        },
+    },
     devServer: {
-        publicPath: '/lib/',
-        contentBase: path.resolve(context, 'www'),
+        contentBase: path.resolve(context, 'lib'),
         port: 9000
     },
 });

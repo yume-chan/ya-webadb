@@ -22,14 +22,10 @@ jobs:
     - run: npm run build
     - run: npm run build:demo
 
-    - run: mkdir dist
-    - run: cp -r packages/demo/www/* dist
-    - run: cp -r packages/demo/lib dist
-
     - name: Deploy
       uses: s0/git-publish-subdir-action@develop
       env:
         REPO: self
         BRANCH: gh-pages
-        FOLDER: dist
+        FOLDER: packages/demo/lib
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
