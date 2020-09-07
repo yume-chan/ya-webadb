@@ -18,7 +18,7 @@ const plugins: webpack.Plugin[] = [
         patterns: [
             {
                 context: path.dirname(require.resolve('streamsaver')),
-                from: '(mitm.html|sw.js)',
+                from: '(mitm.html|sw.js|LICENSE)',
                 to: 'streamsaver'
             },
         ],

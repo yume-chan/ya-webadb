@@ -7,7 +7,7 @@ import StreamSaver from 'streamsaver';
 import withDisplayName from './with-display-name';
 
 initializeFileTypeIcons();
-StreamSaver.mitm = '/streamsaver/mitm.html';
+StreamSaver.mitm = 'streamsaver/mitm.html';
 
 export interface SyncProps {
     device: Adb | undefined;
