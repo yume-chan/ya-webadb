@@ -1,25 +1,13 @@
-import {
-    Breadcrumb,
-    concatStyleSets,
-    DetailsHeader,
-    DetailsListLayoutMode,
-    IBreadcrumbItem,
-    IColumn,
-    Icon,
-    IDetailsHeaderProps,
-    Layer,
-    Link,
-    Overlay,
-    ShimmeredDetailsList,
-    Stack,
-    StackItem
-} from '@fluentui/react';
+import { Breadcrumb, concatStyleSets, ContextualMenu, DetailsListLayoutMode, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IRenderFunction, Layer, Link, Overlay, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@uifabric/file-type-icons';
+import { useConstCallback } from '@uifabric/react-hooks';
 import { Adb, AdbSyncEntryResponse, LinuxFileType } from '@yume-chan/adb';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import StreamSaver from 'streamsaver';
 import withDisplayName from './with-display-name';
 
 initializeFileTypeIcons();
+StreamSaver.mitm = '/streamsaver/mitm.html';
 
 export interface SyncProps {
     device: Adb | undefined;
@@ -46,18 +34,16 @@ function extensionName(fileName: string): string {
     }
 }
 
-function renderDetailsHeader(props?: IDetailsHeaderProps) {
-    if (!props) {
+const renderDetailsHeader: IRenderFunction<IDetailsHeaderProps> = (props?, defaultRender?) => {
+    if (!props || !defaultRender) {
         return null;
     }
 
-    return (
-        <DetailsHeader
-            {...props}
-            styles={concatStyleSets(props.styles, { root: { paddingTop: 0 } })}
-        />
-    );
-}
+    return defaultRender({
+        ...props,
+        styles: concatStyleSets(props.styles, { root: { paddingTop: 0 } })
+    });
+};
 
 function combinePath(...segments: string[]): string {
     return segments.reduce((result, item) => {
@@ -69,8 +55,8 @@ function combinePath(...segments: string[]): string {
     }, '');
 }
 
-function createReadableStreamFromBufferIterator(iterator: AsyncIterator<ArrayBuffer>) {
-    return new ReadableStream({
+function createReadableStreamFromBufferIterator(iterator: AsyncIterator<ArrayBuffer>): ReadableStream {
+    return new ReadableStream<Uint8Array>({
         async pull(controller) {
             const { desiredSize } = controller;
             if (!desiredSize || desiredSize < 0) {
@@ -153,7 +139,6 @@ export default withDisplayName('Sync', ({
             const url = window.URL.createObjectURL(blob);
             setPreviewUrl(url);
         } finally {
-            setLoading(false);
             sync.dispose();
         }
     }, [device]);
@@ -285,6 +270,55 @@ export default withDisplayName('Sync', ({
         return list;
     }, [path]);
 
+    const [contextMenuItems, setContextMenuItems] = useState<IContextualMenuItem[]>([]);
+    const [contextMenuTarget, setContextMenuTarget] = useState<MouseEvent>();
+    const showContextMenu = useCallback((
+        item?: AdbSyncEntryResponse,
+        index?: number,
+        e?: Event
+    ) => {
+        if (!item) {
+            return false;
+        }
+
+        let contextMenuItems: IContextualMenuItem[] = [];
+
+        if (item.type === LinuxFileType.File) {
+            contextMenuItems.push({
+                key: 'download',
+                text: 'Download',
+                onClick() {
+                    (async () => {
+                        const sync = await device!.sync();
+                        try {
+                            const itemPath = combinePath(path, item.name);
+                            const readableStream = createReadableStreamFromBufferIterator(sync.receive(itemPath));
+
+                            const writeableStream = StreamSaver.createWriteStream(item.name, {
+                                size: item.size,
+                            });
+                            await readableStream.pipeTo(writeableStream);
+                        } finally {
+                            sync.dispose();
+                        }
+                    })();
+                    return false;
+                },
+            });
+        }
+
+        if (!contextMenuItems.length) {
+            return false;
+        }
+
+        setContextMenuItems(contextMenuItems);
+        setContextMenuTarget(e as MouseEvent);
+        return false;
+    }, [path, device]);
+    const hideContextMenu = useConstCallback(() => {
+        setContextMenuTarget(undefined);
+    });
+
     if (!cached) {
         return null;
     }
@@ -309,6 +343,7 @@ export default withDisplayName('Sync', ({
                     layoutMode={DetailsListLayoutMode.justified}
                     enableShimmer={loading}
                     onItemInvoked={handleItemInvoked}
+                    onItemContextMenu={showContextMenu}
                     onRenderDetailsHeader={renderDetailsHeader}
                     usePageCache
                 />
@@ -322,6 +357,14 @@ export default withDisplayName('Sync', ({
                     </Overlay>
                 </Layer>
             )}
+
+            <ContextualMenu
+                items={contextMenuItems}
+                hidden={!contextMenuTarget}
+                directionalHint={DirectionalHint.bottomLeftEdge}
+                target={contextMenuTarget}
+                onDismiss={hideContextMenu}
+            />
         </Stack>
     );
 });
