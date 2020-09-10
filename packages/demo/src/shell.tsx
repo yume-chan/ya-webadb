@@ -1,8 +1,9 @@
+import { IconButton, SearchBox, Stack, StackItem } from '@fluentui/react';
 import { Adb } from '@yume-chan/adb';
 import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-// import { SearchAddon } from 'xterm-addon-search';
+import { SearchAddon } from 'xterm-addon-search';
 import 'xterm/css/xterm.css';
 import ResizeObserver from './resize-observer';
 import withDisplayName from './with-display-name';
@@ -29,6 +30,21 @@ export default withDisplayName('Shell', ({
         }
     }, [visible]);
 
+    const [findKeyword, setFindKeyword] = useState('');
+    const findAddonRef = useRef<SearchAddon>();
+    const handleFindKeywordChange = useCallback((e, newValue?: string) => {
+        setFindKeyword(newValue ?? '');
+        if (newValue) {
+            findAddonRef.current!.findNext(newValue, { incremental: true });
+        }
+    }, []);
+    const findPrevious = useCallback(() => {
+        findAddonRef.current!.findPrevious(findKeyword);
+    }, [findKeyword]);
+    const findNext = useCallback(() => {
+        findAddonRef.current!.findNext(findKeyword);
+    }, [findKeyword]);
+
     const [terminal, setTerminal] = useState<Terminal>();
     const fitAddonRef = useRef<FitAddon>();
     const handleContainerRef = useCallback((element: HTMLDivElement | null) => {
@@ -39,6 +55,10 @@ export default withDisplayName('Shell', ({
         const terminal = new Terminal({
             scrollback: 9001,
         });
+
+        const findAddon = new SearchAddon();
+        findAddonRef.current = findAddon;
+        terminal.loadAddon(findAddon);
 
         const fitAddon = new FitAddon();
         fitAddonRef.current = fitAddon;
@@ -85,7 +105,40 @@ export default withDisplayName('Shell', ({
 
     return (
         <ResizeObserver style={containerStyle} onResize={handleResize}>
-            <div ref={handleContainerRef} style={{ height: '100%' }} />
+            <Stack
+                verticalFill
+                tokens={{ childrenGap: 8, padding: 8 }}
+            >
+                <StackItem>
+                    <Stack horizontal>
+                        <StackItem grow>
+                            <SearchBox
+                                placeholder="Find"
+                                value={findKeyword}
+                                onChange={handleFindKeywordChange}
+                                onSearch={findNext}
+                            />
+                        </StackItem>
+                        <StackItem>
+                            <IconButton
+                                disabled={!findKeyword}
+                                iconProps={{ iconName: 'ChevronUp' }}
+                                onClick={findPrevious}
+                            />
+                        </StackItem>
+                        <StackItem>
+                            <IconButton
+                                disabled={!findKeyword}
+                                iconProps={{ iconName: 'ChevronDown' }}
+                                onClick={findNext}
+                            />
+                        </StackItem>
+                    </Stack>
+                </StackItem>
+                <StackItem grow styles={{ root: { minHeight: 0 } }}>
+                    <div ref={handleContainerRef} style={{ height: '100%' }} />
+                </StackItem>
+            </Stack>
         </ResizeObserver>
     );
 });
