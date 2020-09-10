@@ -54,21 +54,33 @@ export const CacheSwitch = withDisplayName('CacheSwitch', (props: CacheSwitchPro
     let cached: React.ReactElement[] = [];
     React.Children.forEach(props.children, child => {
         if (React.isValidElement<RouteProps & RedirectProps>(child)) {
+            // Always render all cached routes
+            const isCacheRoute = child.type === CacheRoute;
+            if (isCacheRoute) {
+                cached.push(child);
+            }
+
+            // If we already found the matched route,
+            // Don't care about others
+            if (computedMatch) {
+                return;
+            }
+
             const path = child.props.path ?? child.props.from;
             const match = path
                 ? matchPath(location.pathname, { ...child.props, path })
                 : contextMatch;
 
-            if (child.type === CacheRoute) {
-                cached.push(child);
-                return;
-            }
-
             if (match) {
-                element = child;
                 computedMatch = match;
-            }
 
+                if (isCacheRoute) {
+                    // Don't render a CacheRoute twice
+                    element = undefined;
+                } else {
+                    element = child;
+                }
+            }
         }
     });
 
