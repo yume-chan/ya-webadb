@@ -15,21 +15,11 @@ const containerStyle: CSSProperties = {
 
 export interface ShellProps {
     device: Adb | undefined;
-
-    visible: boolean;
 }
 
 export default withDisplayName('Shell', ({
     device,
-    visible,
 }: ShellProps): JSX.Element | null => {
-    const [cached, setCached] = useState(false);
-    useEffect(() => {
-        if (visible) {
-            setCached(true);
-        }
-    }, [visible]);
-
     const [findKeyword, setFindKeyword] = useState('');
     const findAddonRef = useRef<SearchAddon>();
     const handleFindKeywordChange = useCallback((e, newValue?: string) => {
@@ -99,46 +89,39 @@ export default withDisplayName('Shell', ({
         fitAddonRef.current?.fit();
     }, []);
 
-    if (!cached) {
-        return null;
-    }
-
     return (
-        <ResizeObserver style={containerStyle} onResize={handleResize}>
-            <Stack
-                verticalFill
-                tokens={{ childrenGap: 8, padding: 8 }}
-            >
-                <StackItem>
-                    <Stack horizontal>
-                        <StackItem grow>
-                            <SearchBox
-                                placeholder="Find"
-                                value={findKeyword}
-                                onChange={handleFindKeywordChange}
-                                onSearch={findNext}
-                            />
-                        </StackItem>
-                        <StackItem>
-                            <IconButton
-                                disabled={!findKeyword}
-                                iconProps={{ iconName: 'ChevronUp' }}
-                                onClick={findPrevious}
-                            />
-                        </StackItem>
-                        <StackItem>
-                            <IconButton
-                                disabled={!findKeyword}
-                                iconProps={{ iconName: 'ChevronDown' }}
-                                onClick={findNext}
-                            />
-                        </StackItem>
-                    </Stack>
-                </StackItem>
-                <StackItem grow styles={{ root: { minHeight: 0 } }}>
+        <>
+            <StackItem>
+                <Stack horizontal>
+                    <StackItem grow>
+                        <SearchBox
+                            placeholder="Find"
+                            value={findKeyword}
+                            onChange={handleFindKeywordChange}
+                            onSearch={findNext}
+                        />
+                    </StackItem>
+                    <StackItem>
+                        <IconButton
+                            disabled={!findKeyword}
+                            iconProps={{ iconName: 'ChevronUp' }}
+                            onClick={findPrevious}
+                        />
+                    </StackItem>
+                    <StackItem>
+                        <IconButton
+                            disabled={!findKeyword}
+                            iconProps={{ iconName: 'ChevronDown' }}
+                            onClick={findNext}
+                        />
+                    </StackItem>
+                </Stack>
+            </StackItem>
+            <StackItem grow styles={{ root: { minHeight: 0 } }}>
+                <ResizeObserver style={containerStyle} onResize={handleResize}>
                     <div ref={handleContainerRef} style={{ height: '100%' }} />
-                </StackItem>
-            </Stack>
-        </ResizeObserver>
+                </ResizeObserver>
+            </StackItem>
+        </>
     );
 });

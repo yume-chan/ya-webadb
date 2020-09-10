@@ -4,11 +4,12 @@ import { useId } from '@uifabric/react-hooks';
 import { Adb } from '@yume-chan/adb';
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { HashRouter, Redirect, Route, Switch, useLocation } from 'react-router-dom';
+import { HashRouter, Redirect, useLocation } from 'react-router-dom';
 import Connect from './connect';
+import FileManager from './file-manager';
 import './index.css';
+import { CacheRoute, CacheSwitch } from './router';
 import Shell from './shell';
-import Sync from './sync';
 
 initializeIcons();
 
@@ -70,137 +71,104 @@ function App(): JSX.Element | null {
                             styles={{ root: { width: 250 } }}
                             groups={[{
                                 links: [
-                                    { key: '/intro', name: 'Introduction', url: '#/intro' },
+                                    { key: '/', name: 'Introduction', url: '#/' },
                                     { key: '/device-info', name: 'Device Info', url: '#/device-info' },
                                     { key: '/adb-over-wifi', name: 'ADB over WiFi', url: '#/adb-over-wifi' },
                                     { key: '/shell', name: 'Interactive Shell', url: '#/shell' },
-                                    { key: '/sync', name: 'File Manager', url: '#/sync' },
+                                    { key: '/file-manager', name: 'File Manager', url: '#/file-manager' },
                                 ]
                             }]}
                             selectedKey={location.pathname}
                         />
                     </StackItem>
                     <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden' } }}>
-                        <Switch>
-                            <Route path="/intro">
-                                <Stack
-                                    verticalFill
-                                    styles={{ root: { overflow: 'auto' } }}
-                                    tokens={{ childrenGap: 8, padding: 8 }}
-                                >
-                                    <Text block>
-                                        This demo can connect to your Android devices using the{' '}
-                                        <Link href="https://developer.mozilla.org/en-US/docs/Web/API/USB" target="_blank">WebUSB</Link>{' '}
-                                        API.
-                                    </Text>
-                                    <Text block>
-                                        Before start, please make sure your adb server is not running (`adb kill-server`), as there can be only one connection to your device at same time.
-                                    </Text>
-                                </Stack>
-                            </Route>
-                            <Route path='/device-info'>
-                                <Stack
-                                    verticalFill
-                                    styles={{ root: { overflow: 'auto' } }}
-                                    tokens={{ childrenGap: 8, padding: 8 }}
-                                >
+                        <CacheSwitch>
+                            <CacheRoute exact path="/">
+                                <Text block>
+                                    This demo can connect to your Android devices using the{' '}
+                                    <Link href="https://developer.mozilla.org/en-US/docs/Web/API/USB" target="_blank">WebUSB</Link>{' '}
+                                    API.
+                                </Text>
+                                <Text block>
+                                    Before start, please make sure your adb server is not running (`adb kill-server`), as there can be only one connection to your device at same time.
+                                </Text>
+                            </CacheRoute>
+                            <CacheRoute path='/device-info'>
+                                <StackItem>
+                                    Product: {device?.product}
+                                </StackItem>
+                                <StackItem>
+                                    Model: {device?.model}
+                                </StackItem>
+                                <StackItem>
+                                    Device: {device?.device}
+                                </StackItem>
+                                <StackItem>
+                                    Features: {device?.features?.join(',')}
+                                </StackItem>
+                            </CacheRoute>
+                            <CacheRoute path="/adb-over-wifi">
+                                <StackItem>
+                                    <MessageBar>
+                                        <Text>Although WebADB can enable ADB over WiFi for you, it can't connect to your device wirelessly.</Text>
+                                    </MessageBar>
+                                </StackItem>
+                                <StackItem>
+                                    <MessageBar >
+                                        <Text>Your device will disconnect after changing ADB over WiFi config.</Text>
+                                    </MessageBar>
+                                </StackItem>
+                                <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
                                     <StackItem>
-                                        Product: {device?.product}<br />
-                                        Model: {device?.model}<br />
-                                        Device: {device?.device}<br />
-                                        Features: {device?.features?.join(',')}<br />
+                                        <PrimaryButton text="Update Status" disabled={!device} onClick={queryTcpPort} />
+                                    </StackItem>
+                                    <StackItem>
+                                        {tcpPort !== undefined &&
+                                            (tcpPort.length !== 0
+                                                ? `Enabled at ${tcpPort.join(', ')}`
+                                                : 'Disabled')}
                                     </StackItem>
                                 </Stack>
-                            </Route>
-                            <Route path="/adb-over-wifi">
-                                <Stack
-                                    verticalFill
-                                    styles={{ root: { overflow: 'auto' } }}
-                                    tokens={{ childrenGap: 8, padding: 8 }}
-                                >
+                                <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
                                     <StackItem>
-                                        <MessageBar >
-                                            <Text>Although WebADB can enable ADB over WiFi for you, it can't connect to your device wirelessly.</Text>
-                                        </MessageBar>
+                                        <Label htmlFor={tcpPortInputId}>Port: </Label>
                                     </StackItem>
                                     <StackItem>
-                                        <MessageBar >
-                                            <Text>Your device will disconnect after changing ADB over WiFi config.</Text>
-                                        </MessageBar>
+                                        <TextField
+                                            id={tcpPortInputId}
+                                            width={300}
+                                            disabled={!device}
+                                            value={tcpPortValue}
+                                            onChange={(e, value) => setTcpPortValue(value!)}
+                                        />
                                     </StackItem>
-                                    <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
-                                        <StackItem>
-                                            <PrimaryButton text="Update Status" disabled={!device} onClick={queryTcpPort} />
-                                        </StackItem>
-                                        <StackItem>
-                                            {tcpPort !== undefined &&
-                                                (tcpPort.length !== 0
-                                                    ? `Enabled at ${tcpPort.join(', ')}`
-                                                    : 'Disabled')}
-                                        </StackItem>
-                                    </Stack>
-                                    <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
-                                        <StackItem>
-                                            <Label htmlFor={tcpPortInputId}>Port: </Label>
-                                        </StackItem>
-                                        <StackItem>
-                                            <TextField
-                                                id={tcpPortInputId}
-                                                width={300}
-                                                disabled={!device}
-                                                value={tcpPortValue}
-                                                onChange={(e, value) => setTcpPortValue(value!)}
-                                            />
-                                        </StackItem>
-                                        <StackItem>
-                                            <PrimaryButton
-                                                text="Enable"
-                                                disabled={!device}
-                                                onClick={enableTcp}
-                                            />
-                                        </StackItem>
-                                    </Stack>
                                     <StackItem>
                                         <PrimaryButton
-                                            text="Disable"
-                                            disabled={!device || tcpPort === undefined || tcpPort.length === 0}
-                                            onClick={disableTcp}
+                                            text="Enable"
+                                            disabled={!device}
+                                            onClick={enableTcp}
                                         />
                                     </StackItem>
                                 </Stack>
-                            </Route>
+                                <StackItem>
+                                    <PrimaryButton
+                                        text="Disable"
+                                        disabled={!device || tcpPort === undefined || tcpPort.length === 0}
+                                        onClick={disableTcp}
+                                    />
+                                </StackItem>
+                            </CacheRoute>
 
-                            <Route path="/shell" />
-                            <Route path="/sync" />
+                            <CacheRoute path="/shell" >
+                                <Shell device={device} />
+                            </CacheRoute>
 
-                            <Redirect to="/intro" />
-                        </Switch>
-                        <Route path="/shell" >
-                            {({ match }) => (
-                                <Stack
-                                    verticalFill
-                                    styles={{ root: { overflow: 'auto', display: match ? 'flex' : 'none' } }}
-                                    tokens={{ childrenGap: 8, padding: 8 }}
-                                >
-                                    <StackItem grow styles={{ root: { minHeight: 0 } }}>
-                                        <Shell device={device} visible={!!match} />
-                                    </StackItem>
-                                </Stack>
-                            )}
-                        </Route>
-                        <Route path="/sync" >
-                            {({ match }) => (
-                                <Stack
-                                    verticalFill
-                                    styles={{ root: { overflow: 'auto', display: match ? 'flex' : 'none' } }}
-                                    tokens={{ childrenGap: 8, padding: 8 }}
-                                >
-                                    <StackItem grow styles={{ root: { minHeight: 0 } }}>
-                                        <Sync device={device} visible={!!match} />
-                                    </StackItem>
-                                </Stack>
-                            )}
-                        </Route>
+                            <CacheRoute path="/file-manager" >
+                                <FileManager device={device} />
+                            </CacheRoute>
+
+                            <Redirect to="/" />
+                        </CacheSwitch>
                     </StackItem>
                 </Stack>
             </StackItem>
@@ -214,48 +182,3 @@ ReactDOM.render(
     </HashRouter>,
     document.getElementById('container')
 );
-
-// (new WebAdb({} as any) as any).getPublicKey();
-
-// document.getElementById('start')!.onclick = async () => {
-//     const transportation = await WebUsbTransportation.pickDevice();
-//     const device = new WebAdb(transportation);
-
-//     const textEncoder = new TextEncoder();
-
-//     const output = await device.shell('echo', '1');
-//     console.log(output);
-
-//     const shell = await device.shell();
-
-//     const terminal = new Terminal({
-//         scrollback: 9001,
-//     });
-
-//     const searchAddon = new SearchAddon();
-//     terminal.loadAddon(searchAddon);
-
-//     const keyword = document.getElementById('search-keyword')! as HTMLInputElement;
-//     keyword.addEventListener('input', () => {
-//         searchAddon.findNext(keyword.value, { incremental: true });
-//     });
-
-//     const next = document.getElementById('search-next')!;
-//     next.addEventListener('click', () => {
-//         searchAddon.findNext(keyword.value);
-//     });
-
-//     const prev = document.getElementById('search-prev')!;
-//     prev.addEventListener('click', () => {
-//         searchAddon.findPrevious(keyword.value);
-//     });
-
-//     terminal.open(document.getElementById('terminal')!);
-//     terminal.onData(data => {
-//         const { buffer } = textEncoder.encode(data);
-//         shell.write(buffer);
-//     });
-//     shell.onData(data => {
-//         terminal.write(new Uint8Array(data));
-//     });
-// };

@@ -9,10 +9,8 @@ import withDisplayName from './with-display-name';
 initializeFileTypeIcons();
 StreamSaver.mitm = 'streamsaver/mitm.html';
 
-export interface SyncProps {
+export interface FileManagerProps {
     device: Adb | undefined;
-
-    visible: boolean;
 }
 
 const units = [' B', ' KB', ' MB', ' GB'];
@@ -55,7 +53,9 @@ function combinePath(...segments: string[]): string {
     }, '');
 }
 
-function createReadableStreamFromBufferIterator(iterator: AsyncIterator<ArrayBuffer>): ReadableStream {
+function createReadableStreamFromBufferIterator(
+    iterator: AsyncIterator<ArrayBuffer>
+): ReadableStream<Uint8Array> {
     return new ReadableStream<Uint8Array>({
         async pull(controller) {
             const { desiredSize } = controller;
@@ -78,26 +78,14 @@ function createReadableStreamFromBufferIterator(iterator: AsyncIterator<ArrayBuf
     });
 }
 
-export default withDisplayName('Sync', ({
+export default withDisplayName('FileManager', ({
     device,
-    visible,
-}: SyncProps): JSX.Element | null => {
-    const [cached, setCached] = useState(false);
-    useEffect(() => {
-        if (visible) {
-            setCached(true);
-        }
-    }, [visible]);
-
+}: FileManagerProps): JSX.Element | null => {
     const [path, setPath] = useState('/');
     const [loading, setLoading] = useState(false);
     const [items, setItems] = useState<AdbSyncEntryResponse[]>([]);
     useEffect(() => {
         (async () => {
-            if (!cached) {
-                return;
-            }
-
             if (!device) {
                 setPath('/');
                 setItems([]);
@@ -127,7 +115,7 @@ export default withDisplayName('Sync', ({
                 sync.dispose();
             }
         })();
-    }, [cached, device, path]);
+    }, [device, path]);
 
     const [previewUrl, setPreviewUrl] = useState<string | undefined>();
     const previewImage = useCallback(async (path: string) => {
@@ -319,21 +307,14 @@ export default withDisplayName('Sync', ({
         setContextMenuTarget(undefined);
     });
 
-    if (!cached) {
-        return null;
-    }
-
     return (
-        <Stack
-            verticalFill
-            styles={{ root: { overflow: 'auto' } }}
-            tokens={{ childrenGap: 8, padding: 8 }}
-        >
+        <>
             {device && (
-                <StackItem >
+                <StackItem>
                     <Breadcrumb items={breadcrumb} />
                 </StackItem>
             )}
+
             <StackItem grow styles={{ root: { minHeight: 0 } }}>
                 <ShimmeredDetailsList
                     items={items}
@@ -348,6 +329,7 @@ export default withDisplayName('Sync', ({
                     usePageCache
                 />
             </StackItem>
+
             {previewUrl && (
                 <Layer>
                     <Overlay onClick={hidePreview}>
@@ -365,6 +347,6 @@ export default withDisplayName('Sync', ({
                 target={contextMenuTarget}
                 onDismiss={hideContextMenu}
             />
-        </Stack>
+        </>
     );
 });
