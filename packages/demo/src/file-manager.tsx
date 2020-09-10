@@ -1,8 +1,9 @@
-import { Breadcrumb, concatStyleSets, ContextualMenu, DetailsListLayoutMode, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IRenderFunction, Layer, Link, Overlay, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
+import { Breadcrumb, concatStyleSets, ContextualMenu, DetailsListLayoutMode, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IRenderFunction, Layer, Link, Overlay, ShimmeredDetailsList, StackItem } from '@fluentui/react';
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@uifabric/file-type-icons';
+import { IHTMLSlot } from '@uifabric/foundation';
 import { useConstCallback } from '@uifabric/react-hooks';
 import { Adb, AdbSyncEntryResponse, LinuxFileType } from '@yume-chan/adb';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
 import withDisplayName from './with-display-name';
 
@@ -83,12 +84,24 @@ export default withDisplayName('FileManager', ({
 }: FileManagerProps): JSX.Element | null => {
     const [path, setPath] = useState('/');
     const [loading, setLoading] = useState(false);
+
+    const stackItemRootElementRef = useRef<HTMLDivElement>();
+    useLayoutEffect(() => {
+        if (stackItemRootElementRef.current) {
+            stackItemRootElementRef.current!.parentElement!.scrollTop = 0;
+        }
+    }, [loading]);
+    const stackItemRootSlotProps = useMemo((): IHTMLSlot => ({
+        ref: stackItemRootElementRef,
+    }), []);
+
     const [items, setItems] = useState<AdbSyncEntryResponse[]>([]);
     useEffect(() => {
         (async () => {
+            setItems([]);
+
             if (!device) {
                 setPath('/');
-                setItems([]);
                 return;
             }
 
@@ -229,11 +242,11 @@ export default withDisplayName('FileManager', ({
         },
     ], [handleItemInvoked]);
 
-    const getKey = useCallback((item: AdbSyncEntryResponse, index?: number) => {
+    const getItemKey = useCallback((item: AdbSyncEntryResponse, index?: number) => {
         return item?.name ?? index?.toString() ?? '';
     }, []);
 
-    const breadcrumb = useMemo((): IBreadcrumbItem[] => {
+    const breadcrumbItems = useMemo((): IBreadcrumbItem[] => {
         let part = '';
         const list: IBreadcrumbItem[] = path.split('/').filter(Boolean).map(segment => {
             part += '/' + segment;
@@ -311,15 +324,19 @@ export default withDisplayName('FileManager', ({
         <>
             {device && (
                 <StackItem>
-                    <Breadcrumb items={breadcrumb} />
+                    <Breadcrumb items={breadcrumbItems} />
                 </StackItem>
             )}
 
-            <StackItem grow styles={{ root: { minHeight: 0 } }}>
+            <StackItem
+                root={stackItemRootSlotProps}
+                grow
+                styles={{ root: { minHeight: 0 } }}
+            >
                 <ShimmeredDetailsList
                     items={items}
                     columns={columns}
-                    getKey={getKey}
+                    getKey={getItemKey}
                     setKey={path}
                     layoutMode={DetailsListLayoutMode.justified}
                     enableShimmer={loading}
