@@ -111,6 +111,8 @@ export class AdbSyncEntryResponse {
 
     public readonly size: number;
 
+    public readonly logicalSize: number;
+
     public readonly lastModifiedTime: number;
 
     public readonly name: string;
@@ -119,6 +121,7 @@ export class AdbSyncEntryResponse {
         this.type = mode >> 12 as LinuxFileType;
         this.mode = mode & 0b00001111_11111111;
         this.size = size;
+        this.logicalSize = this.type === LinuxFileType.File ? this.size : 0;
         this.lastModifiedTime = lastModifiedTime;
         this.name = name;
     }
@@ -150,9 +153,9 @@ async function parseResponse(stream: AdbBufferedStream) {
     const id = stream.backend.decodeUtf8(await stream.read(4)) as AdbSyncResponseId;
     switch (id) {
         case AdbSyncResponseId.Entry:
-            return await AdbSyncEntryResponse.parse(stream);
+            return AdbSyncEntryResponse.parse(stream);
         case AdbSyncResponseId.Data:
-            return await AdbSyncDataResponse.parse(stream);
+            return AdbSyncDataResponse.parse(stream);
         case AdbSyncResponseId.Done:
             await stream.read(4);
             return new AdbSyncDoneResponse();
@@ -172,21 +175,20 @@ export class AdbSync extends AutoDisposable {
         this.stream = new AdbBufferedStream(stream);
     }
 
-    public async list(path: string) {
+    public async *iterate(path: string) {
         await this.sendLock.wait();
 
         try {
             await this.write(new AdbSyncStringRequest(AdbSyncRequestId.List, path));
 
-            const results: AdbSyncEntryResponse[] = [];
             while (true) {
                 const response = await parseResponse(this.stream);
                 switch (response.id) {
                     case AdbSyncResponseId.Entry:
-                        results.push(response);
+                        yield response;
                         break;
                     case AdbSyncResponseId.Done:
-                        return results;
+                        return;
                     default:
                         throw new Error('Unexpected response id');
                 }
@@ -194,6 +196,14 @@ export class AdbSync extends AutoDisposable {
         } finally {
             this.sendLock.notify();
         }
+    }
+
+    public async list(path: string) {
+        const results: AdbSyncEntryResponse[] = [];
+        for await (const entry of this.iterate(path)) {
+            results.push(entry);
+        }
+        return results;
     }
 
     public async *receive(path: string): AsyncGenerator<ArrayBuffer, void, void> {

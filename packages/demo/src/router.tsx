@@ -42,7 +42,7 @@ export const CacheRoute = withDisplayName('CacheRoute', (props: RouteProps) => {
 });
 
 export interface CacheSwitchProps {
-    children: React.ReactElement[];
+    children: React.ReactNodeArray;
 }
 
 export const CacheSwitch = withDisplayName('CacheSwitch', (props: CacheSwitchProps) => {
