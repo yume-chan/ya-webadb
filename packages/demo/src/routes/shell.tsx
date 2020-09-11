@@ -1,25 +1,21 @@
 import { IconButton, SearchBox, Stack, StackItem } from '@fluentui/react';
-import { Adb } from '@yume-chan/adb';
 import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { SearchAddon } from 'xterm-addon-search';
 import 'xterm/css/xterm.css';
-import ResizeObserver from './resize-observer';
-import withDisplayName from './with-display-name';
+import ResizeObserver from '../resize-observer';
+import withDisplayName from '../with-display-name';
+import { RouteProps } from './type';
 
 const containerStyle: CSSProperties = {
     width: '100%',
     height: '100%',
 };
 
-export interface ShellProps {
-    device: Adb | undefined;
-}
-
 export default withDisplayName('Shell', ({
     device,
-}: ShellProps): JSX.Element | null => {
+}: RouteProps): JSX.Element | null => {
     const [findKeyword, setFindKeyword] = useState('');
     const findAddonRef = useRef<SearchAddon>();
     const handleFindKeywordChange = useCallback((e, newValue?: string) => {
