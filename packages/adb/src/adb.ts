@@ -154,6 +154,7 @@ export class Adb {
     public shell(command: string, ...args: string[]): Promise<string>;
     public shell(): Promise<AdbStream>;
     public shell(command?: string, ...args: string[]): Promise<AdbStream | string> {
+        // TODO: use shell protocol
         if (!command) {
             return this.createStream('shell:');
         } else {
