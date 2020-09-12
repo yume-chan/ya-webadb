@@ -1,4 +1,4 @@
-import { Link, Nav, Separator, Stack, StackItem, Text } from '@fluentui/react';
+import { Nav, Separator, Stack, StackItem, Text } from '@fluentui/react';
 import { initializeIcons } from '@uifabric/icons';
 import { Adb } from '@yume-chan/adb';
 import React, { useMemo, useState } from 'react';
@@ -9,6 +9,7 @@ import ErrorDialogProvider from './error-dialog';
 import './index.css';
 import { CacheRoute, CacheSwitch } from './router';
 import FileManager from './routes/file-manager';
+import Intro from './routes/intro';
 import Shell from './routes/shell';
 import TcpIp from './routes/tcp-ip';
 
@@ -35,41 +36,7 @@ function App(): JSX.Element | null {
             exact: true,
             name: 'Introduction',
             children: (
-                <>
-                    <Text block>
-                        This demo can connect to your Android devices using the{' '}
-                        <Link href="https://developer.mozilla.org/en-US/docs/Web/API/USB" target="_blank">WebUSB</Link>{' '}
-                        API.
-                    </Text>
-                    <Text block>
-                        The latest version of Google Chrome (or Microsoft Edge) is recommended for best compatibility.
-                    </Text>
-                    <Text block styles={{ root: { fontWeight: '600' } }}>
-                        Windows user?
-                    </Text>
-                    <Text block>
-                        The experimental new backend is required. Enable from  {' '}
-                        <Link href="chrome://flags/#new-usb-backend">
-                            chrome://flags/#new-usb-backend
-                        </Link>
-                    </Text>
-                    <Text block styles={{ root: { fontWeight: '600' } }}>
-                        Got "Unable to claim interface"?
-                    </Text>
-                    <Text block >
-                        1. Make sure ADB server is not running (run `adb kill-server` to stop it).<br />
-                        2. Make sure no other Android management tools are running
-                    </Text>
-                    <Text block styles={{ root: { fontWeight: '600' } }}>
-                        Got "Access denied"?
-                    </Text>
-                    <Text block >
-                        If you have a Samsung device, it's caused by the custom driver. See {' '}
-                        <Link href="https://bugs.chromium.org/p/chromium/issues/detail?id=1127206">
-                            https://bugs.chromium.org/p/chromium/issues/detail?id=1127206
-                        </Link>
-                    </Text>
-                </>
+                <Intro />
             )
         },
         {
