@@ -99,7 +99,7 @@ export class Adb {
             }
         }));
 
-        disposableList.add(this.packetDispatcher.onReceiveError(e => {
+        disposableList.add(this.packetDispatcher.onError(e => {
             resolver.reject(e);
         }));
 
@@ -189,7 +189,7 @@ export class Adb {
     }
 
     public async sync(): Promise<AdbSync> {
-        const stream = await this.createStream('sync:\0');
+        const stream = await this.createStream('sync:');
         return new AdbSync(stream);
     }
 
@@ -197,8 +197,8 @@ export class Adb {
         return this.packetDispatcher.createStream(service);
     }
 
-    public async createStreamAndReadAll(payload: string): Promise<string> {
-        const stream = await this.createStream(payload);
+    public async createStreamAndReadAll(service: string): Promise<string> {
+        const stream = await this.createStream(service);
         const buffered = new AdbBufferedStream(stream);
         return buffered.readAll();
     }

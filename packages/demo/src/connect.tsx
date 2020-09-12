@@ -1,8 +1,8 @@
-import { DefaultButton, Dialog, DialogFooter, DialogType, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
-import { useBoolean } from '@uifabric/react-hooks';
+import { DefaultButton, Dialog, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
 import { Adb } from '@yume-chan/adb';
 import { WebUsbAdbBackend } from '@yume-chan/adb-webusb';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { ErrorDialogContext } from './error-dialog';
 import withDisplayName from './with-display-name';
 
 interface ConnectProps {
@@ -15,11 +15,9 @@ export default withDisplayName('Connect', ({
     device,
     onDeviceChange,
 }: ConnectProps): JSX.Element | null => {
+    const { show: showErrorDialog } = useContext(ErrorDialogContext);
+
     const [connecting, setConnecting] = useState(false);
-
-    const [errorDialogVisible, { setTrue: showErrorDialog, setFalse: hideErrorDialog }] = useBoolean(false);
-    const [errorMessage, setErrorMessage] = useState<string | undefined>();
-
     const connect = useCallback(async () => {
         try {
             const backend = await WebUsbAdbBackend.pickDevice();
@@ -35,23 +33,19 @@ export default withDisplayName('Connect', ({
                 }
             }
         } catch (e) {
-            setErrorMessage(e.message);
-            showErrorDialog();
+            showErrorDialog(e.message);
         } finally {
             setConnecting(false);
         }
     }, [onDeviceChange]);
-
     const disconnect = useCallback(async () => {
         try {
             await device!.dispose();
             onDeviceChange(undefined);
         } catch (e) {
-            setErrorMessage(e.message);
-            showErrorDialog();
+            showErrorDialog(e.message);
         }
     }, [device]);
-
     useEffect(() => {
         return device?.onDisconnected(() => {
             onDeviceChange(undefined);
@@ -80,19 +74,6 @@ export default withDisplayName('Connect', ({
                 }}
             >
                 <ProgressIndicator />
-            </Dialog>
-
-            <Dialog
-                hidden={!errorDialogVisible}
-                dialogContentProps={{
-                    type: DialogType.normal,
-                    title: 'Error',
-                    subText: errorMessage,
-                }}
-            >
-                <DialogFooter>
-                    <PrimaryButton text="OK" onClick={hideErrorDialog} />
-                </DialogFooter>
             </Dialog>
         </>
     );

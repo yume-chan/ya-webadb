@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { HashRouter, Redirect, useLocation } from 'react-router-dom';
 import Connect from './connect';
+import ErrorDialogProvider from './error-dialog';
 import './index.css';
 import { CacheRoute, CacheSwitch } from './router';
 import FileManager from './routes/file-manager';
@@ -159,7 +160,9 @@ function App(): JSX.Element | null {
 
 ReactDOM.render(
     <HashRouter>
-        <App />
+        <ErrorDialogProvider>
+            <App />
+        </ErrorDialogProvider>
     </HashRouter>,
     document.getElementById('container')
 );
