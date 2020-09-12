@@ -62,11 +62,11 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly initializers = new AsyncOperationManager(1);
     private readonly streams = new Map<number, AdbStreamController>();
 
-    private readonly onPacketEvent = this.addDisposable(new EventEmitter<AdbPacketArrivedEventArgs>());
-    public readonly onPacket = this.onPacketEvent.event;
+    private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketArrivedEventArgs>());
+    public get onPacket() { return this.packetEvent.event; }
 
-    private readonly onReceiveErrorEvent = this.addDisposable(new EventEmitter<Error>());
-    public readonly onReceiveError = this.onReceiveErrorEvent.event;
+    private readonly errorEvent = this.addDisposable(new EventEmitter<Error>());
+    public get onError() { return this.errorEvent.event; }
 
     private _running = true;
     public get running() { return this._running; }
@@ -127,69 +127,73 @@ export class AdbPacketDispatcher extends AutoDisposable {
     }
 
     private async receiveLoop() {
-        while (this._running) {
-            try {
+        try {
+            while (this._running) {
                 const packet = await AdbPacket.parse(this.backend);
-                let handled = false;
                 switch (packet.command) {
                     case AdbCommand.OK:
-                        handled = true;
                         // OKAY has two meanings
                         if (this.initializers.resolve(packet.arg1, packet.arg0)) {
                             // 1. The device has created the Stream
-                        } else if (this.streams.has(packet.arg1)) {
+                            continue;
+                        }
+
+                        if (this.streams.has(packet.arg1)) {
                             // 2. The device has received last WRTE to the Stream
                             this.streams.get(packet.arg1)!.ack();
-                        } else {
-                            // Last connection sent an OPEN to device,
-                            // device now sent OKAY to this connection
-                            // tell the device to close the stream
-                            this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
+                            continue;
                         }
-                        break;
+
+                        // Maybe the device is responding to a packet of last connection
+                        // Tell the device to close the stream
+                        this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
+                        continue;
                     case AdbCommand.Close:
                         // CLSE also has two meanings
                         if (packet.arg0 === 0) {
                             // 1. The device don't want to create the Stream
-                            if (this.initializers.reject(packet.arg1, new Error('open failed'))) {
-                                handled = true;
-                            }
-                        } else if (this.streams.has(packet.arg1)) {
-                            // 2. The device has closed the Stream
-                            const stream = this.streams.get(packet.arg1)!;
-                            stream.dispose();
-
-                            this.streams.delete(packet.arg1);
-                            handled = true;
+                            this.initializers.reject(packet.arg1, new Error('open failed'));
+                            continue;
                         }
-                        break;
+
+                        if (this.streams.has(packet.arg1)) {
+                            // 2. The device has closed the Stream
+                            this.streams.get(packet.arg1)!.dispose();
+                            this.streams.delete(packet.arg1);
+                            continue;
+                        }
+
+                        // Maybe the device is responding to a packet of last connection
+                        // Just ignore it
+                        continue;
                     case AdbCommand.Write:
                         if (this.streams.has(packet.arg1)) {
-                            await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
                             await this.streams.get(packet.arg1)!.dataEvent.fire(packet.payload!);
-                            handled = true;
+                            await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
                         }
-                        break;
+
+                        // Maybe the device is responding to a packet of last connection
+                        // Just ignore it
+                        continue;
                 }
 
-                if (!handled) {
-                    const args: AdbPacketArrivedEventArgs = {
-                        handled: false,
-                        packet,
-                    };
-                    this.onPacketEvent.fire(args);
-                    if (!args.handled) {
-                        this.dispose();
-                        return;
-                    }
+                const args: AdbPacketArrivedEventArgs = {
+                    handled: false,
+                    packet,
+                };
+                this.packetEvent.fire(args);
+                if (!args.handled) {
+                    this.dispose();
+                    return;
                 }
-            } catch (e) {
-                if (!this._running) {
-                    // ignore error
-                }
-
-                this.onReceiveErrorEvent.fire(e);
             }
+        } catch (e) {
+            if (!this._running) {
+                // ignore error
+                return;
+            }
+
+            this.errorEvent.fire(e);
         }
     }
 }

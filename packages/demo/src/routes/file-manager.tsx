@@ -1,10 +1,11 @@
 import { Breadcrumb, concatStyleSets, ContextualMenu, DetailsListLayoutMode, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, Selection, ShimmeredDetailsList, StackItem } from '@fluentui/react';
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@uifabric/file-type-icons';
-import { IHTMLSlot } from '@uifabric/foundation';
 import { useConst, useConstCallback } from '@uifabric/react-hooks';
 import { AdbSyncEntryResponse, LinuxFileType } from '@yume-chan/adb';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import path from 'path';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
+import { ErrorDialogContext } from '../error-dialog';
 import withDisplayName from '../with-display-name';
 import { RouteProps } from './type';
 
@@ -58,16 +59,6 @@ const renderDetailsHeader: IRenderFunction<IDetailsHeaderProps> = (props?, defau
     });
 };
 
-function combinePath(...segments: string[]): string {
-    return segments.reduce((result, item) => {
-        if (result.endsWith('/')) {
-            return `${result}${item}`;
-        } else {
-            return `${result}/${item}`;
-        }
-    }, '');
-}
-
 function delay(time: number): Promise<void> {
     return new Promise(resolve => {
         setTimeout(resolve, time);
@@ -102,13 +93,15 @@ function createReadableStreamFromBufferIterator(
 export default withDisplayName('FileManager', ({
     device,
 }: RouteProps): JSX.Element | null => {
-    const [path, setPath] = useState('/');
-    const pathRef = useRef(path);
-    pathRef.current = path;
+    const { show: showErrorDialog } = useContext(ErrorDialogContext);
+
+    const [currentPath, setCurrentPath] = useState('/');
+    const currentPathRef = useRef(currentPath);
+    currentPathRef.current = currentPath;
 
     const breadcrumbItems = useMemo((): IBreadcrumbItem[] => {
         let part = '';
-        const list: IBreadcrumbItem[] = path.split('/').filter(Boolean).map(segment => {
+        const list: IBreadcrumbItem[] = currentPath.split('/').filter(Boolean).map(segment => {
             part += '/' + segment;
             return {
                 key: part,
@@ -117,71 +110,72 @@ export default withDisplayName('FileManager', ({
                     if (!item) {
                         return;
                     }
-                    setPath(item.key);
+                    setCurrentPath(item.key);
                 },
             };
         });
         list.unshift({
             key: '/',
             text: '/',
-            onClick: () => setPath('/'),
+            onClick: () => setCurrentPath('/'),
         });
         list[list.length - 1].isCurrentItem = true;
         list[list.length - 1].onClick = undefined;
         return list;
-    }, [path]);
+    }, [currentPath]);
 
     const [items, setItems] = useState<ListItem[]>([]);
     const [loading, setLoading] = useState(false);
     const listRef = useRef<IDetailsList | null>(null);
+    const load = useCallback(async () => {
+        setItems([]);
+
+        if (!device) {
+            setCurrentPath('/');
+            return;
+        }
+
+        setLoading(true);
+        const sync = await device.sync();
+
+        let items: ListItem[] = [];
+        const intervalId = setInterval(() => {
+            setItems(items.slice());
+        }, 1000);
+
+        try {
+            let lastBreak = Date.now();
+            for await (const entry of sync.iterate(currentPath)) {
+                if (currentPath !== currentPathRef.current) {
+                    break;
+                }
+
+                if (entry.name === '.' || entry.name === '..') {
+                    continue;
+                }
+
+                items.push(toListItem(entry));
+
+                const now = Date.now();
+                if (now - lastBreak > 16) {
+                    await delay(0);
+                    lastBreak = now;
+                }
+            }
+
+            setItems(items);
+            listRef.current?.scrollToIndex(0);
+        } finally {
+            if (currentPath === currentPathRef.current) {
+                setLoading(false);
+            }
+            clearInterval(intervalId);
+            sync.dispose();
+        }
+    }, [device, currentPath]);
     useEffect(() => {
-        (async () => {
-            setItems([]);
-
-            if (!device) {
-                setPath('/');
-                return;
-            }
-
-            setLoading(true);
-            const sync = await device.sync();
-
-            let items: ListItem[] = [];
-            const intervalId = setInterval(() => {
-                setItems(items.slice());
-            }, 1000);
-
-            try {
-                let lastBreak = Date.now();
-                for await (const entry of sync.iterate(path)) {
-                    if (path !== pathRef.current) {
-                        break;
-                    }
-
-                    if (entry.name === '.' || entry.name === '..') {
-                        continue;
-                    }
-
-                    items.push(toListItem(entry));
-
-                    const now = Date.now();
-                    if (now - lastBreak > 16) {
-                        await delay(0);
-                        lastBreak = now;
-                    }
-                }
-
-                setItems(items);
-                listRef.current?.scrollToIndex(0);
-            } finally {
-                if (path === pathRef.current) {
-                    setLoading(false);
-                }
-                clearInterval(intervalId);
-                sync.dispose();
-            }
-        })();
-    }, [device, path]);
+        load();
+    }, [load]);
 
     const [sortedList, setSortedList] = useState<ListItem[]>([]);
     const [sortKey, setSortKey] = useState<keyof ListItem>('name');
@@ -319,7 +313,7 @@ export default withDisplayName('FileManager', ({
         switch (item.type) {
             case LinuxFileType.Link:
             case LinuxFileType.Directory:
-                setPath(combinePath(path, item.name));
+                setCurrentPath(path.resolve(currentPath, item.name));
                 break;
             case LinuxFileType.File:
                 switch (extensionName(item.name)) {
@@ -327,12 +321,12 @@ export default withDisplayName('FileManager', ({
                     case '.png':
                     case '.svg':
                     case '.gif':
-                        previewImage(combinePath(path, item.name));
+                        previewImage(path.resolve(currentPath, item.name));
                         break;
                 }
                 break;
         }
-    }, [path, previewImage]);
+    }, [currentPath, previewImage]);
 
     const selection = useConst(() => new Selection());
 
@@ -348,13 +342,11 @@ export default withDisplayName('FileManager', ({
         }
 
         const selectedItems = selection.getSelection() as ListItem[];
-        if (selectedItems.length !== 1) {
-            return false;
-        }
 
         let contextMenuItems: IContextualMenuItem[] = [];
 
-        if (selectedItems[0].type === LinuxFileType.File) {
+        if (selectedItems.length === 0 &&
+            selectedItems[0].type === LinuxFileType.File) {
             contextMenuItems.push({
                 key: 'download',
                 text: 'Download',
@@ -362,7 +354,7 @@ export default withDisplayName('FileManager', ({
                     (async () => {
                         const sync = await device!.sync();
                         try {
-                            const itemPath = combinePath(path, selectedItems[0].name);
+                            const itemPath = path.resolve(currentPath, selectedItems[0].name);
                             const readableStream = createReadableStreamFromBufferIterator(sync.receive(itemPath));
 
                             const writeableStream = StreamSaver.createWriteStream(selectedItems[0].name, {
@@ -378,6 +370,29 @@ export default withDisplayName('FileManager', ({
             });
         }
 
+        contextMenuItems.push({
+            key: 'delete',
+            text: 'Delete',
+            onClick() {
+                (async () => {
+                    try {
+                        for (const item of selectedItems) {
+                            const output = await device!.shell('rm', '-rf', `"${path.resolve(currentPath, item.name)}"`);
+                            if (output) {
+                                showErrorDialog(output);
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        showErrorDialog(e.message);
+                    } finally {
+                        load();
+                    }
+                })();
+                return false;
+            }
+        });
+
         if (!contextMenuItems.length) {
             return false;
         }
@@ -385,7 +400,7 @@ export default withDisplayName('FileManager', ({
         setContextMenuItems(contextMenuItems);
         setContextMenuTarget(e as MouseEvent);
         return false;
-    }, [path, device]);
+    }, [currentPath, device]);
     const hideContextMenu = useConstCallback(() => {
         setContextMenuTarget(undefined);
     });
@@ -406,7 +421,7 @@ export default withDisplayName('FileManager', ({
                     componentRef={listRef}
                     items={sortedList}
                     columns={columns}
-                    setKey={path}
+                    setKey={currentPath}
                     selection={selection}
                     layoutMode={DetailsListLayoutMode.justified}
                     enableShimmer={loading && items.length === 0}
