@@ -96,6 +96,7 @@ export class AdbBufferedStream implements AsyncIterable<ArrayBuffer>{
 
         return new EventIterable<ArrayBuffer>(controller => {
             controller.maxConsumerCount = 1;
+            controller.highWaterMark = 16 * 1024;
 
             for (const item of this.extraBuffers) {
                 controller.push(item);
@@ -105,7 +106,7 @@ export class AdbBufferedStream implements AsyncIterable<ArrayBuffer>{
             const disposable = new DisposableList();
             const resetEvent = new AutoResetEvent(true);
             disposable.add(this.stream.onData(buffer => {
-                if (!controller.push(buffer)) {
+                if (!controller.push(buffer, buffer.byteLength)) {
                     return resetEvent.wait();
                 }
                 return;

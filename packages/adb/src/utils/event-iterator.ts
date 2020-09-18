@@ -1,14 +1,22 @@
 import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { EventEmitter } from '@yume-chan/event';
 
+const IteratorReturnUndefinedResult: IteratorReturnResult<void> = {
+    done: true,
+    value: undefined,
+};
+Object.freeze(IteratorReturnUndefinedResult);
+
 export type EventIteratorDestroyer<T> = (items: T[]) => void;
 
 export class EventIteratorState<T> {
     public pullQueue: PromiseResolver<IteratorResult<T>>[] = [];
 
-    public pushQueue: T[] = [];
+    public pushQueue: [value: T, size: number][] = [];
 
     public ended = false;
+
+    public waterMark = 0;
 
     public pendingLowWaterEvent = false;
 
@@ -28,20 +36,23 @@ export class EventIteratorController<T> {
 
     public lowWaterMark: number = 0;
 
+    public get waterMark() { return this.state.waterMark; }
+
     public get onLowWater() { return this.state.lowWaterEvent.event; }
 
     public constructor(state: EventIteratorState<T>) {
         this.state = state;
     }
 
-    public push(value: T): boolean {
+    public push(value: T, size = 1): boolean {
         if (this.state.pullQueue.length) {
             this.state.pullQueue.shift()!.resolve({ done: false, value });
             return true;
         }
 
-        this.state.pushQueue.push(value);
-        if (this.state.pushQueue.length < this.highWaterMark) {
+        this.state.pushQueue.push([value, size]);
+        this.state.waterMark += size;
+        if (this.state.waterMark < this.highWaterMark) {
             return true;
         }
 
@@ -49,12 +60,12 @@ export class EventIteratorController<T> {
         return false;
     }
 
-    end(): void {
+    public end(): void {
         this.state.ended = true;
         while (this.state.pullQueue.length) {
-            this.state.pullQueue.shift()!.resolve({ done: true, value: undefined });
+            this.state.pullQueue.shift()!.resolve(IteratorReturnUndefinedResult);
         }
-        this.state.cleanup(this.state.pushQueue);
+        this.state.cleanup(this.state.pushQueue.map(([value]) => value));
     }
 }
 
@@ -76,16 +87,17 @@ export class EventIterable<T> implements AsyncIterable<T> {
         return {
             next() {
                 if (state.pushQueue.length) {
-                    const value = state.pushQueue.shift()!;
+                    const [value, size] = state.pushQueue.shift()!;
+                    state.waterMark -= size;
                     if (state.pendingLowWaterEvent &&
-                        state.pushQueue.length <= controller.lowWaterMark) {
+                        state.waterMark <= controller.lowWaterMark) {
                         state.lowWaterEvent.fire();
                     }
                     return Promise.resolve({ done: false, value });
                 }
 
                 if (state.ended) {
-                    return Promise.resolve({ done: true, value: undefined });
+                    return Promise.resolve(IteratorReturnUndefinedResult);
                 }
 
                 if (state.pullQueue.length < controller.maxConsumerCount) {
@@ -98,7 +110,7 @@ export class EventIterable<T> implements AsyncIterable<T> {
             },
             return() {
                 controller.end();
-                return Promise.resolve({ done: true, value: undefined });
+                return Promise.resolve(IteratorReturnUndefinedResult);
             },
         };
     }
