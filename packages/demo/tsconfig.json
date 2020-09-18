@@ -7,14 +7,14 @@
             "ESNext",
             "DOM"
         ],
-        "jsx": "react", //                        /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
+        "jsx": "react" //                        /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
     },
     "include": [
         "src"
     ],
     "references": [
         {
-            "path": "../adb-webusb/tsconfig.json"
+            "path": "../adb-backend-web/tsconfig.json"
         }
     ]
 }

@@ -12,8 +12,8 @@ const PrivateKeyStorageKey = 'private-key';
 const Utf8Encoder = new TextEncoder();
 const Utf8Decoder = new TextDecoder();
 
-export class WebUsbAdbBackend implements AdbBackend {
-    public static async fromDevice(device: USBDevice) {
+export default class AdbWebBackend implements AdbBackend {
+    public static async fromDevice(device: USBDevice): Promise<AdbWebBackend> {
         await device.open();
 
         for (const configuration of device.configurations) {
@@ -42,13 +42,13 @@ export class WebUsbAdbBackend implements AdbBackend {
                                 case 'in':
                                     inEndpointNumber = endpoint.endpointNumber;
                                     if (outEndpointNumber !== undefined) {
-                                        return new WebUsbAdbBackend(device, inEndpointNumber, outEndpointNumber);
+                                        return new AdbWebBackend(device, inEndpointNumber, outEndpointNumber);
                                     }
                                     break;
                                 case 'out':
                                     outEndpointNumber = endpoint.endpointNumber;
                                     if (inEndpointNumber !== undefined) {
-                                        return new WebUsbAdbBackend(device, inEndpointNumber, outEndpointNumber);
+                                        return new AdbWebBackend(device, inEndpointNumber, outEndpointNumber);
                                     }
                                     break;
                             }
@@ -61,10 +61,10 @@ export class WebUsbAdbBackend implements AdbBackend {
         throw new Error('Unknown error');
     }
 
-    public static async pickDevice() {
+    public static async pickDevice(): Promise<AdbWebBackend | undefined> {
         try {
             const device = await navigator.usb.requestDevice({ filters: [WebUsbDeviceFilter] });
-            return WebUsbAdbBackend.fromDevice(device);
+            return AdbWebBackend.fromDevice(device);
         } catch (e) {
             switch (e.name) {
                 case 'NotFoundError':

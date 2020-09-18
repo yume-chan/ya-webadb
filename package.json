@@ -1,14 +1,14 @@
 {
-  "name": "root",
-  "private": true,
-  "scripts": {
-    "postinstall": "lerna bootstrap",
-    "build": "lerna run --scope @yume-chan/adb-webusb build",
-    "build:watch": "lerna run --scope @yume-chan/adb-webusb --stream build:watch",
-    "build:demo": "lerna run --scope demo --stream build",
-    "start:demo": "lerna run --scope demo --stream start"
-  },
-  "devDependencies": {
-    "lerna": "3.22.1"
-  }
+    "name": "root",
+    "private": true,
+    "scripts": {
+        "postinstall": "lerna bootstrap",
+        "build": "lerna run --scope @yume-chan/adb-backend-web build",
+        "build:watch": "lerna run --scope @yume-chan/adb-backend-web --stream build:watch",
+        "build:demo": "lerna run --scope demo --stream build",
+        "start:demo": "lerna run --scope demo --stream start"
+    },
+    "devDependencies": {
+        "lerna": "3.22.1"
+    }
 }

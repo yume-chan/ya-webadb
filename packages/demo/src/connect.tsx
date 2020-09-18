@@ -1,6 +1,6 @@
 import { DefaultButton, Dialog, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
 import { Adb } from '@yume-chan/adb';
-import { WebUsbAdbBackend } from '@yume-chan/adb-webusb';
+import AdbWebBackend from '@yume-chan/adb-backend-web';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorDialogContext } from './error-dialog';
 import withDisplayName from './with-display-name';
@@ -20,7 +20,7 @@ export default withDisplayName('Connect', ({
     const [connecting, setConnecting] = useState(false);
     const connect = useCallback(async () => {
         try {
-            const backend = await WebUsbAdbBackend.pickDevice();
+            const backend = await AdbWebBackend.pickDevice();
             if (backend) {
                 const device = new Adb(backend);
                 try {

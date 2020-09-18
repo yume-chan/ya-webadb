@@ -1,11 +1,9 @@
-# `webpack-config`
+# Webpack config
 
-> TODO: description
+Generate webpack config for the `demo` package.
 
-## Usage
+## Build
 
-```
-const webpackConfig = require('webpack-config');
-
-// TODO: DEMONSTRATE API
+```sh
+npm run build
 ```

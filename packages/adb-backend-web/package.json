@@ -1,33 +1,33 @@
 {
-  "name": "@yume-chan/adb-webusb",
-  "version": "0.0.1",
-  "description": "WebUSB backend for @yume-chan/adb",
-  "keywords": [
-    "webusb",
-    "adb"
-  ],
-  "author": "Simon Chan <cnsimonchan@live.com>",
-  "homepage": "https://github.com/yume-chan/ya-webadb#readme",
-  "license": "MIT",
-  "main": "lib/index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/yume-chan/ya-webadb.git"
-  },
-  "scripts": {
-    "build": "tsc -b",
-    "build:watch": "tsc -b -w"
-  },
-  "bugs": {
-    "url": "https://github.com/yume-chan/ya-webadb/issues"
-  },
-  "devDependencies": {
-    "typescript": "4.0.2"
-  },
-  "dependencies": {
-    "@types/w3c-web-usb": "1.0.4",
-    "@yume-chan/adb": "^0.0.1",
-    "@yume-chan/event": "^0.0.1",
-    "tslib": "2.0.1"
-  }
+    "name": "@yume-chan/adb-backend-web",
+    "version": "0.0.1",
+    "description": "Backend for `@yume-chan/adb` using Web technologies.",
+    "keywords": [
+        "webusb",
+        "adb"
+    ],
+    "author": "Simon Chan <cnsimonchan@live.com>",
+    "homepage": "https://github.com/yume-chan/ya-webadb#readme",
+    "license": "MIT",
+    "main": "lib/index.js",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git"
+    },
+    "scripts": {
+        "build": "tsc -b",
+        "build:watch": "tsc -b -w"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "devDependencies": {
+        "typescript": "4.0.2"
+    },
+    "dependencies": {
+        "@types/w3c-web-usb": "1.0.4",
+        "@yume-chan/adb": "^0.0.1",
+        "@yume-chan/event": "^0.0.1",
+        "tslib": "2.0.1"
+    }
 }
