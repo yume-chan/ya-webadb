@@ -3,9 +3,8 @@ import CopyPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import path from 'path';
-import type webpack from 'webpack';
+import webpack from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
-import WriteFileWebpackPlugin from 'write-file-webpack-plugin';
 
 const context = path.resolve(process.cwd());
 
@@ -28,7 +27,6 @@ const plugins: webpack.Plugin[] = [
         template: 'www/index.html',
         scriptLoading: 'defer',
     }),
-    new WriteFileWebpackPlugin(),
 ];
 
 if (process.env.ANALYZE) {
@@ -75,7 +73,7 @@ const config: webpack.ConfigurationFactory = (
     },
     devServer: {
         contentBase: path.resolve(context, 'lib'),
-        port: 9000
+        port: 9000,
     },
 });
 

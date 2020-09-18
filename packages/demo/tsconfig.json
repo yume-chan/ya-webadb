@@ -1,17 +1,13 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "outDir": "lib", //                       /* Redirect output structure to the directory. */
         "rootDir": "./src", //                    /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
         "lib": [
             "ESNext",
             "DOM"
         ],
-        "jsx": "react" //                        /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
+        "jsx": "react", //                        /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
     },
-    "include": [
-        "src"
-    ],
     "references": [
         {
             "path": "../adb-backend-web/tsconfig.json"

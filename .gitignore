@@ -1,4 +1,4 @@
-node_modules
 lib
+node_modules
 *.log
 tsconfig.tsbuildinfo

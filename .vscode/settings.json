@@ -15,6 +15,7 @@
         "reimplement",
         "sendrecv",
         "streamsaver",
+        "struct",
         "tcpip",
         "uifabric",
         "webadb",

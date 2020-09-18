@@ -136,7 +136,8 @@ export default class AdbWebBackend implements AdbBackend {
                 await this._device.clearHalt('in', this._inEndpointNumber);
             }
 
-            return result.data!.buffer;
+            const { buffer } = result.data!;
+            return buffer;
         } catch (e) {
             if (e instanceof Error && e.name === 'NotFoundError') {
                 this.onDisconnectedEvent.fire();

@@ -185,8 +185,6 @@ Supported on devices with `ls_v2` feature.
 
 #### STAT
 
-*(Not Implemented)*
-
 Request server to return the information of a file.
 
 If path is a symbolic link, the returned information is about the link itself.

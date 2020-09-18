@@ -138,13 +138,15 @@ export default withDisplayName('FileManager', ({
         setLoading(true);
         const sync = await device.sync();
 
-        let items: ListItem[] = [];
+        const items: ListItem[] = [];
+        const linkItems: AdbSyncEntryResponse[] = [];
         const intervalId = setInterval(() => {
             setItems(items.slice());
         }, 1000);
 
         try {
             let lastBreak = Date.now();
+
             for await (const entry of sync.iterate(currentPath)) {
                 if (currentPath !== currentPathRef.current) {
                     break;
@@ -154,12 +156,34 @@ export default withDisplayName('FileManager', ({
                     continue;
                 }
 
-                items.push(toListItem(entry));
+                if (entry.type === LinuxFileType.Link) {
+                    linkItems.push(entry);
+                } else {
+                    items.push(toListItem(entry));
+                }
 
                 const now = Date.now();
                 if (now - lastBreak > 16) {
                     await delay(0);
                     lastBreak = now;
+                }
+            }
+
+            for (const entry of linkItems) {
+                try {
+                    const followLinkPath = path.resolve(currentPath, entry.name) + '/';
+                    console.log(followLinkPath);
+                    await sync.lstat(followLinkPath);
+                    items.push(toListItem(entry));
+                    console.log(entry);
+                } catch (e) {
+                    console.log(e);
+                    items.push(toListItem(new AdbSyncEntryResponse(
+                        (LinuxFileType.File << 12) | entry.mode,
+                        0,
+                        entry.lastModifiedTime,
+                        entry.name
+                    )));
                 }
             }
 
@@ -258,7 +282,7 @@ export default withDisplayName('FileManager', ({
                 minWidth: 0,
                 onRender(item: AdbSyncEntryResponse) {
                     if (item.type === LinuxFileType.File) {
-                        return formatSize(item.logicalSize);
+                        return formatSize(item.size);
                     }
                     return '';
                 }
@@ -345,7 +369,7 @@ export default withDisplayName('FileManager', ({
 
         let contextMenuItems: IContextualMenuItem[] = [];
 
-        if (selectedItems.length === 0 &&
+        if (selectedItems.length === 1 &&
             selectedItems[0].type === LinuxFileType.File) {
             contextMenuItems.push({
                 key: 'download',
@@ -361,6 +385,8 @@ export default withDisplayName('FileManager', ({
                                 size: selectedItems[0].size,
                             });
                             await readableStream.pipeTo(writeableStream);
+                        } catch (e) {
+                            showErrorDialog(e.message);
                         } finally {
                             sync.dispose();
                         }
