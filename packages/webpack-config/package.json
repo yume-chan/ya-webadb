@@ -24,7 +24,7 @@
         "@types/webpack": "4.41.22",
         "@types/webpack-bundle-analyzer": "3.8.0",
         "@types/webpack-dev-server": "3.11.0",
-        "@types/write-file-webpack-plugin": "^4.5.0",
+        "@types/write-file-webpack-plugin": "4.5.0",
         "clean-webpack-plugin": "3.0.0",
         "typescript": "4.0.2"
     }
