@@ -1,0 +1,1 @@
+{"version":3,"file":"resize-observer.d.ts","sourceRoot":"","sources":["../src/resize-observer.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,EAAiB,cAAc,EAAE,iBAAiB,EAAuB,MAAM,OAAO,CAAC;AAGrG,MAAM,WAAW,mBAAoB,SAAQ,cAAc,CAAC,cAAc,CAAC,EAAE,iBAAiB,CAAC,EAAE,CAAC;IAC9F,QAAQ,EAAE,MAAM,IAAI,CAAC;CACxB;;AAWD,wBAqCG"}
