@@ -2,10 +2,11 @@
 const tslib_1 = require("tslib");
 const clean_webpack_plugin_1 = require("clean-webpack-plugin");
 const copy_webpack_plugin_1 = tslib_1.__importDefault(require("copy-webpack-plugin"));
+const html_webpack_plugin_1 = tslib_1.__importDefault(require("html-webpack-plugin"));
 const mini_css_extract_plugin_1 = tslib_1.__importDefault(require("mini-css-extract-plugin"));
 const path_1 = tslib_1.__importDefault(require("path"));
 const webpack_bundle_analyzer_1 = require("webpack-bundle-analyzer");
-const html_webpack_plugin_1 = tslib_1.__importDefault(require("html-webpack-plugin"));
+const write_file_webpack_plugin_1 = tslib_1.__importDefault(require("write-file-webpack-plugin"));
 const context = path_1.default.resolve(process.cwd());
 const plugins = [
     new clean_webpack_plugin_1.CleanWebpackPlugin(),
@@ -26,6 +27,7 @@ const plugins = [
         template: 'www/index.html',
         scriptLoading: 'defer',
     }),
+    new write_file_webpack_plugin_1.default(),
 ];
 if (process.env.ANALYZE) {
     plugins.push(new webpack_bundle_analyzer_1.BundleAnalyzerPlugin());
@@ -50,7 +52,7 @@ const config = (env, argv) => ({
         rules: [
             { test: /\.js$/, enforce: 'pre', loader: ['source-map-loader'], },
             { test: /.css$/i, loader: [mini_css_extract_plugin_1.default.loader, 'css-loader'] },
-            { test: /.tsx?$/i, loader: 'ts-loader' },
+            { test: /.tsx?$/i, loader: 'ts-loader', options: { projectReferences: true } },
         ],
     },
     optimization: {

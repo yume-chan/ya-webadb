@@ -1,10 +1,11 @@
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import CopyPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import path from 'path';
 import type webpack from 'webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
+import WriteFileWebpackPlugin from 'write-file-webpack-plugin';
 
 const context = path.resolve(process.cwd());
 
@@ -27,6 +28,7 @@ const plugins: webpack.Plugin[] = [
         template: 'www/index.html',
         scriptLoading: 'defer',
     }),
+    new WriteFileWebpackPlugin(),
 ];
 
 if (process.env.ANALYZE) {
@@ -56,7 +58,7 @@ const config: webpack.ConfigurationFactory = (
         rules: [
             { test: /\.js$/, enforce: 'pre', loader: ['source-map-loader'], },
             { test: /.css$/i, loader: [MiniCssExtractPlugin.loader, 'css-loader'] },
-            { test: /.tsx?$/i, loader: 'ts-loader' },
+            { test: /.tsx?$/i, loader: 'ts-loader', options: { projectReferences: true } },
         ],
     },
     optimization: {
