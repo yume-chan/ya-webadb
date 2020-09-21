@@ -1,4 +1,5 @@
 import { IconButton, SearchBox, Stack, StackItem } from '@fluentui/react';
+import { encodeUtf8 } from '@yume-chan/adb-backend-web';
 import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -65,9 +66,8 @@ export default withDisplayName('Shell', ({
 
         (async () => {
             const shell = await device.shell();
-            const textEncoder = new TextEncoder();
             terminal.onData(data => {
-                const { buffer } = textEncoder.encode(data);
+                const buffer = encodeUtf8(data);
                 shell.write(buffer);
             });
             shell.onData(data => {

@@ -1,7 +1,8 @@
 import { Breadcrumb, concatStyleSets, ContextualMenu, DetailsListLayoutMode, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, Selection, ShimmeredDetailsList, StackItem } from '@fluentui/react';
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@uifabric/file-type-icons';
-import { useConst, useConstCallback } from '@uifabric/react-hooks';
+import { useConst } from '@uifabric/react-hooks';
 import { AdbSyncEntryResponse, LinuxFileType } from '@yume-chan/adb';
+import { encodeUtf8 } from '@yume-chan/adb-backend-web';
 import path from 'path';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
@@ -17,7 +18,7 @@ interface ListItem extends AdbSyncEntryResponse {
 }
 
 function toListItem(item: AdbSyncEntryResponse): ListItem {
-    return { ...item, key: item.name };
+    return { ...item, key: item.name! };
 }
 
 const classNames = mergeStyleSets({
@@ -171,19 +172,19 @@ export default withDisplayName('FileManager', ({
 
             for (const entry of linkItems) {
                 try {
-                    const followLinkPath = path.resolve(currentPath, entry.name) + '/';
+                    const followLinkPath = path.resolve(currentPath, entry.name!) + '/';
                     console.log(followLinkPath);
                     await sync.lstat(followLinkPath);
                     items.push(toListItem(entry));
                     console.log(entry);
                 } catch (e) {
                     console.log(e);
-                    items.push(toListItem(new AdbSyncEntryResponse(
-                        (LinuxFileType.File << 12) | entry.mode,
-                        0,
-                        entry.lastModifiedTime,
-                        entry.name
-                    )));
+                    items.push(toListItem(AdbSyncEntryResponse.create({
+                        mode: (LinuxFileType.File << 12) | entry.mode,
+                        size: 0,
+                        lastModifiedTime: entry.lastModifiedTime,
+                        name: entry.name,
+                    }, { encodeUtf8 })));
                 }
             }
 
@@ -214,11 +215,11 @@ export default withDisplayName('FileManager', ({
             if (aIsFile !== bIsFile) {
                 result = aIsFile - bIsFile;
             } else {
-                const aSortKey = a[sortKey];
-                const bSortKey = b[sortKey];
+                const aSortKey = a[sortKey]!;
+                const bSortKey = b[sortKey]!;
 
                 if (aSortKey === bSortKey) {
-                    result = a.name < b.name ? -1 : 1;
+                    result = a.name! < b.name! ? -1 : 1;
                 } else {
                     result = aSortKey < bSortKey ? -1 : 1;
                 }
@@ -249,7 +250,7 @@ export default withDisplayName('FileManager', ({
                         case LinuxFileType.Directory:
                             return <Icon {...getFileTypeIconProps({ size: 20, type: FileIconType.folder })} />;
                         case LinuxFileType.File:
-                            return <Icon {...getFileTypeIconProps({ size: 20, extension: extensionName(item.name) })} />;
+                            return <Icon {...getFileTypeIconProps({ size: 20, extension: extensionName(item.name!) })} />;
                         default:
                             return <Icon {...getFileTypeIconProps({ size: 20, extension: 'txt' })} />;
                     }
@@ -337,15 +338,15 @@ export default withDisplayName('FileManager', ({
         switch (item.type) {
             case LinuxFileType.Link:
             case LinuxFileType.Directory:
-                setCurrentPath(path.resolve(currentPath, item.name));
+                setCurrentPath(path.resolve(currentPath, item.name!));
                 break;
             case LinuxFileType.File:
-                switch (extensionName(item.name)) {
+                switch (extensionName(item.name!)) {
                     case '.jpg':
                     case '.png':
                     case '.svg':
                     case '.gif':
-                        previewImage(path.resolve(currentPath, item.name));
+                        previewImage(path.resolve(currentPath, item.name!));
                         break;
                 }
                 break;
@@ -378,10 +379,10 @@ export default withDisplayName('FileManager', ({
                     (async () => {
                         const sync = await device!.sync();
                         try {
-                            const itemPath = path.resolve(currentPath, selectedItems[0].name);
+                            const itemPath = path.resolve(currentPath, selectedItems[0].name!);
                             const readableStream = createReadableStreamFromBufferIterator(sync.receive(itemPath));
 
-                            const writeableStream = StreamSaver.createWriteStream(selectedItems[0].name, {
+                            const writeableStream = StreamSaver.createWriteStream(selectedItems[0].name!, {
                                 size: selectedItems[0].size,
                             });
                             await readableStream.pipeTo(writeableStream);
@@ -403,7 +404,7 @@ export default withDisplayName('FileManager', ({
                 (async () => {
                     try {
                         for (const item of selectedItems) {
-                            const output = await device!.shell('rm', '-rf', `"${path.resolve(currentPath, item.name)}"`);
+                            const output = await device!.shell('rm', '-rf', `"${path.resolve(currentPath, item.name!)}"`);
                             if (output) {
                                 showErrorDialog(output);
                                 return;
@@ -427,9 +428,9 @@ export default withDisplayName('FileManager', ({
         setContextMenuTarget(e as MouseEvent);
         return false;
     }, [currentPath, device]);
-    const hideContextMenu = useConstCallback(() => {
+    const hideContextMenu = React.useCallback(() => {
         setContextMenuTarget(undefined);
-    });
+    }, []);
 
     return (
         <MarqueeSelection selection={selection}>

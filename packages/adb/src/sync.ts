@@ -1,7 +1,7 @@
 import { AutoDisposable } from '@yume-chan/event';
 import { AdbBufferedStream } from './buffered-stream';
 import { AdbStream } from './stream';
-import { AutoResetEvent, Struct, StructInitType, StructReader } from './utils';
+import { AutoResetEvent, Struct, StructInitType, StructValueType } from './utils';
 
 export enum AdbSyncRequestId {
     List = 'LIST',
@@ -31,9 +31,10 @@ export type AdbSyncStringRequestId =
     AdbSyncRequestId.Receive;
 
 const AdbSyncStringRequest =
-    new Struct(true)
-        .fixedLengthString('id', 4, undefined as any as AdbSyncStringRequestId)
-        .lengthPrefixedString('value', 'int32');
+    new Struct({ littleEndian: true })
+        .string('id', { length: 4 })
+        .uint32('valueLength')
+        .string('value', { lengthField: 'valueLength' });
 
 // https://github.com/python/cpython/blob/4e581d64b8aff3e2eda99b12f080c877bb78dfca/Lib/stat.py#L36
 export enum LinuxFileType {
@@ -42,77 +43,38 @@ export enum LinuxFileType {
     Link = 0o12,
 }
 
-const AdbSyncStatResponseStruct =
-    new Struct(true)
+export const AdbSyncStatResponse =
+    new Struct({ littleEndian: true })
         .int32('mode')
         .int32('size')
         .int32('lastModifiedTime')
+        .extra({
+            id: AdbSyncResponseId.Stat as const,
+            get type() { return this.mode >> 12 as LinuxFileType; },
+            get permission() { return this.mode & 0b00001111_11111111; },
+        })
+        .afterParsed((object) => {
+            if (object.mode === 0 &&
+                object.size === 0 &&
+                object.lastModifiedTime === 0
+            ) {
+                throw new Error('lstat failed');
+            }
+        });
 
-export class AdbSyncStatResponse {
-    public static readonly size = AdbSyncStatResponseStruct.size;
+export const AdbSyncEntryResponse =
+    AdbSyncStatResponse
+        .afterParsed()
+        .uint32('nameLength')
+        .string('name', { lengthField: 'nameLength' })
+        .extra({ id: AdbSyncResponseId.Entry as const });
 
-    public static async parse(reader: StructReader): Promise<AdbSyncStatResponse> {
-        const struct = await AdbSyncStatResponseStruct.parse(reader);
-        if (struct.mode === 0 && struct.size === 0 && struct.lastModifiedTime === 0) {
-            throw new Error('lstat failed');
-        }
-        return new AdbSyncStatResponse(struct.mode, struct.size, struct.lastModifiedTime);
-    }
+export type AdbSyncEntryResponse = StructValueType<typeof AdbSyncEntryResponse>;
 
-    public readonly id = AdbSyncResponseId.Stat;
-
-    public readonly type: LinuxFileType;
-
-    public readonly mode: number;
-
-    public readonly size: number;
-
-    public readonly lastModifiedTime: number;
-
-    public constructor(mode: number, size: number, lastModifiedTime: number) {
-        this.type = mode >> 12 as LinuxFileType;
-        this.mode = mode & 0b00001111_11111111;
-        this.size = size;
-        this.lastModifiedTime = lastModifiedTime;
-    }
-}
-
-const AdbSyncEntryResponseStruct =
-    AdbSyncStatResponseStruct
-        .lengthPrefixedString('name', 'int32');
-
-export class AdbSyncEntryResponse {
-    public static readonly size = AdbSyncEntryResponseStruct.size;
-
-    public static async parse(reader: StructReader): Promise<AdbSyncEntryResponse> {
-        const struct = await AdbSyncEntryResponseStruct.parse(reader);
-        return new AdbSyncEntryResponse(struct.mode, struct.size, struct.lastModifiedTime, struct.name);
-    }
-
-    public readonly id = AdbSyncResponseId.Entry;
-
-    public readonly type: LinuxFileType;
-
-    public readonly mode: number;
-
-    public readonly size: number;
-
-    public readonly lastModifiedTime: number;
-
-    public readonly name: string;
-
-    public constructor(mode: number, size: number, lastModifiedTime: number, name: string) {
-        this.type = mode >> 12 as LinuxFileType;
-        this.mode = mode & 0b00001111_11111111;
-        this.size = size;
-        this.lastModifiedTime = lastModifiedTime;
-        this.name = name;
-    }
-}
-
-const AdbSyncDataResponse =
-    new Struct(true)
-        .lengthPrefixedBuffer('data', 'int32')
+export const AdbSyncDataResponse =
+    new Struct({ littleEndian: true })
+        .uint32('dataLength')
+        .arrayBuffer('data', { lengthField: 'dataLength' })
         .extra({ id: AdbSyncResponseId.Data } as const);
 
 export class AdbSyncDoneResponse {
@@ -121,16 +83,13 @@ export class AdbSyncDoneResponse {
     public readonly id = AdbSyncResponseId.Done;
 }
 
-const AdbSyncFailResponseStruct =
-    new Struct(true)
-        .lengthPrefixedString('message', 'int32');
-
-class AdbSyncFailResponse {
-    public static async parse(reader: StructReader): Promise<never> {
-        const struct = await AdbSyncFailResponseStruct.parse(reader);
-        throw new Error(struct.message);
-    }
-}
+export const AdbSyncFailResponse =
+    new Struct({ littleEndian: true })
+        .uint32('messageLength')
+        .string('message', { lengthField: 'messageLength' })
+        .afterParsed(object => {
+            throw new Error(object.message);
+        });
 
 async function parseResponse(stream: AdbBufferedStream, size: number) {
     // DONE responses' size are always same as the request's normal response.
@@ -141,6 +100,7 @@ async function parseResponse(stream: AdbBufferedStream, size: number) {
     const structReader = {
         read: stream.read.bind(stream),
         decodeUtf8: stream.backend.decodeUtf8.bind(stream.backend),
+        encodeUtf8: stream.backend.encodeUtf8.bind(stream.backend),
     };
     switch (id) {
         case AdbSyncResponseId.Entry:
@@ -209,7 +169,7 @@ export class AdbSync extends AutoDisposable {
     }
 
     public async list(path: string) {
-        const results: AdbSyncEntryResponse[] = [];
+        const results: StructValueType<typeof AdbSyncEntryResponse>[] = [];
         for await (const entry of this.iterate(path)) {
             results.push(entry);
         }
@@ -225,7 +185,7 @@ export class AdbSync extends AutoDisposable {
                 const response = await parseResponse(this.stream, AdbSyncDataResponse.size);
                 switch (response.id) {
                     case AdbSyncResponseId.Data:
-                        yield response.data;
+                        yield response.data!;
                         break;
                     case AdbSyncResponseId.Done:
                         return;

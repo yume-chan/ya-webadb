@@ -12,6 +12,14 @@ const PrivateKeyStorageKey = 'private-key';
 const Utf8Encoder = new TextEncoder();
 const Utf8Decoder = new TextDecoder();
 
+export function encodeUtf8(input: string): ArrayBuffer {
+    return Utf8Encoder.encode(input);
+}
+
+export function decodeUtf8(buffer: ArrayBuffer): string {
+    return Utf8Decoder.decode(buffer);
+}
+
 export default class AdbWebBackend implements AdbBackend {
     public static async fromDevice(device: USBDevice): Promise<AdbWebBackend> {
         await device.open();
@@ -117,11 +125,11 @@ export default class AdbWebBackend implements AdbBackend {
     }
 
     public encodeUtf8(input: string): ArrayBuffer {
-        return Utf8Encoder.encode(input);
+        return encodeUtf8(input);
     }
 
     public decodeUtf8(buffer: ArrayBuffer): string {
-        return Utf8Decoder.decode(buffer);
+        return decodeUtf8(buffer);
     }
 
     public async write(buffer: ArrayBuffer): Promise<void> {
