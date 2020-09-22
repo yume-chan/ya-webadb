@@ -36,7 +36,7 @@
         "webpack-dev-server": "3.11.0"
     },
     "dependencies": {
-        "@fluentui/react": "7.138.0",
+        "@fluentui/react": "7.139.1",
         "@uifabric/file-type-icons": "7.6.6",
         "@uifabric/react-hooks": "7.13.5",
         "@yume-chan/adb": "^0.0.1",
