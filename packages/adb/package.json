@@ -26,6 +26,7 @@
     "dependencies": {
         "@yume-chan/async-operation-manager": "^2.0.0",
         "@yume-chan/event": "^0.0.1",
+        "@yume-chan/struct": "^0.0.0",
         "tslib": "^2.0.1"
     }
 }

@@ -1,7 +1,8 @@
 import { AutoDisposable } from '@yume-chan/event';
+import { Struct, StructInitType, StructValueType } from '@yume-chan/struct';
 import { AdbBufferedStream } from './buffered-stream';
 import { AdbStream } from './stream';
-import { AutoResetEvent, Struct, StructInitType, StructValueType } from './utils';
+import { AutoResetEvent } from './utils';
 
 export enum AdbSyncRequestId {
     List = 'LIST',
