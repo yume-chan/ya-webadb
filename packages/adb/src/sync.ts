@@ -169,7 +169,7 @@ export class AdbSync extends AutoDisposable {
     }
 
     public async list(path: string) {
-        const results: StructValueType<typeof AdbSyncEntryResponse>[] = [];
+        const results: AdbSyncEntryResponse[] = [];
         for await (const entry of this.iterate(path)) {
             results.push(entry);
         }
