@@ -1,539 +1,125 @@
-const BackingField = Symbol('BackingField');
-
-export namespace StructField {
-    export const enum Type {
-        Number,
-        FixedLengthArray,
-        VariableLengthArray,
-    }
-
-    export interface BaseOptions {
-
-    }
-
-    export interface Base<TOptions extends BaseOptions = BaseOptions> {
-        type: Type;
-
-        name: PropertyKey;
-
-        options: TOptions;
-    }
-
-    export type Parser<TField extends Any> = (options: {
-        field: TField;
-        object: any;
-        options: StructOptions;
-        reader: StructReader;
-    }) => Promise<void>;
-
-    export type Initializer<TField extends Any> = (options: {
-        field: TField;
-        init: any;
-        object: any;
-        options: StructOptions;
-        writer: StructWriter;
-    }) => void;
-
-    export type Writer<TField extends Any> = (options: {
-        dataView: DataView;
-        field: TField;
-        object: any;
-        offset: number;
-        options: StructOptions;
-        writer: StructWriter;
-    }) => void;
-
-    export interface Methods<TField extends Any> {
-        type: Type;
-
-        getLength(options: {
-            field: TField;
-            options: StructOptions;
-        }): number;
-
-        parse: Parser<TField>;
-
-        initialize?: Initializer<TField>;
-
-        getVariableLength?(options: {
-            field: TField,
-            object: any,
-            options: StructOptions,
-            writer: StructWriter,
-        }): number;
-
-        write: Writer<TField>;
-    }
-
-    const registry: Record<number, Methods<any>> = {};
-
-    export function getType(type: Type): Methods<Any> {
-        return registry[type as number];
-    }
-
-    export function registerType<TField extends Any, TMethods extends Methods<TField>>(
-        _field: TField,
-        methods: TMethods
-    ): void {
-        registry[methods.type as number] = methods;
-    }
-
-    export namespace Number {
-        export type TypeScriptType = number;
-
-        export const enum SubType {
-            Int32,
-            Uint32,
-        }
-
-        export const SizeMap: Record<SubType, number> = {
-            [SubType.Int32]: 4,
-            [SubType.Uint32]: 4,
-        };
-
-        export const DataViewGetterMap = {
-            [SubType.Int32]: 'getInt32',
-            [SubType.Uint32]: 'getUint32',
-        } as const;
-
-        export const DataViewSetterMap = {
-            [SubType.Int32]: 'setInt32',
-            [SubType.Uint32]: 'setUint32',
-        } as const;
-    }
-
-    registerType(undefined as unknown as Number, {
-        type: Type.Number,
-
-        getLength({ field }) {
-            return Number.SizeMap[field.subType];
-        },
-
-        async parse({ field, object, options, reader }) {
-            const buffer = await reader.read(Number.SizeMap[field.subType]);
-            const view = new DataView(buffer);
-            object[field.name] = view[Number.DataViewGetterMap[field.subType]](
-                0,
-                options.littleEndian
-            );
-        },
-
-        write({ dataView, field, object, offset, options }) {
-            dataView[Number.DataViewSetterMap[field.subType]](
-                offset,
-                object[field.name],
-                options.littleEndian
-            );
-        },
-    });
-
-    export interface Number<TOptions extends BaseOptions = BaseOptions> extends Base<TOptions> {
-        type: Type.Number;
-
-        subType: Number.SubType;
-    }
-
-    export namespace Array {
-        export const enum SubType {
-            ArrayBuffer,
-            String,
-        }
-
-        export type TypeScriptType<TType extends SubType = SubType> =
-            TType extends SubType.ArrayBuffer ? ArrayBuffer :
-            TType extends SubType.String ? string :
-            ArrayBuffer | string;
-
-        export interface BackingField {
-            buffer?: ArrayBuffer;
-
-            string?: string;
-        }
-
-        export function getBackingField(object: any, name: PropertyKey): BackingField {
-            return object[BackingField][name];
-        }
-
-        export function setBackingField(object: any, name: PropertyKey, value: BackingField): void {
-            object[BackingField][name] = value;
-        }
-
-        export function initialize(object: any, field: Array, value: BackingField): void {
-            switch (field.subType) {
-                case StructField.Array.SubType.ArrayBuffer:
-                    Object.defineProperty(object, field.name, {
-                        configurable: true,
-                        enumerable: true,
-                        get(): ArrayBuffer {
-                            return getBackingField(object, field.name).buffer!;
-                        },
-                        set(buffer: ArrayBuffer) {
-                            setBackingField(object, field.name, { buffer });
-                        },
-                    });
-                    break;
-                case StructField.Array.SubType.String:
-                    Object.defineProperty(object, field.name, {
-                        configurable: true,
-                        enumerable: true,
-                        get(): string {
-                            return getBackingField(object, field.name).string!;
-                        },
-                        set(string: string) {
-                            setBackingField(object, field.name, { string });
-                        },
-                    });
-                    break;
-                default:
-                    throw new Error('Unknown type');
-            }
-            setBackingField(object, field.name, value);
-        }
-    }
-
-    export interface Array<
-        TType extends Array.SubType = Array.SubType,
-        TOptions extends BaseOptions = BaseOptions
-        > extends Base<TOptions> {
-        subType: TType;
-    }
-
-    export namespace FixedLengthArray {
-        export interface Options extends BaseOptions {
-            length: number;
-        }
-    }
-
-    registerType(undefined as unknown as FixedLengthArray, {
-        type: Type.FixedLengthArray,
-
-        getLength({ field }) {
-            return field.options.length;
-        },
-
-        async parse({ field, object, reader }) {
-            const value: Array.BackingField = {
-                buffer: await reader.read(field.options.length),
-            };
-
-            switch (field.subType) {
-                case Array.SubType.ArrayBuffer:
-                    break;
-                case Array.SubType.String:
-                    value.string = reader.decodeUtf8(value.buffer!);
-                    break;
-                default:
-                    throw new Error('Unknown type');
-            }
-
-            Array.initialize(object, field, value);
-        },
-
-        initialize({ field, init, object }) {
-            Array.initialize(object, field, {});
-            object[field.name] = init[field.name];
-        },
-
-        write({ dataView, field, object, offset, writer }) {
-            const backingField = Array.getBackingField(object, field.name);
-            backingField.buffer ??=
-                writer.encodeUtf8(backingField.string!);
-
-            new Uint8Array(dataView.buffer).set(
-                new Uint8Array(backingField.buffer),
-                offset
-            );
-        }
-    });
-
-    export interface FixedLengthArray<
-        TType extends Array.SubType = Array.SubType,
-        TOptions extends FixedLengthArray.Options = FixedLengthArray.Options
-        > extends Array<TType, TOptions> {
-        type: Type.FixedLengthArray;
-
-        options: TOptions;
-    }
-
-    export namespace VariableLengthArray {
-        export type TypeScriptTypeCanBeUndefined<
-            TEmptyBehavior extends EmptyBehavior = EmptyBehavior
-            > =
-            TEmptyBehavior extends EmptyBehavior.Empty ? never :
-            undefined;
-
-        export type TypeScriptType<
-            TType extends Array.SubType = Array.SubType,
-            TEmptyBehavior extends EmptyBehavior = EmptyBehavior
-            > =
-            Array.TypeScriptType<TType> |
-            TypeScriptTypeCanBeUndefined<TEmptyBehavior>;
-
-        export const enum EmptyBehavior {
-            Undefined,
-            Empty,
-        }
-
-        export type KeyOfType<TObject, TProperty> =
-            {
-                [TKey in keyof TObject]:
-                TObject[TKey] extends TProperty ? TKey : never
-            }[keyof TObject];
-
-        export interface Options<
-            TObject = object,
-            TLengthField extends KeyOfType<TObject, number> = any,
-            TEmptyBehavior extends EmptyBehavior = EmptyBehavior
-            > extends BaseOptions {
-            lengthField: TLengthField;
-
-            emptyBehavior?: TEmptyBehavior;
-        }
-
-        export function getLengthBackingField(object: any, field: VariableLengthArray): number | undefined {
-            return object[BackingField][field.options.lengthField];
-        }
-
-        export function setLengthBackingField(
-            object: any,
-            field: VariableLengthArray,
-            value: number | undefined
-        ) {
-            object[BackingField][field.options.lengthField] = value;
-        }
-
-        export function initialize(
-            object: any,
-            field: VariableLengthArray,
-            value: Array.BackingField,
-            writer: StructWriter,
-        ): void {
-            Array.initialize(object, field, value);
-            const descriptor = Object.getOwnPropertyDescriptor(object, field.name)!;
-            delete object[field.name];
-
-            switch (field.subType) {
-                case Array.SubType.ArrayBuffer:
-                    Object.defineProperty(object, field.name, {
-                        ...descriptor,
-                        set(buffer: ArrayBuffer | undefined) {
-                            descriptor.set!.call(object, buffer);
-                            setLengthBackingField(object, field, buffer?.byteLength ?? 0);
-                        },
-                    });
-
-                    delete object[field.options.lengthField];
-                    Object.defineProperty(object, field.options.lengthField, {
-                        configurable: true,
-                        enumerable: true,
-                        get() {
-                            return getLengthBackingField(object, field);
-                        }
-                    });
-                    break;
-                case Array.SubType.String:
-                    Object.defineProperty(object, field.name, {
-                        ...descriptor,
-                        set(string: string | undefined) {
-                            descriptor.set!.call(object, string);
-                            if (string) {
-                                setLengthBackingField(object, field, undefined);
-                            } else {
-                                setLengthBackingField(object, field, 0);
-                            }
-                        },
-                    });
-
-                    delete object[field.options.lengthField];
-                    Object.defineProperty(object, field.options.lengthField, {
-                        configurable: true,
-                        enumerable: true,
-                        get() {
-                            let value = getLengthBackingField(object, field);
-                            if (value === undefined) {
-                                const backingField = Array.getBackingField(object, field.name);
-                                const buffer = writer.encodeUtf8(backingField.string!);
-                                backingField.buffer = buffer;
-
-                                value = buffer.byteLength;
-                                setLengthBackingField(object, field, value);
-                            }
-                            return value;
-                        }
-                    });
-                    break;
-                default:
-                    throw new Error('Unknown type');
-            }
-            Array.setBackingField(object, field.name, value);
-            if (value.buffer) {
-                setLengthBackingField(object, field, value.buffer.byteLength);
-            }
-        }
-    }
-
-    registerType(undefined as unknown as VariableLengthArray, {
-        type: Type.VariableLengthArray,
-
-        getLength() { return 0; },
-
-        async parse({ field, object, reader }) {
-            const value: Array.BackingField = {};
-            const length = object[field.options.lengthField];
-            if (length === 0) {
-                if (field.options.emptyBehavior === VariableLengthArray.EmptyBehavior.Empty) {
-                    value.buffer = new ArrayBuffer(0);
-                    value.string = '';
-                }
-
-                VariableLengthArray.initialize(object, field, value, reader);
-                return;
-            }
-
-            value.buffer = await reader.read(length);
-            switch (field.subType) {
-                case Array.SubType.ArrayBuffer:
-                    break;
-                case Array.SubType.String:
-                    value.string = reader.decodeUtf8(value.buffer);
-                    break;
-                default:
-                    throw new Error('Unknown type');
-            }
-            VariableLengthArray.initialize(object, field, value, reader);
-        },
-
-        initialize({ field, init, object, writer }) {
-            VariableLengthArray.initialize(object, field, {}, writer);
-            object[field.name] = init[field.name];
-        },
-
-        getVariableLength({ field, object }) {
-            return object[field.options.lengthField];
-        },
-
-        write({ dataView, field, object, offset }) {
-            const backingField = Array.getBackingField(object, field.name);
-            new Uint8Array(dataView.buffer).set(
-                new Uint8Array(backingField.buffer!),
-                offset
-            );
-        },
-    });
-
-    export interface VariableLengthArray<
-        TType extends Array.SubType = Array.SubType,
-        TObject = object,
-        TLengthField extends VariableLengthArray.KeyOfType<TObject, number> = any,
-        TEmptyBehavior extends VariableLengthArray.EmptyBehavior = VariableLengthArray.EmptyBehavior,
-        TOptions extends VariableLengthArray.Options<TObject, TLengthField, TEmptyBehavior> = VariableLengthArray.Options<TObject, TLengthField, TEmptyBehavior>
-        > extends Array<TType, TOptions> {
-        type: Type.VariableLengthArray;
-
-        options: TOptions;
-    }
-
-    export type Any =
-        Number |
-        FixedLengthArray |
-        VariableLengthArray;
-}
-
-export interface StructWriter {
-    encodeUtf8(input: string): ArrayBuffer;
-}
-
-export interface StructReader extends StructWriter {
-    decodeUtf8(buffer: ArrayBuffer): string;
-
-    read(length: number): Promise<ArrayBuffer>;
-}
+import { Array, BackingField, FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType, FixedLengthArray, getFieldTypeDefinition, Number, StructDeserializationContext, StructOptions, StructSerializationContext, VariableLengthArray } from './field';
+import { Evaluate, Identity } from './utils';
 
 export type StructValueType<T extends Struct<unknown, unknown, unknown>> =
-    T extends { parse(reader: StructReader): Promise<infer R>; } ? R : never;
+    T extends { deserialize(reader: StructDeserializationContext): Promise<infer R>; } ? R : never;
 
 export type StructInitType<T extends Struct<unknown, unknown, unknown>> =
     T extends { create(value: infer R, ...args: any): any; } ? R : never;
-
-export interface StructOptions {
-    littleEndian: boolean;
-}
 
 export const StructDefaultOptions: Readonly<StructOptions> = {
     littleEndian: false,
 };
 
-interface ArrayInitializer<TObject, TAfterParsed, TInit> {
+interface AddArrayFieldDescriptor<TObject, TAfterParsed, TInit> {
     <
-        TName extends PropertyKey,
-        TType extends StructField.Array.SubType,
-        TTypeScriptType = StructField.Array.TypeScriptType<TType>
+        TName extends string,
+        TType extends Array.SubType,
+        TTypeScriptType = Array.TypeScriptType<TType>
         >(
         name: TName,
         type: TType,
-        options: StructField.FixedLengthArray.Options,
+        options: FixedLengthArray.Options,
         typescriptType?: () => TTypeScriptType,
-    ): Struct<
-        TObject & Record<TName, TTypeScriptType>,
+    ): MergeStruct<
+        TObject,
         TAfterParsed,
-        TInit & Record<TName, TTypeScriptType>
+        TInit,
+        FixedLengthArray<
+            TName,
+            TType,
+            TTypeScriptType
+        >
     >;
 
     <
-        TName extends PropertyKey,
-        TType extends StructField.Array.SubType,
-        TLengthField extends StructField.VariableLengthArray.KeyOfType<TInit, number>,
-        TEmptyBehavior extends StructField.VariableLengthArray.EmptyBehavior,
-        TTypeScriptType = StructField.VariableLengthArray.TypeScriptType<TType, TEmptyBehavior>
+        TName extends string,
+        TType extends Array.SubType,
+        TLengthField extends VariableLengthArray.KeyOfType<TInit, number>,
+        TEmptyBehavior extends VariableLengthArray.EmptyBehavior,
+        TTypeScriptType = VariableLengthArray.TypeScriptType<TType, TEmptyBehavior>
         >(
         name: TName,
         type: TType,
-        options: StructField.VariableLengthArray.Options<TInit, TLengthField, TEmptyBehavior>,
+        options: VariableLengthArray.Options<TInit, TLengthField, TEmptyBehavior>,
         typescriptType?: () => TTypeScriptType,
-    ): Struct<
-        TObject & Record<TName, TTypeScriptType>,
+    ): MergeStruct<
+        TObject,
         TAfterParsed,
-        Omit<TInit, TLengthField> & Record<TName, TTypeScriptType>
+        TInit,
+        VariableLengthArray<
+            TName,
+            TType,
+            TInit,
+            TLengthField,
+            TEmptyBehavior,
+            TTypeScriptType
+        >
     >;
 }
 
-interface ArrayTypeInitializer<
+interface AddArraySubTypeFieldDescriptor<
     TObject,
     TAfterParsed,
     TInit,
-    TType extends StructField.Array.SubType
+    TType extends Array.SubType
     > {
     <
-        TName extends PropertyKey,
-        TTypeScriptType = StructField.Array.TypeScriptType<TType>
+        TName extends string,
+        TTypeScriptType = Array.TypeScriptType<TType>
         >(
         name: TName,
-        options: StructField.FixedLengthArray.Options,
+        options: FixedLengthArray.Options,
         typescriptType?: () => TTypeScriptType,
-    ): Struct<
-        TObject & Record<TName, TTypeScriptType>,
+    ): MergeStruct<
+        TObject,
         TAfterParsed,
-        TInit & Record<TName, TTypeScriptType>
+        TInit,
+        FixedLengthArray<
+            TName,
+            TType,
+            TTypeScriptType
+        >
     >;
 
     <
-        TName extends PropertyKey,
-        TLengthField extends StructField.VariableLengthArray.KeyOfType<TInit, number>,
-        TEmptyBehavior extends StructField.VariableLengthArray.EmptyBehavior,
-        TTypeScriptType = StructField.VariableLengthArray.TypeScriptType<TType, TEmptyBehavior>
+        TName extends string,
+        TLengthField extends VariableLengthArray.KeyOfType<TInit, number>,
+        TEmptyBehavior extends VariableLengthArray.EmptyBehavior,
+        TTypeScriptType = VariableLengthArray.TypeScriptType<TType, TEmptyBehavior>
         >(
         name: TName,
-        options: StructField.VariableLengthArray.Options<TInit, TLengthField, TEmptyBehavior>,
+        options: VariableLengthArray.Options<TInit, TLengthField, TEmptyBehavior>,
         _typescriptType?: () => TTypeScriptType,
-    ): Struct<
-        TObject & Record<TName, TTypeScriptType>,
+    ): MergeStruct<
+        TObject,
         TAfterParsed,
-        Omit<TInit, TLengthField> & Record<TName, TTypeScriptType>
+        TInit,
+        VariableLengthArray<
+            TName,
+            TType,
+            TInit,
+            TLengthField,
+            TEmptyBehavior,
+            TTypeScriptType
+        >
     >;
 }
 
 export type StructAfterParsed<TObject, TResult> =
     (this: TObject, object: TObject) => TResult;
+
+export type OmitNever<T> = Pick<T, { [K in keyof T]: [T[K]] extends [never] ? never : K }[keyof T]>;
+
+type MergeStruct<TObject, TAfterParsed, TInit, TDescriptor extends FieldDescriptorBase> =
+    Identity<Struct<
+        Evaluate<TObject & Exclude<TDescriptor['resultObject'], undefined>>,
+        TAfterParsed,
+        Evaluate<OmitNever<TInit & Exclude<TDescriptor['initObject'], undefined>>>
+    >>;
+
+export type StructExtraResult<TObject, TExtra> =
+    Evaluate<Omit<TObject, keyof TExtra> & TExtra>;
 
 export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> {
     public readonly options: Readonly<StructOptions>;
@@ -541,7 +127,7 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
     private _size = 0;
     public get size() { return this._size; }
 
-    private fields: StructField.Any[] = [];
+    private fields: FieldDescriptorBase[] = [];
 
     private _extra: PropertyDescriptorMap = {};
 
@@ -560,87 +146,84 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         return result;
     }
 
+    public field<TDescriptor extends FieldDescriptorBase>(
+        field: TDescriptor,
+    ): MergeStruct<TObject, TAfterParsed, TInit, TDescriptor> {
+        const result = this.clone();
+        result.fields.push(field);
+
+        const definition = getFieldTypeDefinition(field.type);
+        const size = definition.getSize({ field, options: this.options });
+        result._size += size;
+
+        return result;
+    }
+
     private number<
-        TName extends PropertyKey,
-        TTypeScriptType = StructField.Number.TypeScriptType
+        TName extends string,
+        TTypeScriptType = Number.TypeScriptType
     >(
         name: TName,
-        type: StructField.Number.SubType,
-        options: StructField.BaseOptions = {},
+        type: Number.SubType,
+        options: FieldDescriptorBaseOptions = {},
         _typescriptType?: () => TTypeScriptType,
-    ): Struct<
-        TObject & Record<TName, TTypeScriptType>,
-        TAfterParsed,
-        TInit & Record<TName, TTypeScriptType>
-    > {
-        const result = this.clone();
-        result.fields.push({
-            type: StructField.Type.Number,
+    ) {
+        return this.field<Number<TName, TTypeScriptType>>({
+            type: FieldType.Number,
             name,
             subType: type,
             options,
         });
-        result._size += StructField.Number.SizeMap[type];
-        return result;
     }
 
     public int32<
-        TName extends PropertyKey,
-        TTypeScriptType = StructField.Number.TypeScriptType
+        TName extends string,
+        TTypeScriptType = Number.TypeScriptType
     >(
         name: TName,
-        options?: StructField.BaseOptions,
+        options: FieldDescriptorBaseOptions = {},
         _typescriptType?: () => TTypeScriptType,
-    ): Struct<
-        TObject & Record<TName, TTypeScriptType>,
-        TAfterParsed,
-        TInit & Record<TName, TTypeScriptType>
-    > {
+    ) {
         return this.number(
             name,
-            StructField.Number.SubType.Int32,
+            Number.SubType.Int32,
             options,
             _typescriptType
         );
     }
 
     public uint32<
-        TName extends PropertyKey,
-        TTypeScriptType = StructField.Number.TypeScriptType
+        TName extends string,
+        TTypeScriptType = Number.TypeScriptType
     >(
         name: TName,
-        options?: StructField.BaseOptions,
+        options: FieldDescriptorBaseOptions = {},
         _typescriptType?: () => TTypeScriptType,
-    ): Struct<
-        TObject & Record<TName, TTypeScriptType>,
-        TAfterParsed,
-        TInit & Record<TName, TTypeScriptType>
-    > {
+    ) {
         return this.number(
             name,
-            StructField.Number.SubType.Uint32,
+            Number.SubType.Uint32,
             options,
             _typescriptType
         );
     }
 
-    private array: ArrayInitializer<TObject, TAfterParsed, TInit> = (
-        name: PropertyKey,
-        type: StructField.Array.SubType,
-        options: StructField.FixedLengthArray.Options | StructField.VariableLengthArray.Options
+    private array: AddArrayFieldDescriptor<TObject, TAfterParsed, TInit> = (
+        name: string,
+        type: Array.SubType,
+        options: FixedLengthArray.Options | VariableLengthArray.Options
     ): Struct<any, any, any> => {
         const result = this.clone();
         if ('length' in options) {
-            result.fields.push({
-                type: StructField.Type.FixedLengthArray,
+            this.field<FixedLengthArray>({
+                type: FieldType.FixedLengthArray,
                 name,
                 subType: type,
                 options: options,
             });
-            result._size += options.length;
         } else {
-            result.fields.push({
-                type: StructField.Type.VariableLengthArray,
+            this.field<VariableLengthArray>({
+                type: FieldType.VariableLengthArray,
                 name,
                 subType: type,
                 options: options,
@@ -649,33 +232,37 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         return result;
     };
 
-    public arrayBuffer: ArrayTypeInitializer<
+    public arrayBuffer: AddArraySubTypeFieldDescriptor<
         TObject,
         TAfterParsed,
         TInit,
-        StructField.Array.SubType.ArrayBuffer
-    > = (
-        name: PropertyKey,
+        Array.SubType.ArrayBuffer
+    > = <TName extends string>(
+        name: TName,
         options: any
     ) => {
-            return this.array(name, StructField.Array.SubType.ArrayBuffer, options);
+            return this.array(name, Array.SubType.ArrayBuffer, options);
         };
 
-    public string: ArrayTypeInitializer<
+    public string: AddArraySubTypeFieldDescriptor<
         TObject,
         TAfterParsed,
         TInit,
-        StructField.Array.SubType.String
-    > = (
-        name: PropertyKey,
+        Array.SubType.String
+    > = <TName extends string>(
+        name: TName,
         options: any
     ) => {
-            return this.array(name, StructField.Array.SubType.String, options);
+            return this.array(name, Array.SubType.String, options);
         };
 
-    public extra<U extends object>(
-        value: U & ThisType<Omit<TObject, keyof U> & U>
-    ): Struct<Omit<TObject, keyof U> & U, TAfterParsed, TInit> {
+    public extra<TExtra extends object>(
+        value: TExtra & ThisType<StructExtraResult<TObject, TExtra>>
+    ): Struct<
+        StructExtraResult<TObject, TExtra>,
+        TAfterParsed,
+        Evaluate<Omit<TInit, keyof TExtra>>
+    > {
         const result = this.clone();
         result._extra = { ...result._extra, ...Object.getOwnPropertyDescriptors(value) };
         return result;
@@ -698,20 +285,20 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         return result;
     }
 
-    public create(init: TInit, writer: StructWriter): TObject {
+    public create(init: TInit, context: StructSerializationContext): TObject {
         const object: any = {
             [BackingField]: {},
         };
 
         for (const field of this.fields) {
-            const type = StructField.getType(field.type);
+            const type = getFieldTypeDefinition(field.type);
             if (type.initialize) {
                 type.initialize({
+                    context,
                     field,
                     init,
                     object,
                     options: this.options,
-                    writer,
                 });
             } else {
                 object[field.name] = (init as any)[field.name];
@@ -722,16 +309,16 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         return object;
     }
 
-    public async parse(
-        reader: StructReader
+    public async deserialize(
+        context: StructDeserializationContext
     ): Promise<TAfterParsed extends undefined ? TObject : TAfterParsed> {
         const object: any = {
             [BackingField]: {},
         };
 
         for (const field of this.fields) {
-            await StructField.getType(field.type).parse({
-                reader,
+            await getFieldTypeDefinition(field.type).deserialize({
+                context,
                 field,
                 object,
                 options: this.options,
@@ -750,24 +337,24 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         return object;
     }
 
-    public toBuffer(init: TInit, writer: StructWriter): ArrayBuffer {
-        const object = this.create(init, writer) as any;
+    public serialize(init: TInit, context: StructSerializationContext): ArrayBuffer {
+        const object = this.create(init, context) as any;
 
         let size = this._size;
         let fieldSize: number[] = [];
         for (let i = 0; i < this.fields.length; i++) {
             const field = this.fields[i];
-            const type = StructField.getType(field.type);
-            if (type.getVariableLength) {
-                fieldSize[i] = type.getVariableLength({
-                    writer,
+            const type = getFieldTypeDefinition(field.type);
+            if (type.getDynamicSize) {
+                fieldSize[i] = type.getDynamicSize({
+                    context,
                     field,
                     object,
                     options: this.options,
                 });
                 size += fieldSize[i];
             } else {
-                fieldSize[i] = type.getLength({ field, options: this.options });
+                fieldSize[i] = type.getSize({ field, options: this.options });
             }
         }
 
@@ -776,14 +363,14 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         let offset = 0;
         for (let i = 0; i < this.fields.length; i++) {
             const field = this.fields[i];
-            const type = StructField.getType(field.type);
-            type.write({
+            const type = getFieldTypeDefinition(field.type);
+            type.serialize({
+                context,
                 dataView,
                 field,
                 object,
                 offset,
                 options: this.options,
-                writer,
             });
             offset += fieldSize[i];
         }

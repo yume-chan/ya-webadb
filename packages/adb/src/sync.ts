@@ -92,7 +92,7 @@ export const AdbSyncFailResponse =
             throw new Error(object.message);
         });
 
-async function parseResponse(stream: AdbBufferedStream, size: number) {
+async function readResponse(stream: AdbBufferedStream, size: number) {
     // DONE responses' size are always same as the request's normal response.
     // For example DONE responses for LIST requests are 16 bytes (same as DENT responses),
     // but DONE responses for STAT requests are 12 bytes (same as STAT responses)
@@ -105,16 +105,16 @@ async function parseResponse(stream: AdbBufferedStream, size: number) {
     };
     switch (id) {
         case AdbSyncResponseId.Entry:
-            return AdbSyncEntryResponse.parse(structReader);
+            return AdbSyncEntryResponse.deserialize(structReader);
         case AdbSyncResponseId.Stat:
-            return AdbSyncStatResponse.parse(structReader);
+            return AdbSyncStatResponse.deserialize(structReader);
         case AdbSyncResponseId.Data:
-            return AdbSyncDataResponse.parse(structReader);
+            return AdbSyncDataResponse.deserialize(structReader);
         case AdbSyncResponseId.Done:
             await stream.read(size);
             return AdbSyncDoneResponse.instance;
         case AdbSyncResponseId.Fail:
-            return AdbSyncFailResponse.parse(structReader);
+            return AdbSyncFailResponse.deserialize(structReader);
         default:
             throw new Error('Unexpected response id');
     }
@@ -136,7 +136,7 @@ export class AdbSync extends AutoDisposable {
 
         try {
             await this.write(AdbSyncStringRequest, { id: AdbSyncRequestId.Stat, value: path });
-            const response = await parseResponse(this.stream, AdbSyncStatResponse.size);
+            const response = await readResponse(this.stream, AdbSyncStatResponse.size);
             if (response.id !== AdbSyncResponseId.Stat) {
                 throw new Error('Unexpected response id');
             }
@@ -153,7 +153,7 @@ export class AdbSync extends AutoDisposable {
             await this.write(AdbSyncStringRequest, { id: AdbSyncRequestId.List, value: path });
 
             while (true) {
-                const response = await parseResponse(this.stream, AdbSyncEntryResponse.size);
+                const response = await readResponse(this.stream, AdbSyncEntryResponse.size);
                 switch (response.id) {
                     case AdbSyncResponseId.Entry:
                         yield response;
@@ -183,7 +183,7 @@ export class AdbSync extends AutoDisposable {
         try {
             await this.write(AdbSyncStringRequest, { id: AdbSyncRequestId.Receive, value: path });
             while (true) {
-                const response = await parseResponse(this.stream, AdbSyncDataResponse.size);
+                const response = await readResponse(this.stream, AdbSyncDataResponse.size);
                 switch (response.id) {
                     case AdbSyncResponseId.Data:
                         yield response.data!;
@@ -205,6 +205,6 @@ export class AdbSync extends AutoDisposable {
     }
 
     private write<T extends Struct<unknown, unknown>>(type: T, value: StructInitType<T>) {
-        return this.stream.write(type.toBuffer(value, this.stream.backend));
+        return this.stream.write(type.serialize(value, this.stream.backend));
     }
 }
