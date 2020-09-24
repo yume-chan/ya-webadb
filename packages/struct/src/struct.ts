@@ -213,23 +213,21 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         type: Array.SubType,
         options: FixedLengthArray.Options | VariableLengthArray.Options
     ): Struct<any, any, any> => {
-        const result = this.clone();
         if ('length' in options) {
-            this.field<FixedLengthArray>({
+            return this.field<FixedLengthArray>({
                 type: FieldType.FixedLengthArray,
                 name,
                 subType: type,
                 options: options,
             });
         } else {
-            this.field<VariableLengthArray>({
+            return this.field<VariableLengthArray>({
                 type: FieldType.VariableLengthArray,
                 name,
                 subType: type,
                 options: options,
             });
         }
-        return result;
     };
 
     public arrayBuffer: AddArraySubTypeFieldDescriptor<
