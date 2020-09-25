@@ -9,7 +9,8 @@ interface Base64CharRange {
 }
 
 let ranges: Base64CharRange[] = [];
-let chars: string[] = [];
+const chars: number[] = [];
+const padding = '='.charCodeAt(0);
 
 let offset = 0;
 function addRange(start: string, end: string) {
@@ -18,7 +19,7 @@ function addRange(start: string, end: string) {
     const length = endCharCode - startCharCode + 1;
 
     for (let i = startCharCode; i <= endCharCode; i++) {
-        chars.push(String.fromCharCode(i));
+        chars.push(i);
     }
 
     ranges.push({
@@ -59,51 +60,194 @@ function toValue(char: string): number {
     }
 }
 
-export function encodeBase64(buffer: ArrayBuffer): string {
-    const array = new Uint8Array(buffer);
-    const length = buffer.byteLength;
-    const remainder = length % 3;
-    let result = '';
+export function calculateBase64EncodedLength(inputLength: number): number {
+    const paddingLength = inputLength % 3;
+    return (inputLength + 3 - paddingLength) / 3 * 4;
+}
 
-    let i = 0;
-    for (; i < length - remainder;) {
+export function encodeBase64(
+    input: ArrayBuffer | Uint8Array,
+    inputOffset?: number,
+    inputLength?: number,
+): ArrayBuffer;
+export function encodeBase64(
+    input: ArrayBuffer | Uint8Array,
+    output: ArrayBuffer | Uint8Array,
+    outputOffset?: number
+): number;
+export function encodeBase64(
+    input: ArrayBuffer | Uint8Array,
+    inputOffset: number,
+    output: ArrayBuffer | Uint8Array,
+    outputOffset?: number
+): number;
+export function encodeBase64(
+    input: ArrayBuffer | Uint8Array,
+    inputOffset: number,
+    inputLength: number,
+    output: ArrayBuffer | Uint8Array,
+    outputOffset?: number
+): number;
+export function encodeBase64(
+    input: ArrayBuffer | Uint8Array,
+    arg1?: number | ArrayBuffer | Uint8Array,
+    arg2?: number | ArrayBuffer | Uint8Array,
+    _arg3?: number | ArrayBuffer | Uint8Array,
+    _arg4?: number,
+): ArrayBuffer | Uint8Array | number {
+    if (input instanceof ArrayBuffer) {
+        input = new Uint8Array(input);
+    }
+
+    // Because `Uint8Array` is type compatible with `ArrayBuffer`,
+    // TypeScript doesn't correctly narrow `input` to `Uint8Array` when assigning.
+    // Manually eliminate `ArrayBuffer` from `input` with a type guard.
+    if (input instanceof ArrayBuffer) {
+        return input;
+    }
+
+    let inputOffset: number;
+    let inputLength: number;
+    let output: Uint8Array;
+    let outputOffset: number;
+
+    let outputArgumentIndex: number;
+    if (typeof arg1 !== 'number') {
+        inputOffset = 0;
+        inputLength = input.byteLength;
+        outputArgumentIndex = 1;
+    } else {
+        inputOffset = arg1;
+
+        if (typeof arg2 !== 'number') {
+            inputLength = input.byteLength - inputOffset;
+            outputArgumentIndex = 2;
+        } else {
+            inputLength = arg2;
+            outputArgumentIndex = 3;
+        }
+    }
+
+    const paddingLength = inputLength % 3;
+    const outputLength = (inputLength + 3 - paddingLength) / 3 * 4;
+
+    let maybeOutput: ArrayBuffer | Uint8Array | undefined = arguments[outputArgumentIndex];
+    let outputType: 'ArrayBuffer' | 'number';
+    if (maybeOutput) {
+        let maybeOutputOffset: number | undefined = arguments[outputArgumentIndex + 1];
+        if (typeof maybeOutputOffset === 'number') {
+            outputOffset = maybeOutputOffset;
+        } else {
+            outputOffset = 0;
+        }
+
+        if (maybeOutput.byteLength - outputOffset < outputLength) {
+            throw new Error('output buffer is too small');
+        }
+
+        if (maybeOutput instanceof ArrayBuffer) {
+            output = new Uint8Array(maybeOutput);
+        } else {
+            output = maybeOutput;
+        }
+
+        outputType = 'number';
+    } else {
+        const buffer = new ArrayBuffer(outputLength);
+        output = new Uint8Array(buffer);
+        outputOffset = 0;
+        outputType = 'ArrayBuffer';
+    }
+
+    // Because `Uint8Array` is type compatible with `ArrayBuffer`,
+    // TypeScript doesn't correctly narrow `output` to `Uint8Array` when assigning.
+    // Manually eliminate `ArrayBuffer` from `output` with a type guard.
+    if (output instanceof ArrayBuffer) {
+        return output;
+    }
+
+    if (input.buffer === output.buffer) {
+        const bufferInputStart = input.byteOffset + inputOffset;
+        const bufferOutputStart = output.byteOffset + outputOffset;
+        if (bufferOutputStart < bufferInputStart - 1) {
+            const bufferOutputEnd = bufferOutputStart + outputLength;
+            if (bufferOutputEnd >= bufferInputStart) {
+                throw new Error('input and output buffer can not be overlapping');
+            }
+        }
+    }
+
+    let inputIndex = inputOffset + inputLength - 1;
+    let outputIndex = outputOffset + outputLength - 1;
+
+    if (paddingLength === 1) {
         // aaaaaabb
-        const x = array[i];
-        i += 1;
+        const x = input[inputIndex];
+        inputIndex -= 1;
+
+        output[outputIndex] = padding;
+        outputIndex -= 1;
+
+        output[outputIndex] = padding;
+        outputIndex -= 1;
+
+        output[outputIndex] = chars[((x & 0b11) << 4)];
+        outputIndex -= 1;
+
+        output[outputIndex] = chars[x >> 2];
+        outputIndex -= 1;
+    } else if (paddingLength === 2) {
         // bbbbcccc
-        const y = array[i];
-        i += 1;
+        const y = input[inputIndex];
+        inputIndex -= 1;
+
+        // aaaaaabb
+        const x = input[inputIndex];
+
+        output[outputIndex] = padding;
+        outputIndex -= 1;
+
+        output[outputIndex] = chars[((y & 0b1111) << 2)];
+        outputIndex -= 1;
+
+        output[outputIndex] = chars[((x & 0b11) << 4) | (y >> 4)];
+        outputIndex -= 1;
+
+        output[outputIndex] = chars[x >> 2];
+        outputIndex -= 1;
+    }
+
+    while (inputIndex >= inputOffset) {
         // ccdddddd
-        const z = array[i];
-        i += 1;
+        const z = input[inputIndex];
+        inputIndex -= 1;
 
-        result += chars[x >> 2];
-        result += chars[((x & 0b11) << 4) | (y >> 4)];
-        result += chars[((y & 0b1111) << 2) | (z >> 6)];
-        result += chars[z & 0b111111];
-    }
-
-    if (remainder === 1) {
-        // aaaaaabb
-        const x = array[i];
-
-        result += chars[x >> 2];
-        result += chars[((x & 0b11) << 4)];
-        result += '==';
-    } else if (remainder === 2) {
-        // aaaaaabb
-        const x = array[i];
-        i += 1;
         // bbbbcccc
-        const y = array[i];
+        const y = input[inputIndex];
+        inputIndex -= 1;
 
-        result += chars[x >> 2];
-        result += chars[((x & 0b11) << 4) | (y >> 4)];
-        result += chars[((y & 0b1111) << 2)];
-        result += '=';
+        // aaaaaabb
+        const x = input[inputIndex];
+        inputIndex -= 1;
+
+        output[outputIndex] = chars[z & 0b111111];
+        outputIndex -= 1;
+
+        output[outputIndex] = chars[((y & 0b1111) << 2) | (z >> 6)];
+        outputIndex -= 1;
+
+        output[outputIndex] = chars[((x & 0b11) << 4) | (y >> 4)];
+        outputIndex -= 1;
+
+        output[outputIndex] = chars[x >> 2];
+        outputIndex -= 1;
     }
 
-    return result;
+    if (outputType === 'ArrayBuffer') {
+        return output.buffer;
+    } else {
+        return outputLength;
+    }
 }
 
 export function decodeBase64(input: string): ArrayBuffer {

@@ -120,7 +120,7 @@ export default class AdbWebBackend implements AdbBackend {
         );
 
         const privateKey = await crypto.subtle.exportKey('pkcs8', cryptoKey);
-        window.localStorage.setItem(PrivateKeyStorageKey, encodeBase64(privateKey));
+        window.localStorage.setItem(PrivateKeyStorageKey, decodeUtf8(encodeBase64(privateKey)));
         return privateKey;
     }
 

@@ -113,7 +113,23 @@ export function modInverse(a: number, m: number) {
     return (y % m + m) % m;
 }
 
-export function calculatePublicKey(privateKey: ArrayBuffer): ArrayBuffer {
+export function calculatePublicKeyLength() {
+    return 4 + 4 + 2048 / 8 + 2048 / 8 + 4;
+}
+
+export function calculatePublicKey(
+    privateKey: ArrayBuffer
+): ArrayBuffer;
+export function calculatePublicKey(
+    privateKey: ArrayBuffer,
+    output: ArrayBuffer,
+    outputOffset?: number
+): number;
+export function calculatePublicKey(
+    privateKey: ArrayBuffer,
+    output?: ArrayBuffer,
+    outputOffset: number = 0
+): ArrayBuffer | number {
     // Android has its own public key generation algorithm
     // See https://github.com/aosp-mirror/platform_system_core/blob/e5c9bbd45381d7bd72fef232d1c6668946253ac8/libcrypto_utils/android_pubkey.cpp#L111
 
@@ -134,29 +150,50 @@ export function calculatePublicKey(privateKey: ArrayBuffer): ArrayBuffer {
     // extract `n` from private key
     const [n] = parsePrivateKey(privateKey);
 
-    const publicKey = new ArrayBuffer(4 + 4 + 2048 / 8 + 2048 / 8 + 4);
-    const publicKeyView = new DataView(publicKey);
+    let outputType: 'ArrayBuffer' | 'number';
+    const outputLength = calculatePublicKeyLength();
+    if (!output) {
+        output = new ArrayBuffer(outputLength);
+        outputType = 'ArrayBuffer';
+    } else {
+        if (output.byteLength - outputOffset < outputLength) {
+            throw new Error('output buffer is too small');
+        }
+
+        outputType = 'number';
+    }
+
+    const outputView = new DataView(output);
 
     // modulusLengthInWords
-    publicKeyView.setUint32(0, 2048 / 8 / 4, true);
+    outputView.setUint32(outputOffset, 2048 / 8 / 4, true);
+    outputOffset += 4;
 
     // Calculate `n0inv`
     // Don't know why need to multiple -1
     // Didn't exist in Android codebase
     const n0inv = modInverse(Number(BigInt.asUintN(32, n) * BigInt(-1)), 2 ** 32);
-    publicKeyView.setUint32(4, n0inv, true);
+    outputView.setUint32(outputOffset, n0inv, true);
+    outputOffset += 4;
 
     // Write n
-    setBigLE(publicKey, n, 8);
+    setBigLE(output, n, outputOffset);
+    outputOffset += 256;
 
     // Calculate rr = (2^(rsa_size)) ^ 2 mod n
     let rr = BigInt(2) ** BigInt(4096) % n;
-    setBigLE(publicKey, rr, 8 + 256);
+    setBigLE(output, rr, outputOffset);
+    outputOffset += 256;
 
     // exponent
-    publicKeyView.setUint32(8 + 256 + 256, 65537, true);
+    outputView.setUint32(outputOffset, 65537, true);
+    outputOffset += 4;
 
-    return publicKey;
+    if (outputType === 'ArrayBuffer') {
+        return output;
+    } else {
+        return outputLength;
+    }
 }
 
 // Modular exponentiation

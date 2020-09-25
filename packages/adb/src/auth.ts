@@ -1,8 +1,8 @@
 import { AutoDisposable, Disposable } from '@yume-chan/event';
 import { AdbBackend, AdbKeyIterator } from './backend';
-import { calculatePublicKey, sign } from './crypto';
+import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto';
 import { AdbCommand, AdbPacket } from './packet';
-import { encodeBase64 } from './utils';
+import { calculateBase64EncodedLength, encodeBase64 } from './utils';
 
 export enum AdbAuthType {
     Token = 1,
@@ -77,14 +77,22 @@ export class AdbPublicKeyAuthenticator implements AdbAuthenticator {
             privateKey = await this.backend.generateKey();
         }
 
-        const publicKey = calculatePublicKey(privateKey);
+        const publicKeyLength = calculatePublicKeyLength();
+        const publicKeyBase64Length = calculateBase64EncodedLength(publicKeyLength);
+
+        // ADBd needs an extra null terminator,
+        // So we allocate the buffer with one extra byte.
+        const publicKeyBuffer = new ArrayBuffer(publicKeyBase64Length + 1);
+
+        calculatePublicKey(privateKey, publicKeyBuffer);
+        encodeBase64(publicKeyBuffer, 0, publicKeyLength, publicKeyBuffer);
+
         return new AdbPacket(
             this.backend,
             AdbCommand.Auth,
             AdbAuthType.PublicKey,
             0,
-            // adbd needs the extra null character
-            encodeBase64(publicKey) + '\0'
+            publicKeyBuffer
         );
     }
 
