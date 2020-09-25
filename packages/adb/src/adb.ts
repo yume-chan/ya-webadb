@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbBufferedStream } from './buffered-stream';
+import { AdbReadableStream } from './buffered-stream';
 import { AdbCommand } from './packet';
 import { AdbPacketDispatcher, AdbStream } from './stream';
 import { AdbSync } from './sync';
@@ -80,7 +80,7 @@ export class Adb {
                             throw new Error('Version mismatch');
                         }
 
-                        this.parseBanner(packet.payloadString!);
+                        this.parseBanner(this.backend.decodeUtf8(packet.payload!));
                         resolver.resolve();
                         break;
                     case AdbCommand.Auth:
@@ -200,8 +200,8 @@ export class Adb {
 
     public async createStreamAndReadAll(service: string): Promise<string> {
         const stream = await this.createStream(service);
-        const buffered = new AdbBufferedStream(stream);
-        return buffered.readAll();
+        const readable = new AdbReadableStream(stream);
+        return readable.readAll();
     }
 
     public async dispose() {

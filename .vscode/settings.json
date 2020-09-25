@@ -13,6 +13,7 @@
         "lapo",
         "lstat",
         "mitm",
+        "opendir",
         "pluggable",
         "reimplement",
         "sendrecv",

@@ -148,7 +148,7 @@ export default withDisplayName('FileManager', ({
         try {
             let lastBreak = Date.now();
 
-            for await (const entry of sync.iterate(currentPath)) {
+            for await (const entry of sync.opendir(currentPath)) {
                 if (currentPath !== currentPathRef.current) {
                     break;
                 }
@@ -173,14 +173,11 @@ export default withDisplayName('FileManager', ({
             for (const entry of linkItems) {
                 try {
                     const followLinkPath = path.resolve(currentPath, entry.name!) + '/';
-                    console.log(followLinkPath);
                     await sync.lstat(followLinkPath);
                     items.push(toListItem(entry));
-                    console.log(entry);
                 } catch (e) {
-                    console.log(e);
                     items.push(toListItem(AdbSyncEntryResponse.create({
-                        mode: (LinuxFileType.File << 12) | entry.mode,
+                        mode: (LinuxFileType.File << 12) | entry.permission,
                         size: 0,
                         lastModifiedTime: entry.lastModifiedTime,
                         name: entry.name,

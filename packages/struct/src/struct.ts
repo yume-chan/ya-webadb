@@ -110,9 +110,6 @@ interface AddArraySubTypeFieldDescriptor<
     >;
 }
 
-export type StructAfterParsed<TResult, TAfterParsed> =
-    (this: TResult, object: TResult) => TAfterParsed;
-
 export type OmitNever<T> = Pick<T, { [K in keyof T]: [T[K]] extends [never] ? never : K }[keyof T]>;
 
 type MergeStruct<
@@ -127,8 +124,13 @@ type MergeStruct<
         TAfterParsed
     >>;
 
+type WithBackingField<T> = T & { [BackingField]: any; };
+
 export type StructExtraResult<TResult, TExtra> =
     Evaluate<Omit<TResult, keyof TExtra> & TExtra>;
+
+export type StructAfterParsed<TResult, TAfterParsed> =
+    (this: WithBackingField<TResult>, object: WithBackingField<TResult>) => TAfterParsed;
 
 export default class Struct<
     TResult extends object = {},
@@ -268,7 +270,7 @@ export default class Struct<
         };
 
     public extra<TExtra extends object>(
-        value: TExtra & ThisType<StructExtraResult<TResult, TExtra>>
+        value: TExtra & ThisType<WithBackingField<StructExtraResult<TResult, TExtra>>>
     ): Struct<
         StructExtraResult<TResult, TExtra>,
         Evaluate<Omit<TInit, keyof TExtra>>,
@@ -312,7 +314,13 @@ export default class Struct<
                     options: this.options,
                 });
             } else {
-                object[field.name] = (init as any)[field.name];
+                object[BackingField][field.name] = (init as any)[field.name];
+                Object.defineProperty(object, field.name, {
+                    configurable: true,
+                    enumerable: true,
+                    get() { return object[BackingField][field.name]; },
+                    set(value) { object[BackingField][field.name] = value; },
+                });
             }
         }
 

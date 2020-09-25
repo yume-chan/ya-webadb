@@ -42,13 +42,13 @@ export class AdbSignatureAuthenticator implements AdbAuthenticator {
         }
 
         const signature = sign(next.value, packet.payload!);
-        return new AdbPacket(
-            this.backend,
-            AdbCommand.Auth,
-            AdbAuthType.Signature,
-            0,
-            signature
-        );
+
+        return AdbPacket.create({
+            command: AdbCommand.Auth,
+            arg0: AdbAuthType.Signature,
+            arg1: 0,
+            payload: signature
+        }, this.backend);
     }
 
     public dispose() {
@@ -87,13 +87,12 @@ export class AdbPublicKeyAuthenticator implements AdbAuthenticator {
         calculatePublicKey(privateKey, publicKeyBuffer);
         encodeBase64(publicKeyBuffer, 0, publicKeyLength, publicKeyBuffer);
 
-        return new AdbPacket(
-            this.backend,
-            AdbCommand.Auth,
-            AdbAuthType.PublicKey,
-            0,
-            publicKeyBuffer
-        );
+        return AdbPacket.create({
+            command: AdbCommand.Auth,
+            arg0: AdbAuthType.PublicKey,
+            arg1: 0,
+            payload: publicKeyBuffer
+        }, this.backend);
     }
 
     public dispose() {

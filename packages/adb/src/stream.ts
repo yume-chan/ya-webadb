@@ -102,17 +102,23 @@ export class AdbPacketDispatcher extends AutoDisposable {
         arg1?: number,
         payload?: string | ArrayBuffer
     ): Promise<void> {
+        let packet: AdbPacket;
         if (arguments.length === 1) {
-            return (packetOrCommand as AdbPacket).send();
+            packet = packetOrCommand as AdbPacket;
         } else {
-            return AdbPacket.send(
-                this.backend,
-                packetOrCommand as AdbCommand,
-                arg0 as number,
-                arg1 as number,
-                payload
-            );
+            if (typeof payload === 'string') {
+                payload = this.backend.encodeUtf8(payload);
+            }
+
+            packet = AdbPacket.create({
+                command: packetOrCommand as AdbCommand,
+                arg0: arg0 as number,
+                arg1: arg1 as number,
+                payload,
+            }, this.backend);
         }
+
+        return AdbPacket.write(packet, this.backend);
     }
 
     public dispose() {
@@ -129,7 +135,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private async receiveLoop() {
         try {
             while (this._running) {
-                const packet = await AdbPacket.parse(this.backend);
+                const packet = await AdbPacket.read(this.backend);
                 switch (packet.command) {
                     case AdbCommand.OK:
                         // OKAY has two meanings

@@ -1,5 +1,5 @@
 import { registerFieldTypeDefinition } from './definition';
-import { FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType } from './descriptor';
+import { BackingField, FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType } from './descriptor';
 
 export namespace Number {
     export type TypeScriptType = number;
@@ -50,10 +50,17 @@ registerFieldTypeDefinition(undefined as unknown as Number, {
     async deserialize({ context, field, object, options }) {
         const buffer = await context.read(Number.SizeMap[field.subType]);
         const view = new DataView(buffer);
-        object[field.name] = view[Number.DataViewGetterMap[field.subType]](
+        const value = view[Number.DataViewGetterMap[field.subType]](
             0,
             options.littleEndian
         );
+        object[BackingField][field.name] = value;
+        Object.defineProperty(object, field.name, {
+            configurable: true,
+            enumerable: true,
+            get() { return object[BackingField][field.name]; },
+            set(value) { object[BackingField][field.name] = value; },
+        });
     },
 
     serialize({ dataView, field, object, offset, options }) {

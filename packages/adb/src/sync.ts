@@ -146,7 +146,7 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public async *iterate(path: string) {
+    public async *opendir(path: string) {
         await this.sendLock.wait();
 
         try {
@@ -169,9 +169,9 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public async list(path: string) {
+    public async readdir(path: string) {
         const results: AdbSyncEntryResponse[] = [];
-        for await (const entry of this.iterate(path)) {
+        for await (const entry of this.opendir(path)) {
             results.push(entry);
         }
         return results;

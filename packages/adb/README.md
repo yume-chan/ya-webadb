@@ -52,7 +52,13 @@ read(length: number): ArrayBuffer | Promise<ArrayBuffer>
 
 Read the specified amount of data from the underlying connection.
 
-The returned `ArrayBuffer` must contains exactly `length` bytes of data.
+The backend should return only the data written by another endpoint in a single operation. That meas, it should never concatenate multiple write operations to fulfill the requested `length`. Here is the reason:
+
+In normal working condition the client always knows how much data it should read and the server will always send exactly such amount of data in a single operation.
+
+One exception is that for stateless connections (including USB and TCP), if one client sent a request and died without reading the response, the data will sit in an operating system's internal buffer. When the next client, reusing the connection, want to read a response to its request, it may get that buffered response instead.
+
+The native ADB implementation tries to detect such a situation by checking length and content of the response data, so do this library. So the backend should not return such a response if possible, or follow this behavior if it can't distinguish.
 
 #### `write`
 

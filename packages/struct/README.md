@@ -13,6 +13,7 @@ Fully compatible with TypeScript.
   - [`deserialize` method](#deserialize-method)
   - [`serialize` method](#serialize-method)
 - [Extend types](#extend-types)
+  - [Backing Field](#backing-field)
   - [`FieldDescriptorBase` interface](#fielddescriptorbase-interface)
   - [`field` method](#field-method)
   - [`FieldTypeDefinition` interface](#fieldtypedefinition-interface)
@@ -363,6 +364,22 @@ The library also supports adding custom types.
 
 There are two concepts around the type plugin system.
 
+### Backing Field
+
+This library defines a common method to hide implementation details of each field types on the result object.
+
+It can be accessed with the exported `BackingField` symbol.
+
+```ts
+import { BackingField } from '@yume-chan/struct';
+
+const backingField = resultObject[BackingField];
+```
+
+The backing field is a map between field key and arbitrary data each type definition want to store. Normally type definitions will store info on the backing field and then define getter/setter on the result object to access them.
+
+It's also possible to access other fields' data if you know the data type. But it's not recommended to modify them.
+
 ### `FieldDescriptorBase` interface
 
 This interface describe one field in the struct, and will be stored in `Struct` class.
@@ -469,9 +486,28 @@ initialize?(options: {
 
 When creating or serializing an object, you can fine tune how to map fields from `init` object onto the result `object`.
 
-You can directly modify the `object` as your wish.
+You can modify the `object` as your wish, but a common practice is storing actual data on the backing field and define getter/setter on `object` to access them. Because fields may be overwritten by `extra` fields, where data on the backing field is still useful.
 
-If omitted, value from `init` will be directly set onto `object`.
+```ts
+initialize({ field, init, object }) {
+    object[BackingField][field.name] = {
+        value: init[field.name],
+        ...extraData,
+    };
+
+    Object.defineProperty(object, field.name, {
+        configurable: true,
+        enumerable: true,
+        get() { return object[BackingField][field.name].value; }
+        set(value) {
+            object[BackingField][field.name].value = value;
+            // set some other data
+        }
+    });
+}
+```
+
+If omitted, value from `init` will be set into the backing field and a pair of simple getter/setter will be defined on `object`.
 
 Some possible usages:
 
