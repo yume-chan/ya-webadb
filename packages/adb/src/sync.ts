@@ -204,7 +204,10 @@ export class AdbSync extends AutoDisposable {
         this.stream.close();
     }
 
-    private write<T extends Struct<unknown, unknown>>(type: T, value: StructInitType<T>) {
+    private write<T extends Struct<object, object, unknown>>(
+        type: T,
+        value: StructInitType<T>
+    ) {
         return this.stream.write(type.serialize(value, this.stream.backend));
     }
 }

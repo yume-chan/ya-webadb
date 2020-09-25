@@ -1,17 +1,21 @@
 import { Array, BackingField, FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType, FixedLengthArray, getFieldTypeDefinition, Number, StructDeserializationContext, StructOptions, StructSerializationContext, VariableLengthArray } from './field';
 import { Evaluate, Identity } from './utils';
 
-export type StructValueType<T extends Struct<unknown, unknown, unknown>> =
+export type StructValueType<T extends Struct<object, object, unknown>> =
     T extends { deserialize(reader: StructDeserializationContext): Promise<infer R>; } ? R : never;
 
-export type StructInitType<T extends Struct<unknown, unknown, unknown>> =
+export type StructInitType<T extends Struct<object, object, unknown>> =
     T extends { create(value: infer R, ...args: any): any; } ? R : never;
 
 export const StructDefaultOptions: Readonly<StructOptions> = {
     littleEndian: false,
 };
 
-interface AddArrayFieldDescriptor<TObject, TAfterParsed, TInit> {
+interface AddArrayFieldDescriptor<
+    TResult extends object,
+    TInit extends object,
+    TAfterParsed
+    > {
     <
         TName extends string,
         TType extends Array.SubType,
@@ -22,9 +26,9 @@ interface AddArrayFieldDescriptor<TObject, TAfterParsed, TInit> {
         options: FixedLengthArray.Options,
         typescriptType?: () => TTypeScriptType,
     ): MergeStruct<
-        TObject,
-        TAfterParsed,
+        TResult,
         TInit,
+        TAfterParsed,
         FixedLengthArray<
             TName,
             TType,
@@ -44,9 +48,9 @@ interface AddArrayFieldDescriptor<TObject, TAfterParsed, TInit> {
         options: VariableLengthArray.Options<TInit, TLengthField, TEmptyBehavior>,
         typescriptType?: () => TTypeScriptType,
     ): MergeStruct<
-        TObject,
-        TAfterParsed,
+        TResult,
         TInit,
+        TAfterParsed,
         VariableLengthArray<
             TName,
             TType,
@@ -59,9 +63,9 @@ interface AddArrayFieldDescriptor<TObject, TAfterParsed, TInit> {
 }
 
 interface AddArraySubTypeFieldDescriptor<
-    TObject,
+    TResult extends object,
+    TInit extends object,
     TAfterParsed,
-    TInit,
     TType extends Array.SubType
     > {
     <
@@ -72,9 +76,9 @@ interface AddArraySubTypeFieldDescriptor<
         options: FixedLengthArray.Options,
         typescriptType?: () => TTypeScriptType,
     ): MergeStruct<
-        TObject,
-        TAfterParsed,
+        TResult,
         TInit,
+        TAfterParsed,
         FixedLengthArray<
             TName,
             TType,
@@ -92,9 +96,9 @@ interface AddArraySubTypeFieldDescriptor<
         options: VariableLengthArray.Options<TInit, TLengthField, TEmptyBehavior>,
         _typescriptType?: () => TTypeScriptType,
     ): MergeStruct<
-        TObject,
-        TAfterParsed,
+        TResult,
         TInit,
+        TAfterParsed,
         VariableLengthArray<
             TName,
             TType,
@@ -106,22 +110,31 @@ interface AddArraySubTypeFieldDescriptor<
     >;
 }
 
-export type StructAfterParsed<TObject, TResult> =
-    (this: TObject, object: TObject) => TResult;
+export type StructAfterParsed<TResult, TAfterParsed> =
+    (this: TResult, object: TResult) => TAfterParsed;
 
 export type OmitNever<T> = Pick<T, { [K in keyof T]: [T[K]] extends [never] ? never : K }[keyof T]>;
 
-type MergeStruct<TObject, TAfterParsed, TInit, TDescriptor extends FieldDescriptorBase> =
+type MergeStruct<
+    TResult extends object,
+    TInit extends object,
+    TAfterParsed,
+    TDescriptor extends FieldDescriptorBase
+    > =
     Identity<Struct<
-        Evaluate<TObject & Exclude<TDescriptor['resultObject'], undefined>>,
-        TAfterParsed,
-        Evaluate<OmitNever<TInit & Exclude<TDescriptor['initObject'], undefined>>>
+        Evaluate<TResult & Exclude<TDescriptor['resultObject'], undefined>>,
+        Evaluate<OmitNever<TInit & Exclude<TDescriptor['initObject'], undefined>>>,
+        TAfterParsed
     >>;
 
-export type StructExtraResult<TObject, TExtra> =
-    Evaluate<Omit<TObject, keyof TExtra> & TExtra>;
+export type StructExtraResult<TResult, TExtra> =
+    Evaluate<Omit<TResult, keyof TExtra> & TExtra>;
 
-export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> {
+export default class Struct<
+    TResult extends object = {},
+    TInit extends object = {},
+    TAfterParsed = undefined,
+    > {
     public readonly options: Readonly<StructOptions>;
 
     private _size = 0;
@@ -148,7 +161,7 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
 
     public field<TDescriptor extends FieldDescriptorBase>(
         field: TDescriptor,
-    ): MergeStruct<TObject, TAfterParsed, TInit, TDescriptor> {
+    ): MergeStruct<TResult, TInit, TAfterParsed, TDescriptor> {
         const result = this.clone();
         result.fields.push(field);
 
@@ -208,7 +221,7 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         );
     }
 
-    private array: AddArrayFieldDescriptor<TObject, TAfterParsed, TInit> = (
+    private array: AddArrayFieldDescriptor<TResult, TInit, TAfterParsed> = (
         name: string,
         type: Array.SubType,
         options: FixedLengthArray.Options | VariableLengthArray.Options
@@ -231,9 +244,9 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
     };
 
     public arrayBuffer: AddArraySubTypeFieldDescriptor<
-        TObject,
-        TAfterParsed,
+        TResult,
         TInit,
+        TAfterParsed,
         Array.SubType.ArrayBuffer
     > = <TName extends string>(
         name: TName,
@@ -243,9 +256,9 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         };
 
     public string: AddArraySubTypeFieldDescriptor<
-        TObject,
-        TAfterParsed,
+        TResult,
         TInit,
+        TAfterParsed,
         Array.SubType.String
     > = <TName extends string>(
         name: TName,
@@ -255,11 +268,11 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
         };
 
     public extra<TExtra extends object>(
-        value: TExtra & ThisType<StructExtraResult<TObject, TExtra>>
+        value: TExtra & ThisType<StructExtraResult<TResult, TExtra>>
     ): Struct<
-        StructExtraResult<TObject, TExtra>,
-        TAfterParsed,
-        Evaluate<Omit<TInit, keyof TExtra>>
+        StructExtraResult<TResult, TExtra>,
+        Evaluate<Omit<TInit, keyof TExtra>>,
+        TAfterParsed
     > {
         const result = this.clone();
         result._extra = { ...result._extra, ...Object.getOwnPropertyDescriptors(value) };
@@ -267,23 +280,23 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
     }
 
     public afterParsed(
-        callback: StructAfterParsed<TObject, never>
-    ): Struct<TObject, never, TInit>;
+        callback: StructAfterParsed<TResult, never>
+    ): Struct<TResult, TInit, never>;
     public afterParsed(
-        callback?: StructAfterParsed<TObject, void>
-    ): Struct<TObject, undefined, TInit>;
-    public afterParsed<TResult>(
-        callback?: StructAfterParsed<TObject, TResult>
-    ): Struct<TObject, TResult, TInit>;
+        callback?: StructAfterParsed<TResult, void>
+    ): Struct<TResult, TInit, undefined>;
+    public afterParsed<TAfterParsed>(
+        callback?: StructAfterParsed<TResult, TAfterParsed>
+    ): Struct<TResult, TInit, TAfterParsed>;
     public afterParsed(
-        callback?: StructAfterParsed<TObject, any>
+        callback?: StructAfterParsed<TResult, any>
     ): Struct<any, any, any> {
         const result = this.clone();
         result._afterParsed = callback;
         return result;
     }
 
-    public create(init: TInit, context: StructSerializationContext): TObject {
+    public create(init: TInit, context: StructSerializationContext): TResult {
         const object: any = {
             [BackingField]: {},
         };
@@ -309,7 +322,7 @@ export default class Struct<TObject = {}, TAfterParsed = undefined, TInit = {}> 
 
     public async deserialize(
         context: StructDeserializationContext
-    ): Promise<TAfterParsed extends undefined ? TObject : TAfterParsed> {
+    ): Promise<TAfterParsed extends undefined ? TResult : TAfterParsed> {
         const object: any = {
             [BackingField]: {},
         };
