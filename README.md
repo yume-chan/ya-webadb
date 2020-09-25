@@ -16,13 +16,14 @@ See README in each package for more implementation details.
 
 This repository is a monorepo containing following packages:
 
-| Folder Name     | Package Name                 | Description                                                                                    |
-| --------------- | ---------------------------- | ---------------------------------------------------------------------------------------------- |
-| event           | `@yume-chan/event`           | Provides an EventEmitter pattern.                                                              |
-| adb             | `@yume-chan/adb`             | A platform-independent implementation of the Android Debug Bridge (ADB) protocol in TypeScript |
-| adb-backend-web | `@yume-chan/adb-backend-web` | Backend for `@yume-chan/adb` using Web technologies.                                           |
-| webpack-config  | -                            | Webpack configuration file in TypeScript, will output into `demo` folder                       |
-| demo            | -                            | A sample website demonstrating usage of `@yume-chan/adb` and `@yume-chan/adb-backend-web`      |
+| Folder Name     | Description                                                              |
+| --------------- | ------------------------------------------------------------------------ |
+| event           | Event/EventEmitter pattern.                                              |
+| adb             | TypeScript implementation of Android Debug Bridge (ADB) protocol.        |
+| adb-backend-web | Backend for `@yume-chan/adb` using Web technologies.                     |
+| struct          | C-style structure serializer and deserializer.                           |
+| webpack-config  | Webpack configuration file in TypeScript, will output into `demo` folder |
+| demo            | Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-web`.               |
 
 ## Development
 

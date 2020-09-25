@@ -1,6 +1,6 @@
 # @yume-chan/adb
 
-A platform-independent implementation of the Android Debug Bridge (ADB) protocol in TypeScript.
+TypeScript implementation of Android Debug Bridge (ADB) protocol.
 
 - [Connection](#connection)
   - [Backend](#backend)
@@ -199,15 +199,11 @@ So it's actually the [`lstat`](https://linux.die.net/man/2/lstat) system call.
 
 #### LST2
 
-*(Not Implemented)*
-
 Version 2 of the STAT command, contains more information.
 
 Supported on devices with `stat_v2` feature.
 
 #### STA2
-
-*(Not Implemented)*
 
 Basically identical to LST2, but if path is a symbolic link, the information is about the file it refers to.
 

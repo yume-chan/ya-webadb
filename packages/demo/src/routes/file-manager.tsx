@@ -179,7 +179,7 @@ export default withDisplayName('FileManager', ({
                     items.push(toListItem(AdbSyncEntryResponse.create({
                         mode: (LinuxFileType.File << 12) | entry.permission,
                         size: 0,
-                        lastModifiedTime: entry.lastModifiedTime,
+                        mtime: entry.mtime,
                         name: entry.name,
                     }, { encodeUtf8 })));
                 }
@@ -286,11 +286,11 @@ export default withDisplayName('FileManager', ({
                 }
             },
             {
-                key: 'lastModifiedTime',
+                key: 'mtime',
                 name: 'Last Modified Time',
                 minWidth: 150,
                 onRender(item: AdbSyncEntryResponse) {
-                    return new Date(item.lastModifiedTime * 1000).toLocaleString();
+                    return new Date(item.mtime * 1000).toLocaleString();
                 },
             }
         ];

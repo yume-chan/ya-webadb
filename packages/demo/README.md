@@ -1,5 +1,7 @@
 # WebADB Demo
 
+Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-web`.
+
 ## Start
 
 From root folder:

@@ -2,7 +2,7 @@
     "name": "demo",
     "version": "0.0.1",
     "private": true,
-    "description": "Demo for WebADB",
+    "description": "Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-web`.",
     "author": "Simon Chan <cnsimonchan@live.com>",
     "homepage": "https://github.com/yume-chan/ya-webadb#readme",
     "license": "MIT",

@@ -18,11 +18,7 @@ const AdbPacketWithoutPayload =
         .uint32('arg1')
         .uint32('payloadLength')
         .uint32('checksum')
-        .int32('magic')
-        .extra({
-            checksum: 0,
-            get magic() { return this.command ^ 0xFFFFFFFF; },
-        });
+        .int32('magic');
 
 const AdbPacketStruct =
     AdbPacketWithoutPayload
@@ -35,9 +31,15 @@ const AdbPacketStruct =
 
 export type AdbPacket = StructValueType<typeof AdbPacketStruct>;
 
+export type AdbPacketInit = Omit<StructInitType<typeof AdbPacketStruct>, 'checksum' | 'magic'>;
+
 export namespace AdbPacket {
-    export function create(init: StructInitType<typeof AdbPacketStruct>, backend: AdbBackend): AdbPacket {
-        return AdbPacketStruct.create(init, backend);
+    export function create(init: AdbPacketInit, backend: AdbBackend): AdbPacket {
+        return AdbPacketStruct.create({
+            ...init,
+            checksum: 0,
+            magic: init.command ^ 0xFFFFFFFF,
+        }, backend);
     }
 
     export async function read(backend: AdbBackend): Promise<AdbPacket> {

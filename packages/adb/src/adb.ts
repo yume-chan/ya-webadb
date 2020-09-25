@@ -3,6 +3,7 @@ import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
 import { AdbReadableStream } from './buffered-stream';
+import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbPacketDispatcher, AdbStream } from './stream';
 import { AdbSync } from './sync';
@@ -32,7 +33,7 @@ export class Adb {
     private _device: string | undefined;
     public get device() { return this._device; }
 
-    private _features: string[] | undefined;
+    private _features: AdbFeatures[] | undefined;
     public get features() { return this._features; }
 
     private packetDispatcher: AdbPacketDispatcher;
@@ -144,7 +145,7 @@ export class Adb {
                         this._device = value;
                         break;
                     case AdbPropKey.Features:
-                        this._features = value.split(',');
+                        this._features = value.split(',') as AdbFeatures[];
                         break;
                 }
             }
@@ -191,7 +192,7 @@ export class Adb {
 
     public async sync(): Promise<AdbSync> {
         const stream = await this.createStream('sync:');
-        return new AdbSync(stream);
+        return new AdbSync(stream, this);
     }
 
     public async createStream(service: string): Promise<AdbStream> {
