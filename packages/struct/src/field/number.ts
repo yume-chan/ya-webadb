@@ -1,33 +1,40 @@
+import { placeholder } from '../utils';
 import { registerFieldTypeDefinition } from './definition';
-import { BackingField, FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType } from './descriptor';
+import { FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType } from './descriptor';
 
 export namespace Number {
-    export type TypeScriptType = number;
+    export type TypeScriptType<T extends SubType> =
+        T extends SubType.Uint64 ? bigint : number;
 
     export const enum SubType {
         Int32,
         Uint32,
+        Uint64,
     }
 
     export const SizeMap: Record<SubType, number> = {
         [SubType.Int32]: 4,
         [SubType.Uint32]: 4,
+        [SubType.Uint64]: 8,
     };
 
     export const DataViewGetterMap = {
         [SubType.Int32]: 'getInt32',
         [SubType.Uint32]: 'getUint32',
+        [SubType.Uint64]: 'getBigUint64',
     } as const;
 
     export const DataViewSetterMap = {
         [SubType.Int32]: 'setInt32',
         [SubType.Uint32]: 'setUint32',
+        [SubType.Uint64]: 'setBigUint64',
     } as const;
 }
 
 export interface Number<
     TName extends string = string,
-    TTypeScriptType = Number.TypeScriptType,
+    TSubType extends Number.SubType = Number.SubType,
+    TTypeScriptType = Number.TypeScriptType<TSubType>,
     TOptions extends FieldDescriptorBaseOptions = FieldDescriptorBaseOptions
     > extends FieldDescriptorBase<
     TName,
@@ -37,37 +44,35 @@ export interface Number<
     > {
     type: FieldType.Number;
 
-    subType: Number.SubType;
+    subType: TSubType;
 }
 
-registerFieldTypeDefinition(undefined as unknown as Number, {
-    type: FieldType.Number,
+registerFieldTypeDefinition(
+    placeholder<Number>(),
+    undefined,
+    {
+        type: FieldType.Number,
 
-    getSize({ field }) {
-        return Number.SizeMap[field.subType];
-    },
+        getSize({ field }) {
+            return Number.SizeMap[field.subType];
+        },
 
-    async deserialize({ context, field, object, options }) {
-        const buffer = await context.read(Number.SizeMap[field.subType]);
-        const view = new DataView(buffer);
-        const value = view[Number.DataViewGetterMap[field.subType]](
-            0,
-            options.littleEndian
-        );
-        object[BackingField][field.name] = value;
-        Object.defineProperty(object, field.name, {
-            configurable: true,
-            enumerable: true,
-            get() { return object[BackingField][field.name]; },
-            set(value) { object[BackingField][field.name] = value; },
-        });
-    },
+        async deserialize({ context, field, options }) {
+            const buffer = await context.read(Number.SizeMap[field.subType]);
+            const view = new DataView(buffer);
+            const value = view[Number.DataViewGetterMap[field.subType]](
+                0,
+                options.littleEndian
+            );
+            return { value };
+        },
 
-    serialize({ dataView, field, object, offset, options }) {
-        dataView[Number.DataViewSetterMap[field.subType]](
-            offset,
-            object[field.name],
-            options.littleEndian
-        );
-    },
-});
+        serialize({ dataView, field, object, offset, options }) {
+            (dataView[Number.DataViewSetterMap[field.subType]] as any)(
+                offset,
+                object[field.name],
+                options.littleEndian
+            );
+        },
+    }
+);

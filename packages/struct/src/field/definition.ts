@@ -1,21 +1,9 @@
+import { StructDeserializationContext, StructOptions, StructSerializationContext } from '../types';
 import { FieldDescriptorBase, FieldType } from './descriptor';
-
-export interface StructSerializationContext {
-    encodeUtf8(input: string): ArrayBuffer;
-}
-
-export interface StructDeserializationContext extends StructSerializationContext {
-    decodeUtf8(buffer: ArrayBuffer): string;
-
-    read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
-}
-
-export interface StructOptions {
-    littleEndian: boolean;
-}
 
 export interface FieldTypeDefinition<
     TDescriptor extends FieldDescriptorBase = FieldDescriptorBase,
+    TInitExtra = undefined,
     > {
     type: FieldType | string;
 
@@ -24,7 +12,7 @@ export interface FieldTypeDefinition<
         field: TDescriptor;
         object: any;
         options: StructOptions;
-    }): Promise<void>;
+    }): Promise<{ value: any; extra?: TInitExtra; }>;
 
     getSize(options: {
         field: TDescriptor;
@@ -32,16 +20,17 @@ export interface FieldTypeDefinition<
     }): number;
 
     getDynamicSize?(options: {
-        context: StructSerializationContext,
-        field: TDescriptor,
-        object: any,
-        options: StructOptions,
+        context: StructSerializationContext;
+        field: TDescriptor;
+        object: any;
+        options: StructOptions;
     }): number;
 
     initialize?(options: {
         context: StructSerializationContext;
         field: TDescriptor;
-        init: any;
+        value: any;
+        extra?: TInitExtra;
         object: any;
         options: StructOptions;
     }): void;
@@ -56,17 +45,19 @@ export interface FieldTypeDefinition<
     }): void;
 }
 
-const registry: Record<number | string, FieldTypeDefinition> = {};
+const registry: Record<number | string, FieldTypeDefinition<any, any>> = {};
 
-export function getFieldTypeDefinition(type: FieldType | string): FieldTypeDefinition {
+export function getFieldTypeDefinition(type: FieldType | string): FieldTypeDefinition<any, any> {
     return registry[type];
 }
 
 export function registerFieldTypeDefinition<
     TDescriptor extends FieldDescriptorBase,
-    TDefinition extends FieldTypeDefinition<TDescriptor>
+    TInitExtra,
+    TDefinition extends FieldTypeDefinition<TDescriptor, TInitExtra>
 >(
     _field: TDescriptor,
+    _initExtra: TInitExtra,
     methods: TDefinition
 ): void {
     registry[methods.type] = methods;

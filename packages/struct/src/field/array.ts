@@ -1,4 +1,5 @@
-import { BackingField, FieldDescriptorBase, FieldDescriptorBaseOptions } from './descriptor';
+import { getBackingField, setBackingField } from '../backing-field';
+import { FieldDescriptorBase, FieldDescriptorBaseOptions } from './descriptor';
 
 export namespace Array {
     export const enum SubType {
@@ -17,14 +18,6 @@ export namespace Array {
         string?: string;
     }
 
-    export function getBackingField(object: any, name: string): BackingField {
-        return object[BackingField][name];
-    }
-
-    export function setBackingField(object: any, name: string, value: BackingField): void {
-        object[BackingField][name] = value;
-    }
-
     export function initialize(object: any, field: Array, value: BackingField): void {
         switch (field.subType) {
             case SubType.ArrayBuffer:
@@ -32,7 +25,7 @@ export namespace Array {
                     configurable: true,
                     enumerable: true,
                     get(): ArrayBuffer {
-                        return getBackingField(object, field.name).buffer!;
+                        return getBackingField<BackingField>(object, field.name).buffer!;
                     },
                     set(buffer: ArrayBuffer) {
                         setBackingField(object, field.name, { buffer });
@@ -44,7 +37,7 @@ export namespace Array {
                     configurable: true,
                     enumerable: true,
                     get(): string {
-                        return getBackingField(object, field.name).string!;
+                        return getBackingField<BackingField>(object, field.name).string!;
                     },
                     set(string: string) {
                         setBackingField(object, field.name, { string });

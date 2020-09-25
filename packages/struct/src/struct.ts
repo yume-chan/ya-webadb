@@ -1,19 +1,18 @@
-import { Array, BackingField, FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType, FixedLengthArray, getFieldTypeDefinition, Number, StructDeserializationContext, StructOptions, StructSerializationContext, VariableLengthArray } from './field';
-import { Evaluate, Identity } from './utils';
+import { BackingField, defineSimpleAccessors, setBackingField, WithBackingField } from './backing-field';
+import { Array, FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType, FieldTypeDefinition, FixedLengthArray, getFieldTypeDefinition, Number, VariableLengthArray } from './field';
+import { StructDefaultOptions, StructDeserializationContext, StructOptions, StructSerializationContext } from './types';
+import { Evaluate, Identity, OmitNever, Overwrite } from './utils';
 
-export type StructValueType<T extends Struct<object, object, unknown>> =
+export type StructValueType<T extends Struct<object, object, object, unknown>> =
     T extends { deserialize(reader: StructDeserializationContext): Promise<infer R>; } ? R : never;
 
-export type StructInitType<T extends Struct<object, object, unknown>> =
+export type StructInitType<T extends Struct<object, object, object, unknown>> =
     T extends { create(value: infer R, ...args: any): any; } ? R : never;
-
-export const StructDefaultOptions: Readonly<StructOptions> = {
-    littleEndian: false,
-};
 
 interface AddArrayFieldDescriptor<
     TResult extends object,
     TInit extends object,
+    TExtra extends object,
     TAfterParsed
     > {
     <
@@ -28,6 +27,7 @@ interface AddArrayFieldDescriptor<
     ): MergeStruct<
         TResult,
         TInit,
+        TExtra,
         TAfterParsed,
         FixedLengthArray<
             TName,
@@ -50,6 +50,7 @@ interface AddArrayFieldDescriptor<
     ): MergeStruct<
         TResult,
         TInit,
+        TExtra,
         TAfterParsed,
         VariableLengthArray<
             TName,
@@ -65,6 +66,7 @@ interface AddArrayFieldDescriptor<
 interface AddArraySubTypeFieldDescriptor<
     TResult extends object,
     TInit extends object,
+    TExtra extends object,
     TAfterParsed,
     TType extends Array.SubType
     > {
@@ -78,6 +80,7 @@ interface AddArraySubTypeFieldDescriptor<
     ): MergeStruct<
         TResult,
         TInit,
+        TExtra,
         TAfterParsed,
         FixedLengthArray<
             TName,
@@ -94,10 +97,11 @@ interface AddArraySubTypeFieldDescriptor<
         >(
         name: TName,
         options: VariableLengthArray.Options<TInit, TLengthField, TEmptyBehavior>,
-        _typescriptType?: () => TTypeScriptType,
+        _typescriptType?: TTypeScriptType,
     ): MergeStruct<
         TResult,
         TInit,
+        TExtra,
         TAfterParsed,
         VariableLengthArray<
             TName,
@@ -110,24 +114,19 @@ interface AddArraySubTypeFieldDescriptor<
     >;
 }
 
-export type OmitNever<T> = Pick<T, { [K in keyof T]: [T[K]] extends [never] ? never : K }[keyof T]>;
-
 type MergeStruct<
     TResult extends object,
     TInit extends object,
+    TExtra extends object,
     TAfterParsed,
     TDescriptor extends FieldDescriptorBase
     > =
     Identity<Struct<
         Evaluate<TResult & Exclude<TDescriptor['resultObject'], undefined>>,
         Evaluate<OmitNever<TInit & Exclude<TDescriptor['initObject'], undefined>>>,
+        TExtra,
         TAfterParsed
     >>;
-
-type WithBackingField<T> = T & { [BackingField]: any; };
-
-export type StructExtraResult<TResult, TExtra> =
-    Evaluate<Omit<TResult, keyof TExtra> & TExtra>;
 
 export type StructAfterParsed<TResult, TAfterParsed> =
     (this: WithBackingField<TResult>, object: WithBackingField<TResult>) => TAfterParsed;
@@ -135,6 +134,7 @@ export type StructAfterParsed<TResult, TAfterParsed> =
 export default class Struct<
     TResult extends object = {},
     TInit extends object = {},
+    TExtra extends object = {},
     TAfterParsed = undefined,
     > {
     public readonly options: Readonly<StructOptions>;
@@ -152,8 +152,8 @@ export default class Struct<
         this.options = { ...StructDefaultOptions, ...options };
     }
 
-    private clone(): Struct<any, any, any> {
-        const result = new Struct<any, any, any>(this.options);
+    private clone(): Struct<any, any, any, any> {
+        const result = new Struct<any, any, any, any>(this.options);
         result.fields = this.fields.slice();
         result._size = this._size;
         result._extra = this._extra;
@@ -163,7 +163,7 @@ export default class Struct<
 
     public field<TDescriptor extends FieldDescriptorBase>(
         field: TDescriptor,
-    ): MergeStruct<TResult, TInit, TAfterParsed, TDescriptor> {
+    ): MergeStruct<TResult, TInit, TExtra, TAfterParsed, TDescriptor> {
         const result = this.clone();
         result.fields.push(field);
 
@@ -176,14 +176,15 @@ export default class Struct<
 
     private number<
         TName extends string,
-        TTypeScriptType = Number.TypeScriptType
+        TSubType extends Number.SubType = Number.SubType,
+        TTypeScriptType = Number.TypeScriptType<TSubType>
     >(
         name: TName,
-        type: Number.SubType,
+        type: TSubType,
         options: FieldDescriptorBaseOptions = {},
-        _typescriptType?: () => TTypeScriptType,
+        _typescriptType?: TTypeScriptType,
     ) {
-        return this.field<Number<TName, TTypeScriptType>>({
+        return this.field<Number<TName, TSubType, TTypeScriptType>>({
             type: FieldType.Number,
             name,
             subType: type,
@@ -193,11 +194,11 @@ export default class Struct<
 
     public int32<
         TName extends string,
-        TTypeScriptType = Number.TypeScriptType
+        TTypeScriptType = Number.TypeScriptType<Number.SubType.Int32>
     >(
         name: TName,
         options: FieldDescriptorBaseOptions = {},
-        _typescriptType?: () => TTypeScriptType,
+        _typescriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
@@ -209,11 +210,11 @@ export default class Struct<
 
     public uint32<
         TName extends string,
-        TTypeScriptType = Number.TypeScriptType
+        TTypeScriptType = Number.TypeScriptType<Number.SubType.Uint32>
     >(
         name: TName,
         options: FieldDescriptorBaseOptions = {},
-        _typescriptType?: () => TTypeScriptType,
+        _typescriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
@@ -223,11 +224,27 @@ export default class Struct<
         );
     }
 
-    private array: AddArrayFieldDescriptor<TResult, TInit, TAfterParsed> = (
+    public uint64<
+        TName extends string,
+        TTypeScriptType = Number.TypeScriptType<Number.SubType.Uint64>
+    >(
+        name: TName,
+        options: FieldDescriptorBaseOptions = {},
+        _typescriptType?: TTypeScriptType,
+    ) {
+        return this.number(
+            name,
+            Number.SubType.Uint64,
+            options,
+            _typescriptType
+        );
+    }
+
+    private array: AddArrayFieldDescriptor<TResult, TInit, TExtra, TAfterParsed> = (
         name: string,
         type: Array.SubType,
         options: FixedLengthArray.Options | VariableLengthArray.Options
-    ): Struct<any, any, any> => {
+    ): Struct<any, any, any, any> => {
         if ('length' in options) {
             return this.field<FixedLengthArray>({
                 type: FieldType.FixedLengthArray,
@@ -248,6 +265,7 @@ export default class Struct<
     public arrayBuffer: AddArraySubTypeFieldDescriptor<
         TResult,
         TInit,
+        TExtra,
         TAfterParsed,
         Array.SubType.ArrayBuffer
     > = <TName extends string>(
@@ -260,6 +278,7 @@ export default class Struct<
     public string: AddArraySubTypeFieldDescriptor<
         TResult,
         TInit,
+        TExtra,
         TAfterParsed,
         Array.SubType.String
     > = <TName extends string>(
@@ -269,11 +288,12 @@ export default class Struct<
             return this.array(name, Array.SubType.String, options);
         };
 
-    public extra<TExtra extends object>(
-        value: TExtra & ThisType<WithBackingField<StructExtraResult<TResult, TExtra>>>
+    public extra<TValue extends object>(
+        value: TValue & ThisType<WithBackingField<Overwrite<Overwrite<TExtra, TValue>, TResult>>>
     ): Struct<
-        StructExtraResult<TResult, TExtra>,
-        Evaluate<Omit<TInit, keyof TExtra>>,
+        TResult,
+        TInit,
+        Overwrite<TExtra, TValue>,
         TAfterParsed
     > {
         const result = this.clone();
@@ -283,68 +303,89 @@ export default class Struct<
 
     public afterParsed(
         callback: StructAfterParsed<TResult, never>
-    ): Struct<TResult, TInit, never>;
+    ): Struct<TResult, TInit, TExtra, never>;
     public afterParsed(
         callback?: StructAfterParsed<TResult, void>
-    ): Struct<TResult, TInit, undefined>;
+    ): Struct<TResult, TInit, TExtra, undefined>;
     public afterParsed<TAfterParsed>(
         callback?: StructAfterParsed<TResult, TAfterParsed>
-    ): Struct<TResult, TInit, TAfterParsed>;
+    ): Struct<TResult, TInit, TExtra, TAfterParsed>;
     public afterParsed(
         callback?: StructAfterParsed<TResult, any>
-    ): Struct<any, any, any> {
+    ) {
         const result = this.clone();
         result._afterParsed = callback;
         return result;
     }
 
-    public create(init: TInit, context: StructSerializationContext): TResult {
+    private initializeField(
+        context: StructSerializationContext,
+        field: FieldDescriptorBase,
+        fieldTypeDefinition: FieldTypeDefinition<any, any>,
+        object: any,
+        value: any,
+        extra?: any
+    ) {
+        if (fieldTypeDefinition.initialize) {
+            fieldTypeDefinition.initialize({
+                context,
+                extra,
+                field,
+                object,
+                options: this.options,
+                value,
+            });
+        } else {
+            setBackingField(object, field.name, value);
+            defineSimpleAccessors(object, field.name);
+        }
+    }
+
+    public create(init: TInit, context: StructSerializationContext): Overwrite<TExtra, TResult> {
         const object: any = {
             [BackingField]: {},
         };
+        Object.defineProperties(object, this._extra);
 
         for (const field of this.fields) {
-            const type = getFieldTypeDefinition(field.type);
-            if (type.initialize) {
-                type.initialize({
-                    context,
-                    field,
-                    init,
-                    object,
-                    options: this.options,
-                });
-            } else {
-                object[BackingField][field.name] = (init as any)[field.name];
-                Object.defineProperty(object, field.name, {
-                    configurable: true,
-                    enumerable: true,
-                    get() { return object[BackingField][field.name]; },
-                    set(value) { object[BackingField][field.name] = value; },
-                });
-            }
+            const fieldTypeDefinition = getFieldTypeDefinition(field.type);
+            this.initializeField(
+                context,
+                field,
+                fieldTypeDefinition,
+                object,
+                (init as any)[field.name]
+            );
         }
 
-        Object.defineProperties(object, this._extra);
         return object;
     }
 
     public async deserialize(
         context: StructDeserializationContext
-    ): Promise<TAfterParsed extends undefined ? TResult : TAfterParsed> {
+    ): Promise<TAfterParsed extends undefined ? Overwrite<TExtra, TResult> : TAfterParsed> {
         const object: any = {
             [BackingField]: {},
         };
+        Object.defineProperties(object, this._extra);
 
         for (const field of this.fields) {
-            await getFieldTypeDefinition(field.type).deserialize({
+            const fieldTypeDefinition = getFieldTypeDefinition(field.type);
+            const { value, extra } = await fieldTypeDefinition.deserialize({
                 context,
                 field,
                 object,
                 options: this.options,
             });
+            this.initializeField(
+                context,
+                field,
+                fieldTypeDefinition,
+                object,
+                value,
+                extra
+            );
         }
-
-        Object.defineProperties(object, this._extra);
 
         if (this._afterParsed) {
             const result = this._afterParsed.call(object, object);

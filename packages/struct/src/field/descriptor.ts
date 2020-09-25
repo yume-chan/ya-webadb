@@ -1,5 +1,3 @@
-export const BackingField = Symbol('BackingField');
-
 export const enum FieldType {
     Number,
     FixedLengthArray,

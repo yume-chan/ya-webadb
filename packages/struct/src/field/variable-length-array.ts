@@ -1,7 +1,9 @@
-import { Identity } from '../utils';
+import { getBackingField, setBackingField } from '../backing-field';
+import { StructSerializationContext } from '../types';
+import { Identity, placeholder } from '../utils';
 import { Array } from './array';
-import { registerFieldTypeDefinition, StructSerializationContext } from './definition';
-import { BackingField, FieldDescriptorBaseOptions, FieldType } from './descriptor';
+import { registerFieldTypeDefinition } from './definition';
+import { FieldDescriptorBaseOptions, FieldType } from './descriptor';
 
 export namespace VariableLengthArray {
     export type TypeScriptTypeCanBeUndefined<
@@ -40,8 +42,11 @@ export namespace VariableLengthArray {
         emptyBehavior?: TEmptyBehavior;
     }
 
-    export function getLengthBackingField(object: any, field: VariableLengthArray): number | undefined {
-        return object[BackingField][field.options.lengthField];
+    export function getLengthBackingField(
+        object: any,
+        field: VariableLengthArray
+    ): number | undefined {
+        return getBackingField<number>(object, field.options.lengthField);
     }
 
     export function setLengthBackingField(
@@ -49,7 +54,7 @@ export namespace VariableLengthArray {
         field: VariableLengthArray,
         value: number | undefined
     ) {
-        object[BackingField][field.options.lengthField] = value;
+        setBackingField(object, field.options.lengthField, value);
     }
 
     export function initialize(
@@ -101,7 +106,7 @@ export namespace VariableLengthArray {
                     get() {
                         let value = getLengthBackingField(object, field);
                         if (value === undefined) {
-                            const backingField = Array.getBackingField(object, field.name);
+                            const backingField = getBackingField<Array.BackingField>(object, field.name);
                             const buffer = context.encodeUtf8(backingField.string!);
                             backingField.buffer = buffer;
 
@@ -115,7 +120,7 @@ export namespace VariableLengthArray {
             default:
                 throw new Error('Unknown type');
         }
-        Array.setBackingField(object, field.name, value);
+        setBackingField(object, field.name, value);
         if (value.buffer) {
             setLengthBackingField(object, field, value.buffer.byteLength);
         }
@@ -142,51 +147,71 @@ export interface VariableLengthArray<
     options: TOptions;
 }
 
-registerFieldTypeDefinition(undefined as unknown as VariableLengthArray, {
-    type: FieldType.VariableLengthArray,
+registerFieldTypeDefinition(
+    placeholder<VariableLengthArray>(),
+    placeholder<ArrayBuffer>(),
+    {
+        type: FieldType.VariableLengthArray,
 
-    async deserialize({ context, field, object }) {
-        const value: Array.BackingField = {};
-        const length = object[field.options.lengthField];
-        if (length === 0) {
-            if (field.options.emptyBehavior === VariableLengthArray.EmptyBehavior.Empty) {
-                value.buffer = new ArrayBuffer(0);
-                value.string = '';
+        async deserialize(
+            { context, field, object }
+        ): Promise<{ value: string | ArrayBuffer | undefined, extra?: ArrayBuffer; }> {
+            const length = object[field.options.lengthField];
+            if (length === 0) {
+                if (field.options.emptyBehavior === VariableLengthArray.EmptyBehavior.Empty) {
+                    switch (field.subType) {
+                        case Array.SubType.ArrayBuffer:
+                            return { value: new ArrayBuffer(0) };
+                        case Array.SubType.String:
+                            return { value: '', extra: new ArrayBuffer(0) };
+                        default:
+                            throw new Error('Unknown type');
+                    }
+                } else {
+                    return { value: undefined };
+                }
             }
 
-            VariableLengthArray.initialize(object, field, value, context);
-            return;
-        }
+            const buffer = await context.read(length);
+            switch (field.subType) {
+                case Array.SubType.ArrayBuffer:
+                    return { value: buffer };
+                case Array.SubType.String:
+                    return {
+                        value: context.decodeUtf8(buffer),
+                        extra: buffer
+                    };
+                default:
+                    throw new Error('Unknown type');
+            }
+        },
 
-        value.buffer = await context.read(length);
-        switch (field.subType) {
-            case Array.SubType.ArrayBuffer:
-                break;
-            case Array.SubType.String:
-                value.string = context.decodeUtf8(value.buffer);
-                break;
-            default:
-                throw new Error('Unknown type');
-        }
-        VariableLengthArray.initialize(object, field, value, context);
-    },
+        getSize() { return 0; },
 
-    getSize() { return 0; },
+        getDynamicSize({ field, object }) {
+            return object[field.options.lengthField];
+        },
 
-    getDynamicSize({ field, object }) {
-        return object[field.options.lengthField];
-    },
+        initialize({ context, extra, field, object, value }) {
+            const backingField: Array.BackingField = {};
+            if (typeof value === 'string') {
+                backingField.string = value;
+                if (extra) {
+                    backingField.buffer = extra;
+                }
+            } else {
+                backingField.buffer = value;
+            }
+            Array.initialize(object, field, backingField);
+            VariableLengthArray.initialize(object, field, backingField, context);
+        },
 
-    initialize({ context, field, init, object }) {
-        VariableLengthArray.initialize(object, field, {}, context);
-        object[field.name] = init[field.name];
-    },
-
-    serialize({ dataView, field, object, offset }) {
-        const backingField = Array.getBackingField(object, field.name);
-        new Uint8Array(dataView.buffer).set(
-            new Uint8Array(backingField.buffer!),
-            offset
-        );
-    },
-});
+        serialize({ dataView, field, object, offset }) {
+            const backingField = getBackingField<Array.BackingField>(object, field.name);
+            new Uint8Array(dataView.buffer).set(
+                new Uint8Array(backingField.buffer!),
+                offset
+            );
+        },
+    }
+);
