@@ -3,6 +3,7 @@ export * from './auth';
 export * from './backend';
 export * from './crypto';
 export * from './features';
+export * from './framebuffer';
 export * from './packet';
 export * from './stream';
 export * from './sync';

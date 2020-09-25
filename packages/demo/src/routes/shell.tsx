@@ -5,8 +5,7 @@ import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { SearchAddon } from 'xterm-addon-search';
 import 'xterm/css/xterm.css';
-import ResizeObserver from '../resize-observer';
-import withDisplayName from '../with-display-name';
+import { ResizeObserver, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 const containerStyle: CSSProperties = {

@@ -1,7 +1,7 @@
 import { AnimationClassNames, concatStyleSets, IStackProps, Stack } from '@fluentui/react';
 import React, { useMemo, useRef } from 'react';
 import { match, matchPath, RedirectProps, RouteProps, useLocation, useRouteMatch } from 'react-router-dom';
-import withDisplayName from './with-display-name';
+import { withDisplayName } from './utils';
 
 export const DefaultStackProps: IStackProps = {
     tokens: { childrenGap: 8, padding: 8 },

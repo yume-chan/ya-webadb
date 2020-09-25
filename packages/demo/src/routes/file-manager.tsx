@@ -7,7 +7,7 @@ import path from 'path';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
 import { ErrorDialogContext } from '../error-dialog';
-import withDisplayName from '../with-display-name';
+import { withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 initializeFileTypeIcons();

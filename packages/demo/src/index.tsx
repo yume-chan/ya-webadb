@@ -9,6 +9,7 @@ import ErrorDialogProvider from './error-dialog';
 import './index.css';
 import { CacheRoute, CacheSwitch } from './router';
 import FileManager from './routes/file-manager';
+import FrameBuffer from './routes/framebuffer';
 import Intro from './routes/intro';
 import Shell from './routes/shell';
 import TcpIp from './routes/tcp-ip';
@@ -78,6 +79,13 @@ function App(): JSX.Element | null {
             name: 'File Manager',
             children: (
                 <FileManager device={device} />
+            ),
+        },
+        {
+            path: '/framebuffer',
+            name: 'Screen Capture',
+            children: (
+                <FrameBuffer device={device} />
             ),
         },
     ], [device]);

@@ -3,7 +3,7 @@ import { Adb } from '@yume-chan/adb';
 import AdbWebBackend from '@yume-chan/adb-backend-web';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorDialogContext } from './error-dialog';
-import withDisplayName from './with-display-name';
+import { withDisplayName } from './utils';
 
 interface ConnectProps {
     device: Adb | undefined;

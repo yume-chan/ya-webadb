@@ -7,7 +7,7 @@ export type StructValueType<T extends Struct<object, object, object, unknown>> =
     T extends { deserialize(reader: StructDeserializationContext): Promise<infer R>; } ? R : never;
 
 export type StructInitType<T extends Struct<object, object, object, unknown>> =
-    T extends { create(value: infer R, ...args: any): any; } ? R : never;
+    T extends { create(value: infer R, ...args: any): any; } ? Evaluate<R> : never;
 
 interface AddArrayFieldDescriptor<
     TResult extends object,
@@ -123,7 +123,7 @@ type MergeStruct<
     > =
     Identity<Struct<
         Evaluate<TResult & Exclude<TDescriptor['resultObject'], undefined>>,
-        Evaluate<OmitNever<TInit & Exclude<TDescriptor['initObject'], undefined>>>,
+        OmitNever<TInit & Exclude<TDescriptor['initObject'], undefined>>,
         TExtra,
         TAfterParsed
     >>;

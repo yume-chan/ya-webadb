@@ -1,7 +1,7 @@
 import { Dialog, DialogFooter, DialogType, PrimaryButton } from '@fluentui/react';
 import { useBoolean } from '@uifabric/react-hooks';
 import React, { PropsWithChildren, useMemo, useState } from 'react';
-import withDisplayName from './with-display-name';
+import { withDisplayName } from './utils';
 
 export interface ErrorDialogContext {
     show(message: string): void;

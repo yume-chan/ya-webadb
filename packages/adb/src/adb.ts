@@ -2,8 +2,9 @@ import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbReadableStream } from './buffered-stream';
+import { AdbBufferedStream, AdbReadableStream } from './buffered-stream';
 import { AdbFeatures } from './features';
+import { FrameBuffer } from './framebuffer';
 import { AdbCommand } from './packet';
 import { AdbPacketDispatcher, AdbStream } from './stream';
 import { AdbSync } from './sync';
@@ -193,6 +194,16 @@ export class Adb {
     public async sync(): Promise<AdbSync> {
         const stream = await this.createStream('sync:');
         return new AdbSync(stream, this);
+    }
+
+    public async framebuffer(): Promise<FrameBuffer> {
+        const stream = await this.createStream('framebuffer:');
+        const buffered = new AdbBufferedStream(stream);
+        return await FrameBuffer.deserialize({
+            read: buffered.read.bind(buffered),
+            encodeUtf8: this.backend.encodeUtf8.bind(this.backend),
+            decodeUtf8: this.backend.decodeUtf8.bind(this.backend),
+        });
     }
 
     public async createStream(service: string): Promise<AdbStream> {

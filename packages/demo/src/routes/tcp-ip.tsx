@@ -1,7 +1,7 @@
 import { Label, MessageBar, PrimaryButton, Stack, StackItem, Text, TextField } from '@fluentui/react';
 import { useId } from '@uifabric/react-hooks';
 import React, { useCallback, useEffect, useState } from 'react';
-import withDisplayName from '../with-display-name';
+import { withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 export default withDisplayName('TcpIp', ({
