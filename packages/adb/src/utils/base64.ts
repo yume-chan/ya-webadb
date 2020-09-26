@@ -128,18 +128,13 @@ export function encodeBase64(
         }
     }
 
-    const paddingLength = inputLength % 3;
-    const outputLength = (inputLength + 3 - paddingLength) / 3 * 4;
+    const extraBytes = inputLength % 3;
+    const outputLength = (inputLength + 3 - extraBytes) / 3 * 4;
 
     let maybeOutput: ArrayBuffer | Uint8Array | undefined = arguments[outputArgumentIndex];
     let outputType: 'ArrayBuffer' | 'number';
     if (maybeOutput) {
-        let maybeOutputOffset: number | undefined = arguments[outputArgumentIndex + 1];
-        if (typeof maybeOutputOffset === 'number') {
-            outputOffset = maybeOutputOffset;
-        } else {
-            outputOffset = 0;
-        }
+        outputOffset = arguments[outputArgumentIndex + 1] ?? 0;
 
         if (maybeOutput.byteLength - outputOffset < outputLength) {
             throw new Error('output buffer is too small');
@@ -180,7 +175,7 @@ export function encodeBase64(
     let inputIndex = inputOffset + inputLength - 1;
     let outputIndex = outputOffset + outputLength - 1;
 
-    if (paddingLength === 1) {
+    if (extraBytes === 1) {
         // aaaaaabb
         const x = input[inputIndex];
         inputIndex -= 1;
@@ -196,13 +191,14 @@ export function encodeBase64(
 
         output[outputIndex] = chars[x >> 2];
         outputIndex -= 1;
-    } else if (paddingLength === 2) {
+    } else if (extraBytes === 2) {
         // bbbbcccc
         const y = input[inputIndex];
         inputIndex -= 1;
 
         // aaaaaabb
         const x = input[inputIndex];
+        inputIndex -= 1;
 
         output[outputIndex] = padding;
         outputIndex -= 1;
