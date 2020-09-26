@@ -14,7 +14,11 @@ export const RouteStackProps: IStackProps = {
     styles: { root: { overflow: 'auto' } },
 };
 
-export const CacheRoute = withDisplayName('CacheRoute', (props: RouteProps) => {
+export interface CacheRouteProps extends RouteProps {
+    noCache?: boolean;
+}
+
+export const CacheRoute = withDisplayName('CacheRoute', (props: CacheRouteProps) => {
     const match = useRouteMatch(props);
 
     const everMatched = useRef(!!match);
@@ -29,6 +33,10 @@ export const CacheRoute = withDisplayName('CacheRoute', (props: RouteProps) => {
             { root: { display: match ? 'flex' : 'none' } }
         ),
     }), [!!match]);
+
+    if (props.noCache && !match) {
+        return null;
+    }
 
     if (!everMatched.current) {
         return null;

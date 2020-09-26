@@ -24,6 +24,8 @@ interface RouteInfo {
     name: string;
 
     children: JSX.Element | null;
+
+    noCache?: boolean;
 }
 
 function App(): JSX.Element | null {
@@ -84,6 +86,7 @@ function App(): JSX.Element | null {
         {
             path: '/framebuffer',
             name: 'Screen Capture',
+            noCache: true,
             children: (
                 <FrameBuffer device={device} />
             ),
@@ -119,7 +122,10 @@ function App(): JSX.Element | null {
                     <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden' } }}>
                         <CacheSwitch>
                             {routes.map<React.ReactElement>(route => (
-                                <CacheRoute exact={route.exact} path={route.path}>
+                                <CacheRoute
+                                    exact={route.exact}
+                                    path={route.path}
+                                    noCache={route.noCache}>
                                     {route.children}
                                 </CacheRoute>
                             ))}
