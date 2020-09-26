@@ -2,11 +2,10 @@ import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbBufferedStream, AdbReadableStream } from './buffered-stream';
 import { AdbFeatures } from './features';
 import { FrameBuffer } from './framebuffer';
 import { AdbCommand } from './packet';
-import { AdbPacketDispatcher, AdbStream } from './stream';
+import { AdbBufferedStream, AdbPacketDispatcher, AdbReadableStream, AdbStream } from './stream';
 import { AdbSync } from './sync';
 
 export enum AdbPropKey {
@@ -52,7 +51,7 @@ export class Adb {
         const features = [
             'shell_v2',
             'cmd',
-            'stat_v2',
+            AdbFeatures.StatV2,
             'ls_v2',
             'fixed_push_mkdir',
             'apex',

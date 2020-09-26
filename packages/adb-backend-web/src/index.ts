@@ -133,7 +133,15 @@ export default class AdbWebBackend implements AdbBackend {
     }
 
     public async write(buffer: ArrayBuffer): Promise<void> {
-        await this._device.transferOut(this._outEndpointNumber, buffer);
+        try {
+            await this._device.transferOut(this._outEndpointNumber, buffer);
+        } catch (e) {
+            if (e instanceof Error && e.name === 'NotFoundError') {
+                this.onDisconnectedEvent.fire();
+            }
+
+            throw e;
+        }
     }
 
     public async read(length: number): Promise<ArrayBuffer> {

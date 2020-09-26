@@ -1,9 +1,8 @@
 import { AutoDisposable } from '@yume-chan/event';
 import { placeholder, Struct, StructDeserializationContext, StructInitType, StructValueType } from '@yume-chan/struct';
 import { Adb } from './adb';
-import { AdbBufferedStream } from './buffered-stream';
 import { AdbFeatures } from './features';
-import { AdbStream } from './stream';
+import { AdbBufferedStream, AdbStream } from './stream';
 import { AutoResetEvent } from './utils';
 
 export enum AdbSyncRequestId {
@@ -135,7 +134,7 @@ export const AdbSyncDataResponse =
     new Struct({ littleEndian: true })
         .uint32('dataLength')
         .arrayBuffer('data', { lengthField: 'dataLength' })
-        .extra({ id: AdbSyncResponseId.Data } as const);
+        .extra({ id: AdbSyncResponseId.Data as const });
 
 export interface AdbSyncDoneResponseDeserializeContext extends StructDeserializationContext {
     size: number;

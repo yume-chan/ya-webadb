@@ -50,7 +50,7 @@ export default withDisplayName('FrameBuffer', ({
 
     return (
         <>
-            <canvas ref={canvasRef} />
+            <canvas ref={canvasRef} style={{ maxWidth: '100%' }} />
         </>
     );
 });

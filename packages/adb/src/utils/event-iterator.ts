@@ -7,7 +7,7 @@ const IteratorReturnUndefinedResult: IteratorReturnResult<void> = {
 };
 Object.freeze(IteratorReturnUndefinedResult);
 
-export type EventIteratorDestroyer<T> = (items: T[]) => void;
+export type EventIteratorDestroyer<_T> = (() => void) | undefined;
 
 export class EventIteratorState<T> {
     public pullQueue: PromiseResolver<IteratorResult<T>>[] = [];
@@ -29,8 +29,6 @@ export class EventIteratorState<T> {
 
 export class EventIteratorController<T> {
     private state: EventIteratorState<T>;
-
-    public maxConsumerCount = Infinity;
 
     public highWaterMark: number = 10;
 
@@ -62,10 +60,11 @@ export class EventIteratorController<T> {
 
     public end(): void {
         this.state.ended = true;
-        while (this.state.pullQueue.length) {
-            this.state.pullQueue.shift()!.resolve(IteratorReturnUndefinedResult);
+        let item: PromiseResolver<IteratorResult<T, any>> | undefined;
+        while (item = this.state.pullQueue.shift()) {
+            item.resolve(IteratorReturnUndefinedResult);
         }
-        this.state.cleanup(this.state.pushQueue.map(([value]) => value));
+        this.state.cleanup?.();
     }
 }
 
@@ -73,43 +72,88 @@ export interface EventIteratorInitializer<T> {
     (controller: EventIteratorController<T>): EventIteratorDestroyer<T>;
 }
 
+export interface EventIteratorOptions {
+    maxConsumerCount: number;
+
+    autoCleanup: boolean;
+
+    autoStart: boolean;
+}
+
+export const EventIteratorDefaultOptions: EventIteratorOptions = {
+    maxConsumerCount: Infinity,
+    autoCleanup: true,
+    autoStart: true,
+};
+
 export class EventIterable<T> implements AsyncIterable<T> {
     private initializer: EventIteratorInitializer<T>;
 
-    public constructor(initializer: EventIteratorInitializer<T>) {
+    private options: EventIteratorOptions;
+
+    private consumerCount: number = 0;
+
+    private state: EventIteratorState<T>;
+
+    private controller: EventIteratorController<T>;
+
+    private started = false;
+
+    public constructor(
+        initializer: EventIteratorInitializer<T>,
+        options?: Partial<EventIteratorOptions>
+    ) {
         this.initializer = initializer;
+        this.options = { ...EventIteratorDefaultOptions, ...options };
+
+        this.state = new EventIteratorState<T>();
+        this.controller = new EventIteratorController<T>(this.state);
+
+        if (this.options.autoStart) {
+            this.state.cleanup = this.initializer(this.controller);
+        }
     }
 
+    private next = () => {
+        const { state, controller } = this;
+
+        if (state.pushQueue.length) {
+            const [value, size] = state.pushQueue.shift()!;
+            state.waterMark -= size;
+            if (state.pendingLowWaterEvent &&
+                state.waterMark <= controller.lowWaterMark) {
+                state.lowWaterEvent.fire();
+            }
+            return Promise.resolve({ done: false, value });
+        }
+
+        if (state.ended) {
+            return Promise.resolve(IteratorReturnUndefinedResult);
+        }
+
+        const resolver = new PromiseResolver<IteratorResult<T>>();
+        state.pullQueue.push(resolver);
+        return resolver.promise;
+    };
+
     public [Symbol.asyncIterator](): AsyncIterator<T> {
-        const state = new EventIteratorState<T>();
-        const controller = new EventIteratorController<T>(state);
-        state.cleanup = this.initializer(controller);
+        if (this.consumerCount === this.options.maxConsumerCount) {
+            throw new Error('Max consumer count exceeded');
+        }
+        this.consumerCount += 1;
+
+        if (!this.options.autoStart && !this.started) {
+            this.state.cleanup = this.initializer(this.controller);
+            this.started = true;
+        }
+
         return {
-            next() {
-                if (state.pushQueue.length) {
-                    const [value, size] = state.pushQueue.shift()!;
-                    state.waterMark -= size;
-                    if (state.pendingLowWaterEvent &&
-                        state.waterMark <= controller.lowWaterMark) {
-                        state.lowWaterEvent.fire();
-                    }
-                    return Promise.resolve({ done: false, value });
+            next: this.next,
+            return: () => {
+                this.consumerCount -= 1;
+                if (this.consumerCount === 0 && this.options.autoCleanup) {
+                    this.controller.end();
                 }
-
-                if (state.ended) {
-                    return Promise.resolve(IteratorReturnUndefinedResult);
-                }
-
-                if (state.pullQueue.length < controller.maxConsumerCount) {
-                    const resolver = new PromiseResolver<IteratorResult<T>>();
-                    state.pullQueue.push(resolver);
-                    return resolver.promise;
-                }
-
-                return Promise.reject(new Error('Max consumer count exceeded'));
-            },
-            return() {
-                controller.end();
                 return Promise.resolve(IteratorReturnUndefinedResult);
             },
         };

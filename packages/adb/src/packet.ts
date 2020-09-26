@@ -1,6 +1,6 @@
 import { BackingField, Struct, StructInitType, StructValueType } from '@yume-chan/struct';
 import { AdbBackend } from './backend';
-import { BufferedStream } from './buffered-stream';
+import { BufferedStream } from './stream';
 
 export enum AdbCommand {
     Auth = 0x48545541,    // 'AUTH'
@@ -69,6 +69,7 @@ export namespace AdbPacket {
     }
 
     export async function write(packet: AdbPacket, backend: AdbBackend): Promise<void> {
+        // Write payload separately to avoid an extra copy
         await backend.write(AdbPacketWithoutPayload.serialize(packet, backend));
         if (packet.payload) {
             await backend.write(packet.payload);
