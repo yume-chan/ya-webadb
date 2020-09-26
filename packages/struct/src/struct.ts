@@ -288,7 +288,12 @@ export default class Struct<
             return this.array(name, Array.SubType.String, options);
         };
 
-    public extra<TValue extends object>(
+    public extra<TValue extends Record<
+        Exclude<
+            keyof TValue,
+            Exclude<keyof TValue, keyof TResult>>,
+        never
+    >>(
         value: TValue & ThisType<WithBackingField<Overwrite<Overwrite<TExtra, TValue>, TResult>>>
     ): Struct<
         TResult,
