@@ -9,6 +9,8 @@ const classNames = mergeStyleSets({
     },
 });
 
+const BoldTextStyles = { root: { fontWeight: '600' } };
+
 interface CopyLinkProps {
     href: string;
 }
@@ -56,7 +58,7 @@ export default withDisplayName('Intro', () => {
                 The latest version of Google Chrome (or Microsoft Edge) is recommended for best compatibility.
             </Text>
 
-            <Text block styles={{ root: { fontWeight: '600' } }}>
+            <Text block styles={BoldTextStyles}>
                 Windows user?
             </Text>
             <Text block>
@@ -65,7 +67,7 @@ export default withDisplayName('Intro', () => {
                 .
             </Text>
 
-            <Text block styles={{ root: { fontWeight: '600' } }}>
+            <Text block styles={BoldTextStyles}>
                 Got "Unable to claim interface" error?
             </Text>
             <Text block>
@@ -73,7 +75,7 @@ export default withDisplayName('Intro', () => {
                 1. Make sure ADB server is not running (run `adb kill-server` to stop it).<br />
                 2. Make sure no other Android management tools are running
             </Text>
-            <Text block styles={{ root: { fontWeight: '600' } }}>
+            <Text block styles={BoldTextStyles}>
                 Got "Access denied" error?
             </Text>
             <Text block>
@@ -82,7 +84,7 @@ export default withDisplayName('Intro', () => {
                     https://bugs.chromium.org/p/chromium/issues/detail?id=1127206
                 </Link>
             </Text>
-            <Text block styles={{ root: { fontWeight: '600' } }}>
+            <Text block styles={BoldTextStyles}>
                 Can I connect my device wirelessly (ADB over WiFi)?
             </Text>
             <Text block>

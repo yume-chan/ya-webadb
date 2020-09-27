@@ -36,14 +36,13 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly errorEvent = this.addDisposable(new EventEmitter<Error>());
     public get onError() { return this.errorEvent.event; }
 
-    private _running = true;
+    private _running = false;
     public get running() { return this._running; }
 
     public constructor(backend: AdbBackend) {
         super();
 
         this.backend = backend;
-        this.receiveLoop();
     }
 
     private async receiveLoop() {
@@ -129,7 +128,8 @@ export class AdbPacketDispatcher extends AutoDisposable {
         const [localId] = this.initializers.add<number>();
         this.initializers.resolve(localId, undefined);
 
-        const controller = new AdbStreamController(localId, packet.arg0, this);
+        const remoteId = packet.arg0;
+        const controller = new AdbStreamController(localId, remoteId, this);
         const stream = new AdbStream(controller);
 
         const args: AdbStreamCreatedEventArgs = {
@@ -141,10 +141,15 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
         if (args.handled) {
             this.streams.set(localId, controller);
-            await this.sendPacket(AdbCommand.OK, localId, packet.arg0);
+            await this.sendPacket(AdbCommand.OK, localId, remoteId);
         } else {
-            await this.sendPacket(AdbCommand.Close, 0, packet.arg0);
+            await this.sendPacket(AdbCommand.Close, 0, remoteId);
         }
+    }
+
+    public start() {
+        this._running = true;
+        this.receiveLoop();
     }
 
     public async createStream(service: string): Promise<AdbStream> {

@@ -3,9 +3,13 @@ import { Event } from '@yume-chan/event';
 export type AdbKeyIterator = Iterator<ArrayBuffer> | AsyncIterator<ArrayBuffer>;
 
 export interface AdbBackend {
+    readonly serial: string;
+
     readonly name: string | undefined;
 
     readonly onDisconnected: Event<void>;
+
+    connect?(): void | Promise<void>;
 
     iterateKeys(): AdbKeyIterator;
 

@@ -1,3 +1,4 @@
+import { StructDeserializationContext } from '@yume-chan/struct';
 import { AdbStreamBase } from './controller';
 import { AdbReadableStream } from './readable-stream';
 import { AdbStream } from './stream';
@@ -60,7 +61,9 @@ export class BufferedStream<T extends Stream> {
     }
 }
 
-export class AdbBufferedStream extends BufferedStream<AdbReadableStream> implements AdbStreamBase {
+export class AdbBufferedStream
+    extends BufferedStream<AdbReadableStream>
+    implements AdbStreamBase, StructDeserializationContext {
     public get backend() { return this.stream.backend; }
 
     public get localId() { return this.stream.localId; }
@@ -73,5 +76,13 @@ export class AdbBufferedStream extends BufferedStream<AdbReadableStream> impleme
 
     public write(data: ArrayBuffer): Promise<void> {
         return this.stream.write(data);
+    }
+
+    public decodeUtf8(buffer: ArrayBuffer): string {
+        return this.backend.decodeUtf8(buffer);
+    }
+
+    public encodeUtf8(input: string): ArrayBuffer {
+        return this.backend.encodeUtf8(input);
     }
 }

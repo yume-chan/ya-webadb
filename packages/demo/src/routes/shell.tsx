@@ -8,10 +8,13 @@ import 'xterm/css/xterm.css';
 import { ResizeObserver, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
-const containerStyle: CSSProperties = {
+const ResizeObserverStyle: CSSProperties = {
     width: '100%',
     height: '100%',
 };
+
+const UpIconProps = { iconName: 'ChevronUp' };
+const DownIconProps = { iconName: 'ChevronDown' };
 
 export default withDisplayName('Shell', ({
     device,
@@ -99,21 +102,21 @@ export default withDisplayName('Shell', ({
                     <StackItem>
                         <IconButton
                             disabled={!findKeyword}
-                            iconProps={{ iconName: 'ChevronUp' }}
+                            iconProps={UpIconProps}
                             onClick={findPrevious}
                         />
                     </StackItem>
                     <StackItem>
                         <IconButton
                             disabled={!findKeyword}
-                            iconProps={{ iconName: 'ChevronDown' }}
+                            iconProps={DownIconProps}
                             onClick={findNext}
                         />
                     </StackItem>
                 </Stack>
             </StackItem>
             <StackItem grow styles={{ root: { minHeight: 0 } }}>
-                <ResizeObserver style={containerStyle} onResize={handleResize}>
+                <ResizeObserver style={ResizeObserverStyle} onResize={handleResize}>
                     <div ref={handleContainerRef} style={{ height: '100%' }} />
                 </ResizeObserver>
             </StackItem>

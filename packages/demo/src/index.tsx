@@ -12,7 +12,8 @@ import FileManager from './routes/file-manager';
 import FrameBuffer from './routes/framebuffer';
 import Intro from './routes/intro';
 import Shell from './routes/shell';
-import TcpIp from './routes/tcp-ip';
+import TcpIp from './routes/tcpip';
+import { CommonStackTokens } from './styles';
 
 initializeIcons();
 
@@ -105,7 +106,7 @@ function App(): JSX.Element | null {
                 <Separator />
             </StackItem>
             <StackItem grow styles={{ root: { minHeight: 0 } }}>
-                <Stack horizontal verticalFill tokens={{ childrenGap: 8 }}>
+                <Stack horizontal verticalFill tokens={CommonStackTokens}>
                     <StackItem>
                         <Nav
                             styles={{ root: { width: 250 } }}

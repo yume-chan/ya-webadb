@@ -34,7 +34,7 @@ export namespace VariableLengthArray {
 
     export interface Options<
         TInit = object,
-        TLengthField extends KeyOfType<TInit, number> = any,
+        TLengthField extends KeyOfType<TInit, number | string> = any,
         TEmptyBehavior extends EmptyBehavior = EmptyBehavior
         > extends FieldDescriptorBaseOptions {
         lengthField: TLengthField;
@@ -131,7 +131,7 @@ export interface VariableLengthArray<
     TName extends string = string,
     TType extends Array.SubType = Array.SubType,
     TInit = object,
-    TLengthField extends VariableLengthArray.KeyOfType<TInit, number> = any,
+    TLengthField extends VariableLengthArray.KeyOfType<TInit, number | string> = any,
     TEmptyBehavior extends VariableLengthArray.EmptyBehavior = VariableLengthArray.EmptyBehavior,
     TTypeScriptType = VariableLengthArray.TypeScriptType<TType, TEmptyBehavior>,
     TOptions extends VariableLengthArray.Options<TInit, TLengthField, TEmptyBehavior> = VariableLengthArray.Options<TInit, TLengthField, TEmptyBehavior>
@@ -156,7 +156,11 @@ registerFieldTypeDefinition(
         async deserialize(
             { context, field, object }
         ): Promise<{ value: string | ArrayBuffer | undefined, extra?: ArrayBuffer; }> {
-            const length = object[field.options.lengthField];
+            let length = object[field.options.lengthField];
+            if (typeof length === 'string') {
+                length = Number.parseInt(length, 10);
+            }
+
             if (length === 0) {
                 if (field.options.emptyBehavior === VariableLengthArray.EmptyBehavior.Empty) {
                     switch (field.subType) {

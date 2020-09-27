@@ -39,7 +39,7 @@ interface AddArrayFieldDescriptor<
     <
         TName extends string,
         TType extends Array.SubType,
-        TLengthField extends VariableLengthArray.KeyOfType<TInit, number>,
+        TLengthField extends VariableLengthArray.KeyOfType<TInit, number | string>,
         TEmptyBehavior extends VariableLengthArray.EmptyBehavior,
         TTypeScriptType = VariableLengthArray.TypeScriptType<TType, TEmptyBehavior>
         >(
@@ -91,7 +91,7 @@ interface AddArraySubTypeFieldDescriptor<
 
     <
         TName extends string,
-        TLengthField extends VariableLengthArray.KeyOfType<TInit, number>,
+        TLengthField extends VariableLengthArray.KeyOfType<TInit, number | string>,
         TEmptyBehavior extends VariableLengthArray.EmptyBehavior,
         TTypeScriptType = VariableLengthArray.TypeScriptType<TType, TEmptyBehavior>
         >(

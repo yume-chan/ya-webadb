@@ -1,9 +1,11 @@
-import { DefaultButton, Dialog, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
-import { Adb } from '@yume-chan/adb';
-import AdbWebBackend from '@yume-chan/adb-backend-web';
+import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, TooltipHost } from '@fluentui/react';
+import { Adb, AdbBackend } from '@yume-chan/adb';
+import AdbWebBackend, { AdbWebBackendWatcher } from '@yume-chan/adb-backend-web';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorDialogContext } from './error-dialog';
 import { withDisplayName } from './utils';
+
+const DropdownStyles = { dropdown: { width: 300 } };
 
 interface ConnectProps {
     device: Adb | undefined;
@@ -17,12 +19,66 @@ export default withDisplayName('Connect', ({
 }: ConnectProps): JSX.Element | null => {
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
+    const [backendOptions, setBackendOptions] = useState<IDropdownOption[]>([]);
+    const [selectedBackend, setSelectedBackend] = useState<AdbBackend | undefined>();
+    useEffect(() => {
+        async function refresh() {
+            const backendList = await AdbWebBackend.getDevices();
+
+            const options = backendList.map(item => ({
+                key: item.serial,
+                text: `${item.serial} ${item.name ? `(${item.name})` : ''}`,
+                data: item,
+            }));
+            setBackendOptions(options);
+
+            setSelectedBackend(old => {
+                if (old && backendList.some(item => item.serial === old.serial)) {
+                    return old;
+                }
+                return backendList[0];
+            });
+        };
+
+        refresh();
+
+        const watcher = new AdbWebBackendWatcher(refresh);
+        return () => watcher.dispose();
+    }, []);
+
+    const handleSelectedBackendChange = (
+        _e: React.FormEvent<HTMLDivElement>,
+        option?: IDropdownOption,
+    ) => {
+        setSelectedBackend(option?.data as AdbBackend);
+    };
+
+    const requestAccess = useCallback(async () => {
+        const backend = await AdbWebBackend.requestDevice();
+        if (backend) {
+            setBackendOptions(list => {
+                for (const item of list) {
+                    if (item.key === backend.serial) {
+                        setSelectedBackend(item.data);
+                        return list;
+                    }
+                }
+
+                setSelectedBackend(backend);
+                return [...list, {
+                    key: backend.serial,
+                    text: `${backend.serial} ${backend.name ? `(${backend.name})` : ''}`,
+                    data: backend,
+                }];
+            });
+        }
+    }, []);
+
     const [connecting, setConnecting] = useState(false);
     const connect = useCallback(async () => {
         try {
-            const backend = await AdbWebBackend.pickDevice();
-            if (backend) {
-                const device = new Adb(backend);
+            if (selectedBackend) {
+                const device = new Adb(selectedBackend);
                 try {
                     setConnecting(true);
                     await device.connect();
@@ -37,7 +93,7 @@ export default withDisplayName('Connect', ({
         } finally {
             setConnecting(false);
         }
-    }, [onDeviceChange]);
+    }, [selectedBackend, onDeviceChange]);
     const disconnect = useCallback(async () => {
         try {
             await device!.dispose();
@@ -53,18 +109,42 @@ export default withDisplayName('Connect', ({
     }, [device, onDeviceChange]);
 
     return (
-        <>
-            <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8, padding: 8 }}>
-                {!device && <StackItem>
-                    <PrimaryButton text="Connect" onClick={connect} />
-                </StackItem>}
-                {device && <StackItem>
+        <Stack
+            horizontal
+            verticalAlign="end"
+            tokens={{ childrenGap: 8, padding: 8 }}
+        >
+            <Dropdown
+                disabled={!!device || backendOptions.length === 0}
+                label="Available devices"
+                placeholder="No available devices"
+                options={backendOptions}
+                styles={DropdownStyles}
+                selectedKey={selectedBackend?.serial}
+                onChange={handleSelectedBackendChange}
+            />
+
+            {!device ? (
+                <>
+                    <PrimaryButton
+                        text="Connect"
+                        disabled={!selectedBackend}
+                        primary={!!selectedBackend}
+                        onClick={connect}
+                    />
+                    <TooltipHost
+                        content="WebADB can't connect to anything without your explicit permission."
+                    >
+                        <DefaultButton
+                            text="Add new device"
+                            primary={!selectedBackend}
+                            onClick={requestAccess}
+                        />
+                    </TooltipHost>
+                </>
+            ) : (
                     <DefaultButton text="Disconnect" onClick={disconnect} />
-                </StackItem>}
-                <StackItem>
-                    {device && `Connected to ${device.name}`}
-                </StackItem>
-            </Stack>
+                )}
 
             <Dialog
                 hidden={!connecting}
@@ -75,6 +155,6 @@ export default withDisplayName('Connect', ({
             >
                 <ProgressIndicator />
             </Dialog>
-        </>
+        </Stack>
     );
 });

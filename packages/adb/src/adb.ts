@@ -2,6 +2,7 @@ import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
+import { AdbReverseCommand, AdbTcpIpCommand } from './commands';
 import { AdbFeatures } from './features';
 import { FrameBuffer } from './framebuffer';
 import { AdbCommand } from './packet';
@@ -16,6 +17,8 @@ export enum AdbPropKey {
 }
 
 export class Adb {
+    private packetDispatcher: AdbPacketDispatcher;
+
     private backend: AdbBackend;
     public get onDisconnected() { return this.backend.onDisconnected; }
 
@@ -36,29 +39,38 @@ export class Adb {
     private _features: AdbFeatures[] | undefined;
     public get features() { return this._features; }
 
-    private packetDispatcher: AdbPacketDispatcher;
+    public readonly tcpip: AdbTcpIpCommand;
+
+    public readonly reverse: AdbReverseCommand;
 
     public constructor(backend: AdbBackend) {
         this.backend = backend;
+
         this.packetDispatcher = new AdbPacketDispatcher(backend);
+
+        this.tcpip = new AdbTcpIpCommand(this);
+        this.reverse = new AdbReverseCommand(this.packetDispatcher);
 
         backend.onDisconnected(this.dispose, this);
     }
 
     public async connect(authenticators = AdbDefaultAuthenticators) {
+        await this.backend.connect?.();
+        this.packetDispatcher.start();
+
         const version = 0x01000001;
 
         const features = [
-            'shell_v2',
-            'cmd',
-            AdbFeatures.StatV2,
+            'shell_v2', // 9
+            'cmd', // 7
+            AdbFeatures.StatV2, // 5
             'ls_v2',
-            'fixed_push_mkdir',
-            'apex',
-            'abb',
-            'fixed_push_symlink_timestamp',
-            'abb_exec',
-            'remount_shell',
+            'fixed_push_mkdir', // 4
+            'apex', // 2
+            'abb', // 8
+            'fixed_push_symlink_timestamp', // 1
+            'abb_exec', // 6
+            'remount_shell', // 3
             'track_app',
             'sendrecv_v2',
             'sendrecv_v2_brotli',
@@ -163,33 +175,6 @@ export class Adb {
         }
     }
 
-    public async getDaemonTcpAddresses(): Promise<string[]> {
-        const propAddr = (await this.shell('getprop', 'service.adb.listen_addrs')).trim();
-        if (propAddr) {
-            return propAddr.split(',');
-        }
-
-        let port = (await this.shell('getprop', 'service.adb.tcp.port')).trim();
-        if (port) {
-            return [`0.0.0.0:${port}`];
-        }
-
-        port = (await this.shell('getprop', 'persist.adb.tcp.port')).trim();
-        if (port) {
-            return [`0.0.0.0:${port}`];
-        }
-
-        return [];
-    }
-
-    public setDaemonTcpPort(port = 5555): Promise<string> {
-        return this.createStreamAndReadAll(`tcpip:${port}`);
-    }
-
-    public disableDaemonTcp(): Promise<string> {
-        return this.createStreamAndReadAll('usb:');
-    }
-
     public async sync(): Promise<AdbSync> {
         const stream = await this.createStream('sync:');
         return new AdbSync(stream, this);
@@ -198,11 +183,7 @@ export class Adb {
     public async framebuffer(): Promise<FrameBuffer> {
         const stream = await this.createStream('framebuffer:');
         const buffered = new AdbBufferedStream(stream);
-        return await FrameBuffer.deserialize({
-            read: buffered.read.bind(buffered),
-            encodeUtf8: this.backend.encodeUtf8.bind(this.backend),
-            decodeUtf8: this.backend.decodeUtf8.bind(this.backend),
-        });
+        return FrameBuffer.deserialize(buffered);
     }
 
     public async createStream(service: string): Promise<AdbStream> {

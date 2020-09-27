@@ -1,6 +1,7 @@
 import { Label, MessageBar, PrimaryButton, Stack, StackItem, Text, TextField } from '@fluentui/react';
 import { useId } from '@uifabric/react-hooks';
 import React, { useCallback, useEffect, useState } from 'react';
+import { CommonStackTokens } from '../styles';
 import { withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
@@ -19,7 +20,7 @@ export default withDisplayName('TcpIp', ({
             return;
         }
 
-        const result = await device.getDaemonTcpAddresses();
+        const result = await device.tcpip.getAddresses();
         setTcpAddresses(result);
     }, [device]);
 
@@ -30,8 +31,7 @@ export default withDisplayName('TcpIp', ({
             return;
         }
 
-        const result = await device.setDaemonTcpPort(Number.parseInt(tcpPortValue, 10));
-        console.log(result);
+        await device.tcpip.setPort(Number.parseInt(tcpPortValue, 10));
     }, [device, tcpPortValue]);
 
     const disableTcp = useCallback(async () => {
@@ -39,8 +39,7 @@ export default withDisplayName('TcpIp', ({
             return;
         }
 
-        const result = await device.disableDaemonTcp();
-        console.log(result);
+        await device.tcpip.disable();
     }, [device]);
 
     return (
@@ -55,7 +54,7 @@ export default withDisplayName('TcpIp', ({
                     <Text>Your device will disconnect after changing ADB over WiFi config.</Text>
                 </MessageBar>
             </StackItem>
-            <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
+            <Stack horizontal verticalAlign="center" tokens={CommonStackTokens}>
                 <StackItem>
                     <PrimaryButton text="Update Status" disabled={!device} onClick={queryTcpAddress} />
                 </StackItem>
@@ -66,7 +65,7 @@ export default withDisplayName('TcpIp', ({
                             : 'Disabled')}
                 </StackItem>
             </Stack>
-            <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
+            <Stack horizontal verticalAlign="center" tokens={CommonStackTokens}>
                 <StackItem>
                     <Label htmlFor={tcpPortInputId}>Port: </Label>
                 </StackItem>
