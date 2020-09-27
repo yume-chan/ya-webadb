@@ -1,11 +1,11 @@
-import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, TooltipHost } from '@fluentui/react';
+import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem, TooltipHost } from '@fluentui/react';
 import { Adb, AdbBackend } from '@yume-chan/adb';
 import AdbWebBackend, { AdbWebBackendWatcher } from '@yume-chan/adb-backend-web';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorDialogContext } from './error-dialog';
 import { withDisplayName } from './utils';
 
-const DropdownStyles = { dropdown: { width: 300 } };
+const DropdownStyles = { dropdown: { width: 250 - 8 } };
 
 interface ConnectProps {
     device: Adb | undefined;
@@ -110,9 +110,7 @@ export default withDisplayName('Connect', ({
 
     return (
         <Stack
-            horizontal
-            verticalAlign="end"
-            tokens={{ childrenGap: 8, padding: 8 }}
+            tokens={{ childrenGap: 8, padding: '0 0 8px 8px' }}
         >
             <Dropdown
                 disabled={!!device || backendOptions.length === 0}
@@ -120,28 +118,35 @@ export default withDisplayName('Connect', ({
                 placeholder="No available devices"
                 options={backendOptions}
                 styles={DropdownStyles}
+                dropdownWidth={300}
                 selectedKey={selectedBackend?.serial}
                 onChange={handleSelectedBackendChange}
             />
 
             {!device ? (
-                <>
-                    <PrimaryButton
-                        text="Connect"
-                        disabled={!selectedBackend}
-                        primary={!!selectedBackend}
-                        onClick={connect}
-                    />
-                    <TooltipHost
-                        content="WebADB can't connect to anything without your explicit permission."
-                    >
-                        <DefaultButton
-                            text="Add new device"
-                            primary={!selectedBackend}
-                            onClick={requestAccess}
+                <Stack horizontal tokens={{ childrenGap: 8 }}>
+                    <StackItem grow shrink>
+                        <PrimaryButton
+                            text="Connect"
+                            disabled={!selectedBackend}
+                            primary={!!selectedBackend}
+                            styles={{ root: { width: '100%' } }}
+                            onClick={connect}
                         />
-                    </TooltipHost>
-                </>
+                    </StackItem>
+                    <StackItem grow shrink>
+                        <TooltipHost
+                            content="WebADB can't connect to anything without your explicit permission."
+                        >
+                            <DefaultButton
+                                text="Add device"
+                                primary={!selectedBackend}
+                                styles={{ root: { width: '100%' } }}
+                                onClick={requestAccess}
+                            />
+                        </TooltipHost>
+                    </StackItem>
+                </Stack>
             ) : (
                     <DefaultButton text="Disconnect" onClick={disconnect} />
                 )}

@@ -5,7 +5,7 @@ import { CommonStackTokens } from '../styles';
 import { withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
-export default withDisplayName('TcpIp', ({
+export const TcpIp = withDisplayName('TcpIp', ({
     device
 }: RouteProps): JSX.Element | null => {
     const [tcpPort, setTcpAddresses] = useState<string[] | undefined>();

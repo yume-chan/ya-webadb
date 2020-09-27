@@ -1,4 +1,4 @@
-import { Nav, Separator, Stack, StackItem, Text } from '@fluentui/react';
+import { Nav, Stack, StackItem } from '@fluentui/react';
 import { initializeIcons } from '@uifabric/icons';
 import { Adb } from '@yume-chan/adb';
 import React, { useMemo, useState } from 'react';
@@ -8,12 +8,7 @@ import Connect from './connect';
 import ErrorDialogProvider from './error-dialog';
 import './index.css';
 import { CacheRoute, CacheSwitch } from './router';
-import FileManager from './routes/file-manager';
-import FrameBuffer from './routes/framebuffer';
-import Intro from './routes/intro';
-import Shell from './routes/shell';
-import TcpIp from './routes/tcpip';
-import { CommonStackTokens } from './styles';
+import { FileManager, FrameBuffer, Intro, Shell, TcpIp } from './routes';
 
 initializeIcons();
 
@@ -96,18 +91,28 @@ function App(): JSX.Element | null {
 
     return (
         <Stack verticalFill>
-            <StackItem tokens={{ padding: 8 }}>
-                <Text variant="xxLarge">WebADB Demo</Text>
-            </StackItem>
             <StackItem>
-                <Connect device={device} onDeviceChange={setDevice} />
+                <div
+                    style={{
+                        padding: '4px 0',
+                        fontSize: 20,
+                        textAlign: 'center',
+                        borderBottom: '1px solid rgb(243, 242, 241)',
+                    }}
+                >
+                    WebADB Demo
+                </div>
             </StackItem>
-            <StackItem>
-                <Separator />
-            </StackItem>
-            <StackItem grow styles={{ root: { minHeight: 0 } }}>
-                <Stack horizontal verticalFill tokens={CommonStackTokens}>
-                    <StackItem>
+            <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden' } }}>
+                <Stack horizontal verticalFill>
+                    <StackItem styles={{
+                        root: {
+                            paddingRight: 8,
+                            borderRight: '1px solid rgb(243, 242, 241)',
+                        }
+                    }}>
+                        <Connect device={device} onDeviceChange={setDevice} />
+
                         <Nav
                             styles={{ root: { width: 250 } }}
                             groups={[{
@@ -120,7 +125,7 @@ function App(): JSX.Element | null {
                             selectedKey={location.pathname}
                         />
                     </StackItem>
-                    <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden' } }}>
+                    <StackItem grow>
                         <CacheSwitch>
                             {routes.map<React.ReactElement>(route => (
                                 <CacheRoute

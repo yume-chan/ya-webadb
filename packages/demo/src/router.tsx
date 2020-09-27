@@ -4,7 +4,7 @@ import { match, matchPath, RedirectProps, RouteProps, useLocation, useRouteMatch
 import { withDisplayName } from './utils';
 
 export const DefaultStackProps: IStackProps = {
-    tokens: { childrenGap: 8, padding: 8 },
+    tokens: { childrenGap: 8, padding: 20 },
     verticalFill: true,
 };
 

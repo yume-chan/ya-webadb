@@ -44,7 +44,7 @@ const CopyLink = withDisplayName('CopyLink', ({
     );
 });
 
-export default withDisplayName('Intro', () => {
+export const Intro = withDisplayName('Intro', () => {
     return (
         <>
             <Text block>

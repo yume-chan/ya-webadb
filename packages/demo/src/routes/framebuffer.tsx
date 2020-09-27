@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
-export default withDisplayName('FrameBuffer', ({
+export const FrameBuffer = withDisplayName('FrameBuffer', ({
     device
 }: RouteProps): JSX.Element | null => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);

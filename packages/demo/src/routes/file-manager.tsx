@@ -1,8 +1,7 @@
-import { Breadcrumb, concatStyleSets, ContextualMenu, DetailsListLayoutMode, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, Selection, ShimmeredDetailsList, StackItem } from '@fluentui/react';
+import { Breadcrumb, CommandBar, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, Selection, ShimmeredDetailsList, StackItem } from '@fluentui/react';
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@uifabric/file-type-icons';
 import { useConst } from '@uifabric/react-hooks';
 import { AdbSyncEntryResponse, LinuxFileType } from '@yume-chan/adb';
-import { encodeUtf8 } from '@yume-chan/adb-backend-web';
 import path from 'path';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
@@ -91,7 +90,7 @@ function createReadableStreamFromBufferIterator(
     });
 }
 
-export default withDisplayName('FileManager', ({
+export const FileManager = withDisplayName('FileManager', ({
     device,
 }: RouteProps): JSX.Element | null => {
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
@@ -107,7 +106,7 @@ export default withDisplayName('FileManager', ({
             return {
                 key: part,
                 text: segment,
-                onClick: (e, item) => {
+                onClick: (_e, item) => {
                     if (!item) {
                         return;
                     }
@@ -117,7 +116,7 @@ export default withDisplayName('FileManager', ({
         });
         list.unshift({
             key: '/',
-            text: '/',
+            text: 'Device',
             onClick: () => setCurrentPath('/'),
         });
         list[list.length - 1].isCurrentItem = true;
@@ -171,18 +170,12 @@ export default withDisplayName('FileManager', ({
             }
 
             for (const entry of linkItems) {
-                try {
-                    const followLinkPath = path.resolve(currentPath, entry.name!) + '/';
-                    await sync.lstat(followLinkPath);
-                    items.push(toListItem(entry));
-                } catch (e) {
-                    items.push(toListItem(AdbSyncEntryResponse.create({
-                        mode: (LinuxFileType.File << 12) | entry.permission,
-                        size: 0,
-                        mtime: entry.mtime,
-                        name: entry.name,
-                    }, { encodeUtf8 })));
+                if (!await sync.isDirectory(path.resolve(currentPath, entry.name!))) {
+                    entry.mode = (LinuxFileType.File << 12) | entry.permission;
+                    entry.size = 0;
+                    toListItem(entry);
                 }
+                items.push(toListItem(entry));
             }
 
             setItems(items);
@@ -296,7 +289,7 @@ export default withDisplayName('FileManager', ({
         ];
 
         for (const item of list) {
-            item.onColumnClick = (e, column) => {
+            item.onColumnClick = (_e, column) => {
                 if (sortKey === column.key) {
                     setSortDescendent(!sortDescending);
                 } else {
@@ -318,7 +311,7 @@ export default withDisplayName('FileManager', ({
     const previewImage = useCallback(async (path: string) => {
         const sync = await device!.sync();
         try {
-            const readableStream = createReadableStreamFromBufferIterator(sync.receive(path));
+            const readableStream = createReadableStreamFromBufferIterator(sync.read(path));
             const response = new Response(readableStream);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
@@ -350,129 +343,165 @@ export default withDisplayName('FileManager', ({
         }
     }, [currentPath, previewImage]);
 
-    const selection = useConst(() => new Selection());
+    const [selectedItems, setSelectedItems] = useState<ListItem[]>([]);
+    const selection = useConst(() => new Selection({
+        onSelectionChanged() {
+            const selectedItems = selection.getSelection() as ListItem[];
+            setSelectedItems(selectedItems);
+        },
+    }));
 
-    const [contextMenuItems, setContextMenuItems] = useState<IContextualMenuItem[]>([]);
+    const [menuItems, setMenuItems] = useState<IContextualMenuItem[]>([]);
+    useEffect(() => {
+        let result: IContextualMenuItem[] = [];
+
+        switch (selectedItems.length) {
+            case 0:
+                // result.push({
+                //     key: 'upload',
+                //     text: 'Upload',
+                //     iconProps: { iconName: 'Upload' },
+                //     disabled: !device,
+                // });
+                break;
+            // @ts-expect-error
+            case 1:
+                if (selectedItems[0].type === LinuxFileType.File) {
+                    result.push({
+                        key: 'download',
+                        text: 'Download',
+                        iconProps: { iconName: 'Download' },
+                        onClick() {
+                            (async () => {
+                                const sync = await device!.sync();
+                                try {
+                                    const itemPath = path.resolve(currentPath, selectedItems[0].name!);
+                                    const readableStream = createReadableStreamFromBufferIterator(sync.read(itemPath));
+
+                                    const writeableStream = StreamSaver.createWriteStream(selectedItems[0].name!, {
+                                        size: selectedItems[0].size,
+                                    });
+                                    await readableStream.pipeTo(writeableStream);
+                                } catch (e) {
+                                    showErrorDialog(e.message);
+                                } finally {
+                                    sync.dispose();
+                                }
+                            })();
+                            return false;
+                        },
+                    });
+                }
+            default:
+                result.push({
+                    key: 'delete',
+                    text: 'Delete',
+                    iconProps: { iconName: 'Delete' },
+                    onClick() {
+                        (async () => {
+                            try {
+                                for (const item of selectedItems) {
+                                    const output = await device!.shell('rm', '-rf', `"${path.resolve(currentPath, item.name!)}"`);
+                                    if (output) {
+                                        showErrorDialog(output);
+                                        return;
+                                    }
+                                }
+                            } catch (e) {
+                                showErrorDialog(e.message);
+                            } finally {
+                                load();
+                            }
+                        })();
+                        return false;
+                    }
+                });
+                break;
+        }
+
+        setMenuItems(result);
+    }, [selectedItems, device, currentPath]);
+
     const [contextMenuTarget, setContextMenuTarget] = useState<MouseEvent>();
     const showContextMenu = useCallback((
-        item?: AdbSyncEntryResponse,
-        index?: number,
+        _item?: AdbSyncEntryResponse,
+        _index?: number,
         e?: Event
     ) => {
         if (!e) {
             return false;
         }
 
-        const selectedItems = selection.getSelection() as ListItem[];
-
-        let contextMenuItems: IContextualMenuItem[] = [];
-
-        if (selectedItems.length === 1 &&
-            selectedItems[0].type === LinuxFileType.File) {
-            contextMenuItems.push({
-                key: 'download',
-                text: 'Download',
-                onClick() {
-                    (async () => {
-                        const sync = await device!.sync();
-                        try {
-                            const itemPath = path.resolve(currentPath, selectedItems[0].name!);
-                            const readableStream = createReadableStreamFromBufferIterator(sync.receive(itemPath));
-
-                            const writeableStream = StreamSaver.createWriteStream(selectedItems[0].name!, {
-                                size: selectedItems[0].size,
-                            });
-                            await readableStream.pipeTo(writeableStream);
-                        } catch (e) {
-                            showErrorDialog(e.message);
-                        } finally {
-                            sync.dispose();
-                        }
-                    })();
-                    return false;
-                },
-            });
+        if (menuItems.length) {
+            setContextMenuTarget(e as MouseEvent);
         }
 
-        contextMenuItems.push({
-            key: 'delete',
-            text: 'Delete',
-            onClick() {
-                (async () => {
-                    try {
-                        for (const item of selectedItems) {
-                            const output = await device!.shell('rm', '-rf', `"${path.resolve(currentPath, item.name!)}"`);
-                            if (output) {
-                                showErrorDialog(output);
-                                return;
-                            }
-                        }
-                    } catch (e) {
-                        showErrorDialog(e.message);
-                    } finally {
-                        load();
-                    }
-                })();
-                return false;
-            }
-        });
-
-        if (!contextMenuItems.length) {
-            return false;
-        }
-
-        setContextMenuItems(contextMenuItems);
-        setContextMenuTarget(e as MouseEvent);
         return false;
-    }, [currentPath, device]);
+    }, [device, menuItems]);
     const hideContextMenu = React.useCallback(() => {
         setContextMenuTarget(undefined);
     }, []);
 
     return (
-        <MarqueeSelection selection={selection}>
-            {device && (
-                <StackItem>
-                    <Breadcrumb items={breadcrumbItems} />
-                </StackItem>
-            )}
-
+        <>
             <StackItem
-                grow
-                styles={{ root: { minHeight: 0 } }}
+                styles={{
+                    root: {
+                        margin: '-20px -20px 0 -20px',
+                        borderBottom: '1px solid rgb(243, 242, 241)',
+                    }
+                }}
             >
-                <ShimmeredDetailsList
-                    componentRef={listRef}
-                    items={sortedList}
-                    columns={columns}
-                    setKey={currentPath}
-                    selection={selection}
-                    layoutMode={DetailsListLayoutMode.justified}
-                    enableShimmer={loading && items.length === 0}
-                    onItemInvoked={handleItemInvoked}
-                    onItemContextMenu={showContextMenu}
-                    onRenderDetailsHeader={renderDetailsHeader}
-                    usePageCache
+                <CommandBar
+                    items={menuItems}
                 />
             </StackItem>
 
-            {previewUrl && (
-                <Layer>
-                    <Overlay onClick={hidePreview}>
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src={previewUrl} style={{ maxWidth: '100%', maxHeight: '100%' }} />
-                        </div>
-                    </Overlay>
-                </Layer>
-            )}
+            <StackItem grow styles={{
+                root: {
+                    margin: '-8px -20px -20px -20px',
+                    padding: '8px 20px 20px 20px',
+                    minHeight: 0,
+                    overflow: 'auto',
+                }
+            }}>
+                <MarqueeSelection selection={selection}>
+                    <Breadcrumb items={breadcrumbItems} />
 
-            <ContextualMenu
-                items={contextMenuItems}
-                hidden={!contextMenuTarget}
-                directionalHint={DirectionalHint.bottomLeftEdge}
-                target={contextMenuTarget}
-                onDismiss={hideContextMenu}
-            />
-        </MarqueeSelection>
+                    <ShimmeredDetailsList
+                        componentRef={listRef}
+                        items={sortedList}
+                        columns={columns}
+                        setKey={currentPath}
+                        selection={selection}
+                        layoutMode={DetailsListLayoutMode.justified}
+                        enableShimmer={loading && items.length === 0}
+                        onItemInvoked={handleItemInvoked}
+                        onItemContextMenu={showContextMenu}
+                        onRenderDetailsHeader={renderDetailsHeader}
+                        usePageCache
+                    />
+                </MarqueeSelection>
+
+                {previewUrl && (
+                    <Layer>
+                        <Overlay onClick={hidePreview}>
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <img src={previewUrl} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                            </div>
+                        </Overlay>
+                    </Layer>
+                )}
+
+                <ContextualMenu
+                    items={menuItems}
+                    hidden={!contextMenuTarget}
+                    directionalHint={DirectionalHint.bottomLeftEdge}
+                    target={contextMenuTarget}
+                    onDismiss={hideContextMenu}
+                    contextualMenuItemAs={props => <ContextualMenuItem {...props} hasIcons={false} />}
+                />
+            </StackItem>
+        </>
     );
 });

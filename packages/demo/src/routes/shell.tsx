@@ -16,7 +16,7 @@ const ResizeObserverStyle: CSSProperties = {
 const UpIconProps = { iconName: 'ChevronUp' };
 const DownIconProps = { iconName: 'ChevronDown' };
 
-export default withDisplayName('Shell', ({
+export const Shell = withDisplayName('Shell', ({
     device,
 }: RouteProps): JSX.Element | null => {
     const [findKeyword, setFindKeyword] = useState('');
