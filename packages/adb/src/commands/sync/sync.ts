@@ -1,9 +1,9 @@
 import { AutoDisposable } from '@yume-chan/event';
 import { placeholder, Struct, StructDeserializationContext, StructInitType, StructValueType } from '@yume-chan/struct';
-import { Adb } from './adb';
-import { AdbFeatures } from './features';
-import { AdbBufferedStream, AdbStream } from './stream';
-import { AutoResetEvent } from './utils';
+import { Adb } from '../../adb';
+import { AdbFeatures } from '../../features';
+import { AdbBufferedStream, AdbStream } from '../../stream';
+import { AutoResetEvent } from '../../utils';
 
 export enum AdbSyncRequestId {
     List = 'LIST',
@@ -27,22 +27,18 @@ export enum AdbSyncResponseId {
     Fail = 'FAIL',
 }
 
-export type AdbSyncNumberRequestId =
-    AdbSyncRequestId.Done;
-
-export type AdbSyncStringRequestId =
-    AdbSyncRequestId.List |
-    AdbSyncRequestId.Send |
-    AdbSyncRequestId.Lstat |
-    AdbSyncRequestId.Stat |
-    AdbSyncRequestId.Lstat2 |
-    AdbSyncRequestId.Receive;
-
-const AdbSyncStringRequest =
+const AdbSyncNumberRequest =
     new Struct({ littleEndian: true })
         .string('id', { length: 4 })
-        .uint32('valueLength')
-        .string('value', { lengthField: 'valueLength' });
+        .uint32('arg');
+
+const AdbSyncStringRequest =
+    AdbSyncNumberRequest
+        .string('data', { lengthField: 'arg' });
+
+const AdbSyncBufferRequest =
+    AdbSyncNumberRequest
+        .arrayBuffer('data', { lengthField: 'arg' });
 
 // https://github.com/python/cpython/blob/4e581d64b8aff3e2eda99b12f080c877bb78dfca/Lib/stat.py#L36
 export enum LinuxFileType {
@@ -191,22 +187,98 @@ async function readResponse(stream: AdbBufferedStream, size: number) {
     throw new Error('Unexpected response id');
 }
 
-export class AdbSync extends AutoDisposable {
-    private stream: AdbBufferedStream;
+export function chunkArray(
+    value: ArrayLike<number>,
+    size: number
+): Generator<ArrayBuffer, void, void> {
+    return chunkArrayBuffer(new Uint8Array(value).buffer, size);
+}
 
-    private adb: Adb;
+export function* chunkArrayBuffer(
+    value: ArrayBufferLike,
+    size: number
+): Generator<ArrayBuffer, void, void> {
+    if (value.byteLength <= size) {
+        return yield value;
+    }
+
+    for (let i = 0; i < value.byteLength; i += size) {
+        yield value.slice(i, i + size);
+    }
+}
+
+export async function* chunkAsyncIterable(
+    value: AsyncIterable<ArrayBuffer>,
+    size: number
+): AsyncGenerator<ArrayBuffer, void, void> {
+    let result = new Uint8Array(size);
+    let index = 0;
+    for await (let buffer of value) {
+        // `result` has some data, `result + buffer` is enough
+        if (index !== 0 && index + buffer.byteLength >= size) {
+            const remainder = size - index;
+            result.set(new Uint8Array(buffer, 0, remainder), index);
+            yield result.buffer;
+
+            result = new Uint8Array(size);
+            index = 0;
+
+            if (buffer.byteLength > remainder) {
+                // `buffer` still has some data
+                buffer = buffer.slice(remainder);
+            } else {
+                continue;
+            }
+        }
+
+        // `result` is empty, `buffer` alone is enough
+        if (buffer.byteLength >= size) {
+            let remainder = false;
+            for (const chunk of chunkArrayBuffer(buffer, size)) {
+                if (chunk.byteLength === size) {
+                    yield chunk;
+                }
+
+                // `buffer` still has some data
+                remainder = true;
+                buffer = chunk;
+            }
+
+            if (!remainder) {
+                continue;
+            }
+        }
+
+        // `result` has some data but `result + buffer` is still not enough
+        // or after previous steps `buffer` still has some data
+        result.set(new Uint8Array(buffer), index);
+        index += buffer.byteLength;
+    }
+}
+
+export class AdbSync extends AutoDisposable {
+    protected adb: Adb;
+
+    protected stream: AdbBufferedStream;
+
+    protected sendLock = this.addDisposable(new AutoResetEvent());
 
     public get supportStat(): boolean {
         return this.adb.features!.includes(AdbFeatures.StatV2);
     }
 
-    private sendLock = this.addDisposable(new AutoResetEvent());
-
-    public constructor(stream: AdbStream, adb: Adb) {
+    public constructor(adb: Adb, stream: AdbStream) {
         super();
 
-        this.stream = new AdbBufferedStream(stream);
         this.adb = adb;
+        this.stream = new AdbBufferedStream(stream);
+    }
+
+    protected send<T extends Struct<object, object, object, unknown>>(
+        type: T,
+        value: StructInitType<T>
+    ) {
+        return this.stream.write(type.serialize(value, this.stream.backend));
     }
 
     public async lstat(path: string): Promise<AdbSyncLstatResponse | AdbSyncStatResponse> {
@@ -227,7 +299,7 @@ export class AdbSync extends AutoDisposable {
                 responseId = AdbSyncResponseId.Lstat;
             }
 
-            await this.write(AdbSyncStringRequest, { id: requestId, value: path });
+            await this.send(AdbSyncStringRequest, { id: requestId, data: path });
             const response = await readResponse(this.stream, responseType.size);
             if (response.id !== responseId) {
                 throw new Error('Unexpected response id');
@@ -246,7 +318,7 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            await this.write(AdbSyncStringRequest, { id: AdbSyncRequestId.Stat, value: path });
+            await this.send(AdbSyncStringRequest, { id: AdbSyncRequestId.Stat, data: path });
             const response = await readResponse(this.stream, AdbSyncStatResponse.size);
             if (response.id !== AdbSyncResponseId.Stat) {
                 throw new Error('Unexpected response id');
@@ -257,11 +329,24 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
+    public async isDirectory(path: string): Promise<boolean> {
+        await this.sendLock.wait();
+
+        try {
+            await this.stat(path + '/');
+            return true;
+        } catch (e) {
+            return false;
+        } finally {
+            this.sendLock.notify();
+        }
+    }
+
     public async *opendir(path: string) {
         await this.sendLock.wait();
 
         try {
-            await this.write(AdbSyncStringRequest, { id: AdbSyncRequestId.List, value: path });
+            await this.send(AdbSyncStringRequest, { id: AdbSyncRequestId.List, data: path });
 
             while (true) {
                 const response = await readResponse(this.stream, AdbSyncEntryResponse.size);
@@ -288,11 +373,11 @@ export class AdbSync extends AutoDisposable {
         return results;
     }
 
-    public async *receive(path: string): AsyncGenerator<ArrayBuffer, void, void> {
+    public async *read(path: string): AsyncGenerator<ArrayBuffer, void, void> {
         await this.sendLock.wait();
 
         try {
-            await this.write(AdbSyncStringRequest, { id: AdbSyncRequestId.Receive, value: path });
+            await this.send(AdbSyncStringRequest, { id: AdbSyncRequestId.Receive, data: path });
             while (true) {
                 const response = await readResponse(this.stream, AdbSyncDataResponse.size);
                 switch (response.id) {
@@ -310,15 +395,61 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
+    public async write(
+        path: string,
+        file: AsyncIterable<ArrayBuffer>,
+        mode?: number,
+        mtime?: number,
+    ): Promise<void>;
+    public async write(
+        path: string,
+        file: ArrayLike<number>,
+        mode?: number,
+        mtime?: number,
+    ): Promise<void>;
+    public async write(
+        path: string,
+        file: AsyncIterable<ArrayBuffer> | ArrayLike<number>,
+        mode = 0o777,
+        mtime = Date.now(),
+    ): Promise<void> {
+        await this.sendLock.wait();
+        const packetSize = 64 * 1024;
+
+        try {
+            const pathAndMode = `${path},${mode.toString(8)}`;
+            await this.send(AdbSyncStringRequest, {
+                id: AdbSyncRequestId.Send,
+                data: pathAndMode
+            });
+
+            let chunkReader: Iterable<ArrayBuffer> | AsyncIterable<ArrayBuffer>;
+            if ('length' in file) {
+                chunkReader = chunkArray(file, packetSize);
+            } else if ('byteLength' in file) {
+                chunkReader = chunkArrayBuffer(file, packetSize);
+            } else {
+                chunkReader = chunkAsyncIterable(file, packetSize);
+            }
+
+            for await (const buffer of chunkReader) {
+                await this.send(AdbSyncBufferRequest, {
+                    id: AdbSyncRequestId.Data,
+                    data: buffer,
+                });
+            }
+
+            await this.send(AdbSyncNumberRequest, {
+                id: AdbSyncRequestId.Send,
+                arg: mtime
+            });
+        } finally {
+            this.sendLock.notify();
+        }
+    }
+
     public dispose() {
         super.dispose();
         this.stream.close();
-    }
-
-    private write<T extends Struct<object, object, object, unknown>>(
-        type: T,
-        value: StructInitType<T>
-    ) {
-        return this.stream.write(type.serialize(value, this.stream.backend));
     }
 }
