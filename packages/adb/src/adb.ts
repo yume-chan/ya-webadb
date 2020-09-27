@@ -2,12 +2,10 @@ import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbReverseCommand, AdbTcpIpCommand } from './commands';
+import { AdbFrameBuffer, AdbReverseCommand, AdbSync, AdbTcpIpCommand } from './commands';
 import { AdbFeatures } from './features';
-import { FrameBuffer } from './framebuffer';
 import { AdbCommand } from './packet';
 import { AdbBufferedStream, AdbPacketDispatcher, AdbReadableStream, AdbStream } from './stream';
-import { AdbSync } from './sync';
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -175,15 +173,20 @@ export class Adb {
         }
     }
 
-    public async sync(): Promise<AdbSync> {
-        const stream = await this.createStream('sync:');
-        return new AdbSync(stream, this);
+    public async getProp(key: string): Promise<string> {
+        const output = await this.shell('getprop', key);
+        return output.trim();
     }
 
-    public async framebuffer(): Promise<FrameBuffer> {
+    public async sync(): Promise<AdbSync> {
+        const stream = await this.createStream('sync:');
+        return new AdbSync(this, stream);
+    }
+
+    public async framebuffer(): Promise<AdbFrameBuffer> {
         const stream = await this.createStream('framebuffer:');
         const buffered = new AdbBufferedStream(stream);
-        return FrameBuffer.deserialize(buffered);
+        return AdbFrameBuffer.deserialize(buffered);
     }
 
     public async createStream(service: string): Promise<AdbStream> {

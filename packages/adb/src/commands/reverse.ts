@@ -1,9 +1,7 @@
 import { AutoDisposable } from '@yume-chan/event';
 import { Struct } from '@yume-chan/struct';
-import { Adb } from '../adb';
 import { AdbPacket } from '../packet';
-import { AdbBufferedStream, AdbPacketDispatcher, AdbStream } from '../stream';
-import { AdbCommandBase } from './base';
+import { AdbBufferedStream, AdbIncomingStreamEventArgs, AdbPacketDispatcher, AdbStream } from '../stream';
 
 export interface AdbReverseHandler {
     onStream(packet: AdbPacket, stream: AdbStream): void;
@@ -29,29 +27,32 @@ const AdbReverseErrorResponse =
         });
 
 export class AdbReverseCommand extends AutoDisposable {
-    private portToHandlerMap = new Map<number, AdbReverseHandler>();
+    protected portToHandlerMap = new Map<number, AdbReverseHandler>();
 
-    private devicePortToPortMap = new Map<number, number>();
+    protected devicePortToPortMap = new Map<number, number>();
 
-    private dispatcher: AdbPacketDispatcher;
+    protected dispatcher: AdbPacketDispatcher;
 
-    private listening = false;
+    protected listening = false;
 
     public constructor(dispatcher: AdbPacketDispatcher) {
         super();
+
         this.dispatcher = dispatcher;
+        this.addDisposable(this.dispatcher.onStream(this.handleStream, this));
     }
 
-    public async list(): Promise<AdbForwardListener[]> {
-        const stream = await this.dispatcher.createStream('reverse:list-forward');
-        const buffered = new AdbBufferedStream(stream);
+    protected handleStream(e: AdbIncomingStreamEventArgs): void {
+        if (e.handled) {
+            return;
+        }
 
-        const response = await AdbReverseStringResponse.deserialize(buffered);
-
-        return response.content!.split('\n').map(line => {
-            const [deviceSerial, localName, remoteName] = line.split(' ');
-            return { deviceSerial, localName, remoteName };
-        });
+        const address = this.dispatcher.backend.decodeUtf8(e.packet.payload!);
+        const port = Number.parseInt(address.substring(4));
+        if (this.portToHandlerMap.has(port)) {
+            this.portToHandlerMap.get(port)!.onStream(e.packet, e.stream);
+            e.handled = true;
+        }
     }
 
     public async add(
@@ -59,21 +60,6 @@ export class AdbReverseCommand extends AutoDisposable {
         handler: AdbReverseHandler,
         devicePort: number = 0,
     ): Promise<number> {
-        if (!this.listening) {
-            this.addDisposable(this.dispatcher.onStream(e => {
-                if (e.handled) {
-                    return;
-                }
-
-                const address = this.dispatcher.backend.decodeUtf8(e.packet.payload!);
-                const port = Number.parseInt(address.substring(4));
-                if (this.portToHandlerMap.has(port)) {
-                    this.portToHandlerMap.get(port)!.onStream(e.packet, e.stream);
-                    e.handled = true;
-                }
-            }));
-        }
-
         const stream = await this.dispatcher.createStream(`reverse:forward:tcp:${devicePort};tcp:${port}`);
         const buffered = new AdbBufferedStream(stream);
 
@@ -90,6 +76,18 @@ export class AdbReverseCommand extends AutoDisposable {
         } else {
             return await AdbReverseErrorResponse.deserialize(buffered);
         }
+    }
+
+    public async list(): Promise<AdbForwardListener[]> {
+        const stream = await this.dispatcher.createStream('reverse:list-forward');
+        const buffered = new AdbBufferedStream(stream);
+
+        const response = await AdbReverseStringResponse.deserialize(buffered);
+
+        return response.content!.split('\n').map(line => {
+            const [deviceSerial, localName, remoteName] = line.split(' ');
+            return { deviceSerial, localName, remoteName };
+        });
     }
 
     public async remove(devicePort: number): Promise<void> {

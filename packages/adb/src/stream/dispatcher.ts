@@ -11,7 +11,7 @@ export interface AdbPacketReceivedEventArgs {
     packet: AdbPacket;
 }
 
-export interface AdbStreamCreatedEventArgs {
+export interface AdbIncomingStreamEventArgs {
     handled: boolean;
 
     packet: AdbPacket;
@@ -30,7 +30,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketReceivedEventArgs>());
     public get onPacket() { return this.packetEvent.event; }
 
-    private readonly streamEvent = this.addDisposable(new EventEmitter<AdbStreamCreatedEventArgs>());
+    private readonly streamEvent = this.addDisposable(new EventEmitter<AdbIncomingStreamEventArgs>());
     public get onStream() { return this.streamEvent.event; }
 
     private readonly errorEvent = this.addDisposable(new EventEmitter<Error>());
@@ -132,7 +132,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         const controller = new AdbStreamController(localId, remoteId, this);
         const stream = new AdbStream(controller);
 
-        const args: AdbStreamCreatedEventArgs = {
+        const args: AdbIncomingStreamEventArgs = {
             handled: false,
             packet,
             stream,

@@ -257,7 +257,7 @@ export function sign(privateKey: ArrayBuffer, data: ArrayBuffer): ArrayBuffer {
     const fillLength = padded.length - Sha1DigestInfo.length - data.byteLength - 1;
     while (index < fillLength) {
         padded[index] = 0xff;
-        index++;
+        index += 1;
     }
 
     padded[index] = 0;

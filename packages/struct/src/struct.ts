@@ -3,8 +3,8 @@ import { Array, FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType, Fiel
 import { StructDefaultOptions, StructDeserializationContext, StructOptions, StructSerializationContext } from './types';
 import { Evaluate, Identity, OmitNever, Overwrite } from './utils';
 
-export type StructValueType<T extends Struct<object, object, object, unknown>> =
-    T extends { deserialize(reader: StructDeserializationContext): Promise<infer R>; } ? R : never;
+export type StructValueType<T> =
+    T extends { deserialize(context: StructDeserializationContext): Promise<infer R>; } ? R : never;
 
 export type StructInitType<T extends Struct<object, object, object, unknown>> =
     T extends { create(value: infer R, ...args: any): any; } ? Evaluate<R> : never;
@@ -407,7 +407,7 @@ export default class Struct<
 
         let size = this._size;
         let fieldSize: number[] = [];
-        for (let i = 0; i < this.fields.length; i++) {
+        for (let i = 0; i < this.fields.length; i += 1) {
             const field = this.fields[i];
             const type = getFieldTypeDefinition(field.type);
             if (type.getDynamicSize) {
@@ -426,7 +426,7 @@ export default class Struct<
         const buffer = new ArrayBuffer(size);
         const dataView = new DataView(buffer);
         let offset = 0;
-        for (let i = 0; i < this.fields.length; i++) {
+        for (let i = 0; i < this.fields.length; i += 1) {
             const field = this.fields[i];
             const type = getFieldTypeDefinition(field.type);
             type.serialize({

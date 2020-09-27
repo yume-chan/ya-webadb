@@ -18,7 +18,7 @@ function addRange(start: string, end: string) {
     const endCharCode = end.charCodeAt(0);
     const length = endCharCode - startCharCode + 1;
 
-    for (let i = startCharCode; i <= endCharCode; i++) {
+    for (let i = startCharCode; i <= endCharCode; i += 1) {
         chars.push(i);
     }
 

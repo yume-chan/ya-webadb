@@ -1,6 +1,6 @@
 import { Struct, StructValueType } from "@yume-chan/struct";
 
-export const FrameBuffer =
+export const AdbFrameBuffer =
     new Struct({ littleEndian: true })
         .uint32('version', undefined, 2 as const)
         .uint32('bpp')
@@ -18,4 +18,4 @@ export const FrameBuffer =
         .uint32('alpha_length')
         .arrayBuffer('data', { lengthField: 'size' });
 
-export type FrameBuffer = StructValueType<typeof FrameBuffer>;
+export type AdbFrameBuffer = StructValueType<typeof AdbFrameBuffer>;
