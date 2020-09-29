@@ -95,7 +95,7 @@ export class Adb {
                         resolver.resolve();
                         break;
                     case AdbCommand.Auth:
-                        const authPacket = await authHandler.tryNextAuth(e.packet);
+                        const authPacket = await authHandler.next(e.packet);
                         await this.packetDispatcher.sendPacket(authPacket);
                         break;
                     case AdbCommand.Close:

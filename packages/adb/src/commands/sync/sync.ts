@@ -6,7 +6,7 @@ import { AutoResetEvent } from '../../utils';
 import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';
 import { adbSyncPull } from './receive';
 import { adbSyncPush } from './send';
-import { adbSyncLstat, adbSyncStat } from './stat';
+import { adbSyncLstat, adbSyncStat, LinuxFileType } from './stat';
 
 export class AdbSync extends AutoDisposable {
     protected adb: Adb;
@@ -92,7 +92,7 @@ export class AdbSync extends AutoDisposable {
     public async write(
         path: string,
         file: AsyncIterable<ArrayBuffer> | ArrayLike<number>,
-        mode = 0o777,
+        mode = (LinuxFileType.File << 12) | 0o777,
         mtime = Date.now(),
     ): Promise<void> {
         await this.sendLock.wait();

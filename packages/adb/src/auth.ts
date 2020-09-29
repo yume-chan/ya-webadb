@@ -1,7 +1,7 @@
-import { AutoDisposable, Disposable } from '@yume-chan/event';
-import { AdbBackend, AdbKeyIterator } from './backend';
+import { Disposable } from '@yume-chan/event';
+import { AdbBackend } from './backend';
 import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto';
-import { AdbCommand, AdbPacket } from './packet';
+import { AdbCommand, AdbPacket, AdbPacketInit } from './packet';
 import { calculateBase64EncodedLength, encodeBase64 } from './utils';
 
 export enum AdbAuthType {
@@ -10,127 +10,113 @@ export enum AdbAuthType {
     PublicKey = 3,
 }
 
-export interface AdbAuthenticator extends Disposable {
-    tryAuth(packet: AdbPacket): Promise<AdbPacket | undefined>;
+export interface AdbAuthenticator {
+    (backend: AdbBackend, packet: AdbPacket): AsyncIterator<AdbPacketInit, void, AdbPacket>;
 }
 
-export interface AdbAuthenticatorConstructor {
-    new(backend: AdbBackend): AdbAuthenticator;
-}
-
-export class AdbSignatureAuthenticator implements AdbAuthenticator {
-    private readonly backend: AdbBackend;
-
-    private readonly iterator: AdbKeyIterator;
-
-    private iteratorDone = false;
-
-    public constructor(backend: AdbBackend) {
-        this.backend = backend;
-        this.iterator = backend.iterateKeys();
-    }
-
-    public async tryAuth(packet: AdbPacket): Promise<AdbPacket | undefined> {
+export async function* AdbSignatureAuthenticator(
+    backend: AdbBackend,
+    packet: AdbPacket,
+): AsyncIterator<AdbPacketInit, void, AdbPacket> {
+    for await (const key of backend.iterateKeys()) {
         if (packet.arg0 !== AdbAuthType.Token) {
-            return undefined;
+            return;
         }
 
-        const next = await this.iterator.next();
-        if (next.done) {
-            this.iteratorDone = true;
-            return undefined;
-        }
+        const signature = sign(key, packet.payload!);
 
-        const signature = sign(next.value, packet.payload!);
-
-        return AdbPacket.create({
+        packet = yield {
             command: AdbCommand.Auth,
             arg0: AdbAuthType.Signature,
             arg1: 0,
             payload: signature
-        }, this.backend);
-    }
-
-    public dispose() {
-        if (!this.iteratorDone) {
-            this.iterator.return?.();
-        }
+        };
     }
 }
 
-export class AdbPublicKeyAuthenticator implements AdbAuthenticator {
-    private backend: AdbBackend;
-
-    public constructor(backend: AdbBackend) {
-        this.backend = backend;
+export async function* AdbPublicKeyAuthenticator(
+    backend: AdbBackend,
+    packet: AdbPacket,
+): AsyncIterator<AdbPacketInit, void, AdbPacket> {
+    if (packet.arg0 !== AdbAuthType.Token) {
+        return;
     }
 
-    public async tryAuth(): Promise<AdbPacket> {
-        let privateKey: ArrayBuffer;
-
-        const iterator = this.backend.iterateKeys();
-        const next = await iterator.next();
-        if (!next.done) {
-            privateKey = next.value;
-            await iterator.return?.();
-        } else {
-            privateKey = await this.backend.generateKey();
-        }
-
-        const publicKeyLength = calculatePublicKeyLength();
-        const publicKeyBase64Length = calculateBase64EncodedLength(publicKeyLength);
-
-        // ADBd needs an extra null terminator,
-        // So we allocate the buffer with one extra byte.
-        const publicKeyBuffer = new ArrayBuffer(publicKeyBase64Length + 1);
-
-        calculatePublicKey(privateKey, publicKeyBuffer);
-        encodeBase64(publicKeyBuffer, 0, publicKeyLength, publicKeyBuffer);
-
-        return AdbPacket.create({
-            command: AdbCommand.Auth,
-            arg0: AdbAuthType.PublicKey,
-            arg1: 0,
-            payload: publicKeyBuffer
-        }, this.backend);
+    let privateKey: ArrayBuffer | undefined;
+    for await (const key of backend.iterateKeys()) {
+        privateKey = key;
+        break;
     }
 
-    public dispose() {
-        // do nothing
+    if (!privateKey) {
+        privateKey = await backend.generateKey();
     }
+
+    const publicKeyLength = calculatePublicKeyLength();
+    const publicKeyBase64Length = calculateBase64EncodedLength(publicKeyLength);
+
+    // ADBd needs an extra null terminator,
+    // So we allocate the buffer with one extra byte.
+    const publicKeyBuffer = new ArrayBuffer(publicKeyBase64Length + 1);
+
+    calculatePublicKey(privateKey, publicKeyBuffer);
+    encodeBase64(publicKeyBuffer, 0, publicKeyLength, publicKeyBuffer);
+
+    yield {
+        command: AdbCommand.Auth,
+        arg0: AdbAuthType.PublicKey,
+        arg1: 0,
+        payload: publicKeyBuffer
+    };
 }
 
-export const AdbDefaultAuthenticators: AdbAuthenticatorConstructor[] = [
+export const AdbDefaultAuthenticators: AdbAuthenticator[] = [
     AdbSignatureAuthenticator,
     AdbPublicKeyAuthenticator
 ];
 
-export class AdbAuthenticationHandler extends AutoDisposable {
+export class AdbAuthenticationHandler implements Disposable {
     public readonly authenticators: readonly AdbAuthenticator[];
 
-    private index = 0;
+    private readonly backend: AdbBackend;
+
+    private iterator: AsyncIterator<AdbPacketInit, never, AdbPacket> | undefined;
 
     public constructor(
-        authenticators: readonly AdbAuthenticatorConstructor[],
+        authenticators: readonly AdbAuthenticator[],
         backend: AdbBackend
     ) {
-        super();
-
-        this.authenticators = authenticators.map(
-            Constructor => this.addDisposable(new Constructor(backend))
-        );
+        this.authenticators = authenticators;
+        this.backend = backend;
     }
 
-    public async tryNextAuth(packet: AdbPacket): Promise<AdbPacket> {
-        while (this.index < this.authenticators.length) {
-            const result = await this.authenticators[this.index].tryAuth(packet);
-            if (result) {
-                return result;
+    private async* nextCore(packet: AdbPacket): AsyncGenerator<AdbPacketInit, never, AdbPacket> {
+        for (const authenticator of this.authenticators) {
+            const iterator = authenticator(this.backend, packet);
+            try {
+                let result = await iterator.next();
+                while (!result.done) {
+                    packet = yield result.value;
+                    result = await iterator.next(packet);
+                }
+            } finally {
+                iterator.return?.();
             }
-
-            this.index += 1;
         }
 
         throw new Error('Cannot authenticate with device');
+    }
+
+    public async next(packet: AdbPacket): Promise<AdbPacket> {
+        if (!this.iterator) {
+            this.iterator = this.nextCore(packet);
+        }
+
+        const result = await this.iterator.next(packet);
+        return AdbPacket.create(result.value, this.backend);
+    }
+
+    public dispose() {
+        this.iterator?.return?.();
     }
 }

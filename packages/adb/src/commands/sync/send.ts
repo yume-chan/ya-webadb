@@ -78,17 +78,17 @@ export async function* chunkAsyncIterable(
     }
 }
 
-export const AdbSyncSendPacketSize = 64 * 1024;
+export const AdbSyncMaxPacketSize = 64 * 1024;
 
 export async function adbSyncPush(
     stream: AdbBufferedStream,
     path: string,
     file: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
-    mode: number = LinuxFileType.File | 0o777,
+    mode: number = (LinuxFileType.File << 12) | 0o777,
     mtime: number = (Date.now() / 1000) | 0,
-    packetSize: number = AdbSyncSendPacketSize,
+    packetSize: number = AdbSyncMaxPacketSize,
 ): Promise<void> {
-    const pathAndMode = `${path},${mode.toString(8)}`;
+    const pathAndMode = `${path},${mode.toString()}`;
     await adbSyncWriteRequest(stream, AdbSyncRequestId.Send, pathAndMode);
 
     let chunkReader: Iterable<ArrayBuffer> | AsyncIterable<ArrayBuffer>;
