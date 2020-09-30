@@ -4,9 +4,9 @@ import { AdbFeatures } from '../../features';
 import { AdbBufferedStream, AdbStream } from '../../stream';
 import { AutoResetEvent } from '../../utils';
 import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';
-import { adbSyncPull } from './receive';
-import { adbSyncPush } from './send';
-import { adbSyncLstat, adbSyncStat, LinuxFileType } from './stat';
+import { adbSyncPull } from './pull';
+import { adbSyncPush } from './push';
+import { adbSyncLstat, adbSyncStat } from './stat';
 
 export class AdbSync extends AutoDisposable {
     protected adb: Adb;
@@ -92,13 +92,14 @@ export class AdbSync extends AutoDisposable {
     public async write(
         path: string,
         file: AsyncIterable<ArrayBuffer> | ArrayLike<number>,
-        mode = (LinuxFileType.File << 12) | 0o777,
-        mtime = Date.now(),
+        mode?: number,
+        mtime?: number,
+        onProgress?: (uploaded: number) => void,
     ): Promise<void> {
         await this.sendLock.wait();
 
         try {
-            adbSyncPush(this.stream, path, file, mode, mtime);
+            await adbSyncPush(this.stream, path, file, mode, mtime, undefined, onProgress);
         } finally {
             this.sendLock.notify();
         }

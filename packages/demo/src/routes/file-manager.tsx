@@ -1,7 +1,7 @@
-import { Breadcrumb, CommandBar, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, Selection, ShimmeredDetailsList, StackItem } from '@fluentui/react';
+import { Breadcrumb, CommandBar, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, Selection, ShimmeredDetailsList, StackItem } from '@fluentui/react';
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@uifabric/file-type-icons';
 import { useConst } from '@uifabric/react-hooks';
-import { AdbSyncEntryResponse, LinuxFileType } from '@yume-chan/adb';
+import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume-chan/adb';
 import path from 'path';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
@@ -88,6 +88,12 @@ function createReadableStreamFromBufferIterator(
             }
         },
     });
+}
+
+async function* chunkFile(file: File): AsyncGenerator<ArrayBuffer, void, void> {
+    for (let i = 0; i < file.size; i += AdbSyncMaxPacketSize) {
+        yield file.slice(i, i + AdbSyncMaxPacketSize, file.type).arrayBuffer();
+    }
 }
 
 export const FileManager = withDisplayName('FileManager', ({
@@ -260,11 +266,11 @@ export const FileManager = withDisplayName('FileManager', ({
                 }
             },
             {
-                key: 'mode',
-                name: 'Mode',
+                key: 'permission',
+                name: 'Permission',
                 minWidth: 0,
                 onRender(item: AdbSyncEntryResponse) {
-                    return `0${(item.mode >> 6 & 0b100).toString(8)}${(item.mode >> 3 & 0b100).toString(8)}${(item.mode & 0b100).toString(8)}`;
+                    return `${(item.mode >> 6 & 0b100).toString(8)}${(item.mode >> 3 & 0b100).toString(8)}${(item.mode & 0b100).toString(8)}`;
                 }
             },
             {
@@ -351,18 +357,74 @@ export const FileManager = withDisplayName('FileManager', ({
         },
     }));
 
+    const [uploading, setUploading] = useState(false);
+    const [uploadPath, setUploadPath] = useState('');
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadedSize, setUploadedSize] = useState(0);
+    const [uploadTotalSize, setUploadTotalSize] = useState(0);
+    const [uploadSpeed, setUploadSpeed] = useState(0);
+    const upload = useCallback(async (file: File) => {
+        let lastSecondUploadedSize = 0;
+        let currentUploadedSize = 0;
+        const intervalId = window.setInterval(() => {
+            setUploadedSize(currentUploadedSize);
+            setUploadSpeed(currentUploadedSize - lastSecondUploadedSize);
+            lastSecondUploadedSize = currentUploadedSize;
+        }, 1000);
+
+        const sync = await device!.sync();
+        try {
+            const itemPath = path.resolve(currentPath, file.name);
+            setUploading(true);
+            setUploadPath(file.name);
+            setUploadTotalSize(file.size);
+            await sync.write(
+                itemPath,
+                chunkFile(file),
+                (LinuxFileType.File << 12) | 0o666,
+                file.lastModified / 1000,
+                (uploadedSize) => {
+                    setUploadProgress(uploadedSize / file.size);
+                    currentUploadedSize = uploadedSize;
+                },
+            );
+        } catch (e) {
+            showErrorDialog(e.message);
+        } finally {
+            sync.dispose();
+            load();
+            setUploading(false);
+            window.clearInterval(intervalId);
+        }
+    }, [currentPath, device]);
+
     const [menuItems, setMenuItems] = useState<IContextualMenuItem[]>([]);
     useEffect(() => {
         let result: IContextualMenuItem[] = [];
 
         switch (selectedItems.length) {
             case 0:
-                // result.push({
-                //     key: 'upload',
-                //     text: 'Upload',
-                //     iconProps: { iconName: 'Upload' },
-                //     disabled: !device,
-                // });
+                result.push({
+                    key: 'upload',
+                    text: 'Upload',
+                    iconProps: { iconName: 'Upload' },
+                    disabled: !device,
+                    onClick() {
+                        const input = document.createElement('input');
+                        input.type = "file";
+                        input.onchange = async () => {
+                            if (input.files?.length) {
+                                for (let i = 0; i < input.files!.length; i++) {
+                                    const file = input.files!.item(i)!;
+                                    await upload(file);
+                                }
+                            }
+                        };
+                        input.click();
+
+                        return false;
+                    }
+                });
                 break;
             // @ts-expect-error
             case 1:
@@ -501,6 +563,19 @@ export const FileManager = withDisplayName('FileManager', ({
                     onDismiss={hideContextMenu}
                     contextualMenuItemAs={props => <ContextualMenuItem {...props} hasIcons={false} />}
                 />
+
+                <Dialog
+                    hidden={!uploading}
+                    dialogContentProps={{
+                        title: 'Uploading...',
+                        subText: uploadPath
+                    }}
+                >
+                    <ProgressIndicator
+                        description={`${formatSize(uploadedSize)} / ${formatSize(uploadTotalSize)} at ${formatSize(uploadSpeed)}/s`}
+                        percentComplete={uploadProgress}
+                    />
+                </Dialog>
             </StackItem>
         </>
     );

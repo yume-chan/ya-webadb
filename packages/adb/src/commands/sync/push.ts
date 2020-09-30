@@ -59,6 +59,7 @@ export async function* chunkAsyncIterable(
             for (const chunk of chunkArrayLike(buffer, size)) {
                 if (chunk.byteLength === size) {
                     yield chunk;
+                    continue;
                 }
 
                 // `buffer` still has some data
@@ -76,6 +77,10 @@ export async function* chunkAsyncIterable(
         result.set(new Uint8Array(buffer), index);
         index += buffer.byteLength;
     }
+
+    if (index !== 0) {
+        yield result.buffer.slice(0, index);
+    }
 }
 
 export const AdbSyncMaxPacketSize = 64 * 1024;
@@ -84,9 +89,10 @@ export async function adbSyncPush(
     stream: AdbBufferedStream,
     path: string,
     file: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
-    mode: number = (LinuxFileType.File << 12) | 0o777,
+    mode: number = (LinuxFileType.File << 12) | 0o666,
     mtime: number = (Date.now() / 1000) | 0,
     packetSize: number = AdbSyncMaxPacketSize,
+    onProgress?: (uploaded: number) => void,
 ): Promise<void> {
     const pathAndMode = `${path},${mode.toString()}`;
     await adbSyncWriteRequest(stream, AdbSyncRequestId.Send, pathAndMode);
@@ -98,10 +104,13 @@ export async function adbSyncPush(
         chunkReader = chunkAsyncIterable(file, packetSize);
     }
 
+    let uploaded = 0;
     for await (const buffer of chunkReader) {
         await adbSyncWriteRequest(stream, AdbSyncRequestId.Data, buffer);
+        uploaded += buffer.byteLength;
+        onProgress?.(uploaded);
     }
 
-    await adbSyncWriteRequest(stream, AdbSyncRequestId.Send, mtime);
+    await adbSyncWriteRequest(stream, AdbSyncRequestId.Done, mtime);
     await adbSyncReadResponse(stream, ResponseTypes);
 }
