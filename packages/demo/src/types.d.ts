@@ -39,3 +39,5 @@ declare module 'streamsaver' {
 
     export = StreamSaver;
 }
+
+declare module 'file-loader!*';

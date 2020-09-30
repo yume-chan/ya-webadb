@@ -25,6 +25,10 @@ export class AdbStreamController extends AutoDisposable implements AdbStreamBase
 
     public readonly dataEvent = this.addDisposable(new AsyncEventEmitter<ArrayBuffer>());
 
+    private _closed = false;
+
+    public get closed() { return this._closed; }
+
     private readonly closeEvent = this.addDisposable(new EventEmitter<void>());
 
     public get onClose() { return this.closeEvent.event; }
@@ -38,6 +42,10 @@ export class AdbStreamController extends AutoDisposable implements AdbStreamBase
     }
 
     public async write(data: ArrayBuffer): Promise<void> {
+        if (this._closed) {
+            throw new Error('Can not write after closed');
+        }
+
         await this.writeLock.wait();
         await this.dispatcher.sendPacket(AdbCommand.Write, this.localId, this.remoteId, data);
     }
@@ -46,11 +54,15 @@ export class AdbStreamController extends AutoDisposable implements AdbStreamBase
         this.writeLock.notify();
     }
 
-    public close() {
-        return this.dispatcher.sendPacket(AdbCommand.Close, this.localId, this.remoteId);
+    public async close(): Promise<void> {
+        if (!this._closed) {
+            await this.dispatcher.sendPacket(AdbCommand.Close, this.localId, this.remoteId);
+            this._closed = true;
+        }
     }
 
     public dispose() {
+        this._closed = true;
         this.closeEvent.fire();
         super.dispose();
     }

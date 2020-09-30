@@ -91,7 +91,7 @@ export class AdbSync extends AutoDisposable {
 
     public async write(
         path: string,
-        file: AsyncIterable<ArrayBuffer> | ArrayLike<number>,
+        file: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
         mode?: number,
         mtime?: number,
         onProgress?: (uploaded: number) => void,

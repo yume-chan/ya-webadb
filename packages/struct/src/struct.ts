@@ -192,6 +192,22 @@ export default class Struct<
         });
     }
 
+    public uint16<
+        TName extends string,
+        TTypeScriptType = Number.TypeScriptType<Number.SubType.Uint16>
+    >(
+        name: TName,
+        options: FieldDescriptorBaseOptions = {},
+        _typescriptType?: TTypeScriptType,
+    ) {
+        return this.number(
+            name,
+            Number.SubType.Uint16,
+            options,
+            _typescriptType
+        );
+    }
+
     public int32<
         TName extends string,
         TTypeScriptType = Number.TypeScriptType<Number.SubType.Int32>

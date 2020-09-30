@@ -5,7 +5,7 @@ import { AdbBackend } from './backend';
 import { AdbFrameBuffer, AdbReverseCommand, AdbSync, AdbTcpIpCommand } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
-import { AdbBufferedStream, AdbPacketDispatcher, AdbReadableStream, AdbStream } from './stream';
+import { AdbBufferedStream, AdbPacketDispatcher, AdbStream } from './stream';
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -162,19 +162,22 @@ export class Adb {
         }
     }
 
-    public shell(command: string, ...args: string[]): Promise<string>;
-    public shell(): Promise<AdbStream>;
-    public shell(command?: string, ...args: string[]): Promise<AdbStream | string> {
+    public shell(): Promise<AdbStream> {
+        return this.createStream('shell:');
+    }
+
+    public spawn(command: string, ...args: string[]): Promise<AdbStream> {
         // TODO: use shell protocol
-        if (!command) {
-            return this.createStream('shell:');
-        } else {
-            return this.createStreamAndReadAll(`shell:${command} ${args.join(' ')}`);
-        }
+        return this.createStream(`shell:${command} ${args.join(' ')}`);
+    }
+
+    public exec(command: string, ...args: string[]): Promise<string> {
+        // TODO: use shell protocol
+        return this.createStreamAndReadAll(`shell:${command} ${args.join(' ')}`);
     }
 
     public async getProp(key: string): Promise<string> {
-        const output = await this.shell('getprop', key);
+        const output = await this.exec('getprop', key);
         return output.trim();
     }
 
@@ -195,8 +198,13 @@ export class Adb {
 
     public async createStreamAndReadAll(service: string): Promise<string> {
         const stream = await this.createStream(service);
-        const readable = new AdbReadableStream(stream);
-        return readable.readAll();
+        const resolver = new PromiseResolver<string>();
+        let result = '';
+        stream.onData(buffer => {
+            result += this.backend.decodeUtf8(buffer);
+        });
+        stream.onClose(() => resolver.resolve(result));
+        return resolver.promise;
     }
 
     public async dispose() {

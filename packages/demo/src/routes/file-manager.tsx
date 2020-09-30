@@ -463,7 +463,11 @@ export const FileManager = withDisplayName('FileManager', ({
                         (async () => {
                             try {
                                 for (const item of selectedItems) {
-                                    const output = await device!.shell('rm', '-rf', `"${path.resolve(currentPath, item.name!)}"`);
+                                    const output = await device!.exec(
+                                        'rm',
+                                        '-rf',
+                                        `"${path.resolve(currentPath, item.name!)}"`
+                                    );
                                     if (output) {
                                         showErrorDialog(output);
                                         return;
