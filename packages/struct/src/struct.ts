@@ -256,6 +256,22 @@ export default class Struct<
         );
     }
 
+    public int64<
+        TName extends string,
+        TTypeScriptType = Number.TypeScriptType<Number.SubType.Int64>
+    >(
+        name: TName,
+        options: FieldDescriptorBaseOptions = {},
+        _typescriptType?: TTypeScriptType,
+    ) {
+        return this.number(
+            name,
+            Number.SubType.Int64,
+            options,
+            _typescriptType
+        );
+    }
+
     private array: AddArrayFieldDescriptor<TResult, TInit, TExtra, TAfterParsed> = (
         name: string,
         type: Array.SubType,

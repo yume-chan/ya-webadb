@@ -8,7 +8,7 @@ import Connect from './connect';
 import ErrorDialogProvider from './error-dialog';
 import './index.css';
 import { CacheRoute, CacheSwitch } from './router';
-import { FileManager, FrameBuffer, Intro, Shell, TcpIp } from './routes';
+import { FileManager, FrameBuffer, Intro, Scrcpy, Shell, TcpIp } from './routes';
 
 initializeIcons();
 
@@ -85,6 +85,14 @@ function App(): JSX.Element | null {
             noCache: true,
             children: (
                 <FrameBuffer device={device} />
+            ),
+        },
+        {
+            path: '/scrcpy',
+            name: 'Scrcpy',
+            noCache: true,
+            children: (
+                <Scrcpy device={device} />
             ),
         },
     ], [device]);

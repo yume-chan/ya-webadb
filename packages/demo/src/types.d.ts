@@ -41,3 +41,37 @@ declare module 'streamsaver' {
 }
 
 declare module 'file-loader!*';
+
+declare module 'jmuxer' {
+    export interface JMuxerOptions {
+        node: string | HTMLVideoElement;
+
+        mode?: 'video' | 'audio' | 'both';
+
+        flushingTime?: number;
+
+        clearBuffer?: boolean;
+
+        fps?: number;
+
+        onReady?: () => void;
+
+        debug?: boolean;
+    }
+
+    export interface JMuxerData {
+        video?: Uint8Array;
+
+        audio?: Uint8Array;
+
+        duration?: number;
+    }
+
+    export default class JMuxer {
+        constructor(options: JMuxerOptions);
+
+        feed(data: JMuxerData): void;
+
+        destroy(): void;
+    }
+}

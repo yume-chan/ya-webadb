@@ -17,7 +17,8 @@ export enum AdbPropKey {
 export class Adb {
     private packetDispatcher: AdbPacketDispatcher;
 
-    private backend: AdbBackend;
+    public readonly backend: AdbBackend;
+
     public get onDisconnected() { return this.backend.onDisconnected; }
 
     private _connected = false;

@@ -5,14 +5,17 @@
         "CNXN",
         "Callout",
         "Deserialization",
+        "Muxer",
         "PKCS",
         "RSASSA",
         "Scrcpy",
         "WRTE",
         "addrs",
+        "brotli",
         "fluentui",
         "genymobile",
         "getprop",
+        "jmuxer",
         "killforward",
         "lapo",
         "localabstract",
@@ -32,6 +35,7 @@
         "webusb",
         "wifi",
         "wirelessly",
-        "yume"
+        "yume",
+        "zstd"
     ]
 }

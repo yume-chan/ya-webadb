@@ -37,15 +37,28 @@ export class BufferedStream<T extends Stream> {
             index = buffer.byteLength;
             this.buffer = undefined;
         } else {
+            const buffer = await this.stream.read(length);
+            if (buffer.byteLength === length) {
+                return buffer;
+            }
+
+            if (buffer.byteLength > length) {
+                this.buffer = new Uint8Array(buffer, length);
+                return buffer.slice(0, length);
+            }
+
             array = new Uint8Array(length);
-            index = 0;
+            array.set(new Uint8Array(buffer), 0);
+            index = buffer.byteLength;
         }
 
         while (index < length) {
-            const buffer = await this.stream.read(length - index);
-            if (buffer.byteLength > length - index) {
-                array.set(new Uint8Array(buffer, 0, length), index);
-                this.buffer = new Uint8Array(buffer, length);
+            const left = length - index;
+
+            const buffer = await this.stream.read(left);
+            if (buffer.byteLength > left) {
+                array.set(new Uint8Array(buffer, 0, left), index);
+                this.buffer = new Uint8Array(buffer, left);
                 return array.buffer;
             }
 

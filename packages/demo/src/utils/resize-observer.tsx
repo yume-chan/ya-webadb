@@ -1,8 +1,9 @@
+import { createMergedRef } from '@fluentui/react';
 import React, { CSSProperties, HTMLAttributes, PropsWithChildren, useCallback, useRef } from 'react';
-import { withDisplayName } from './with-display-name';
+import { forwardRef } from './with-display-name';
 
 export interface ResizeObserverProps extends HTMLAttributes<HTMLDivElement>, PropsWithChildren<{}> {
-    onResize: () => void;
+    onResize: (width: number, height: number) => void;
 }
 
 const iframeStyle: CSSProperties = {
@@ -14,17 +15,21 @@ const iframeStyle: CSSProperties = {
     visibility: 'hidden',
 };
 
-export const ResizeObserver = withDisplayName('ResizeObserver', ({
+export const ResizeObserver = forwardRef('ResizeObserver', ({
     onResize,
     style,
     children,
     ...rest
-}: ResizeObserverProps): JSX.Element | null => {
-    const onResizeRef = useRef<() => void>(onResize);
+}: ResizeObserverProps, ref): JSX.Element | null => {
+    const onResizeRef = useRef<(width: number, height: number) => void>(onResize);
     onResizeRef.current = onResize;
 
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const mergedRef = createMergedRef()(ref, containerRef);
+
     const handleResize = useCallback(() => {
-        onResizeRef.current();
+        const { width, height } = containerRef.current!.getBoundingClientRect();
+        onResizeRef.current(width, height);
     }, []);
 
     const handleIframeRef = useCallback((element: HTMLIFrameElement | null) => {
@@ -46,7 +51,7 @@ export const ResizeObserver = withDisplayName('ResizeObserver', ({
     }, [style]);
 
     return (
-        <div style={containerStyle} {...rest}>
+        <div ref={mergedRef} style={containerStyle} {...rest}>
             <iframe ref={handleIframeRef} style={iframeStyle} />
             {children}
         </div>

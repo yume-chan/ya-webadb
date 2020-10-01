@@ -4,13 +4,16 @@ import { FieldDescriptorBase, FieldDescriptorBaseOptions, FieldType } from './de
 
 export namespace Number {
     export type TypeScriptType<T extends SubType> =
-        T extends SubType.Uint64 ? bigint : number;
+        T extends SubType.Uint64 ? bigint :
+        T extends SubType.Int64 ? bigint :
+        number;
 
     export const enum SubType {
         Uint16,
         Int32,
         Uint32,
         Uint64,
+        Int64,
     }
 
     export const SizeMap: Record<SubType, number> = {
@@ -18,6 +21,7 @@ export namespace Number {
         [SubType.Int32]: 4,
         [SubType.Uint32]: 4,
         [SubType.Uint64]: 8,
+        [SubType.Int64]: 8,
     };
 
     export const DataViewGetterMap = {
@@ -25,6 +29,7 @@ export namespace Number {
         [SubType.Int32]: 'getInt32',
         [SubType.Uint32]: 'getUint32',
         [SubType.Uint64]: 'getBigUint64',
+        [SubType.Int64]: 'getBigInt64',
     } as const;
 
     export const DataViewSetterMap = {
@@ -32,6 +37,7 @@ export namespace Number {
         [SubType.Int32]: 'setInt32',
         [SubType.Uint32]: 'setUint32',
         [SubType.Uint64]: 'setBigUint64',
+        [SubType.Int64]: 'setBigInt64',
     } as const;
 }
 

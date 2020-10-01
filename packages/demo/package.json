@@ -43,6 +43,7 @@
         "@yume-chan/adb": "^0.0.1",
         "@yume-chan/adb-backend-web": "^0.0.1",
         "@yume-chan/struct": "^0.0.0",
+        "jmuxer": "^1.2.0",
         "react": "16.13.1",
         "react-dom": "16.13.1",
         "react-router-dom": "5.2.0",

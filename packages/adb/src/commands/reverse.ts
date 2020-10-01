@@ -65,15 +65,13 @@ export class AdbReverseCommand extends AutoDisposable {
 
         const success = this.dispatcher.backend.decodeUtf8(await buffered.read(4)) === 'OKAY';
         if (success) {
-            const response = await AdbReverseStringResponse.deserialize(buffered);
-
-            if (deviceAddress === 'tcp:0') {
+            if (deviceAddress.startsWith('tcp:')) {
+                const response = await AdbReverseStringResponse.deserialize(buffered);
                 deviceAddress = `tcp:${Number.parseInt(response.content!, 10)}`;
             }
 
             this.localPortToHandler.set(localPort, handler);
             this.deviceAddressToLocalPort.set(deviceAddress, localPort);
-
             return deviceAddress;
         } else {
             return await AdbReverseErrorResponse.deserialize(buffered);
