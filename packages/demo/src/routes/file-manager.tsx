@@ -1,4 +1,4 @@
-import { Breadcrumb, CommandBar, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, Selection, ShimmeredDetailsList, StackItem } from '@fluentui/react';
+import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, Selection, ShimmeredDetailsList, StackItem } from '@fluentui/react';
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@uifabric/file-type-icons';
 import { useConst } from '@uifabric/react-hooks';
 import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume-chan/adb';
@@ -6,7 +6,7 @@ import path from 'path';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
 import { ErrorDialogContext } from '../error-dialog';
-import { withDisplayName } from '../utils';
+import { CommandBar, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 initializeFileTypeIcons();
@@ -510,18 +510,7 @@ export const FileManager = withDisplayName('FileManager', ({
 
     return (
         <>
-            <StackItem
-                styles={{
-                    root: {
-                        margin: '-20px -20px 0 -20px',
-                        borderBottom: '1px solid rgb(243, 242, 241)',
-                    }
-                }}
-            >
-                <CommandBar
-                    items={menuItems}
-                />
-            </StackItem>
+            <CommandBar items={menuItems} />
 
             <StackItem grow styles={{
                 root: {

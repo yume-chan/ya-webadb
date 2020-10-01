@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { withDisplayName } from '../utils';
+import { ICommandBarItemProps } from '@fluentui/react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { CommandBar, DeviceView, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 export const FrameBuffer = withDisplayName('FrameBuffer', ({
@@ -7,15 +8,15 @@ export const FrameBuffer = withDisplayName('FrameBuffer', ({
 }: RouteProps): JSX.Element | null => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-    useEffect(() => {
+    const [width, setWidth] = useState(0);
+    const [height, setHeight] = useState(0);
+
+    const capture = useCallback(() => {
         if (!device) {
             return;
         }
 
-        let running = true;
-        let timeoutId: any;
-
-        async function capture() {
+        (async function () {
             const start = window.performance.now();
             const framebuffer = await device!.framebuffer();
             const end = window.performance.now();
@@ -28,29 +29,47 @@ export const FrameBuffer = withDisplayName('FrameBuffer', ({
                 return;
             }
 
+            setWidth(width);
+            setHeight(height);
             canvas.width = width;
             canvas.height = height;
 
             const context = canvas.getContext("2d")!;
             const image = new ImageData(new Uint8ClampedArray(framebuffer.data!), width, height);
             context.putImageData(image, 0, 0);
-
-            if (running) {
-                timeoutId = setTimeout(capture, 16);
-            }
-        }
-
-        capture();
-
-        return () => {
-            running = false;
-            clearTimeout(timeoutId);
-        };
+        })();
     }, [device]);
+
+    const commandBarItems = useMemo((): ICommandBarItemProps[] => [
+        {
+            key: 'start',
+            disabled: !device,
+            iconProps: { iconName: 'Camera' },
+            text: 'Capture',
+            onClick: capture,
+        }
+    ], [device]);
+
+    const commandBarFarItems = useMemo((): ICommandBarItemProps[] => [
+        {
+            key: 'info',
+            iconProps: { iconName: 'Info' },
+            iconOnly: true,
+            tooltipHostProps: {
+                content: 'Use ADB FrameBuffer command to capture a full-size, high-resolution screenshot.',
+                calloutProps: {
+                    calloutMaxWidth: 250,
+                }
+            },
+        }
+    ], []);
 
     return (
         <>
-            <canvas ref={canvasRef} style={{ maxWidth: '100%' }} />
+            <CommandBar items={commandBarItems} farItems={commandBarFarItems} />
+            <DeviceView width={width} height={height}>
+                <canvas ref={canvasRef} />
+            </DeviceView>
         </>
     );
 });

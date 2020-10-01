@@ -1,25 +1,6 @@
 import { AdbCommandBase } from './base';
 
 export class AdbTcpIpCommand extends AdbCommandBase {
-    public async getAddresses(): Promise<string[]> {
-        const propAddr = await this.adb.getProp('service.adb.listen_addrs');
-        if (propAddr) {
-            return propAddr.split(',');
-        }
-
-        let port = await this.adb.getProp('service.adb.tcp.port');
-        if (port) {
-            return [`0.0.0.0:${port}`];
-        }
-
-        port = await this.adb.getProp('persist.adb.tcp.port');
-        if (port) {
-            return [`0.0.0.0:${port}`];
-        }
-
-        return [];
-    }
-
     public async setPort(port: number): Promise<void> {
         if (port <= 0) {
             throw new Error(`Invalid port ${port}`);

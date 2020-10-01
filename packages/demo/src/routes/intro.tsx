@@ -1,7 +1,7 @@
 import { Callout, DirectionalHint, Link, mergeStyleSets, Text } from '@fluentui/react';
 import { useBoolean } from '@uifabric/react-hooks';
 import React, { useCallback, useRef } from 'react';
-import { withDisplayName } from '../utils';
+import { ExternalLink, withDisplayName } from '../utils';
 
 const classNames = mergeStyleSets({
     callout: {
@@ -48,10 +48,10 @@ export const Intro = withDisplayName('Intro', () => {
     return (
         <>
             <Text block>
-                This page is a demo of my {' '}
-                <Link href="https://github.com/yume-chan/ya-webadb/" target="_blank">WebADB</Link>{' '}
-                library, which can connect to your Android devices with the {' '}
-                <Link href="https://developer.mozilla.org/en-US/docs/Web/API/USB" target="_blank">WebUSB</Link>{' '}
+                This page is a demo of my
+                <ExternalLink href="https://github.com/yume-chan/ya-webadb/" spaceBefore spaceAfter>WebADB</ExternalLink>
+                library, which can connect to your Android devices with the
+                <ExternalLink href="https://developer.mozilla.org/en-US/docs/Web/API/USB" spaceBefore spaceAfter>WebUSB</ExternalLink>
                 API.
             </Text>
             <Text block>
@@ -79,18 +79,16 @@ export const Intro = withDisplayName('Intro', () => {
                 Got "Access denied" error?
             </Text>
             <Text block>
-                If you have a Samsung device, it's caused by the custom driver. See {' '}
-                <Link href="https://bugs.chromium.org/p/chromium/issues/detail?id=1127206">
-                    https://bugs.chromium.org/p/chromium/issues/detail?id=1127206
-                </Link>
+                If you have a Samsung device, it's caused by the custom driver. See
+                <ExternalLink href="https://bugs.chromium.org/p/chromium/issues/detail?id=1127206" spaceBefore />
             </Text>
             <Text block styles={BoldTextStyles}>
                 Can I connect my device wirelessly (ADB over WiFi)?
             </Text>
             <Text block>
                 No. Web browsers doesn't support TCP connections.<br />
-                Or maybe, with {' '}
-                <Link href="https://github.com/novnc/websockify">websockify</Link>{' '}
+                Or maybe, with
+                <ExternalLink href="https://github.com/novnc/websockify" spaceBefore spaceAfter>websockify</ExternalLink>
                 running on your device and a WebSocket backend for WebADB.
             </Text>
         </>

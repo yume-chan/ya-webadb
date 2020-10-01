@@ -82,7 +82,6 @@ function App(): JSX.Element | null {
         {
             path: '/framebuffer',
             name: 'Screen Capture',
-            noCache: true,
             children: (
                 <FrameBuffer device={device} />
             ),
