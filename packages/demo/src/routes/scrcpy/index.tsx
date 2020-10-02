@@ -109,6 +109,15 @@ export const Scrcpy = withDisplayName('Scrcpy', ({
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
+    const handleVideoRef = useCallback((value: HTMLVideoElement | null) => {
+        videoRef.current = value;
+        if (value) {
+            value.onresize = () => {
+                setWidth(value.videoWidth);
+                setHeight(value.videoHeight);
+            };
+        }
+    }, []);
 
     const serverRef = useRef<AdbStream | undefined>();
     const controlStreamRef = useRef<AdbBufferedStream | undefined>();
@@ -166,12 +175,10 @@ export const Scrcpy = withDisplayName('Scrcpy', ({
             // The connection might be stuck because we have not read some packets from videoStream.
             device.reverse.remove(reverseDeviceAddress);
 
-            // Device name, not useful
+            // Device name, we don't need it
             await videoStream.read(64);
-
-            const { width, height } = await Size.deserialize(videoStream);
-            setWidth(width);
-            setHeight(height);
+            // Initial video size, we don't need it
+            await Size.deserialize(videoStream);
 
             const jmuxer = new JMuxer({
                 node: videoRef.current!,
@@ -266,7 +273,7 @@ export const Scrcpy = withDisplayName('Scrcpy', ({
             <CommandBar items={commandBarItems} farItems={commandBarFarItems} />
             <DeviceView width={width} height={height}>
                 <video
-                    ref={videoRef}
+                    ref={handleVideoRef}
                     width={width}
                     height={height}
                     onCanPlay={handleCanPlay}

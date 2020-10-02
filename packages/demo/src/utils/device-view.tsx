@@ -1,6 +1,5 @@
 import { StackItem } from '@fluentui/react';
-import React, { useCallback, useState } from 'react';
-import { ReactNode } from 'react';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { ResizeObserver } from './resize-observer';
 import { withDisplayName } from './with-display-name';
 
@@ -13,10 +12,17 @@ export interface DeviceViewProps {
 }
 
 export const DeviceView = withDisplayName('DeviceView', ({ width, height, children }: DeviceViewProps) => {
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [containerHeight, setContainerHeight] = useState(0);
     const [scale, setScale] = useState(1);
 
     const handleResize = useCallback((containerWidth: number, containerHeight: number) => {
-        if (width === 0) {
+        setContainerWidth(containerWidth);
+        setContainerHeight(containerHeight);
+    }, []);
+
+    useEffect(() => {
+        if (width === 0 || containerWidth === 0) {
             setScale(1);
             return;
         }
@@ -28,7 +34,7 @@ export const DeviceView = withDisplayName('DeviceView', ({ width, height, childr
         } else {
             setScale(containerHeight / height);
         }
-    }, [width, height]);
+    }, [width, height, containerWidth, containerHeight]);
 
     return (
         <StackItem grow>
