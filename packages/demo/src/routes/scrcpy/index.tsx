@@ -132,7 +132,10 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 setHeight(video.videoHeight);
             };
 
-            video.addEventListener('touchmove', e => {
+            video.addEventListener('touchstart', e => {
+                e.preventDefault();
+            });
+            video.addEventListener('contextmenu', e => {
                 e.preventDefault();
             });
 
@@ -348,43 +351,29 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     }, [width, height]);
 
     const handlePointerDown = useCallback((e: React.PointerEvent<HTMLVideoElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
         injectTouch(AndroidMotionEventAction.Down, e);
     }, [injectTouch]);
 
     const handlePointerMove = useCallback((e: React.PointerEvent<HTMLVideoElement>) => {
-        if (e.pressure > 0) {
-            injectTouch(AndroidMotionEventAction.Move, e);
+        if (e.buttons !== 1) {
+            return;
         }
+        injectTouch(AndroidMotionEventAction.Move, e);
     }, [injectTouch]);
 
     const handlePointerUp = useCallback((e: React.PointerEvent<HTMLVideoElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
         injectTouch(AndroidMotionEventAction.Up, e);
     }, [injectTouch]);
 
     const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLVideoElement>) => {
 
     }, []);
-
-    // useEffect(() => {
-    //     function handlePageShow() {
-    //         if (document.visibilityState !== 'visible') {
-    //             return;
-    //         }
-
-    //         const video = videoRef.current;
-    //         if (!video || video.buffered.length === 0) {
-    //             return;
-    //         }
-
-    //         video.currentTime = video.buffered.end(0);
-    //     }
-
-    //     document.addEventListener('visibilitychange', handlePageShow);
-
-    //     return () => {
-    //         document.removeEventListener('visibilitychange', handlePageShow);
-    //     };
-    // }, []);
 
     return (
         <>
