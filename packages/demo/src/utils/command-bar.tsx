@@ -9,7 +9,7 @@ const ContainerStyles = {
     }
 } as const;
 
-export const CommandBar = withDisplayName('CommandBar', (props: ICommandBarProps) => {
+export const CommandBar = withDisplayName('CommandBar')((props: ICommandBarProps) => {
     return (
         <StackItem styles={ContainerStyles}>
             <FluentCommandBar {...props} />

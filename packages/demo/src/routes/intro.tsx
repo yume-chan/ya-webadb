@@ -15,7 +15,7 @@ interface CopyLinkProps {
     href: string;
 }
 
-const CopyLink = withDisplayName('CopyLink', ({
+const CopyLink = withDisplayName('CopyLink')(({
     href,
 }: CopyLinkProps) => {
     const calloutTarget = useRef<HTMLButtonElement | null>(null);
@@ -44,7 +44,7 @@ const CopyLink = withDisplayName('CopyLink', ({
     );
 });
 
-export const Intro = withDisplayName('Intro', () => {
+export const Intro = withDisplayName('Intro')(() => {
     return (
         <>
             <Text block>

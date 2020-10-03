@@ -1,7 +1,7 @@
 import { StackItem } from '@fluentui/react';
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { ResizeObserver } from './resize-observer';
-import { withDisplayName } from './with-display-name';
+import { forwardRef } from './with-display-name';
 
 export interface DeviceViewProps {
     width: number;
@@ -11,7 +11,15 @@ export interface DeviceViewProps {
     children: ReactNode;
 }
 
-export const DeviceView = withDisplayName('DeviceView', ({ width, height, children }: DeviceViewProps) => {
+export interface DeviceViewRef {
+    enterFullscreen(): void;
+}
+
+export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
+    width,
+    height,
+    children,
+}: DeviceViewProps, ref) => {
     const [containerWidth, setContainerWidth] = useState(0);
     const [containerHeight, setContainerHeight] = useState(0);
     const [scale, setScale] = useState(1);
@@ -36,9 +44,15 @@ export const DeviceView = withDisplayName('DeviceView', ({ width, height, childr
         }
     }, [width, height, containerWidth, containerHeight]);
 
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useImperativeHandle(ref, () => ({
+        enterFullscreen() { containerRef.current!.requestFullscreen(); },
+    }), []);
+
     return (
         <StackItem grow>
             <ResizeObserver
+                ref={containerRef}
                 style={{
                     position: 'relative',
                     width: '100%',

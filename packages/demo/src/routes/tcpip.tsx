@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CommandBar, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
-export const TcpIp = withDisplayName('TcpIp', ({
+export const TcpIp = withDisplayName('TcpIp')(({
     device
 }: RouteProps): JSX.Element | null => {
     const [serviceListenAddrs, setServiceListenAddrs] = useState<string[] | undefined>();

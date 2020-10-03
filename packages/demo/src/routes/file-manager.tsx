@@ -6,7 +6,7 @@ import path from 'path';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
 import { ErrorDialogContext } from '../error-dialog';
-import { CommandBar, withDisplayName } from '../utils';
+import { CommandBar, delay, formatSize, formatSpeed, useSpeed, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 initializeFileTypeIcons();
@@ -29,25 +29,6 @@ const classNames = mergeStyleSets({
     },
 });
 
-const units = [' B', ' KB', ' MB', ' GB'];
-function formatSize(value: number): string {
-    let index = 0;
-    while (index < units.length && value > 1024) {
-        index += 1;
-        value /= 1024;
-    }
-    return value.toLocaleString(undefined, { maximumFractionDigits: 2 }) + units[index];
-}
-
-function extensionName(fileName: string): string {
-    const index = fileName.lastIndexOf('.');
-    if (index === -1) {
-        return '';
-    } else {
-        return fileName.slice(index);
-    }
-}
-
 const renderDetailsHeader: IRenderFunction<IDetailsHeaderProps> = (props?, defaultRender?) => {
     if (!props || !defaultRender) {
         return null;
@@ -58,12 +39,6 @@ const renderDetailsHeader: IRenderFunction<IDetailsHeaderProps> = (props?, defau
         styles: concatStyleSets(props.styles, { root: { paddingTop: 0 } })
     });
 };
-
-function delay(time: number): Promise<void> {
-    return new Promise(resolve => {
-        setTimeout(resolve, time);
-    });
-}
 
 function createReadableStreamFromBufferIterator(
     iterator: AsyncIterator<ArrayBuffer>
@@ -96,7 +71,7 @@ async function* chunkFile(file: File): AsyncGenerator<ArrayBuffer, void, void> {
     }
 }
 
-export const FileManager = withDisplayName('FileManager', ({
+export const FileManager = withDisplayName('FileManager')(({
     device,
 }: RouteProps): JSX.Element | null => {
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
@@ -246,7 +221,7 @@ export const FileManager = withDisplayName('FileManager', ({
                         case LinuxFileType.Directory:
                             return <Icon {...getFileTypeIconProps({ size: 20, type: FileIconType.folder })} />;
                         case LinuxFileType.File:
-                            return <Icon {...getFileTypeIconProps({ size: 20, extension: extensionName(item.name!) })} />;
+                            return <Icon {...getFileTypeIconProps({ size: 20, extension: path.extname(item.name!) })} />;
                         default:
                             return <Icon {...getFileTypeIconProps({ size: 20, extension: 'txt' })} />;
                     }
@@ -337,7 +312,7 @@ export const FileManager = withDisplayName('FileManager', ({
                 setCurrentPath(path.resolve(currentPath, item.name!));
                 break;
             case LinuxFileType.File:
-                switch (extensionName(item.name!)) {
+                switch (path.extname(item.name!)) {
                     case '.jpg':
                     case '.png':
                     case '.svg':
@@ -359,19 +334,10 @@ export const FileManager = withDisplayName('FileManager', ({
 
     const [uploading, setUploading] = useState(false);
     const [uploadPath, setUploadPath] = useState('');
-    const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadedSize, setUploadedSize] = useState(0);
     const [uploadTotalSize, setUploadTotalSize] = useState(0);
-    const [uploadSpeed, setUploadSpeed] = useState(0);
+    const [debouncedUploadedSize, uploadSpeed] = useSpeed(uploadedSize, uploadTotalSize);
     const upload = useCallback(async (file: File) => {
-        let lastSecondUploadedSize = 0;
-        let currentUploadedSize = 0;
-        const intervalId = window.setInterval(() => {
-            setUploadedSize(currentUploadedSize);
-            setUploadSpeed(currentUploadedSize - lastSecondUploadedSize);
-            lastSecondUploadedSize = currentUploadedSize;
-        }, 1000);
-
         const sync = await device!.sync();
         try {
             const itemPath = path.resolve(currentPath, file.name);
@@ -383,10 +349,7 @@ export const FileManager = withDisplayName('FileManager', ({
                 chunkFile(file),
                 (LinuxFileType.File << 12) | 0o666,
                 file.lastModified / 1000,
-                (uploadedSize) => {
-                    setUploadProgress(uploadedSize / file.size);
-                    currentUploadedSize = uploadedSize;
-                },
+                setUploadedSize,
             );
         } catch (e) {
             showErrorDialog(e.message);
@@ -394,7 +357,6 @@ export const FileManager = withDisplayName('FileManager', ({
             sync.dispose();
             load();
             setUploading(false);
-            window.clearInterval(intervalId);
         }
     }, [currentPath, device]);
 
@@ -565,8 +527,8 @@ export const FileManager = withDisplayName('FileManager', ({
                     }}
                 >
                     <ProgressIndicator
-                        description={`${formatSize(uploadedSize)} / ${formatSize(uploadTotalSize)} at ${formatSize(uploadSpeed)}/s`}
-                        percentComplete={uploadProgress}
+                        description={formatSpeed(debouncedUploadedSize, uploadTotalSize, uploadSpeed)}
+                        percentComplete={uploadedSize / uploadTotalSize}
                     />
                 </Dialog>
             </StackItem>

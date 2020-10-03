@@ -3,7 +3,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { CommandBar, DeviceView, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
-export const FrameBuffer = withDisplayName('FrameBuffer', ({
+export const FrameBuffer = withDisplayName('FrameBuffer')(({
     device
 }: RouteProps): JSX.Element | null => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);

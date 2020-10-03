@@ -2,6 +2,7 @@ import AsyncOperationManager from '@yume-chan/async-operation-manager';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbBackend } from '../backend';
 import { AdbCommand, AdbPacket } from '../packet';
+import { AutoResetEvent } from '../utils';
 import { AdbStreamController } from './controller';
 import { AdbStream } from './stream';
 
@@ -24,6 +25,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
     // (0 means open failed)
     private readonly initializers = new AsyncOperationManager(1);
     private readonly streams = new Map<number, AdbStreamController>();
+    private readonly sendLock = new AutoResetEvent();
 
     public readonly backend: AdbBackend;
 
@@ -170,7 +172,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         arg1: number,
         payload?: string | ArrayBuffer
     ): Promise<void>;
-    public sendPacket(
+    public async sendPacket(
         packetOrCommand: AdbPacket | AdbCommand,
         arg0?: number,
         arg1?: number,
@@ -192,7 +194,12 @@ export class AdbPacketDispatcher extends AutoDisposable {
             }, this.backend);
         }
 
-        return AdbPacket.write(packet, this.backend);
+        try {
+            await this.sendLock.wait();
+            await AdbPacket.write(packet, this.backend);
+        } finally {
+            this.sendLock.notify();
+        }
     }
 
     public dispose() {

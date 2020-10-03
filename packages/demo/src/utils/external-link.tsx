@@ -12,7 +12,7 @@ export interface ExternalLinkProps {
     children?: ReactNode;
 }
 
-export const ExternalLink = withDisplayName('ExternalLink', ({
+export const ExternalLink = withDisplayName('ExternalLink')(({
     href,
     spaceBefore,
     spaceAfter,

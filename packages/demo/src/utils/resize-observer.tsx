@@ -15,7 +15,7 @@ const iframeStyle: CSSProperties = {
     visibility: 'hidden',
 };
 
-export const ResizeObserver = forwardRef('ResizeObserver', ({
+export const ResizeObserver = forwardRef<HTMLDivElement>('ResizeObserver')(({
     onResize,
     style,
     children,
@@ -25,7 +25,7 @@ export const ResizeObserver = forwardRef('ResizeObserver', ({
     onResizeRef.current = onResize;
 
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const mergedRef = createMergedRef()(ref, containerRef);
+    const mergedRef = createMergedRef<HTMLDivElement | null>()(ref, containerRef);
 
     const handleResize = useCallback(() => {
         const { width, height } = containerRef.current!.getBoundingClientRect();

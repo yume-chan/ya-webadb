@@ -18,7 +18,7 @@ export interface CacheRouteProps extends RouteProps {
     noCache?: boolean;
 }
 
-export const CacheRoute = withDisplayName('CacheRoute', (props: CacheRouteProps) => {
+export const CacheRoute = withDisplayName('CacheRoute')((props: CacheRouteProps) => {
     const match = useRouteMatch(props);
 
     const everMatched = useRef(!!match);
@@ -53,7 +53,7 @@ export interface CacheSwitchProps {
     children: React.ReactNodeArray;
 }
 
-export const CacheSwitch = withDisplayName('CacheSwitch', (props: CacheSwitchProps) => {
+export const CacheSwitch = withDisplayName('CacheSwitch')((props: CacheSwitchProps) => {
     const location = useLocation();
     let contextMatch = useRouteMatch();
 

@@ -42,6 +42,7 @@
         "@uifabric/react-hooks": "7.13.5",
         "@yume-chan/adb": "^0.0.1",
         "@yume-chan/adb-backend-web": "^0.0.1",
+        "@yume-chan/event": "^0.0.1",
         "@yume-chan/struct": "^0.0.0",
         "jmuxer": "1.2.0",
         "react": "16.13.1",

@@ -1,19 +1,13 @@
-import { ICommandBarItemProps } from '@fluentui/react';
+import { Dialog, ICommandBarItemProps, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
 import { AdbBufferedStream, AdbStream, EventQueue } from '@yume-chan/adb';
 import { Struct } from '@yume-chan/struct';
-import serverUrl from 'file-loader!./scrcpy-server';
 import JMuxer from 'jmuxer';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { CommandBar, DeviceView, ExternalLink, withDisplayName } from '../../utils';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CommonStackTokens } from '../../styles';
+import { CommandBar, DeviceView, DeviceViewRef, ExternalLink, formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
-
-let cachedServerBinary: Promise<ArrayBuffer> | undefined;
-function getServerBinary() {
-    if (!cachedServerBinary) {
-        cachedServerBinary = fetch(serverUrl).then(response => response.arrayBuffer());
-    }
-    return cachedServerBinary;
-}
+import { AndroidMotionEventAction, ScrcpyControlMessage, ScrcpyControlMessageType, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './control';
+import { fetchServer } from './fetch-server';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
 
@@ -59,6 +53,7 @@ async function receiveVideo(stream: AdbBufferedStream, jmuxer: JMuxer) {
             });
         }
     } catch (e) {
+        jmuxer.destroy();
         return;
     }
 }
@@ -86,6 +81,26 @@ async function receiveControl(stream: AdbBufferedStream) {
     }
 }
 
+async function sendControl(stream: AdbBufferedStream, queue: EventQueue<ScrcpyControlMessage>) {
+    try {
+        while (true) {
+            const message = await queue.next();
+            let buffer: ArrayBuffer;
+            switch (message.type) {
+                case ScrcpyControlMessageType.InjectTouch:
+                    buffer = ScrcpyInjectTouchControlMessage.serialize(message, stream);
+                    break;
+                default:
+                    buffer = ScrcpySimpleControlMessage.serialize(message, stream);
+                    break;
+            }
+            await stream.write(buffer);
+        }
+    } catch (e) {
+        return;
+    }
+}
+
 export const enum ScrcpyLogLevel {
     Debug = 'debug',
     Info = 'info',
@@ -101,7 +116,7 @@ export const enum ScrcpyScreenOrientation {
     LandscapeFlipped = 3,
 }
 
-export const Scrcpy = withDisplayName('Scrcpy', ({
+export const Scrcpy = withDisplayName('Scrcpy')(({
     device
 }: RouteProps): JSX.Element | null => {
     const [running, setRunning] = useState(false);
@@ -109,18 +124,38 @@ export const Scrcpy = withDisplayName('Scrcpy', ({
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
-    const handleVideoRef = useCallback((value: HTMLVideoElement | null) => {
-        videoRef.current = value;
-        if (value) {
-            value.onresize = () => {
-                setWidth(value.videoWidth);
-                setHeight(value.videoHeight);
+    const handleVideoRef = useCallback((video: HTMLVideoElement | null) => {
+        videoRef.current = video;
+        if (video) {
+            video.onresize = () => {
+                setWidth(video.videoWidth);
+                setHeight(video.videoHeight);
             };
+
+            video.addEventListener('touchmove', e => {
+                e.preventDefault();
+            });
+
+            video.addEventListener('pause', () => {
+                console.log('???');
+                video.play();
+            });
         }
     }, []);
 
-    const serverRef = useRef<AdbStream | undefined>();
-    const controlStreamRef = useRef<AdbBufferedStream | undefined>();
+    const [connecting, setConnecting] = useState(false);
+
+    const [serverTotalSize, setServerTotalSize] = useState(0);
+
+    const [serverDownloadedSize, setServerDownloadedSize] = useState(0);
+    const [debouncedServerDownloadedSize, serverDownloadSpeed] = useSpeed(serverDownloadedSize, serverTotalSize);
+
+    const [serverUploadedSize, setServerUploadedSize] = useState(0);
+    const [debouncedServerUploadedSize, serverUploadSpeed] = useSpeed(serverUploadedSize, serverTotalSize);
+
+    const serverRef = useRef<AdbStream>();
+    const eventQueueRef = useRef<EventQueue<ScrcpyControlMessage>>();
+    const controlStreamRef = useRef<AdbBufferedStream>();
 
     const start = useCallback(() => {
         if (!device) {
@@ -128,10 +163,24 @@ export const Scrcpy = withDisplayName('Scrcpy', ({
         }
 
         (async () => {
-            const serverBuffer = await getServerBinary();
+            setServerTotalSize(0);
+            setServerDownloadedSize(0);
+            setServerUploadedSize(0);
+            setConnecting(true);
+
+            const serverBuffer = await fetchServer(([downloaded, total]) => {
+                setServerDownloadedSize(downloaded);
+                setServerTotalSize(total);
+            });
 
             const sync = await device.sync();
-            await sync.write(DeviceServerPath, serverBuffer);
+            await sync.write(
+                DeviceServerPath,
+                serverBuffer,
+                undefined,
+                undefined,
+                setServerUploadedSize
+            );
 
             const listener = new EventQueue<AdbStream>();
             const reverseDeviceAddress = await device.reverse.add('localabstract:scrcpy', 27183, {
@@ -187,41 +236,65 @@ export const Scrcpy = withDisplayName('Scrcpy', ({
             });
 
             serverRef.current = server;
+
+            setConnecting(false);
             setRunning(true);
+
+            eventQueueRef.current = new EventQueue<ScrcpyControlMessage>();
 
             await Promise.all([
                 receiveVideo(videoStream, jmuxer),
                 receiveControl(controlStream),
+                sendControl(controlStream, eventQueueRef.current),
             ]);
 
-            jmuxer.destroy();
-            await server.close();
-            serverRef.current = undefined;
-            setRunning(false);
+            stop();
         })();
     }, [device]);
 
     const stop = useCallback(() => {
-        serverRef.current!.close();
+        if (!serverRef.current) {
+            return;
+        }
+
+        eventQueueRef.current!.end();
+
+        serverRef.current.close();
+        serverRef.current = undefined;
+
+        setRunning(false);
     }, []);
 
+    const deviceViewRef = useRef<DeviceViewRef | null>(null);
     const commandBarItems = useMemo((): ICommandBarItemProps[] => {
+        const reuslt: ICommandBarItemProps[] = [];
+
         if (running) {
-            return [{
+            reuslt.push({
                 key: 'stop',
                 iconProps: { iconName: 'Stop' },
                 text: 'Stop',
                 onClick: stop,
-            }];
+            });
         } else {
-            return [{
+            reuslt.push({
                 key: 'start',
                 disabled: !device,
                 iconProps: { iconName: 'Play' },
                 text: 'Start',
                 onClick: start,
-            }];
+            });
         }
+
+        reuslt.push({
+            key: 'fullscreen',
+            disabled: !running,
+            iconProps: { iconName: 'Fullscreen' },
+            text: 'Fullscreen',
+            onClick: () => { deviceViewRef.current?.enterFullscreen(); },
+        });
+
+        return reuslt;
     }, [device, running, start]);
 
     const commandBarFarItems = useMemo((): ICommandBarItemProps[] => [
@@ -248,41 +321,121 @@ export const Scrcpy = withDisplayName('Scrcpy', ({
         }
     ], []);
 
-    const handleTouchStart = useCallback((e: React.TouchEvent<HTMLVideoElement>) => {
-        controlStreamRef.current!.write(new ArrayBuffer(10));
-    }, []);
+    const injectTouch = useCallback((
+        action: AndroidMotionEventAction,
+        e: React.PointerEvent<HTMLVideoElement>
+    ) => {
+        e.preventDefault();
+        e.stopPropagation();
 
-    const handleTouchMove = useCallback((e: React.TouchEvent<HTMLVideoElement>) => {
+        const view = e.currentTarget.getBoundingClientRect();
+        const pointerViewX = e.clientX - view.x;
+        const pointerViewY = e.clientY - view.y;
+        const pointerScreenX = pointerViewX / view.width * width;
+        const pointerScreenY = pointerViewY / view.height * height;
 
-    }, []);
+        eventQueueRef.current!.push({
+            type: ScrcpyControlMessageType.InjectTouch,
+            action,
+            buttons: 0,
+            pointerId: BigInt(e.pointerId),
+            pointerX: pointerScreenX,
+            pointerY: pointerScreenY,
+            pressure: e.pressure * 65535,
+            screenWidth: width,
+            screenHeight: height,
+        });
+    }, [width, height]);
 
-    const handleTouchEnd = useCallback((e: React.TouchEvent<HTMLVideoElement>) => {
+    const handlePointerDown = useCallback((e: React.PointerEvent<HTMLVideoElement>) => {
+        injectTouch(AndroidMotionEventAction.Down, e);
+    }, [injectTouch]);
 
-    }, []);
+    const handlePointerMove = useCallback((e: React.PointerEvent<HTMLVideoElement>) => {
+        if (e.pressure > 0) {
+            injectTouch(AndroidMotionEventAction.Move, e);
+        }
+    }, [injectTouch]);
+
+    const handlePointerUp = useCallback((e: React.PointerEvent<HTMLVideoElement>) => {
+        injectTouch(AndroidMotionEventAction.Up, e);
+    }, [injectTouch]);
 
     const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLVideoElement>) => {
 
     }, []);
 
-    const handleCanPlay = useCallback(() => {
-        videoRef.current!.play();
-    }, []);
+    // useEffect(() => {
+    //     function handlePageShow() {
+    //         if (document.visibilityState !== 'visible') {
+    //             return;
+    //         }
+
+    //         const video = videoRef.current;
+    //         if (!video || video.buffered.length === 0) {
+    //             return;
+    //         }
+
+    //         video.currentTime = video.buffered.end(0);
+    //     }
+
+    //     document.addEventListener('visibilitychange', handlePageShow);
+
+    //     return () => {
+    //         document.removeEventListener('visibilitychange', handlePageShow);
+    //     };
+    // }, []);
 
     return (
         <>
             <CommandBar items={commandBarItems} farItems={commandBarFarItems} />
-            <DeviceView width={width} height={height}>
+
+            <DeviceView ref={deviceViewRef} width={width} height={height}>
                 <video
                     ref={handleVideoRef}
+                    autoPlay
                     width={width}
                     height={height}
-                    onCanPlay={handleCanPlay}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
                     onKeyPress={handleKeyPress}
                 />
             </DeviceView>
+
+            <Dialog
+                hidden={!connecting}
+                dialogContentProps={{
+                    title: 'Connecting...'
+                }}
+            >
+                <Stack tokens={CommonStackTokens}>
+                    <StackItem>
+                        <ProgressIndicator
+                            label="1. Downloading scrcpy server..."
+                            progressHidden={serverTotalSize === 0}
+                            percentComplete={serverDownloadedSize / serverTotalSize}
+                            description={formatSpeed(debouncedServerDownloadedSize, serverTotalSize, serverDownloadSpeed)}
+                        />
+                    </StackItem>
+
+                    <StackItem>
+                        <ProgressIndicator
+                            label="2. Pushing scrcpy server to device..."
+                            progressHidden={serverTotalSize === 0 || serverDownloadedSize !== serverTotalSize}
+                            percentComplete={serverUploadedSize / serverTotalSize}
+                            description={formatSpeed(debouncedServerUploadedSize, serverTotalSize, serverUploadSpeed)}
+                        />
+                    </StackItem>
+
+                    <StackItem>
+                        <ProgressIndicator
+                            label="3. Starting scrcpy server on device..."
+                            progressHidden={serverTotalSize === 0 || serverUploadedSize !== serverTotalSize}
+                        />
+                    </StackItem>
+                </Stack>
+            </Dialog>
         </>
     );
 });

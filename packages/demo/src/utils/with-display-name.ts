@@ -1,18 +1,14 @@
-import React from 'react';
-import { memo, NamedExoticComponent } from 'react';
+import React, { memo } from 'react';
 
-export function withDisplayName<P extends object>(
-    name: string,
-    Component: React.FunctionComponent<P>
-): NamedExoticComponent<P> {
-    Component.displayName = name;
-    return memo(Component);
+export function withDisplayName(name: string) {
+    return <P extends object>(Component: React.FunctionComponent<P>) => {
+        Component.displayName = name;
+        return memo(Component);
+    };
 }
 
-export function forwardRef<P extends object>(
-    name: string,
-    Component: React.ForwardRefRenderFunction<unknown, P>
-) {
-    Component.displayName = name;
-    return memo(React.forwardRef(Component));
+export function forwardRef<T>(name: string) {
+    return <P extends object>(Component: React.ForwardRefRenderFunction<T, P>) => {
+        return withDisplayName(name)(React.forwardRef(Component));
+    };
 }

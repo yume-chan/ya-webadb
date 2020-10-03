@@ -13,7 +13,7 @@ interface ConnectProps {
     onDeviceChange: (device: Adb | undefined) => void;
 }
 
-export default withDisplayName('Connect', ({
+export default withDisplayName('Connect')(({
     device,
     onDeviceChange,
 }: ConnectProps): JSX.Element | null => {
@@ -154,7 +154,7 @@ export default withDisplayName('Connect', ({
             <Dialog
                 hidden={!connecting}
                 dialogContentProps={{
-                    title: 'Connecting',
+                    title: 'Connecting...',
                     subText: 'Please authorize the connection on your device'
                 }}
             >

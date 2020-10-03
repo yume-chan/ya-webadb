@@ -9,6 +9,7 @@ export namespace Number {
         number;
 
     export const enum SubType {
+        Uint8,
         Uint16,
         Int32,
         Uint32,
@@ -17,6 +18,7 @@ export namespace Number {
     }
 
     export const SizeMap: Record<SubType, number> = {
+        [SubType.Uint8]: 1,
         [SubType.Uint16]: 2,
         [SubType.Int32]: 4,
         [SubType.Uint32]: 4,
@@ -25,6 +27,7 @@ export namespace Number {
     };
 
     export const DataViewGetterMap = {
+        [SubType.Uint8]: 'getUint8',
         [SubType.Uint16]: 'getUint16',
         [SubType.Int32]: 'getInt32',
         [SubType.Uint32]: 'getUint32',
@@ -33,6 +36,7 @@ export namespace Number {
     } as const;
 
     export const DataViewSetterMap = {
+        [SubType.Uint8]: 'setUint8',
         [SubType.Uint16]: 'setUint16',
         [SubType.Int32]: 'setInt32',
         [SubType.Uint32]: 'setUint32',

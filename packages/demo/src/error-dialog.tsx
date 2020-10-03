@@ -11,7 +11,7 @@ export const ErrorDialogContext = React.createContext<ErrorDialogContext>({
     show() { }
 });
 
-export default withDisplayName('ErrorDialogProvider', (props: PropsWithChildren<{}>) => {
+export default withDisplayName('ErrorDialogProvider')((props: PropsWithChildren<{}>) => {
     const [errorDialogVisible, { setTrue: showErrorDialog, setFalse: hideErrorDialog }] = useBoolean(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
