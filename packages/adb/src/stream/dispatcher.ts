@@ -1,7 +1,7 @@
 import AsyncOperationManager from '@yume-chan/async-operation-manager';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbBackend } from '../backend';
-import { AdbCommand, AdbPacket } from '../packet';
+import { AdbCommand, AdbPacket, AdbPacketInit } from '../packet';
 import { AutoResetEvent } from '../utils';
 import { AdbStreamController } from './controller';
 import { AdbStream } from './stream';
@@ -28,6 +28,9 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly sendLock = new AutoResetEvent();
 
     public readonly backend: AdbBackend;
+
+    public maxPayloadSize = 0;
+    public calculateChecksum = true;
 
     private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketReceivedEventArgs>());
     public get onPacket() { return this.packetEvent.event; }
@@ -59,7 +62,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
                         // CLSE also has two meanings
                         if (packet.arg0 === 0) {
                             // 1. The device don't want to create the Stream
-                            this.initializers.reject(packet.arg1, new Error('open failed'));
+                            this.initializers.reject(packet.arg1, new Error('Stream open failed'));
                             continue;
                         }
 
@@ -165,7 +168,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         return new AdbStream(controller);
     }
 
-    public sendPacket(packet: AdbPacket): Promise<void>;
+    public sendPacket(packet: AdbPacketInit): Promise<void>;
     public sendPacket(
         command: AdbCommand,
         arg0: number,
@@ -173,29 +176,32 @@ export class AdbPacketDispatcher extends AutoDisposable {
         payload?: string | ArrayBuffer
     ): Promise<void>;
     public async sendPacket(
-        packetOrCommand: AdbPacket | AdbCommand,
+        packetOrCommand: AdbPacketInit | AdbCommand,
         arg0?: number,
         arg1?: number,
         payload?: string | ArrayBuffer
     ): Promise<void> {
-        let packet: AdbPacket;
+        let init: AdbPacketInit;
         if (arguments.length === 1) {
-            packet = packetOrCommand as AdbPacket;
+            init = packetOrCommand as AdbPacketInit;
         } else {
-            if (typeof payload === 'string') {
-                payload = this.backend.encodeUtf8(payload);
-            }
-
-            packet = AdbPacket.create({
+            init = {
                 command: packetOrCommand as AdbCommand,
                 arg0: arg0 as number,
                 arg1: arg1 as number,
-                payload,
-            }, this.backend);
+                payload: typeof payload === 'string' ? this.backend.encodeUtf8(payload) : payload,
+            };
+        }
+
+        if (init.payload &&
+            init.payload.byteLength > this.maxPayloadSize) {
+            throw new Error('payload too large');
         }
 
         try {
             await this.sendLock.wait();
+
+            const packet = AdbPacket.create(init, this.calculateChecksum, this.backend);
             await AdbPacket.write(packet, this.backend);
         } finally {
             this.sendLock.notify();

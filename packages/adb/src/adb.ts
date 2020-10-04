@@ -55,9 +55,13 @@ export class Adb {
 
     public async connect(authenticators = AdbDefaultAuthenticators) {
         await this.backend.connect?.();
+        this.packetDispatcher.maxPayloadSize = 0x1000;
+        this.packetDispatcher.calculateChecksum = true;
         this.packetDispatcher.start();
 
         const version = 0x01000001;
+        const versionNoChecksum = 0x01000001;
+        const maxPayloadSize = 0x100000;
 
         const features = [
             'shell_v2', // 9
@@ -88,8 +92,9 @@ export class Adb {
             try {
                 switch (packet.command) {
                     case AdbCommand.Connect:
-                        if (packet.arg0 !== version) {
-                            throw new Error('Version mismatch');
+                        this.packetDispatcher.maxPayloadSize = Math.min(maxPayloadSize, packet.arg1);
+                        if (Math.min(version, packet.arg0) >= versionNoChecksum) {
+                            this.packetDispatcher.calculateChecksum = false;
                         }
 
                         this.parseBanner(this.backend.decodeUtf8(packet.payload!));
@@ -118,7 +123,7 @@ export class Adb {
         await this.packetDispatcher.sendPacket(
             AdbCommand.Connect,
             version,
-            0x100000,
+            maxPayloadSize,
             `host::features=${features}`
         );
 

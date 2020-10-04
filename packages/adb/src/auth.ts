@@ -107,13 +107,13 @@ export class AdbAuthenticationHandler implements Disposable {
         throw new Error('Cannot authenticate with device');
     }
 
-    public async next(packet: AdbPacket): Promise<AdbPacket> {
+    public async next(packet: AdbPacket): Promise<AdbPacketInit> {
         if (!this.iterator) {
             this.iterator = this.nextCore(packet);
         }
 
         const result = await this.iterator.next(packet);
-        return AdbPacket.create(result.value, this.backend);
+        return result.value;
     }
 
     public dispose() {

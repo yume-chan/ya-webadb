@@ -34,10 +34,22 @@ export type AdbPacket = StructValueType<typeof AdbPacketStruct>;
 export type AdbPacketInit = Omit<StructInitType<typeof AdbPacketStruct>, 'checksum' | 'magic'>;
 
 export namespace AdbPacket {
-    export function create(init: AdbPacketInit, backend: AdbBackend): AdbPacket {
+    export function create(
+        init: AdbPacketInit,
+        calculateChecksum: boolean,
+        backend: AdbBackend
+    ): AdbPacket {
+        let checksum: number;
+        if (calculateChecksum && init.payload) {
+            const array = new Uint8Array(init.payload);
+            checksum = array.reduce((result, item) => result + item, 0);
+        } else {
+            checksum = 0;
+        }
+
         return AdbPacketStruct.create({
             ...init,
-            checksum: 0,
+            checksum,
             magic: init.command ^ 0xFFFFFFFF,
         }, backend);
     }

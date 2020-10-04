@@ -2,7 +2,8 @@ import { Dialog, ICommandBarItemProps, ProgressIndicator, Stack, StackItem } fro
 import { AdbBufferedStream, AdbStream, EventQueue } from '@yume-chan/adb';
 import { Struct } from '@yume-chan/struct';
 import JMuxer from 'jmuxer';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { ErrorDialogContext } from '../../error-dialog';
 import { CommonStackTokens } from '../../styles';
 import { CommandBar, DeviceView, DeviceViewRef, ExternalLink, formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
@@ -119,6 +120,8 @@ export const enum ScrcpyScreenOrientation {
 export const Scrcpy = withDisplayName('Scrcpy')(({
     device
 }: RouteProps): JSX.Element | null => {
+    const { show: showErrorDialog } = useContext(ErrorDialogContext);
+
     const [running, setRunning] = useState(false);
 
     const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -166,92 +169,98 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         }
 
         (async () => {
-            setServerTotalSize(0);
-            setServerDownloadedSize(0);
-            setServerUploadedSize(0);
-            setConnecting(true);
+            try {
+                setServerTotalSize(0);
+                setServerDownloadedSize(0);
+                setServerUploadedSize(0);
+                setConnecting(true);
 
-            const serverBuffer = await fetchServer(([downloaded, total]) => {
-                setServerDownloadedSize(downloaded);
-                setServerTotalSize(total);
-            });
+                const serverBuffer = await fetchServer(([downloaded, total]) => {
+                    setServerDownloadedSize(downloaded);
+                    setServerTotalSize(total);
+                });
 
-            const sync = await device.sync();
-            await sync.write(
-                DeviceServerPath,
-                serverBuffer,
-                undefined,
-                undefined,
-                setServerUploadedSize
-            );
+                const sync = await device.sync();
+                await sync.write(
+                    DeviceServerPath,
+                    serverBuffer,
+                    undefined,
+                    undefined,
+                    setServerUploadedSize
+                );
 
-            const listener = new EventQueue<AdbStream>();
-            const reverseDeviceAddress = await device.reverse.add('localabstract:scrcpy', 27183, {
-                onStream(packet, stream) {
-                    listener.push(stream);
-                },
-            });
+                const listener = new EventQueue<AdbStream>();
+                const reverseDeviceAddress = await device.reverse.add('localabstract:scrcpy', 27183, {
+                    onStream(packet, stream) {
+                        listener.push(stream);
+                    },
+                });
 
-            const server = await device.spawn(
-                `CLASSPATH=${DeviceServerPath}`,
-                'app_process',
-                '/', // unused
-                'com.genymobile.scrcpy.Server',
-                '1.16', // SCRCPY_VERSION
-                ScrcpyLogLevel.Debug,
-                '0', // max_size (0: unlimited)
-                '8000000', // bit_rate
-                '0', // max_fps
-                ScrcpyScreenOrientation.Unlocked.toString(), // lock_video_orientation (-1: unlocked)
-                'false', // tunnel_forward
-                '-', // crop
-                'true', // always send frame meta (packet boundaries + timestamp)
-                'true', // control
-                '0', // display_id
-                'true', // show_touches
-                'true', // stay_awake
-                '-', // codec_options
-            );
-            server.onData(data => {
-                console.log(device.backend.decodeUtf8(data));
-            });
-            server.onClose(() => {
-                console.log('server stopped');
-            });
+                const server = await device.spawn(
+                    `CLASSPATH=${DeviceServerPath}`,
+                    'app_process',
+                    '/', // unused
+                    'com.genymobile.scrcpy.Server',
+                    '1.16', // SCRCPY_VERSION
+                    ScrcpyLogLevel.Debug,
+                    '0', // max_size (0: unlimited)
+                    '8000000', // bit_rate
+                    '0', // max_fps
+                    ScrcpyScreenOrientation.Unlocked.toString(), // lock_video_orientation (-1: unlocked)
+                    'false', // tunnel_forward
+                    '-', // crop
+                    'true', // always send frame meta (packet boundaries + timestamp)
+                    'true', // control
+                    '0', // display_id
+                    'true', // show_touches
+                    'true', // stay_awake
+                    '-', // codec_options
+                );
+                server.onData(data => {
+                    console.log(device.backend.decodeUtf8(data));
+                });
+                server.onClose(() => {
+                    console.log('server stopped');
+                });
 
-            const videoStream = new AdbBufferedStream(await listener.next());
-            const controlStream = new AdbBufferedStream(await listener.next());
-            controlStreamRef.current = controlStream;
+                const videoStream = new AdbBufferedStream(await listener.next());
+                const controlStream = new AdbBufferedStream(await listener.next());
+                controlStreamRef.current = controlStream;
 
-            // Don't await this
-            // The connection might be stuck because we have not read some packets from videoStream.
-            device.reverse.remove(reverseDeviceAddress);
+                // Don't await this
+                // The connection might be stuck because we have not read some packets from videoStream.
+                device.reverse.remove(reverseDeviceAddress);
 
-            // Device name, we don't need it
-            await videoStream.read(64);
-            // Initial video size, we don't need it
-            await Size.deserialize(videoStream);
+                // Device name, we don't need it
+                await videoStream.read(64);
+                // Initial video size, we don't need it
+                await Size.deserialize(videoStream);
 
-            const jmuxer = new JMuxer({
-                node: videoRef.current!,
-                mode: 'video',
-                flushingTime: 0,
-            });
+                const jmuxer = new JMuxer({
+                    node: videoRef.current!,
+                    mode: 'video',
+                    flushingTime: 0,
+                });
 
-            serverRef.current = server;
+                serverRef.current = server;
 
-            setConnecting(false);
-            setRunning(true);
+                setConnecting(false);
+                setRunning(true);
 
-            eventQueueRef.current = new EventQueue<ScrcpyControlMessage>();
+                eventQueueRef.current = new EventQueue<ScrcpyControlMessage>();
 
-            await Promise.all([
-                receiveVideo(videoStream, jmuxer),
-                receiveControl(controlStream),
-                sendControl(controlStream, eventQueueRef.current),
-            ]);
+                await Promise.all([
+                    receiveVideo(videoStream, jmuxer),
+                    receiveControl(controlStream),
+                    sendControl(controlStream, eventQueueRef.current),
+                ]);
 
-            stop();
+                stop();
+            } catch (e) {
+                showErrorDialog(e.message);
+            } finally {
+                setConnecting(false);
+            }
         })();
     }, [device]);
 
@@ -270,17 +279,17 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
     const deviceViewRef = useRef<DeviceViewRef | null>(null);
     const commandBarItems = useMemo((): ICommandBarItemProps[] => {
-        const reuslt: ICommandBarItemProps[] = [];
+        const result: ICommandBarItemProps[] = [];
 
         if (running) {
-            reuslt.push({
+            result.push({
                 key: 'stop',
                 iconProps: { iconName: 'Stop' },
                 text: 'Stop',
                 onClick: stop,
             });
         } else {
-            reuslt.push({
+            result.push({
                 key: 'start',
                 disabled: !device,
                 iconProps: { iconName: 'Play' },
@@ -289,7 +298,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
             });
         }
 
-        reuslt.push({
+        result.push({
             key: 'fullscreen',
             disabled: !running,
             iconProps: { iconName: 'Fullscreen' },
@@ -297,7 +306,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
             onClick: () => { deviceViewRef.current?.enterFullscreen(); },
         });
 
-        return reuslt;
+        return result;
     }, [device, running, start]);
 
     const commandBarFarItems = useMemo((): ICommandBarItemProps[] => [

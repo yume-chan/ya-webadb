@@ -21,7 +21,7 @@ export interface CacheRouteProps extends RouteProps {
 export const CacheRoute = withDisplayName('CacheRoute')((props: CacheRouteProps) => {
     const match = useRouteMatch(props);
 
-    const everMatched = useRef(!!match);
+    const everMatched = useRef(false);
     if (!everMatched.current && match) {
         everMatched.current = true;
     }
@@ -43,8 +43,14 @@ export const CacheRoute = withDisplayName('CacheRoute')((props: CacheRouteProps)
     }
 
     return (
-        <Stack {...stackProps} >
-            {props.children}
+        <Stack {...stackProps}>
+            {React.Children.map(
+                props.children,
+                element =>
+                    React.isValidElement(element)
+                        ? React.cloneElement(element, { ...element.props, visible: !!match })
+                        : element
+            )}
         </Stack>
     );
 });

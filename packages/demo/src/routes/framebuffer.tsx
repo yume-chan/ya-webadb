@@ -1,11 +1,14 @@
 import { ICommandBarItemProps } from '@fluentui/react';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { ErrorDialogContext } from '../error-dialog';
 import { CommandBar, DeviceView, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 export const FrameBuffer = withDisplayName('FrameBuffer')(({
     device
 }: RouteProps): JSX.Element | null => {
+    const { show: showErrorDialog } = useContext(ErrorDialogContext);
+
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     const [width, setWidth] = useState(0);
@@ -17,26 +20,30 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
         }
 
         (async function () {
-            const start = window.performance.now();
-            const framebuffer = await device!.framebuffer();
-            const end = window.performance.now();
-            console.log('time', end - start);
+            try {
+                const start = window.performance.now();
+                const framebuffer = await device!.framebuffer();
+                const end = window.performance.now();
+                console.log('time', end - start);
 
-            const { width, height } = framebuffer;
+                const { width, height } = framebuffer;
 
-            const canvas = canvasRef.current;
-            if (!canvas) {
-                return;
+                const canvas = canvasRef.current;
+                if (!canvas) {
+                    return;
+                }
+
+                setWidth(width);
+                setHeight(height);
+                canvas.width = width;
+                canvas.height = height;
+
+                const context = canvas.getContext("2d")!;
+                const image = new ImageData(new Uint8ClampedArray(framebuffer.data!), width, height);
+                context.putImageData(image, 0, 0);
+            } catch (e) {
+                showErrorDialog(e.message);
             }
-
-            setWidth(width);
-            setHeight(height);
-            canvas.width = width;
-            canvas.height = height;
-
-            const context = canvas.getContext("2d")!;
-            const image = new ImageData(new Uint8ClampedArray(framebuffer.data!), width, height);
-            context.putImageData(image, 0, 0);
         })();
     }, [device]);
 

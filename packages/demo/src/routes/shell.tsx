@@ -1,10 +1,13 @@
 import { IconButton, SearchBox, Stack, StackItem } from '@fluentui/react';
+import { AdbStream } from '@yume-chan/adb';
 import { encodeUtf8 } from '@yume-chan/adb-backend-web';
-import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { Disposable } from '@yume-chan/event';
+import React, { CSSProperties, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { SearchAddon } from 'xterm-addon-search';
 import 'xterm/css/xterm.css';
+import { ErrorDialogContext } from '../error-dialog';
 import { ResizeObserver, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
@@ -17,8 +20,11 @@ const UpIconProps = { iconName: 'ChevronUp' };
 const DownIconProps = { iconName: 'ChevronDown' };
 
 export const Shell = withDisplayName('Shell')(({
+    visible,
     device,
 }: RouteProps): JSX.Element | null => {
+    const { show: showErrorDialog } = useContext(ErrorDialogContext);
+
     const [findKeyword, setFindKeyword] = useState('');
     const findAddonRef = useRef<SearchAddon>();
     const handleFindKeywordChange = useCallback((e, newValue?: string) => {
@@ -34,7 +40,31 @@ export const Shell = withDisplayName('Shell')(({
         findAddonRef.current!.findNext(findKeyword);
     }, [findKeyword]);
 
-    const [terminal, setTerminal] = useState<Terminal>();
+    const terminalRef = useRef<Terminal>();
+    const shellStreamRef = useRef<AdbStream>();
+    const terminalDisposableRef = useRef<Disposable>();
+    const connect = useCallback(async () => {
+        if (!visible || !device || !terminalRef.current) {
+            return;
+        }
+
+        try {
+            const shell = await device.shell();
+            shellStreamRef.current = shell;
+            terminalDisposableRef.current = terminalRef.current.onData(data => {
+                const buffer = encodeUtf8(data);
+                shell.write(buffer);
+            });
+            shell.onData(data => {
+                terminalRef.current!.write(new Uint8Array(data));
+            });
+        } catch (e) {
+            showErrorDialog(e.message);
+        }
+    }, [visible, device]);
+
+    const connectRef = useRef(connect);
+    connectRef.current = connect;
     const fitAddonRef = useRef<FitAddon>();
     const handleContainerRef = useCallback((element: HTMLDivElement | null) => {
         if (!element) {
@@ -44,6 +74,7 @@ export const Shell = withDisplayName('Shell')(({
         const terminal = new Terminal({
             scrollback: 9001,
         });
+        terminalRef.current = terminal;
 
         const findAddon = new SearchAddon();
         findAddonRef.current = findAddon;
@@ -53,35 +84,33 @@ export const Shell = withDisplayName('Shell')(({
         fitAddonRef.current = fitAddon;
         terminal.loadAddon(fitAddon);
 
-        setTerminal(terminal);
         terminal.open(element);
         fitAddon.fit();
-    }, []);
-    useEffect(() => {
-        return () => terminal?.dispose();
+
+        connectRef.current();
     }, []);
 
     useEffect(() => {
-        if (!device || !terminal) {
+        if (!device) {
+            if (shellStreamRef.current) {
+                terminalDisposableRef.current!.dispose();
+                terminalDisposableRef.current = undefined;
+
+                shellStreamRef.current!.close();
+                shellStreamRef.current = undefined;
+
+                terminalRef.current!.clear();
+                terminalRef.current!.reset();
+            }
             return;
         }
 
-        (async () => {
-            const shell = await device.shell();
-            terminal.onData(data => {
-                const buffer = encodeUtf8(data);
-                shell.write(buffer);
-            });
-            shell.onData(data => {
-                terminal.write(new Uint8Array(data));
-            });
-        })();
+        if (!visible || shellStreamRef.current) {
+            return;
+        }
 
-        return () => {
-            terminal.reset();
-            terminal.clear();
-        };
-    }, [device, terminal]);
+        connect();
+    }, [device, visible, connect]);
 
     const handleResize = useCallback(() => {
         fitAddonRef.current?.fit();
