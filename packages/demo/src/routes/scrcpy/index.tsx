@@ -411,8 +411,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     <StackItem>
                         <ProgressIndicator
                             label="1. Downloading scrcpy server..."
-                            progressHidden={serverTotalSize === 0}
-                            percentComplete={serverDownloadedSize / serverTotalSize}
+                            percentComplete={serverTotalSize ? serverDownloadedSize / serverTotalSize : undefined}
                             description={formatSpeed(debouncedServerDownloadedSize, serverTotalSize, serverDownloadSpeed)}
                         />
                     </StackItem>
