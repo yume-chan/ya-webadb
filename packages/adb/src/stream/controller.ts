@@ -2,6 +2,7 @@ import { AsyncEventEmitter, AutoDisposable, EventEmitter } from '@yume-chan/even
 import { AdbBackend } from '../backend';
 import { AdbCommand } from '../packet';
 import { AutoResetEvent } from '../utils';
+import { chunkArrayLike } from './chunk';
 import { AdbPacketDispatcher } from './dispatcher';
 
 export interface AdbStreamBase {
@@ -41,13 +42,19 @@ export class AdbStreamController extends AutoDisposable implements AdbStreamBase
         this.dispatcher = dispatcher;
     }
 
-    public async write(data: ArrayBuffer): Promise<void> {
+    private async writeChunk(data: ArrayBuffer): Promise<void> {
         if (this._closed) {
             throw new Error('Can not write after closed');
         }
 
         await this.writeLock.wait();
         await this.dispatcher.sendPacket(AdbCommand.Write, this.localId, this.remoteId, data);
+    }
+
+    public async write(data: ArrayBuffer): Promise<void> {
+        for await (const chunk of chunkArrayLike(data, this.dispatcher.maxPayloadSize)) {
+            await this.writeChunk(chunk);
+        }
     }
 
     public ack() {

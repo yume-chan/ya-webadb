@@ -71,6 +71,15 @@ async function* chunkFile(file: File): AsyncGenerator<ArrayBuffer, void, void> {
     }
 }
 
+function compareCaseInsensitively(a: string, b: string) {
+    let result = a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase());
+    if (result !== 0) {
+        return result;
+    } else {
+        return a.localeCompare(b);
+    }
+}
+
 export const FileManager = withDisplayName('FileManager')(({
     device,
 }: RouteProps): JSX.Element | null => {
@@ -190,7 +199,9 @@ export const FileManager = withDisplayName('FileManager')(({
                 const bSortKey = b[sortKey]!;
 
                 if (aSortKey === bSortKey) {
-                    result = a.name! < b.name! ? -1 : 1;
+                    result = compareCaseInsensitively(a.name!, b.name!);
+                } else if (typeof aSortKey === 'string') {
+                    result = compareCaseInsensitively(aSortKey, bSortKey as string);
                 } else {
                     result = aSortKey < bSortKey ? -1 : 1;
                 }
@@ -244,14 +255,16 @@ export const FileManager = withDisplayName('FileManager')(({
                 key: 'permission',
                 name: 'Permission',
                 minWidth: 0,
+                isCollapsible: true,
                 onRender(item: AdbSyncEntryResponse) {
                     return `${(item.mode >> 6 & 0b100).toString(8)}${(item.mode >> 3 & 0b100).toString(8)}${(item.mode & 0b100).toString(8)}`;
                 }
             },
             {
-                key: 'logicalSize',
+                key: 'size',
                 name: 'Size',
                 minWidth: 0,
+                isCollapsible: true,
                 onRender(item: AdbSyncEntryResponse) {
                     if (item.type === LinuxFileType.File) {
                         return formatSize(item.size);
@@ -263,6 +276,7 @@ export const FileManager = withDisplayName('FileManager')(({
                 key: 'mtime',
                 name: 'Last Modified Time',
                 minWidth: 150,
+                isCollapsible: true,
                 onRender(item: AdbSyncEntryResponse) {
                     return new Date(item.mtime * 1000).toLocaleString();
                 },
@@ -336,7 +350,7 @@ export const FileManager = withDisplayName('FileManager')(({
     const [uploadPath, setUploadPath] = useState('');
     const [uploadedSize, setUploadedSize] = useState(0);
     const [uploadTotalSize, setUploadTotalSize] = useState(0);
-    const [debouncedUploadedSize, uploadSpeed] = useSpeed(uploadedSize, uploadTotalSize);
+    const [debouncedUploadedSize, uploadSpeed] = useSpeed(uploadedSize);
     const upload = useCallback(async (file: File) => {
         const sync = await device!.sync();
         try {
@@ -479,7 +493,6 @@ export const FileManager = withDisplayName('FileManager')(({
                     margin: '-8px -20px -20px -20px',
                     padding: '8px 20px 20px 20px',
                     minHeight: 0,
-                    overflow: 'auto',
                 }
             }}>
                 <MarqueeSelection selection={selection}>

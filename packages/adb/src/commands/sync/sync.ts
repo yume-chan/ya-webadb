@@ -52,7 +52,7 @@ export class AdbSync extends AutoDisposable {
 
     public async isDirectory(path: string): Promise<boolean> {
         try {
-            await this.stat(path + '/');
+            await this.lstat(path + '/');
             return true;
         } catch (e) {
             return false;

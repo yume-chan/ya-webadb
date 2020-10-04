@@ -40,15 +40,18 @@ export const Shell = withDisplayName('Shell')(({
         findAddonRef.current!.findNext(findKeyword);
     }, [findKeyword]);
 
+    const connectingRef = useRef(false);
     const terminalRef = useRef<Terminal>();
     const shellStreamRef = useRef<AdbStream>();
     const terminalDisposableRef = useRef<Disposable>();
     const connect = useCallback(async () => {
-        if (!visible || !device || !terminalRef.current) {
+        if (!visible || !device || !terminalRef.current || connectingRef.current) {
             return;
         }
 
         try {
+            connectingRef.current = true;
+
             const shell = await device.shell();
             shellStreamRef.current = shell;
             terminalDisposableRef.current = terminalRef.current.onData(data => {
@@ -62,9 +65,9 @@ export const Shell = withDisplayName('Shell')(({
             showErrorDialog(e.message);
         }
     }, [visible, device]);
-
     const connectRef = useRef(connect);
     connectRef.current = connect;
+
     const fitAddonRef = useRef<FitAddon>();
     const handleContainerRef = useCallback((element: HTMLDivElement | null) => {
         if (!element) {
@@ -101,6 +104,8 @@ export const Shell = withDisplayName('Shell')(({
 
                 terminalRef.current!.clear();
                 terminalRef.current!.reset();
+
+                connectingRef.current = false;
             }
             return;
         }
@@ -109,8 +114,8 @@ export const Shell = withDisplayName('Shell')(({
             return;
         }
 
-        connect();
-    }, [device, visible, connect]);
+        connectRef.current();
+    }, [device, visible]);
 
     const handleResize = useCallback(() => {
         fitAddonRef.current?.fit();

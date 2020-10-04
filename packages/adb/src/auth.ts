@@ -55,7 +55,7 @@ export async function* AdbPublicKeyAuthenticator(
     const publicKeyLength = calculatePublicKeyLength();
     const publicKeyBase64Length = calculateBase64EncodedLength(publicKeyLength);
 
-    // ADBd needs an extra null terminator,
+    // The public key is null terminated,
     // So we allocate the buffer with one extra byte.
     const publicKeyBuffer = new ArrayBuffer(publicKeyBase64Length + 1);
 

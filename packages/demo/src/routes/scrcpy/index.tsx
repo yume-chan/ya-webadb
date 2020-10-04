@@ -154,10 +154,10 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     const [serverTotalSize, setServerTotalSize] = useState(0);
 
     const [serverDownloadedSize, setServerDownloadedSize] = useState(0);
-    const [debouncedServerDownloadedSize, serverDownloadSpeed] = useSpeed(serverDownloadedSize, serverTotalSize);
+    const [debouncedServerDownloadedSize, serverDownloadSpeed] = useSpeed(serverDownloadedSize);
 
     const [serverUploadedSize, setServerUploadedSize] = useState(0);
-    const [debouncedServerUploadedSize, serverUploadSpeed] = useSpeed(serverUploadedSize, serverTotalSize);
+    const [debouncedServerUploadedSize, serverUploadSpeed] = useSpeed(serverUploadedSize);
 
     const serverRef = useRef<AdbStream>();
     const eventQueueRef = useRef<EventQueue<ScrcpyControlMessage>>();

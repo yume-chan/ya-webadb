@@ -42,7 +42,7 @@ export const AdbFrameBufferV2 =
 export type AdbFrameBufferV2 = StructValueType<typeof AdbFrameBufferV2>;
 
 export async function framebuffer(adb: Adb) {
-    const stream = await adb.createStream('framebuffer:\0');
+    const stream = await adb.createStream('framebuffer:');
     const buffered = new AdbBufferedStream(stream);
     const { version } = await Version.deserialize(buffered);
     switch (version) {

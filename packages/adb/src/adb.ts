@@ -57,6 +57,7 @@ export class Adb {
         await this.backend.connect?.();
         this.packetDispatcher.maxPayloadSize = 0x1000;
         this.packetDispatcher.calculateChecksum = true;
+        this.packetDispatcher.appendNullToServiceString = true;
         this.packetDispatcher.start();
 
         const version = 0x01000001;
@@ -95,6 +96,9 @@ export class Adb {
                         this.packetDispatcher.maxPayloadSize = Math.min(maxPayloadSize, packet.arg1);
                         if (Math.min(version, packet.arg0) >= versionNoChecksum) {
                             this.packetDispatcher.calculateChecksum = false;
+                            // Android prior to 9.0.0 uses char* to parse service string
+                            // thus requires an extra null character
+                            this.packetDispatcher.appendNullToServiceString = false;
                         }
 
                         this.parseBanner(this.backend.decodeUtf8(packet.payload!));
@@ -120,11 +124,15 @@ export class Adb {
             resolver.reject(e);
         }));
 
+        // Android prior 9.0.0 requires the null character
+        // Newer versions can also handle the null character
+        // The terminating `;` is required in formal definition
+        // But ADB daemon can also work without it
         await this.packetDispatcher.sendPacket(
             AdbCommand.Connect,
             version,
             maxPayloadSize,
-            `host::features=${features}`
+            `host::features=${features};\0`
         );
 
         try {
@@ -136,6 +144,8 @@ export class Adb {
     }
 
     private parseBanner(banner: string) {
+        this._features = [];
+
         const pieces = banner.split('::');
         if (pieces.length > 1) {
             const props = pieces[1];
@@ -169,7 +179,7 @@ export class Adb {
     }
 
     public shell(): Promise<AdbStream> {
-        return this.createStream('shell:\0');
+        return this.createStream('shell:');
     }
 
     public spawn(command: string, ...args: string[]): Promise<AdbStream> {

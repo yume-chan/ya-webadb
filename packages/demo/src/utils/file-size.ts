@@ -1,4 +1,5 @@
-import { useRef } from 'react';
+import { useSetInterval } from '@uifabric/react-hooks';
+import { useEffect, useRef, useState } from 'react';
 
 const units = [' B', ' KB', ' MB', ' GB'];
 
@@ -18,27 +19,24 @@ export function formatSpeed(completed: number, total: number, speed: number): st
     return `${formatSize(completed)} of ${formatSize(total)} (${formatSize(speed)}/s)`;
 }
 
-export function useDebounced<T>(value: T, interval = 1000): T {
-    const startTime = useRef(0);
-    const startValue = useRef(value);
+export function useSpeed(completed: number): [completed: number, speed: number] {
+    const completedRef = useRef(completed);
+    completedRef.current = completed;
 
-    const now = Date.now();
-    if (now - startTime.current > interval) {
-        startTime.current = now;
-        startValue.current = value;
-    }
+    const [debouncedCompleted, setDebouncedCompleted] = useState(completed);
+    const [speed, setSpeed] = useState(0);
 
-    return startValue.current;
-}
+    const { setInterval } = useSetInterval();
+    useEffect(() => {
+        setInterval(() => {
+            setDebouncedCompleted(debouncedCompleted => {
+                setSpeed(completedRef.current - debouncedCompleted);
+                return completedRef.current;
+            });
+        }, 1000);
+    }, []);
 
-export function useSpeed(completed: number, total: number): [completed: number, speed: number] {
-    const debouncedCompleted = useDebounced(completed);
-
-    if (completed === total) {
-        return [completed, completed - debouncedCompleted];
-    } else {
-        return [debouncedCompleted, completed - debouncedCompleted];
-    }
+    return [debouncedCompleted, speed];
 }
 
 export function delay(time: number): Promise<void> {

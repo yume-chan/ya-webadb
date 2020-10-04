@@ -31,6 +31,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
     public maxPayloadSize = 0;
     public calculateChecksum = true;
+    public appendNullToServiceString = true;
 
     private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketReceivedEventArgs>());
     public get onPacket() { return this.packetEvent.event; }
@@ -158,6 +159,10 @@ export class AdbPacketDispatcher extends AutoDisposable {
     }
 
     public async createStream(service: string): Promise<AdbStream> {
+        if (this.appendNullToServiceString) {
+            service += '\0';
+        }
+
         const [localId, initializer] = this.initializers.add<number>();
         await this.sendPacket(AdbCommand.Open, localId, 0, service);
 
