@@ -9,8 +9,8 @@ Fully compatible with TypeScript.
 - [API](#api)
   - [`placeholder` method](#placeholder-method)
   - [`Struct` constructor](#struct-constructor)
-  - [`Struct#int32`/`Struct#uint32` methods](#structint32structuint32-methods)
-  - [`Struct#uint64` method](#structuint64-method)
+  - [`Struct#uint8`/`uint16`/`uint32`/`int32` methods](#structuint8uint16uint32int32-methods)
+  - [`Struct#uint64`/`int64` method](#structuint64int64-method)
   - [`extra` function](#extra-function)
   - [`afterParsed` method](#afterparsed-method)
   - [`deserialize` method](#deserialize-method)
@@ -128,7 +128,7 @@ These are considered "internal state" of the `Struct` and will be taken care of 
 
 [Wikipeida_Endianess]: https://en.wikipedia.org/wiki/Endianness
 
-### `Struct#int32`/`Struct#uint32` methods
+### `Struct#uint8`/`uint16`/`uint32`/`int32` methods
 
 ```ts
 public int32<
@@ -239,7 +239,7 @@ But obviously, it's a bad idea.
     // `struct1` will not be changed
     ```
 
-### `Struct#uint64` method
+### `Struct#uint64`/`int64` method
 
 ```ts
 public uint64<

@@ -6,6 +6,8 @@ Online demo: https://yume-chan.github.io/ya-webadb
 
 ## How does it work
 
+**I'm working on a series of [blog posts](https://chensi.moe/blog/2020/09/28/webadb-part0-overview/) explaining the ADB protocol and my implementation in details.**
+
 `@yume-chan/adb` contains a platform-independent TypeScript implementation of the Android Debug Bridge (ADB) protocol.
 
 `@yume-chan/adb-backend-web` contains a backend for `@yume-chan/adb` that uses Web technologies.
