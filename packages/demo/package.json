@@ -39,7 +39,7 @@
     "dependencies": {
         "@fluentui/react": "7.144.2",
         "@uifabric/file-type-icons": "7.6.6",
-        "@uifabric/react-hooks": "7.13.5",
+        "@uifabric/react-hooks": "7.13.6",
         "@yume-chan/adb": "^0.0.1",
         "@yume-chan/adb-backend-web": "^0.0.1",
         "@yume-chan/event": "^0.0.1",
