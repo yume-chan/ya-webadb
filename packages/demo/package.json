@@ -24,7 +24,7 @@
         "@types/react-router-dom": "5.1.6",
         "clean-webpack-plugin": "3.0.0",
         "copy-webpack-plugin": "6.2.0",
-        "css-loader": "4.3.0",
+        "css-loader": "5.0.0",
         "file-loader": "6.1.1",
         "html-webpack-plugin": "4.5.0",
         "mini-css-extract-plugin": "1.1.1",
