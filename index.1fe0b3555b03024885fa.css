@@ -1,3 +1,9 @@
+html, body, #container {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
 /**
  * Copyright (c) 2014 The xterm.js authors. All rights reserved.
  * Copyright (c) 2012-2013, Christopher Jeffrey (MIT License)
@@ -171,4 +177,4 @@
 }
 
 
-/*# sourceMappingURL=vendor.dae02134cda3ec57cdcc.css.map*/
+/*# sourceMappingURL=index.1fe0b3555b03024885fa.css.map*/
