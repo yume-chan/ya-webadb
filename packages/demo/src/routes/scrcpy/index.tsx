@@ -102,14 +102,14 @@ async function sendControl(stream: AdbBufferedStream, queue: EventQueue<ScrcpyCo
     }
 }
 
-export const enum ScrcpyLogLevel {
+export enum ScrcpyLogLevel {
     Debug = 'debug',
     Info = 'info',
     Warn = 'warn',
     Error = 'error',
 }
 
-export const enum ScrcpyScreenOrientation {
+export enum ScrcpyScreenOrientation {
     Unlocked = -1,
     Portrait = 0,
     Landscape = 1,

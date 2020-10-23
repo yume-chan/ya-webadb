@@ -12,7 +12,6 @@ const plugins: webpack.Plugin[] = [
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
         filename: '[name].[contenthash].css',
-        esModule: true,
     }),
     new CopyPlugin({
         patterns: [
@@ -50,26 +49,16 @@ const config: webpack.ConfigurationFactory = (
     },
     resolve: {
         extensions: ['.ts', '.tsx', '.js'],
+        // @ts-expect-error typing is not up to date
+        fallback: { "path": require.resolve("path-browserify") },
     },
     plugins,
     module: {
         rules: [
-            { test: /\.js$/, enforce: 'pre', loader: ['source-map-loader'], },
-            { test: /.css$/i, loader: [MiniCssExtractPlugin.loader, 'css-loader'] },
+            { test: /\.js$/, enforce: 'pre', use: ['source-map-loader'], },
+            { test: /.css$/i, use: [MiniCssExtractPlugin.loader, 'css-loader'] },
             { test: /.tsx?$/i, loader: 'ts-loader', options: { projectReferences: true } },
         ],
-    },
-    optimization: {
-        moduleIds: 'hashed',
-        splitChunks: {
-            cacheGroups: {
-                vendor: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: 'vendor',
-                    chunks: 'all',
-                },
-            },
-        },
     },
     devServer: {
         contentBase: path.resolve(context, 'lib'),

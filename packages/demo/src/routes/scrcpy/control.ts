@@ -1,6 +1,6 @@
 import { Struct, placeholder, StructInitType } from '@yume-chan/struct';
 
-export const enum ScrcpyControlMessageType {
+export enum ScrcpyControlMessageType {
     InjectKeycode,
     InjectText,
     InjectTouch,
@@ -20,7 +20,7 @@ export const ScrcpySimpleControlMessage =
 
 export type ScrcpySimpleControlMessage = StructInitType<typeof ScrcpySimpleControlMessage>;
 
-export const enum AndroidMotionEventAction {
+export enum AndroidMotionEventAction {
     Down,
     Up,
     Move,

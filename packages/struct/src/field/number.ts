@@ -8,7 +8,7 @@ export namespace Number {
         T extends SubType.Int64 ? bigint :
         number;
 
-    export const enum SubType {
+    export enum SubType {
         Uint8,
         Uint16,
         Int32,

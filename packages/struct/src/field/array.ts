@@ -2,7 +2,7 @@ import { getBackingField, setBackingField } from '../backing-field';
 import { FieldDescriptorBase, FieldDescriptorBaseOptions } from './descriptor';
 
 export namespace Array {
-    export const enum SubType {
+    export enum SubType {
         ArrayBuffer,
         String,
     }

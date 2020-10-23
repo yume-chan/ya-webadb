@@ -11,7 +11,6 @@ const plugins = [
     new clean_webpack_plugin_1.CleanWebpackPlugin(),
     new mini_css_extract_plugin_1.default({
         filename: '[name].[contenthash].css',
-        esModule: true,
     }),
     new copy_webpack_plugin_1.default({
         patterns: [
@@ -44,35 +43,20 @@ const config = (env, argv) => ({
     },
     resolve: {
         extensions: ['.ts', '.tsx', '.js'],
+        // @ts-expect-error typing is not up to date
+        fallback: { "path": require.resolve("path-browserify") },
     },
     plugins,
     module: {
         rules: [
-            { test: /\.js$/, enforce: 'pre', loader: ['source-map-loader'], },
-            { test: /.css$/i, loader: [mini_css_extract_plugin_1.default.loader, 'css-loader'] },
+            { test: /\.js$/, enforce: 'pre', use: ['source-map-loader'], },
+            { test: /.css$/i, use: [mini_css_extract_plugin_1.default.loader, 'css-loader'] },
             { test: /.tsx?$/i, loader: 'ts-loader', options: { projectReferences: true } },
         ],
-    },
-    optimization: {
-        moduleIds: 'hashed',
-        splitChunks: {
-            cacheGroups: {
-                vendor: {
-                    test: /[\\/]node_modules[\\/]/,
-                    name: 'vendor',
-                    chunks: 'all',
-                },
-            },
-        },
     },
     devServer: {
         contentBase: path_1.default.resolve(context, 'lib'),
         port: 9000,
-        watchOptions: {
-            ignored: [
-                /.(js|d.ts|map|tsbuildinfo|css|html)/
-            ]
-        }
     },
 });
 module.exports = config;

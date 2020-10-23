@@ -1,4 +1,4 @@
-export const enum FieldType {
+export enum FieldType {
     Number,
     FixedLengthArray,
     VariableLengthArray,

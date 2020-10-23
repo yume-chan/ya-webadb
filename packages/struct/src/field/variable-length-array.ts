@@ -21,7 +21,7 @@ export namespace VariableLengthArray {
             TypeScriptTypeCanBeUndefined<TEmptyBehavior>
         >;
 
-    export const enum EmptyBehavior {
+    export enum EmptyBehavior {
         Undefined,
         Empty,
     }

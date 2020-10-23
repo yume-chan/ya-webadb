@@ -7,6 +7,9 @@
             "DOM"
         ],
         "jsx": "react", //                        /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
+        "declaration": false, //                  /* Generates corresponding '.d.ts' file. */
+        "declarationMap": false, //               /* Generates a sourcemap for each corresponding '.d.ts' file. */
+        "composite": false, //                    /* Enable project compilation */
     },
     "references": [
         {
