@@ -1,35 +1,16 @@
-interface Base64CharRange {
-    start: number;
-
-    length: number;
-
-    end: number;
-
-    offset: number;
-}
-
-let ranges: Base64CharRange[] = [];
-const chars: number[] = [];
+const charToIndex: Record<string, number> = {};
+const indexToChar: number[] = [];
 const padding = '='.charCodeAt(0);
 
-let offset = 0;
 function addRange(start: string, end: string) {
-    const startCharCode = start.charCodeAt(0);
-    const endCharCode = end.charCodeAt(0);
-    const length = endCharCode - startCharCode + 1;
+    const charCodeStart = start.charCodeAt(0);
+    const charCodeEnd = end.charCodeAt(0);
+    const length = charCodeEnd - charCodeStart + 1;
 
-    for (let i = startCharCode; i <= endCharCode; i += 1) {
-        chars.push(i);
+    for (let charCode = charCodeStart; charCode <= charCodeEnd; charCode += 1) {
+        charToIndex[String.fromCharCode(charCode)] = indexToChar.length;
+        indexToChar.push(charCode);
     }
-
-    ranges.push({
-        start: startCharCode,
-        length: length,
-        end: endCharCode,
-        offset: startCharCode - offset,
-    });
-
-    offset += length;
 }
 
 addRange('A', 'Z');
@@ -38,31 +19,8 @@ addRange('0', '9');
 addRange('+', '+');
 addRange('/', '/');
 
-ranges = ranges.sort((a, b) => a.end - b.end);
-
-function toValue(char: string): number {
-    const charCode = char.charCodeAt(0);
-
-    let start = 0;
-    let end = ranges.length - 1;
-    let i = end >> 1;
-
-    while (true) {
-        const range = ranges[i];
-        if (charCode < range.start) {
-            end = i - 1;
-        } else if (charCode > range.end) {
-            start = i + 1;
-        } else {
-            return charCode - range.offset;
-        }
-        i = (start + end) >> 1;
-    }
-}
-
 export function calculateBase64EncodedLength(inputLength: number): number {
-    const paddingLength = inputLength % 3;
-    return (inputLength + 3 - paddingLength) / 3 * 4;
+    return Math.ceil(inputLength / 3) * 4;
 }
 
 export function encodeBase64(
@@ -186,10 +144,10 @@ export function encodeBase64(
         output[outputIndex] = padding;
         outputIndex -= 1;
 
-        output[outputIndex] = chars[((x & 0b11) << 4)];
+        output[outputIndex] = indexToChar[((x & 0b11) << 4)];
         outputIndex -= 1;
 
-        output[outputIndex] = chars[x >> 2];
+        output[outputIndex] = indexToChar[x >> 2];
         outputIndex -= 1;
     } else if (extraBytes === 2) {
         // bbbbcccc
@@ -203,13 +161,13 @@ export function encodeBase64(
         output[outputIndex] = padding;
         outputIndex -= 1;
 
-        output[outputIndex] = chars[((y & 0b1111) << 2)];
+        output[outputIndex] = indexToChar[((y & 0b1111) << 2)];
         outputIndex -= 1;
 
-        output[outputIndex] = chars[((x & 0b11) << 4) | (y >> 4)];
+        output[outputIndex] = indexToChar[((x & 0b11) << 4) | (y >> 4)];
         outputIndex -= 1;
 
-        output[outputIndex] = chars[x >> 2];
+        output[outputIndex] = indexToChar[x >> 2];
         outputIndex -= 1;
     }
 
@@ -226,16 +184,16 @@ export function encodeBase64(
         const x = input[inputIndex];
         inputIndex -= 1;
 
-        output[outputIndex] = chars[z & 0b111111];
+        output[outputIndex] = indexToChar[z & 0b111111];
         outputIndex -= 1;
 
-        output[outputIndex] = chars[((y & 0b1111) << 2) | (z >> 6)];
+        output[outputIndex] = indexToChar[((y & 0b1111) << 2) | (z >> 6)];
         outputIndex -= 1;
 
-        output[outputIndex] = chars[((x & 0b11) << 4) | (y >> 4)];
+        output[outputIndex] = indexToChar[((x & 0b11) << 4) | (y >> 4)];
         outputIndex -= 1;
 
-        output[outputIndex] = chars[x >> 2];
+        output[outputIndex] = indexToChar[x >> 2];
         outputIndex -= 1;
     }
 
@@ -261,16 +219,16 @@ export function decodeBase64(input: string): ArrayBuffer {
     let dIndex = 0;
 
     while (sIndex < input.length - (padding !== 0 ? 4 : 0)) {
-        const a = toValue(input[sIndex]);
+        const a = charToIndex[input[sIndex]];
         sIndex += 1;
 
-        const b = toValue(input[sIndex]);
+        const b = charToIndex[input[sIndex]];
         sIndex += 1;
 
-        const c = toValue(input[sIndex]);
+        const c = charToIndex[input[sIndex]];
         sIndex += 1;
 
-        const d = toValue(input[sIndex]);
+        const d = charToIndex[input[sIndex]];
         sIndex += 1;
 
         result[dIndex] = (a << 2) | ((b & 0b11_0000) >> 4);
@@ -284,23 +242,23 @@ export function decodeBase64(input: string): ArrayBuffer {
     }
 
     if (padding === 1) {
-        const a = toValue(input[sIndex]);
+        const a = charToIndex[input[sIndex]];
         sIndex += 1;
 
-        const b = toValue(input[sIndex]);
+        const b = charToIndex[input[sIndex]];
         sIndex += 1;
 
-        const c = toValue(input[sIndex]);
+        const c = charToIndex[input[sIndex]];
 
         result[dIndex] = (a << 2) | ((b & 0b11_0000) >> 4);
         dIndex += 1;
 
         result[dIndex] = ((b & 0b1111) << 4) | ((c & 0b11_1100) >> 2);
     } else if (padding === 2) {
-        const a = toValue(input[sIndex]);
+        const a = charToIndex[input[sIndex]];
         sIndex += 1;
 
-        const b = toValue(input[sIndex]);
+        const b = charToIndex[input[sIndex]];
 
         result[dIndex] = (a << 2) | ((b & 0b11_0000) >> 4);
     }
