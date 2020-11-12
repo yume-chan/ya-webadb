@@ -2,3 +2,4 @@ lib
 node_modules
 *.log
 tsconfig.tsbuildinfo
+/package-lock.json

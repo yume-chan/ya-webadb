@@ -18,14 +18,14 @@ See README in each package for more implementation details.
 
 This repository is a monorepo containing following packages:
 
-| Folder Name     | Description                                                              |
-| --------------- | ------------------------------------------------------------------------ |
-| event           | Event/EventEmitter pattern.                                              |
-| adb             | TypeScript implementation of Android Debug Bridge (ADB) protocol.        |
-| adb-backend-web | Backend for `@yume-chan/adb` using Web technologies.                     |
-| struct          | C-style structure serializer and deserializer.                           |
-| webpack-config  | Webpack configuration file in TypeScript, will output into `demo` folder |
-| demo            | Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-web`.               |
+| Folder Name                                                    | Description                                                              |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| adb ([README](packages/adb/README.md))                         | TypeScript implementation of Android Debug Bridge (ADB) protocol.        |
+| adb-backend-web ([README](packages/adb-backend-web/README.md)) | Backend for `@yume-chan/adb` using Web technologies.                     |
+| event                                                          | Event/EventEmitter pattern.                                              |
+| struct ([README](packages/struct/README.md))                   | C-style structure serializer and deserializer.                           |
+| webpack-config                                                 | Webpack configuration file in TypeScript, will output into `demo` folder |
+| demo ([README](packages/demo/README.md))                       | Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-web`.               |
 
 ## Development
 
@@ -50,5 +50,4 @@ will install lerna locally and bootstrap all packages.
 * `npm run build`: build `@yume-chan/event`, `@yume-chan/adb` and `@yume-chan/adb-backend-web` packages.
 * `npm run build:watch`: build and watch changes for `@yume-chan/event`, `@yume-chan/adb` and `@yume-chan/adb-backend-web` packages.
 * `npm run start:demo`: start webpack-dev-server for the `demo` package.
-
 * `npm run build:demo`: build the `demo` package.

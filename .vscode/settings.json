@@ -39,5 +39,6 @@
         "wirelessly",
         "yume",
         "zstd"
-    ]
+    ],
+    "editor.tabSize": 4
 }
