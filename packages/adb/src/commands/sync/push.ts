@@ -70,21 +70,21 @@ export const AdbSyncMaxPacketSize = 64 * 1024;
 
 export async function adbSyncPush(
     stream: AdbBufferedStream,
-    path: string,
-    file: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
+    filename: string,
+    content: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
     mode: number = (LinuxFileType.File << 12) | 0o666,
     mtime: number = (Date.now() / 1000) | 0,
     packetSize: number = AdbSyncMaxPacketSize,
     onProgress?: (uploaded: number) => void,
 ): Promise<void> {
-    const pathAndMode = `${path},${mode.toString()}`;
+    const pathAndMode = `${filename},${mode.toString()}`;
     await adbSyncWriteRequest(stream, AdbSyncRequestId.Send, pathAndMode);
 
     let chunkReader: Iterable<ArrayBuffer> | AsyncIterable<ArrayBuffer>;
-    if ('length' in file || 'byteLength' in file) {
-        chunkReader = chunkArrayLike(file, packetSize);
+    if ('length' in content || 'byteLength' in content) {
+        chunkReader = chunkArrayLike(content, packetSize);
     } else {
-        chunkReader = chunkAsyncIterable(file, packetSize);
+        chunkReader = chunkAsyncIterable(content, packetSize);
     }
 
     let uploaded = 0;

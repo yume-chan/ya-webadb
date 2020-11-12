@@ -6,7 +6,7 @@ import path from 'path';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
 import { ErrorDialogContext } from '../error-dialog';
-import { CommandBar, delay, formatSize, formatSpeed, useSpeed, withDisplayName } from '../utils';
+import { CommandBar, delay, formatSize, formatSpeed, pickFile, useSpeed, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 initializeFileTypeIcons();
@@ -65,7 +65,7 @@ function createReadableStreamFromBufferIterator(
     });
 }
 
-async function* chunkFile(file: File): AsyncGenerator<ArrayBuffer, void, void> {
+export async function* chunkFile(file: File): AsyncGenerator<ArrayBuffer, void, void> {
     for (let i = 0; i < file.size; i += AdbSyncMaxPacketSize) {
         yield file.slice(i, i + AdbSyncMaxPacketSize, file.type).arrayBuffer();
     }
@@ -386,17 +386,13 @@ export const FileManager = withDisplayName('FileManager')(({
                     iconProps: { iconName: 'Upload' },
                     disabled: !device,
                     onClick() {
-                        const input = document.createElement('input');
-                        input.type = "file";
-                        input.onchange = async () => {
-                            if (input.files?.length) {
-                                for (let i = 0; i < input.files!.length; i++) {
-                                    const file = input.files!.item(i)!;
-                                    await upload(file);
-                                }
+                        (async () => {
+                            const files = await pickFile({ multiple: true });
+                            for (let i = 0; i < files.length; i++) {
+                                const file = files.item(i)!;
+                                await upload(file);
                             }
-                        };
-                        input.click();
+                        })();
 
                         return false;
                     }
@@ -439,11 +435,7 @@ export const FileManager = withDisplayName('FileManager')(({
                         (async () => {
                             try {
                                 for (const item of selectedItems) {
-                                    const output = await device!.exec(
-                                        'rm',
-                                        '-rf',
-                                        `"${path.resolve(currentPath, item.name!)}"`
-                                    );
+                                    const output = await device!.rm(path.resolve(currentPath, item.name!));
                                     if (output) {
                                         showErrorDialog(output);
                                         return;

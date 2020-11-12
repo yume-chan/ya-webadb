@@ -79,19 +79,19 @@ export class AdbSync extends AutoDisposable {
         return results;
     }
 
-    public async *read(path: string): AsyncGenerator<ArrayBuffer, void, void> {
+    public async *read(filename: string): AsyncGenerator<ArrayBuffer, void, void> {
         await this.sendLock.wait();
 
         try {
-            yield* adbSyncPull(this.stream, path);
+            yield* adbSyncPull(this.stream, filename);
         } finally {
             this.sendLock.notify();
         }
     }
 
     public async write(
-        path: string,
-        file: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
+        filename: string,
+        content: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
         mode?: number,
         mtime?: number,
         onProgress?: (uploaded: number) => void,
@@ -99,7 +99,7 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            await adbSyncPush(this.stream, path, file, mode, mtime, undefined, onProgress);
+            await adbSyncPush(this.stream, filename, content, mode, mtime, undefined, onProgress);
         } finally {
             this.sendLock.notify();
         }

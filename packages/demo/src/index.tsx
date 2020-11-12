@@ -8,7 +8,7 @@ import Connect from './connect';
 import ErrorDialogProvider from './error-dialog';
 import './index.css';
 import { CacheRoute, CacheSwitch } from './router';
-import { FileManager, FrameBuffer, Intro, Scrcpy, Shell, TcpIp } from './routes';
+import { FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
 
 initializeIcons();
 
@@ -77,6 +77,13 @@ function App(): JSX.Element | null {
             name: 'File Manager',
             children: (
                 <FileManager device={device} />
+            ),
+        },
+        {
+            path: '/install',
+            name: 'Install APK',
+            children: (
+                <Install device={device} />
             ),
         },
         {

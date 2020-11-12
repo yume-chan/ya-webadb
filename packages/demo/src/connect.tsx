@@ -3,6 +3,7 @@ import { Adb, AdbBackend } from '@yume-chan/adb';
 import AdbWebBackend, { AdbWebBackendWatcher } from '@yume-chan/adb-backend-web';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorDialogContext } from './error-dialog';
+import { CommonStackTokens } from './styles';
 import { withDisplayName } from './utils';
 
 const DropdownStyles = { dropdown: { width: 250 - 8 } };
@@ -124,7 +125,7 @@ export default withDisplayName('Connect')(({
             />
 
             {!device ? (
-                <Stack horizontal tokens={{ childrenGap: 8 }}>
+                <Stack horizontal tokens={CommonStackTokens}>
                     <StackItem grow shrink>
                         <PrimaryButton
                             text="Connect"

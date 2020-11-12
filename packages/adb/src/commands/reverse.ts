@@ -42,12 +42,27 @@ export class AdbReverseCommand extends AutoDisposable {
         this.addDisposable(this.dispatcher.onStream(this.handleStream, this));
     }
 
+    private async createBufferedStream(service: string) {
+        const stream = await this.dispatcher.createStream(service);
+        return new AdbBufferedStream(stream);
+    }
+
+    private async sendRequest(service: string) {
+        const stream = await this.createBufferedStream(service);
+        const success = this.dispatcher.backend.decodeUtf8(await stream.read(4)) === 'OKAY';
+        if (!success) {
+            await AdbReverseErrorResponse.deserialize(stream);
+        }
+        return stream;
+    }
+
     protected handleStream(e: AdbIncomingStreamEventArgs): void {
         if (e.handled) {
             return;
         }
 
         const address = this.dispatcher.backend.decodeUtf8(e.packet.payload!);
+        // tcp:1234\0
         const port = Number.parseInt(address.substring(4));
         if (this.localPortToHandler.has(port)) {
             this.localPortToHandler.get(port)!.onStream(e.packet, e.stream);
@@ -55,66 +70,56 @@ export class AdbReverseCommand extends AutoDisposable {
         }
     }
 
+    public async list(): Promise<AdbForwardListener[]> {
+        const stream = await this.createBufferedStream('reverse:list-forward');
+
+        const response = await AdbReverseStringResponse.deserialize(stream);
+        return response.content!.split('\n').map(line => {
+            const [deviceSerial, localName, remoteName] = line.split(' ');
+            return { deviceSerial, localName, remoteName };
+        });
+
+        // No need to close the stream, device will close it
+    }
+
     public async add(
         deviceAddress: string,
         localPort: number,
         handler: AdbReverseHandler,
     ): Promise<string> {
-        const stream = await this.dispatcher.createStream(`reverse:forward:${deviceAddress};tcp:${localPort}`);
-        const buffered = new AdbBufferedStream(stream);
+        const stream = await this.sendRequest(`reverse:forward:${deviceAddress};tcp:${localPort}`);
 
-        const success = this.dispatcher.backend.decodeUtf8(await buffered.read(4)) === 'OKAY';
-        if (success) {
-            if (deviceAddress.startsWith('tcp:')) {
-                const response = await AdbReverseStringResponse.deserialize(buffered);
-                deviceAddress = `tcp:${Number.parseInt(response.content!, 10)}`;
-            }
-
-            this.localPortToHandler.set(localPort, handler);
-            this.deviceAddressToLocalPort.set(deviceAddress, localPort);
-            return deviceAddress;
-        } else {
-            return await AdbReverseErrorResponse.deserialize(buffered);
+        // `tcp:0` tells the device to pick an available port.
+        // However, device will response with the selected port for all `tcp:` requests.
+        if (deviceAddress.startsWith('tcp:')) {
+            const response = await AdbReverseStringResponse.deserialize(stream);
+            deviceAddress = `tcp:${Number.parseInt(response.content!, 10)}`;
         }
-    }
 
-    public async list(): Promise<AdbForwardListener[]> {
-        const stream = await this.dispatcher.createStream('reverse:list-forward');
-        const buffered = new AdbBufferedStream(stream);
+        this.localPortToHandler.set(localPort, handler);
+        this.deviceAddressToLocalPort.set(deviceAddress, localPort);
+        return deviceAddress;
 
-        const response = await AdbReverseStringResponse.deserialize(buffered);
-
-        return response.content!.split('\n').map(line => {
-            const [deviceSerial, localName, remoteName] = line.split(' ');
-            return { deviceSerial, localName, remoteName };
-        });
+        // No need to close the stream, device will close it
     }
 
     public async remove(deviceAddress: string): Promise<void> {
-        const stream = await this.dispatcher.createStream(`reverse:killforward:${deviceAddress}`);
-        const buffered = new AdbBufferedStream(stream);
+        await this.sendRequest(`reverse:killforward:${deviceAddress}`);
 
-        const success = this.dispatcher.backend.decodeUtf8(await buffered.read(4)) === 'OKAY';
-        if (success) {
-            if (this.deviceAddressToLocalPort.has(deviceAddress)) {
-                this.localPortToHandler.delete(this.deviceAddressToLocalPort.get(deviceAddress)!);
-                this.deviceAddressToLocalPort.delete(deviceAddress);
-            }
-        } else {
-            await AdbReverseErrorResponse.deserialize(buffered);
+        if (this.deviceAddressToLocalPort.has(deviceAddress)) {
+            this.localPortToHandler.delete(this.deviceAddressToLocalPort.get(deviceAddress)!);
+            this.deviceAddressToLocalPort.delete(deviceAddress);
         }
+
+        // No need to close the stream, device will close it
     }
 
     public async removeAll(): Promise<void> {
-        const stream = await this.dispatcher.createStream(`reverse:killforward-all`);
-        const buffered = new AdbBufferedStream(stream);
+        await this.sendRequest(`reverse:killforward-all`);
 
-        const success = this.dispatcher.backend.decodeUtf8(await buffered.read(4)) === 'OKAY';
-        if (success) {
-            this.deviceAddressToLocalPort.clear();
-            this.localPortToHandler.clear();
-        } else {
-            await AdbReverseErrorResponse.deserialize(buffered);
-        }
+        this.deviceAddressToLocalPort.clear();
+        this.localPortToHandler.clear();
+
+        // No need to close the stream, device will close it
     }
 }

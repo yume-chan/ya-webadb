@@ -2,10 +2,10 @@ import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbFrameBufferV2, AdbReverseCommand, AdbSync, AdbTcpIpCommand, framebuffer } from './commands';
+import { AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
-import { AdbBufferedStream, AdbPacketDispatcher, AdbStream } from './stream';
+import { AdbPacketDispatcher, AdbStream } from './stream';
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -195,6 +195,17 @@ export class Adb {
     public async getProp(key: string): Promise<string> {
         const output = await this.exec('getprop', key);
         return output.trim();
+    }
+
+    public async rm(...filenames: string[]): Promise<string> {
+        return await this.exec('rm', '-rf', ...filenames.map(arg => escapeArg(arg)));
+    }
+
+    public async install(
+        apk: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
+        onProgress?: (uploaded: number) => void,
+    ) {
+        return await install(this, apk, onProgress);
     }
 
     public async sync(): Promise<AdbSync> {
