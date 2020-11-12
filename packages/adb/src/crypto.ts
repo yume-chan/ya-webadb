@@ -131,7 +131,7 @@ export function calculatePublicKey(
     outputOffset: number = 0
 ): ArrayBuffer | number {
     // Android has its own public key generation algorithm
-    // See https://github.com/aosp-mirror/platform_system_core/blob/e5c9bbd45381d7bd72fef232d1c6668946253ac8/libcrypto_utils/android_pubkey.cpp#L111
+    // See https://android.googlesource.com/platform/system/core.git/+/91784040db2b9273687f88d8b95f729d4a61ecc2/libcrypto_utils/android_pubkey.cpp#111
 
     // The public key is an array of
     //
@@ -145,7 +145,7 @@ export function calculatePublicKey(
     // ]
     //
     // (All in little endian)
-    // See https://github.com/aosp-mirror/platform_system_core/blob/e5c9bbd45381d7bd72fef232d1c6668946253ac8/libcrypto_utils/android_pubkey.cpp#L38
+    // See https://android.googlesource.com/platform/system/core.git/+/91784040db2b9273687f88d8b95f729d4a61ecc2/libcrypto_utils/android_pubkey.cpp#38
 
     // extract `n` from private key
     const [n] = parsePrivateKey(privateKey);

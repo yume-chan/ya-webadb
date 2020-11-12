@@ -237,5 +237,5 @@ Supported on devices with `sendrecv_v2` feature.
 
 ## Useful links
 
-* [ADB protocol overview](https://github.com/aosp-mirror/platform_system_core/blob/master/adb/OVERVIEW.TXT)
-* [ADB commands](https://github.com/aosp-mirror/platform_system_core/blob/d7c1bc73dc5b4e43b8288d43052a8b8890c4bf5a/adb/SERVICES.TXT#L145)
+* [ADB protocol overview](https://android.googlesource.com/platform/packages/modules/adb/+/2fd69306184634c6d90db3ed3be5349e71dcc471/OVERVIEW.TXT)
+* [ADB commands](https://android.googlesource.com/platform/packages/modules/adb/+/2fd69306184634c6d90db3ed3be5349e71dcc471/SERVICES.TXT#145)
