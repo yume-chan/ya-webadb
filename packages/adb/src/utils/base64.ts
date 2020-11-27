@@ -87,7 +87,7 @@ export function encodeBase64(
     }
 
     const extraBytes = inputLength % 3;
-    const outputLength = (inputLength + 3 - extraBytes) / 3 * 4;
+    const outputLength = calculateBase64EncodedLength(inputLength);
 
     let maybeOutput: ArrayBuffer | Uint8Array | undefined = arguments[outputArgumentIndex];
     let outputType: 'ArrayBuffer' | 'number';
