@@ -1,3 +1,4 @@
+import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { Disposable } from '@yume-chan/event';
 import { AdbBackend } from './backend';
 import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto';
@@ -11,33 +12,50 @@ export enum AdbAuthType {
 }
 
 export interface AdbAuthenticator {
-    (backend: AdbBackend, packet: AdbPacket): AsyncIterator<AdbPacketInit, void, AdbPacket>;
+    /**
+     * @param getNextRequest
+     *
+     * Call this function to get the next authentication request packet from device.
+     *
+     * After calling `getNextRequest`, authenticator can `yield` a packet as response, or `return` to indicate its incapability of handling the request.
+     *
+     * After `return`, the `AdbAuthenticatorHandler` will move on to next authenticator and never go back.
+     *
+     * Calling `getNextRequest` multiple times without `yield` or `return` will always return the same request.
+     */
+    (
+        backend: AdbBackend,
+        getNextRequest: () => Promise<AdbPacket>
+    ): AsyncIterable<AdbPacketInit>;
 }
 
-export async function* AdbSignatureAuthenticator(
+export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
     backend: AdbBackend,
-    packet: AdbPacket,
-): AsyncIterator<AdbPacketInit, void, AdbPacket> {
+    getNextRequest: () => Promise<AdbPacket>,
+): AsyncIterable<AdbPacketInit> {
     for await (const key of backend.iterateKeys()) {
+        const packet = await getNextRequest();
+
         if (packet.arg0 !== AdbAuthType.Token) {
             return;
         }
 
         const signature = sign(key, packet.payload!);
-
-        packet = yield {
+        yield {
             command: AdbCommand.Auth,
             arg0: AdbAuthType.Signature,
             arg1: 0,
-            payload: signature
+            payload: signature,
         };
     }
-}
+};
 
-export async function* AdbPublicKeyAuthenticator(
+export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     backend: AdbBackend,
-    packet: AdbPacket,
-): AsyncIterator<AdbPacketInit, void, AdbPacket> {
+    getNextRequest: () => Promise<AdbPacket>,
+): AsyncIterable<AdbPacketInit> {
+    const packet = await getNextRequest();
+
     if (packet.arg0 !== AdbAuthType.Token) {
         return;
     }
@@ -68,7 +86,7 @@ export async function* AdbPublicKeyAuthenticator(
         arg1: 0,
         payload: publicKeyBuffer
     };
-}
+};
 
 export const AdbDefaultAuthenticators: AdbAuthenticator[] = [
     AdbSignatureAuthenticator,
@@ -80,7 +98,9 @@ export class AdbAuthenticationHandler implements Disposable {
 
     private readonly backend: AdbBackend;
 
-    private iterator: AsyncIterator<AdbPacketInit, never, AdbPacket> | undefined;
+    private pendingRequest = new PromiseResolver<AdbPacket>();
+
+    private iterator: AsyncIterator<AdbPacketInit> | undefined;
 
     public constructor(
         authenticators: readonly AdbAuthenticator[],
@@ -90,18 +110,23 @@ export class AdbAuthenticationHandler implements Disposable {
         this.backend = backend;
     }
 
-    private async* nextCore(packet: AdbPacket): AsyncGenerator<AdbPacketInit, never, AdbPacket> {
+    private getNextRequest = (): Promise<AdbPacket> => {
+        return this.pendingRequest.promise;
+    };
+
+    private async* runAuthenticator(): AsyncGenerator<AdbPacketInit> {
         for (const authenticator of this.authenticators) {
-            const iterator = authenticator(this.backend, packet);
-            try {
-                let result = await iterator.next();
-                while (!result.done) {
-                    packet = yield result.value;
-                    result = await iterator.next(packet);
-                }
-            } finally {
-                iterator.return?.();
+            for await (const packet of authenticator(this.backend, this.getNextRequest)) {
+                // If the authenticator yielded a response
+                // Prepare `nextRequest` for next authentication request
+                this.pendingRequest = new PromiseResolver<AdbPacket>();
+
+                // Yield the response to outer layer
+                yield packet;
             }
+
+            // If the authenticator returned,
+            // Next authenticator will be given the same `pendingRequest`
         }
 
         throw new Error('Cannot authenticate with device');
@@ -109,10 +134,11 @@ export class AdbAuthenticationHandler implements Disposable {
 
     public async next(packet: AdbPacket): Promise<AdbPacketInit> {
         if (!this.iterator) {
-            this.iterator = this.nextCore(packet);
+            this.iterator = this.runAuthenticator();
         }
 
-        const result = await this.iterator.next(packet);
+        this.pendingRequest.resolve(packet);
+        const result = await this.iterator.next();
         return result.value;
     }
 
