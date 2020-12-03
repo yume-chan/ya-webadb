@@ -5,14 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "edge",
+            "name": "Launch Edge",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
+            "type": "pwa-msedge",
             "url": "http://localhost:9000",
-            "sourceMapPathOverrides": {
-                "webpack:///../*": "${workspaceFolder}/packages/*",
-                "webpack:///./*": "${workspaceFolder}/packages/demo/*"
-            }
+            "webRoot": "${workspaceFolder}/packages/demo",
+            "runtimeExecutable": "beta",
         }
     ]
 }
