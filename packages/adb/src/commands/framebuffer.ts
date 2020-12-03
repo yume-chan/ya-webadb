@@ -4,6 +4,19 @@ import { AdbBufferedStream } from '../stream';
 
 const Version = new Struct({ littleEndian: true }).uint32('version');
 
+/*
+ * ADB uses 8 int32 fields to describe bit depths
+ * The only combination I have seen is RGBA8888, which is
+ *   red_offset:   0
+ *   red_length:   8
+ *   blue_offset:  16
+ *   blue_length:  8
+ *   green_offset: 8
+ *   green_length: 8
+ *   alpha_offset: 24
+ *   alpha_length: 8
+ */
+
 export const AdbFrameBufferV1 =
     new Struct({ littleEndian: true })
         .uint32('bpp')

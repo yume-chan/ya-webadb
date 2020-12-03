@@ -1,3 +1,4 @@
+// Prepare maps for O(1) searching
 const charToIndex: Record<string, number> = {};
 const indexToChar: number[] = [];
 const padding = '='.charCodeAt(0);
@@ -86,7 +87,6 @@ export function encodeBase64(
         }
     }
 
-    const extraBytes = inputLength % 3;
     const outputLength = calculateBase64EncodedLength(inputLength);
 
     let maybeOutput: ArrayBuffer | Uint8Array | undefined = arguments[outputArgumentIndex];
@@ -130,9 +130,11 @@ export function encodeBase64(
         }
     }
 
+    // Run backward to do in-place overwrite
     let inputIndex = inputOffset + inputLength - 1;
     let outputIndex = outputOffset + outputLength - 1;
 
+    const extraBytes = inputLength % 3;
     if (extraBytes === 1) {
         // aaaaaabb
         const x = input[inputIndex];

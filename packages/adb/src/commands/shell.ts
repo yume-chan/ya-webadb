@@ -1,4 +1,3 @@
-
 export function escapeArg(s: string) {
     let result = '';
     result += `'`;
@@ -11,7 +10,8 @@ export function escapeArg(s: string) {
             break;
         }
         result += s.substring(base, found);
-        result += String.raw`'\''`; // a'b => a'\'b
+        // a'b become a'\'b
+        result += String.raw`'\''`;
         base = found + 1;
     }
 
