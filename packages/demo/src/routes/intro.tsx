@@ -55,7 +55,7 @@ export const Intro = withDisplayName('Intro')(() => {
                 API.
             </Text>
             <Text block>
-                The latest version of Google Chrome (or Microsoft Edge) is recommended for best compatibility.
+                Latest version of Google Chrome (for Windows, macOS, Linux and Android) or Microsoft Edge (for Windows and macOS) is recommended for best compatibility.
             </Text>
 
             <Text block styles={BoldTextStyles}>
@@ -71,9 +71,10 @@ export const Intro = withDisplayName('Intro')(() => {
                 Got "Unable to claim interface" error?
             </Text>
             <Text block>
-                Only one software can connect to your device at a time.<br />
-                1. Make sure ADB server is not running (run `adb kill-server` to stop it).<br />
-                2. Make sure no other Android management tools are running
+                Only one connection to your device can exist simultaneously. Please make sure<br />
+                1. Native ADB client is not running (run `adb kill-server` to stop it).<br />
+                2. No other Android management tools are running<br />
+                3. No other WebADB tabs have already connected to your device.
             </Text>
             <Text block styles={BoldTextStyles}>
                 Got "Access denied" error?

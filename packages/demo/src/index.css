@@ -3,3 +3,7 @@ html, body, #container {
     height: 100%;
     margin: 0;
 }
+
+.ms-Dialog-subText {
+    white-space: pre-wrap;
+}

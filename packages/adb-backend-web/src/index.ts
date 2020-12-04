@@ -23,6 +23,10 @@ export function decodeUtf8(buffer: ArrayBuffer): string {
 }
 
 export default class AdbWebBackend implements AdbBackend {
+    public static isSupported(): boolean {
+        return !!window.navigator?.usb;
+    }
+
     public static async getDevices(): Promise<AdbWebBackend[]> {
         const devices = await window.navigator.usb.getDevices();
         return devices.map(device => new AdbWebBackend(device));

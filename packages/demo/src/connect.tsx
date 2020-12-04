@@ -18,11 +18,18 @@ export default withDisplayName('Connect')(({
     device,
     onDeviceChange,
 }: ConnectProps): JSX.Element | null => {
+    const supported = AdbWebBackend.isSupported();
+
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
     const [backendOptions, setBackendOptions] = useState<IDropdownOption[]>([]);
     const [selectedBackend, setSelectedBackend] = useState<AdbBackend | undefined>();
     useEffect(() => {
+        if (!supported) {
+            showErrorDialog('Your browser does not support WebUSB standard, which is required for this site to work.\n\nLatest version of Google Chrome (for Windows, macOS, Linux and Android), Microsoft Edge (for Windows and macOS), or other Chromium-based browsers should work.');
+            return;
+        }
+
         async function refresh() {
             const backendList = await AdbWebBackend.getDevices();
 
@@ -42,7 +49,6 @@ export default withDisplayName('Connect')(({
         };
 
         refresh();
-
         const watcher = new AdbWebBackendWatcher(refresh);
         return () => watcher.dispose();
     }, []);
@@ -141,6 +147,7 @@ export default withDisplayName('Connect')(({
                         >
                             <DefaultButton
                                 text="Add device"
+                                disabled={!supported}
                                 primary={!selectedBackend}
                                 styles={{ root: { width: '100%' } }}
                                 onClick={requestAccess}
