@@ -1,13 +1,15 @@
 import { Dialog, ICommandBarItemProps, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
 import { AdbBufferedStream, AdbStream, EventQueue } from '@yume-chan/adb';
 import { Struct } from '@yume-chan/struct';
-import JMuxer from 'jmuxer';
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import YUVBuffer from 'yuv-buffer';
+import YUVCanvas from 'yuv-canvas';
 import { ErrorDialogContext } from '../../error-dialog';
 import { CommonStackTokens } from '../../styles';
 import { CommandBar, DeviceView, DeviceViewRef, ExternalLink, formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
 import { AndroidMotionEventAction, ScrcpyControlMessage, ScrcpyControlMessageType, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './control';
+import { createDecoder, H264Decoder } from './decoder';
 import { fetchServer } from './fetch-server';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
@@ -25,12 +27,17 @@ const VideoPacket =
 
 const NoPts = BigInt(-1);
 
-async function receiveVideo(stream: AdbBufferedStream, jmuxer: JMuxer) {
+async function receiveVideo(stream: AdbBufferedStream, decoder: H264Decoder) {
     let lastPts = BigInt(0);
     let buffer: ArrayBuffer | undefined;
+    let firstPacket = true;
     try {
         while (true) {
             const { pts, data } = await VideoPacket.deserialize(stream);
+            if (data!.byteLength === 0) {
+                continue;
+            }
+
             if (pts === NoPts) {
                 buffer = data;
                 continue;
@@ -48,13 +55,20 @@ async function receiveVideo(stream: AdbBufferedStream, jmuxer: JMuxer) {
 
             const duration = Number(pts - lastPts) / 1000;
             lastPts = pts;
-            jmuxer.feed({
-                video: array,
-                duration,
-            });
+
+            if (firstPacket) {
+                firstPacket = false;
+                if (array[4] !== 103 || array[5] !== 66) {
+                    throw new Error('Unsupported H.264 profile: ' + array[5].toString());
+                }
+            }
+
+            decoder.feed(array.buffer);
         }
     } catch (e) {
-        jmuxer.destroy();
+        console.error(e);
+        stream.close();
+        decoder.dispose();
         return;
     }
 }
@@ -124,27 +138,19 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
     const [running, setRunning] = useState(false);
 
-    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const yuvCanvasRef = useRef<YUVCanvas>();
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
-    const handleVideoRef = useCallback((video: HTMLVideoElement | null) => {
-        videoRef.current = video;
-        if (video) {
-            video.onresize = () => {
-                setWidth(video.videoWidth);
-                setHeight(video.videoHeight);
-            };
-
-            video.addEventListener('touchstart', e => {
+    const handleCanvasRef = useCallback((canvas: HTMLCanvasElement | null) => {
+        canvasRef.current = canvas;
+        if (canvas) {
+            yuvCanvasRef.current = YUVCanvas.attach(canvas);
+            canvas.addEventListener('touchstart', e => {
                 e.preventDefault();
             });
-            video.addEventListener('contextmenu', e => {
+            canvas.addEventListener('contextmenu', e => {
                 e.preventDefault();
-            });
-
-            video.addEventListener('pause', () => {
-                console.log('???');
-                video.play();
             });
         }
     }, []);
@@ -204,7 +210,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     '1.16', // SCRCPY_VERSION
                     ScrcpyLogLevel.Debug,
                     '0', // max_size (0: unlimited)
-                    '8000000', // bit_rate
+                    '2000000', // bit_rate
                     '0', // max_fps
                     ScrcpyScreenOrientation.Unlocked.toString(), // lock_video_orientation (-1: unlocked)
                     'false', // tunnel_forward
@@ -212,9 +218,11 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     'true', // always send frame meta (packet boundaries + timestamp)
                     'true', // control
                     '0', // display_id
-                    'true', // show_touches
+                    'false', // show_touches
                     'true', // stay_awake
-                    '-', // codec_options
+                    'profile=1,level=16', // codec_options
+                    // 'OMX.hisi.video.encoder.avc', // encoder name
+                    'OMX.google.h264.encoder', // encoder name
                 );
                 server.onData(data => {
                     console.log(device.backend.decodeUtf8(data));
@@ -233,14 +241,10 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
                 // Device name, we don't need it
                 await videoStream.read(64);
-                // Initial video size, we don't need it
-                await Size.deserialize(videoStream);
-
-                const jmuxer = new JMuxer({
-                    node: videoRef.current!,
-                    mode: 'video',
-                    flushingTime: 0,
-                });
+                // Initial video size
+                const { width, height } = await Size.deserialize(videoStream);
+                setWidth(width);
+                setHeight(height);
 
                 serverRef.current = server;
 
@@ -249,8 +253,35 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
                 eventQueueRef.current = new EventQueue<ScrcpyControlMessage>();
 
+                const decoder = await createDecoder();
+                decoder.pictureReady((args) => {
+                    const { data, width: videoWidth, height: videoHeight } = args;
+
+                    const format = YUVBuffer.format({
+                        width: videoWidth,
+                        height: videoHeight,
+                        chromaWidth: videoWidth / 2,
+                        chromaHeight: videoHeight / 2,
+                        cropLeft: (videoWidth - width) / 2,
+                        cropTop: (videoHeight - height) / 2,
+                        cropWidth: width,
+                        cropHeight: height,
+                        displayWidth: width,
+                        displayHeight: height,
+                    });
+
+                    const array = new Uint8Array(data);
+                    const frame = YUVBuffer.frame(format,
+                        YUVBuffer.lumaPlane(format, array, videoWidth, 0),
+                        YUVBuffer.chromaPlane(format, array, videoWidth / 2, videoWidth * videoHeight),
+                        YUVBuffer.chromaPlane(format, array, videoWidth / 2, videoWidth * videoHeight + videoWidth * videoHeight / 4)
+                    );
+
+                    yuvCanvasRef.current?.drawFrame(frame);
+                });
+
                 await Promise.all([
-                    receiveVideo(videoStream, jmuxer),
+                    receiveVideo(videoStream, decoder),
                     receiveControl(controlStream),
                     sendControl(controlStream, eventQueueRef.current),
                 ]);
@@ -319,10 +350,13 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     <>
                         <div>
                             <ExternalLink href="https://github.com/Genymobile/scrcpy" spaceAfter>Scrcpy</ExternalLink>
-                        developed by genymobile can display the screen with low latency (1~2 frames) and control the device, all without root access.
+                            developed by genymobile can display the screen with low latency (1~2 frames) and control the device, all without root access.
                         </div>
                         <div>
-                            I reimplemented the protocol in JavaScript, it's used with a pre-built server binary from Genymobile's GitHub.
+                            I reimplemented the protocol in JavaScript, a pre-built server binary from Genymobile is used.
+                        </div>
+                        <div>
+                            It uses tinyh264 as decoder to achieve low latency. But since it's a software decoder, high CPU usage and sub-optimal compatibility are expected.
                         </div>
                     </>
                 ),
@@ -335,7 +369,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
     const injectTouch = useCallback((
         action: AndroidMotionEventAction,
-        e: React.PointerEvent<HTMLVideoElement>
+        e: React.PointerEvent<HTMLCanvasElement>
     ) => {
         e.preventDefault();
         e.stopPropagation();
@@ -359,28 +393,28 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         });
     }, [width, height]);
 
-    const handlePointerDown = useCallback((e: React.PointerEvent<HTMLVideoElement>) => {
+    const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
         if (e.button !== 0) {
             return;
         }
         injectTouch(AndroidMotionEventAction.Down, e);
     }, [injectTouch]);
 
-    const handlePointerMove = useCallback((e: React.PointerEvent<HTMLVideoElement>) => {
+    const handlePointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
         if (e.buttons !== 1) {
             return;
         }
         injectTouch(AndroidMotionEventAction.Move, e);
     }, [injectTouch]);
 
-    const handlePointerUp = useCallback((e: React.PointerEvent<HTMLVideoElement>) => {
+    const handlePointerUp = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
         if (e.button !== 0) {
             return;
         }
         injectTouch(AndroidMotionEventAction.Up, e);
     }, [injectTouch]);
 
-    const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLVideoElement>) => {
+    const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLCanvasElement>) => {
 
     }, []);
 
@@ -389,9 +423,8 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
             <CommandBar items={commandBarItems} farItems={commandBarFarItems} />
 
             <DeviceView ref={deviceViewRef} width={width} height={height}>
-                <video
-                    ref={handleVideoRef}
-                    autoPlay
+                <canvas
+                    ref={handleCanvasRef}
                     width={width}
                     height={height}
                     onPointerDown={handlePointerDown}

@@ -26,6 +26,9 @@ export class Adb {
 
     public get name() { return this.backend.name; }
 
+    private _protocolVersion: number | undefined;
+    public get protocolVersion() { return this._protocolVersion; }
+
     private _product: string | undefined;
     public get product() { return this._product; }
 
@@ -94,7 +97,11 @@ export class Adb {
                 switch (packet.command) {
                     case AdbCommand.Connect:
                         this.packetDispatcher.maxPayloadSize = Math.min(maxPayloadSize, packet.arg1);
-                        if (Math.min(version, packet.arg0) >= versionNoChecksum) {
+
+                        const finalVersion = Math.min(version, packet.arg0);
+                        this._protocolVersion = finalVersion;
+
+                        if (finalVersion >= versionNoChecksum) {
                             this.packetDispatcher.calculateChecksum = false;
                             // Android prior to 9.0.0 uses char* to parse service string
                             // thus requires an extra null character

@@ -54,17 +54,27 @@ export const Intro = withDisplayName('Intro')(() => {
                 <ExternalLink href="https://developer.mozilla.org/en-US/docs/Web/API/USB" spaceBefore spaceAfter>WebUSB</ExternalLink>
                 API.
             </Text>
+
+            <Text block styles={BoldTextStyles}>
+                Security concerns:
+            </Text>
             <Text block>
-                Latest version of Google Chrome (for Windows, macOS, Linux and Android) or Microsoft Edge (for Windows and macOS) is recommended for best compatibility.
+                Yes, accessing USB devices from random website can be pretty dangerous. Firefox team even <ExternalLink href="https://mozilla.github.io/standards-positions/#webusb">considered it harmful</ExternalLink> and refused to implement it.<br />
+                However, there are several reasons you can trust this one:<br />
+                1. Web apps, unlike native apps, can't connect to your devices silently. Web apps must first get your permission through a browser-controlled UI, which it can't alter.<br />
+                2. Web apps can be updated at any time, but native apps can also do this. So I consider this a tie.<br />
+                3. Only minimal and trust-worthy dependencies are used by this website, to minimize the possibility of <ExternalLink href="https://en.wikipedia.org/wiki/Supply_chain_attack" spaceBefore>supply chain attacks</ExternalLink>.<br />
+                4. The source code is available at <ExternalLink href="https://github.com/yume-chan/ya-webadb/" spaceBefore>GitHub</ExternalLink>, you can check it yourself (or you can find someone you trust to check it for you).<br />
+                5. This website is built and published by <ExternalLink href="https://github.com/yume-chan/ya-webadb/blob/master/.github/workflows/gh-pages.yml">GitHub CI</ExternalLink>, so it will be exactly same with the source code.<br />
             </Text>
 
             <Text block styles={BoldTextStyles}>
-                Windows user?
+                Compatibility:
             </Text>
             <Text block>
-                The experimental new backend is required. Enable from  {' '}
-                <CopyLink href="chrome://flags/#new-usb-backend" />
-                .
+                Google Chrome (for Windows and Android), and Microsoft Edge (Chromium-based, for Windows) are tested. Other Chromium-based browsers should also work.<br />
+                On Windows, the experimental new USB backend is required to function. You can enable it from <CopyLink href="chrome://flags/#new-usb-backend" />.<br />
+                If you have a Samsung device, and got "Access denied" error, please update your browser to a newer version (Chrome 87 or later).
             </Text>
 
             <Text block styles={BoldTextStyles}>
@@ -76,21 +86,12 @@ export const Intro = withDisplayName('Intro')(() => {
                 2. No other Android management tools are running<br />
                 3. No other WebADB tabs have already connected to your device.
             </Text>
-            <Text block styles={BoldTextStyles}>
-                Got "Access denied" error?
-            </Text>
-            <Text block>
-                If you have a Samsung device, it's caused by the custom driver. See
-                <ExternalLink href="https://bugs.chromium.org/p/chromium/issues/detail?id=1127206" spaceBefore />
-            </Text>
+
             <Text block styles={BoldTextStyles}>
                 Can I connect my device wirelessly (ADB over WiFi)?
             </Text>
             <Text block>
-                No. Web browsers doesn't support TCP connections.<br />
-                Or maybe, with
-                <ExternalLink href="https://github.com/novnc/websockify" spaceBefore spaceAfter>websockify</ExternalLink>
-                running on your device and a WebSocket backend for WebADB.
+                No. Web browsers doesn't support TCP connections.
             </Text>
         </>
     );

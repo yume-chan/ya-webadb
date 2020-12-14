@@ -50,8 +50,9 @@ const config = (env, argv) => ({
     module: {
         rules: [
             { test: /\.js$/, enforce: 'pre', use: ['source-map-loader'], },
-            { test: /.css$/i, use: [mini_css_extract_plugin_1.default.loader, 'css-loader'] },
-            { test: /.tsx?$/i, loader: 'ts-loader', options: { projectReferences: true } },
+            { test: /\.css$/i, use: [mini_css_extract_plugin_1.default.loader, 'css-loader'] },
+            { test: /\.asset$/, use: { loader: "file-loader" } },
+            { test: /\.tsx?$/i, loader: 'ts-loader', options: { projectReferences: true } },
         ],
     },
     devServer: {

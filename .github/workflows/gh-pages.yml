@@ -19,7 +19,13 @@ jobs:
     - run: npm i
       env:
         CI: true
+
     - run: npm run build
+
+    - run: npm test
+      env:
+        CI: true
+
     - run: npm run build:demo
 
     - name: Deploy

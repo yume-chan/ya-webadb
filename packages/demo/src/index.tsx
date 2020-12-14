@@ -44,6 +44,9 @@ function App(): JSX.Element | null {
             children: (
                 <>
                     <StackItem>
+                        Protocol Version: {device?.protocolVersion?.toString(16)}
+                    </StackItem>
+                    <StackItem>
                         Product: {device?.product}
                     </StackItem>
                     <StackItem>
@@ -117,7 +120,7 @@ function App(): JSX.Element | null {
                     WebADB Demo
                 </div>
             </StackItem>
-            <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden' } }}>
+            <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden', lineHeight: '1.5' } }}>
                 <Stack horizontal verticalFill>
                     <StackItem styles={{
                         root: {

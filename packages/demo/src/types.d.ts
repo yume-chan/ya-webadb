@@ -41,6 +41,13 @@ declare module 'streamsaver' {
 }
 
 declare module 'file-loader!*';
+declare module 'worker-loader!*' {
+    class WebpackWorker extends Worker {
+        constructor();
+    }
+
+    export default WebpackWorker;
+}
 
 declare module 'jmuxer' {
     export interface JMuxerOptions {
