@@ -71,7 +71,7 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     }
 
     const publicKeyLength = calculatePublicKeyLength();
-    const publicKeyBase64Length = calculateBase64EncodedLength(publicKeyLength);
+    const [publicKeyBase64Length] = calculateBase64EncodedLength(publicKeyLength);
 
     // The public key is null terminated,
     // So we allocate the buffer with one extra byte.

@@ -1,7 +1,7 @@
 // Prepare maps for O(1) searching
 const charToIndex: Record<string, number> = {};
 const indexToChar: number[] = [];
-const padding = '='.charCodeAt(0);
+const paddingChar = '='.charCodeAt(0);
 
 function addRange(start: string, end: string) {
     const charCodeStart = start.charCodeAt(0);
@@ -20,40 +20,42 @@ addRange('0', '9');
 addRange('+', '+');
 addRange('/', '/');
 
-export function calculateBase64EncodedLength(inputLength: number): number {
-    return Math.ceil(inputLength / 3) * 4;
+export function calculateBase64EncodedLength(inputLength: number): [outputLength: number, paddingLength: number] {
+    const remainder = inputLength % 3;
+    const paddingLength = remainder !== 0 ? 3 - remainder : 0;
+    return [(inputLength + paddingLength) / 3 * 4, paddingLength];
 }
 
 export function encodeBase64(
     input: ArrayBuffer | Uint8Array,
     inputOffset?: number,
     inputLength?: number,
-): ArrayBuffer;
+): ArrayBuffer; // overload 1
 export function encodeBase64(
     input: ArrayBuffer | Uint8Array,
     output: ArrayBuffer | Uint8Array,
     outputOffset?: number
-): number;
+): number; // overload 2
 export function encodeBase64(
     input: ArrayBuffer | Uint8Array,
     inputOffset: number,
     output: ArrayBuffer | Uint8Array,
     outputOffset?: number
-): number;
+): number; // overload 3
 export function encodeBase64(
     input: ArrayBuffer | Uint8Array,
     inputOffset: number,
     inputLength: number,
     output: ArrayBuffer | Uint8Array,
     outputOffset?: number
-): number;
+): number; // overload 4
 export function encodeBase64(
     input: ArrayBuffer | Uint8Array,
     arg1?: number | ArrayBuffer | Uint8Array,
     arg2?: number | ArrayBuffer | Uint8Array,
     _arg3?: number | ArrayBuffer | Uint8Array,
     _arg4?: number,
-): ArrayBuffer | Uint8Array | number {
+): ArrayBuffer | number {
     if (input instanceof ArrayBuffer) {
         input = new Uint8Array(input);
     }
@@ -71,23 +73,27 @@ export function encodeBase64(
     let outputOffset: number;
 
     let outputArgumentIndex: number;
-    if (typeof arg1 !== 'number') {
+    if (typeof arg1 === 'number') {
+        // overload 1, 3, 4
+        inputOffset = arg1;
+
+        if (typeof arg2 === 'number') {
+            // overload 1, 4
+            inputLength = arg2;
+            outputArgumentIndex = 3;
+        } else {
+            // overload 3
+            inputLength = input.byteLength - inputOffset;
+            outputArgumentIndex = 2;
+        }
+    } else {
+        // overload 2
         inputOffset = 0;
         inputLength = input.byteLength;
         outputArgumentIndex = 1;
-    } else {
-        inputOffset = arg1;
-
-        if (typeof arg2 !== 'number') {
-            inputLength = input.byteLength - inputOffset;
-            outputArgumentIndex = 2;
-        } else {
-            inputLength = arg2;
-            outputArgumentIndex = 3;
-        }
     }
 
-    const outputLength = calculateBase64EncodedLength(inputLength);
+    const [outputLength, paddingLength] = calculateBase64EncodedLength(inputLength);
 
     let maybeOutput: ArrayBuffer | Uint8Array | undefined = arguments[outputArgumentIndex];
     let outputType: 'ArrayBuffer' | 'number';
@@ -134,16 +140,15 @@ export function encodeBase64(
     let inputIndex = inputOffset + inputLength - 1;
     let outputIndex = outputOffset + outputLength - 1;
 
-    const extraBytes = inputLength % 3;
-    if (extraBytes === 1) {
+    if (paddingLength === 2) {
         // aaaaaabb
         const x = input[inputIndex];
         inputIndex -= 1;
 
-        output[outputIndex] = padding;
+        output[outputIndex] = paddingChar;
         outputIndex -= 1;
 
-        output[outputIndex] = padding;
+        output[outputIndex] = paddingChar;
         outputIndex -= 1;
 
         output[outputIndex] = indexToChar[((x & 0b11) << 4)];
@@ -151,7 +156,7 @@ export function encodeBase64(
 
         output[outputIndex] = indexToChar[x >> 2];
         outputIndex -= 1;
-    } else if (extraBytes === 2) {
+    } else if (paddingLength === 1) {
         // bbbbcccc
         const y = input[inputIndex];
         inputIndex -= 1;
@@ -160,7 +165,7 @@ export function encodeBase64(
         const x = input[inputIndex];
         inputIndex -= 1;
 
-        output[outputIndex] = padding;
+        output[outputIndex] = paddingChar;
         outputIndex -= 1;
 
         output[outputIndex] = indexToChar[((y & 0b1111) << 2)];

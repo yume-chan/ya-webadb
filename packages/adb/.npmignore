@@ -1,0 +1,4 @@
+__snapshots__
+**/*.spec.*
+jest.config.js
+tsconfig.tsbuildinfo
