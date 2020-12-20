@@ -6,6 +6,12 @@ import { AutoResetEvent } from '../utils';
 import { AdbStreamController } from './controller';
 import { AdbStream } from './stream';
 
+export interface AdbLogger {
+    onIncomingPacket(packet: AdbPacket): void;
+
+    onOutgoingPacket(packet: AdbPacket): void;
+}
+
 export interface AdbPacketReceivedEventArgs {
     handled: boolean;
 
@@ -21,11 +27,12 @@ export interface AdbIncomingStreamEventArgs {
 }
 
 export class AdbPacketDispatcher extends AutoDisposable {
-    // ADB requires stream id to start from 1
+    // ADB stream id starts from 1
     // (0 means open failed)
     private readonly initializers = new AsyncOperationManager(1);
     private readonly streams = new Map<number, AdbStreamController>();
     private readonly sendLock = new AutoResetEvent();
+    private readonly logger: AdbLogger | undefined;
 
     public readonly backend: AdbBackend;
 
@@ -45,16 +52,19 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private _running = false;
     public get running() { return this._running; }
 
-    public constructor(backend: AdbBackend) {
+    public constructor(backend: AdbBackend, logger?: AdbLogger) {
         super();
 
         this.backend = backend;
+        this.logger = logger;
     }
 
     private async receiveLoop() {
         try {
             while (this._running) {
                 const packet = await AdbPacket.read(this.backend);
+                this.logger?.onIncomingPacket(packet);
+
                 switch (packet.command) {
                     case AdbCommand.OK:
                         this.handleOk(packet);
@@ -98,7 +108,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
                 this.packetEvent.fire(args);
                 if (!args.handled) {
                     this.dispose();
-                    return;
+                    throw new Error(`Unhandled packet with command '${packet.command}'`);
                 }
             }
         } catch (e) {
@@ -130,7 +140,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
     private async handleOpen(packet: AdbPacket) {
         // AsyncOperationManager doesn't support get and skip an ID
-        // Use `add` + `resolve` to simulate the behavior
+        // Use `add` + `resolve` to simulate this behavior
         const [localId] = this.initializers.add<number>();
         this.initializers.resolve(localId, undefined);
 
@@ -204,9 +214,13 @@ export class AdbPacketDispatcher extends AutoDisposable {
         }
 
         try {
+            // `AdbPacket.write` writes each packet in two parts
+            // Use a lock to prevent packets been interlaced
             await this.sendLock.wait();
 
             const packet = AdbPacket.create(init, this.calculateChecksum, this.backend);
+            this.logger?.onOutgoingPacket(packet);
+
             await AdbPacket.write(packet, this.backend);
         } finally {
             this.sendLock.notify();

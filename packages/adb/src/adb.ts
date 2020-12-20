@@ -5,7 +5,7 @@ import { AdbBackend } from './backend';
 import { AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
-import { AdbPacketDispatcher, AdbStream } from './stream';
+import { AdbLogger, AdbPacketDispatcher, AdbStream } from './stream';
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -17,7 +17,7 @@ export enum AdbPropKey {
 export class Adb {
     private packetDispatcher: AdbPacketDispatcher;
 
-    public readonly backend: AdbBackend;
+    public get backend(): AdbBackend { return this.packetDispatcher.backend; }
 
     public get onDisconnected() { return this.backend.onDisconnected; }
 
@@ -45,10 +45,8 @@ export class Adb {
 
     public readonly reverse: AdbReverseCommand;
 
-    public constructor(backend: AdbBackend) {
-        this.backend = backend;
-
-        this.packetDispatcher = new AdbPacketDispatcher(backend);
+    public constructor(backend: AdbBackend, logger?: AdbLogger) {
+        this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
 
         this.tcpip = new AdbTcpIpCommand(this);
         this.reverse = new AdbReverseCommand(this.packetDispatcher);
@@ -68,16 +66,16 @@ export class Adb {
         const maxPayloadSize = 0x100000;
 
         const features = [
-            'shell_v2', // 9
-            'cmd', // 7
-            AdbFeatures.StatV2, // 5
+            'shell_v2',
+            'cmd',
+            AdbFeatures.StatV2,
             'ls_v2',
-            'fixed_push_mkdir', // 4
-            'apex', // 2
-            'abb', // 8
-            'fixed_push_symlink_timestamp', // 1
-            'abb_exec', // 6
-            'remount_shell', // 3
+            'fixed_push_mkdir',
+            'apex',
+            'abb',
+            'fixed_push_symlink_timestamp',
+            'abb_exec',
+            'remount_shell',
             'track_app',
             'sendrecv_v2',
             'sendrecv_v2_brotli',
@@ -112,7 +110,7 @@ export class Adb {
                         resolver.resolve();
                         break;
                     case AdbCommand.Auth:
-                        const authPacket = await authHandler.next(e.packet);
+                        const authPacket = await authHandler.handle(e.packet);
                         await this.packetDispatcher.sendPacket(authPacket);
                         break;
                     case AdbCommand.Close:

@@ -1,21 +1,24 @@
 import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem, TooltipHost } from '@fluentui/react';
-import { Adb, AdbBackend } from '@yume-chan/adb';
+import { Adb, AdbBackend, AdbLogger } from '@yume-chan/adb';
 import AdbWebBackend, { AdbWebBackendWatcher } from '@yume-chan/adb-backend-web';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorDialogContext } from './error-dialog';
 import { CommonStackTokens } from './styles';
 import { withDisplayName } from './utils';
 
-const DropdownStyles = { dropdown: { width: 250 - 8 } };
+const DropdownStyles = { dropdown: { width: '100%' } };
 
 interface ConnectProps {
     device: Adb | undefined;
+
+    logger?: AdbLogger;
 
     onDeviceChange: (device: Adb | undefined) => void;
 }
 
 export default withDisplayName('Connect')(({
     device,
+    logger,
     onDeviceChange,
 }: ConnectProps): JSX.Element | null => {
     const supported = AdbWebBackend.isSupported();
@@ -85,7 +88,7 @@ export default withDisplayName('Connect')(({
     const connect = useCallback(async () => {
         try {
             if (selectedBackend) {
-                const device = new Adb(selectedBackend);
+                const device = new Adb(selectedBackend, logger);
                 try {
                     setConnecting(true);
                     await device.connect();
@@ -100,7 +103,7 @@ export default withDisplayName('Connect')(({
         } finally {
             setConnecting(false);
         }
-    }, [selectedBackend, onDeviceChange]);
+    }, [selectedBackend, logger, onDeviceChange]);
     const disconnect = useCallback(async () => {
         try {
             await device!.dispose();

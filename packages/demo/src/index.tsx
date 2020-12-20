@@ -1,4 +1,4 @@
-import { Nav, Stack, StackItem } from '@fluentui/react';
+import { mergeStyleSets, Nav, Stack, StackItem } from '@fluentui/react';
 import { initializeIcons } from '@uifabric/icons';
 import { Adb } from '@yume-chan/adb';
 import React, { useMemo, useState } from 'react';
@@ -7,10 +7,31 @@ import { HashRouter, Redirect, useLocation } from 'react-router-dom';
 import Connect from './connect';
 import ErrorDialogProvider from './error-dialog';
 import './index.css';
+import { AdbEventLogger, Logger, LoggerContextProvider, ToggleLogger } from './logger';
 import { CacheRoute, CacheSwitch } from './router';
 import { FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
 
 initializeIcons();
+
+const classNames = mergeStyleSets({
+    'title-container': {
+        borderBottom: '1px solid rgb(243, 242, 241)',
+    },
+    title: {
+        padding: '4px 0',
+        fontSize: 20,
+        textAlign: 'center',
+    },
+    'left-column': {
+        width: 250,
+        paddingRight: 8,
+        borderRight: '1px solid rgb(243, 242, 241)',
+        overflow: 'auto',
+    },
+    'right-column': {
+        borderLeft: '1px solid rgb(243, 242, 241)',
+    }
+});
 
 interface RouteInfo {
     path: string;
@@ -27,6 +48,7 @@ interface RouteInfo {
 function App(): JSX.Element | null {
     const location = useLocation();
 
+    const [logger] = useState(() => new AdbEventLogger());
     const [device, setDevice] = useState<Adb | undefined>();
 
     const routes = useMemo((): RouteInfo[] => [
@@ -107,58 +129,56 @@ function App(): JSX.Element | null {
     ], [device]);
 
     return (
-        <Stack verticalFill>
-            <StackItem>
-                <div
-                    style={{
-                        padding: '4px 0',
-                        fontSize: 20,
-                        textAlign: 'center',
-                        borderBottom: '1px solid rgb(243, 242, 241)',
-                    }}
-                >
-                    WebADB Demo
-                </div>
-            </StackItem>
-            <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden', lineHeight: '1.5' } }}>
-                <Stack horizontal verticalFill>
-                    <StackItem styles={{
-                        root: {
-                            paddingRight: 8,
-                            borderRight: '1px solid rgb(243, 242, 241)',
-                        }
-                    }}>
-                        <Connect device={device} onDeviceChange={setDevice} />
-
-                        <Nav
-                            styles={{ root: { width: 250 } }}
-                            groups={[{
-                                links: routes.map(route => ({
-                                    key: route.path,
-                                    name: route.name,
-                                    url: `#${route.path}`,
-                                })),
-                            }]}
-                            selectedKey={location.pathname}
-                        />
-                    </StackItem>
+        <LoggerContextProvider>
+            <Stack verticalFill>
+                <Stack className={classNames['title-container']} horizontal verticalAlign="center">
                     <StackItem grow>
-                        <CacheSwitch>
-                            {routes.map<React.ReactElement>(route => (
-                                <CacheRoute
-                                    exact={route.exact}
-                                    path={route.path}
-                                    noCache={route.noCache}>
-                                    {route.children}
-                                </CacheRoute>
-                            ))}
-
-                            <Redirect to="/" />
-                        </CacheSwitch>
+                        <div className={classNames.title}>WebADB Demo</div>
                     </StackItem>
+                    <ToggleLogger />
                 </Stack>
-            </StackItem>
-        </Stack>
+
+                <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden', lineHeight: '1.5' } }}>
+                    <Stack horizontal verticalFill disableShrink>
+                        <StackItem className={classNames['left-column']}>
+                            <Connect
+                                device={device}
+                                logger={logger.logger}
+                                onDeviceChange={setDevice}
+                            />
+
+                            <Nav
+                                styles={{ root: {} }}
+                                groups={[{
+                                    links: routes.map(route => ({
+                                        key: route.path,
+                                        name: route.name,
+                                        url: `#${route.path}`,
+                                    })),
+                                }]}
+                                selectedKey={location.pathname}
+                            />
+                        </StackItem>
+                        <StackItem grow styles={{ root: { width: 0 } }}>
+                            <CacheSwitch>
+                                {routes.map<React.ReactElement>(route => (
+                                    <CacheRoute
+                                        exact={route.exact}
+                                        path={route.path}
+                                        noCache={route.noCache}>
+                                        {route.children}
+                                    </CacheRoute>
+                                ))}
+
+                                <Redirect to="/" />
+                            </CacheSwitch>
+                        </StackItem>
+
+                        <Logger className={classNames['right-column']} logger={logger} />
+                    </Stack>
+                </StackItem>
+            </Stack>
+        </LoggerContextProvider>
     );
 }
 

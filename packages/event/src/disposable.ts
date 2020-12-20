@@ -5,6 +5,10 @@ export interface Disposable {
 export class AutoDisposable implements Disposable {
     private disposables: Disposable[] = [];
 
+    public constructor() {
+        this.dispose = this.dispose.bind(this);
+    }
+
     protected addDisposable<T extends Disposable>(disposable: T): T {
         this.disposables.push(disposable);
         return disposable;
