@@ -1,14 +1,12 @@
-import { mergeStyleSets, Nav, Stack, StackItem } from '@fluentui/react';
+import { IconButton, mergeStyles, mergeStyleSets, Nav, Stack, StackItem } from '@fluentui/react';
 import { initializeIcons } from '@uifabric/icons';
 import { Adb } from '@yume-chan/adb';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { HashRouter, Redirect, useLocation } from 'react-router-dom';
-import Connect from './connect';
-import ErrorDialogProvider from './error-dialog';
+import { CacheRoute, CacheSwitch, Connect, ErrorDialogProvider } from './components';
 import './index.css';
-import { AdbEventLogger, Logger, LoggerContextProvider, ToggleLogger } from './logger';
-import { CacheRoute, CacheSwitch } from './router';
+import { AdbEventLogger, Logger, LoggerContextProvider, ToggleLogger } from './components/logger';
 import { FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
 
 initializeIcons();
@@ -50,6 +48,12 @@ function App(): JSX.Element | null {
 
     const [logger] = useState(() => new AdbEventLogger());
     const [device, setDevice] = useState<Adb | undefined>();
+
+    const [leftPanelVisible, setLeftPanelVisible] = useState(() => innerWidth > 650);
+    const toggleLeftPanel = useCallback(() => {
+        setLeftPanelVisible(value => !value);
+    }, []);
+
 
     const routes = useMemo((): RouteInfo[] => [
         {
@@ -132,51 +136,58 @@ function App(): JSX.Element | null {
         <LoggerContextProvider>
             <Stack verticalFill>
                 <Stack className={classNames['title-container']} horizontal verticalAlign="center">
+                    <IconButton
+                        checked={leftPanelVisible}
+                        title="Toggle Menu"
+                        iconProps={{ iconName: 'GlobalNavButton' }}
+                        onClick={toggleLeftPanel}
+                    />
+
                     <StackItem grow>
                         <div className={classNames.title}>WebADB Demo</div>
                     </StackItem>
+
                     <ToggleLogger />
                 </Stack>
 
-                <StackItem grow styles={{ root: { minHeight: 0, overflow: 'hidden', lineHeight: '1.5' } }}>
-                    <Stack horizontal verticalFill disableShrink>
-                        <StackItem className={classNames['left-column']}>
-                            <Connect
-                                device={device}
-                                logger={logger.logger}
-                                onDeviceChange={setDevice}
-                            />
+                <Stack grow horizontal verticalFill disableShrink styles={{ root: { minHeight: 0, overflow: 'hidden', lineHeight: '1.5' } }}>
+                    <StackItem className={mergeStyles(classNames['left-column'], !leftPanelVisible && { display: 'none' })}>
+                        <Connect
+                            device={device}
+                            logger={logger.logger}
+                            onDeviceChange={setDevice}
+                        />
 
-                            <Nav
-                                styles={{ root: {} }}
-                                groups={[{
-                                    links: routes.map(route => ({
-                                        key: route.path,
-                                        name: route.name,
-                                        url: `#${route.path}`,
-                                    })),
-                                }]}
-                                selectedKey={location.pathname}
-                            />
-                        </StackItem>
-                        <StackItem grow styles={{ root: { width: 0 } }}>
-                            <CacheSwitch>
-                                {routes.map<React.ReactElement>(route => (
-                                    <CacheRoute
-                                        exact={route.exact}
-                                        path={route.path}
-                                        noCache={route.noCache}>
-                                        {route.children}
-                                    </CacheRoute>
-                                ))}
+                        <Nav
+                            styles={{ root: {} }}
+                            groups={[{
+                                links: routes.map(route => ({
+                                    key: route.path,
+                                    name: route.name,
+                                    url: `#${route.path}`,
+                                })),
+                            }]}
+                            selectedKey={location.pathname}
+                        />
+                    </StackItem>
 
-                                <Redirect to="/" />
-                            </CacheSwitch>
-                        </StackItem>
+                    <StackItem grow styles={{ root: { width: 0 } }}>
+                        <CacheSwitch>
+                            {routes.map<React.ReactElement>(route => (
+                                <CacheRoute
+                                    exact={route.exact}
+                                    path={route.path}
+                                    noCache={route.noCache}>
+                                    {route.children}
+                                </CacheRoute>
+                            ))}
 
-                        <Logger className={classNames['right-column']} logger={logger} />
-                    </Stack>
-                </StackItem>
+                            <Redirect to="/" />
+                        </CacheSwitch>
+                    </StackItem>
+
+                    <Logger className={classNames['right-column']} logger={logger} />
+                </Stack>
             </Stack>
         </LoggerContextProvider>
     );

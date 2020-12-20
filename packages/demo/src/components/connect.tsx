@@ -3,8 +3,8 @@ import { Adb, AdbBackend, AdbLogger } from '@yume-chan/adb';
 import AdbWebBackend, { AdbWebBackendWatcher } from '@yume-chan/adb-backend-web';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorDialogContext } from './error-dialog';
-import { CommonStackTokens } from './styles';
-import { withDisplayName } from './utils';
+import { CommonStackTokens } from '../styles';
+import { withDisplayName } from '../utils';
 
 const DropdownStyles = { dropdown: { width: '100%' } };
 
@@ -16,7 +16,7 @@ interface ConnectProps {
     onDeviceChange: (device: Adb | undefined) => void;
 }
 
-export default withDisplayName('Connect')(({
+export const Connect = withDisplayName('Connect')(({
     device,
     logger,
     onDeviceChange,

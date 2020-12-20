@@ -1,7 +1,8 @@
-import { ICommandBarItemProps } from '@fluentui/react';
+import { ICommandBarItemProps, Stack, StackItem } from '@fluentui/react';
+import { useBoolean } from '@uifabric/react-hooks';
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
-import { ErrorDialogContext } from '../error-dialog';
-import { CommandBar, DeviceView, withDisplayName } from '../utils';
+import { CommandBar, DemoMode, DeviceView, ErrorDialogContext } from '../components';
+import { withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 export const FrameBuffer = withDisplayName('FrameBuffer')(({
@@ -13,6 +14,8 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
 
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
+
+    const [settingsVisible, { toggle: toggleSettingsVisible }] = useBoolean(false);
 
     const capture = useCallback(() => {
         if (!device) {
@@ -59,6 +62,13 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
 
     const commandBarFarItems = useMemo((): ICommandBarItemProps[] => [
         {
+            key: 'Settings',
+            iconProps: { iconName: 'Settings' },
+            checked: settingsVisible,
+            text: 'Toggle Settings',
+            onClick: toggleSettingsVisible,
+        },
+        {
             key: 'info',
             iconProps: { iconName: 'Info' },
             iconOnly: true,
@@ -69,14 +79,21 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
                 }
             },
         }
-    ], []);
+    ], [settingsVisible]);
 
     return (
         <>
             <CommandBar items={commandBarItems} farItems={commandBarFarItems} />
-            <DeviceView width={width} height={height}>
-                <canvas ref={canvasRef} />
-            </DeviceView>
+            <Stack horizontal grow styles={{ root: { height: 0 } }}>
+                <DeviceView width={width} height={height}>
+                    <canvas ref={canvasRef} />
+                </DeviceView>
+
+                <DemoMode
+                    device={device}
+                    style={{ display: settingsVisible ? 'block' : 'none' }}
+                />
+            </Stack>
         </>
     );
 });

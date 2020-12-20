@@ -7,7 +7,7 @@ import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { SearchAddon } from 'xterm-addon-search';
 import 'xterm/css/xterm.css';
-import { ErrorDialogContext } from '../error-dialog';
+import { ErrorDialogContext } from '../components/error-dialog';
 import { ResizeObserver, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 

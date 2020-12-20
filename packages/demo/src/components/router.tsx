@@ -1,10 +1,10 @@
 import { AnimationClassNames, concatStyleSets, IStackProps, Stack } from '@fluentui/react';
 import React, { useMemo, useRef } from 'react';
 import { match, matchPath, RedirectProps, RouteProps, useLocation, useRouteMatch } from 'react-router-dom';
-import { withDisplayName } from './utils';
+import { withDisplayName } from '../utils';
 
 export const DefaultStackProps: IStackProps = {
-    tokens: { childrenGap: 8, padding: 20 },
+    tokens: { childrenGap: 8, padding: 16 },
     verticalFill: true,
 };
 

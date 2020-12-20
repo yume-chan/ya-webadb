@@ -1,7 +1,8 @@
 import { Callout, DirectionalHint, Link, mergeStyleSets, Text } from '@fluentui/react';
 import { useBoolean } from '@uifabric/react-hooks';
 import React, { useCallback, useRef } from 'react';
-import { ExternalLink, withDisplayName } from '../utils';
+import { ExternalLink } from '../components';
+import { withDisplayName } from '../utils';
 
 const classNames = mergeStyleSets({
     callout: {

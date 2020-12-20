@@ -1,6 +1,7 @@
 import { MessageBar, StackItem, Text, TextField, Toggle } from '@fluentui/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CommandBar, withDisplayName } from '../utils';
+import { CommandBar } from '../components';
+import { withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 export const TcpIp = withDisplayName('TcpIp')(({

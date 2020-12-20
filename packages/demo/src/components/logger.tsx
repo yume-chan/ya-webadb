@@ -3,7 +3,8 @@ import { AdbLogger, AdbPacket } from '@yume-chan/adb';
 import { decodeUtf8 } from '@yume-chan/adb-backend-web';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
 import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { CommandBar, withDisplayName } from './utils';
+import { withDisplayName } from '../utils';
+import { CommandBar } from './command-bar';
 
 const classNames = mergeStyleSets({
     'logger-container': {

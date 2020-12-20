@@ -5,8 +5,9 @@ import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume
 import path from 'path';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
-import { ErrorDialogContext } from '../error-dialog';
-import { CommandBar, delay, formatSize, formatSpeed, pickFile, useSpeed, withDisplayName } from '../utils';
+import { CommandBar } from '../components';
+import { ErrorDialogContext } from '../components/error-dialog';
+import { delay, formatSize, formatSpeed, pickFile, useSpeed, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
 initializeFileTypeIcons();

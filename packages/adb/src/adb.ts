@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
+import { AdbDemoMode, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbStream } from './stream';
@@ -45,11 +45,14 @@ export class Adb {
 
     public readonly reverse: AdbReverseCommand;
 
+    public readonly demoMode: AdbDemoMode;
+
     public constructor(backend: AdbBackend, logger?: AdbLogger) {
         this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
 
         this.tcpip = new AdbTcpIpCommand(this);
         this.reverse = new AdbReverseCommand(this.packetDispatcher);
+        this.demoMode = new AdbDemoMode(this);
 
         backend.onDisconnected(this.dispose, this);
     }

@@ -1,7 +1,7 @@
 import { StackItem } from '@fluentui/react';
 import React, { ReactNode, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { ResizeObserver } from './resize-observer';
-import { forwardRef } from './with-display-name';
+import { ResizeObserver } from '../utils/resize-observer';
+import { forwardRef } from '../utils/with-display-name';
 
 export interface DeviceViewProps {
     width: number;

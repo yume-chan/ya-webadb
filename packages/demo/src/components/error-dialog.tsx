@@ -1,7 +1,7 @@
 import { Dialog, DialogFooter, DialogType, PrimaryButton } from '@fluentui/react';
 import { useBoolean } from '@uifabric/react-hooks';
 import React, { PropsWithChildren, useMemo, useState } from 'react';
-import { withDisplayName } from './utils';
+import { withDisplayName } from '../utils';
 
 export interface ErrorDialogContext {
     show(message: string): void;
@@ -11,7 +11,7 @@ export const ErrorDialogContext = React.createContext<ErrorDialogContext>({
     show() { }
 });
 
-export default withDisplayName('ErrorDialogProvider')((props: PropsWithChildren<{}>) => {
+export const ErrorDialogProvider = withDisplayName('ErrorDialogProvider')((props: PropsWithChildren<{}>) => {
     const [errorDialogVisible, { setTrue: showErrorDialog, setFalse: hideErrorDialog }] = useBoolean(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
