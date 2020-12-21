@@ -1,7 +1,8 @@
-import { Dropdown, IDropdownOption, Position, Separator, SpinButton, Toggle } from '@fluentui/react';
-import { Adb, AdbDemoModeMobileDataType, AdbDemoModeWifiSignalStrength } from '@yume-chan/adb';
+import { Dropdown, IDropdownOption, Position, Separator, Toggle } from '@fluentui/react';
+import { Adb, AdbDemoModeMobileDataType, AdbDemoModeMobileDataTypes, AdbDemoModeStatusBarMode, AdbDemoModeStatusBarModes, AdbDemoModeWifiSignalStrength } from '@yume-chan/adb';
 import React, { useCallback, useEffect, useState } from 'react';
 import { withDisplayName } from '../utils';
+import { NumberPicker } from './number-picker';
 
 export interface DemoModeProps {
     device?: Adb;
@@ -35,6 +36,29 @@ function useDemoModeSetting<T>(
     return [value, handleChange];
 }
 
+function useBooleanDemoModeSetting(
+    initialValue: boolean,
+    enabled: boolean,
+    setEnabled: (value: boolean) => void,
+    onChange: (value: boolean) => void
+): [boolean, (e: any, value?: boolean) => void] {
+    const [value, setValue] = useDemoModeSetting(
+        initialValue,
+        enabled,
+        setEnabled,
+        onChange
+    );
+
+    const handleChange = useCallback(async (e, value?: boolean) => {
+        if (value === undefined) {
+            return;
+        }
+        setValue(value);
+    }, [setValue]);
+
+    return [value, handleChange];
+}
+
 const WifiSignalStrengthOptions =
     Object.values(AdbDemoModeWifiSignalStrength)
         .map((key) => ({
@@ -50,19 +74,39 @@ const WifiSignalStrengthOptions =
         }));
 
 const MobileDataTypeOptions =
-    Object.values(AdbDemoModeMobileDataType)
+    AdbDemoModeMobileDataTypes
         .map((key) => ({
             key,
             text: {
-                [AdbDemoModeMobileDataType.Hidden]: 'Hidden',
-                [AdbDemoModeMobileDataType.OneX]: '1x',
-                [AdbDemoModeMobileDataType.ThirdGen]: '3G',
-                [AdbDemoModeMobileDataType.FourthGen]: '4G',
-                [AdbDemoModeMobileDataType.EDGE]: 'E',
-                [AdbDemoModeMobileDataType.GPRS]: 'G',
-                [AdbDemoModeMobileDataType.HSPA]: 'H',
-                [AdbDemoModeMobileDataType.LTE]: 'LTE',
-                [AdbDemoModeMobileDataType.Roaming]: 'Roam',
+                '1x': '1X',
+                '3g': '3G',
+                '4g': '4G',
+                '4g+': '4G+',
+                '5g': '5G',
+                '5ge': '5GE',
+                '5g+': '5G+',
+                'e': 'EDGE',
+                'g': 'GPRS',
+                'h': 'HSPA',
+                'h+': 'HSPA+',
+                'lte': 'LTE',
+                'lte+': 'LTE+',
+                'dis': 'Disabled',
+                'not': 'Not default SIM',
+                'null': 'Unknown',
+            }[key],
+        }));
+
+const StatusBarModeOptions =
+    AdbDemoModeStatusBarModes
+        .map((key) => ({
+            key,
+            text: {
+                'opaque': 'Opaque',
+                'translucent': 'Translucent',
+                'semi-transparent': 'Semi-transparent',
+                'transparent': 'Transparent',
+                'warning': 'Warning',
             }[key],
         }));
 
@@ -77,7 +121,11 @@ export const DemoMode = withDisplayName('DemoMode')(({
             setAllowed(false);
 
             if (device) {
-                setAllowed(await device.demoMode.getAllowed());
+                const allowed = await device.demoMode.getAllowed();
+                setAllowed(allowed);
+                if (allowed) {
+                    setEnabled(await device.demoMode.getEnabled());
+                }
             }
         })();
     }, [device]);
@@ -88,6 +136,7 @@ export const DemoMode = withDisplayName('DemoMode')(({
         }
         await device!.demoMode.setAllowed(value);
         setAllowed(value);
+        setEnabled(false);
     }, [device]);
 
     const [enabled, setEnabled] = useState(false);
@@ -100,9 +149,7 @@ export const DemoMode = withDisplayName('DemoMode')(({
         if (value === undefined) {
             return;
         }
-        if (value === false) {
-            await device!.demoMode.exit();
-        }
+        await device!.demoMode.setEnabled(value);
         setEnabled(value);
     }, [device]);
 
@@ -113,85 +160,19 @@ export const DemoMode = withDisplayName('DemoMode')(({
         async value => await device!.demoMode.setBatteryLevel(value)
     );
 
-    const handleBatteryLevelChange = useCallback((value: string) => {
-        let number = Number.parseInt(value.replace(/[^0-9]/g, ''), 10);
-        if (number < 0) {
-            number = 0;
-        }
-        else if (number > 100) {
-            number = 100;
-        }
-        setBatteryLevel(number);
-        return number.toString();
-    }, [setBatteryLevel]);
-
-    const handleBatteryLevelIncrease = useCallback((value: string) => {
-        let number = Number.parseInt(value.replace(/[^0-9]/g, ''), 10);
-        number += 1;
-        if (number < 0) {
-            number = 0;
-        }
-        else if (number > 100) {
-            number = 100;
-        }
-        setBatteryLevel(number);
-        return number.toString();
-    }, [setBatteryLevel]);
-
-    const handleBatteryLevelDecrease = useCallback((value: string) => {
-        let number = Number.parseInt(value.replace(/[^0-9]/g, ''), 10);
-        number -= 1;
-        if (number < 0) {
-            number = 0;
-        }
-        else if (number > 100) {
-            number = 100;
-        }
-        setBatteryLevel(number);
-        return number.toString();
-    }, [setBatteryLevel]);
-
-    const [batteryCharing, setBatteryCharging] = useDemoModeSetting(
+    const [batteryCharing, setBatteryCharging] = useBooleanDemoModeSetting(
         false,
         enabled,
         setEnabled,
         async value => await device!.demoMode.setBatteryCharging(value)
     );
 
-    const handleBatteryChargingChanged = useCallback(async (e, value?: boolean) => {
-        if (value === undefined) {
-            return;
-        }
-        setBatteryCharging(value);
-    }, [setBatteryCharging]);
-
-    // const [powerSaveMode, setPowerSaveMode] = useDemoModeSetting(
-    //     false,
-    //     enabled,
-    //     setEnabled,
-    //     async value => await device!.demoMode.setPowerSaveMode(value)
-    // );
-
-    // const handlePowerSaveModeChanged = useCallback(async (e, value?: boolean) => {
-    //     if (value === undefined) {
-    //         return;
-    //     }
-    //     setPowerSaveMode(value);
-    // }, [setPowerSaveMode]);
-
-    // const [airplaneMode, setAirplaneMode] = useDemoModeSetting(
-    //     false,
-    //     enabled,
-    //     setEnabled,
-    //     async value => await device!.demoMode.setAirplaneMode(value)
-    // );
-
-    // const handleAirplaneModeChanged = useCallback(async (e, value?: boolean) => {
-    //     if (value === undefined) {
-    //         return;
-    //     }
-    //     setAirplaneMode(value);
-    // }, [setAirplaneMode]);
+    const [powerSaveMode, setPowerSaveMode] = useBooleanDemoModeSetting(
+        false,
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setPowerSaveMode(value)
+    );
 
     const [wifiSignalStrength, setWifiSignalStrength] = useDemoModeSetting(
         AdbDemoModeWifiSignalStrength.Level4,
@@ -207,8 +188,15 @@ export const DemoMode = withDisplayName('DemoMode')(({
         setWifiSignalStrength(value.key! as AdbDemoModeWifiSignalStrength);
     }, [setWifiSignalStrength]);
 
-    const [mobileDataType, setMobileDataType] = useDemoModeSetting(
-        AdbDemoModeMobileDataType.LTE,
+    const [airplaneMode, setAirplaneMode] = useBooleanDemoModeSetting(
+        false,
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setAirplaneMode(value)
+    );
+
+    const [mobileDataType, setMobileDataType] = useDemoModeSetting<AdbDemoModeMobileDataType>(
+        'lte',
         enabled,
         setEnabled,
         async value => await device!.demoMode.setMobileDataType(value)
@@ -235,6 +223,69 @@ export const DemoMode = withDisplayName('DemoMode')(({
         setMobileSignalStrength(value.key! as AdbDemoModeWifiSignalStrength);
     }, [setMobileSignalStrength]);
 
+    const [statusBarMode, setStatusBarMode] = useDemoModeSetting<AdbDemoModeStatusBarMode>(
+        'transparent',
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setStatusBarMode(value)
+    );
+
+    const handleStatusBarModeChanged = useCallback(async (e, value?: IDropdownOption) => {
+        if (value === undefined) {
+            return;
+        }
+        setStatusBarMode(value.key! as AdbDemoModeStatusBarMode);
+    }, [setStatusBarMode]);
+
+    const [vibrateMode, setVibrateMode] = useBooleanDemoModeSetting(
+        false,
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setVibrateModeEnabled(value)
+    );
+
+    const [bluetoothConnected, setBluetoothConnected] = useBooleanDemoModeSetting(
+        false,
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setBluetoothConnected(value)
+    );
+
+    const [locatingIcon, setLocatingIcon] = useBooleanDemoModeSetting(
+        false,
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setLocatingIcon(value)
+    );
+
+    const [alarmIcon, setAlarmIcon] = useBooleanDemoModeSetting(
+        false,
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setAlarmIcon(value)
+    );
+
+    const [notificationsVisibility, setNotificationsVisibility] = useBooleanDemoModeSetting(
+        true,
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setNotificationsVisibility(value)
+    );
+
+    const [hour, setHour] = useDemoModeSetting<number>(
+        12,
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setTime(value, minute)
+    );
+
+    const [minute, setMinute] = useDemoModeSetting<number>(
+        34,
+        enabled,
+        setEnabled,
+        async value => await device!.demoMode.setTime(hour, value)
+    );
+
     return (
         <div style={{ padding: 12, overflow: 'hidden auto', ...style }}>
             <Toggle
@@ -251,49 +302,50 @@ export const DemoMode = withDisplayName('DemoMode')(({
                 onChange={handleEnabledChange}
             />
 
+            <div><strong>Note:</strong></div>
+            <div>Device may not support all options.</div>
+
             <Separator />
 
-            <SpinButton
+            <NumberPicker
                 label="Battery Level"
                 labelPosition={Position.top}
                 disabled={!device || !allowed}
                 min={0}
                 max={100}
                 step={1}
-                value={batteryLevel.toString()}
-                onValidate={handleBatteryLevelChange}
-                onIncrement={handleBatteryLevelIncrease}
-                onDecrement={handleBatteryLevelDecrease}
+                value={batteryLevel}
+                onChange={setBatteryLevel}
             />
 
             <Toggle
                 label="Battery Charing"
                 disabled={!device || !allowed}
                 checked={batteryCharing}
-                onChange={handleBatteryChargingChanged}
+                onChange={setBatteryCharging}
             />
 
-            {/* <Toggle
+            <Toggle
                 label="Power Save Mode"
                 disabled={!device || !allowed}
                 checked={powerSaveMode}
-                onChange={handlePowerSaveModeChanged}
-            /> */}
+                onChange={setPowerSaveMode}
+            />
 
             <Separator />
-
-            {/* <Toggle
-                label="Airplane Mode"
-                disabled={!device || !allowed}
-                checked={airplaneMode}
-                onChange={handleAirplaneModeChanged}
-            /> */}
 
             <Dropdown
                 label="Wifi Signal Strength"
                 options={WifiSignalStrengthOptions}
                 selectedKey={wifiSignalStrength}
                 onChange={handleWifiSignalStrengthChanged}
+            />
+
+            <Toggle
+                label="Airplane Mode"
+                disabled={!device || !allowed}
+                checked={airplaneMode}
+                onChange={setAirplaneMode}
             />
 
             <Dropdown
@@ -308,6 +360,72 @@ export const DemoMode = withDisplayName('DemoMode')(({
                 options={WifiSignalStrengthOptions}
                 selectedKey={mobileSignalStrength}
                 onChange={handleMobileSignalStrengthChanged}
+            />
+
+            <Separator />
+
+            <Dropdown
+                label="Status Bar Mode"
+                options={StatusBarModeOptions}
+                selectedKey={statusBarMode}
+                onChange={handleStatusBarModeChanged}
+            />
+
+            <Toggle
+                label="Vibrate Mode"
+                disabled={!device || !allowed}
+                checked={vibrateMode}
+                onChange={setVibrateMode}
+            />
+
+            <Toggle
+                label="Bluetooth Connected"
+                disabled={!device || !allowed}
+                checked={bluetoothConnected}
+                onChange={setBluetoothConnected}
+            />
+
+            <Toggle
+                label="Locating Icon"
+                disabled={!device || !allowed}
+                checked={locatingIcon}
+                onChange={setLocatingIcon}
+            />
+
+            <Toggle
+                label="Alarm Icon"
+                disabled={!device || !allowed}
+                checked={alarmIcon}
+                onChange={setAlarmIcon}
+            />
+
+            <Toggle
+                label="Notifications Visible"
+                disabled={!device || !allowed}
+                checked={notificationsVisibility}
+                onChange={setNotificationsVisibility}
+            />
+
+            <NumberPicker
+                label="Clock Hour"
+                labelPosition={Position.top}
+                disabled={!device || !allowed}
+                min={0}
+                max={23}
+                step={1}
+                value={hour}
+                onChange={setHour}
+            />
+
+            <NumberPicker
+                label="Clock Minute"
+                labelPosition={Position.top}
+                disabled={!device || !allowed}
+                min={0}
+                max={59}
+                step={1}
+                value={minute}
+                onChange={setMinute}
             />
 
         </div>

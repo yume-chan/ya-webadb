@@ -11,6 +11,7 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const [hasImage, setHasImage] = useState(false);
 
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
@@ -44,6 +45,7 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
                 const context = canvas.getContext("2d")!;
                 const image = new ImageData(new Uint8ClampedArray(framebuffer.data!), width, height);
                 context.putImageData(image, 0, 0);
+                setHasImage(true);
             } catch (e) {
                 showErrorDialog(e.message);
             }
@@ -57,8 +59,26 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
             iconProps: { iconName: 'Camera' },
             text: 'Capture',
             onClick: capture,
+        },
+        {
+            key: 'Save',
+            disabled: !hasImage,
+            iconProps: { iconName: 'Save' },
+            text: 'Save',
+            onClick: () => {
+                const canvas = canvasRef.current;
+                if (!canvas) {
+                    return;
+                }
+
+                const url = canvas.toDataURL();
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Screenshot of ${device!.name}.png`;
+                a.click();
+            },
         }
-    ], [device]);
+    ], [device, hasImage]);
 
     const commandBarFarItems = useMemo((): ICommandBarItemProps[] => [
         {
@@ -86,7 +106,7 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
             <CommandBar items={commandBarItems} farItems={commandBarFarItems} />
             <Stack horizontal grow styles={{ root: { height: 0 } }}>
                 <DeviceView width={width} height={height}>
-                    <canvas ref={canvasRef} />
+                    <canvas ref={canvasRef} style={{ display: 'block' }} />
                 </DeviceView>
 
                 <DemoMode

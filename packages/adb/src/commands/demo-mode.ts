@@ -9,20 +9,24 @@ export enum AdbDemoModeWifiSignalStrength {
     Level4 = '4',
 }
 
-export enum AdbDemoModeMobileDataType {
-    Hidden = 'null',
-    OneX = '1x',
-    ThirdGen = '3g',
-    FourthGen = '4g',
-    EDGE = 'e',
-    GPRS = 'g',
-    HSPA = 'h',
-    LTE = 'lte',
-    Roaming = 'roam',
-}
+// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkControllerImpl.java;l=1073
+export const AdbDemoModeMobileDataTypes = ['1x', '3g', '4g', '4g+', '5g', '5ge', '5g+',
+    'e', 'g', 'h', 'h+', 'lte', 'lte+', 'dis', 'not', 'null'] as const;
+
+export type AdbDemoModeMobileDataType = (typeof AdbDemoModeMobileDataTypes)[number];
+
+// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java;l=3136
+export const AdbDemoModeStatusBarModes = ['opaque', 'translucent', 'semi-transparent', 'transparent', 'warning'] as const;
+
+export type AdbDemoModeStatusBarMode = (typeof AdbDemoModeStatusBarModes)[number];
 
 export class AdbDemoMode extends AdbCommandBase {
     public static readonly AllowedSettingKey = 'sysui_demo_allowed';
+
+    // Demo Mode actually doesn't have a setting indicates its enablement
+    // However Developer Mode menu uses this key
+    // So we can only try our best to guess if it's enabled
+    public static readonly EnabledSettingKey = 'sysui_tuner_demo_on';
 
     public async getAllowed(): Promise<boolean> {
         const result = await this.adb.exec('settings', 'get', 'global', AdbDemoMode.AllowedSettingKey);
@@ -33,7 +37,22 @@ export class AdbDemoMode extends AdbCommandBase {
         if (value) {
             await this.adb.exec('settings', 'put', 'global', AdbDemoMode.AllowedSettingKey, '1');
         } else {
+            await this.setEnabled(false);
             await this.adb.exec('settings', 'delete', 'global', AdbDemoMode.AllowedSettingKey);
+        }
+    }
+
+    public async getEnabled(): Promise<boolean> {
+        const result = await this.adb.exec('settings', 'get', 'global', AdbDemoMode.EnabledSettingKey);
+        return result.trim() === '1';
+    }
+
+    public async setEnabled(value: boolean): Promise<void> {
+        if (value) {
+            await this.adb.exec('settings', 'put', 'global', AdbDemoMode.EnabledSettingKey, '1');
+        } else {
+            await this.adb.exec('settings', 'delete', 'global', AdbDemoMode.EnabledSettingKey);
+            await this.broadcast('exit');
         }
     }
 
@@ -50,10 +69,6 @@ export class AdbDemoMode extends AdbCommandBase {
         );
     }
 
-    public async exit(): Promise<void> {
-        await this.broadcast('exit');
-    }
-
     public async setBatteryLevel(level: number): Promise<void> {
         await this.broadcast('battery', { level: level.toString() });
     }
@@ -63,12 +78,10 @@ export class AdbDemoMode extends AdbCommandBase {
     }
 
     public async setPowerSaveMode(value: boolean): Promise<void> {
-        // doesn't work
         await this.broadcast('battery', { powersave: value.toString() });
     }
 
     public async setAirplaneMode(show: boolean): Promise<void> {
-        // doesn't work
         await this.broadcast('network', { airplane: show ? 'show' : 'hide' });
     }
 
@@ -77,8 +90,21 @@ export class AdbDemoMode extends AdbCommandBase {
     }
 
     public async setMobileDataType(value: AdbDemoModeMobileDataType): Promise<void> {
-        await this.broadcast('network', { mobile: 'show', sims: '1', 'nosim': 'hide', datatype: value });
-        await this.broadcast('network', { mobile: 'show', slot: '1', fully: 'true' });
+        for (let i = 0; i < 2; i += 1) {
+            await this.broadcast('network', {
+                mobile: 'show',
+                sims: '1',
+                nosim: 'hide',
+                slot: '0',
+                datatype: value,
+                fully: 'true',
+                roam: 'false',
+                level: '4',
+                inflate: 'false',
+                activity: 'in',
+                carriernetworkchange: 'hide',
+            });
+        }
     }
 
     public async setMobileSignalStrength(value: AdbDemoModeWifiSignalStrength): Promise<void> {
@@ -89,16 +115,18 @@ export class AdbDemoMode extends AdbCommandBase {
         await this.broadcast('network', { nosim: show ? 'show' : 'hide' });
     }
 
-    public async setStatusBarMode(mode: string): Promise<void> {
+    public async setStatusBarMode(mode: AdbDemoModeStatusBarMode): Promise<void> {
         await this.broadcast('bars', { mode });
     }
 
-    public async setVolumeMode(mode: 'silent' | 'vibrate' | null): Promise<void> {
-        await this.broadcast('status', { volume: mode ? mode : 'null' });
+    public async setVibrateModeEnabled(value: boolean): Promise<void> {
+        // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/phone/DemoStatusIcons.java;l=103
+        await this.broadcast('status', { volume: value ? 'vibrate' : 'hide' });
     }
 
-    public async setBluetoothState(state: 'connected' | 'disconnected' | null): Promise<void> {
-        await this.broadcast('status', { bluetooth: state ? state : 'null' });
+    public async setBluetoothConnected(value: boolean): Promise<void> {
+        // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/phone/DemoStatusIcons.java;l=114
+        await this.broadcast('status', { bluetooth: value ? 'connected' : 'hide' });
     }
 
     public async setLocatingIcon(show: boolean): Promise<void> {
@@ -122,10 +150,11 @@ export class AdbDemoMode extends AdbCommandBase {
     }
 
     public async setNotificationsVisibility(show: boolean): Promise<void> {
-        await this.broadcast('notifications', { visible: show ? 'show' : 'hide' });
+        // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java;l=3131
+        await this.broadcast('notifications', { visible: show.toString() });
     }
 
     public async setTime(hour: number, minute: number): Promise<void> {
-        await this.broadcast('click', { hhmm: `${hour.toString().padStart(2, '0')}${minute.toString().padStart(2, '0')}` });
+        await this.broadcast('clock', { hhmm: `${hour.toString().padStart(2, '0')}${minute.toString().padStart(2, '0')}` });
     }
 }

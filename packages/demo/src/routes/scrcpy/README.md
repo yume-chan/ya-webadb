@@ -15,9 +15,9 @@
 
 Scrcpy server version 1.17 (unreleased) supports specifying encoders.
 
-|                   | OMX.google.h264.encoder  | c2.android.avc.encoder | OMX.qcom.video.encoder.avc | OMX.hisi.video.encoder.avc       |
-| ----------------- | ------------------------ | ---------------------- | -------------------------- | -------------------------------- |
-| Vendor            | Google                   | UNKNOWN                | Qualcomm                   | Huawei                           |
-| Type              | Software encoder         | UNKNOWN                | Hardware encoder           | Hardware encoder                 |
-| Huawei Mate 9     | Works                    | Not exist              | Not exist                  | Ignores profile and level config |
-| Samsung Galaxy S9 | IllegalArgumentException | Not tested             | Works                      | Not exist                        |
+|                   | OMX.google.h264.encoder  | c2.android.avc.encoder   | OMX.qcom.video.encoder.avc | OMX.hisi.video.encoder.avc       |
+| ----------------- | ------------------------ | ------------------------ | -------------------------- | -------------------------------- |
+| Vendor            | Google                   | UNKNOWN                  | Qualcomm                   | Huawei                           |
+| Type              | Software encoder         | UNKNOWN                  | Hardware encoder           | Hardware encoder                 |
+| Huawei Mate 9     | Works                    | Not exist                | Not exist                  | Ignores profile and level config |
+| Samsung Galaxy S9 | IllegalArgumentException | IllegalArgumentException | Works                      | Not exist                        |

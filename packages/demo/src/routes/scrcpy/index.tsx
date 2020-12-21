@@ -1,4 +1,4 @@
-import { Dialog, ICommandBarItemProps, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
+import { Dialog, ICommandBarItemProps, IconButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
 import { AdbBufferedStream, AdbStream, EventQueue } from '@yume-chan/adb';
 import { Struct } from '@yume-chan/struct';
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
@@ -244,8 +244,8 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     '1.16', // SCRCPY_VERSION
                     ScrcpyLogLevel.Debug,
                     '0', // max_size (0: unlimited)
-                    '2000000', // bit_rate
-                    '0', // max_fps
+                    '4000000', // bit_rate
+                    '10', // max_fps
                     ScrcpyScreenOrientation.Unlocked.toString(), // lock_video_orientation (-1: unlocked)
                     'false', // tunnel_forward
                     '-', // crop
@@ -255,10 +255,14 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     'false', // show_touches
                     'true', // stay_awake
                     // TinyH264 only supports baseline profile
-                    `profile=${AndroidCodecProfileLevel.AVCProfileBaseline},level=${AndroidCodecProfileLevel.AVCLevel3}`, // codec_options
+                    `profile=${AndroidCodecProfileLevel.AVCProfileBaseline},level=${AndroidCodecProfileLevel.AVCLevel4}`, // codec_options
                     'OMX.qcom.video.encoder.avc', // encoder_name
                 );
                 server.onData(data => {
+                    const text = device.backend.decodeUtf8(data);
+                    if (text.startsWith('[server] ERROR:')) {
+                        showErrorDialog(text);
+                    }
                     console.log(device.backend.decodeUtf8(data));
                 });
                 server.onClose(() => {
@@ -384,7 +388,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     <>
                         <div>
                             <ExternalLink href="https://github.com/Genymobile/scrcpy" spaceAfter>Scrcpy</ExternalLink>
-                            developed by genymobile can display the screen with low latency (1~2 frames) and control the device, all without root access.
+                            developed by Genymobile can display the screen with low latency (1~2 frames) and control the device, all without root access.
                         </div>
                         <div>
                             I reimplemented the protocol in JavaScript, a pre-built server binary from Genymobile is used.
@@ -461,11 +465,19 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     ref={handleCanvasRef}
                     width={width}
                     height={height}
+                    style={{ display: 'block' }}
                     onPointerDown={handlePointerDown}
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
                     onKeyPress={handleKeyPress}
                 />
+                {/* {width && (
+                    <Stack horizontal style={{ width, height: 150, background: '#999' }} horizontalAlign="space-evenly" verticalAlign="center">
+                        <IconButton iconProps={{ iconName: 'Play' }} style={{ transform: 'rotate(180deg)', color: 'white' }} />
+                        <IconButton iconProps={{ iconName: 'LocationCircle' }} style={{ color: 'white' }} />
+                        <IconButton iconProps={{ iconName: 'Stop' }} style={{ color: 'white' }} />
+                    </Stack>
+                )} */}
             </DeviceView>
 
             <Dialog
