@@ -336,6 +336,7 @@ export const DemoMode = withDisplayName('DemoMode')(({
 
             <Dropdown
                 label="Wifi Signal Strength"
+                disabled={!device || !allowed}
                 options={WifiSignalStrengthOptions}
                 selectedKey={wifiSignalStrength}
                 onChange={handleWifiSignalStrengthChanged}
@@ -357,6 +358,7 @@ export const DemoMode = withDisplayName('DemoMode')(({
 
             <Dropdown
                 label="Mobile Signal Strength"
+                disabled={!device || !allowed}
                 options={WifiSignalStrengthOptions}
                 selectedKey={mobileSignalStrength}
                 onChange={handleMobileSignalStrengthChanged}
@@ -366,6 +368,7 @@ export const DemoMode = withDisplayName('DemoMode')(({
 
             <Dropdown
                 label="Status Bar Mode"
+                disabled={!device || !allowed}
                 options={StatusBarModeOptions}
                 selectedKey={statusBarMode}
                 onChange={handleStatusBarModeChanged}

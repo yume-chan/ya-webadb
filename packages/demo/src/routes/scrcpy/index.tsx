@@ -1,12 +1,13 @@
 import { Dialog, ICommandBarItemProps, ProgressIndicator, Stack } from '@fluentui/react';
+import { useBoolean } from '@uifabric/react-hooks';
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import YUVBuffer from 'yuv-buffer';
 import YUVCanvas from 'yuv-canvas';
-import { CommandBar, DeviceView, DeviceViewRef, ErrorDialogContext, ExternalLink } from '../../components';
+import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, ExternalLink } from '../../components';
 import { CommonStackTokens } from '../../styles';
 import { formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
-import { createScrcpyConnection, fetchServer, ScrcpyConnection, AndroidMotionEventAction, ScrcpyControlMessageType, AndroidCodecProfile, ScrcpyLogLevel } from './server';
+import { AndroidCodecLevel, AndroidCodecProfile, AndroidMotionEventAction, createScrcpyConnection, fetchServer, getEncoderList, ScrcpyConnection, ScrcpyControlMessageType, ScrcpyLogLevel, ScrcpyOptions } from './server';
 import { createTinyH264Decoder } from './tinyh264';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
@@ -46,7 +47,13 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     const [serverUploadedSize, setServerUploadedSize] = useState(0);
     const [debouncedServerUploadedSize, serverUploadSpeed] = useSpeed(serverUploadedSize);
 
+    const [settingsVisible, { toggle: toggleSettingsVisible }] = useBoolean(false);
+    const [encoders, setEncoders] = useState<string[]>([]);
+    const [currentEncoder, setCurrentEncoder] = useState<string>();
+
     const serverRef = useRef<ScrcpyConnection>();
+
+    const [demoModeVisible, { toggle: toggleDemoModeVisible }] = useBoolean(false);
 
     const start = useCallback(() => {
         if (!device) {
@@ -55,6 +62,9 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
         (async () => {
             try {
+                let croppedWidth!: number;
+                let croppedHeight!: number;
+
                 setDecoderReady(false);
                 const decoder = await createTinyH264Decoder();
                 decoder.pictureReady((args) => {
@@ -65,12 +75,12 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                         height: videoHeight,
                         chromaWidth: videoWidth / 2,
                         chromaHeight: videoHeight / 2,
-                        cropLeft: (videoWidth - width) / 2,
-                        cropTop: (videoHeight - height) / 2,
-                        cropWidth: width,
-                        cropHeight: height,
-                        displayWidth: width,
-                        displayHeight: height,
+                        cropLeft: (videoWidth - croppedWidth) / 2,
+                        cropTop: (videoHeight - croppedHeight) / 2,
+                        cropWidth: croppedWidth,
+                        cropHeight: croppedHeight,
+                        displayWidth: croppedWidth,
+                        displayHeight: croppedHeight,
                     });
 
                     const array = new Uint8Array(data);
@@ -103,32 +113,65 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     setServerUploadedSize
                 );
 
-                setConnecting(false);
-                setRunning(true);
-
-                const server = await createScrcpyConnection({
+                const options: ScrcpyOptions = {
                     device,
                     path: DeviceServerPath,
                     version: '1.16',
                     logLevel: ScrcpyLogLevel.Info,
                     bitRate: 4_000_000,
-                });
-                setWidth(server.width);
-                setHeight(server.height);
-                server.onError(message => {
-                    showErrorDialog(message);
-                });
+                    profile: AndroidCodecProfile.Baseline,
+                    level: AndroidCodecLevel.Level4,
+                };
+
+                const encoders = await getEncoderList(options);
+                if (encoders.length === 0) {
+                    throw new Error('No available encoder found');
+                }
+
+                setEncoders(encoders);
+                setCurrentEncoder(encoders[0]);
+
+                let encoder;
+                for (let item of encoders) {
+                    // This one is known not working
+                    if (item === 'OMX.hisi.video.encoder.avc') {
+                        continue;
+                    }
+
+                    encoder = item;
+                    break;
+                }
+
+                options.encoder = encoder;
+
+                const server = await createScrcpyConnection(options);
+
                 server.onInfo(message => {
                     console.log('INFO: ' + message);
                 });
-                server.onStopped(stop);
+                server.onError(message => {
+                    showErrorDialog(message);
+                });
+                server.onClose(stop);
+
+                server.onSizeChanged(() => {
+                    croppedWidth = server.width!;
+                    croppedHeight = server.height!;
+                    setWidth(croppedWidth);
+                    setHeight(croppedHeight);
+                });
                 server.onVideoData(({ data }) => {
                     decoder.feed(data!);
                 });
+
                 server.onClipboardChange(content => {
                     window.navigator.clipboard.writeText(content);
                 });
+
                 serverRef.current = server;
+
+                setConnecting(false);
+                setRunning(true);
             } catch (e) {
                 showErrorDialog(e.message);
             } finally {
@@ -143,7 +186,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 return;
             }
 
-            await serverRef.current.stop();
+            await serverRef.current.close();
             serverRef.current = undefined;
 
             setRunning(false);
@@ -183,6 +226,20 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     }, [device, running, start]);
 
     const commandBarFarItems = useMemo((): ICommandBarItemProps[] => [
+        // {
+        //     key: 'Settings',
+        //     iconProps: { iconName: 'Settings' },
+        //     checked: settingsVisible,
+        //     text: 'Settings',
+        //     onClick: toggleSettingsVisible,
+        // },
+        {
+            key: 'DemoMode',
+            iconProps: { iconName: 'Personalize' },
+            checked: demoModeVisible,
+            text: 'Demo Mode Settings',
+            onClick: toggleDemoModeVisible,
+        },
         {
             key: 'info',
             iconProps: { iconName: 'Info' },
@@ -190,16 +247,16 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
             tooltipHostProps: {
                 content: (
                     <>
-                        <div>
+                        <p>
                             <ExternalLink href="https://github.com/Genymobile/scrcpy" spaceAfter>Scrcpy</ExternalLink>
                             developed by Genymobile can display the screen with low latency (1~2 frames) and control the device, all without root access.
-                        </div>
-                        <div>
+                        </p>
+                        <p>
                             I reimplemented the protocol in JavaScript, a pre-built server binary from Genymobile is used.
-                        </div>
-                        <div>
+                        </p>
+                        <p>
                             It uses tinyh264 as decoder to achieve low latency. But since it's a software decoder, high CPU usage and sub-optimal compatibility are expected.
-                        </div>
+                        </p>
                     </>
                 ),
                 calloutProps: {
@@ -207,7 +264,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 }
             },
         }
-    ], []);
+    ], [settingsVisible, demoModeVisible]);
 
     const injectTouch = useCallback((
         action: AndroidMotionEventAction,
@@ -264,25 +321,52 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         <>
             <CommandBar items={commandBarItems} farItems={commandBarFarItems} />
 
-            <DeviceView ref={deviceViewRef} width={width} height={height}>
-                <canvas
-                    ref={handleCanvasRef}
-                    width={width}
-                    height={height}
-                    style={{ display: 'block' }}
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    onKeyPress={handleKeyPress}
-                />
-                {/* {width && (
+            <Stack horizontal grow styles={{ root: { height: 0 } }}>
+                <DeviceView ref={deviceViewRef} width={width} height={height}>
+                    <canvas
+                        ref={handleCanvasRef}
+                        width={width}
+                        height={height}
+                        style={{ display: 'block' }}
+                        onPointerDown={handlePointerDown}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onKeyPress={handleKeyPress}
+                    />
+                    {/* {width && (
                     <Stack horizontal style={{ width, height: 150, background: '#999' }} horizontalAlign="space-evenly" verticalAlign="center">
                         <IconButton iconProps={{ iconName: 'Play' }} style={{ transform: 'rotate(180deg)', color: 'white' }} />
                         <IconButton iconProps={{ iconName: 'LocationCircle' }} style={{ color: 'white' }} />
                         <IconButton iconProps={{ iconName: 'Stop' }} style={{ color: 'white' }} />
                     </Stack>
                 )} */}
-            </DeviceView>
+                </DeviceView>
+
+                {/* <div style={{ padding: 12, overflow: 'hidden auto', display: settingsVisible ? 'block' : 'none' }}>
+                    <PrimaryButton text="Apply and Restart" />
+
+                    <Dropdown
+                        label="Encoder"
+                        options={encoders.map(item => ({ key: item, text: item }))}
+                        selectedKey={currentEncoder}
+                    />
+
+                    <NumberPicker
+                        label="Target Bit Rate"
+                        labelPosition={Position.top}
+                        value={2_000_000}
+                        min={100}
+                        max={10_000_000}
+                        step={100}
+                        onChange={() => { }}
+                    />
+                </div> */}
+
+                <DemoMode
+                    device={device}
+                    style={{ display: demoModeVisible ? 'block' : 'none' }}
+                />
+            </Stack>
 
             <Dialog
                 hidden={!connecting}

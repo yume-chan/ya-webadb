@@ -1,5 +1,5 @@
-import { EventQueue, AdbStream, AdbBufferedStream, Adb } from '@yume-chan/adb';
-import { EventEmitter } from '@yume-chan/event';
+import { Adb, AdbBufferedStream, AdbStream, EventQueue } from '@yume-chan/adb';
+import { DisposableList, EventEmitter } from '@yume-chan/event';
 import { Struct, StructValueType } from '@yume-chan/struct';
 import { ScrcpyInjectTouchControlMessage } from './message';
 
@@ -8,6 +8,39 @@ export enum ScrcpyLogLevel {
     Info = 'info',
     Warn = 'warn',
     Error = 'error',
+}
+
+function* parseScrcpyOutput(message: string): Generator<{ level: ScrcpyLogLevel, message: string; }> {
+    for (let line of message.split('\n')) {
+        if (line === '') {
+            continue;
+        }
+
+        if (line.startsWith('[server] ')) {
+            line = line.substring('[server] '.length);
+
+            if (line.startsWith('ERROR:')) {
+                yield {
+                    level: ScrcpyLogLevel.Error,
+                    message: line.substring('ERROR: '.length),
+                };
+                continue;
+            }
+
+            if (line.startsWith('INFO:')) {
+                yield {
+                    level: ScrcpyLogLevel.Info,
+                    message: line.substring('INFO: '.length),
+                };
+                continue;
+            }
+        }
+
+        yield {
+            level: ScrcpyLogLevel.Info,
+            message: line,
+        };
+    }
 }
 
 export enum ScrcpyScreenOrientation {
@@ -54,28 +87,6 @@ export enum AndroidCodecLevel {
     Level62 = 0x80000,
 }
 
-export interface ScrcpyOptions {
-    device: Adb;
-
-    path: string;
-
-    version: string;
-
-    logLevel?: ScrcpyLogLevel;
-
-    bitRate: number;
-
-    maxFps?: number;
-
-    orientation?: ScrcpyScreenOrientation;
-
-    profile?: AndroidCodecProfile;
-
-    level?: AndroidCodecLevel;
-
-    encoder?: string;
-}
-
 const Size =
     new Struct()
         .uint16('width')
@@ -105,17 +116,20 @@ export class ScrcpyConnection {
     private readonly errorEvent = new EventEmitter<string>();
     public get onError() { return this.errorEvent.event; }
 
-    private readonly stoppedEvent = new EventEmitter<void>();
-    public get onStopped() { return this.stoppedEvent.event; }
+    private readonly closeEvent = new EventEmitter<void>();
+    public get onClose() { return this.closeEvent.event; }
 
     private _running = true;
     public get running() { return this._running; }
 
-    private _width: number;
+    private _width: number | undefined;
     public get width() { return this._width; }
 
-    private _height: number;
+    private _height: number | undefined;
     public get height() { return this._height; }
+
+    private readonly sizeChangedEvent = new EventEmitter<void>();
+    public get onSizeChanged() { return this.sizeChangedEvent.event; }
 
     private readonly videoDataEvent = new EventEmitter<VideoPacket>();
     public get onVideoData() { return this.videoDataEvent.event; }
@@ -129,22 +143,17 @@ export class ScrcpyConnection {
 
     public constructor(
         process: AdbStream,
-        pendingMessages: string[],
-        width: number,
-        height: number,
         videoStream: AdbBufferedStream,
         controlStream: AdbBufferedStream
     ) {
-        this.process = process;
-        this.process.onData(this.handleProcessOutput, this);
-        this.process.onClose(this.handleProcessStopped, this);
-
-        for (const message of pendingMessages) {
-            this.processLogMessage(message);
+        if (process.closed) {
+            throw new Error('Server has exited');
         }
 
-        this._width = width;
-        this._height = height;
+        this.process = process;
+        this.process.onData(this.handleProcessOutput, this);
+        this.process.onClose(this.handleProcessClosed, this);
+
         this.videoStream = videoStream;
         this.controlStream = controlStream;
 
@@ -153,52 +162,69 @@ export class ScrcpyConnection {
     }
 
     private handleProcessOutput(data: ArrayBuffer) {
-        const message = this.process.backend.decodeUtf8(data);
-        this.processLogMessage(message);
-    }
-
-    private handleProcessStopped() {
-        this._running = false;
-        this.stoppedEvent.fire();
-    }
-
-    private processLogMessage(message: string) {
-        if (message.startsWith('[server] ')) {
-            message = message.substring('[server] '.length + 1);
-
-            if (message.startsWith('ERROR:')) {
-                this.errorEvent.fire(message.substring('ERROR: '.length + 1));
-            } else if (message.startsWith('INFO:')) {
-                this.infoEvent.fire(message.substring('INFO: '.length + 1));
+        const string = this.process.backend.decodeUtf8(data);
+        for (const { level, message } of parseScrcpyOutput(string)) {
+            switch (level) {
+                case ScrcpyLogLevel.Info:
+                    this.infoEvent.fire(message);
+                    break;
+                case ScrcpyLogLevel.Error:
+                    this.errorEvent.fire(message);
+                    break;
             }
         }
     }
 
+    private handleProcessClosed() {
+        this._running = false;
+        this.closeEvent.fire();
+    }
+
     private async receiveVideo() {
-        let buffer: ArrayBuffer | undefined;
+        try {
+            // Device name, we don't need it
+            await this.videoStream.read(64);
 
-        while (this._running) {
-            const { pts, data } = await VideoPacket.deserialize(this.videoStream);
-            if (data!.byteLength === 0) {
-                continue;
+            // Initial video size
+            const { width, height } = await Size.deserialize(this.videoStream);
+            this._width = width;
+            this._height = height;
+            this.sizeChangedEvent.fire();
+
+            let buffer: ArrayBuffer | undefined;
+            while (this._running) {
+                const { pts, data } = await VideoPacket.deserialize(this.videoStream);
+                if (data!.byteLength === 0) {
+                    continue;
+                }
+
+                if (pts === NoPts) {
+                    buffer = data;
+                    continue;
+                }
+
+                let array: Uint8Array;
+                if (buffer) {
+                    array = new Uint8Array(buffer.byteLength + data!.byteLength);
+                    array.set(new Uint8Array(buffer));
+                    array.set(new Uint8Array(data!), buffer.byteLength);
+                    buffer = undefined;
+                } else {
+                    array = new Uint8Array(data!);
+                }
+
+                this.videoDataEvent.fire({
+                    pts,
+                    size: array.byteLength,
+                    data: array.buffer,
+                });
+            }
+        } catch (e) {
+            if (!this._running) {
+                return;
             }
 
-            if (pts === NoPts) {
-                buffer = data;
-                continue;
-            }
-
-            let array: Uint8Array;
-            if (buffer) {
-                array = new Uint8Array(buffer.byteLength + data!.byteLength);
-                array.set(new Uint8Array(buffer));
-                array.set(new Uint8Array(data!), buffer.byteLength);
-                buffer = undefined;
-            } else {
-                array = new Uint8Array(data!);
-            }
-
-            this.videoDataEvent.fire({ pts, size: array.byteLength, data: array });
+            this.close();
         }
     }
 
@@ -216,7 +242,11 @@ export class ScrcpyConnection {
                 }
             }
         } catch (e) {
-            return;
+            if (!this._running) {
+                return;
+            }
+
+            this.close();
         }
     }
 
@@ -225,14 +255,42 @@ export class ScrcpyConnection {
         await this.controlStream.write(buffer);
     }
 
-    public async stop() {
+    public async close() {
         if (!this._running) {
             return;
         }
 
-        await this.process.close();
         this._running = false;
+        await this.process.close();
     }
+}
+
+export interface ScrcpyOptions {
+    device: Adb;
+
+    path: string;
+
+    version: string;
+
+    logLevel?: ScrcpyLogLevel;
+
+    bitRate: number;
+
+    maxFps?: number;
+
+    orientation?: ScrcpyScreenOrientation;
+
+    profile?: AndroidCodecProfile;
+
+    level?: AndroidCodecLevel;
+
+    encoder?: string;
+
+    onInfo?: (message: string) => void;
+
+    onError?: (message: string) => void;
+
+    onClose?: () => void;
 }
 
 export async function createScrcpyConnection(options: ScrcpyOptions) {
@@ -247,12 +305,15 @@ export async function createScrcpyConnection(options: ScrcpyOptions) {
         profile = AndroidCodecProfile.Baseline,
         level = AndroidCodecLevel.Level4,
         encoder = '-',
+        onInfo,
+        onError,
+        onClose,
     } = options;
 
-    const queue = new EventQueue<AdbStream>();
+    const streams = new EventQueue<AdbStream>();
     const reverseRegistry = await device.reverse.add('localabstract:scrcpy', 27183, {
         onStream(packet, stream) {
-            queue.push(stream);
+            streams.push(stream);
         },
     });
 
@@ -278,33 +339,53 @@ export async function createScrcpyConnection(options: ScrcpyOptions) {
         encoder,
     );
 
-    const pendingMessages: string[] = [];
-    const dispose = process.onData(data => {
-        const message = device.backend.decodeUtf8(data);
-        pendingMessages.push(message);
-    });
+    const disposables = new DisposableList();
+    // Dispatch messages before connection created
+    disposables.add(process.onData(data => {
+        const string = device.backend.decodeUtf8(data);
+        for (const { level, message } of parseScrcpyOutput(string)) {
+            switch (level) {
+                case ScrcpyLogLevel.Info:
+                    onInfo?.(message);
+                    break;
+                case ScrcpyLogLevel.Error:
+                    onError?.(message);
+                    break;
+            }
+        }
+    }));
 
-    const videoStream = new AdbBufferedStream(await queue.next());
-    const controlStream = new AdbBufferedStream(await queue.next());
+    if (onClose) {
+        disposables.add(process.onClose(onClose));
+    }
+
+    const videoStream = new AdbBufferedStream(await streams.next());
+    const controlStream = new AdbBufferedStream(await streams.next());
 
     // Don't await this!
     // `reverse.remove`'s response will never arrive
     // before we read all pending data from `videoStream`
     device.reverse.remove(reverseRegistry);
 
-    // Device name, we don't need it
-    await videoStream.read(64);
-    // Initial video size
-    const { width, height } = await Size.deserialize(videoStream);
+    // Stop dispatch messages
+    disposables.dispose();
 
-    dispose();
-
-    return new ScrcpyConnection(
+    const connection = new ScrcpyConnection(
         process,
-        pendingMessages,
-        width,
-        height,
         videoStream,
-        controlStream
+        controlStream,
     );
+
+    // Forward message handlers
+    if (onInfo) {
+        connection.onInfo(onInfo);
+    }
+    if (onError) {
+        connection.onError(onError);
+    }
+    if (onClose) {
+        connection.onClose(onClose);
+    }
+
+    return connection;
 }
