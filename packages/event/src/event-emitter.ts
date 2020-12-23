@@ -38,7 +38,7 @@ export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
 
         const remove: RemoveEventListener = () => {
             const index = this.listeners.indexOf(info);
-            if (index > 0) {
+            if (index !== -1) {
                 this.listeners.splice(index, 1);
             }
         };

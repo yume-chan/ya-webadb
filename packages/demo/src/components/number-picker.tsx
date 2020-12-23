@@ -56,11 +56,11 @@ export const NumberPicker = withDisplayName('NumberPicker')(({
     const handleDecrease = useCallback((value: string) => {
         let number = Number.parseInt(value.replace(/[^0-9]/g, ''), 10);
         number -= step;
-        if (number < 0) {
-            number = 0;
+        if (number < min) {
+            number = min;
         }
-        else if (number > 100) {
-            number = 100;
+        else if (number > max) {
+            number = max;
         }
         onChange(number);
         return number.toString();

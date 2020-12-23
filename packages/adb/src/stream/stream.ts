@@ -9,6 +9,8 @@ export class AdbStream implements AdbStreamBase {
 
     public get remoteId() { return this.controller.remoteId; }
 
+    public get closed() { return this.controller.closed; }
+
     public get onData() { return this.controller.dataEvent.event; }
 
     public get onClose() { return this.controller.onClose; }

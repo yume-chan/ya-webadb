@@ -16,7 +16,7 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
 
-    const [settingsVisible, { toggle: toggleSettingsVisible }] = useBoolean(false);
+    const [demoModeVisible, { toggle: toggleDemoModeVisible }] = useBoolean(false);
 
     const capture = useCallback(() => {
         if (!device) {
@@ -82,11 +82,11 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
 
     const commandBarFarItems = useMemo((): ICommandBarItemProps[] => [
         {
-            key: 'Settings',
-            iconProps: { iconName: 'Settings' },
-            checked: settingsVisible,
-            text: 'Toggle Settings',
-            onClick: toggleSettingsVisible,
+            key: 'DemoMode',
+            iconProps: { iconName: 'Personalize' },
+            checked: demoModeVisible,
+            text: 'Demo Mode Settings',
+            onClick: toggleDemoModeVisible,
         },
         {
             key: 'info',
@@ -99,7 +99,7 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
                 }
             },
         }
-    ], [settingsVisible]);
+    ], [demoModeVisible]);
 
     return (
         <>
@@ -111,7 +111,7 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
 
                 <DemoMode
                     device={device}
-                    style={{ display: settingsVisible ? 'block' : 'none' }}
+                    style={{ display: demoModeVisible ? 'block' : 'none' }}
                 />
             </Stack>
         </>

@@ -1,10 +1,10 @@
 import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
-import TinyH264Worker from 'worker-loader!./tiny-h264';
+import TinyH264Worker from 'worker-loader!./worker';
 
 let worker: TinyH264Worker | undefined;
 let workerReady = false;
-const pendingResolvers: PromiseResolver<H264Decoder>[] = [];
+const pendingResolvers: PromiseResolver<TinyH264Decoder>[] = [];
 let streamId = 0;
 
 export interface PictureReadyEventArgs {
@@ -19,7 +19,7 @@ export interface PictureReadyEventArgs {
 
 const pictureReadyEvent = new EventEmitter<PictureReadyEventArgs>();
 
-export class H264Decoder extends AutoDisposable {
+export class TinyH264Decoder extends AutoDisposable {
     public readonly streamId: number;
 
     private readonly pictureReadyEvent = new EventEmitter<PictureReadyEventArgs>();
@@ -57,7 +57,7 @@ export class H264Decoder extends AutoDisposable {
     }
 }
 
-export function createDecoder(): Promise<H264Decoder> {
+export function createTinyH264Decoder(): Promise<TinyH264Decoder> {
     if (!worker) {
         worker = new TinyH264Worker();
         worker.addEventListener('message', (e) => {
@@ -66,7 +66,7 @@ export function createDecoder(): Promise<H264Decoder> {
                 case 'decoderReady':
                     workerReady = true;
                     for (const resolver of pendingResolvers) {
-                        resolver.resolve(new H264Decoder(streamId));
+                        resolver.resolve(new TinyH264Decoder(streamId));
                         streamId += 1;
                     }
                     pendingResolvers.length = 0;
@@ -79,12 +79,12 @@ export function createDecoder(): Promise<H264Decoder> {
     }
 
     if (!workerReady) {
-        const resolver = new PromiseResolver<H264Decoder>();
+        const resolver = new PromiseResolver<TinyH264Decoder>();
         pendingResolvers.push(resolver);
         return resolver.promise;
     }
 
-    const decoder = new H264Decoder(streamId);
+    const decoder = new TinyH264Decoder(streamId);
     streamId += 1;
     return Promise.resolve(decoder);
 }
