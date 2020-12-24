@@ -1,12 +1,16 @@
 import { StackItem } from '@fluentui/react';
-import React, { ReactNode, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { ResizeObserver } from '../utils/resize-observer';
+import React, { ReactNode, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { ResizeObserver, Size } from '../utils/resize-observer';
 import { forwardRef } from '../utils/with-display-name';
 
 export interface DeviceViewProps {
     width: number;
 
     height: number;
+
+    bottomElement?: ReactNode;
+
+    bottomHeight?: number;
 
     children: ReactNode;
 }
@@ -18,31 +22,59 @@ export interface DeviceViewRef {
 export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
     width,
     height,
+    bottomElement,
+    bottomHeight,
     children,
 }: DeviceViewProps, ref) => {
-    const [containerWidth, setContainerWidth] = useState(0);
-    const [containerHeight, setContainerHeight] = useState(0);
-    const [scale, setScale] = useState(1);
+    const [containerSize, setContainerSize] = useState<Size>({ width: 0, height: 0 });
 
-    const handleResize = useCallback((containerWidth: number, containerHeight: number) => {
-        setContainerWidth(containerWidth);
-        setContainerHeight(containerHeight);
-    }, []);
+    // Container size minus bottom element size
+    const usableSize = useMemo(() => ({
+        width: containerSize.width,
+        height: containerSize.height - (bottomHeight ?? 0),
+    }), [containerSize, bottomHeight]);
 
-    useEffect(() => {
-        if (width === 0 || containerWidth === 0) {
-            setScale(1);
-            return;
-        }
+    // Compute sizes after scaling
+    const childrenStyle = useMemo(() => {
+        let scale: number;
+        let childrenWidth: number;
+        let childrenHeight: number;
+        let childrenTop: number;
+        let childrenLeft: number;
 
-        const videoRatio = width / height;
-        const containerRatio = containerWidth / containerHeight;
-        if (videoRatio > containerRatio) {
-            setScale(containerWidth / width);
+        if (width === 0 || usableSize.width === 0) {
+            scale = 1;
+            childrenWidth = 0;
+            childrenHeight = 0;
+            childrenTop = 0;
+            childrenLeft = 0;
         } else {
-            setScale(containerHeight / height);
+            const videoRatio = width / height;
+            const containerRatio = usableSize.width / usableSize.height;
+
+            if (videoRatio > containerRatio) {
+                scale = usableSize.width / width;
+                childrenWidth = usableSize.width;
+                childrenHeight = height * scale;
+                childrenTop = (usableSize.height - childrenHeight) / 2;
+                childrenLeft = 0;
+            } else {
+                scale = usableSize.height / height;
+                childrenWidth = width * scale;
+                childrenHeight = usableSize.height;
+                childrenTop = 0;
+                childrenLeft = (usableSize.width - childrenWidth) / 2;
+            }
         }
-    }, [width, height, containerWidth, containerHeight]);
+
+        return {
+            scale,
+            width: childrenWidth,
+            height: childrenHeight,
+            top: childrenTop,
+            left: childrenLeft,
+        };
+    }, [width, height, usableSize]);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     useImperativeHandle(ref, () => ({
@@ -59,19 +91,33 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
                     height: '100%',
                     backgroundColor: 'black',
                 }}
-                onResize={handleResize}
+                onResize={setContainerSize}
             >
                 <div
                     style={{
                         position: 'absolute',
-                        left: '50%',
-                        top: '50%',
-                        transform: `scale(${scale}) translate(-50%, -50%)`,
+                        top: childrenStyle.top,
+                        left: childrenStyle.left,
+                        width,
+                        height,
+                        transform: `scale(${childrenStyle.scale})`,
                         transformOrigin: 'top left',
                     }}
                 >
                     {children}
                 </div>
+
+                {(!!width && !!bottomElement) && (
+                    <div style={{
+                        position: 'absolute',
+                        top: childrenStyle.top + childrenStyle.height,
+                        left: childrenStyle.left,
+                        width: childrenStyle.width,
+                        height: bottomHeight,
+                    }}>
+                        {bottomElement}
+                    </div>
+                )}
             </ResizeObserver>
         </StackItem>
     );

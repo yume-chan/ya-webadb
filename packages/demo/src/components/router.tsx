@@ -11,7 +11,7 @@ export const DefaultStackProps: IStackProps = {
 export const RouteStackProps: IStackProps = {
     ...DefaultStackProps,
     className: AnimationClassNames.slideUpIn10,
-    styles: { root: { overflow: 'auto' } },
+    styles: { root: { overflow: 'auto', position: 'relative' } },
 };
 
 export interface CacheRouteProps extends RouteProps {

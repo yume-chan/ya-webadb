@@ -14,6 +14,8 @@ export interface AdbStreamBase {
 }
 
 export class AdbStreamController extends AutoDisposable implements AdbStreamBase {
+    private readonly writeChunkLock = this.addDisposable(new AutoResetEvent());
+
     private readonly writeLock = this.addDisposable(new AutoResetEvent());
 
     public readonly dispatcher: AdbPacketDispatcher;
@@ -47,18 +49,22 @@ export class AdbStreamController extends AutoDisposable implements AdbStreamBase
             throw new Error('Can not write after closed');
         }
 
-        await this.writeLock.wait();
+        // Wait for an ack packet
+        await this.writeChunkLock.wait();
         await this.dispatcher.sendPacket(AdbCommand.Write, this.localId, this.remoteId, data);
     }
 
     public async write(data: ArrayBuffer): Promise<void> {
+        // Keep write operations in order
+        await this.writeLock.wait();
         for await (const chunk of chunkArrayLike(data, this.dispatcher.maxPayloadSize)) {
             await this.writeChunk(chunk);
         }
+        this.writeLock.notify();
     }
 
     public ack() {
-        this.writeLock.notify();
+        this.writeChunkLock.notify();
     }
 
     public async close(): Promise<void> {

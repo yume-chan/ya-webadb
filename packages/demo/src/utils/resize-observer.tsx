@@ -2,8 +2,25 @@ import { createMergedRef } from '@fluentui/react';
 import React, { CSSProperties, HTMLAttributes, PropsWithChildren, useCallback, useRef } from 'react';
 import { forwardRef } from './with-display-name';
 
+export interface Size {
+    width: number;
+
+    height: number;
+}
+
 export interface ResizeObserverProps extends HTMLAttributes<HTMLDivElement>, PropsWithChildren<{}> {
-    onResize: (width: number, height: number) => void;
+    onResize: (size: Size) => void;
+}
+
+export function useCallbackRef<TArgs extends any[], R>(callback: (...args: TArgs) => R): (...args: TArgs) => R {
+    const ref = useRef<(...args: TArgs) => R>(callback);
+    ref.current = callback;
+
+    const wrapper = useCallback((...args: TArgs) => {
+        return ref.current.apply(undefined, args);
+    }, []);
+
+    return wrapper;
 }
 
 const iframeStyle: CSSProperties = {
@@ -21,16 +38,13 @@ export const ResizeObserver = forwardRef<HTMLDivElement>('ResizeObserver')(({
     children,
     ...rest
 }: ResizeObserverProps, ref): JSX.Element | null => {
-    const onResizeRef = useRef<(width: number, height: number) => void>(onResize);
-    onResizeRef.current = onResize;
-
     const containerRef = useRef<HTMLDivElement | null>(null);
     const mergedRef = createMergedRef<HTMLDivElement | null>()(ref, containerRef);
 
-    const handleResize = useCallback(() => {
+    const handleResize = useCallbackRef(() => {
         const { width, height } = containerRef.current!.getBoundingClientRect();
-        onResizeRef.current(width, height);
-    }, []);
+        onResize({ width, height });
+    });
 
     const handleIframeRef = useCallback((element: HTMLIFrameElement | null) => {
         if (element) {

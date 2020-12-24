@@ -1,5 +1,5 @@
-import { Dialog, ICommandBarItemProps, ProgressIndicator, Stack } from '@fluentui/react';
-import { useBoolean } from '@uifabric/react-hooks';
+import { Dialog, ICommandBarItemProps, IconButton, LayerHost, ProgressIndicator, Stack } from '@fluentui/react';
+import { useBoolean, useId } from '@uifabric/react-hooks';
 import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import YUVBuffer from 'yuv-buffer';
 import YUVCanvas from 'yuv-canvas';
@@ -7,7 +7,7 @@ import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, Ex
 import { CommonStackTokens } from '../../styles';
 import { formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
-import { AndroidCodecLevel, AndroidCodecProfile, AndroidMotionEventAction, createScrcpyConnection, fetchServer, getEncoderList, ScrcpyConnection, ScrcpyControlMessageType, ScrcpyLogLevel, ScrcpyOptions } from './server';
+import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyEventAction, AndroidKeyEventKeyCode, AndroidMotionEventAction, createScrcpyConnection, fetchServer, getEncoderList, ScrcpyConnection, ScrcpyControlMessageType, ScrcpyLogLevel, ScrcpyOptions, ScrcpyScreenOrientation } from './server';
 import { createTinyH264Decoder } from './tinyh264';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
@@ -118,7 +118,12 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     path: DeviceServerPath,
                     version: '1.16',
                     logLevel: ScrcpyLogLevel.Info,
+                    // TinyH264 is slow, so limit the max resolution and bit rate
+                    maxSize: 1080,
                     bitRate: 4_000_000,
+                    // TinyH264 can't handle resolution change, so keep the screen in portrait
+                    orientation: ScrcpyScreenOrientation.Portrait,
+                    // TinyH264 only supports Baseline profile
                     profile: AndroidCodecProfile.Baseline,
                     level: AndroidCodecLevel.Level4,
                 };
@@ -282,13 +287,13 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         serverRef.current?.injectTouch({
             type: ScrcpyControlMessageType.InjectTouch,
             action,
-            buttons: 0,
             pointerId: BigInt(e.pointerId),
             pointerX: pointerScreenX,
             pointerY: pointerScreenY,
-            pressure: e.pressure * 65535,
             screenWidth: width,
             screenHeight: height,
+            pressure: e.pressure * 65535,
+            buttons: 0,
         });
     }, [width, height]);
 
@@ -317,12 +322,66 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
     }, []);
 
+    const handleBackClick = useCallback(() => {
+        serverRef.current!.pressBackOrTurnOnScreen();
+    }, []);
+
+    const handleHomeClick = useCallback(() => {
+        serverRef.current!.injectKeyCode({
+            type: ScrcpyControlMessageType.InjectKeycode,
+            action: AndroidKeyEventAction.Down | AndroidKeyEventAction.Up,
+            keyCode: AndroidKeyEventKeyCode.Home,
+            repeat: 0,
+            metaState: 0,
+        });
+    }, []);
+
+    const handleAppSwitchClick = useCallback(() => {
+        serverRef.current!.injectKeyCode({
+            type: ScrcpyControlMessageType.InjectKeycode,
+            action: AndroidKeyEventAction.Down | AndroidKeyEventAction.Up,
+            keyCode: AndroidKeyEventKeyCode.AppSwitch,
+            repeat: 0,
+            metaState: 0,
+        });
+    }, []);
+
+    const bottomElement = (
+        <Stack verticalFill horizontalAlign="center" style={{ background: '#999' }}>
+            <Stack verticalFill horizontal style={{ width: '100%', maxWidth: 300 }} horizontalAlign="space-evenly" verticalAlign="center">
+                <IconButton
+                    iconProps={{ iconName: 'Play' }}
+                    style={{ transform: 'rotate(180deg)', color: 'white' }}
+                    onClick={handleBackClick}
+                />
+                <IconButton
+                    iconProps={{ iconName: 'LocationCircle' }}
+                    style={{ color: 'white' }}
+                    onClick={handleHomeClick}
+                />
+                <IconButton
+                    iconProps={{ iconName: 'Stop' }}
+                    style={{ color: 'white' }}
+                    onClick={handleAppSwitchClick}
+                />
+            </Stack>
+        </Stack>
+    );
+
+    const layerHostId = useId('layerHost');
+
     return (
         <>
             <CommandBar items={commandBarItems} farItems={commandBarFarItems} />
 
             <Stack horizontal grow styles={{ root: { height: 0 } }}>
-                <DeviceView ref={deviceViewRef} width={width} height={height}>
+                <DeviceView
+                    ref={deviceViewRef}
+                    width={width}
+                    height={height}
+                    bottomElement={bottomElement}
+                    bottomHeight={50}
+                >
                     <canvas
                         ref={handleCanvasRef}
                         width={width}
@@ -333,13 +392,6 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                         onPointerUp={handlePointerUp}
                         onKeyPress={handleKeyPress}
                     />
-                    {/* {width && (
-                    <Stack horizontal style={{ width, height: 150, background: '#999' }} horizontalAlign="space-evenly" verticalAlign="center">
-                        <IconButton iconProps={{ iconName: 'Play' }} style={{ transform: 'rotate(180deg)', color: 'white' }} />
-                        <IconButton iconProps={{ iconName: 'LocationCircle' }} style={{ color: 'white' }} />
-                        <IconButton iconProps={{ iconName: 'Stop' }} style={{ color: 'white' }} />
-                    </Stack>
-                )} */}
                 </DeviceView>
 
                 {/* <div style={{ padding: 12, overflow: 'hidden auto', display: settingsVisible ? 'block' : 'none' }}>
@@ -368,8 +420,11 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 />
             </Stack>
 
+            {connecting && <LayerHost id={layerHostId} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }} />}
+
             <Dialog
                 hidden={!connecting}
+                modalProps={{ layerProps: { hostId: layerHostId } }}
                 dialogContentProps={{
                     title: 'Connecting...'
                 }}

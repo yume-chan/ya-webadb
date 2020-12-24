@@ -50,6 +50,29 @@ export const ScrcpyInjectTouchControlMessage =
 
 export type ScrcpyInjectTouchControlMessage = StructInitType<typeof ScrcpyInjectTouchControlMessage>;
 
+export enum AndroidKeyEventAction {
+    Down = 1,
+    Up = 1 << 1,
+}
+
+export enum AndroidKeyEventKeyCode {
+    Home = 3,
+    Back = 4,
+    AppSwitch = 187,
+}
+
+export const ScrcpyInjectKeyCodeControlMessage =
+    new Struct()
+        .uint8('type', undefined, ScrcpyControlMessageType.InjectKeycode as const)
+        .uint8('action', undefined, placeholder<AndroidKeyEventAction>())
+        .uint32('keyCode')
+        .uint32('repeat')
+        .uint32('metaState');
+
+export type ScrcpyInjectKeyCodeControlMessage =
+    StructInitType<typeof ScrcpyInjectKeyCodeControlMessage>;
+
 export type ScrcpyControlMessage =
     ScrcpySimpleControlMessage |
-    ScrcpyInjectTouchControlMessage;
+    ScrcpyInjectTouchControlMessage |
+    ScrcpyInjectKeyCodeControlMessage;

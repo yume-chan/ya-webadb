@@ -1,7 +1,7 @@
 import { Adb, AdbBufferedStream, AdbStream, EventQueue } from '@yume-chan/adb';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
 import { Struct, StructValueType } from '@yume-chan/struct';
-import { ScrcpyInjectTouchControlMessage } from './message';
+import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
 
 export enum ScrcpyLogLevel {
     Debug = 'debug',
@@ -141,6 +141,8 @@ export class ScrcpyConnection {
     private readonly clipboardChangeEvent = new EventEmitter<string>();
     public get onClipboardChange() { return this.clipboardChangeEvent.event; }
 
+    private sendingTouchMessage = false;
+
     public constructor(
         process: AdbStream,
         videoStream: AdbBufferedStream,
@@ -250,8 +252,39 @@ export class ScrcpyConnection {
         }
     }
 
+    public async injectKeyCode(message: ScrcpyInjectKeyCodeControlMessage) {
+        const action = message.action;
+        if (action & AndroidKeyEventAction.Down) {
+            message.action = AndroidKeyEventAction.Down;
+            const buffer = ScrcpyInjectKeyCodeControlMessage.serialize(message, this.process.backend);
+            await this.controlStream.write(buffer);
+        }
+        if (action & AndroidKeyEventAction.Up) {
+            message.action = AndroidKeyEventAction.Up;
+            const buffer = ScrcpyInjectKeyCodeControlMessage.serialize(message, this.process.backend);
+            await this.controlStream.write(buffer);
+        }
+    }
+
     public async injectTouch(message: ScrcpyInjectTouchControlMessage) {
+        // ADB streams are actually pretty low-bandwidth and laggy
+        // Re-sample move events to avoid flooding the connection
+        if (this.sendingTouchMessage &&
+            message.action === AndroidMotionEventAction.Move) {
+            return;
+        }
+
+        this.sendingTouchMessage = true;
         const buffer = ScrcpyInjectTouchControlMessage.serialize(message, this.process.backend);
+        await this.controlStream.write(buffer);
+        this.sendingTouchMessage = false;
+    }
+
+    public async pressBackOrTurnOnScreen() {
+        const buffer = ScrcpySimpleControlMessage.serialize(
+            { type: ScrcpyControlMessageType.BackOrScreenOn },
+            this.process.backend
+        );
         await this.controlStream.write(buffer);
     }
 
@@ -273,6 +306,8 @@ export interface ScrcpyOptions {
     version: string;
 
     logLevel?: ScrcpyLogLevel;
+
+    maxSize?: number;
 
     bitRate: number;
 
@@ -299,6 +334,7 @@ export async function createScrcpyConnection(options: ScrcpyOptions) {
         path,
         version,
         logLevel = ScrcpyLogLevel.Error,
+        maxSize = 0,
         bitRate,
         maxFps = 0,
         orientation = ScrcpyScreenOrientation.Unlocked,
@@ -324,7 +360,7 @@ export async function createScrcpyConnection(options: ScrcpyOptions) {
         'com.genymobile.scrcpy.Server',
         version,
         logLevel,
-        /*        max_size */ '0', // (0: unlimited)
+        maxSize.toString(), // (0: unlimited)
         bitRate.toString(),
         maxFps.toString(),
         orientation.toString(),
