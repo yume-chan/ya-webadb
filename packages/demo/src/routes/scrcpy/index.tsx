@@ -420,7 +420,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 />
             </Stack>
 
-            {connecting && <LayerHost id={layerHostId} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }} />}
+            {connecting && <LayerHost id={layerHostId} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, margin: 0 }} />}
 
             <Dialog
                 hidden={!connecting}

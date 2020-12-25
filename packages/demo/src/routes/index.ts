@@ -1,3 +1,4 @@
+export * from './device-info';
 export * from './file-manager';
 export * from './framebuffer';
 export * from './install';

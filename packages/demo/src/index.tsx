@@ -7,7 +7,7 @@ import { HashRouter, Redirect, useLocation } from 'react-router-dom';
 import { CacheRoute, CacheSwitch, Connect, ErrorDialogProvider } from './components';
 import './index.css';
 import { AdbEventLogger, Logger, LoggerContextProvider, ToggleLogger } from './components/logger';
-import { FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
+import { DeviceInfo, FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
 
 initializeIcons();
 
@@ -68,23 +68,7 @@ function App(): JSX.Element | null {
             path: '/device-info',
             name: 'Device Info',
             children: (
-                <>
-                    <StackItem>
-                        Protocol Version: {device?.protocolVersion?.toString(16)}
-                    </StackItem>
-                    <StackItem>
-                        Product: {device?.product}
-                    </StackItem>
-                    <StackItem>
-                        Model: {device?.model}
-                    </StackItem>
-                    <StackItem>
-                        Device: {device?.device}
-                    </StackItem>
-                    <StackItem>
-                        Features: {device?.features?.join(',')}
-                    </StackItem>
-                </>
+                <DeviceInfo device={device} />
             )
         },
         {

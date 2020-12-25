@@ -483,8 +483,8 @@ export const FileManager = withDisplayName('FileManager')(({
 
             <StackItem grow styles={{
                 root: {
-                    margin: '-8px -20px -20px -20px',
-                    padding: '8px 20px 20px 20px',
+                    margin: '-8px -16px -16px -16px',
+                    padding: '8px 16px 16px 16px',
                     minHeight: 0,
                 }
             }}>
