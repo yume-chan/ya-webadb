@@ -1,4 +1,4 @@
-import { IconButton, List, mergeStyles, mergeStyleSets, Stack } from '@fluentui/react';
+import { IconButton, IListProps, List, mergeStyles, mergeStyleSets, Stack } from '@fluentui/react';
 import { AdbLogger, AdbPacket } from '@yume-chan/adb';
 import { decodeUtf8 } from '@yume-chan/adb-backend-web';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
@@ -113,6 +113,14 @@ export interface LoggerProps {
     logger: AdbEventLogger;
 }
 
+function shouldVirtualize(props: IListProps<string>) {
+    return !!props.items && props.items.length > 100;
+}
+
+function renderCell(item?: string) {
+    return item;
+}
+
 export const Logger = withDisplayName('Logger')(({
     className,
     logger,
@@ -147,35 +155,51 @@ export const Logger = withDisplayName('Logger')(({
         }
     });
 
+    const commandBarItems = useMemo(() => [
+        {
+            key: 'Copy',
+            text: 'Copy',
+            iconProps: {
+                iconName: 'Copy',
+            },
+            onClick: () => {
+                setLines(lines => {
+                    window.navigator.clipboard.writeText(lines.join('\r'));
+                    return lines;
+                });
+            },
+        },
+        {
+            key: 'Clear',
+            text: 'Clear',
+            iconProps: {
+                iconName: 'Delete',
+            },
+            onClick: () => {
+                setLines([]);
+            },
+        },
+    ], []);
+
+    const mergedClassName = useMemo(() => mergeStyles(
+        className,
+        classNames['logger-container'],
+        !contextValue?.visible && { display: 'none' }
+    ), [contextValue?.visible]);
+
     return (
         <Stack
-            className={mergeStyles(className, classNames['logger-container'], !contextValue?.visible && ({ display: 'none' }))}
+            className={mergedClassName}
             verticalFill
         >
-            <CommandBar items={[
-                {
-                    key: 'Copy',
-                    text: 'Copy',
-                    iconProps: {
-                        iconName: 'Copy',
-                    },
-                    onClick: () => {
-                        window.navigator.clipboard.writeText(lines.join('\r'));
-                    },
-                },
-                {
-                    key: 'Clear',
-                    text: 'Clear',
-                    iconProps: {
-                        iconName: 'Delete',
-                    },
-                    onClick: () => {
-                        setLines([]);
-                    },
-                },
-            ]} />
+            <CommandBar items={commandBarItems} />
             <div ref={scrollerRef} className={classNames.grow}>
-                <List items={lines} onRenderCell={line => line} />
+                <List
+                    items={lines}
+                    usePageCache
+                    onShouldVirtualize={shouldVirtualize}
+                    onRenderCell={renderCell}
+                />
             </div>
         </Stack>
     );

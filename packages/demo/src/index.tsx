@@ -4,9 +4,8 @@ import { Adb } from '@yume-chan/adb';
 import React, { useCallback, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { HashRouter, Redirect, useLocation } from 'react-router-dom';
-import { CacheRoute, CacheSwitch, Connect, ErrorDialogProvider } from './components';
+import { AdbEventLogger, CacheRoute, CacheSwitch, Connect, ErrorDialogProvider, Logger, LoggerContextProvider, ToggleLogger } from './components';
 import './index.css';
-import { AdbEventLogger, Logger, LoggerContextProvider, ToggleLogger } from './components/logger';
 import { DeviceInfo, FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
 
 initializeIcons();

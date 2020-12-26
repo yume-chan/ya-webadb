@@ -1,10 +1,11 @@
 import { AutoDisposable } from '@yume-chan/event';
 import { Struct } from '@yume-chan/struct';
 import { AdbPacket } from '../packet';
-import { AdbBufferedStream, AdbIncomingStreamEventArgs, AdbPacketDispatcher, AdbStream } from '../stream';
+import { AdbIncomingSocketEventArgs, AdbPacketDispatcher, AdbSocket } from '../socket';
+import { AdbBufferedStream } from '../stream';
 
 export interface AdbReverseHandler {
-    onStream(packet: AdbPacket, stream: AdbStream): void;
+    onSocket(packet: AdbPacket, socket: AdbSocket): void;
 }
 
 export interface AdbForwardListener {
@@ -39,12 +40,26 @@ export class AdbReverseCommand extends AutoDisposable {
         super();
 
         this.dispatcher = dispatcher;
-        this.addDisposable(this.dispatcher.onStream(this.handleStream, this));
+        this.addDisposable(this.dispatcher.onIncomingSocket(this.handleIncomingSocket, this));
+    }
+
+    protected handleIncomingSocket(e: AdbIncomingSocketEventArgs): void {
+        if (e.handled) {
+            return;
+        }
+
+        const address = this.dispatcher.backend.decodeUtf8(e.packet.payload!);
+        // tcp:1234\0
+        const port = Number.parseInt(address.substring(4));
+        if (this.localPortToHandler.has(port)) {
+            this.localPortToHandler.get(port)!.onSocket(e.packet, e.socket);
+            e.handled = true;
+        }
     }
 
     private async createBufferedStream(service: string) {
-        const stream = await this.dispatcher.createStream(service);
-        return new AdbBufferedStream(stream);
+        const socket = await this.dispatcher.createSocket(service);
+        return new AdbBufferedStream(socket);
     }
 
     private async sendRequest(service: string) {
@@ -54,20 +69,6 @@ export class AdbReverseCommand extends AutoDisposable {
             await AdbReverseErrorResponse.deserialize(stream);
         }
         return stream;
-    }
-
-    protected handleStream(e: AdbIncomingStreamEventArgs): void {
-        if (e.handled) {
-            return;
-        }
-
-        const address = this.dispatcher.backend.decodeUtf8(e.packet.payload!);
-        // tcp:1234\0
-        const port = Number.parseInt(address.substring(4));
-        if (this.localPortToHandler.has(port)) {
-            this.localPortToHandler.get(port)!.onStream(e.packet, e.stream);
-            e.handled = true;
-        }
     }
 
     public async list(): Promise<AdbForwardListener[]> {

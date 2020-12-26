@@ -3,14 +3,9 @@ import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbBackend } from '../backend';
 import { AdbCommand, AdbPacket, AdbPacketInit } from '../packet';
 import { AutoResetEvent } from '../utils';
-import { AdbStreamController } from './controller';
-import { AdbStream } from './stream';
-
-export interface AdbLogger {
-    onIncomingPacket(packet: AdbPacket): void;
-
-    onOutgoingPacket(packet: AdbPacket): void;
-}
+import { AdbSocketController } from './controller';
+import { AdbLogger } from './logger';
+import { AdbSocket } from './socket';
 
 export interface AdbPacketReceivedEventArgs {
     handled: boolean;
@@ -18,19 +13,21 @@ export interface AdbPacketReceivedEventArgs {
     packet: AdbPacket;
 }
 
-export interface AdbIncomingStreamEventArgs {
+export interface AdbIncomingSocketEventArgs {
     handled: boolean;
 
     packet: AdbPacket;
 
-    stream: AdbStream;
+    serviceString: string;
+
+    socket: AdbSocket;
 }
 
 export class AdbPacketDispatcher extends AutoDisposable {
-    // ADB stream id starts from 1
+    // ADB socket id starts from 1
     // (0 means open failed)
     private readonly initializers = new AsyncOperationManager(1);
-    private readonly streams = new Map<number, AdbStreamController>();
+    private readonly sockets = new Map<number, AdbSocketController>();
     private readonly sendLock = new AutoResetEvent();
     private readonly logger: AdbLogger | undefined;
 
@@ -43,8 +40,8 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketReceivedEventArgs>());
     public get onPacket() { return this.packetEvent.event; }
 
-    private readonly streamEvent = this.addDisposable(new EventEmitter<AdbIncomingStreamEventArgs>());
-    public get onStream() { return this.streamEvent.event; }
+    private readonly incomingSocketEvent = this.addDisposable(new EventEmitter<AdbIncomingSocketEventArgs>());
+    public get onIncomingSocket() { return this.incomingSocketEvent.event; }
 
     private readonly errorEvent = this.addDisposable(new EventEmitter<Error>());
     public get onError() { return this.errorEvent.event; }
@@ -63,33 +60,18 @@ export class AdbPacketDispatcher extends AutoDisposable {
         try {
             while (this._running) {
                 const packet = await AdbPacket.read(this.backend);
-                this.logger?.onIncomingPacket(packet);
+                this.logger?.onIncomingPacket?.(packet);
 
                 switch (packet.command) {
                     case AdbCommand.OK:
                         this.handleOk(packet);
                         continue;
                     case AdbCommand.Close:
-                        // CLSE also has two meanings
-                        if (packet.arg0 === 0) {
-                            // 1. The device don't want to create the Stream
-                            this.initializers.reject(packet.arg1, new Error('Stream open failed'));
-                            continue;
-                        }
-
-                        if (this.streams.has(packet.arg1)) {
-                            // 2. The device has closed the Stream
-                            this.streams.get(packet.arg1)!.dispose();
-                            this.streams.delete(packet.arg1);
-                            continue;
-                        }
-
-                        // Maybe the device is responding to a packet of last connection
-                        // Just ignore it
+                        await this.handleClose(packet);
                         continue;
                     case AdbCommand.Write:
-                        if (this.streams.has(packet.arg1)) {
-                            await this.streams.get(packet.arg1)!.dataEvent.fire(packet.payload!);
+                        if (this.sockets.has(packet.arg1)) {
+                            await this.sockets.get(packet.arg1)!.dataEvent.fire(packet.payload!);
                             await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
                         }
 
@@ -123,19 +105,50 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
     private handleOk(packet: AdbPacket) {
         if (this.initializers.resolve(packet.arg1, packet.arg0)) {
-            // Device has created the `Stream`
+            // Device successfully created the socket
             return;
         }
 
-        if (this.streams.has(packet.arg1)) {
-            // Device has received last `WRTE` to the `Stream`
-            this.streams.get(packet.arg1)!.ack();
+        const socket = this.sockets.get(packet.arg1);
+        if (socket) {
+            // Device has received last `WRTE` to the socket
+            socket.ack();
             return;
         }
 
         // Maybe the device is responding to a packet of last connection
-        // Tell the device to close the stream
+        // Tell the device to close the socket
         this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
+    }
+
+    private async handleClose(packet: AdbPacket) {
+        // From https://android.googlesource.com/platform/packages/modules/adb/+/65d18e2c1cc48b585811954892311b28a4c3d188/adb.cpp#459
+        /* According to protocol.txt, p->msg.arg0 might be 0 to indicate
+        * a failed OPEN only. However, due to a bug in previous ADB
+        * versions, CLOSE(0, remote-id, "") was also used for normal
+        * CLOSE() operations.
+        */
+
+        // So don't return if `reject` didn't find a pending socket
+        if (packet.arg0 === 0 &&
+            this.initializers.reject(packet.arg1, new Error('Socket open failed'))) {
+            // Device failed to create the socket
+            return;
+        }
+
+        const socket = this.sockets.get(packet.arg1);
+        if (socket) {
+            // The device want to close the socket
+            if (!socket.closed) {
+                await this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
+            }
+            socket.dispose();
+            this.sockets.delete(packet.arg1);
+            return;
+        }
+
+        // Maybe the device is responding to a packet of last connection
+        // Just ignore it
     }
 
     private async handleOpen(packet: AdbPacket) {
@@ -145,18 +158,27 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this.initializers.resolve(localId, undefined);
 
         const remoteId = packet.arg0;
-        const controller = new AdbStreamController(localId, remoteId, this);
-        const stream = new AdbStream(controller);
+        const serviceString = this.backend.decodeUtf8(packet.payload!);
 
-        const args: AdbIncomingStreamEventArgs = {
+        const controller = new AdbSocketController({
+            dispatcher: this,
+            localId,
+            remoteId,
+            localCreated: false,
+            serviceString,
+        });
+        const socket = new AdbSocket(controller);
+
+        const args: AdbIncomingSocketEventArgs = {
             handled: false,
             packet,
-            stream,
+            serviceString,
+            socket,
         };
-        this.streamEvent.fire(args);
+        this.incomingSocketEvent.fire(args);
 
         if (args.handled) {
-            this.streams.set(localId, controller);
+            this.sockets.set(localId, controller);
             await this.sendPacket(AdbCommand.OK, localId, remoteId);
         } else {
             await this.sendPacket(AdbCommand.Close, 0, remoteId);
@@ -168,19 +190,25 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this.receiveLoop();
     }
 
-    public async createStream(service: string): Promise<AdbStream> {
+    public async createSocket(serviceString: string): Promise<AdbSocket> {
         if (this.appendNullToServiceString) {
-            service += '\0';
+            serviceString += '\0';
         }
 
         const [localId, initializer] = this.initializers.add<number>();
-        await this.sendPacket(AdbCommand.Open, localId, 0, service);
+        await this.sendPacket(AdbCommand.Open, localId, 0, serviceString);
 
         const remoteId = await initializer;
-        const controller = new AdbStreamController(localId, remoteId, this);
-        this.streams.set(controller.localId, controller);
+        const controller = new AdbSocketController({
+            dispatcher: this,
+            localId,
+            remoteId,
+            localCreated: true,
+            serviceString,
+        });
+        this.sockets.set(controller.localId, controller);
 
-        return new AdbStream(controller);
+        return new AdbSocket(controller);
     }
 
     public sendPacket(packet: AdbPacketInit): Promise<void>;
@@ -219,7 +247,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
             await this.sendLock.wait();
 
             const packet = AdbPacket.create(init, this.calculateChecksum, this.backend);
-            this.logger?.onOutgoingPacket(packet);
+            this.logger?.onOutgoingPacket?.(packet);
 
             await AdbPacket.write(packet, this.backend);
         } finally {
@@ -230,10 +258,10 @@ export class AdbPacketDispatcher extends AutoDisposable {
     public dispose() {
         this._running = false;
 
-        for (const stream of this.streams.values()) {
-            stream.dispose();
+        for (const socket of this.sockets.values()) {
+            socket.dispose();
         }
-        this.streams.clear();
+        this.sockets.clear();
 
         super.dispose();
     }

@@ -7,7 +7,7 @@ import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, Ex
 import { CommonStackTokens } from '../../styles';
 import { formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
-import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyEventAction, AndroidKeyEventKeyCode, AndroidMotionEventAction, createScrcpyConnection, fetchServer, getEncoderList, ScrcpyConnection, ScrcpyControlMessageType, ScrcpyLogLevel, ScrcpyOptions, ScrcpyScreenOrientation } from './server';
+import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyControlMessageType, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyStartOptions } from './server';
 import { createTinyH264Decoder } from './tinyh264';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
@@ -42,16 +42,16 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     const [serverTotalSize, setServerTotalSize] = useState(0);
 
     const [serverDownloadedSize, setServerDownloadedSize] = useState(0);
-    const [debouncedServerDownloadedSize, serverDownloadSpeed] = useSpeed(serverDownloadedSize);
+    const [debouncedServerDownloadedSize, serverDownloadSpeed] = useSpeed(serverDownloadedSize, serverTotalSize);
 
     const [serverUploadedSize, setServerUploadedSize] = useState(0);
-    const [debouncedServerUploadedSize, serverUploadSpeed] = useSpeed(serverUploadedSize);
+    const [debouncedServerUploadedSize, serverUploadSpeed] = useSpeed(serverUploadedSize, serverTotalSize);
 
     const [settingsVisible, { toggle: toggleSettingsVisible }] = useBoolean(false);
     const [encoders, setEncoders] = useState<string[]>([]);
     const [currentEncoder, setCurrentEncoder] = useState<string>();
 
-    const serverRef = useRef<ScrcpyConnection>();
+    const scrcpyClientRef = useRef<ScrcpyClient>();
 
     const [demoModeVisible, { toggle: toggleDemoModeVisible }] = useBoolean(false);
 
@@ -113,22 +113,22 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     setServerUploadedSize
                 );
 
-                const options: ScrcpyOptions = {
+                const options: ScrcpyStartOptions = {
                     device,
                     path: DeviceServerPath,
                     version: '1.16',
-                    logLevel: ScrcpyLogLevel.Info,
+                    logLevel: ScrcpyLogLevel.Debug,
                     // TinyH264 is slow, so limit the max resolution and bit rate
                     maxSize: 1080,
                     bitRate: 4_000_000,
-                    // TinyH264 can't handle resolution change, so keep the screen in portrait
+                    // TinyH264 can't handle resolution change, so keep the video stream in portrait
                     orientation: ScrcpyScreenOrientation.Portrait,
                     // TinyH264 only supports Baseline profile
                     profile: AndroidCodecProfile.Baseline,
                     level: AndroidCodecLevel.Level4,
                 };
 
-                const encoders = await getEncoderList(options);
+                const encoders = await ScrcpyClient.getEncoders(options);
                 if (encoders.length === 0) {
                     throw new Error('No available encoder found');
                 }
@@ -147,35 +147,39 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     break;
                 }
 
+                // Run scrcpy once will delete the server file
+                // Re-push it
+                await sync.write(
+                    DeviceServerPath,
+                    serverBuffer,
+                );
+
                 options.encoder = encoder;
+                const scrcpyClient = await ScrcpyClient.start(options);
 
-                const server = await createScrcpyConnection(options);
-
-                server.onInfo(message => {
+                scrcpyClient.onInfo(message => {
                     console.log('INFO: ' + message);
                 });
-                server.onError(message => {
+                scrcpyClient.onError(message => {
                     showErrorDialog(message);
                 });
-                server.onClose(stop);
+                scrcpyClient.onClose(stop);
 
-                server.onSizeChanged(() => {
-                    croppedWidth = server.width!;
-                    croppedHeight = server.height!;
+                scrcpyClient.onSizeChanged(() => {
+                    croppedWidth = scrcpyClient.width!;
+                    croppedHeight = scrcpyClient.height!;
                     setWidth(croppedWidth);
                     setHeight(croppedHeight);
                 });
-                server.onVideoData(({ data }) => {
+                scrcpyClient.onVideoData(({ data }) => {
                     decoder.feed(data!);
                 });
 
-                server.onClipboardChange(content => {
+                scrcpyClient.onClipboardChange(content => {
                     window.navigator.clipboard.writeText(content);
                 });
 
-                serverRef.current = server;
-
-                setConnecting(false);
+                scrcpyClientRef.current = scrcpyClient;
                 setRunning(true);
             } catch (e) {
                 showErrorDialog(e.message);
@@ -187,12 +191,12 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
     const stop = useCallback(() => {
         (async () => {
-            if (!serverRef.current) {
+            if (!scrcpyClientRef.current) {
                 return;
             }
 
-            await serverRef.current.close();
-            serverRef.current = undefined;
+            await scrcpyClientRef.current.close();
+            scrcpyClientRef.current = undefined;
 
             setRunning(false);
         })();
@@ -284,7 +288,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         const pointerScreenX = pointerViewX / view.width * width;
         const pointerScreenY = pointerViewY / view.height * height;
 
-        serverRef.current?.injectTouch({
+        scrcpyClientRef.current?.injectTouch({
             type: ScrcpyControlMessageType.InjectTouch,
             action,
             pointerId: BigInt(e.pointerId),
@@ -323,24 +327,22 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     }, []);
 
     const handleBackClick = useCallback(() => {
-        serverRef.current!.pressBackOrTurnOnScreen();
+        scrcpyClientRef.current!.pressBackOrTurnOnScreen();
     }, []);
 
     const handleHomeClick = useCallback(() => {
-        serverRef.current!.injectKeyCode({
+        scrcpyClientRef.current!.injectKeyCode({
             type: ScrcpyControlMessageType.InjectKeycode,
-            action: AndroidKeyEventAction.Down | AndroidKeyEventAction.Up,
-            keyCode: AndroidKeyEventKeyCode.Home,
+            keyCode: AndroidKeyCode.Home,
             repeat: 0,
             metaState: 0,
         });
     }, []);
 
     const handleAppSwitchClick = useCallback(() => {
-        serverRef.current!.injectKeyCode({
+        scrcpyClientRef.current!.injectKeyCode({
             type: ScrcpyControlMessageType.InjectKeycode,
-            action: AndroidKeyEventAction.Down | AndroidKeyEventAction.Up,
-            keyCode: AndroidKeyEventKeyCode.AppSwitch,
+            keyCode: AndroidKeyCode.AppSwitch,
             repeat: 0,
             metaState: 0,
         });
@@ -380,7 +382,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     width={width}
                     height={height}
                     bottomElement={bottomElement}
-                    bottomHeight={50}
+                    bottomHeight={40}
                 >
                     <canvas
                         ref={handleCanvasRef}
@@ -442,14 +444,14 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     />
 
                     <ProgressIndicator
-                        label="2. Pushing scrcpy server to device..."
+                        label="3. Pushing scrcpy server to device..."
                         progressHidden={serverTotalSize === 0 || serverDownloadedSize !== serverTotalSize}
                         percentComplete={serverUploadedSize / serverTotalSize}
                         description={formatSpeed(debouncedServerUploadedSize, serverTotalSize, serverUploadSpeed)}
                     />
 
                     <ProgressIndicator
-                        label="3. Starting scrcpy server on device..."
+                        label="4. Starting scrcpy server on device..."
                         progressHidden={serverTotalSize === 0 || serverUploadedSize !== serverTotalSize}
                     />
                 </Stack>

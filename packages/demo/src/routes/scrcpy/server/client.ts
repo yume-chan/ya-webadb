@@ -1,7 +1,11 @@
-import { Adb, AdbBufferedStream, AdbStream, EventQueue } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbSocket, EventQueue } from '@yume-chan/adb';
+import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
 import { Struct, StructValueType } from '@yume-chan/struct';
+import { AndroidCodecLevel, AndroidCodecProfile } from './codec';
 import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
+
+const encoderRegex = /^\s+scrcpy --encoder-name '(.*?)'/;
 
 export enum ScrcpyLogLevel {
     Debug = 'debug',
@@ -19,7 +23,15 @@ function* parseScrcpyOutput(message: string): Generator<{ level: ScrcpyLogLevel,
         if (line.startsWith('[server] ')) {
             line = line.substring('[server] '.length);
 
-            if (line.startsWith('ERROR:')) {
+            if (line.startsWith('DEBUG: ')) {
+                yield {
+                    level: ScrcpyLogLevel.Debug,
+                    message: line.substring('DEBUG: '.length),
+                };
+                continue;
+            }
+
+            if (line.startsWith('ERROR: ')) {
                 yield {
                     level: ScrcpyLogLevel.Error,
                     message: line.substring('ERROR: '.length),
@@ -27,7 +39,7 @@ function* parseScrcpyOutput(message: string): Generator<{ level: ScrcpyLogLevel,
                 continue;
             }
 
-            if (line.startsWith('INFO:')) {
+            if (line.startsWith('INFO: ')) {
                 yield {
                     level: ScrcpyLogLevel.Info,
                     message: line.substring('INFO: '.length),
@@ -51,42 +63,6 @@ export enum ScrcpyScreenOrientation {
     LandscapeFlipped = 3,
 }
 
-// See https://developer.android.com/reference/android/media/MediaCodecInfo.CodecProfileLevel
-export enum AndroidCodecProfile {
-    Baseline = 0x01,
-    Main = 0x02,
-    Extended = 0x04,
-    High = 0x08,
-    High10 = 0x10,
-    High422 = 0x20,
-    High444 = 0x40,
-    ConstrainedBaseline = 0x10000,
-    ConstrainedHigh = 0x80000,
-}
-
-export enum AndroidCodecLevel {
-    Level1 = 0x01,
-    Level1b = 0x02,
-    Level11 = 0x04,
-    Level12 = 0x08,
-    Level13 = 0x10,
-    Level2 = 0x20,
-    Level21 = 0x40,
-    Level22 = 0x80,
-    Level3 = 0x100,
-    Level31 = 0x200,
-    Level32 = 0x400,
-    Level4 = 0x800,
-    Level41 = 0x1000,
-    Level42 = 0x2000,
-    Level5 = 0x4000,
-    Level51 = 0x8000,
-    Level52 = 0x10000,
-    Level6 = 0x20000,
-    Level61 = 0x40000,
-    Level62 = 0x80000,
-}
-
 const Size =
     new Struct()
         .uint16('width')
@@ -107,8 +83,167 @@ const ClipboardMessage =
         .uint32('length')
         .string('content', { lengthField: 'length' });
 
-export class ScrcpyConnection {
-    private readonly process: AdbStream;
+export interface ScrcpyStartOptions {
+    device: Adb;
+
+    path: string;
+
+    version: string;
+
+    logLevel?: ScrcpyLogLevel;
+
+    maxSize?: number;
+
+    bitRate: number;
+
+    maxFps?: number;
+
+    /**
+     * The orientation of the video stream.
+     *
+     * It will not keep the device screen in specific orientation,
+     * only the captured video will in this orientation.
+     */
+    orientation?: ScrcpyScreenOrientation;
+
+    profile?: AndroidCodecProfile;
+
+    level?: AndroidCodecLevel;
+
+    encoder?: string;
+
+    onInfo?: (message: string) => void;
+
+    onError?: (message: string) => void;
+
+    onClose?: () => void;
+}
+
+export class ScrcpyClient {
+    public static async start({
+        device,
+        path,
+        version,
+        logLevel = ScrcpyLogLevel.Error,
+        maxSize = 0,
+        bitRate,
+        maxFps = 0,
+        orientation = ScrcpyScreenOrientation.Unlocked,
+        profile = AndroidCodecProfile.Baseline,
+        level = AndroidCodecLevel.Level4,
+        encoder = '-',
+        onInfo,
+        onError,
+        onClose,
+    }: ScrcpyStartOptions): Promise<ScrcpyClient> {
+        const streams = new EventQueue<AdbSocket>();
+        const reverseRegistry = await device.reverse.add('localabstract:scrcpy', 27183, {
+            onSocket(packet, stream) {
+                streams.push(stream);
+            },
+        });
+
+        const process = await device.spawn(
+            `CLASSPATH=${path}`,
+            'app_process',
+            /*          unused */ '/',
+            'com.genymobile.scrcpy.Server',
+            version,
+            logLevel,
+            maxSize.toString(), // (0: unlimited)
+            bitRate.toString(),
+            maxFps.toString(),
+            orientation.toString(),
+            /*  tunnel_forward */ 'false',
+            /*            crop */ '-',
+            /* send_frame_meta */ 'true', // always send frame meta (packet boundaries + timestamp)
+            /*         control */ 'true',
+            /*      display_id */ '0',
+            /*    show_touches */ 'false',
+            /*      stay_awake */ 'true',
+            /*   codec_options */ `profile=${profile},level=${level}`,
+            encoder,
+        );
+
+        const disposables = new DisposableList();
+        // Dispatch messages before connection created
+        disposables.add(process.onData(data => {
+            const string = device.backend.decodeUtf8(data);
+            for (const { level, message } of parseScrcpyOutput(string)) {
+                switch (level) {
+                    case ScrcpyLogLevel.Info:
+                        onInfo?.(message);
+                        break;
+                    case ScrcpyLogLevel.Error:
+                        onError?.(message);
+                        break;
+                }
+            }
+        }));
+
+        if (onClose) {
+            process.onClose(onClose);
+        }
+
+        const videoStream = new AdbBufferedStream(await streams.next());
+        const controlStream = new AdbBufferedStream(await streams.next());
+
+        // Don't await this!
+        // `reverse.remove`'s response will never arrive
+        // before we read all pending data from `videoStream`
+        device.reverse.remove(reverseRegistry);
+
+        // Stop dispatch messages
+        disposables.dispose();
+
+        const connection = new ScrcpyClient(
+            process,
+            videoStream,
+            controlStream,
+        );
+
+        // Forward message handlers
+        if (onInfo) {
+            connection.onInfo(onInfo);
+        }
+        if (onError) {
+            connection.onError(onError);
+        }
+
+        return connection;
+    }
+
+    public static async getEncoders(options: ScrcpyStartOptions): Promise<string[]> {
+        // Make a copy
+        options = { ...options };
+
+        // Provide an invalid encoder name
+        // So the server will return all available encoders
+        options.encoder = '_';
+
+        const encoders: string[] = [];
+        options.onError = message => {
+            const match = message.match(encoderRegex);
+            if (match) {
+                encoders.push(match[1]);
+            }
+        };
+
+        const connection = await this.start(options);
+
+        const resolver = new PromiseResolver<string[]>();
+        setTimeout(() => {
+            // There is no reliable way to detect wether server has finished
+            // printing its message. So wait 1 second before kill it
+            // See https://github.com/Genymobile/scrcpy/issues/1992
+            connection.close();
+            resolver.resolve(encoders);
+        }, 1000);
+
+        return resolver.promise;
+    }
+
+    private readonly process: AdbSocket;
 
     private readonly infoEvent = new EventEmitter<string>();
     public get onInfo() { return this.infoEvent.event; }
@@ -116,8 +251,7 @@ export class ScrcpyConnection {
     private readonly errorEvent = new EventEmitter<string>();
     public get onError() { return this.errorEvent.event; }
 
-    private readonly closeEvent = new EventEmitter<void>();
-    public get onClose() { return this.closeEvent.event; }
+    public get onClose() { return this.process.onClose; }
 
     private _running = true;
     public get running() { return this._running; }
@@ -144,14 +278,10 @@ export class ScrcpyConnection {
     private sendingTouchMessage = false;
 
     public constructor(
-        process: AdbStream,
+        process: AdbSocket,
         videoStream: AdbBufferedStream,
         controlStream: AdbBufferedStream
     ) {
-        if (process.closed) {
-            throw new Error('Server has exited');
-        }
-
         this.process = process;
         this.process.onData(this.handleProcessOutput, this);
         this.process.onClose(this.handleProcessClosed, this);
@@ -179,7 +309,6 @@ export class ScrcpyConnection {
 
     private handleProcessClosed() {
         this._running = false;
-        this.closeEvent.fire();
     }
 
     private async receiveVideo() {
@@ -225,8 +354,6 @@ export class ScrcpyConnection {
             if (!this._running) {
                 return;
             }
-
-            this.close();
         }
     }
 
@@ -247,23 +374,19 @@ export class ScrcpyConnection {
             if (!this._running) {
                 return;
             }
-
-            this.close();
         }
     }
 
-    public async injectKeyCode(message: ScrcpyInjectKeyCodeControlMessage) {
-        const action = message.action;
-        if (action & AndroidKeyEventAction.Down) {
-            message.action = AndroidKeyEventAction.Down;
-            const buffer = ScrcpyInjectKeyCodeControlMessage.serialize(message, this.process.backend);
-            await this.controlStream.write(buffer);
-        }
-        if (action & AndroidKeyEventAction.Up) {
-            message.action = AndroidKeyEventAction.Up;
-            const buffer = ScrcpyInjectKeyCodeControlMessage.serialize(message, this.process.backend);
-            await this.controlStream.write(buffer);
-        }
+    public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'action'>) {
+        await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
+            ...message,
+            action: AndroidKeyEventAction.Down,
+        }, this.process.backend));
+
+        await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
+            ...message,
+            action: AndroidKeyEventAction.Up,
+        }, this.process.backend));
     }
 
     public async injectTouch(message: ScrcpyInjectTouchControlMessage) {
@@ -296,132 +419,4 @@ export class ScrcpyConnection {
         this._running = false;
         await this.process.close();
     }
-}
-
-export interface ScrcpyOptions {
-    device: Adb;
-
-    path: string;
-
-    version: string;
-
-    logLevel?: ScrcpyLogLevel;
-
-    maxSize?: number;
-
-    bitRate: number;
-
-    maxFps?: number;
-
-    orientation?: ScrcpyScreenOrientation;
-
-    profile?: AndroidCodecProfile;
-
-    level?: AndroidCodecLevel;
-
-    encoder?: string;
-
-    onInfo?: (message: string) => void;
-
-    onError?: (message: string) => void;
-
-    onClose?: () => void;
-}
-
-export async function createScrcpyConnection(options: ScrcpyOptions) {
-    const {
-        device,
-        path,
-        version,
-        logLevel = ScrcpyLogLevel.Error,
-        maxSize = 0,
-        bitRate,
-        maxFps = 0,
-        orientation = ScrcpyScreenOrientation.Unlocked,
-        profile = AndroidCodecProfile.Baseline,
-        level = AndroidCodecLevel.Level4,
-        encoder = '-',
-        onInfo,
-        onError,
-        onClose,
-    } = options;
-
-    const streams = new EventQueue<AdbStream>();
-    const reverseRegistry = await device.reverse.add('localabstract:scrcpy', 27183, {
-        onStream(packet, stream) {
-            streams.push(stream);
-        },
-    });
-
-    const process = await device.spawn(
-        `CLASSPATH=${path}`,
-        'app_process',
-        /*          unused */ '/',
-        'com.genymobile.scrcpy.Server',
-        version,
-        logLevel,
-        maxSize.toString(), // (0: unlimited)
-        bitRate.toString(),
-        maxFps.toString(),
-        orientation.toString(),
-        /*  tunnel_forward */ 'false',
-        /*            crop */ '-',
-        /* send_frame_meta */ 'true', // always send frame meta (packet boundaries + timestamp)
-        /*         control */ 'true',
-        /*      display_id */ '0',
-        /*    show_touches */ 'false',
-        /*      stay_awake */ 'true',
-        /*   codec_options */ `profile=${profile},level=${level}`,
-        encoder,
-    );
-
-    const disposables = new DisposableList();
-    // Dispatch messages before connection created
-    disposables.add(process.onData(data => {
-        const string = device.backend.decodeUtf8(data);
-        for (const { level, message } of parseScrcpyOutput(string)) {
-            switch (level) {
-                case ScrcpyLogLevel.Info:
-                    onInfo?.(message);
-                    break;
-                case ScrcpyLogLevel.Error:
-                    onError?.(message);
-                    break;
-            }
-        }
-    }));
-
-    if (onClose) {
-        disposables.add(process.onClose(onClose));
-    }
-
-    const videoStream = new AdbBufferedStream(await streams.next());
-    const controlStream = new AdbBufferedStream(await streams.next());
-
-    // Don't await this!
-    // `reverse.remove`'s response will never arrive
-    // before we read all pending data from `videoStream`
-    device.reverse.remove(reverseRegistry);
-
-    // Stop dispatch messages
-    disposables.dispose();
-
-    const connection = new ScrcpyConnection(
-        process,
-        videoStream,
-        controlStream,
-    );
-
-    // Forward message handlers
-    if (onInfo) {
-        connection.onInfo(onInfo);
-    }
-    if (onError) {
-        connection.onError(onError);
-    }
-    if (onClose) {
-        connection.onClose(onClose);
-    }
-
-    return connection;
 }

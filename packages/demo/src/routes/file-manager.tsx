@@ -351,7 +351,7 @@ export const FileManager = withDisplayName('FileManager')(({
     const [uploadPath, setUploadPath] = useState('');
     const [uploadedSize, setUploadedSize] = useState(0);
     const [uploadTotalSize, setUploadTotalSize] = useState(0);
-    const [debouncedUploadedSize, uploadSpeed] = useSpeed(uploadedSize);
+    const [debouncedUploadedSize, uploadSpeed] = useSpeed(uploadedSize, uploadTotalSize);
     const upload = useCallback(async (file: File) => {
         const sync = await device!.sync();
         try {

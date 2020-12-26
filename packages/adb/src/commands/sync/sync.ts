@@ -1,7 +1,8 @@
 import { AutoDisposable } from '@yume-chan/event';
 import { Adb } from '../../adb';
 import { AdbFeatures } from '../../features';
-import { AdbBufferedStream, AdbStream } from '../../stream';
+import { AdbSocket } from '../../socket';
+import { AdbBufferedStream } from '../../stream';
 import { AutoResetEvent } from '../../utils';
 import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';
 import { adbSyncPull } from './pull';
@@ -19,11 +20,11 @@ export class AdbSync extends AutoDisposable {
         return this.adb.features!.includes(AdbFeatures.StatV2);
     }
 
-    public constructor(adb: Adb, stream: AdbStream) {
+    public constructor(adb: Adb, socket: AdbSocket) {
         super();
 
         this.adb = adb;
-        this.stream = new AdbBufferedStream(stream);
+        this.stream = new AdbBufferedStream(socket);
     }
 
     public async lstat(path: string) {

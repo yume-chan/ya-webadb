@@ -19,22 +19,37 @@ export function formatSpeed(completed: number, total: number, speed: number): st
     return `${formatSize(completed)} of ${formatSize(total)} (${formatSize(speed)}/s)`;
 }
 
-export function useSpeed(completed: number): [completed: number, speed: number] {
+export function useSpeed(completed: number, total: number): [completed: number, speed: number] {
     const completedRef = useRef(completed);
     completedRef.current = completed;
 
     const [debouncedCompleted, setDebouncedCompleted] = useState(completed);
     const [speed, setSpeed] = useState(0);
 
-    const { setInterval } = useSetInterval();
+    const { setInterval, clearInterval } = useSetInterval();
+    const intervalIdRef = useRef<number>();
     useEffect(() => {
-        setInterval(() => {
+        intervalIdRef.current = setInterval(() => {
             setDebouncedCompleted(debouncedCompleted => {
                 setSpeed(completedRef.current - debouncedCompleted);
                 return completedRef.current;
             });
         }, 1000);
-    }, []);
+
+        return () => {
+            clearInterval(intervalIdRef.current!);
+        };
+    }, [total]);
+
+    useEffect(() => {
+        if (total !== 0 && completed === total) {
+            setDebouncedCompleted(debouncedCompleted => {
+                setSpeed(total - debouncedCompleted);
+                return total;
+            });
+            clearInterval(intervalIdRef.current!);
+        }
+    }, [completed, total]);
 
     return [debouncedCompleted, speed];
 }

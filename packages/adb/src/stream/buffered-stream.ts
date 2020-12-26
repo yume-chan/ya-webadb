@@ -1,7 +1,6 @@
 import { StructDeserializationContext } from '@yume-chan/struct';
-import { AdbStreamBase } from './controller';
-import { AdbReadableStream } from './readable-stream';
-import { AdbStream } from './stream';
+import { AdbSocket, AdbSocketInfo } from '../socket';
+import { AdbSocketStream } from './stream';
 
 export interface Stream {
     /**
@@ -75,16 +74,16 @@ export class BufferedStream<T extends Stream> {
 }
 
 export class AdbBufferedStream
-    extends BufferedStream<AdbReadableStream>
-    implements AdbStreamBase, StructDeserializationContext {
+    extends BufferedStream<AdbSocketStream>
+    implements AdbSocketInfo, StructDeserializationContext {
     public get backend() { return this.stream.backend; }
-
     public get localId() { return this.stream.localId; }
-
     public get remoteId() { return this.stream.remoteId; }
+    public get localCreated() { return this.stream.localCreated; }
+    public get serviceString() { return this.stream.serviceString; }
 
-    public constructor(stream: AdbStream) {
-        super(new AdbReadableStream(stream));
+    public constructor(socket: AdbSocket) {
+        super(new AdbSocketStream(socket));
     }
 
     public write(data: ArrayBuffer): Promise<void> {

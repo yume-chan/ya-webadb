@@ -1,29 +1,59 @@
-import { AdbStreamBase, AdbStreamController } from './controller';
+import { AdbSocket, AdbSocketInfo } from '../socket';
+import { AutoResetEvent, EventQueue } from '../utils';
 
-export class AdbStream implements AdbStreamBase {
-    private controller: AdbStreamController;
+export class AdbSocketStream implements AdbSocketInfo {
+    private socket: AdbSocket;
 
-    public get backend() { return this.controller.backend; }
+    private queue: EventQueue<ArrayBuffer>;
 
-    public get localId() { return this.controller.localId; }
+    private readLock = new AutoResetEvent();
 
-    public get remoteId() { return this.controller.remoteId; }
+    public get backend() { return this.socket.backend; }
+    public get localId() { return this.socket.localId; }
+    public get remoteId() { return this.socket.remoteId; }
+    public get localCreated() { return this.socket.localCreated; }
+    public get serviceString() { return this.socket.serviceString; }
 
-    public get closed() { return this.controller.closed; }
+    public constructor(socket: AdbSocket) {
+        this.socket = socket;
+        this.queue = new EventQueue<ArrayBuffer>({
+            highWaterMark: 16 * 1024,
+        });
 
-    public get onData() { return this.controller.dataEvent.event; }
+        const resetEvent = new AutoResetEvent(true);
 
-    public get onClose() { return this.controller.onClose; }
+        this.socket.onData(buffer => {
+            if (!this.queue.push(buffer, buffer.byteLength)) {
+                return resetEvent.wait();
+            }
+            return;
+        });
+        this.socket.onClose(() => {
+            this.queue.end();
+        });
 
-    public constructor(controller: AdbStreamController) {
-        this.controller = controller;
+        this.queue.onLowWater(() => {
+            resetEvent.notify();
+        });
+    }
+
+    public async read(): Promise<ArrayBuffer> {
+        await this.readLock.wait();
+
+        try {
+            return await this.queue.next();
+        } catch {
+            throw new Error('Can not read after AdbSocketStream has been closed');
+        } finally {
+            this.readLock.notify();
+        }
     }
 
     public write(data: ArrayBuffer): Promise<void> {
-        return this.controller.write(data);
+        return this.socket.write(data);
     }
 
-    public close(): Promise<void> {
-        return this.controller.close();
+    close(): void {
+        this.socket.close();
     }
 }

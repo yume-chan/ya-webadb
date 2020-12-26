@@ -5,7 +5,7 @@ import { AdbBackend } from './backend';
 import { AdbDemoMode, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
-import { AdbLogger, AdbPacketDispatcher, AdbStream } from './stream';
+import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -186,18 +186,18 @@ export class Adb {
         }
     }
 
-    public shell(): Promise<AdbStream> {
-        return this.createStream('shell:');
+    public shell(): Promise<AdbSocket> {
+        return this.createSocket('shell:');
     }
 
-    public spawn(command: string, ...args: string[]): Promise<AdbStream> {
+    public spawn(command: string, ...args: string[]): Promise<AdbSocket> {
         // TODO: use shell protocol
-        return this.createStream(`shell:${command} ${args.join(' ')}`);
+        return this.createSocket(`shell:${command} ${args.join(' ')}`);
     }
 
     public exec(command: string, ...args: string[]): Promise<string> {
         // TODO: use shell protocol
-        return this.createStreamAndReadAll(`shell:${command} ${args.join(' ')}`);
+        return this.createSocketAndReadAll(`shell:${command} ${args.join(' ')}`);
     }
 
     public async getProp(key: string): Promise<string> {
@@ -217,26 +217,26 @@ export class Adb {
     }
 
     public async sync(): Promise<AdbSync> {
-        const stream = await this.createStream('sync:');
-        return new AdbSync(this, stream);
+        const socket = await this.createSocket('sync:');
+        return new AdbSync(this, socket);
     }
 
     public async framebuffer() {
         return framebuffer(this);
     }
 
-    public async createStream(service: string): Promise<AdbStream> {
-        return this.packetDispatcher.createStream(service);
+    public async createSocket(service: string): Promise<AdbSocket> {
+        return this.packetDispatcher.createSocket(service);
     }
 
-    public async createStreamAndReadAll(service: string): Promise<string> {
-        const stream = await this.createStream(service);
+    public async createSocketAndReadAll(service: string): Promise<string> {
+        const socket = await this.createSocket(service);
         const resolver = new PromiseResolver<string>();
         let result = '';
-        stream.onData(buffer => {
+        socket.onData(buffer => {
             result += this.backend.decodeUtf8(buffer);
         });
-        stream.onClose(() => resolver.resolve(result));
+        socket.onClose(() => resolver.resolve(result));
         return resolver.promise;
     }
 

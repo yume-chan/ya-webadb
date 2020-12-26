@@ -1,7 +1,7 @@
 import { Disposable } from './disposable';
 import { EventListener, RemoveEventListener } from './event';
 
-interface EventListenerInfo<TEvent, TResult = unknown> {
+export interface EventListenerInfo<TEvent, TResult = unknown> {
     listener: EventListener<TEvent, any, any, TResult>;
 
     thisArg: unknown;
@@ -10,10 +10,23 @@ interface EventListenerInfo<TEvent, TResult = unknown> {
 }
 
 export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
-    protected listeners: EventListenerInfo<TEvent, TResult>[] = [];
+    protected readonly listeners: EventListenerInfo<TEvent, TResult>[] = [];
 
     public constructor() {
         this.event = this.event.bind(this);
+    }
+
+    protected addEventListener(info: EventListenerInfo<TEvent, TResult>): RemoveEventListener {
+        this.listeners.push(info);
+
+        const remove: RemoveEventListener = () => {
+            const index = this.listeners.indexOf(info);
+            if (index !== -1) {
+                this.listeners.splice(index, 1);
+            }
+        };
+        remove.dispose = remove;
+        return remove;
     }
 
     public event(
@@ -34,16 +47,7 @@ export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
             thisArg,
             args,
         };
-        this.listeners.push(info);
-
-        const remove: RemoveEventListener = () => {
-            const index = this.listeners.indexOf(info);
-            if (index !== -1) {
-                this.listeners.splice(index, 1);
-            }
-        };
-        remove.dispose = remove;
-        return remove;
+        return this.addEventListener(info);
     }
 
     public fire(e: TEvent) {

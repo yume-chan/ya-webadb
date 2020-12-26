@@ -36,6 +36,7 @@
         "powersave",
         "reimplement",
         "reimplemented",
+        "scrollback",
         "sendrecv",
         "streamsaver",
         "struct",

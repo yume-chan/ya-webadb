@@ -56,7 +56,10 @@ export namespace AdbPacket {
 
     export async function read(backend: AdbBackend): Promise<AdbPacket> {
         let buffer = await backend.read(24);
-        if (buffer.byteLength !== 24) {
+
+        // Detect boundary
+        // Note that it relies on the backend to only return data from one write operation
+        while (buffer.byteLength !== 24) {
             // Maybe it's a payload from last connection.
             // Ignore and try again
             buffer = await backend.read(24);
