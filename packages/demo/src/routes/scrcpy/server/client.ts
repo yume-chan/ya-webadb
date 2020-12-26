@@ -417,6 +417,8 @@ export class ScrcpyClient {
         }
 
         this._running = false;
+        this.videoStream.close();
+        this.controlStream.close();
         await this.process.close();
     }
 }

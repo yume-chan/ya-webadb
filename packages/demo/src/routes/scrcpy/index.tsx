@@ -21,13 +21,11 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     const [running, setRunning] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const yuvCanvasRef = useRef<YUVCanvas>();
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
     const handleCanvasRef = useCallback((canvas: HTMLCanvasElement | null) => {
         canvasRef.current = canvas;
         if (canvas) {
-            yuvCanvasRef.current = YUVCanvas.attach(canvas);
             canvas.addEventListener('touchstart', e => {
                 e.preventDefault();
             });
@@ -66,6 +64,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 let croppedHeight!: number;
 
                 setDecoderReady(false);
+                const yuvCanvas = YUVCanvas.attach(canvasRef.current!);
                 const decoder = await createTinyH264Decoder();
                 decoder.pictureReady((args) => {
                     const { data, width: videoWidth, height: videoHeight } = args;
@@ -90,7 +89,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                         YUVBuffer.chromaPlane(format, array, videoWidth / 2, videoWidth * videoHeight + videoWidth * videoHeight / 4)
                     );
 
-                    yuvCanvasRef.current?.drawFrame(frame);
+                    yuvCanvas.drawFrame(frame);
                 });
                 setDecoderReady(true);
 
