@@ -8,7 +8,7 @@ import { CommonStackTokens } from '../../styles';
 import { formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
 import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyControlMessageType, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyStartOptions } from './server';
-import { createTinyH264Decoder } from './tinyh264';
+import { createTinyH264Decoder, TinyH264Decoder } from './tinyh264';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
 
@@ -17,7 +17,6 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 }: RouteProps): JSX.Element | null => {
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
-    const [decoderReady, setDecoderReady] = useState(false);
     const [running, setRunning] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -60,39 +59,6 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
         (async () => {
             try {
-                let croppedWidth!: number;
-                let croppedHeight!: number;
-
-                setDecoderReady(false);
-                const yuvCanvas = YUVCanvas.attach(canvasRef.current!);
-                const decoder = await createTinyH264Decoder();
-                decoder.pictureReady((args) => {
-                    const { data, width: videoWidth, height: videoHeight } = args;
-
-                    const format = YUVBuffer.format({
-                        width: videoWidth,
-                        height: videoHeight,
-                        chromaWidth: videoWidth / 2,
-                        chromaHeight: videoHeight / 2,
-                        cropLeft: (videoWidth - croppedWidth) / 2,
-                        cropTop: (videoHeight - croppedHeight) / 2,
-                        cropWidth: croppedWidth,
-                        cropHeight: croppedHeight,
-                        displayWidth: croppedWidth,
-                        displayHeight: croppedHeight,
-                    });
-
-                    const array = new Uint8Array(data);
-                    const frame = YUVBuffer.frame(format,
-                        YUVBuffer.lumaPlane(format, array, videoWidth, 0),
-                        YUVBuffer.chromaPlane(format, array, videoWidth / 2, videoWidth * videoHeight),
-                        YUVBuffer.chromaPlane(format, array, videoWidth / 2, videoWidth * videoHeight + videoWidth * videoHeight / 4)
-                    );
-
-                    yuvCanvas.drawFrame(frame);
-                });
-                setDecoderReady(true);
-
                 setServerTotalSize(0);
                 setServerDownloadedSize(0);
                 setServerUploadedSize(0);
@@ -120,8 +86,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     // TinyH264 is slow, so limit the max resolution and bit rate
                     maxSize: 1080,
                     bitRate: 4_000_000,
-                    // TinyH264 can't handle resolution change, so keep the video stream in portrait
-                    orientation: ScrcpyScreenOrientation.Portrait,
+                    orientation: ScrcpyScreenOrientation.Unlocked,
                     // TinyH264 only supports Baseline profile
                     profile: AndroidCodecProfile.Baseline,
                     level: AndroidCodecLevel.Level4,
@@ -164,14 +129,54 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 });
                 scrcpyClient.onClose(stop);
 
-                scrcpyClient.onSizeChanged(() => {
-                    croppedWidth = scrcpyClient.width!;
-                    croppedHeight = scrcpyClient.height!;
+                let decoderPromise: Promise<TinyH264Decoder> | undefined;
+                scrcpyClient.onSizeChanged(async ({ croppedWidth, croppedHeight, cropLeft, cropTop }) => {
+                    let oldDecoderPromise = decoderPromise;
+                    decoderPromise = createTinyH264Decoder();
+
+                    let decoder = await oldDecoderPromise;
+                    decoder?.dispose();
+
+                    if (canvasRef.current) {
+                        canvasRef.current.width = croppedWidth;
+                        canvasRef.current.height = croppedHeight;
+                    }
+
                     setWidth(croppedWidth);
                     setHeight(croppedHeight);
+
+                    const yuvCanvas = YUVCanvas.attach(canvasRef.current!);
+
+                    decoder = await decoderPromise;
+                    decoder.pictureReady((args) => {
+                        const { data, width: videoWidth, height: videoHeight } = args;
+
+                        const format = YUVBuffer.format({
+                            width: videoWidth,
+                            height: videoHeight,
+                            chromaWidth: videoWidth / 2,
+                            chromaHeight: videoHeight / 2,
+                            cropLeft,
+                            cropTop,
+                            cropWidth: croppedWidth,
+                            cropHeight: croppedHeight,
+                            displayWidth: croppedWidth,
+                            displayHeight: croppedHeight,
+                        });
+
+                        const array = new Uint8Array(data);
+                        const frame = YUVBuffer.frame(format,
+                            YUVBuffer.lumaPlane(format, array, videoWidth, 0),
+                            YUVBuffer.chromaPlane(format, array, videoWidth / 2, videoWidth * videoHeight),
+                            YUVBuffer.chromaPlane(format, array, videoWidth / 2, videoWidth * videoHeight + videoWidth * videoHeight / 4)
+                        );
+
+                        yuvCanvas.drawFrame(frame);
+                    });
                 });
-                scrcpyClient.onVideoData(({ data }) => {
-                    decoder.feed(data!);
+                scrcpyClient.onVideoData(async ({ data }) => {
+                    let decoder = await decoderPromise;
+                    decoder?.feed(data!);
                 });
 
                 scrcpyClient.onClipboardChange(content => {
@@ -385,8 +390,6 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 >
                     <canvas
                         ref={handleCanvasRef}
-                        width={width}
-                        height={height}
                         style={{ display: 'block' }}
                         onPointerDown={handlePointerDown}
                         onPointerMove={handlePointerMove}
@@ -432,25 +435,20 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
             >
                 <Stack tokens={CommonStackTokens}>
                     <ProgressIndicator
-                        label="1. Initializing video decoder..."
-                        percentComplete={decoderReady ? 1 : undefined}
-                    />
-
-                    <ProgressIndicator
-                        label="2. Downloading scrcpy server..."
+                        label="1. Downloading scrcpy server..."
                         percentComplete={serverTotalSize ? serverDownloadedSize / serverTotalSize : undefined}
                         description={formatSpeed(debouncedServerDownloadedSize, serverTotalSize, serverDownloadSpeed)}
                     />
 
                     <ProgressIndicator
-                        label="3. Pushing scrcpy server to device..."
+                        label="2. Pushing scrcpy server to device..."
                         progressHidden={serverTotalSize === 0 || serverDownloadedSize !== serverTotalSize}
                         percentComplete={serverUploadedSize / serverTotalSize}
                         description={formatSpeed(debouncedServerUploadedSize, serverTotalSize, serverUploadSpeed)}
                     />
 
                     <ProgressIndicator
-                        label="4. Starting scrcpy server on device..."
+                        label="3. Starting scrcpy server on device..."
                         progressHidden={serverTotalSize === 0 || serverUploadedSize !== serverTotalSize}
                     />
                 </Stack>

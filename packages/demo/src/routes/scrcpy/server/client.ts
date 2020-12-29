@@ -1,9 +1,10 @@
-import { Adb, AdbBufferedStream, AdbSocket, EventQueue } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbSocket, DataEventEmitter, EventQueue } from '@yume-chan/adb';
 import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
 import { Struct, StructValueType } from '@yume-chan/struct';
 import { AndroidCodecLevel, AndroidCodecProfile } from './codec';
 import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
+import { parse_sequence_parameter_set } from './sps';
 
 const encoderRegex = /^\s+scrcpy --encoder-name '(.*?)'/;
 
@@ -117,6 +118,24 @@ export interface ScrcpyStartOptions {
     onError?: (message: string) => void;
 
     onClose?: () => void;
+}
+
+interface FrameSize {
+    width: number;
+
+    height: number;
+
+    cropLeft: number;
+
+    cropRight: number;
+
+    cropTop: number;
+
+    cropBottom: number;
+
+    croppedWidth: number;
+
+    croppedHeight: number;
 }
 
 export class ScrcpyClient {
@@ -256,16 +275,10 @@ export class ScrcpyClient {
     private _running = true;
     public get running() { return this._running; }
 
-    private _width: number | undefined;
-    public get width() { return this._width; }
-
-    private _height: number | undefined;
-    public get height() { return this._height; }
-
-    private readonly sizeChangedEvent = new EventEmitter<void>();
+    private readonly sizeChangedEvent = new EventEmitter<FrameSize>();
     public get onSizeChanged() { return this.sizeChangedEvent.event; }
 
-    private readonly videoDataEvent = new EventEmitter<VideoPacket>();
+    private readonly videoDataEvent = new DataEventEmitter<VideoPacket>();
     public get onVideoData() { return this.videoDataEvent.event; }
 
     private readonly videoStream: AdbBufferedStream;
@@ -318,18 +331,53 @@ export class ScrcpyClient {
 
             // Initial video size
             const { width, height } = await Size.deserialize(this.videoStream);
-            this._width = width;
-            this._height = height;
-            this.sizeChangedEvent.fire();
+            this.sizeChangedEvent.fire({
+                width,
+                height,
+                cropLeft: 0,
+                cropRight: 0,
+                cropTop: 0,
+                cropBottom: 0,
+                croppedWidth: width,
+                croppedHeight: height,
+            });
 
             let buffer: ArrayBuffer | undefined;
             while (this._running) {
                 const { pts, data } = await VideoPacket.deserialize(this.videoStream);
-                if (data!.byteLength === 0) {
+                if (!data || data.byteLength === 0) {
                     continue;
                 }
 
                 if (pts === NoPts) {
+                    const {
+                        pic_width_in_mbs_minus1,
+                        pic_height_in_map_units_minus1,
+                        frame_mbs_only_flag,
+                        frame_crop_left_offset,
+                        frame_crop_right_offset,
+                        frame_crop_top_offset,
+                        frame_crop_bottom_offset,
+                    } = parse_sequence_parameter_set(data.slice(0));
+
+                    const width = (pic_width_in_mbs_minus1 + 1) * 16;
+                    const height = (pic_height_in_map_units_minus1 + 1) * (2 - frame_mbs_only_flag) * 16;
+                    const cropLeft = frame_crop_left_offset * 2;
+                    const cropRight = frame_crop_right_offset * 2;
+                    const cropTop = frame_crop_top_offset * 2;
+                    const cropBottom = frame_crop_bottom_offset * 2;
+
+                    this.sizeChangedEvent.fire({
+                        width,
+                        height,
+                        cropLeft: cropLeft,
+                        cropRight: cropRight,
+                        cropTop: cropTop,
+                        cropBottom: cropBottom,
+                        croppedWidth: width - cropLeft - cropRight,
+                        croppedHeight: height - cropTop - cropBottom,
+                    });
+
                     buffer = data;
                     continue;
                 }
@@ -344,7 +392,7 @@ export class ScrcpyClient {
                     array = new Uint8Array(data!);
                 }
 
-                this.videoDataEvent.fire({
+                await this.videoDataEvent.fire({
                     pts,
                     size: array.byteLength,
                     data: array.buffer,
