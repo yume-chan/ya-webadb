@@ -49,24 +49,58 @@ export const Intro = withDisplayName('Intro')(() => {
     return (
         <>
             <Text block>
-                This page is a demo of my
-                <ExternalLink href="https://github.com/yume-chan/ya-webadb/" spaceBefore spaceAfter>WebADB</ExternalLink>
-                library, which can connect to your Android devices with the
+                <span>This page is a demo for my</span>
+                <ExternalLink href="https://github.com/yume-chan/ya-webadb/" spaceBefore spaceAfter>ya-webadb</ExternalLink>
+                <span>project, which can connect directly to your phone in browsers, using the</span>
                 <ExternalLink href="https://developer.mozilla.org/en-US/docs/Web/API/USB" spaceBefore spaceAfter>WebUSB</ExternalLink>
-                API.
+                <span>API</span>
+            </Text>
+
+            <Text block>
+                <span>It started out as a proof of concept. </span>
+                <span>And it was called "ya-webadb" (Yet Another WebADB), because there were several similar projects before this one</span>
+                <span> (for example</span>
+                <ExternalLink href="https://github.com/webadb/webadb.js" spaceBefore spaceAfter>webadb/webadb.js</ExternalLink>
+                <span>and</span>
+                <ExternalLink href="https://github.com/cybojenix/WebADB" spaceBefore>cybojenix/WebADB</ExternalLink>
+                <span>).</span>
             </Text>
 
             <Text block styles={BoldTextStyles}>
                 Security concerns:
             </Text>
             <Text block>
-                Yes, accessing USB devices from random website can be pretty dangerous. Firefox team even <ExternalLink href="https://mozilla.github.io/standards-positions/#webusb">considered it harmful</ExternalLink> and refused to implement it.<br />
-                However, there are several reasons you can trust this one:<br />
-                1. Web apps, unlike native apps, can't connect to your devices silently. Web apps must first get your permission through a browser-controlled UI, which it can't alter.<br />
-                2. Web apps can be updated at any time, but native apps can also do this. So I consider this a tie.<br />
-                3. Only minimal and trust-worthy dependencies are used by this website, to minimize the possibility of <ExternalLink href="https://en.wikipedia.org/wiki/Supply_chain_attack" spaceBefore>supply chain attacks</ExternalLink>.<br />
-                4. The source code is available at <ExternalLink href="https://github.com/yume-chan/ya-webadb/" spaceBefore>GitHub</ExternalLink>, you can check it yourself (or you can find someone you trust to check it for you).<br />
-                5. This website is built and published by <ExternalLink href="https://github.com/yume-chan/ya-webadb/blob/master/.github/workflows/gh-pages.yml">GitHub CI</ExternalLink>, so it will be exactly same with the source code.<br />
+                <span>Undeniably, accessing USB devices directly from a web page can be pretty dangerous. </span>
+                <span>Firefox developers even refused to implement the WebUSB standard because they </span>
+                <ExternalLink href="https://mozilla.github.io/standards-positions/#webusb">considered it was harmful</ExternalLink>
+                <span>.</span><br />
+
+                <span>So I don't recommend the average users to try it either.</span>
+            </Text>
+
+            <Text block>
+                <span>However, I believe this one is quite safe. Here are a few reasons why. </span>
+                <span>You can verify it yourself (or find someone you trust to verify it for you)</span>
+            </Text>
+
+            <Text block>
+                <span>1. Unlike native apps, web apps can't access your devices silently. </span>
+                <span>In addition to the connection verification popup that comes with ADB, </span>
+                <span>WebUSB requires the user to permit the connection through a browser-provided UI </span>
+                <span>(which the web page cannot modify or skip).</span><br />
+
+                <span>2. Because it is a proof of concept, I have used only minimal and trustworthy third-party dependencies </span>
+                <span>in the development process, which just minimized</span>
+                <ExternalLink href="https://en.wikipedia.org/wiki/Supply_chain_attack" spaceBefore>supply chain attacks</ExternalLink>
+                <span>.</span><br />
+
+                <span>3. All source code of this project is open sourced on</span>
+                <ExternalLink href="https://github.com/yume-chan/ya-webadb/" spaceBefore>GitHub</ExternalLink>
+                <span>. You can review it at any time.</span><br />
+
+                <span>4. This site is built and deployed by </span>
+                <ExternalLink href="https://github.com/yume-chan/ya-webadb/blob/master/.github/workflows/gh-pages.yml" spaceAfter>GitHub CI</ExternalLink>
+                <span>to ensure that what you see is exactly the same as the source code.</span>
             </Text>
 
             <Text block styles={BoldTextStyles}>
