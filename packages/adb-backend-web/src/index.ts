@@ -15,7 +15,7 @@ const Utf8Encoder = new TextEncoder();
 const Utf8Decoder = new TextDecoder();
 
 export function encodeUtf8(input: string): ArrayBuffer {
-    return Utf8Encoder.encode(input);
+    return Utf8Encoder.encode(input).buffer;
 }
 
 export function decodeUtf8(buffer: ArrayBuffer): string {

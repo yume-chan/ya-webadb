@@ -50,6 +50,15 @@ export const ScrcpyInjectTouchControlMessage =
 
 export type ScrcpyInjectTouchControlMessage = StructInitType<typeof ScrcpyInjectTouchControlMessage>;
 
+export const ScrcpyInjectTextControlMessage =
+    new Struct()
+        .uint8('type', undefined, ScrcpyControlMessageType.InjectText as const)
+        .uint32('length')
+        .string('text', { lengthField: 'length' });
+
+export type ScrcpyInjectTextControlMessage =
+    StructInitType<typeof ScrcpyInjectTextControlMessage>;
+
 export enum AndroidKeyEventAction {
     Down = 0,
     Up = 1,
@@ -58,6 +67,33 @@ export enum AndroidKeyEventAction {
 export enum AndroidKeyCode {
     Home = 3,
     Back = 4,
+    A = 29,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
+    S,
+    T,
+    U,
+    V,
+    W,
+    X,
+    Y,
+    Z,
+    Delete = 67,
     AppSwitch = 187,
 }
 

@@ -1,13 +1,13 @@
 import { Dialog, ICommandBarItemProps, IconButton, LayerHost, ProgressIndicator, Stack } from '@fluentui/react';
 import { useBoolean, useId } from '@uifabric/react-hooks';
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useRef, useState, KeyboardEvent } from 'react';
 import YUVBuffer from 'yuv-buffer';
 import YUVCanvas from 'yuv-canvas';
 import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, ExternalLink } from '../../components';
 import { CommonStackTokens } from '../../styles';
 import { formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
-import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyControlMessageType, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyStartOptions } from './server';
+import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyStartOptions } from './server';
 import { createTinyH264Decoder, TinyH264Decoder } from './tinyh264';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
@@ -293,13 +293,10 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         const pointerScreenY = pointerViewY / view.height * height;
 
         scrcpyClientRef.current?.injectTouch({
-            type: ScrcpyControlMessageType.InjectTouch,
             action,
             pointerId: BigInt(e.pointerId),
             pointerX: pointerScreenX,
             pointerY: pointerScreenY,
-            screenWidth: width,
-            screenHeight: height,
             pressure: e.pressure * 65535,
             buttons: 0,
         });
@@ -309,6 +306,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         if (e.button !== 0) {
             return;
         }
+        canvasRef.current!.focus();
         injectTouch(AndroidMotionEventAction.Down, e);
     }, [injectTouch]);
 
@@ -326,8 +324,23 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         injectTouch(AndroidMotionEventAction.Up, e);
     }, [injectTouch]);
 
-    const handleKeyPress = useCallback((e: React.KeyboardEvent<HTMLCanvasElement>) => {
+    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLCanvasElement>) => {
+        const key = e.key;
+        if (key.match(/^[a-z0-9]$/i)) {
+            scrcpyClientRef.current!.injectText(key);
+            return;
+        }
 
+        const keyCode = ({
+            Backspace: AndroidKeyCode.Delete,
+        } as Record<string, AndroidKeyCode | undefined>)[key];
+        if (keyCode) {
+            scrcpyClientRef.current!.injectKeyCode({
+                keyCode,
+                metaState: 0,
+                repeat: 0,
+            });
+        }
     }, []);
 
     const handleBackClick = useCallback(() => {
@@ -336,7 +349,6 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
     const handleHomeClick = useCallback(() => {
         scrcpyClientRef.current!.injectKeyCode({
-            type: ScrcpyControlMessageType.InjectKeycode,
             keyCode: AndroidKeyCode.Home,
             repeat: 0,
             metaState: 0,
@@ -345,7 +357,6 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
 
     const handleAppSwitchClick = useCallback(() => {
         scrcpyClientRef.current!.injectKeyCode({
-            type: ScrcpyControlMessageType.InjectKeycode,
             keyCode: AndroidKeyCode.AppSwitch,
             repeat: 0,
             metaState: 0,
@@ -390,11 +401,12 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 >
                     <canvas
                         ref={handleCanvasRef}
-                        style={{ display: 'block' }}
+                        style={{ display: 'block', outline: 'none' }}
+                        tabIndex={-1}
                         onPointerDown={handlePointerDown}
                         onPointerMove={handlePointerMove}
                         onPointerUp={handlePointerUp}
-                        onKeyPress={handleKeyPress}
+                        onKeyDown={handleKeyDown}
                     />
                 </DeviceView>
 

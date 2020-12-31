@@ -3,7 +3,7 @@ import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
 import { Struct, StructValueType } from '@yume-chan/struct';
 import { AndroidCodecLevel, AndroidCodecProfile } from './codec';
-import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
+import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
 import { parse_sequence_parameter_set } from './sps';
 
 const encoderRegex = /^\s+scrcpy --encoder-name '(.*?)'/;
@@ -275,6 +275,12 @@ export class ScrcpyClient {
     private _running = true;
     public get running() { return this._running; }
 
+    private _screenWidth: number | undefined;
+    public get screenWidth() { return this._screenWidth; }
+
+    private _screenHeight: number | undefined;
+    public get screenHeight() { return this._screenHeight; }
+
     private readonly sizeChangedEvent = new EventEmitter<FrameSize>();
     public get onSizeChanged() { return this.sizeChangedEvent.event; }
 
@@ -331,6 +337,8 @@ export class ScrcpyClient {
 
             // Initial video size
             const { width, height } = await Size.deserialize(this.videoStream);
+            this._screenWidth = width;
+            this._screenHeight = height;
             this.sizeChangedEvent.fire({
                 width,
                 height,
@@ -367,6 +375,11 @@ export class ScrcpyClient {
                     const cropTop = frame_crop_top_offset * 2;
                     const cropBottom = frame_crop_bottom_offset * 2;
 
+                    const screenWidth = width - cropLeft - cropRight;
+                    const screenHeight = height - cropTop - cropBottom;
+                    this._screenWidth = screenWidth;
+                    this._screenHeight = screenHeight;
+
                     this.sizeChangedEvent.fire({
                         width,
                         height,
@@ -374,8 +387,8 @@ export class ScrcpyClient {
                         cropRight: cropRight,
                         cropTop: cropTop,
                         cropBottom: cropBottom,
-                        croppedWidth: width - cropLeft - cropRight,
-                        croppedHeight: height - cropTop - cropBottom,
+                        croppedWidth: screenWidth,
+                        croppedHeight: screenHeight,
                     });
 
                     buffer = data;
@@ -425,19 +438,32 @@ export class ScrcpyClient {
         }
     }
 
-    public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'action'>) {
+    public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type' | 'action'>) {
         await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
             ...message,
+            type: ScrcpyControlMessageType.InjectKeycode,
             action: AndroidKeyEventAction.Down,
         }, this.process.backend));
 
         await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
             ...message,
+            type: ScrcpyControlMessageType.InjectKeycode,
             action: AndroidKeyEventAction.Up,
         }, this.process.backend));
     }
 
-    public async injectTouch(message: ScrcpyInjectTouchControlMessage) {
+    public async injectText(text: string) {
+        await this.controlStream.write(ScrcpyInjectTextControlMessage.serialize({
+            type: ScrcpyControlMessageType.InjectText,
+            text,
+        }, this.process.backend));
+    }
+
+    public async injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, 'type' | 'screenWidth' | 'screenHeight'>) {
+        if (!this.screenWidth || !this.screenHeight) {
+            return;
+        }
+
         // ADB streams are actually pretty low-bandwidth and laggy
         // Re-sample move events to avoid flooding the connection
         if (this.sendingTouchMessage &&
@@ -446,7 +472,12 @@ export class ScrcpyClient {
         }
 
         this.sendingTouchMessage = true;
-        const buffer = ScrcpyInjectTouchControlMessage.serialize(message, this.process.backend);
+        const buffer = ScrcpyInjectTouchControlMessage.serialize({
+            ...message,
+            type: ScrcpyControlMessageType.InjectTouch,
+            screenWidth: this.screenWidth,
+            screenHeight: this.screenHeight,
+        }, this.process.backend);
         await this.controlStream.write(buffer);
         this.sendingTouchMessage = false;
     }
