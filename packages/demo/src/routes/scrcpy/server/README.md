@@ -2,6 +2,6 @@
 
 The scrcpy server binary was built by scrcpy team, copied here by me, without any changes.
 
-The current version is built from dev branch, taken from [scrcpy#1827 (comment)](https://github.com/Genymobile/scrcpy/pull/1827#issuecomment-725933512).
+Current version is [official build 1.17](https://github.com/Genymobile/scrcpy/releases/tag/v1.17) (Checksum is on the release page)
 
 Scrcpy is open-sourced under Apache License 2.0. See [LICENSE](LICENSE) file for detail.

@@ -81,7 +81,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 const options: ScrcpyStartOptions = {
                     device,
                     path: DeviceServerPath,
-                    version: '1.16',
+                    version: '1.17',
                     logLevel: ScrcpyLogLevel.Debug,
                     // TinyH264 is slow, so limit the max resolution and bit rate
                     maxSize: 1080,
@@ -124,7 +124,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                 scrcpyClient.onInfo(message => {
                     console.log('INFO: ' + message);
                 });
-                scrcpyClient.onError(message => {
+                scrcpyClient.onError(({ message }) => {
                     showErrorDialog(message);
                 });
                 scrcpyClient.onClose(stop);

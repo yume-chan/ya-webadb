@@ -1,5 +1,5 @@
 import { EventEmitter } from "@yume-chan/event";
-import serverUrl from 'file-loader!./scrcpy-server';
+import serverUrl from 'file-loader!./scrcpy-server-v1.17';
 
 class FetchWithProgress {
     public readonly promise: Promise<ArrayBuffer>;

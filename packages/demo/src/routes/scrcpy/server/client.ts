@@ -15,8 +15,65 @@ export enum ScrcpyLogLevel {
     Error = 'error',
 }
 
-function* parseScrcpyOutput(message: string): Generator<{ level: ScrcpyLogLevel, message: string; }> {
-    for (let line of message.split('\n')) {
+interface ScrcpyError {
+    type: string;
+
+    message: string;
+
+    stackTrace: string[];
+}
+
+interface ScrcpyOutput {
+    level: ScrcpyLogLevel;
+
+    message: string;
+
+    error?: ScrcpyError;
+}
+
+class LineReader {
+    private readonly text: string;
+
+    private start = 0;
+
+    private peekLine: string | undefined;
+
+    private peekEnd = 0;
+
+    constructor(text: string) {
+        this.text = text;
+    }
+
+    public next(): string | undefined {
+        let result = this.peek();
+        this.start = this.peekEnd;
+        this.peekEnd = 0;
+        return result;
+    }
+
+    public peek(): string | undefined {
+        if (this.peekEnd) {
+            return this.peekLine;
+        }
+
+        const index = this.text.indexOf('\n', this.start);
+        if (index === -1) {
+            this.peekLine = undefined;
+            this.peekEnd = this.text.length;
+            return undefined;
+        }
+
+        const line = this.text.substring(this.start, index);
+        this.peekLine = line;
+        this.peekEnd = index + 1;
+        return line;
+    }
+}
+
+function* parseScrcpyOutput(text: string): Generator<ScrcpyOutput> {
+    const lines = new LineReader(text);
+    let line: string | undefined;
+    while (line = lines.next()) {
         if (line === '') {
             continue;
         }
@@ -32,18 +89,43 @@ function* parseScrcpyOutput(message: string): Generator<{ level: ScrcpyLogLevel,
                 continue;
             }
 
-            if (line.startsWith('ERROR: ')) {
-                yield {
-                    level: ScrcpyLogLevel.Error,
-                    message: line.substring('ERROR: '.length),
-                };
-                continue;
-            }
-
             if (line.startsWith('INFO: ')) {
                 yield {
                     level: ScrcpyLogLevel.Info,
                     message: line.substring('INFO: '.length),
+                };
+                continue;
+            }
+
+            if (line.startsWith('ERROR: ')) {
+                line = line.substring('ERROR: '.length);
+                const message = line;
+
+                let error: ScrcpyError | undefined;
+                if (line.startsWith('Exception on thread')) {
+                    if (line = lines.next()) {
+                        const [errorType, errorMessage] = line.split(': ', 2);
+                        const stackTrace: string[] = [];
+                        while (line = lines.peek()) {
+                            if (line.startsWith('\t')) {
+                                stackTrace.push(line.trim());
+                                lines.next();
+                                continue;
+                            }
+                            break;
+                        }
+                        error = {
+                            type: errorType,
+                            message: errorMessage,
+                            stackTrace,
+                        };
+                    }
+                }
+
+                yield {
+                    level: ScrcpyLogLevel.Error,
+                    message,
+                    error,
                 };
                 continue;
             }
@@ -115,7 +197,7 @@ export interface ScrcpyStartOptions {
 
     onInfo?: (message: string) => void;
 
-    onError?: (message: string) => void;
+    onError?: (message: ScrcpyOutput) => void;
 
     onClose?: () => void;
 }
@@ -188,13 +270,13 @@ export class ScrcpyClient {
         // Dispatch messages before connection created
         disposables.add(process.onData(data => {
             const string = device.backend.decodeUtf8(data);
-            for (const { level, message } of parseScrcpyOutput(string)) {
-                switch (level) {
+            for (const output of parseScrcpyOutput(string)) {
+                switch (output.level) {
                     case ScrcpyLogLevel.Info:
-                        onInfo?.(message);
+                        onInfo?.(output.message);
                         break;
                     case ScrcpyLogLevel.Error:
-                        onError?.(message);
+                        onError?.(output);
                         break;
                 }
             }
@@ -241,24 +323,24 @@ export class ScrcpyClient {
         options.encoder = '_';
 
         const encoders: string[] = [];
-        options.onError = message => {
+        options.onError = ({ message, error }) => {
+            if (error && error.type !== 'com.genymobile.scrcpy.InvalidEncoderException') {
+                resolver.reject(new Error(`${error.type}: ${error.message}`));
+                return;
+            }
+
             const match = message.match(encoderRegex);
             if (match) {
                 encoders.push(match[1]);
             }
         };
 
-        const connection = await this.start(options);
-
         const resolver = new PromiseResolver<string[]>();
-        setTimeout(() => {
-            // There is no reliable way to detect wether server has finished
-            // printing its message. So wait 1 second before kill it
-            // See https://github.com/Genymobile/scrcpy/issues/1992
-            connection.close();
+        options.onClose = () => {
             resolver.resolve(encoders);
-        }, 1000);
+        };
 
+        await this.start(options);
         return resolver.promise;
     }
 
@@ -267,7 +349,7 @@ export class ScrcpyClient {
     private readonly infoEvent = new EventEmitter<string>();
     public get onInfo() { return this.infoEvent.event; }
 
-    private readonly errorEvent = new EventEmitter<string>();
+    private readonly errorEvent = new EventEmitter<ScrcpyOutput>();
     public get onError() { return this.errorEvent.event; }
 
     public get onClose() { return this.process.onClose; }
@@ -314,13 +396,13 @@ export class ScrcpyClient {
 
     private handleProcessOutput(data: ArrayBuffer) {
         const string = this.process.backend.decodeUtf8(data);
-        for (const { level, message } of parseScrcpyOutput(string)) {
-            switch (level) {
+        for (const output of parseScrcpyOutput(string)) {
+            switch (output.level) {
                 case ScrcpyLogLevel.Info:
-                    this.infoEvent.fire(message);
+                    this.infoEvent.fire(output.message);
                     break;
                 case ScrcpyLogLevel.Error:
-                    this.errorEvent.fire(message);
+                    this.errorEvent.fire(output);
                     break;
             }
         }
