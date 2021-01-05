@@ -43,7 +43,7 @@ export const CacheRoute = withDisplayName('CacheRoute')((props: CacheRouteProps)
     }
 
     return (
-        <Stack {...stackProps}>
+        <Stack {...stackProps} disableShrink>
             {React.Children.map(
                 props.children,
                 element =>
