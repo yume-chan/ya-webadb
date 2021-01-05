@@ -1,5 +1,7 @@
-lib
+cjs
+esm
+dts
 node_modules
 *.log
-tsconfig.tsbuildinfo
+*.tsbuildinfo
 /package-lock.json

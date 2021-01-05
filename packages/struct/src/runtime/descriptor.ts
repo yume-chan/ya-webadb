@@ -1,7 +1,7 @@
-export enum FieldType {
+export enum BuiltInFieldType {
     Number,
-    FixedLengthArray,
-    VariableLengthArray,
+    FixedLengthArrayBufferLike,
+    VariableLengthArrayBufferLike,
 }
 
 export interface FieldDescriptorBaseOptions {
@@ -14,7 +14,7 @@ export interface FieldDescriptorBase<
     TInitObject = {},
     TOptions extends FieldDescriptorBaseOptions = FieldDescriptorBaseOptions
     > {
-    type: FieldType | string;
+    type: BuiltInFieldType | string;
 
     name: TName;
 

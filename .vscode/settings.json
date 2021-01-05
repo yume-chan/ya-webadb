@@ -45,6 +45,7 @@
         "sysui",
         "tcpip",
         "tinyh",
+        "tsbuildinfo",
         "uifabric",
         "webadb",
         "websockify",

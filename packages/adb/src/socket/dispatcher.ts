@@ -23,6 +23,8 @@ export interface AdbIncomingSocketEventArgs {
     socket: AdbSocket;
 }
 
+const EmptyArrayBuffer = new ArrayBuffer(0);
+
 export class AdbPacketDispatcher extends AutoDisposable {
     // ADB socket id starts from 1
     // (0 means open failed)
@@ -222,10 +224,10 @@ export class AdbPacketDispatcher extends AutoDisposable {
         packetOrCommand: AdbPacketInit | AdbCommand,
         arg0?: number,
         arg1?: number,
-        payload?: string | ArrayBuffer
+        payload: string | ArrayBuffer = EmptyArrayBuffer,
     ): Promise<void> {
         let init: AdbPacketInit;
-        if (arguments.length === 1) {
+        if (arg0 === undefined) {
             init = packetOrCommand as AdbPacketInit;
         } else {
             init = {

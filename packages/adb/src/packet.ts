@@ -1,4 +1,4 @@
-import { BackingField, Struct, StructInitType, StructValueType } from '@yume-chan/struct';
+import { Struct, StructInitType, StructValueType } from '@yume-chan/struct';
 import { AdbBackend } from './backend';
 import { BufferedStream } from './stream';
 
@@ -11,7 +11,7 @@ export enum AdbCommand {
     Write = 0x45545257,   // 'WRTE'
 }
 
-const AdbPacketWithoutPayload =
+const AdbPacketHeader =
     new Struct({ littleEndian: true })
         .uint32('command', undefined)
         .uint32('arg0')
@@ -21,13 +21,8 @@ const AdbPacketWithoutPayload =
         .int32('magic');
 
 const AdbPacketStruct =
-    AdbPacketWithoutPayload
-        .arrayBuffer('payload', { lengthField: 'payloadLength' })
-        .afterParsed((value) => {
-            if (value[BackingField].magic !== value.magic) {
-                throw new Error('Invalid command');
-            }
-        });
+    AdbPacketHeader
+        .arrayBuffer('payload', { lengthField: 'payloadLength' });
 
 export type AdbPacket = StructValueType<typeof AdbPacketStruct>;
 
@@ -37,7 +32,7 @@ export namespace AdbPacket {
     export function create(
         init: AdbPacketInit,
         calculateChecksum: boolean,
-        backend: AdbBackend
+        backend: AdbBackend,
     ): AdbPacket {
         let checksum: number;
         if (calculateChecksum && init.payload) {
@@ -85,8 +80,9 @@ export namespace AdbPacket {
 
     export async function write(packet: AdbPacket, backend: AdbBackend): Promise<void> {
         // Write payload separately to avoid an extra copy
-        await backend.write(AdbPacketWithoutPayload.serialize(packet, backend));
-        if (packet.payload) {
+        const header = AdbPacketHeader.serialize(packet, backend);
+        await backend.write(header);
+        if (packet.payload.byteLength) {
             await backend.write(packet.payload);
         }
     }

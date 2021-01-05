@@ -1,4 +1,4 @@
-import { Icon, MessageBar, StackItem, TooltipHost, Text, Separator } from '@fluentui/react';
+import { Icon, MessageBar, Separator, TooltipHost } from '@fluentui/react';
 import { AdbFeatures } from '@yume-chan/adb';
 import React from 'react';
 import { ExternalLink } from '../components';

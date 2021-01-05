@@ -8,7 +8,9 @@
     "author": "Simon Chan <cnsimonchan@live.com>",
     "homepage": "https://github.com/yume-chan/ya-webadb#readme",
     "license": "MIT",
-    "main": "lib/index.js",
+    "main": "cjs/index.js",
+    "module": "esm/index.js",
+    "types": "dts/index.d.ts",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git"

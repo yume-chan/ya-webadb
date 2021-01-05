@@ -1,13 +1,24 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "outDir": "lib", //                       /* Redirect output structure to the directory. */
-        "rootDir": "./src", //                    /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
+        "outDir": "esm",
+        "declarationDir": "dts",
+        "rootDir": "./src",
         "lib": [
             "ESNext",
             "DOM"
+        ],
+        "types": [
+            "@types/w3c-web-usb",
+            "@yume-chan/adb"
         ]
     },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "src/**/*.spec.ts"
+    ],
     "references": [
         {
             "path": "../adb/tsconfig.json"
