@@ -1,23 +1,10 @@
 {
-    "extends": "../../tsconfig.base.json",
+    "extends": "./tsconfig.esm.json",
     "compilerOptions": {
-        "target": "ES2016",
-        "outDir": "esm",
-        "declarationDir": "dts",
-        "rootDir": "./src"
+        "noEmit": true,
+        "types": [
+            "jest"
+        ]
     },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-        "src/**/*.spec.ts"
-    ],
-    "references": [
-        {
-            "path": "../event/tsconfig.esm.json"
-        },
-        {
-            "path": "../struct/tsconfig.esm.json"
-        }
-    ]
+    "exclude": []
 }

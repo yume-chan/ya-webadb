@@ -21,7 +21,7 @@
     ],
     "references": [
         {
-            "path": "../adb/tsconfig.json"
+            "path": "../adb/tsconfig.esm.json"
         }
     ]
 }
