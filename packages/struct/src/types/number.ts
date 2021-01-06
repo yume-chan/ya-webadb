@@ -1,4 +1,4 @@
-import { BuiltInFieldType, FieldDescriptorBase, FieldDescriptorBaseOptions, FieldRuntimeValue, GlobalStructFieldRuntimeTypeRegistry, StructDeserializationContext } from '../runtime';
+import { FieldDefinition, FieldRuntimeValue, StructDeserializationContext, StructOptions, StructSerializationContext } from '../basic';
 
 export type DataViewGetters =
     { [TKey in keyof DataView]: TKey extends `get${string}` ? TKey : never }[keyof DataView];
@@ -6,20 +6,20 @@ export type DataViewGetters =
 export type DataViewSetters =
     { [TKey in keyof DataView]: TKey extends `set${string}` ? TKey : never }[keyof DataView];
 
-export class NumberFieldSubType<TTypeScriptType extends number | bigint = number | bigint> {
-    public static readonly Uint8 = new NumberFieldSubType<number>(1, 'getUint8', 'setUint8');
+export class NumberFieldType<TTypeScriptType extends number | bigint = number | bigint> {
+    public static readonly Uint8 = new NumberFieldType<number>(1, 'getUint8', 'setUint8');
 
-    public static readonly Uint16 = new NumberFieldSubType<number>(2, 'getUint16', 'setUint16');
+    public static readonly Uint16 = new NumberFieldType<number>(2, 'getUint16', 'setUint16');
 
-    public static readonly Int32 = new NumberFieldSubType<number>(4, 'getInt32', 'setInt32');
+    public static readonly Int32 = new NumberFieldType<number>(4, 'getInt32', 'setInt32');
 
-    public static readonly Uint32 = new NumberFieldSubType<number>(4, 'getUint32', 'setUint32');
+    public static readonly Uint32 = new NumberFieldType<number>(4, 'getUint32', 'setUint32');
 
-    public static readonly Int64 = new NumberFieldSubType<bigint>(8, 'getBigInt64', 'setBigInt64');
+    public static readonly Int64 = new NumberFieldType<bigint>(8, 'getBigInt64', 'setBigInt64');
 
-    public static readonly Uint64 = new NumberFieldSubType<bigint>(8, 'getBigUint64', 'setBigUint64');
+    public static readonly Uint64 = new NumberFieldType<bigint>(8, 'getBigUint64', 'setBigUint64');
 
-    public readonly value!: TTypeScriptType;
+    public readonly valueType!: TTypeScriptType;
 
     public readonly size: number;
 
@@ -38,33 +38,44 @@ export class NumberFieldSubType<TTypeScriptType extends number | bigint = number
     }
 }
 
-export interface NumberFieldDescriptor<
-    TName extends string = string,
-    TSubType extends NumberFieldSubType<any> = NumberFieldSubType<any>,
-    TTypeScriptType = TSubType['value'],
-    TOptions extends FieldDescriptorBaseOptions = FieldDescriptorBaseOptions
-    > extends FieldDescriptorBase<
-    TName,
-    Record<TName, TTypeScriptType>,
-    Record<TName, TTypeScriptType>,
-    TOptions
+export class NumberFieldDefinition<
+    TType extends NumberFieldType = NumberFieldType,
+    TTypeScriptType = TType['valueType'],
+    > extends FieldDefinition<
+    void,
+    TTypeScriptType,
+    never
     > {
-    type: BuiltInFieldType.Number;
+    public readonly type: TType;
 
-    subType: TSubType;
-}
-
-export class NumberFieldRuntimeValue extends FieldRuntimeValue<NumberFieldDescriptor> {
-    public static getSize(descriptor: NumberFieldDescriptor): number {
-        return descriptor.subType.size;
+    public constructor(type: TType, _typescriptType?: TTypeScriptType) {
+        super();
+        this.type = type;
     }
 
+    public getSize(): number {
+        return this.type.size;
+    }
+
+    public createValue(
+        options: Readonly<StructOptions>,
+        context: StructSerializationContext,
+        object: any
+    ): NumberFieldRuntimeValue<TType, TTypeScriptType> {
+        return new NumberFieldRuntimeValue(this, options, context, object);
+    }
+}
+
+export class NumberFieldRuntimeValue<
+    TType extends NumberFieldType = NumberFieldType,
+    TTypeScriptType = TType['valueType'],
+    > extends FieldRuntimeValue<NumberFieldDefinition<TType, TTypeScriptType>> {
     protected value: number | bigint | undefined;
 
     public async deserialize(context: StructDeserializationContext): Promise<void> {
         const buffer = await context.read(this.getSize());
         const view = new DataView(buffer);
-        this.value = view[this.descriptor.subType.dataViewGetter](
+        this.value = view[this.definition.type.dataViewGetter](
             0,
             this.options.littleEndian
         );
@@ -82,15 +93,10 @@ export class NumberFieldRuntimeValue extends FieldRuntimeValue<NumberFieldDescri
         // `setBigInt64` requires a `bigint` while others require `number`
         // So `dataView[DataViewSetters]` requires `bigint & number`
         // and that is, `never`
-        (dataView[this.descriptor.subType.dataViewSetter] as any)(
+        (dataView[this.definition.type.dataViewSetter] as any)(
             offset,
             this.value!,
             this.options.littleEndian
         );
     }
 }
-
-GlobalStructFieldRuntimeTypeRegistry.register(
-    BuiltInFieldType.Number,
-    NumberFieldRuntimeValue,
-);

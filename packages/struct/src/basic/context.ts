@@ -1,6 +1,3 @@
-import type { StructFieldRuntimeTypeRegistry } from './registry';
-import { GlobalStructFieldRuntimeTypeRegistry } from './registry';
-
 /**
  * Context with enough methods to serialize a struct
  */
@@ -21,9 +18,10 @@ export interface StructDeserializationContext extends StructSerializationContext
     decodeUtf8(buffer: ArrayBuffer): string;
 
     /**
-     * Read exactly `length` bytes of data from underlying storage.
+     * Read data from the underlying data source.
      *
-     * Errors can be thrown to indicates end of file or other errors.
+     * Context should return exactly `length` bytes or data. If that's not possible
+     * (due to end of file or other error condition), it should throw an error.
      */
     read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
 }
@@ -35,11 +33,8 @@ export interface StructOptions {
      * Default to `false`
      */
     littleEndian: boolean;
-
-    fieldRuntimeTypeRegistry: StructFieldRuntimeTypeRegistry;
 }
 
 export const StructDefaultOptions: Readonly<StructOptions> = {
     littleEndian: false,
-    fieldRuntimeTypeRegistry: GlobalStructFieldRuntimeTypeRegistry,
 };

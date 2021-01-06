@@ -22,8 +22,9 @@ const AdbReverseStringResponse =
         .string('content', { lengthField: 'length' });
 
 const AdbReverseErrorResponse =
-    AdbReverseStringResponse
-        .afterParsed((value) => {
+    new Struct({ littleEndian: true })
+        .fields(AdbReverseStringResponse)
+        .postDeserialize((value) => {
             throw new Error(value.content);
         });
 

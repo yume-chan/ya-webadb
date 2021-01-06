@@ -1,5 +1,5 @@
-import { BuiltInFieldType, createObjectWithRuntimeValues, FieldDescriptorBase, FieldDescriptorBaseOptions, FieldRuntimeValue, getRuntimeValue, GlobalStructFieldRuntimeTypeRegistry, setRuntimeValue, StructDefaultOptions, StructDeserializationContext, StructOptions, StructSerializationContext } from './runtime';
-import { ArrayBufferLikeFieldDescriptor, Evaluate, FixedLengthArrayBufferFieldDescriptor, Identity, KeysOfType, NumberFieldDescriptor, NumberFieldSubType, OmitNever, Overwrite, VariableLengthArrayBufferFieldDescriptor } from './types';
+import { createRuntimeObject, FieldDefinition, FieldRuntimeValue, getRuntimeValue, setRuntimeValue, StructDefaultOptions, StructDeserializationContext, StructOptions, StructSerializationContext } from './basic';
+import { ArrayBufferFieldType, ArrayBufferLikeFieldType, Evaluate, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, Identity, KeysOfType, NumberFieldDefinition, NumberFieldType, Overwrite, StringFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
 
 /**
  * Extract the value type of the specified `Struct`
@@ -12,7 +12,7 @@ export type StructValueType<T> =
 /**
  * Extract the init type of the specified `Struct`
  */
-export type StructInitType<T extends Struct<object, object, object, unknown>> =
+export type StructInitType<T extends Struct<any, object, object, any>> =
     T extends { create(value: infer R, ...args: any): any; } ? Evaluate<R> : never;
 
 /**
@@ -22,35 +22,28 @@ type AddFieldDescriptor<
     TValue extends object,
     TInit extends object,
     TExtra extends object,
-    TAfterParsed,
-    TDescriptor extends FieldDescriptorBase> =
+    TPostDeserialized,
+    TFieldName extends PropertyKey,
+    TDefinition extends FieldDefinition<any, any, any>> =
     Identity<Struct<
         // Merge two types
-        Evaluate<
-            TValue &
-            // `TDescriptor.resultObject` is optional, so remove `undefined` from its type
-            Exclude<TDescriptor['resultObject'], undefined>
-        >,
-        // `TDescriptor.initObject` signals removal of fields by setting its type to `never`
-        // I don't `Evaluate` here, because if I do, the result type will become too complex,
-        // and TypeScript will refuse to evaluate it.
-        OmitNever<
-            TInit &
-            // `TDescriptor.initObject` is optional, so remove `undefined` from its type
-            Exclude<TDescriptor['initObject'], undefined>
-        >,
+        // Evaluate immediately to optimize editor hover tooltip
+        Evaluate<TValue & Record<TFieldName, TDefinition['valueType']>>,
+        // There is no `Evaluate` here, because otherwise the type of a `Struct` with many fields
+        // can become too complex for TypeScript to compute
+        Evaluate<Omit<TInit, TDefinition['removeFields']> & Record<TFieldName, TDefinition['valueType']>>,
         TExtra,
-        TAfterParsed
+        TPostDeserialized
     >>;
 
 /**
- * Overload methods to add an array typed field
+ * Overload methods to add an array buffer like field
  */
-interface AddArrayBufferFieldDescriptor<
+interface ArrayBufferLikeFieldCreator<
     TValue extends object,
     TInit extends object,
     TExtra extends object,
-    TAfterParsed
+    TPostDeserialized
     > {
     /**
      * Append a fixed-length array to the `Struct`
@@ -62,23 +55,23 @@ interface AddArrayBufferFieldDescriptor<
      * For example, if this field is a string, you can declare it as a string enum or literal union.
      */
     <
-        TName extends string,
-        TType extends ArrayBufferLikeFieldDescriptor.SubType,
-        TTypeScriptType extends ArrayBufferLikeFieldDescriptor.TypeScriptType<TType> = ArrayBufferLikeFieldDescriptor.TypeScriptType<TType>
+        TName extends PropertyKey,
+        TType extends ArrayBufferLikeFieldType,
+        TTypeScriptType = TType['valueType'],
         >(
         name: TName,
         type: TType,
-        options: FixedLengthArrayBufferFieldDescriptor.Options,
+        options: FixedLengthArrayBufferLikeFieldOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TValue,
         TInit,
         TExtra,
-        TAfterParsed,
-        FixedLengthArrayBufferFieldDescriptor<
-            TName,
+        TPostDeserialized,
+        TName,
+        FixedLengthArrayBufferLikeFieldDefinition<
             TType,
-            TTypeScriptType
+            FixedLengthArrayBufferLikeFieldOptions
         >
     >;
 
@@ -86,342 +79,350 @@ interface AddArrayBufferFieldDescriptor<
      * Append a variable-length array to the `Struct`
      */
     <
-        TName extends string,
-        TType extends ArrayBufferLikeFieldDescriptor.SubType,
-        TLengthField extends KeysOfType<TInit, number | string>,
-        TTypeScriptType = ArrayBufferLikeFieldDescriptor.TypeScriptType<TType>
+        TName extends PropertyKey,
+        TType extends ArrayBufferLikeFieldType,
+        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TInit>,
+        TTypeScriptType = TType['valueType'],
         >(
         name: TName,
         type: TType,
-        options: VariableLengthArrayBufferFieldDescriptor.Options<TInit, TLengthField>,
+        options: TOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TValue,
         TInit,
         TExtra,
-        TAfterParsed,
-        VariableLengthArrayBufferFieldDescriptor<
-            TName,
+        TPostDeserialized,
+        TName,
+        VariableLengthArrayBufferLikeFieldDefinition<
             TType,
-            TInit,
-            TLengthField,
-            TTypeScriptType
+            TOptions
         >
     >;
 }
 
-interface AddArrayBufferSubTypeFieldDescriptor<
-    TResult extends object,
+/**
+ * Similar to `ArrayBufferLikeFieldCreator`, but bind to a `ArrayBufferLikeFieldType`
+ */
+interface ArrayBufferTypeFieldDefinitionCreator<
+    TValue extends object,
     TInit extends object,
     TExtra extends object,
-    TAfterParsed,
-    TType extends ArrayBufferLikeFieldDescriptor.SubType
+    TPostDeserialized,
+    TType extends ArrayBufferLikeFieldType
     > {
     <
-        TName extends string,
-        TTypeScriptType = ArrayBufferLikeFieldDescriptor.TypeScriptType<TType>
+        TName extends PropertyKey,
+        TTypeScriptType = TType['valueType'],
         >(
         name: TName,
-        options: FixedLengthArrayBufferFieldDescriptor.Options,
+        options: FixedLengthArrayBufferLikeFieldOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
-        TResult,
+        TValue,
         TInit,
         TExtra,
-        TAfterParsed,
-        FixedLengthArrayBufferFieldDescriptor<
-            TName,
+        TPostDeserialized,
+        TName,
+        FixedLengthArrayBufferLikeFieldDefinition<
             TType,
-            TTypeScriptType
+            FixedLengthArrayBufferLikeFieldOptions
         >
     >;
 
     <
-        TName extends string,
+        TName extends PropertyKey,
         TLengthField extends KeysOfType<TInit, number | string>,
-        TTypeScriptType = ArrayBufferLikeFieldDescriptor.TypeScriptType<TType>
+        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TInit, TLengthField>,
+        TTypeScriptType = TType['valueType'],
         >(
         name: TName,
-        options: VariableLengthArrayBufferFieldDescriptor.Options<TInit, TLengthField>,
-        _typescriptType?: TTypeScriptType,
+        options: TOptions,
+        typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
-        TResult,
+        TValue,
         TInit,
         TExtra,
-        TAfterParsed,
-        VariableLengthArrayBufferFieldDescriptor<
-            TName,
+        TPostDeserialized,
+        TName,
+        VariableLengthArrayBufferLikeFieldDefinition<
             TType,
-            TInit,
-            TLengthField,
-            TTypeScriptType
+            TOptions
         >
     >;
 }
 
-export type StructAfterParsed<TResult, TAfterParsed> =
-    (this: TResult, object: TResult) => TAfterParsed;
+export type StructPostDeserialized<TValue, TPostDeserialized> =
+    (this: TValue, object: TValue) => TPostDeserialized;
 
 export default class Struct<
-    TResult extends object = {},
+    TValue extends object = {},
     TInit extends object = {},
     TExtra extends object = {},
-    TAfterParsed = undefined,
+    TPostDeserialized = undefined,
     > {
+    public readonly valueType!: TValue;
+
+    public readonly initType!: TInit;
+
+    public readonly extraType!: TExtra;
+
     public readonly options: Readonly<StructOptions>;
 
     private _size = 0;
+    /**
+     * Get the static size (exclude fields that can change size at runtime)
+     */
     public get size() { return this._size; }
 
-    private fieldDescriptors: FieldDescriptorBase[] = [];
+    private _fields: [name: PropertyKey, definition: FieldDefinition<any, any, any>][] = [];
 
     private _extra: PropertyDescriptorMap = {};
 
-    private _afterParsed?: StructAfterParsed<any, any>;
+    private _postDeserialized?: StructPostDeserialized<TValue, any>;
 
     public constructor(options?: Partial<StructOptions>) {
         this.options = { ...StructDefaultOptions, ...options };
     }
 
-    private clone(): Struct<any, any, any, any> {
-        const result = new Struct<any, any, any, any>(this.options);
-        result.fieldDescriptors = this.fieldDescriptors.slice();
-        result._size = this._size;
-        result._extra = this._extra;
-        result._afterParsed = this._afterParsed;
-        return result;
+    public field<
+        TName extends PropertyKey,
+        TDefinition extends FieldDefinition<any, any, any>
+    >(
+        name: TName,
+        definition: TDefinition,
+    ): AddFieldDescriptor<
+        TValue,
+        TInit,
+        TExtra,
+        TPostDeserialized,
+        TName,
+        TDefinition
+    > {
+        this._fields.push([name, definition]);
+
+        const size = definition.getSize();
+        this._size += size;
+
+        // Force cast `this` to another type
+        return this as any;
     }
 
-    public field<TDescriptor extends FieldDescriptorBase>(
-        descriptor: TDescriptor,
-    ): AddFieldDescriptor<TResult, TInit, TExtra, TAfterParsed, TDescriptor> {
-        const result = this.clone();
-        result.fieldDescriptors.push(descriptor);
-
-        const Constructor = GlobalStructFieldRuntimeTypeRegistry.get(descriptor.type);
-        const size = Constructor.getSize(descriptor, this.options);
-        result._size += size;
-
-        return result;
+    public fields<TOther extends Struct<any, any, any, any>>(
+        struct: TOther
+    ): Struct<
+        TValue & TOther['valueType'],
+        TInit & TOther['initType'],
+        TExtra & TOther['extraType'],
+        TPostDeserialized
+    > {
+        for (const field of struct._fields) {
+            this._fields.push(field);
+        }
+        this._size += struct._size;
+        Object.assign(this._extra, struct._extra);
+        return this as any;
     }
 
     private number<
-        TName extends string,
-        TType extends NumberFieldSubType = NumberFieldSubType,
-        TTypeScriptType = TType['value']
+        TName extends PropertyKey,
+        TType extends NumberFieldType = NumberFieldType,
+        TTypeScriptType = TType['valueType']
     >(
         name: TName,
         type: TType,
-        options: FieldDescriptorBaseOptions = {},
         _typescriptType?: TTypeScriptType,
     ) {
-        return this.field<NumberFieldDescriptor<TName, TType, TTypeScriptType>>({
-            type: BuiltInFieldType.Number,
+        return this.field(
             name,
-            subType: type,
-            options,
-        });
+            new NumberFieldDefinition(type, _typescriptType),
+        );
     }
 
     public uint8<
-        TName extends string,
-        TTypeScriptType = (typeof NumberFieldSubType)['Uint8']['value']
+        TName extends PropertyKey,
+        TTypeScriptType = (typeof NumberFieldType)['Uint8']['valueType']
     >(
         name: TName,
-        options: FieldDescriptorBaseOptions = {},
         _typescriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
-            NumberFieldSubType.Uint8,
-            options,
+            NumberFieldType.Uint8,
             _typescriptType
         );
     }
 
     public uint16<
-        TName extends string,
-        TTypeScriptType = (typeof NumberFieldSubType)['Uint16']['value']
+        TName extends PropertyKey,
+        TTypeScriptType = (typeof NumberFieldType)['Uint16']['valueType']
     >(
         name: TName,
-        options: FieldDescriptorBaseOptions = {},
         _typescriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
-            NumberFieldSubType.Uint16,
-            options,
+            NumberFieldType.Uint16,
             _typescriptType
         );
     }
 
     public int32<
-        TName extends string,
-        TTypeScriptType = (typeof NumberFieldSubType)['Int32']['value']
+        TName extends PropertyKey,
+        TTypeScriptType = (typeof NumberFieldType)['Int32']['valueType']
     >(
         name: TName,
-        options: FieldDescriptorBaseOptions = {},
         _typescriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
-            NumberFieldSubType.Int32,
-            options,
+            NumberFieldType.Int32,
             _typescriptType
         );
     }
 
     public uint32<
-        TName extends string,
-        TTypeScriptType = (typeof NumberFieldSubType)['Uint32']['value']
+        TName extends PropertyKey,
+        TTypeScriptType = (typeof NumberFieldType)['Uint32']['valueType']
     >(
         name: TName,
-        options: FieldDescriptorBaseOptions = {},
         typescriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
-            NumberFieldSubType.Uint32,
-            options,
+            NumberFieldType.Uint32,
             typescriptType
         );
     }
 
     public int64<
-        TName extends string,
-        TTypeScriptType = (typeof NumberFieldSubType)['Int64']['value']
+        TName extends PropertyKey,
+        TTypeScriptType = (typeof NumberFieldType)['Int64']['valueType']
     >(
         name: TName,
-        options: FieldDescriptorBaseOptions = {},
         _typescriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
-            NumberFieldSubType.Int64,
-            options,
+            NumberFieldType.Int64,
             _typescriptType
         );
     }
 
     public uint64<
-        TName extends string,
-        TTypeScriptType = (typeof NumberFieldSubType)['Uint64']['value']
+        TName extends PropertyKey,
+        TTypeScriptType = (typeof NumberFieldType)['Uint64']['valueType']
     >(
         name: TName,
-        options: FieldDescriptorBaseOptions = {},
         _typescriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
-            NumberFieldSubType.Uint64,
-            options,
+            NumberFieldType.Uint64,
             _typescriptType
         );
     }
 
-    private arrayBufferLike: AddArrayBufferFieldDescriptor<TResult, TInit, TExtra, TAfterParsed> = (
-        name: string,
-        type: ArrayBufferLikeFieldDescriptor.SubType,
-        options: FixedLengthArrayBufferFieldDescriptor.Options | VariableLengthArrayBufferFieldDescriptor.Options
-    ): Struct<any, any, any, any> => {
+    private arrayBufferLike: ArrayBufferLikeFieldCreator<TValue, TInit, TExtra, TPostDeserialized> = (
+        name: PropertyKey,
+        type: ArrayBufferLikeFieldType,
+        options: FixedLengthArrayBufferLikeFieldOptions | VariableLengthArrayBufferLikeFieldOptions
+    ): any => {
         if ('length' in options) {
-            return this.field<FixedLengthArrayBufferFieldDescriptor>({
-                type: BuiltInFieldType.FixedLengthArrayBufferLike,
+            return this.field(
                 name,
-                subType: type,
-                options: options,
-            });
+                new FixedLengthArrayBufferLikeFieldDefinition(type, options),
+            );
         } else {
-            return this.field<VariableLengthArrayBufferFieldDescriptor>({
-                type: BuiltInFieldType.VariableLengthArrayBufferLike,
+            return this.field(
                 name,
-                subType: type,
-                options: options,
-            });
+                new VariableLengthArrayBufferLikeFieldDefinition(type, options),
+            );
         }
     };
 
-    public arrayBuffer: AddArrayBufferSubTypeFieldDescriptor<
-        TResult,
+    public arrayBuffer: ArrayBufferTypeFieldDefinitionCreator<
+        TValue,
         TInit,
         TExtra,
-        TAfterParsed,
-        ArrayBufferLikeFieldDescriptor.SubType.ArrayBuffer
-    > = <TName extends string>(
-        name: TName,
+        TPostDeserialized,
+        ArrayBufferFieldType
+    > = (
+        name: PropertyKey,
         options: any
-    ) => {
-            return this.arrayBufferLike(name, ArrayBufferLikeFieldDescriptor.SubType.ArrayBuffer, options);
+    ): any => {
+            return this.arrayBufferLike(name, ArrayBufferFieldType.instance, options);
         };
 
-    public string: AddArrayBufferSubTypeFieldDescriptor<
-        TResult,
+    public string: ArrayBufferTypeFieldDefinitionCreator<
+        TValue,
         TInit,
         TExtra,
-        TAfterParsed,
-        ArrayBufferLikeFieldDescriptor.SubType.String
-    > = <TName extends string>(
-        name: TName,
+        TPostDeserialized,
+        StringFieldType
+    > = (
+        name: PropertyKey,
         options: any
-    ) => {
-            return this.arrayBufferLike(name, ArrayBufferLikeFieldDescriptor.SubType.String, options);
+    ): any => {
+            return this.arrayBufferLike(name, StringFieldType.instance, options);
         };
 
-    public extra<TValue extends Record<
+    public extra<T extends Record<
+        // This trick disallows any keys that are already in `TValue`
         Exclude<
-            keyof TValue,
-            Exclude<keyof TValue, keyof TResult>>,
+            keyof T,
+            Exclude<keyof T, keyof TValue>
+        >,
         never
     >>(
-        value: TValue & ThisType<Overwrite<Overwrite<TExtra, TValue>, TResult>>
+        value: T & ThisType<Overwrite<Overwrite<TExtra, T>, TValue>>
     ): Struct<
-        TResult,
+        TValue,
         TInit,
-        Overwrite<TExtra, TValue>,
-        TAfterParsed
+        Overwrite<TExtra, T>,
+        TPostDeserialized
     > {
-        const result = this.clone();
-        result._extra = { ...result._extra, ...Object.getOwnPropertyDescriptors(value) };
-        return result;
+        Object.assign(this._extra, Object.getOwnPropertyDescriptors(value));
+        return this as any;
     }
 
-    public afterParsed(
-        callback: StructAfterParsed<TResult, never>
-    ): Struct<TResult, TInit, TExtra, never>;
-    public afterParsed(
-        callback?: StructAfterParsed<TResult, void>
-    ): Struct<TResult, TInit, TExtra, undefined>;
-    public afterParsed<TAfterParsed>(
-        callback?: StructAfterParsed<TResult, TAfterParsed>
-    ): Struct<TResult, TInit, TExtra, TAfterParsed>;
-    public afterParsed(
-        callback?: StructAfterParsed<TResult, any>
+    /**
+     *
+     */
+    public postDeserialize(
+        callback: StructPostDeserialized<TValue, never>
+    ): Struct<TValue, TInit, TExtra, never>;
+    public postDeserialize(
+        callback?: StructPostDeserialized<TValue, void>
+    ): Struct<TValue, TInit, TExtra, undefined>;
+    public postDeserialize<TPostSerialize>(
+        callback?: StructPostDeserialized<TValue, TPostSerialize>
+    ): Struct<TValue, TInit, TExtra, TPostSerialize>;
+    public postDeserialize(
+        callback?: StructPostDeserialized<TValue, any>
     ) {
-        const result = this.clone();
-        result._afterParsed = callback;
-        return result;
+        this._postDeserialized = callback;
+        return this as any;
     }
 
     private initializeObject(context: StructSerializationContext) {
-        const object = createObjectWithRuntimeValues();
+        const object = createRuntimeObject();
         Object.defineProperties(object, this._extra);
 
-        for (const descriptor of this.fieldDescriptors) {
-            const Constructor = GlobalStructFieldRuntimeTypeRegistry.get(descriptor.type);
-
-            const runtimeValue = new Constructor(descriptor, this.options, context, object);
-            setRuntimeValue(object, descriptor.name, runtimeValue);
+        for (const [name, definition] of this._fields) {
+            const runtimeValue = definition.createValue(this.options, context, object);
+            setRuntimeValue(object, name, runtimeValue);
         }
 
         return object;
     }
 
-    public create(init: TInit, context: StructSerializationContext): Overwrite<TExtra, TResult> {
+    public create(init: TInit, context: StructSerializationContext): Overwrite<TExtra, TValue> {
         const object = this.initializeObject(context);
 
-        for (const { name: fieldName } of this.fieldDescriptors) {
-            const runtimeValue = getRuntimeValue(object, fieldName);
-            runtimeValue.set((init as any)[fieldName]);
+        for (const [name] of this._fields) {
+            const runtimeValue = getRuntimeValue(object, name);
+            runtimeValue.set((init as any)[name]);
         }
 
         return object as any;
@@ -429,16 +430,16 @@ export default class Struct<
 
     public async deserialize(
         context: StructDeserializationContext
-    ): Promise<TAfterParsed extends undefined ? Overwrite<TExtra, TResult> : TAfterParsed> {
+    ): Promise<TPostDeserialized extends undefined ? Overwrite<TExtra, TValue> : TPostDeserialized> {
         const object = this.initializeObject(context);
 
-        for (const { name: fieldName } of this.fieldDescriptors) {
-            const runtimeValue = getRuntimeValue(object, fieldName);
-            await runtimeValue.deserialize(context, object);
+        for (const [name] of this._fields) {
+            const runtimeValue = getRuntimeValue(object, name);
+            await runtimeValue.deserialize(context);
         }
 
-        if (this._afterParsed) {
-            const result = this._afterParsed.call(object, object);
+        if (this._postDeserialized) {
+            const result = this._postDeserialized.call(object as TValue, object as TValue);
             if (result) {
                 return result;
             }
@@ -453,8 +454,8 @@ export default class Struct<
         let structSize = 0;
         const fieldsInfo: { runtimeValue: FieldRuntimeValue, size: number; }[] = [];
 
-        for (const { name: fieldName } of this.fieldDescriptors) {
-            const runtimeValue = getRuntimeValue(object, fieldName);
+        for (const [name] of this._fields) {
+            const runtimeValue = getRuntimeValue(object, name);
             const size = runtimeValue.getSize();
             fieldsInfo.push({ runtimeValue, size });
             structSize += size;

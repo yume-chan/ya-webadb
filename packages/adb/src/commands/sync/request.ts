@@ -18,7 +18,8 @@ export const AdbSyncNumberRequest =
         .uint32('arg');
 
 export const AdbSyncDataRequest =
-    AdbSyncNumberRequest
+    new Struct({ littleEndian: true })
+        .fields(AdbSyncNumberRequest)
         .arrayBuffer('data', { lengthField: 'arg' });
 
 export async function adbSyncWriteRequest(

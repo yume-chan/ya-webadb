@@ -35,7 +35,7 @@ export const AdbSyncFailResponse =
     new Struct({ littleEndian: true })
         .uint32('messageLength')
         .string('message', { lengthField: 'messageLength' })
-        .afterParsed(object => {
+        .postDeserialize(object => {
             throw new Error(object.message);
         });
 

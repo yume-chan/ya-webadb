@@ -1,34 +1,67 @@
-import { createObjectWithRuntimeValues, getRuntimeValue, setRuntimeValue } from './runtime-value';
+import { StructDeserializationContext, StructOptions, StructSerializationContext } from './context';
+import { FieldDefinition } from './definition';
+import { FieldRuntimeValue } from './runtime-value';
 
-describe('Runtime', () => {
-    describe('RuntimeValue', () => {
-        it('`createObjectWithRuntimeValues` should create an object with symbol', () => {
-            const object = createObjectWithRuntimeValues();
-            expect(Object.getOwnPropertySymbols(object)).toHaveLength(1);
+describe('FieldRuntimeValue', () => {
+    describe('.constructor', () => {
+        it('should save parameters', () => {
+            class MockFieldRuntimeValue extends FieldRuntimeValue {
+                public deserialize(context: StructDeserializationContext): void | Promise<void> {
+                    throw new Error('Method not implemented.');
+                }
+                public get(): unknown {
+                    throw new Error('Method not implemented.');
+                }
+                public set(value: unknown): void {
+                    throw new Error('Method not implemented.');
+                }
+                public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
+                    throw new Error('Method not implemented.');
+                }
+            }
+
+            const definition = 1 as any;
+            const options = 2 as any;
+            const context = 3 as any;
+            const object = 4 as any;
+
+            const fieldRuntimeValue = new MockFieldRuntimeValue(definition, options, context, object);
+            expect(fieldRuntimeValue).toHaveProperty('definition', definition);
+            expect(fieldRuntimeValue).toHaveProperty('options', options);
+            expect(fieldRuntimeValue).toHaveProperty('context', context);
+            expect(fieldRuntimeValue).toHaveProperty('object', object);
         });
+    });
 
-        it('`getRuntimeValue` should return previously set value', () => {
-            const object = createObjectWithRuntimeValues();
-            const field = 'foo';
-            const value = {} as any;
-            setRuntimeValue(object, field, value);
-            expect(getRuntimeValue(object, field)).toBe(value);
-        });
+    describe('#getSize', () => {
+        it('should return same value as definition\'s', () => {
+            class MockFieldDefinition extends FieldDefinition {
+                public getSize(): number {
+                    return 42;
+                }
+                public createValue(options: Readonly<StructOptions>, context: StructSerializationContext, object: any): FieldRuntimeValue<FieldDefinition<any, any, any>> {
+                    throw new Error('Method not implemented.');
+                }
+            }
 
-        it('`setRuntimeValue` should define a proxy to underlying `RuntimeValue`', () => {
-            const object = createObjectWithRuntimeValues();
-            const field = 'foo';
-            const getter = jest.fn(() => 42);
-            const setter = jest.fn((value: number) => { });
-            const value = { get: getter, set: setter } as any;
-            setRuntimeValue(object, field, value);
+            class MockFieldRuntimeValue extends FieldRuntimeValue {
+                public deserialize(context: StructDeserializationContext): void | Promise<void> {
+                    throw new Error('Method not implemented.');
+                }
+                public get(): unknown {
+                    throw new Error('Method not implemented.');
+                }
+                public set(value: unknown): void {
+                    throw new Error('Method not implemented.');
+                }
+                public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
+                    throw new Error('Method not implemented.');
+                }
+            }
 
-            expect((object as any)[field]).toBe(42);
-            expect(getter).toBeCalledTimes(1);
-
-            (object as any)[field] = 100;
-            expect(setter).toBeCalledTimes(1);
-            expect(setter).lastCalledWith(100);
+            const fieldDefinition = new MockFieldDefinition();
+            const fieldRuntimeValue = new MockFieldRuntimeValue(fieldDefinition, undefined as any, undefined as any, undefined as any);
+            expect(fieldRuntimeValue.getSize()).toBe(42);
         });
     });
 });

@@ -16,7 +16,7 @@ export enum ScrcpyControlMessageType {
 
 export const ScrcpySimpleControlMessage =
     new Struct()
-        .uint8('type', undefined, placeholder<ScrcpyControlMessageType.BackOrScreenOn>());
+        .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>());
 
 export type ScrcpySimpleControlMessage = StructInitType<typeof ScrcpySimpleControlMessage>;
 
@@ -38,8 +38,8 @@ export enum AndroidMotionEventAction {
 
 export const ScrcpyInjectTouchControlMessage =
     new Struct()
-        .uint8('type', undefined, ScrcpyControlMessageType.InjectTouch as const)
-        .uint8('action', undefined, placeholder<AndroidMotionEventAction>())
+        .uint8('type', ScrcpyControlMessageType.InjectTouch as const)
+        .uint8('action', placeholder<AndroidMotionEventAction>())
         .uint64('pointerId')
         .uint32('pointerX')
         .uint32('pointerY')
@@ -52,7 +52,7 @@ export type ScrcpyInjectTouchControlMessage = StructInitType<typeof ScrcpyInject
 
 export const ScrcpyInjectTextControlMessage =
     new Struct()
-        .uint8('type', undefined, ScrcpyControlMessageType.InjectText as const)
+        .uint8('type', ScrcpyControlMessageType.InjectText as const)
         .uint32('length')
         .string('text', { lengthField: 'length' });
 
@@ -99,8 +99,8 @@ export enum AndroidKeyCode {
 
 export const ScrcpyInjectKeyCodeControlMessage =
     new Struct()
-        .uint8('type', undefined, ScrcpyControlMessageType.InjectKeycode as const)
-        .uint8('action', undefined, placeholder<AndroidKeyEventAction>())
+        .uint8('type', ScrcpyControlMessageType.InjectKeycode as const)
+        .uint8('action', placeholder<AndroidKeyEventAction>())
         .uint32('keyCode')
         .uint32('repeat')
         .uint32('metaState');

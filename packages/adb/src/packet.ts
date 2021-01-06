@@ -13,7 +13,7 @@ export enum AdbCommand {
 
 const AdbPacketHeader =
     new Struct({ littleEndian: true })
-        .uint32('command', undefined)
+        .uint32('command')
         .uint32('arg0')
         .uint32('arg1')
         .uint32('payloadLength')
@@ -21,7 +21,8 @@ const AdbPacketHeader =
         .int32('magic');
 
 const AdbPacketStruct =
-    AdbPacketHeader
+    new Struct({ littleEndian: true })
+        .fields(AdbPacketHeader)
         .arrayBuffer('payload', { lengthField: 'payloadLength' });
 
 export type AdbPacket = StructValueType<typeof AdbPacketStruct>;

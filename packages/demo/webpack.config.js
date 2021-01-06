@@ -1,13 +1,13 @@
 "use strict";
-const tslib_1 = require("tslib");
-const clean_webpack_plugin_1 = require("clean-webpack-plugin");
-const copy_webpack_plugin_1 = tslib_1.__importDefault(require("copy-webpack-plugin"));
-const html_webpack_plugin_1 = tslib_1.__importDefault(require("html-webpack-plugin"));
-const mini_css_extract_plugin_1 = tslib_1.__importDefault(require("mini-css-extract-plugin"));
-const path_1 = tslib_1.__importDefault(require("path"));
-const webpack_bundle_analyzer_1 = require("webpack-bundle-analyzer");
-const context = path_1.default.resolve(process.cwd());
-const plugins = [
+var tslib_1 = require("tslib");
+var clean_webpack_plugin_1 = require("clean-webpack-plugin");
+var copy_webpack_plugin_1 = tslib_1.__importDefault(require("copy-webpack-plugin"));
+var html_webpack_plugin_1 = tslib_1.__importDefault(require("html-webpack-plugin"));
+var mini_css_extract_plugin_1 = tslib_1.__importDefault(require("mini-css-extract-plugin"));
+var path_1 = tslib_1.__importDefault(require("path"));
+var webpack_bundle_analyzer_1 = require("webpack-bundle-analyzer");
+var context = path_1.default.resolve(process.cwd());
+var plugins = [
     new clean_webpack_plugin_1.CleanWebpackPlugin(),
     new mini_css_extract_plugin_1.default({
         filename: '[name].[contenthash].css',
@@ -29,10 +29,10 @@ const plugins = [
 if (process.env.ANALYZE) {
     plugins.push(new webpack_bundle_analyzer_1.BundleAnalyzerPlugin());
 }
-const config = (env, argv) => ({
+var config = function (env, argv) { return ({
     mode: 'development',
     devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
-    context,
+    context: context,
     target: 'web',
     entry: {
         index: './src/index.tsx',
@@ -43,10 +43,9 @@ const config = (env, argv) => ({
     },
     resolve: {
         extensions: ['.ts', '.tsx', '.js'],
-        // @ts-expect-error typing is not up to date
         fallback: { "path": require.resolve("path-browserify") },
     },
-    plugins,
+    plugins: plugins,
     module: {
         rules: [
             { test: /\.js$/, enforce: 'pre', use: ['source-map-loader'], },
@@ -59,5 +58,5 @@ const config = (env, argv) => ({
         contentBase: path_1.default.resolve(context, 'lib'),
         port: 9000,
     },
-});
+}); };
 module.exports = config;

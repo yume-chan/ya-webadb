@@ -1,37 +1,33 @@
-import { BuiltInFieldType, FieldDescriptorBaseOptions, GlobalStructFieldRuntimeTypeRegistry } from '../runtime';
-import { ArrayBufferLikeFieldDescriptor, ArrayBufferLikeFieldRuntimeValue } from './array-buffer';
+import { StructOptions, StructSerializationContext } from '../basic';
+import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldRuntimeValue, ArrayBufferLikeFieldType } from './array-buffer';
 
-export namespace FixedLengthArrayBufferFieldDescriptor {
-    export interface Options extends FieldDescriptorBaseOptions {
-        length: number;
-    }
+export interface FixedLengthArrayBufferLikeFieldOptions {
+    length: number;
 }
 
-export interface FixedLengthArrayBufferFieldDescriptor<
-    TName extends string = string,
-    TType extends ArrayBufferLikeFieldDescriptor.SubType = ArrayBufferLikeFieldDescriptor.SubType,
-    TTypeScriptType = ArrayBufferLikeFieldDescriptor.TypeScriptType<TType>,
-    TOptions extends FixedLengthArrayBufferFieldDescriptor.Options = FixedLengthArrayBufferFieldDescriptor.Options
-    > extends ArrayBufferLikeFieldDescriptor<
-    TName,
+export class FixedLengthArrayBufferLikeFieldDefinition<
+    TType extends ArrayBufferLikeFieldType = ArrayBufferLikeFieldType,
+    TOptions extends FixedLengthArrayBufferLikeFieldOptions = FixedLengthArrayBufferLikeFieldOptions,
+    > extends ArrayBufferLikeFieldDefinition<
     TType,
-    Record<TName, TTypeScriptType>,
-    Record<TName, TTypeScriptType>,
     TOptions
     > {
-    type: BuiltInFieldType.FixedLengthArrayBufferLike;
+    public getSize(): number {
+        return this.options.length;
+    }
 
-    options: TOptions;
+    public createValue(
+        options: Readonly<StructOptions>,
+        context: StructSerializationContext,
+        object: any
+    ): FixedLengthArrayBufferFieldRuntimeValue {
+        return new FixedLengthArrayBufferFieldRuntimeValue(this, options, context, object);
+    }
 };
 
 class FixedLengthArrayBufferFieldRuntimeValue
-    extends ArrayBufferLikeFieldRuntimeValue<FixedLengthArrayBufferFieldDescriptor>{
-    public static getSize(descriptor: FixedLengthArrayBufferFieldDescriptor) {
+    extends ArrayBufferLikeFieldRuntimeValue<FixedLengthArrayBufferLikeFieldDefinition>{
+    public static getSize(descriptor: FixedLengthArrayBufferLikeFieldDefinition) {
         return descriptor.options.length;
     }
 }
-
-GlobalStructFieldRuntimeTypeRegistry.register(
-    BuiltInFieldType.FixedLengthArrayBufferLike,
-    FixedLengthArrayBufferFieldRuntimeValue,
-);

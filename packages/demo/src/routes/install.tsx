@@ -27,6 +27,7 @@ interface Progress {
 export const Install = withDisplayName('Install')(({
     device,
 }: RouteProps): JSX.Element => {
+    const [installing, setInstalling] = useState(false);
     const [progress, setProgress] = useState<Progress>();
 
     const handleOpen = useCallback(async () => {
@@ -35,6 +36,7 @@ export const Install = withDisplayName('Install')(({
             return;
         }
 
+        setInstalling(true);
         setProgress({
             filename: file.name,
             stage: Stage.Uploading,
@@ -70,13 +72,14 @@ export const Install = withDisplayName('Install')(({
             totalSize: file.size,
             value: 1,
         });
+        setInstalling(false);
     }, [device]);
 
     return (
         <>
             <Stack horizontal>
                 <DefaultButton
-                    disabled={!device || !!progress}
+                    disabled={!device || installing}
                     text="Open"
                     onClick={handleOpen}
                 />

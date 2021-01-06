@@ -20,7 +20,7 @@ export const AdbSyncLstatResponse =
             get type() { return this.mode >> 12 as LinuxFileType; },
             get permission() { return this.mode & 0b00001111_11111111; },
         })
-        .afterParsed((object) => {
+        .postDeserialize((object) => {
             if (object.mode === 0 &&
                 object.size === 0 &&
                 object.mtime === 0
@@ -56,7 +56,7 @@ export enum AdbSyncStatErrorCode {
 
 export const AdbSyncStatResponse =
     new Struct({ littleEndian: true })
-        .uint32('error', undefined, placeholder<AdbSyncStatErrorCode>())
+        .uint32('error', placeholder<AdbSyncStatErrorCode>())
         .uint64('dev')
         .uint64('ino')
         .uint32('mode')
@@ -72,7 +72,7 @@ export const AdbSyncStatResponse =
             get type() { return this.mode >> 12 as LinuxFileType; },
             get permission() { return this.mode & 0b00001111_11111111; },
         })
-        .afterParsed((object) => {
+        .postDeserialize((object) => {
             if (object.error) {
                 throw new Error(AdbSyncStatErrorCode[object.error]);
             }

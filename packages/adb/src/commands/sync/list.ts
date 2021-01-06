@@ -1,12 +1,12 @@
-import { StructValueType } from '@yume-chan/struct';
+import { Struct, StructValueType } from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
 import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './response';
 import { AdbSyncLstatResponse } from './stat';
 
 export const AdbSyncEntryResponse =
-    AdbSyncLstatResponse
-        .afterParsed()
+    new Struct({ littleEndian: true })
+        .fields(AdbSyncLstatResponse)
         .uint32('nameLength')
         .string('name', { lengthField: 'nameLength' })
         .extra({ id: AdbSyncResponseId.Entry as const });

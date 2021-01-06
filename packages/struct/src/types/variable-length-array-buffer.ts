@@ -1,47 +1,47 @@
-import { BuiltInFieldType, FieldDescriptorBaseOptions, getRuntimeValue, GlobalStructFieldRuntimeTypeRegistry, setRuntimeValue, StructOptions, StructSerializationContext } from '../runtime';
-import { ArrayBufferLikeFieldDescriptor, ArrayBufferLikeFieldRuntimeValue } from './array-buffer';
-import { NumberFieldDescriptor, NumberFieldRuntimeValue } from './number';
+import { getRuntimeValue, setRuntimeValue, StructOptions, StructSerializationContext } from '../basic';
+import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldRuntimeValue, ArrayBufferLikeFieldType } from './array-buffer';
+import { NumberFieldDefinition, NumberFieldRuntimeValue } from './number';
 import { KeysOfType } from './utils';
 
-export namespace VariableLengthArrayBufferFieldDescriptor {
-    export interface Options<
-        TInit = object,
-        TLengthField extends KeysOfType<TInit, number | string> = any,
-        > extends FieldDescriptorBaseOptions {
-        lengthField: TLengthField;
+export interface VariableLengthArrayBufferLikeFieldOptions<
+    TInit = object,
+    TLengthField extends KeysOfType<TInit, number | string> = any,
+    > {
+    lengthField: TLengthField;
+}
+
+export class VariableLengthArrayBufferLikeFieldDefinition<
+    TType extends ArrayBufferLikeFieldType = ArrayBufferLikeFieldType,
+    TOptions extends VariableLengthArrayBufferLikeFieldOptions = VariableLengthArrayBufferLikeFieldOptions
+    > extends ArrayBufferLikeFieldDefinition<
+    TType,
+    TOptions,
+    TOptions['lengthField']
+    > {
+    public getSize(): number {
+        return 0;
+    }
+
+    public createValue(
+        options: Readonly<StructOptions>,
+        context: StructSerializationContext,
+        object: any
+    ): VariableLengthArrayBufferLikeFieldRuntimeValue {
+        return new VariableLengthArrayBufferLikeFieldRuntimeValue(this, options, context, object);
     }
 }
 
-export interface VariableLengthArrayBufferFieldDescriptor<
-    TName extends string = string,
-    TType extends ArrayBufferLikeFieldDescriptor.SubType = ArrayBufferLikeFieldDescriptor.SubType,
-    TInit = object,
-    TLengthField extends KeysOfType<TInit, number | string> = any,
-    TTypeScriptType = ArrayBufferLikeFieldDescriptor.TypeScriptType<TType>,
-    TOptions extends VariableLengthArrayBufferFieldDescriptor.Options<TInit, TLengthField> = VariableLengthArrayBufferFieldDescriptor.Options<TInit, TLengthField>
-    > extends ArrayBufferLikeFieldDescriptor<
-    TName,
-    TType,
-    Record<TName, TTypeScriptType>,
-    Record<TName, TTypeScriptType> & Record<TLengthField, never>,
-    TOptions
-    > {
-    type: BuiltInFieldType.VariableLengthArrayBufferLike;
-
-    options: TOptions;
-}
-
-class VariableLengthArrayBufferLengthFieldRuntimeValue extends NumberFieldRuntimeValue {
-    protected arrayBufferValue: VariableLengthArrayBufferFieldRuntimeValue;
+class VariableLengthArrayBufferLikeLengthFieldRuntimeValue extends NumberFieldRuntimeValue {
+    protected arrayBufferValue: VariableLengthArrayBufferLikeFieldRuntimeValue;
 
     public constructor(
-        descriptor: NumberFieldDescriptor,
+        definition: NumberFieldDefinition,
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         object: any,
-        arrayBufferValue: VariableLengthArrayBufferFieldRuntimeValue,
+        arrayBufferValue: VariableLengthArrayBufferLikeFieldRuntimeValue,
     ) {
-        super(descriptor, options, context, object);
+        super(definition, options, context, object);
         this.arrayBufferValue = arrayBufferValue;
     }
 
@@ -61,28 +61,28 @@ class VariableLengthArrayBufferLengthFieldRuntimeValue extends NumberFieldRuntim
     }
 }
 
-class VariableLengthArrayBufferFieldRuntimeValue
-    extends ArrayBufferLikeFieldRuntimeValue<VariableLengthArrayBufferFieldDescriptor> {
+class VariableLengthArrayBufferLikeFieldRuntimeValue
+    extends ArrayBufferLikeFieldRuntimeValue<VariableLengthArrayBufferLikeFieldDefinition> {
     public static getSize() {
         return 0;
     }
 
     protected length: number | undefined;
 
-    protected lengthFieldValue: VariableLengthArrayBufferLengthFieldRuntimeValue;
+    protected lengthFieldValue: VariableLengthArrayBufferLikeLengthFieldRuntimeValue;
 
     public constructor(
-        descriptor: VariableLengthArrayBufferFieldDescriptor,
+        descriptor: VariableLengthArrayBufferLikeFieldDefinition,
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         object: any
     ) {
         super(descriptor, options, context, object);
 
-        const lengthField = this.descriptor.options.lengthField;
+        const lengthField = this.definition.options.lengthField;
         const oldValue = getRuntimeValue(object, lengthField) as NumberFieldRuntimeValue;
-        this.lengthFieldValue = new VariableLengthArrayBufferLengthFieldRuntimeValue(
-            oldValue.descriptor,
+        this.lengthFieldValue = new VariableLengthArrayBufferLikeLengthFieldRuntimeValue(
+            oldValue.definition,
             this.options,
             this.context,
             object,
@@ -98,19 +98,17 @@ class VariableLengthArrayBufferFieldRuntimeValue
 
     public getSize() {
         if (this.length === undefined) {
-            switch (this.descriptor.subType) {
-                case ArrayBufferLikeFieldDescriptor.SubType.ArrayBuffer:
-                    this.length = this.arrayBuffer!.byteLength;
-                    break;
-                case ArrayBufferLikeFieldDescriptor.SubType.Uint8ClampedArray:
-                    this.length = this.typedArray!.byteLength;
-                    break;
-                case ArrayBufferLikeFieldDescriptor.SubType.String:
-                    this.arrayBuffer = this.context.encodeUtf8(this.string!);
+            if (this.arrayBuffer !== undefined) {
+                this.length = this.arrayBuffer.byteLength;
+            } else {
+                this.length = this.definition.type.getSize(this.typedValue);
+                if (this.length === -1) {
+                    this.arrayBuffer = this.definition.type.toArrayBuffer(this.typedValue, this.context);
                     this.length = this.arrayBuffer.byteLength;
-                    break;
+                }
             }
         }
+
         return this.length;
     }
 
@@ -119,8 +117,3 @@ class VariableLengthArrayBufferFieldRuntimeValue
         this.length = undefined;
     }
 }
-
-GlobalStructFieldRuntimeTypeRegistry.register(
-    BuiltInFieldType.VariableLengthArrayBufferLike,
-    VariableLengthArrayBufferFieldRuntimeValue,
-);
