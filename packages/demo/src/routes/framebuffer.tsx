@@ -43,7 +43,7 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
                 canvas.height = height;
 
                 const context = canvas.getContext("2d")!;
-                const image = new ImageData(new Uint8ClampedArray(framebuffer.data!), width, height);
+                const image = new ImageData(framebuffer.data, width, height);
                 context.putImageData(image, 0, 0);
                 setHasImage(true);
             } catch (e) {

@@ -2,7 +2,9 @@ import { Struct, StructValueType } from "@yume-chan/struct";
 import { Adb } from '../adb';
 import { AdbBufferedStream } from '../stream';
 
-const Version = new Struct({ littleEndian: true }).uint32('version');
+const Version =
+    new Struct({ littleEndian: true })
+        .uint32('version');
 
 /*
  * ADB uses 8 int32 fields to describe bit depths
@@ -31,7 +33,7 @@ export const AdbFrameBufferV1 =
         .uint32('green_length')
         .uint32('alpha_offset')
         .uint32('alpha_length')
-        .arrayBuffer('data', { lengthField: 'size' });
+        .uint8ClampedArray('data', { lengthField: 'size' });
 
 export type AdbFrameBufferV1 = StructValueType<typeof AdbFrameBufferV1>;
 
@@ -50,7 +52,7 @@ export const AdbFrameBufferV2 =
         .uint32('green_length')
         .uint32('alpha_offset')
         .uint32('alpha_length')
-        .arrayBuffer('data', { lengthField: 'size' });
+        .uint8ClampedArray('data', { lengthField: 'size' });
 
 export type AdbFrameBufferV2 = StructValueType<typeof AdbFrameBufferV2>;
 

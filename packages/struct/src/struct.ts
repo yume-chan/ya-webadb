@@ -1,5 +1,5 @@
 import { createRuntimeObject, FieldDefinition, FieldRuntimeValue, getRuntimeValue, setRuntimeValue, StructDefaultOptions, StructDeserializationContext, StructOptions, StructSerializationContext } from './basic';
-import { ArrayBufferFieldType, ArrayBufferLikeFieldType, Evaluate, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, Identity, KeysOfType, NumberFieldDefinition, NumberFieldType, Overwrite, StringFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
+import { ArrayBufferFieldType, ArrayBufferLikeFieldType, Evaluate, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, Identity, KeysOfType, NumberFieldDefinition, NumberFieldType, Overwrite, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
 
 /**
  * Extract the value type of the specified `Struct`
@@ -352,6 +352,19 @@ export default class Struct<
         options: any
     ): any => {
             return this.arrayBufferLike(name, ArrayBufferFieldType.instance, options);
+        };
+
+    public uint8ClampedArray: ArrayBufferTypeFieldDefinitionCreator<
+        TValue,
+        TInit,
+        TExtra,
+        TPostDeserialized,
+        Uint8ClampedArrayFieldType
+    > = (
+        name: PropertyKey,
+        options: any
+    ): any => {
+            return this.arrayBufferLike(name, Uint8ClampedArrayFieldType.instance, options);
         };
 
     public string: ArrayBufferTypeFieldDefinitionCreator<
