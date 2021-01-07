@@ -1,6 +1,5 @@
-import { getRuntimeValue, setRuntimeValue, StructOptions, StructSerializationContext } from '../basic';
+import { FieldRuntimeValue, getRuntimeValue, setRuntimeValue, StructOptions, StructSerializationContext } from '../basic';
 import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldRuntimeValue, ArrayBufferLikeFieldType } from './array-buffer';
-import { NumberFieldDefinition, NumberFieldRuntimeValue } from './number';
 import { KeysOfType } from './utils';
 
 export interface VariableLengthArrayBufferLikeFieldOptions<
@@ -22,47 +21,59 @@ export class VariableLengthArrayBufferLikeFieldDefinition<
         return 0;
     }
 
+    protected getDeserializeSize(object: any) {
+        let value = object[this.options.lengthField] as number | string;
+        if (typeof value === 'string') {
+            value = Number.parseInt(value, 10);
+        }
+        return value;
+    }
+
     public createValue(
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
-        object: any
-    ): VariableLengthArrayBufferLikeFieldRuntimeValue {
-        return new VariableLengthArrayBufferLikeFieldRuntimeValue(this, options, context, object);
+        object: any,
+        value: TType['valueType'],
+    ): VariableLengthArrayBufferLikeFieldRuntimeValue<TType, TOptions> {
+        return new VariableLengthArrayBufferLikeFieldRuntimeValue(this, options, context, object, value);
     }
 }
 
-class VariableLengthArrayBufferLikeLengthFieldRuntimeValue extends NumberFieldRuntimeValue {
+class VariableLengthArrayBufferLikeLengthFieldRuntimeValue extends FieldRuntimeValue {
+    protected originalValue: FieldRuntimeValue;
+
     protected arrayBufferValue: VariableLengthArrayBufferLikeFieldRuntimeValue;
 
     public constructor(
-        definition: NumberFieldDefinition,
-        options: Readonly<StructOptions>,
-        context: StructSerializationContext,
-        object: any,
+        originalValue: FieldRuntimeValue,
         arrayBufferValue: VariableLengthArrayBufferLikeFieldRuntimeValue,
     ) {
-        super(definition, options, context, object);
+        super(originalValue.definition, originalValue.options, originalValue.context, originalValue.object, 0);
+        this.originalValue = originalValue;
         this.arrayBufferValue = arrayBufferValue;
     }
 
-    getDeserializeSize() {
-        return this.value;
+    public getSize() {
+        return this.originalValue.getSize();
     }
 
     get() {
+        // TODO: originalValue might be a `string` type, now it always returns `number`.
         return this.arrayBufferValue.getSize();
     }
 
     set() { }
 
-    serialize(dataView: DataView, offset: number) {
-        this.value = this.get();
-        super.serialize(dataView, offset);
+    serialize(dataView: DataView, offset: number, context: StructSerializationContext) {
+        this.originalValue.set(this.get());
+        this.originalValue.serialize(dataView, offset, context);
     }
 }
 
-class VariableLengthArrayBufferLikeFieldRuntimeValue
-    extends ArrayBufferLikeFieldRuntimeValue<VariableLengthArrayBufferLikeFieldDefinition> {
+class VariableLengthArrayBufferLikeFieldRuntimeValue<
+    TType extends ArrayBufferLikeFieldType = ArrayBufferLikeFieldType,
+    TOptions extends VariableLengthArrayBufferLikeFieldOptions = VariableLengthArrayBufferLikeFieldOptions
+    > extends ArrayBufferLikeFieldRuntimeValue<VariableLengthArrayBufferLikeFieldDefinition<TType, TOptions>> {
     public static getSize() {
         return 0;
     }
@@ -72,28 +83,19 @@ class VariableLengthArrayBufferLikeFieldRuntimeValue
     protected lengthFieldValue: VariableLengthArrayBufferLikeLengthFieldRuntimeValue;
 
     public constructor(
-        descriptor: VariableLengthArrayBufferLikeFieldDefinition,
+        definition: VariableLengthArrayBufferLikeFieldDefinition<TType, TOptions>,
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
-        object: any
+        object: any,
+        value: TType['valueType'],
     ) {
-        super(descriptor, options, context, object);
+        super(definition, options, context, object, value);
 
+        // Patch the associated length field.
         const lengthField = this.definition.options.lengthField;
-        const oldValue = getRuntimeValue(object, lengthField) as NumberFieldRuntimeValue;
-        this.lengthFieldValue = new VariableLengthArrayBufferLikeLengthFieldRuntimeValue(
-            oldValue.definition,
-            this.options,
-            this.context,
-            object,
-            this
-        );
+        const originalValue = getRuntimeValue(object, lengthField);
+        this.lengthFieldValue = new VariableLengthArrayBufferLikeLengthFieldRuntimeValue(originalValue, this);
         setRuntimeValue(object, lengthField, this.lengthFieldValue);
-    }
-
-    protected getDeserializeSize() {
-        const value = this.lengthFieldValue.getDeserializeSize() as number;
-        return value;
     }
 
     public getSize() {
@@ -101,9 +103,9 @@ class VariableLengthArrayBufferLikeFieldRuntimeValue
             if (this.arrayBuffer !== undefined) {
                 this.length = this.arrayBuffer.byteLength;
             } else {
-                this.length = this.definition.type.getSize(this.typedValue);
+                this.length = this.definition.type.getSize(this.value);
                 if (this.length === -1) {
-                    this.arrayBuffer = this.definition.type.toArrayBuffer(this.typedValue, this.context);
+                    this.arrayBuffer = this.definition.type.toArrayBuffer(this.value, this.context);
                     this.length = this.arrayBuffer.byteLength;
                 }
             }

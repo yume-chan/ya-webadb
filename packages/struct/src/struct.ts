@@ -31,7 +31,7 @@ type AddFieldDescriptor<
         Evaluate<TValue & Record<TFieldName, TDefinition['valueType']>>,
         // There is no `Evaluate` here, because otherwise the type of a `Struct` with many fields
         // can become too complex for TypeScript to compute
-        Evaluate<Omit<TInit, TDefinition['removeFields']> & Record<TFieldName, TDefinition['valueType']>>,
+        Evaluate<Omit<TInit, TDefinition['removeInitFields']> & Record<TFieldName, TDefinition['valueType']>>,
         TExtra,
         TPostDeserialized
     >>;
@@ -171,7 +171,7 @@ export default class Struct<
 
     private _size = 0;
     /**
-     * Get the static size (exclude fields that can change size at runtime)
+     * Gets the static size (exclude fields that can change size at runtime)
      */
     public get size() { return this._size; }
 
@@ -185,6 +185,9 @@ export default class Struct<
         this.options = { ...StructDefaultOptions, ...options };
     }
 
+    /**
+     * Appends a `FieldDefinition` to the `Struct
+     */
     public field<
         TName extends PropertyKey,
         TDefinition extends FieldDefinition<any, any, any>
@@ -208,6 +211,9 @@ export default class Struct<
         return this as any;
     }
 
+    /**
+     * Merges (flats) another `Struct`'s fields and extra fields into this one.
+     */
     public fields<TOther extends Struct<any, any, any, any>>(
         struct: TOther
     ): Struct<
@@ -239,6 +245,9 @@ export default class Struct<
         );
     }
 
+    /**
+     * Appends an `uint8` field to the `Struct`
+     */
     public uint8<
         TName extends PropertyKey,
         TTypeScriptType = (typeof NumberFieldType)['Uint8']['valueType']
@@ -253,6 +262,9 @@ export default class Struct<
         );
     }
 
+    /**
+     * Appends an `uint16` field to the `Struct`
+     */
     public uint16<
         TName extends PropertyKey,
         TTypeScriptType = (typeof NumberFieldType)['Uint16']['valueType']
@@ -267,6 +279,9 @@ export default class Struct<
         );
     }
 
+    /**
+     * Appends an `int32` field to the `Struct`
+     */
     public int32<
         TName extends PropertyKey,
         TTypeScriptType = (typeof NumberFieldType)['Int32']['valueType']
@@ -281,6 +296,9 @@ export default class Struct<
         );
     }
 
+    /**
+     * Appends an `uint32` field to the `Struct`
+     */
     public uint32<
         TName extends PropertyKey,
         TTypeScriptType = (typeof NumberFieldType)['Uint32']['valueType']
@@ -295,6 +313,11 @@ export default class Struct<
         );
     }
 
+    /**
+     * Appends an `int64` field to the `Struct`
+     *
+     * Requires native `BigInt` support
+     */
     public int64<
         TName extends PropertyKey,
         TTypeScriptType = (typeof NumberFieldType)['Int64']['valueType']
@@ -309,6 +332,11 @@ export default class Struct<
         );
     }
 
+    /**
+     * Appends an `uint64` field to the `Struct`
+     *
+     * Requires native `BigInt` support
+     */
     public uint64<
         TName extends PropertyKey,
         TTypeScriptType = (typeof NumberFieldType)['Uint64']['valueType']
@@ -380,6 +408,13 @@ export default class Struct<
             return this.arrayBufferLike(name, StringFieldType.instance, options);
         };
 
+    /**
+     * Adds some extra fields into every Struct instance.
+     *
+     * Extra fields will not affect serialize or deserialize process.
+     *
+     * Multiple calls to `extra` will merge all values together.
+     */
     public extra<T extends Record<
         // This trick disallows any keys that are already in `TValue`
         Exclude<
@@ -400,14 +435,29 @@ export default class Struct<
     }
 
     /**
+     * Registers (or replaces) a custom callback to be run after deserialized.
      *
+     * A callback returning `never` (always throw an error)
+     * will also change the return type of `deserialize` to `never`.
      */
     public postDeserialize(
         callback: StructPostDeserialized<TValue, never>
     ): Struct<TValue, TInit, TExtra, never>;
+    /**
+     * Registers (or replaces) a custom callback to be run after deserialized.
+     *
+     * A callback returning `void` means it modify the result object in-place
+     * (or doesn't modify it at all), so `deserialize` will still return the result object.
+     */
     public postDeserialize(
         callback?: StructPostDeserialized<TValue, void>
     ): Struct<TValue, TInit, TExtra, undefined>;
+    /**
+     * Registers (or replaces) a custom callback to be run after deserialized.
+     *
+     * A callback returning anything other than `undefined`
+     * will `deserialize` to return that object instead.
+     */
     public postDeserialize<TPostSerialize>(
         callback?: StructPostDeserialized<TValue, TPostSerialize>
     ): Struct<TValue, TInit, TExtra, TPostSerialize>;
@@ -418,24 +468,18 @@ export default class Struct<
         return this as any;
     }
 
-    private initializeObject(context: StructSerializationContext) {
+    private initializeObject() {
         const object = createRuntimeObject();
         Object.defineProperties(object, this._extra);
-
-        for (const [name, definition] of this._fields) {
-            const runtimeValue = definition.createValue(this.options, context, object);
-            setRuntimeValue(object, name, runtimeValue);
-        }
-
         return object;
     }
 
     public create(init: TInit, context: StructSerializationContext): Overwrite<TExtra, TValue> {
-        const object = this.initializeObject(context);
+        const object = this.initializeObject();
 
-        for (const [name] of this._fields) {
-            const runtimeValue = getRuntimeValue(object, name);
-            runtimeValue.set((init as any)[name]);
+        for (const [name, definition] of this._fields) {
+            const runtimeValue = definition.createValue(this.options, context, object, (init as any)[name]);
+            setRuntimeValue(object, name, runtimeValue);
         }
 
         return object as any;
@@ -444,11 +488,11 @@ export default class Struct<
     public async deserialize(
         context: StructDeserializationContext
     ): Promise<TPostDeserialized extends undefined ? Overwrite<TExtra, TValue> : TPostDeserialized> {
-        const object = this.initializeObject(context);
+        const object = this.initializeObject();
 
-        for (const [name] of this._fields) {
-            const runtimeValue = getRuntimeValue(object, name);
-            await runtimeValue.deserialize(context);
+        for (const [name, definition] of this._fields) {
+            const runtimeValue = await definition.deserialize(this.options, context, object);
+            setRuntimeValue(object, name, runtimeValue);
         }
 
         if (this._postDeserialized) {

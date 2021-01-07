@@ -1,5 +1,6 @@
 {
     "name": "@yume-chan/adb-backend-web",
+    "private": true,
     "version": "0.0.1",
     "description": "Backend for `@yume-chan/adb` using Web technologies.",
     "keywords": [

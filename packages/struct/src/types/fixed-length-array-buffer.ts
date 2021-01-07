@@ -19,15 +19,9 @@ export class FixedLengthArrayBufferLikeFieldDefinition<
     public createValue(
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
-        object: any
-    ): FixedLengthArrayBufferFieldRuntimeValue {
-        return new FixedLengthArrayBufferFieldRuntimeValue(this, options, context, object);
+        object: any,
+        value: TType['valueType']
+    ): ArrayBufferLikeFieldRuntimeValue<FixedLengthArrayBufferLikeFieldDefinition<TType, TOptions>> {
+        return new ArrayBufferLikeFieldRuntimeValue(this, options, context, object, value);
     }
 };
-
-class FixedLengthArrayBufferFieldRuntimeValue
-    extends ArrayBufferLikeFieldRuntimeValue<FixedLengthArrayBufferLikeFieldDefinition>{
-    public static getSize(descriptor: FixedLengthArrayBufferLikeFieldDefinition) {
-        return descriptor.options.length;
-    }
-}

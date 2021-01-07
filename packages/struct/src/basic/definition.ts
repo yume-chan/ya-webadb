@@ -1,5 +1,7 @@
-import type { StructOptions, StructSerializationContext } from './context';
+import type { StructDeserializationContext, StructOptions, StructSerializationContext } from './context';
 import type { FieldRuntimeValue } from './runtime-value';
+
+type ValueOrPromise<T> = T | Promise<T>;
 
 /**
  * A field definition is a bridge between its type and its runtime value.
@@ -14,44 +16,54 @@ import type { FieldRuntimeValue } from './runtime-value';
  *
  * @template TOptions TypeScript type of this definition's `options`.
  * @template TValueType TypeScript type of this field.
- * @template TRemoveFields Optional remove keys from current `Struct`. Should be a union of string literal types.
+ * @template TRemoveInitFields Optional remove some field from the `TInit` type. Should be a union of string literal types.
  */
 export abstract class FieldDefinition<
     TOptions = void,
     TValueType = unknown,
-    TRemoveFields = never,
+    TRemoveInitFields = never,
     > {
     public readonly options: TOptions;
 
     /**
      * When `T` is a type initiated `FieldDefinition`,
-     * use `T['valueType']` to retrieve its `TValueType` type parameter
+     * use `T['valueType']` to retrieve its `TValueType` type parameter.
      */
     public readonly valueType!: TValueType;
 
     /**
      * When `T` is a type initiated `FieldDefinition`,
-     * use `T['removeFields']` to retrieve its `TRemoveFields` type parameter .
+     * use `T['removeInitFields']` to retrieve its `TRemoveInitFields` type parameter.
      */
-    public readonly removeFields!: TRemoveFields;
+    public readonly removeInitFields!: TRemoveInitFields;
 
     public constructor(options: TOptions) {
         this.options = options;
     }
 
     /**
-     * When implemented in derived classes, returns the static size (or smallest size) of this field.
+     * When implemented in derived classes, returns the size (or minimal size if it's dynamic) of this field.
      *
      * Actual size can be retrieved from `FieldRuntimeValue#getSize`
      */
     public abstract getSize(): number;
 
     /**
-     * When implemented in derived classes, creates a `FieldRuntimeValue` for the current field definition.
+     * When implemented in derived classes, creates a `FieldRuntimeValue` by parsing the `context`.
+     */
+    public abstract deserialize(
+        options: Readonly<StructOptions>,
+        context: StructDeserializationContext,
+        object: any,
+    ): ValueOrPromise<FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TRemoveInitFields>>>;
+
+    /**
+     * When implemented in derived classes, creates a `FieldRuntimeValue` from a given `value`.
      */
     public abstract createValue(
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
-        object: any
-    ): FieldRuntimeValue;
+        object: any,
+        value: TValueType,
+    ): FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TRemoveInitFields>>;
 }

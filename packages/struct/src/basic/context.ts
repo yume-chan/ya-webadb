@@ -28,7 +28,7 @@ export interface StructDeserializationContext extends StructSerializationContext
 
 export interface StructOptions {
     /**
-     * Whether multi-byte fields in this struct are in little endian
+     * Whether all multi-byte fields in this struct are little-endian encoded.
      *
      * Default to `false`
      */

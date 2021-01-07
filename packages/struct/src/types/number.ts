@@ -57,12 +57,27 @@ export class NumberFieldDefinition<
         return this.type.size;
     }
 
+    public async deserialize(
+        options: Readonly<StructOptions>,
+        context: StructDeserializationContext,
+        object: any,
+    ): Promise<NumberFieldRuntimeValue<TType, TTypeScriptType>> {
+        const buffer = await context.read(this.getSize());
+        const view = new DataView(buffer);
+        const value = view[this.type.dataViewGetter](
+            0,
+            options.littleEndian
+        ) as any;
+        return this.createValue(options, context, object, value);
+    }
+
     public createValue(
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
-        object: any
+        object: any,
+        value: TTypeScriptType,
     ): NumberFieldRuntimeValue<TType, TTypeScriptType> {
-        return new NumberFieldRuntimeValue(this, options, context, object);
+        return new NumberFieldRuntimeValue(this, options, context, object, value);
     }
 }
 
@@ -70,25 +85,6 @@ export class NumberFieldRuntimeValue<
     TType extends NumberFieldType = NumberFieldType,
     TTypeScriptType = TType['valueType'],
     > extends FieldRuntimeValue<NumberFieldDefinition<TType, TTypeScriptType>> {
-    protected value: number | bigint | undefined;
-
-    public async deserialize(context: StructDeserializationContext): Promise<void> {
-        const buffer = await context.read(this.getSize());
-        const view = new DataView(buffer);
-        this.value = view[this.definition.type.dataViewGetter](
-            0,
-            this.options.littleEndian
-        );
-    }
-
-    public get(): unknown {
-        return this.value;
-    }
-
-    public set(value: unknown): void {
-        this.value = value as number | bigint;
-    }
-
     public serialize(dataView: DataView, offset: number): void {
         // `setBigInt64` requires a `bigint` while others require `number`
         // So `dataView[DataViewSetters]` requires `bigint & number`

@@ -1,4 +1,4 @@
-import { FieldDefinition, FieldRuntimeValue, StructDeserializationContext, StructSerializationContext } from '../basic';
+import { FieldDefinition, FieldRuntimeValue, StructDeserializationContext, StructOptions, StructSerializationContext } from '../basic';
 
 /**
  * Base class for all types that
@@ -97,14 +97,16 @@ export class StringFieldType<TTypeScriptType = string>
     }
 }
 
+const EmptyArrayBuffer = new ArrayBuffer(0);
+
 export abstract class ArrayBufferLikeFieldDefinition<
     TType extends ArrayBufferLikeFieldType = ArrayBufferLikeFieldType,
     TOptions = void,
-    TRemoveFields = never,
+    TRemoveInitFields = never,
     > extends FieldDefinition<
     TOptions,
     TType['valueType'],
-    TRemoveFields
+    TRemoveInitFields
     >{
     public readonly type: TType;
 
@@ -112,48 +114,55 @@ export abstract class ArrayBufferLikeFieldDefinition<
         super(options);
         this.type = type;
     }
-}
 
-const EmptyArrayBuffer = new ArrayBuffer(0);
-
-export abstract class ArrayBufferLikeFieldRuntimeValue<
-    TDefinition extends ArrayBufferLikeFieldDefinition<any, any, any>,
-    > extends FieldRuntimeValue<TDefinition> {
-    protected arrayBuffer: ArrayBuffer | undefined;
-
-    protected typedValue: unknown;
-
-    protected getDeserializeSize(): number {
+    protected getDeserializeSize(object: any): number {
         return this.getSize();
     }
 
-    public async deserialize(context: StructDeserializationContext): Promise<void> {
-        const size = this.getDeserializeSize();
+    public async deserialize(
+        options: Readonly<StructOptions>,
+        context: StructDeserializationContext,
+        object: any,
+    ): Promise<ArrayBufferLikeFieldRuntimeValue<ArrayBufferLikeFieldDefinition<TType, TOptions, TRemoveInitFields>>> {
+        const size = this.getDeserializeSize(object);
 
-        this.arrayBuffer = undefined;
-        this.typedValue = undefined;
-
+        let arrayBuffer: ArrayBuffer;
         if (size === 0) {
-            this.arrayBuffer = EmptyArrayBuffer;
+            arrayBuffer = EmptyArrayBuffer;
         } else {
-            this.arrayBuffer = await context.read(size);
+            arrayBuffer = await context.read(size);
         }
 
-        this.typedValue = this.definition.type.fromArrayBuffer(this.arrayBuffer, context);
+        const value = this.type.fromArrayBuffer(arrayBuffer, context);
+        const runtimeValue = this.createValue(options, context, object, value);
+        runtimeValue.arrayBuffer = arrayBuffer;
+        return runtimeValue;
     }
 
-    public get(): unknown {
-        return this.typedValue;
-    }
+    /**
+     * When implemented in derived classes, creates a `FieldRuntimeValue` for the current field definition.
+     */
+    public abstract createValue(
+        options: Readonly<StructOptions>,
+        context: StructSerializationContext,
+        object: any,
+        value: TType['valueType'],
+    ): ArrayBufferLikeFieldRuntimeValue<ArrayBufferLikeFieldDefinition<TType, TOptions, TRemoveInitFields>>;
+}
 
-    public set(value: unknown): void {
-        this.typedValue = value;
+export class ArrayBufferLikeFieldRuntimeValue<
+    TDefinition extends ArrayBufferLikeFieldDefinition<any, any, any>,
+    > extends FieldRuntimeValue<TDefinition> {
+    public arrayBuffer: ArrayBuffer | undefined;
+
+    public set(value: TDefinition['valueType']): void {
+        super.set(value);
         this.arrayBuffer = undefined;
     }
 
     public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
         if (!this.arrayBuffer) {
-            this.arrayBuffer = this.definition.type.toArrayBuffer(this.typedValue, context);
+            this.arrayBuffer = this.definition.type.toArrayBuffer(this.value, context);
         }
 
         new Uint8Array(dataView.buffer)

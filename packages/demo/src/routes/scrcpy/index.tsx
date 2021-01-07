@@ -12,6 +12,18 @@ import { createTinyH264Decoder, TinyH264Decoder } from './tinyh264';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
 
+function clamp(value: number, min: number, max: number): number {
+    if (value < min) {
+        return min;
+    }
+
+    if (value > max) {
+        return max;
+    }
+
+    return value;
+}
+
 export const Scrcpy = withDisplayName('Scrcpy')(({
     device
 }: RouteProps): JSX.Element | null => {
@@ -283,14 +295,11 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         action: AndroidMotionEventAction,
         e: React.PointerEvent<HTMLCanvasElement>
     ) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const view = e.currentTarget.getBoundingClientRect();
+        const view = canvasRef.current!.getBoundingClientRect();
         const pointerViewX = e.clientX - view.x;
         const pointerViewY = e.clientY - view.y;
-        const pointerScreenX = pointerViewX / view.width * width;
-        const pointerScreenY = pointerViewY / view.height * height;
+        const pointerScreenX = clamp(pointerViewX / view.width, 0, 1) * width;
+        const pointerScreenY = clamp(pointerViewY / view.height, 0, 1) * height;
 
         scrcpyClientRef.current?.injectTouch({
             action,
@@ -307,6 +316,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
             return;
         }
         canvasRef.current!.focus();
+        e.currentTarget.setPointerCapture(e.pointerId);
         injectTouch(AndroidMotionEventAction.Down, e);
     }, [injectTouch]);
 
@@ -321,6 +331,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
         if (e.button !== 0) {
             return;
         }
+        e.currentTarget.releasePointerCapture(e.pointerId);
         injectTouch(AndroidMotionEventAction.Up, e);
     }, [injectTouch]);
 
@@ -406,6 +417,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                         onPointerDown={handlePointerDown}
                         onPointerMove={handlePointerMove}
                         onPointerUp={handlePointerUp}
+                        onPointerCancel={handlePointerUp}
                         onKeyDown={handleKeyDown}
                     />
                 </DeviceView>

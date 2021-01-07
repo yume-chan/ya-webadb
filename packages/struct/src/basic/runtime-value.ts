@@ -1,4 +1,4 @@
-import type { StructDeserializationContext, StructOptions, StructSerializationContext } from './context';
+import type { StructOptions, StructSerializationContext } from './context';
 import type { FieldDefinition } from './definition';
 
 /**
@@ -22,22 +22,21 @@ export abstract class FieldRuntimeValue<
     /** Gets the associated `Struct` instance */
     public readonly object: any;
 
+    protected value: TDefinition['valueType'];
+
     public constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         object: any,
+        value: TDefinition['valueType'],
     ) {
         this.definition = definition;
         this.options = options;
         this.context = context;
         this.object = object;
+        this.value = value;
     }
-
-    /** When implemented in derived classes, deserialize this field from the specified `context` */
-    public abstract deserialize(
-        context: StructDeserializationContext
-    ): void | Promise<void>;
 
     /**
      * Gets the actual size of this field. By default, the return value of its `definition.getSize()`
@@ -51,12 +50,16 @@ export abstract class FieldRuntimeValue<
     /**
      * When implemented in derived classes, returns the current value of this field
      */
-    public abstract get(): unknown;
+    public get(): TDefinition['valueType'] {
+        return this.value;
+    }
 
     /**
      * When implemented in derived classes, update the current value of this field
      */
-    public abstract set(value: unknown): void;
+    public set(value: TDefinition['valueType']): void {
+        this.value = value;
+    }
 
     /**
      * When implemented in derived classes, serializes this field into `dataView` at `offset`

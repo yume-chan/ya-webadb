@@ -10,7 +10,6 @@
         "rootDir": "src",
         "outDir": "esm",
         "sourceMap": true,
-        "removeComments": true,
         "declaration": true,
         "declarationDir": "dts",
         "declarationMap": true,

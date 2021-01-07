@@ -6,12 +6,12 @@
             "ESNext"
         ],
         "declaration": false, //                  /* Generates corresponding '.d.ts' file. */
+        "declarationDir": null,
         "declarationMap": false, //               /* Generates a sourcemap for each corresponding '.d.ts' file. */
         "sourceMap": false, //                    /* Generates corresponding '.map' file. */
         "outDir": "../demo", //                   /* Redirect output structure to the directory. */
         "rootDir": "./src", //                    /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
         "composite": false, //                    /* Enable project compilation */
-        "tsBuildInfoFile": "./tsconfig.tsbuildinfo", /* Specify file to store incremental compilation information */
     },
     "include": [
         "src"

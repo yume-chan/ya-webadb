@@ -4,30 +4,42 @@ C-style structure serializer and deserializer.
 
 Fully compatible with TypeScript.
 
-- [Compatibility](#compatibility)
 - [Quick Start](#quick-start)
+- [Compatibility](#compatibility)
 - [API](#api)
   - [`placeholder` method](#placeholder-method)
   - [`Struct` constructor](#struct-constructor)
-  - [`Struct#uint8`/`uint16`/`uint32`/`int32` methods](#structuint8uint16uint32int32-methods)
-  - [`Struct#uint64`/`int64` method](#structuint64int64-method)
+  - [`Struct#fields` method](#structfields-method)
+  - [`Struct#uint8`/`uint16`/`int32`/`uint32` methods](#structuint8uint16int32uint32-methods)
+  - [`Struct#int64`/`uint64` methods](#structint64uint64-methods)
   - [`extra` function](#extra-function)
-  - [`afterParsed` method](#afterparsed-method)
+  - [`postDeserialize` method](#postdeserialize-method)
   - [`deserialize` method](#deserialize-method)
   - [`serialize` method](#serialize-method)
-- [Extend types](#extend-types)
-  - [Backing Field](#backing-field)
-  - [`FieldDescriptorBase` interface](#fielddescriptorbase-interface)
-  - [`field` method](#field-method)
-  - [`FieldTypeDefinition` interface](#fieldtypedefinition-interface)
-    - [`deserialize` method](#deserialize-method-1)
-    - [`getSize` method](#getsize-method)
-    - [`getDynamicSize` method](#getdynamicsize-method)
-    - [`initialize` method](#initialize-method)
-    - [`serialize` method](#serialize-method-1)
-  - [Array type](#array-type)
-  - [`registerFieldTypeDefinition` method](#registerfieldtypedefinition-method)
-  - [Data flow](#data-flow)
+- [Custom types](#custom-types)
+  - [`Struct#field` method](#structfield-method)
+  - [FieldDefinition](#fielddefinition)
+  - [`FieldDefinition#getSize` method](#fielddefinitiongetsize-method)
+  - [`FieldDefinition#deserialize` method](#fielddefinitiondeserialize-method)
+  - [`FieldDefinition#createValue` method](#fielddefinitioncreatevalue-method)
+  - [FieldRuntimeValue](#fieldruntimevalue)
+
+## Quick Start
+
+```ts
+import Struct from '@yume-chan/struct';
+
+const MyStruct =
+    new Struct({ littleEndian: true })
+        .int32('foo')
+        .int32('bar');
+
+const value = await MyStruct.deserialize(someStream);
+// TypeScript can infer type of the result object.
+const { foo, bar } = value;
+
+const buffer = MyStruct.serialize({ foo, bar });
+```
 
 ## Compatibility
 
@@ -47,7 +59,7 @@ Basic usage requires [`Promise`][MDN_Promise], [`ArrayBuffer`][MDN_ArrayBuffer],
 | **Safari**            | 8                         |                                 |
 | **Node.js**           | 0.12                      |                                 |
 
-Usage of `uint64` requires [`BigInt`][MDN_BigInt] (**can't** be polyfilled), [`DataView#getBigUint64`][MDN_DataView_getBigUint64] and [`DataView#setBigUint64`][MDN_DataView_setBigUint64] (can be polyfilled).
+Usage of `int64`/`uint64` requires [`BigInt`][MDN_BigInt] (**can't** be polyfilled), [`DataView#getBigUint64`][MDN_DataView_getBigUint64] and [`DataView#setBigUint64`][MDN_DataView_setBigUint64] (can be polyfilled).
 
 [MDN_BigInt]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
 [MDN_DataView_getBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/getBigUint64
@@ -62,21 +74,6 @@ Usage of `uint64` requires [`BigInt`][MDN_BigInt] (**can't** be polyfilled), [`D
 | **Safari**            | 14                        | Requires polyfills for `DataView#getBigUint64`/`DataView#setBigUint64` |
 | **Node.js**           | 10.4.0                    |                                                                        |
 
-## Quick Start
-
-```ts
-import Struct from '@yume-chan/struct';
-
-const MyStruct =
-    new Struct({ littleEndian: true })
-        .int32('foo')
-        .int32('bar');
-
-const value = MyStruct.deserialize(someStream);
-// TypeScript can infer type of the result object.
-const { foo, bar } = value;
-```
-
 ## API
 
 ### `placeholder` method
@@ -89,20 +86,18 @@ export function placeholder<T>(): T {
 
 Return a (fake) value of the given type.
 
-Because TypeScript only supports supply all or none type arguments, this library allows all type parameters to be inferred from arguments.
-
-This method can be used where an argument is only used to infer a type parameter.
+Because TypeScript only supports supply all or none type arguments, this method allows all type parameters to be inferred from arguments.
 
 **While all following APIs heavily rely on generic, DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
 
 ### `Struct` constructor
 
 ```ts
-export default class Struct<
-    TResult extends object = {},
+class Struct<
+    TValue extends object = {},
     TInit extends object = {},
     TExtra extends object = {},
-    TAfterParsed = undefined,
+    TPostDeserialized = undefined
 > {
     public constructor(options: Partial<StructOptions> = StructDefaultOptions);
 }
@@ -112,10 +107,10 @@ Creates a new structure definition.
 
 **Generic Parameters**
 
-1. `TResult`: Type of the result object.
-2. `TInit`: Type requirement to create such a structure. (Because some fields may implies other fields)
+1. `TValue`: Type of the Struct instance.
+2. `TInit`: Type requirement to create such a structure. (May not be same as `TValue` because some fields can implies others)
 3. `TExtra`: Type of extra fields.
-4. `TAfterParsed`: State of the `afterParsed` function.
+4. `TPostDeserialized`: State of the `postDeserialize` function.
 
 **DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
 
@@ -124,52 +119,90 @@ These are considered "internal state" of the `Struct` and will be taken care of 
 **Parameters**
 
 1. `options`:
-   * `littleEndian:boolean = false`: Whether all multi-byte fields are [little-endian encoded][Wikipeida_Endianess].
+   * `littleEndian:boolean = false`: Whether all multi-byte fields in this struct are [little-endian encoded][Wikipeida_Endianess].
 
 [Wikipeida_Endianess]: https://en.wikipedia.org/wiki/Endianness
 
-### `Struct#uint8`/`uint16`/`uint32`/`int32` methods
+### `Struct#fields` method
 
 ```ts
-public int32<
-    TName extends string,
-    TTypeScriptType = number
+fields<
+    TOther extends Struct<any, any, any, any>
 >(
-    name: TName,
-    options: FieldDescriptorBaseOptions = {},
-    _typescriptType?: TTypeScriptType,
+    struct: TOther
 ): Struct<
-    TResult & Record<TName, TTypeScriptType>,
-    TInit & Record<TName, TTypeScriptType>,
-    TExtra,
-    TAfterParsed,
->;
-
-public uint32<
-    TName extends string,
-    TTypeScriptType = number
->(
-    name: TName,
-    options: {} = {},
-    _typescriptType?: TTypeScriptType,
-): Struct<
-    TResult & Record<TName, TTypeScriptType>,
-    TInit & Record<TName, TTypeScriptType>,
-    TExtra,
-    TAfterParsed,
+    TValue & TOther['valueType'],
+    TInit & TOther['initType'],
+    TExtra & TOther['extraType'],
+    TPostDeserialized
 >;
 ```
 
-Return a new `Struct` instance with an `int32`/`uint32` field appended to the end.
+Merges (flats) another `Struct`'s fields and extra fields into this one.
 
-The original `Struct` instance will not be changed.
+**Examples**
 
-TypeScript will also append a `name: TTypeScriptType` field into the result object and the init object.
+1. Extending another `Struct`
+
+    ```ts
+    const MyStructV1 =
+        new Struct()
+            .int32('field1');
+
+    const MyStructV2 =
+        new Struct()
+            .fields(MyStructV1)
+            .int32('field2');
+
+    const structV2 = await MyStructV2.deserialize(context);
+    structV2.field1; // number
+    structV2.field2; // number
+    // Same result, but serialize/deserialize order is reversed
+    ```
+
+2. Also possible in any order
+
+    ```ts
+    const MyStructV1 =
+        new Struct()
+            .int32('field1');
+
+    const MyStructV2 =
+        new Struct()
+            .int32('field2')
+            .fields(MyStructV1);
+
+    const structV2 = await MyStructV2.deserialize(context);
+    structV2.field1; // number
+    structV2.field2; // number
+    // Fields are flatten
+    ```
+
+### `Struct#uint8`/`uint16`/`int32`/`uint32` methods
+
+```ts
+int32<
+    TName extends PropertyKey,
+    TTypeScriptType = number
+>(
+    name: TName,
+    _typescriptType?: TTypeScriptType
+): Struct<
+    Evaluate<TValue & Record<TName, TTypeScriptType>>,
+    Evaluate<TInit & Record<TName, TTypeScriptType>>,
+    TExtra,
+    TPostDeserialized
+>;
+```
+
+(All method signatures are same)
+
+Appends an `uint8`/`uint16`/`int32`/`uint32` field to the `Struct`
 
 **Generic Parameters**
 
 1. `TName`: Literal type of the field's name.
-2. `TTypeScriptType = number`: Type of the field in the result object.
+2. `TTypeScriptType = number`: Type of the field in the result object. For example you can declare it as a number literal type, or some enum type.
 
 **DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
 
@@ -178,7 +211,6 @@ TypeScript will infer them from arguments. See examples below.
 **Parameters**
 
 1. `name`: (Required) Field name. Should be a string literal to make types work.
-1. `options`: currently unused.
 2. `_typescriptType`: Set field's type. See examples below.
 
 **Note**
@@ -226,67 +258,62 @@ But obviously, it's a bad idea.
     struct.create({ foo: MyEnum.a, bar: MyEnum.b }); // ok
     ```
 
-3. Create a new struct by extending existing one
-
-    ```ts
-    const struct1 = new Struct()
-        .int32('foo');
-
-    const struct2 = struct1
-        .int32('bar');
-
-    assert(struct2 !== struct1);
-    // `struct1` will not be changed
-    ```
-
-### `Struct#uint64`/`int64` method
+### `Struct#int64`/`uint64` methods
 
 ```ts
-public uint64<
-    TName extends string,
+int64<
+    TName extends PropertyKey,
     TTypeScriptType = bigint
 >(
     name: TName,
-    options: FieldDescriptorBaseOptions = {},
-    _typescriptType?: TTypeScriptType,
+    _typescriptType?: TTypeScriptType
 ): Struct<
-    TResult & Record<TName, TTypeScriptType>,
-    TInit & Record<TName, TTypeScriptType>,
+    Evaluate<TValue & Record<TName, TTypeScriptType>>,
+    Evaluate<TInit & Record<TName, TTypeScriptType>>,
     TExtra,
-    TAfterParsed,
+    TPostDeserialized
 >;
 ```
 
-Return a new `Struct` instance with an `uint64` field appended to the end.
+Appends an `int64`/`uint64` field to the `Struct`.
 
-The original `Struct` instance will not be changed.
-
-TypeScript will also append a `name: TTypeScriptType` field into the result object and the init object.
-
-Require native `BigInt` support in runtime. See [compatibility](#compatibility).
+Requires native `BigInt` support of runtime. See [compatibility](#compatibility).
 
 ### `extra` function
 
 ```ts
-public extra<TValue extends object>(
-    value: TValue & ThisType<WithBackingField<Overwrite<Overwrite<TExtra, TValue>, TResult>>>
+extra<
+    T extends Record<
+        Exclude<
+            keyof T,
+            Exclude<
+                keyof T,
+                keyof TValue
+            >
+        >,
+        never
+    >
+>(
+    value: T & ThisType<Overwrite<Overwrite<TExtra, T>, TValue>>
 ): Struct<
-    TResult,
+    TValue,
     TInit,
-    Overwrite<TExtra, TValue>,
-    TAfterParsed
+    Overwrite<TExtra, T>,
+    TPostDeserialized
 >;
 ```
 
-Return a new `Struct` instance adding some extra fields.
+Adds some extra fields into every Struct instance.
 
-The original `Struct` instance will not be changed.
+Extra fields will not affect serialize or deserialize process.
 
-TypeScript will also append all extra fields into the result object (if not already exited).
+Multiple calls to `extra` will merge all values together.
+
+See examples below.
 
 **Generic Parameters**
 
-1. `TValue`: Type of the extra fields.
+1. `T`: Type of the extra fields. The scary looking generic constraint is used to forbid overwriting any already existed fields.
 
 **DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
 
@@ -299,8 +326,6 @@ TypeScript will infer them from arguments. See examples below.
 **Note**
 
 1. If the current `Struct` already has some extra fields, it will be merged with `value`, with `value` taking precedence.
-2. Extra fields will not be serialized.
-3. Extra fields will be ignored if it has the same name with some defined fields.
 
 **Examples**
 
@@ -343,31 +368,30 @@ TypeScript will infer them from arguments. See examples below.
     value.logBar();
     ```
 
-### `afterParsed` method
+### `postDeserialize` method
 
 ```ts
-public afterParsed(
-    callback?: StructAfterParsed<TResult, void>
-): Struct<TResult, TInit, TExtra, undefined>;
+postDeserialize(callback: StructPostDeserialized<TValue, never>): Struct<TValue, TInit, TExtra, never>;
+postDeserialize(callback?: StructPostDeserialized<TValue, void>): Struct<TValue, TInit, TExtra, undefined>;
 ```
 
-Return a new `Struct` instance, registering (or replacing) a custom callback to be run after deserialized.
+Registers (or replaces) a custom callback to be run after deserialized.
 
-The original `Struct` instance will not be changed.
+A callback returning `never` (always throw an error) will also change the return type of `deserialize` to `never`.
+
+A callback returning `void` means it modify the result object in-place (or doesn't modify it at all), so `deserialize` will still return the result object.
 
 ```ts
-public afterParsed<TAfterParsed>(
-    callback?: StructAfterParsed<TResult, TAfterParsed>
-): Struct<TResult, TInit, TExtra, TAfterParsed>;
+postDeserialize<TPostSerialize>(callback?: StructPostDeserialized<TValue, TPostSerialize>): Struct<TValue, TInit, TExtra, TPostSerialize>;
 ```
 
-Return a new `Struct` instance, registering (or replacing) a custom callback to be run after deserialized, and replacing the result object with the returned value.
+Registers (or replaces) a custom callback to be run after deserialized.
 
-The original `Struct` instance will not be changed.
+A callback returning anything other than `undefined` will `deserialize` to return that object instead.
 
 **Generic Parameters**
 
-1. `TAfterParsed`: Type of the new result object.
+1. `TPostSerialize`: Type of the new result object.
 
 **DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
 
@@ -389,7 +413,7 @@ TypeScript will infer them from arguments. See examples below.
     const struct = new Struct()
         .int32('messageLength')
         .string('message', { lengthField: 'messageLength' })
-        .afterParsed(value => {
+        .postDeserialize(value => {
             throw new Error(value.message);
         });
     ```
@@ -400,28 +424,12 @@ TypeScript will infer them from arguments. See examples below.
     // I think this one doesn't need any code example
     ```
 
-3. Clear a previously set `afterParsed` callback
-
-    ```ts
-    // Most used with extending structures
-
-    const struct1 = new Struct()
-        .int32('foo')
-        .afterParsed(value => {
-            // do something
-        });
-
-    const struct2 = struct1
-        .afterParsed() // don't inherit `struct1`'s `afterParsed`
-        .int32('bar');
-    ```
-
-4. Replace result object
+3. Replace result object
 
     ```ts
     const struct1 = new Struct()
         .int32('foo')
-        .afterParsed(value => {
+        .postDeserialize(value => {
             return {
                 bar: value.foo,
             };
@@ -434,14 +442,12 @@ TypeScript will infer them from arguments. See examples below.
 ### `deserialize` method
 
 ```ts
-public async deserialize(
-    context: StructDeserializationContext
-): Promise<TAfterParsed extends undefined ? Overwrite<TExtra, TResult> : TAfterParsed>;
+deserialize(context: StructDeserializationContext): Promise<TPostDeserialized extends undefined ? Overwrite<TExtra, TValue> : TPostDeserialized>;
 ```
 
-Deserialize one structure from the `context`.
+Deserialize a Struct instance from `context`.
 
-As you can see, if your `afterParsed` callback returns a value, that value will be returned by `deserialize`. Or the result object will be returned.
+As you can see, if your `postDeserialize` callback returns something, that value will be returned by `deserialize`.
 
 ### `serialize` method
 
@@ -449,214 +455,97 @@ As you can see, if your `afterParsed` callback returns a value, that value will 
 public serialize(init: TInit, context: StructSerializationContext): ArrayBuffer;
 ```
 
-Serialize a value as the structure.
+Serialize a Struct instance into an `ArrayBuffer`.
 
-## Extend types
+## Custom types
 
-The library also supports adding custom types.
+It also supports adding custom types.
 
-There are two concepts around the type plugin system.
-
-### Backing Field
-
-The result object has a hidden backing field, containing implementation details of each field.
+### `Struct#field` method
 
 ```ts
-import { getBackingField, setBackingField } from '@yume-chan/struct';
-
-const value = getBackingField<number>(resultObject, 'foo');
-setBackingField(resultObject, 'foo', value);
+field<
+    TName extends PropertyKey,
+    TDefinition extends FieldDefinition<any, any, any>
+>(
+    name: TName,
+    definition: TDefinition
+): Struct<
+    Evaluate<TValue & Record<TFieldName, TDefinition['valueType']>>,
+    Evaluate<Omit<TInit, TDefinition['removeFields']> & Record<TFieldName, TDefinition['valueType']>>,
+    TExtra,
+    TPostDeserialized
+>;
 ```
 
-It's possible to access other fields' data if you know the type. But it's not recommended to modify them.
+Appends a `FieldDefinition` to the `Struct.
 
-### `FieldDescriptorBase` interface
+All above built-in methods are all alias to this method.
 
-This interface describes one field, and will be stored in `Struct` class.
-
-**Generic Parameters**
-
-* `TName extends string = string`: Name of the field. Although `FieldDescriptorBase` doesn't need it to be generic, derived types will need it. So marking this way helps TypeScript infer the type.
-* `TResultObject = {}`: Type that will be merged into the result object (`TResult`). Any key that has `never` type will be removed.
-* `TInitObject = {}`: Type that will be merged into the init object (`TInit`). Any key that has `never` type will be removed. Normally you only need to add the current field into `TInit`, but sometimes one field will imply other fields, so you may want to also remove those implied fields from `TInit`.
-* `TOptions extends FieldDescriptorBaseOptions = FieldDescriptorBaseOptions`: Type of the `options`. currently `FieldDescriptorBaseOptions` is empty but maybe something will happen later.
-
-When declaring your own field descriptor, you need to extend `FieldDescriptorBase`, and correctly pass all generic arguments.
-
-**Fields**
-
-* `type: string`: The unique identifier of the type.
-* `name: TName`: Field name in the result object.
-* `options: TOptions`: You can store your options here.
-* `resultObject?: TResultObject`: Make it possible for TypeScript to infer `TResultObject`. DO NOT TOUCH.
-* `initObject?: TInitObject`: Make it possible for TypeScript to infer `TInitObject`. DO NOT TOUCH.
-
-When declaring your own field descriptor, you can also add more fields to hold your data.
-
-### `field` method
-
-`Struct` class also has a `field` method to add a custom field descriptor.
-
-Due to the limitation of TypeScript, you can't extend `Struct` class while keeping the fluent style API working.
-
-So for type safety you should provide a function to generate your own field descriptor, then let the user call the `field` method.
-
-### `FieldTypeDefinition` interface
-
-This interface defines how to serialize and deserialize a type. You need to implement this interface for your type and register it.
-
-**Generic Parameters**
-
-* `TDescriptor extends FieldDescriptorBase = FieldDescriptorBase`: Type of the field descriptor. Just pass in your own field descriptor type.
-
-**Fields**
-
-* `type: string`: The unique identifier of the type. Make sure it's same as in `FieldDescriptor`.
-
-#### `deserialize` method
+### FieldDefinition
 
 ```ts
-deserialize(options: {
-    context: StructDeserializationContext;
-    field: TDescriptor;
-    object: any;
-    options: StructOptions;
-}): Promise<void>;
-```
+abstract class FieldDefinition<TOptions = void, TValueType = unknown, TRemoveFields = never> {
+    readonly options: TOptions;
 
-Defines how to deserialize the field.
-
-You should `read` data from the `context` according to your `field` descriptor, and set appropriate values onto `object` ("appropriate" means "same as `TDescriptor`'s `TResultObject`").
-
-If you also defined `initialize` method, the result data shape of `object` should be same as the result of `initialize`.
-
-#### `getSize` method
-
-```ts
-getSize(options: {
-    field: TDescriptor;
-    options: StructOptions;
-}): number;
-```
-
-Get the size (in bytes) of the field.
-
-If the size is (partially or fully) dynamic, returns the minimal size.
-
-It's just a hint for how much data should be ready before parsing, not that important.
-
-#### `getDynamicSize` method
-
-```ts
-getDynamicSize?(options: {
-    context: StructSerializationContext,
-    field: TDescriptor,
-    object: any,
-    options: StructOptions,
-}): number;
-```
-
-Similar to `getSize`, but also has access to `object` and `context` so the actual size can be calculated.
-
-This method will be called just before `serialize`, so you can also prepare your field to be serialized in it.
-
-You can also modify `object` to store your lazily evaluated values so next serialization can reuse them. But make sure you have also defined a setter in `initialize` method to invalidate the cache.
-
-#### `initialize` method
-
-```ts
-initialize?(options: {
-    context: StructSerializationContext;
-    field: TDescriptor;
-    init: any;
-    object: any;
-    options: StructOptions;
-}): void;
-```
-
-When creating or serializing an object, you can fine tune how to map fields from `init` object onto the result `object`.
-
-You can modify the `object` as your wish, but a common practice is storing actual data on the backing field and define getter/setter on `object` to access them. Because fields may be overwritten by `extra` fields, where data on the backing field is still useful.
-
-```ts
-initialize({ field, init, object }) {
-    object[BackingField][field.name] = {
-        value: init[field.name],
-        ...extraData,
-    };
-
-    Object.defineProperty(object, field.name, {
-        configurable: true,
-        enumerable: true,
-        get() { return object[BackingField][field.name].value; }
-        set(value) {
-            object[BackingField][field.name].value = value;
-            // set some other data
-        }
-    });
+    constructor(options: TOptions);
 }
 ```
 
-If omitted, value from `init` will be set into the backing field and a pair of simple getter/setter will be defined on `object`.
+A `FieldDefinition` defines its type, size, etc.
 
-Some possible usages:
+It's an `abstract` class, means it lacks some method implementations, so it shouldn't be constructed.
 
-1. Do some calculations and then set it onto `object`.
-2. Define getter/setter onto `object` to intercept read/write.
-3. Maybe one field implies others, so you can define multiple fields onto `object` for a single `field`.
+To create a custom type, one should create its own derived classes of `FieldDefinition` and `FieldRuntimeValue`.
 
-#### `serialize` method
+The custom `FieldDefinition` then can be passed to `Struct#field` method to append such a custom type field.
+
+### `FieldDefinition#getSize` method
 
 ```ts
-serialize(options: {
-    context: StructSerializationContext;
-    dataView: DataView;
-    field: TDescriptor;
-    object: any;
-    offset: number;
-    options: StructOptions;
-}): void;
+abstract getSize(): number;
 ```
 
-Defines how to serialize the field.
+Returns the size (or minimal size if it's dynamic) of this field.
 
-You should serialize your `field`'s value on `object`, and write it to `dataView` at `offset`.
+Actual size should been returned from `FieldRuntimeValue#getSize`
 
-You must not write more data than `getSize`/`getDynamicSize` returned. Or an Error will be thrown.
+### `FieldDefinition#deserialize` method
 
-### Array type
+```ts
+abstract deserialize(
+    options: Readonly<StructOptions>,
+    context: StructDeserializationContext,
+    object: any,
+): ValueOrPromise<FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TRemoveInitFields>>>;
+```
 
-Instead of true "Array", the current array types (`arraybuffer` and `string`) are more like buffers.
+Defines how to deserialize a value from `context`. Can also return a `Promise`.
 
-### `registerFieldTypeDefinition` method
+Usually implementations should be:
 
-This library exports the `registerFieldTypeDefinition` method to register your custom type definitions.
+1. Some how parse the value from `context`
+2. Pass the value into `FieldDefinition#createValue`
 
-Pass the `undefined as unknown as YourTypeDescriptor` as the first argument to make TypeScript infers the type.
+Sometimes, some metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` and save those metadata on the `FieldRuntimeValue` instance.
 
-### Data flow
+### `FieldDefinition#createValue` method
 
-Here are lists of methods calling order to help you understand how this library works.
+```ts
+abstract createValue(
+    options: Readonly<StructOptions>,
+    context: StructSerializationContext,
+    object: any,
+    value: TValueType,
+): FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TRemoveInitFields>>;
+```
 
-| Method                        | Description                |
-| ----------------------------- | -------------------------- |
-| `Struct#field`                | Add a field descriptor     |
-| `FieldTypeDefinition#getSize` | Add up struct's total size |
+Similar to `deserialize`, creates a `FieldRuntimeValue` for this instance.
 
-| Method                            | Description                          |
-| --------------------------------- | ------------------------------------ |
-| `Struct#deserialize`              | Start deserializing from a `context` |
-| `FieldTypeDefinition#deserialize` | Deserialize each field               |
+The difference is `createValue` will be called when a init value was provided to create a Struct instance.
 
-| Method                           | Description                                          |
-| -------------------------------- | ---------------------------------------------------- |
-| `Struct#create`                  | Validate and create a value of the current structure |
-| `FieldTypeDefinition#initialize` | Initialize each field                                |
+### FieldRuntimeValue
 
-| Method                               | Description                                          |
-| ------------------------------------ | ---------------------------------------------------- |
-| `Struct#serialize`                   | Serialize a value into a buffer                      |
-| `Struct#create`                      | Validate and create a value of the current structure |
-| `FieldTypeDefinition#initialize`     | Initialize each field                                |
-| `FieldTypeDefinition#getDynamicSize` | Get actual sizes of each field                       |
-| `FieldTypeDefinition#serialize`      | Write each field into the allocated buffer           |
+One `FieldDefinition` instance represents one field declaration, and one `FieldRuntimeValue` instance represents one value.
+
+It defines how to get, set, and serialize a value.
