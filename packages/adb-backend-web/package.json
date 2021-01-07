@@ -31,6 +31,6 @@
         "@types/w3c-web-usb": "1.0.4",
         "@yume-chan/adb": "^0.0.3",
         "@yume-chan/event": "^0.0.3",
-        "tslib": "2.0.3"
+        "tslib": "2.1.0"
     }
 }
