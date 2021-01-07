@@ -47,7 +47,7 @@ describe('Types', () => {
             });
         });
 
-        describe('NumberFieldRuntimeValue', () => {
+        describe('NumberFieldDefinition', () => {
             it('should deserialize Uint8', async () => {
                 const read = jest.fn((length: number) => new Uint8Array([1, 2, 3, 4]).buffer);
                 const context: StructDeserializationContext = {
@@ -56,13 +56,12 @@ describe('Types', () => {
                     encodeUtf8(input) { throw new Error(''); },
                 };
 
-                const value = new NumberFieldRuntimeValue(
-                    new NumberFieldDefinition(NumberFieldType.Uint8),
+                const definition = new NumberFieldDefinition(NumberFieldType.Uint8);
+                const value = await definition.deserialize(
                     StructDefaultOptions,
-                    undefined as any,
-                    undefined as any,
+                    context,
+                    {}
                 );
-                await value.deserialize(context);
 
                 expect(value.get()).toBe(1);
                 expect(read).toBeCalledTimes(1);
@@ -77,13 +76,12 @@ describe('Types', () => {
                     encodeUtf8(input) { throw new Error(''); },
                 };
 
-                const value = new NumberFieldRuntimeValue(
-                    new NumberFieldDefinition(NumberFieldType.Uint16),
+                const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
+                const value = await definition.deserialize(
                     StructDefaultOptions,
-                    undefined as any,
-                    undefined as any,
+                    context,
+                    {}
                 );
-                await value.deserialize(context);
 
                 expect(value.get()).toBe((1 << 8) | 2);
                 expect(read).toBeCalledTimes(1);
@@ -98,13 +96,12 @@ describe('Types', () => {
                     encodeUtf8(input) { throw new Error(''); },
                 };
 
-                const value = new NumberFieldRuntimeValue(
-                    new NumberFieldDefinition(NumberFieldType.Uint16),
+                const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
+                const value = await definition.deserialize(
                     { ...StructDefaultOptions, littleEndian: true },
-                    undefined as any,
-                    undefined as any,
+                    context,
+                    {}
                 );
-                await value.deserialize(context);
 
                 expect(value.get()).toBe((2 << 8) | 1);
                 expect(read).toBeCalledTimes(1);

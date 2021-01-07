@@ -1,3 +1,4 @@
+import { StructOptions, StructDeserializationContext, StructSerializationContext } from './context';
 import { FieldDefinition } from './definition';
 import { FieldRuntimeValue } from './runtime-value';
 
@@ -11,7 +12,10 @@ describe('FieldDefinition', () => {
                 public getSize(): number {
                     throw new Error('Method not implemented.');
                 }
-                public createValue(): FieldRuntimeValue<FieldDefinition<any, any, any>> {
+                public deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, object: any): FieldRuntimeValue<FieldDefinition<number, unknown, never>> | Promise<FieldRuntimeValue<FieldDefinition<number, unknown, never>>> {
+                    throw new Error('Method not implemented.');
+                }
+                public createValue(options: Readonly<StructOptions>, context: StructSerializationContext, object: any, value: unknown): FieldRuntimeValue<FieldDefinition<number, unknown, never>> {
                     throw new Error('Method not implemented.');
                 }
             }
