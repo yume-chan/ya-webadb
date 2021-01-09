@@ -55,11 +55,11 @@ const buffer = MyStruct.serialize({
     - [`postDeserialize`](#postdeserialize)
 - [Custom field type](#custom-field-type)
   - [`Struct#field` method](#structfield-method)
-  - [FieldDefinition](#fielddefinition)
-  - [`FieldDefinition#getSize` method](#fielddefinitiongetsize-method)
-  - [`FieldDefinition#deserialize` method](#fielddefinitiondeserialize-method)
-  - [`FieldDefinition#createValue` method](#fielddefinitioncreatevalue-method)
-  - [FieldRuntimeValue](#fieldruntimevalue)
+  - [`FieldDefinition`](#fielddefinition)
+    - [`getSize`](#getsize)
+    - [`deserialize`](#deserialize-1)
+    - [`createValue`](#createvalue)
+  - [`FieldRuntimeValue`](#fieldruntimevalue)
 
 ## Compatibility
 
@@ -578,7 +578,7 @@ Appends a `FieldDefinition` to the `Struct`.
 
 All above built-in methods are alias of `field`. To add a field of a custom type, let users call `field` with your custom `FieldDefinition` implementation.
 
-### FieldDefinition
+### `FieldDefinition`
 
 ```ts
 abstract class FieldDefinition<TOptions = void, TValueType = unknown, TRemoveFields = never> {
@@ -592,7 +592,7 @@ A `FieldDefinition` describes type, size and runtime semantics of a field.
 
 It's an `abstract` class, means it lacks some method implementations, so it shouldn't be constructed.
 
-### `FieldDefinition#getSize` method
+#### `getSize`
 
 ```ts
 abstract getSize(): number;
@@ -602,7 +602,7 @@ Returns the size (or minimal size if it's dynamic) of this field.
 
 Actual size should been returned from `FieldRuntimeValue#getSize`
 
-### `FieldDefinition#deserialize` method
+#### `deserialize`
 
 ```ts
 abstract deserialize(
@@ -621,7 +621,7 @@ Usually implementations should be:
 
 Sometimes, some metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` can save those metadata on the `FieldRuntimeValue` instance for later use.
 
-### `FieldDefinition#createValue` method
+#### `createValue`
 
 ```ts
 abstract createValue(
@@ -636,7 +636,7 @@ Similar to `deserialize`, creates a `FieldRuntimeValue` for this instance.
 
 The difference is `createValue` will be called when a init value was provided to create a Struct value.
 
-### FieldRuntimeValue
+### `FieldRuntimeValue`
 
 One `FieldDefinition` instance represents one field declaration, and one `FieldRuntimeValue` instance represents one value.
 
