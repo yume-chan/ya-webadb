@@ -34,14 +34,14 @@ export type Overwrite<TBase extends object, TNew extends object> =
 export type OmitNever<T> = Pick<T, { [K in keyof T]: [T[K]] extends [never] ? never : K }[keyof T]>;
 
 /**
- * Generates a type. Useful in generic type inference.
- */
-export function placeholder<T>(): T {
-    return undefined as unknown as T;
-}
-
-/**
  * Extract keys of fields in `T` that has type `TValue`
  */
 export type KeysOfType<T, TValue> =
     { [TKey in keyof T]: T[TKey] extends TValue ? TKey : never }[keyof T];
+
+/**
+ * Returns a (fake) value of the given type.
+ */
+export function placeholder<T>(): T {
+    return undefined as unknown as T;
+}

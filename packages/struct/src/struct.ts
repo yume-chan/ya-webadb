@@ -215,18 +215,18 @@ export default class Struct<
      * Merges (flats) another `Struct`'s fields and extra fields into this one.
      */
     public fields<TOther extends Struct<any, any, any, any>>(
-        struct: TOther
+        other: TOther
     ): Struct<
         TValue & TOther['valueType'],
         TInit & TOther['initType'],
         TExtra & TOther['extraType'],
         TPostDeserialized
     > {
-        for (const field of struct._fields) {
+        for (const field of other._fields) {
             this._fields.push(field);
         }
-        this._size += struct._size;
-        Object.assign(this._extra, struct._extra);
+        this._size += other._size;
+        Object.assign(this._extra, other._extra);
         return this as any;
     }
 
@@ -246,6 +246,23 @@ export default class Struct<
     }
 
     /**
+     * Appends an `int8` field to the `Struct`
+     */
+    public int8<
+        TName extends PropertyKey,
+        TTypeScriptType = (typeof NumberFieldType)['Uint8']['valueType']
+    >(
+        name: TName,
+        _typescriptType?: TTypeScriptType,
+    ) {
+        return this.number(
+            name,
+            NumberFieldType.Int8,
+            _typescriptType
+        );
+    }
+
+    /**
      * Appends an `uint8` field to the `Struct`
      */
     public uint8<
@@ -258,6 +275,23 @@ export default class Struct<
         return this.number(
             name,
             NumberFieldType.Uint8,
+            _typescriptType
+        );
+    }
+
+    /**
+     * Appends an `int16` field to the `Struct`
+     */
+    public int16<
+        TName extends PropertyKey,
+        TTypeScriptType = (typeof NumberFieldType)['Uint16']['valueType']
+    >(
+        name: TName,
+        _typescriptType?: TTypeScriptType,
+    ) {
+        return this.number(
+            name,
+            NumberFieldType.Int16,
             _typescriptType
         );
     }
@@ -409,11 +443,14 @@ export default class Struct<
         };
 
     /**
-     * Adds some extra fields into every Struct instance.
+     * Adds some extra fields into every Struct value.
      *
      * Extra fields will not affect serialize or deserialize process.
      *
      * Multiple calls to `extra` will merge all values together.
+     *
+     * @param value
+     * An object containing anything you want to add to the result object. Accessors and methods are also allowed.
      */
     public extra<T extends Record<
         // This trick disallows any keys that are already in `TValue`
