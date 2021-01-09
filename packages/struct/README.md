@@ -1,28 +1,17 @@
 # @yume-chan/struct
 
-C-style structure serializer and deserializer.
+![license](https://img.shields.io/npm/l/@yume-chan/struct)
+![npm type definitions](https://img.shields.io/npm/types/@yume-chan/struct)
+[![npm version](https://img.shields.io/npm/v/@yume-chan/struct)](https://www.npmjs.com/package/@yume-chan/struct)
+![npm bundle size](https://img.shields.io/bundlephobia/min/@yume-chan/struct)
 
-Fully compatible with TypeScript.
+A C-style structure serializer and deserializer. Written in TypeScript and highly takes advantage of its type system.
 
-- [Quick Start](#quick-start)
-- [Compatibility](#compatibility)
-- [API](#api)
-  - [`placeholder` method](#placeholder-method)
-  - [`Struct` constructor](#struct-constructor)
-  - [`Struct#fields` method](#structfields-method)
-  - [`Struct#uint8`/`uint16`/`int32`/`uint32` methods](#structuint8uint16int32uint32-methods)
-  - [`Struct#int64`/`uint64` methods](#structint64uint64-methods)
-  - [`extra` function](#extra-function)
-  - [`postDeserialize` method](#postdeserialize-method)
-  - [`deserialize` method](#deserialize-method)
-  - [`serialize` method](#serialize-method)
-- [Custom types](#custom-types)
-  - [`Struct#field` method](#structfield-method)
-  - [FieldDefinition](#fielddefinition)
-  - [`FieldDefinition#getSize` method](#fielddefinitiongetsize-method)
-  - [`FieldDefinition#deserialize` method](#fielddefinitiondeserialize-method)
-  - [`FieldDefinition#createValue` method](#fielddefinitioncreatevalue-method)
-  - [FieldRuntimeValue](#fieldruntimevalue)
+## Installation
+
+```sh
+$ npm i @yume-chan/struct
+```
 
 ## Quick Start
 
@@ -31,15 +20,46 @@ import Struct from '@yume-chan/struct';
 
 const MyStruct =
     new Struct({ littleEndian: true })
-        .int32('foo')
-        .int32('bar');
+        .int8('foo')
+        .int64('bar')
+        .int32('bazLength')
+        .string('baz', { lengthField: 'bazLength' });
 
-const value = await MyStruct.deserialize(someStream);
-// TypeScript can infer type of the result object.
-const { foo, bar } = value;
+const value = await MyStruct.deserialize(stream);
+value.foo // number
+value.bar // bigint
+value.bazLength // number
+value.baz // string
 
-const buffer = MyStruct.serialize({ foo, bar });
+const buffer = MyStruct.serialize({
+    foo: 42,
+    bar: 42n,
+    // `bazLength` automatically set to `baz.length`
+    baz: 'Hello, World!',
+});
 ```
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Compatibility](#compatibility)
+- [API](#api)
+  - [`placeholder`](#placeholder)
+  - [`Struct`](#struct)
+    - [`int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32`](#int8uint8int16uint16int32uint32)
+    - [`int64`/`uint64`](#int64uint64)
+    - [`arraybuffer`/`uint8ClampedArray`/`string`](#arraybufferuint8clampedarraystring)
+    - [`fields`](#fields)
+    - [`deserialize`](#deserialize)
+    - [`serialize`](#serialize)
+    - [`extra`](#extra)
+    - [`postDeserialize`](#postdeserialize)
+- [Custom field type](#custom-field-type)
+  - [`Struct#field` method](#structfield-method)
+  - [FieldDefinition](#fielddefinition)
+  - [`FieldDefinition#getSize` method](#fielddefinitiongetsize-method)
+  - [`FieldDefinition#deserialize` method](#fielddefinitiondeserialize-method)
+  - [`FieldDefinition#createValue` method](#fielddefinitioncreatevalue-method)
+  - [FieldRuntimeValue](#fieldruntimevalue)
 
 ## Compatibility
 
@@ -59,7 +79,7 @@ Basic usage requires [`Promise`][MDN_Promise], [`ArrayBuffer`][MDN_ArrayBuffer],
 | **Safari**            | 8                         |                                 |
 | **Node.js**           | 0.12                      |                                 |
 
-Usage of `int64`/`uint64` requires [`BigInt`][MDN_BigInt] (**can't** be polyfilled), [`DataView#getBigUint64`][MDN_DataView_getBigUint64] and [`DataView#setBigUint64`][MDN_DataView_setBigUint64] (can be polyfilled).
+Use of `int64`/`uint64` requires [`BigInt`][MDN_BigInt] (**can't** be polyfilled), [`DataView#getBigUint64`][MDN_DataView_getBigUint64] and [`DataView#setBigUint64`][MDN_DataView_setBigUint64] (can be polyfilled).
 
 [MDN_BigInt]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
 [MDN_DataView_getBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/getBigUint64
@@ -76,21 +96,46 @@ Usage of `int64`/`uint64` requires [`BigInt`][MDN_BigInt] (**can't** be polyfill
 
 ## API
 
-### `placeholder` method
+### `placeholder`
 
 ```ts
-export function placeholder<T>(): T {
+function placeholder<T>(): T {
     return undefined as unknown as T;
 }
 ```
 
-Return a (fake) value of the given type.
+Returns a (fake) value of the given type. It's only useful in TypeScript, if you are using JavaScript, you shouldn't care about it.
 
-Because TypeScript only supports supply all or none type arguments, this method allows all type parameters to be inferred from arguments.
+Many methods in this library have multiple generic parameters, but TypeScript only allows users to specify none (let TypeScript inference all of them from arguments), or all generic arguments. ([Microsoft/TypeScript#26242](https://github.com/microsoft/TypeScript/issues/26242))
 
-**While all following APIs heavily rely on generic, DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
+<details>
+<summary>Detail explanation (click to expand)</summary>
 
-### `Struct` constructor
+When you have a generic method, where half generic parameters can be inferred.
+
+```ts
+declare function fn<A, B>(a: A): [A, B];
+fn(42); // Expected 2 type arguments, but got 1. ts(2558)
+```
+
+Rather than force users repeat the type `A`, I declare a parameter for `B`.
+
+```ts
+declare function fn2<A, B>(a: A, b: B): [A, B];
+```
+
+I don't really need a value of type `B`, I only require its type information
+
+```ts
+fn2(42, placeholder<boolean>()) // fn2<number, boolean>
+```
+</details>
+
+To workaround this issue, these methods have an extra `_typescriptType` parameter, to let you specify a generic parameter, without pass all other generic arguments manually. The actual value of `_typescriptType` argument is never used, so you can pass any value, as long as it has the correct type, including values produced by this `placeholder` method.
+
+**With that said, I don't expect you to specify any generic arguments manually when using this library.**
+
+### `Struct`
 
 ```ts
 class Struct<
@@ -103,18 +148,18 @@ class Struct<
 }
 ```
 
-Creates a new structure definition.
+Creates a new structure declaration.
 
-**Generic Parameters**
+<details>
+<summary>Generic parameters (click to expand)</summary>
 
-1. `TValue`: Type of the Struct instance.
-2. `TInit`: Type requirement to create such a structure. (May not be same as `TValue` because some fields can implies others)
-3. `TExtra`: Type of extra fields.
-4. `TPostDeserialized`: State of the `postDeserialize` function.
+This information was added to help you understand how does it work. These are considered as "internal state" so don't specify them manually.
 
-**DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
-
-These are considered "internal state" of the `Struct` and will be taken care of by methods below.
+1. `TValue`: Type of the Struct value. Modified when new fields are added.
+2. `TInit`: Type requirement to create such a structure. (May not be same as `TValue` because some fields can implies others). Modified when new fields are added.
+3. `TExtra`: Type of extra fields. Modified when `extra` is called.
+4. `TPostDeserialized`: State of the `postDeserialize` function. Modified when `postDeserialize` is called. Affects return type of `deserialize`
+</details>
 
 **Parameters**
 
@@ -123,66 +168,11 @@ These are considered "internal state" of the `Struct` and will be taken care of 
 
 [Wikipeida_Endianess]: https://en.wikipedia.org/wiki/Endianness
 
-### `Struct#fields` method
-
-```ts
-fields<
-    TOther extends Struct<any, any, any, any>
->(
-    struct: TOther
-): Struct<
-    TValue & TOther['valueType'],
-    TInit & TOther['initType'],
-    TExtra & TOther['extraType'],
-    TPostDeserialized
->;
-```
-
-Merges (flats) another `Struct`'s fields and extra fields into this one.
-
-**Examples**
-
-1. Extending another `Struct`
-
-    ```ts
-    const MyStructV1 =
-        new Struct()
-            .int32('field1');
-
-    const MyStructV2 =
-        new Struct()
-            .fields(MyStructV1)
-            .int32('field2');
-
-    const structV2 = await MyStructV2.deserialize(context);
-    structV2.field1; // number
-    structV2.field2; // number
-    // Same result, but serialize/deserialize order is reversed
-    ```
-
-2. Also possible in any order
-
-    ```ts
-    const MyStructV1 =
-        new Struct()
-            .int32('field1');
-
-    const MyStructV2 =
-        new Struct()
-            .int32('field2')
-            .fields(MyStructV1);
-
-    const structV2 = await MyStructV2.deserialize(context);
-    structV2.field1; // number
-    structV2.field2; // number
-    // Fields are flatten
-    ```
-
-### `Struct#uint8`/`uint16`/`int32`/`uint32` methods
+#### `int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32`
 
 ```ts
 int32<
-    TName extends PropertyKey,
+    TName extends string | number | symbol,
     TTypeScriptType = number
 >(
     name: TName,
@@ -195,18 +185,12 @@ int32<
 >;
 ```
 
-(All method signatures are same)
-
-Appends an `uint8`/`uint16`/`int32`/`uint32` field to the `Struct`
+Appends an `int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32` field to the `Struct`
 
 **Generic Parameters**
 
 1. `TName`: Literal type of the field's name.
 2. `TTypeScriptType = number`: Type of the field in the result object. For example you can declare it as a number literal type, or some enum type.
-
-**DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
-
-TypeScript will infer them from arguments. See examples below.
 
 **Parameters**
 
@@ -217,13 +201,11 @@ TypeScript will infer them from arguments. See examples below.
 
 There is no generic constraints on the `TTypeScriptType` type because TypeScript doesn't allow casting enum types to `number`.
 
-So it's technically possible to pass in an incompatible type (e.g. `string`).
-
-But obviously, it's a bad idea.
+So it's technically possible to pass in an incompatible type (e.g. `string`). But obviously, it's a bad idea.
 
 **Examples**
 
-1. Append an int32 field named `foo`
+1. Append an `int32` field named `foo`
 
     ```ts
     const struct = new Struct()
@@ -232,12 +214,12 @@ But obviously, it's a bad idea.
     const value = await struct.deserialize(stream);
     value.foo; // number
 
-    struct.create({ }) // error: 'foo' is required
-    struct.create({ foo: 'bar' }) // error: 'foo' must be a number
-    struct.create({ foo: 42 }) // ok
+    struct.serialize({ }, context) // error: 'foo' is required
+    struct.serialize({ foo: 'bar' }, context) // error: 'foo' must be a number
+    struct.serialize({ foo: 42 }, context) // ok
     ```
 
-2. Set `foo`'s type (can be used with the [`placeholder` method](#placeholder-method))
+2. Set `foo`'s type (can be used with [`placeholder` method](#placeholder))
 
     ```ts
     enum MyEnum {
@@ -253,12 +235,12 @@ But obviously, it's a bad idea.
     value.foo; // MyEnum
     value.bar; // MyEnum.a
 
-    struct.create({ foo: 42, bar: MyEnum.a }); // error: 'foo' must be of type `MyEnum`
-    struct.create({ foo: MyEnum.a, bar: MyEnum.b }); // error: 'bar' must be of type `MyEnum.a`
-    struct.create({ foo: MyEnum.a, bar: MyEnum.b }); // ok
+    struct.serialize({ foo: 42, bar: MyEnum.a }, context); // error: 'foo' must be of type `MyEnum`
+    struct.serialize({ foo: MyEnum.a, bar: MyEnum.b }, context); // error: 'bar' must be of type `MyEnum.a`
+    struct.serialize({ foo: MyEnum.a, bar: MyEnum.b }, context); // ok
     ```
 
-### `Struct#int64`/`uint64` methods
+#### `int64`/`uint64`
 
 ```ts
 int64<
@@ -277,9 +259,145 @@ int64<
 
 Appends an `int64`/`uint64` field to the `Struct`.
 
-Requires native `BigInt` support of runtime. See [compatibility](#compatibility).
+Requires native runtime support for `BigInt`. Check [compatibility table](#compatibility) for more information.
 
-### `extra` function
+#### `arraybuffer`/`uint8ClampedArray`/`string`
+
+```ts
+<
+    TName extends PropertyKey,
+    TTypeScriptType = TType['valueType'],
+>(
+    name: TName,
+    options: FixedLengthArrayBufferLikeFieldOptions,
+    typescriptType?: TTypeScriptType,
+): AddFieldDescriptor<
+    TValue,
+    TInit,
+    TExtra,
+    TPostDeserialized,
+    TName,
+    FixedLengthArrayBufferLikeFieldDefinition<
+        TType,
+        FixedLengthArrayBufferLikeFieldOptions
+    >
+>;
+
+<
+    TName extends PropertyKey,
+    TLengthField extends KeysOfType<TInit, number | string>,
+    TOptions extends VariableLengthArrayBufferLikeFieldOptions<TInit, TLengthField>,
+    TTypeScriptType = TType['valueType'],
+>(
+    name: TName,
+    options: TOptions,
+    typescriptType?: TTypeScriptType,
+): AddFieldDescriptor<
+    TValue,
+    TInit,
+    TExtra,
+    TPostDeserialized,
+    TName,
+    VariableLengthArrayBufferLikeFieldDefinition<
+        TType,
+        TOptions
+    >
+>;
+```
+
+Appends an array type field to the `Struct`. The second, `options` parameter defines its length in byte.
+
+* `{ length: number }`: When the `length` option is specified, it's a fixed length array.
+* `{ lengthField: string }`: When the `lengthField` option is specified, and pointing to another `number` or `string` typed field that's defined before this one, it's a variable length array. It will use that field's value for its length when deserializing, and write its length to that field when serializing.
+
+All these three are deserialized as `ArrayBuffer`, then converted to `Uint8ClampedArray` or `string` for ease of use.
+
+#### `fields`
+
+```ts
+fields<
+    TOther extends Struct<any, any, any, any>
+>(
+    other: TOther
+): Struct<
+    TValue & TOther['valueType'],
+    TInit & TOther['initType'],
+    TExtra & TOther['extraType'],
+    TPostDeserialized
+>;
+```
+
+Merges (flats) another `Struct`'s fields and extra fields into the current one.
+
+**Examples**
+
+1. Extending another `Struct`
+
+    ```ts
+    const MyStructV1 =
+        new Struct()
+            .int32('field1');
+
+    const MyStructV2 =
+        new Struct()
+            .fields(MyStructV1)
+            .int32('field2');
+
+    const structV2 = await MyStructV2.deserialize(context);
+    structV2.field1; // number
+    structV2.field2; // number
+    // Fields are flatten
+    ```
+
+2. Also possible in any order
+
+    ```ts
+    const MyStructV1 =
+        new Struct()
+            .int32('field1');
+
+    const MyStructV2 =
+        new Struct()
+            .int32('field2')
+            .fields(MyStructV1);
+
+    const structV2 = await MyStructV2.deserialize(context);
+    structV2.field1; // number
+    structV2.field2; // number
+    // Same result as above, but serialize/deserialize order is reversed
+    ```
+
+#### `deserialize`
+
+```ts
+export interface StructDeserializationContext {
+    decodeUtf8(buffer: ArrayBuffer): string;
+
+    read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
+}
+
+deserialize(context: StructDeserializationContext): Promise<TPostDeserialized extends undefined ? Overwrite<TExtra, TValue> : TPostDeserialized>;
+```
+
+Deserialize a Struct value from `context`.
+
+As you can see, if your `postDeserialize` callback returns something, that value will be returned by `deserialize`.
+
+The `context` has a `read` method, that when called, should returns exactly `length` bytes of data (or throw an `Error` if it can't). So data can arrive asynchronously.
+
+#### `serialize`
+
+```ts
+interface StructSerializationContext {
+    encodeUtf8(input: string): ArrayBuffer;
+}
+
+serialize(init: TInit, context: StructSerializationContext): ArrayBuffer;
+```
+
+Serialize a Struct value into an `ArrayBuffer`.
+
+#### `extra`
 
 ```ts
 extra<
@@ -303,7 +421,7 @@ extra<
 >;
 ```
 
-Adds some extra fields into every Struct instance.
+Adds some extra fields into every Struct value.
 
 Extra fields will not affect serialize or deserialize process.
 
@@ -322,10 +440,6 @@ TypeScript will infer them from arguments. See examples below.
 **Parameters**
 
 1. `value`: An object containing anything you want to add to the result object. Accessors and methods are also allowed.
-
-**Note**
-
-1. If the current `Struct` already has some extra fields, it will be merged with `value`, with `value` taking precedence.
 
 **Examples**
 
@@ -353,7 +467,7 @@ TypeScript will infer them from arguments. See examples below.
         .int32('foo')
         .extra({
             get bar() {
-                // `this` contains deserialized fields
+                // `this` is the result Struct value
                 return this.foo + 1;
             },
             logBar() {
@@ -368,7 +482,7 @@ TypeScript will infer them from arguments. See examples below.
     value.logBar();
     ```
 
-### `postDeserialize` method
+#### `postDeserialize`
 
 ```ts
 postDeserialize(callback: StructPostDeserialized<TValue, never>): Struct<TValue, TInit, TExtra, never>;
@@ -439,27 +553,9 @@ TypeScript will infer them from arguments. See examples below.
     value.bar; // number
     ```
 
-### `deserialize` method
+## Custom field type
 
-```ts
-deserialize(context: StructDeserializationContext): Promise<TPostDeserialized extends undefined ? Overwrite<TExtra, TValue> : TPostDeserialized>;
-```
-
-Deserialize a Struct instance from `context`.
-
-As you can see, if your `postDeserialize` callback returns something, that value will be returned by `deserialize`.
-
-### `serialize` method
-
-```ts
-public serialize(init: TInit, context: StructSerializationContext): ArrayBuffer;
-```
-
-Serialize a Struct instance into an `ArrayBuffer`.
-
-## Custom types
-
-It also supports adding custom types.
+This library has a plugin system to support adding fields with custom types.
 
 ### `Struct#field` method
 
@@ -478,9 +574,9 @@ field<
 >;
 ```
 
-Appends a `FieldDefinition` to the `Struct.
+Appends a `FieldDefinition` to the `Struct`.
 
-All above built-in methods are all alias to this method.
+All above built-in methods are alias of `field`. To add a field of a custom type, let users call `field` with your custom `FieldDefinition` implementation.
 
 ### FieldDefinition
 
@@ -492,13 +588,9 @@ abstract class FieldDefinition<TOptions = void, TValueType = unknown, TRemoveFie
 }
 ```
 
-A `FieldDefinition` defines its type, size, etc.
+A `FieldDefinition` describes type, size and runtime semantics of a field.
 
 It's an `abstract` class, means it lacks some method implementations, so it shouldn't be constructed.
-
-To create a custom type, one should create its own derived classes of `FieldDefinition` and `FieldRuntimeValue`.
-
-The custom `FieldDefinition` then can be passed to `Struct#field` method to append such a custom type field.
 
 ### `FieldDefinition#getSize` method
 
@@ -524,10 +616,10 @@ Defines how to deserialize a value from `context`. Can also return a `Promise`.
 
 Usually implementations should be:
 
-1. Some how parse the value from `context`
+1. Somehow parse the value from `context`
 2. Pass the value into `FieldDefinition#createValue`
 
-Sometimes, some metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` and save those metadata on the `FieldRuntimeValue` instance.
+Sometimes, some metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` can save those metadata on the `FieldRuntimeValue` instance for later use.
 
 ### `FieldDefinition#createValue` method
 
@@ -542,7 +634,7 @@ abstract createValue(
 
 Similar to `deserialize`, creates a `FieldRuntimeValue` for this instance.
 
-The difference is `createValue` will be called when a init value was provided to create a Struct instance.
+The difference is `createValue` will be called when a init value was provided to create a Struct value.
 
 ### FieldRuntimeValue
 
