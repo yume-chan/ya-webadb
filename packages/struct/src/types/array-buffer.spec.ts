@@ -41,6 +41,11 @@ describe('Types', () => {
             expect(array).toHaveProperty('byteOffset', 0);
             expect(array).toHaveProperty('byteLength', 10);
         });
+
+        it('`getSize` should return the `byteLength` of the `ArrayBuffer`', () => {
+            const array = new Uint8ClampedArray(10);
+            expect(Uint8ClampedArrayFieldType.instance.getSize(array)).toBe(10);
+        });
     });
 
     describe('StringFieldType', () => {
@@ -74,6 +79,10 @@ describe('Types', () => {
                 },
             };
             expect(StringFieldType.instance.fromArrayBuffer(arrayBuffer, context)).toBe(text);
+        });
+
+        it('`getSize` should return -1', () => {
+            expect(StringFieldType.instance.getSize()).toBe(-1);
         });
     });
 });

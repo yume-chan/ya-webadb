@@ -1,6 +1,7 @@
 cjs
 esm
 dts
+coverage
 node_modules
 *.log
 *.tsbuildinfo

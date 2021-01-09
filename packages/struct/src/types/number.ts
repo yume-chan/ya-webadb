@@ -11,7 +11,7 @@ export class NumberFieldType<TTypeScriptType extends number | bigint = number | 
 
     public static readonly Uint8 = new NumberFieldType<number>(1, 'getUint8', 'setUint8');
 
-    public static readonly Int16 = new NumberFieldType<number>(2, 'getInt16', 'setUint16');
+    public static readonly Int16 = new NumberFieldType<number>(2, 'getInt16', 'setInt16');
 
     public static readonly Uint16 = new NumberFieldType<number>(2, 'getUint16', 'setUint16');
 
