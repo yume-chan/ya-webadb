@@ -1,6 +1,6 @@
 import { Callout, DirectionalHint, Link, mergeStyleSets, Text } from '@fluentui/react';
 import { useBoolean } from '@uifabric/react-hooks';
-import React, { useCallback, useRef } from 'react';
+import React, { ReactNode, useCallback, useRef } from 'react';
 import { ExternalLink } from '../components';
 import { withDisplayName } from '../utils';
 
@@ -14,10 +14,13 @@ const BoldTextStyles = { root: { fontWeight: '600' } };
 
 interface CopyLinkProps {
     href: string;
+
+    children?: ReactNode;
 }
 
 const CopyLink = withDisplayName('CopyLink')(({
     href,
+    children,
 }: CopyLinkProps) => {
     const calloutTarget = useRef<HTMLButtonElement | null>(null);
     const [calloutVisible, { setTrue: showCallout, setFalse: hideCallout }] = useBoolean(false);
@@ -30,7 +33,7 @@ const CopyLink = withDisplayName('CopyLink')(({
 
     return (
         <>
-            <Link onClick={copyLink}>{href}</Link>
+            <Link onClick={copyLink}>{children || href}</Link>
             <Callout
                 directionalHint={DirectionalHint.topCenter}
                 hidden={!calloutVisible}
@@ -107,9 +110,16 @@ export const Intro = withDisplayName('Intro')(() => {
                 Compatibility:
             </Text>
             <Text block>
-                Google Chrome (for Windows and Android), and Microsoft Edge (Chromium-based, for Windows) are tested. Other Chromium-based browsers should also work.<br />
-                On Windows, the experimental new USB backend is required to function. You can enable it from <CopyLink href="chrome://flags/#new-usb-backend" />.<br />
-                If you have a Samsung device, and got "Access denied" error, please update your browser to a newer version (Chrome 87 or later).
+                <span>Currently, only Chromium-based browsers support the WebUSB API.</span>
+                <span> Most recent versions of browsers are recommended.</span><br />
+
+                <span>Google is developing new WebUSB implementations for</span>
+                <ExternalLink href="https://bugs.chromium.org/p/chromium/issues/detail?id=637404" spaceBefore spaceAfter>Windows</ExternalLink>
+                <span>and</span>
+                <ExternalLink href="https://bugs.chromium.org/p/chromium/issues/detail?id=1096743" spaceBefore spaceAfter>macOS</ExternalLink>
+                <span>respectively.</span>
+                <span> The Windows one is already enabled by default since Chrome 87.</span><br />
+                <span>It can be turned on or off manually via <CopyLink href="chrome://flags/#new-usb-backend" /></span>
             </Text>
 
             <Text block styles={BoldTextStyles}>
