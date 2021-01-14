@@ -581,7 +581,7 @@ All above built-in methods are alias of `field`. To add a field of a custom type
 ### `FieldDefinition`
 
 ```ts
-abstract class FieldDefinition<TOptions = void, TValueType = unknown, TRemoveFields = never> {
+abstract class FieldDefinition<TOptions = void, TValueType = unknown, TOmitInit = never> {
     readonly options: TOptions;
 
     constructor(options: TOptions);

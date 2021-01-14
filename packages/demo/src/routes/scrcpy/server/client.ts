@@ -1,7 +1,7 @@
 import { Adb, AdbBufferedStream, AdbSocket, DataEventEmitter, EventQueue } from '@yume-chan/adb';
 import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
-import { Struct, StructValueType } from '@yume-chan/struct';
+import Struct from '@yume-chan/struct';
 import { AndroidCodecLevel, AndroidCodecProfile } from './codec';
 import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
 import { parse_sequence_parameter_set } from './sps';
@@ -159,7 +159,7 @@ const VideoPacket =
 
 export const NoPts = BigInt(-1);
 
-export type VideoPacket = StructValueType<typeof VideoPacket>;
+export type VideoPacket = typeof VideoPacket['deserializedType'];
 
 const ClipboardMessage =
     new Struct()

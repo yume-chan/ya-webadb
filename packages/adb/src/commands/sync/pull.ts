@@ -1,4 +1,4 @@
-import { Struct } from '@yume-chan/struct';
+import Struct from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
 import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './response';

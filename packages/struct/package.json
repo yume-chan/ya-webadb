@@ -4,6 +4,8 @@
     "description": "C-style structure serializer and deserializer.",
     "keywords": [
         "structure",
+        "serialization",
+        "deserialization",
         "typescript"
     ],
     "license": "MIT",

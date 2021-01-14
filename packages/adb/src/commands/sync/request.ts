@@ -1,4 +1,4 @@
-import { Struct } from '@yume-chan/struct';
+import Struct from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
 
 export enum AdbSyncRequestId {

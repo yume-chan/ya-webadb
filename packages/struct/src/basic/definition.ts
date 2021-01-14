@@ -16,12 +16,12 @@ type ValueOrPromise<T> = T | Promise<T>;
  *
  * @template TOptions TypeScript type of this definition's `options`.
  * @template TValueType TypeScript type of this field.
- * @template TRemoveInitFields Optional remove some field from the `TInit` type. Should be a union of string literal types.
+ * @template TOmitInit Optionally remove some fields from the init type. Should be a union of string literal types.
  */
 export abstract class FieldDefinition<
     TOptions = void,
     TValueType = unknown,
-    TRemoveInitFields = never,
+    TOmitInit = never,
     > {
     public readonly options: TOptions;
 
@@ -33,9 +33,9 @@ export abstract class FieldDefinition<
 
     /**
      * When `T` is a type initiated `FieldDefinition`,
-     * use `T['removeInitFields']` to retrieve its `TRemoveInitFields` type parameter.
+     * use `T['omitInitType']` to retrieve its `TOmitInit` type parameter.
      */
-    public readonly removeInitFields!: TRemoveInitFields;
+    public readonly omitInitType!: TOmitInit;
 
     public constructor(options: TOptions) {
         this.options = options;
@@ -55,7 +55,7 @@ export abstract class FieldDefinition<
         options: Readonly<StructOptions>,
         context: StructDeserializationContext,
         object: any,
-    ): ValueOrPromise<FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TRemoveInitFields>>>;
+    ): ValueOrPromise<FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TOmitInit>>>;
 
     /**
      * When implemented in derived classes, creates a `FieldRuntimeValue` from a given `value`.
@@ -65,5 +65,5 @@ export abstract class FieldDefinition<
         context: StructSerializationContext,
         object: any,
         value: TValueType,
-    ): FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TRemoveInitFields>>;
+    ): FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TOmitInit>>;
 }

@@ -1,26 +1,26 @@
 import { createRuntimeObject, FieldDefinition, FieldRuntimeValue, getRuntimeValue, setRuntimeValue, StructDefaultOptions, StructDeserializationContext, StructOptions, StructSerializationContext } from './basic';
 import { ArrayBufferFieldType, ArrayBufferLikeFieldType, Evaluate, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, Identity, KeysOfType, NumberFieldDefinition, NumberFieldType, Overwrite, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
 
+export interface StructLike<TValue> {
+    deserialize(context: StructDeserializationContext): Promise<TValue>;
+}
+
+export type Awaited<T> = T extends Promise<infer R> ? Awaited<R> : T;
+
 /**
  * Extract the value type of the specified `Struct`
  *
  * The lack of generic constraint is on purpose to allow `StructLike` types
  */
-export type StructValueType<T> =
-    T extends { deserialize(context: StructDeserializationContext): Promise<infer R>; } ? R : never;
-
-/**
- * Extract the init type of the specified `Struct`
- */
-export type StructInitType<T extends Struct<any, object, object, any>> =
-    T extends { create(value: infer R, ...args: any): any; } ? Evaluate<R> : never;
+export type StructValueType<T extends StructLike<any>> =
+    Awaited<ReturnType<T['deserialize']>>;
 
 /**
  * Create a new `Struct` type with `TDescriptor` appended
  */
 type AddFieldDescriptor<
-    TValue extends object,
-    TInit extends object,
+    TFields extends object,
+    TOmitInit extends string,
     TExtra extends object,
     TPostDeserialized,
     TFieldName extends PropertyKey,
@@ -28,10 +28,9 @@ type AddFieldDescriptor<
     Identity<Struct<
         // Merge two types
         // Evaluate immediately to optimize editor hover tooltip
-        Evaluate<TValue & Record<TFieldName, TDefinition['valueType']>>,
-        // There is no `Evaluate` here, because otherwise the type of a `Struct` with many fields
-        // can become too complex for TypeScript to compute
-        Evaluate<Omit<TInit, TDefinition['removeInitFields']> & Record<TFieldName, TDefinition['valueType']>>,
+        Evaluate<TFields & Record<TFieldName, TDefinition['valueType']>>,
+        // Merge two `TOmitInit
+        TOmitInit | TDefinition['omitInitType'],
         TExtra,
         TPostDeserialized
     >>;
@@ -40,8 +39,8 @@ type AddFieldDescriptor<
  * Overload methods to add an array buffer like field
  */
 interface ArrayBufferLikeFieldCreator<
-    TValue extends object,
-    TInit extends object,
+    TFields extends object,
+    TOmitInit extends string,
     TExtra extends object,
     TPostDeserialized
     > {
@@ -64,8 +63,8 @@ interface ArrayBufferLikeFieldCreator<
         options: FixedLengthArrayBufferLikeFieldOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
-        TValue,
-        TInit,
+        TFields,
+        TOmitInit,
         TExtra,
         TPostDeserialized,
         TName,
@@ -81,7 +80,7 @@ interface ArrayBufferLikeFieldCreator<
     <
         TName extends PropertyKey,
         TType extends ArrayBufferLikeFieldType,
-        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TInit>,
+        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields>,
         TTypeScriptType = TType['valueType'],
         >(
         name: TName,
@@ -89,8 +88,8 @@ interface ArrayBufferLikeFieldCreator<
         options: TOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
-        TValue,
-        TInit,
+        TFields,
+        TOmitInit,
         TExtra,
         TPostDeserialized,
         TName,
@@ -105,8 +104,8 @@ interface ArrayBufferLikeFieldCreator<
  * Similar to `ArrayBufferLikeFieldCreator`, but bind to a `ArrayBufferLikeFieldType`
  */
 interface ArrayBufferTypeFieldDefinitionCreator<
-    TValue extends object,
-    TInit extends object,
+    TFields extends object,
+    TOmitInit extends string,
     TExtra extends object,
     TPostDeserialized,
     TType extends ArrayBufferLikeFieldType
@@ -119,8 +118,8 @@ interface ArrayBufferTypeFieldDefinitionCreator<
         options: FixedLengthArrayBufferLikeFieldOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
-        TValue,
-        TInit,
+        TFields,
+        TOmitInit,
         TExtra,
         TPostDeserialized,
         TName,
@@ -132,16 +131,16 @@ interface ArrayBufferTypeFieldDefinitionCreator<
 
     <
         TName extends PropertyKey,
-        TLengthField extends KeysOfType<TInit, number | string>,
-        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TInit, TLengthField>,
+        TLengthField extends KeysOfType<TFields, number | string>,
+        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields, TLengthField>,
         TTypeScriptType = TType['valueType'],
         >(
         name: TName,
         options: TOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
-        TValue,
-        TInit,
+        TFields,
+        TOmitInit,
         TExtra,
         TPostDeserialized,
         TName,
@@ -155,17 +154,24 @@ interface ArrayBufferTypeFieldDefinitionCreator<
 export type StructPostDeserialized<TValue, TPostDeserialized> =
     (this: TValue, object: TValue) => TPostDeserialized;
 
-export default class Struct<
-    TValue extends object = {},
-    TInit extends object = {},
+export type StructDeserializedType<TFields extends object, TExtra extends object, TPostDeserialized> =
+    TPostDeserialized extends undefined ? Overwrite<TExtra, TFields> : TPostDeserialized;
+
+export class Struct<
+    TFields extends object = {},
+    TOmitInit extends string = never,
     TExtra extends object = {},
     TPostDeserialized = undefined,
-    > {
-    public readonly valueType!: TValue;
+    > implements StructLike<StructDeserializedType<TFields, TExtra, TPostDeserialized>>{
+    public readonly fieldsType!: TFields;
 
-    public readonly initType!: TInit;
+    public readonly omitInitType!: TOmitInit;
 
     public readonly extraType!: TExtra;
+
+    public readonly initType!: Evaluate<Omit<TFields, TOmitInit>>;
+
+    public readonly deserializedType!: StructDeserializedType<TFields, TExtra, TPostDeserialized>;
 
     public readonly options: Readonly<StructOptions>;
 
@@ -179,7 +185,7 @@ export default class Struct<
 
     private _extra: PropertyDescriptorMap = {};
 
-    private _postDeserialized?: StructPostDeserialized<TValue, any>;
+    private _postDeserialized?: StructPostDeserialized<any, any>;
 
     public constructor(options?: Partial<StructOptions>) {
         this.options = { ...StructDefaultOptions, ...options };
@@ -195,8 +201,8 @@ export default class Struct<
         name: TName,
         definition: TDefinition,
     ): AddFieldDescriptor<
-        TValue,
-        TInit,
+        TFields,
+        TOmitInit,
         TExtra,
         TPostDeserialized,
         TName,
@@ -217,8 +223,8 @@ export default class Struct<
     public fields<TOther extends Struct<any, any, any, any>>(
         other: TOther
     ): Struct<
-        TValue & TOther['valueType'],
-        TInit & TOther['initType'],
+        TFields & TOther['fieldsType'],
+        TOmitInit | TOther['omitInitType'],
         TExtra & TOther['extraType'],
         TPostDeserialized
     > {
@@ -385,27 +391,32 @@ export default class Struct<
         );
     }
 
-    private arrayBufferLike: ArrayBufferLikeFieldCreator<TValue, TInit, TExtra, TPostDeserialized> = (
+    private arrayBufferLike: ArrayBufferLikeFieldCreator<
+        TFields,
+        TOmitInit,
+        TExtra,
+        TPostDeserialized
+    > = (
         name: PropertyKey,
         type: ArrayBufferLikeFieldType,
         options: FixedLengthArrayBufferLikeFieldOptions | VariableLengthArrayBufferLikeFieldOptions
     ): any => {
-        if ('length' in options) {
-            return this.field(
-                name,
-                new FixedLengthArrayBufferLikeFieldDefinition(type, options),
-            );
-        } else {
-            return this.field(
-                name,
-                new VariableLengthArrayBufferLikeFieldDefinition(type, options),
-            );
-        }
-    };
+            if ('length' in options) {
+                return this.field(
+                    name,
+                    new FixedLengthArrayBufferLikeFieldDefinition(type, options),
+                );
+            } else {
+                return this.field(
+                    name,
+                    new VariableLengthArrayBufferLikeFieldDefinition(type, options),
+                );
+            }
+        };
 
     public arrayBuffer: ArrayBufferTypeFieldDefinitionCreator<
-        TValue,
-        TInit,
+        TFields,
+        TOmitInit,
         TExtra,
         TPostDeserialized,
         ArrayBufferFieldType
@@ -417,8 +428,8 @@ export default class Struct<
         };
 
     public uint8ClampedArray: ArrayBufferTypeFieldDefinitionCreator<
-        TValue,
-        TInit,
+        TFields,
+        TOmitInit,
         TExtra,
         TPostDeserialized,
         Uint8ClampedArrayFieldType
@@ -430,8 +441,8 @@ export default class Struct<
         };
 
     public string: ArrayBufferTypeFieldDefinitionCreator<
-        TValue,
-        TInit,
+        TFields,
+        TOmitInit,
         TExtra,
         TPostDeserialized,
         StringFieldType
@@ -456,14 +467,14 @@ export default class Struct<
         // This trick disallows any keys that are already in `TValue`
         Exclude<
             keyof T,
-            Exclude<keyof T, keyof TValue>
+            Exclude<keyof T, keyof TFields>
         >,
         never
     >>(
-        value: T & ThisType<Overwrite<Overwrite<TExtra, T>, TValue>>
+        value: T & ThisType<Overwrite<Overwrite<TExtra, T>, TFields>>
     ): Struct<
-        TValue,
-        TInit,
+        TFields,
+        TOmitInit,
         Overwrite<TExtra, T>,
         TPostDeserialized
     > {
@@ -478,8 +489,8 @@ export default class Struct<
      * will also change the return type of `deserialize` to `never`.
      */
     public postDeserialize(
-        callback: StructPostDeserialized<TValue, never>
-    ): Struct<TValue, TInit, TExtra, never>;
+        callback: StructPostDeserialized<TFields, never>
+    ): Struct<TFields, TOmitInit, TExtra, never>;
     /**
      * Registers (or replaces) a custom callback to be run after deserialized.
      *
@@ -487,8 +498,8 @@ export default class Struct<
      * (or doesn't modify it at all), so `deserialize` will still return the result object.
      */
     public postDeserialize(
-        callback?: StructPostDeserialized<TValue, void>
-    ): Struct<TValue, TInit, TExtra, undefined>;
+        callback?: StructPostDeserialized<TFields, void>
+    ): Struct<TFields, TOmitInit, TExtra, undefined>;
     /**
      * Registers (or replaces) a custom callback to be run after deserialized.
      *
@@ -496,10 +507,10 @@ export default class Struct<
      * will `deserialize` to return that object instead.
      */
     public postDeserialize<TPostSerialize>(
-        callback?: StructPostDeserialized<TValue, TPostSerialize>
-    ): Struct<TValue, TInit, TExtra, TPostSerialize>;
+        callback?: StructPostDeserialized<TFields, TPostSerialize>
+    ): Struct<TFields, TOmitInit, TExtra, TPostSerialize>;
     public postDeserialize(
-        callback?: StructPostDeserialized<TValue, any>
+        callback?: StructPostDeserialized<TFields, any>
     ) {
         this._postDeserialized = callback;
         return this as any;
@@ -511,7 +522,7 @@ export default class Struct<
         return object;
     }
 
-    public create(init: TInit, context: StructSerializationContext): Overwrite<TExtra, TValue> {
+    public create(init: Evaluate<Omit<TFields, TOmitInit>>, context: StructSerializationContext): Overwrite<TExtra, TFields> {
         const object = this.initializeObject();
 
         for (const [name, definition] of this._fields) {
@@ -524,7 +535,7 @@ export default class Struct<
 
     public async deserialize(
         context: StructDeserializationContext
-    ): Promise<TPostDeserialized extends undefined ? Overwrite<TExtra, TValue> : TPostDeserialized> {
+    ): Promise<StructDeserializedType<TFields, TExtra, TPostDeserialized>> {
         const object = this.initializeObject();
 
         for (const [name, definition] of this._fields) {
@@ -533,7 +544,7 @@ export default class Struct<
         }
 
         if (this._postDeserialized) {
-            const result = this._postDeserialized.call(object as TValue, object as TValue);
+            const result = this._postDeserialized.call(object as TFields, object as TFields);
             if (result) {
                 return result;
             }
@@ -542,7 +553,7 @@ export default class Struct<
         return object as any;
     }
 
-    public serialize(init: TInit, context: StructSerializationContext): ArrayBuffer {
+    public serialize(init: Evaluate<Omit<TFields, TOmitInit>>, context: StructSerializationContext): ArrayBuffer {
         const object = this.create(init, context) as any;
 
         let structSize = 0;

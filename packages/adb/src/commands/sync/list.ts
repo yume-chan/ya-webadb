@@ -1,4 +1,4 @@
-import { Struct, StructValueType } from '@yume-chan/struct';
+import Struct from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
 import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './response';
@@ -11,7 +11,7 @@ export const AdbSyncEntryResponse =
         .string('name', { lengthField: 'nameLength' })
         .extra({ id: AdbSyncResponseId.Entry as const });
 
-export type AdbSyncEntryResponse = StructValueType<typeof AdbSyncEntryResponse>;
+export type AdbSyncEntryResponse = typeof AdbSyncEntryResponse['deserializedType'];
 
 const ResponseTypes = {
     [AdbSyncResponseId.Entry]: AdbSyncEntryResponse,

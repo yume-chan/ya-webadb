@@ -1,4 +1,4 @@
-import { placeholder, Struct, StructInitType } from '@yume-chan/struct';
+import Struct, { placeholder } from '@yume-chan/struct';
 
 export enum ScrcpyControlMessageType {
     InjectKeycode,
@@ -18,7 +18,7 @@ export const ScrcpySimpleControlMessage =
     new Struct()
         .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>());
 
-export type ScrcpySimpleControlMessage = StructInitType<typeof ScrcpySimpleControlMessage>;
+export type ScrcpySimpleControlMessage = typeof ScrcpySimpleControlMessage['initType'];
 
 export enum AndroidMotionEventAction {
     Down,
@@ -48,7 +48,7 @@ export const ScrcpyInjectTouchControlMessage =
         .uint16('pressure')
         .uint32('buttons');
 
-export type ScrcpyInjectTouchControlMessage = StructInitType<typeof ScrcpyInjectTouchControlMessage>;
+export type ScrcpyInjectTouchControlMessage = typeof ScrcpyInjectTouchControlMessage['initType'];
 
 export const ScrcpyInjectTextControlMessage =
     new Struct()
@@ -57,7 +57,7 @@ export const ScrcpyInjectTextControlMessage =
         .string('text', { lengthField: 'length' });
 
 export type ScrcpyInjectTextControlMessage =
-    StructInitType<typeof ScrcpyInjectTextControlMessage>;
+    typeof ScrcpyInjectTextControlMessage['initType'];
 
 export enum AndroidKeyEventAction {
     Down = 0,
@@ -106,7 +106,7 @@ export const ScrcpyInjectKeyCodeControlMessage =
         .uint32('metaState');
 
 export type ScrcpyInjectKeyCodeControlMessage =
-    StructInitType<typeof ScrcpyInjectKeyCodeControlMessage>;
+    typeof ScrcpyInjectKeyCodeControlMessage['initType'];
 
 export type ScrcpyControlMessage =
     ScrcpySimpleControlMessage |

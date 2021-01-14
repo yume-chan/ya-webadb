@@ -1,4 +1,4 @@
-import { Struct, StructDeserializationContext, StructValueType } from '@yume-chan/struct';
+import Struct, { StructDeserializationContext, StructLike, StructValueType } from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
 
 export enum AdbSyncResponseId {
@@ -16,7 +16,7 @@ export enum AdbSyncResponseId {
 // For example DONE responses for LIST requests are 16 bytes (same as DENT responses),
 // but DONE responses for STAT requests are 12 bytes (same as STAT responses)
 // So we need to know responses' size in advance.
-export class AdbSyncDoneResponse {
+export class AdbSyncDoneResponse implements StructLike<AdbSyncDoneResponse> {
     private length: number;
 
     public readonly id = AdbSyncResponseId.Done;
@@ -39,7 +39,7 @@ export const AdbSyncFailResponse =
             throw new Error(object.message);
         });
 
-export async function adbSyncReadResponse<T extends Record<string, { deserialize(context: StructDeserializationContext): Promise<any>; }>>(
+export async function adbSyncReadResponse<T extends Record<string, StructLike<any>>>(
     stream: AdbBufferedStream,
     types: T,
 ): Promise<StructValueType<T[keyof T]>> {

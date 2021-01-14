@@ -1,0 +1,10 @@
+.github
+.vscode
+coverage
+src/**.spec.ts
+
+jest.config.js
+pnpm-lock.yaml
+renovate.json
+tsconfig.json
+*.tsbuildinfo

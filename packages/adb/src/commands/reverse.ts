@@ -1,5 +1,5 @@
 import { AutoDisposable } from '@yume-chan/event';
-import { Struct } from '@yume-chan/struct';
+import Struct from '@yume-chan/struct';
 import { AdbPacket } from '../packet';
 import { AdbIncomingSocketEventArgs, AdbPacketDispatcher, AdbSocket } from '../socket';
 import { AdbBufferedStream } from '../stream';

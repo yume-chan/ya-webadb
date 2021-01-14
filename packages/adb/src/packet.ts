@@ -1,4 +1,4 @@
-import { Struct, StructInitType, StructValueType } from '@yume-chan/struct';
+import Struct from '@yume-chan/struct';
 import { AdbBackend } from './backend';
 import { BufferedStream } from './stream';
 
@@ -25,9 +25,9 @@ const AdbPacketStruct =
         .fields(AdbPacketHeader)
         .arrayBuffer('payload', { lengthField: 'payloadLength' });
 
-export type AdbPacket = StructValueType<typeof AdbPacketStruct>;
+export type AdbPacket = typeof AdbPacketStruct['deserializedType'];
 
-export type AdbPacketInit = Omit<StructInitType<typeof AdbPacketStruct>, 'checksum' | 'magic'>;
+export type AdbPacketInit = Omit<typeof AdbPacketStruct['initType'], 'checksum' | 'magic'>;
 
 export namespace AdbPacket {
     export function create(

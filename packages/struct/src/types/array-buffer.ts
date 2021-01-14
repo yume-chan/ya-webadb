@@ -102,11 +102,11 @@ const EmptyArrayBuffer = new ArrayBuffer(0);
 export abstract class ArrayBufferLikeFieldDefinition<
     TType extends ArrayBufferLikeFieldType = ArrayBufferLikeFieldType,
     TOptions = void,
-    TRemoveInitFields = never,
+    TOmitInit = never,
     > extends FieldDefinition<
     TOptions,
     TType['valueType'],
-    TRemoveInitFields
+    TOmitInit
     >{
     public readonly type: TType;
 
@@ -123,7 +123,7 @@ export abstract class ArrayBufferLikeFieldDefinition<
         options: Readonly<StructOptions>,
         context: StructDeserializationContext,
         object: any,
-    ): Promise<ArrayBufferLikeFieldRuntimeValue<ArrayBufferLikeFieldDefinition<TType, TOptions, TRemoveInitFields>>> {
+    ): Promise<ArrayBufferLikeFieldRuntimeValue<ArrayBufferLikeFieldDefinition<TType, TOptions, TOmitInit>>> {
         const size = this.getDeserializeSize(object);
 
         let arrayBuffer: ArrayBuffer;
@@ -147,7 +147,7 @@ export abstract class ArrayBufferLikeFieldDefinition<
         context: StructSerializationContext,
         object: any,
         value: TType['valueType'],
-    ): ArrayBufferLikeFieldRuntimeValue<ArrayBufferLikeFieldDefinition<TType, TOptions, TRemoveInitFields>>;
+    ): ArrayBufferLikeFieldRuntimeValue<ArrayBufferLikeFieldDefinition<TType, TOptions, TOmitInit>>;
 }
 
 export class ArrayBufferLikeFieldRuntimeValue<

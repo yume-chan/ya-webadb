@@ -1,10 +1,11 @@
 {
     "name": "@yume-chan/event",
-    "private": true,
     "version": "0.0.4",
     "description": "Event/EventEmitter",
     "keywords": [
-        "event"
+        "event",
+        "eventemitter",
+        "typescript"
     ],
     "license": "MIT",
     "author": {
@@ -27,6 +28,7 @@
     "scripts": {
         "build": "rimraf {cjs,esm,dts,*.tsbuildinfo} && tsc -b tsconfig.esm.json tsconfig.cjs.json",
         "build:watch": "tsc -b -w tsconfig.esm.json tsconfig.cjs.json",
+        "test": "jest",
         "coverage": "jest --coverage",
         "prepublishOnly": "npm run build"
     },

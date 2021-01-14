@@ -49,7 +49,7 @@ will install lerna locally and bootstrap all packages.
 
 ### Scripts
 
-* `npm run build`: build `@yume-chan/event`, `@yume-chan/adb` and `@yume-chan/adb-backend-web` packages.
-* `npm run build:watch`: build and watch changes for `@yume-chan/event`, `@yume-chan/adb` and `@yume-chan/adb-backend-web` packages.
+* `npm run build`: build all npm packages.
+* `npm run build:watch`: build and watch changes for all npm packages.
 * `npm run start:demo`: start webpack-dev-server for the `demo` package.
 * `npm run build:demo`: build the `demo` package.

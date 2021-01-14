@@ -3,8 +3,8 @@ import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldRuntimeValue, Array
 import { KeysOfType } from './utils';
 
 export interface VariableLengthArrayBufferLikeFieldOptions<
-    TInit = object,
-    TLengthField extends KeysOfType<TInit, number | string> = any,
+    TFields = object,
+    TLengthField extends KeysOfType<TFields, number | string> = any,
     > {
     lengthField: TLengthField;
 }

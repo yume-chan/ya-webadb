@@ -47,8 +47,7 @@ export class NumberFieldDefinition<
     TTypeScriptType = TType['valueType'],
     > extends FieldDefinition<
     void,
-    TTypeScriptType,
-    never
+    TTypeScriptType
     > {
     public readonly type: TType;
 

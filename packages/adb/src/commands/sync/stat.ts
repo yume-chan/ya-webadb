@@ -1,4 +1,4 @@
-import { placeholder, Struct, StructValueType } from '@yume-chan/struct';
+import Struct, { placeholder } from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
 import { adbSyncReadResponse, AdbSyncResponseId } from './response';
@@ -29,7 +29,7 @@ export const AdbSyncLstatResponse =
             }
         });
 
-export type AdbSyncLstatResponse = StructValueType<typeof AdbSyncLstatResponse>;
+export type AdbSyncLstatResponse = typeof AdbSyncLstatResponse['deserializedType'];
 
 export enum AdbSyncStatErrorCode {
     EACCES = 13,
@@ -78,7 +78,7 @@ export const AdbSyncStatResponse =
             }
         });
 
-export type AdbSyncStatResponse = StructValueType<typeof AdbSyncStatResponse>;
+export type AdbSyncStatResponse = typeof AdbSyncStatResponse['deserializedType'];
 
 const StatResponseType = {
     [AdbSyncResponseId.Stat]: AdbSyncStatResponse,
