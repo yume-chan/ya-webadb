@@ -1,7 +1,7 @@
 {
     "name": "@yume-chan/adb-backend-web",
     "private": true,
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Backend for `@yume-chan/adb` using Web technologies.",
     "keywords": [
         "webusb",
@@ -29,8 +29,8 @@
     },
     "dependencies": {
         "@types/w3c-web-usb": "1.0.4",
-        "@yume-chan/adb": "^0.0.4",
-        "@yume-chan/event": "^0.0.4",
+        "@yume-chan/adb": "^0.0.5",
+        "@yume-chan/event": "^0.0.5",
         "tslib": "2.1.0"
     }
 }
