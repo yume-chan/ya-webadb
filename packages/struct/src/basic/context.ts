@@ -1,3 +1,5 @@
+import type { ValueOrPromise } from '../utils';
+
 /**
  * Context with enough methods to serialize a struct
  */
@@ -23,7 +25,7 @@ export interface StructDeserializationContext extends StructSerializationContext
      * Context should return exactly `length` bytes or data. If that's not possible
      * (due to end of file or other error condition), it should throw an error.
      */
-    read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
+    read(length: number): ValueOrPromise<ArrayBuffer>;
 }
 
 export interface StructOptions {

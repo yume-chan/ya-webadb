@@ -1,4 +1,4 @@
 export * from './context';
 export * from './definition';
-export * from './runtime-value';
-export * from './runtime-object';
+export * from './field-value';
+export * from './struct-value';

@@ -55,11 +55,11 @@ const buffer = MyStruct.serialize({
     - [`postDeserialize`](#postdeserialize)
 - [Custom field type](#custom-field-type)
   - [`Struct#field` method](#structfield-method)
-  - [`FieldDefinition`](#fielddefinition)
+  - [`StructFieldDefinition`](#fielddefinition)
     - [`getSize`](#getsize)
     - [`deserialize`](#deserialize-1)
     - [`createValue`](#createvalue)
-  - [`FieldRuntimeValue`](#fieldruntimevalue)
+  - [`StructFieldValue`](#StructFieldValue)
 
 ## Compatibility
 
@@ -562,7 +562,7 @@ This library has a plugin system to support adding fields with custom types.
 ```ts
 field<
     TName extends PropertyKey,
-    TDefinition extends FieldDefinition<any, any, any>
+    TDefinition extends StructFieldDefinition<any, any, any>
 >(
     name: TName,
     definition: TDefinition
@@ -574,21 +574,21 @@ field<
 >;
 ```
 
-Appends a `FieldDefinition` to the `Struct`.
+Appends a `StructFieldDefinition` to the `Struct`.
 
-All above built-in methods are alias of `field`. To add a field of a custom type, let users call `field` with your custom `FieldDefinition` implementation.
+All above built-in methods are alias of `field`. To add a field of a custom type, let users call `field` with your custom `StructFieldDefinition` implementation.
 
-### `FieldDefinition`
+### `StructFieldDefinition`
 
 ```ts
-abstract class FieldDefinition<TOptions = void, TValueType = unknown, TOmitInit = never> {
+abstract class StructFieldDefinition<TOptions = void, TValueType = unknown, TOmitInit = never> {
     readonly options: TOptions;
 
     constructor(options: TOptions);
 }
 ```
 
-A `FieldDefinition` describes type, size and runtime semantics of a field.
+A `StructFieldDefinition` describes type, size and runtime semantics of a field.
 
 It's an `abstract` class, means it lacks some method implementations, so it shouldn't be constructed.
 
@@ -600,7 +600,7 @@ abstract getSize(): number;
 
 Returns the size (or minimal size if it's dynamic) of this field.
 
-Actual size should been returned from `FieldRuntimeValue#getSize`
+Actual size should been returned from `StructFieldValue#getSize`
 
 #### `deserialize`
 
@@ -609,7 +609,7 @@ abstract deserialize(
     options: Readonly<StructOptions>,
     context: StructDeserializationContext,
     object: any,
-): ValueOrPromise<FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TRemoveInitFields>>>;
+): ValueOrPromise<StructFieldValue<StructFieldDefinition<TOptions, TValueType, TRemoveInitFields>>>;
 ```
 
 Defines how to deserialize a value from `context`. Can also return a `Promise`.
@@ -617,9 +617,9 @@ Defines how to deserialize a value from `context`. Can also return a `Promise`.
 Usually implementations should be:
 
 1. Somehow parse the value from `context`
-2. Pass the value into `FieldDefinition#createValue`
+2. Pass the value into `StructFieldDefinition#createValue`
 
-Sometimes, some metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` can save those metadata on the `FieldRuntimeValue` instance for later use.
+Sometimes, some metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` can save those metadata on the `StructFieldValue` instance for later use.
 
 #### `createValue`
 
@@ -629,15 +629,15 @@ abstract createValue(
     context: StructSerializationContext,
     object: any,
     value: TValueType,
-): FieldRuntimeValue<FieldDefinition<TOptions, TValueType, TRemoveInitFields>>;
+): StructFieldValue<StructFieldDefinition<TOptions, TValueType, TRemoveInitFields>>;
 ```
 
-Similar to `deserialize`, creates a `FieldRuntimeValue` for this instance.
+Similar to `deserialize`, creates a `StructFieldValue` for this instance.
 
 The difference is `createValue` will be called when a init value was provided to create a Struct value.
 
-### `FieldRuntimeValue`
+### `StructFieldValue`
 
-One `FieldDefinition` instance represents one field declaration, and one `FieldRuntimeValue` instance represents one value.
+One `StructFieldDefinition` instance represents one field declaration, and one `StructFieldValue` instance represents one value.
 
 It defines how to get, set, and serialize a value.

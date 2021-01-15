@@ -1,6 +1,6 @@
-import { FieldRuntimeValue, getRuntimeValue, setRuntimeValue, StructOptions, StructSerializationContext } from '../basic';
-import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldRuntimeValue, ArrayBufferLikeFieldType } from './array-buffer';
-import { KeysOfType } from './utils';
+import { StructFieldValue, StructOptions, StructSerializationContext, StructValue } from '../basic';
+import { KeysOfType } from '../utils';
+import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldType, ArrayBufferLikeFieldValue } from './array-buffer';
 
 export interface VariableLengthArrayBufferLikeFieldOptions<
     TFields = object,
@@ -21,81 +21,49 @@ export class VariableLengthArrayBufferLikeFieldDefinition<
         return 0;
     }
 
-    protected getDeserializeSize(object: any) {
-        let value = object[this.options.lengthField] as number | string;
+    protected getDeserializeSize(struct: StructValue) {
+        let value = struct.value[this.options.lengthField] as number | string;
         if (typeof value === 'string') {
             value = Number.parseInt(value, 10);
         }
         return value;
     }
 
-    public createValue(
+    public create(
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
-        object: any,
+        struct: StructValue,
         value: TType['valueType'],
-    ): VariableLengthArrayBufferLikeFieldRuntimeValue<TType, TOptions> {
-        return new VariableLengthArrayBufferLikeFieldRuntimeValue(this, options, context, object, value);
+    ): VariableLengthArrayBufferLikeStructFieldValue<this> {
+        return new VariableLengthArrayBufferLikeStructFieldValue(this, options, context, struct, value);
     }
 }
 
-class VariableLengthArrayBufferLikeLengthFieldRuntimeValue extends FieldRuntimeValue {
-    protected originalValue: FieldRuntimeValue;
-
-    protected arrayBufferValue: VariableLengthArrayBufferLikeFieldRuntimeValue;
-
-    public constructor(
-        originalValue: FieldRuntimeValue,
-        arrayBufferValue: VariableLengthArrayBufferLikeFieldRuntimeValue,
-    ) {
-        super(originalValue.definition, originalValue.options, originalValue.context, originalValue.object, 0);
-        this.originalValue = originalValue;
-        this.arrayBufferValue = arrayBufferValue;
-    }
-
-    public getSize() {
-        return this.originalValue.getSize();
-    }
-
-    get() {
-        // TODO: originalValue might be a `string` type, now it always returns `number`.
-        return this.arrayBufferValue.getSize();
-    }
-
-    set() { }
-
-    serialize(dataView: DataView, offset: number, context: StructSerializationContext) {
-        this.originalValue.set(this.get());
-        this.originalValue.serialize(dataView, offset, context);
-    }
-}
-
-class VariableLengthArrayBufferLikeFieldRuntimeValue<
-    TType extends ArrayBufferLikeFieldType = ArrayBufferLikeFieldType,
-    TOptions extends VariableLengthArrayBufferLikeFieldOptions = VariableLengthArrayBufferLikeFieldOptions
-    > extends ArrayBufferLikeFieldRuntimeValue<VariableLengthArrayBufferLikeFieldDefinition<TType, TOptions>> {
-    public static getSize() {
-        return 0;
-    }
-
+export class VariableLengthArrayBufferLikeStructFieldValue<
+    TDefinition extends VariableLengthArrayBufferLikeFieldDefinition = VariableLengthArrayBufferLikeFieldDefinition,
+    > extends ArrayBufferLikeFieldValue<TDefinition> {
     protected length: number | undefined;
 
-    protected lengthFieldValue: VariableLengthArrayBufferLikeLengthFieldRuntimeValue;
+    protected lengthFieldValue: VariableLengthArrayBufferLikeLengthStructFieldValue;
 
     public constructor(
-        definition: VariableLengthArrayBufferLikeFieldDefinition<TType, TOptions>,
+        definition: TDefinition,
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
-        object: any,
-        value: TType['valueType'],
+        struct: StructValue,
+        value: TDefinition['valueType'],
     ) {
-        super(definition, options, context, object, value);
+        super(definition, options, context, struct, value);
 
         // Patch the associated length field.
         const lengthField = this.definition.options.lengthField;
-        const originalValue = getRuntimeValue(object, lengthField);
-        this.lengthFieldValue = new VariableLengthArrayBufferLikeLengthFieldRuntimeValue(originalValue, this);
-        setRuntimeValue(object, lengthField, this.lengthFieldValue);
+
+        const originalValue = struct.get(lengthField);
+        this.lengthFieldValue = new VariableLengthArrayBufferLikeLengthStructFieldValue(
+            originalValue,
+            this,
+        );
+        struct.set(lengthField, this.lengthFieldValue);
     }
 
     public getSize() {
@@ -117,5 +85,43 @@ class VariableLengthArrayBufferLikeFieldRuntimeValue<
     public set(value: unknown) {
         super.set(value);
         this.length = undefined;
+    }
+}
+
+export class VariableLengthArrayBufferLikeLengthStructFieldValue
+    extends StructFieldValue {
+    protected originalField: StructFieldValue;
+
+    protected arrayBufferField: VariableLengthArrayBufferLikeStructFieldValue;
+
+    public constructor(
+        originalField: StructFieldValue,
+        arrayBufferField: VariableLengthArrayBufferLikeStructFieldValue,
+    ) {
+        super(originalField.definition, originalField.options, originalField.context, originalField.struct, 0);
+        this.originalField = originalField;
+        this.arrayBufferField = arrayBufferField;
+    }
+
+    public getSize() {
+        return this.originalField.getSize();
+    }
+
+    get() {
+        let value: string | number = this.arrayBufferField.getSize();
+
+        const originalValue = this.originalField.get();
+        if (typeof originalValue === 'string') {
+            value = value.toString();
+        }
+
+        return value;
+    }
+
+    set() { }
+
+    serialize(dataView: DataView, offset: number, context: StructSerializationContext) {
+        this.originalField.set(this.get());
+        this.originalField.serialize(dataView, offset, context);
     }
 }

@@ -1,4 +1,4 @@
-import { FieldDefinition, FieldRuntimeValue, StructDeserializationContext, StructOptions, StructSerializationContext } from '../basic';
+import { StructDeserializationContext, StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from '../basic';
 
 export type DataViewGetters =
     { [TKey in keyof DataView]: TKey extends `get${string}` ? TKey : never }[keyof DataView];
@@ -45,7 +45,7 @@ export class NumberFieldType<TTypeScriptType extends number | bigint = number | 
 export class NumberFieldDefinition<
     TType extends NumberFieldType = NumberFieldType,
     TTypeScriptType = TType['valueType'],
-    > extends FieldDefinition<
+    > extends StructFieldDefinition<
     void,
     TTypeScriptType
     > {
@@ -60,34 +60,33 @@ export class NumberFieldDefinition<
         return this.type.size;
     }
 
+    public create(
+        options: Readonly<StructOptions>,
+        context: StructSerializationContext,
+        struct: StructValue,
+        value: TTypeScriptType,
+    ): NumberFieldValue<this> {
+        return new NumberFieldValue(this, options, context, struct, value);
+    }
+
     public async deserialize(
         options: Readonly<StructOptions>,
         context: StructDeserializationContext,
-        object: any,
-    ): Promise<NumberFieldRuntimeValue<TType, TTypeScriptType>> {
+        struct: StructValue,
+    ): Promise<NumberFieldValue<this>> {
         const buffer = await context.read(this.getSize());
         const view = new DataView(buffer);
         const value = view[this.type.dataViewGetter](
             0,
             options.littleEndian
         ) as any;
-        return this.createValue(options, context, object, value);
-    }
-
-    public createValue(
-        options: Readonly<StructOptions>,
-        context: StructSerializationContext,
-        object: any,
-        value: TTypeScriptType,
-    ): NumberFieldRuntimeValue<TType, TTypeScriptType> {
-        return new NumberFieldRuntimeValue(this, options, context, object, value);
+        return this.create(options, context, struct, value);
     }
 }
 
-export class NumberFieldRuntimeValue<
-    TType extends NumberFieldType = NumberFieldType,
-    TTypeScriptType = TType['valueType'],
-    > extends FieldRuntimeValue<NumberFieldDefinition<TType, TTypeScriptType>> {
+export class NumberFieldValue<
+    TDefinition extends NumberFieldDefinition<NumberFieldType, any>,
+    > extends StructFieldValue<TDefinition> {
     public serialize(dataView: DataView, offset: number): void {
         // `setBigInt64` requires a `bigint` while others require `number`
         // So `dataView[DataViewSetters]` requires `bigint & number`

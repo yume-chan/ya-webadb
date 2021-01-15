@@ -1,21 +1,23 @@
-import { StructOptions, StructDeserializationContext, StructSerializationContext } from './context';
-import { FieldDefinition } from './definition';
-import { FieldRuntimeValue } from './runtime-value';
+import { ValueOrPromise } from '../utils';
+import { StructDeserializationContext, StructOptions, StructSerializationContext } from './context';
+import { StructFieldDefinition } from './definition';
+import { StructFieldValue } from './field-value';
+import { StructValue } from './struct-value';
 
-describe('FieldDefinition', () => {
-    describe('new', () => {
+describe('StructFieldDefinition', () => {
+    describe('.constructor', () => {
         it('should save the `options` parameter', () => {
-            class MockFieldDefinition extends FieldDefinition<number>{
+            class MockFieldDefinition extends StructFieldDefinition<number>{
                 public constructor(options: number) {
                     super(options);
                 }
                 public getSize(): number {
                     throw new Error('Method not implemented.');
                 }
-                public deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, object: any): FieldRuntimeValue<FieldDefinition<number, unknown, never>> | Promise<FieldRuntimeValue<FieldDefinition<number, unknown, never>>> {
+                public create(options: Readonly<StructOptions>, context: StructSerializationContext, object: StructValue, struct: unknown): StructFieldValue<this> {
                     throw new Error('Method not implemented.');
                 }
-                public createValue(options: Readonly<StructOptions>, context: StructSerializationContext, object: any, value: unknown): FieldRuntimeValue<FieldDefinition<number, unknown, never>> {
+                public deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
                     throw new Error('Method not implemented.');
                 }
             }

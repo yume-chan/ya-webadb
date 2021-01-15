@@ -1,5 +1,5 @@
-import { StructDefaultOptions, StructDeserializationContext, StructSerializationContext } from '../basic';
-import { NumberFieldDefinition, NumberFieldRuntimeValue, NumberFieldType } from './number';
+import { StructDefaultOptions, StructDeserializationContext, StructSerializationContext, StructValue } from '../basic';
+import { NumberFieldDefinition, NumberFieldType } from './number';
 
 describe('Types', () => {
     describe('Number', () => {
@@ -62,41 +62,20 @@ describe('Types', () => {
         });
 
         describe('NumberFieldDefinition', () => {
-            describe('getSize', () => {
-                it('should return 1 for int8', () => {
+            describe('#getSize', () => {
+                it('should return size of its type', () => {
                     expect(new NumberFieldDefinition(NumberFieldType.Int8).getSize()).toBe(1);
-                });
-
-                it('should return 1 for uint8', () => {
                     expect(new NumberFieldDefinition(NumberFieldType.Uint8).getSize()).toBe(1);
-                });
-
-                it('should return 2 for int16', () => {
                     expect(new NumberFieldDefinition(NumberFieldType.Int16).getSize()).toBe(2);
-                });
-
-                it('should return 2 for uint16', () => {
                     expect(new NumberFieldDefinition(NumberFieldType.Uint16).getSize()).toBe(2);
-                });
-
-                it('should return 4 for int32', () => {
                     expect(new NumberFieldDefinition(NumberFieldType.Int32).getSize()).toBe(4);
-                });
-
-                it('should return 4 for uint32', () => {
                     expect(new NumberFieldDefinition(NumberFieldType.Uint32).getSize()).toBe(4);
-                });
-
-                it('should return 8 for int64', () => {
                     expect(new NumberFieldDefinition(NumberFieldType.Int64).getSize()).toBe(8);
-                });
-
-                it('should return 8 for uint64', () => {
                     expect(new NumberFieldDefinition(NumberFieldType.Uint64).getSize()).toBe(8);
                 });
             });
 
-            describe('deserialize', () => {
+            describe('#deserialize', () => {
                 it('should deserialize Uint8', async () => {
                     const read = jest.fn((length: number) => new Uint8Array([1, 2, 3, 4]).buffer);
                     const context: StructDeserializationContext = {
@@ -106,10 +85,11 @@ describe('Types', () => {
                     };
 
                     const definition = new NumberFieldDefinition(NumberFieldType.Uint8);
+                    const struct = new StructValue();
                     const value = await definition.deserialize(
                         StructDefaultOptions,
                         context,
-                        {}
+                        struct,
                     );
 
                     expect(value.get()).toBe(1);
@@ -126,10 +106,11 @@ describe('Types', () => {
                     };
 
                     const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
+                    const struct = new StructValue();
                     const value = await definition.deserialize(
                         StructDefaultOptions,
                         context,
-                        {}
+                        struct,
                     );
 
                     expect(value.get()).toBe((1 << 8) | 2);
@@ -146,10 +127,11 @@ describe('Types', () => {
                     };
 
                     const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
+                    const struct = new StructValue();
                     const value = await definition.deserialize(
                         { ...StructDefaultOptions, littleEndian: true },
                         context,
-                        {}
+                        struct,
                     );
 
                     expect(value.get()).toBe((2 << 8) | 1);
@@ -159,100 +141,121 @@ describe('Types', () => {
             });
         });
 
-        describe('NumberRuntimeValue', () => {
-            describe('getSize', () => {
-                it('should return 1 for int8', () => {
+        describe('NumberFieldValue', () => {
+            describe('#getSize', () => {
+                it('should return size of its definition', () => {
                     const context: StructSerializationContext = {
                         encodeUtf8(input) { throw new Error(''); },
                     };
-                    const definition = new NumberFieldDefinition(NumberFieldType.Int8);
-                    const runtimeValue = definition.createValue(StructDefaultOptions, context, {}, 42);
+                    const struct = new StructValue();
 
-                    expect(runtimeValue.getSize()).toBe(1);
-                });
+                    expect(
+                        new NumberFieldDefinition(NumberFieldType.Int8)
+                            .create(
+                                StructDefaultOptions,
+                                context,
+                                struct,
+                                42,
+                            )
+                            .getSize()
+                    ).toBe(1);
 
-                it('should return 1 for uint8', () => {
-                    const context: StructSerializationContext = {
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
-                    const definition = new NumberFieldDefinition(NumberFieldType.Uint8);
-                    const runtimeValue = definition.createValue(StructDefaultOptions, context, {}, 42);
+                    expect(
+                        new NumberFieldDefinition(NumberFieldType.Uint8)
+                            .create(
+                                StructDefaultOptions,
+                                context,
+                                struct,
+                                42,
+                            )
+                            .getSize()
+                    ).toBe(1);
 
-                    expect(runtimeValue.getSize()).toBe(1);
-                });
+                    expect(
+                        new NumberFieldDefinition(NumberFieldType.Int16)
+                            .create(
+                                StructDefaultOptions,
+                                context,
+                                struct,
+                                42,
+                            )
+                            .getSize()
+                    ).toBe(2);
 
-                it('should return 2 for int16', () => {
-                    const context: StructSerializationContext = {
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
-                    const definition = new NumberFieldDefinition(NumberFieldType.Int16);
-                    const runtimeValue = definition.createValue(StructDefaultOptions, context, {}, 42);
+                    expect(
+                        new NumberFieldDefinition(NumberFieldType.Uint16)
+                            .create(
+                                StructDefaultOptions,
+                                context,
+                                struct,
+                                42,
+                            )
+                            .getSize()
+                    ).toBe(2);
 
-                    expect(runtimeValue.getSize()).toBe(2);
-                });
+                    expect(
+                        new NumberFieldDefinition(NumberFieldType.Int32)
+                            .create(
+                                StructDefaultOptions,
+                                context,
+                                struct,
+                                42,
+                            )
+                            .getSize()
+                    ).toBe(4);
 
-                it('should return 2 for uint16', () => {
-                    const context: StructSerializationContext = {
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
-                    const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
-                    const runtimeValue = definition.createValue(StructDefaultOptions, context, {}, 42);
+                    expect(
+                        new NumberFieldDefinition(NumberFieldType.Uint32)
+                            .create(
+                                StructDefaultOptions,
+                                context,
+                                struct,
+                                42,
+                            )
+                            .getSize()
+                    ).toBe(4);
 
-                    expect(runtimeValue.getSize()).toBe(2);
-                });
+                    expect(
+                        new NumberFieldDefinition(NumberFieldType.Int64)
+                            .create(
+                                StructDefaultOptions,
+                                context,
+                                struct,
+                                BigInt(100),
+                            )
+                            .getSize()
+                    ).toBe(8);
 
-                it('should return 4 for int32', () => {
-                    const context: StructSerializationContext = {
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
-                    const definition = new NumberFieldDefinition(NumberFieldType.Int32);
-                    const runtimeValue = definition.createValue(StructDefaultOptions, context, {}, 42);
-
-                    expect(runtimeValue.getSize()).toBe(4);
-                });
-
-                it('should return 4 for uint32', () => {
-                    const context: StructSerializationContext = {
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
-                    const definition = new NumberFieldDefinition(NumberFieldType.Uint32);
-                    const runtimeValue = definition.createValue(StructDefaultOptions, context, {}, 42);
-
-                    expect(runtimeValue.getSize()).toBe(4);
-                });
-
-                it('should return 8 for int64', () => {
-                    const context: StructSerializationContext = {
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
-                    const definition = new NumberFieldDefinition(NumberFieldType.Int64);
-                    const runtimeValue = definition.createValue(StructDefaultOptions, context, {}, BigInt(42));
-
-                    expect(runtimeValue.getSize()).toBe(8);
-                });
-
-                it('should return 8 for uint64', () => {
-                    const context: StructSerializationContext = {
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
-                    const definition = new NumberFieldDefinition(NumberFieldType.Uint64);
-                    const runtimeValue = definition.createValue(StructDefaultOptions, context, {}, BigInt(42));
-
-                    expect(runtimeValue.getSize()).toBe(8);
+                    expect(
+                        new NumberFieldDefinition(NumberFieldType.Uint64)
+                            .create(
+                                StructDefaultOptions,
+                                context,
+                                struct,
+                                BigInt(100),
+                            )
+                            .getSize()
+                    ).toBe(8);
                 });
             });
 
-            describe('serialize', () => {
+            describe('#serialize', () => {
                 it('should serialize uint8', () => {
                     const context: StructSerializationContext = {
                         encodeUtf8(input) { throw new Error(''); },
                     };
                     const definition = new NumberFieldDefinition(NumberFieldType.Int8);
-                    const runtimeValue = definition.createValue(StructDefaultOptions, context, {}, 42);
+                    const struct = new StructValue();
+                    const value = definition.create(
+                        StructDefaultOptions,
+                        context,
+                        struct,
+                        42,
+                    );
 
                     const array = new Uint8Array(10);
                     const dataView = new DataView(array.buffer);
-                    runtimeValue.serialize(dataView, 2);
+                    value.serialize(dataView, 2);
 
                     expect(Array.from(array)).toEqual([0, 0, 42, 0, 0, 0, 0, 0, 0, 0]);
                 });

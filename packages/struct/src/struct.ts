@@ -1,5 +1,6 @@
-import { createRuntimeObject, FieldDefinition, FieldRuntimeValue, getRuntimeValue, setRuntimeValue, StructDefaultOptions, StructDeserializationContext, StructOptions, StructSerializationContext } from './basic';
-import { ArrayBufferFieldType, ArrayBufferLikeFieldType, Evaluate, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, Identity, KeysOfType, NumberFieldDefinition, NumberFieldType, Overwrite, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
+import { StructDefaultOptions, StructDeserializationContext, StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from './basic';
+import { ArrayBufferFieldType, ArrayBufferLikeFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
+import { Evaluate, Identity, KeysOfType, Overwrite } from './utils';
 
 export interface StructLike<TValue> {
     deserialize(context: StructDeserializationContext): Promise<TValue>;
@@ -24,13 +25,13 @@ type AddFieldDescriptor<
     TExtra extends object,
     TPostDeserialized,
     TFieldName extends PropertyKey,
-    TDefinition extends FieldDefinition<any, any, any>> =
+    TDefinition extends StructFieldDefinition<any, any, any>> =
     Identity<Struct<
         // Merge two types
         // Evaluate immediately to optimize editor hover tooltip
         Evaluate<TFields & Record<TFieldName, TDefinition['valueType']>>,
         // Merge two `TOmitInit
-        TOmitInit | TDefinition['omitInitType'],
+        TOmitInit | TDefinition['omitInitKeyType'],
         TExtra,
         TPostDeserialized
     >>;
@@ -181,7 +182,7 @@ export class Struct<
      */
     public get size() { return this._size; }
 
-    private _fields: [name: PropertyKey, definition: FieldDefinition<any, any, any>][] = [];
+    private _fields: [name: PropertyKey, definition: StructFieldDefinition<any, any, any>][] = [];
 
     private _extra: PropertyDescriptorMap = {};
 
@@ -192,11 +193,11 @@ export class Struct<
     }
 
     /**
-     * Appends a `FieldDefinition` to the `Struct
+     * Appends a `StructFieldDefinition` to the `Struct
      */
     public field<
         TName extends PropertyKey,
-        TDefinition extends FieldDefinition<any, any, any>
+        TDefinition extends StructFieldDefinition<any, any, any>
     >(
         name: TName,
         definition: TDefinition,
@@ -516,61 +517,55 @@ export class Struct<
         return this as any;
     }
 
-    private initializeObject() {
-        const object = createRuntimeObject();
-        Object.defineProperties(object, this._extra);
-        return object;
-    }
-
-    public create(init: Evaluate<Omit<TFields, TOmitInit>>, context: StructSerializationContext): Overwrite<TExtra, TFields> {
-        const object = this.initializeObject();
-
-        for (const [name, definition] of this._fields) {
-            const runtimeValue = definition.createValue(this.options, context, object, (init as any)[name]);
-            setRuntimeValue(object, name, runtimeValue);
-        }
-
-        return object as any;
+    private initializeStructValue() {
+        const value = new StructValue();
+        Object.defineProperties(value.value, this._extra);
+        return value;
     }
 
     public async deserialize(
         context: StructDeserializationContext
     ): Promise<StructDeserializedType<TFields, TExtra, TPostDeserialized>> {
-        const object = this.initializeObject();
+        const value = this.initializeStructValue();
 
         for (const [name, definition] of this._fields) {
-            const runtimeValue = await definition.deserialize(this.options, context, object);
-            setRuntimeValue(object, name, runtimeValue);
+            const fieldValue = await definition.deserialize(this.options, context, value);
+            value.set(name, fieldValue);
         }
 
         if (this._postDeserialized) {
-            const result = this._postDeserialized.call(object as TFields, object as TFields);
+            const result = this._postDeserialized.call(value.value as TFields, value as TFields);
             if (result) {
                 return result;
             }
         }
 
-        return object as any;
+        return value.value as any;
     }
 
     public serialize(init: Evaluate<Omit<TFields, TOmitInit>>, context: StructSerializationContext): ArrayBuffer {
-        const object = this.create(init, context) as any;
+        const value = this.initializeStructValue();
+
+        for (const [name, definition] of this._fields) {
+            const fieldValue = definition.create(this.options, context, value, (init as any)[name]);
+            value.set(name, fieldValue);
+        }
 
         let structSize = 0;
-        const fieldsInfo: { runtimeValue: FieldRuntimeValue, size: number; }[] = [];
+        const fieldsInfo: { fieldValue: StructFieldValue, size: number; }[] = [];
 
         for (const [name] of this._fields) {
-            const runtimeValue = getRuntimeValue(object, name);
-            const size = runtimeValue.getSize();
-            fieldsInfo.push({ runtimeValue, size });
+            const fieldValue = value.get(name);
+            const size = fieldValue.getSize();
+            fieldsInfo.push({ fieldValue, size });
             structSize += size;
         }
 
         const buffer = new ArrayBuffer(structSize);
         const dataView = new DataView(buffer);
         let offset = 0;
-        for (const { runtimeValue, size } of fieldsInfo) {
-            runtimeValue.serialize(dataView, offset, context);
+        for (const { fieldValue, size } of fieldsInfo) {
+            fieldValue.serialize(dataView, offset, context);
             offset += size;
         }
 

@@ -1,5 +1,4 @@
-import { StructOptions, StructSerializationContext } from '../basic';
-import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldRuntimeValue, ArrayBufferLikeFieldType } from './array-buffer';
+import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldType } from './array-buffer';
 
 export interface FixedLengthArrayBufferLikeFieldOptions {
     length: number;
@@ -14,14 +13,5 @@ export class FixedLengthArrayBufferLikeFieldDefinition<
     > {
     public getSize(): number {
         return this.options.length;
-    }
-
-    public createValue(
-        options: Readonly<StructOptions>,
-        context: StructSerializationContext,
-        object: any,
-        value: TType['valueType']
-    ): ArrayBufferLikeFieldRuntimeValue<FixedLengthArrayBufferLikeFieldDefinition<TType, TOptions>> {
-        return new ArrayBufferLikeFieldRuntimeValue(this, options, context, object, value);
     }
 };

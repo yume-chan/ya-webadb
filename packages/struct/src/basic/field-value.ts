@@ -1,14 +1,15 @@
 import type { StructOptions, StructSerializationContext } from './context';
-import type { FieldDefinition } from './definition';
+import type { StructFieldDefinition } from './definition';
+import type { StructValue } from './struct-value';
 
 /**
  * Field runtime value manages one field of one `Struct` instance.
  *
- * If one `FieldDefinition` needs to change other field's semantics
- * It can override other fields' `FieldRuntimeValue` in its own `FieldRuntimeValue`'s constructor
+ * If one `StructFieldDefinition` needs to change other field's semantics
+ * It can override other fields' `StructFieldValue` in its own `StructFieldValue`'s constructor
  */
-export abstract class FieldRuntimeValue<
-    TDefinition extends FieldDefinition<any, any, any> = FieldDefinition<any, any, any>
+export abstract class StructFieldValue<
+    TDefinition extends StructFieldDefinition<any, any, any> = StructFieldDefinition<any, any, any>
     > {
     /** Gets the definition associated with this runtime value */
     public readonly definition: TDefinition;
@@ -20,7 +21,7 @@ export abstract class FieldRuntimeValue<
     public readonly context: StructSerializationContext;
 
     /** Gets the associated `Struct` instance */
-    public readonly object: any;
+    public readonly struct: StructValue;
 
     protected value: TDefinition['valueType'];
 
@@ -28,13 +29,13 @@ export abstract class FieldRuntimeValue<
         definition: TDefinition,
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
-        object: any,
+        struct: StructValue,
         value: TDefinition['valueType'],
     ) {
         this.definition = definition;
         this.options = options;
         this.context = context;
-        this.object = object;
+        this.struct = struct;
         this.value = value;
     }
 

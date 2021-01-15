@@ -1,8 +1,8 @@
 import { StructDefaultOptions } from './context';
 
-describe('Runtime', () => {
-    describe('StructDefaultOptions', () => {
-        it('should have `littleEndian` that equals to `false`', () => {
+describe('StructDefaultOptions', () => {
+    describe('.littleEndian', () => {
+        it('should be `false`', () => {
             expect(StructDefaultOptions).toHaveProperty('littleEndian', false);
         });
     });

@@ -1,38 +1,68 @@
-import { createRuntimeObject, getRuntimeValue, setRuntimeValue } from './runtime-object';
+import { StructValue } from './struct-value';
 
-describe('RuntimeObject', () => {
-    describe('createRuntimeObject', () => {
-        it('should create a special object', () => {
-            const object = createRuntimeObject();
-            expect(Object.getOwnPropertySymbols(object)).toHaveLength(1);
+describe('StructValue', () => {
+    describe('.constructor', () => {
+        it('should create `fieldValues` and `value`', () => {
+            const foo = new StructValue();
+            const bar = new StructValue();
+
+            expect(foo).toHaveProperty('fieldValues', {});
+            expect(bar).toHaveProperty('fieldValues', {});
+            expect(foo.fieldValues).not.toBe(bar.fieldValues);
         });
     });
 
-    describe('getRuntimeValue', () => {
-        it('should return previously set value', () => {
-            const object = createRuntimeObject();
-            const field = 'foo';
-            const value = {} as any;
-            setRuntimeValue(object, field, value);
-            expect(getRuntimeValue(object, field)).toBe(value);
+    describe('#set', () => {
+        it('should save the `StructFieldValue`', () => {
+            const object = new StructValue();
+
+            const foo = 'foo';
+            const fooValue = {} as any;
+            object.set(foo, fooValue);
+
+            const bar = 'bar';
+            const barValue = {} as any;
+            object.set(bar, barValue);
+
+            expect(object.fieldValues[foo]).toBe(fooValue);
+            expect(object.fieldValues[bar]).toBe(barValue);
+        });
+
+        it('should define a property for `key`', () => {
+            const object = new StructValue();
+
+            const foo = 'foo';
+            const fooGetter = jest.fn(() => 42);
+            const fooSetter = jest.fn((value: number) => { });
+            const fooValue = { get: fooGetter, set: fooSetter } as any;
+            object.set(foo, fooValue);
+
+            const bar = 'bar';
+            const barGetter = jest.fn(() => true);
+            const barSetter = jest.fn((value: number) => { });
+            const barValue = { get: barGetter, set: barSetter } as any;
+            object.set(bar, barValue);
+
+            expect(object.value).toHaveProperty(foo, 42);
+            expect(fooGetter).toBeCalledTimes(1);
+            expect(barGetter).toBeCalledTimes(0);
+
+            object.value[foo] = 100;
+            expect(fooSetter).toBeCalledTimes(1);
+            expect(fooSetter).lastCalledWith(100);
+            expect(barSetter).toBeCalledTimes(0);
         });
     });
 
-    describe('setRuntimeValue', () => {
-        it('should define a proxy property to underlying `RuntimeValue`', () => {
-            const object = createRuntimeObject();
-            const field = 'foo';
-            const getter = jest.fn(() => 42);
-            const setter = jest.fn((value: number) => { });
-            const value = { get: getter, set: setter } as any;
-            setRuntimeValue(object, field, value);
+    describe('#get', () => {
+        it('should return previously set `StructFieldValue`', () => {
+            const object = new StructValue();
 
-            expect((object as any)[field]).toBe(42);
-            expect(getter).toBeCalledTimes(1);
+            const foo = 'foo';
+            const fooValue = {} as any;
+            object.set(foo, fooValue);
 
-            (object as any)[field] = 100;
-            expect(setter).toBeCalledTimes(1);
-            expect(setter).lastCalledWith(100);
+            expect(object.get(foo)).toBe(fooValue);
         });
     });
 });

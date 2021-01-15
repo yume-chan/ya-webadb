@@ -1,15 +1,15 @@
-import { FieldDefinition, FieldRuntimeValue, StructDeserializationContext, StructOptions, StructSerializationContext } from '../basic';
+import { StructDeserializationContext, StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from '../basic';
 
 /**
  * Base class for all types that
  * can be converted from an ArrayBuffer when deserialized,
  * and need to be converted to an ArrayBuffer when serializing
  *
- * @template TType The actual TypeScript type of this type
+ * @template TValue The actual TypeScript type of this type
  * @template TTypeScriptType Optional another type (should be compatible with `TType`)
  * specified by user when creating field definitions.
  */
-export abstract class ArrayBufferLikeFieldType<TType = unknown, TTypeScriptType = TType> {
+export abstract class ArrayBufferLikeFieldType<TValue = unknown, TTypeScriptType = TValue> {
     public readonly valueType!: TTypeScriptType;
 
     /**
@@ -18,10 +18,10 @@ export abstract class ArrayBufferLikeFieldType<TType = unknown, TTypeScriptType 
      * This function should be "pure", i.e.,
      * same `value` should always be converted to `ArrayBuffer`s that have same content.
      */
-    public abstract toArrayBuffer(value: TType, context: StructSerializationContext): ArrayBuffer;
+    public abstract toArrayBuffer(value: TValue, context: StructSerializationContext): ArrayBuffer;
 
     /** When implemented in derived classes, converts the `ArrayBuffer` to a type-specific value */
-    public abstract fromArrayBuffer(arrayBuffer: ArrayBuffer, context: StructDeserializationContext): TType;
+    public abstract fromArrayBuffer(arrayBuffer: ArrayBuffer, context: StructDeserializationContext): TValue;
 
     /**
      * When implemented in derived classes, gets the size in byte of the type-specific `value`.
@@ -30,7 +30,7 @@ export abstract class ArrayBufferLikeFieldType<TType = unknown, TTypeScriptType 
      * implementer should returns `-1` so the caller will get its size by first converting it to
      * an `ArrayBuffer` (and cache the result).
      */
-    public abstract getSize(value: TType): number;
+    public abstract getSize(value: TValue): number;
 }
 
 /** An ArrayBufferLike type that's actually an `ArrayBuffer` */
@@ -54,7 +54,7 @@ export class ArrayBufferFieldType extends ArrayBufferLikeFieldType<ArrayBuffer> 
     }
 }
 
-/** Am ArrayBufferLike type that converts to/from the `ArrayBuffer` from/to a `Uint8ClampedArray` */
+/** Am ArrayBufferLike type that converts between `ArrayBuffer` and `Uint8ClampedArray` */
 export class Uint8ClampedArrayFieldType
     extends ArrayBufferLikeFieldType<Uint8ClampedArray, Uint8ClampedArray> {
     public static readonly instance = new Uint8ClampedArrayFieldType();
@@ -76,7 +76,7 @@ export class Uint8ClampedArrayFieldType
     }
 }
 
-/** Am ArrayBufferLike type that converts to/from the `ArrayBuffer` from/to a `string` */
+/** Am ArrayBufferLike type that converts between `ArrayBuffer` and `string` */
 export class StringFieldType<TTypeScriptType = string>
     extends ArrayBufferLikeFieldType<string, TTypeScriptType> {
     public static readonly instance = new StringFieldType();
@@ -102,11 +102,11 @@ const EmptyArrayBuffer = new ArrayBuffer(0);
 export abstract class ArrayBufferLikeFieldDefinition<
     TType extends ArrayBufferLikeFieldType = ArrayBufferLikeFieldType,
     TOptions = void,
-    TOmitInit = never,
-    > extends FieldDefinition<
+    TOmitInitKey = never,
+    > extends StructFieldDefinition<
     TOptions,
     TType['valueType'],
-    TOmitInit
+    TOmitInitKey
     >{
     public readonly type: TType;
 
@@ -115,16 +115,28 @@ export abstract class ArrayBufferLikeFieldDefinition<
         this.type = type;
     }
 
-    protected getDeserializeSize(object: any): number {
+    protected getDeserializeSize(struct: StructValue): number {
         return this.getSize();
+    }
+
+    /**
+     * When implemented in derived classes, creates a `StructFieldValue` for the current field definition.
+     */
+    public create(
+        options: Readonly<StructOptions>,
+        context: StructSerializationContext,
+        struct: StructValue,
+        value: TType['valueType'],
+    ): ArrayBufferLikeFieldValue<this> {
+        return new ArrayBufferLikeFieldValue(this, options, context, struct, value);
     }
 
     public async deserialize(
         options: Readonly<StructOptions>,
         context: StructDeserializationContext,
-        object: any,
-    ): Promise<ArrayBufferLikeFieldRuntimeValue<ArrayBufferLikeFieldDefinition<TType, TOptions, TOmitInit>>> {
-        const size = this.getDeserializeSize(object);
+        struct: StructValue,
+    ): Promise<ArrayBufferLikeFieldValue<this>> {
+        const size = this.getDeserializeSize(struct);
 
         let arrayBuffer: ArrayBuffer;
         if (size === 0) {
@@ -134,25 +146,15 @@ export abstract class ArrayBufferLikeFieldDefinition<
         }
 
         const value = this.type.fromArrayBuffer(arrayBuffer, context);
-        const runtimeValue = this.createValue(options, context, object, value);
-        runtimeValue.arrayBuffer = arrayBuffer;
-        return runtimeValue;
+        const fieldValue = this.create(options, context, struct, value);
+        fieldValue.arrayBuffer = arrayBuffer;
+        return fieldValue;
     }
-
-    /**
-     * When implemented in derived classes, creates a `FieldRuntimeValue` for the current field definition.
-     */
-    public abstract createValue(
-        options: Readonly<StructOptions>,
-        context: StructSerializationContext,
-        object: any,
-        value: TType['valueType'],
-    ): ArrayBufferLikeFieldRuntimeValue<ArrayBufferLikeFieldDefinition<TType, TOptions, TOmitInit>>;
 }
 
-export class ArrayBufferLikeFieldRuntimeValue<
-    TDefinition extends ArrayBufferLikeFieldDefinition<any, any, any>,
-    > extends FieldRuntimeValue<TDefinition> {
+export class ArrayBufferLikeFieldValue<
+    TDefinition extends ArrayBufferLikeFieldDefinition<ArrayBufferLikeFieldType, any, any>,
+    > extends StructFieldValue<TDefinition> {
     public arrayBuffer: ArrayBuffer | undefined;
 
     public set(value: TDefinition['valueType']): void {
@@ -166,6 +168,6 @@ export class ArrayBufferLikeFieldRuntimeValue<
         }
 
         new Uint8Array(dataView.buffer)
-            .set(new Uint8Array(this.arrayBuffer!), offset);
+            .set(new Uint8Array(this.arrayBuffer), offset);
     }
 }

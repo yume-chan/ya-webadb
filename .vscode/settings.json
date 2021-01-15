@@ -59,5 +59,7 @@
         "yume",
         "zstd"
     ],
-    "editor.tabSize": 4
+    "editor.tabSize": 4,
+    "jest.rootPath": "packages/struct",
+    "jest.showCoverageOnLoad": true
 }

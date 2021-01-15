@@ -39,6 +39,9 @@ export type OmitNever<T> = Pick<T, { [K in keyof T]: [T[K]] extends [never] ? ne
 export type KeysOfType<T, TValue> =
     { [TKey in keyof T]: T[TKey] extends TValue ? TKey : never }[keyof T];
 
+export type ValueOrPromise<T> = T | Promise<T>;
+
+
 /**
  * Returns a (fake) value of the given type.
  */
