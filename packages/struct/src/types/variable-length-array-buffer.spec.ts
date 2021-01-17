@@ -1,467 +1,556 @@
-import { StructDefaultOptions, StructDeserializationContext, StructValue } from '../basic';
-import { ArrayBufferFieldType, ArrayBufferLikeFieldValue, StringFieldType, Uint8ClampedArrayFieldType } from './array-buffer';
-import { FixedLengthArrayBufferLikeFieldDefinition } from './fixed-length-array-buffer';
-import { NumberFieldDefinition, NumberFieldType, NumberFieldValue } from './number';
-import { VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeLengthStructFieldValue, VariableLengthArrayBufferLikeStructFieldValue } from './variable-length-array-buffer';
+import { StructDefaultOptions, StructDeserializationContext, StructFieldValue, StructSerializationContext, StructValue } from '../basic';
+import { ArrayBufferFieldType, ArrayBufferLikeFieldType } from './array-buffer';
+import { VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldLengthValue, VariableLengthArrayBufferLikeStructFieldValue } from './variable-length-array-buffer';
+
+class MockDeserializationContext implements StructDeserializationContext {
+    public buffer = new ArrayBuffer(0);
+
+    public read = jest.fn((length: number) => this.buffer);
+
+    public encodeUtf8 = jest.fn((input: string) => Buffer.from(input, 'utf-8'));
+
+    public decodeUtf8 = jest.fn((buffer: ArrayBuffer) => Buffer.from(buffer).toString('utf-8'));
+}
+
+class MockOriginalFieldValue extends StructFieldValue {
+    public constructor() {
+        super({} as any, {} as any, {} as any, {} as any, {});
+    }
+
+    public value: string | number = 0;
+
+    public get = jest.fn((): string | number => this.value);
+
+    public size = 0;
+
+    public getSize = jest.fn((): number => this.size);
+
+    public set = jest.fn((value: string | number) => { });
+
+    public serialize = jest.fn((dataView: DataView, offset: number, context: StructSerializationContext): void => { });
+}
 
 describe('Types', () => {
-    describe('VariableLengthArrayBufferLikeFieldDefinition', () => {
+    describe('VariableLengthArrayBufferLikeFieldLengthValue', () => {
+        class MockArrayBufferFieldValue extends StructFieldValue {
+            public constructor() {
+                super({} as any, {} as any, {} as any, {} as any, {});
+            }
+
+            public size = 0;
+
+            public getSize = jest.fn(() => this.size);
+
+            public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
+                throw new Error('Method not implemented.');
+            }
+        }
+
         describe('#getSize', () => {
-            it('should always return `0`', () => {
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(ArrayBufferFieldType.instance, { lengthField: 'foo' });
-                expect(definition.getSize()).toBe(0);
+            it('should return size of its original field value', () => {
+                const mockOriginalFieldValue = new MockOriginalFieldValue();
+                const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
+                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                    mockOriginalFieldValue,
+                    mockArrayBufferFieldValue,
+                );
+
+                mockOriginalFieldValue.size = 0;
+                expect(lengthFieldValue.getSize()).toBe(0);
+                expect(mockOriginalFieldValue.getSize).toBeCalledTimes(1);
+
+                mockOriginalFieldValue.getSize.mockClear();
+                mockOriginalFieldValue.size = 100;
+                expect(lengthFieldValue.getSize()).toBe(100);
+                expect(mockOriginalFieldValue.getSize).toBeCalledTimes(1);
             });
         });
 
-        describe('#getDeserializeSize', () => {
-            it('should return value of its `lengthField`', async () => {
-                const lengthField = 'foo';
-                const size = 10;
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(ArrayBufferFieldType.instance, { lengthField });
-                const buffer = new ArrayBuffer(size);
-                const read = jest.fn((length: number) => buffer);
-                const context: StructDeserializationContext = {
-                    read,
-                    encodeUtf8(input) { throw new Error(''); },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
-                const struct = new StructValue();
-                struct.set(
-                    lengthField,
-                    new NumberFieldValue(
-                        new NumberFieldDefinition(
-                            NumberFieldType.Int8
-                        ),
-                        StructDefaultOptions,
-                        context,
-                        struct,
-                        size,
-                    ),
+        describe('#get', () => {
+            it('should return size of its `arrayBufferField`', async () => {
+                const mockOriginalFieldValue = new MockOriginalFieldValue();
+                const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
+                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                    mockOriginalFieldValue,
+                    mockArrayBufferFieldValue,
                 );
 
-                const fieldValue = await definition.deserialize(StructDefaultOptions, context, struct);
-                expect(read).toBeCalledTimes(1);
-                expect(read).toBeCalledWith(size);
-                expect(fieldValue).toHaveProperty('arrayBuffer', buffer);
+                mockOriginalFieldValue.value = 0;
+                mockArrayBufferFieldValue.size = 0;
+                expect(lengthFieldValue.get()).toBe(0);
+                expect(mockArrayBufferFieldValue.getSize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
 
-                const value = fieldValue.get();
-                expect(value).toBe(buffer);
+                mockArrayBufferFieldValue.getSize.mockClear();
+                mockOriginalFieldValue.get.mockClear();
+                mockArrayBufferFieldValue.size = 100;
+                expect(lengthFieldValue.get()).toBe(100);
+                expect(mockArrayBufferFieldValue.getSize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
             });
 
-            it('should return value of its `lengthField` as number', async () => {
-                const lengthField = 'foo';
-                const size = 10;
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(ArrayBufferFieldType.instance, { lengthField });
-                const buffer = new ArrayBuffer(size);
-                const read = jest.fn((length: number) => buffer);
-                const context: StructDeserializationContext = {
-                    read,
-                    encodeUtf8(input) { throw new Error(''); },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
-                const struct = new StructValue();
-                struct.set(
-                    lengthField,
-                    new ArrayBufferLikeFieldValue(
-                        new FixedLengthArrayBufferLikeFieldDefinition(
-                            StringFieldType.instance,
-                            { length: 2 },
-                        ),
-                        StructDefaultOptions,
-                        context,
-                        struct,
-                        size.toString()
-                    ),
+            it('should return size of its `arrayBufferField` as string', async () => {
+                const mockOriginalFieldValue = new MockOriginalFieldValue();
+                const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
+                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                    mockOriginalFieldValue,
+                    mockArrayBufferFieldValue,
                 );
 
-                const fieldValue = await definition.deserialize(StructDefaultOptions, context, struct);
-                expect(read).toBeCalledTimes(1);
-                expect(read).toBeCalledWith(size);
-                expect(fieldValue).toHaveProperty('arrayBuffer', buffer);
+                mockOriginalFieldValue.value = '0';
+                mockArrayBufferFieldValue.size = 0;
+                expect(lengthFieldValue.get()).toBe('0');
+                expect(mockArrayBufferFieldValue.getSize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
 
-                const value = fieldValue.get();
-                expect(value).toBe(buffer);
+                mockArrayBufferFieldValue.getSize.mockClear();
+                mockOriginalFieldValue.get.mockClear();
+                mockArrayBufferFieldValue.size = 100;
+                expect(lengthFieldValue.get()).toBe('100');
+                expect(mockArrayBufferFieldValue.getSize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
+            });
+        });
+
+        describe('#set', () => {
+            it('should does nothing', async () => {
+                const mockOriginalFieldValue = new MockOriginalFieldValue();
+                const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
+                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                    mockOriginalFieldValue,
+                    mockArrayBufferFieldValue,
+                );
+
+                mockOriginalFieldValue.value = 0;
+                mockArrayBufferFieldValue.size = 0;
+                expect(lengthFieldValue.get()).toBe(0);
+
+                (lengthFieldValue as StructFieldValue).set(100);
+                expect(lengthFieldValue.get()).toBe(0);
+            });
+        });
+
+        describe('#serialize', () => {
+            it('should call `serialize` of its `originalField`', async () => {
+                const mockOriginalFieldValue = new MockOriginalFieldValue();
+                const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
+                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                    mockOriginalFieldValue,
+                    mockArrayBufferFieldValue,
+                );
+
+                let dataView = 0 as any;
+                let offset = 1 as any;
+                let context = 2 as any;
+
+                mockArrayBufferFieldValue.size = 0;
+                lengthFieldValue.serialize(dataView, offset, context);
+                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toBeCalledWith(0);
+                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.serialize).toBeCalledWith(dataView, offset, context);
+
+                mockOriginalFieldValue.set.mockClear();
+                mockOriginalFieldValue.serialize.mockClear();
+                mockArrayBufferFieldValue.size = 100;
+                lengthFieldValue.serialize(dataView, offset, context);
+                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toBeCalledWith(100);
+                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.serialize).toBeCalledWith(dataView, offset, context);
             });
         });
     });
 
     describe('VariableLengthArrayBufferLikeStructFieldValue', () => {
         describe('.constructor', () => {
-            it('should replace `lengthField` on `struct`', () => {
-                const lengthField = 'foo';
-                const size = 10;
-                const buffer = new ArrayBuffer(size);
-                const read = jest.fn((length: number) => buffer);
-                const context: StructDeserializationContext = {
-                    read,
-                    encodeUtf8(input) { throw new Error(''); },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
+            it('should forward parameters', () => {
                 const struct = new StructValue();
 
-                const originalLengthFieldValue = new ArrayBufferLikeFieldValue(
-                    new FixedLengthArrayBufferLikeFieldDefinition(
-                        StringFieldType.instance,
-                        { length: 2 },
-                    ),
-                    StructDefaultOptions,
-                    context,
-                    struct,
-                    size.toString()
-                );
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
 
-                struct.set(lengthField, originalLengthFieldValue,);
-
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
+                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
                     ArrayBufferFieldType.instance,
                     { lengthField },
                 );
-                const fieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
-                    definition,
+
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(0);
+
+                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                    arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     context,
                     struct,
-                    buffer,
+                    value,
                 );
 
-                expect(fieldValue).toHaveProperty('definition', definition);
+                expect(arrayBufferFieldValue).toHaveProperty('definition', arrayBufferFieldDefinition);
+                expect(arrayBufferFieldValue).toHaveProperty('options', StructDefaultOptions);
+                expect(arrayBufferFieldValue).toHaveProperty('context', context);
+                expect(arrayBufferFieldValue).toHaveProperty('struct', struct);
+                expect(arrayBufferFieldValue).toHaveProperty('value', value);
+                expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', undefined);
+                expect(arrayBufferFieldValue).toHaveProperty('length', undefined);
+            });
 
-                expect(struct.fieldValues[lengthField]).not.toBe(originalLengthFieldValue);
+            it('should forward parameters with `arrayBuffer`', () => {
+                const struct = new StructValue();
+
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
+
+                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    ArrayBufferFieldType.instance,
+                    { lengthField },
+                );
+
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(100);
+
+                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                    arrayBufferFieldDefinition,
+                    StructDefaultOptions,
+                    context,
+                    struct,
+                    value,
+                    value,
+                );
+
+                expect(arrayBufferFieldValue).toHaveProperty('definition', arrayBufferFieldDefinition);
+                expect(arrayBufferFieldValue).toHaveProperty('options', StructDefaultOptions);
+                expect(arrayBufferFieldValue).toHaveProperty('context', context);
+                expect(arrayBufferFieldValue).toHaveProperty('struct', struct);
+                expect(arrayBufferFieldValue).toHaveProperty('value', value);
+                expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', value);
+                expect(arrayBufferFieldValue).toHaveProperty('length', 100);
+            });
+
+            it('should replace `lengthField` on `struct`', () => {
+                const struct = new StructValue();
+
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
+
+                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    ArrayBufferFieldType.instance,
+                    { lengthField },
+                );
+
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(0);
+
+                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                    arrayBufferFieldDefinition,
+                    StructDefaultOptions,
+                    context,
+                    struct,
+                    value,
+                );
+
+                expect(arrayBufferFieldValue['lengthFieldValue']).toBeInstanceOf(StructFieldValue);
+                expect(struct.fieldValues[lengthField]).toBe(arrayBufferFieldValue['lengthFieldValue']);
             });
         });
 
         describe('#getSize', () => {
-            it('should return size of `arrayBuffer` if exist', async () => {
-                const lengthField = 'foo';
-                const size = 10;
-                const buffer = new ArrayBuffer(size);
-                const read = jest.fn((length: number) => buffer);
-                const context: StructDeserializationContext = {
-                    read,
-                    encodeUtf8(input) { throw new Error(''); },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
+            class MockArrayBufferFieldType extends ArrayBufferLikeFieldType<ArrayBuffer> {
+                public toArrayBuffer = jest.fn((value: ArrayBuffer, context: StructSerializationContext): ArrayBuffer => {
+                    return value;
+                });
+
+                public fromArrayBuffer = jest.fn((arrayBuffer: ArrayBuffer, context: StructDeserializationContext): ArrayBuffer => {
+                    return arrayBuffer;
+                });
+
+                public size = 0;
+
+                public getSize = jest.fn((value: ArrayBuffer): number => {
+                    return this.size;
+                });
+            }
+
+            it('should return cached size if exist', async () => {
                 const struct = new StructValue();
 
-                const originalLengthFieldValue = new ArrayBufferLikeFieldValue(
-                    new FixedLengthArrayBufferLikeFieldDefinition(
-                        StringFieldType.instance,
-                        { length: 2 },
-                    ),
-                    StructDefaultOptions,
-                    context,
-                    struct,
-                    size.toString()
-                );
-                struct.set(lengthField, originalLengthFieldValue,);
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
 
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const arrayBufferFieldType = new MockArrayBufferFieldType();
+                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    arrayBufferFieldType,
                     { lengthField },
                 );
 
-                const fieldValue = await definition.deserialize(StructDefaultOptions, context, struct);
-                expect(fieldValue.getSize()).toBe(size);
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(100);
+
+                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                    arrayBufferFieldDefinition,
+                    StructDefaultOptions,
+                    context,
+                    struct,
+                    value,
+                    value,
+                );
+
+                expect(arrayBufferFieldValue.getSize()).toBe(100);
+                expect(arrayBufferFieldType.fromArrayBuffer).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.toArrayBuffer).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.getSize).toBeCalledTimes(0);
             });
 
             it('should call `getSize` of its `type`', () => {
-                const lengthField = 'foo';
-                const size = 10;
-                const buffer = new ArrayBuffer(size);
-
-                const context: StructDeserializationContext = {
-                    read(length) { throw new Error(''); },
-                    encodeUtf8(input) { throw new Error(''); },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
                 const struct = new StructValue();
 
-                const originalLengthFieldValue = new ArrayBufferLikeFieldValue(
-                    new FixedLengthArrayBufferLikeFieldDefinition(
-                        StringFieldType.instance,
-                        { length: 2 },
-                    ),
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
+
+                const arrayBufferFieldType = new MockArrayBufferFieldType();
+                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    arrayBufferFieldType,
+                    { lengthField },
+                );
+
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(100);
+
+                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                    arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     context,
                     struct,
-                    size.toString()
-                );
-                struct.set(lengthField, originalLengthFieldValue,);
-
-                const fieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
-                    new VariableLengthArrayBufferLikeFieldDefinition(
-                        ArrayBufferFieldType.instance,
-                        { lengthField },
-                    ),
-                    StructDefaultOptions,
-                    context,
-                    struct,
-                    buffer,
+                    value,
                 );
 
-                expect(fieldValue.getSize()).toBe(size);
+                arrayBufferFieldType.size = 100;
+                expect(arrayBufferFieldValue.getSize()).toBe(100);
+                expect(arrayBufferFieldType.fromArrayBuffer).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.toArrayBuffer).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.getSize).toBeCalledTimes(1);
+                expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', undefined);
+                expect(arrayBufferFieldValue).toHaveProperty('length', 100);
             });
 
             it('should call `toArrayBuffer` of its `type` if it does not support `getSize`', () => {
-                const lengthField = 'foo';
-                const size = 10;
-                const context: StructDeserializationContext = {
-                    read(length) { throw new Error(''); },
-                    encodeUtf8(input) {
-                        return Buffer.from(input, 'utf-8');
-                    },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
                 const struct = new StructValue();
 
-                const originalLengthFieldValue = new ArrayBufferLikeFieldValue(
-                    new FixedLengthArrayBufferLikeFieldDefinition(
-                        StringFieldType.instance,
-                        { length: 2 },
-                    ),
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
+
+                const arrayBufferFieldType = new MockArrayBufferFieldType();
+                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    arrayBufferFieldType,
+                    { lengthField },
+                );
+
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(100);
+
+                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                    arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     context,
                     struct,
-                    size.toString()
-                );
-                struct.set(lengthField, originalLengthFieldValue,);
-
-                const fieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
-                    new VariableLengthArrayBufferLikeFieldDefinition(
-                        StringFieldType.instance,
-                        { lengthField },
-                    ),
-                    StructDefaultOptions,
-                    context,
-                    struct,
-                    'test',
+                    value,
                 );
 
-                expect(fieldValue.getSize()).toBe(4);
+                arrayBufferFieldType.size = -1;
+                expect(arrayBufferFieldValue.getSize()).toBe(100);
+                expect(arrayBufferFieldType.fromArrayBuffer).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.toArrayBuffer).toBeCalledTimes(1);
+                expect(arrayBufferFieldType.getSize).toBeCalledTimes(1);
+                expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', value);
+                expect(arrayBufferFieldValue).toHaveProperty('length', 100);
             });
         });
 
         describe('#set', () => {
-            it('should store value', () => {
-                const lengthField = 'foo';
-                const size = 10;
-
-                const array = new Uint8ClampedArray(size);
-                const buffer = array.buffer;
-
-                const read = jest.fn((length: number) => buffer);
-                const context: StructDeserializationContext = {
-                    read,
-                    encodeUtf8(input) { throw new Error(''); },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
+            it('should call `ArrayBufferLikeFieldValue#set`', () => {
                 const struct = new StructValue();
 
-                const originalLengthFieldValue = new ArrayBufferLikeFieldValue(
-                    new FixedLengthArrayBufferLikeFieldDefinition(
-                        StringFieldType.instance,
-                        { length: 2 },
-                    ),
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
+
+                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    ArrayBufferFieldType.instance,
+                    { lengthField },
+                );
+
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(100);
+
+                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                    arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     context,
                     struct,
-                    size.toString()
+                    value,
+                    value,
                 );
 
-                struct.set(lengthField, originalLengthFieldValue,);
-
-                const fieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
-                    new VariableLengthArrayBufferLikeFieldDefinition(
-                        Uint8ClampedArrayFieldType.instance,
-                        { lengthField },
-                    ),
-                    StructDefaultOptions,
-                    context,
-                    struct,
-                    new Uint8ClampedArray(buffer),
-                );
-
-                const newArray = new Uint8ClampedArray(size);
-                fieldValue.set(newArray);
-                expect(fieldValue.get()).toBe(newArray);
+                const newValue = new ArrayBuffer(100);
+                arrayBufferFieldValue.set(newValue);
+                expect(arrayBufferFieldValue.get()).toBe(newValue);
+                expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', undefined);
             });
 
             it('should clear length', () => {
-                const lengthField = 'foo';
-                const size = 10;
-
-                const array = new Uint8ClampedArray(size);
-                const buffer = array.buffer;
-
-                const read = jest.fn((length: number) => buffer);
-                const context: StructDeserializationContext = {
-                    read,
-                    encodeUtf8(input) { throw new Error(''); },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
                 const struct = new StructValue();
 
-                const originalLengthFieldValue = new ArrayBufferLikeFieldValue(
-                    new FixedLengthArrayBufferLikeFieldDefinition(
-                        StringFieldType.instance,
-                        { length: 2 },
-                    ),
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
+
+                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    ArrayBufferFieldType.instance,
+                    { lengthField },
+                );
+
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(100);
+
+                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                    arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     context,
                     struct,
-                    size.toString()
+                    value,
+                    value,
                 );
 
-                struct.set(lengthField, originalLengthFieldValue,);
-
-                const fieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
-                    new VariableLengthArrayBufferLikeFieldDefinition(
-                        Uint8ClampedArrayFieldType.instance,
-                        { lengthField },
-                    ),
-                    StructDefaultOptions,
-                    context,
-                    struct,
-                    new Uint8ClampedArray(buffer),
-                );
-
-                const newArray = new Uint8ClampedArray(size);
-                fieldValue.set(newArray);
-
-                expect(fieldValue['length']).toBeUndefined();
+                const newValue = new ArrayBuffer(100);
+                arrayBufferFieldValue.set(newValue);
+                expect(arrayBufferFieldValue).toHaveProperty('length', undefined);
             });
         });
     });
 
-    describe('VariableLengthArrayBufferLikeLengthStructFieldValue', () => {
+    describe('VariableLengthArrayBufferLikeFieldDefinition', () => {
         describe('#getSize', () => {
-            it('should return size of its original field value', () => {
-                const struct = new StructValue();
-                const originalFieldValue = new NumberFieldValue(
-                    new NumberFieldDefinition(
-                        NumberFieldType.Int8
-                    ),
-                    StructDefaultOptions,
-                    {} as any,
-                    struct,
-                    42,
+            it('should always return `0`', () => {
+                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    ArrayBufferFieldType.instance,
+                    { lengthField: 'foo' },
                 );
-                const fieldValue = new VariableLengthArrayBufferLikeLengthStructFieldValue(
-                    originalFieldValue,
-                    {} as any,
-                );
-
-                expect(fieldValue.getSize()).toBe(originalFieldValue.getSize());
+                expect(definition.getSize()).toBe(0);
             });
         });
 
-        describe('#get', () => {
-            it('should return size of its `arrayBufferField`', async () => {
-                const lengthField = 'foo';
-                const size = 10;
-                const buffer = new ArrayBuffer(size);
-                const read = jest.fn((length: number) => buffer);
-                const context: StructDeserializationContext = {
-                    read,
-                    encodeUtf8(input) { throw new Error(''); },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
+        describe('#getDeserializeSize', () => {
+            it('should return value of its `lengthField`', async () => {
                 const struct = new StructValue();
 
-                const originalLengthFieldValue = new NumberFieldValue(
-                    new NumberFieldDefinition(
-                        NumberFieldType.Int32
-                    ),
-                    StructDefaultOptions,
-                    context,
-                    struct,
-                    size
-                );
-                struct.set(lengthField, originalLengthFieldValue,);
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
 
                 const definition = new VariableLengthArrayBufferLikeFieldDefinition(
                     ArrayBufferFieldType.instance,
                     { lengthField },
                 );
 
-                const fieldValue = (await definition.deserialize(StructDefaultOptions, context, struct)) as any as VariableLengthArrayBufferLikeStructFieldValue;
-                expect(fieldValue['lengthFieldValue'].get()).toBe(size);
+                originalLengthFieldValue.value = 0;
+                expect(definition['getDeserializeSize'](struct)).toBe(0);
+                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+
+                originalLengthFieldValue.get.mockClear();
+                originalLengthFieldValue.value = 100;
+                expect(definition['getDeserializeSize'](struct)).toBe(100);
+                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
             });
 
-            it('should return size of its `arrayBufferField` as string', async () => {
-                const lengthField = 'foo';
-                const size = 10;
-                const buffer = new ArrayBuffer(size);
-                const read = jest.fn((length: number) => buffer);
-                const context: StructDeserializationContext = {
-                    read,
-                    encodeUtf8(input) { throw new Error(''); },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
+            it('should return value of its `lengthField` as number', async () => {
                 const struct = new StructValue();
 
-                const originalLengthFieldValue = new ArrayBufferLikeFieldValue(
-                    new FixedLengthArrayBufferLikeFieldDefinition(
-                        StringFieldType.instance,
-                        { length: 2 },
-                    ),
-                    StructDefaultOptions,
-                    context,
-                    struct,
-                    size.toString()
-                );
-                struct.set(lengthField, originalLengthFieldValue,);
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
 
                 const definition = new VariableLengthArrayBufferLikeFieldDefinition(
                     ArrayBufferFieldType.instance,
                     { lengthField },
                 );
 
-                const fieldValue = (await definition.deserialize(StructDefaultOptions, context, struct)) as any as VariableLengthArrayBufferLikeStructFieldValue;
-                expect(fieldValue['lengthFieldValue'].get()).toBe(size.toString());
+                originalLengthFieldValue.value = '0';
+                expect(definition['getDeserializeSize'](struct)).toBe(0);
+                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+
+                originalLengthFieldValue.get.mockClear();
+                originalLengthFieldValue.value = '100';
+                expect(definition['getDeserializeSize'](struct)).toBe(100);
+                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
             });
         });
 
-        describe('#serialize', () => {
-            it('should call `serialize` of its `originalField`', async () => {
-                const lengthField = 'foo';
-                const size = 10;
-
-                const buffer = new ArrayBuffer(size);
-                const read = jest.fn((length: number) => buffer);
-                const context: StructDeserializationContext = {
-                    read,
-                    encodeUtf8(input) {
-                        return Buffer.from(input, 'utf-8');
-                    },
-                    decodeUtf8(buffer) { throw new Error(''); },
-                };
-
+        describe('#create', () => {
+            it('should create a `VariableLengthArrayBufferLikeFieldValue`', () => {
                 const struct = new StructValue();
 
-                const originalLengthFieldValue = new ArrayBufferLikeFieldValue(
-                    new FixedLengthArrayBufferLikeFieldDefinition(
-                        StringFieldType.instance,
-                        { length: 2 },
-                    ),
-                    StructDefaultOptions,
-                    context,
-                    struct,
-                    size.toString()
-                );
-                struct.set(lengthField, originalLengthFieldValue,);
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
 
                 const definition = new VariableLengthArrayBufferLikeFieldDefinition(
                     ArrayBufferFieldType.instance,
                     { lengthField },
                 );
 
-                const fieldValue = (await definition.deserialize(StructDefaultOptions, context, struct)) as any as VariableLengthArrayBufferLikeStructFieldValue;
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(100);
+                const arrayBufferFieldValue = definition.create(
+                    StructDefaultOptions,
+                    context,
+                    struct,
+                    value,
+                );
 
-                const targetArray = new Uint8Array(2);
-                const targetView = new DataView(targetArray.buffer);
-                fieldValue['lengthFieldValue'].serialize(targetView, 0, context);
-                expect(targetArray).toEqual(new Uint8Array('10'.split('').map(c => c.charCodeAt(0))));
+                expect(arrayBufferFieldValue).toHaveProperty('definition', definition);
+                expect(arrayBufferFieldValue).toHaveProperty('options', StructDefaultOptions);
+                expect(arrayBufferFieldValue).toHaveProperty('context', context);
+                expect(arrayBufferFieldValue).toHaveProperty('struct', struct);
+                expect(arrayBufferFieldValue).toHaveProperty('value', value);
+                expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', undefined);
+                expect(arrayBufferFieldValue).toHaveProperty('length', undefined);
+            });
+
+            it('should create a `VariableLengthArrayBufferLikeFieldValue` with `arrayBuffer`', () => {
+                const struct = new StructValue();
+
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
+
+                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    ArrayBufferFieldType.instance,
+                    { lengthField },
+                );
+
+                const context = new MockDeserializationContext();
+                const value = new ArrayBuffer(100);
+                const arrayBufferFieldValue = definition.create(
+                    StructDefaultOptions,
+                    context,
+                    struct,
+                    value,
+                    value,
+                );
+
+                expect(arrayBufferFieldValue).toHaveProperty('definition', definition);
+                expect(arrayBufferFieldValue).toHaveProperty('options', StructDefaultOptions);
+                expect(arrayBufferFieldValue).toHaveProperty('context', context);
+                expect(arrayBufferFieldValue).toHaveProperty('struct', struct);
+                expect(arrayBufferFieldValue).toHaveProperty('value', value);
+                expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', value);
+                expect(arrayBufferFieldValue).toHaveProperty('length', 100);
             });
         });
     });

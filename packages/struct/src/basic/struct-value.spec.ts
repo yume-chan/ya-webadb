@@ -7,8 +7,11 @@ describe('StructValue', () => {
             const bar = new StructValue();
 
             expect(foo).toHaveProperty('fieldValues', {});
+            expect(foo).toHaveProperty('value', {});
             expect(bar).toHaveProperty('fieldValues', {});
+            expect(bar).toHaveProperty('value', {});
             expect(foo.fieldValues).not.toBe(bar.fieldValues);
+            expect(foo.value).not.toBe(bar.fieldValues);
         });
     });
 

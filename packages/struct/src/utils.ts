@@ -41,6 +41,7 @@ export type KeysOfType<T, TValue> =
 
 export type ValueOrPromise<T> = T | Promise<T>;
 
+export type Awaited<T> = T extends Promise<infer R> ? Awaited<R> : T;
 
 /**
  * Returns a (fake) value of the given type.

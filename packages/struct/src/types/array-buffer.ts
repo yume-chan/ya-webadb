@@ -127,8 +127,9 @@ export abstract class ArrayBufferLikeFieldDefinition<
         context: StructSerializationContext,
         struct: StructValue,
         value: TType['valueType'],
+        arrayBuffer?: ArrayBuffer,
     ): ArrayBufferLikeFieldValue<this> {
-        return new ArrayBufferLikeFieldValue(this, options, context, struct, value);
+        return new ArrayBufferLikeFieldValue(this, options, context, struct, value, arrayBuffer);
     }
 
     public async deserialize(
@@ -146,16 +147,26 @@ export abstract class ArrayBufferLikeFieldDefinition<
         }
 
         const value = this.type.fromArrayBuffer(arrayBuffer, context);
-        const fieldValue = this.create(options, context, struct, value);
-        fieldValue.arrayBuffer = arrayBuffer;
-        return fieldValue;
+        return this.create(options, context, struct, value, arrayBuffer);
     }
 }
 
 export class ArrayBufferLikeFieldValue<
     TDefinition extends ArrayBufferLikeFieldDefinition<ArrayBufferLikeFieldType, any, any>,
     > extends StructFieldValue<TDefinition> {
-    public arrayBuffer: ArrayBuffer | undefined;
+    protected arrayBuffer: ArrayBuffer | undefined;
+
+    public constructor(
+        definition: TDefinition,
+        options: Readonly<StructOptions>,
+        context: StructSerializationContext,
+        struct: StructValue,
+        value: TDefinition['valueType'],
+        arrayBuffer?: ArrayBuffer,
+    ) {
+        super(definition, options, context, struct, value);
+        this.arrayBuffer = arrayBuffer;
+    }
 
     public set(value: TDefinition['valueType']): void {
         super.set(value);

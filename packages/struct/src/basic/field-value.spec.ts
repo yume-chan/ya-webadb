@@ -1,8 +1,8 @@
-import { ValueOrPromise } from '../utils';
-import { StructDeserializationContext, StructOptions, StructSerializationContext } from './context';
+import type { ValueOrPromise } from '../utils';
+import type { StructDeserializationContext, StructOptions, StructSerializationContext } from './context';
 import { StructFieldDefinition } from './definition';
 import { StructFieldValue } from './field-value';
-import { StructValue } from './struct-value';
+import type { StructValue } from './struct-value';
 
 describe('StructFieldValue', () => {
     describe('.constructor', () => {

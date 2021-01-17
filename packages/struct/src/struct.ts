@@ -1,12 +1,10 @@
 import { StructDefaultOptions, StructDeserializationContext, StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from './basic';
 import { ArrayBufferFieldType, ArrayBufferLikeFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
-import { Evaluate, Identity, KeysOfType, Overwrite } from './utils';
+import { Awaited, Evaluate, Identity, KeysOfType, Overwrite } from './utils';
 
 export interface StructLike<TValue> {
     deserialize(context: StructDeserializationContext): Promise<TValue>;
 }
-
-export type Awaited<T> = T extends Promise<infer R> ? Awaited<R> : T;
 
 /**
  * Extract the value type of the specified `Struct`
@@ -160,17 +158,17 @@ export type StructDeserializedType<TFields extends object, TExtra extends object
 
 export class Struct<
     TFields extends object = {},
-    TOmitInit extends string = never,
+    TOmitInitKey extends string = never,
     TExtra extends object = {},
     TPostDeserialized = undefined,
     > implements StructLike<StructDeserializedType<TFields, TExtra, TPostDeserialized>>{
     public readonly fieldsType!: TFields;
 
-    public readonly omitInitType!: TOmitInit;
+    public readonly omitInitType!: TOmitInitKey;
 
     public readonly extraType!: TExtra;
 
-    public readonly initType!: Evaluate<Omit<TFields, TOmitInit>>;
+    public readonly initType!: Evaluate<Omit<TFields, TOmitInitKey>>;
 
     public readonly deserializedType!: StructDeserializedType<TFields, TExtra, TPostDeserialized>;
 
@@ -188,7 +186,7 @@ export class Struct<
 
     private _postDeserialized?: StructPostDeserialized<any, any>;
 
-    public constructor(options?: Partial<StructOptions>) {
+    public constructor(options?: Partial<Readonly<StructOptions>>) {
         this.options = { ...StructDefaultOptions, ...options };
     }
 
@@ -203,12 +201,18 @@ export class Struct<
         definition: TDefinition,
     ): AddFieldDescriptor<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         TExtra,
         TPostDeserialized,
         TName,
         TDefinition
     > {
+        for (const field of this._fields) {
+            if (field[0] === name) {
+                throw new Error(`This struct already have a field with name '${name}'`);
+            }
+        }
+
         this._fields.push([name, definition]);
 
         const size = definition.getSize();
@@ -225,7 +229,7 @@ export class Struct<
         other: TOther
     ): Struct<
         TFields & TOther['fieldsType'],
-        TOmitInit | TOther['omitInitType'],
+        TOmitInitKey | TOther['omitInitType'],
         TExtra & TOther['extraType'],
         TPostDeserialized
     > {
@@ -394,7 +398,7 @@ export class Struct<
 
     private arrayBufferLike: ArrayBufferLikeFieldCreator<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         TExtra,
         TPostDeserialized
     > = (
@@ -417,7 +421,7 @@ export class Struct<
 
     public arrayBuffer: ArrayBufferTypeFieldDefinitionCreator<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         TExtra,
         TPostDeserialized,
         ArrayBufferFieldType
@@ -430,7 +434,7 @@ export class Struct<
 
     public uint8ClampedArray: ArrayBufferTypeFieldDefinitionCreator<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         TExtra,
         TPostDeserialized,
         Uint8ClampedArrayFieldType
@@ -443,7 +447,7 @@ export class Struct<
 
     public string: ArrayBufferTypeFieldDefinitionCreator<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         TExtra,
         TPostDeserialized,
         StringFieldType
@@ -475,7 +479,7 @@ export class Struct<
         value: T & ThisType<Overwrite<Overwrite<TExtra, T>, TFields>>
     ): Struct<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         Overwrite<TExtra, T>,
         TPostDeserialized
     > {
@@ -491,7 +495,7 @@ export class Struct<
      */
     public postDeserialize(
         callback: StructPostDeserialized<TFields, never>
-    ): Struct<TFields, TOmitInit, TExtra, never>;
+    ): Struct<TFields, TOmitInitKey, TExtra, never>;
     /**
      * Registers (or replaces) a custom callback to be run after deserialized.
      *
@@ -500,7 +504,7 @@ export class Struct<
      */
     public postDeserialize(
         callback?: StructPostDeserialized<TFields, void>
-    ): Struct<TFields, TOmitInit, TExtra, undefined>;
+    ): Struct<TFields, TOmitInitKey, TExtra, undefined>;
     /**
      * Registers (or replaces) a custom callback to be run after deserialized.
      *
@@ -509,7 +513,7 @@ export class Struct<
      */
     public postDeserialize<TPostSerialize>(
         callback?: StructPostDeserialized<TFields, TPostSerialize>
-    ): Struct<TFields, TOmitInit, TExtra, TPostSerialize>;
+    ): Struct<TFields, TOmitInitKey, TExtra, TPostSerialize>;
     public postDeserialize(
         callback?: StructPostDeserialized<TFields, any>
     ) {
@@ -517,16 +521,11 @@ export class Struct<
         return this as any;
     }
 
-    private initializeStructValue() {
-        const value = new StructValue();
-        Object.defineProperties(value.value, this._extra);
-        return value;
-    }
-
     public async deserialize(
         context: StructDeserializationContext
     ): Promise<StructDeserializedType<TFields, TExtra, TPostDeserialized>> {
-        const value = this.initializeStructValue();
+        const value = new StructValue();
+        Object.defineProperties(value.value, this._extra);
 
         for (const [name, definition] of this._fields) {
             const fieldValue = await definition.deserialize(this.options, context, value);
@@ -534,7 +533,8 @@ export class Struct<
         }
 
         if (this._postDeserialized) {
-            const result = this._postDeserialized.call(value.value as TFields, value as TFields);
+            const object = value.value as TFields;
+            const result = this._postDeserialized.call(object, object);
             if (result) {
                 return result;
             }
@@ -543,8 +543,8 @@ export class Struct<
         return value.value as any;
     }
 
-    public serialize(init: Evaluate<Omit<TFields, TOmitInit>>, context: StructSerializationContext): ArrayBuffer {
-        const value = this.initializeStructValue();
+    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>, context: StructSerializationContext): ArrayBuffer {
+        const value = new StructValue();
 
         for (const [name, definition] of this._fields) {
             const fieldValue = definition.create(this.options, context, value, (init as any)[name]);
