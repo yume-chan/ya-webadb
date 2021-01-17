@@ -30,26 +30,6 @@ export type AdbPacket = typeof AdbPacketStruct['deserializedType'];
 export type AdbPacketInit = Omit<typeof AdbPacketStruct['initType'], 'checksum' | 'magic'>;
 
 export namespace AdbPacket {
-    export function create(
-        init: AdbPacketInit,
-        calculateChecksum: boolean,
-        backend: AdbBackend,
-    ): AdbPacket {
-        let checksum: number;
-        if (calculateChecksum && init.payload) {
-            const array = new Uint8Array(init.payload);
-            checksum = array.reduce((result, item) => result + item, 0);
-        } else {
-            checksum = 0;
-        }
-
-        return AdbPacketStruct.create({
-            ...init,
-            checksum,
-            magic: init.command ^ 0xFFFFFFFF,
-        }, backend);
-    }
-
     export async function read(backend: AdbBackend): Promise<AdbPacket> {
         let buffer = await backend.read(24);
 
@@ -79,7 +59,26 @@ export namespace AdbPacket {
         });
     }
 
-    export async function write(packet: AdbPacket, backend: AdbBackend): Promise<void> {
+    export async function write(
+        init: AdbPacketInit,
+        calculateChecksum: boolean,
+        backend: AdbBackend
+    ): Promise<void> {
+        let checksum: number;
+        if (calculateChecksum && init.payload) {
+            const array = new Uint8Array(init.payload);
+            checksum = array.reduce((result, item) => result + item, 0);
+        } else {
+            checksum = 0;
+        }
+
+        const packet = {
+            ...init,
+            checksum,
+            magic: init.command ^ 0xFFFFFFFF,
+            payloadLength: init.payload.byteLength,
+        };
+
         // Write payload separately to avoid an extra copy
         const header = AdbPacketHeader.serialize(packet, backend);
         await backend.write(header);

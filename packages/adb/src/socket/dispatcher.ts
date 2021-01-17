@@ -248,10 +248,9 @@ export class AdbPacketDispatcher extends AutoDisposable {
             // Use a lock to prevent packets been interlaced
             await this.sendLock.wait();
 
-            const packet = AdbPacket.create(init, this.calculateChecksum, this.backend);
-            this.logger?.onOutgoingPacket?.(packet);
+            this.logger?.onOutgoingPacket?.(init);
 
-            await AdbPacket.write(packet, this.backend);
+            await AdbPacket.write(init, this.calculateChecksum, this.backend);
         } finally {
             this.sendLock.notify();
         }
