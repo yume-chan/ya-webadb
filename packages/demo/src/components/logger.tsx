@@ -1,5 +1,5 @@
 import { IconButton, IListProps, List, mergeStyles, mergeStyleSets, Stack } from '@fluentui/react';
-import { AdbLogger, AdbPacket } from '@yume-chan/adb';
+import { AdbLogger, AdbPacket, AdbPacketInit } from '@yume-chan/adb';
 import { decodeUtf8 } from '@yume-chan/adb-backend-web';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
 import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -29,7 +29,7 @@ export class AdbEventLogger {
     private readonly _incomingPacketEvent = new EventEmitter<AdbPacket>();
     public get onIncomingPacket() { return this._incomingPacketEvent.event; }
 
-    private readonly _outgoingPacketEvent = new EventEmitter<AdbPacket>();
+    private readonly _outgoingPacketEvent = new EventEmitter<AdbPacketInit>();
     public get onOutgoingPacket() { return this._outgoingPacketEvent.event; }
 
     public constructor() {
@@ -44,7 +44,7 @@ export class AdbEventLogger {
     }
 }
 
-function serializePacket(packet: AdbPacket) {
+function serializePacket(packet: AdbPacketInit) {
     const command = decodeUtf8(new Uint32Array([packet.command]).buffer);
 
     const parts = [
