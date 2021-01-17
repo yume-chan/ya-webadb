@@ -1,3 +1,12 @@
+coverage:
+  status:
+    project:
+      default: off
+    struct:
+      target: 80%
+      flags:
+        - struct
+
 flags:
   struct:
     paths:
