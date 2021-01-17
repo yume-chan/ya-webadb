@@ -1,0 +1,4 @@
+flags:
+  struct:
+    paths:
+      - packages/struct
