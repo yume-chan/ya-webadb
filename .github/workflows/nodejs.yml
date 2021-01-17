@@ -31,3 +31,4 @@ jobs:
     - run: npm test
       env:
         CI: true
+    - run: bash <(curl -s https://codecov.io/bash) -F struct -c packages/struct
