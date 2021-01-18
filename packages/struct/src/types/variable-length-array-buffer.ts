@@ -2,9 +2,11 @@ import { StructFieldValue, StructOptions, StructSerializationContext, StructValu
 import type { KeysOfType } from '../utils';
 import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldType, ArrayBufferLikeFieldValue } from './array-buffer';
 
+export type LengthField<TFields> = KeysOfType<TFields, number | string>;
+
 export interface VariableLengthArrayBufferLikeFieldOptions<
     TFields = object,
-    TLengthField extends KeysOfType<TFields, number | string> = any,
+    TLengthField extends LengthField<TFields> = any,
     > {
     lengthField: TLengthField;
 }

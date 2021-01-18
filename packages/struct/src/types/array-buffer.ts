@@ -102,7 +102,7 @@ const EmptyArrayBuffer = new ArrayBuffer(0);
 export abstract class ArrayBufferLikeFieldDefinition<
     TType extends ArrayBufferLikeFieldType = ArrayBufferLikeFieldType,
     TOptions = void,
-    TOmitInitKey = never,
+    TOmitInitKey extends PropertyKey = never,
     > extends StructFieldDefinition<
     TOptions,
     TType['valueType'],

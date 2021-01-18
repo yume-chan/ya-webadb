@@ -1,6 +1,6 @@
 import { StructDefaultOptions, StructDeserializationContext, StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from './basic';
-import { ArrayBufferFieldType, ArrayBufferLikeFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
-import { Awaited, Evaluate, Identity, KeysOfType, Overwrite } from './utils';
+import { ArrayBufferFieldType, ArrayBufferLikeFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
+import { Awaited, Evaluate, Identity, Overwrite } from './utils';
 
 export interface StructLike<TValue> {
     deserialize(context: StructDeserializationContext): Promise<TValue>;
@@ -19,17 +19,18 @@ export type StructValueType<T extends StructLike<any>> =
  */
 type AddFieldDescriptor<
     TFields extends object,
-    TOmitInit extends string,
+    TOmitInitKey extends PropertyKey,
     TExtra extends object,
     TPostDeserialized,
     TFieldName extends PropertyKey,
-    TDefinition extends StructFieldDefinition<any, any, any>> =
+    TDefinition extends StructFieldDefinition<any, any, any>
+    > =
     Identity<Struct<
         // Merge two types
         // Evaluate immediately to optimize editor hover tooltip
         Evaluate<TFields & Record<TFieldName, TDefinition['valueType']>>,
-        // Merge two `TOmitInit
-        TOmitInit | TDefinition['omitInitKeyType'],
+        // Merge two `TOmitInitKey`s
+        TOmitInitKey | TDefinition['omitInitKeyType'],
         TExtra,
         TPostDeserialized
     >>;
@@ -39,7 +40,7 @@ type AddFieldDescriptor<
  */
 interface ArrayBufferLikeFieldCreator<
     TFields extends object,
-    TOmitInit extends string,
+    TOmitInitKey extends PropertyKey,
     TExtra extends object,
     TPostDeserialized
     > {
@@ -63,7 +64,7 @@ interface ArrayBufferLikeFieldCreator<
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         TExtra,
         TPostDeserialized,
         TName,
@@ -88,7 +89,7 @@ interface ArrayBufferLikeFieldCreator<
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         TExtra,
         TPostDeserialized,
         TName,
@@ -104,7 +105,7 @@ interface ArrayBufferLikeFieldCreator<
  */
 interface ArrayBufferTypeFieldDefinitionCreator<
     TFields extends object,
-    TOmitInit extends string,
+    TOmitInitKey extends PropertyKey,
     TExtra extends object,
     TPostDeserialized,
     TType extends ArrayBufferLikeFieldType
@@ -118,7 +119,7 @@ interface ArrayBufferTypeFieldDefinitionCreator<
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         TExtra,
         TPostDeserialized,
         TName,
@@ -130,7 +131,7 @@ interface ArrayBufferTypeFieldDefinitionCreator<
 
     <
         TName extends PropertyKey,
-        TLengthField extends KeysOfType<TFields, number | string>,
+        TLengthField extends LengthField<TFields>,
         TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields, TLengthField>,
         TTypeScriptType = TType['valueType'],
         >(
@@ -139,7 +140,7 @@ interface ArrayBufferTypeFieldDefinitionCreator<
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
-        TOmitInit,
+        TOmitInitKey,
         TExtra,
         TPostDeserialized,
         TName,
@@ -158,7 +159,7 @@ export type StructDeserializedType<TFields extends object, TExtra extends object
 
 export class Struct<
     TFields extends object = {},
-    TOmitInitKey extends string = never,
+    TOmitInitKey extends PropertyKey = never,
     TExtra extends object = {},
     TPostDeserialized = undefined,
     > implements StructLike<StructDeserializedType<TFields, TExtra, TPostDeserialized>>{

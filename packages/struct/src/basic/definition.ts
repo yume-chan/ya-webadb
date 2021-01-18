@@ -21,7 +21,7 @@ import type { StructValue } from './struct-value';
 export abstract class StructFieldDefinition<
     TOptions = void,
     TValue = unknown,
-    TOmitInitKey = never,
+    TOmitInitKey extends PropertyKey = never,
     > {
     public readonly options: TOptions;
 
