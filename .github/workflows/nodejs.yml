@@ -31,4 +31,4 @@ jobs:
     - run: npm test
       env:
         CI: true
-    - run: bash <(curl -s https://codecov.io/bash) -f packages/struct/coverage/clover.xml -F struct
+    - run: bash <(curl -s https://codecov.io/bash) -f packages/struct/coverage/lcov.info -F struct
