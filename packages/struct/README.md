@@ -4,6 +4,7 @@
 ![npm type definitions](https://img.shields.io/npm/types/@yume-chan/struct)
 [![npm version](https://img.shields.io/npm/v/@yume-chan/struct)](https://www.npmjs.com/package/@yume-chan/struct)
 ![npm bundle size](https://img.shields.io/bundlephobia/min/@yume-chan/struct)
+![Codecov](https://img.shields.io/codecov/c/github/yume-chan/ya-webadb?flag=struct&token=2fU3Cx2Edq)
 
 A C-style structure serializer and deserializer. Written in TypeScript and highly takes advantage of its type system.
 
@@ -55,11 +56,11 @@ const buffer = MyStruct.serialize({
     - [`postDeserialize`](#postdeserialize)
 - [Custom field type](#custom-field-type)
   - [`Struct#field` method](#structfield-method)
-  - [`StructFieldDefinition`](#fielddefinition)
+  - [`StructFieldDefinition`](#structfielddefinition)
     - [`getSize`](#getsize)
     - [`deserialize`](#deserialize-1)
     - [`createValue`](#createvalue)
-  - [`StructFieldValue`](#StructFieldValue)
+  - [`StructFieldValue`](#structfieldvalue)
 
 ## Compatibility
 
