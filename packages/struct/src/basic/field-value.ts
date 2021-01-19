@@ -40,7 +40,7 @@ export abstract class StructFieldValue<
     }
 
     /**
-     * Gets the actual size of this field. By default, the return value of its `definition.getSize()`
+     * Gets size of this field. By default, it returns its `definition`'s size.
      *
      * When overridden in derived classes, can have custom logic to calculate the actual size.
      */

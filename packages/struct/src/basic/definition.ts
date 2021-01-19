@@ -54,8 +54,8 @@ export abstract class StructFieldDefinition<
     public abstract create(
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
-        object: StructValue,
-        struct: TValue,
+        struct: StructValue,
+        value: TValue,
     ): StructFieldValue<this>;
 
     /**

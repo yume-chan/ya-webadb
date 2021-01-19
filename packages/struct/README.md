@@ -50,50 +50,47 @@ const buffer = MyStruct.serialize({
     - [`int64`/`uint64`](#int64uint64)
     - [`arraybuffer`/`uint8ClampedArray`/`string`](#arraybufferuint8clampedarraystring)
     - [`fields`](#fields)
-    - [`deserialize`](#deserialize)
-    - [`serialize`](#serialize)
     - [`extra`](#extra)
     - [`postDeserialize`](#postdeserialize)
+    - [`deserialize`](#deserialize)
+    - [`serialize`](#serialize)
 - [Custom field type](#custom-field-type)
-  - [`Struct#field` method](#structfield-method)
+  - [`Struct#field`](#structfield)
   - [`StructFieldDefinition`](#structfielddefinition)
+    - [`valueType`/`omitInitKeyType`](#valuetypeomitinitkeytype)
     - [`getSize`](#getsize)
+    - [`create`](#create)
     - [`deserialize`](#deserialize-1)
-    - [`createValue`](#createvalue)
   - [`StructFieldValue`](#structfieldvalue)
+    - [`getSize`](#getsize-1)
+    - [`get`/`set`](#getset)
+    - [`serialize`](#serialize-1)
 
 ## Compatibility
 
-Basic usage requires [`Promise`][MDN_Promise], [`ArrayBuffer`][MDN_ArrayBuffer], [`Uint8Array`][MDN_Uint8Array] and [`DataView`][MDN_DataView]. All can be globally polyfilled to support older runtime.
+|                                                      | Chrome | Edge | Firefox | Internet Explorer | Safari         | Node.js |
+| ---------------------------------------------------- | ------ | ---- | ------- | ----------------- | -------------- | ------- |
+| [`Promise`][MDN_Promise]                             | 32     | 12   | 29      | No<sup>1</sup>    | 8              | 0.12    |
+| [`ArrayBuffer`][MDN_ArrayBuffer]                     | 7      | 12   | 4       | 10                | 5.1            | 0.10    |
+| [`Uint8Array`][MDN_Uint8Array]                       | 7      | 12   | 4       | 10                | 5.1            | 0.10    |
+| [`DataView`][MDN_DataView]                           | 9      | 12   | 15      | 10                | 5.1            | 0.10    |
+| **Basic usage**                                      | 32     | 12   | 29      | 10<sup>1</sup>    | 8              | 0.12    |
+| [`BigInt`][MDN_BigInt]                               | 67     | 79   | 68      | No                | 14             | 10.4    |
+| [`DataView#getBigUint64`][MDN_DataView_getBigUint64] | 67     | 79   | 68      | No                | No<sup>2</sup> | 10.4    |
+| [`DataView#setBigUint64`][MDN_DataView_setBigUint64] | 67     | 79   | 68      | No                | No<sup>2</sup> | 10.4    |
+| **Use [`int64/uint64`](#int64uint64) API**           | 68     | 79   | 68      | No                | 14<sup>2</sup> | 10.4    |
+
+<sup>1</sup> Requires a polyfill for Promise (e.g. [promise-polyfill](https://www.npmjs.com/package/promise-polyfill))
+
+<sup>2</sup> Requires a polyfill for `DataView#getBigUint64`/`DataView#setBigUint64`
 
 [MDN_Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [MDN_ArrayBuffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
 [MDN_Uint8Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
 [MDN_DataView]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
-
-| Runtime               | Minimal Supported Version | Note                            |
-| --------------------- | ------------------------- | ------------------------------- |
-| **Chrome**            | 32                        |                                 |
-| **Edge**              | 12                        |                                 |
-| **Firefox**           | 29                        |                                 |
-| **Internet Explorer** | 10                        | Requires polyfill for `Promise` |
-| **Safari**            | 8                         |                                 |
-| **Node.js**           | 0.12                      |                                 |
-
-Use of `int64`/`uint64` requires [`BigInt`][MDN_BigInt] (**can't** be polyfilled), [`DataView#getBigUint64`][MDN_DataView_getBigUint64] and [`DataView#setBigUint64`][MDN_DataView_setBigUint64] (can be polyfilled).
-
 [MDN_BigInt]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
 [MDN_DataView_getBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/getBigUint64
 [MDN_DataView_setBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/setBigUint64
-
-| Runtime               | Minimal Supported Version | Note                                                                   |
-| --------------------- | ------------------------- | ---------------------------------------------------------------------- |
-| **Chrome**            | 67                        |                                                                        |
-| **Edge**              | 79                        |                                                                        |
-| **Firefox**           | 68                        |                                                                        |
-| **Internet Explorer** | *N/A*                     | Doesn't support `BigInt`, can't be polyfilled.                         |
-| **Safari**            | 14                        | Requires polyfills for `DataView#getBigUint64`/`DataView#setBigUint64` |
-| **Node.js**           | 10.4.0                    |                                                                        |
 
 ## API
 
@@ -132,7 +129,7 @@ fn2(42, placeholder<boolean>()) // fn2<number, boolean>
 ```
 </details>
 
-To workaround this issue, these methods have an extra `_typescriptType` parameter, to let you specify a generic parameter, without pass all other generic arguments manually. The actual value of `_typescriptType` argument is never used, so you can pass any value, as long as it has the correct type, including values produced by this `placeholder` method.
+To workaround this issue, these methods have an extra `_typescriptType` parameter, to let you specify a generic parameter, without passing all other generic arguments manually. The actual value of `_typescriptType` argument is never used, so you can pass any value, as long as it has the correct type, including values produced by this `placeholder` method.
 
 **With that said, I don't expect you to specify any generic arguments manually when using this library.**
 
@@ -140,8 +137,8 @@ To workaround this issue, these methods have an extra `_typescriptType` paramete
 
 ```ts
 class Struct<
-    TValue extends object = {},
-    TInit extends object = {},
+    TFields extends object = {},
+    TOmitInitKey extends string | number | symbol = never,
     TExtra extends object = {},
     TPostDeserialized = undefined
 > {
@@ -156,8 +153,8 @@ Creates a new structure declaration.
 
 This information was added to help you understand how does it work. These are considered as "internal state" so don't specify them manually.
 
-1. `TValue`: Type of the Struct value. Modified when new fields are added.
-2. `TInit`: Type requirement to create such a structure. (May not be same as `TValue` because some fields can implies others). Modified when new fields are added.
+1. `TFields`: Type of the Struct value. Modified when new fields are added.
+2. `TOmitInitKey`: When serializing a structure containing variable length arrays, the length field can be calculate from the array field, so they doesn't need to be provided explicitly.
 3. `TExtra`: Type of extra fields. Modified when `extra` is called.
 4. `TPostDeserialized`: State of the `postDeserialize` function. Modified when `postDeserialize` is called. Affects return type of `deserialize`
 </details>
@@ -179,28 +176,30 @@ int32<
     name: TName,
     _typescriptType?: TTypeScriptType
 ): Struct<
-    Evaluate<TValue & Record<TName, TTypeScriptType>>,
-    Evaluate<TInit & Record<TName, TTypeScriptType>>,
+    TFields & Record<TName, TTypeScriptType>,
+    TOmitInitKey,
     TExtra,
     TPostDeserialized
 >;
 ```
 
-Appends an `int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32` field to the `Struct`
+Appends an `int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32` field to the `Struct`.
 
-**Generic Parameters**
+<details>
+<summary>Generic parameters (click to expand)</summary>
 
 1. `TName`: Literal type of the field's name.
 2. `TTypeScriptType = number`: Type of the field in the result object. For example you can declare it as a number literal type, or some enum type.
+</details>
 
 **Parameters**
 
-1. `name`: (Required) Field name. Should be a string literal to make types work.
+1. `name`: (Required) Field name. Must have a [literal type](https://www.typescriptlang.org/docs/handbook/literal-types.html).
 2. `_typescriptType`: Set field's type. See examples below.
 
 **Note**
 
-There is no generic constraints on the `TTypeScriptType` type because TypeScript doesn't allow casting enum types to `number`.
+There is no generic constraints on the `TTypeScriptType`, because TypeScript doesn't allow casting enum types to `number`.
 
 So it's technically possible to pass in an incompatible type (e.g. `string`). But obviously, it's a bad idea.
 
@@ -220,7 +219,7 @@ So it's technically possible to pass in an incompatible type (e.g. `string`). Bu
     struct.serialize({ foo: 42 }, context) // ok
     ```
 
-2. Set `foo`'s type (can be used with [`placeholder` method](#placeholder))
+2. Set fields' type (can be used with [`placeholder` method](#placeholder))
 
     ```ts
     enum MyEnum {
@@ -245,14 +244,14 @@ So it's technically possible to pass in an incompatible type (e.g. `string`). Bu
 
 ```ts
 int64<
-    TName extends PropertyKey,
+    TName extends string | number | symbol,
     TTypeScriptType = bigint
 >(
     name: TName,
     _typescriptType?: TTypeScriptType
 ): Struct<
-    Evaluate<TValue & Record<TName, TTypeScriptType>>,
-    Evaluate<TInit & Record<TName, TTypeScriptType>>,
+    TFields & Record<TName, TTypeScriptType>,
+    TOmitInitKey,
     TExtra,
     TPostDeserialized
 >;
@@ -260,58 +259,49 @@ int64<
 
 Appends an `int64`/`uint64` field to the `Struct`.
 
-Requires native runtime support for `BigInt`. Check [compatibility table](#compatibility) for more information.
+Requires native support for `BigInt`. Check [compatibility table](#compatibility) for more information.
 
 #### `arraybuffer`/`uint8ClampedArray`/`string`
 
 ```ts
-<
-    TName extends PropertyKey,
-    TTypeScriptType = TType['valueType'],
+arraybuffer<
+    TName extends string | number | symbol,
+    TTypeScriptType = ArrayBuffer
 >(
     name: TName,
     options: FixedLengthArrayBufferLikeFieldOptions,
-    typescriptType?: TTypeScriptType,
-): AddFieldDescriptor<
-    TValue,
-    TInit,
+    _typescriptType?: TTypeScriptType,
+): Struct<
+    TFields & Record<TName, TTypeScriptType>,
+    TOmitInitKey,
     TExtra,
-    TPostDeserialized,
-    TName,
-    FixedLengthArrayBufferLikeFieldDefinition<
-        TType,
-        FixedLengthArrayBufferLikeFieldOptions
-    >
+    TPostDeserialized
 >;
 
-<
-    TName extends PropertyKey,
-    TLengthField extends KeysOfType<TInit, number | string>,
-    TOptions extends VariableLengthArrayBufferLikeFieldOptions<TInit, TLengthField>,
-    TTypeScriptType = TType['valueType'],
+arraybuffer<
+    TName extends string | number | symbol,
+    TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields>,
+    TTypeScriptType = ArrayBuffer,
 >(
     name: TName,
     options: TOptions,
-    typescriptType?: TTypeScriptType,
-): AddFieldDescriptor<
-    TValue,
-    TInit,
+    _typescriptType?: TTypeScriptType,
+): Struct<
+    TFields & Record<TName, TTypeScriptType>,
+    TOmitInitKey | TOptions['lengthField'],
     TExtra,
-    TPostDeserialized,
-    TName,
-    VariableLengthArrayBufferLikeFieldDefinition<
-        TType,
-        TOptions
-    >
+    TPostDeserialized
 >;
 ```
 
-Appends an array type field to the `Struct`. The second, `options` parameter defines its length in byte.
+Appends an `ArrayBuffer`/`Uint8ClampedArray`/`string` field to the `Struct`.
 
-* `{ length: number }`: When the `length` option is specified, it's a fixed length array.
-* `{ lengthField: string }`: When the `lengthField` option is specified, and pointing to another `number` or `string` typed field that's defined before this one, it's a variable length array. It will use that field's value for its length when deserializing, and write its length to that field when serializing.
+The `options` parameter defines its length, it can be in two formats:
 
-All these three are deserialized as `ArrayBuffer`, then converted to `Uint8ClampedArray` or `string` for ease of use.
+* `{ length: number }`: Presence of the `length` option indicates that it's a fixed length array.
+* `{ lengthField: string }`: Presence of the `lengthField` option indicates it's a variable length array. The `lengthField` options must refers to a `number` or `string` typed field that's already defined in this `Struct`. When deserializing, it will use that field's value as its length. And when serializing, it will write its length to that field.
+
+All these three are actually deserialized to `ArrayBuffer`, then converted to `Uint8ClampedArray` or `string` for ease of use.
 
 #### `fields`
 
@@ -321,8 +311,8 @@ fields<
 >(
     other: TOther
 ): Struct<
-    TValue & TOther['valueType'],
-    TInit & TOther['initType'],
+    TFields & TOther['fieldsType'],
+    TOmitInitKey | TOther['omitInitType'],
     TExtra & TOther['extraType'],
     TPostDeserialized
 >;
@@ -368,36 +358,6 @@ Merges (flats) another `Struct`'s fields and extra fields into the current one.
     // Same result as above, but serialize/deserialize order is reversed
     ```
 
-#### `deserialize`
-
-```ts
-export interface StructDeserializationContext {
-    decodeUtf8(buffer: ArrayBuffer): string;
-
-    read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
-}
-
-deserialize(context: StructDeserializationContext): Promise<TPostDeserialized extends undefined ? Overwrite<TExtra, TValue> : TPostDeserialized>;
-```
-
-Deserialize a Struct value from `context`.
-
-As you can see, if your `postDeserialize` callback returns something, that value will be returned by `deserialize`.
-
-The `context` has a `read` method, that when called, should returns exactly `length` bytes of data (or throw an `Error` if it can't). So data can arrive asynchronously.
-
-#### `serialize`
-
-```ts
-interface StructSerializationContext {
-    encodeUtf8(input: string): ArrayBuffer;
-}
-
-serialize(init: TInit, context: StructSerializationContext): ArrayBuffer;
-```
-
-Serialize a Struct value into an `ArrayBuffer`.
-
 #### `extra`
 
 ```ts
@@ -407,40 +367,32 @@ extra<
             keyof T,
             Exclude<
                 keyof T,
-                keyof TValue
+                keyof TFields
             >
         >,
         never
     >
 >(
-    value: T & ThisType<Overwrite<Overwrite<TExtra, T>, TValue>>
+    value: T & ThisType<Overwrite<Overwrite<TExtra, T>, TFields>>
 ): Struct<
-    TValue,
+    TFields,
     TInit,
     Overwrite<TExtra, T>,
     TPostDeserialized
 >;
 ```
 
-Adds some extra fields into every Struct value.
+Adds extra fields into the `Struct`. Extra fields will be defined on prototype of each Struct values, so they don't affect serialize and deserialize process, and deserialized fields will overwrite extra fields.
 
-Extra fields will not affect serialize or deserialize process.
-
-Multiple calls to `extra` will merge all values together.
-
-See examples below.
+Multiple calls merge all extra fields together.
 
 **Generic Parameters**
 
 1. `T`: Type of the extra fields. The scary looking generic constraint is used to forbid overwriting any already existed fields.
 
-**DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
-
-TypeScript will infer them from arguments. See examples below.
-
 **Parameters**
 
-1. `value`: An object containing anything you want to add to the result object. Accessors and methods are also allowed.
+1. `value`: An object containing anything you want to add to Struct values. Accessors and methods are also allowed.
 
 **Examples**
 
@@ -457,8 +409,8 @@ TypeScript will infer them from arguments. See examples below.
     value.foo; // number
     value.bar; // 'hello'
 
-    struct.create({ foo: 42 }); // ok
-    struct.create({ foo: 42, bar: 'hello' }); // error: 'bar' is redundant
+    struct.serialize({ foo: 42 }, context); // ok
+    struct.serialize({ foo: 42, bar: 'hello' }, context); // error: 'bar' is redundant
     ```
 
 2. Add getters and methods. `this` in functions refers to the result object.
@@ -486,35 +438,45 @@ TypeScript will infer them from arguments. See examples below.
 #### `postDeserialize`
 
 ```ts
-postDeserialize(callback: StructPostDeserialized<TValue, never>): Struct<TValue, TInit, TExtra, never>;
-postDeserialize(callback?: StructPostDeserialized<TValue, void>): Struct<TValue, TInit, TExtra, undefined>;
+postDeserialize(): Struct<TFields, TOmitInitKey, TExtra, undefined>;
+```
+
+Remove any registered post deserialization callback.
+
+```ts
+postDeserialize(
+    callback: (this: TFields, object: TFields) => never
+): Struct<TFields, TOmitInitKey, TExtra, never>;
+postDeserialize(
+    callback: (this: TFields, object: TFields) => void
+): Struct<TFields, TOmitInitKey, TExtra, undefined>;
 ```
 
 Registers (or replaces) a custom callback to be run after deserialized.
 
-A callback returning `never` (always throw an error) will also change the return type of `deserialize` to `never`.
+`this` in `callback`, along with the first parameter `object` will both be the deserialized Struct value.
+
+A callback returning `never` (always throws errors) will change the return type of `deserialize` to `never`.
 
 A callback returning `void` means it modify the result object in-place (or doesn't modify it at all), so `deserialize` will still return the result object.
 
 ```ts
-postDeserialize<TPostSerialize>(callback?: StructPostDeserialized<TValue, TPostSerialize>): Struct<TValue, TInit, TExtra, TPostSerialize>;
+postDeserialize<TPostSerialize>(
+    callback: (this: TFields, object: TFields) => TPostSerialize
+): Struct<TFields, TOmitInitKey, TExtra, TPostSerialize>;
 ```
 
 Registers (or replaces) a custom callback to be run after deserialized.
 
-A callback returning anything other than `undefined` will `deserialize` to return that object instead.
+A callback returning anything other than `undefined` will cause `deserialize` to return that value instead.
 
 **Generic Parameters**
 
-1. `TPostSerialize`: Type of the new result object.
-
-**DO NOT PASS ANY GENERIC ARGUMENTS MANUALLY!**
-
-TypeScript will infer them from arguments. See examples below.
+1. `TPostSerialize`: Type of the new result.
 
 **Parameters**
 
-1. `callback`: An function contains the custom logic to be run, optionally returns a new result object. Or `undefined`, to clear the previously set `afterParsed` callback.
+1. `callback`: An function contains the custom logic to be run, optionally returns a new result. Or `undefined`, to remove any previously set `postDeserialize` callback.
 
 **Examples**
 
@@ -551,25 +513,65 @@ TypeScript will infer them from arguments. See examples below.
         });
 
     const value = await struct.deserialize(stream);
+    value.foo // error: not exist
     value.bar; // number
     ```
 
+#### `deserialize`
+
+```ts
+interface StructDeserializationContext {
+    decodeUtf8(buffer: ArrayBuffer): string;
+
+    read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
+}
+
+deserialize(
+    context: StructDeserializationContext
+): Promise<
+    TPostDeserialized extends undefined
+        ? Overwrite<TExtra, TValue>
+        : TPostDeserialized
+    >;
+```
+
+Deserialize a Struct value from `context`.
+
+As the signature shows, if the `postDeserialize` callback returns any value, `deserialize` will return that value instead.
+
+The `read` method of `context`, when being called, should returns exactly `length` bytes of data (or throw an `Error` if it can't).
+
+#### `serialize`
+
+```ts
+interface StructSerializationContext {
+    encodeUtf8(input: string): ArrayBuffer;
+}
+
+serialize(
+    init: Omit<TFields, TOmitInitKey>,
+    context: StructSerializationContext
+): ArrayBuffer;
+```
+
+Serialize a Struct value into an `ArrayBuffer`.
+
 ## Custom field type
 
-This library has a plugin system to support adding fields with custom types.
+This library supports adding fields of user defined types.
 
-### `Struct#field` method
+### `Struct#field`
 
 ```ts
 field<
-    TName extends PropertyKey,
+    TName extends string | number | symbol,
     TDefinition extends StructFieldDefinition<any, any, any>
 >(
     name: TName,
     definition: TDefinition
 ): Struct<
-    Evaluate<TValue & Record<TFieldName, TDefinition['valueType']>>,
-    Evaluate<Omit<TInit, TDefinition['removeFields']> & Record<TFieldName, TDefinition['valueType']>>,
+    TFields & Record<TName, TDefinition['valueType']>,
+    TOmitInitKey | TDefinition['omitInitKeyType'],
     TExtra,
     TPostDeserialized
 >;
@@ -577,15 +579,35 @@ field<
 
 Appends a `StructFieldDefinition` to the `Struct`.
 
-All above built-in methods are alias of `field`. To add a field of a custom type, let users call `field` with your custom `StructFieldDefinition` implementation.
+Actually, all built-in field type methods are aliases of `field`. For example, calling
+
+```ts
+struct.int8('foo')
+```
+
+is same as
+
+```ts
+struct.field(
+    'foo',
+    new NumberFieldDefinition(
+        NumberFieldType.Int8
+    )
+)
+```
+
 
 ### `StructFieldDefinition`
 
 ```ts
-abstract class StructFieldDefinition<TOptions = void, TValueType = unknown, TOmitInit = never> {
-    readonly options: TOptions;
+abstract class StructFieldDefinition<
+    TOptions = void,
+    TValue = unknown,
+    TOmitInitKey extends PropertyKey = never,
+> {
+    public readonly options: TOptions;
 
-    constructor(options: TOptions);
+    public constructor(options: TOptions);
 }
 ```
 
@@ -593,15 +615,34 @@ A `StructFieldDefinition` describes type, size and runtime semantics of a field.
 
 It's an `abstract` class, means it lacks some method implementations, so it shouldn't be constructed.
 
+#### `valueType`/`omitInitKeyType`
+
+These two fields are used to provide type information to TypeScript. Their values will always be `undefined`, but having correct types is enough. You don't need to care about them.
+
 #### `getSize`
 
 ```ts
 abstract getSize(): number;
 ```
 
-Returns the size (or minimal size if it's dynamic) of this field.
+Derived classes must implement this method to return size (or minimal size if it's dynamic) of this field.
 
-Actual size should been returned from `StructFieldValue#getSize`
+Actual size should be returned from `StructFieldValue#getSize`
+
+#### `create`
+
+```ts
+abstract create(
+    options: Readonly<StructOptions>,
+    context: StructSerializationContext,
+    struct: StructValue,
+    value: TValue,
+): StructFieldValue<this>;
+```
+
+Derived classes must implement this method to create its own field value instance for the current definition.
+
+`Struct#serialize` will call this method, then call `StructFieldValue#serialize` to serialize one field value.
 
 #### `deserialize`
 
@@ -609,36 +650,60 @@ Actual size should been returned from `StructFieldValue#getSize`
 abstract deserialize(
     options: Readonly<StructOptions>,
     context: StructDeserializationContext,
-    object: any,
-): ValueOrPromise<StructFieldValue<StructFieldDefinition<TOptions, TValueType, TRemoveInitFields>>>;
+    struct: StructValue,
+): ValueOrPromise<StructFieldValue<this>>;
 ```
 
-Defines how to deserialize a value from `context`. Can also return a `Promise`.
+Derived classes must implement this method to define how to deserialize a value from `context`. Can also return a `Promise`.
 
 Usually implementations should be:
 
 1. Somehow parse the value from `context`
-2. Pass the value into `StructFieldDefinition#createValue`
+2. Pass the value into its `create` method
 
 Sometimes, some metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` can save those metadata on the `StructFieldValue` instance for later use.
 
-#### `createValue`
-
-```ts
-abstract createValue(
-    options: Readonly<StructOptions>,
-    context: StructSerializationContext,
-    object: any,
-    value: TValueType,
-): StructFieldValue<StructFieldDefinition<TOptions, TValueType, TRemoveInitFields>>;
-```
-
-Similar to `deserialize`, creates a `StructFieldValue` for this instance.
-
-The difference is `createValue` will be called when a init value was provided to create a Struct value.
-
 ### `StructFieldValue`
 
-One `StructFieldDefinition` instance represents one field declaration, and one `StructFieldValue` instance represents one value.
+```ts
+abstract class StructFieldValue<
+    TDefinition extends StructFieldDefinition<any, any, any>
+>
+```
 
-It defines how to get, set, and serialize a value.
+To define a custom type, one must create their own `StructFieldValue` type to define the runtime semantics.
+
+Each `StructFieldValue` is linked to a `StructFieldDefinition`.
+
+#### `getSize`
+
+```ts
+getSize(): number;
+```
+
+Gets size of this field. By default, it returns its `definition`'s size.
+
+If this field's size can change based on some criteria, one must override `getSize` to return its actual size.
+
+#### `get`/`set`
+
+```ts
+get(): TDefinition['valueType'];
+set(value: TDefinition['valueType']): void;
+```
+
+Defines how to get or set this field's value. By default, it store its value in `value` field.
+
+If one needs to manipulate other states when getting/setting values, they can override these methods.
+
+#### `serialize`
+
+```ts
+abstract serialize(
+    dataView: DataView,
+    offset: number,
+    context: StructSerializationContext
+): void;
+```
+
+Derived classes must implement this method to serialize current value into `dataView`, from `offset`. It must not write more bytes than what its `getSize` returned.

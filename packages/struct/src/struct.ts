@@ -151,8 +151,8 @@ interface ArrayBufferTypeFieldDefinitionCreator<
     >;
 }
 
-export type StructPostDeserialized<TValue, TPostDeserialized> =
-    (this: TValue, object: TValue) => TPostDeserialized;
+export type StructPostDeserialized<TFields, TPostDeserialized> =
+    (this: TFields, object: TFields) => TPostDeserialized;
 
 export type StructDeserializedType<TFields extends object, TExtra extends object, TPostDeserialized> =
     TPostDeserialized extends undefined ? Overwrite<TExtra, TFields> : TPostDeserialized;

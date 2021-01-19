@@ -14,7 +14,7 @@ describe('StructFieldDefinition', () => {
                 public getSize(): number {
                     throw new Error('Method not implemented.');
                 }
-                public create(options: Readonly<StructOptions>, context: StructSerializationContext, object: StructValue, struct: unknown): StructFieldValue<this> {
+                public create(options: Readonly<StructOptions>, context: StructSerializationContext, struct: StructValue, value: unknown): StructFieldValue<this> {
                     throw new Error('Method not implemented.');
                 }
                 public deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
