@@ -6,5 +6,13 @@
             "jest"
         ]
     },
-    "exclude": []
+    "exclude": [],
+    "references": [
+        {
+            "path": "../event/tsconfig.esm.json"
+        },
+        {
+            "path": "../struct/tsconfig.esm.json"
+        }
+    ]
 }

@@ -1,4 +1,4 @@
-export class AdbWebBackendWatcher {
+export class AdbWebUsbBackendWatcher {
     private callback: () => void;
 
     public constructor(callback: () => void) {

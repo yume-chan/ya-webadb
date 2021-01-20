@@ -56,7 +56,9 @@ export const AdbFrameBufferV2 =
 
 export type AdbFrameBufferV2 = typeof AdbFrameBufferV2['deserializedType'];
 
-export async function framebuffer(adb: Adb) {
+export type AdbFrameBuffer = AdbFrameBufferV1 | AdbFrameBufferV2;
+
+export async function framebuffer(adb: Adb): Promise<AdbFrameBuffer> {
     const socket = await adb.createSocket('framebuffer:');
     const stream = new AdbBufferedStream(socket);
     const { version } = await Version.deserialize(stream);

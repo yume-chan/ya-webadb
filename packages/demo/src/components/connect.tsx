@@ -1,10 +1,11 @@
 import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem, TooltipHost } from '@fluentui/react';
 import { Adb, AdbBackend, AdbLogger } from '@yume-chan/adb';
-import AdbWebBackend, { AdbWebBackendWatcher } from '@yume-chan/adb-backend-web';
+import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorDialogContext } from './error-dialog';
 import { CommonStackTokens } from '../styles';
 import { withDisplayName } from '../utils';
+import AdbWsBackend from '@yume-chan/adb-backend-ws';
 
 const DropdownStyles = { dropdown: { width: '100%' } };
 
@@ -16,12 +17,14 @@ interface ConnectProps {
     onDeviceChange: (device: Adb | undefined) => void;
 }
 
+// const wsBackend = new AdbWsBackend("ws://localhost:15554");
+
 export const Connect = withDisplayName('Connect')(({
     device,
     logger,
     onDeviceChange,
 }: ConnectProps): JSX.Element | null => {
-    const supported = AdbWebBackend.isSupported();
+    const supported = AdbWebUsbBackend.isSupported();
 
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
@@ -34,9 +37,10 @@ export const Connect = withDisplayName('Connect')(({
         }
 
         async function refresh() {
-            const backendList = await AdbWebBackend.getDevices();
+            const backendList: AdbBackend[] = await AdbWebUsbBackend.getDevices();
+            // backendList.push(wsBackend);
 
-            const options = backendList.map(item => ({
+            const options: IDropdownOption[] = backendList.map(item => ({
                 key: item.serial,
                 text: `${item.serial} ${item.name ? `(${item.name})` : ''}`,
                 data: item,
@@ -52,7 +56,7 @@ export const Connect = withDisplayName('Connect')(({
         };
 
         refresh();
-        const watcher = new AdbWebBackendWatcher(refresh);
+        const watcher = new AdbWebUsbBackendWatcher(refresh);
         return () => watcher.dispose();
     }, []);
 
@@ -64,7 +68,7 @@ export const Connect = withDisplayName('Connect')(({
     };
 
     const requestAccess = useCallback(async () => {
-        const backend = await AdbWebBackend.requestDevice();
+        const backend = await AdbWebUsbBackend.requestDevice();
         if (backend) {
             setBackendOptions(list => {
                 for (const item of list) {

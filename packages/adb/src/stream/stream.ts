@@ -1,12 +1,12 @@
+import { once } from '@yume-chan/event';
+import { ValueOrPromise } from '@yume-chan/struct';
 import { AdbSocket, AdbSocketInfo } from '../socket';
-import { AutoResetEvent, EventQueue } from '../utils';
+import { EventQueue } from '../utils';
 
 export class AdbSocketStream implements AdbSocketInfo {
     private socket: AdbSocket;
 
     private queue: EventQueue<ArrayBuffer>;
-
-    private readLock = new AutoResetEvent();
 
     public get backend() { return this.socket.backend; }
     public get localId() { return this.socket.localId; }
@@ -16,36 +16,27 @@ export class AdbSocketStream implements AdbSocketInfo {
 
     public constructor(socket: AdbSocket) {
         this.socket = socket;
+
         this.queue = new EventQueue<ArrayBuffer>({
             highWaterMark: 16 * 1024,
         });
 
-        const resetEvent = new AutoResetEvent(true);
-
-        this.socket.onData(buffer => {
-            if (!this.queue.push(buffer, buffer.byteLength)) {
-                return resetEvent.wait();
+        this.socket.onData((buffer): ValueOrPromise<void> => {
+            if (!this.queue.enqueue(buffer, buffer.byteLength)) {
+                return once(this.queue.onDrain);
             }
-            return;
         });
+
         this.socket.onClose(() => {
             this.queue.end();
-        });
-
-        this.queue.onLowWater(() => {
-            resetEvent.notify();
         });
     }
 
     public async read(): Promise<ArrayBuffer> {
-        await this.readLock.wait();
-
         try {
-            return await this.queue.next();
+            return await this.queue.dequeue();
         } catch {
             throw new Error('Can not read after AdbSocketStream has been closed');
-        } finally {
-            this.readLock.notify();
         }
     }
 

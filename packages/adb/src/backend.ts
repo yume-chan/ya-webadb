@@ -1,4 +1,5 @@
 import { Event } from '@yume-chan/event';
+import { ValueOrPromise } from '@yume-chan/struct';
 
 export type AdbKeyIterable = Iterable<ArrayBuffer> | AsyncIterable<ArrayBuffer>;
 
@@ -9,19 +10,19 @@ export interface AdbBackend {
 
     readonly onDisconnected: Event<void>;
 
-    connect?(): void | Promise<void>;
+    connect?(): ValueOrPromise<void>;
 
     iterateKeys(): AdbKeyIterable;
 
-    generateKey(): ArrayBuffer | Promise<ArrayBuffer>;
+    generateKey(): ValueOrPromise<ArrayBuffer>;
 
     encodeUtf8(input: string): ArrayBuffer;
 
     decodeUtf8(buffer: ArrayBuffer): string;
 
-    write(buffer: ArrayBuffer): void | Promise<void>;
+    write(buffer: ArrayBuffer): ValueOrPromise<void>;
 
-    read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
+    read(length: number): ValueOrPromise<ArrayBuffer>;
 
-    dispose(): void | Promise<void>;
+    dispose(): ValueOrPromise<void>;
 }

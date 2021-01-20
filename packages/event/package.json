@@ -33,6 +33,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
+        "@yume-chan/async-operation-manager": "2.1.4",
         "tslib": "2.1.0"
     },
     "devDependencies": {

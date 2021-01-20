@@ -1,6 +1,6 @@
-# @yume-chan/adb-backend-web
+# @yume-chan/adb-backend-webusb
 
-Backend for `@yume-chan/adb` using Web technologies.
+Backend for `@yume-chan/adb` using WebUSB API.
 
 - [Note](#note)
 - [`pickDevice`](#pickdevice)

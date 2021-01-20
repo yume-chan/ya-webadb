@@ -16,7 +16,7 @@
             "@types/react-router-dom",
             "@fluentui/react",
             "@yume-chan/adb",
-            "@yume-chan/adb-backend-web",
+            "@yume-chan/adb-backend-webusb",
             "@yume-chan/async-operation-manager",
             "@yume-chan/event",
             "@yume-chan/struct"
@@ -30,7 +30,10 @@
     ],
     "references": [
         {
-            "path": "../adb-backend-web/tsconfig.json"
-        }
+            "path": "../adb-backend-webusb/tsconfig.json"
+        },
+        {
+            "path": "../adb-backend-ws/tsconfig.json"
+        },
     ]
 }

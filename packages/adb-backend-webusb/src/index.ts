@@ -22,20 +22,20 @@ export function decodeUtf8(buffer: ArrayBuffer): string {
     return Utf8Decoder.decode(buffer);
 }
 
-export default class AdbWebBackend implements AdbBackend {
+export default class AdbWebUsbBackend implements AdbBackend {
     public static isSupported(): boolean {
         return !!window.navigator?.usb;
     }
 
-    public static async getDevices(): Promise<AdbWebBackend[]> {
+    public static async getDevices(): Promise<AdbWebUsbBackend[]> {
         const devices = await window.navigator.usb.getDevices();
-        return devices.map(device => new AdbWebBackend(device));
+        return devices.map(device => new AdbWebUsbBackend(device));
     }
 
-    public static async requestDevice(): Promise<AdbWebBackend | undefined> {
+    public static async requestDevice(): Promise<AdbWebUsbBackend | undefined> {
         try {
             const device = await navigator.usb.requestDevice({ filters: [WebUsbDeviceFilter] });
-            return new AdbWebBackend(device);
+            return new AdbWebUsbBackend(device);
         } catch (e) {
             switch (e.name) {
                 case 'NotFoundError':

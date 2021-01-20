@@ -1,0 +1,26 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "esm",
+        "declarationDir": "dts",
+        "rootDir": "./src",
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
+        "types": [
+            "@yume-chan/adb"
+        ]
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "src/**/*.spec.ts"
+    ],
+    "references": [
+        {
+            "path": "../adb/tsconfig.esm.json"
+        }
+    ]
+}

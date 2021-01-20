@@ -3,8 +3,8 @@
     "private": true,
     "scripts": {
         "postinstall": "lerna bootstrap",
-        "build": "lerna run --scope @yume-chan/adb-backend-web build",
-        "build:watch": "lerna run --scope @yume-chan/adb-backend-web --stream build:watch",
+        "build": "lerna run --scope @yume-chan/adb-backend-webusb build",
+        "build:watch": "lerna run --scope @yume-chan/adb-backend-webusb --stream build:watch",
         "build:demo": "lerna run --scope demo --stream build",
         "start:demo": "lerna run --scope demo --stream start",
         "test": "lerna run --stream --no-bail coverage"

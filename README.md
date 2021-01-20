@@ -12,7 +12,7 @@ Online demo: https://yume-chan.github.io/ya-webadb
 
 `@yume-chan/adb` contains a platform-independent TypeScript implementation of the Android Debug Bridge (ADB) protocol.
 
-`@yume-chan/adb-backend-web` contains a backend for `@yume-chan/adb` that uses Web technologies.
+`@yume-chan/adb-backend-webusb` contains a backend for `@yume-chan/adb` that uses WebUSB API.
 
 See README in each package for more implementation details.
 
@@ -20,14 +20,14 @@ See README in each package for more implementation details.
 
 This repository is a monorepo containing following packages:
 
-| Folder Name                                                    | Description                                                              |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| adb ([README](packages/adb/README.md))                         | TypeScript implementation of Android Debug Bridge (ADB) protocol.        |
-| adb-backend-web ([README](packages/adb-backend-web/README.md)) | Backend for `@yume-chan/adb` using Web technologies.                     |
-| event                                                          | Event/EventEmitter pattern.                                              |
-| struct ([README](packages/struct/README.md))                   | C-style structure serializer and deserializer.                           |
-| webpack-config                                                 | Webpack configuration file in TypeScript, will output into `demo` folder |
-| demo ([README](packages/demo/README.md))                       | Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-web`.               |
+| Folder Name                                                          | Description                                                              |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| adb ([README](packages/adb/README.md))                               | TypeScript implementation of Android Debug Bridge (ADB) protocol.        |
+| adb-backend-webusb ([README](packages/adb-backend-webusb/README.md)) | Backend for `@yume-chan/adb` using WebUSB API.                           |
+| event                                                                | Event/EventEmitter pattern.                                              |
+| struct ([README](packages/struct/README.md))                         | C-style structure serializer and deserializer.                           |
+| webpack-config                                                       | Webpack configuration file in TypeScript, will output into `demo` folder |
+| demo ([README](packages/demo/README.md))                             | Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-webusb`.            |
 
 ## Development
 

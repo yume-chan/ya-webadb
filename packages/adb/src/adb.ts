@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbDemoMode, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
+import { AdbDemoMode, AdbFrameBuffer, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
@@ -57,7 +57,7 @@ export class Adb {
         backend.onDisconnected(this.dispose, this);
     }
 
-    public async connect(authenticators = AdbDefaultAuthenticators) {
+    public async connect(authenticators = AdbDefaultAuthenticators): Promise<void> {
         await this.backend.connect?.();
         this.packetDispatcher.maxPayloadSize = 0x1000;
         this.packetDispatcher.calculateChecksum = true;
@@ -151,7 +151,7 @@ export class Adb {
         }
     }
 
-    private parseBanner(banner: string) {
+    private parseBanner(banner: string): void {
         this._features = [];
 
         const pieces = banner.split('::');
@@ -212,7 +212,7 @@ export class Adb {
     public async install(
         apk: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
         onProgress?: (uploaded: number) => void,
-    ) {
+    ): Promise<void> {
         return await install(this, apk, onProgress);
     }
 
@@ -221,7 +221,7 @@ export class Adb {
         return new AdbSync(this, socket);
     }
 
-    public async framebuffer() {
+    public async framebuffer(): Promise<AdbFrameBuffer> {
         return framebuffer(this);
     }
 
@@ -240,7 +240,7 @@ export class Adb {
         return resolver.promise;
     }
 
-    public async dispose() {
+    public async dispose(): Promise<void> {
         this.packetDispatcher.dispose();
         await this.backend.dispose();
     }

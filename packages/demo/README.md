@@ -1,6 +1,6 @@
 # WebADB Demo
 
-Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-web`.
+Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-webusb`.
 
 ## Start
 

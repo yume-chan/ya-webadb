@@ -1,7 +1,8 @@
 import { PromiseResolver } from '@yume-chan/async-operation-manager';
 import { Event, EventEmitter, EventListenerInfo } from '@yume-chan/event';
+import { ValueOrPromise } from '@yume-chan/struct';
 
-export type AsyncEventResult = void | Promise<void>;
+export type AsyncEventResult = ValueOrPromise<void>;
 
 export type AsyncEvent<TEvent> = Event<TEvent, AsyncEventResult>;
 
