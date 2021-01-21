@@ -10,7 +10,7 @@ import { StructDeserializationContext, StructFieldDefinition, StructFieldValue, 
  * specified by user when creating field definitions.
  */
 export abstract class ArrayBufferLikeFieldType<TValue = unknown, TTypeScriptType = TValue> {
-    public readonly valueType!: TTypeScriptType;
+    public readonly TTypeScriptType!: TTypeScriptType;
 
     /**
      * When implemented in derived classes, converts the type-specific `value` to an `ArrayBuffer`
@@ -105,7 +105,7 @@ export abstract class ArrayBufferLikeFieldDefinition<
     TOmitInitKey extends PropertyKey = never,
     > extends StructFieldDefinition<
     TOptions,
-    TType['valueType'],
+    TType['TTypeScriptType'],
     TOmitInitKey
     >{
     public readonly type: TType;
@@ -126,7 +126,7 @@ export abstract class ArrayBufferLikeFieldDefinition<
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         struct: StructValue,
-        value: TType['valueType'],
+        value: TType['TTypeScriptType'],
         arrayBuffer?: ArrayBuffer,
     ): ArrayBufferLikeFieldValue<this> {
         return new ArrayBufferLikeFieldValue(this, options, context, struct, value, arrayBuffer);
@@ -161,14 +161,14 @@ export class ArrayBufferLikeFieldValue<
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         struct: StructValue,
-        value: TDefinition['valueType'],
+        value: TDefinition['TValue'],
         arrayBuffer?: ArrayBuffer,
     ) {
         super(definition, options, context, struct, value);
         this.arrayBuffer = arrayBuffer;
     }
 
-    public set(value: TDefinition['valueType']): void {
+    public set(value: TDefinition['TValue']): void {
         super.set(value);
         this.arrayBuffer = undefined;
     }

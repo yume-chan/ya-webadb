@@ -29,7 +29,7 @@ export const AdbSyncLstatResponse =
             }
         });
 
-export type AdbSyncLstatResponse = typeof AdbSyncLstatResponse['deserializedType'];
+export type AdbSyncLstatResponse = typeof AdbSyncLstatResponse['TDeserializeResult'];
 
 export enum AdbSyncStatErrorCode {
     EACCES = 13,
@@ -78,7 +78,7 @@ export const AdbSyncStatResponse =
             }
         });
 
-export type AdbSyncStatResponse = typeof AdbSyncStatResponse['deserializedType'];
+export type AdbSyncStatResponse = typeof AdbSyncStatResponse['TDeserializeResult'];
 
 const StatResponseType = {
     [AdbSyncResponseId.Stat]: AdbSyncStatResponse,

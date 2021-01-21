@@ -11,7 +11,7 @@ export const AdbSyncEntryResponse =
         .string('name', { lengthField: 'nameLength' })
         .extra({ id: AdbSyncResponseId.Entry as const });
 
-export type AdbSyncEntryResponse = typeof AdbSyncEntryResponse['deserializedType'];
+export type AdbSyncEntryResponse = typeof AdbSyncEntryResponse['TDeserializeResult'];
 
 const ResponseTypes = {
     [AdbSyncResponseId.Entry]: AdbSyncEntryResponse,

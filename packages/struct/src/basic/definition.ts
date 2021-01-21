@@ -23,19 +23,19 @@ export abstract class StructFieldDefinition<
     TValue = unknown,
     TOmitInitKey extends PropertyKey = never,
     > {
+    /**
+     * When `T` is a type initiated `StructFieldDefinition`,
+     * use `T['TValue']` to retrieve its `TValue` type parameter.
+     */
+    public readonly TValue!: TValue;
+
+    /**
+     * When `T` is a type initiated `StructFieldDefinition`,
+     * use `T['TOmitInitKey']` to retrieve its `TOmitInitKey` type parameter.
+     */
+    public readonly TOmitInitKey!: TOmitInitKey;
+
     public readonly options: TOptions;
-
-    /**
-     * When `T` is a type initiated `StructFieldDefinition`,
-     * use `T['valueType']` to retrieve its `TValue` type parameter.
-     */
-    public readonly valueType!: TValue;
-
-    /**
-     * When `T` is a type initiated `StructFieldDefinition`,
-     * use `T['omitInitKeyType']` to retrieve its `TOmitInitKey` type parameter.
-     */
-    public readonly omitInitKeyType!: TOmitInitKey;
 
     public constructor(options: TOptions) {
         this.options = options;

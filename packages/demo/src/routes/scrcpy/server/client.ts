@@ -159,7 +159,7 @@ const VideoPacket =
 
 export const NoPts = BigInt(-1);
 
-export type VideoPacket = typeof VideoPacket['deserializedType'];
+export type VideoPacket = typeof VideoPacket['TDeserializeResult'];
 
 const ClipboardMessage =
     new Struct()

@@ -18,7 +18,7 @@ export const ScrcpySimpleControlMessage =
     new Struct()
         .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>());
 
-export type ScrcpySimpleControlMessage = typeof ScrcpySimpleControlMessage['initType'];
+export type ScrcpySimpleControlMessage = typeof ScrcpySimpleControlMessage['TInit'];
 
 export enum AndroidMotionEventAction {
     Down,
@@ -48,7 +48,7 @@ export const ScrcpyInjectTouchControlMessage =
         .uint16('pressure')
         .uint32('buttons');
 
-export type ScrcpyInjectTouchControlMessage = typeof ScrcpyInjectTouchControlMessage['initType'];
+export type ScrcpyInjectTouchControlMessage = typeof ScrcpyInjectTouchControlMessage['TInit'];
 
 export const ScrcpyInjectTextControlMessage =
     new Struct()
@@ -57,7 +57,7 @@ export const ScrcpyInjectTextControlMessage =
         .string('text', { lengthField: 'length' });
 
 export type ScrcpyInjectTextControlMessage =
-    typeof ScrcpyInjectTextControlMessage['initType'];
+    typeof ScrcpyInjectTextControlMessage['TInit'];
 
 export enum AndroidKeyEventAction {
     Down = 0,
@@ -106,7 +106,7 @@ export const ScrcpyInjectKeyCodeControlMessage =
         .uint32('metaState');
 
 export type ScrcpyInjectKeyCodeControlMessage =
-    typeof ScrcpyInjectKeyCodeControlMessage['initType'];
+    typeof ScrcpyInjectKeyCodeControlMessage['TInit'];
 
 export type ScrcpyControlMessage =
     ScrcpySimpleControlMessage |

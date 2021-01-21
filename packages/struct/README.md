@@ -57,7 +57,7 @@ const buffer = MyStruct.serialize({
 - [Custom field type](#custom-field-type)
   - [`Struct#field`](#structfield)
   - [`StructFieldDefinition`](#structfielddefinition)
-    - [`valueType`/`omitInitKeyType`](#valuetypeomitinitkeytype)
+    - [`TValue`/`TOmitInitKey`](#tvaluetomitinitkey)
     - [`getSize`](#getsize)
     - [`create`](#create)
     - [`deserialize`](#deserialize-1)
@@ -570,8 +570,8 @@ field<
     name: TName,
     definition: TDefinition
 ): Struct<
-    TFields & Record<TName, TDefinition['valueType']>,
-    TOmitInitKey | TDefinition['omitInitKeyType'],
+    TFields & Record<TName, TDefinition['TValue']>,
+    TOmitInitKey | TDefinition['TOmitInitKey'],
     TExtra,
     TPostDeserialized
 >;
@@ -615,7 +615,7 @@ A `StructFieldDefinition` describes type, size and runtime semantics of a field.
 
 It's an `abstract` class, means it lacks some method implementations, so it shouldn't be constructed.
 
-#### `valueType`/`omitInitKeyType`
+#### `TValue`/`TOmitInitKey`
 
 These two fields are used to provide type information to TypeScript. Their values will always be `undefined`, but having correct types is enough. You don't need to care about them.
 
@@ -688,8 +688,8 @@ If this field's size can change based on some criteria, one must override `getSi
 #### `get`/`set`
 
 ```ts
-get(): TDefinition['valueType'];
-set(value: TDefinition['valueType']): void;
+get(): TDefinition['TValue'];
+set(value: TDefinition['TValue']): void;
 ```
 
 Defines how to get or set this field's value. By default, it store its value in `value` field.

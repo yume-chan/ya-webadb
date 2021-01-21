@@ -25,9 +25,9 @@ const AdbPacketStruct =
         .fields(AdbPacketHeader)
         .arrayBuffer('payload', { lengthField: 'payloadLength' });
 
-export type AdbPacket = typeof AdbPacketStruct['deserializedType'];
+export type AdbPacket = typeof AdbPacketStruct['TDeserializeResult'];
 
-export type AdbPacketInit = Omit<typeof AdbPacketStruct['initType'], 'checksum' | 'magic'>;
+export type AdbPacketInit = Omit<typeof AdbPacketStruct['TInit'], 'checksum' | 'magic'>;
 
 export namespace AdbPacket {
     export async function read(backend: AdbBackend): Promise<AdbPacket> {

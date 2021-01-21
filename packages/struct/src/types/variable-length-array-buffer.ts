@@ -35,7 +35,7 @@ export class VariableLengthArrayBufferLikeFieldDefinition<
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         struct: StructValue,
-        value: TType['valueType'],
+        value: TType['TTypeScriptType'],
         arrayBuffer?: ArrayBuffer
     ): VariableLengthArrayBufferLikeStructFieldValue<this> {
         return new VariableLengthArrayBufferLikeStructFieldValue(
@@ -61,7 +61,7 @@ export class VariableLengthArrayBufferLikeStructFieldValue<
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         struct: StructValue,
-        value: TDefinition['valueType'],
+        value: TDefinition['TValue'],
         arrayBuffer?: ArrayBuffer,
     ) {
         super(definition, options, context, struct, value, arrayBuffer);
