@@ -59,7 +59,7 @@
         "tinyh264": "0.0.6",
         "xterm": "4.9.0",
         "xterm-addon-fit": "0.4.0",
-        "xterm-addon-search": "0.7.0",
+        "xterm-addon-search": "0.8.0",
         "yuv-buffer": "1.0.0",
         "yuv-canvas": "1.2.6"
     }
