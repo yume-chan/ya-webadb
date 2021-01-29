@@ -17,7 +17,7 @@
             "@fluentui/react",
             "@yume-chan/adb",
             "@yume-chan/adb-backend-webusb",
-            "@yume-chan/async-operation-manager",
+            "@yume-chan/async",
             "@yume-chan/event",
             "@yume-chan/struct"
         ]

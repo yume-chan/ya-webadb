@@ -1,4 +1,4 @@
-import { PromiseResolver } from '@yume-chan/async-operation-manager';
+import { PromiseResolver } from '@yume-chan/async';
 import { Disposable } from '@yume-chan/event';
 
 export class AutoResetEvent implements Disposable {

@@ -1,4 +1,4 @@
-import { PromiseResolver } from '@yume-chan/async-operation-manager';
+import { PromiseResolver } from '@yume-chan/async';
 import { Disposable } from '@yume-chan/event';
 import { AdbBackend } from './backend';
 import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto';

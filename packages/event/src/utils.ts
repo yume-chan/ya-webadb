@@ -1,4 +1,4 @@
-import { PromiseResolver } from '@yume-chan/async-operation-manager';
+import { PromiseResolver } from '@yume-chan/async';
 import { Event } from './event';
 
 export async function once<T>(event: Event<T>): Promise<T> {

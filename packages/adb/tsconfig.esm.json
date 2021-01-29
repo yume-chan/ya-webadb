@@ -6,7 +6,7 @@
         "target": "ES2016",
         "declarationDir": "dts",
         "types": [
-            "@yume-chan/async-operation-manager",
+            "@yume-chan/async",
             "@yume-chan/event",
             "@yume-chan/struct",
         ],

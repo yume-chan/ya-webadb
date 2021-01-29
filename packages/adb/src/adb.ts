@@ -1,4 +1,4 @@
-import { PromiseResolver } from '@yume-chan/async-operation-manager';
+import { PromiseResolver } from '@yume-chan/async';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';

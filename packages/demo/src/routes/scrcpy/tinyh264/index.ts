@@ -1,4 +1,4 @@
-import { PromiseResolver } from '@yume-chan/async-operation-manager';
+import { PromiseResolver } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import TinyH264Worker from 'worker-loader!./worker';
 

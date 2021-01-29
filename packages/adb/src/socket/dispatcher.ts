@@ -1,4 +1,4 @@
-import AsyncOperationManager from '@yume-chan/async-operation-manager';
+import { AsyncOperationManager } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbBackend } from '../backend';
 import { AdbCommand, AdbPacket, AdbPacketInit } from '../packet';

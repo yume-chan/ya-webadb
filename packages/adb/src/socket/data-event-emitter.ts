@@ -1,4 +1,4 @@
-import { PromiseResolver } from '@yume-chan/async-operation-manager';
+import { PromiseResolver } from '@yume-chan/async';
 import { Event, EventEmitter, EventListenerInfo } from '@yume-chan/event';
 import { ValueOrPromise } from '@yume-chan/struct';
 

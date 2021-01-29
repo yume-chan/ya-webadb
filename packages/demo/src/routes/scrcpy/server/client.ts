@@ -1,5 +1,5 @@
 import { Adb, AdbBufferedStream, AdbSocket, DataEventEmitter, EventQueue } from '@yume-chan/adb';
-import { PromiseResolver } from '@yume-chan/async-operation-manager';
+import { PromiseResolver } from '@yume-chan/async';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { AndroidCodecLevel, AndroidCodecProfile } from './codec';
