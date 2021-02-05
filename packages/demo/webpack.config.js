@@ -1,14 +1,14 @@
 "use strict";
-var tslib_1 = require("tslib");
-var clean_webpack_plugin_1 = require("clean-webpack-plugin");
-var copy_webpack_plugin_1 = tslib_1.__importDefault(require("copy-webpack-plugin"));
-var html_webpack_plugin_1 = tslib_1.__importDefault(require("html-webpack-plugin"));
-var mini_css_extract_plugin_1 = tslib_1.__importDefault(require("mini-css-extract-plugin"));
-var path_1 = tslib_1.__importDefault(require("path"));
-var webpack_bundle_analyzer_1 = require("webpack-bundle-analyzer");
-var webpackbar_1 = tslib_1.__importDefault(require("webpackbar"));
-var context = path_1.default.resolve(process.cwd());
-var plugins = [
+const tslib_1 = require("tslib");
+const clean_webpack_plugin_1 = require("clean-webpack-plugin");
+const copy_webpack_plugin_1 = tslib_1.__importDefault(require("copy-webpack-plugin"));
+const html_webpack_plugin_1 = tslib_1.__importDefault(require("html-webpack-plugin"));
+const mini_css_extract_plugin_1 = tslib_1.__importDefault(require("mini-css-extract-plugin"));
+const path_1 = tslib_1.__importDefault(require("path"));
+const webpack_bundle_analyzer_1 = require("webpack-bundle-analyzer");
+const webpackbar_1 = tslib_1.__importDefault(require("webpackbar"));
+const context = path_1.default.resolve(process.cwd());
+const plugins = [
     new webpackbar_1.default({}),
     new mini_css_extract_plugin_1.default({
         filename: '[name].[contenthash].css',
@@ -30,14 +30,14 @@ var plugins = [
 if (process.env.ANALYZE) {
     plugins.push(new webpack_bundle_analyzer_1.BundleAnalyzerPlugin());
 }
-var config = function (env, argv) {
+const config = (env, argv) => {
     if (argv.mode !== 'production') {
         plugins.unshift(new clean_webpack_plugin_1.CleanWebpackPlugin());
     }
     return {
         mode: 'development',
         devtool: argv.mode === 'production' ? 'source-map' : 'eval-source-map',
-        context: context,
+        context,
         target: 'web',
         entry: {
             index: './src/index.tsx',
@@ -51,7 +51,7 @@ var config = function (env, argv) {
             // @ts-expect-error typing is not up to date
             fallback: { "path": require.resolve("path-browserify") },
         },
-        plugins: plugins,
+        plugins,
         module: {
             rules: [
                 { test: /\.js$/, enforce: 'pre', use: ['source-map-loader'], },

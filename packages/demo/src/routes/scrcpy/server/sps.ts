@@ -44,12 +44,15 @@ function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
     let start = -1;
     let writeIndex = 0;
 
-    // How many zeros in a row we have counted
+    // How many `0x00`s in a row we have counted
     let zeroCount = 0;
 
     let inEmulation = false;
 
     for (const byte of buffer) {
+        buffer[writeIndex] = byte;
+        writeIndex += 1;
+
         if (inEmulation) {
             if (byte > 0x03) {
                 // `0x00000304` or larger are invalid
@@ -57,10 +60,8 @@ function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
             }
 
             inEmulation = false;
+            continue;
         }
-
-        buffer[writeIndex] = byte;
-        writeIndex += 1;
 
         if (byte == 0x00) {
             zeroCount += 1;
@@ -70,41 +71,59 @@ function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
         const lastZeroCount = zeroCount;
         zeroCount = 0;
 
-        // 0x000001 is the start code
-        // But it can be preceded by any number of zeros
-        // So 2 is the minimal
-        if (lastZeroCount >= 2 && byte === 0x01) {
-            // Remove all leading `0`s and this `1`
-            writeIndex -= lastZeroCount + 1;
-
-            if (start !== -1) {
-                yield buffer.subarray(start, writeIndex);
+        if (start === -1) {
+            // 0x000001 is the start code
+            // But it can be preceded by any number of zeros
+            // So 2 is the minimal
+            if (lastZeroCount >= 2 && byte === 0x01) {
+                // Found start of first NAL unit
+                writeIndex = 0;
+                start = 0;
+                continue;
             }
 
-            start = writeIndex;
-            continue;
-        } else if (start === -1) {
             // Not begin with start code
             throw new Error('Invalid data');
         }
 
-        if (lastZeroCount === 2) {
-            switch (byte) {
-                // `byte` can't be `0` or `1` here
-                case 2:
-                    // Didn't find why, but 7.4.1 NAL unit semantics forbid 0x000002 appear in NAL units
-                    throw new Error('Invalid data');
-                case 3:
-                    // `0x000003` is the "emulation_prevention_three_byte"
-                    // `0x00000300`, `0x00000301`, `0x00000302` and `0x00000303` represent
-                    // `0x000000`, `0x000001`, `0x000002` and `0x000003` respectively
+        if (lastZeroCount < 2) {
+            // zero or one `0x00`s are acceptable
+            continue;
+        }
 
-                    // Remove current byte
-                    writeIndex -= 1;
+        if (byte === 0x01) {
+            // Remove all leading `0x00`s and this `0x01`
+            writeIndex -= lastZeroCount + 1;
 
-                    inEmulation = true;
-                    continue;
-            }
+            // Found another NAL unit
+            yield buffer.subarray(start, writeIndex);
+
+            start = writeIndex;
+            continue;
+        }
+
+        if (lastZeroCount > 2) {
+            // Too much `0x00`s
+            throw new Error('Invalid data');
+        }
+
+        switch (byte) {
+            case 0x02:
+                // Didn't find why, but 7.4.1 NAL unit semantics forbids `0x000002` appearing in NAL units
+                throw new Error('Invalid data');
+            case 0x03:
+                // `0x000003` is the "emulation_prevention_three_byte"
+                // `0x00000300`, `0x00000301`, `0x00000302` and `0x00000303` represent
+                // `0x000000`, `0x000001`, `0x000002` and `0x000003` respectively
+
+                // Remove current byte
+                writeIndex -= 1;
+
+                inEmulation = true;
+                break;
+            default:
+                // `0x000004` or larger are ok
+                break;
         }
     }
 
