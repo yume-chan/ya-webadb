@@ -31,7 +31,7 @@ if (process.env.ANALYZE) {
     plugins.push(new webpack_bundle_analyzer_1.BundleAnalyzerPlugin());
 }
 const config = (env, argv) => {
-    if (argv.mode !== 'production') {
+    if (argv.mode === 'production') {
         plugins.unshift(new clean_webpack_plugin_1.CleanWebpackPlugin());
     }
     return {

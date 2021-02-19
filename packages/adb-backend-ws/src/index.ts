@@ -24,6 +24,9 @@ export default class AdbWsBackend implements AdbBackend {
 
     private bufferedStream: BufferedStream<Stream> | undefined;
 
+    private _connected = false;
+    public get connected() { return this._connected; }
+
     private readonly disconnectEvent = new EventEmitter<void>();
     public readonly onDisconnected = this.disconnectEvent.event;
 
@@ -49,6 +52,7 @@ export default class AdbWsBackend implements AdbBackend {
         };
         socket.onclose = () => {
             queue.end();
+            this._connected = false;
             this.disconnectEvent.fire();
         };
 
@@ -56,6 +60,7 @@ export default class AdbWsBackend implements AdbBackend {
         this.bufferedStream = new BufferedStream({
             read() { return queue.dequeue(); },
         });
+        this._connected = true;
     }
 
     public *iterateKeys(): Generator<ArrayBuffer, void, void> {

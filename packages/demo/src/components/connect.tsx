@@ -1,11 +1,11 @@
 import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem, TooltipHost } from '@fluentui/react';
 import { Adb, AdbBackend, AdbLogger } from '@yume-chan/adb';
 import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { ErrorDialogContext } from './error-dialog';
+import AdbWsBackend from '@yume-chan/adb-backend-ws';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CommonStackTokens } from '../styles';
 import { withDisplayName } from '../utils';
-import AdbWsBackend from '@yume-chan/adb-backend-ws';
+import { ErrorDialogContext } from './error-dialog';
 
 const DropdownStyles = { dropdown: { width: '100%' } };
 
@@ -17,8 +17,6 @@ interface ConnectProps {
     onDeviceChange: (device: Adb | undefined) => void;
 }
 
-// const wsBackend = new AdbWsBackend("ws://localhost:15554");
-
 export const Connect = withDisplayName('Connect')(({
     device,
     logger,
@@ -28,37 +26,57 @@ export const Connect = withDisplayName('Connect')(({
 
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
-    const [backendOptions, setBackendOptions] = useState<IDropdownOption[]>([]);
     const [selectedBackend, setSelectedBackend] = useState<AdbBackend | undefined>();
+    const [connecting, setConnecting] = useState(false);
+
+    const [usbBackendList, setUsbBackendList] = useState<AdbBackend[]>([]);
+    const updateUsbBackendList = useCallback(async () => {
+        const backendList: AdbBackend[] = await AdbWebUsbBackend.getDevices();
+        setUsbBackendList(backendList);
+        return backendList;
+    }, []);
     useEffect(() => {
         if (!supported) {
             showErrorDialog('Your browser does not support WebUSB standard, which is required for this site to work.\n\nLatest version of Google Chrome (for Windows, macOS, Linux and Android), Microsoft Edge (for Windows and macOS), or other Chromium-based browsers should work.');
             return;
         }
 
-        async function refresh() {
-            const backendList: AdbBackend[] = await AdbWebUsbBackend.getDevices();
-            // backendList.push(wsBackend);
+        updateUsbBackendList();
 
-            const options: IDropdownOption[] = backendList.map(item => ({
-                key: item.serial,
-                text: `${item.serial} ${item.name ? `(${item.name})` : ''}`,
-                data: item,
-            }));
-            setBackendOptions(options);
+        const watcher = new AdbWebUsbBackendWatcher(async (serial?: string) => {
+            const list = await updateUsbBackendList();
 
-            setSelectedBackend(old => {
-                if (old && backendList.some(item => item.serial === old.serial)) {
-                    return old;
-                }
-                return backendList[0];
-            });
-        };
-
-        refresh();
-        const watcher = new AdbWebUsbBackendWatcher(refresh);
+            if (serial) {
+                setSelectedBackend(list.find(backend => backend.serial === serial));
+                return;
+            }
+        });
         return () => watcher.dispose();
     }, []);
+
+    const [wsBackendList, setWsBackendList] = useState<AdbBackend[]>([]);
+    useEffect(() => {
+        const intervalId = setInterval(async () => {
+            if (connecting || device) {
+                return;
+            }
+
+            const wsBackend = new AdbWsBackend("ws://localhost:15555");
+            try {
+                await wsBackend.connect();
+                setWsBackendList([wsBackend]);
+                setSelectedBackend(wsBackend);
+            } catch {
+                setWsBackendList([]);
+            } finally {
+                await wsBackend.dispose();
+            }
+        }, 5000);
+
+        return () => {
+            clearInterval(intervalId);
+        };
+    }, [connecting, device]);
 
     const handleSelectedBackendChange = (
         _e: React.FormEvent<HTMLDivElement>,
@@ -69,26 +87,10 @@ export const Connect = withDisplayName('Connect')(({
 
     const requestAccess = useCallback(async () => {
         const backend = await AdbWebUsbBackend.requestDevice();
-        if (backend) {
-            setBackendOptions(list => {
-                for (const item of list) {
-                    if (item.key === backend.serial) {
-                        setSelectedBackend(item.data);
-                        return list;
-                    }
-                }
-
-                setSelectedBackend(backend);
-                return [...list, {
-                    key: backend.serial,
-                    text: `${backend.serial} ${backend.name ? `(${backend.name})` : ''}`,
-                    data: backend,
-                }];
-            });
-        }
+        setSelectedBackend(backend);
+        await updateUsbBackendList();
     }, []);
 
-    const [connecting, setConnecting] = useState(false);
     const connect = useCallback(async () => {
         try {
             if (selectedBackend) {
@@ -121,6 +123,32 @@ export const Connect = withDisplayName('Connect')(({
             onDeviceChange(undefined);
         });
     }, [device, onDeviceChange]);
+
+    const backendList = useMemo(
+        () => ([] as AdbBackend[]).concat(usbBackendList, wsBackendList),
+        [usbBackendList, wsBackendList]
+    );
+
+    const backendOptions = useMemo(() => {
+        return backendList.map(backend => ({
+            key: backend.serial,
+            text: `${backend.serial} ${backend.name ? `(${backend.name})` : ''}`,
+            data: backend,
+        }));
+    }, [backendList]);
+
+    useEffect(() => {
+        setSelectedBackend(old => {
+            if (old) {
+                const current = backendList.find(backend => backend.serial === old.serial);
+                if (current) {
+                    return current;
+                }
+            }
+
+            return backendList.length ? backendList[0] : undefined;
+        });
+    }, [backendList]);
 
     return (
         <Stack
@@ -163,8 +191,8 @@ export const Connect = withDisplayName('Connect')(({
                     </StackItem>
                 </Stack>
             ) : (
-                    <DefaultButton text="Disconnect" onClick={disconnect} />
-                )}
+                <DefaultButton text="Disconnect" onClick={disconnect} />
+            )}
 
             <Dialog
                 hidden={!connecting}

@@ -8,6 +8,8 @@ export interface AdbBackend {
 
     readonly name: string | undefined;
 
+    readonly connected: boolean;
+
     readonly onDisconnected: Event<void>;
 
     connect?(): ValueOrPromise<void>;

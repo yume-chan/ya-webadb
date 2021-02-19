@@ -37,7 +37,7 @@ const config: webpack.ConfigurationFactory = (
     env: unknown,
     argv: webpack.CliConfigOptions
 ): webpack.Configuration => {
-    if (argv.mode !== 'production') {
+    if (argv.mode === 'production') {
         plugins.unshift(new CleanWebpackPlugin());
     }
 

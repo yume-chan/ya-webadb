@@ -52,6 +52,9 @@ export default class AdbWebUsbBackend implements AdbBackend {
 
     public get name(): string { return this._device.productName!; }
 
+    private _connected = false;
+    public get connected() { return this._connected; }
+
     private readonly disconnectEvent = new EventEmitter<void>();
     public readonly onDisconnected = this.disconnectEvent.event;
 
@@ -65,6 +68,7 @@ export default class AdbWebUsbBackend implements AdbBackend {
 
     private handleDisconnect = (e: USBConnectionEvent) => {
         if (e.device === this._device) {
+            this._connected = false;
             this.disconnectEvent.fire();
         }
     };
@@ -97,12 +101,14 @@ export default class AdbWebUsbBackend implements AdbBackend {
                                 case 'in':
                                     this._inEndpointNumber = endpoint.endpointNumber;
                                     if (this._outEndpointNumber !== undefined) {
+                                        this._connected = true;
                                         return;
                                     }
                                     break;
                                 case 'out':
                                     this._outEndpointNumber = endpoint.endpointNumber;
                                     if (this._inEndpointNumber !== undefined) {
+                                        this._connected = true;
                                         return;
                                     }
                                     break;
@@ -165,6 +171,7 @@ export default class AdbWebUsbBackend implements AdbBackend {
     }
 
     public async dispose() {
+        this._connected = false;
         window.navigator.usb.removeEventListener('disconnect', this.handleDisconnect);
         this.disconnectEvent.dispose();
         await this._device.close();
