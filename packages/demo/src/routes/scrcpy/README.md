@@ -14,7 +14,7 @@
 
 ## Encoders
 
-Scrcpy server version 1.17 (unreleased) supports specifying encoders.
+Scrcpy server version 1.17 supports specifying encoders.
 
 | Encoder Name      | OMX.google.h264.encoder  | c2.android.avc.encoder   | OMX.qcom.video.encoder.avc | OMX.hisi.video.encoder.avc       |
 | ----------------- | ------------------------ | ------------------------ | -------------------------- | -------------------------------- |

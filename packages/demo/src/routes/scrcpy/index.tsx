@@ -1,13 +1,13 @@
-import { Dialog, ICommandBarItemProps, IconButton, LayerHost, ProgressIndicator, Stack } from '@fluentui/react';
+import { Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, Stack, Toggle, TooltipHost } from '@fluentui/react';
 import { useBoolean, useId } from '@uifabric/react-hooks';
-import React, { useCallback, useContext, useMemo, useRef, useState, KeyboardEvent } from 'react';
+import React, { FormEvent, KeyboardEvent, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import YUVBuffer from 'yuv-buffer';
 import YUVCanvas from 'yuv-canvas';
-import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, ExternalLink } from '../../components';
+import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, ExternalLink, NumberPicker } from '../../components';
 import { CommonStackTokens } from '../../styles';
 import { formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
-import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyStartOptions } from './server';
+import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyClientOptions, ScrcpyServerVersion } from './server';
 import { createTinyH264Decoder, TinyH264Decoder } from './tinyh264';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
@@ -57,8 +57,27 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     const [debouncedServerUploadedSize, serverUploadSpeed] = useSpeed(serverUploadedSize, serverTotalSize);
 
     const [settingsVisible, { toggle: toggleSettingsVisible }] = useBoolean(false);
+
     const [encoders, setEncoders] = useState<string[]>([]);
     const [currentEncoder, setCurrentEncoder] = useState<string>();
+    const handleCurrentEncoderChange = useCallback((e?: FormEvent<HTMLElement>, option?: IDropdownOption) => {
+        if (!option) {
+            return;
+        }
+
+        setCurrentEncoder(option.key as string);
+    }, []);
+
+    const [bitRate, setBitRate] = useState(4_000_000);
+
+    const [tunnelForward, setTunnelForward] = useState(false);
+    const handleTunnelForwardChange = useCallback((event: React.MouseEvent<HTMLElement>, checked?: boolean) => {
+        if (checked === undefined) {
+            return;
+        }
+
+        setTunnelForward(checked);
+    }, []);
 
     const scrcpyClientRef = useRef<ScrcpyClient>();
 
@@ -90,10 +109,29 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     setServerUploadedSize
                 );
 
-                const options: ScrcpyStartOptions = {
+                const encoders = await ScrcpyClient.getEncoders({
                     device,
                     path: DeviceServerPath,
-                    version: '1.17',
+                    version: ScrcpyServerVersion,
+                    logLevel: ScrcpyLogLevel.Debug,
+                    bitRate: 4_000_000,
+                });
+                if (encoders.length === 0) {
+                    throw new Error('No available encoder found');
+                }
+                setEncoders(encoders);
+
+                // Run scrcpy once will delete the server file
+                // Re-push it
+                await sync.write(
+                    DeviceServerPath,
+                    serverBuffer,
+                );
+
+                const options: ScrcpyClientOptions = {
+                    device,
+                    path: DeviceServerPath,
+                    version: ScrcpyServerVersion,
                     logLevel: ScrcpyLogLevel.Debug,
                     // TinyH264 is slow, so limit the max resolution and bit rate
                     maxSize: 1080,
@@ -104,45 +142,47 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     level: AndroidCodecLevel.Level4,
                 };
 
-                const encoders = await ScrcpyClient.getEncoders(options);
-                if (encoders.length === 0) {
-                    throw new Error('No available encoder found');
-                }
-
-                setEncoders(encoders);
-                setCurrentEncoder(encoders[0]);
-
-                let encoder;
-                for (let item of encoders) {
-                    // This one is known not working
-                    if (item === 'OMX.hisi.video.encoder.avc') {
-                        continue;
+                let encoder!: string;
+                setCurrentEncoder(current => {
+                    if (current) {
+                        encoder = current;
+                        return current;
+                    } else {
+                        encoder = encoders.find(item => item !== '') ?? 'OMX.hisi.video.encoder.avc';
+                        return encoder;
                     }
-
-                    encoder = item;
-                    break;
-                }
-
-                // Run scrcpy once will delete the server file
-                // Re-push it
-                await sync.write(
-                    DeviceServerPath,
-                    serverBuffer,
-                );
-
-                options.encoder = encoder;
-                const scrcpyClient = await ScrcpyClient.start(options);
-
-                scrcpyClient.onInfo(message => {
-                    console.log('INFO: ' + message);
                 });
-                scrcpyClient.onError(({ message }) => {
+                options.encoder = encoder;
+
+                let bitRate!: number;
+                setBitRate(current => {
+                    bitRate = current;
+                    return current;
+                });
+                options.bitRate = bitRate;
+
+                let tunnelForward!: boolean;
+                setTunnelForward(current => {
+                    tunnelForward = current;
+                    return current;
+                });
+                options.tunnelForward = tunnelForward;
+
+                const client = new ScrcpyClient(options);
+
+                client.onDebug(message => {
+                    console.debug('[server] ' + message);
+                });
+                client.onInfo(message => {
+                    console.log('[server] ' + message);
+                });
+                client.onError(({ message }) => {
                     showErrorDialog(message);
                 });
-                scrcpyClient.onClose(stop);
+                client.onClose(stop);
 
                 let decoderPromise: Promise<TinyH264Decoder> | undefined;
-                scrcpyClient.onSizeChanged(async ({ croppedWidth, croppedHeight, cropLeft, cropTop }) => {
+                client.onSizeChanged(async ({ croppedWidth, croppedHeight, cropLeft, cropTop }) => {
                     let oldDecoderPromise = decoderPromise;
                     decoderPromise = createTinyH264Decoder();
 
@@ -186,16 +226,17 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                         yuvCanvas.drawFrame(frame);
                     });
                 });
-                scrcpyClient.onVideoData(async ({ data }) => {
+                client.onVideoData(async ({ data }) => {
                     let decoder = await decoderPromise;
                     decoder?.feed(data!);
                 });
 
-                scrcpyClient.onClipboardChange(content => {
+                client.onClipboardChange(content => {
                     window.navigator.clipboard.writeText(content);
                 });
 
-                scrcpyClientRef.current = scrcpyClient;
+                await client.start();
+                scrcpyClientRef.current = client;
                 setRunning(true);
             } catch (e) {
                 showErrorDialog(e.message);
@@ -251,13 +292,13 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     }, [device, running, start]);
 
     const commandBarFarItems = useMemo((): ICommandBarItemProps[] => [
-        // {
-        //     key: 'Settings',
-        //     iconProps: { iconName: 'Settings' },
-        //     checked: settingsVisible,
-        //     text: 'Settings',
-        //     onClick: toggleSettingsVisible,
-        // },
+        {
+            key: 'Settings',
+            iconProps: { iconName: 'Settings' },
+            checked: settingsVisible,
+            text: 'Settings',
+            onClick: toggleSettingsVisible,
+        },
         {
             key: 'DemoMode',
             iconProps: { iconName: 'Personalize' },
@@ -422,25 +463,40 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     />
                 </DeviceView>
 
-                {/* <div style={{ padding: 12, overflow: 'hidden auto', display: settingsVisible ? 'block' : 'none' }}>
-                    <PrimaryButton text="Apply and Restart" />
+                <div style={{ padding: 12, overflow: 'hidden auto', display: settingsVisible ? 'block' : 'none', width: 300 }}>
+                    <div>Changes will take effect on next connection</div>
 
                     <Dropdown
                         label="Encoder"
                         options={encoders.map(item => ({ key: item, text: item }))}
                         selectedKey={currentEncoder}
+                        placeholder="Connect once to retrieve encoder list"
+                        onChange={handleCurrentEncoderChange}
                     />
 
                     <NumberPicker
                         label="Target Bit Rate"
                         labelPosition={Position.top}
-                        value={2_000_000}
+                        value={bitRate}
                         min={100}
                         max={10_000_000}
                         step={100}
-                        onChange={() => { }}
+                        onChange={setBitRate}
                     />
-                </div> */}
+
+                    <Toggle
+                        label={
+                            <>
+                                <span>Use forward connection{' '}</span>
+                                <TooltipHost content="Old Android devices may not support reverse connection when using ADB over WiFi">
+                                    <Icon iconName="Info" />
+                                </TooltipHost>
+                            </>
+                        }
+                        checked={tunnelForward}
+                        onChange={handleTunnelForwardChange}
+                    />
+                </div>
 
                 <DemoMode
                     device={device}

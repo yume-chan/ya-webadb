@@ -1,12 +1,11 @@
-import { Adb, AdbBufferedStream, AdbSocket, DataEventEmitter, EventQueue } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbSocket, DataEventEmitter } from '@yume-chan/adb';
 import { PromiseResolver } from '@yume-chan/async';
-import { DisposableList, EventEmitter } from '@yume-chan/event';
+import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { AndroidCodecLevel, AndroidCodecProfile } from './codec';
+import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "./connection";
 import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
 import { parse_sequence_parameter_set } from './sps';
-
-const encoderRegex = /^\s+scrcpy --encoder-name '(.*?)'/;
 
 export enum ScrcpyLogLevel {
     Debug = 'debug',
@@ -166,7 +165,7 @@ const ClipboardMessage =
         .uint32('length')
         .string('content', { lengthField: 'length' });
 
-export interface ScrcpyStartOptions {
+export interface ScrcpyClientOptions {
     device: Adb;
 
     path: string;
@@ -189,17 +188,13 @@ export interface ScrcpyStartOptions {
      */
     orientation?: ScrcpyScreenOrientation;
 
+    tunnelForward?: boolean;
+
     profile?: AndroidCodecProfile;
 
     level?: AndroidCodecLevel;
 
     encoder?: string;
-
-    onInfo?: (message: string) => void;
-
-    onError?: (message: ScrcpyOutput) => void;
-
-    onClose?: () => void;
 }
 
 interface FrameSize {
@@ -220,110 +215,20 @@ interface FrameSize {
     croppedHeight: number;
 }
 
+const encoderRegex = /^\s+scrcpy --encoder-name '(.*?)'/;
+
 export class ScrcpyClient {
-    public static async start({
-        device,
-        path,
-        version,
-        logLevel = ScrcpyLogLevel.Error,
-        maxSize = 0,
-        bitRate,
-        maxFps = 0,
-        orientation = ScrcpyScreenOrientation.Unlocked,
-        profile = AndroidCodecProfile.Baseline,
-        level = AndroidCodecLevel.Level4,
-        encoder = '-',
-        onInfo,
-        onError,
-        onClose,
-    }: ScrcpyStartOptions): Promise<ScrcpyClient> {
-        const streams = new EventQueue<AdbSocket>();
-        const reverseRegistry = await device.reverse.add('localabstract:scrcpy', 27183, {
-            onSocket(packet, stream) {
-                streams.enqueue(stream);
-            },
+    public static async getEncoders(options: ScrcpyClientOptions): Promise<string[]> {
+        const client = new ScrcpyClient({
+            ...options,
+            // Provide an invalid encoder name
+            // So the server will return all available encoders
+            encoder: '_',
         });
 
-        const process = await device.spawn(
-            `CLASSPATH=${path}`,
-            'app_process',
-            /*          unused */ '/',
-            'com.genymobile.scrcpy.Server',
-            version,
-            logLevel,
-            maxSize.toString(), // (0: unlimited)
-            bitRate.toString(),
-            maxFps.toString(),
-            orientation.toString(),
-            /*  tunnel_forward */ 'false',
-            /*            crop */ '-',
-            /* send_frame_meta */ 'true', // always send frame meta (packet boundaries + timestamp)
-            /*         control */ 'true',
-            /*      display_id */ '0',
-            /*    show_touches */ 'false',
-            /*      stay_awake */ 'true',
-            /*   codec_options */ `profile=${profile},level=${level}`,
-            encoder,
-        );
-
-        const disposables = new DisposableList();
-        // Dispatch messages before connection created
-        disposables.add(process.onData(data => {
-            const string = device.backend.decodeUtf8(data);
-            for (const output of parseScrcpyOutput(string)) {
-                switch (output.level) {
-                    case ScrcpyLogLevel.Info:
-                        onInfo?.(output.message);
-                        break;
-                    case ScrcpyLogLevel.Error:
-                        onError?.(output);
-                        break;
-                }
-            }
-        }));
-
-        if (onClose) {
-            process.onClose(onClose);
-        }
-
-        const videoStream = new AdbBufferedStream(await streams.dequeue());
-        const controlStream = new AdbBufferedStream(await streams.dequeue());
-
-        // Don't await this!
-        // `reverse.remove`'s response will never arrive
-        // before we read all pending data from `videoStream`
-        device.reverse.remove(reverseRegistry);
-
-        // Stop dispatch messages
-        disposables.dispose();
-
-        const connection = new ScrcpyClient(
-            process,
-            videoStream,
-            controlStream,
-        );
-
-        // Forward message handlers
-        if (onInfo) {
-            connection.onInfo(onInfo);
-        }
-        if (onError) {
-            connection.onError(onError);
-        }
-
-        return connection;
-    }
-
-    public static async getEncoders(options: ScrcpyStartOptions): Promise<string[]> {
-        // Make a copy
-        options = { ...options };
-
-        // Provide an invalid encoder name
-        // So the server will return all available encoders
-        options.encoder = '_';
-
+        const resolver = new PromiseResolver<string[]>();
         const encoders: string[] = [];
-        options.onError = ({ message, error }) => {
+        client.onError(({ message, error }) => {
             if (error && error.type !== 'com.genymobile.scrcpy.InvalidEncoderException') {
                 resolver.reject(new Error(`${error.type}: ${error.message}`));
                 return;
@@ -333,18 +238,31 @@ export class ScrcpyClient {
             if (match) {
                 encoders.push(match[1]);
             }
-        };
+        });
 
-        const resolver = new PromiseResolver<string[]>();
-        options.onClose = () => {
+        client.onClose(() => {
             resolver.resolve(encoders);
-        };
+        });
 
-        await this.start(options);
+        // Scrcpy server will open connections, before initializing encoder
+        // Thus although an invalid encoder name is given, the start process will success
+        await client.start();
+
         return resolver.promise;
     }
 
-    private readonly process: AdbSocket;
+    private readonly options: ScrcpyClientOptions;
+
+    public get backend() { return this.options.device.backend; }
+
+    private process: AdbSocket | undefined;
+
+    private videoStream: AdbBufferedStream | undefined;
+
+    private controlStream: AdbBufferedStream | undefined;
+
+    private readonly debugEvent = new EventEmitter<string>();
+    public get onDebug() { return this.debugEvent.event; }
 
     private readonly infoEvent = new EventEmitter<string>();
     public get onInfo() { return this.infoEvent.event; }
@@ -352,9 +270,10 @@ export class ScrcpyClient {
     private readonly errorEvent = new EventEmitter<ScrcpyOutput>();
     public get onError() { return this.errorEvent.event; }
 
-    public get onClose() { return this.process.onClose; }
+    private readonly closeEvent = new EventEmitter<void>();
+    public get onClose() { return this.closeEvent.event; }
 
-    private _running = true;
+    private _running = false;
     public get running() { return this._running; }
 
     private _screenWidth: number | undefined;
@@ -369,35 +288,100 @@ export class ScrcpyClient {
     private readonly videoDataEvent = new DataEventEmitter<VideoPacket>();
     public get onVideoData() { return this.videoDataEvent.event; }
 
-    private readonly videoStream: AdbBufferedStream;
-
-    private readonly controlStream: AdbBufferedStream;
-
     private readonly clipboardChangeEvent = new EventEmitter<string>();
     public get onClipboardChange() { return this.clipboardChangeEvent.event; }
 
     private sendingTouchMessage = false;
 
-    public constructor(
-        process: AdbSocket,
-        videoStream: AdbBufferedStream,
-        controlStream: AdbBufferedStream
-    ) {
-        this.process = process;
-        this.process.onData(this.handleProcessOutput, this);
-        this.process.onClose(this.handleProcessClosed, this);
+    public constructor(options: ScrcpyClientOptions) {
+        this.options = options;
+    }
 
-        this.videoStream = videoStream;
-        this.controlStream = controlStream;
+    public async start(): Promise<void> {
+        const {
+            device,
+            path,
+            version,
+            logLevel = ScrcpyLogLevel.Error,
+            maxSize = 0,
+            bitRate,
+            maxFps = 0,
+            orientation = ScrcpyScreenOrientation.Unlocked,
+            tunnelForward = false,
+            profile = AndroidCodecProfile.Baseline,
+            level = AndroidCodecLevel.Level4,
+            encoder = '-',
+        } = this.options;
 
-        this.receiveVideo();
-        this.receiveControl();
+        let connection: ScrcpyClientConnection | undefined;
+        let process: AdbSocket | undefined;
+
+        try {
+            if (tunnelForward) {
+                connection = new ScrcpyClientForwardConnection(device);
+            } else {
+                connection = new ScrcpyClientReverseConnection(device);
+            }
+            await connection.initialize();
+
+            process = await device.spawn(
+                `CLASSPATH=${path}`,
+                'app_process',
+                /*          unused */ '/',
+                'com.genymobile.scrcpy.Server',
+                version,
+                logLevel,
+                maxSize.toString(), // (0: unlimited)
+                bitRate.toString(),
+                maxFps.toString(),
+                orientation.toString(),
+                tunnelForward.toString(),
+                /*            crop */ '-',
+                /* send_frame_meta */ 'true', // always send frame meta (packet boundaries + timestamp)
+                /*         control */ 'true',
+                /*      display_id */ '0',
+                /*    show_touches */ 'false',
+                /*      stay_awake */ 'true',
+                /*   codec_options */ `profile=${profile},level=${level}`,
+                encoder,
+            );
+
+            process.onData(this.handleProcessOutput, this);
+
+            const resolver = new PromiseResolver<never>();
+            const removeEventListener = process.onClose(() => {
+                resolver.reject('Server died');
+            });
+
+            const [videoStream, controlStream] = await Promise.race([
+                resolver.promise,
+                connection.getStreams(),
+            ]);
+
+            removeEventListener();
+            this.process = process;
+            this.process.onClose(this.handleProcessClosed, this);
+            this.videoStream = videoStream;
+            this.controlStream = controlStream;
+
+            this._running = true;
+            this.receiveVideo();
+            this.receiveControl();
+        } catch (e) {
+            process?.close();
+            throw e;
+        } finally {
+            connection?.dispose();
+        }
     }
 
     private handleProcessOutput(data: ArrayBuffer) {
-        const string = this.process.backend.decodeUtf8(data);
+        const string = this.options.device.backend.decodeUtf8(data);
         for (const output of parseScrcpyOutput(string)) {
             switch (output.level) {
+                case ScrcpyLogLevel.Debug:
+                    this.debugEvent.fire(output.message);
+                    break;
                 case ScrcpyLogLevel.Info:
                     this.infoEvent.fire(output.message);
                     break;
@@ -410,9 +394,14 @@ export class ScrcpyClient {
 
     private handleProcessClosed() {
         this._running = false;
+        this.closeEvent.fire();
     }
 
     private async receiveVideo() {
+        if (!this.videoStream) {
+            throw new Error('receiveVideo started before initialization');
+        }
+
         try {
             // Device name, we don't need it
             await this.videoStream.read(64);
@@ -501,6 +490,10 @@ export class ScrcpyClient {
     }
 
     private async receiveControl() {
+        if (!this.controlStream) {
+            throw new Error('receiveControl started before initialization');
+        }
+
         try {
             while (true) {
                 const type = await this.controlStream.read(1);
@@ -521,27 +514,39 @@ export class ScrcpyClient {
     }
 
     public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type' | 'action'>) {
+        if (!this.controlStream) {
+            throw new Error('injectKeyCode called before initialization');
+        }
+
         await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
             ...message,
             type: ScrcpyControlMessageType.InjectKeycode,
             action: AndroidKeyEventAction.Down,
-        }, this.process.backend));
+        }, this.backend));
 
         await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
             ...message,
             type: ScrcpyControlMessageType.InjectKeycode,
             action: AndroidKeyEventAction.Up,
-        }, this.process.backend));
+        }, this.backend));
     }
 
     public async injectText(text: string) {
+        if (!this.controlStream) {
+            throw new Error('injectText called before initialization');
+        }
+
         await this.controlStream.write(ScrcpyInjectTextControlMessage.serialize({
             type: ScrcpyControlMessageType.InjectText,
             text,
-        }, this.process.backend));
+        }, this.backend));
     }
 
     public async injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, 'type' | 'screenWidth' | 'screenHeight'>) {
+        if (!this.controlStream) {
+            throw new Error('injectTouch called before initialization');
+        }
+
         if (!this.screenWidth || !this.screenHeight) {
             return;
         }
@@ -559,15 +564,19 @@ export class ScrcpyClient {
             type: ScrcpyControlMessageType.InjectTouch,
             screenWidth: this.screenWidth,
             screenHeight: this.screenHeight,
-        }, this.process.backend);
+        }, this.backend);
         await this.controlStream.write(buffer);
         this.sendingTouchMessage = false;
     }
 
     public async pressBackOrTurnOnScreen() {
+        if (!this.controlStream) {
+            throw new Error('pressBackOrTurnOnScreen called before initialization');
+        }
+
         const buffer = ScrcpySimpleControlMessage.serialize(
             { type: ScrcpyControlMessageType.BackOrScreenOn },
-            this.process.backend
+            this.backend
         );
         await this.controlStream.write(buffer);
     }
@@ -578,8 +587,8 @@ export class ScrcpyClient {
         }
 
         this._running = false;
-        this.videoStream.close();
-        this.controlStream.close();
-        await this.process.close();
+        this.videoStream?.close();
+        this.controlStream?.close();
+        await this.process?.close();
     }
 }
