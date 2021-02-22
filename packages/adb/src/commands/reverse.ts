@@ -19,7 +19,7 @@ export interface AdbForwardListener {
 const AdbReverseStringResponse =
     new Struct({ littleEndian: true })
         .string('length', { length: 4 })
-        .string('content', { lengthField: 'length' });
+        .string('content', { lengthField: 'length', lengthFieldBase: 16 });
 
 const AdbReverseErrorResponse =
     new Struct({ littleEndian: true })
@@ -84,6 +84,12 @@ export class AdbReverseCommand extends AutoDisposable {
         // No need to close the stream, device will close it
     }
 
+    /**
+     * @param deviceAddress The address adbd on device is listening on. Can be `tcp:0` to let adbd choose an available TCP port by itself.
+     * @param localPort Native ADB will open a connection to localPort when reverse connection starts. In webadb, it's only used to uniquely identify a reverse registry, `handler` will be called on connection.
+     * @param handler A callback to handle incoming connections
+     * @returns If `deviceAddress` is `tcp:0`, return `tcp:{ACTUAL_LISTENING_PORT}`; otherwise, return `deviceAddress`.
+     */
     public async add(
         deviceAddress: string,
         localPort: number,
