@@ -34,7 +34,7 @@ describe('Types', () => {
     describe('VariableLengthArrayBufferLikeFieldLengthValue', () => {
         class MockArrayBufferFieldValue extends StructFieldValue {
             public constructor() {
-                super({} as any, {} as any, {} as any, {} as any, {});
+                super({ options: {} } as any, {} as any, {} as any, {} as any, {});
             }
 
             public size = 0;
@@ -143,8 +143,11 @@ describe('Types', () => {
                 let offset = 1 as any;
                 let context = 2 as any;
 
+                mockOriginalFieldValue.value = 10;
                 mockArrayBufferFieldValue.size = 0;
                 lengthFieldValue.serialize(dataView, offset, context);
+                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toReturnWith(10);
                 expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
                 expect(mockOriginalFieldValue.set).toBeCalledWith(0);
                 expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
@@ -156,6 +159,73 @@ describe('Types', () => {
                 lengthFieldValue.serialize(dataView, offset, context);
                 expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
                 expect(mockOriginalFieldValue.set).toBeCalledWith(100);
+                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.serialize).toBeCalledWith(dataView, offset, context);
+            });
+
+            it('should stringify its length if `originalField` is a string', async () => {
+                const mockOriginalFieldValue = new MockOriginalFieldValue();
+                const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
+                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                    mockOriginalFieldValue,
+                    mockArrayBufferFieldValue,
+                );
+
+                let dataView = 0 as any;
+                let offset = 1 as any;
+                let context = 2 as any;
+
+                mockOriginalFieldValue.value = '10';
+                mockArrayBufferFieldValue.size = 0;
+                lengthFieldValue.serialize(dataView, offset, context);
+                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toReturnWith('10');
+                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toBeCalledWith('0');
+                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.serialize).toBeCalledWith(dataView, offset, context);
+
+                mockOriginalFieldValue.set.mockClear();
+                mockOriginalFieldValue.serialize.mockClear();
+                mockArrayBufferFieldValue.size = 100;
+                lengthFieldValue.serialize(dataView, offset, context);
+                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toBeCalledWith('100');
+                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.serialize).toBeCalledWith(dataView, offset, context);
+            });
+
+            it('should stringify its length in specified base if `originalField` is a string', async () => {
+                const mockOriginalFieldValue = new MockOriginalFieldValue();
+                const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
+                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                    mockOriginalFieldValue,
+                    mockArrayBufferFieldValue,
+                );
+
+                const base = 16;
+                mockArrayBufferFieldValue.definition.options.lengthFieldBase = base;
+
+                let dataView = 0 as any;
+                let offset = 1 as any;
+                let context = 2 as any;
+
+                mockOriginalFieldValue.value = '10';
+                mockArrayBufferFieldValue.size = 0;
+                lengthFieldValue.serialize(dataView, offset, context);
+                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toReturnWith('10');
+                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toBeCalledWith('0');
+                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.serialize).toBeCalledWith(dataView, offset, context);
+
+                mockOriginalFieldValue.set.mockClear();
+                mockOriginalFieldValue.serialize.mockClear();
+                mockArrayBufferFieldValue.size = 100;
+                lengthFieldValue.serialize(dataView, offset, context);
+                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toBeCalledWith((100).toString(base));
                 expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
                 expect(mockOriginalFieldValue.serialize).toBeCalledWith(dataView, offset, context);
             });
@@ -487,6 +557,29 @@ describe('Types', () => {
                 originalLengthFieldValue.get.mockClear();
                 originalLengthFieldValue.value = '100';
                 expect(definition['getDeserializeSize'](struct)).toBe(100);
+                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+            });
+
+            it('should return value of its `lengthField` as number with specified base', async () => {
+                const struct = new StructValue();
+
+                const lengthField = 'foo';
+                const originalLengthFieldValue = new MockOriginalFieldValue();
+                struct.set(lengthField, originalLengthFieldValue);
+
+                const base = 8;
+                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
+                    ArrayBufferFieldType.instance,
+                    { lengthField, lengthFieldBase: base },
+                );
+
+                originalLengthFieldValue.value = '0';
+                expect(definition['getDeserializeSize'](struct)).toBe(0);
+                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+
+                originalLengthFieldValue.get.mockClear();
+                originalLengthFieldValue.value = '100';
+                expect(definition['getDeserializeSize'](struct)).toBe(Number.parseInt('100', base));
                 expect(originalLengthFieldValue.get).toBeCalledTimes(1);
             });
         });

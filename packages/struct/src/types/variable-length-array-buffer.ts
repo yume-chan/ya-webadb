@@ -1,4 +1,4 @@
-import { StructFieldValue, StructOptions, StructSerializationContext, StructValue } from '../basic';
+import { StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from '../basic';
 import type { KeysOfType } from '../utils';
 import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldType, ArrayBufferLikeFieldValue } from './array-buffer';
 
@@ -102,15 +102,19 @@ export class VariableLengthArrayBufferLikeStructFieldValue<
     }
 }
 
+// Not using `VariableLengthArrayBufferLikeStructFieldValue` directly makes writing tests much easier...
+type VariableLengthArrayBufferLikeFieldValueLike =
+    StructFieldValue<StructFieldDefinition<VariableLengthArrayBufferLikeFieldOptions, any, any>>;
+
 export class VariableLengthArrayBufferLikeFieldLengthValue
     extends StructFieldValue {
     protected originalField: StructFieldValue;
 
-    protected arrayBufferField: VariableLengthArrayBufferLikeStructFieldValue;
+    protected arrayBufferField: VariableLengthArrayBufferLikeFieldValueLike;
 
     public constructor(
         originalField: StructFieldValue,
-        arrayBufferField: VariableLengthArrayBufferLikeStructFieldValue,
+        arrayBufferField: VariableLengthArrayBufferLikeFieldValueLike,
     ) {
         super(originalField.definition, originalField.options, originalField.context, originalField.struct, 0);
         this.originalField = originalField;
