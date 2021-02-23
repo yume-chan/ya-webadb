@@ -109,12 +109,19 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     setServerUploadedSize
                 );
 
+                let tunnelForward!: boolean;
+                setTunnelForward(current => {
+                    tunnelForward = current;
+                    return current;
+                });
+
                 const encoders = await ScrcpyClient.getEncoders({
                     device,
                     path: DeviceServerPath,
                     version: ScrcpyServerVersion,
                     logLevel: ScrcpyLogLevel.Debug,
                     bitRate: 4_000_000,
+                    tunnelForward,
                 });
                 if (encoders.length === 0) {
                     throw new Error('No available encoder found');
@@ -137,6 +144,7 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     maxSize: 1080,
                     bitRate: 4_000_000,
                     orientation: ScrcpyScreenOrientation.Unlocked,
+                    tunnelForward,
                     // TinyH264 only supports Baseline profile
                     profile: AndroidCodecProfile.Baseline,
                     level: AndroidCodecLevel.Level4,
@@ -160,13 +168,6 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                     return current;
                 });
                 options.bitRate = bitRate;
-
-                let tunnelForward!: boolean;
-                setTunnelForward(current => {
-                    tunnelForward = current;
-                    return current;
-                });
-                options.tunnelForward = tunnelForward;
 
                 const client = new ScrcpyClient(options);
 
