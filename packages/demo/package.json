@@ -41,7 +41,7 @@
         "worker-loader": "3.0.7"
     },
     "dependencies": {
-        "@fluentui/react": "7.155.2",
+        "@fluentui/react": "8.1.0",
         "@uifabric/file-type-icons": "7.6.23",
         "@uifabric/react-hooks": "7.13.9",
         "@yume-chan/adb": "^0.0.5",
