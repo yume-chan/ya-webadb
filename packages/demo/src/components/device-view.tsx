@@ -1,5 +1,5 @@
 import { StackItem } from '@fluentui/react';
-import React, { ReactNode, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { ReactNode, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { ResizeObserver, Size } from '../utils/resize-observer';
 import { forwardRef } from '../utils/with-display-name';
 

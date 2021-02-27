@@ -1,5 +1,5 @@
 import { AnimationClassNames, concatStyleSets, IStackProps, Stack } from '@fluentui/react';
-import React, { useMemo, useRef } from 'react';
+import { Children, cloneElement, isValidElement, useMemo, useRef } from 'react';
 import { match, matchPath, RedirectProps, RouteProps, useLocation, useRouteMatch } from 'react-router-dom';
 import { withDisplayName } from '../utils';
 
@@ -44,11 +44,11 @@ export const CacheRoute = withDisplayName('CacheRoute')((props: CacheRouteProps)
 
     return (
         <Stack {...stackProps} disableShrink>
-            {React.Children.map(
+            {Children.map(
                 props.children,
                 element =>
-                    React.isValidElement(element)
-                        ? React.cloneElement(element, { ...element.props, visible: !!match })
+                    isValidElement(element)
+                        ? cloneElement(element, { ...element.props, visible: !!match })
                         : element
             )}
         </Stack>
@@ -66,8 +66,8 @@ export const CacheSwitch = withDisplayName('CacheSwitch')((props: CacheSwitchPro
     let element: React.ReactElement | undefined;
     let computedMatch: match | null | undefined;
     let cached: React.ReactElement[] = [];
-    React.Children.forEach(props.children, child => {
-        if (React.isValidElement<RouteProps & RedirectProps>(child)) {
+    Children.forEach(props.children, child => {
+        if (isValidElement<RouteProps & RedirectProps>(child)) {
             // Always render all cached routes
             const isCacheRoute = child.type === CacheRoute;
             if (isCacheRoute) {
@@ -101,7 +101,7 @@ export const CacheSwitch = withDisplayName('CacheSwitch')((props: CacheSwitchPro
     return (
         <>
             {cached}
-            {element ? React.cloneElement(element, { location, computedMatch }) : null}
+            {element ? cloneElement(element, { location, computedMatch }) : null}
         </>
     );
 });

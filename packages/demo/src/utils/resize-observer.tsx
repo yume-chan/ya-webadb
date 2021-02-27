@@ -1,5 +1,5 @@
 import { createMergedRef } from '@fluentui/react';
-import React, { CSSProperties, HTMLAttributes, PropsWithChildren, useCallback, useRef } from 'react';
+import { CSSProperties, HTMLAttributes, PropsWithChildren, useCallback, useMemo, useRef } from 'react';
 import { forwardRef } from './with-display-name';
 
 export interface Size {
@@ -52,7 +52,7 @@ export const ResizeObserver = forwardRef<HTMLDivElement>('ResizeObserver')(({
         }
     }, []);
 
-    const containerStyle: CSSProperties = React.useMemo(() => {
+    const containerStyle: CSSProperties = useMemo(() => {
         if (!style) {
             return { position: 'relative' };
         }

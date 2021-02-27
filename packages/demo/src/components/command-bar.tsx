@@ -1,5 +1,4 @@
 import { CommandBar as FluentCommandBar, ICommandBarProps, StackItem } from '@fluentui/react';
-import React from 'react';
 import { withDisplayName } from '../utils/with-display-name';
 
 const ContainerStyles = {

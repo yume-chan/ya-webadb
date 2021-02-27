@@ -1,6 +1,6 @@
 import { Callout, DirectionalHint, Link, mergeStyleSets, Text } from '@fluentui/react';
-import { useBoolean } from '@uifabric/react-hooks';
-import React, { ReactNode, useCallback, useRef } from 'react';
+import { useBoolean } from '@fluentui/react-hooks';
+import { ReactNode, useCallback, useRef, MouseEvent } from 'react';
 import { ExternalLink } from '../components';
 import { withDisplayName } from '../utils';
 
@@ -24,7 +24,7 @@ const CopyLink = withDisplayName('CopyLink')(({
 }: CopyLinkProps) => {
     const calloutTarget = useRef<HTMLButtonElement | null>(null);
     const [calloutVisible, { setTrue: showCallout, setFalse: hideCallout }] = useBoolean(false);
-    const copyLink = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const copyLink = useCallback((e: MouseEvent<HTMLAnchorElement | HTMLElement | HTMLButtonElement>) => {
         navigator.clipboard.writeText(href);
         calloutTarget.current = e.target as HTMLButtonElement;
         showCallout();

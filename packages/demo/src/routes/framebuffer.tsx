@@ -1,6 +1,6 @@
-import { ICommandBarItemProps, Stack, StackItem } from '@fluentui/react';
-import { useBoolean } from '@uifabric/react-hooks';
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { ICommandBarItemProps, Stack } from '@fluentui/react';
+import { useBoolean } from '@fluentui/react-hooks';
+import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { CommandBar, DemoMode, DeviceView, ErrorDialogContext } from '../components';
 import { withDisplayName } from '../utils';
 import { RouteProps } from './type';

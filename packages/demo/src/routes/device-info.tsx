@@ -1,6 +1,5 @@
 import { Icon, MessageBar, Separator, TooltipHost } from '@fluentui/react';
 import { AdbFeatures } from '@yume-chan/adb';
-import React from 'react';
 import { ExternalLink } from '../components';
 import { withDisplayName } from '../utils';
 import { RouteProps } from './type';

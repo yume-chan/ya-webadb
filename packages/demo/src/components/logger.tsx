@@ -2,7 +2,7 @@ import { IconButton, IListProps, List, mergeStyles, mergeStyleSets, Stack } from
 import { AdbLogger, AdbPacket, AdbPacketInit } from '@yume-chan/adb';
 import { decodeUtf8 } from '@yume-chan/adb-backend-webusb';
 import { DisposableList, EventEmitter } from '@yume-chan/event';
-import React, { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { withDisplayName } from '../utils';
 import { CommandBar } from './command-bar';
 

@@ -1,9 +1,9 @@
 import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, Selection, ShimmeredDetailsList, StackItem } from '@fluentui/react';
-import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@uifabric/file-type-icons';
-import { useConst } from '@uifabric/react-hooks';
+import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@fluentui/react-file-type-icons';
+import { useConst } from '@fluentui/react-hooks';
 import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume-chan/adb';
 import path from 'path';
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
 import { CommandBar } from '../components';
 import { ErrorDialogContext } from '../components/error-dialog';
@@ -473,7 +473,7 @@ export const FileManager = withDisplayName('FileManager')(({
 
         return false;
     }, [device, menuItems]);
-    const hideContextMenu = React.useCallback(() => {
+    const hideContextMenu = useCallback(() => {
         setContextMenuTarget(undefined);
     }, []);
 

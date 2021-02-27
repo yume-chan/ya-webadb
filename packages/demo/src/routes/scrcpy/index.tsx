@@ -1,13 +1,13 @@
-import { Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, Stack, Toggle, TooltipHost } from '@fluentui/react';
-import { useBoolean, useId } from '@uifabric/react-hooks';
-import React, { FormEvent, KeyboardEvent, useCallback, useContext, useMemo, useRef, useState } from 'react';
+import { Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from '@fluentui/react';
+import { useBoolean, useId } from '@fluentui/react-hooks';
+import { FormEvent, KeyboardEvent, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import YUVBuffer from 'yuv-buffer';
 import YUVCanvas from 'yuv-canvas';
-import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, ExternalLink, NumberPicker } from '../../components';
+import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, ExternalLink } from '../../components';
 import { CommonStackTokens } from '../../styles';
 import { formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { RouteProps } from '../type';
-import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyClientOptions, ScrcpyServerVersion } from './server';
+import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyClientOptions, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyServerVersion } from './server';
 import { createTinyH264Decoder, TinyH264Decoder } from './tinyh264';
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
@@ -69,6 +69,12 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
     }, []);
 
     const [bitRate, setBitRate] = useState(4_000_000);
+    const handleBitRateChange = useCallback((e: any, value?: string) => {
+        if (value === undefined) {
+            return;
+        }
+        setBitRate(+value);
+    }, []);
 
     const [tunnelForward, setTunnelForward] = useState(false);
     const handleTunnelForwardChange = useCallback((event: React.MouseEvent<HTMLElement>, checked?: boolean) => {
@@ -475,14 +481,14 @@ export const Scrcpy = withDisplayName('Scrcpy')(({
                         onChange={handleCurrentEncoderChange}
                     />
 
-                    <NumberPicker
+                    <SpinButton
                         label="Target Bit Rate"
                         labelPosition={Position.top}
-                        value={bitRate}
+                        value={bitRate.toString()}
                         min={100}
                         max={10_000_000}
                         step={100}
-                        onChange={setBitRate}
+                        onChange={handleBitRateChange}
                     />
 
                     <Toggle

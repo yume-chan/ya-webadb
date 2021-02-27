@@ -2,7 +2,7 @@ import { IconButton, SearchBox, Stack, StackItem } from '@fluentui/react';
 import { AdbSocket } from '@yume-chan/adb';
 import { encodeUtf8 } from '@yume-chan/adb-backend-webusb';
 import { AutoDisposable } from '@yume-chan/event';
-import React, { CSSProperties, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { SearchAddon } from 'xterm-addon-search';

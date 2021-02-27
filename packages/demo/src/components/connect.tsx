@@ -2,7 +2,7 @@ import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, Progre
 import { Adb, AdbBackend, AdbLogger } from '@yume-chan/adb';
 import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CommonStackTokens } from '../styles';
 import { withDisplayName } from '../utils';
 import { ErrorDialogContext } from './error-dialog';

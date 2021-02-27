@@ -1,13 +1,12 @@
-import { Dropdown, IDropdownOption, Position, Separator, Toggle } from '@fluentui/react';
+import { Dropdown, IDropdownOption, Position, Separator, SpinButton, Toggle } from '@fluentui/react';
 import { Adb, AdbDemoModeMobileDataType, AdbDemoModeMobileDataTypes, AdbDemoModeStatusBarMode, AdbDemoModeStatusBarModes, AdbDemoModeWifiSignalStrength } from '@yume-chan/adb';
-import React, { useCallback, useEffect, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useState } from 'react';
 import { withDisplayName } from '../utils';
-import { NumberPicker } from './number-picker';
 
 export interface DemoModeProps {
     device?: Adb;
 
-    style?: React.CSSProperties;
+    style?: CSSProperties;
 }
 
 function useDemoModeSetting<T>(
@@ -57,6 +56,29 @@ function useBooleanDemoModeSetting(
     }, [setValue]);
 
     return [value, handleChange];
+}
+
+function useNumberDemoModeSetting(
+    initialValue: number,
+    enabled: boolean,
+    setEnabled: (value: boolean) => void,
+    onChange: (value: number) => void
+): [string, (e: any, value?: string) => void] {
+    const [value, setValue] = useDemoModeSetting(
+        initialValue,
+        enabled,
+        setEnabled,
+        onChange
+    );
+
+    const handleChange = useCallback(async (e, value?: string) => {
+        if (value === undefined) {
+            return;
+        }
+        setValue(+value);
+    }, [setValue]);
+
+    return [value.toString(), handleChange];
 }
 
 const WifiSignalStrengthOptions =
@@ -153,7 +175,7 @@ export const DemoMode = withDisplayName('DemoMode')(({
         setEnabled(value);
     }, [device]);
 
-    const [batteryLevel, setBatteryLevel] = useDemoModeSetting(
+    const [batteryLevel, setBatteryLevel] = useNumberDemoModeSetting(
         100,
         enabled,
         setEnabled,
@@ -272,18 +294,18 @@ export const DemoMode = withDisplayName('DemoMode')(({
         async value => await device!.demoMode.setNotificationsVisibility(value)
     );
 
-    const [hour, setHour] = useDemoModeSetting<number>(
+    const [hour, setHour] = useNumberDemoModeSetting(
         12,
         enabled,
         setEnabled,
-        async value => await device!.demoMode.setTime(value, minute)
+        async value => await device!.demoMode.setTime(value, +minute)
     );
 
-    const [minute, setMinute] = useDemoModeSetting<number>(
+    const [minute, setMinute] = useNumberDemoModeSetting(
         34,
         enabled,
         setEnabled,
-        async value => await device!.demoMode.setTime(hour, value)
+        async value => await device!.demoMode.setTime(+hour, value)
     );
 
     return (
@@ -307,7 +329,7 @@ export const DemoMode = withDisplayName('DemoMode')(({
 
             <Separator />
 
-            <NumberPicker
+            <SpinButton
                 label="Battery Level"
                 labelPosition={Position.top}
                 disabled={!device || !allowed}
@@ -409,7 +431,7 @@ export const DemoMode = withDisplayName('DemoMode')(({
                 onChange={setNotificationsVisibility}
             />
 
-            <NumberPicker
+            <SpinButton
                 label="Clock Hour"
                 labelPosition={Position.top}
                 disabled={!device || !allowed}
@@ -420,7 +442,7 @@ export const DemoMode = withDisplayName('DemoMode')(({
                 onChange={setHour}
             />
 
-            <NumberPicker
+            <SpinButton
                 label="Clock Minute"
                 labelPosition={Position.top}
                 disabled={!device || !allowed}

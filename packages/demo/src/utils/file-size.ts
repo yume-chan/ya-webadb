@@ -1,4 +1,4 @@
-import { useSetInterval } from '@uifabric/react-hooks';
+import { useSetInterval } from '@fluentui/react-hooks';
 import { useEffect, useRef, useState } from 'react';
 
 const units = [' B', ' KB', ' MB', ' GB'];

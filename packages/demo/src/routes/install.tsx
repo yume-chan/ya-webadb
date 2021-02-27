@@ -1,5 +1,5 @@
 import { DefaultButton, ProgressIndicator, Stack } from "@fluentui/react";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { pickFile, withDisplayName } from "../utils";
 import { chunkFile } from "./file-manager";
 import { RouteProps } from "./type";

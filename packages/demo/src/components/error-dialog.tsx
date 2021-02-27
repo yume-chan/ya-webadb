@@ -1,13 +1,13 @@
 import { Dialog, DialogFooter, DialogType, PrimaryButton } from '@fluentui/react';
-import { useBoolean } from '@uifabric/react-hooks';
-import React, { PropsWithChildren, useMemo, useState } from 'react';
+import { useBoolean } from '@fluentui/react-hooks';
+import { createContext, PropsWithChildren, useMemo, useState } from 'react';
 import { withDisplayName } from '../utils';
 
 export interface ErrorDialogContext {
     show(message: string): void;
 }
 
-export const ErrorDialogContext = React.createContext<ErrorDialogContext>({
+export const ErrorDialogContext = createContext<ErrorDialogContext>({
     show() { }
 });
 

@@ -1,7 +1,7 @@
+import { initializeIcons } from '@fluentui/font-icons-mdl2';
 import { IconButton, mergeStyles, mergeStyleSets, Nav, Stack, StackItem } from '@fluentui/react';
-import { initializeIcons } from '@uifabric/icons';
 import { Adb } from '@yume-chan/adb';
-import React, { useCallback, useMemo, useState } from 'react';
+import { ReactElement, useCallback, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { HashRouter, Redirect, useLocation } from 'react-router-dom';
 import { AdbEventLogger, CacheRoute, CacheSwitch, Connect, ErrorDialogProvider, Logger, LoggerContextProvider, ToggleLogger } from './components';
@@ -156,7 +156,7 @@ function App(): JSX.Element | null {
 
                     <StackItem grow styles={{ root: { width: 0 } }}>
                         <CacheSwitch>
-                            {routes.map<React.ReactElement>(route => (
+                            {routes.map<ReactElement>(route => (
                                 <CacheRoute
                                     exact={route.exact}
                                     path={route.path}

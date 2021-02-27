@@ -1,5 +1,5 @@
 import { Link } from '@fluentui/react';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { withDisplayName } from '../utils/with-display-name';
 
 export interface ExternalLinkProps {

@@ -7,7 +7,7 @@
             "ESNext",
             "DOM"
         ],
-        "jsx": "react", //                        /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
+        "jsx": "react-jsx",
         "composite": false, //                    /* Enable project compilation */
         "types": [
             "@types/node",
