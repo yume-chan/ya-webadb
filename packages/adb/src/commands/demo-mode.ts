@@ -29,35 +29,35 @@ export class AdbDemoMode extends AdbCommandBase {
     public static readonly EnabledSettingKey = 'sysui_tuner_demo_on';
 
     public async getAllowed(): Promise<boolean> {
-        const result = await this.adb.exec('settings', 'get', 'global', AdbDemoMode.AllowedSettingKey);
+        const result = await this.adb.childProcess.exec('settings', 'get', 'global', AdbDemoMode.AllowedSettingKey);
         return result.trim() === '1';
     }
 
     public async setAllowed(value: boolean): Promise<void> {
         if (value) {
-            await this.adb.exec('settings', 'put', 'global', AdbDemoMode.AllowedSettingKey, '1');
+            await this.adb.childProcess.exec('settings', 'put', 'global', AdbDemoMode.AllowedSettingKey, '1');
         } else {
             await this.setEnabled(false);
-            await this.adb.exec('settings', 'delete', 'global', AdbDemoMode.AllowedSettingKey);
+            await this.adb.childProcess.exec('settings', 'delete', 'global', AdbDemoMode.AllowedSettingKey);
         }
     }
 
     public async getEnabled(): Promise<boolean> {
-        const result = await this.adb.exec('settings', 'get', 'global', AdbDemoMode.EnabledSettingKey);
+        const result = await this.adb.childProcess.exec('settings', 'get', 'global', AdbDemoMode.EnabledSettingKey);
         return result.trim() === '1';
     }
 
     public async setEnabled(value: boolean): Promise<void> {
         if (value) {
-            await this.adb.exec('settings', 'put', 'global', AdbDemoMode.EnabledSettingKey, '1');
+            await this.adb.childProcess.exec('settings', 'put', 'global', AdbDemoMode.EnabledSettingKey, '1');
         } else {
-            await this.adb.exec('settings', 'delete', 'global', AdbDemoMode.EnabledSettingKey);
+            await this.adb.childProcess.exec('settings', 'delete', 'global', AdbDemoMode.EnabledSettingKey);
             await this.broadcast('exit');
         }
     }
 
     public async broadcast(command: string, extra?: Record<string, string>): Promise<void> {
-        await this.adb.exec(
+        await this.adb.childProcess.exec(
             'am',
             'broadcast',
             '-a',

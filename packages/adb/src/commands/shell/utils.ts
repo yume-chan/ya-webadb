@@ -10,7 +10,7 @@ export function escapeArg(s: string) {
             break;
         }
         result += s.substring(base, found);
-        // a'b become a'\'b
+        // a'b becomes a'\'b
         result += String.raw`'\''`;
         base = found + 1;
     }

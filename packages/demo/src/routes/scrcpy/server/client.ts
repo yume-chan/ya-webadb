@@ -1,4 +1,4 @@
-import { Adb, AdbBufferedStream, AdbSocket, DataEventEmitter } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbShell, DataEventEmitter } from '@yume-chan/adb';
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
@@ -255,7 +255,7 @@ export class ScrcpyClient {
 
     public get backend() { return this.options.device.backend; }
 
-    private process: AdbSocket | undefined;
+    private process: AdbShell | undefined;
 
     private videoStream: AdbBufferedStream | undefined;
 
@@ -314,7 +314,7 @@ export class ScrcpyClient {
         } = this.options;
 
         let connection: ScrcpyClientConnection | undefined;
-        let process: AdbSocket | undefined;
+        let process: AdbShell | undefined;
 
         try {
             if (tunnelForward) {
@@ -324,7 +324,7 @@ export class ScrcpyClient {
             }
             await connection.initialize();
 
-            process = await device.spawn(
+            process = await device.childProcess.spawn([
                 `CLASSPATH=${path}`,
                 'app_process',
                 /*          unused */ '/',
@@ -344,12 +344,15 @@ export class ScrcpyClient {
                 /*      stay_awake */ 'true',
                 /*   codec_options */ `profile=${profile},level=${level}`,
                 encoder,
-            );
+            ], {
+                // Disable Shell Protocol to simplify processing
+                shellProtocol: 'disable',
+            });
 
-            process.onData(this.handleProcessOutput, this);
+            process.onStdout(this.handleProcessOutput, this);
 
             const resolver = new PromiseResolver<never>();
-            const removeEventListener = process.onClose(() => {
+            const removeEventListener = process.onExit(() => {
                 resolver.reject('Server died');
             });
 
@@ -360,7 +363,7 @@ export class ScrcpyClient {
 
             removeEventListener();
             this.process = process;
-            this.process.onClose(this.handleProcessClosed, this);
+            this.process.onExit(this.handleProcessClosed, this);
             this.videoStream = videoStream;
             this.controlStream = controlStream;
 
@@ -368,7 +371,7 @@ export class ScrcpyClient {
             this.receiveVideo();
             this.receiveControl();
         } catch (e) {
-            process?.close();
+            await process?.kill();
             throw e;
         } finally {
             connection?.dispose();
@@ -589,6 +592,6 @@ export class ScrcpyClient {
         this._running = false;
         this.videoStream?.close();
         this.controlStream?.close();
-        await this.process?.close();
+        await this.process?.kill();
     }
 }

@@ -1,5 +1,5 @@
 import { IconButton, SearchBox, Stack, StackItem } from '@fluentui/react';
-import { AdbSocket } from '@yume-chan/adb';
+import { AdbShell } from '@yume-chan/adb';
 import { encodeUtf8 } from '@yume-chan/adb-backend-webusb';
 import { AutoDisposable } from '@yume-chan/event';
 import { CSSProperties, useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -26,7 +26,7 @@ class AdbTerminal extends AutoDisposable {
 
     public findAddon = new SearchAddon();
 
-    public fitAddon = new FitAddon();
+    private readonly fitAddon = new FitAddon();
 
     private _parent: HTMLElement | undefined;
     public get parent() { return this._parent; }
@@ -35,30 +35,35 @@ class AdbTerminal extends AutoDisposable {
 
         if (value) {
             this.terminal.open(value);
-            this.fitAddon.fit();
+            this.fit();
         }
     }
 
-    private _socket: AdbSocket | undefined;
-    public get socket() { return this._socket; }
+    private _shell: AdbShell | undefined;
+    public get socket() { return this._shell; }
     public set socket(value) {
-        if (this._socket) {
+        if (this._shell) {
             this.dispose();
         }
 
-        this._socket = value;
+        this._shell = value;
 
         if (value) {
             this.terminal.clear();
             this.terminal.reset();
 
-            this.addDisposable(value.onData(data => {
+            this.addDisposable(value.onStdout(data => {
+                this.terminal.write(new Uint8Array(data));
+            }));
+            this.addDisposable(value.onStderr(data => {
                 this.terminal.write(new Uint8Array(data));
             }));
             this.addDisposable(this.terminal.onData(data => {
                 const buffer = encodeUtf8(data);
                 value.write(buffer);
             }));
+
+            this.fit();
         }
     }
 
@@ -67,6 +72,12 @@ class AdbTerminal extends AutoDisposable {
 
         this.terminal.loadAddon(this.findAddon);
         this.terminal.loadAddon(this.fitAddon);
+    }
+
+    public fit() {
+        this.fitAddon.fit();
+        const { rows, cols } = this.terminal;
+        this._shell?.resize(rows, cols);
     }
 }
 
@@ -106,7 +117,7 @@ export const Shell = withDisplayName('Shell')(({
 
             try {
                 connectingRef.current = true;
-                const socket = await device.shell();
+                const socket = await device.childProcess.shell();
                 terminalRef.current.socket = socket;
             } catch (e) {
                 showErrorDialog(e.message);
@@ -121,7 +132,7 @@ export const Shell = withDisplayName('Shell')(({
     }, []);
 
     const handleResize = useCallback(() => {
-        terminalRef.current.fitAddon.fit();
+        terminalRef.current.fit();
     }, []);
 
     return (

@@ -16,7 +16,7 @@ export class AdbSync extends AutoDisposable {
 
     protected sendLock = this.addDisposable(new AutoResetEvent());
 
-    public get supportStat(): boolean {
+    public get supportsStat(): boolean {
         return this.adb.features!.includes(AdbFeatures.StatV2);
     }
 
@@ -31,14 +31,14 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            return adbSyncLstat(this.stream, path, this.supportStat);
+            return adbSyncLstat(this.stream, path, this.supportsStat);
         } finally {
             this.sendLock.notify();
         }
     }
 
     public async stat(path: string) {
-        if (!this.supportStat) {
+        if (!this.supportsStat) {
             throw new Error('Not supported');
         }
 

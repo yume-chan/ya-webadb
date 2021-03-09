@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbDemoMode, AdbFrameBuffer, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
+import { AdbChildProcess, AdbDemoMode, AdbFrameBuffer, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
@@ -47,12 +47,15 @@ export class Adb {
 
     public readonly demoMode: AdbDemoMode;
 
+    public readonly childProcess: AdbChildProcess;
+
     public constructor(backend: AdbBackend, logger?: AdbLogger) {
         this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
 
         this.tcpip = new AdbTcpIpCommand(this);
         this.reverse = new AdbReverseCommand(this.packetDispatcher);
         this.demoMode = new AdbDemoMode(this);
+        this.childProcess = new AdbChildProcess(this);
 
         backend.onDisconnected(this.dispose, this);
     }
@@ -186,27 +189,13 @@ export class Adb {
         }
     }
 
-    public shell(): Promise<AdbSocket> {
-        return this.createSocket('shell:');
-    }
-
-    public spawn(command: string, ...args: string[]): Promise<AdbSocket> {
-        // TODO: use shell protocol
-        return this.createSocket(`shell:${command} ${args.join(' ')}`);
-    }
-
-    public exec(command: string, ...args: string[]): Promise<string> {
-        // TODO: use shell protocol
-        return this.createSocketAndReadAll(`shell:${command} ${args.join(' ')}`);
-    }
-
     public async getProp(key: string): Promise<string> {
-        const output = await this.exec('getprop', key);
+        const output = await this.childProcess.exec('getprop', key);
         return output.trim();
     }
 
     public async rm(...filenames: string[]): Promise<string> {
-        return await this.exec('rm', '-rf', ...filenames.map(arg => escapeArg(arg)));
+        return await this.childProcess.exec('rm', '-rf', ...filenames.map(arg => escapeArg(arg)));
     }
 
     public async install(
