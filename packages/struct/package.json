@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/struct",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "C-style structure serializer and deserializer.",
     "keywords": [
         "structure",

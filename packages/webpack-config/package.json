@@ -1,7 +1,7 @@
 {
     "name": "webpack-config",
     "private": true,
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "Webpack config for `demo` project in TypeScript",
     "author": "Simon Chan <cnsimonchan@live.com>",
     "homepage": "https://github.com/yume-chan/ya-webadb#readme",
