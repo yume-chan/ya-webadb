@@ -62,5 +62,6 @@
     ],
     "editor.tabSize": 4,
     "jest.rootPath": "packages/struct",
-    "jest.showCoverageOnLoad": true
+    "jest.showCoverageOnLoad": true,
+    "markdown.extension.toc.levels": "2..6"
 }

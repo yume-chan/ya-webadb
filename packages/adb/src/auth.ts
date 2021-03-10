@@ -1,9 +1,17 @@
 import { PromiseResolver } from '@yume-chan/async';
 import { Disposable } from '@yume-chan/event';
-import { AdbBackend } from './backend';
+import { ValueOrPromise } from '@yume-chan/struct';
 import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto';
 import { AdbCommand, AdbPacket, AdbPacketInit } from './packet';
 import { calculateBase64EncodedLength, encodeBase64 } from './utils';
+
+export type AdbKeyIterable = Iterable<ArrayBuffer> | AsyncIterable<ArrayBuffer>;
+
+export interface AdbCredentialStore {
+    iterateKeys(): AdbKeyIterable;
+
+    generateKey(): ValueOrPromise<ArrayBuffer>;
+}
 
 export enum AdbAuthType {
     Token = 1,
@@ -24,16 +32,16 @@ export interface AdbAuthenticator {
      * Calling `getNextRequest` multiple times without `yield` or `return` will always return the same request.
      */
     (
-        backend: AdbBackend,
+        credentialStore: AdbCredentialStore,
         getNextRequest: () => Promise<AdbPacket>
     ): AsyncIterable<AdbPacketInit>;
 }
 
 export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
-    backend: AdbBackend,
+    credentialStore: AdbCredentialStore,
     getNextRequest: () => Promise<AdbPacket>,
 ): AsyncIterable<AdbPacketInit> {
-    for await (const key of backend.iterateKeys()) {
+    for await (const key of credentialStore.iterateKeys()) {
         const packet = await getNextRequest();
 
         if (packet.arg0 !== AdbAuthType.Token) {
@@ -51,7 +59,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
 };
 
 export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
-    backend: AdbBackend,
+    credentialStore: AdbCredentialStore,
     getNextRequest: () => Promise<AdbPacket>,
 ): AsyncIterable<AdbPacketInit> {
     const packet = await getNextRequest();
@@ -61,13 +69,13 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     }
 
     let privateKey: ArrayBuffer | undefined;
-    for await (const key of backend.iterateKeys()) {
+    for await (const key of credentialStore.iterateKeys()) {
         privateKey = key;
         break;
     }
 
     if (!privateKey) {
-        privateKey = await backend.generateKey();
+        privateKey = await credentialStore.generateKey();
     }
 
     const publicKeyLength = calculatePublicKeyLength();
@@ -96,7 +104,7 @@ export const AdbDefaultAuthenticators: AdbAuthenticator[] = [
 export class AdbAuthenticationHandler implements Disposable {
     public readonly authenticators: readonly AdbAuthenticator[];
 
-    private readonly backend: AdbBackend;
+    private readonly credentialStore: AdbCredentialStore;
 
     private pendingRequest = new PromiseResolver<AdbPacket>();
 
@@ -104,10 +112,10 @@ export class AdbAuthenticationHandler implements Disposable {
 
     public constructor(
         authenticators: readonly AdbAuthenticator[],
-        backend: AdbBackend
+        credentialStore: AdbCredentialStore
     ) {
         this.authenticators = authenticators;
-        this.backend = backend;
+        this.credentialStore = credentialStore;
     }
 
     private getNextRequest = (): Promise<AdbPacket> => {
@@ -116,7 +124,7 @@ export class AdbAuthenticationHandler implements Disposable {
 
     private async* runAuthenticator(): AsyncGenerator<AdbPacketInit> {
         for (const authenticator of this.authenticators) {
-            for await (const packet of authenticator(this.backend, this.getNextRequest)) {
+            for await (const packet of authenticator(this.credentialStore, this.getNextRequest)) {
                 // If the authenticator yielded a response
                 // Prepare `nextRequest` for next authentication request
                 this.pendingRequest = new PromiseResolver<AdbPacket>();

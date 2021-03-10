@@ -1,6 +1,6 @@
 import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem, TooltipHost } from '@fluentui/react';
 import { Adb, AdbBackend, AdbLogger } from '@yume-chan/adb';
-import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
+import AdbWebUsbBackend, { AdbWebCredentialStore, AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CommonStackTokens } from '../styles';
@@ -16,6 +16,8 @@ interface ConnectProps {
 
     onDeviceChange: (device: Adb | undefined) => void;
 }
+
+const CredentialStore = new AdbWebCredentialStore();
 
 export const Connect = withDisplayName('Connect')(({
     device,
@@ -97,7 +99,7 @@ export const Connect = withDisplayName('Connect')(({
                 const device = new Adb(selectedBackend, logger);
                 try {
                     setConnecting(true);
-                    await device.connect();
+                    await device.connect(CredentialStore);
                     onDeviceChange(device);
                 } catch (e) {
                     device.dispose();

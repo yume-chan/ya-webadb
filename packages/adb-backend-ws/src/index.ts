@@ -2,8 +2,6 @@ import { AdbBackend, BufferedStream, decodeBase64, encodeBase64, EventQueue, Str
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 
-const PrivateKeyStorageKey = 'private-key';
-
 const Utf8Encoder = new TextEncoder();
 const Utf8Decoder = new TextDecoder();
 
@@ -61,31 +59,6 @@ export default class AdbWsBackend implements AdbBackend {
             read() { return queue.dequeue(); },
         });
         this._connected = true;
-    }
-
-    public *iterateKeys(): Generator<ArrayBuffer, void, void> {
-        const privateKey = window.localStorage.getItem(PrivateKeyStorageKey);
-        if (privateKey) {
-            yield decodeBase64(privateKey);
-        }
-    }
-
-    public async generateKey(): Promise<ArrayBuffer> {
-        const { privateKey: cryptoKey } = await crypto.subtle.generateKey(
-            {
-                name: 'RSASSA-PKCS1-v1_5',
-                modulusLength: 2048,
-                // 65537
-                publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-                hash: 'SHA-1',
-            },
-            true,
-            ['sign', 'verify']
-        );
-
-        const privateKey = await crypto.subtle.exportKey('pkcs8', cryptoKey);
-        window.localStorage.setItem(PrivateKeyStorageKey, decodeUtf8(encodeBase64(privateKey)));
-        return privateKey;
     }
 
     public encodeUtf8(input: string): ArrayBuffer {

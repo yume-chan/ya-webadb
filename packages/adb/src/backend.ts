@@ -1,8 +1,6 @@
 import { Event } from '@yume-chan/event';
 import { ValueOrPromise } from '@yume-chan/struct';
 
-export type AdbKeyIterable = Iterable<ArrayBuffer> | AsyncIterable<ArrayBuffer>;
-
 export interface AdbBackend {
     readonly serial: string;
 
@@ -13,10 +11,6 @@ export interface AdbBackend {
     readonly onDisconnected: Event<void>;
 
     connect?(): ValueOrPromise<void>;
-
-    iterateKeys(): AdbKeyIterable;
-
-    generateKey(): ValueOrPromise<ArrayBuffer>;
 
     encodeUtf8(input: string): ArrayBuffer;
 

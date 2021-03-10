@@ -1,6 +1,6 @@
 import { PromiseResolver } from '@yume-chan/async';
 import { DisposableList } from '@yume-chan/event';
-import { AdbAuthenticationHandler, AdbDefaultAuthenticators } from './auth';
+import { AdbAuthenticationHandler, AdbCredentialStore, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
 import { AdbChildProcess, AdbDemoMode, AdbFrameBuffer, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
@@ -15,9 +15,11 @@ export enum AdbPropKey {
 }
 
 export class Adb {
-    private packetDispatcher: AdbPacketDispatcher;
+    private readonly _backend: AdbBackend;
 
-    public get backend(): AdbBackend { return this.packetDispatcher.backend; }
+    public get backend(): AdbBackend { return this._backend; }
+
+    private readonly packetDispatcher: AdbPacketDispatcher;
 
     public get onDisconnected() { return this.backend.onDisconnected; }
 
@@ -50,6 +52,7 @@ export class Adb {
     public readonly childProcess: AdbChildProcess;
 
     public constructor(backend: AdbBackend, logger?: AdbLogger) {
+        this._backend = backend;
         this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
 
         this.tcpip = new AdbTcpIpCommand(this);
@@ -60,7 +63,10 @@ export class Adb {
         backend.onDisconnected(this.dispose, this);
     }
 
-    public async connect(authenticators = AdbDefaultAuthenticators): Promise<void> {
+    public async connect(
+        credentialStore: AdbCredentialStore,
+        authenticators = AdbDefaultAuthenticators
+    ): Promise<void> {
         await this.backend.connect?.();
         this.packetDispatcher.maxPayloadSize = 0x1000;
         this.packetDispatcher.calculateChecksum = true;
@@ -91,7 +97,7 @@ export class Adb {
         ].join(',');
 
         const resolver = new PromiseResolver<void>();
-        const authHandler = new AdbAuthenticationHandler(authenticators, this.backend);
+        const authHandler = new AdbAuthenticationHandler(authenticators, credentialStore);
         const disposableList = new DisposableList();
         disposableList.add(this.packetDispatcher.onPacket(async (e) => {
             e.handled = true;

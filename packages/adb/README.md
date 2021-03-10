@@ -2,6 +2,7 @@
 
 TypeScript implementation of Android Debug Bridge (ADB) protocol.
 
+- [Compatibility](#compatibility)
 - [Connection](#connection)
   - [Backend](#backend)
     - [`read`](#read)
@@ -35,6 +36,21 @@ TypeScript implementation of Android Debug Bridge (ADB) protocol.
     - [SEND](#send)
     - [SND2](#snd2)
 - [Useful links](#useful-links)
+
+## Compatibility
+
+The main limiting factor of compatibility is [@yume-chan/struct](https://www.npmjs.com/package/@yume-chan/struct).
+
+This library doesn't use any DOM or Node.js API.
+
+|                 | Chrome | Edge | Firefox | Internet Explorer | Safari         | Node.js |
+| --------------- | ------ | ---- | ------- | ----------------- | -------------- | ------- |
+| **Basic usage** | 68     | 79   | 68      | No                | 14<sup>1</sup> | 10.4    |
+
+<sup>1</sup> Requires a polyfill for [`DataView#getBigUint64`][MDN_DataView_getBigUint64] and [`DataView#setBigUint64`][MDN_DataView_setBigUint64]
+
+[MDN_DataView_getBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/getBigUint64
+[MDN_DataView_setBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/setBigUint64
 
 ## Connection
 

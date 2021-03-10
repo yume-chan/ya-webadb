@@ -78,11 +78,11 @@ const buffer = MyStruct.serialize({
 | [`BigInt`][MDN_BigInt]                               | 67     | 79   | 68      | No                | 14             | 10.4    |
 | [`DataView#getBigUint64`][MDN_DataView_getBigUint64] | 67     | 79   | 68      | No                | No<sup>2</sup> | 10.4    |
 | [`DataView#setBigUint64`][MDN_DataView_setBigUint64] | 67     | 79   | 68      | No                | No<sup>2</sup> | 10.4    |
-| **Use [`int64/uint64`](#int64uint64) API**           | 68     | 79   | 68      | No                | 14<sup>2</sup> | 10.4    |
+| **Use [`int64/uint64`](#int64uint64) API**           | 67     | 79   | 68      | No                | 14<sup>2</sup> | 10.4    |
 
 <sup>1</sup> Requires a polyfill for Promise (e.g. [promise-polyfill](https://www.npmjs.com/package/promise-polyfill))
 
-<sup>2</sup> Requires a polyfill for `DataView#getBigUint64`/`DataView#setBigUint64`
+<sup>2</sup> Requires a polyfill for `DataView#getBigUint64` and `DataView#setBigUint64`
 
 [MDN_Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [MDN_ArrayBuffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
