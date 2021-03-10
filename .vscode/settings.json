@@ -16,6 +16,7 @@
         "Scrcpy",
         "WRTE",
         "addrs",
+        "allowlist",
         "arraybuffer",
         "brotli",
         "carriernetworkchange",

@@ -30,7 +30,7 @@
     ],
     "references": [
         {
-            "path": "../adb-backend-webusb/tsconfig.json"
+            "path": "../adb-backend-webusb/tsconfig.esm.json"
         },
         {
             "path": "../adb-backend-ws/tsconfig.json"

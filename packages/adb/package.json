@@ -1,6 +1,5 @@
 {
     "name": "@yume-chan/adb",
-    "private": true,
     "version": "0.0.5",
     "description": "TypeScript implementation of Android Debug Bridge (ADB) protocol.",
     "keywords": [

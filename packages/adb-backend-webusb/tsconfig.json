@@ -1,24 +1,14 @@
 {
-    "extends": "../../tsconfig.base.json",
+    "extends": "./tsconfig.esm.json",
     "compilerOptions": {
-        "outDir": "esm",
-        "declarationDir": "dts",
-        "rootDir": "./src",
-        "lib": [
-            "ESNext",
-            "DOM"
-        ],
+        "noEmit": true,
         "types": [
             "@types/w3c-web-usb",
-            "@yume-chan/adb"
+            "@yume-chan/adb",
+            "jest"
         ]
     },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-        "src/**/*.spec.ts"
-    ],
+    "exclude": [],
     "references": [
         {
             "path": "../adb/tsconfig.esm.json"
