@@ -1,7 +1,7 @@
 {
     "name": "@yume-chan/adb-backend-ws",
     "private": true,
-    "version": "0.0.5",
+    "version": "0.0.8",
     "description": "Backend for `@yume-chan/adb` using WebSocket API.",
     "keywords": [
         "websocket",
