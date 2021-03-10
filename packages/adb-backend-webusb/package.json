@@ -27,7 +27,7 @@
     "scripts": {
         "build": "rimraf {cjs,esm,dts,*.tsbuildinfo} && tsc -b tsconfig.esm.json tsconfig.cjs.json",
         "build:watch": "tsc -b -w tsconfig.esm.json tsconfig.cjs.json",
-        "test": "jest",
+        "//test": "jest",
         "coverage": "jest --coverage",
         "prepublishOnly": "npm run build"
     },
