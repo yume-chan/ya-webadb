@@ -43,7 +43,7 @@
     "dependencies": {
         "@fluentui/react": "8.3.2",
         "@fluentui/react-file-type-icons": "8.0.2",
-        "@fluentui/react-hooks": "8.0.2",
+        "@fluentui/react-hooks": "8.1.0",
         "@yume-chan/adb": "^0.0.8",
         "@yume-chan/adb-backend-webusb": "^0.0.8",
         "@yume-chan/adb-backend-ws": "^0.0.8",
