@@ -47,7 +47,7 @@ export class AdbChildProcess {
             return new AdbShellProtocol(await this.adb.createSocket(`shell,v2,pty:${command}`));
         }
 
-        return new AdbLegacyShell(await this.adb.createSocket('shell:'));
+        return new AdbLegacyShell(await this.adb.createSocket(`shell:${command}`));
     }
 
     public shell(options?: Partial<AdbChildProcessOptions>): Promise<AdbShell> {
