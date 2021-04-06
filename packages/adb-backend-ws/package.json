@@ -1,7 +1,7 @@
 {
     "name": "@yume-chan/adb-backend-ws",
     "private": true,
-    "version": "0.0.8",
+    "version": "0.0.9",
     "description": "Backend for `@yume-chan/adb` using WebSocket API.",
     "keywords": [
         "websocket",
@@ -28,9 +28,9 @@
         "typescript": "4.2.3"
     },
     "dependencies": {
-        "@yume-chan/adb": "^0.0.8",
+        "@yume-chan/adb": "^0.0.9",
         "@yume-chan/async": "2.1.4",
-        "@yume-chan/event": "^0.0.8",
+        "@yume-chan/event": "^0.0.9",
         "tslib": "2.1.0"
     }
 }
