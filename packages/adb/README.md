@@ -5,24 +5,21 @@ TypeScript implementation of Android Debug Bridge (ADB) protocol.
 - [Compatibility](#compatibility)
 - [Connection](#connection)
   - [Backend](#backend)
+    - [`connect`](#connect)
     - [`read`](#read)
     - [`write`](#write)
-- [Authenticate](#authenticate)
-  - [Public key authentication](#public-key-authentication)
-    - [Backend](#backend-1)
+- [Authentication](#authentication)
+    - [AdbCredentialStore](#adbcredentialstore)
       - [`generateKey`](#generatekey)
-  - [Token authentication](#token-authentication)
-    - [Backend](#backend-2)
       - [`iterateKeys`](#iteratekeys)
+      - [Implementations](#implementations)
+    - [AdbAuthenticator](#adbauthenticator)
 - [Stream multiplex](#stream-multiplex)
-  - [Backend](#backend-3)
+  - [Backend](#backend-1)
     - [`encodeUtf8`](#encodeutf8)
     - [`decodeUtf8`](#decodeutf8)
 - [Commands](#commands)
-  - [shell](#shell)
-    - [PTY mode](#pty-mode)
-    - [ADB shell protocol](#adb-shell-protocol)
-    - [Raw mode](#raw-mode)
+  - [childProcess](#childprocess)
   - [usb](#usb)
   - [tcpip](#tcpip)
   - [sync](#sync)
@@ -54,11 +51,17 @@ This library doesn't use any DOM or Node.js API.
 
 ## Connection
 
-This library doesn't tie with a specific transportation method.
+This library doesn't tie to a specific transportation method.
 
-Instead, a `Backend` is responsible for transferring packets in its own way (USB, WebSocket, etc).
+Instead, a `Backend` is responsible for transferring data in its own way (USB, WebSocket, etc).
 
 ### Backend
+
+#### `connect`
+
+Establishes a connection with the device.
+
+If a backend doesn't have extra steps to establish the connection, it can omit the `connect` method implementation.
 
 #### `read`
 
@@ -66,15 +69,9 @@ Instead, a `Backend` is responsible for transferring packets in its own way (USB
 read(length: number): ArrayBuffer | Promise<ArrayBuffer>
 ```
 
-Read the specified amount of data from the underlying connection.
+Reads the specified amount of data from the underlying connection.
 
-The backend should return only the data written by another endpoint in a single operation. That meas, it should never concatenate multiple write operations to fulfill the requested `length`. Here is the reason:
-
-In normal working condition the client always knows how much data it should read and the server will always send exactly such amount of data in a single operation.
-
-One exception is that for stateless connections (including USB and TCP), if one client sent a request and died without reading the response, the data will sit in an operating system's internal buffer. When the next client, reusing the connection, want to read a response to its request, it may get that buffered response instead.
-
-The native ADB implementation tries to detect such a situation by checking length and content of the response data, so do this library. So the backend should not return such a response if possible, or follow this behavior if it can't distinguish.
+The returned `ArrayBuffer` may have more or less data than the `length` parameter specified, if there is some residual data in the connection buffer. The client will automatically call `read` again with the same `length`.
 
 #### `write`
 
@@ -82,20 +79,20 @@ The native ADB implementation tries to detect such a situation by checking lengt
 write(buffer: ArrayBuffer): void | Promise<void>
 ```
 
-Write data to the underlying connection.
+Writes data to the underlying connection.
 
-## Authenticate
+## Authentication
 
-ADB supports two authentication methods:
+For how does ADB authentication work, see https://chensi.moe/blog/2020/09/30/webadb-part2-connection/#auth.
 
-### Public key authentication
+In this library, authentication comes in two parts:
 
-1. Client (this library) generates a RSA private key and save it.
-2. Client generates an ADB public key (not RSA public key) based on the RSA private key.
-3. Client transfers the ADB public key to server (device).
-4. Server may ask its user to accept the public key, it will save the public key if accepted.
+* `AdbCredentialStore`: because JavaScript has no unified method to generate, store and iterate crypto keys, an implementation of `AdbCredentialStore` is required for the two built-in authenticators.
+* `AdbAuthenticator`: can be used to implement custom authentication modes.
 
-#### Backend
+Custom `AdbCredentialStore`s and `AdbAuthenticator`s can be specified in the `Adb#connect` method.
+
+#### AdbCredentialStore
 
 ##### `generateKey`
 
@@ -103,28 +100,29 @@ ADB supports two authentication methods:
 generateKey(): ArrayBuffer | Promise<ArrayBuffer>
 ```
 
-Generate and store a RSA private key with modulus length 2048 and public exponent 65537.
+Generate and store a RSA private key with modulus length `2048` and public exponent `65537`.
 
 The returned `ArrayBuffer` is the private key in PKCS #8 format.
-
-### Token authentication
-
-1. Server transfers a 20 bytes token to client.
-2. Client RSA encrypts the token with its RSA private key.
-3. Client transfers the encrypted token to server.
-4. Server tries to decrypt the received data with all saved public keys. If any decryption succeed, the authentication succeed.
-
-#### Backend
 
 ##### `iterateKeys`
 
 ```ts
-generateKey(): Iterator<ArrayBuffer> | AsyncIterator<ArrayBuffer>
+iterateKeys(): Iterator<ArrayBuffer> | AsyncIterator<ArrayBuffer>
 ```
 
 Synchronously or asynchronously iterate through all stored RSA private keys.
 
 Each call to `iterateKeys` must returns a different iterator that iterate through all stored keys.
+
+##### Implementations
+
+The `@yume-chan/adb-backend-webusb` package contains a `AdbWebCredentialStore` implementation using Web Crypto API to generating keys and Web Storage API to storing keys.
+
+#### AdbAuthenticator
+
+An `AdbAuthenticator` generates `AUTH` responses for each `AUTH` request from server.
+
+This package contains `AdbSignatureAuthenticator` and `AdbPublicKeyAuthenticator`, the two basic modes.
 
 ## Stream multiplex
 
@@ -157,29 +155,19 @@ Decode `buffer` into a string with UTF-8 encoding.
 
 ## Commands
 
-### shell
+### childProcess
 
-#### PTY mode
+Spawns child process on server. ADB has two shell modes:
 
-Basic mode, supported on all devices.
+|                             | Legacy mode      | Shell Protocol     |
+| --------------------------- | ---------------- | ------------------ |
+| Feature flag                | -                | `shell_v2`         |
+| Implementation              | `AdbLegacyShell` | `AdbShellProtocol` |
+| Splitting stdout and stderr | No               | Yes                |
+| Returning exit code         | No               | Yes                |
+| Resizing window             | No               | Yes                |
 
-#### ADB shell protocol
-
-*(Not Implemented)*
-
-Supported on devices with `shell_v2` feature.
-
-Supports window size changing event.
-
-Supports returning process exit code.
-
-#### Raw mode
-
-*(Not Implemented)*
-
-Must be used with ADB shell protocol.
-
-Supports splitting stdout and stderr.
+The `Adb#childProcess#shell` and `Adb#childProcess#spawn` methods accepts a list of implementations, and will use the first supported one.
 
 ### usb
 
@@ -198,8 +186,6 @@ Client and server will communicate with another protocol on the opened stream.
 Request server to list the content of a folder.
 
 #### LIS2
-
-*(Not Implemented)*
 
 Version 2 of the LIST command, contains more information.
 

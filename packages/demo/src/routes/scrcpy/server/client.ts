@@ -1,4 +1,4 @@
-import { Adb, AdbBufferedStream, AdbShell, DataEventEmitter } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbLegacyShell, AdbShell, DataEventEmitter } from '@yume-chan/adb';
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
@@ -174,6 +174,9 @@ export interface ScrcpyClientOptions {
 
     logLevel?: ScrcpyLogLevel;
 
+    /**
+     * The maximum value of both width and height.
+     */
     maxSize?: number;
 
     bitRate: number;
@@ -346,7 +349,7 @@ export class ScrcpyClient {
                 encoder,
             ], {
                 // Disable Shell Protocol to simplify processing
-                shellProtocol: 'disable',
+                shells: [AdbLegacyShell],
             });
 
             process.onStdout(this.handleProcessOutput, this);

@@ -1,8 +1,10 @@
 import { EventEmitter } from "@yume-chan/event";
 import Struct, { placeholder } from "@yume-chan/struct";
-import { AdbSocket } from "../../socket";
+import type { Adb } from "../../adb";
+import { AdbFeatures } from "../../features";
+import type { AdbSocket } from "../../socket";
 import { AdbBufferedStream } from "../../stream";
-import { AdbShell } from "./types";
+import type { AdbShell } from "./types";
 
 export enum AdbShellProtocolId {
     Stdin,
@@ -13,15 +15,34 @@ export enum AdbShellProtocolId {
     WindowSizeChange,
 }
 
+// This packet format is used in both direction.
 const AdbShellProtocolPacket = new Struct({ littleEndian: true })
     .uint8('id', placeholder<AdbShellProtocolId>())
     .uint32('length')
     .arrayBuffer('data', { lengthField: 'length' });
 
+function assertUnreachable(x: never): never {
+    throw new Error("Unreachable");
+}
+
 /**
- * Shell v2 is also called Shell Protocol
+ * Shell v2 a.k.a Shell Protocol
+ *
+ * Features:
+ * * `onStderr`: Yes
+ * * `onExit` exit code: Yes
+ * * `resize`: Yes
  */
 export class AdbShellProtocol implements AdbShell {
+    public static isSupported(adb: Adb) {
+        return adb.features!.includes(AdbFeatures.ShellV2);
+    }
+
+    public static async spawn(adb: Adb, command: string) {
+        // TODO: the service string may support more parameters
+        return new AdbShellProtocol(await adb.createSocket(`shell,v2,pty:${command}`));
+    }
+
     private readonly stream: AdbBufferedStream;
 
     private readonly stdoutEvent = new EventEmitter<ArrayBuffer>();
@@ -52,6 +73,13 @@ export class AdbShellProtocol implements AdbShell {
                     case AdbShellProtocolId.Exit:
                         this.exitEvent.fire(new Uint8Array(packet.data)[0]);
                         break;
+                    case AdbShellProtocolId.CloseStdin:
+                    case AdbShellProtocolId.Stdin:
+                    case AdbShellProtocolId.WindowSizeChange:
+                        // These ids are client-to-server
+                        throw new Error('unreachable');
+                    default:
+                        assertUnreachable(packet.id);
                 }
             } catch {
                 return;
@@ -72,15 +100,15 @@ export class AdbShellProtocol implements AdbShell {
     }
 
     public async resize(rows: number, cols: number) {
-        this.stream.write(
+        await this.stream.write(
             AdbShellProtocolPacket.serialize(
                 {
                     id: AdbShellProtocolId.WindowSizeChange,
                     data: this.stream.encodeUtf8(
-                        // Correct format is ${rows}x${cols},${x_pixels}x${y_pixels}
-                        // But from https://linux.die.net/man/4/tty_ioctl
-                        // x_pixels and y_pixels are unused
-                        `${rows}x${cols},${0}x${0}\0`
+                        // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
+                        // However, according to https://linux.die.net/man/4/tty_ioctl
+                        // `x_pixels` and `y_pixels` are not used, so always pass `0` is fine.
+                        `${rows}x${cols},0x0\0`
                     ),
                 },
                 this.stream

@@ -1,8 +1,23 @@
 import { EventEmitter } from "@yume-chan/event";
-import { AdbSocket } from "../../socket";
-import { AdbShell } from "./types";
+import type { Adb } from "../../adb";
+import type { AdbSocket } from "../../socket";
+import type { AdbShell } from "./types";
 
+/**
+ * The legacy shell
+ *
+ * Features:
+ * * `onStderr`: No
+ * * `onExit` exit code: No
+ * * `resize`: No
+ */
 export class AdbLegacyShell implements AdbShell {
+    public static isSupported() { return true; }
+
+    public static async spawn(adb: Adb, command: string) {
+        return new AdbLegacyShell(await adb.createSocket(`shell:${command}`));
+    }
+
     private readonly socket: AdbSocket;
 
     private readonly stdoutEvent = new EventEmitter<ArrayBuffer>();
@@ -21,10 +36,12 @@ export class AdbLegacyShell implements AdbShell {
     }
 
     private handleData(data: ArrayBuffer) {
+        // Legacy shell doesn't support splitting output streams.
         this.stdoutEvent.fire(data);
     }
 
     private handleExit() {
+        // Legacy shell doesn't support returning exit code.
         this.exitEvent.fire(0);
     }
 

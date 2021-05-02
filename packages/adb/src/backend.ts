@@ -1,5 +1,5 @@
-import { Event } from '@yume-chan/event';
-import { ValueOrPromise } from '@yume-chan/struct';
+import type { Event } from '@yume-chan/event';
+import type { ValueOrPromise } from '@yume-chan/struct';
 
 export interface AdbBackend {
     readonly serial: string;
@@ -16,9 +16,9 @@ export interface AdbBackend {
 
     decodeUtf8(buffer: ArrayBuffer): string;
 
-    write(buffer: ArrayBuffer): ValueOrPromise<void>;
-
     read(length: number): ValueOrPromise<ArrayBuffer>;
+
+    write(buffer: ArrayBuffer): ValueOrPromise<void>;
 
     dispose(): ValueOrPromise<void>;
 }

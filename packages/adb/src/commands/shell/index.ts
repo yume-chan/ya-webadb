@@ -1,59 +1,70 @@
 import { Adb } from '../../adb';
-import { AdbFeatures } from '../../features';
 import { AdbLegacyShell } from './legacy';
 import { AdbShellProtocol } from './protocol';
-import { AdbShell } from './types';
+import type { AdbShell, AdbShellConstructor } from './types';
 
 export * from './legacy';
 export * from './protocol';
 export * from './types';
 export * from './utils';
 
-export type AdbShellProtocolOption = 'auto' | 'enable' | 'disable';
-
 export interface AdbChildProcessOptions {
-    shellProtocol: 'auto' | 'enable' | 'disable',
+    /**
+     * A list of `AdbShellConstructor`s that can be used.
+     * Different `AdbShell`s have different capabilities. Please check the documentation for each `AdbShell`
+     *
+     * The first one whose `isSupported` returns `true` will be used.
+     * If no `AdbShell` is supported, an error will be thrown.
+     *
+     * The default value is `[AdbShellProtocol, AdbLegacyShell]`.
+     */
+    shells: AdbShellConstructor[];
 }
 
 const DefaultOptions: AdbChildProcessOptions = {
-    shellProtocol: 'auto',
+    shells: [AdbShellProtocol, AdbLegacyShell],
 };
 
 export class AdbChildProcess {
     public readonly adb: Adb;
-
-    public get supportsShellProtocol(): boolean {
-        return this.adb.features!.includes(AdbFeatures.ShellV2);
-    }
 
     public constructor(adb: Adb) {
         this.adb = adb;
     }
 
     private async createShell(command: string, options?: Partial<AdbChildProcessOptions>): Promise<AdbShell> {
-        let { shellProtocol } = { ...DefaultOptions, ...options };
-        switch (shellProtocol) {
-            case 'auto':
-                shellProtocol = this.supportsShellProtocol ? 'enable' : 'disable';
+        let { shells } = { ...DefaultOptions, ...options };
+
+        let shell: AdbShellConstructor | undefined;
+        for (const item of shells) {
+            if (await item.isSupported(this.adb)) {
+                shell = item;
                 break;
-            case 'enable':
-                if (!shellProtocol) {
-                    throw new Error('`shellProtocol` has been set to `enable` but the device does not support it');
-                }
-                break;
+            }
         }
 
-        if (shellProtocol === 'enable') {
-            return new AdbShellProtocol(await this.adb.createSocket(`shell,v2,pty:${command}`));
+        if (!shell) {
+            throw new Error('No specified shell is supported by the device');
         }
 
-        return new AdbLegacyShell(await this.adb.createSocket(`shell:${command}`));
+        return await shell.spawn(this.adb, command);
     }
 
+    /**
+     * Spawns the default shell in interactive mode.
+     * @param options The options for creating the `AdbShell`
+     * @returns A new `AdbShell` instance connecting to the spawned shell process.
+     */
     public shell(options?: Partial<AdbChildProcessOptions>): Promise<AdbShell> {
         return this.createShell('', options);
     }
 
+    /**
+     * Spawns a new process using the given `command`.
+     * @param command The command to run, or an array of strings containing both command and args.
+     * @param options The options for creating the `AdbShell`
+     * @returns A new `AdbShell` instance connecting to the spawned process.
+     */
     public spawn(command: string | string[], options?: Partial<AdbChildProcessOptions>): Promise<AdbShell> {
         if (Array.isArray(command)) {
             command = command.join(' ');
@@ -61,8 +72,14 @@ export class AdbChildProcess {
         return this.createShell(command, options);
     }
 
+    /**
+     * Spawns a new process, waits until it exits, and returns the entire output.
+     * @param command The command to run
+     * @param args List of command arguments
+     * @returns The entire output of the command
+     */
     public exec(command: string, ...args: string[]): Promise<string> {
-        // `exec` only need all output, using Shell Protocol only makes it more complicate.
+        // `exec` only needs the entire output, use Legacy Shell is simpler.
         return this.adb.createSocketAndReadAll(`shell:${command} ${args.join(' ')}`);
     }
 }
