@@ -38,7 +38,7 @@
         "webpack-cli": "4.6.0",
         "webpack-dev-server": "3.11.1",
         "webpackbar": "5.0.0-3",
-        "worker-loader": "3.0.7"
+        "worker-loader": "3.0.8"
     },
     "dependencies": {
         "@fluentui/react": "8.12.0",
