@@ -24,11 +24,18 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm i
+
+    - run: node common/scripts/install-run-rush.js change -v
+    - run: node common/scripts/install-run-rush.js install
+    - run: node common/scripts/install-run-rush.js rebuild --verbose
+    - run: node common/scripts/install-run-rush.js test
+
+    - run: bash <(curl -s https://codecov.io/bash) -f libraries/struct/coverage/lcov.info -F struct
+
+    - name: Deploy
+      uses: s0/git-publish-subdir-action@develop
       env:
-        CI: true
-    - run: npm run build --if-present
-    - run: npm test
-      env:
-        CI: true
-    - run: bash <(curl -s https://codecov.io/bash) -f packages/struct/coverage/lcov.info -F struct
+        REPO: self
+        BRANCH: gh-pages
+        FOLDER: apps/demo/lib
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,36 @@
+{
+    "name": "@yume-chan/adb-backend-ws",
+    "private": true,
+    "version": "0.0.9",
+    "description": "Backend for `@yume-chan/adb` using WebSocket API.",
+    "keywords": [
+        "websocket",
+        "adb"
+    ],
+    "author": "Simon Chan <cnsimonchan@live.com>",
+    "homepage": "https://github.com/yume-chan/ya-webadb#readme",
+    "license": "MIT",
+    "main": "cjs/index.js",
+    "module": "esm/index.js",
+    "types": "dts/index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git"
+    },
+    "scripts": {
+        "build": "build-ts-package"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "devDependencies": {
+        "typescript": "4.2.4",
+        "@yume-chan/ts-package-builder": "1.0.0"
+    },
+    "dependencies": {
+        "@yume-chan/adb": "^0.0.9",
+        "@yume-chan/async": "2.1.4",
+        "@yume-chan/event": "^0.0.9",
+        "tslib": "2.2.0"
+    }
+}
