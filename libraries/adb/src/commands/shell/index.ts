@@ -1,4 +1,4 @@
-import { Adb } from '../../adb';
+import type { Adb } from '../../adb';
 import { AdbLegacyShell } from './legacy';
 import { AdbShellProtocol } from './protocol';
 import type { AdbShell, AdbShellConstructor } from './types';
@@ -10,8 +10,10 @@ export * from './utils';
 
 export interface AdbChildProcessOptions {
     /**
-     * A list of `AdbShellConstructor`s that can be used.
-     * Different `AdbShell`s have different capabilities. Please check the documentation for each `AdbShell`
+     * A list of `AdbShellConstructor`s to be used.
+     *
+     * Different `AdbShell` has different capabilities, thus requires specific adaptations.
+     * Check each `AdbShell`'s documentation for details.
      *
      * The first one whose `isSupported` returns `true` will be used.
      * If no `AdbShell` is supported, an error will be thrown.

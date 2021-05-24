@@ -12,7 +12,7 @@ export interface AdbShell {
     /**
      * Notifies that new data has been written into the `stderr` stream.
      *
-     * The current shell may not support splitting output streams
+     * Some `AdbShell`s may not support separate output streams
      * and will always fire the `onStdout` event instead.
      */
     readonly onStderr: Event<ArrayBuffer>;
@@ -21,7 +21,7 @@ export interface AdbShell {
      * Notifies that the current process has exited.
      *
      * The event arg is the exit code.
-     * The current shell may not support returning exit code and will always return `0` instead.
+     * Some `AdbShell`s may not support returning exit code and will always return `0` instead.
      */
     readonly onExit: Event<number>;
 
@@ -33,7 +33,7 @@ export interface AdbShell {
     /**
      * Resizes the current shell.
      *
-     * The current shell may not support resizing and will always ignore calls to this method.
+     * Some `AdbShell`s may not support resizing and will always ignore calls to this method.
      */
     resize(rows: number, cols: number): ValueOrPromise<void>;
 

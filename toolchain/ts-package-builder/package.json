@@ -18,5 +18,8 @@
   "dependencies": {
     "json5": "2.2.0",
     "@types/jest": "26.0.23"
+  },
+  "peerDependencies": {
+    "typescript": "^4.0.0"
   }
 }

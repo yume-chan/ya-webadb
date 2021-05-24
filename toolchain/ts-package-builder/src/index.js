@@ -10,7 +10,6 @@ fs.mkdirSync(temp, { recursive: true });
 fs.rmSync(path.resolve(cwd, 'cjs'), { force: true, recursive: true });
 fs.rmSync(path.resolve(cwd, 'esm'), { force: true, recursive: true });
 fs.rmSync(path.resolve(cwd, 'dts'), { force: true, recursive: true });
-fs.rmSync(path.resolve(cwd, 'tsconfig.tsbuildinfo'), { force: true, recursive: true });
 
 const tsconfigPath = path.resolve(cwd, 'tsconfig.json');
 const tsconfigValue = JSON5.parse(fs.readFileSync(tsconfigPath), 'utf8');
