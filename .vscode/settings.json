@@ -1,5 +1,7 @@
 {
     "cSpell.words": [
+        "ADB's",
+        "Backends",
         "CLASSPATH",
         "CLSE",
         "CNXN",
@@ -23,6 +25,8 @@
         "fluentui",
         "genymobile",
         "getprop",
+        "hardcode",
+        "hardcodes",
         "hhmm",
         "hisi",
         "jmuxer",
@@ -30,6 +34,7 @@
         "killforward",
         "laggy",
         "lapo",
+        "libusb",
         "localabstract",
         "lstat",
         "mitm",
@@ -39,6 +44,7 @@
         "powersave",
         "reimplement",
         "reimplemented",
+        "runtimes",
         "scrollback",
         "sendrecv",
         "streamsaver",

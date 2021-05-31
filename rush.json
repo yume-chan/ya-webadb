@@ -290,7 +290,7 @@
      * your PR branch, and in this situation "rush change" will also automatically invoke "git fetch"
      * to retrieve the latest activity for the remote master branch.
      */
-    // "url": "https://github.com/microsoft/rush-example",
+    "url": "https://github.com/yume-chan/ya-webadb"
 
     /**
      * The default branch name. This tells "rush change" which remote branch to compare against.
@@ -484,6 +484,10 @@
     {
       "packageName": "demo",
       "projectFolder": "apps/demo"
+    },
+    {
+      "packageName": "unofficial-adb-book",
+      "projectFolder": "apps/book"
     },
     {
       "packageName": "@yume-chan/ts-package-builder",

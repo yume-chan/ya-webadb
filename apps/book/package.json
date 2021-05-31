@@ -1,0 +1,19 @@
+{
+  "name": "unofficial-adb-book",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "authors": {
+    "name": "Simon Chan",
+    "email": "cnsimonchan@live.com"
+  },
+  "repository": "git+https://github.com/yume-chan/ya-webadb.git",
+  "scripts": {
+    "dev": "vuepress dev src",
+    "build": "vuepress build src"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "vuepress": "^1.5.3"
+  }
+}
