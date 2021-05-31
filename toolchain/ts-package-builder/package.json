@@ -1,0 +1,25 @@
+{
+  "name": "@yume-chan/ts-package-builder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "build-ts-package": "./src/index.js"
+  },
+  "scripts": {
+    "build": ""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "15.0.3"
+  },
+  "dependencies": {
+    "json5": "2.2.0",
+    "@types/jest": "26.0.23"
+  },
+  "peerDependencies": {
+    "typescript": "^4.0.0"
+  }
+}
