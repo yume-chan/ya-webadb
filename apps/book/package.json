@@ -9,7 +9,7 @@
   },
   "repository": "git+https://github.com/yume-chan/ya-webadb.git",
   "scripts": {
-    "dev": "vuepress dev src",
+    "start": "vuepress dev src",
     "build": "vuepress build src"
   },
   "license": "MIT",

@@ -27,4 +27,6 @@ For example, one type of packet has `0x4e584e43` as its `command`, hex strings a
 
 ## Checksum
 
-Checksum is calculated by adding up all bytes in `payload` as an unsigned 32-bit integer, wrap then overflow.
+Checksum is calculated by adding up all bytes in `payload`.
+
+For example, when the payload is `[0x01, 0x02, 0x03]`, the `checksum` is `0x01 + 0x02 + 0x03 = 0x00000006`.

@@ -69,7 +69,9 @@ Daemon receives packets, performs operations on device, and sends back response 
 
 In USB mode, each Daemon can only accept one connection.
 
-**TODO:** Finds out wether a Daemon can accept multiple TCP connections.
+:::tip TODO
+Finds out wether a Daemon can accept multiple TCP connections.
+:::
 
 ## Web ADB
 
