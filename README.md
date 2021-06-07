@@ -35,7 +35,7 @@ The repository uses [Rush](https://rushjs.io/) for monorepo management.
 ### Install Rush globally
 
 ```sh
-$ npm i -g rush
+$ npm i -g @microsoft/rush
 ```
 
 ### Install dependencies
