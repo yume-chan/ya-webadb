@@ -54,13 +54,15 @@ function App(): JSX.Element | null {
     }, []);
 
 
+    const appId = `com.gamingforgood.clashofstreamers`
+
     const routes = useMemo((): RouteInfo[] => [
         {
             path: '/',
             exact: true,
             name: 'Logs',
             children: (
-                <Logcat device={device} applicationId="com.gamingforgood.clashofstreamers" />
+                <Logcat device={device} applicationId={appId} />
             )
         },
         {
