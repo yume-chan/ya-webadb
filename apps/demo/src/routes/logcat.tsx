@@ -147,10 +147,11 @@ export const Logcat = withDisplayName('Logcat')(({
                 }
                 const pid = await device.childProcess.exec(`pidof -s ${applicationId}`);
                 const socket = terminalRef.current.socket;
-                if (!socket) {
-                    return;
+                if (socket) {
+                    // continue
                 } else {
                     console.log(`no socket yet, the ${applicationId} pid=${pid} before=${processId}`);
+                    return;
                 }
                 try {
                     if (!pid && processId === null) {
@@ -164,6 +165,7 @@ export const Logcat = withDisplayName('Logcat')(({
                             // discovered that app is running
                             console.log(`[logs] logcat`);
                             await socket.write(encodeUtf8(`logcat --pid=${pid}\n`))
+                            terminalRef.current.terminal.writeln(`echo\n=== process: ${applicationId} ===`)
                         }
                     } else {
                         if (processId) {
