@@ -170,6 +170,7 @@ function App(): JSX.Element | null {
                                 <CacheRoute
                                     exact={route.exact}
                                     path={route.path}
+                                    key={route.path}
                                     noCache={route.noCache}>
                                     {route.children}
                                 </CacheRoute>
