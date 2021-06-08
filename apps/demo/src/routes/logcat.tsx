@@ -82,7 +82,7 @@ class AdbTerminal extends AutoDisposable {
 }
 
 export interface LogcatRouteProps extends RouteProps {
-    applicationId: string;
+    applicationId: string | null;
 }
 
 export const Logcat = withDisplayName('Logcat')(({

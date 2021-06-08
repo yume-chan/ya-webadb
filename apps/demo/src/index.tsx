@@ -54,7 +54,7 @@ function App(): JSX.Element | null {
     }, []);
 
 
-    const appId = `com.gamingforgood.clashofstreamers`
+    const appId = new URLSearchParams(window.location.search).get('appId')
 
     const routes = useMemo((): RouteInfo[] => [
         {
