@@ -60,17 +60,17 @@ function App(): JSX.Element | null {
         {
             path: '/',
             exact: true,
-            name: 'Logs',
-            children: (
-                <Logcat device={device} applicationId={appId} />
-            )
-        },
-        {
-            path: '/introduction',
-            exact: true,
             name: 'Introduction',
             children: (
                 <Intro />
+            )
+        },
+        {
+            path: '/logs',
+            exact: true,
+            name: 'Logs',
+            children: (
+                <Logcat device={device} applicationId={appId} />
             )
         },
         {
