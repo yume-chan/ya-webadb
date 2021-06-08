@@ -60,7 +60,7 @@ function App(): JSX.Element | null {
             exact: true,
             name: 'Logs',
             children: (
-                <Logcat device={device} />
+                <Logcat device={device} applicationId="com.gamingforgood.clashofstreamers" />
             )
         },
         {

@@ -81,10 +81,15 @@ class AdbTerminal extends AutoDisposable {
     }
 }
 
+export interface LogcatRouteProps extends RouteProps {
+    applicationId: string;
+}
+
 export const Logcat = withDisplayName('Logcat')(({
     visible,
     device,
-}: RouteProps): JSX.Element | null => {
+    applicationId,
+}: LogcatRouteProps): JSX.Element | null => {
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
     const terminalRef = useRef(new AdbTerminal());
@@ -114,20 +119,6 @@ export const Logcat = withDisplayName('Logcat')(({
             if (!visible || !!terminalRef.current.socket || connectingRef.current) {
                 return;
             }
-
-            useEffect(() => {
-                const interval = setInterval(() => {
-                    console.log('This will run every second!');
-                    try {
-                        device.childProcess.exec('pidof -s com.gamingforgood.clashofstreamers').then(pid => {
-                            window.cosPID = pid;
-                        })
-                    } catch (e) {
-                        showErrorDialog(e.message);
-                    }
-                }, 1000);
-                return () => clearInterval(interval);
-            }, []);
             
             try {
                 connectingRef.current = true;
@@ -141,7 +132,57 @@ export const Logcat = withDisplayName('Logcat')(({
         })();
     }, [visible, device]);
 
-    device?.childProcess.
+    useEffect(() => {
+        if (!visible || !!terminalRef.current.socket) {
+            return;
+        }
+        let processId: string | null = null;
+        const interval = setInterval(async () => {
+            if (connectingRef.current) {
+                return;
+            }
+            try {
+                if (!device) {
+                    return;
+                }
+                const pid = await device.childProcess.exec(`pidof -s ${applicationId}`);
+                const socket = terminalRef.current.socket;
+                if (!socket) {
+                    return;
+                } else {
+                    console.log(`no socket yet, the ${applicationId} pid=${pid} before=${processId}`);
+                }
+                try {
+                    if (!pid && processId === null) {
+                        terminalRef.current.terminal.writeln(`echo\n=== Waiting for ${applicationId} ===`)
+                    }
+                    if (processId === null) {
+                        processId = ''
+                    }
+                    if (pid) {
+                        if (processId !== pid) {
+                            // discovered that app is running
+                            console.log(`[logs] logcat`);
+                            await socket.write(encodeUtf8(`logcat --pid=${pid}\n`))
+                        }
+                    } else {
+                        if (processId) {
+                            // app is no longer running, stop logcat
+                            await socket.kill();
+                            console.log('[logs] stopped logcat')
+                            terminalRef.current.terminal.writeln('[App stopped]')
+                            return;
+                        }
+                    }
+                } finally {
+                    processId = pid;
+                }
+            } catch (e) {
+                showErrorDialog(e.message);
+            }
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [visible, device]);
 
     const handleContainerRef = useCallback((element: HTMLDivElement | null) => {
         terminalRef.current.parent = element ?? undefined;
