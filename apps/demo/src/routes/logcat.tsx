@@ -163,7 +163,6 @@ export const Logcat = withDisplayName('Logcat')(({
                     if (pid) {
                         if (processId !== pid) {
                             // discovered that app is running
-                            console.log(`[logs] logcat`);
                             await socket.write(encodeUtf8(`logcat --pid=${pid}\n`))
                             terminalRef.current.terminal.writeln(`echo\n=== process: ${applicationId} ===`)
                         }
@@ -171,7 +170,6 @@ export const Logcat = withDisplayName('Logcat')(({
                         if (processId) {
                             // app is no longer running, stop logcat
                             await socket.kill();
-                            console.log('[logs] stopped logcat')
                             terminalRef.current.terminal.writeln('[App stopped]')
                             return;
                         }
