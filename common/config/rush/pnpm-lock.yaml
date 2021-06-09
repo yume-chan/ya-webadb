@@ -17,6 +17,8 @@ dependencies:
   '@types/react-dom': 17.0.0
   '@types/react-router-dom': 5.1.6
   '@types/w3c-web-usb': 1.0.4
+  '@vuepress/plugin-back-to-top': 1.8.2
+  '@vuepress/plugin-medium-zoom': 1.8.2
   '@yume-chan/async': 2.1.4
   clean-webpack-plugin: 3.0.0_webpack@5.28.0
   copy-webpack-plugin: 8.0.0_webpack@5.28.0
@@ -2001,12 +2003,24 @@ packages:
     dev: false
     resolution:
       integrity: sha512-JmXAQg8D7J8mcKe2Ue3BZ9dOCzJMJXP4Cnkkc/IrqfDg0ET0l96gYWZohCqlvRIWt4f0VPiFAO4FLYrW+hko+g==
+  /@vuepress/plugin-back-to-top/1.8.2:
+    dependencies:
+      lodash.debounce: 4.0.8
+    dev: false
+    resolution:
+      integrity: sha512-htAf2m8+6cGmYQexWerznGBY10y1E4TBfebYC3Y3wqNjFjvXUmRKcAG/u6Yxvey4OFkQUxbth2ilKi/GlIW8aQ==
   /@vuepress/plugin-last-updated/1.8.2:
     dependencies:
       cross-spawn: 6.0.5
     dev: false
     resolution:
       integrity: sha512-pYIRZi52huO9b6HY3JQNPKNERCLzMHejjBRt9ekdnJ1xhLs4MmRvt37BoXjI/qzvXkYtr7nmGgnKThNBVRTZuA==
+  /@vuepress/plugin-medium-zoom/1.8.2:
+    dependencies:
+      medium-zoom: 1.0.6
+    dev: false
+    resolution:
+      integrity: sha512-Mljso/8E6IbNmIKmwKeC6FDfnhKY3fsOUSs5kEGzz3RQwd54eshqHAMRVwW4LZkYZHhwQXF8+qk7YqoMZB7jjg==
   /@vuepress/plugin-nprogress/1.8.2:
     dependencies:
       nprogress: 0.2.0
@@ -7312,6 +7326,10 @@ packages:
       node: '>= 0.6'
     resolution:
       integrity: sha1-hxDXrwqmJvj/+hzgAWhUUmMlV0g=
+  /medium-zoom/1.0.6:
+    dev: false
+    resolution:
+      integrity: sha512-UdiUWfvz9fZMg1pzf4dcuqA0W079o0mpqbTnOz5ip4VGYX96QjmbM+OgOU/0uOzAytxC0Ny4z+VcYQnhdifimg==
   /memory-fs/0.4.1:
     dependencies:
       errno: 0.1.8
@@ -11793,6 +11811,8 @@ packages:
     version: 0.0.0
   file:projects/unofficial-adb-book.tgz_webpack-cli@4.7.0:
     dependencies:
+      '@vuepress/plugin-back-to-top': 1.8.2
+      '@vuepress/plugin-medium-zoom': 1.8.2
       vuepress: 1.8.2_webpack-cli@4.7.0
     dev: false
     id: file:projects/unofficial-adb-book.tgz
@@ -11800,7 +11820,7 @@ packages:
     peerDependencies:
       webpack-cli: '*'
     resolution:
-      integrity: sha512-W8n3xEc4TSY2b0J7PFKhn1coVT5U3/fFrHJy7H0KbW5DXMqA5jg0zhFeCtFyWZuW3JURnQg5y9WlQoU4yIRFrQ==
+      integrity: sha512-dmJxH0domp8cfStyFAZu5TX2svgjpa72xWyM4kBpUM2jqlmqEVThy4oOlr8bwYNx33NW6my0+F+pZVXyw8QtBA==
       tarball: file:projects/unofficial-adb-book.tgz
     version: 0.0.0
 specifiers:
@@ -11822,6 +11842,8 @@ specifiers:
   '@types/react-dom': 17.0.0
   '@types/react-router-dom': 5.1.6
   '@types/w3c-web-usb': 1.0.4
+  '@vuepress/plugin-back-to-top': ~1.8.2
+  '@vuepress/plugin-medium-zoom': ~1.8.2
   '@yume-chan/async': 2.1.4
   clean-webpack-plugin: 3.0.0
   copy-webpack-plugin: 8.0.0
