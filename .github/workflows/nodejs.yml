@@ -29,8 +29,6 @@ jobs:
       - run: node common/scripts/install-run-rush.js rebuild --verbose
       - run: node common/scripts/install-run-rush.js test
 
-      - run: cat libraries/struct/cjs/index.js
-      - run: cat libraries/struct/coverage/lcov.info
       - run: bash <(curl -s https://codecov.io/bash) -f libraries/struct/coverage/lcov.info -F struct
 
       - name: Deploy
