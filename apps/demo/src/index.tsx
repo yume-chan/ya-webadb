@@ -6,7 +6,7 @@ import ReactDOM from 'react-dom';
 import { HashRouter, Redirect, useLocation } from 'react-router-dom';
 import { AdbEventLogger, CacheRoute, CacheSwitch, Connect, ErrorDialogProvider, Logger, LoggerContextProvider, ToggleLogger } from './components';
 import './index.css';
-import { DeviceInfo, FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
+import { DeviceInfo, FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp, Logcat } from './routes';
 
 initializeIcons();
 
@@ -54,6 +54,8 @@ function App(): JSX.Element | null {
     }, []);
 
 
+    const appId = new URLSearchParams(window.location.search).get('appId')
+
     const routes = useMemo((): RouteInfo[] => [
         {
             path: '/',
@@ -61,6 +63,14 @@ function App(): JSX.Element | null {
             name: 'Introduction',
             children: (
                 <Intro />
+            )
+        },
+        {
+            path: '/logs',
+            exact: true,
+            name: 'Logs',
+            children: (
+                <Logcat device={device} applicationId={appId} />
             )
         },
         {
@@ -160,6 +170,7 @@ function App(): JSX.Element | null {
                                 <CacheRoute
                                     exact={route.exact}
                                     path={route.path}
+                                    key={route.path}
                                     noCache={route.noCache}>
                                     {route.children}
                                 </CacheRoute>
