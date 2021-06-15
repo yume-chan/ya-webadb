@@ -1,4 +1,4 @@
-import { AdbBackend, BufferedStream, decodeBase64, encodeBase64, EventQueue, Stream } from '@yume-chan/adb';
+import { AdbBackend, BufferedStream, EventQueue, Stream } from '@yume-chan/adb';
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 

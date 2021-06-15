@@ -23,12 +23,12 @@ export class AdbWebUsbBackend implements AdbBackend {
             const device = await navigator.usb.requestDevice({ filters: [WebUsbDeviceFilter] });
             return new AdbWebUsbBackend(device);
         } catch (e) {
-            switch (e.name) {
-                case 'NotFoundError':
-                    return undefined;
-                default:
-                    throw e;
+            // User cancelled the device picker
+            if (e instanceof DOMException && e.name === 'NotFoundError') {
+                return undefined;
             }
+
+            throw e;
         }
     }
 

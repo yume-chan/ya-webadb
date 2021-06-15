@@ -1,4 +1,4 @@
-import { AdbCredentialStore, decodeBase64, encodeBase64 } from "@yume-chan/adb";
+import { AdbCredentialStore, calculateBase64EncodedLength, calculatePublicKey, calculatePublicKeyLength, decodeBase64, encodeBase64 } from "@yume-chan/adb";
 import { decodeUtf8 } from "./utils";
 
 export class AdbWebCredentialStore implements AdbCredentialStore {
@@ -30,6 +30,18 @@ export class AdbWebCredentialStore implements AdbCredentialStore {
 
         const privateKey = await crypto.subtle.exportKey('pkcs8', cryptoKey);
         window.localStorage.setItem(this.localStorageKey, decodeUtf8(encodeBase64(privateKey)));
+
+        // The authentication module doesn't need a public key.
+        // It will generate the public key from private key every time.
+        // However, maybe there are people want to manually put this public key onto their device,
+        // so also save the public key for their convenience.
+        const publicKeyLength = calculatePublicKeyLength();
+        const [publicKeyBase64Length] = calculateBase64EncodedLength(publicKeyLength);
+        const publicKeyBuffer = new ArrayBuffer(publicKeyBase64Length);
+        calculatePublicKey(privateKey, publicKeyBuffer);
+        encodeBase64(publicKeyBuffer, 0, publicKeyLength, publicKeyBuffer);
+        window.localStorage.setItem(this.localStorageKey + '.pub', decodeUtf8(publicKeyBuffer));
+
         return privateKey;
     }
 
