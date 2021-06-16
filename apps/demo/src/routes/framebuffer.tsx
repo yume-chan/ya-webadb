@@ -47,7 +47,7 @@ export const FrameBuffer = withDisplayName('FrameBuffer')(({
                 context.putImageData(image, 0, 0);
                 setHasImage(true);
             } catch (e) {
-                showErrorDialog(e.message);
+                showErrorDialog(e instanceof Error ? e.message : `${e}`);
             }
         })();
     }, [device]);

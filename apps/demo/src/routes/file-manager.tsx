@@ -5,8 +5,7 @@ import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume
 import path from 'path';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import StreamSaver from 'streamsaver';
-import { CommandBar } from '../components';
-import { ErrorDialogContext } from '../components/error-dialog';
+import { CommandBar, ErrorDialogContext } from '../components';
 import { delay, formatSize, formatSpeed, pickFile, useSpeed, withDisplayName } from '../utils';
 import { RouteProps } from './type';
 
@@ -111,7 +110,7 @@ export const FileManager = withDisplayName('FileManager')(({
             onClick: () => setCurrentPath('/'),
         });
         list[list.length - 1].isCurrentItem = true;
-        list[list.length - 1].onClick = undefined;
+        delete list[list.length - 1].onClick;
         return list;
     }, [currentPath]);
 
@@ -367,7 +366,7 @@ export const FileManager = withDisplayName('FileManager')(({
                 setUploadedSize,
             );
         } catch (e) {
-            showErrorDialog(e.message);
+            showErrorDialog(e instanceof Error ? e.message : `${e}`);
         } finally {
             sync.dispose();
             load();
@@ -418,7 +417,7 @@ export const FileManager = withDisplayName('FileManager')(({
                                     });
                                     await readableStream.pipeTo(writeableStream);
                                 } catch (e) {
-                                    showErrorDialog(e.message);
+                                    showErrorDialog(e instanceof Error ? e.message : `${e}`);
                                 } finally {
                                     sync.dispose();
                                 }
@@ -443,7 +442,7 @@ export const FileManager = withDisplayName('FileManager')(({
                                     }
                                 }
                             } catch (e) {
-                                showErrorDialog(e.message);
+                                showErrorDialog(e instanceof Error ? e.message : `${e}`);
                             } finally {
                                 load();
                             }

@@ -4,7 +4,7 @@ import { CSSProperties, useCallback, useEffect, useState } from 'react';
 import { withDisplayName } from '../utils';
 
 export interface DemoModeProps {
-    device?: Adb;
+    device?: Adb | undefined;
 
     style?: CSSProperties;
 }
