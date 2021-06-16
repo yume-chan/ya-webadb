@@ -3,13 +3,12 @@ import { useBoolean } from '@fluentui/react-hooks';
 import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { CommandBar, DemoMode, DeviceView, ErrorDialogContext } from '../components';
 import { withDisplayName } from '../utils';
-import { RouteProps } from './type';
+import { useAdbDevice } from './type';
 
-export const FrameBuffer = withDisplayName('FrameBuffer')(({
-    device
-}: RouteProps): JSX.Element | null => {
+export const FrameBuffer = withDisplayName('FrameBuffer')((): JSX.Element | null => {
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
+    const device = useAdbDevice();
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [hasImage, setHasImage] = useState(false);
 

@@ -6,7 +6,7 @@ import YUVCanvas from 'yuv-canvas';
 import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, ExternalLink } from '../../components';
 import { CommonStackTokens } from '../../styles';
 import { formatSpeed, useSpeed, withDisplayName } from '../../utils';
-import { RouteProps } from '../type';
+import { useAdbDevice } from '../type';
 import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyClientOptions, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyServerVersion } from './server';
 import { createTinyH264Decoder, TinyH264Decoder } from './tinyh264';
 
@@ -24,11 +24,10 @@ function clamp(value: number, min: number, max: number): number {
     return value;
 }
 
-export const Scrcpy = withDisplayName('Scrcpy')(({
-    device
-}: RouteProps): JSX.Element | null => {
+export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
+    const device = useAdbDevice();
     const [running, setRunning] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);

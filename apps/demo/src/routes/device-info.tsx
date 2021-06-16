@@ -2,7 +2,7 @@ import { Icon, MessageBar, Separator, TooltipHost } from '@fluentui/react';
 import { AdbFeatures } from '@yume-chan/adb';
 import { ExternalLink } from '../components';
 import { withDisplayName } from '../utils';
-import { RouteProps } from './type';
+import { useAdbDevice } from './type';
 
 const knownFeatures: Record<string, string> = {
     'shell_v2': `"shell" command now supports separating child process's stdout and stderr, and returning exit code`,
@@ -23,9 +23,9 @@ const knownFeatures: Record<string, string> = {
     // 'sendrecv_v2_dry_run_send': '',
 };
 
-export const DeviceInfo = withDisplayName('DeviceInfo')(({
-    device
-}: RouteProps): JSX.Element | null => {
+export const DeviceInfo = withDisplayName('DeviceInfo')((): JSX.Element | null => {
+    const device = useAdbDevice();
+
     return (
         <>
             <MessageBar>

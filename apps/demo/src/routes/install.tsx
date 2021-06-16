@@ -2,7 +2,7 @@ import { DefaultButton, ProgressIndicator, Stack } from "@fluentui/react";
 import { useCallback, useState } from "react";
 import { pickFile, withDisplayName } from "../utils";
 import { chunkFile } from "./file-manager";
-import { RouteProps } from "./type";
+import { useAdbDevice } from "./type";
 
 enum Stage {
     Uploading,
@@ -24,9 +24,8 @@ interface Progress {
     value: number | undefined;
 }
 
-export const Install = withDisplayName('Install')(({
-    device,
-}: RouteProps): JSX.Element => {
+export const Install = withDisplayName('Install')((): JSX.Element => {
+    const device = useAdbDevice();
     const [installing, setInstalling] = useState(false);
     const [progress, setProgress] = useState<Progress>();
 

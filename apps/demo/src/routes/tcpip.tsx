@@ -2,11 +2,11 @@ import { MessageBar, StackItem, Text, TextField, Toggle } from '@fluentui/react'
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CommandBar } from '../components';
 import { withDisplayName } from '../utils';
-import { RouteProps } from './type';
+import { useAdbDevice } from './type';
 
-export const TcpIp = withDisplayName('TcpIp')(({
-    device
-}: RouteProps): JSX.Element | null => {
+export const TcpIp = withDisplayName('TcpIp')((): JSX.Element | null => {
+    const device = useAdbDevice();
+
     const [serviceListenAddrs, setServiceListenAddrs] = useState<string[] | undefined>();
 
     const [servicePortEnabled, setServicePortEnabled] = useState<boolean>(false);

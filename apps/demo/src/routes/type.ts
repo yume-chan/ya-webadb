@@ -1,7 +1,14 @@
 import { Adb } from '@yume-chan/adb';
+import React, { useContext } from "react";
 
 export interface RouteProps {
     visible?: boolean;
+}
 
-    device?: Adb;
+const AdbDeviceContext = React.createContext<Adb | undefined>(undefined);
+
+export const AdbDeviceProvider = AdbDeviceContext.Provider;
+
+export function useAdbDevice() {
+    return useContext(AdbDeviceContext);
 }

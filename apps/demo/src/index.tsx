@@ -6,7 +6,7 @@ import ReactDOM from 'react-dom';
 import { HashRouter, Redirect, useLocation } from 'react-router-dom';
 import { AdbEventLogger, CacheRoute, CacheSwitch, Connect, ErrorDialogProvider, Logger, LoggerContextProvider, ToggleLogger } from './components';
 import './index.css';
-import { DeviceInfo, FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
+import { AdbDeviceProvider, DeviceInfo, FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
 
 initializeIcons();
 
@@ -67,42 +67,42 @@ function App(): JSX.Element | null {
             path: '/device-info',
             name: 'Device Info',
             children: (
-                <DeviceInfo device={device} />
+                <DeviceInfo />
             )
         },
         {
             path: '/adb-over-wifi',
             name: 'ADB over WiFi',
             children: (
-                <TcpIp device={device} />
+                <TcpIp />
             )
         },
         {
             path: '/shell',
             name: 'Interactive Shell',
             children: (
-                <Shell device={device} />
+                <Shell />
             ),
         },
         {
             path: '/file-manager',
             name: 'File Manager',
             children: (
-                <FileManager device={device} />
+                <FileManager />
             ),
         },
         {
             path: '/install',
             name: 'Install APK',
             children: (
-                <Install device={device} />
+                <Install />
             ),
         },
         {
             path: '/framebuffer',
             name: 'Screen Capture',
             children: (
-                <FrameBuffer device={device} />
+                <FrameBuffer />
             ),
         },
         {
@@ -110,7 +110,7 @@ function App(): JSX.Element | null {
             name: 'Scrcpy',
             noCache: true,
             children: (
-                <Scrcpy device={device} />
+                <Scrcpy />
             ),
         },
     ], [device]);
@@ -155,18 +155,20 @@ function App(): JSX.Element | null {
                     </StackItem>
 
                     <StackItem grow styles={{ root: { width: 0 } }}>
-                        <CacheSwitch>
-                            {routes.map<ReactElement>(route => (
-                                <CacheRoute
-                                    exact={route.exact}
-                                    path={route.path}
-                                    noCache={route.noCache}>
-                                    {route.children}
-                                </CacheRoute>
-                            ))}
+                        <AdbDeviceProvider value={device}>
+                            <CacheSwitch>
+                                {routes.map<ReactElement>(route => (
+                                    <CacheRoute
+                                        exact={route.exact}
+                                        path={route.path}
+                                        noCache={route.noCache}>
+                                        {route.children}
+                                    </CacheRoute>
+                                ))}
 
-                            <Redirect to="/" />
-                        </CacheSwitch>
+                                <Redirect to="/" />
+                            </CacheSwitch>
+                        </AdbDeviceProvider>
                     </StackItem>
 
                     <Logger className={classNames['right-column']} logger={logger} />

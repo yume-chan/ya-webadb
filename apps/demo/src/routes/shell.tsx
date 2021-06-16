@@ -9,7 +9,7 @@ import { SearchAddon } from 'xterm-addon-search';
 import 'xterm/css/xterm.css';
 import { ErrorDialogContext } from '../components/error-dialog';
 import { ResizeObserver, withDisplayName } from '../utils';
-import { RouteProps } from './type';
+import { RouteProps, useAdbDevice } from './type';
 
 const ResizeObserverStyle: CSSProperties = {
     width: '100%',
@@ -83,10 +83,10 @@ class AdbTerminal extends AutoDisposable {
 
 export const Shell = withDisplayName('Shell')(({
     visible,
-    device,
 }: RouteProps): JSX.Element | null => {
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
+    const device = useAdbDevice();
     const terminalRef = useRef(new AdbTerminal());
 
     const [findKeyword, setFindKeyword] = useState('');
@@ -120,7 +120,7 @@ export const Shell = withDisplayName('Shell')(({
                 const socket = await device.childProcess.shell();
                 terminalRef.current.socket = socket;
             } catch (e) {
-                showErrorDialog(e.message);
+                showErrorDialog(e instanceof Error ? e.message : `${e}`);
             } finally {
                 connectingRef.current = false;
             }

@@ -7,7 +7,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import StreamSaver from 'streamsaver';
 import { CommandBar, ErrorDialogContext } from '../components';
 import { delay, formatSize, formatSpeed, pickFile, useSpeed, withDisplayName } from '../utils';
-import { RouteProps } from './type';
+import { useAdbDevice } from './type';
 
 initializeFileTypeIcons();
 StreamSaver.mitm = 'streamsaver/mitm.html';
@@ -80,11 +80,10 @@ function compareCaseInsensitively(a: string, b: string) {
     }
 }
 
-export const FileManager = withDisplayName('FileManager')(({
-    device,
-}: RouteProps): JSX.Element | null => {
+export const FileManager = withDisplayName('FileManager')((): JSX.Element | null => {
     const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
+    const device = useAdbDevice();
     const [currentPath, setCurrentPath] = useState('/');
     const currentPathRef = useRef(currentPath);
     currentPathRef.current = currentPath;
