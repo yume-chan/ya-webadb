@@ -18,7 +18,8 @@
         "url": "git+https://github.com/yume-chan/ya-webadb.git"
     },
     "scripts": {
-        "build": "build-ts-package"
+        "build": "build-ts-package",
+        "build:watch": "build-ts-package --incremental"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"

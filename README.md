@@ -20,13 +20,13 @@ See README in each package for details.
 
 This repository is a monorepo containing following packages:
 
-| Package Name                                                          | Description                                                              |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| adb ([README](libraries/adb/README.md))                               | TypeScript implementation of Android Debug Bridge (ADB) protocol.        |
-| adb-backend-webusb ([README](libraries/adb-backend-webusb/README.md)) | Backend for `@yume-chan/adb` using WebUSB API.                           |
-| event ([README](libraries/event/README.md))                           | Event/EventEmitter pattern.                                              |
-| struct ([README](libraries/struct/README.md))                         | C-style structure serializer and deserializer.                           |
-| demo ([README](apps/demo/README.md))                                  | Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-webusb`.            |
+| Package Name                                                          | Description                                                       |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| adb ([README](libraries/adb/README.md))                               | TypeScript implementation of Android Debug Bridge (ADB) protocol. |
+| adb-backend-webusb ([README](libraries/adb-backend-webusb/README.md)) | Backend for `@yume-chan/adb` using WebUSB API.                    |
+| event ([README](libraries/event/README.md))                           | Event/EventEmitter pattern.                                       |
+| struct ([README](libraries/struct/README.md))                         | C-style structure serializer and deserializer.                    |
+| demo ([README](apps/demo/README.md))                                  | Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-webusb`.     |
 
 ## Development
 
@@ -51,3 +51,18 @@ Build all packages:
 ```sh
 $ rush build
 ```
+
+Watch all libraries:
+
+```sh
+$ rush build:watch
+```
+
+Start demo dev-server:
+
+```sh
+$ cd apps/demo
+$ npm start
+```
+
+Usually you need two terminals to run both 2 and 3.

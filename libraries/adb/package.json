@@ -26,6 +26,7 @@
     "types": "dts/index.d.ts",
     "scripts": {
         "build": "build-ts-package",
+        "build:watch": "build-ts-package --incremental",
         "test": "jest --coverage",
         "prepublishOnly": "npm run build"
     },

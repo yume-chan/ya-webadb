@@ -7,9 +7,11 @@ const cwd = process.cwd();
 const temp = path.resolve(__dirname, '..', 'temp', process.pid.toString());
 fs.mkdirSync(temp, { recursive: true });
 
-fs.rmSync(path.resolve(cwd, 'cjs'), { force: true, recursive: true });
-fs.rmSync(path.resolve(cwd, 'esm'), { force: true, recursive: true });
-fs.rmSync(path.resolve(cwd, 'dts'), { force: true, recursive: true });
+if (process.argv[2] !== '--incremental') {
+    fs.rmSync(path.resolve(cwd, 'cjs'), { force: true, recursive: true });
+    fs.rmSync(path.resolve(cwd, 'esm'), { force: true, recursive: true });
+    fs.rmSync(path.resolve(cwd, 'dts'), { force: true, recursive: true });
+}
 
 const tsconfigPath = path.resolve(cwd, 'tsconfig.json');
 const tsconfigValue = JSON5.parse(fs.readFileSync(tsconfigPath), 'utf8');

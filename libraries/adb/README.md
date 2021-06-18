@@ -112,7 +112,7 @@ iterateKeys(): Iterator<ArrayBuffer> | AsyncIterator<ArrayBuffer>
 
 Synchronously or asynchronously iterate through all stored RSA private keys.
 
-Each call to `iterateKeys` must returns a different iterator that iterate through all stored keys.
+Each call to `iterateKeys` must return a different iterator that iterate through all stored keys.
 
 ##### Implementations
 

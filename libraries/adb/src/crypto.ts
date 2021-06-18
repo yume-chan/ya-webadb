@@ -196,8 +196,13 @@ export function calculatePublicKey(
     }
 }
 
-// Modular exponentiation
-// See https://en.wikipedia.org/wiki/Modular_exponentiation#Implementation_in_Lua
+/**
+ * Modular exponentiation.
+ *
+ * Calculate `(base ** exponent) % modulus` without actually calculating `(base ** exponent)`.
+ *
+ * See https://en.wikipedia.org/wiki/Modular_exponentiation#Implementation_in_Lua
+ */
 export function powMod(base: bigint, exponent: bigint, modulus: bigint): bigint {
     if (modulus === BigInt1) {
         return BigInt0;

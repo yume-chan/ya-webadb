@@ -8,9 +8,19 @@ import { calculateBase64EncodedLength, encodeBase64 } from './utils';
 export type AdbKeyIterable = Iterable<ArrayBuffer> | AsyncIterable<ArrayBuffer>;
 
 export interface AdbCredentialStore {
-    iterateKeys(): AdbKeyIterable;
-
+    /**
+     * Generate and store a RSA private key with modulus length `2048` and public exponent `65537`.
+     *
+     * The returned `ArrayBuffer` is the private key in PKCS #8 format.
+     */
     generateKey(): ValueOrPromise<ArrayBuffer>;
+
+    /**
+     * Synchronously or asynchronously iterate through all stored RSA private keys.
+     *
+     * Each call to `iterateKeys` must return a different iterator that iterate through all stored keys.
+     */
+    iterateKeys(): AdbKeyIterable;
 }
 
 export enum AdbAuthType {
@@ -92,13 +102,13 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
         command: AdbCommand.Auth,
         arg0: AdbAuthType.PublicKey,
         arg1: 0,
-        payload: publicKeyBuffer
+        payload: publicKeyBuffer,
     };
 };
 
 export const AdbDefaultAuthenticators: AdbAuthenticator[] = [
     AdbSignatureAuthenticator,
-    AdbPublicKeyAuthenticator
+    AdbPublicKeyAuthenticator,
 ];
 
 export class AdbAuthenticationHandler implements Disposable {

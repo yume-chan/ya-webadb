@@ -31,7 +31,7 @@ export class AdbWebCredentialStore implements AdbCredentialStore {
         const privateKey = await crypto.subtle.exportKey('pkcs8', cryptoKey);
         window.localStorage.setItem(this.localStorageKey, decodeUtf8(encodeBase64(privateKey)));
 
-        // The authentication module doesn't need a public key.
+        // The authentication module in core doesn't need public keys.
         // It will generate the public key from private key every time.
         // However, maybe there are people want to manually put this public key onto their device,
         // so also save the public key for their convenience.
