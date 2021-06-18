@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Transportation
 
 First I need to clarify what "ADB protocol" precisely is.
@@ -6,7 +10,9 @@ First I need to clarify what "ADB protocol" precisely is.
 
 Native ADB has three components:
 
-<pre class="flow-chart">
+<div className="flow-chart">
+
+```
 ┌───────────────────────────────┐  ┌──────────────┐
 │                               │  │              │
 │ ┌───────────┐     ┌────────┐  │  │ ┌──────────┐ │
@@ -37,7 +43,9 @@ Native ADB has three components:
 │  Computer B   │
 │               │
 └───────────────┘
-</pre>
+```
+
+</div>
 
 ### Client
 
@@ -77,7 +85,9 @@ Finds out wether a Daemon can accept multiple TCP connections.
 
 Web ADB reuses native ADB daemon, with a 1:1:1 architecture:
 
-<pre class="flow-chart">
+<div className="flow-chart">
+
+```
 ┌──────────────────────────────────┐  ┌──────────────┐
 │                                  │  │              │
 │ ┌──────────┐    ┌─────────────┐  │  │ ┌──────────┐ │
@@ -98,7 +108,9 @@ Web ADB reuses native ADB daemon, with a 1:1:1 architecture:
 │        JavaScript Runtime        │                    │   Device B   │
 │                                  │                    │              │
 └──────────────────────────────────┘                    └──────────────┘
-</pre>
+```
+
+</div>
 
 ### Core
 
@@ -126,8 +138,8 @@ Possible Backend implementations:
 
 ## Comparison
 
-|                                  | Native ADB                             | Web ADB                                    |
-| -------------------------------- | -------------------------------------- | ------------------------------------------ |
-| Who implements all ADB commands? | Client                                 | Core                                       |
-| Who directly talks to device?    | Server                                 | Backend                                    |
-| How does them talk internally?   | TCP Socket (variation of ADB protocol) | JavaScript API calls                       |
+|                                  | Native ADB                             | Web ADB              |
+| -------------------------------- | -------------------------------------- | -------------------- |
+| Who implements all ADB commands? | Client                                 | Core                 |
+| Who directly talks to device?    | Server                                 | Backend              |
+| How does them talk internally?   | TCP Socket (variation of ADB protocol) | JavaScript API calls |

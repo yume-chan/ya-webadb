@@ -1,3 +1,8 @@
+---
+slug: /
+sidebar_position: 0
+---
+
 # Introduction
 
 [ADB (Android Debugging Bridge)](https://developer.android.com/studio/command-line/adb) is the protocol for communicating with Android devices.

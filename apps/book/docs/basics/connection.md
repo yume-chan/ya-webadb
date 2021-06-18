@@ -1,6 +1,10 @@
+---
+sidebar_position: 3
+---
+
 # Connection
 
-ADB client connects to daemons by exchanging the `CNXN` [packet](./packet.html).
+ADB client connects to daemons by exchanging the `CNXN` [packet](./packet.md).
 
 ## `CNXN` Packet
 
@@ -15,11 +19,11 @@ ADB client connects to daemons by exchanging the `CNXN` [packet](./packet.html).
 
 ADB now has two versions, here are the differences:
 
-|                  | 0x01000000     | 0x01000001        |
-| ---------------- | -------------- | ----------------- |
-| Android version  | <9             | >=9               |
-| Max payload size | 4 * 1024 bytes | 1024 * 1024 bytes |
-| Omit `checksum`  | No             | Yes               |
+| Version number   | 0x01000000     | 0x01000001         |
+| ---------------- | -------------- | ------------------ |
+| Android version  | <9             | >=9                |
+| Max payload size | 4 * 1024 bytes | 1024 * 1024 bytes  |
+| Omit `checksum`  | :x:            | :heavy_check_mark: |
 
 In the first upstream `CNXN` packet:
 
@@ -31,3 +35,7 @@ Starting from version `0x01000001`, Native ADB (client, server and daemon) doesn
 However, ADB clients SHOULD always include correct `checksum` fields in handshake process, otherwise connections to older versions of daemons will fail.
 
 ## Device Banner
+
+:::tip TODO
+TODO
+:::
