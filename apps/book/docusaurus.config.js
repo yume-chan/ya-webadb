@@ -52,6 +52,7 @@ module.exports = {
                     // Please change this to your repo.
                     editUrl:
                         'https://github.com/yume-chan/ya-webadb/edit/main/apps/book/',
+                    remarkPlugins: [require('./scripts/plantuml')],
                 },
                 theme: {
                     customCss: require.resolve('./src/css/custom.css'),

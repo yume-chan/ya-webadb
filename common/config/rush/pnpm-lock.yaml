@@ -31,7 +31,10 @@ dependencies:
   jest: 26.6.3
   json5: 2.2.0
   mini-css-extract-plugin: 1.4.0_webpack@5.28.0
+  mini-svg-data-uri: 1.3.3
+  node-fetch: 2.6.1
   path-browserify: 1.0.1
+  plantuml-encoder: 1.4.0
   react: 17.0.2
   react-dom: 17.0.2_react@17.0.2
   react-router-dom: 5.2.0_react@17.0.2
@@ -40,6 +43,7 @@ dependencies:
   tinyh264: 0.0.6
   ts-loader: 9.1.2_webpack@5.28.0
   tslib: 2.2.0
+  unist-util-visit: 2.0.3
   url-loader: 4.1.1_file-loader@6.2.0+webpack@5.28.0
   webpack: 5.28.0_webpack-cli@4.7.0
   webpack-bundle-analyzer: 4.4.0
@@ -7952,6 +7956,11 @@ packages:
       webpack: ^4.4.0 || ^5.0.0
     resolution:
       integrity: sha512-DyQr5DhXXARKZoc4kwvCvD95kh69dUupfuKOmBUqZ4kBTmRaRZcU32lYu3cLd6nEGXhQ1l7LzZ3F/CjItaY6VQ==
+  /mini-svg-data-uri/1.3.3:
+    dev: false
+    hasBin: true
+    resolution:
+      integrity: sha512-+fA2oRcR1dJI/7ITmeQJDrYWks0wodlOz0pAEhKYJ2IVc1z0AnwJUsKY2fzFmPAM3Jo9J0rBx8JAA9QQSJ5PuA==
   /minimalistic-assert/1.0.1:
     dev: false
     resolution:
@@ -8647,6 +8656,10 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==
+  /plantuml-encoder/1.4.0:
+    dev: false
+    resolution:
+      integrity: sha512-sxMwpDw/ySY1WB2CE3+IdMuEcWibJ72DDOsXLkSmEaSzwEUaYBT6DWgOfBiHGCux4q433X6+OEFWjlVqp7gL6g==
   /portfinder/1.0.28:
     dependencies:
       async: 2.6.3
@@ -12137,8 +12150,12 @@ packages:
       '@svgr/webpack': 5.5.0
       clsx: 1.1.1
       file-loader: 6.2.0_webpack@5.28.0
+      mini-svg-data-uri: 1.3.3
+      node-fetch: 2.6.1
+      plantuml-encoder: 1.4.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+      unist-util-visit: 2.0.3
       url-loader: 4.1.1_file-loader@6.2.0+webpack@5.28.0
     dev: false
     id: file:projects/unofficial-adb-book.tgz
@@ -12148,7 +12165,7 @@ packages:
       webpack: '*'
       webpack-cli: '*'
     resolution:
-      integrity: sha512-b3J6BwVNYs0CGLjgrAkl4/sTowhmkAubbkLvieGEidSki6h8MuRF0cqmfzcqLcSFgkLLd9XnOfB6y8OpfycbZA==
+      integrity: sha512-X5XaCuG6kMtOqmMh1mHCSeZLY7kgKPnOrll+Q/Ky9o5RWoX10sEVgv/BSxYZ8wvk3Ox3zCYqK1CaCyPBYxS3YQ==
       tarball: file:projects/unofficial-adb-book.tgz
     version: 0.0.0
 specifiers:
@@ -12184,7 +12201,10 @@ specifiers:
   jest: 26.6.3
   json5: 2.2.0
   mini-css-extract-plugin: 1.4.0
+  mini-svg-data-uri: ~1.3.3
+  node-fetch: ~2.6.1
   path-browserify: 1.0.1
+  plantuml-encoder: ~1.4.0
   react: 17.0.2
   react-dom: 17.0.2
   react-router-dom: 5.2.0
@@ -12193,6 +12213,7 @@ specifiers:
   tinyh264: 0.0.6
   ts-loader: 9.1.2
   tslib: 2.2.0
+  unist-util-visit: ^2.0.0
   url-loader: ^4.1.1
   webpack: 5.28.0
   webpack-bundle-analyzer: 4.4.0

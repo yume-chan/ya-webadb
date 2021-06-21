@@ -11,11 +11,11 @@ Note:
 * All offsets are in bytes
 * All multi-byte fields are in little-endian
 * All strings are in UTF-8 encoding
-* Some strings require null termination will be explicitly stated
+* Some strings requiring null termination will be explicitly stated
 
 | Offset | Type                | Field         | Description                            |
 | ------ | ------------------- | ------------- | -------------------------------------- |
-| 0      | uint32              | command       | Packet type                            |
+| 0      | char[4]             | command       | Packet type                            |
 | 4      | byte[4]             | arg0          | Meaning defined by each packet type    |
 | 8      | byte[4]             | arg1          | Meaning defined by each packet type    |
 | 12     | uint32              | payloadLength | Length of payload, in bytes            |
@@ -27,7 +27,7 @@ Note:
 
 The `command` field consists of four ASCII characters.
 
-For example, one type of packet has `0x4e584e43` as its `command`, hex strings are in big-endian so it's actually `[0x43, 0x4e, 0x58, 0x4e]`, encoded from `"CNXN"`.
+For example, one type of packet has `command` of `"CNXN"`, encoded to `[0x43, 0x4e, 0x58, 0x4e]`, or `0x4e584e43` in Hex (Hex strings are big-endian).
 
 ## Checksum
 
