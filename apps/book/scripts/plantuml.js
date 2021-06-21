@@ -27,7 +27,8 @@ module.exports = () => {
 
         await Promise.all(matches.map(async node => {
             const lightSvg = await umlToSvgDataUri(node.value.replace('@startuml', '@startuml\n!theme bluegray'));
-            const darkSvg = await umlToSvgDataUri(node.value.replace('@startuml', '@startuml\n!theme cyborg'));
+            // Workaround https://github.com/bschwarz/puml-themes/issues/15
+            const darkSvg = await umlToSvgDataUri(node.value.replace('@startuml', '@startuml\n!theme cyborg\nskinparam SequenceDelayFontColor $FGCOLOR'));
             node.type = 'jsx';
             node.value = `<ThemedImage${id} sources={{ light: "${lightSvg}", dark: "${darkSvg}" }} />`;
         }));
