@@ -2,9 +2,9 @@
 sidebar_position: 1
 ---
 
-# Transportation
+# Achitecture
 
-First I need to clarify what "ADB protocol" precisely is.
+This part describes the architecture of native ADB and Web ADB, and why there are designed in this way.
 
 ## Native ADB
 
@@ -49,41 +49,37 @@ Native ADB has three components:
 
 ### Client
 
-Most ADB commands are executed in Client, but Client doesn't talk directly to Daemon on device.
+**Client** receives command line inputs, generates request packets, sends them to **server** over TCP.
 
-The Client generates ADB packet payloads, encapsulates in **a variation of ADB protocol**, and sends them to Server over TCP.
+Because there can be multiple devices connected to the computer, **clients** add a "host prefix" to specify the device.
 
 ### Server
 
-Server is in the same binary with Client, but runs in a different process with different command arguments.
+**Server** is in the same binary as **client**, but runs in a separate process with different command line arguments. Usually **servers** are spawned by **clients** when they cannot find one on localhost. To manually spawn a **server**, use `adb server nodaemon`. By default, it binds to `localhost:5037`.
 
-Server will mux ADB packets from multiple clients then send to Daemon over USB (libusb) or TCP, using the **ADB protocol**.
+It is also possible to use SSH tunnel to let **clients** connect to a **server** running on a remote machine.
 
-Because OS USB APIs only allow exclusive access to a device from one application, this architecture is required to enable multiple CLI applications to access concurrently use one device.
+**Servers** are responsible for discovering and connecting to devices. They also handle packets from **clients**.
 
-Usually Server is spawned by Client if no one is already running. As a result, it usually runs on the same computer as Client.
+Some packets should be processed by **server** itself (for example `adb devices`), it generates response packets and sends them to **client**.
 
-However, it's also possible to manually start a Server with the following command:
+Others need to be forwarded to **daemons** (for example `adb shell`). It finds the specified **daemon** using the "host prefix", rewrites the packet to remove "host prefix", and finally sends it to the **daemon** over USB (libusb/WinUSB) or TCP.
 
-```shell
-$ adb server nodaemon
-```
-
-Then, with SSH tunnel or other port forwarding solutions, Clients may connect to the server running on a different machine.
+Because USB APIs only allow one connection to a device simultaneously, to use multiple CLI applications with one device, the **server** is required to multiplex the packets.
 
 ### Daemon
 
-Daemon receives packets, performs operations on device, and sends back response packets. The details of how Daemon works won't be included in this book.
+**Daemon** runs on Android devices and emulators, it receives packets, handles them, and generates responses.
 
-In USB mode, each Daemon can only accept one connection.
+Historically, because most device only has one USB port, **daemons** can only handle one connection. But even after ADB over Wi-Fi has been added, one **daemon** can still handle one TCP connection.
 
-:::tip TODO
-Finds out wether a Daemon can accept multiple TCP connections.
-:::
+### Protocol
+
+All packets between **client-server** and **server-daemon** are in the ADB packet format, but as mentioned before, **client-server** packets contain an extra "host prefix". ADB packet format will be described in [packet](./packet.md) chapter, while "host prefix" will be described in [stream](./stream.md) chapter.
 
 ## Web ADB
 
-Web ADB reuses native ADB daemon, with a 1:1:1 architecture:
+Web ADB reuses native ADB daemons, but there is no **client**/**server**: One application, one connection, to one device.
 
 <div className="flow-chart">
 
@@ -114,17 +110,17 @@ Web ADB reuses native ADB daemon, with a 1:1:1 architecture:
 
 ### Core
 
-Core is the `@yume-chan/adb` package. It generates data in **ADB protocol**.
+**Core** is the `@yume-chan/adb` package. It generates data in ADB protocol, without "host prefix" (not needed because packets are directly sent to **daemons** via **backends**).
 
 ### Backend
 
-Backends are in their own packages. They implement custom logic for sending packets.
+One **backend** defines one method to transmit and receive ADB packets. There are already multiple backend implementations, for example `@yume-chan/adb-backend-usb` and `@yume-chan/adb-backend-ws`.
 
-Core takes an instance of some Backend on initialization, and calls methods on it to send and receive data.
+One **core** instance requires one **backend** instance, so it only connects to one device.
 
-Because it's not easy to share a Backend to clients outside the Web Browser, and it's very easy to share a connected Core object, this 1:1:1 architecture was chosen and it dramatically reduces complexity.
+Because JavaScript runtimes are generally more isolated, sharing devices between multiple application is not a consideration. However, it is still very easy to share a **core** instance within a single application, and if a runtime has more privileges, sharing **core** using a custom protocol is also not impossible.
 
-Having Backend as an independent part also makes it very easy to port to other runtimes (Web Browsers, Node.js, Electron, etc).
+Having Backend as an independent part also makes it extremely easy to port to other runtimes (Web Browsers, Node.js, Electron, etc.).
 
 Possible Backend implementations:
 
