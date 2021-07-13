@@ -130,6 +130,10 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
         const items: ListItem[] = [];
         const linkItems: AdbSyncEntryResponse[] = [];
         const intervalId = setInterval(() => {
+            if (currentPath !== currentPathRef.current) {
+                return;
+            }
+
             setItems(items.slice());
         }, 1000);
 
@@ -138,7 +142,7 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
 
             for await (const entry of sync.opendir(currentPath)) {
                 if (currentPath !== currentPathRef.current) {
-                    break;
+                    return;
                 }
 
                 if (entry.name === '.' || entry.name === '..') {
@@ -159,6 +163,10 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
             }
 
             for (const entry of linkItems) {
+                if (currentPath !== currentPathRef.current) {
+                    return;
+                }
+
                 if (!await sync.isDirectory(path.resolve(currentPath, entry.name!))) {
                     entry.mode = (LinuxFileType.File << 12) | entry.permission;
                     entry.size = 0;
@@ -167,6 +175,9 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
                 items.push(toListItem(entry));
             }
 
+            if (currentPath !== currentPathRef.current) {
+                return;
+            }
             setItems(items);
             listRef.current?.scrollToIndex(0);
         } finally {
