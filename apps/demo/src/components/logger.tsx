@@ -65,6 +65,16 @@ function serializePacket(packet: AdbPacketInit) {
     return parts.join(' ');
 }
 
+const LoggerLine = withDisplayName('LoggerLine')(({ packet }: { packet: [string, AdbPacketInit]; }) => {
+    const string = useMemo(() => serializePacket(packet[1]), [packet]);
+
+    return (
+        <>
+            {packet[0]}{' '}{string}
+        </>
+    );
+});
+
 export interface LoggerContextValue {
     visible: boolean;
 
@@ -113,12 +123,18 @@ export interface LoggerProps {
     logger: AdbEventLogger;
 }
 
-function shouldVirtualize(props: IListProps<string>) {
+function shouldVirtualize(props: IListProps<[string, AdbPacketInit]>) {
     return !!props.items && props.items.length > 100;
 }
 
-function renderCell(item?: string) {
-    return item;
+function renderCell(item?: [string, AdbPacketInit]) {
+    if (!item) {
+        return null;
+    }
+
+    return (
+        <LoggerLine packet={item} />
+    );
 }
 
 export const Logger = withDisplayName('Logger')(({
@@ -126,23 +142,23 @@ export const Logger = withDisplayName('Logger')(({
     logger,
 }: LoggerProps) => {
     const contextValue = useContext(LoggerContext);
-    const [lines, setLines] = useState<string[]>([]);
+    const [packets, setPackets] = useState<[string, AdbPacketInit][]>([]);
     const scrollerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const disposables = new DisposableList();
         disposables.add(logger.onIncomingPacket((packet => {
-            setLines(lines => {
-                lines = lines.slice();
-                lines.push('Incoming ' + serializePacket(packet));
-                return lines;
+            setPackets(packets => {
+                packets = packets.slice();
+                packets.push(['Incoming', packet]);
+                return packets;
             });
         })));
         disposables.add(logger.onOutgoingPacket(packet => {
-            setLines(lines => {
-                lines = lines.slice();
-                lines.push('Outgoing ' + serializePacket(packet));
-                return lines;
+            setPackets(packets => {
+                packets = packets.slice();
+                packets.push(['Outgoing', packet]);
+                return packets;
             });
         }));
         return disposables.dispose;
@@ -163,7 +179,7 @@ export const Logger = withDisplayName('Logger')(({
                 iconName: 'Copy',
             },
             onClick: () => {
-                setLines(lines => {
+                setPackets(lines => {
                     window.navigator.clipboard.writeText(lines.join('\r'));
                     return lines;
                 });
@@ -176,7 +192,7 @@ export const Logger = withDisplayName('Logger')(({
                 iconName: 'Delete',
             },
             onClick: () => {
-                setLines([]);
+                setPackets([]);
             },
         },
     ], []);
@@ -184,8 +200,11 @@ export const Logger = withDisplayName('Logger')(({
     const mergedClassName = useMemo(() => mergeStyles(
         className,
         classNames['logger-container'],
-        !contextValue?.visible && { display: 'none' }
-    ), [contextValue?.visible]);
+    ), [className]);
+
+    if (!contextValue?.visible) {
+        return null;
+    }
 
     return (
         <Stack
@@ -195,8 +214,7 @@ export const Logger = withDisplayName('Logger')(({
             <CommandBar items={commandBarItems} />
             <div ref={scrollerRef} className={classNames.grow}>
                 <List
-                    items={lines}
-                    usePageCache
+                    items={packets}
                     onShouldVirtualize={shouldVirtualize}
                     onRenderCell={renderCell}
                 />

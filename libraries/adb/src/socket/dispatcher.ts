@@ -101,7 +101,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
                 return;
             }
 
-            this.errorEvent.fire(e);
+            this.errorEvent.fire(e as Error);
         }
     }
 
@@ -126,10 +126,10 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private async handleClose(packet: AdbPacket) {
         // From https://android.googlesource.com/platform/packages/modules/adb/+/65d18e2c1cc48b585811954892311b28a4c3d188/adb.cpp#459
         /* According to protocol.txt, p->msg.arg0 might be 0 to indicate
-        * a failed OPEN only. However, due to a bug in previous ADB
-        * versions, CLOSE(0, remote-id, "") was also used for normal
-        * CLOSE() operations.
-        */
+         * a failed OPEN only. However, due to a bug in previous ADB
+         * versions, CLOSE(0, remote-id, "") was also used for normal
+         * CLOSE() operations.
+         */
 
         // So don't return if `reject` didn't find a pending socket
         if (packet.arg0 === 0 &&

@@ -5,7 +5,7 @@ import Struct from '@yume-chan/struct';
 import { AndroidCodecLevel, AndroidCodecProfile } from './codec';
 import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "./connection";
 import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
-import { parse_sequence_parameter_set } from './sps';
+import { parse_sequence_parameter_set, SequenceParameterSet } from './sps';
 
 export enum ScrcpyLogLevel {
     Debug = 'debug',
@@ -177,7 +177,7 @@ export interface ScrcpyClientOptions {
     /**
      * The maximum value of both width and height.
      */
-    maxSize?: number;
+    maxSize?: number | undefined;
 
     bitRate: number;
 
@@ -200,21 +200,19 @@ export interface ScrcpyClientOptions {
     encoder?: string;
 }
 
-interface FrameSize {
-    width: number;
+export interface FrameSize {
+    sequenceParameterSet: SequenceParameterSet;
 
+    width: number;
     height: number;
 
     cropLeft: number;
-
     cropRight: number;
 
     cropTop: number;
-
     cropBottom: number;
 
     croppedWidth: number;
-
     croppedHeight: number;
 }
 
@@ -416,16 +414,6 @@ export class ScrcpyClient {
             const { width, height } = await Size.deserialize(this.videoStream);
             this._screenWidth = width;
             this._screenHeight = height;
-            this.sizeChangedEvent.fire({
-                width,
-                height,
-                cropLeft: 0,
-                cropRight: 0,
-                cropTop: 0,
-                cropBottom: 0,
-                croppedWidth: width,
-                croppedHeight: height,
-            });
 
             let buffer: ArrayBuffer | undefined;
             while (this._running) {
@@ -435,6 +423,8 @@ export class ScrcpyClient {
                 }
 
                 if (pts === NoPts) {
+                    const sequenceParameterSet = parse_sequence_parameter_set(data.slice(0));
+
                     const {
                         pic_width_in_mbs_minus1,
                         pic_height_in_map_units_minus1,
@@ -443,8 +433,7 @@ export class ScrcpyClient {
                         frame_crop_right_offset,
                         frame_crop_top_offset,
                         frame_crop_bottom_offset,
-                    } = parse_sequence_parameter_set(data.slice(0));
-
+                    } = sequenceParameterSet;
                     const width = (pic_width_in_mbs_minus1 + 1) * 16;
                     const height = (pic_height_in_map_units_minus1 + 1) * (2 - frame_mbs_only_flag) * 16;
                     const cropLeft = frame_crop_left_offset * 2;
@@ -458,6 +447,7 @@ export class ScrcpyClient {
                     this._screenHeight = screenHeight;
 
                     this.sizeChangedEvent.fire({
+                        sequenceParameterSet,
                         width,
                         height,
                         cropLeft: cropLeft,

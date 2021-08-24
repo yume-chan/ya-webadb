@@ -154,15 +154,18 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
         }
 
         const profile_idc = reader.read(8);
-        const constraint_set0_flag = !!reader.next();
-        const constraint_set1_flag = !!reader.next();
-        const constraint_set2_flag = !!reader.next();
-        const constraint_set3_flag = !!reader.next();
-        const constraint_set4_flag = !!reader.next();
-        const constraint_set5_flag = !!reader.next();
+        const constraint_set = reader.read(8);
+
+        const constraint_set_reader = new BitReader(new Uint8Array([constraint_set]));
+        const constraint_set0_flag = !!constraint_set_reader.next();
+        const constraint_set1_flag = !!constraint_set_reader.next();
+        const constraint_set2_flag = !!constraint_set_reader.next();
+        const constraint_set3_flag = !!constraint_set_reader.next();
+        const constraint_set4_flag = !!constraint_set_reader.next();
+        const constraint_set5_flag = !!constraint_set_reader.next();
 
         // reserved_zero_2bits
-        if (reader.read(2) !== 0) {
+        if (constraint_set_reader.read(2) !== 0) {
             throw new Error('Invalid data');
         }
 
@@ -255,6 +258,7 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
 
         return {
             profile_idc,
+            constraint_set,
             constraint_set0_flag,
             constraint_set1_flag,
             constraint_set2_flag,
@@ -276,3 +280,5 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
 
     throw new Error('Invalid data');
 }
+
+export type SequenceParameterSet = ReturnType<typeof parse_sequence_parameter_set>;

@@ -1,16 +1,28 @@
 import { Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from '@fluentui/react';
 import { useBoolean, useId } from '@fluentui/react-hooks';
-import { FormEvent, KeyboardEvent, useCallback, useContext, useMemo, useRef, useState } from 'react';
-import YUVBuffer from 'yuv-buffer';
-import YUVCanvas from 'yuv-canvas';
+import { FormEvent, KeyboardEvent, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { CommandBar, DemoMode, DeviceView, DeviceViewRef, ErrorDialogContext, ExternalLink } from '../../components';
 import { CommonStackTokens } from '../../styles';
 import { formatSpeed, useSpeed, withDisplayName } from '../../utils';
 import { useAdbDevice } from '../type';
+import { Decoder, DecoderConstructor } from "./decoder";
 import { AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidMotionEventAction, fetchServer, ScrcpyClient, ScrcpyClientOptions, ScrcpyLogLevel, ScrcpyScreenOrientation, ScrcpyServerVersion } from './server';
-import { createTinyH264Decoder, TinyH264Decoder } from './tinyh264';
+import { TinyH264DecoderWrapper } from "./tinyh264";
+import { WebCodecsDecoder } from "./webcodecs/decoder";
 
 const DeviceServerPath = '/data/local/tmp/scrcpy-server.jar';
+
+const decoders: { name: string; factory: DecoderConstructor; }[] = [{
+    name: 'TinyH264 (Software)',
+    factory: TinyH264DecoderWrapper,
+}];
+
+if (typeof window.VideoDecoder === 'function') {
+    decoders.push({
+        name: 'WebCodecs',
+        factory: WebCodecsDecoder,
+    });
+}
 
 function clamp(value: number, min: number, max: number): number {
     if (value < min) {
@@ -30,6 +42,7 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
     const device = useAdbDevice();
     const [running, setRunning] = useState(false);
 
+    const [canvasKey, setCanvasKey] = useState(decoders[0].name);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [width, setWidth] = useState(0);
     const [height, setHeight] = useState(0);
@@ -57,14 +70,34 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
 
     const [settingsVisible, { toggle: toggleSettingsVisible }] = useBoolean(false);
 
+    const [selectedDecoder, setSelectedDecoder] = useState(decoders[0]);
+    const decoderRef = useRef<Decoder | undefined>(undefined);
+    const handleSelectedDecoderChange = useCallback((e?: FormEvent<HTMLElement>, option?: IDropdownOption) => {
+        if (!option) { return; }
+        setSelectedDecoder(option.data as { name: string; factory: DecoderConstructor; });
+    }, []);
+    useLayoutEffect(() => {
+        if (!running) {
+            // Different decoders may need different canvas context,
+            // but it's impossible to change context type on a canvas element,
+            // so re-render canvas element after stopped
+            setCanvasKey(selectedDecoder.name);
+        }
+    }, [running, selectedDecoder]);
+
     const [encoders, setEncoders] = useState<string[]>([]);
     const [currentEncoder, setCurrentEncoder] = useState<string>();
     const handleCurrentEncoderChange = useCallback((e?: FormEvent<HTMLElement>, option?: IDropdownOption) => {
-        if (!option) {
+        if (!option) { return; }
+        setCurrentEncoder(option.key as string);
+    }, []);
+
+    const [resolution, setResolution] = useState(1080);
+    const handleResolutionChange = useCallback((e: any, value?: string) => {
+        if (value === undefined) {
             return;
         }
-
-        setCurrentEncoder(option.key as string);
+        setResolution(+value);
     }, []);
 
     const [bitRate, setBitRate] = useState(4_000_000);
@@ -95,6 +128,10 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
 
         (async () => {
             try {
+                if (!selectedDecoder) {
+                    throw new Error('No available decoder');
+                }
+
                 setServerTotalSize(0);
                 setServerDownloadedSize(0);
                 setServerUploadedSize(0);
@@ -145,7 +182,6 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
                     path: DeviceServerPath,
                     version: ScrcpyServerVersion,
                     logLevel: ScrcpyLogLevel.Debug,
-                    // TinyH264 is slow, so limit the max resolution and bit rate
                     maxSize: 1080,
                     bitRate: 4_000_000,
                     orientation: ScrcpyScreenOrientation.Unlocked,
@@ -155,24 +191,25 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
                     level: AndroidCodecLevel.Level4,
                 };
 
-                let encoder!: string;
                 setCurrentEncoder(current => {
                     if (current) {
-                        encoder = current;
+                        options.encoder = current;
                         return current;
                     } else {
-                        encoder = encoders.find(item => item !== '') ?? 'OMX.hisi.video.encoder.avc';
-                        return encoder;
+                        options.encoder = encoders[0];
+                        return encoders[0];
                     }
                 });
-                options.encoder = encoder;
 
-                let bitRate!: number;
-                setBitRate(current => {
-                    bitRate = current;
+                setResolution(current => {
+                    options.maxSize = current;
                     return current;
                 });
-                options.bitRate = bitRate;
+
+                setBitRate(current => {
+                    options.bitRate = current;
+                    return current;
+                });
 
                 const client = new ScrcpyClient(options);
 
@@ -187,54 +224,24 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
                 });
                 client.onClose(stop);
 
-                let decoderPromise: Promise<TinyH264Decoder> | undefined;
-                client.onSizeChanged(async ({ croppedWidth, croppedHeight, cropLeft, cropTop }) => {
-                    let oldDecoderPromise = decoderPromise;
-                    decoderPromise = createTinyH264Decoder();
+                const decoder = new selectedDecoder.factory(canvasRef.current!);
+                decoderRef.current = decoder;
 
-                    let decoder = await oldDecoderPromise;
-                    decoder?.dispose();
-
-                    if (canvasRef.current) {
-                        canvasRef.current.width = croppedWidth;
-                        canvasRef.current.height = croppedHeight;
-                    }
+                client.onSizeChanged(async (config) => {
+                    const { croppedWidth, croppedHeight, } = config;
 
                     setWidth(croppedWidth);
                     setHeight(croppedHeight);
 
-                    const yuvCanvas = YUVCanvas.attach(canvasRef.current!);
+                    const canvas = canvasRef.current!;
+                    canvas.width = croppedWidth;
+                    canvas.height = croppedHeight;
 
-                    decoder = await decoderPromise;
-                    decoder.pictureReady((args) => {
-                        const { data, width: videoWidth, height: videoHeight } = args;
-
-                        const format = YUVBuffer.format({
-                            width: videoWidth,
-                            height: videoHeight,
-                            chromaWidth: videoWidth / 2,
-                            chromaHeight: videoHeight / 2,
-                            cropLeft,
-                            cropTop,
-                            cropWidth: croppedWidth,
-                            cropHeight: croppedHeight,
-                            displayWidth: croppedWidth,
-                            displayHeight: croppedHeight,
-                        });
-
-                        const array = new Uint8Array(data);
-                        const frame = YUVBuffer.frame(format,
-                            YUVBuffer.lumaPlane(format, array, videoWidth, 0),
-                            YUVBuffer.chromaPlane(format, array, videoWidth / 2, videoWidth * videoHeight),
-                            YUVBuffer.chromaPlane(format, array, videoWidth / 2, videoWidth * videoHeight + videoWidth * videoHeight / 4)
-                        );
-
-                        yuvCanvas.drawFrame(frame);
-                    });
+                    await decoder.configure(config);
                 });
+
                 client.onVideoData(async ({ data }) => {
-                    let decoder = await decoderPromise;
-                    decoder?.feed(data!);
+                    await decoder.decode(data);
                 });
 
                 client.onClipboardChange(content => {
@@ -244,13 +251,13 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
                 await client.start();
                 scrcpyClientRef.current = client;
                 setRunning(true);
-            } catch (e) {
+            } catch (e: any) {
                 showErrorDialog(e.message);
             } finally {
                 setConnecting(false);
             }
         })();
-    }, [device]);
+    }, [device, selectedDecoder]);
 
     const stop = useCallback(() => {
         (async () => {
@@ -260,6 +267,8 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
 
             await scrcpyClientRef.current.close();
             scrcpyClientRef.current = undefined;
+
+            decoderRef.current?.dispose();
 
             setRunning(false);
         })();
@@ -458,6 +467,7 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
                     bottomHeight={40}
                 >
                     <canvas
+                        key={canvasKey}
                         ref={handleCanvasRef}
                         style={{ display: 'block', outline: 'none' }}
                         tabIndex={-1}
@@ -480,8 +490,27 @@ export const Scrcpy = withDisplayName('Scrcpy')((): JSX.Element | null => {
                         onChange={handleCurrentEncoderChange}
                     />
 
+                    {decoders.length > 1 && (
+                        <Dropdown
+                            label="Decoder"
+                            options={decoders.map(item => ({ key: item.name, text: item.name, data: item }))}
+                            selectedKey={selectedDecoder.name}
+                            onChange={handleSelectedDecoderChange}
+                        />
+                    )}
+
                     <SpinButton
-                        label="Target Bit Rate"
+                        label="Max Resolution (longer side, 0 = unlimited)"
+                        labelPosition={Position.top}
+                        value={resolution.toString()}
+                        min={0}
+                        max={2560}
+                        step={100}
+                        onChange={handleResolutionChange}
+                    />
+
+                    <SpinButton
+                        label="Max Bit Rate"
                         labelPosition={Position.top}
                         value={bitRate.toString()}
                         min={100}
