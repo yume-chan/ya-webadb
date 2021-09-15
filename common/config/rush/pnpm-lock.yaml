@@ -16,13 +16,13 @@ dependencies:
   '@rush-temp/unofficial-adb-book': file:projects/unofficial-adb-book.tgz_7c3ab479aeb2c39a2fd53464782a0811
   '@svgr/webpack': 5.5.0
   '@types/jest': 26.0.24
-  '@types/node': 15.14.2
+  '@types/node': 16.9.1
   '@types/react': 17.0.14
   '@types/react-dom': 17.0.9
   '@types/react-router-dom': 5.1.8
   '@types/w3c-web-usb': 1.0.5
   '@yume-chan/async': 2.1.4
-  clean-webpack-plugin: 3.0.0_webpack@5.44.0
+  clean-webpack-plugin: 4.0.0_webpack@5.44.0
   clsx: 1.1.1
   copy-webpack-plugin: 8.1.1_webpack@5.44.0
   css-loader: 5.2.6_webpack@5.44.0
@@ -42,7 +42,7 @@ dependencies:
   streamsaver: 2.0.5
   tinyh264: 0.0.6
   ts-loader: 9.2.3_webpack@5.44.0
-  tslib: 2.3.0
+  tslib: 2.3.1
   unist-util-visit: 2.0.3
   url-loader: 4.1.1_file-loader@6.2.0+webpack@5.44.0
   webpack: 5.44.0_webpack-cli@4.7.2
@@ -51,9 +51,10 @@ dependencies:
   webpack-dev-server: 3.11.2_webpack-cli@4.7.2+webpack@5.44.0
   webpackbar: 5.0.0-3_webpack@5.44.0
   worker-loader: 3.0.8_webpack@5.44.0
-  xterm: 4.13.0
-  xterm-addon-fit: 0.5.0_xterm@4.13.0
-  xterm-addon-search: 0.8.0_xterm@4.13.0
+  xterm: 4.14.1
+  xterm-addon-fit: 0.5.0_xterm@4.14.1
+  xterm-addon-search: 0.8.1_xterm@4.14.1
+  xterm-addon-webgl: 0.11.2_xterm@4.14.1
   yuv-buffer: 1.0.0
   yuv-canvas: 1.2.7
 lockfileVersion: 5.2
@@ -2825,6 +2826,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-dvMUE/m2LbXPwlvVuzCyslTEtQ2ZwuuFClDrOQ6mp2CenCg971719PTILZ4I6bTP27xfFFc+o7x2TkLuun/MPw==
+  /@types/node/16.9.1:
+    dev: false
+    resolution:
+      integrity: sha512-QpLcX9ZSsq3YYUUnD3nFDY8H7wctAhQj/TFKL8Ya8v5fMm3CFXxo8zStsLAl780ltoYoo1WvKUVGBQK+1ifr7g==
   /@types/normalize-package-data/2.4.1:
     dev: false
     resolution:
@@ -2888,24 +2893,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew==
-  /@types/source-list-map/0.1.2:
-    dev: false
-    resolution:
-      integrity: sha512-K5K+yml8LTo9bWJI/rECfIPrGgxdpeNbj+d53lwN4QjW1MCwlkhUms+gtdzigTeUyBr09+u8BwOIY3MXvHdcsA==
   /@types/stack-utils/2.0.1:
     dev: false
     resolution:
       integrity: sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==
-  /@types/tapable/1.0.8:
-    dev: false
-    resolution:
-      integrity: sha512-ipixuVrh2OdNmauvtT51o3d8z12p6LtFW9in7U79der/kwejjdNchQC5UMn5u/KxNoM7VHHOs/l8KS8uHxhODQ==
-  /@types/uglify-js/3.13.1:
-    dependencies:
-      source-map: 0.6.1
-    dev: false
-    resolution:
-      integrity: sha512-O3MmRAk6ZuAKa9CHgg0Pr0+lUOqoMLpc9AS4R8ano2auvsg7IE8syF3Xh/NPr26TWklxYcqoEEFdzLLs1fV9PQ==
   /@types/unist/2.0.5:
     dev: false
     resolution:
@@ -2914,25 +2905,6 @@ packages:
     dev: false
     resolution:
       integrity: sha512-dYolx2XWesl1TMu+1BjtjU6eC6c2zZ2VDKhjU4f/mtR3+UBfMW6h1tPCQt7leY5Y8JBg0Fe/mMnoDMkPPNX9sw==
-  /@types/webpack-sources/2.1.1:
-    dependencies:
-      '@types/node': 15.14.2
-      '@types/source-list-map': 0.1.2
-      source-map: 0.7.3
-    dev: false
-    resolution:
-      integrity: sha512-MjM1R6iuw8XaVbtkCBz0N349cyqBjJHCbQiOeppe3VBeFvxqs74RKHAVt9LkxTnUWc7YLZOEsUfPUnmK6SBPKQ==
-  /@types/webpack/4.41.30:
-    dependencies:
-      '@types/node': 15.14.2
-      '@types/tapable': 1.0.8
-      '@types/uglify-js': 3.13.1
-      '@types/webpack-sources': 2.1.1
-      anymatch: 3.1.2
-      source-map: 0.6.1
-    dev: false
-    resolution:
-      integrity: sha512-GUHyY+pfuQ6haAfzu4S14F+R5iGRwN6b2FRNJY7U0NilmFAqbsOfK6j1HwuLBAqwRIT+pVdNDJGJ6e8rpp0KHA==
   /@types/yargs-parser/20.2.1:
     dev: false
     resolution:
@@ -3999,18 +3971,17 @@ packages:
       node: '>=6'
     resolution:
       integrity: sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
-  /clean-webpack-plugin/3.0.0_webpack@5.44.0:
+  /clean-webpack-plugin/4.0.0_webpack@5.44.0:
     dependencies:
-      '@types/webpack': 4.41.30
       del: 4.1.1
       webpack: 5.44.0_webpack-cli@4.7.2
     dev: false
     engines:
-      node: '>=8.9.0'
+      node: '>=10.0.0'
     peerDependencies:
-      webpack: '*'
+      webpack: '>=4.0.0 <6.0.0'
     resolution:
-      integrity: sha512-MciirUH5r+cYLGCOL5JX/ZLzOZbVr1ot3Fw+KcvbhUb6PM+yycqd9ZhIlcigQ5gl+XhppNmw3bEFuaaMNyLj3A==
+      integrity: sha512-WuWE1nyTNAyW5T7oNyys2EN0cfP2fdRxhxnIQWiAp0bMabPdHhoGxM8A6YL2GhqwgrPnnaemVE7nv5XJ2Fhh2w==
   /cli-boxes/2.2.1:
     dev: false
     engines:
@@ -10930,13 +10901,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-3IVX4nI6B5cc31/GFFE+i8ey/N2eA0CZDbo6n0yrz0zDX8ZJ8djmU1p+XRz7G3is0F3bB3pu2pAroFdAWQKU3w==
-  /ts-loader/9.2.3_typescript@4.3.5+webpack@5.44.0:
+  /ts-loader/9.2.3_typescript@4.4.3+webpack@5.44.0:
     dependencies:
       chalk: 4.1.1
       enhanced-resolve: 5.8.2
       micromatch: 4.0.4
       semver: 7.3.5
-      typescript: 4.3.5
+      typescript: 4.4.3
       webpack: 5.44.0_webpack-cli@4.7.2
     dev: false
     engines:
@@ -10973,6 +10944,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==
+  /tslib/2.3.1:
+    dev: false
+    resolution:
+      integrity: sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==
   /type-check/0.3.2:
     dependencies:
       prelude-ls: 1.1.2
@@ -11026,13 +11001,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-zdu8XMNEDepKKR+XYOXAVPtWui0ly0NtohUscw+UmaHiAWT8hrV1rr//H6V+0DvJ3OQ19S979M0laLfX8rm82Q==
-  /typescript/4.3.5:
+  /typescript/4.4.3:
     dev: false
     engines:
       node: '>=4.2.0'
     hasBin: true
     resolution:
-      integrity: sha512-DqQgihaQ9cUrskJo9kIyW/+g0Vxsk8cDtZ52a3NGh0YNTfpUSArXSohyUGnvbPazEPLu398C0UxmKSOrPumUzA==
+      integrity: sha512-4xfscpisVgqqDfPaJo5vkd+Qd/ItkoagnHpufr+i2QCHBsNYp+G7UAoyFl8aPtx879u38wPV65rZ8qbGZijalA==
   /ua-parser-js/0.7.28:
     dev: false
     resolution:
@@ -11885,26 +11860,34 @@ packages:
       node: '>=0.4'
     resolution:
       integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
-  /xterm-addon-fit/0.5.0_xterm@4.13.0:
+  /xterm-addon-fit/0.5.0_xterm@4.14.1:
     dependencies:
-      xterm: 4.13.0
+      xterm: 4.14.1
     dev: false
     peerDependencies:
       xterm: ^4.0.0
     resolution:
       integrity: sha512-DsS9fqhXHacEmsPxBJZvfj2la30Iz9xk+UKjhQgnYNkrUIN5CYLbw7WEfz117c7+S86S/tpHPfvNxJsF5/G8wQ==
-  /xterm-addon-search/0.8.0_xterm@4.13.0:
+  /xterm-addon-search/0.8.1_xterm@4.14.1:
     dependencies:
-      xterm: 4.13.0
+      xterm: 4.14.1
     dev: false
     peerDependencies:
       xterm: ^4.0.0
     resolution:
-      integrity: sha512-MPJGPVPpHRUw9cLIuqQbrVepmENMOybVUSxIALz5h1ryyQBrVqVujq2hL5aroX5/dZJoHx9lGHQTVLQ07SKgKA==
-  /xterm/4.13.0:
+      integrity: sha512-OtOaC9gxD2Q4ZnjZrCSRZmKLwwUjXX3gP7mIzq8Rs50317DGRDqgTLuHTYv/Nx/LvI5ceVFRYCxK36Ixs1nXNw==
+  /xterm-addon-webgl/0.11.2_xterm@4.14.1:
+    dependencies:
+      xterm: 4.14.1
+    dev: false
+    peerDependencies:
+      xterm: ^4.0.0
+    resolution:
+      integrity: sha512-eEOKEIMZO0IRb+UTHhTaUwxpD1cu7Zqr+jdUfhDv9cfVieg9c4mcRn9RWvNGlprGdlLmOSTUByhm8ve6qAc4HQ==
+  /xterm/4.14.1:
     dev: false
     resolution:
-      integrity: sha512-HVW1gdoLOTnkMaqQCr2r3mQy4fX9iSa5gWxKZ2UTYdLa4iqavv7QxJ8n1Ypse32shPVkhTYPLS6vHEFZp5ghzw==
+      integrity: sha512-jgzNg5BuGPwq5/M4dGnmbghZvHx2jaj+9crSEt15bV34Za49VziBmCu7zIy88zUKKiGTxeo7aVzirFSJArIMFw==
   /y18n/4.0.3:
     dev: false
     resolution:
@@ -11990,35 +11973,35 @@ packages:
     dependencies:
       '@types/w3c-web-usb': 1.0.5
       jest: 26.6.3
-      tslib: 2.3.0
-      typescript: 4.3.5
+      tslib: 2.3.1
+      typescript: 4.4.3
     dev: false
     name: '@rush-temp/adb-backend-webusb'
     resolution:
-      integrity: sha512-egmrEmqQ/DC311ePCYaooF5KBtqbwUr81024KSVJeRXhNVrb79L5QPfB6chjniRVR+5ALC5hWThcXp1hdM5DBQ==
+      integrity: sha512-HSlDEP7ueAlPCjy6F+o9flrcykC54oul0iSug+ujAAuuEX2kjMOm2J2puyI/ZKag0dsNSUcojdm2J1ViXkbGMQ==
       tarball: file:projects/adb-backend-webusb.tgz
     version: 0.0.0
   file:projects/adb-backend-ws.tgz:
     dependencies:
       '@yume-chan/async': 2.1.4
-      tslib: 2.3.0
-      typescript: 4.3.5
+      tslib: 2.3.1
+      typescript: 4.4.3
     dev: false
     name: '@rush-temp/adb-backend-ws'
     resolution:
-      integrity: sha512-v9ji+SKJWgYEKShDU5iQOZW9OgJQDwjvZTwtUUwEyMXj6RH8I88L/I86NqtEkF3vVbcxgcvS38JlHnVrp3wRWg==
+      integrity: sha512-gmOeTpe51r+uwYeeMuPIQ6LU2+DYXJbirNXafLgfLjpWWWH8sCblZADZlHLzI/wte6RfabrecbyTgxoTtJ6rvA==
       tarball: file:projects/adb-backend-ws.tgz
     version: 0.0.0
   file:projects/adb.tgz:
     dependencies:
       '@yume-chan/async': 2.1.4
       jest: 26.6.3
-      tslib: 2.3.0
-      typescript: 4.3.5
+      tslib: 2.3.1
+      typescript: 4.4.3
     dev: false
     name: '@rush-temp/adb'
     resolution:
-      integrity: sha512-hHLj5hwJ8Yr6DOq1uVcQo/ZVxE6p/IIeG8RMyCAbiwSVYnoj13nA5kQIEvPWQF2zgFQcYD+896/NlBuyYdIByw==
+      integrity: sha512-ml4LnuWqxm//ml+VLLaRCxyfXCrbAmjOUupCyZOz8gOKgyhTNuNLd9KBxQFGH26qH7OFzn3oBttLJWKnaP2Q8Q==
       tarball: file:projects/adb.tgz
     version: 0.0.0
   file:projects/demo.tgz:
@@ -12028,12 +12011,12 @@ packages:
       '@fluentui/react-file-type-icons': 8.2.3_b2f98f1a44929e460196386bafc39b6a
       '@fluentui/react-hooks': 8.2.7_b2f98f1a44929e460196386bafc39b6a
       '@types/jest': 26.0.24
-      '@types/node': 15.14.2
+      '@types/node': 16.9.1
       '@types/react': 17.0.14
       '@types/react-dom': 17.0.9
       '@types/react-router-dom': 5.1.8
       '@yume-chan/async': 2.1.4
-      clean-webpack-plugin: 3.0.0_webpack@5.44.0
+      clean-webpack-plugin: 4.0.0_webpack@5.44.0
       copy-webpack-plugin: 8.1.1_webpack@5.44.0
       css-loader: 5.2.6_webpack@5.44.0
       file-loader: 6.2.0_webpack@5.44.0
@@ -12046,60 +12029,61 @@ packages:
       source-map-loader: 2.0.2_webpack@5.44.0
       streamsaver: 2.0.5
       tinyh264: 0.0.6
-      ts-loader: 9.2.3_typescript@4.3.5+webpack@5.44.0
-      tslib: 2.3.0
-      typescript: 4.3.5
+      ts-loader: 9.2.3_typescript@4.4.3+webpack@5.44.0
+      tslib: 2.3.1
+      typescript: 4.4.3
       webpack: 5.44.0_webpack-cli@4.7.2
       webpack-bundle-analyzer: 4.4.2
       webpack-cli: 4.7.2_3ba9f3aa30c144452af654d0ccdb44e9
       webpack-dev-server: 3.11.2_webpack-cli@4.7.2+webpack@5.44.0
       webpackbar: 5.0.0-3_webpack@5.44.0
       worker-loader: 3.0.8_webpack@5.44.0
-      xterm: 4.13.0
-      xterm-addon-fit: 0.5.0_xterm@4.13.0
-      xterm-addon-search: 0.8.0_xterm@4.13.0
+      xterm: 4.14.1
+      xterm-addon-fit: 0.5.0_xterm@4.14.1
+      xterm-addon-search: 0.8.1_xterm@4.14.1
+      xterm-addon-webgl: 0.11.2_xterm@4.14.1
       yuv-buffer: 1.0.0
       yuv-canvas: 1.2.7
     dev: false
     name: '@rush-temp/demo'
     resolution:
-      integrity: sha512-bFFC7rW/EaQt7ouSCVIq+y7daLZSS2QrS9kIILQd/xCNnKOmGL7RWxzzpYSKTq1+bODT0rOEtZeEFUOq/MVkNw==
+      integrity: sha512-XbNR6+aZFyh7lu1CYiBY+PzWsXjwIZcAKLIWDqo/OpbxQsiDVJjmz+EBtof/laPSjU2wM2BgQ8jWGM9236FHBQ==
       tarball: file:projects/demo.tgz
     version: 0.0.0
   file:projects/event.tgz:
     dependencies:
       '@yume-chan/async': 2.1.4
       jest: 26.6.3
-      tslib: 2.3.0
-      typescript: 4.3.5
+      tslib: 2.3.1
+      typescript: 4.4.3
     dev: false
     name: '@rush-temp/event'
     resolution:
-      integrity: sha512-nzhzEBRDaLpa4gLs+4/WWZGYyAVnWeq0iMa0qNuG5o1uZw9olkjHh702jL1HsOQViNsa9hB9O2F1rbVW9xsCKg==
+      integrity: sha512-xKXpC79xXSyXj/rzUHlyCAFT5X9mUejkCcF2DarGiRw+gT7tug6na+EvUz2dZUVCtIzyUJFtuhbS39n0qy0A+g==
       tarball: file:projects/event.tgz
     version: 0.0.0
   file:projects/struct.tgz:
     dependencies:
-      '@types/node': 15.14.2
+      '@types/node': 16.9.1
       jest: 26.6.3
-      tslib: 2.3.0
-      typescript: 4.3.5
+      tslib: 2.3.1
+      typescript: 4.4.3
     dev: false
     name: '@rush-temp/struct'
     resolution:
-      integrity: sha512-k3jz8Lst3WmOWapT9qQ56H7JIX5qGwK0MJhkiLSHjtte4sWzu5/jrrEZyfKqiABOh/CTBEGAs7E5vsKO3pdg6Q==
+      integrity: sha512-j1oCxwpkmde9LO5iyZHD3ndKGeD8ECVh7n8wpm4mqiQmHzay++2ky0djoqL5j3+sMycUmQfMKq7llNvNN0tDHg==
       tarball: file:projects/struct.tgz
     version: 0.0.0
   file:projects/ts-package-builder.tgz:
     dependencies:
       '@types/jest': 26.0.24
-      '@types/node': 15.14.2
+      '@types/node': 16.9.1
       json5: 2.2.0
-      typescript: 4.3.5
+      typescript: 4.4.3
     dev: false
     name: '@rush-temp/ts-package-builder'
     resolution:
-      integrity: sha512-AyL7A8tQ+jEM3teCd8CM2FlH9hSTJ0dnXDs7BRlel7nXABKcLdMVGyIzNPdSjYXErdd6C94oT+d192VGncIy4w==
+      integrity: sha512-M7CMjBTO+fqKzrmWZgx3veL5IqvlOvvjYRJsMe6l/ylsaApwrJthKN7QwHE1wcHm7M/cCbakhA8oucRMLSAqxw==
       tarball: file:projects/ts-package-builder.tgz
     version: 0.0.0
   file:projects/unofficial-adb-book.tgz_7c3ab479aeb2c39a2fd53464782a0811:
@@ -12146,13 +12130,13 @@ specifiers:
   '@rush-temp/unofficial-adb-book': file:./projects/unofficial-adb-book.tgz
   '@svgr/webpack': ^5.5.0
   '@types/jest': ^26.0.23
-  '@types/node': ^15.0.3
+  '@types/node': ^16.9.1
   '@types/react': ^17.0.0
   '@types/react-dom': ^17.0.0
   '@types/react-router-dom': ^5.1.6
   '@types/w3c-web-usb': ^1.0.4
   '@yume-chan/async': ^2.1.4
-  clean-webpack-plugin: ^3.0.0
+  clean-webpack-plugin: ^4.0.0
   clsx: ^1.1.1
   copy-webpack-plugin: ^8.0.0
   css-loader: ^5.2.4
@@ -12172,7 +12156,7 @@ specifiers:
   streamsaver: ^2.0.5
   tinyh264: ^0.0.6
   ts-loader: ^9.1.2
-  tslib: ^2.2.0
+  tslib: ^2.3.1
   unist-util-visit: ^2.0.0
   url-loader: ^4.1.1
   webpack: ^5.28.0
@@ -12181,8 +12165,9 @@ specifiers:
   webpack-dev-server: ^3.11.1
   webpackbar: ^5.0.0-3
   worker-loader: ^3.0.7
-  xterm: ^4.13.0
+  xterm: ^4.14.1
   xterm-addon-fit: ^0.5.0
-  xterm-addon-search: ^0.8.0
+  xterm-addon-search: ^0.8.1
+  xterm-addon-webgl: ^0.11.2
   yuv-buffer: ^1.0.0
   yuv-canvas: ^1.2.6

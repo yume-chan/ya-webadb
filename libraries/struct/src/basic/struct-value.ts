@@ -18,9 +18,6 @@ export class StructValue {
      * @param value The associated `StructFieldValue`
      */
     public set(key: PropertyKey, value: StructFieldValue): void {
-        // TODO: TypeScript 4.2 will allow this behavior
-        // https://github.com/microsoft/TypeScript/pull/26797
-        // @ts-expect-error Type 'symbol' cannot be used as an index type. ts(2538)
         this.fieldValues[key] = value;
 
         Object.defineProperty(this.value, key, {
@@ -37,9 +34,6 @@ export class StructValue {
      * @param key The field name
      */
     public get(key: PropertyKey): StructFieldValue {
-        // TODO: TypeScript 4.2 will allow this behavior
-        // https://github.com/microsoft/TypeScript/pull/26797
-        // @ts-expect-error Type 'symbol' cannot be used as an index type. ts(2538)
         return this.fieldValues[key];
     }
 }

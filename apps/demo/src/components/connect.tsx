@@ -106,7 +106,7 @@ export const Connect = withDisplayName('Connect')(({
                     throw e;
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
             showErrorDialog(e.message);
         } finally {
             setConnecting(false);
@@ -116,7 +116,7 @@ export const Connect = withDisplayName('Connect')(({
         try {
             await device!.dispose();
             onDeviceChange(undefined);
-        } catch (e) {
+        } catch (e: any) {
             showErrorDialog(e.message);
         }
     }, [device]);

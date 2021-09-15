@@ -6,6 +6,7 @@ import { CSSProperties, useCallback, useContext, useEffect, useRef, useState } f
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { SearchAddon } from 'xterm-addon-search';
+import { WebglAddon } from 'xterm-addon-webgl';
 import 'xterm/css/xterm.css';
 import { ErrorDialogContext } from '../components/error-dialog';
 import { ResizeObserver, withDisplayName } from '../utils';
@@ -24,7 +25,7 @@ class AdbTerminal extends AutoDisposable {
         scrollback: 9000,
     });
 
-    public findAddon = new SearchAddon();
+    public searchAddon = new SearchAddon();
 
     private readonly fitAddon = new FitAddon();
 
@@ -35,6 +36,8 @@ class AdbTerminal extends AutoDisposable {
 
         if (value) {
             this.terminal.open(value);
+            this.terminal.loadAddon(new WebglAddon());
+            this.terminal.setOption('cursorBlink', true);
             this.fit();
         }
     }
@@ -70,7 +73,10 @@ class AdbTerminal extends AutoDisposable {
     public constructor() {
         super();
 
-        this.terminal.loadAddon(this.findAddon);
+        this.terminal.setOption('fontFamily', '"Cascadia Code", Consolas, monospace, "Source Han Sans SC", "Microsoft YaHei"');
+        this.terminal.setOption('letterSpacing', 1);
+        this.terminal.setOption('cursorStyle', 'bar');
+        this.terminal.loadAddon(this.searchAddon);
         this.terminal.loadAddon(this.fitAddon);
     }
 
@@ -89,19 +95,19 @@ export const Shell = withDisplayName('Shell')(({
     const device = useAdbDevice();
     const terminalRef = useRef(new AdbTerminal());
 
-    const [findKeyword, setFindKeyword] = useState('');
-    const handleFindKeywordChange = useCallback((e, newValue?: string) => {
-        setFindKeyword(newValue ?? '');
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const handleSearchKeywordChange = useCallback((e, newValue?: string) => {
+        setSearchKeyword(newValue ?? '');
         if (newValue) {
-            terminalRef.current.findAddon.findNext(newValue, { incremental: true });
+            terminalRef.current.searchAddon.findNext(newValue, { incremental: true });
         }
     }, []);
     const findPrevious = useCallback(() => {
-        terminalRef.current.findAddon.findPrevious(findKeyword);
-    }, [findKeyword]);
+        terminalRef.current.searchAddon.findPrevious(searchKeyword);
+    }, [searchKeyword]);
     const findNext = useCallback(() => {
-        terminalRef.current.findAddon.findNext(findKeyword);
-    }, [findKeyword]);
+        terminalRef.current.searchAddon.findNext(searchKeyword);
+    }, [searchKeyword]);
 
     const connectingRef = useRef(false);
     useEffect(() => {
@@ -142,21 +148,21 @@ export const Shell = withDisplayName('Shell')(({
                     <StackItem grow>
                         <SearchBox
                             placeholder="Find"
-                            value={findKeyword}
-                            onChange={handleFindKeywordChange}
+                            value={searchKeyword}
+                            onChange={handleSearchKeywordChange}
                             onSearch={findNext}
                         />
                     </StackItem>
                     <StackItem>
                         <IconButton
-                            disabled={!findKeyword}
+                            disabled={!searchKeyword}
                             iconProps={UpIconProps}
                             onClick={findPrevious}
                         />
                     </StackItem>
                     <StackItem>
                         <IconButton
-                            disabled={!findKeyword}
+                            disabled={!searchKeyword}
                             iconProps={DownIconProps}
                             onClick={findNext}
                         />
