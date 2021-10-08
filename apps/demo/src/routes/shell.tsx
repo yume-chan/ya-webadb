@@ -37,6 +37,7 @@ class AdbTerminal extends AutoDisposable {
         if (value) {
             this.terminal.open(value);
             this.terminal.loadAddon(new WebglAddon());
+            // WebGL renderer ignores `cursorBlink` set before it initialized
             this.terminal.setOption('cursorBlink', true);
             this.fit();
         }

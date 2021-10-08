@@ -17,38 +17,36 @@ export const FrameBuffer = withDisplayName('FrameBuffer')((): JSX.Element | null
 
     const [demoModeVisible, { toggle: toggleDemoModeVisible }] = useBoolean(false);
 
-    const capture = useCallback(() => {
+    const capture = useCallback(async () => {
         if (!device) {
             return;
         }
 
-        (async function () {
-            try {
-                const start = window.performance.now();
-                const framebuffer = await device!.framebuffer();
-                const end = window.performance.now();
-                console.log('time', end - start);
+        try {
+            const start = window.performance.now();
+            const framebuffer = await device!.framebuffer();
+            const end = window.performance.now();
+            console.log('time', end - start);
 
-                const { width, height } = framebuffer;
+            const { width, height } = framebuffer;
 
-                const canvas = canvasRef.current;
-                if (!canvas) {
-                    return;
-                }
-
-                setWidth(width);
-                setHeight(height);
-                canvas.width = width;
-                canvas.height = height;
-
-                const context = canvas.getContext("2d")!;
-                const image = new ImageData(framebuffer.data, width, height);
-                context.putImageData(image, 0, 0);
-                setHasImage(true);
-            } catch (e) {
-                showErrorDialog(e instanceof Error ? e.message : `${e}`);
+            const canvas = canvasRef.current;
+            if (!canvas) {
+                return;
             }
-        })();
+
+            setWidth(width);
+            setHeight(height);
+            canvas.width = width;
+            canvas.height = height;
+
+            const context = canvas.getContext("2d")!;
+            const image = new ImageData(framebuffer.data, width, height);
+            context.putImageData(image, 0, 0);
+            setHasImage(true);
+        } catch (e) {
+            showErrorDialog(e instanceof Error ? e.message : `${e}`);
+        }
     }, [device]);
 
     const commandBarItems = useMemo((): ICommandBarItemProps[] => [

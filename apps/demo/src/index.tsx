@@ -6,7 +6,7 @@ import ReactDOM from 'react-dom';
 import { HashRouter, Redirect, useLocation } from 'react-router-dom';
 import { AdbEventLogger, CacheRoute, CacheSwitch, Connect, ErrorDialogProvider, Logger, LoggerContextProvider, ToggleLogger } from './components';
 import './index.css';
-import { AdbDeviceProvider, DeviceInfo, FileManager, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
+import { AdbDeviceProvider, DeviceInfo, FileManagerRoute, FrameBuffer, Install, Intro, Scrcpy, Shell, TcpIp } from './routes';
 
 initializeIcons();
 
@@ -88,7 +88,7 @@ function App(): JSX.Element | null {
             path: '/file-manager',
             name: 'File Manager',
             children: (
-                <FileManager />
+                <FileManagerRoute />
             ),
         },
         {

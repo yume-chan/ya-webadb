@@ -4,10 +4,11 @@ import { useConst } from '@fluentui/react-hooks';
 import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume-chan/adb';
 import path from 'path';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useHistory, useLocation } from "react-router-dom";
 import StreamSaver from 'streamsaver';
 import { CommandBar, ErrorDialogContext } from '../components';
 import { delay, formatSize, formatSpeed, pickFile, useSpeed, withDisplayName } from '../utils';
-import { useAdbDevice } from './type';
+import { RouteProps, useAdbDevice } from './type';
 
 initializeFileTypeIcons();
 StreamSaver.mitm = 'streamsaver/mitm.html';
@@ -80,13 +81,53 @@ function compareCaseInsensitively(a: string, b: string) {
     }
 }
 
-export const FileManager = withDisplayName('FileManager')((): JSX.Element | null => {
-    const { show: showErrorDialog } = useContext(ErrorDialogContext);
+export interface FileManagerProps {
+    currentPath: string;
+    onPathChange: (path: string) => void;
+}
 
-    const device = useAdbDevice();
-    const [currentPath, setCurrentPath] = useState('/');
-    const currentPathRef = useRef(currentPath);
-    currentPathRef.current = currentPath;
+function useAsyncEffect(effect: (signal: AbortSignal) => Promise<void | (() => void)>, deps?: unknown[]) {
+    useEffect(() => {
+        const abortController = new AbortController();
+        let cleanup: void | (() => void);
+
+        effect(abortController.signal)
+            .then(result => {
+                cleanup = result;
+
+                // Abortion requested but the effect still finished
+                // Immediately call cleanup
+                if (abortController.signal.aborted) {
+                    cleanup?.();
+                }
+            }, err => {
+                if (err instanceof DOMException) {
+                    // Ignore errors from AbortSignal-aware APIs
+                    // (e.g. `fetch`)
+                    if (err.name === 'AbortError') {
+                        return;
+                    }
+                }
+
+                console.error(err);
+            });
+
+        return () => {
+            // Effect finished before abortion
+            // Call cleanup
+            cleanup?.();
+
+            // Request abortion
+            abortController.abort();
+        };
+    }, deps);
+}
+
+export const FileManager = withDisplayName('FileManager')(({
+    currentPath,
+    onPathChange,
+}: FileManagerProps): JSX.Element | null => {
+    const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
     const breadcrumbItems = useMemo((): IBreadcrumbItem[] => {
         let part = '';
@@ -99,28 +140,38 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
                     if (!item) {
                         return;
                     }
-                    setCurrentPath(item.key);
+                    onPathChange(item.key);
                 },
             };
         });
         list.unshift({
             key: '/',
             text: 'Device',
-            onClick: () => setCurrentPath('/'),
+            onClick: () => onPathChange('/'),
         });
         list[list.length - 1].isCurrentItem = true;
         delete list[list.length - 1].onClick;
         return list;
-    }, [currentPath]);
+    }, [currentPath, onPathChange]);
 
+    const device = useAdbDevice();
+    // In theory, re-invoke the effect with `setForceReload({})`
+    // will cause a full re-render.
+    // But this is how React was designed.
+    const [forceReload, setForceReload] = useState({});
     const [items, setItems] = useState<ListItem[]>([]);
     const [loading, setLoading] = useState(false);
     const listRef = useRef<IDetailsList | null>(null);
-    const load = useCallback(async () => {
+
+    useAsyncEffect(async (signal) => {
+        // Tell eslint we depends on `forceReload`
+        // (even if eslint doesn't support custom hooks)
+        // (and eslint is not enabled for this project)
+        void forceReload;
+
         setItems([]);
 
         if (!device) {
-            setCurrentPath('/');
             return;
         }
 
@@ -130,7 +181,7 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
         const items: ListItem[] = [];
         const linkItems: AdbSyncEntryResponse[] = [];
         const intervalId = setInterval(() => {
-            if (currentPath !== currentPathRef.current) {
+            if (signal.aborted) {
                 return;
             }
 
@@ -141,7 +192,7 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
             let lastBreak = Date.now();
 
             for await (const entry of sync.opendir(currentPath)) {
-                if (currentPath !== currentPathRef.current) {
+                if (signal.aborted) {
                     return;
                 }
 
@@ -163,7 +214,7 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
             }
 
             for (const entry of linkItems) {
-                if (currentPath !== currentPathRef.current) {
+                if (signal.aborted) {
                     return;
                 }
 
@@ -175,22 +226,19 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
                 items.push(toListItem(entry));
             }
 
-            if (currentPath !== currentPathRef.current) {
+            if (signal.aborted) {
                 return;
             }
             setItems(items);
             listRef.current?.scrollToIndex(0);
         } finally {
-            if (currentPath === currentPathRef.current) {
+            if (!signal.aborted) {
                 setLoading(false);
             }
             clearInterval(intervalId);
             sync.dispose();
         }
-    }, [device, currentPath]);
-    useEffect(() => {
-        load();
-    }, [load]);
+    }, [forceReload, device, currentPath, onPathChange]);
 
     const [sortedList, setSortedList] = useState<ListItem[]>([]);
     const [sortKey, setSortKey] = useState<keyof ListItem>('name');
@@ -333,7 +381,7 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
         switch (item.type) {
             case LinuxFileType.Link:
             case LinuxFileType.Directory:
-                setCurrentPath(path.resolve(currentPath, item.name!));
+                onPathChange(path.resolve(currentPath!, item.name!));
                 break;
             case LinuxFileType.File:
                 switch (path.extname(item.name!)) {
@@ -341,12 +389,12 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
                     case '.png':
                     case '.svg':
                     case '.gif':
-                        previewImage(path.resolve(currentPath, item.name!));
+                        previewImage(path.resolve(currentPath!, item.name!));
                         break;
                 }
                 break;
         }
-    }, [currentPath, previewImage]);
+    }, [currentPath, onPathChange, previewImage]);
 
     const [selectedItems, setSelectedItems] = useState<ListItem[]>([]);
     const selection = useConst(() => new Selection({
@@ -364,7 +412,7 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
     const upload = useCallback(async (file: File) => {
         const sync = await device!.sync();
         try {
-            const itemPath = path.resolve(currentPath, file.name);
+            const itemPath = path.resolve(currentPath!, file.name);
             setUploading(true);
             setUploadPath(file.name);
             setUploadTotalSize(file.size);
@@ -379,7 +427,7 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
             showErrorDialog(e instanceof Error ? e.message : `${e}`);
         } finally {
             sync.dispose();
-            load();
+            setForceReload({});
             setUploading(false);
         }
     }, [currentPath, device]);
@@ -454,7 +502,7 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
                             } catch (e) {
                                 showErrorDialog(e instanceof Error ? e.message : `${e}`);
                             } finally {
-                                load();
+                                setForceReload({});
                             }
                         })();
                         return false;
@@ -548,5 +596,36 @@ export const FileManager = withDisplayName('FileManager')((): JSX.Element | null
                 </Dialog>
             </StackItem>
         </>
+    );
+});
+
+/**
+ * Sync current path with url query
+ */
+export const FileManagerRoute = withDisplayName('FileManagerRoute')(({ visible }: RouteProps) => {
+
+    const location = useLocation();
+    const path = useMemo(() => new URLSearchParams(location.search).get('path'), [location.search]);
+
+    const history = useHistory();
+    const handlePathChange = useCallback((path: string, replace = false) => {
+        history[replace ? 'replace' : 'push'](`${location.pathname}?path=${path}`);
+    }, [history, location.pathname]);
+
+    const [cachedPath, setCachedPath] = useState('/');
+    useEffect(() => {
+        if (!visible) {
+            return;
+        }
+
+        if (!path) {
+            handlePathChange(cachedPath, true);
+        } else {
+            setCachedPath(path);
+        }
+    }, [visible, path, cachedPath]);
+
+    return (
+        <FileManager currentPath={cachedPath} onPathChange={handlePathChange} />
     );
 });
