@@ -1,30 +1,19 @@
 {
-    "extends": "./node_modules/@yume-chan/ts-package-builder/tsconfig.base.json",
-    "compilerOptions": {
-        "rootDir": "./src", //                    /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
-        "target": "ES2016",
-        "lib": [
-            "ESNext",
-            "DOM"
-        ],
-        "jsx": "react-jsx",
-        "composite": false, //                    /* Enable project compilation */
-        "types": [
-            "node",
-        ]
-    },
-    "include": [
-        "src"
-    ],
-    "exclude": [
-        "src/**/*.spec.ts"
-    ],
-    "references": [
-        {
-            "path": "../../libraries/adb-backend-webusb/tsconfig.json"
-        },
-        {
-            "path": "../../libraries/adb-backend-ws/tsconfig.json"
-        },
-    ]
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve"
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
 }

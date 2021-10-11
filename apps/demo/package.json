@@ -1,69 +1,45 @@
 {
     "name": "demo",
+    "version": "0.1.0",
     "private": true,
-    "version": "0.0.9",
-    "description": "Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-webusb`.",
-    "author": "Simon Chan <cnsimonchan@live.com>",
-    "homepage": "https://github.com/yume-chan/ya-webadb#readme",
-    "license": "MIT",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/yume-chan/ya-webadb.git"
-    },
     "scripts": {
-        "start": "webpack serve",
-        "build": "webpack --mode production",
-        "build:dev": "webpack"
-    },
-    "bugs": {
-        "url": "https://github.com/yume-chan/ya-webadb/issues"
-    },
-    "devDependencies": {
-        "@types/jest": "^26.0.23",
-        "@types/react": "^17.0.0",
-        "@types/react-dom": "^17.0.0",
-        "@types/react-router-dom": "^5.1.6",
-        "clean-webpack-plugin": "^4.0.0",
-        "copy-webpack-plugin": "^8.0.0",
-        "css-loader": "^5.2.4",
-        "file-loader": "^6.2.0",
-        "html-webpack-plugin": "^5.3.1",
-        "mini-css-extract-plugin": "^1.4.0",
-        "source-map-loader": "^2.0.1",
-        "ts-loader": "^9.1.2",
-        "tslib": "^2.3.1",
-        "typescript": "^4.4.3",
-        "webpack": "^5.28.0",
-        "webpack-bundle-analyzer": "^4.4.0",
-        "webpack-cli": "^4.7.0",
-        "webpack-dev-server": "^3.11.1",
-        "webpackbar": "^5.0.0-3",
-        "worker-loader": "^3.0.7",
-        "@yume-chan/ts-package-builder": "^1.0.0"
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
     },
     "dependencies": {
-        "@fluentui/font-icons-mdl2": "^8.1.9",
-        "@fluentui/react": "^8.29.1",
-        "@fluentui/react-file-type-icons": "^8.2.3",
-        "@fluentui/react-hooks": "^8.2.7",
-        "@types/node": "^16.9.1",
+        "@fluentui/font-icons-mdl2": "^8.1.14",
+        "@fluentui/react": "^8.36.3",
+        "@fluentui/react-file-type-icons": "^8.4.3",
+        "@fluentui/react-hooks": "^8.3.4",
         "@yume-chan/adb": "^0.0.9",
         "@yume-chan/adb-backend-webusb": "^0.0.9",
         "@yume-chan/adb-backend-ws": "^0.0.9",
         "@yume-chan/async": "^2.1.4",
         "@yume-chan/event": "^0.0.9",
         "@yume-chan/struct": "^0.0.9",
-        "path-browserify": "^1.0.1",
+        "mobx": "^6.3.3",
+        "mobx-react-lite": "^3.2.1",
+        "next": "11.1.2",
         "react": "^17.0.2",
         "react-dom": "^17.0.2",
-        "react-router-dom": "^5.2.0",
         "streamsaver": "^2.0.5",
-        "tinyh264": "^0.0.6",
+        "tinyh264": "^0.0.7",
         "xterm": "^4.14.1",
         "xterm-addon-fit": "^0.5.0",
         "xterm-addon-search": "^0.8.1",
         "xterm-addon-webgl": "^0.11.2",
         "yuv-buffer": "^1.0.0",
-        "yuv-canvas": "^1.2.6"
+        "yuv-canvas": "^1.2.7"
+    },
+    "devDependencies": {
+        "@mdx-js/loader": "^1.6.22",
+        "@next/mdx": "^11.1.2",
+        "@types/react": "17.0.27",
+        "copy-webpack-plugin": "^9.0.1",
+        "eslint": "7.32.0",
+        "eslint-config-next": "^11.1.3-canary.52",
+        "typescript": "^4.4.3"
     }
 }
