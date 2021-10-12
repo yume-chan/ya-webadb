@@ -1,6 +1,6 @@
 import { AdbCommandBase } from './base';
 
-export enum AdbDemoModeWifiSignalStrength {
+export enum AdbDemoModeSignalStrength {
     Hidden = 'null',
     Level0 = '0',
     Level1 = '1',
@@ -85,7 +85,7 @@ export class AdbDemoMode extends AdbCommandBase {
         await this.broadcast('network', { airplane: show ? 'show' : 'hide' });
     }
 
-    public async setWifiSignalStrength(value: AdbDemoModeWifiSignalStrength): Promise<void> {
+    public async setWifiSignalStrength(value: AdbDemoModeSignalStrength): Promise<void> {
         await this.broadcast('network', { wifi: 'show', level: value });
     }
 
@@ -107,7 +107,7 @@ export class AdbDemoMode extends AdbCommandBase {
         }
     }
 
-    public async setMobileSignalStrength(value: AdbDemoModeWifiSignalStrength): Promise<void> {
+    public async setMobileSignalStrength(value: AdbDemoModeSignalStrength): Promise<void> {
         await this.broadcast('network', { mobile: 'show', level: value });
     }
 

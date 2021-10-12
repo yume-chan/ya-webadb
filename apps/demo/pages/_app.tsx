@@ -21,6 +21,10 @@ const ROUTES = [
         url: '/file-manager',
         name: 'File Manager',
     },
+    {
+        url: '/framebuffer',
+        name: 'Screen Capture',
+    }
 ];
 
 function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsProps<INavButtonProps>) {

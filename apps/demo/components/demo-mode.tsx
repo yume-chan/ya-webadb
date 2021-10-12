@@ -1,95 +1,21 @@
 import { Dropdown, IDropdownOption, Position, Separator, SpinButton, Toggle } from '@fluentui/react';
-import { Adb, AdbDemoModeMobileDataType, AdbDemoModeMobileDataTypes, AdbDemoModeStatusBarMode, AdbDemoModeStatusBarModes, AdbDemoModeWifiSignalStrength } from '@yume-chan/adb';
-import { CSSProperties, useCallback, useEffect, useState } from 'react';
-import { withDisplayName } from '../utils';
+import { AdbDemoModeMobileDataType, AdbDemoModeMobileDataTypes, AdbDemoModeSignalStrength, AdbDemoModeStatusBarMode, AdbDemoModeStatusBarModes } from '@yume-chan/adb';
+import { autorun, makeAutoObservable, reaction, runInAction, when } from "mobx";
+import { observer } from "mobx-react-lite";
+import { CSSProperties, useCallback } from 'react';
+import { device } from "../state";
 
-export interface DemoModeProps {
-    device?: Adb | undefined;
-
-    style?: CSSProperties;
-}
-
-function useDemoModeSetting<T>(
-    initialValue: T,
-    enabled: boolean,
-    setEnabled: (value: boolean) => void,
-    onChange: (value: T) => void
-): [T, (value: T) => void] {
-    const [value, setValue] = useState<T>(initialValue);
-
-    useEffect(() => {
-        if (enabled) {
-            onChange(value);
-        }
-    }, [enabled, onChange, value]);
-
-    const handleChange = useCallback((value: T) => {
-        setValue(value);
-        if (!enabled) {
-            setEnabled(true);
-        }
-    }, [enabled, setEnabled]);
-
-    return [value, handleChange];
-}
-
-function useBooleanDemoModeSetting(
-    initialValue: boolean,
-    enabled: boolean,
-    setEnabled: (value: boolean) => void,
-    onChange: (value: boolean) => void
-): [boolean, (e: any, value?: boolean) => void] {
-    const [value, setValue] = useDemoModeSetting(
-        initialValue,
-        enabled,
-        setEnabled,
-        onChange
-    );
-
-    const handleChange = useCallback(async (e, value?: boolean) => {
-        if (value === undefined) {
-            return;
-        }
-        setValue(value);
-    }, [setValue]);
-
-    return [value, handleChange];
-}
-
-function useNumberDemoModeSetting(
-    initialValue: number,
-    enabled: boolean,
-    setEnabled: (value: boolean) => void,
-    onChange: (value: number) => void
-): [string, (e: any, value?: string) => void] {
-    const [value, setValue] = useDemoModeSetting(
-        initialValue,
-        enabled,
-        setEnabled,
-        onChange
-    );
-
-    const handleChange = useCallback(async (e, value?: string) => {
-        if (value === undefined) {
-            return;
-        }
-        setValue(+value);
-    }, [setValue]);
-
-    return [value.toString(), handleChange];
-}
-
-const WifiSignalStrengthOptions =
-    Object.values(AdbDemoModeWifiSignalStrength)
+const SignalStrengthOptions =
+    Object.values(AdbDemoModeSignalStrength)
         .map((key) => ({
             key,
             text: {
-                [AdbDemoModeWifiSignalStrength.Hidden]: 'Hidden',
-                [AdbDemoModeWifiSignalStrength.Level0]: 'Level 0',
-                [AdbDemoModeWifiSignalStrength.Level1]: 'Level 1',
-                [AdbDemoModeWifiSignalStrength.Level2]: 'Level 2',
-                [AdbDemoModeWifiSignalStrength.Level3]: 'Level 3',
-                [AdbDemoModeWifiSignalStrength.Level4]: 'Level 4',
+                [AdbDemoModeSignalStrength.Hidden]: 'Hidden',
+                [AdbDemoModeSignalStrength.Level0]: 'Level 0',
+                [AdbDemoModeSignalStrength.Level1]: 'Level 1',
+                [AdbDemoModeSignalStrength.Level2]: 'Level 2',
+                [AdbDemoModeSignalStrength.Level3]: 'Level 3',
+                [AdbDemoModeSignalStrength.Level4]: 'Level 4',
             }[key],
         }));
 
@@ -130,327 +56,298 @@ const StatusBarModeOptions =
             }[key],
         }));
 
-export const DemoMode = withDisplayName('DemoMode')(({
-    device,
-    style,
-}: DemoModeProps) => {
-    const [allowed, setAllowed] = useState(false);
+class DemoModeState {
+    allowed = false;
+    enabled = false;
+    features: Map<string, unknown> = new Map();
 
-    useEffect(() => {
-        (async () => {
-            setAllowed(false);
+    constructor() {
+        makeAutoObservable(this);
 
-            if (device) {
-                const allowed = await device.demoMode.getAllowed();
-                setAllowed(allowed);
-                if (allowed) {
-                    setEnabled(await device.demoMode.getEnabled());
+        reaction(
+            () => device.current,
+            async () => {
+                if (device.current) {
+                    const allowed = await device.current.demoMode.getAllowed();
+                    runInAction(() => this.allowed = allowed);
+                    if (allowed) {
+                        const enabled = await device.current.demoMode.getEnabled();
+                        runInAction(() => this.enabled = enabled);
+                    }
+                } else {
+                    this.allowed = false;
+                    this.enabled = false;
+                    this.features.clear();
+                }
+            },
+            { fireImmediately: true }
+        );
+
+        // Apply all features when enable
+        autorun(() => {
+            if (this.enabled) {
+                for (const group of features) {
+                    for (const feature of group) {
+                        feature.onChange(this.features.get(feature.key) ?? feature.initial);
+                    }
                 }
             }
-        })();
-    }, [device]);
+        });
+    }
+}
 
-    const handleAllowedChange = useCallback(async (e, value?: boolean) => {
-        if (value === undefined) {
-            return;
+const state = new DemoModeState();
+
+interface FeatureDefinition {
+    key: string;
+    label: string;
+    type: string;
+    min?: number;
+    max?: number;
+    step?: number;
+    options?: { key: string, text: string; }[];
+    initial: unknown;
+    onChange: (value: unknown) => void;
+}
+
+const features: FeatureDefinition[][] = [
+    [
+        {
+            key: 'batteryLevel',
+            label: 'Battery Level',
+            type: 'number',
+            min: 0,
+            max: 100,
+            step: 1,
+            initial: 100,
+            onChange: (value) => device.current!.demoMode.setBatteryLevel(value as number),
+        },
+        {
+            key: 'batteryCharging',
+            label: 'Battery Charging',
+            type: 'boolean',
+            initial: false,
+            onChange: (value) => device.current!.demoMode.setBatteryCharging(value as boolean),
+        },
+        {
+            key: 'powerSaveMode',
+            label: 'Power Save Mode',
+            type: 'boolean',
+            initial: false,
+            onChange: (value) => device.current!.demoMode.setPowerSaveMode(value as boolean),
+        },
+    ],
+    [
+        {
+            key: 'wifiSignalStrength',
+            label: 'Wifi Signal Strength',
+            type: 'select',
+            options: SignalStrengthOptions,
+            initial: AdbDemoModeSignalStrength.Level4,
+            onChange: (value) => device.current!.demoMode.setWifiSignalStrength(value as AdbDemoModeSignalStrength),
+        },
+        {
+            key: 'airplaneMode',
+            label: 'Airplane Mode',
+            type: 'boolean',
+            initial: false,
+            onChange: (value) => device.current!.demoMode.setAirplaneMode(value as boolean),
+        },
+        {
+            key: 'mobileDataType',
+            label: 'Mobile Data Type',
+            type: 'select',
+            options: MobileDataTypeOptions,
+            initial: 'lte',
+            onChange: (value) => device.current!.demoMode.setMobileDataType(value as AdbDemoModeMobileDataType),
+        },
+        {
+            key: 'mobileSignalStrength',
+            label: 'Mobile Signal Strength',
+            type: 'select',
+            options: SignalStrengthOptions,
+            initial: AdbDemoModeSignalStrength.Level4,
+            onChange: (value) => device.current!.demoMode.setMobileSignalStrength(value as AdbDemoModeSignalStrength),
+        },
+    ],
+    [
+        {
+            key: 'statusBarMode',
+            label: 'Status Bar Mode',
+            type: 'select',
+            options: StatusBarModeOptions,
+            initial: 'transparent',
+            onChange: (value) => device.current!.demoMode.setStatusBarMode(value as AdbDemoModeStatusBarMode),
+        },
+        {
+            key: 'vibrateMode',
+            label: 'Vibrate Mode Indicator',
+            type: 'boolean',
+            initial: false,
+            onChange: (value) => device.current!.demoMode.setVibrateModeEnabled(value as boolean),
+        },
+        {
+            key: 'bluetoothConnected',
+            label: 'Bluetooth Indicator',
+            type: 'boolean',
+            initial: false,
+            onChange: (value) => device.current!.demoMode.setBluetoothConnected(value as boolean),
+        },
+        {
+            key: 'locatingIcon',
+            label: 'Locating Icon',
+            type: 'boolean',
+            initial: false,
+            onChange: (value) => device.current!.demoMode.setLocatingIcon(value as boolean),
+        },
+        {
+            key: 'alarmIcon',
+            label: 'Alarm Icon',
+            type: 'boolean',
+            initial: false,
+            onChange: (value) => device.current!.demoMode.setAlarmIcon(value as boolean),
+        },
+        {
+            key: 'notificationsVisibility',
+            label: 'Notifications Visibility',
+            type: 'boolean',
+            initial: true,
+            onChange: (value) => device.current!.demoMode.setNotificationsVisibility(value as boolean),
+        },
+        {
+            key: 'hour',
+            label: 'Clock Hour',
+            type: 'number',
+            min: 0,
+            max: 23,
+            step: 1,
+            initial: 12,
+            onChange: (value) => device.current!.demoMode.setTime(value as number, state.features.get('minute') as number | undefined ?? 34)
+        },
+        {
+            key: 'minute',
+            label: 'Clock Minute',
+            type: 'number',
+            min: 0,
+            max: 59,
+            step: 1,
+            initial: 34,
+            onChange: (value) => device.current!.demoMode.setTime(state.features.get('hour') as number | undefined ?? 34, value as number)
         }
-        await device!.demoMode.setAllowed(value);
-        setAllowed(value);
-        setEnabled(false);
-    }, [device]);
+    ],
+];
 
-    const [enabled, setEnabled] = useState(false);
+const FeatureBase = ({ feature }: { feature: FeatureDefinition; }) => {
+    const handleChange = useCallback((e, value: unknown) => {
+        switch (feature.type) {
+            case 'select':
+                value = (value as IDropdownOption).key;
+                break;
+            case 'number':
+                value = parseFloat(value as string);
+            default:
+                break;
+        }
 
-    useEffect(() => {
-        setEnabled(false);
-    }, [device]);
+        feature.onChange(value);
+        runInAction(() => {
+            state.features.set(feature.key, value);
+            state.enabled = true;
+        });
+    }, [feature]);
+
+    const value = state.features.get(feature.key) ?? feature.initial;
+
+    switch (feature.type) {
+        case 'boolean':
+            return (
+                <Toggle
+                    label={feature.label}
+                    disabled={!state.allowed}
+                    checked={value as boolean}
+                    onChange={handleChange}
+                />
+            );
+        case 'number':
+            return (
+                <SpinButton
+                    label={feature.label}
+                    labelPosition={Position.top}
+                    disabled={!state.allowed}
+                    min={feature.min}
+                    max={feature.max}
+                    step={feature.step}
+                    value={value as string}
+                    onChange={handleChange}
+                />
+            );
+        case 'select':
+            return (
+                <Dropdown
+                    label={feature.label}
+                    disabled={!state.allowed}
+                    options={feature.options!}
+                    selectedKey={value as string}
+                    onChange={handleChange}
+                />
+            );
+        default:
+            return null;
+    };
+};
+
+const Feature = observer(FeatureBase);
+
+export interface DemoModeProps {
+    style?: CSSProperties;
+}
+
+const DemoModeBase = ({
+    style,
+}: DemoModeProps) => {
+    const handleAllowedChange = useCallback(async (e, value?: boolean) => {
+        await device.current!.demoMode.setAllowed(value!);
+        runInAction(() => {
+            state.allowed = value!;
+            state.enabled = false;
+        });
+    }, []);
 
     const handleEnabledChange = useCallback(async (e, value?: boolean) => {
-        if (value === undefined) {
-            return;
-        }
-        await device!.demoMode.setEnabled(value);
-        setEnabled(value);
-    }, [device]);
-
-    const [batteryLevel, setBatteryLevel] = useNumberDemoModeSetting(
-        100,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setBatteryLevel(value)
-    );
-
-    const [batteryCharing, setBatteryCharging] = useBooleanDemoModeSetting(
-        false,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setBatteryCharging(value)
-    );
-
-    const [powerSaveMode, setPowerSaveMode] = useBooleanDemoModeSetting(
-        false,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setPowerSaveMode(value)
-    );
-
-    const [wifiSignalStrength, setWifiSignalStrength] = useDemoModeSetting(
-        AdbDemoModeWifiSignalStrength.Level4,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setWifiSignalStrength(value)
-    );
-
-    const handleWifiSignalStrengthChanged = useCallback(async (e, value?: IDropdownOption) => {
-        if (value === undefined) {
-            return;
-        }
-        setWifiSignalStrength(value.key! as AdbDemoModeWifiSignalStrength);
-    }, [setWifiSignalStrength]);
-
-    const [airplaneMode, setAirplaneMode] = useBooleanDemoModeSetting(
-        false,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setAirplaneMode(value)
-    );
-
-    const [mobileDataType, setMobileDataType] = useDemoModeSetting<AdbDemoModeMobileDataType>(
-        'lte',
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setMobileDataType(value)
-    );
-
-    const handleMobileDataTypeChanged = useCallback(async (e, value?: IDropdownOption) => {
-        if (value === undefined) {
-            return;
-        }
-        setMobileDataType(value.key! as AdbDemoModeMobileDataType);
-    }, [setMobileDataType]);
-
-    const [mobileSignalStrength, setMobileSignalStrength] = useDemoModeSetting(
-        AdbDemoModeWifiSignalStrength.Level4,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setMobileSignalStrength(value)
-    );
-
-    const handleMobileSignalStrengthChanged = useCallback(async (e, value?: IDropdownOption) => {
-        if (value === undefined) {
-            return;
-        }
-        setMobileSignalStrength(value.key! as AdbDemoModeWifiSignalStrength);
-    }, [setMobileSignalStrength]);
-
-    const [statusBarMode, setStatusBarMode] = useDemoModeSetting<AdbDemoModeStatusBarMode>(
-        'transparent',
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setStatusBarMode(value)
-    );
-
-    const handleStatusBarModeChanged = useCallback(async (e, value?: IDropdownOption) => {
-        if (value === undefined) {
-            return;
-        }
-        setStatusBarMode(value.key! as AdbDemoModeStatusBarMode);
-    }, [setStatusBarMode]);
-
-    const [vibrateMode, setVibrateMode] = useBooleanDemoModeSetting(
-        false,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setVibrateModeEnabled(value)
-    );
-
-    const [bluetoothConnected, setBluetoothConnected] = useBooleanDemoModeSetting(
-        false,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setBluetoothConnected(value)
-    );
-
-    const [locatingIcon, setLocatingIcon] = useBooleanDemoModeSetting(
-        false,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setLocatingIcon(value)
-    );
-
-    const [alarmIcon, setAlarmIcon] = useBooleanDemoModeSetting(
-        false,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setAlarmIcon(value)
-    );
-
-    const [notificationsVisibility, setNotificationsVisibility] = useBooleanDemoModeSetting(
-        true,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setNotificationsVisibility(value)
-    );
-
-    const [hour, setHour] = useNumberDemoModeSetting(
-        12,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setTime(value, +minute)
-    );
-
-    const [minute, setMinute] = useNumberDemoModeSetting(
-        34,
-        enabled,
-        setEnabled,
-        async value => await device!.demoMode.setTime(+hour, value)
-    );
+        await device.current!.demoMode.setEnabled(value!);
+        runInAction(() => state.enabled = value!);
+    }, []);
 
     return (
         <div style={{ padding: 12, overflow: 'hidden auto', ...style }}>
             <Toggle
                 label="Allowed"
-                disabled={!device}
-                checked={allowed}
+                disabled={!device.current}
+                checked={state.allowed}
                 onChange={handleAllowedChange}
             />
 
             <Toggle
                 label="Enabled"
-                disabled={!device || !allowed}
-                checked={enabled}
+                disabled={!state.allowed}
+                checked={state.enabled}
                 onChange={handleEnabledChange}
             />
 
             <div><strong>Note:</strong></div>
             <div>Device may not support all options.</div>
 
-            <Separator />
+            {features.map(group => (
+                <>
+                    <Separator />
 
-            <SpinButton
-                label="Battery Level"
-                labelPosition={Position.top}
-                disabled={!device || !allowed}
-                min={0}
-                max={100}
-                step={1}
-                value={batteryLevel}
-                onChange={setBatteryLevel}
-            />
-
-            <Toggle
-                label="Battery Charing"
-                disabled={!device || !allowed}
-                checked={batteryCharing}
-                onChange={setBatteryCharging}
-            />
-
-            <Toggle
-                label="Power Save Mode"
-                disabled={!device || !allowed}
-                checked={powerSaveMode}
-                onChange={setPowerSaveMode}
-            />
-
-            <Separator />
-
-            <Dropdown
-                label="Wifi Signal Strength"
-                disabled={!device || !allowed}
-                options={WifiSignalStrengthOptions}
-                selectedKey={wifiSignalStrength}
-                onChange={handleWifiSignalStrengthChanged}
-            />
-
-            <Toggle
-                label="Airplane Mode"
-                disabled={!device || !allowed}
-                checked={airplaneMode}
-                onChange={setAirplaneMode}
-            />
-
-            <Dropdown
-                label="Mobile Data Type"
-                options={MobileDataTypeOptions}
-                selectedKey={mobileDataType}
-                onChange={handleMobileDataTypeChanged}
-            />
-
-            <Dropdown
-                label="Mobile Signal Strength"
-                disabled={!device || !allowed}
-                options={WifiSignalStrengthOptions}
-                selectedKey={mobileSignalStrength}
-                onChange={handleMobileSignalStrengthChanged}
-            />
-
-            <Separator />
-
-            <Dropdown
-                label="Status Bar Mode"
-                disabled={!device || !allowed}
-                options={StatusBarModeOptions}
-                selectedKey={statusBarMode}
-                onChange={handleStatusBarModeChanged}
-            />
-
-            <Toggle
-                label="Vibrate Mode"
-                disabled={!device || !allowed}
-                checked={vibrateMode}
-                onChange={setVibrateMode}
-            />
-
-            <Toggle
-                label="Bluetooth Connected"
-                disabled={!device || !allowed}
-                checked={bluetoothConnected}
-                onChange={setBluetoothConnected}
-            />
-
-            <Toggle
-                label="Locating Icon"
-                disabled={!device || !allowed}
-                checked={locatingIcon}
-                onChange={setLocatingIcon}
-            />
-
-            <Toggle
-                label="Alarm Icon"
-                disabled={!device || !allowed}
-                checked={alarmIcon}
-                onChange={setAlarmIcon}
-            />
-
-            <Toggle
-                label="Notifications Visible"
-                disabled={!device || !allowed}
-                checked={notificationsVisibility}
-                onChange={setNotificationsVisibility}
-            />
-
-            <SpinButton
-                label="Clock Hour"
-                labelPosition={Position.top}
-                disabled={!device || !allowed}
-                min={0}
-                max={23}
-                step={1}
-                value={hour}
-                onChange={setHour}
-            />
-
-            <SpinButton
-                label="Clock Minute"
-                labelPosition={Position.top}
-                disabled={!device || !allowed}
-                min={0}
-                max={59}
-                step={1}
-                value={minute}
-                onChange={setMinute}
-            />
-
+                    {group.map(feature => (
+                        <Feature key={feature.key} feature={feature} />
+                    ))}
+                </>
+            ))}
         </div>
     );
-});
+};
+
+export const DemoMode = observer(DemoModeBase);
