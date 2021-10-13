@@ -476,7 +476,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
             state.loadFiles();
             setUploading(false);
         }
-    }, []);
+    }, [showErrorDialog]);
 
     const [menuItems, setMenuItems] = useState<IContextualMenuItem[]>([]);
     useEffect(() => {
@@ -557,7 +557,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
         }
 
         setMenuItems(result);
-    }, [selectedItems]);
+    }, [selectedItems, upload, showErrorDialog]);
 
     const [contextMenuTarget, setContextMenuTarget] = useState<MouseEvent>();
     const showContextMenu = useCallback((
@@ -618,7 +618,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
                     <Layer>
                         <Overlay onClick={hidePreview}>
                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <img src={previewUrl} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                                <img src={previewUrl} alt="" style={{ maxWidth: '100%', maxHeight: '100%' }} />
                             </div>
                         </Overlay>
                     </Layer>

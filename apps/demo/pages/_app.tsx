@@ -1,7 +1,7 @@
-import { ActionButton, IComponentAsProps, IconButton, INavButtonProps, INavLink, initializeIcons, Link as FluentLink, mergeStyles, mergeStyleSets, Nav, Stack, StackItem } from "@fluentui/react";
+import { IComponentAsProps, IconButton, INavButtonProps, initializeIcons, mergeStyles, mergeStyleSets, Nav, Stack, StackItem } from "@fluentui/react";
 import type { AppProps } from 'next/app';
-import { useRouter } from 'next/router';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from "react";
 import { Connect, ErrorDialogProvider, Logger, ToggleLogger } from "../components";
 import '../styles/globals.css';
@@ -24,7 +24,11 @@ const ROUTES = [
     {
         url: '/framebuffer',
         name: 'Screen Capture',
-    }
+    },
+    {
+        url: '/shell',
+        name: 'Interactive Shell',
+    },
 ];
 
 function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsProps<INavButtonProps>) {

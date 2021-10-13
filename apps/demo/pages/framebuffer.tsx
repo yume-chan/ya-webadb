@@ -51,7 +51,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
         } catch (e) {
             showErrorDialog(e instanceof Error ? e.message : `${e}`);
         }
-    }, []);
+    }, [showErrorDialog]);
 
     useEffect(() => {
         return autorun(() => {

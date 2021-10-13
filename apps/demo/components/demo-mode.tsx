@@ -233,7 +233,7 @@ const features: FeatureDefinition[][] = [
             step: 1,
             initial: 34,
             onChange: (value) => device.current!.demoMode.setTime(state.features.get('hour') as number | undefined ?? 34, value as number)
-        }
+        },
     ],
 ];
 
