@@ -5,7 +5,7 @@ import { NextPage } from "next";
 import Head from "next/head";
 import React, { useCallback } from "react";
 import { ExternalLink } from "../components";
-import { device } from "../state";
+import { global } from "../state";
 import { asyncEffect, RouteStackProps } from "../utils";
 
 class TcpIpState {
@@ -18,7 +18,7 @@ class TcpIpState {
     constructor() {
         makeAutoObservable(this);
         reaction(
-            () => device.current,
+            () => global.device,
             () => this.queryInfo(),
             { fireImmediately: true }
         );
@@ -28,14 +28,14 @@ class TcpIpState {
         return [
             {
                 key: 'refresh',
-                disabled: !device.current,
+                disabled: !global.device,
                 iconProps: { iconName: 'Refresh' },
                 text: 'Refresh',
                 onClick: () => { this.queryInfo(); },
             },
             {
                 key: 'apply',
-                disabled: !device.current,
+                disabled: !global.device,
                 iconProps: { iconName: 'Save' },
                 text: 'Apply',
                 onClick: () => { this.applyServicePort(); },
@@ -44,7 +44,7 @@ class TcpIpState {
     }
 
     queryInfo = asyncEffect(async (signal) => {
-        if (!device.current) {
+        if (!global.device) {
             runInAction(() => {
                 this.serviceListenAddresses = undefined;
                 this.servicePortEnabled = false;
@@ -55,9 +55,9 @@ class TcpIpState {
             return;
         }
 
-        const serviceListenAddresses = await device.current.getProp('service.adb.listen_addrs');
-        const servicePort = await device.current.getProp('service.adb.tcp.port');
-        const persistPort = await device.current.getProp('persist.adb.tcp.port');
+        const serviceListenAddresses = await global.device.getProp('service.adb.listen_addrs');
+        const servicePort = await global.device.getProp('service.adb.tcp.port');
+        const persistPort = await global.device.getProp('persist.adb.tcp.port');
 
         if (signal.aborted) {
             return;
@@ -85,14 +85,14 @@ class TcpIpState {
     });
 
     async applyServicePort() {
-        if (!device.current) {
+        if (!global.device) {
             return;
         }
 
         if (state.servicePortEnabled) {
-            await device.current.tcpip.setPort(Number.parseInt(state.servicePort, 10));
+            await global.device.tcpip.setPort(Number.parseInt(state.servicePort, 10));
         } else {
-            await device.current.tcpip.disable();
+            await global.device.tcpip.disable();
         }
     }
 }
@@ -158,12 +158,12 @@ const TcpIp: NextPage = () => {
                     inlineLabel
                     label="service.adb.tcp.port"
                     checked={state.servicePortEnabled}
-                    disabled={!device.current || !!state.serviceListenAddresses}
+                    disabled={!global.device || !!state.serviceListenAddresses}
                     onText="Enabled"
                     offText="Disabled"
                     onChange={handleServicePortEnabledChange}
                 />
-                {device && (
+                {global && (
                     <TextField
                         disabled={!!state.serviceListenAddresses}
                         value={state.servicePort}

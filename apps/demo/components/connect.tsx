@@ -4,7 +4,7 @@ import AdbWebUsbBackend, { AdbWebCredentialStore, AdbWebUsbBackendWatcher } from
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { device, logger } from '../state';
+import { global, logger } from '../state';
 import { CommonStackTokens } from '../utils';
 import { ErrorDialogContext } from './error-dialog';
 
@@ -58,7 +58,7 @@ function _Connect(): JSX.Element | null {
     const [wsBackendList, setWsBackendList] = useState<AdbBackend[]>([]);
     useEffect(() => {
         const intervalId = setInterval(async () => {
-            if (connecting || device.current) {
+            if (connecting || global.device) {
                 return;
             }
 
@@ -99,7 +99,7 @@ function _Connect(): JSX.Element | null {
                 try {
                     setConnecting(true);
                     await adb.connect(CredentialStore);
-                    device.setCurrent(adb);
+                    global.setCurrent(adb);
                 } catch (e) {
                     adb.dispose();
                     throw e;
@@ -113,8 +113,8 @@ function _Connect(): JSX.Element | null {
     }, [showErrorDialog, selectedBackend]);
     const disconnect = useCallback(async () => {
         try {
-            await device.current!.dispose();
-            device.setCurrent(undefined);
+            await global.device!.dispose();
+            global.setCurrent(undefined);
         } catch (e: any) {
             showErrorDialog(e.message);
         }
@@ -151,7 +151,7 @@ function _Connect(): JSX.Element | null {
             tokens={{ childrenGap: 8, padding: '0 0 8px 8px' }}
         >
             <Dropdown
-                disabled={!!device.current || backendOptions.length === 0}
+                disabled={!!global.device || backendOptions.length === 0}
                 label="Available devices"
                 placeholder="No available devices"
                 options={backendOptions}
@@ -161,7 +161,7 @@ function _Connect(): JSX.Element | null {
                 onChange={handleSelectedBackendChange}
             />
 
-            {!device.current ? (
+            {!global.device ? (
                 <Stack horizontal tokens={CommonStackTokens}>
                     <StackItem grow shrink>
                         <PrimaryButton

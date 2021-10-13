@@ -6,7 +6,7 @@ import Head from "next/head";
 import React, { CSSProperties, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import 'xterm/css/xterm.css';
 import { ErrorDialogContext } from '../components/error-dialog';
-import { device } from "../state";
+import { global } from "../state";
 import { ResizeObserver, RouteStackProps } from '../utils';
 
 let terminal: import('../components/terminal').AdbTerminal;
@@ -43,9 +43,9 @@ const Shell: NextPage = (): JSX.Element | null => {
     const connectingRef = useRef(false);
     useEffect(() => {
         return reaction(
-            () => device.current,
+            () => global.device,
             async () => {
-                if (!device.current) {
+                if (!global.device) {
                     terminal.socket = undefined;
                     return;
                 }
@@ -56,7 +56,7 @@ const Shell: NextPage = (): JSX.Element | null => {
 
                 try {
                     connectingRef.current = true;
-                    const socket = await device.current.childProcess.shell();
+                    const socket = await global.device.childProcess.shell();
                     terminal.socket = socket;
                 } catch (e) {
                     showErrorDialog(e instanceof Error ? e.message : `${e}`);

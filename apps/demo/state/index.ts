@@ -1,2 +1,2 @@
-export * from './device';
+export * from './global';
 export * from './logger';

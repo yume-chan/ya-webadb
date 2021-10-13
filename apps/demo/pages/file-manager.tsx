@@ -10,7 +10,7 @@ import Router, { useRouter } from "next/router";
 import path from 'path';
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CommandBar, ErrorDialogContext } from '../components';
-import { device } from '../state';
+import { global } from '../state';
 import { asyncEffect, chunkFile, formatSize, formatSpeed, pickFile, RouteStackProps, useSpeed } from '../utils';
 
 let StreamSaver: typeof import('streamsaver');
@@ -96,7 +96,7 @@ class FileManagerState {
             items: observable.shallow,
         });
         reaction(
-            () => device.current,
+            () => global.device,
             () => this.loadFiles(),
             { fireImmediately: true },
         );
@@ -264,13 +264,13 @@ class FileManagerState {
 
         runInAction(() => this.items = []);
 
-        if (!device.current) {
+        if (!global.device) {
             return;
         }
 
         runInAction(() => this.loading = true);
 
-        const sync = await device.current.sync();
+        const sync = await global.device.sync();
 
         const items: ListItem[] = [];
         const linkItems: AdbSyncEntryResponse[] = [];
@@ -365,7 +365,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
 
     const [previewUrl, setPreviewUrl] = useState<string | undefined>();
     const previewImage = useCallback(async (path: string) => {
-        const sync = await device.current!.sync();
+        const sync = await global.device!.sync();
         try {
             const readableStream = createReadableStreamFromBufferIterator(sync.read(path));
             const response = new Response(readableStream);
@@ -413,7 +413,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
     const [uploadTotalSize, setUploadTotalSize] = useState(0);
     const [debouncedUploadedSize, uploadSpeed] = useSpeed(uploadedSize, uploadTotalSize);
     const upload = useCallback(async (file: File) => {
-        const sync = await device.current!.sync();
+        const sync = await global.device!.sync();
         try {
             const itemPath = path.resolve(state.path!, file.name);
             setUploading(true);
@@ -445,7 +445,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
                     key: 'upload',
                     text: 'Upload',
                     iconProps: { iconName: 'Upload' },
-                    disabled: !device.current,
+                    disabled: !global.device,
                     onClick() {
                         (async () => {
                             const files = await pickFile({ multiple: true });
@@ -467,7 +467,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
                         iconProps: { iconName: 'Download' },
                         onClick() {
                             (async () => {
-                                const sync = await device.current!.sync();
+                                const sync = await global.device!.sync();
                                 try {
                                     const itemPath = path.resolve(state.path, selectedItems[0].name!);
                                     const readableStream = createReadableStreamFromBufferIterator(sync.read(itemPath));
@@ -495,7 +495,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
                         (async () => {
                             try {
                                 for (const item of selectedItems) {
-                                    const output = await device.current!.rm(path.resolve(state.path, item.name!));
+                                    const output = await global.device!.rm(path.resolve(state.path, item.name!));
                                     if (output) {
                                         showErrorDialog(output);
                                         return;

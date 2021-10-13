@@ -3,7 +3,7 @@ import { AdbDemoModeMobileDataType, AdbDemoModeMobileDataTypes, AdbDemoModeSigna
 import { autorun, makeAutoObservable, reaction, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { CSSProperties, useCallback } from 'react';
-import { device } from "../state";
+import { global } from "../state";
 
 const SignalStrengthOptions =
     Object.values(AdbDemoModeSignalStrength)
@@ -65,7 +65,7 @@ class DemoModeState {
         makeAutoObservable(this);
 
         reaction(
-            () => device.current,
+            () => global.device,
             async (device) => {
                 if (device) {
                     const allowed = await device.demoMode.getAllowed();
@@ -120,21 +120,21 @@ const FEATURES: FeatureDefinition[][] = [
             max: 100,
             step: 1,
             initial: 100,
-            onChange: (value) => device.current!.demoMode.setBatteryLevel(value as number),
+            onChange: (value) => global.device!.demoMode.setBatteryLevel(value as number),
         },
         {
             key: 'batteryCharging',
             label: 'Battery Charging',
             type: 'boolean',
             initial: false,
-            onChange: (value) => device.current!.demoMode.setBatteryCharging(value as boolean),
+            onChange: (value) => global.device!.demoMode.setBatteryCharging(value as boolean),
         },
         {
             key: 'powerSaveMode',
             label: 'Power Save Mode',
             type: 'boolean',
             initial: false,
-            onChange: (value) => device.current!.demoMode.setPowerSaveMode(value as boolean),
+            onChange: (value) => global.device!.demoMode.setPowerSaveMode(value as boolean),
         },
     ],
     [
@@ -144,14 +144,14 @@ const FEATURES: FeatureDefinition[][] = [
             type: 'select',
             options: SignalStrengthOptions,
             initial: AdbDemoModeSignalStrength.Level4,
-            onChange: (value) => device.current!.demoMode.setWifiSignalStrength(value as AdbDemoModeSignalStrength),
+            onChange: (value) => global.device!.demoMode.setWifiSignalStrength(value as AdbDemoModeSignalStrength),
         },
         {
             key: 'airplaneMode',
             label: 'Airplane Mode',
             type: 'boolean',
             initial: false,
-            onChange: (value) => device.current!.demoMode.setAirplaneMode(value as boolean),
+            onChange: (value) => global.device!.demoMode.setAirplaneMode(value as boolean),
         },
         {
             key: 'mobileDataType',
@@ -159,7 +159,7 @@ const FEATURES: FeatureDefinition[][] = [
             type: 'select',
             options: MobileDataTypeOptions,
             initial: 'lte',
-            onChange: (value) => device.current!.demoMode.setMobileDataType(value as AdbDemoModeMobileDataType),
+            onChange: (value) => global.device!.demoMode.setMobileDataType(value as AdbDemoModeMobileDataType),
         },
         {
             key: 'mobileSignalStrength',
@@ -167,7 +167,7 @@ const FEATURES: FeatureDefinition[][] = [
             type: 'select',
             options: SignalStrengthOptions,
             initial: AdbDemoModeSignalStrength.Level4,
-            onChange: (value) => device.current!.demoMode.setMobileSignalStrength(value as AdbDemoModeSignalStrength),
+            onChange: (value) => global.device!.demoMode.setMobileSignalStrength(value as AdbDemoModeSignalStrength),
         },
     ],
     [
@@ -177,42 +177,42 @@ const FEATURES: FeatureDefinition[][] = [
             type: 'select',
             options: StatusBarModeOptions,
             initial: 'transparent',
-            onChange: (value) => device.current!.demoMode.setStatusBarMode(value as AdbDemoModeStatusBarMode),
+            onChange: (value) => global.device!.demoMode.setStatusBarMode(value as AdbDemoModeStatusBarMode),
         },
         {
             key: 'vibrateMode',
             label: 'Vibrate Mode Indicator',
             type: 'boolean',
             initial: false,
-            onChange: (value) => device.current!.demoMode.setVibrateModeEnabled(value as boolean),
+            onChange: (value) => global.device!.demoMode.setVibrateModeEnabled(value as boolean),
         },
         {
             key: 'bluetoothConnected',
             label: 'Bluetooth Indicator',
             type: 'boolean',
             initial: false,
-            onChange: (value) => device.current!.demoMode.setBluetoothConnected(value as boolean),
+            onChange: (value) => global.device!.demoMode.setBluetoothConnected(value as boolean),
         },
         {
             key: 'locatingIcon',
             label: 'Locating Icon',
             type: 'boolean',
             initial: false,
-            onChange: (value) => device.current!.demoMode.setLocatingIcon(value as boolean),
+            onChange: (value) => global.device!.demoMode.setLocatingIcon(value as boolean),
         },
         {
             key: 'alarmIcon',
             label: 'Alarm Icon',
             type: 'boolean',
             initial: false,
-            onChange: (value) => device.current!.demoMode.setAlarmIcon(value as boolean),
+            onChange: (value) => global.device!.demoMode.setAlarmIcon(value as boolean),
         },
         {
             key: 'notificationsVisibility',
             label: 'Notifications Visibility',
             type: 'boolean',
             initial: true,
-            onChange: (value) => device.current!.demoMode.setNotificationsVisibility(value as boolean),
+            onChange: (value) => global.device!.demoMode.setNotificationsVisibility(value as boolean),
         },
         {
             key: 'hour',
@@ -222,7 +222,7 @@ const FEATURES: FeatureDefinition[][] = [
             max: 23,
             step: 1,
             initial: 12,
-            onChange: (value) => device.current!.demoMode.setTime(value as number, state.features.get('minute') as number | undefined ?? 34)
+            onChange: (value) => global.device!.demoMode.setTime(value as number, state.features.get('minute') as number | undefined ?? 34)
         },
         {
             key: 'minute',
@@ -232,7 +232,7 @@ const FEATURES: FeatureDefinition[][] = [
             max: 59,
             step: 1,
             initial: 34,
-            onChange: (value) => device.current!.demoMode.setTime(state.features.get('hour') as number | undefined ?? 34, value as number)
+            onChange: (value) => global.device!.demoMode.setTime(state.features.get('hour') as number | undefined ?? 34, value as number)
         },
     ],
 ];
@@ -306,7 +306,7 @@ const DemoModeBase = ({
     style,
 }: DemoModeProps) => {
     const handleAllowedChange = useCallback(async (e, value?: boolean) => {
-        await device.current!.demoMode.setAllowed(value!);
+        await global.device!.demoMode.setAllowed(value!);
         runInAction(() => {
             state.allowed = value!;
             state.enabled = false;
@@ -314,7 +314,7 @@ const DemoModeBase = ({
     }, []);
 
     const handleEnabledChange = useCallback(async (e, value?: boolean) => {
-        await device.current!.demoMode.setEnabled(value!);
+        await global.device!.demoMode.setEnabled(value!);
         runInAction(() => state.enabled = value!);
     }, []);
 
@@ -322,7 +322,7 @@ const DemoModeBase = ({
         <div style={{ padding: 12, overflow: 'hidden auto', ...style }}>
             <Toggle
                 label="Allowed"
-                disabled={!device.current}
+                disabled={!global.device}
                 checked={state.allowed}
                 onChange={handleAllowedChange}
             />

@@ -1,19 +1,19 @@
 import { Adb } from "@yume-chan/adb";
 import { makeAutoObservable } from 'mobx';
 
-export class Device {
-    current: Adb | undefined;
+export class GlobalState {
+    device: Adb | undefined;
 
     constructor() {
         makeAutoObservable(this);
     }
 
     setCurrent(device: Adb | undefined) {
-        this.current = device;
+        this.device = device;
         device?.onDisconnected(() => {
             this.setCurrent(undefined);
         });
     }
 }
 
-export const device = new Device();
+export const global = new GlobalState();
