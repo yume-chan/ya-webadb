@@ -8,7 +8,7 @@ import { ExternalLink } from "../components";
 import { device } from '../state';
 import { RouteStackProps } from "../utils";
 
-const knownFeatures: Record<string, string> = {
+const KNOWN_FEATURES: Record<string, string> = {
     'shell_v2': `"shell" command now supports separating child process's stdout and stderr, and returning exit code`,
     // 'cmd': '',
     [AdbFeatures.StatV2]: '"sync" command now supports "STA2" (returns more information of a file than old "STAT") and "LST2" (returns information of a directory) sub command',
@@ -91,8 +91,8 @@ const DeviceInfo: NextPage = () => {
                     <span key={feature}>
                         {index !== 0 && (<span>, </span>)}
                         <span>{feature}</span>
-                        {knownFeatures[feature] && (
-                            <TooltipHost content={<span>{knownFeatures[feature]}</span>}>
+                        {KNOWN_FEATURES[feature] && (
+                            <TooltipHost content={<span>{KNOWN_FEATURES[feature]}</span>}>
                                 <Icon style={{ marginLeft: 4 }} iconName="Unknown" />
                             </TooltipHost>
                         )}

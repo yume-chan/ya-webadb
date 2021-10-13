@@ -11,7 +11,7 @@ import path from 'path';
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CommandBar, ErrorDialogContext } from '../components';
 import { device } from '../state';
-import { chunkFile, formatSize, formatSpeed, pickFile, RouteStackProps, useSpeed } from '../utils';
+import { asyncEffect, chunkFile, formatSize, formatSpeed, pickFile, RouteStackProps, useSpeed } from '../utils';
 
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
@@ -81,49 +81,6 @@ function compareCaseInsensitively(a: string, b: string) {
     } else {
         return a.localeCompare(b);
     }
-}
-
-function asyncEffect(effect: (signal: AbortSignal) => Promise<void | (() => void)>) {
-    let cancelLast = () => { };
-
-    return async () => {
-        cancelLast();
-        cancelLast = () => {
-            // Effect finished before abortion
-            // Call cleanup
-            if (typeof cleanup === 'function') {
-                cleanup();
-            }
-
-            // Request abortion
-            abortController.abort();
-        };
-
-        const abortController = new AbortController();
-        let cleanup: void | (() => void);
-
-        try {
-            cleanup = await effect(abortController.signal);
-
-            // Abortion requested but the effect still finished
-            // Immediately call cleanup
-            if (abortController.signal.aborted) {
-                if (typeof cleanup === 'function') {
-                    cleanup();
-                }
-            }
-        } catch (e) {
-            if (e instanceof DOMException) {
-                // Ignore errors from AbortSignal-aware APIs
-                // (e.g. `fetch`)
-                if (e.name === 'AbortError') {
-                    return;
-                }
-            }
-
-            console.error(e);
-        }
-    };
 }
 
 class FileManagerState {

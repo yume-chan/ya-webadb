@@ -29,6 +29,10 @@ const ROUTES = [
         url: '/shell',
         name: 'Interactive Shell',
     },
+    {
+        url: '/tcpip',
+        name: 'ADB over WiFi',
+    },
 ];
 
 function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsProps<INavButtonProps>) {

@@ -1,6 +1,6 @@
 import { Dropdown, IDropdownOption, Position, Separator, SpinButton, Toggle } from '@fluentui/react';
 import { AdbDemoModeMobileDataType, AdbDemoModeMobileDataTypes, AdbDemoModeSignalStrength, AdbDemoModeStatusBarMode, AdbDemoModeStatusBarModes } from '@yume-chan/adb';
-import { autorun, makeAutoObservable, reaction, runInAction, when } from "mobx";
+import { autorun, makeAutoObservable, reaction, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { CSSProperties, useCallback } from 'react';
 import { device } from "../state";
@@ -66,12 +66,12 @@ class DemoModeState {
 
         reaction(
             () => device.current,
-            async () => {
-                if (device.current) {
-                    const allowed = await device.current.demoMode.getAllowed();
+            async (device) => {
+                if (device) {
+                    const allowed = await device.demoMode.getAllowed();
                     runInAction(() => this.allowed = allowed);
                     if (allowed) {
-                        const enabled = await device.current.demoMode.getEnabled();
+                        const enabled = await device.demoMode.getEnabled();
                         runInAction(() => this.enabled = enabled);
                     }
                 } else {
@@ -86,7 +86,7 @@ class DemoModeState {
         // Apply all features when enable
         autorun(() => {
             if (this.enabled) {
-                for (const group of features) {
+                for (const group of FEATURES) {
                     for (const feature of group) {
                         feature.onChange(this.features.get(feature.key) ?? feature.initial);
                     }
@@ -110,7 +110,7 @@ interface FeatureDefinition {
     onChange: (value: unknown) => void;
 }
 
-const features: FeatureDefinition[][] = [
+const FEATURES: FeatureDefinition[][] = [
     [
         {
             key: 'batteryLevel',
@@ -337,7 +337,7 @@ const DemoModeBase = ({
             <div><strong>Note:</strong></div>
             <div>Device may not support all options.</div>
 
-            {features.map(group => (
+            {FEATURES.map(group => (
                 <>
                     <Separator />
 
