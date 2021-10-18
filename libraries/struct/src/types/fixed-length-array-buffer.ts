@@ -11,7 +11,7 @@ export class FixedLengthArrayBufferLikeFieldDefinition<
     TType,
     TOptions
     > {
-    public getSize(): number {
+    getSize(): number {
         return this.options.length;
     }
 };

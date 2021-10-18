@@ -14,26 +14,26 @@ export function decodeUtf8(buffer: ArrayBuffer): string {
 }
 
 export default class AdbWsBackend implements AdbBackend {
-    public readonly serial: string;
+    readonly serial: string;
 
-    public name: string | undefined;
+    name: string | undefined;
 
     private socket: WebSocket | undefined;
 
     private bufferedStream: BufferedStream<Stream> | undefined;
 
     private _connected = false;
-    public get connected() { return this._connected; }
+    get connected() { return this._connected; }
 
     private readonly disconnectEvent = new EventEmitter<void>();
-    public readonly onDisconnected = this.disconnectEvent.event;
+    readonly onDisconnected = this.disconnectEvent.event;
 
-    public constructor(url: string, name?: string) {
+    constructor(url: string, name?: string) {
         this.serial = url;
         this.name = name;
     }
 
-    public async connect() {
+    async connect() {
         const socket = new WebSocket(this.serial);
         socket.binaryType = "arraybuffer";
 
@@ -61,23 +61,23 @@ export default class AdbWsBackend implements AdbBackend {
         this._connected = true;
     }
 
-    public encodeUtf8(input: string): ArrayBuffer {
+    encodeUtf8(input: string): ArrayBuffer {
         return encodeUtf8(input);
     }
 
-    public decodeUtf8(buffer: ArrayBuffer): string {
+    decodeUtf8(buffer: ArrayBuffer): string {
         return decodeUtf8(buffer);
     }
 
-    public write(buffer: ArrayBuffer): void | Promise<void> {
+    write(buffer: ArrayBuffer): void | Promise<void> {
         this.socket?.send(buffer);
     }
 
-    public read(length: number): ArrayBuffer | Promise<ArrayBuffer> {
+    read(length: number): ArrayBuffer | Promise<ArrayBuffer> {
         return this.bufferedStream!.read(length);
     }
 
-    public dispose(): void | Promise<void> {
+    dispose(): void | Promise<void> {
         this.socket?.close();
     }
 }

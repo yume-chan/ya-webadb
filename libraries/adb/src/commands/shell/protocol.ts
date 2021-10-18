@@ -34,11 +34,11 @@ function assertUnreachable(x: never): never {
  * * `resize`: Yes
  */
 export class AdbShellProtocol implements AdbShell {
-    public static isSupported(adb: Adb) {
+    static isSupported(adb: Adb) {
         return adb.features!.includes(AdbFeatures.ShellV2);
     }
 
-    public static async spawn(adb: Adb, command: string) {
+    static async spawn(adb: Adb, command: string) {
         // TODO: the service string may support more parameters
         return new AdbShellProtocol(await adb.createSocket(`shell,v2,pty:${command}`));
     }
@@ -46,15 +46,15 @@ export class AdbShellProtocol implements AdbShell {
     private readonly stream: AdbBufferedStream;
 
     private readonly stdoutEvent = new EventEmitter<ArrayBuffer>();
-    public get onStdout() { return this.stdoutEvent.event; }
+    get onStdout() { return this.stdoutEvent.event; }
 
     private readonly stderrEvent = new EventEmitter<ArrayBuffer>();
-    public get onStderr() { return this.stderrEvent.event; }
+    get onStderr() { return this.stderrEvent.event; }
 
     private readonly exitEvent = new EventEmitter<number>();
-    public get onExit() { return this.exitEvent.event; }
+    get onExit() { return this.exitEvent.event; }
 
-    public constructor(socket: AdbSocket) {
+    constructor(socket: AdbSocket) {
         this.stream = new AdbBufferedStream(socket);
         this.readData();
     }
@@ -87,7 +87,7 @@ export class AdbShellProtocol implements AdbShell {
         }
     }
 
-    public async write(data: ArrayBuffer) {
+    async write(data: ArrayBuffer) {
         this.stream.write(
             AdbShellProtocolPacket.serialize(
                 {
@@ -99,7 +99,7 @@ export class AdbShellProtocol implements AdbShell {
         );
     }
 
-    public async resize(rows: number, cols: number) {
+    async resize(rows: number, cols: number) {
         await this.stream.write(
             AdbShellProtocolPacket.serialize(
                 {
@@ -116,7 +116,7 @@ export class AdbShellProtocol implements AdbShell {
         );
     }
 
-    public kill() {
+    kill() {
         return this.stream.close();
     }
 }

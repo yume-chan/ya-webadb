@@ -2,20 +2,20 @@ import { AdbCredentialStore, calculateBase64EncodedLength, calculatePublicKey, c
 import { decodeUtf8 } from "./utils";
 
 export class AdbWebCredentialStore implements AdbCredentialStore {
-    public readonly localStorageKey: string;
+    readonly localStorageKey: string;
 
-    public constructor(localStorageKey = 'private-key') {
+    constructor(localStorageKey = 'private-key') {
         this.localStorageKey = localStorageKey;
     }
 
-    public *iterateKeys(): Generator<ArrayBuffer, void, void> {
+    *iterateKeys(): Generator<ArrayBuffer, void, void> {
         const privateKey = window.localStorage.getItem(this.localStorageKey);
         if (privateKey) {
             yield decodeBase64(privateKey);
         }
     }
 
-    public async generateKey(): Promise<ArrayBuffer> {
+    async generateKey(): Promise<ArrayBuffer> {
         const { privateKey: cryptoKey } = await crypto.subtle.generateKey(
             {
                 name: 'RSASSA-PKCS1-v1_5',

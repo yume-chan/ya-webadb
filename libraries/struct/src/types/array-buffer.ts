@@ -10,7 +10,7 @@ import { StructDeserializationContext, StructFieldDefinition, StructFieldValue, 
  * specified by user when creating field definitions.
  */
 export abstract class ArrayBufferLikeFieldType<TValue = unknown, TTypeScriptType = TValue> {
-    public readonly TTypeScriptType!: TTypeScriptType;
+    readonly TTypeScriptType!: TTypeScriptType;
 
     /**
      * When implemented in derived classes, converts the type-specific `value` to an `ArrayBuffer`
@@ -18,10 +18,10 @@ export abstract class ArrayBufferLikeFieldType<TValue = unknown, TTypeScriptType
      * This function should be "pure", i.e.,
      * same `value` should always be converted to `ArrayBuffer`s that have same content.
      */
-    public abstract toArrayBuffer(value: TValue, context: StructSerializationContext): ArrayBuffer;
+    abstract toArrayBuffer(value: TValue, context: StructSerializationContext): ArrayBuffer;
 
     /** When implemented in derived classes, converts the `ArrayBuffer` to a type-specific value */
-    public abstract fromArrayBuffer(arrayBuffer: ArrayBuffer, context: StructDeserializationContext): TValue;
+    abstract fromArrayBuffer(arrayBuffer: ArrayBuffer, context: StructDeserializationContext): TValue;
 
     /**
      * When implemented in derived classes, gets the size in byte of the type-specific `value`.
@@ -30,26 +30,26 @@ export abstract class ArrayBufferLikeFieldType<TValue = unknown, TTypeScriptType
      * implementer should returns `-1` so the caller will get its size by first converting it to
      * an `ArrayBuffer` (and cache the result).
      */
-    public abstract getSize(value: TValue): number;
+    abstract getSize(value: TValue): number;
 }
 
 /** An ArrayBufferLike type that's actually an `ArrayBuffer` */
 export class ArrayBufferFieldType extends ArrayBufferLikeFieldType<ArrayBuffer> {
-    public static readonly instance = new ArrayBufferFieldType();
+    static readonly instance = new ArrayBufferFieldType();
 
     protected constructor() {
         super();
     }
 
-    public toArrayBuffer(value: ArrayBuffer): ArrayBuffer {
+    toArrayBuffer(value: ArrayBuffer): ArrayBuffer {
         return value;
     }
 
-    public fromArrayBuffer(arrayBuffer: ArrayBuffer): ArrayBuffer {
+    fromArrayBuffer(arrayBuffer: ArrayBuffer): ArrayBuffer {
         return arrayBuffer;
     }
 
-    public getSize(value: ArrayBuffer): number {
+    getSize(value: ArrayBuffer): number {
         return value.byteLength;
     }
 }
@@ -57,21 +57,21 @@ export class ArrayBufferFieldType extends ArrayBufferLikeFieldType<ArrayBuffer> 
 /** Am ArrayBufferLike type that converts between `ArrayBuffer` and `Uint8ClampedArray` */
 export class Uint8ClampedArrayFieldType
     extends ArrayBufferLikeFieldType<Uint8ClampedArray, Uint8ClampedArray> {
-    public static readonly instance = new Uint8ClampedArrayFieldType();
+    static readonly instance = new Uint8ClampedArrayFieldType();
 
     protected constructor() {
         super();
     }
 
-    public toArrayBuffer(value: Uint8ClampedArray): ArrayBuffer {
+    toArrayBuffer(value: Uint8ClampedArray): ArrayBuffer {
         return value.buffer;
     }
 
-    public fromArrayBuffer(arrayBuffer: ArrayBuffer): Uint8ClampedArray {
+    fromArrayBuffer(arrayBuffer: ArrayBuffer): Uint8ClampedArray {
         return new Uint8ClampedArray(arrayBuffer);
     }
 
-    public getSize(value: Uint8ClampedArray): number {
+    getSize(value: Uint8ClampedArray): number {
         return value.byteLength;
     }
 }
@@ -79,17 +79,17 @@ export class Uint8ClampedArrayFieldType
 /** Am ArrayBufferLike type that converts between `ArrayBuffer` and `string` */
 export class StringFieldType<TTypeScriptType = string>
     extends ArrayBufferLikeFieldType<string, TTypeScriptType> {
-    public static readonly instance = new StringFieldType();
+    static readonly instance = new StringFieldType();
 
-    public toArrayBuffer(value: string, context: StructSerializationContext): ArrayBuffer {
+    toArrayBuffer(value: string, context: StructSerializationContext): ArrayBuffer {
         return context.encodeUtf8(value);
     }
 
-    public fromArrayBuffer(arrayBuffer: ArrayBuffer, context: StructDeserializationContext): string {
+    fromArrayBuffer(arrayBuffer: ArrayBuffer, context: StructDeserializationContext): string {
         return context.decodeUtf8(arrayBuffer);
     }
 
-    public getSize(): number {
+    getSize(): number {
         // Return `-1`, so `ArrayBufferLikeFieldDefinition` will
         // convert this `value` into an `ArrayBuffer` (and cache the result),
         // Then get the size from that `ArrayBuffer`
@@ -108,9 +108,9 @@ export abstract class ArrayBufferLikeFieldDefinition<
     TType['TTypeScriptType'],
     TOmitInitKey
     >{
-    public readonly type: TType;
+    readonly type: TType;
 
-    public constructor(type: TType, options: TOptions) {
+    constructor(type: TType, options: TOptions) {
         super(options);
         this.type = type;
     }
@@ -122,7 +122,7 @@ export abstract class ArrayBufferLikeFieldDefinition<
     /**
      * When implemented in derived classes, creates a `StructFieldValue` for the current field definition.
      */
-    public create(
+    create(
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         struct: StructValue,
@@ -132,7 +132,7 @@ export abstract class ArrayBufferLikeFieldDefinition<
         return new ArrayBufferLikeFieldValue(this, options, context, struct, value, arrayBuffer);
     }
 
-    public async deserialize(
+    async deserialize(
         options: Readonly<StructOptions>,
         context: StructDeserializationContext,
         struct: StructValue,
@@ -156,7 +156,7 @@ export class ArrayBufferLikeFieldValue<
     > extends StructFieldValue<TDefinition> {
     protected arrayBuffer: ArrayBuffer | undefined;
 
-    public constructor(
+    constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
@@ -168,12 +168,12 @@ export class ArrayBufferLikeFieldValue<
         this.arrayBuffer = arrayBuffer;
     }
 
-    public set(value: TDefinition['TValue']): void {
+    set(value: TDefinition['TValue']): void {
         super.set(value);
         this.arrayBuffer = undefined;
     }
 
-    public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
+    serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
         if (!this.arrayBuffer) {
             this.arrayBuffer = this.definition.type.toArrayBuffer(this.value, context);
         }

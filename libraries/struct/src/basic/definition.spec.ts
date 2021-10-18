@@ -8,16 +8,16 @@ describe('StructFieldDefinition', () => {
     describe('.constructor', () => {
         it('should save the `options` parameter', () => {
             class MockFieldDefinition extends StructFieldDefinition<number>{
-                public constructor(options: number) {
+                constructor(options: number) {
                     super(options);
                 }
-                public getSize(): number {
+                getSize(): number {
                     throw new Error('Method not implemented.');
                 }
-                public create(options: Readonly<StructOptions>, context: StructSerializationContext, struct: StructValue, value: unknown): StructFieldValue<this> {
+                create(options: Readonly<StructOptions>, context: StructSerializationContext, struct: StructValue, value: unknown): StructFieldValue<this> {
                     throw new Error('Method not implemented.');
                 }
-                public deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
+                deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
                     throw new Error('Method not implemented.');
                 }
             }

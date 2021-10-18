@@ -33,25 +33,25 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly sendLock = new AutoResetEvent();
     private readonly logger: AdbLogger | undefined;
 
-    public readonly backend: AdbBackend;
+    readonly backend: AdbBackend;
 
-    public maxPayloadSize = 0;
-    public calculateChecksum = true;
-    public appendNullToServiceString = true;
+    maxPayloadSize = 0;
+    calculateChecksum = true;
+    appendNullToServiceString = true;
 
     private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketReceivedEventArgs>());
-    public get onPacket() { return this.packetEvent.event; }
+    get onPacket() { return this.packetEvent.event; }
 
     private readonly incomingSocketEvent = this.addDisposable(new EventEmitter<AdbIncomingSocketEventArgs>());
-    public get onIncomingSocket() { return this.incomingSocketEvent.event; }
+    get onIncomingSocket() { return this.incomingSocketEvent.event; }
 
     private readonly errorEvent = this.addDisposable(new EventEmitter<Error>());
-    public get onError() { return this.errorEvent.event; }
+    get onError() { return this.errorEvent.event; }
 
     private _running = false;
-    public get running() { return this._running; }
+    get running() { return this._running; }
 
-    public constructor(backend: AdbBackend, logger?: AdbLogger) {
+    constructor(backend: AdbBackend, logger?: AdbLogger) {
         super();
 
         this.backend = backend;
@@ -187,12 +187,12 @@ export class AdbPacketDispatcher extends AutoDisposable {
         }
     }
 
-    public start() {
+    start() {
         this._running = true;
         this.receiveLoop();
     }
 
-    public async createSocket(serviceString: string): Promise<AdbSocket> {
+    async createSocket(serviceString: string): Promise<AdbSocket> {
         if (this.appendNullToServiceString) {
             serviceString += '\0';
         }
@@ -213,14 +213,14 @@ export class AdbPacketDispatcher extends AutoDisposable {
         return new AdbSocket(controller);
     }
 
-    public sendPacket(packet: AdbPacketInit): Promise<void>;
-    public sendPacket(
+    sendPacket(packet: AdbPacketInit): Promise<void>;
+    sendPacket(
         command: AdbCommand,
         arg0: number,
         arg1: number,
         payload?: string | ArrayBuffer
     ): Promise<void>;
-    public async sendPacket(
+    async sendPacket(
         packetOrCommand: AdbPacketInit | AdbCommand,
         arg0?: number,
         arg1?: number,
@@ -256,7 +256,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         }
     }
 
-    public dispose() {
+    dispose() {
         this._running = false;
 
         for (const socket of this.sockets.values()) {

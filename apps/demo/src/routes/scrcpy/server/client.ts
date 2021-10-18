@@ -43,14 +43,14 @@ class LineReader {
         this.text = text;
     }
 
-    public next(): string | undefined {
+    next(): string | undefined {
         let result = this.peek();
         this.start = this.peekEnd;
         this.peekEnd = 0;
         return result;
     }
 
-    public peek(): string | undefined {
+    peek(): string | undefined {
         if (this.peekEnd) {
             return this.peekLine;
         }
@@ -219,7 +219,7 @@ export interface FrameSize {
 const encoderRegex = /^\s+scrcpy --encoder-name '(.*?)'/;
 
 export class ScrcpyClient {
-    public static async getEncoders(options: ScrcpyClientOptions): Promise<string[]> {
+    static async getEncoders(options: ScrcpyClientOptions): Promise<string[]> {
         const client = new ScrcpyClient({
             ...options,
             // Provide an invalid encoder name
@@ -254,7 +254,7 @@ export class ScrcpyClient {
 
     private readonly options: ScrcpyClientOptions;
 
-    public get backend() { return this.options.device.backend; }
+    get backend() { return this.options.device.backend; }
 
     private process: AdbShell | undefined;
 
@@ -263,42 +263,42 @@ export class ScrcpyClient {
     private controlStream: AdbBufferedStream | undefined;
 
     private readonly debugEvent = new EventEmitter<string>();
-    public get onDebug() { return this.debugEvent.event; }
+    get onDebug() { return this.debugEvent.event; }
 
     private readonly infoEvent = new EventEmitter<string>();
-    public get onInfo() { return this.infoEvent.event; }
+    get onInfo() { return this.infoEvent.event; }
 
     private readonly errorEvent = new EventEmitter<ScrcpyOutput>();
-    public get onError() { return this.errorEvent.event; }
+    get onError() { return this.errorEvent.event; }
 
     private readonly closeEvent = new EventEmitter<void>();
-    public get onClose() { return this.closeEvent.event; }
+    get onClose() { return this.closeEvent.event; }
 
     private _running = false;
-    public get running() { return this._running; }
+    get running() { return this._running; }
 
     private _screenWidth: number | undefined;
-    public get screenWidth() { return this._screenWidth; }
+    get screenWidth() { return this._screenWidth; }
 
     private _screenHeight: number | undefined;
-    public get screenHeight() { return this._screenHeight; }
+    get screenHeight() { return this._screenHeight; }
 
     private readonly sizeChangedEvent = new EventEmitter<FrameSize>();
-    public get onSizeChanged() { return this.sizeChangedEvent.event; }
+    get onSizeChanged() { return this.sizeChangedEvent.event; }
 
     private readonly videoDataEvent = new DataEventEmitter<VideoPacket>();
-    public get onVideoData() { return this.videoDataEvent.event; }
+    get onVideoData() { return this.videoDataEvent.event; }
 
     private readonly clipboardChangeEvent = new EventEmitter<string>();
-    public get onClipboardChange() { return this.clipboardChangeEvent.event; }
+    get onClipboardChange() { return this.clipboardChangeEvent.event; }
 
     private sendingTouchMessage = false;
 
-    public constructor(options: ScrcpyClientOptions) {
+    constructor(options: ScrcpyClientOptions) {
         this.options = options;
     }
 
-    public async start(): Promise<void> {
+    async start(): Promise<void> {
         const {
             device,
             path,
@@ -509,7 +509,7 @@ export class ScrcpyClient {
         }
     }
 
-    public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type' | 'action'>) {
+    async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type' | 'action'>) {
         if (!this.controlStream) {
             throw new Error('injectKeyCode called before initialization');
         }
@@ -527,7 +527,7 @@ export class ScrcpyClient {
         }, this.backend));
     }
 
-    public async injectText(text: string) {
+    async injectText(text: string) {
         if (!this.controlStream) {
             throw new Error('injectText called before initialization');
         }
@@ -538,7 +538,7 @@ export class ScrcpyClient {
         }, this.backend));
     }
 
-    public async injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, 'type' | 'screenWidth' | 'screenHeight'>) {
+    async injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, 'type' | 'screenWidth' | 'screenHeight'>) {
         if (!this.controlStream) {
             throw new Error('injectTouch called before initialization');
         }
@@ -565,7 +565,7 @@ export class ScrcpyClient {
         this.sendingTouchMessage = false;
     }
 
-    public async pressBackOrTurnOnScreen() {
+    async pressBackOrTurnOnScreen() {
         if (!this.controlStream) {
             throw new Error('pressBackOrTurnOnScreen called before initialization');
         }
@@ -577,7 +577,7 @@ export class ScrcpyClient {
         await this.controlStream.write(buffer);
     }
 
-    public async close() {
+    async close() {
         if (!this._running) {
             return;
         }

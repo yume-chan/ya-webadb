@@ -21,17 +21,17 @@ const UpIconProps = { iconName: 'ChevronUp' };
 const DownIconProps = { iconName: 'ChevronDown' };
 
 class AdbTerminal extends AutoDisposable {
-    public terminal: Terminal = new Terminal({
+    terminal: Terminal = new Terminal({
         scrollback: 9000,
     });
 
-    public searchAddon = new SearchAddon();
+    searchAddon = new SearchAddon();
 
     private readonly fitAddon = new FitAddon();
 
     private _parent: HTMLElement | undefined;
-    public get parent() { return this._parent; }
-    public set parent(value) {
+    get parent() { return this._parent; }
+    set parent(value) {
         this._parent = value;
 
         if (value) {
@@ -44,8 +44,8 @@ class AdbTerminal extends AutoDisposable {
     }
 
     private _shell: AdbShell | undefined;
-    public get socket() { return this._shell; }
-    public set socket(value) {
+    get socket() { return this._shell; }
+    set socket(value) {
         if (this._shell) {
             this.dispose();
         }
@@ -71,7 +71,7 @@ class AdbTerminal extends AutoDisposable {
         }
     }
 
-    public constructor() {
+    constructor() {
         super();
 
         this.terminal.setOption('fontFamily', '"Cascadia Code", Consolas, monospace, "Source Han Sans SC", "Microsoft YaHei"');
@@ -81,7 +81,7 @@ class AdbTerminal extends AutoDisposable {
         this.terminal.loadAddon(this.fitAddon);
     }
 
-    public fit() {
+    fit() {
         this.fitAddon.fit();
         const { rows, cols } = this.terminal;
         this._shell?.resize(rows, cols);

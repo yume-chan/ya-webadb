@@ -8,7 +8,7 @@ describe('StructFieldValue', () => {
     describe('.constructor', () => {
         it('should save parameters', () => {
             class MockStructFieldValue extends StructFieldValue {
-                public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
+                serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
                     throw new Error('Method not implemented.');
                 }
             }
@@ -31,19 +31,19 @@ describe('StructFieldValue', () => {
     describe('#getSize', () => {
         it('should return same value as definition\'s', () => {
             class MockFieldDefinition extends StructFieldDefinition {
-                public getSize(): number {
+                getSize(): number {
                     return 42;
                 }
-                public create(options: Readonly<StructOptions>, context: StructSerializationContext, struct: StructValue, value: unknown): StructFieldValue<this> {
+                create(options: Readonly<StructOptions>, context: StructSerializationContext, struct: StructValue, value: unknown): StructFieldValue<this> {
                     throw new Error('Method not implemented.');
                 }
-                public deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
+                deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
                     throw new Error('Method not implemented.');
                 }
             }
 
             class MockStructFieldValue extends StructFieldValue {
-                public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
+                serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
                     throw new Error('Method not implemented.');
                 }
             }
@@ -57,7 +57,7 @@ describe('StructFieldValue', () => {
     describe('#set', () => {
         it('should update its internal value', () => {
             class MockStructFieldValue extends StructFieldValue {
-                public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
+                serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
                     throw new Error('Method not implemented.');
                 }
             }

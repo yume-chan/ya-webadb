@@ -17,7 +17,7 @@ export class DataEventEmitter<TEvent> extends EventEmitter<TEvent, AsyncEventRes
         return remove;
     }
 
-    public async fire(e: TEvent) {
+    async fire(e: TEvent) {
         await this.dispatchLock.promise;
 
         for (const info of this.listeners) {

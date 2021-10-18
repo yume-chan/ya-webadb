@@ -12,7 +12,7 @@ export class WebCodecsDecoder implements Decoder {
     private decoder: VideoDecoder;
     private context: CanvasRenderingContext2D;
 
-    public constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement) {
         this.context = canvas.getContext('2d')!;
         this.decoder = new VideoDecoder({
             output: (frame) => {
@@ -23,7 +23,7 @@ export class WebCodecsDecoder implements Decoder {
         });
     }
 
-    public configure(config: FrameSize): ValueOrPromise<void> {
+    configure(config: FrameSize): ValueOrPromise<void> {
         const { sequenceParameterSet: { profile_idc, constraint_set, level_idc } } = config;
 
         // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
@@ -43,7 +43,7 @@ export class WebCodecsDecoder implements Decoder {
         }));
     }
 
-    public dispose() {
+    dispose() {
         this.decoder.close();
     }
 }

@@ -17,11 +17,11 @@ export class BufferedStream<T extends Stream> {
 
     protected readonly stream: T;
 
-    public constructor(stream: T) {
+    constructor(stream: T) {
         this.stream = stream;
     }
 
-    public async read(length: number): Promise<ArrayBuffer> {
+    async read(length: number): Promise<ArrayBuffer> {
         let array: Uint8Array;
         let index: number;
         if (this.buffer) {
@@ -68,7 +68,7 @@ export class BufferedStream<T extends Stream> {
         return array.buffer;
     }
 
-    public close() {
+    close() {
         this.stream.close?.();
     }
 }
@@ -76,25 +76,25 @@ export class BufferedStream<T extends Stream> {
 export class AdbBufferedStream
     extends BufferedStream<AdbSocketStream>
     implements AdbSocketInfo, StructDeserializationContext {
-    public get backend() { return this.stream.backend; }
-    public get localId() { return this.stream.localId; }
-    public get remoteId() { return this.stream.remoteId; }
-    public get localCreated() { return this.stream.localCreated; }
-    public get serviceString() { return this.stream.serviceString; }
+    get backend() { return this.stream.backend; }
+    get localId() { return this.stream.localId; }
+    get remoteId() { return this.stream.remoteId; }
+    get localCreated() { return this.stream.localCreated; }
+    get serviceString() { return this.stream.serviceString; }
 
-    public constructor(socket: AdbSocket) {
+    constructor(socket: AdbSocket) {
         super(new AdbSocketStream(socket));
     }
 
-    public write(data: ArrayBuffer): Promise<void> {
+    write(data: ArrayBuffer): Promise<void> {
         return this.stream.write(data);
     }
 
-    public decodeUtf8(buffer: ArrayBuffer): string {
+    decodeUtf8(buffer: ArrayBuffer): string {
         return this.backend.decodeUtf8(buffer);
     }
 
-    public encodeUtf8(input: string): ArrayBuffer {
+    encodeUtf8(input: string): ArrayBuffer {
         return this.backend.encodeUtf8(input);
     }
 }

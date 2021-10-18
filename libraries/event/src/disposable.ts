@@ -5,7 +5,7 @@ export interface Disposable {
 export class AutoDisposable implements Disposable {
     private disposables: Disposable[] = [];
 
-    public constructor() {
+    constructor() {
         this.dispose = this.dispose.bind(this);
     }
 
@@ -14,7 +14,7 @@ export class AutoDisposable implements Disposable {
         return disposable;
     }
 
-    public dispose() {
+    dispose() {
         for (const disposable of this.disposables) {
             disposable.dispose();
         }
@@ -24,7 +24,7 @@ export class AutoDisposable implements Disposable {
 }
 
 export class DisposableList extends AutoDisposable {
-    public add<T extends Disposable>(disposable: T): T {
+    add<T extends Disposable>(disposable: T): T {
         return this.addDisposable(disposable);
     }
 }

@@ -4,13 +4,13 @@ import { ArrayBufferFieldType, FixedLengthArrayBufferLikeFieldDefinition, Number
 import { ValueOrPromise } from './utils';
 
 class MockDeserializationContext implements StructDeserializationContext {
-    public buffer = new ArrayBuffer(0);
+    buffer = new ArrayBuffer(0);
 
-    public read = jest.fn((length: number) => this.buffer);
+    read = jest.fn((length: number) => this.buffer);
 
-    public encodeUtf8 = jest.fn((input: string) => Buffer.from(input, 'utf-8'));
+    encodeUtf8 = jest.fn((input: string) => Buffer.from(input, 'utf-8'));
 
-    public decodeUtf8 = jest.fn((buffer: ArrayBuffer) => Buffer.from(buffer).toString('utf-8'));
+    decodeUtf8 = jest.fn((buffer: ArrayBuffer) => Buffer.from(buffer).toString('utf-8'));
 }
 
 describe('Struct', () => {
@@ -24,18 +24,18 @@ describe('Struct', () => {
 
     describe('#field', () => {
         class MockFieldDefinition extends StructFieldDefinition<number>{
-            public constructor(size: number) {
+            constructor(size: number) {
                 super(size);
             }
 
-            public getSize = jest.fn(() => {
+            getSize = jest.fn(() => {
                 return this.options;
             });
 
-            public create(options: Readonly<StructOptions>, context: StructSerializationContext, struct: StructValue, value: unknown): StructFieldValue<this> {
+            create(options: Readonly<StructOptions>, context: StructSerializationContext, struct: StructValue, value: unknown): StructFieldValue<this> {
                 throw new Error('Method not implemented.');
             }
-            public deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
+            deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
                 throw new Error('Method not implemented.');
             }
         }

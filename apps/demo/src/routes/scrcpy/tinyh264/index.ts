@@ -24,12 +24,12 @@ export interface PictureReadyEventArgs {
 const pictureReadyEvent = new EventEmitter<PictureReadyEventArgs>();
 
 export class TinyH264Decoder extends AutoDisposable {
-    public readonly streamId: number;
+    readonly streamId: number;
 
     private readonly pictureReadyEvent = new EventEmitter<PictureReadyEventArgs>();
-    public get pictureReady() { return this.pictureReadyEvent.event; }
+    get pictureReady() { return this.pictureReadyEvent.event; }
 
-    public constructor(streamId: number) {
+    constructor(streamId: number) {
         super();
 
         this.streamId = streamId;
@@ -42,7 +42,7 @@ export class TinyH264Decoder extends AutoDisposable {
         }
     }
 
-    public feed(data: ArrayBuffer) {
+    feed(data: ArrayBuffer) {
         worker!.postMessage({
             type: 'decode',
             data: data,
@@ -52,7 +52,7 @@ export class TinyH264Decoder extends AutoDisposable {
         }, [data]);
     }
 
-    public dispose() {
+    dispose() {
         super.dispose();
         worker!.postMessage({
             type: 'release',
@@ -97,7 +97,7 @@ export class TinyH264DecoderWrapper implements Decoder {
     private canvas: HTMLCanvasElement;
     private decoderPromise: Promise<TinyH264Decoder> | undefined;
 
-    public constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
     }
 

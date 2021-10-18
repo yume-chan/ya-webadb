@@ -9,7 +9,7 @@ export class StructValue {
     /**
      * Gets the result struct value object
      */
-    public readonly value: Record<PropertyKey, unknown> = {};
+    readonly value: Record<PropertyKey, unknown> = {};
 
     /**
      * Sets a `StructFieldValue` for `key`
@@ -17,7 +17,7 @@ export class StructValue {
      * @param key The field name
      * @param value The associated `StructFieldValue`
      */
-    public set(key: PropertyKey, value: StructFieldValue): void {
+    set(key: PropertyKey, value: StructFieldValue): void {
         this.fieldValues[key] = value;
 
         Object.defineProperty(this.value, key, {
@@ -33,7 +33,7 @@ export class StructValue {
      *
      * @param key The field name
      */
-    public get(key: PropertyKey): StructFieldValue {
+    get(key: PropertyKey): StructFieldValue {
         return this.fieldValues[key];
     }
 }

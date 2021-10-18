@@ -15,13 +15,13 @@ export class CloseEventEmitter extends EventEmitter<void, void>{
         }
     }
 
-    public fire() {
+    fire() {
         super.fire();
         this.closed = true;
         this.listeners.length = 0;
     }
 
-    public dispose() {
+    dispose() {
         this.fire();
         super.dispose();
     }

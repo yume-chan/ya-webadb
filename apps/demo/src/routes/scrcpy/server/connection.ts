@@ -6,15 +6,15 @@ import { delay } from "../../../utils";
 export abstract class ScrcpyClientConnection implements Disposable {
     protected device: Adb;
 
-    public constructor(device: Adb) {
+    constructor(device: Adb) {
         this.device = device;
     }
 
-    public initialize(): ValueOrPromise<void> { }
+    initialize(): ValueOrPromise<void> { }
 
-    public abstract getStreams(): ValueOrPromise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream]>;
+    abstract getStreams(): ValueOrPromise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream]>;
 
-    public dispose(): void { }
+    dispose(): void { }
 }
 
 export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
@@ -40,7 +40,7 @@ export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
         return stream;
     }
 
-    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream]> {
+    async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream]> {
         return [
             await this.connectAndReadByte(),
             await this.connectAndRetry()
@@ -53,7 +53,7 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
 
     private address!: string;
 
-    public async initialize(): Promise<void> {
+    async initialize(): Promise<void> {
         // try to unbind first
         try {
             await this.device.reverse.remove('localabstract:scrcpy');
@@ -73,14 +73,14 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
         return new AdbBufferedStream(await this.streams.dequeue());
     }
 
-    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream]> {
+    async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream]> {
         return [
             await this.accept(),
             await this.accept(),
         ];
     }
 
-    public dispose() {
+    dispose() {
         // Don't await this!
         // `reverse.remove`'s response will never arrive
         // before we read all pending data from `videoStream`

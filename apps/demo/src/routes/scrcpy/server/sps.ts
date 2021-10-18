@@ -5,11 +5,11 @@ class BitReader {
 
     private bitPosition = 0;
 
-    public constructor(buffer: Uint8Array) {
+    constructor(buffer: Uint8Array) {
         this.buffer = buffer;
     }
 
-    public read(length: number): number {
+    read(length: number): number {
         let result = 0;
         for (let i = 0; i < length; i += 1) {
             result = (result << 1) | this.next();
@@ -17,7 +17,7 @@ class BitReader {
         return result;
     }
 
-    public next(): number {
+    next(): number {
         const value = (this.buffer[this.bytePosition] >> (7 - this.bitPosition)) & 1;
         this.bitPosition += 1;
         if (this.bitPosition === 8) {
@@ -27,7 +27,7 @@ class BitReader {
         return value;
     }
 
-    public decodeExponentialGolombNumber(): number {
+    decodeExponentialGolombNumber(): number {
         let length = 0;
         while (this.next() === 0) {
             length += 1;

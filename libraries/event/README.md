@@ -42,7 +42,7 @@ class MyObject extends AutoDisposable {
 
     private event2 = this.addDisposable(new EventEmitter<void>());
 
-    public dispose() {
+    dispose() {
         // If the derived class has its own dispose logic
         // Don't forget to call super's `dispose`
         super.dispose();

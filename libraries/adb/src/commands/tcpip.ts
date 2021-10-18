@@ -1,7 +1,7 @@
 import { AdbCommandBase } from './base';
 
 export class AdbTcpIpCommand extends AdbCommandBase {
-    public async setPort(port: number): Promise<void> {
+    async setPort(port: number): Promise<void> {
         if (port <= 0) {
             throw new Error(`Invalid port ${port}`);
         }
@@ -12,7 +12,7 @@ export class AdbTcpIpCommand extends AdbCommandBase {
         }
     }
 
-    public async disable(): Promise<void> {
+    async disable(): Promise<void> {
         const output = await this.adb.createSocketAndReadAll('usb:');
         if (output !== 'restarting in USB mode\n') {
             throw new Error('Invalid response');

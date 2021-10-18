@@ -27,9 +27,9 @@ class LinkedList<T>{
     private tail?: LinkedListItem<T>;
 
     private _length = 0;
-    public get length() { return this._length; }
+    get length() { return this._length; }
 
-    public push(value: T): void {
+    push(value: T): void {
         const item: LinkedListItem<T> = { value };
 
         if (this._length === 0) {
@@ -42,7 +42,7 @@ class LinkedList<T>{
         this.tail = item;
     }
 
-    public shift(): T | undefined {
+    shift(): T | undefined {
         if (this._length === 0) {
             return;
         }
@@ -79,19 +79,19 @@ export class EventQueue<T> {
     private ended = false;
 
     private _length = 0;
-    public get length() { return this._length; }
+    get length() { return this._length; }
 
     private _needDrain = false;
-    public get needDrain() { return this._needDrain; }
+    get needDrain() { return this._needDrain; }
 
     private readonly drainEvent = new EventEmitter<void>();
-    public readonly onDrain = this.drainEvent.event;
+    readonly onDrain = this.drainEvent.event;
 
-    public constructor(options?: Partial<EventQueueOptions>) {
+    constructor(options?: Partial<EventQueueOptions>) {
         this.options = { ...EventQueueDefaultOptions, ...options };
     }
 
-    public enqueue(value: T, length = 1): boolean {
+    enqueue(value: T, length = 1): boolean {
         if (this.ended) {
             return true;
         }
@@ -111,7 +111,7 @@ export class EventQueue<T> {
         return false;
     }
 
-    public dequeue(): Promise<T> {
+    dequeue(): Promise<T> {
         if (this.buffers.length) {
             const [value, size] = this.buffers.shift()!;
             this._length -= size;
@@ -135,7 +135,7 @@ export class EventQueue<T> {
         return resolver.promise;
     }
 
-    public end(): void {
+    end(): void {
         this.ended = true;
         let item: PromiseResolver<T> | undefined;
         while (item = this.awaiters.shift()) {

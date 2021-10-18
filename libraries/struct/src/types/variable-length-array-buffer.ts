@@ -21,7 +21,7 @@ export class VariableLengthArrayBufferLikeFieldDefinition<
     TOptions,
     TOptions['lengthField']
     > {
-    public getSize(): number {
+    getSize(): number {
         return 0;
     }
 
@@ -33,7 +33,7 @@ export class VariableLengthArrayBufferLikeFieldDefinition<
         return value;
     }
 
-    public create(
+    create(
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         struct: StructValue,
@@ -58,7 +58,7 @@ export class VariableLengthArrayBufferLikeStructFieldValue<
 
     protected lengthFieldValue: VariableLengthArrayBufferLikeFieldLengthValue;
 
-    public constructor(
+    constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
@@ -83,7 +83,7 @@ export class VariableLengthArrayBufferLikeStructFieldValue<
         struct.set(lengthField, this.lengthFieldValue);
     }
 
-    public getSize() {
+    getSize() {
         if (this.length === undefined) {
             this.length = this.definition.type.getSize(this.value);
             if (this.length === -1) {
@@ -95,7 +95,7 @@ export class VariableLengthArrayBufferLikeStructFieldValue<
         return this.length;
     }
 
-    public set(value: unknown) {
+    set(value: unknown) {
         super.set(value);
         this.arrayBuffer = undefined;
         this.length = undefined;
@@ -112,7 +112,7 @@ export class VariableLengthArrayBufferLikeFieldLengthValue
 
     protected arrayBufferField: VariableLengthArrayBufferLikeFieldValueLike;
 
-    public constructor(
+    constructor(
         originalField: StructFieldValue,
         arrayBufferField: VariableLengthArrayBufferLikeFieldValueLike,
     ) {
@@ -121,7 +121,7 @@ export class VariableLengthArrayBufferLikeFieldLengthValue
         this.arrayBufferField = arrayBufferField;
     }
 
-    public getSize() {
+    getSize() {
         return this.originalField.getSize();
     }
 

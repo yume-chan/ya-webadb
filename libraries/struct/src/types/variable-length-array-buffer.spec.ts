@@ -3,45 +3,45 @@ import { ArrayBufferFieldType, ArrayBufferLikeFieldType } from './array-buffer';
 import { VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldLengthValue, VariableLengthArrayBufferLikeStructFieldValue } from './variable-length-array-buffer';
 
 class MockDeserializationContext implements StructDeserializationContext {
-    public buffer = new ArrayBuffer(0);
+    buffer = new ArrayBuffer(0);
 
-    public read = jest.fn((length: number) => this.buffer);
+    read = jest.fn((length: number) => this.buffer);
 
-    public encodeUtf8 = jest.fn((input: string) => Buffer.from(input, 'utf-8'));
+    encodeUtf8 = jest.fn((input: string) => Buffer.from(input, 'utf-8'));
 
-    public decodeUtf8 = jest.fn((buffer: ArrayBuffer) => Buffer.from(buffer).toString('utf-8'));
+    decodeUtf8 = jest.fn((buffer: ArrayBuffer) => Buffer.from(buffer).toString('utf-8'));
 }
 
 class MockOriginalFieldValue extends StructFieldValue {
-    public constructor() {
+    constructor() {
         super({} as any, {} as any, {} as any, {} as any, {});
     }
 
-    public value: string | number = 0;
+    value: string | number = 0;
 
-    public get = jest.fn((): string | number => this.value);
+    get = jest.fn((): string | number => this.value);
 
-    public size = 0;
+    size = 0;
 
-    public getSize = jest.fn((): number => this.size);
+    getSize = jest.fn((): number => this.size);
 
-    public set = jest.fn((value: string | number) => { });
+    set = jest.fn((value: string | number) => { });
 
-    public serialize = jest.fn((dataView: DataView, offset: number, context: StructSerializationContext): void => { });
+    serialize = jest.fn((dataView: DataView, offset: number, context: StructSerializationContext): void => { });
 }
 
 describe('Types', () => {
     describe('VariableLengthArrayBufferLikeFieldLengthValue', () => {
         class MockArrayBufferFieldValue extends StructFieldValue {
-            public constructor() {
+            constructor() {
                 super({ options: {} } as any, {} as any, {} as any, {} as any, {});
             }
 
-            public size = 0;
+            size = 0;
 
-            public getSize = jest.fn(() => this.size);
+            getSize = jest.fn(() => this.size);
 
-            public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
+            serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
                 throw new Error('Method not implemented.');
             }
         }
@@ -329,17 +329,17 @@ describe('Types', () => {
 
         describe('#getSize', () => {
             class MockArrayBufferFieldType extends ArrayBufferLikeFieldType<ArrayBuffer> {
-                public toArrayBuffer = jest.fn((value: ArrayBuffer, context: StructSerializationContext): ArrayBuffer => {
+                toArrayBuffer = jest.fn((value: ArrayBuffer, context: StructSerializationContext): ArrayBuffer => {
                     return value;
                 });
 
-                public fromArrayBuffer = jest.fn((arrayBuffer: ArrayBuffer, context: StructDeserializationContext): ArrayBuffer => {
+                fromArrayBuffer = jest.fn((arrayBuffer: ArrayBuffer, context: StructDeserializationContext): ArrayBuffer => {
                     return arrayBuffer;
                 });
 
-                public size = 0;
+                size = 0;
 
-                public getSize = jest.fn((value: ArrayBuffer): number => {
+                getSize = jest.fn((value: ArrayBuffer): number => {
                     return this.size;
                 });
             }

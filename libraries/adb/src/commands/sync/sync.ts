@@ -16,18 +16,18 @@ export class AdbSync extends AutoDisposable {
 
     protected sendLock = this.addDisposable(new AutoResetEvent());
 
-    public get supportsStat(): boolean {
+    get supportsStat(): boolean {
         return this.adb.features!.includes(AdbFeatures.StatV2);
     }
 
-    public constructor(adb: Adb, socket: AdbSocket) {
+    constructor(adb: Adb, socket: AdbSocket) {
         super();
 
         this.adb = adb;
         this.stream = new AdbBufferedStream(socket);
     }
 
-    public async lstat(path: string) {
+    async lstat(path: string) {
         await this.sendLock.wait();
 
         try {
@@ -37,7 +37,7 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public async stat(path: string) {
+    async stat(path: string) {
         if (!this.supportsStat) {
             throw new Error('Not supported');
         }
@@ -51,7 +51,7 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public async isDirectory(path: string): Promise<boolean> {
+    async isDirectory(path: string): Promise<boolean> {
         try {
             await this.lstat(path + '/');
             return true;
@@ -60,7 +60,7 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public async *opendir(
+    async *opendir(
         path: string
     ): AsyncGenerator<AdbSyncEntryResponse, void, void> {
         await this.sendLock.wait();
@@ -72,7 +72,7 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public async readdir(path: string) {
+    async readdir(path: string) {
         const results: AdbSyncEntryResponse[] = [];
         for await (const entry of this.opendir(path)) {
             results.push(entry);
@@ -80,7 +80,7 @@ export class AdbSync extends AutoDisposable {
         return results;
     }
 
-    public async *read(filename: string): AsyncGenerator<ArrayBuffer, void, void> {
+    async *read(filename: string): AsyncGenerator<ArrayBuffer, void, void> {
         await this.sendLock.wait();
 
         try {
@@ -90,7 +90,7 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public async write(
+    async write(
         filename: string,
         content: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
         mode?: number,
@@ -106,7 +106,7 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public dispose() {
+    dispose() {
         super.dispose();
         this.stream.close();
     }

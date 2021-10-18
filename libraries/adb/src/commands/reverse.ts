@@ -37,7 +37,7 @@ export class AdbReverseCommand extends AutoDisposable {
 
     protected listening = false;
 
-    public constructor(dispatcher: AdbPacketDispatcher) {
+    constructor(dispatcher: AdbPacketDispatcher) {
         super();
 
         this.dispatcher = dispatcher;
@@ -72,7 +72,7 @@ export class AdbReverseCommand extends AutoDisposable {
         return stream;
     }
 
-    public async list(): Promise<AdbForwardListener[]> {
+    async list(): Promise<AdbForwardListener[]> {
         const stream = await this.createBufferedStream('reverse:list-forward');
 
         const response = await AdbReverseStringResponse.deserialize(stream);
@@ -90,7 +90,7 @@ export class AdbReverseCommand extends AutoDisposable {
      * @param handler A callback to handle incoming connections
      * @returns If `deviceAddress` is `tcp:0`, return `tcp:{ACTUAL_LISTENING_PORT}`; otherwise, return `deviceAddress`.
      */
-    public async add(
+    async add(
         deviceAddress: string,
         localPort: number,
         handler: AdbReverseHandler,
@@ -111,7 +111,7 @@ export class AdbReverseCommand extends AutoDisposable {
         // No need to close the stream, device will close it
     }
 
-    public async remove(deviceAddress: string): Promise<void> {
+    async remove(deviceAddress: string): Promise<void> {
         await this.sendRequest(`reverse:killforward:${deviceAddress}`);
 
         if (this.deviceAddressToLocalPort.has(deviceAddress)) {
@@ -122,7 +122,7 @@ export class AdbReverseCommand extends AutoDisposable {
         // No need to close the stream, device will close it
     }
 
-    public async removeAll(): Promise<void> {
+    async removeAll(): Promise<void> {
         await this.sendRequest(`reverse:killforward-all`);
 
         this.deviceAddressToLocalPort.clear();

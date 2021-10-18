@@ -4,18 +4,18 @@ import serverUrl from 'file-loader!./scrcpy-server-v1.17';
 export const ScrcpyServerVersion = '1.17';
 
 class FetchWithProgress {
-    public readonly promise: Promise<ArrayBuffer>;
+    readonly promise: Promise<ArrayBuffer>;
 
     private _downloaded = 0;
-    public get downloaded() { return this._downloaded; }
+    get downloaded() { return this._downloaded; }
 
     private _total = 0;
-    public get total() { return this._total; }
+    get total() { return this._total; }
 
     private progressEvent = new EventEmitter<[download: number, total: number]>();
-    public get onProgress() { return this.progressEvent.event; }
+    get onProgress() { return this.progressEvent.event; }
 
-    public constructor(url: string) {
+    constructor(url: string) {
         this.promise = this.fetch(url);
     }
 

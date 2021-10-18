@@ -130,8 +130,8 @@ declare module 'yuv-canvas' {
     import { YUVFrame } from 'yuv-buffer';
 
     export default class YUVCanvas {
-        public static attach(canvas: HTMLCanvasElement): YUVCanvas;
+        static attach(canvas: HTMLCanvasElement): YUVCanvas;
 
-        public drawFrame(data: YUVFrame): void;
+        drawFrame(data: YUVFrame): void;
     }
 }

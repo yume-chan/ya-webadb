@@ -35,22 +35,22 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
     private readonly writeLock = this.addDisposable(new AutoResetEvent());
 
     private readonly dispatcher!: AdbPacketDispatcher;
-    public get backend() { return this.dispatcher.backend; }
+    get backend() { return this.dispatcher.backend; }
 
-    public readonly localId!: number;
-    public readonly remoteId!: number;
-    public readonly localCreated!: boolean;
-    public readonly serviceString!: string;
+    readonly localId!: number;
+    readonly remoteId!: number;
+    readonly localCreated!: boolean;
+    readonly serviceString!: string;
 
-    public readonly dataEvent = this.addDisposable(new DataEventEmitter<ArrayBuffer>());
+    readonly dataEvent = this.addDisposable(new DataEventEmitter<ArrayBuffer>());
 
     private _closed = false;
-    public get closed() { return this._closed; }
+    get closed() { return this._closed; }
 
     private readonly closeEvent = this.addDisposable(new CloseEventEmitter());
-    public get onClose() { return this.closeEvent.event; }
+    get onClose() { return this.closeEvent.event; }
 
-    public constructor(options: AdbSocketConstructionOptions) {
+    constructor(options: AdbSocketConstructionOptions) {
         super();
         Object.assign(this, options);
     }
@@ -67,7 +67,7 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
         await this.dispatcher.sendPacket(AdbCommand.Write, this.localId, this.remoteId, data);
     }
 
-    public async write(data: ArrayBuffer): Promise<void> {
+    async write(data: ArrayBuffer): Promise<void> {
         try {
             // Keep write operations in order
             await this.writeLock.wait();
@@ -82,11 +82,11 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
         this.writeLock.notify();
     }
 
-    public ack() {
+    ack() {
         this.writeChunkLock.notify();
     }
 
-    public async close(): Promise<void> {
+    async close(): Promise<void> {
         if (!this._closed) {
             // Immediately cancel all pending writes
             this.writeLock.dispose();
@@ -97,7 +97,7 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
         }
     }
 
-    public dispose() {
+    dispose() {
         this._closed = true;
         this.closeEvent.fire();
         super.dispose();

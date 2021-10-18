@@ -2,13 +2,13 @@ import { StructDefaultOptions, StructDeserializationContext, StructValue } from 
 import { ArrayBufferFieldType, ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldType, StringFieldType, Uint8ClampedArrayFieldType } from './array-buffer';
 
 class MockDeserializationContext implements StructDeserializationContext {
-    public buffer = new ArrayBuffer(0);
+    buffer = new ArrayBuffer(0);
 
-    public read = jest.fn((length: number) => this.buffer);
+    read = jest.fn((length: number) => this.buffer);
 
-    public encodeUtf8 = jest.fn((input: string) => Buffer.from(input, 'utf-8'));
+    encodeUtf8 = jest.fn((input: string) => Buffer.from(input, 'utf-8'));
 
-    public decodeUtf8 = jest.fn((buffer: ArrayBuffer) => Buffer.from(buffer).toString('utf-8'));
+    decodeUtf8 = jest.fn((buffer: ArrayBuffer) => Buffer.from(buffer).toString('utf-8'));
 }
 
 describe('Types', () => {
@@ -97,7 +97,7 @@ describe('Types', () => {
 
         class MockArrayBufferFieldDefinition<TType extends ArrayBufferLikeFieldType>
             extends ArrayBufferLikeFieldDefinition<TType, number> {
-            public getSize(): number {
+            getSize(): number {
                 return this.options;
             }
         }

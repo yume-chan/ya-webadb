@@ -28,9 +28,9 @@ const DefaultOptions: AdbChildProcessOptions = {
 };
 
 export class AdbChildProcess {
-    public readonly adb: Adb;
+    readonly adb: Adb;
 
-    public constructor(adb: Adb) {
+    constructor(adb: Adb) {
         this.adb = adb;
     }
 
@@ -57,7 +57,7 @@ export class AdbChildProcess {
      * @param options The options for creating the `AdbShell`
      * @returns A new `AdbShell` instance connecting to the spawned shell process.
      */
-    public shell(options?: Partial<AdbChildProcessOptions>): Promise<AdbShell> {
+    shell(options?: Partial<AdbChildProcessOptions>): Promise<AdbShell> {
         return this.createShell('', options);
     }
 
@@ -67,7 +67,7 @@ export class AdbChildProcess {
      * @param options The options for creating the `AdbShell`
      * @returns A new `AdbShell` instance connecting to the spawned process.
      */
-    public spawn(command: string | string[], options?: Partial<AdbChildProcessOptions>): Promise<AdbShell> {
+    spawn(command: string | string[], options?: Partial<AdbChildProcessOptions>): Promise<AdbShell> {
         if (Array.isArray(command)) {
             command = command.join(' ');
         }
@@ -80,7 +80,7 @@ export class AdbChildProcess {
      * @param args List of command arguments
      * @returns The entire output of the command
      */
-    public exec(command: string, ...args: string[]): Promise<string> {
+    exec(command: string, ...args: string[]): Promise<string> {
         // `exec` only needs the entire output, use Legacy Shell is simpler.
         return this.adb.createSocketAndReadAll(`shell:${command} ${args.join(' ')}`);
     }

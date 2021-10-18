@@ -112,7 +112,7 @@ export const AdbDefaultAuthenticators: AdbAuthenticator[] = [
 ];
 
 export class AdbAuthenticationHandler implements Disposable {
-    public readonly authenticators: readonly AdbAuthenticator[];
+    readonly authenticators: readonly AdbAuthenticator[];
 
     private readonly credentialStore: AdbCredentialStore;
 
@@ -120,7 +120,7 @@ export class AdbAuthenticationHandler implements Disposable {
 
     private iterator: AsyncIterator<AdbPacketInit> | undefined;
 
-    public constructor(
+    constructor(
         authenticators: readonly AdbAuthenticator[],
         credentialStore: AdbCredentialStore
     ) {
@@ -150,7 +150,7 @@ export class AdbAuthenticationHandler implements Disposable {
         throw new Error('Cannot authenticate with device');
     }
 
-    public async handle(packet: AdbPacket): Promise<AdbPacketInit> {
+    async handle(packet: AdbPacket): Promise<AdbPacketInit> {
         if (!this.iterator) {
             this.iterator = this.runAuthenticator();
         }
@@ -160,7 +160,7 @@ export class AdbAuthenticationHandler implements Disposable {
         return result.value;
     }
 
-    public dispose() {
+    dispose() {
         this.iterator?.return?.();
     }
 }

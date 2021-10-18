@@ -9,16 +9,16 @@ export const WebUsbDeviceFilter: USBDeviceFilter = {
 };
 
 export class AdbWebUsbBackend implements AdbBackend {
-    public static isSupported(): boolean {
+    static isSupported(): boolean {
         return !!window.navigator?.usb;
     }
 
-    public static async getDevices(): Promise<AdbWebUsbBackend[]> {
+    static async getDevices(): Promise<AdbWebUsbBackend[]> {
         const devices = await window.navigator.usb.getDevices();
         return devices.map(device => new AdbWebUsbBackend(device));
     }
 
-    public static async requestDevice(): Promise<AdbWebUsbBackend | undefined> {
+    static async requestDevice(): Promise<AdbWebUsbBackend | undefined> {
         try {
             const device = await navigator.usb.requestDevice({ filters: [WebUsbDeviceFilter] });
             return new AdbWebUsbBackend(device);
@@ -34,20 +34,20 @@ export class AdbWebUsbBackend implements AdbBackend {
 
     private _device: USBDevice;
 
-    public get serial(): string { return this._device.serialNumber!; }
+    get serial(): string { return this._device.serialNumber!; }
 
-    public get name(): string { return this._device.productName!; }
+    get name(): string { return this._device.productName!; }
 
     private _connected = false;
-    public get connected() { return this._connected; }
+    get connected() { return this._connected; }
 
     private readonly disconnectEvent = new EventEmitter<void>();
-    public readonly onDisconnected = this.disconnectEvent.event;
+    readonly onDisconnected = this.disconnectEvent.event;
 
     private _inEndpointNumber!: number;
     private _outEndpointNumber!: number;
 
-    public constructor(device: USBDevice) {
+    constructor(device: USBDevice) {
         this._device = device;
         window.navigator.usb.addEventListener('disconnect', this.handleDisconnect);
     }
@@ -59,7 +59,7 @@ export class AdbWebUsbBackend implements AdbBackend {
         }
     };
 
-    public async connect(): Promise<void> {
+    async connect(): Promise<void> {
         if (!this._device.opened) {
             await this._device.open();
         }
@@ -108,19 +108,19 @@ export class AdbWebUsbBackend implements AdbBackend {
         throw new Error('Unknown error');
     }
 
-    public encodeUtf8(input: string): ArrayBuffer {
+    encodeUtf8(input: string): ArrayBuffer {
         return encodeUtf8(input);
     }
 
-    public decodeUtf8(buffer: ArrayBuffer): string {
+    decodeUtf8(buffer: ArrayBuffer): string {
         return decodeUtf8(buffer);
     }
 
-    public async write(buffer: ArrayBuffer): Promise<void> {
+    async write(buffer: ArrayBuffer): Promise<void> {
         await this._device.transferOut(this._outEndpointNumber, buffer);
     }
 
-    public async read(length: number): Promise<ArrayBuffer> {
+    async read(length: number): Promise<ArrayBuffer> {
         const result = await this._device.transferIn(this._inEndpointNumber, length);
 
         if (result.status === 'stall') {
@@ -131,7 +131,7 @@ export class AdbWebUsbBackend implements AdbBackend {
         return buffer;
     }
 
-    public async dispose() {
+    async dispose() {
         this._connected = false;
         window.navigator.usb.removeEventListener('disconnect', this.handleDisconnect);
         this.disconnectEvent.dispose();

@@ -7,15 +7,15 @@ export type DataViewSetters =
     { [TKey in keyof DataView]: TKey extends `set${string}` ? TKey : never }[keyof DataView];
 
 export class NumberFieldType<TTypeScriptType extends number | bigint = number | bigint> {
-    public readonly TTypeScriptType!: TTypeScriptType;
+    readonly TTypeScriptType!: TTypeScriptType;
 
-    public readonly size: number;
+    readonly size: number;
 
-    public readonly dataViewGetter: DataViewGetters;
+    readonly dataViewGetter: DataViewGetters;
 
-    public readonly dataViewSetter: DataViewSetters;
+    readonly dataViewSetter: DataViewSetters;
 
-    public constructor(
+    constructor(
         size: number,
         dataViewGetter: DataViewGetters,
         dataViewSetter: DataViewSetters
@@ -25,21 +25,21 @@ export class NumberFieldType<TTypeScriptType extends number | bigint = number | 
         this.dataViewSetter = dataViewSetter;
     }
 
-    public static readonly Int8 = new NumberFieldType<number>(1, 'getInt8', 'setInt8');
+    static readonly Int8 = new NumberFieldType<number>(1, 'getInt8', 'setInt8');
 
-    public static readonly Uint8 = new NumberFieldType<number>(1, 'getUint8', 'setUint8');
+    static readonly Uint8 = new NumberFieldType<number>(1, 'getUint8', 'setUint8');
 
-    public static readonly Int16 = new NumberFieldType<number>(2, 'getInt16', 'setInt16');
+    static readonly Int16 = new NumberFieldType<number>(2, 'getInt16', 'setInt16');
 
-    public static readonly Uint16 = new NumberFieldType<number>(2, 'getUint16', 'setUint16');
+    static readonly Uint16 = new NumberFieldType<number>(2, 'getUint16', 'setUint16');
 
-    public static readonly Int32 = new NumberFieldType<number>(4, 'getInt32', 'setInt32');
+    static readonly Int32 = new NumberFieldType<number>(4, 'getInt32', 'setInt32');
 
-    public static readonly Uint32 = new NumberFieldType<number>(4, 'getUint32', 'setUint32');
+    static readonly Uint32 = new NumberFieldType<number>(4, 'getUint32', 'setUint32');
 
-    public static readonly Int64 = new NumberFieldType<bigint>(8, 'getBigInt64', 'setBigInt64');
+    static readonly Int64 = new NumberFieldType<bigint>(8, 'getBigInt64', 'setBigInt64');
 
-    public static readonly Uint64 = new NumberFieldType<bigint>(8, 'getBigUint64', 'setBigUint64');
+    static readonly Uint64 = new NumberFieldType<bigint>(8, 'getBigUint64', 'setBigUint64');
 }
 
 export class NumberFieldDefinition<
@@ -49,18 +49,18 @@ export class NumberFieldDefinition<
     void,
     TTypeScriptType
     > {
-    public readonly type: TType;
+    readonly type: TType;
 
-    public constructor(type: TType, _typescriptType?: TTypeScriptType) {
+    constructor(type: TType, _typescriptType?: TTypeScriptType) {
         super();
         this.type = type;
     }
 
-    public getSize(): number {
+    getSize(): number {
         return this.type.size;
     }
 
-    public create(
+    create(
         options: Readonly<StructOptions>,
         context: StructSerializationContext,
         struct: StructValue,
@@ -69,7 +69,7 @@ export class NumberFieldDefinition<
         return new NumberFieldValue(this, options, context, struct, value);
     }
 
-    public async deserialize(
+    async deserialize(
         options: Readonly<StructOptions>,
         context: StructDeserializationContext,
         struct: StructValue,
@@ -87,7 +87,7 @@ export class NumberFieldDefinition<
 export class NumberFieldValue<
     TDefinition extends NumberFieldDefinition<NumberFieldType, any>,
     > extends StructFieldValue<TDefinition> {
-    public serialize(dataView: DataView, offset: number): void {
+    serialize(dataView: DataView, offset: number): void {
         // `setBigInt64` requires a `bigint` while others require `number`
         // So `dataView[DataViewSetters]` requires `bigint & number`
         // and that is, `never`

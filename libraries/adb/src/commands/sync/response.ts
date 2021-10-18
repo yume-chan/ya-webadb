@@ -19,13 +19,13 @@ export enum AdbSyncResponseId {
 export class AdbSyncDoneResponse implements StructLike<AdbSyncDoneResponse> {
     private length: number;
 
-    public readonly id = AdbSyncResponseId.Done;
+    readonly id = AdbSyncResponseId.Done;
 
-    public constructor(length: number) {
+    constructor(length: number) {
         this.length = length;
     }
 
-    public async deserialize(context: StructDeserializationContext): Promise<this> {
+    async deserialize(context: StructDeserializationContext): Promise<this> {
         await context.read(this.length);
         return this;
     }

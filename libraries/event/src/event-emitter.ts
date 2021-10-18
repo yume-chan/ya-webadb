@@ -12,7 +12,7 @@ export interface EventListenerInfo<TEvent, TResult = unknown> {
 export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
     protected readonly listeners: EventListenerInfo<TEvent, TResult>[] = [];
 
-    public constructor() {
+    constructor() {
         this.event = this.event.bind(this);
     }
 
@@ -29,15 +29,15 @@ export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
         return remove;
     }
 
-    public event(
+    event(
         listener: EventListener<TEvent, unknown, [], TResult>
     ): RemoveEventListener;
-    public event<TThis, TArgs extends unknown[]>(
+    event<TThis, TArgs extends unknown[]>(
         listener: EventListener<TEvent, TThis, TArgs, TResult>,
         thisArg: TThis,
         ...args: TArgs
     ): RemoveEventListener;
-    public event<TThis, TArgs extends unknown[]>(
+    event<TThis, TArgs extends unknown[]>(
         listener: EventListener<TEvent, TThis, TArgs, TResult>,
         thisArg?: TThis,
         ...args: TArgs
@@ -50,13 +50,13 @@ export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
         return this.addEventListener(info);
     }
 
-    public fire(e: TEvent) {
+    fire(e: TEvent) {
         for (const info of this.listeners.slice()) {
             info.listener.apply(info.thisArg, [e, ...info.args]);
         }
     }
 
-    public dispose() {
+    dispose() {
         this.listeners.length = 0;
     }
 }
