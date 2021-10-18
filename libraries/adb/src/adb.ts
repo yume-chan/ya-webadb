@@ -17,41 +17,41 @@ export enum AdbPropKey {
 export class Adb {
     private readonly _backend: AdbBackend;
 
-    public get backend(): AdbBackend { return this._backend; }
+    get backend(): AdbBackend { return this._backend; }
 
     private readonly packetDispatcher: AdbPacketDispatcher;
 
-    public get onDisconnected() { return this.backend.onDisconnected; }
+    get onDisconnected() { return this.backend.onDisconnected; }
 
     private _connected = false;
-    public get connected() { return this._connected; }
+    get connected() { return this._connected; }
 
-    public get name() { return this.backend.name; }
+    get name() { return this.backend.name; }
 
     private _protocolVersion: number | undefined;
-    public get protocolVersion() { return this._protocolVersion; }
+    get protocolVersion() { return this._protocolVersion; }
 
     private _product: string | undefined;
-    public get product() { return this._product; }
+    get product() { return this._product; }
 
     private _model: string | undefined;
-    public get model() { return this._model; }
+    get model() { return this._model; }
 
     private _device: string | undefined;
-    public get device() { return this._device; }
+    get device() { return this._device; }
 
     private _features: AdbFeatures[] | undefined;
-    public get features() { return this._features; }
+    get features() { return this._features; }
 
-    public readonly tcpip: AdbTcpIpCommand;
+    readonly tcpip: AdbTcpIpCommand;
 
-    public readonly reverse: AdbReverseCommand;
+    readonly reverse: AdbReverseCommand;
 
-    public readonly demoMode: AdbDemoMode;
+    readonly demoMode: AdbDemoMode;
 
-    public readonly childProcess: AdbChildProcess;
+    readonly childProcess: AdbChildProcess;
 
-    public constructor(backend: AdbBackend, logger?: AdbLogger) {
+    constructor(backend: AdbBackend, logger?: AdbLogger) {
         this._backend = backend;
         this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
 
@@ -63,7 +63,7 @@ export class Adb {
         backend.onDisconnected(this.dispose, this);
     }
 
-    public async connect(
+    async connect(
         credentialStore: AdbCredentialStore,
         authenticators = AdbDefaultAuthenticators
     ): Promise<void> {
@@ -195,36 +195,36 @@ export class Adb {
         }
     }
 
-    public async getProp(key: string): Promise<string> {
+    async getProp(key: string): Promise<string> {
         const output = await this.childProcess.exec('getprop', key);
         return output.trim();
     }
 
-    public async rm(...filenames: string[]): Promise<string> {
+    async rm(...filenames: string[]): Promise<string> {
         return await this.childProcess.exec('rm', '-rf', ...filenames.map(arg => escapeArg(arg)));
     }
 
-    public async install(
+    async install(
         apk: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
         onProgress?: (uploaded: number) => void,
     ): Promise<void> {
         return await install(this, apk, onProgress);
     }
 
-    public async sync(): Promise<AdbSync> {
+    async sync(): Promise<AdbSync> {
         const socket = await this.createSocket('sync:');
         return new AdbSync(this, socket);
     }
 
-    public async framebuffer(): Promise<AdbFrameBuffer> {
+    async framebuffer(): Promise<AdbFrameBuffer> {
         return framebuffer(this);
     }
 
-    public async createSocket(service: string): Promise<AdbSocket> {
+    async createSocket(service: string): Promise<AdbSocket> {
         return this.packetDispatcher.createSocket(service);
     }
 
-    public async createSocketAndReadAll(service: string): Promise<string> {
+    async createSocketAndReadAll(service: string): Promise<string> {
         const socket = await this.createSocket(service);
         const resolver = new PromiseResolver<string>();
         let result = '';
@@ -235,7 +235,7 @@ export class Adb {
         return resolver.promise;
     }
 
-    public async dispose(): Promise<void> {
+    async dispose(): Promise<void> {
         this.packetDispatcher.dispose();
         await this.backend.dispose();
     }
