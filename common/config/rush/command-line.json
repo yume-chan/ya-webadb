@@ -182,6 +182,15 @@
             "enableParallelism": true,
             "incremental": true,
             "watchForChanges": true
+        },
+        {
+            "commandKind": "bulk",
+            "name": "postinstall",
+            "summary": "Run all postinstall scripts",
+            "ignoreMissingScript": true,
+            "enableParallelism": true,
+            "ignoreDependencyOrder": true,
+            "safeForSimultaneousRushProcesses": true
         }
     ],
     /**

@@ -30,6 +30,10 @@ const ROUTES = [
         name: 'Interactive Shell',
     },
     {
+        url: '/scrcpy',
+        name: 'Scrcpy',
+    },
+    {
         url: '/tcpip',
         name: 'ADB over WiFi',
     },

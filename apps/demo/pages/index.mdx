@@ -43,7 +43,7 @@ One USB device can only be accessed by one application at a time. Please make su
 Extra software is required to bridge the connection. See <ExternalLink href="https://github.com/yume-chan/ya-webadb/discussions/245#discussioncomment-384030">this discussion</ExternalLink>.
 
 export default ({children}) => (
-    <div style={{ padding: '0 16px' }}>
+    <div style={{ height: '100%', padding: '0 16px', overflow: 'auto' }}>
         <Head>
             <title>WebADB</title>
         </Head>
