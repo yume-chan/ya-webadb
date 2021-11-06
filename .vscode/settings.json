@@ -73,5 +73,8 @@
     "editor.tabSize": 4,
     "jest.rootPath": "packages/struct",
     "jest.showCoverageOnLoad": true,
-    "markdown.extension.toc.levels": "2..6"
+    "markdown.extension.toc.levels": "2..6",
+    "files.associations": {
+        "*.mdx": "markdown"
+    }
 }

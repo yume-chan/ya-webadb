@@ -54,9 +54,9 @@ export class AdbTerminal extends AutoDisposable {
         this.element.style.height = '100%';
         this.element.style.overflow = 'hidden';
 
-        this.terminal.setOption('fontFamily', '"Cascadia Code", Consolas, monospace, "Source Han Sans SC", "Microsoft YaHei"');
-        this.terminal.setOption('letterSpacing', 1);
-        this.terminal.setOption('cursorStyle', 'bar');
+        this.terminal.options.fontFamily = '"Cascadia Code", Consolas, monospace, "Source Han Sans SC", "Microsoft YaHei"';
+        this.terminal.options.letterSpacing = 1;
+        this.terminal.options.cursorStyle = 'bar';
         this.terminal.loadAddon(this.searchAddon);
         this.terminal.loadAddon(this.fitAddon);
     }
@@ -68,7 +68,7 @@ export class AdbTerminal extends AutoDisposable {
             this.terminal.open(this.element);
             this.terminal.loadAddon(new WebglAddon());
             // WebGL renderer ignores `cursorBlink` set before it initialized
-            this.terminal.setOption('cursorBlink', true);
+            this.terminal.options.cursorBlink = true;
             this.fit();
         }
     }

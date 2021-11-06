@@ -18,7 +18,6 @@ dependencies:
   '@rush-temp/ts-package-builder': file:projects/ts-package-builder.tgz
   '@rush-temp/unofficial-adb-book': file:projects/unofficial-adb-book.tgz_@types+react@17.0.27
   '@svgr/webpack': 5.5.0
-  '@types/dom-webcodecs': 0.1.2
   '@types/jest': 26.0.24
   '@types/node': 16.9.1
   '@types/react': 17.0.27
@@ -45,10 +44,10 @@ dependencies:
   tslib: 2.3.1
   unist-util-visit: 2.0.3
   url-loader: 4.1.1_file-loader@6.2.0
-  xterm: 4.14.1
-  xterm-addon-fit: 0.5.0_xterm@4.14.1
-  xterm-addon-search: 0.8.1_xterm@4.14.1
-  xterm-addon-webgl: 0.11.2_xterm@4.14.1
+  xterm: 4.15.0
+  xterm-addon-fit: 0.5.0_xterm@4.15.0
+  xterm-addon-search: 0.8.1_xterm@4.15.0
+  xterm-addon-webgl: 0.11.3_xterm@4.15.0
   yuv-buffer: 1.0.0
   yuv-canvas: 1.2.7
 lockfileVersion: 5.2
@@ -14354,34 +14353,34 @@ packages:
       node: '>=0.4'
     resolution:
       integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
-  /xterm-addon-fit/0.5.0_xterm@4.14.1:
+  /xterm-addon-fit/0.5.0_xterm@4.15.0:
     dependencies:
-      xterm: 4.14.1
+      xterm: 4.15.0
     dev: false
     peerDependencies:
       xterm: ^4.0.0
     resolution:
       integrity: sha512-DsS9fqhXHacEmsPxBJZvfj2la30Iz9xk+UKjhQgnYNkrUIN5CYLbw7WEfz117c7+S86S/tpHPfvNxJsF5/G8wQ==
-  /xterm-addon-search/0.8.1_xterm@4.14.1:
+  /xterm-addon-search/0.8.1_xterm@4.15.0:
     dependencies:
-      xterm: 4.14.1
+      xterm: 4.15.0
     dev: false
     peerDependencies:
       xterm: ^4.0.0
     resolution:
       integrity: sha512-OtOaC9gxD2Q4ZnjZrCSRZmKLwwUjXX3gP7mIzq8Rs50317DGRDqgTLuHTYv/Nx/LvI5ceVFRYCxK36Ixs1nXNw==
-  /xterm-addon-webgl/0.11.2_xterm@4.14.1:
+  /xterm-addon-webgl/0.11.3_xterm@4.15.0:
     dependencies:
-      xterm: 4.14.1
+      xterm: 4.15.0
     dev: false
     peerDependencies:
       xterm: ^4.0.0
     resolution:
-      integrity: sha512-eEOKEIMZO0IRb+UTHhTaUwxpD1cu7Zqr+jdUfhDv9cfVieg9c4mcRn9RWvNGlprGdlLmOSTUByhm8ve6qAc4HQ==
-  /xterm/4.14.1:
+      integrity: sha512-Lr6VjLYOrgxLNaUNLDdCBehkr1Vaja/laDMTtvghfRusUMRXTlRKlCb7E3yqx4VgCg5KcV96cArmh88KcwSpUg==
+  /xterm/4.15.0:
     dev: false
     resolution:
-      integrity: sha512-jgzNg5BuGPwq5/M4dGnmbghZvHx2jaj+9crSEt15bV34Za49VziBmCu7zIy88zUKKiGTxeo7aVzirFSJArIMFw==
+      integrity: sha512-Ik1GoSq1yqKZQ2LF37RPS01kX9t4TP8gpamUYblD09yvWX5mEYuMK4CcqH6+plgiNEZduhTz/UrcaWs97gOlOw==
   /y18n/4.0.3:
     dev: false
     resolution:
@@ -14530,10 +14529,10 @@ packages:
       streamsaver: 2.0.5
       tinyh264: 0.0.7
       typescript: 4.4.3
-      xterm: 4.14.1
-      xterm-addon-fit: 0.5.0_xterm@4.14.1
-      xterm-addon-search: 0.8.1_xterm@4.14.1
-      xterm-addon-webgl: 0.11.2_xterm@4.14.1
+      xterm: 4.15.0
+      xterm-addon-fit: 0.5.0_xterm@4.15.0
+      xterm-addon-search: 0.8.1_xterm@4.15.0
+      xterm-addon-webgl: 0.11.3_xterm@4.15.0
       yuv-buffer: 1.0.0
       yuv-canvas: 1.2.7
     dev: false
@@ -14542,7 +14541,7 @@ packages:
     peerDependencies:
       '@mdx-js/react': '*'
     resolution:
-      integrity: sha512-yQ64kuvfu4zYm4ZajZmSBH/mu4xK54yOuKLfQXbX1UDDxM/Kn3hj2ZWuqXMqrCUf64R1t9PP8/XFKYgsvJkvew==
+      integrity: sha512-5zEy73JOnTj2je1iwyYva2J1zai6TiNnZJ5TgNP3Yh/CkdASyOqVQiaI1PuYkF0G/xvO/baF1ldaZsWz3A+RVQ==
       tarball: file:projects/demo.tgz
     version: 0.0.0
   file:projects/event.tgz:
@@ -14638,7 +14637,6 @@ specifiers:
   '@rush-temp/ts-package-builder': file:./projects/ts-package-builder.tgz
   '@rush-temp/unofficial-adb-book': file:./projects/unofficial-adb-book.tgz
   '@svgr/webpack': ^5.5.0
-  '@types/dom-webcodecs': ^0.1.2
   '@types/jest': ^26.0.23
   '@types/node': ^16.9.1
   '@types/react': 17.0.27
@@ -14665,9 +14663,9 @@ specifiers:
   tslib: ^2.3.1
   unist-util-visit: ^2.0.0
   url-loader: ^4.1.1
-  xterm: ^4.14.1
+  xterm: ^4.15.0
   xterm-addon-fit: ^0.5.0
   xterm-addon-search: ^0.8.1
-  xterm-addon-webgl: ^0.11.2
+  xterm-addon-webgl: ^0.11.3
   yuv-buffer: ^1.0.0
   yuv-canvas: ^1.2.7
