@@ -1,1 +1,0 @@
-export const BUNDLED_SERVER_VERSION = "1.19";

@@ -22,5 +22,5 @@ const SERVER_VERSION = '1.19';
         path.resolve(binFolder, 'scrcpy-server')
     );
 
-    fs.writeFile(path.resolve(__dirname, '..', 'src', 'version.ts'), `export const BUNDLED_SERVER_VERSION = "${SERVER_VERSION}";`);
+    fs.writeFile(path.resolve(binFolder, 'version'), SERVER_VERSION);
 })();

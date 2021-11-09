@@ -54,8 +54,8 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
     private address!: string;
 
     public async initialize(): Promise<void> {
-        // try to unbind first
         try {
+            // try to unbind first
             await this.device.reverse.remove('localabstract:scrcpy');
         } catch {
             // ignore error

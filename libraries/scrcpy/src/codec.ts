@@ -1,5 +1,4 @@
-
-// See https://developer.android.com/reference/android/media/MediaCodecInfo.CodecProfileLevel
+// From https://developer.android.com/reference/android/media/MediaCodecInfo.CodecProfileLevel
 export enum AndroidCodecProfile {
     Baseline = 0x01,
     Main = 0x02,
