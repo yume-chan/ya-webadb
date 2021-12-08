@@ -3,7 +3,7 @@ import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { ScrcpyClientConnection } from "./connection";
-import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
+import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
 import { ScrcpyLogLevel, ScrcpyOptions } from "./options";
 import { pushServer, PushServerOptions } from "./push-server";
 import { parse_sequence_parameter_set, SequenceParameterSet } from './sps';
@@ -248,6 +248,7 @@ export class ScrcpyClient {
     private readonly clipboardChangeEvent = new EventEmitter<string>();
     public get onClipboardChange() { return this.clipboardChangeEvent.event; }
 
+    private options: ScrcpyOptions | undefined;
     private sendingTouchMessage = false;
 
     public constructor(device: Adb) {
@@ -266,7 +267,8 @@ export class ScrcpyClient {
             process = await this.device.childProcess.spawn(
                 serverArguments,
                 {
-                    // Disable Shell Protocol to simplify processing
+                    // Scrcpy server doesn't split stdout and stderr,
+                    // so disable Shell Protocol to simplify processing
                     shells: [AdbLegacyShell],
                 }
             );
@@ -301,6 +303,7 @@ export class ScrcpyClient {
     }
 
     public start(options: ScrcpyOptions) {
+        this.options = options;
         return this.startCore(
             options.formatServerArguments(),
             options.createConnection(this.device)
@@ -437,7 +440,7 @@ export class ScrcpyClient {
         }
     }
 
-    public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type' | 'action'>) {
+    public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type'>) {
         if (!this.controlStream) {
             throw new Error('injectKeyCode called before initialization');
         }
@@ -445,13 +448,6 @@ export class ScrcpyClient {
         await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
             ...message,
             type: ScrcpyControlMessageType.InjectKeycode,
-            action: AndroidKeyEventAction.Down,
-        }, this.backend));
-
-        await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
-            ...message,
-            type: ScrcpyControlMessageType.InjectKeycode,
-            action: AndroidKeyEventAction.Up,
         }, this.backend));
     }
 
@@ -493,16 +489,15 @@ export class ScrcpyClient {
         this.sendingTouchMessage = false;
     }
 
-    public async pressBackOrTurnOnScreen() {
+    public async pressBackOrTurnOnScreen(action: AndroidKeyEventAction) {
         if (!this.controlStream) {
             throw new Error('pressBackOrTurnOnScreen called before initialization');
         }
 
-        const buffer = ScrcpySimpleControlMessage.serialize(
-            { type: ScrcpyControlMessageType.BackOrScreenOn },
-            this.backend
-        );
-        await this.controlStream.write(buffer);
+        const buffer = this.options!.createBackOrScreenOnEvent(action, this.device);
+        if (buffer) {
+            await this.controlStream.write(buffer);
+        }
     }
 
     public async close() {

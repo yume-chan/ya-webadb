@@ -1,5 +1,6 @@
 import type { Adb } from "@yume-chan/adb";
 import type { ScrcpyClientConnection } from "../connection";
+import type { AndroidKeyEventAction } from "../message";
 
 export const DEFAULT_SERVER_PATH = '/data/local/tmp/scrcpy-server.jar';
 
@@ -26,4 +27,6 @@ export interface ScrcpyOptions {
     getOutputEncoderNameRegex(): RegExp;
 
     createConnection(device: Adb): ScrcpyClientConnection;
+
+    createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb): ArrayBuffer | undefined;
 }

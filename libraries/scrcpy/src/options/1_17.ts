@@ -1,6 +1,8 @@
 import { Adb } from "@yume-chan/adb";
+import Struct, { placeholder } from "@yume-chan/struct";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../codec";
 import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";
+import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../message";
 import { DEFAULT_SERVER_PATH, ScrcpyLogLevel, ScrcpyOptions, ScrcpyScreenOrientation } from "./common";
 
 export interface ScrcpyOptions1_17Init {
@@ -35,6 +37,10 @@ export interface ScrcpyOptions1_17Init {
 
     encoder?: string;
 }
+
+export const ScrcpyBackOrScreenOnEvent1_17 =
+    new Struct()
+        .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>());
 
 export class ScrcpyOptions1_17 implements ScrcpyOptions {
     path: string;
@@ -154,5 +160,16 @@ export class ScrcpyOptions1_17 implements ScrcpyOptions {
 
     public getOutputEncoderNameRegex(): RegExp {
         return /^\s+scrcpy --encoder-name '(.*?)'/;
+    }
+
+    public createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb) {
+        if (action === AndroidKeyEventAction.Down) {
+            return ScrcpyBackOrScreenOnEvent1_17.serialize(
+                { type: ScrcpyControlMessageType.BackOrScreenOn },
+                device.backend
+            );
+        }
+
+        return undefined;
     }
 }

@@ -14,12 +14,6 @@ export enum ScrcpyControlMessageType {
     RotateDevice,
 }
 
-export const ScrcpySimpleControlMessage =
-    new Struct()
-        .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>());
-
-export type ScrcpySimpleControlMessage = typeof ScrcpySimpleControlMessage['TInit'];
-
 export enum AndroidMotionEventAction {
     Down,
     Up,
@@ -93,6 +87,7 @@ export enum AndroidKeyCode {
     X,
     Y,
     Z,
+    Space = 62,
     Delete = 67,
     AppSwitch = 187,
 }
@@ -107,8 +102,3 @@ export const ScrcpyInjectKeyCodeControlMessage =
 
 export type ScrcpyInjectKeyCodeControlMessage =
     typeof ScrcpyInjectKeyCodeControlMessage['TInit'];
-
-export type ScrcpyControlMessage =
-    ScrcpySimpleControlMessage |
-    ScrcpyInjectTouchControlMessage |
-    ScrcpyInjectKeyCodeControlMessage;

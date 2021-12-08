@@ -1,12 +1,12 @@
 import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_19, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
+import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_18, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { DemoMode, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { global } from "../state";
 import { CommonStackTokens, formatSpeed, RouteStackProps } from "../utils";
@@ -77,36 +77,97 @@ function fetchServer(onProgress?: (e: [downloaded: number, total: number]) => vo
     return cachedValue.promise;
 }
 
-const DECODERS: { name: string; factory: H264DecoderConstructor; }[] = [];
+function clamp(value: number, min: number, max: number): number {
+    if (value < min) {
+        return min;
+    }
 
-if (typeof window !== 'undefined' && typeof window.VideoDecoder === 'function') {
-    DECODERS.push({
-        name: 'WebCodecs',
-        factory: WebCodecsDecoder,
-    });
+    if (value > max) {
+        return max;
+    }
+
+    return value;
 }
 
-DECODERS.push({
-    name: 'TinyH264 (Software)',
-    factory: TinyH264Decoder,
-});
+class KeyRepeater {
+    key: AndroidKeyCode;
+    client: ScrcpyClient;
+
+    delay: number;
+    interval: number;
+
+    onRelease: VoidFunction | undefined;
+
+    constructor(key: AndroidKeyCode, client: ScrcpyClient, delay = 100, interval = 50) {
+        this.key = key;
+        this.client = client;
+
+        this.delay = delay;
+        this.interval = interval;
+    }
+
+    async press() {
+        await this.client.injectKeyCode({
+            action: AndroidKeyEventAction.Down,
+            keyCode: this.key,
+            repeat: 0,
+            metaState: 0,
+        });
+
+        const timeoutId = setTimeout(() => {
+            const intervalId = setInterval(async () => {
+                await this.client.injectKeyCode({
+                    action: AndroidKeyEventAction.Down,
+                    keyCode: this.key,
+                    repeat: 1,
+                    metaState: 0,
+                });
+            }, this.interval);
+            this.onRelease = () => clearInterval(intervalId);
+        }, this.delay);
+        this.onRelease = () => clearTimeout(timeoutId);
+    }
+
+    async release() {
+        this.onRelease?.();
+
+        await this.client.injectKeyCode({
+            action: AndroidKeyEventAction.Up,
+            keyCode: this.key,
+            repeat: 0,
+            metaState: 0,
+        });
+    }
+}
 
 class ScrcpyPageState {
     running = false;
+
     deviceView: DeviceViewRef | null = null;
     rendererContainer: HTMLDivElement | null = null;
+
     settingsVisible = false;
     demoModeVisible = false;
+
     width = 0;
     height = 0;
+
     client: ScrcpyClient | undefined;
-    decoder: H264Decoder | undefined;
+
     encoders: string[] = [];
     selectedEncoder: string | undefined;
-    selectedDecoder: { name: string, factory: H264DecoderConstructor; } = DECODERS[0];
+
+    decoders: { name: string; factory: H264DecoderConstructor; }[] = [{
+        name: 'TinyH264 (Software)',
+        factory: TinyH264Decoder,
+    }];
+    selectedDecoder: { name: string, factory: H264DecoderConstructor; } = this.decoders[0];
+    decoder: H264Decoder | undefined;
+
     resolution = 1080;
     bitRate = 4_000_000;
     tunnelForward = false;
+
     connecting = false;
     serverTotalSize = 0;
     serverDownloadedSize = 0;
@@ -115,6 +176,9 @@ class ScrcpyPageState {
     serverUploadedSize = 0;
     debouncedServerUploadedSize = 0;
     serverUploadSpeed = 0;
+
+    homeKeyRepeater: KeyRepeater | undefined;
+    appSwitchKeyRepeater: KeyRepeater | undefined;
 
     get commandBarItems() {
         const result: ICommandBarItemProps[] = [];
@@ -196,18 +260,30 @@ class ScrcpyPageState {
 
     constructor() {
         makeAutoObservable(this, {
+            decoders: observable.shallow,
             selectedDecoder: observable.ref,
             start: false,
             stop: action.bound,
             handleDeviceViewRef: action.bound,
             handleRendererContainerRef: action.bound,
-            handleBackClick: false,
-            handleHomeClick: false,
-            handleAppSwitchClick: false,
+            handleBackPointerDown: false,
+            handleBackPointerUp: false,
+            handleHomePointerDown: false,
+            handleHomePointerUp: false,
+            handleAppSwitchPointerDown: false,
+            handleAppSwitchPointerUp: false,
             handleCurrentEncoderChange: action.bound,
             handleSelectedDecoderChange: action.bound,
             handleResolutionChange: action.bound,
             handleTunnelForwardChange: action.bound,
+            handleBitRateChange: action.bound,
+            injectTouch: false,
+            handlePointerDown: false,
+            handlePointerMove: false,
+            handlePointerUp: false,
+            handleKeyDown: false,
+            homeKeyRepeater: false,
+            appSwitchKeyRepeater: false,
         });
 
         autorun(() => {
@@ -227,6 +303,26 @@ class ScrcpyPageState {
                 this.rendererContainer.appendChild(this.decoder.element);
             }
         });
+
+        autorun(() => {
+            if (this.client) {
+                this.homeKeyRepeater = new KeyRepeater(AndroidKeyCode.Home, this.client);
+                this.appSwitchKeyRepeater = new KeyRepeater(AndroidKeyCode.AppSwitch, this.client);
+            } else {
+                this.homeKeyRepeater = undefined;
+                this.appSwitchKeyRepeater = undefined;
+            }
+        });
+
+        if (typeof window !== 'undefined' && typeof window.VideoDecoder === 'function') {
+            setTimeout(action(() => {
+                this.decoders.unshift({
+                    name: 'WebCodecs',
+                    factory: WebCodecsDecoder,
+                });
+                this.selectedDecoder = this.decoders[0];
+            }), 0);
+        }
     }
 
     start = async () => {
@@ -257,11 +353,9 @@ class ScrcpyPageState {
                 }),
             });
 
-            console.log(1);
-
             const encoders = await ScrcpyClient.getEncoders(
                 global.device,
-                new ScrcpyOptions1_19({
+                new ScrcpyOptions1_18({
                     version: ScrcpyServerVersion,
                     logLevel: ScrcpyLogLevel.Debug,
                     bitRate: 4_000_000,
@@ -317,7 +411,7 @@ class ScrcpyPageState {
             });
 
             await client.start(
-                new ScrcpyOptions1_19({
+                new ScrcpyOptions1_18({
                     version: ScrcpyServerVersion,
                     logLevel: ScrcpyLogLevel.Debug,
                     maxSize: this.resolution,
@@ -344,10 +438,12 @@ class ScrcpyPageState {
     };
 
     stop() {
-        this.client?.close();
-        this.client = undefined;
         this.decoder?.dispose();
         this.decoder = undefined;
+
+        this.client?.close();
+        this.client = undefined;
+
         this.running = false;
     }
 
@@ -359,24 +455,49 @@ class ScrcpyPageState {
         this.rendererContainer = element;
     };
 
-    handleBackClick = () => {
-        this.client!.pressBackOrTurnOnScreen();
+    handleBackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
+        e.currentTarget.setPointerCapture(e.pointerId);
+        this.client!.pressBackOrTurnOnScreen(AndroidKeyEventAction.Down);
     };
 
-    handleHomeClick = () => {
-        this.client!.injectKeyCode({
-            keyCode: AndroidKeyCode.Home,
-            repeat: 0,
-            metaState: 0,
-        });
+    handleBackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
+        this.client!.pressBackOrTurnOnScreen(AndroidKeyEventAction.Up);
     };
 
-    handleAppSwitchClick = () => {
-        this.client!.injectKeyCode({
-            keyCode: AndroidKeyCode.AppSwitch,
-            repeat: 0,
-            metaState: 0,
-        });
+    handleHomePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
+        e.currentTarget.setPointerCapture(e.pointerId);
+        this.homeKeyRepeater?.press();
+    };
+
+    handleHomePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
+        this.homeKeyRepeater?.release();
+    };
+
+    handleAppSwitchPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
+        e.currentTarget.setPointerCapture(e.pointerId);
+        this.appSwitchKeyRepeater?.press();
+    };
+
+    handleAppSwitchPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
+        this.appSwitchKeyRepeater?.release();
     };
 
     handleCurrentEncoderChange(e?: any, option?: IDropdownOption) {
@@ -416,12 +537,102 @@ class ScrcpyPageState {
 
         this.tunnelForward = checked;
     };
+
+    injectTouch = (
+        action: AndroidMotionEventAction,
+        e: React.PointerEvent<HTMLDivElement>
+    ) => {
+        if (!this.client) {
+            return;
+        }
+
+        const view = this.rendererContainer!.getBoundingClientRect();
+        const pointerViewX = e.clientX - view.x;
+        const pointerViewY = e.clientY - view.y;
+        const pointerScreenX = clamp(pointerViewX / view.width, 0, 1) * this.width;
+        const pointerScreenY = clamp(pointerViewY / view.height, 0, 1) * this.height;
+
+        this.client.injectTouch({
+            action,
+            pointerId: BigInt(e.pointerId),
+            pointerX: pointerScreenX,
+            pointerY: pointerScreenY,
+            pressure: e.pressure * 65535,
+            buttons: 0,
+        });
+    };
+
+    handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
+        this.rendererContainer!.focus();
+        e.currentTarget.setPointerCapture(e.pointerId);
+        this.injectTouch(AndroidMotionEventAction.Down, e);
+    };
+
+    handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.buttons !== 1) {
+            return;
+        }
+        this.injectTouch(AndroidMotionEventAction.Move, e);
+    };
+
+    handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) {
+            return;
+        }
+        e.currentTarget.releasePointerCapture(e.pointerId);
+        this.injectTouch(AndroidMotionEventAction.Up, e);
+    };
+
+    handleKeyDown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (!this.client) {
+            return;
+        }
+
+        const { key, code } = e;
+        if (key.match(/^[a-z0-9]$/i)) {
+            this.client!.injectText(key);
+            return;
+        }
+
+        const keyCode = ({
+            Backspace: AndroidKeyCode.Delete,
+            Space: AndroidKeyCode.Space,
+        } as Record<string, AndroidKeyCode | undefined>)[code];
+
+        if (keyCode) {
+            await this.client.injectKeyCode({
+                action: AndroidKeyEventAction.Down,
+                keyCode,
+                metaState: 0,
+                repeat: 0,
+            });
+            await this.client.injectKeyCode({
+                action: AndroidKeyEventAction.Up,
+                keyCode,
+                metaState: 0,
+                repeat: 0,
+            });
+        }
+    };
 }
 
 const state = new ScrcpyPageState();
 
 const ConnectionDialog = observer(() => {
     const layerHostId = useId('layerHost');
+
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    if (!isClient) {
+        return null;
+    }
 
     return (
         <>
@@ -457,25 +668,26 @@ const ConnectionDialog = observer(() => {
 });
 
 const Scrcpy: NextPage = () => {
-    const layerHostId = useId('layerHost');
-
     const bottomElement = (
         <Stack verticalFill horizontalAlign="center" style={{ background: '#999' }}>
             <Stack verticalFill horizontal style={{ width: '100%', maxWidth: 300 }} horizontalAlign="space-evenly" verticalAlign="center">
                 <IconButton
                     iconProps={{ iconName: 'Play' }}
                     style={{ transform: 'rotate(180deg)', color: 'white' }}
-                    onClick={state.handleBackClick}
+                    onPointerDown={state.handleBackPointerDown}
+                    onPointerUp={state.handleBackPointerUp}
                 />
                 <IconButton
                     iconProps={{ iconName: 'LocationCircle' }}
                     style={{ color: 'white' }}
-                    onClick={state.handleHomeClick}
+                    onPointerDown={state.handleHomePointerDown}
+                    onPointerUp={state.handleHomePointerUp}
                 />
                 <IconButton
                     iconProps={{ iconName: 'Stop' }}
                     style={{ color: 'white' }}
-                    onClick={state.handleAppSwitchClick}
+                    onPointerDown={state.handleAppSwitchPointerDown}
+                    onPointerUp={state.handleAppSwitchPointerUp}
                 />
             </Stack>
         </Stack>
@@ -497,7 +709,15 @@ const Scrcpy: NextPage = () => {
                     bottomElement={bottomElement}
                     bottomHeight={40}
                 >
-                    <div ref={state.handleRendererContainerRef} />
+                    <div
+                        ref={state.handleRendererContainerRef}
+                        tabIndex={-1}
+                        onPointerDown={state.handlePointerDown}
+                        onPointerMove={state.handlePointerMove}
+                        onPointerUp={state.handlePointerUp}
+                        onPointerCancel={state.handlePointerUp}
+                        onKeyDown={state.handleKeyDown}
+                    />
                 </DeviceView>
 
                 <div style={{ padding: 12, overflow: 'hidden auto', display: state.settingsVisible ? 'block' : 'none', width: 300 }}>
@@ -511,10 +731,10 @@ const Scrcpy: NextPage = () => {
                         onChange={state.handleCurrentEncoderChange}
                     />
 
-                    {DECODERS.length > 1 && (
+                    {state.decoders.length > 1 && (
                         <Dropdown
                             label="Decoder"
-                            options={DECODERS.map(item => ({ key: item.name, text: item.name, data: item }))}
+                            options={state.decoders.map(item => ({ key: item.name, text: item.name, data: item }))}
                             selectedKey={state.selectedDecoder.name}
                             onChange={state.handleSelectedDecoderChange}
                         />
