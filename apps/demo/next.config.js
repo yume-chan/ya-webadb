@@ -9,7 +9,7 @@ const withMDX = require('@next/mdx')({
                 return React.createElement(name, props, ...children);
             }
         `,
-    }
+    },
 });
 
 /** @type {import('next').NextConfig} */
@@ -17,4 +17,15 @@ module.exports = withMDX({
     pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
     reactStrictMode: true,
     productionBrowserSourceMaps: true,
+    webpack(config, options) {
+        config.module.rules.push({
+            resourceQuery: /url/,
+            type: "asset/resource",
+            generator: {
+                filename: "static/chunks/[name].[hash][ext]",
+            },
+        });
+
+        return config;
+    },
 });

@@ -36,10 +36,11 @@ class InstallPageState {
     constructor() {
         makeAutoObservable(this, {
             progress: observable.ref,
+            install: false,
         });
     }
 
-    async install() {
+    install = async () => {
         const file = await pickFile({ accept: '.apk' });
         if (!file) {
             return;
@@ -88,7 +89,7 @@ class InstallPageState {
             };
             this.installing = false;
         });
-    }
+    };
 }
 
 const state = new InstallPageState();
@@ -104,7 +105,7 @@ const Install: NextPage = () => {
                 <DefaultButton
                     disabled={!global.device || state.installing}
                     text="Open"
-                    onClick={() => state.install()}
+                    onClick={state.install}
                 />
             </Stack>
 

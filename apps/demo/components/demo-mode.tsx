@@ -337,14 +337,14 @@ const DemoModeBase = ({
             <div><strong>Note:</strong></div>
             <div>Device may not support all options.</div>
 
-            {FEATURES.map(group => (
-                <>
+            {FEATURES.map((group, index) => (
+                <div key={index}>
                     <Separator />
 
                     {group.map(feature => (
                         <Feature key={feature.key} feature={feature} />
                     ))}
-                </>
+                </div>
             ))}
         </div>
     );

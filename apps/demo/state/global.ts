@@ -1,11 +1,15 @@
 import { Adb } from "@yume-chan/adb";
-import { makeAutoObservable } from 'mobx';
+import { action, makeAutoObservable } from 'mobx';
 
 export class GlobalState {
     device: Adb | undefined;
+    errorDialogVisible = false;
+    errorDialogMessage = '';
 
     constructor() {
-        makeAutoObservable(this);
+        makeAutoObservable(this, {
+            hideErrorDialog: action.bound,
+        });
     }
 
     setCurrent(device: Adb | undefined) {
@@ -13,6 +17,15 @@ export class GlobalState {
         device?.onDisconnected(() => {
             this.setCurrent(undefined);
         });
+    }
+
+    showErrorDialog(message: string) {
+        this.errorDialogVisible = true;
+        this.errorDialogMessage = message;
+    }
+
+    hideErrorDialog() {
+        this.errorDialogVisible = false;
     }
 }
 

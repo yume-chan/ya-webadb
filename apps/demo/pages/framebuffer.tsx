@@ -1,11 +1,11 @@
 import { ICommandBarItemProps, Stack } from '@fluentui/react';
 import { AdbFrameBuffer } from "@yume-chan/adb";
-import { autorun, computed, makeAutoObservable } from "mobx";
+import { action, autorun, computed, makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import React, { useCallback, useContext, useEffect, useRef } from 'react';
-import { CommandBar, DemoMode, DeviceView, ErrorDialogContext } from '../components';
+import { CommandBar, DemoMode, DeviceView } from '../components';
 import { global } from "../state";
 import { RouteStackProps } from "../utils";
 
@@ -16,7 +16,9 @@ class FrameBufferState {
     demoModeVisible = false;
 
     constructor() {
-        makeAutoObservable(this);
+        makeAutoObservable(this, {
+            toggleDemoModeVisible: action.bound,
+        });
     }
 
     setImage(image: AdbFrameBuffer) {
@@ -33,8 +35,6 @@ class FrameBufferState {
 const state = new FrameBufferState();
 
 const FrameBuffer: NextPage = (): JSX.Element | null => {
-    const { show: showErrorDialog } = useContext(ErrorDialogContext);
-
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     const capture = useCallback(async () => {
@@ -49,9 +49,9 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
             console.log('time', end - start);
             state.setImage(framebuffer);
         } catch (e) {
-            showErrorDialog(e instanceof Error ? e.message : `${e}`);
+            global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
         }
-    }, [showErrorDialog]);
+    }, []);
 
     useEffect(() => {
         return autorun(() => {
@@ -99,7 +99,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
             iconProps: { iconName: 'Personalize' },
             checked: state.demoModeVisible,
             text: 'Demo Mode Settings',
-            onClick: () => state.toggleDemoModeVisible(),
+            onClick: state.toggleDemoModeVisible,
         },
         {
             key: 'info',

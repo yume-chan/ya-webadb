@@ -75,6 +75,7 @@
     "jest.showCoverageOnLoad": true,
     "markdown.extension.toc.levels": "2..6",
     "files.associations": {
-        "*.mdx": "markdown"
+        "*.mdx": "markdown",
+        "*.json": "jsonc"
     }
 }

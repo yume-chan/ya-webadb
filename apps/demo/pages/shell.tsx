@@ -5,7 +5,6 @@ import { NextPage } from "next";
 import Head from "next/head";
 import React, { CSSProperties, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import 'xterm/css/xterm.css';
-import { ErrorDialogContext } from '../components/error-dialog';
 import { global } from "../state";
 import { ResizeObserver, RouteStackProps } from '../utils';
 
@@ -24,8 +23,6 @@ const UpIconProps = { iconName: 'ChevronUp' };
 const DownIconProps = { iconName: 'ChevronDown' };
 
 const Shell: NextPage = (): JSX.Element | null => {
-    const { show: showErrorDialog } = useContext(ErrorDialogContext);
-
     const [searchKeyword, setSearchKeyword] = useState('');
     const handleSearchKeywordChange = useCallback((e, newValue?: string) => {
         setSearchKeyword(newValue ?? '');
@@ -59,7 +56,7 @@ const Shell: NextPage = (): JSX.Element | null => {
                     const socket = await global.device.childProcess.shell();
                     terminal.socket = socket;
                 } catch (e) {
-                    showErrorDialog(e instanceof Error ? e.message : `${e}`);
+                    global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                 } finally {
                     connectingRef.current = false;
                 }
@@ -68,7 +65,7 @@ const Shell: NextPage = (): JSX.Element | null => {
                 fireImmediately: true,
             }
         );
-    }, [showErrorDialog]);
+    }, []);
 
     const handleResize = useCallback(() => {
         terminal.fit();

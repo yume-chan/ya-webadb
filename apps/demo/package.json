@@ -26,13 +26,10 @@
         "react": "^17.0.2",
         "react-dom": "^17.0.2",
         "streamsaver": "^2.0.5",
-        "tinyh264": "^0.0.7",
         "xterm": "^4.15.0",
         "xterm-addon-fit": "^0.5.0",
         "xterm-addon-search": "^0.8.1",
-        "xterm-addon-webgl": "^0.11.3",
-        "yuv-buffer": "^1.0.0",
-        "yuv-canvas": "^1.2.7"
+        "xterm-addon-webgl": "^0.11.3"
     },
     "devDependencies": {
         "@mdx-js/loader": "^1.6.22",

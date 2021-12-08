@@ -12,7 +12,7 @@ export interface DeviceViewProps {
 
     bottomHeight?: number;
 
-    children: ReactNode;
+    children?: ReactNode;
 }
 
 export interface DeviceViewRef {

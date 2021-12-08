@@ -16,7 +16,11 @@ class TcpIpState {
     persistPort: string | undefined;
 
     constructor() {
-        makeAutoObservable(this);
+        makeAutoObservable(this, {
+            queryInfo: false,
+            applyServicePort: false,
+        });
+
         reaction(
             () => global.device,
             () => this.queryInfo(),
@@ -31,14 +35,14 @@ class TcpIpState {
                 disabled: !global.device,
                 iconProps: { iconName: 'Refresh' },
                 text: 'Refresh',
-                onClick: () => { this.queryInfo(); },
+                onClick: this.queryInfo as () => void,
             },
             {
                 key: 'apply',
                 disabled: !global.device,
                 iconProps: { iconName: 'Save' },
                 text: 'Apply',
-                onClick: () => { this.applyServicePort(); },
+                onClick: this.applyServicePort,
             }
         ];
     }
@@ -84,7 +88,7 @@ class TcpIpState {
         });
     });
 
-    async applyServicePort() {
+    applyServicePort = async () => {
         if (!global.device) {
             return;
         }
@@ -94,7 +98,7 @@ class TcpIpState {
         } else {
             await global.device.tcpip.disable();
         }
-    }
+    };
 }
 
 const state = new TcpIpState();

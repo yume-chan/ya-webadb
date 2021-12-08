@@ -1,6 +1,5 @@
 import { Adb } from "@yume-chan/adb";
-
-export const DEFAULT_SERVER_PATH = '/data/local/tmp/scrcpy-server.jar';
+import { DEFAULT_SERVER_PATH } from "./options";
 
 export interface PushServerOptions {
     path?: string;

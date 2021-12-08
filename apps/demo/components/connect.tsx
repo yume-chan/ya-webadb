@@ -6,7 +6,6 @@ import { observer } from 'mobx-react-lite';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { global, logger } from '../state';
 import { CommonStackTokens } from '../utils';
-import { ErrorDialogContext } from './error-dialog';
 
 const DropdownStyles = { dropdown: { width: '100%' } };
 
@@ -14,8 +13,6 @@ const CredentialStore = new AdbWebCredentialStore();
 
 function _Connect(): JSX.Element | null {
     const [supported, setSupported] = useState(true);
-
-    const { show: showErrorDialog } = useContext(ErrorDialogContext);
 
     const [selectedBackend, setSelectedBackend] = useState<AdbBackend | undefined>();
     const [connecting, setConnecting] = useState(false);
@@ -34,7 +31,7 @@ function _Connect(): JSX.Element | null {
             setSupported(supported);
 
             if (!supported) {
-                showErrorDialog('Your browser does not support WebUSB standard, which is required for this site to work.\n\nLatest version of Google Chrome, Microsoft Edge, or other Chromium-based browsers are required.');
+                global.showErrorDialog('Your browser does not support WebUSB standard, which is required for this site to work.\n\nLatest version of Google Chrome, Microsoft Edge, or other Chromium-based browsers are required.');
                 return;
             }
 
@@ -106,19 +103,19 @@ function _Connect(): JSX.Element | null {
                 }
             }
         } catch (e: any) {
-            showErrorDialog(e.message);
+            global.showErrorDialog(e.message);
         } finally {
             setConnecting(false);
         }
-    }, [showErrorDialog, selectedBackend]);
+    }, [selectedBackend]);
     const disconnect = useCallback(async () => {
         try {
             await global.device!.dispose();
             global.setCurrent(undefined);
         } catch (e: any) {
-            showErrorDialog(e.message);
+            global.showErrorDialog(e.message);
         }
-    }, [showErrorDialog]);
+    }, []);
 
     const backendList = useMemo(
         () => ([] as AdbBackend[]).concat(usbBackendList, wsBackendList),

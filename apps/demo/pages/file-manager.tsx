@@ -9,7 +9,7 @@ import Head from "next/head";
 import Router, { useRouter } from "next/router";
 import path from 'path';
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { CommandBar, ErrorDialogContext } from '../components';
+import { CommandBar } from '../components';
 import { global } from '../state';
 import { asyncEffect, chunkFile, formatSize, formatSpeed, pickFile, RouteStackProps, useSpeed } from '../utils';
 
@@ -91,17 +91,6 @@ class FileManagerState {
     sortDescending = false;
     startItemIndexInView = 0;
 
-    constructor() {
-        makeAutoObservable(this, {
-            items: observable.shallow,
-        });
-        reaction(
-            () => global.device,
-            () => this.loadFiles(),
-            { fireImmediately: true },
-        );
-    }
-
     get breadcrumbItems(): IBreadcrumbItem[] {
         let part = '';
         const list: IBreadcrumbItem[] = this.path.split('/').filter(Boolean).map(segment => {
@@ -125,10 +114,6 @@ class FileManagerState {
         list[list.length - 1].isCurrentItem = true;
         delete list[list.length - 1].onClick;
         return list;
-    }
-
-    pushPathQuery(path: string) {
-        Router.push({ query: { ...Router.query, path } });
     }
 
     get sortedList() {
@@ -250,6 +235,24 @@ class FileManagerState {
         return list;
     }
 
+    constructor() {
+        makeAutoObservable(this, {
+            items: observable.shallow,
+            pushPathQuery: false,
+            changeDirectory: false,
+            loadFiles: false,
+        });
+        reaction(
+            () => global.device,
+            () => this.loadFiles(),
+            { fireImmediately: true },
+        );
+    }
+
+    pushPathQuery = (path: string) => {
+        Router.push({ query: { ...Router.query, path } });
+    };
+
     changeDirectory(path: string) {
         if (this.path === path) {
             return;
@@ -345,8 +348,6 @@ const FileManager: NextPage = (): JSX.Element | null => {
         state.changeDirectory(pathQuery);
     }, [router.query.path]);
 
-    const { show: showErrorDialog } = useContext(ErrorDialogContext);
-
     const listRef = useRef<IDetailsList | null>(null);
     useLayoutEffect(() => {
         const list = listRef.current;
@@ -427,13 +428,13 @@ const FileManager: NextPage = (): JSX.Element | null => {
                 setUploadedSize,
             );
         } catch (e) {
-            showErrorDialog(e instanceof Error ? e.message : `${e}`);
+            global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
         } finally {
             sync.dispose();
             state.loadFiles();
             setUploading(false);
         }
-    }, [showErrorDialog]);
+    }, []);
 
     const [menuItems, setMenuItems] = useState<IContextualMenuItem[]>([]);
     useEffect(() => {
@@ -477,7 +478,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
                                     });
                                     await readableStream.pipeTo(writeableStream);
                                 } catch (e) {
-                                    showErrorDialog(e instanceof Error ? e.message : `${e}`);
+                                    global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                                 } finally {
                                     sync.dispose();
                                 }
@@ -497,12 +498,12 @@ const FileManager: NextPage = (): JSX.Element | null => {
                                 for (const item of selectedItems) {
                                     const output = await global.device!.rm(path.resolve(state.path, item.name!));
                                     if (output) {
-                                        showErrorDialog(output);
+                                        global.showErrorDialog(output);
                                         return;
                                     }
                                 }
                             } catch (e) {
-                                showErrorDialog(e instanceof Error ? e.message : `${e}`);
+                                global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                             } finally {
                                 state.loadFiles();
                             }
@@ -514,7 +515,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
         }
 
         setMenuItems(result);
-    }, [selectedItems, upload, showErrorDialog]);
+    }, [selectedItems, upload]);
 
     const [contextMenuTarget, setContextMenuTarget] = useState<MouseEvent>();
     const showContextMenu = useCallback((

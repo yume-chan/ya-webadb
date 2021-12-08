@@ -2,18 +2,11 @@ import { Adb, AdbBufferedStream, AdbLegacyShell, AdbShell, DataEventEmitter } fr
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import { AndroidCodecLevel, AndroidCodecProfile } from './codec';
-import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "./connection";
+import { ScrcpyClientConnection } from "./connection";
 import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage } from './message';
-import { DEFAULT_SERVER_PATH, pushServer, PushServerOptions } from "./push-server";
+import { ScrcpyLogLevel, ScrcpyOptions } from "./options";
+import { pushServer, PushServerOptions } from "./push-server";
 import { parse_sequence_parameter_set, SequenceParameterSet } from './sps';
-
-export enum ScrcpyLogLevel {
-    Debug = 'debug',
-    Info = 'info',
-    Warn = 'warn',
-    Error = 'error',
-}
 
 interface ScrcpyError {
     type: string;
@@ -138,14 +131,6 @@ function* parseScrcpyOutput(text: string): Generator<ScrcpyOutput> {
     }
 }
 
-export enum ScrcpyScreenOrientation {
-    Unlocked = -1,
-    Portrait = 0,
-    Landscape = 1,
-    PortraitFlipped = 2,
-    LandscapeFlipped = 3,
-}
-
 const Size =
     new Struct()
         .uint16('width')
@@ -166,41 +151,6 @@ const ClipboardMessage =
         .uint32('length')
         .string('content', { lengthField: 'length' });
 
-export interface ScrcpyClientOptions {
-    device: Adb;
-
-    path?: string;
-
-    version: string;
-
-    logLevel?: ScrcpyLogLevel;
-
-    /**
-     * The maximum value of both width and height.
-     */
-    maxSize?: number | undefined;
-
-    bitRate: number;
-
-    maxFps?: number;
-
-    /**
-     * The orientation of the video stream.
-     *
-     * It will not keep the device screen in specific orientation,
-     * only the captured video will in this orientation.
-     */
-    orientation?: ScrcpyScreenOrientation;
-
-    tunnelForward?: boolean;
-
-    profile?: AndroidCodecProfile;
-
-    level?: AndroidCodecLevel;
-
-    encoder?: string;
-}
-
 export interface FrameSize {
     sequenceParameterSet: SequenceParameterSet;
 
@@ -217,8 +167,6 @@ export interface FrameSize {
     croppedHeight: number;
 }
 
-const ENCODER_REGEX = /^\s+scrcpy --encoder-name '(.*?)'/;
-
 export class ScrcpyClient {
     public static pushServer(
         device: Adb,
@@ -228,13 +176,9 @@ export class ScrcpyClient {
         pushServer(device, file, options);
     }
 
-    public static async getEncoders(options: ScrcpyClientOptions): Promise<string[]> {
-        const client = new ScrcpyClient({
-            ...options,
-            // Provide an invalid encoder name
-            // So the server will return all available encoders
-            encoder: '_',
-        });
+    public static async getEncoders(device: Adb, options: ScrcpyOptions): Promise<string[]> {
+        const client = new ScrcpyClient(device);
+        const encoderNameRegex = options.getOutputEncoderNameRegex();
 
         const resolver = new PromiseResolver<string[]>();
         const encoders: string[] = [];
@@ -244,7 +188,7 @@ export class ScrcpyClient {
                 return;
             }
 
-            const match = message.match(ENCODER_REGEX);
+            const match = message.match(encoderNameRegex);
             if (match) {
                 encoders.push(match[1]);
             }
@@ -256,14 +200,17 @@ export class ScrcpyClient {
 
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
-        await client.start();
+        await client.startCore(
+            options.formatGetEncoderListArguments(),
+            options.createConnection(device)
+        );
 
         return resolver.promise;
     }
 
-    private readonly options: ScrcpyClientOptions;
+    private readonly device: Adb;
 
-    public get backend() { return this.options.device.backend; }
+    public get backend() { return this.device.backend; }
 
     private process: AdbShell | undefined;
 
@@ -303,61 +250,26 @@ export class ScrcpyClient {
 
     private sendingTouchMessage = false;
 
-    public constructor(options: ScrcpyClientOptions) {
-        this.options = options;
+    public constructor(device: Adb) {
+        this.device = device;
     }
 
-    public async start(): Promise<void> {
-        const {
-            device,
-            path = DEFAULT_SERVER_PATH,
-            version,
-            logLevel = ScrcpyLogLevel.Error,
-            maxSize = 0,
-            bitRate,
-            maxFps = 0,
-            orientation = ScrcpyScreenOrientation.Unlocked,
-            tunnelForward = false,
-            profile = AndroidCodecProfile.Baseline,
-            level = AndroidCodecLevel.Level4,
-            encoder = '-',
-        } = this.options;
-
-        let connection: ScrcpyClientConnection | undefined;
+    private async startCore(
+        serverArguments: string[],
+        connection: ScrcpyClientConnection
+    ): Promise<void> {
         let process: AdbShell | undefined;
 
         try {
-            if (tunnelForward) {
-                connection = new ScrcpyClientForwardConnection(device);
-            } else {
-                connection = new ScrcpyClientReverseConnection(device);
-            }
             await connection.initialize();
 
-            process = await device.childProcess.spawn([
-                `CLASSPATH=${path}`,
-                'app_process',
-                /*          unused */ '/',
-                'com.genymobile.scrcpy.Server',
-                version,
-                logLevel,
-                maxSize.toString(), // (0: unlimited)
-                bitRate.toString(),
-                maxFps.toString(),
-                orientation.toString(),
-                tunnelForward.toString(),
-                /*            crop */ '-',
-                /* send_frame_meta */ 'true', // always send frame meta (packet boundaries + timestamp)
-                /*         control */ 'true',
-                /*      display_id */ '0',
-                /*    show_touches */ 'false',
-                /*      stay_awake */ 'true',
-                /*   codec_options */ `profile=${profile},level=${level}`,
-                encoder,
-            ], {
-                // Disable Shell Protocol to simplify processing
-                shells: [AdbLegacyShell],
-            });
+            process = await this.device.childProcess.spawn(
+                serverArguments,
+                {
+                    // Disable Shell Protocol to simplify processing
+                    shells: [AdbLegacyShell],
+                }
+            );
 
             process.onStdout(this.handleProcessOutput, this);
 
@@ -384,12 +296,19 @@ export class ScrcpyClient {
             await process?.kill();
             throw e;
         } finally {
-            connection?.dispose();
+            connection.dispose();
         }
     }
 
+    public start(options: ScrcpyOptions) {
+        return this.startCore(
+            options.formatServerArguments(),
+            options.createConnection(this.device)
+        );
+    }
+
     private handleProcessOutput(data: ArrayBuffer) {
-        const string = this.options.device.backend.decodeUtf8(data);
+        const string = this.device.backend.decodeUtf8(data);
         for (const output of parseScrcpyOutput(string)) {
             switch (output.level) {
                 case ScrcpyLogLevel.Debug:
