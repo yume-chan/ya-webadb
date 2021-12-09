@@ -3,7 +3,7 @@ import type { AppProps } from 'next/app';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from "react";
-import { Connect, ErrorDialogProvider, Logger, ToggleLogger } from "../components";
+import { Connect, ErrorDialogProvider, LogView, ToggleLogView } from "../components";
 import '../styles/globals.css';
 
 initializeIcons();
@@ -97,7 +97,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                         <div className={classNames.title}>WebADB Demo</div>
                     </StackItem>
 
-                    <ToggleLogger />
+                    <ToggleLogView />
                 </Stack>
 
                 <Stack grow horizontal verticalFill disableShrink styles={{ root: { minHeight: 0, overflow: 'hidden', lineHeight: '1.5' } }}>
@@ -119,9 +119,9 @@ function MyApp({ Component, pageProps }: AppProps) {
                     <StackItem grow styles={{ root: { width: 0 } }}>
                         <Component {...pageProps} />
                     </StackItem>
-                </Stack>
 
-                <Logger className={classNames['right-column']} />
+                    <LogView className={classNames['right-column']} />
+                </Stack>
             </Stack>
         </ErrorDialogProvider >
     );

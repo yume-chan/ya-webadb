@@ -3,7 +3,7 @@ import { Adb, AdbBackend } from '@yume-chan/adb';
 import AdbWebUsbBackend, { AdbWebCredentialStore, AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import { observer } from 'mobx-react-lite';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { global, logger } from '../state';
 import { CommonStackTokens } from '../utils';
 
@@ -92,13 +92,13 @@ function _Connect(): JSX.Element | null {
     const connect = useCallback(async () => {
         try {
             if (selectedBackend) {
-                const adb = new Adb(selectedBackend, logger.logger);
+                const device = new Adb(selectedBackend, logger.logger);
                 try {
                     setConnecting(true);
-                    await adb.connect(CredentialStore);
-                    global.setCurrent(adb);
+                    await device.connect(CredentialStore);
+                    global.setDevice(device);
                 } catch (e) {
-                    adb.dispose();
+                    device.dispose();
                     throw e;
                 }
             }
@@ -111,7 +111,7 @@ function _Connect(): JSX.Element | null {
     const disconnect = useCallback(async () => {
         try {
             await global.device!.dispose();
-            global.setCurrent(undefined);
+            global.setDevice(undefined);
         } catch (e: any) {
             global.showErrorDialog(e.message);
         }

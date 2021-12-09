@@ -2,8 +2,9 @@ import { IconButton, IListProps, List, mergeStyles, mergeStyleSets, Stack } from
 import { AdbPacketInit } from '@yume-chan/adb';
 import { decodeUtf8 } from '@yume-chan/adb-backend-webusb';
 import { DisposableList } from '@yume-chan/event';
+import { observer } from "mobx-react-lite";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { logger } from "../state";
+import { global, logger } from "../state";
 import { withDisplayName } from '../utils';
 import { CommandBar } from './command-bar';
 
@@ -44,7 +45,7 @@ function serializePacket(packet: AdbPacketInit) {
     return parts.join(' ');
 }
 
-const LoggerLine = withDisplayName('LoggerLine')(({ packet }: { packet: [string, AdbPacketInit]; }) => {
+const LogLine = withDisplayName('LoggerLine')(({ packet }: { packet: [string, AdbPacketInit]; }) => {
     const string = useMemo(() => serializePacket(packet[1]), [packet]);
 
     return (
@@ -54,43 +55,13 @@ const LoggerLine = withDisplayName('LoggerLine')(({ packet }: { packet: [string,
     );
 });
 
-export interface LoggerContextValue {
-    visible: boolean;
-    onVisibleChange: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const LoggerContext = createContext<LoggerContextValue | undefined>(undefined);
-
-export const LoggerContextProvider = withDisplayName('LoggerContextProvider')(({ children }) => {
-    const [visible, setVisible] = useState(false);
-    const contextValue = useMemo(() => ({
-        visible,
-        onVisibleChange: setVisible,
-    }), [visible, setVisible]);
-
-    return (
-        <LoggerContext.Provider value={contextValue}>
-            {children}
-        </LoggerContext.Provider>
-    );
-});
-
-export const ToggleLogger = withDisplayName('ToggleLogger')(() => {
-    const contextValue = useContext(LoggerContext);
-    const handleClick = useCallback(() => {
-        contextValue?.onVisibleChange(value => !value);
-    }, [contextValue]);
-
-    if (!contextValue) {
-        return null;
-    }
-
+export const ToggleLogView = observer(() => {
     return (
         <IconButton
-            checked={contextValue.visible}
+            checked={global.logVisible}
             iconProps={{ iconName: 'ChangeEntitlements' }}
             title="Toggle Log"
-            onClick={handleClick}
+            onClick={global.toggleLog}
         />
     );
 });
@@ -109,14 +80,13 @@ function renderCell(item?: [string, AdbPacketInit]) {
     }
 
     return (
-        <LoggerLine packet={item} />
+        <LogLine packet={item} />
     );
 }
 
-export const Logger = withDisplayName('Logger')(({
+export const LogView = observer(({
     className,
 }: LoggerProps) => {
-    const contextValue = useContext(LoggerContext);
     const [packets, setPackets] = useState<[string, AdbPacketInit][]>([]);
     const scrollerRef = useRef<HTMLDivElement | null>(null);
 
@@ -177,7 +147,7 @@ export const Logger = withDisplayName('Logger')(({
         classNames['logger-container'],
     ), [className]);
 
-    if (!contextValue?.visible) {
+    if (!global.logVisible) {
         return null;
     }
 

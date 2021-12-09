@@ -6,16 +6,19 @@ export class GlobalState {
     errorDialogVisible = false;
     errorDialogMessage = '';
 
+    logVisible = false;
+
     constructor() {
         makeAutoObservable(this, {
             hideErrorDialog: action.bound,
+            toggleLog: action.bound,
         });
     }
 
-    setCurrent(device: Adb | undefined) {
+    setDevice(device: Adb | undefined) {
         this.device = device;
         device?.onDisconnected(() => {
-            this.setCurrent(undefined);
+            this.setDevice(undefined);
         });
     }
 
@@ -26,6 +29,10 @@ export class GlobalState {
 
     hideErrorDialog() {
         this.errorDialogVisible = false;
+    }
+
+    toggleLog() {
+        this.logVisible = !this.logVisible;
     }
 }
 
