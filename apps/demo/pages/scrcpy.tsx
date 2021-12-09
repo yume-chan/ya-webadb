@@ -98,7 +98,7 @@ class KeyRepeater {
 
     onRelease: VoidFunction | undefined;
 
-    constructor(key: AndroidKeyCode, client: ScrcpyClient, delay = 100, interval = 50) {
+    constructor(key: AndroidKeyCode, client: ScrcpyClient, delay = 0, interval = 0) {
         this.key = key;
         this.client = client;
 
@@ -114,7 +114,22 @@ class KeyRepeater {
             metaState: 0,
         });
 
-        const timeoutId = setTimeout(() => {
+        if (this.delay === 0) {
+            return;
+        }
+
+        const timeoutId = setTimeout(async () => {
+            await this.client.injectKeyCode({
+                action: AndroidKeyEventAction.Down,
+                keyCode: this.key,
+                repeat: 1,
+                metaState: 0,
+            });
+
+            if (this.interval === 0) {
+                return;
+            }
+
             const intervalId = setInterval(async () => {
                 await this.client.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
@@ -292,6 +307,8 @@ class ScrcpyPageState {
                     this.encoders = [];
                     this.selectedEncoder = undefined;
                 });
+            } else {
+                this.stop();
             }
         });
 
