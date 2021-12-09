@@ -12,7 +12,6 @@ import { global } from "../state";
 import { CommonStackTokens, formatSpeed, RouteStackProps } from "../utils";
 
 const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url).toString();
-console.log('SERVER_URL', SERVER_URL);
 
 export const ScrcpyServerVersion = '1.19';
 
@@ -258,10 +257,7 @@ class ScrcpyPageState {
                                 developed by Genymobile can display the screen with low latency (1~2 frames) and control the device, all without root access.
                             </p>
                             <p>
-                                I reimplemented the protocol in JavaScript, a pre-built server binary from Genymobile is used.
-                            </p>
-                            <p>
-                                It uses tinyh264 as decoder to achieve low latency. But since it's a software decoder, high CPU usage and sub-optimal compatibility are expected.
+                                This is a TypeScript implementation of the client part. Paired with official pre-built server binary.
                             </p>
                         </>
                     ),

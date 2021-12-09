@@ -2,13 +2,13 @@ import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, Detail
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@fluentui/react-file-type-icons';
 import { useConst } from '@fluentui/react-hooks';
 import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume-chan/adb';
-import { makeAutoObservable, observable, reaction, runInAction } from "mobx";
+import { autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import Router, { useRouter } from "next/router";
 import path from 'path';
-import React, { useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CommandBar } from '../components';
 import { global } from '../state';
 import { asyncEffect, chunkFile, formatSize, formatSpeed, pickFile, RouteStackProps, useSpeed } from '../utils';
@@ -84,6 +84,8 @@ function compareCaseInsensitively(a: string, b: string) {
 }
 
 class FileManagerState {
+    initial = true;
+    visible = false;
     path = '/';
     loading = false;
     items: ListItem[] = [];
@@ -237,16 +239,23 @@ class FileManagerState {
 
     constructor() {
         makeAutoObservable(this, {
+            initial: false,
             items: observable.shallow,
             pushPathQuery: false,
             changeDirectory: false,
             loadFiles: false,
         });
-        reaction(
-            () => global.device,
-            () => this.loadFiles(),
-            { fireImmediately: true },
-        );
+
+        autorun(() => {
+            if (global.device) {
+                if (this.initial && this.visible) {
+                    this.initial = false;
+                    this.loadFiles();
+                }
+            } else {
+                this.initial = true;
+            }
+        });
     }
 
     pushPathQuery = (path: string) => {
@@ -259,6 +268,11 @@ class FileManagerState {
         }
 
         this.path = path;
+
+        if (!global.device) {
+            return;
+        }
+
         this.loadFiles();
     }
 
@@ -333,6 +347,18 @@ class FileManagerState {
 const state = new FileManagerState();
 
 const FileManager: NextPage = (): JSX.Element | null => {
+    useEffect(() => {
+        runInAction(() => {
+            state.visible = true;
+        });
+
+        return () => {
+            runInAction(() => {
+                state.visible = false;
+            });
+        };
+    });
+
     const router = useRouter();
     useEffect(() => {
         let pathQuery = router.query.path;
@@ -346,7 +372,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
         }
 
         state.changeDirectory(pathQuery);
-    }, [router.query.path]);
+    }, [router]);
 
     const listRef = useRef<IDetailsList | null>(null);
     useLayoutEffect(() => {
@@ -358,7 +384,6 @@ const FileManager: NextPage = (): JSX.Element | null => {
     const scrolledRef = useRef(false);
     const handleListUpdate = useCallback((list?: IDetailsList) => {
         if (!scrolledRef.current) {
-            console.log('scroll', state.startItemIndexInView);
             list?.scrollToIndex(state.startItemIndexInView, undefined, ScrollToMode.top);
             scrolledRef.current = true;
         }
@@ -576,6 +601,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
                     <Layer>
                         <Overlay onClick={hidePreview}>
                             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={previewUrl} alt="" style={{ maxWidth: '100%', maxHeight: '100%' }} />
                             </div>
                         </Overlay>

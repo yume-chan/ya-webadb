@@ -1,14 +1,16 @@
 import { CommandBar, ICommandBarItemProps, MessageBar, Stack, StackItem, Text, TextField, Toggle } from "@fluentui/react";
-import { makeAutoObservable, reaction, runInAction } from "mobx";
+import { autorun, makeAutoObservable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { ExternalLink } from "../components";
 import { global } from "../state";
 import { asyncEffect, RouteStackProps } from "../utils";
 
 class TcpIpState {
+    initial = true;
+    visible = false;
     serviceListenAddresses: string[] | undefined;
     servicePortEnabled = false;
     servicePort: string = '';
@@ -17,15 +19,22 @@ class TcpIpState {
 
     constructor() {
         makeAutoObservable(this, {
+            initial: false,
             queryInfo: false,
             applyServicePort: false,
         });
 
-        reaction(
-            () => global.device,
-            () => this.queryInfo(),
-            { fireImmediately: true }
-        );
+
+        autorun(() => {
+            if (global.device) {
+                if (this.initial && this.visible) {
+                    this.initial = false;
+                    this.queryInfo();
+                }
+            } else {
+                this.initial = true;
+            }
+        });
     }
 
     get commandBarItems(): ICommandBarItemProps[] {
@@ -104,6 +113,18 @@ class TcpIpState {
 const state = new TcpIpState();
 
 const TcpIp: NextPage = () => {
+    useEffect(() => {
+        runInAction(() => {
+            state.visible = true;
+        });
+
+        return () => {
+            runInAction(() => {
+                state.visible = false;
+            });
+        };
+    });
+
     const handleServicePortEnabledChange = useCallback((e, value?: boolean) => {
         runInAction(() => { state.servicePortEnabled = !!value; });
     }, []);
