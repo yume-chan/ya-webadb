@@ -16,7 +16,8 @@ import { asyncEffect, chunkFile, formatSize, formatSpeed, pickFile, RouteStackPr
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
     StreamSaver = require('streamsaver');
-    StreamSaver.mitm = 'streamsaver/mitm.html';
+    StreamSaver.mitm = new URL('streamsaver/mitm.html?url', import.meta.url).toString() + '?sw=' + new URL('streamsaver/sw.js?url', import.meta.url);
+    console.log('mitm', StreamSaver.mitm);
 }
 
 initializeFileTypeIcons();
