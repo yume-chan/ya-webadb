@@ -14,6 +14,7 @@ const withMDX = require('@next/mdx')({
 
 /** @type {import('next').NextConfig} */
 module.exports = withMDX({
+    basePath: '/ya-webadb',
     pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
     reactStrictMode: true,
     productionBrowserSourceMaps: true,
