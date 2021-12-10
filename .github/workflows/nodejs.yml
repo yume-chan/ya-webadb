@@ -27,9 +27,9 @@ jobs:
       - run: node common/scripts/install-run-rush.js change -v
       - run: node common/scripts/install-run-rush.js install
       - run: node common/scripts/install-run-rush.js rebuild --verbose
-      - run: node common/scripts/install-run-rush.js test
+      # - run: node common/scripts/install-run-rush.js test
 
-      - run: bash <(curl -s https://codecov.io/bash) -f libraries/struct/coverage/lcov.info -F struct
+      # - run: bash <(curl -s https://codecov.io/bash) -f libraries/struct/coverage/lcov.info -F struct
 
       - name: Deploy
         uses: s0/git-publish-subdir-action@develop
