@@ -11,11 +11,11 @@ import { asyncEffect, RouteStackProps } from "../utils";
 class TcpIpState {
     initial = true;
     visible = false;
-    serviceListenAddresses: string[] | undefined;
+    serviceListenAddresses: string[] | undefined = undefined;
     servicePortEnabled = false;
     servicePort: string = '';
     persistPortEnabled = false;
-    persistPort: string | undefined;
+    persistPort: string | undefined = undefined;
 
     constructor() {
         makeAutoObservable(this, {

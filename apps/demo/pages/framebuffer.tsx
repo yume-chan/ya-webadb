@@ -4,7 +4,7 @@ import { action, autorun, computed, makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { useCallback, useContext, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { CommandBar, DemoMode, DeviceView } from '../components';
 import { global } from "../state";
 import { RouteStackProps } from "../utils";
@@ -12,7 +12,7 @@ import { RouteStackProps } from "../utils";
 class FrameBufferState {
     width = 0;
     height = 0;
-    imageData: ImageData | undefined;
+    imageData: ImageData | undefined = undefined;
     demoModeVisible = false;
 
     constructor() {

@@ -166,17 +166,17 @@ class ScrcpyPageState {
     width = 0;
     height = 0;
 
-    client: ScrcpyClient | undefined;
+    client: ScrcpyClient | undefined = undefined;
 
     encoders: string[] = [];
-    selectedEncoder: string | undefined;
+    selectedEncoder: string | undefined = undefined;
 
     decoders: { name: string; factory: H264DecoderConstructor; }[] = [{
         name: 'TinyH264 (Software)',
         factory: TinyH264Decoder,
     }];
     selectedDecoder: { name: string, factory: H264DecoderConstructor; } = this.decoders[0];
-    decoder: H264Decoder | undefined;
+    decoder: H264Decoder | undefined = undefined;
 
     resolution = 1080;
     bitRate = 4_000_000;
@@ -191,8 +191,8 @@ class ScrcpyPageState {
     debouncedServerUploadedSize = 0;
     serverUploadSpeed = 0;
 
-    homeKeyRepeater: KeyRepeater | undefined;
-    appSwitchKeyRepeater: KeyRepeater | undefined;
+    homeKeyRepeater: KeyRepeater | undefined = undefined;
+    appSwitchKeyRepeater: KeyRepeater | undefined = undefined;
 
     get commandBarItems() {
         const result: ICommandBarItemProps[] = [];

@@ -31,7 +31,7 @@ interface Progress {
 class InstallPageState {
     installing = false;
 
-    progress: Progress | undefined;
+    progress: Progress | undefined = undefined;
 
     constructor() {
         makeAutoObservable(this, {

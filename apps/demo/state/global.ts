@@ -2,7 +2,7 @@ import { Adb } from "@yume-chan/adb";
 import { action, makeAutoObservable } from 'mobx';
 
 export class GlobalState {
-    device: Adb | undefined;
+    device: Adb | undefined = undefined;
     errorDialogVisible = false;
     errorDialogMessage = '';
 
