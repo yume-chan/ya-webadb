@@ -36,5 +36,5 @@ jobs:
         env:
           REPO: self
           BRANCH: gh-pages
-          FOLDER: apps/demo/lib
+          FOLDER: apps/demo/out
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
