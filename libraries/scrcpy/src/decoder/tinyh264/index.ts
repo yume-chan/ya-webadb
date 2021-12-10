@@ -1,3 +1,4 @@
+import { PromiseResolver } from "@yume-chan/async";
 import type { H264Decoder } from "..";
 import type { FrameSize } from '../../client';
 import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
@@ -25,7 +26,7 @@ export class TinyH264Decoder implements H264Decoder {
     public get element() { return this._element; }
 
     private _yuvCanvas: import('yuv-canvas').default | undefined;
-    private _wrapperInitializePromise: Promise<TinyH264Wrapper> | undefined;
+    private _initializer: PromiseResolver<TinyH264Wrapper> | undefined;
 
     public constructor() {
         initialize();
@@ -33,6 +34,9 @@ export class TinyH264Decoder implements H264Decoder {
     }
 
     public async setSize(size: FrameSize) {
+        this.dispose();
+
+        this._initializer = new PromiseResolver<TinyH264Wrapper>();
         const { YuvBuffer, YuvCanvas } = await initialize();
 
         if (!this._yuvCanvas) {
@@ -58,9 +62,8 @@ export class TinyH264Decoder implements H264Decoder {
             displayHeight: size.croppedHeight,
         });
 
-        this._wrapperInitializePromise?.then(wrapper => wrapper.dispose());
-        this._wrapperInitializePromise = createTinyH264Wrapper();
-        const wrapper = await this._wrapperInitializePromise;
+        const wrapper = await createTinyH264Wrapper();
+        this._initializer.resolve(wrapper);
 
         const uPlaneOffset = width * height;
         const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
@@ -76,15 +79,16 @@ export class TinyH264Decoder implements H264Decoder {
     }
 
     public async feed(data: ArrayBuffer) {
-        if (!this._wrapperInitializePromise) {
+        if (!this._initializer) {
             throw new Error('Decoder not initialized');
         }
 
-        const wrapper = await this._wrapperInitializePromise;
+        const wrapper = await this._initializer.promise;
         wrapper.feed(data);
     }
 
     public dispose(): void {
-        this._wrapperInitializePromise?.then(wrapper => wrapper.dispose());
+        this._initializer?.promise.then(wrapper => wrapper.dispose());
+        this._initializer = undefined;
     }
 }
