@@ -3,9 +3,9 @@ import { AdbPacketInit } from '@yume-chan/adb';
 import { decodeUtf8 } from '@yume-chan/adb-backend-webusb';
 import { DisposableList } from '@yume-chan/event';
 import { observer } from "mobx-react-lite";
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { global, logger } from "../state";
-import { withDisplayName } from '../utils';
+import { Icons, withDisplayName } from '../utils';
 import { CommandBar } from './command-bar';
 
 const classNames = mergeStyleSets({
@@ -59,7 +59,7 @@ export const ToggleLogView = observer(() => {
     return (
         <IconButton
             checked={global.logVisible}
-            iconProps={{ iconName: 'ChangeEntitlements' }}
+            iconProps={{ iconName: Icons.TextGrammarError }}
             title="Toggle Log"
             onClick={global.toggleLog}
         />
@@ -120,9 +120,7 @@ export const LogView = observer(({
         {
             key: 'Copy',
             text: 'Copy',
-            iconProps: {
-                iconName: 'Copy',
-            },
+            iconProps: { iconName: Icons.Copy },
             onClick: () => {
                 setPackets(lines => {
                     window.navigator.clipboard.writeText(lines.join('\r'));
@@ -133,9 +131,7 @@ export const LogView = observer(({
         {
             key: 'Clear',
             text: 'Clear',
-            iconProps: {
-                iconName: 'Delete',
-            },
+            iconProps: { iconName: Icons.Delete },
             onClick: () => {
                 setPackets([]);
             },

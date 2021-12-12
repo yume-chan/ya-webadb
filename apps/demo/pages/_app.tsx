@@ -1,40 +1,49 @@
-import { IComponentAsProps, IconButton, INavButtonProps, initializeIcons, mergeStyles, mergeStyleSets, Nav, Stack, StackItem } from "@fluentui/react";
+import { IComponentAsProps, IconButton, INavButtonProps, mergeStyles, mergeStyleSets, Nav, registerIcons, Stack, StackItem } from "@fluentui/react";
 import type { AppProps } from 'next/app';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from "react";
 import { Connect, ErrorDialogProvider, LogView, ToggleLogView } from "../components";
+import { register } from '../utils/icons';
 import '../styles/globals.css';
+import { Icons } from "../utils";
 
-initializeIcons();
+register();
 
 const ROUTES = [
     {
         url: '/',
+        icon: Icons.Bookmark,
         name: 'README',
     },
     {
         url: '/device-info',
+        icon: Icons.Phone,
         name: 'Device Info',
     },
     {
         url: '/file-manager',
+        icon: Icons.Folder,
         name: 'File Manager',
     },
     {
         url: '/framebuffer',
+        icon: Icons.Camera,
         name: 'Screen Capture',
     },
     {
         url: '/shell',
+        icon: Icons.WindowConsole,
         name: 'Interactive Shell',
     },
     {
         url: '/scrcpy',
+        icon: Icons.PhoneLaptop,
         name: 'Scrcpy',
     },
     {
         url: '/tcpip',
+        icon: Icons.WifiSettings,
         name: 'ADB over WiFi',
     },
 ];
@@ -62,7 +71,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             textAlign: 'center',
         },
         'left-column': {
-            width: 250,
+            width: 270,
             paddingRight: 8,
             borderRight: '1px solid rgb(243, 242, 241)',
             overflow: 'auto',
@@ -89,7 +98,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                     <IconButton
                         checked={leftPanelVisible}
                         title="Toggle Menu"
-                        iconProps={{ iconName: 'GlobalNavButton' }}
+                        iconProps={{ iconName: Icons.Navigation }}
                         onClick={toggleLeftPanel}
                     />
 

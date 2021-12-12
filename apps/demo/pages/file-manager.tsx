@@ -2,7 +2,7 @@ import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, Detail
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@fluentui/react-file-type-icons';
 import { useConst } from '@fluentui/react-hooks';
 import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume-chan/adb';
-import { autorun, makeAutoObservable, observable, runInAction } from "mobx";
+import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
@@ -11,7 +11,7 @@ import path from 'path';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CommandBar } from '../components';
 import { global } from '../state';
-import { asyncEffect, chunkFile, formatSize, formatSpeed, pickFile, RouteStackProps, useSpeed } from '../utils';
+import { asyncEffect, chunkFile, formatSize, formatSpeed, Icons, pickFile, RouteStackProps, useSpeed } from '../utils';
 
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
@@ -93,6 +93,16 @@ class FileManagerState {
     sortDescending = false;
     startItemIndexInView = 0;
 
+    uploading = false;
+    uploadPath: string | undefined = undefined;
+    uploadedSize = 0;
+    uploadTotalSize = 0;
+    debouncedUploadedSize = 0;
+    uploadSpeed = 0;
+
+    selectedItems: ListItem[] = [];
+    contextMenuTarget: MouseEvent | undefined = undefined;
+
     get breadcrumbItems(): IBreadcrumbItem[] {
         let part = '';
         const list: IBreadcrumbItem[] = this.path.split('/').filter(Boolean).map(segment => {
@@ -116,6 +126,95 @@ class FileManagerState {
         list[list.length - 1].isCurrentItem = true;
         delete list[list.length - 1].onClick;
         return list;
+    }
+
+    get menuItems() {
+        let result: IContextualMenuItem[] = [];
+
+        switch (this.selectedItems.length) {
+            case 0:
+                result.push({
+                    key: 'upload',
+                    text: 'Upload',
+                    iconProps: {
+                        iconName: Icons.CloudArrowUp,
+                        style: { height: 20, fontSize: 20, lineHeight: 1.5 }
+                    },
+                    disabled: !global.device,
+                    onClick() {
+                        (async () => {
+                            const files = await pickFile({ multiple: true });
+                            for (let i = 0; i < files.length; i++) {
+                                const file = files.item(i)!;
+                                await state.upload(file);
+                            }
+                        })();
+
+                        return false;
+                    }
+                });
+                break;
+            case 1:
+                if (this.selectedItems[0].type === LinuxFileType.File) {
+                    result.push({
+                        key: 'download',
+                        text: 'Download',
+                        iconProps: {
+                            iconName: Icons.CloudArrowDown,
+                            style: { height: 20, fontSize: 20, lineHeight: 1.5 }
+                        },
+                        onClick() {
+                            (async () => {
+                                const sync = await global.device!.sync();
+                                try {
+                                    const itemPath = path.resolve(state.path, this.selectedItems[0].name!);
+                                    const readableStream = createReadableStreamFromBufferIterator(sync.read(itemPath));
+
+                                    const writeableStream = StreamSaver!.createWriteStream(this.selectedItems[0].name!, {
+                                        size: this.selectedItems[0].size,
+                                    });
+                                    await readableStream.pipeTo(writeableStream);
+                                } catch (e) {
+                                    global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
+                                } finally {
+                                    sync.dispose();
+                                }
+                            })();
+                            return false;
+                        },
+                    });
+                }
+            default:
+                result.push({
+                    key: 'delete',
+                    text: 'Delete',
+                    iconProps: {
+                        iconName: Icons.Delete,
+                        style: { height: 20, fontSize: 20, lineHeight: 1.5 }
+                    },
+                    onClick() {
+                        (async () => {
+                            try {
+                                for (const item of this.selectedItems) {
+                                    const output = await global.device!.rm(path.resolve(state.path, item.name!));
+                                    if (output) {
+                                        global.showErrorDialog(output);
+                                        return;
+                                    }
+                                }
+                            } catch (e) {
+                                global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
+                            } finally {
+                                state.loadFiles();
+                            }
+                        })();
+                        return false;
+                    }
+                });
+                break;
+        }
+
+        return result;
     }
 
     get sortedList() {
@@ -153,7 +252,7 @@ class FileManagerState {
             {
                 key: 'type',
                 name: 'File Type',
-                iconName: 'Page',
+                iconName: Icons.Document20,
                 isIconOnly: true,
                 minWidth: 20,
                 maxWidth: 20,
@@ -342,9 +441,72 @@ class FileManagerState {
             sync.dispose();
         }
     });
+
+    upload = async (file: File) => {
+        const sync = await global.device!.sync();
+        try {
+            const itemPath = path.resolve(state.path!, file.name);
+            runInAction(() => {
+                this.uploading = true;
+                this.uploadPath = file.name;
+                this.uploadedSize = 0;
+                this.uploadTotalSize = file.size;
+                this.debouncedUploadedSize = 0;
+                this.uploadSpeed = 0;
+            });
+
+            const intervalId = setInterval(action(() => {
+                this.uploadSpeed = this.uploadedSize - this.debouncedUploadedSize;
+                this.debouncedUploadedSize = this.uploadedSize;
+            }), 1000);
+
+            try {
+                await sync.write(
+                    itemPath,
+                    chunkFile(file, AdbSyncMaxPacketSize),
+                    (LinuxFileType.File << 12) | 0o666,
+                    file.lastModified / 1000,
+                    action((uploaded) => {
+                        this.uploadedSize = uploaded;
+                    }),
+                );
+                runInAction(() => {
+                    this.uploadSpeed = this.uploadedSize - this.debouncedUploadedSize;
+                    this.debouncedUploadedSize = this.uploadedSize;
+                });
+            } finally {
+                clearInterval(intervalId);
+            }
+        } catch (e) {
+            global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
+        } finally {
+            sync.dispose();
+            state.loadFiles();
+            runInAction(() => {
+                this.uploading = false;
+            });
+        }
+    };
 }
 
 const state = new FileManagerState();
+
+const UploadDialog = observer(() => {
+    return (
+        <Dialog
+            hidden={!state.uploading}
+            dialogContentProps={{
+                title: 'Uploading...',
+                subText: state.uploadPath
+            }}
+        >
+            <ProgressIndicator
+                description={formatSpeed(state.debouncedUploadedSize, state.uploadTotalSize, state.uploadSpeed)}
+                percentComplete={state.uploadedSize / state.uploadTotalSize}
+            />
+        </Dialog>
+    );
+});
 
 const FileManager: NextPage = (): JSX.Element | null => {
     useEffect(() => {
@@ -425,141 +587,34 @@ const FileManager: NextPage = (): JSX.Element | null => {
         }
     }, [previewImage]);
 
-    const [selectedItems, setSelectedItems] = useState<ListItem[]>([]);
     const selection = useConst(() => new Selection({
         onSelectionChanged() {
             const selectedItems = selection.getSelection() as ListItem[];
-            setSelectedItems(selectedItems);
+            runInAction(() => {
+                state.selectedItems = selectedItems;
+            });
         },
     }));
 
-    const [uploading, setUploading] = useState(false);
-    const [uploadPath, setUploadPath] = useState('');
-    const [uploadedSize, setUploadedSize] = useState(0);
-    const [uploadTotalSize, setUploadTotalSize] = useState(0);
-    const [debouncedUploadedSize, uploadSpeed] = useSpeed(uploadedSize, uploadTotalSize);
-    const upload = useCallback(async (file: File) => {
-        const sync = await global.device!.sync();
-        try {
-            const itemPath = path.resolve(state.path!, file.name);
-            setUploading(true);
-            setUploadPath(file.name);
-            setUploadTotalSize(file.size);
-            await sync.write(
-                itemPath,
-                chunkFile(file, AdbSyncMaxPacketSize),
-                (LinuxFileType.File << 12) | 0o666,
-                file.lastModified / 1000,
-                setUploadedSize,
-            );
-        } catch (e) {
-            global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
-        } finally {
-            sync.dispose();
-            state.loadFiles();
-            setUploading(false);
-        }
-    }, []);
-
-    const [menuItems, setMenuItems] = useState<IContextualMenuItem[]>([]);
-    useEffect(() => {
-        let result: IContextualMenuItem[] = [];
-
-        switch (selectedItems.length) {
-            case 0:
-                result.push({
-                    key: 'upload',
-                    text: 'Upload',
-                    iconProps: { iconName: 'Upload' },
-                    disabled: !global.device,
-                    onClick() {
-                        (async () => {
-                            const files = await pickFile({ multiple: true });
-                            for (let i = 0; i < files.length; i++) {
-                                const file = files.item(i)!;
-                                await upload(file);
-                            }
-                        })();
-
-                        return false;
-                    }
-                });
-                break;
-            case 1:
-                if (selectedItems[0].type === LinuxFileType.File) {
-                    result.push({
-                        key: 'download',
-                        text: 'Download',
-                        iconProps: { iconName: 'Download' },
-                        onClick() {
-                            (async () => {
-                                const sync = await global.device!.sync();
-                                try {
-                                    const itemPath = path.resolve(state.path, selectedItems[0].name!);
-                                    const readableStream = createReadableStreamFromBufferIterator(sync.read(itemPath));
-
-                                    const writeableStream = StreamSaver!.createWriteStream(selectedItems[0].name!, {
-                                        size: selectedItems[0].size,
-                                    });
-                                    await readableStream.pipeTo(writeableStream);
-                                } catch (e) {
-                                    global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
-                                } finally {
-                                    sync.dispose();
-                                }
-                            })();
-                            return false;
-                        },
-                    });
-                }
-            default:
-                result.push({
-                    key: 'delete',
-                    text: 'Delete',
-                    iconProps: { iconName: 'Delete' },
-                    onClick() {
-                        (async () => {
-                            try {
-                                for (const item of selectedItems) {
-                                    const output = await global.device!.rm(path.resolve(state.path, item.name!));
-                                    if (output) {
-                                        global.showErrorDialog(output);
-                                        return;
-                                    }
-                                }
-                            } catch (e) {
-                                global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
-                            } finally {
-                                state.loadFiles();
-                            }
-                        })();
-                        return false;
-                    }
-                });
-                break;
-        }
-
-        setMenuItems(result);
-    }, [selectedItems, upload]);
-
-    const [contextMenuTarget, setContextMenuTarget] = useState<MouseEvent>();
     const showContextMenu = useCallback((
-        _item?: AdbSyncEntryResponse,
-        _index?: number,
+        item?: AdbSyncEntryResponse,
+        index?: number,
         e?: Event
     ) => {
         if (!e) {
             return false;
         }
 
-        if (menuItems.length) {
-            setContextMenuTarget(e as MouseEvent);
+        if (state.menuItems.length) {
+            runInAction(() => {
+                state.contextMenuTarget = e as MouseEvent;
+            });
         }
 
         return false;
-    }, [menuItems]);
+    }, []);
     const hideContextMenu = useCallback(() => {
-        setContextMenuTarget(undefined);
+        runInAction(() => state.contextMenuTarget = undefined);
     }, []);
 
     return (
@@ -568,7 +623,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
                 <title>File Manager - WebADB</title>
             </Head>
 
-            <CommandBar items={menuItems} />
+            <CommandBar items={state.menuItems} />
 
             <StackItem grow styles={{
                 root: {
@@ -609,26 +664,15 @@ const FileManager: NextPage = (): JSX.Element | null => {
                 )}
 
                 <ContextualMenu
-                    items={menuItems}
-                    hidden={!contextMenuTarget}
+                    items={state.menuItems}
+                    hidden={!state.contextMenuTarget}
                     directionalHint={DirectionalHint.bottomLeftEdge}
-                    target={contextMenuTarget}
+                    target={state.contextMenuTarget}
                     onDismiss={hideContextMenu}
                     contextualMenuItemAs={props => <ContextualMenuItem {...props} hasIcons={false} />}
                 />
 
-                <Dialog
-                    hidden={!uploading}
-                    dialogContentProps={{
-                        title: 'Uploading...',
-                        subText: uploadPath
-                    }}
-                >
-                    <ProgressIndicator
-                        description={formatSpeed(debouncedUploadedSize, uploadTotalSize, uploadSpeed)}
-                        percentComplete={uploadedSize / uploadTotalSize}
-                    />
-                </Dialog>
+                <UploadDialog />
             </StackItem>
         </Stack>
     );

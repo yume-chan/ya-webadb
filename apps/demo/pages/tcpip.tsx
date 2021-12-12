@@ -6,7 +6,7 @@ import Head from "next/head";
 import React, { useCallback, useEffect } from "react";
 import { ExternalLink } from "../components";
 import { global } from "../state";
-import { asyncEffect, RouteStackProps } from "../utils";
+import { asyncEffect, Icons, RouteStackProps } from "../utils";
 
 class TcpIpState {
     initial = true;
@@ -42,14 +42,14 @@ class TcpIpState {
             {
                 key: 'refresh',
                 disabled: !global.device,
-                iconProps: { iconName: 'Refresh' },
+                iconProps: { iconName: Icons.ArrowClockwise },
                 text: 'Refresh',
-                onClick: this.queryInfo as () => void,
+                onClick: this.queryInfo as VoidFunction,
             },
             {
                 key: 'apply',
                 disabled: !global.device,
-                iconProps: { iconName: 'Save' },
+                iconProps: { iconName: Icons.Save },
                 text: 'Apply',
                 onClick: this.applyServicePort,
             }

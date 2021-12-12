@@ -1,11 +1,13 @@
-import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem, TooltipHost } from '@fluentui/react';
+import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
 import { Adb, AdbBackend } from '@yume-chan/adb';
-import AdbWebUsbBackend, { AdbWebCredentialStore, AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
+import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
+import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
+import AdbWebCredentialStore from '@yume-chan/adb-credential-web';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { global, logger } from '../state';
-import { CommonStackTokens } from '../utils';
+import { CommonStackTokens, Icons } from '../utils';
 
 const DropdownStyles = { dropdown: { width: '100%' } };
 
@@ -52,29 +54,65 @@ function _Connect(): JSX.Element | null {
         []
     );
 
-    const [wsBackendList, setWsBackendList] = useState<AdbBackend[]>([]);
+    const [wsBackendList, setWsBackendList] = useState<AdbWsBackend[]>([]);
     useEffect(() => {
-        const intervalId = setInterval(async () => {
-            if (connecting || global.device) {
-                return;
-            }
+        const savedList = localStorage.getItem('ws-backend-list');
+        if (!savedList) {
+            return;
+        }
 
-            const wsBackend = new AdbWsBackend("ws://localhost:15555");
-            try {
-                await wsBackend.connect();
-                setWsBackendList([wsBackend]);
-                setSelectedBackend(wsBackend);
-            } catch {
-                setWsBackendList([]);
-            } finally {
-                await wsBackend.dispose();
-            }
-        }, 5000);
+        const parsed = JSON.parse(savedList) as { address: string; }[];
+        setWsBackendList(parsed.map(x => new AdbWsBackend(x.address)));
+    }, []);
 
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, [connecting]);
+    const addWsBackend = useCallback(() => {
+        const address = window.prompt('Enter the address of WebSockify server');
+        if (!address) {
+            return;
+        }
+        setWsBackendList(list => {
+            const copy = list.slice();
+            copy.push(new AdbWsBackend(address));
+            window.localStorage.setItem('ws-backend-list', JSON.stringify(copy.map(x => ({ address: x.serial }))));
+            return copy;
+        });
+    }, []);
+
+    const [tcpBackendList, setTcpBackendList] = useState<AdbDirectSocketsBackend[]>([]);
+    useEffect(() => {
+        if (!AdbDirectSocketsBackend.isSupported()) {
+            return;
+        }
+
+        const savedList = localStorage.getItem('tcp-backend-list');
+        if (!savedList) {
+            return;
+        }
+
+        const parsed = JSON.parse(savedList) as { address: string; port: number; }[];
+        setTcpBackendList(parsed.map(x => new AdbDirectSocketsBackend(x.address, x.port)));
+    }, []);
+
+    const addTcpBackend = useCallback(() => {
+        const address = window.prompt('Enter the address of device');
+        if (!address) {
+            return;
+        }
+
+        const port = window.prompt('Enter the port of device', '5555');
+        if (!port) {
+            return;
+        }
+
+        const portNumber = Number.parseInt(port, 10);
+
+        setTcpBackendList(list => {
+            const copy = list.slice();
+            copy.push(new AdbDirectSocketsBackend(address, portNumber));
+            window.localStorage.setItem('tcp-backend-list', JSON.stringify(copy.map(x => ({ address: x.address, port: x.port }))));
+            return copy;
+        });
+    }, []);
 
     const handleSelectedBackendChange = (
         e: React.FormEvent<HTMLDivElement>,
@@ -143,6 +181,28 @@ function _Connect(): JSX.Element | null {
         });
     }, [backendList]);
 
+    const addMenuProps = useMemo(() => {
+        const items = [];
+
+        items.push({
+            key: 'websocket',
+            text: 'WebSocket',
+            onClick: addWsBackend,
+        });
+
+        if (AdbDirectSocketsBackend.isSupported()) {
+            items.push({
+                key: 'direct-sockets',
+                text: 'Direct Sockets TCP',
+                onClick: addTcpBackend,
+            });
+        }
+
+        return {
+            items,
+        };
+    }, []);
+
     return (
         <Stack
             tokens={{ childrenGap: 8, padding: '0 0 8px 8px' }}
@@ -158,34 +218,41 @@ function _Connect(): JSX.Element | null {
                 onChange={handleSelectedBackendChange}
             />
 
-            {!global.device ? (
-                <Stack horizontal tokens={CommonStackTokens}>
-                    <StackItem grow shrink>
-                        <PrimaryButton
-                            text="Connect"
-                            disabled={!selectedBackend}
-                            primary={!!selectedBackend}
-                            styles={{ root: { width: '100%' } }}
-                            onClick={connect}
-                        />
-                    </StackItem>
-                    <StackItem grow shrink>
-                        <TooltipHost
-                            content="WebADB can't connect to anything without your explicit permission."
-                        >
+            {!global.device
+                ? (
+                    <Stack horizontal tokens={CommonStackTokens}>
+                        <StackItem grow shrink>
+                            <PrimaryButton
+                                iconProps={{ iconName: Icons.PlugConnected }}
+                                text="Connect"
+                                disabled={!selectedBackend}
+                                primary={!!selectedBackend}
+                                styles={{ root: { width: '100%' } }}
+                                onClick={connect}
+                            />
+                        </StackItem>
+                        <StackItem grow shrink>
                             <DefaultButton
-                                text="Add device"
+                                iconProps={{ iconName: Icons.AddCircle }}
+                                text="Add"
+                                split
+                                splitButtonAriaLabel="Add other connection type"
+                                menuProps={addMenuProps}
                                 disabled={!supported}
                                 primary={!selectedBackend}
                                 styles={{ root: { width: '100%' } }}
                                 onClick={requestAccess}
                             />
-                        </TooltipHost>
-                    </StackItem>
-                </Stack>
-            ) : (
-                <DefaultButton text="Disconnect" onClick={disconnect} />
-            )}
+                        </StackItem>
+                    </Stack>
+                )
+                : (
+                    <DefaultButton
+                        iconProps={{ iconName: Icons.PlugDisconnected }}
+                        text="Disconnect"
+                        onClick={disconnect}
+                    />
+                )}
 
             <Dialog
                 hidden={!connecting}

@@ -6,7 +6,7 @@ import Head from 'next/head';
 import React from "react";
 import { ExternalLink } from "../components";
 import { global } from '../state';
-import { RouteStackProps } from "../utils";
+import { Icons, RouteStackProps } from "../utils";
 
 const KNOWN_FEATURES: Record<string, string> = {
     'shell_v2': `"shell" command now supports separating child process's stdout and stderr, and returning exit code`,
@@ -93,7 +93,7 @@ const DeviceInfo: NextPage = () => {
                         <span>{feature}</span>
                         {KNOWN_FEATURES[feature] && (
                             <TooltipHost content={<span>{KNOWN_FEATURES[feature]}</span>}>
-                                <Icon style={{ marginLeft: 4 }} iconName="Unknown" />
+                                <Icon style={{ marginLeft: 4 }} iconName={Icons.Info} />
                             </TooltipHost>
                         )}
                     </span>

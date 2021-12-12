@@ -1,16 +1,19 @@
 dependencies:
   '@docusaurus/core': 2.0.0-beta.3_react-dom@17.0.2+react@17.0.2
   '@docusaurus/preset-classic': 2.0.0-beta.3_12a6012245369fd5be825566be975ff0
-  '@fluentui/font-icons-mdl2': 8.1.14_b094b78811fc8d2f00a90f13d0251fb6
   '@fluentui/react': 8.36.3_12a6012245369fd5be825566be975ff0
   '@fluentui/react-file-type-icons': 8.4.3_b094b78811fc8d2f00a90f13d0251fb6
   '@fluentui/react-hooks': 8.3.4_b094b78811fc8d2f00a90f13d0251fb6
+  '@fluentui/react-icons': 2.0.154-beta.5_d2f1067edc0bfed1f9bdc78013a98cbb
+  '@fluentui/react-make-styles': 9.0.0-beta.4_12a6012245369fd5be825566be975ff0
   '@mdx-js/loader': 1.6.22_react@17.0.2
   '@mdx-js/react': 1.6.22_react@17.0.2
   '@next/mdx': 11.1.2_f56c41adb6190c4680be4a1c0222355d
   '@rush-temp/adb': file:projects/adb.tgz
+  '@rush-temp/adb-backend-direct-sockets': file:projects/adb-backend-direct-sockets.tgz
   '@rush-temp/adb-backend-webusb': file:projects/adb-backend-webusb.tgz
   '@rush-temp/adb-backend-ws': file:projects/adb-backend-ws.tgz
+  '@rush-temp/adb-credential-web': file:projects/adb-credential-web.tgz
   '@rush-temp/demo': file:projects/demo.tgz_@mdx-js+react@1.6.22
   '@rush-temp/event': file:projects/event.tgz
   '@rush-temp/scrcpy': file:projects/scrcpy.tgz
@@ -2079,6 +2082,10 @@ packages:
       node: '>=12.13.0'
     resolution:
       integrity: sha512-DApc6xcb3CvvsBCfRU6Zk3KoZa4mZfCJA4XRv5zhlhaSb0GFuAo7KQ353RUu6d0eYYylY3GGRABXkxRE1SEClA==
+  /@emotion/hash/0.8.0:
+    dev: false
+    resolution:
+      integrity: sha512-kBJtf7PH6aWwZ6fka3zQ0p6SBYzx4fl1LoZXE2RrnYST9Xljm7WfKJrU4g/Xr3Beg72MLrp1AWNUmuYJTL7Cow==
   /@eslint/eslintrc/0.4.3:
     dependencies:
       ajv: 6.12.6
@@ -2141,6 +2148,21 @@ packages:
     dev: false
     resolution:
       integrity: sha512-pVY2m3IC5+LLmMzsaPApX9eKTzpOzdgQwrR3FNTE6mGx3N/+QWYM7fdF+T1ldZQt87dCRSeQnmAo5kqjtxeA/w==
+  /@fluentui/keyboard-keys/9.0.0-beta.1:
+    dev: false
+    resolution:
+      integrity: sha512-eGKEzdyIep7KZPoKwHVfcDR3hKuSnI0iDqZGYrIOVWYVr1aD9uZ3JXFK2ad8DZtOGnxgK3/pOvAfqFo61LoRjQ==
+  /@fluentui/make-styles/9.0.0-beta.3:
+    dependencies:
+      '@emotion/hash': 0.8.0
+      csstype: 2.6.19
+      inline-style-expand-shorthand: 1.3.0
+      rtl-css-js: 1.15.0
+      stylis: 4.0.13
+      tslib: 2.3.1
+    dev: false
+    resolution:
+      integrity: sha512-Bwe3BTLC5ATNcQdUk0U4s+eKU7OlV0UF4dlVjnlNYQefMfTWfr/ozZa3IczATOfYKyYPad1KOM3SBUojUdaoog==
   /@fluentui/merge-styles/8.2.0:
     dependencies:
       '@fluentui/set-version': 8.1.4
@@ -2191,6 +2213,69 @@ packages:
       react: '>=16.8.0 <18.0.0'
     resolution:
       integrity: sha512-uWaNalWpgsjDaPki4rXzEJAbdOTy1HH+Kwo2Olfyxfm0geePWBnCjKikXI1xIaS/o47ew2B4TQyvR4ShvudOmA==
+  /@fluentui/react-icons/2.0.154-beta.5_d2f1067edc0bfed1f9bdc78013a98cbb:
+    dependencies:
+      '@fluentui/react-make-styles': 9.0.0-beta.4_12a6012245369fd5be825566be975ff0
+    dev: false
+    peerDependencies:
+      '@fluentui/react-make-styles': ^9.0.0-beta.3
+    resolution:
+      integrity: sha512-U+bdvX1BZELUEN5MK4BX7H35p92Kyt/M+26PWJG/gvc2KCgpfFTFedBXjABKEf1Jo8wIcQl8VWciKSkpzhUaQw==
+  /@fluentui/react-make-styles/9.0.0-beta.4_12a6012245369fd5be825566be975ff0:
+    dependencies:
+      '@fluentui/make-styles': 9.0.0-beta.3
+      '@fluentui/react-shared-contexts': 9.0.0-beta.4_12a6012245369fd5be825566be975ff0
+      '@fluentui/react-theme': 9.0.0-beta.4_12a6012245369fd5be825566be975ff0
+      '@fluentui/react-utilities': 9.0.0-beta.4_b094b78811fc8d2f00a90f13d0251fb6
+      '@types/react': 17.0.27
+      react: 17.0.2
+      tslib: 2.3.1
+    dev: false
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0'
+      react-dom: '*'
+    resolution:
+      integrity: sha512-z6yy4xKc8+4YgmsCqluTHNwVyCoG5EuQauIOaeT8kQVvV+vtxTSTqqj9nzG9uknGu29zlwqSzqfI4U5WKEFHyA==
+  /@fluentui/react-shared-contexts/9.0.0-beta.4_12a6012245369fd5be825566be975ff0:
+    dependencies:
+      '@fluentui/react-theme': 9.0.0-beta.4_12a6012245369fd5be825566be975ff0
+      '@types/react': 17.0.27
+      react: 17.0.2
+      tslib: 2.3.1
+    dev: false
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0'
+      react-dom: '*'
+    resolution:
+      integrity: sha512-I4Wb0KHQfDAdWMXb+Af8LvmEvsnzMZ4Oky0ubxNTlueALSdwUE4mVj7dKEasCNESdxR0wXm8YooWh1xCX9WG7w==
+  /@fluentui/react-theme/9.0.0-beta.4_12a6012245369fd5be825566be975ff0:
+    dependencies:
+      '@types/react': 17.0.27
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 2.3.1
+    dev: false
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      '@types/react-dom': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0'
+      react-dom: '>=16.8.0 <18.0.0'
+    resolution:
+      integrity: sha512-dfmfZFgb03d43ZguIKbQIGuKEhyYUDNJLheLLV/1CdzZWHxayxEpHofILc6S7L7KVDIhZPniOSjgxmn+R3kzuw==
+  /@fluentui/react-utilities/9.0.0-beta.4_b094b78811fc8d2f00a90f13d0251fb6:
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.0-beta.1
+      '@types/react': 17.0.27
+      react: 17.0.2
+      tslib: 2.3.1
+    dev: false
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0'
+    resolution:
+      integrity: sha512-b5drXcG02SNHokC39/B19dt1cti0ErtyS94ymMl1ppZ/Lh02/3VYukYsTBXBpKim4zmALAxqGkx/yXm95A7UBQ==
   /@fluentui/react-window-provider/2.1.4_b094b78811fc8d2f00a90f13d0251fb6:
     dependencies:
       '@fluentui/set-version': 8.1.4
@@ -5301,6 +5386,10 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-AZL67abkUzIuvcHqk7c09cezpGNcxUxU4Ioi/05xHk4DQeTkWmGYftIE6ctU6AEt+Gn4n1lDStOtj7FKycP71A==
+  /csstype/2.6.19:
+    dev: false
+    resolution:
+      integrity: sha512-ZVxXaNy28/k3kJg0Fou5MiYpp88j7H9hLZp8PDC3jV0WFjfH5E9xHb56L0W59cPbKbcHXeP4qyT8PrHp8t6LcQ==
   /csstype/3.0.8:
     dev: false
     resolution:
@@ -7822,6 +7911,10 @@ packages:
       node: '>=10'
     resolution:
       integrity: sha512-7PnF4oN3CvZF23ADhA5wRaYEQpJ8qygSkbtTXWBeXWXmEVRXK+1ITciHWwHhsjv1TmW0MgacIv6hEi5pX5NQdA==
+  /inline-style-expand-shorthand/1.3.0:
+    dev: false
+    resolution:
+      integrity: sha512-cYW3cf2Tzi43jjHk8yyHAAnwgVXOC0jdmv7QkHMmha2zI2znhWh8LEC+Enb+PHcZi9afsbcP4JHyr5C08jDRHA==
   /inline-style-parser/0.1.1:
     dev: false
     resolution:
@@ -11957,6 +12050,12 @@ packages:
       node: 6.* || >= 7.*
     resolution:
       integrity: sha512-nfMOlASu9OnRJo1mbEk2cz0D56a1MBNrJ7orjRZQG10XDyuvwksKbuXNp6qa+kbn839HwjwhBzhFmdsaEAfauA==
+  /rtl-css-js/1.15.0:
+    dependencies:
+      '@babel/runtime': 7.16.3
+    dev: false
+    resolution:
+      integrity: sha512-99Cu4wNNIhrI10xxUaABHsdDqzalrSRTie4GeCmbGVuehm4oj+fIy8fTzB+16pmKe8Bv9rl+hxIBez6KxExTew==
   /rtl-detect/1.0.3:
     dev: false
     resolution:
@@ -12856,6 +12955,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-8/3pSmthWM7lsPBKv7NXkzn2Uc9W7NotcwGNpJaa3k7WMM1XDCA4MgT5k/8BIexd5ydZdboXtU90XH9Ec4Bv/Q==
+  /stylis/4.0.13:
+    dev: false
+    resolution:
+      integrity: sha512-xGPXiFVl4YED9Jh7Euv2V220mriG9u4B2TA6Ybjc1catrstKD2PpIdU3U0RKpkVBC2EhmL/F0sPCr9vrFTNRag==
   /supports-color/5.5.0:
     dependencies:
       has-flag: 3.0.0
@@ -14326,6 +14429,17 @@ packages:
     dev: false
     resolution:
       integrity: sha512-V50KMwwzqJV0NpZIZFwfOD5/lyny3WlSzRiXgA0G7VUnRlqttta1L6UQIHzd6EuBY/cHGfwTIck7w1yH6Q5zUw==
+  file:projects/adb-backend-direct-sockets.tgz:
+    dependencies:
+      '@yume-chan/async': 2.1.4
+      tslib: 2.3.1
+      typescript: 4.4.3
+    dev: false
+    name: '@rush-temp/adb-backend-direct-sockets'
+    resolution:
+      integrity: sha512-To21ySnzlUUAcBspOH3tqG4KH7e8evt+K2/D3kYZOCdgQ9P/y9jGHjm/loWzFj82/9h2OGIzM9rYF9gege8nkQ==
+      tarball: file:projects/adb-backend-direct-sockets.tgz
+    version: 0.0.0
   file:projects/adb-backend-webusb.tgz:
     dependencies:
       '@types/w3c-web-usb': 1.0.5
@@ -14349,6 +14463,17 @@ packages:
       integrity: sha512-gmOeTpe51r+uwYeeMuPIQ6LU2+DYXJbirNXafLgfLjpWWWH8sCblZADZlHLzI/wte6RfabrecbyTgxoTtJ6rvA==
       tarball: file:projects/adb-backend-ws.tgz
     version: 0.0.0
+  file:projects/adb-credential-web.tgz:
+    dependencies:
+      '@yume-chan/async': 2.1.4
+      tslib: 2.3.1
+      typescript: 4.4.3
+    dev: false
+    name: '@rush-temp/adb-credential-web'
+    resolution:
+      integrity: sha512-X7CGrXjmZMJZ1eodb8OPi7Gpf4Td6E82tVGmElOGyHGZQfQUAbquFZEA90Xy3fMkOEL044erE0z2K50FT1XgIA==
+      tarball: file:projects/adb-credential-web.tgz
+    version: 0.0.0
   file:projects/adb.tgz:
     dependencies:
       '@yume-chan/async': 2.1.4
@@ -14367,6 +14492,8 @@ packages:
       '@fluentui/react': 8.36.3_12a6012245369fd5be825566be975ff0
       '@fluentui/react-file-type-icons': 8.4.3_b094b78811fc8d2f00a90f13d0251fb6
       '@fluentui/react-hooks': 8.3.4_b094b78811fc8d2f00a90f13d0251fb6
+      '@fluentui/react-icons': 2.0.154-beta.5_d2f1067edc0bfed1f9bdc78013a98cbb
+      '@fluentui/react-make-styles': 9.0.0-beta.4_12a6012245369fd5be825566be975ff0
       '@mdx-js/loader': 1.6.22_react@17.0.2
       '@next/mdx': 11.1.2_f56c41adb6190c4680be4a1c0222355d
       '@types/dom-webcodecs': 0.1.2
@@ -14398,7 +14525,7 @@ packages:
     peerDependencies:
       '@mdx-js/react': '*'
     resolution:
-      integrity: sha512-tq3k2RWwrKsKzVKXGjy+/z9ROfpdF6OMYdFKonBDgfuOe9HUqke5EUlO54BVvLO68v+X8UvVu3o+5X/RW16scg==
+      integrity: sha512-cvSHC3mz5ixtrLSqs8IsDxT8pMx30CevOxdniisAx4zRBJPjmFNN2CH6jNY0ir5xy18pDM0NhJGKj+EGIvbWWQ==
       tarball: file:projects/demo.tgz
     version: 0.0.0
   file:projects/event.tgz:
@@ -14484,16 +14611,19 @@ packages:
 specifiers:
   '@docusaurus/core': ^2.0.0-beta.0
   '@docusaurus/preset-classic': ^2.0.0-beta.0
-  '@fluentui/font-icons-mdl2': ^8.1.14
   '@fluentui/react': ^8.36.3
   '@fluentui/react-file-type-icons': ^8.4.3
   '@fluentui/react-hooks': ^8.3.4
+  '@fluentui/react-icons': ^2.0.154-beta.5
+  '@fluentui/react-make-styles': ^9.0.0-beta.3
   '@mdx-js/loader': ^1.6.22
   '@mdx-js/react': ^1.6.21
   '@next/mdx': ^11.1.2
   '@rush-temp/adb': file:./projects/adb.tgz
+  '@rush-temp/adb-backend-direct-sockets': file:./projects/adb-backend-direct-sockets.tgz
   '@rush-temp/adb-backend-webusb': file:./projects/adb-backend-webusb.tgz
   '@rush-temp/adb-backend-ws': file:./projects/adb-backend-ws.tgz
+  '@rush-temp/adb-credential-web': file:./projects/adb-credential-web.tgz
   '@rush-temp/demo': file:./projects/demo.tgz
   '@rush-temp/event': file:./projects/event.tgz
   '@rush-temp/scrcpy': file:./projects/scrcpy.tgz

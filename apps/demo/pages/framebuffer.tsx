@@ -7,7 +7,7 @@ import Head from "next/head";
 import React, { useCallback, useEffect, useRef } from 'react';
 import { CommandBar, DemoMode, DeviceView } from '../components';
 import { global } from "../state";
-import { RouteStackProps } from "../utils";
+import { Icons, RouteStackProps } from "../utils";
 
 class FrameBufferState {
     width = 0;
@@ -43,9 +43,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
         }
 
         try {
-            const start = window.performance.now();
             const framebuffer = await global.device.framebuffer();
-            const end = window.performance.now();
             state.setImage(framebuffer);
         } catch (e) {
             global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
@@ -68,14 +66,14 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
         {
             key: 'start',
             disabled: !global.device,
-            iconProps: { iconName: 'Camera' },
+            iconProps: { iconName: Icons.Camera, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
             text: 'Capture',
             onClick: capture,
         },
         {
             key: 'Save',
             disabled: !state.imageData,
-            iconProps: { iconName: 'Save' },
+            iconProps: { iconName: Icons.Save, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
             text: 'Save',
             onClick: () => {
                 const canvas = canvasRef.current;
@@ -95,14 +93,14 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
     const commandBarFarItems = computed((): ICommandBarItemProps[] => [
         {
             key: 'DemoMode',
-            iconProps: { iconName: 'Personalize' },
+            iconProps: { iconName: Icons.Wand, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
             checked: state.demoModeVisible,
             text: 'Demo Mode Settings',
             onClick: state.toggleDemoModeVisible,
         },
         {
             key: 'info',
-            iconProps: { iconName: 'Info' },
+            iconProps: { iconName: Icons.Info, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
             iconOnly: true,
             tooltipHostProps: {
                 content: 'Use ADB FrameBuffer command to capture a full-size, high-resolution screenshot.',

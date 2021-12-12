@@ -1,7 +1,17 @@
 import { AdbCredentialStore, calculateBase64EncodedLength, calculatePublicKey, calculatePublicKeyLength, decodeBase64, encodeBase64 } from "@yume-chan/adb";
-import { decodeUtf8 } from "./utils";
 
-export class AdbWebCredentialStore implements AdbCredentialStore {
+const Utf8Encoder = new TextEncoder();
+const Utf8Decoder = new TextDecoder();
+
+export function encodeUtf8(input: string): ArrayBuffer {
+    return Utf8Encoder.encode(input).buffer;
+}
+
+export function decodeUtf8(buffer: ArrayBuffer): string {
+    return Utf8Decoder.decode(buffer);
+}
+
+export default class AdbWebCredentialStore implements AdbCredentialStore {
     public readonly localStorageKey: string;
 
     public constructor(localStorageKey = 'private-key') {
@@ -44,5 +54,4 @@ export class AdbWebCredentialStore implements AdbCredentialStore {
 
         return privateKey;
     }
-
 }

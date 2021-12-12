@@ -9,13 +9,16 @@
         "lint": "next lint"
     },
     "dependencies": {
-        "@fluentui/font-icons-mdl2": "^8.1.14",
         "@fluentui/react": "^8.36.3",
         "@fluentui/react-file-type-icons": "^8.4.3",
         "@fluentui/react-hooks": "^8.3.4",
+        "@fluentui/react-icons": "^2.0.154-beta.5",
+        "@fluentui/react-make-styles": "^9.0.0-beta.3",
         "@yume-chan/adb": "^0.0.9",
+        "@yume-chan/adb-backend-direct-sockets": "^0.0.9",
         "@yume-chan/adb-backend-webusb": "^0.0.9",
         "@yume-chan/adb-backend-ws": "^0.0.9",
+        "@yume-chan/adb-credential-web": "^0.0.9",
         "@yume-chan/async": "^2.1.4",
         "@yume-chan/event": "^0.0.9",
         "@yume-chan/scrcpy": "^0.0.9",

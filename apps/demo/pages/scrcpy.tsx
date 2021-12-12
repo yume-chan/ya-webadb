@@ -9,7 +9,7 @@ import Head from "next/head";
 import React, { useEffect, useState } from "react";
 import { DemoMode, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { global } from "../state";
-import { CommonStackTokens, formatSpeed, RouteStackProps } from "../utils";
+import { CommonStackTokens, formatSpeed, Icons, RouteStackProps } from "../utils";
 
 const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url).toString();
 
@@ -201,14 +201,14 @@ class ScrcpyPageState {
             result.push({
                 key: 'start',
                 disabled: !global.device,
-                iconProps: { iconName: 'Play' },
+                iconProps: { iconName: Icons.Play },
                 text: 'Start',
                 onClick: this.start as VoidFunction,
             });
         } else {
             result.push({
                 key: 'stop',
-                iconProps: { iconName: 'Stop' },
+                iconProps: { iconName: Icons.Stop },
                 text: 'Stop',
                 onClick: this.stop,
             });
@@ -217,7 +217,7 @@ class ScrcpyPageState {
         result.push({
             key: 'fullscreen',
             disabled: !this.running,
-            iconProps: { iconName: 'Fullscreen' },
+            iconProps: { iconName: Icons.FullScreenMaximize },
             text: 'Fullscreen',
             onClick: () => { this.deviceView?.enterFullscreen(); },
         });
@@ -238,7 +238,7 @@ class ScrcpyPageState {
             },
             {
                 key: 'DemoMode',
-                iconProps: { iconName: 'Personalize' },
+                iconProps: { iconName: Icons.Wand },
                 checked: this.demoModeVisible,
                 text: 'Demo Mode Settings',
                 onClick: action(() => {
@@ -247,7 +247,7 @@ class ScrcpyPageState {
             },
             {
                 key: 'info',
-                iconProps: { iconName: 'Info' },
+                iconProps: { iconName: Icons.Info },
                 iconOnly: true,
                 tooltipHostProps: {
                     content: (
@@ -351,20 +351,50 @@ class ScrcpyPageState {
             runInAction(() => {
                 this.serverTotalSize = 0;
                 this.serverDownloadedSize = 0;
+                this.debouncedServerDownloadedSize = 0;
                 this.serverUploadedSize = 0;
+                this.debouncedServerUploadedSize = 0;
                 this.connecting = true;
             });
 
-            const serverBuffer = await fetchServer(action(([downloaded, total]) => {
-                this.serverDownloadedSize = downloaded;
-                this.serverTotalSize = total;
-            }));
+            let intervalId = setInterval(action(() => {
+                this.serverDownloadSpeed = this.serverDownloadedSize - this.debouncedServerDownloadedSize;
+                this.debouncedServerDownloadedSize = this.serverDownloadedSize;
+            }), 1000);
 
-            await pushServer(global.device, serverBuffer, {
-                onProgress: action((progress) => {
-                    this.serverUploadedSize = progress;
-                }),
-            });
+            let serverBuffer: ArrayBuffer;
+
+            try {
+                serverBuffer = await fetchServer(action(([downloaded, total]) => {
+                    this.serverDownloadedSize = downloaded;
+                    this.serverTotalSize = total;
+                }));
+                runInAction(() => {
+                    this.serverDownloadSpeed = this.serverDownloadedSize - this.debouncedServerDownloadedSize;
+                    this.debouncedServerDownloadedSize = this.serverDownloadedSize;
+                });
+            } finally {
+                clearInterval(intervalId);
+            }
+
+            intervalId = setInterval(action(() => {
+                this.serverUploadSpeed = this.serverUploadedSize - this.debouncedServerUploadedSize;
+                this.debouncedServerUploadedSize = this.serverUploadedSize;
+            }), 1000);
+
+            try {
+                await pushServer(global.device, serverBuffer, {
+                    onProgress: action((progress) => {
+                        this.serverUploadedSize = progress;
+                    }),
+                });
+                runInAction(() => {
+                    this.serverUploadSpeed = this.serverUploadedSize - this.debouncedServerUploadedSize;
+                    this.debouncedServerUploadedSize = this.serverUploadedSize;
+                });
+            } finally {
+                clearInterval(intervalId);
+            }
 
             const encoders = await ScrcpyClient.getEncoders(
                 global.device,
@@ -685,19 +715,19 @@ const Scrcpy: NextPage = () => {
         <Stack verticalFill horizontalAlign="center" style={{ background: '#999' }}>
             <Stack verticalFill horizontal style={{ width: '100%', maxWidth: 300 }} horizontalAlign="space-evenly" verticalAlign="center">
                 <IconButton
-                    iconProps={{ iconName: 'Play' }}
+                    iconProps={{ iconName: Icons.Play }}
                     style={{ transform: 'rotate(180deg)', color: 'white' }}
                     onPointerDown={state.handleBackPointerDown}
                     onPointerUp={state.handleBackPointerUp}
                 />
                 <IconButton
-                    iconProps={{ iconName: 'LocationCircle' }}
+                    iconProps={{ iconName: Icons.Circle }}
                     style={{ color: 'white' }}
                     onPointerDown={state.handleHomePointerDown}
                     onPointerUp={state.handleHomePointerUp}
                 />
                 <IconButton
-                    iconProps={{ iconName: 'Stop' }}
+                    iconProps={{ iconName: Icons.Stop }}
                     style={{ color: 'white' }}
                     onPointerDown={state.handleAppSwitchPointerDown}
                     onPointerUp={state.handleAppSwitchPointerUp}
@@ -778,7 +808,7 @@ const Scrcpy: NextPage = () => {
                             <>
                                 <span>Use forward connection{' '}</span>
                                 <TooltipHost content="Old Android devices may not support reverse connection when using ADB over WiFi">
-                                    <Icon iconName="Info" />
+                                    <Icon iconName={Icons.Info} />
                                 </TooltipHost>
                             </>
                         }

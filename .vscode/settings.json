@@ -77,5 +77,6 @@
     "files.associations": {
         "*.mdx": "markdown",
         "*.json": "jsonc"
-    }
+    },
+    "prettier.tabWidth": 4
 }

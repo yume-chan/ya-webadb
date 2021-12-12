@@ -1,68 +1,51 @@
-# Android Debug Bridge (ADB) for Web Browsers
+# 📱 Android Debug Bridge (ADB) for Web Browsers
 
 [![GitHub license](https://img.shields.io/github/license/yume-chan/ya-webadb)](https://github.com/yume-chan/ya-webadb/blob/master/LICENSE)
 
 Manipulate Android devices from any (supported) web browsers, even from another Android device.
 
-Online demo: https://yume-chan.github.io/ya-webadb
+[🚀 Online Demo](https://yume-chan.github.io/ya-webadb)
 
-## How does it work
+## Compatibility
 
-**I'm working on a series of [blog posts](https://chensi.moe/blog/2020/09/28/webadb-part0-overview/) explaining the ADB protocol and my implementation in details.**
+| Connection                            | Chromium-based Browsers                    | Firefox | Node.js  |
+| ------------------------------------- | ------------------------------------------ | ------- | -------- |
+| USB cable                             | Yes via [WebUSB]                           | No      | Possible |
+| Wireless via [WebSocket] <sup>1</sup> | Yes                                        | Yes     | Possible |
+| Wireless via TCP                      | Possible via [Direct Sockets] <sup>2</sup> | No      | Possible |
 
-`@yume-chan/adb` is a platform-independent TypeScript implementation of the Android Debug Bridge (ADB) protocol.
+[WebUSB]: https://wicg.github.io/webusb/
+[WebSocket]: https://websockets.spec.whatwg.org/
+[Direct Sockets]: https://wicg.github.io/raw-sockets/
 
-`@yume-chan/adb-backend-webusb` is a backend for `@yume-chan/adb` that uses WebUSB API.
+<sup>1</sup> Requires WebSockify softwares, see [instruction](https://github.com/yume-chan/ya-webadb/discussions/245#discussioncomment-384030) for detail.
 
-See README in each package for details.
+<sup>2</sup> Under developemnt. Requires Chrome Canary (excluding Chrome for Android) and adding page URL to `chrome://flags/#restricted-api-origins`
 
-## Packages
+## Security concerns
 
-This repository is a monorepo containing following packages:
+Accessing USB devices (especially your phone) directly from a web page can be **very dangerous**. Firefox developers even refused to implement the WebUSB standard because they [considered it to be **harmful**](https://mozilla.github.io/standards-positions/#webusb).
 
-| Package Name                                                          | Description                                                       |
-| --------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| adb ([README](libraries/adb/README.md))                               | TypeScript implementation of Android Debug Bridge (ADB) protocol. |
-| adb-backend-webusb ([README](libraries/adb-backend-webusb/README.md)) | Backend for `@yume-chan/adb` using WebUSB API.                    |
-| event ([README](libraries/event/README.md))                           | Event/EventEmitter pattern.                                       |
-| struct ([README](libraries/struct/README.md))                         | C-style structure serializer and deserializer.                    |
-| demo ([README](apps/demo/README.md))                                  | Demo of `@yume-chan/adb` and `@yume-chan/adb-backend-webusb`.     |
+## Features
 
-## Development
+* 📁 File Management
+  * 📋 List
+  * ⬆ Upload
+  * ⬇ Download
+  * 🗑 Delete
+* 📷 Screen Capture
+* 📜 Interactiv Shell
+* ⚙ Enable ADB over WiFi
+* 📦 Install APK
+* 🎥 [Scrcpy](https://github.com/Genymobile/scrcpy) compatible client (screen mirroring and controling device)
 
-The repository uses [Rush](https://rushjs.io/) for monorepo management.
+[📋 Project Roadmap](https://github.com/yume-chan/ya-webadb/issues/348)
 
-### Install Rush globally
+## Contribute
 
-```sh
-$ npm i -g @microsoft/rush
-```
+See [CONTRIBUTE.md](./CONTRIBUTE.md)
 
-### Install dependencies
+## Credits
 
-```sh
-$ rush update
-```
-
-### Everyday commands
-
-Build all packages:
-
-```sh
-$ rush build
-```
-
-Watch all libraries:
-
-```sh
-$ rush build:watch
-```
-
-Start demo dev-server:
-
-```sh
-$ cd apps/demo
-$ npm start
-```
-
-Usually you need two terminals to run both 2 and 3.
+* Google for [ADB](https://android.googlesource.com/platform/packages/modules/adb) ([Apache License 2.0](./adb.NOTICE))
+* Romain Vimont for [Scrcpy](https://github.com/Genymobile/scrcpy) ([Apache License 2.0](https://github.com/Genymobile/scrcpy/blob/master/LICENSE))

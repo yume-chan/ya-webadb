@@ -3,10 +3,10 @@ import { reaction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { CSSProperties, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import 'xterm/css/xterm.css';
 import { global } from "../state";
-import { ResizeObserver, RouteStackProps } from '../utils';
+import { Icons, ResizeObserver, RouteStackProps } from '../utils';
 
 let terminal: import('../components/terminal').AdbTerminal;
 if (typeof window !== 'undefined') {
@@ -19,8 +19,8 @@ const ResizeObserverStyle: CSSProperties = {
     height: '100%',
 };
 
-const UpIconProps = { iconName: 'ChevronUp' };
-const DownIconProps = { iconName: 'ChevronDown' };
+const UpIconProps = { iconName: Icons.ChevronUp };
+const DownIconProps = { iconName: Icons.ChevronDown };
 
 const Shell: NextPage = (): JSX.Element | null => {
     const [searchKeyword, setSearchKeyword] = useState('');
