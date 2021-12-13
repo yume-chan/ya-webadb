@@ -17,8 +17,6 @@ export default class MyDocument extends Document {
             html,
             head: [
                 ...(head ?? []),
-                <meta httpEquiv="Cross-Origin-Opener-Policy" content="same-origin" />,
-                <meta httpEquiv="Cross-Origin-Embedder-Policy" content="require-corp" />,
                 <script key="fluentui" dangerouslySetInnerHTML={{
                     __html: `
                         window.FabricConfig = window.FabricConfig || {};
