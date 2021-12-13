@@ -26,9 +26,16 @@ jobs:
 
       - run: node common/scripts/install-run-rush.js change -v
       - run: node common/scripts/install-run-rush.js install
+
       - run: node common/scripts/install-run-rush.js rebuild --verbose
+        env:
+          BASE_PATH: /ya-webadb
+
       - run: npx next export
         working-directory: ./apps/demo
+        env:
+          BASE_PATH: /ya-webadb
+
       # - run: node common/scripts/install-run-rush.js test
 
       # - run: bash <(curl -s https://codecov.io/bash) -f libraries/struct/coverage/lcov.info -F struct
