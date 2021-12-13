@@ -1,5 +1,5 @@
 import { registerIcons } from "@fluentui/react";
-import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, NavigationRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, SaveRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, NavigationRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
@@ -29,6 +29,7 @@ export function register() {
             PlugConnected: <PlugConnectedRegular style={STYLE} />,
             PlugDisconnected: <PlugDisconnectedRegular style={STYLE} />,
             Save: <SaveRegular style={STYLE} />,
+            Settings: <SettingsRegular style={STYLE} />,
             Stop: <StopRegular style={STYLE} />,
             TextGrammarError: <TextGrammarErrorRegular style={STYLE} />,
             Wand: <WandRegular style={STYLE} />,
@@ -41,6 +42,7 @@ export function register() {
             CircleRing: <CircleRegular style={STYLE} />,
             SortUp: <ArrowSortUpRegular style={STYLE} />,
             SortDown: <ArrowSortDownRegular style={STYLE} />,
+            Search: <SearchRegular style={STYLE} />,
 
             Document20: <DocumentRegular style={{ fontSize: 20, verticalAlign: 'middle' }} />
         }
@@ -71,6 +73,7 @@ export default {
     PlugConnected: 'PlugConnected',
     PlugDisconnected: 'PlugDisconnected',
     Save: 'Save',
+    Settings: 'Settings',
     Stop: 'Stop',
     TextGrammarError: 'TextGrammarError',
     Wand: 'Wand',
