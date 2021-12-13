@@ -8,11 +8,11 @@ Manipulate Android devices from any (supported) web browsers, even from another 
 
 ## Compatibility
 
-| Connection                            | Chromium-based Browsers                    | Firefox | Node.js  |
-| ------------------------------------- | ------------------------------------------ | ------- | -------- |
-| USB cable                             | Yes via [WebUSB]                           | No      | Possible |
-| Wireless via [WebSocket] <sup>1</sup> | Yes                                        | Yes     | Possible |
-| Wireless via TCP                      | Possible via [Direct Sockets] <sup>2</sup> | No      | Possible |
+| Connection                            | Chromium-based Browsers               | Firefox | Node.js  |
+| ------------------------------------- | ------------------------------------- | ------- | -------- |
+| USB cable                             | Yes via [WebUSB]                      | No      | Possible |
+| Wireless via [WebSocket] <sup>1</sup> | Yes                                   | Yes     | Possible |
+| Wireless via TCP                      | Yes via [Direct Sockets] <sup>2</sup> | No      | Possible |
 
 [WebUSB]: https://wicg.github.io/webusb/
 [WebSocket]: https://websockets.spec.whatwg.org/
@@ -20,7 +20,7 @@ Manipulate Android devices from any (supported) web browsers, even from another 
 
 <sup>1</sup> Requires WebSockify softwares, see [instruction](https://github.com/yume-chan/ya-webadb/discussions/245#discussioncomment-384030) for detail.
 
-<sup>2</sup> Under developemnt. Requires Chrome Canary (excluding Chrome for Android) and adding page URL to `chrome://flags/#restricted-api-origins`
+<sup>2</sup> Chrome for Android doesn't support Direct Sockets. Need extra steps to enable. See [#349](https://github.com/yume-chan/ya-webadb/issues/349) for detail.
 
 ## Security concerns
 
