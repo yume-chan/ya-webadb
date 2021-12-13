@@ -1,5 +1,7 @@
 import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, ScrollToMode, Selection, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
-import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from '@fluentui/react-file-type-icons';
+import { FileIconType } from "@fluentui/react-file-type-icons";
+import { getFileTypeIconNameFromExtensionOrType } from '@fluentui/react-file-type-icons/lib-commonjs/getFileTypeIconProps';
+import { DEFAULT_BASE_URL as FILE_TYPE_ICONS_BASE_URL } from '@fluentui/react-file-type-icons/lib-commonjs/initializeFileTypeIcons';
 import { useConst } from '@fluentui/react-hooks';
 import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume-chan/adb';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
@@ -11,15 +13,13 @@ import path from 'path';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CommandBar } from '../components';
 import { global } from '../state';
-import { asyncEffect, chunkFile, formatSize, formatSpeed, Icons, pickFile, RouteStackProps, useSpeed } from '../utils';
+import { asyncEffect, chunkFile, formatSize, formatSpeed, Icons, pickFile, RouteStackProps } from '../utils';
 
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
     StreamSaver = require('streamsaver');
     // StreamSaver.mitm = new URL('streamsaver/mitm.html?url', import.meta.url).toString() + '?sw=' + new URL('streamsaver/sw.js?url', import.meta.url);
 }
-
-initializeFileTypeIcons();
 
 interface ListItem extends AdbSyncEntryResponse {
     key: string;
@@ -248,26 +248,36 @@ class FileManagerState {
     }
 
     get columns(): IColumn[] {
+        const ICON_SIZE = 20;
+
         const list: IColumn[] = [
             {
                 key: 'type',
                 name: 'File Type',
                 iconName: Icons.Document20,
                 isIconOnly: true,
-                minWidth: 20,
-                maxWidth: 20,
+                minWidth: ICON_SIZE,
+                maxWidth: ICON_SIZE,
                 isCollapsible: true,
                 onRender(item: AdbSyncEntryResponse) {
+                    let iconName: string;
+
                     switch (item.type) {
                         case LinuxFileType.Link:
-                            return <Icon {...getFileTypeIconProps({ size: 20, type: FileIconType.linkedFolder })} />;
+                            iconName = getFileTypeIconNameFromExtensionOrType(undefined, FileIconType.linkedFolder);
+                            break;
                         case LinuxFileType.Directory:
-                            return <Icon {...getFileTypeIconProps({ size: 20, type: FileIconType.folder })} />;
+                            iconName = getFileTypeIconNameFromExtensionOrType(undefined, FileIconType.folder);
+                            break;
                         case LinuxFileType.File:
-                            return <Icon {...getFileTypeIconProps({ size: 20, extension: path.extname(item.name!) })} />;
+                            iconName = getFileTypeIconNameFromExtensionOrType(path.extname(item.name!), undefined);
+                            break;
                         default:
-                            return <Icon {...getFileTypeIconProps({ size: 20, extension: 'txt' })} />;
+                            iconName = getFileTypeIconNameFromExtensionOrType('txt', undefined);
+                            break;
                     }
+
+                    return <Icon imageProps={{ crossOrigin: '', src: `${FILE_TYPE_ICONS_BASE_URL}${ICON_SIZE}/${iconName}.svg` }} style={{ width: ICON_SIZE, height: ICON_SIZE }} />;
                 }
             },
             {
@@ -341,7 +351,7 @@ class FileManagerState {
             initial: false,
             items: observable.shallow,
             pushPathQuery: false,
-            changeDirectory: false,
+            changeDirectory: action.bound,
             loadFiles: false,
         });
 

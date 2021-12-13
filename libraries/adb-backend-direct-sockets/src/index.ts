@@ -1,4 +1,4 @@
-import { AdbBackend } from '@yume-chan/adb';
+import { AdbBackend, BufferedStream, Stream } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 
 const Utf8Encoder = new TextEncoder();
@@ -55,8 +55,9 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
     public name: string | undefined;
 
     private socket: TCPSocket | undefined;
-    private reader: ReadableStreamDefaultReader<ArrayBuffer> | undefined;
-    private writer: WritableStreamDefaultWriter<ArrayBuffer> | undefined;
+    private reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    private bufferedStream: BufferedStream<Stream> | undefined;
+    private writer: WritableStreamDefaultWriter<Uint8Array> | undefined;
 
     private _connected = false;
     public get connected() { return this._connected; }
@@ -80,6 +81,15 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
 
         this.socket = socket;
         this.reader = this.socket.readable.getReader();
+        this.bufferedStream = new BufferedStream({
+            read: async () => {
+                const result = await this.reader!.read();
+                if (result.value) {
+                    return result.value.buffer;
+                }
+                throw new Error('Stream ended');
+            }
+        });
         this.writer = this.socket.writable.getWriter();
 
         this._connected = true;
@@ -94,15 +104,11 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
     }
 
     public write(buffer: ArrayBuffer): Promise<void> {
-        return this.writer!.write(buffer);
+        return this.writer!.write(new Uint8Array(buffer));
     }
 
     public async read(length: number): Promise<ArrayBuffer> {
-        const result = await this.reader!.read();
-        if (result.value) {
-            return result.value;
-        }
-        throw new Error('Stream ended');
+        return this.bufferedStream!.read(length);
     }
 
     public dispose(): void | Promise<void> {

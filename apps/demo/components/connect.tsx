@@ -121,7 +121,7 @@ function _Connect(): JSX.Element | null {
         setSelectedBackend(option?.data as AdbBackend);
     };
 
-    const requestAccess = useCallback(async () => {
+    const addUsbBackend = useCallback(async () => {
         const backend = await AdbWebUsbBackend.requestDevice();
         setSelectedBackend(backend);
         await updateUsbBackendList();
@@ -156,8 +156,8 @@ function _Connect(): JSX.Element | null {
     }, []);
 
     const backendList = useMemo(
-        () => ([] as AdbBackend[]).concat(usbBackendList, wsBackendList),
-        [usbBackendList, wsBackendList]
+        () => ([] as AdbBackend[]).concat(usbBackendList, wsBackendList, tcpBackendList),
+        [usbBackendList, wsBackendList, tcpBackendList]
     );
 
     const backendOptions = useMemo(() => {
@@ -241,7 +241,7 @@ function _Connect(): JSX.Element | null {
                                 disabled={!supported}
                                 primary={!selectedBackend}
                                 styles={{ root: { width: '100%' } }}
-                                onClick={requestAccess}
+                                onClick={addUsbBackend}
                             />
                         </StackItem>
                     </Stack>

@@ -3936,7 +3936,7 @@ packages:
   /autoprefixer/10.3.1_postcss@8.3.5:
     dependencies:
       browserslist: 4.16.6
-      caniuse-lite: 1.0.30001244
+      caniuse-lite: 1.0.30001286
       colorette: 1.2.2
       fraction.js: 4.1.1
       normalize-range: 0.1.2
@@ -4339,7 +4339,7 @@ packages:
       integrity: sha512-Z942RysHXmJrhqk88FmKBVq/v5tqmSkDz7p54G/MGyjMnCFFnC79XWNbg+Vta8W6Wb2qtSZTSxIGkJrRpCFEiA==
   /browserslist/4.14.2:
     dependencies:
-      caniuse-lite: 1.0.30001244
+      caniuse-lite: 1.0.30001286
       electron-to-chromium: 1.3.774
       escalade: 3.1.1
       node-releases: 1.1.73
@@ -4351,7 +4351,7 @@ packages:
       integrity: sha512-HI4lPveGKUR0x2StIz+2FXfDk9SfVMrxn6PLh1JeGUwcuoDkdKZebWiyLRJ68iIPDpMI4JLVDf7S7XzslgWOhw==
   /browserslist/4.16.6:
     dependencies:
-      caniuse-lite: 1.0.30001244
+      caniuse-lite: 1.0.30001286
       colorette: 1.2.2
       electron-to-chromium: 1.3.774
       escalade: 3.1.1
@@ -4505,16 +4505,12 @@ packages:
   /caniuse-api/3.0.0:
     dependencies:
       browserslist: 4.16.6
-      caniuse-lite: 1.0.30001244
+      caniuse-lite: 1.0.30001286
       lodash.memoize: 4.1.2
       lodash.uniq: 4.5.0
     dev: false
     resolution:
       integrity: sha512-bsTwuIg/BZZK/vreVTYYbSWoe2F+71P7K5QGEX+pT250DZbfU1MQ5prOKpPR+LL6uWKK3KMwMCAS74QB3Um1uw==
-  /caniuse-lite/1.0.30001244:
-    dev: false
-    resolution:
-      integrity: sha512-Wb4UFZPkPoJoKKVfELPWytRzpemjP/s0pe22NriANru1NoI+5bGNxzKtk7edYL8rmCWTfQO8eRiF0pn1Dqzx7Q==
   /capture-exit/2.0.0:
     dependencies:
       rsvp: 4.8.5
@@ -5320,7 +5316,7 @@ packages:
       integrity: sha512-qo9tX+t4yAAZ/yagVV3b+QBKeLklQbmgR3wI7mccrDcR+bEk9iHgZN1E7doX68y9ThznLya3RDmR+nc7l6/2WQ==
   /cssnano-preset-simple/3.0.0_postcss@8.2.15:
     dependencies:
-      caniuse-lite: 1.0.30001244
+      caniuse-lite: 1.0.30001286
       postcss: 8.2.15
     dev: false
     peerDependencies:
@@ -9847,7 +9843,7 @@ packages:
       browserify-zlib: 0.2.0
       browserslist: 4.16.6
       buffer: 5.6.0
-      caniuse-lite: 1.0.30001244
+      caniuse-lite: 1.0.30001286
       chalk: 2.4.2
       chokidar: 3.5.1
       constants-browserify: 1.0.0
