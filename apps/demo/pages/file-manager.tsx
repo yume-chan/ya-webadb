@@ -141,12 +141,12 @@ class FileManagerState {
                         style: { height: 20, fontSize: 20, lineHeight: 1.5 }
                     },
                     disabled: !global.device,
-                    onClick() {
+                    onClick: () => {
                         (async () => {
                             const files = await pickFile({ multiple: true });
                             for (let i = 0; i < files.length; i++) {
                                 const file = files.item(i)!;
-                                await state.upload(file);
+                                await this.upload(file);
                             }
                         })();
 
@@ -163,11 +163,11 @@ class FileManagerState {
                             iconName: Icons.CloudArrowDown,
                             style: { height: 20, fontSize: 20, lineHeight: 1.5 }
                         },
-                        onClick() {
+                        onClick: () => {
                             (async () => {
                                 const sync = await global.device!.sync();
                                 try {
-                                    const itemPath = path.resolve(state.path, this.selectedItems[0].name!);
+                                    const itemPath = path.resolve(this.path, this.selectedItems[0].name!);
                                     const readableStream = createReadableStreamFromBufferIterator(sync.read(itemPath));
 
                                     const writeableStream = StreamSaver!.createWriteStream(this.selectedItems[0].name!, {
@@ -192,11 +192,11 @@ class FileManagerState {
                         iconName: Icons.Delete,
                         style: { height: 20, fontSize: 20, lineHeight: 1.5 }
                     },
-                    onClick() {
+                    onClick: () => {
                         (async () => {
                             try {
                                 for (const item of this.selectedItems) {
-                                    const output = await global.device!.rm(path.resolve(state.path, item.name!));
+                                    const output = await global.device!.rm(path.resolve(this.path, item.name!));
                                     if (output) {
                                         global.showErrorDialog(output);
                                         return;
@@ -205,7 +205,7 @@ class FileManagerState {
                             } catch (e) {
                                 global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                             } finally {
-                                state.loadFiles();
+                                this.loadFiles();
                             }
                         })();
                         return false;
@@ -455,7 +455,7 @@ class FileManagerState {
     upload = async (file: File) => {
         const sync = await global.device!.sync();
         try {
-            const itemPath = path.resolve(state.path!, file.name);
+            const itemPath = path.resolve(this.path!, file.name);
             runInAction(() => {
                 this.uploading = true;
                 this.uploadPath = file.name;
@@ -491,7 +491,7 @@ class FileManagerState {
             global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
         } finally {
             sync.dispose();
-            state.loadFiles();
+            this.loadFiles();
             runInAction(() => {
                 this.uploading = false;
             });
