@@ -1,5 +1,5 @@
 import { registerIcons } from "@fluentui/react";
-import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, NavigationRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, NavigationRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
@@ -23,6 +23,7 @@ export function register() {
             FullScreenMaximize: <FullScreenMaximizeRegular style={STYLE} />,
             Info: <InfoRegular style={STYLE} />,
             Navigation: <NavigationRegular style={STYLE} />,
+            PersonFeedback: <PersonFeedbackRegular style={STYLE} />,
             Phone: <PhoneRegular style={STYLE} />,
             PhoneLaptop: <PhoneLaptopRegular style={STYLE} />,
             Play: <PlayRegular style={STYLE} />,
@@ -67,6 +68,7 @@ export default {
     FullScreenMaximize: 'FullScreenMaximize',
     Info: 'Info',
     Navigation: 'Navigation',
+    PersonFeedback: 'PersonFeedback',
     Phone: 'Phone',
     PhoneLaptop: 'PhoneLaptop',
     Play: 'Play',

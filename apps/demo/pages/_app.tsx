@@ -1,14 +1,14 @@
-import { IComponentAsProps, IconButton, INavButtonProps, mergeStyles, mergeStyleSets, Nav, registerIcons, Stack, StackItem } from "@fluentui/react";
+import { IComponentAsProps, IconButton, INavButtonProps, mergeStyles, mergeStyleSets, Nav, Stack, StackItem } from "@fluentui/react";
 import type { AppProps } from 'next/app';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from "react";
 import { Connect, ErrorDialogProvider, LogView, ToggleLogView } from "../components";
-import { register } from '../utils/icons';
 import '../styles/globals.css';
 import { Icons } from "../utils";
+import { register as registerIcons } from '../utils/icons';
 
-register();
+registerIcons();
 
 const ROUTES = [
     {
@@ -105,6 +105,14 @@ function MyApp({ Component, pageProps }: AppProps) {
                     <StackItem grow>
                         <div className={classNames.title}>WebADB Demo</div>
                     </StackItem>
+
+                    <IconButton
+                        iconProps={{ iconName: 'PersonFeedback' }}
+                        title="Feedback"
+                        as="a"
+                        href="https://github.com/yume-chan/ya-webadb/issues/new"
+                        target="_blank"
+                    />
 
                     <ToggleLogView />
                 </Stack>
