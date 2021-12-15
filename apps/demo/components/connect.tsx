@@ -185,6 +185,12 @@ function _Connect(): JSX.Element | null {
         const items = [];
 
         items.push({
+            key: 'usb',
+            text: 'USB',
+            onClick: addUsbBackend,
+        });
+
+        items.push({
             key: 'websocket',
             text: 'WebSocket',
             onClick: addWsBackend,
