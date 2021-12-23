@@ -3,7 +3,7 @@ import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { ScrcpyClientConnection } from "./connection";
-import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
+import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectScrollControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
 import { ScrcpyLogLevel, ScrcpyOptions } from "./options";
 import { pushServer, PushServerOptions } from "./push-server";
 import { parse_sequence_parameter_set, SequenceParameterSet } from './sps';
@@ -487,6 +487,24 @@ export class ScrcpyClient {
         }, this.backend);
         await this.controlStream.write(buffer);
         this.sendingTouchMessage = false;
+    }
+
+    public async injectScroll(message: Omit<ScrcpyInjectScrollControlMessage, 'type' | 'screenWidth' | 'screenHeight'>) {
+        if (!this.controlStream) {
+            throw new Error('injectScroll called before initialization');
+        }
+
+        if (!this.screenWidth || !this.screenHeight) {
+            return;
+        }
+
+        const buffer = ScrcpyInjectScrollControlMessage.serialize({
+            ...message,
+            type: ScrcpyControlMessageType.InjectScroll,
+            screenWidth: this.screenWidth,
+            screenHeight: this.screenHeight,
+        }, this.backend);
+        await this.controlStream.write(buffer);
     }
 
     public async pressBackOrTurnOnScreen(action: AndroidKeyEventAction) {

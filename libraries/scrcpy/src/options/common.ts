@@ -5,6 +5,7 @@ import type { AndroidKeyEventAction } from "../message";
 export const DEFAULT_SERVER_PATH = '/data/local/tmp/scrcpy-server.jar';
 
 export enum ScrcpyLogLevel {
+    Verbose = 'verbose',
     Debug = 'debug',
     Info = 'info',
     Warn = 'warn',
@@ -12,6 +13,7 @@ export enum ScrcpyLogLevel {
 }
 
 export enum ScrcpyScreenOrientation {
+    Initial = -2,
     Unlocked = -1,
     Portrait = 0,
     Landscape = 1,

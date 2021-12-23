@@ -89,10 +89,16 @@ export class ScrcpyOptions1_17 implements ScrcpyOptions {
     }: ScrcpyOptions1_17Init) {
         this.path = path;
         this.version = version;
+        if (logLevel === ScrcpyLogLevel.Verbose) {
+            logLevel = ScrcpyLogLevel.Debug;
+        }
         this.logLevel = logLevel;
         this.maxSize = maxSize;
         this.bitRate = bitRate;
         this.maxFps = maxFps;
+        if (orientation === ScrcpyScreenOrientation.Initial) {
+            orientation = ScrcpyScreenOrientation.Unlocked;
+        }
         this.orientation = orientation;
         this.tunnelForward = tunnelForward;
         this.profile = profile;

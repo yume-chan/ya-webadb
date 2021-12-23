@@ -288,10 +288,12 @@ class ScrcpyPageState {
             handleResolutionChange: action.bound,
             handleTunnelForwardChange: action.bound,
             handleBitRateChange: action.bound,
+            calculatePointerPosition: false,
             injectTouch: false,
             handlePointerDown: false,
             handlePointerMove: false,
             handlePointerUp: false,
+            handleWheel: false,
             handleKeyDown: false,
             homeKeyRepeater: false,
             appSwitchKeyRepeater: false,
@@ -496,6 +498,7 @@ class ScrcpyPageState {
 
     handleRendererContainerRef(element: HTMLDivElement | null) {
         this.rendererContainer = element;
+        this.rendererContainer?.addEventListener('wheel', this.handleWheel, { passive: false });
     };
 
     handleBackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -581,6 +584,19 @@ class ScrcpyPageState {
         this.tunnelForward = checked;
     };
 
+    calculatePointerPosition(clientX: number, clientY: number) {
+        const view = this.rendererContainer!.getBoundingClientRect();
+        const pointerViewX = clientX - view.x;
+        const pointerViewY = clientY - view.y;
+        const pointerScreenX = clamp(pointerViewX / view.width, 0, 1) * this.width;
+        const pointerScreenY = clamp(pointerViewY / view.height, 0, 1) * this.height;
+
+        return {
+            x: pointerScreenX,
+            y: pointerScreenY,
+        };
+    }
+
     injectTouch = (
         action: AndroidMotionEventAction,
         e: React.PointerEvent<HTMLDivElement>
@@ -589,17 +605,12 @@ class ScrcpyPageState {
             return;
         }
 
-        const view = this.rendererContainer!.getBoundingClientRect();
-        const pointerViewX = e.clientX - view.x;
-        const pointerViewY = e.clientY - view.y;
-        const pointerScreenX = clamp(pointerViewX / view.width, 0, 1) * this.width;
-        const pointerScreenY = clamp(pointerViewY / view.height, 0, 1) * this.height;
-
+        const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
         this.client.injectTouch({
             action,
             pointerId: BigInt(e.pointerId),
-            pointerX: pointerScreenX,
-            pointerY: pointerScreenY,
+            pointerX: x,
+            pointerY: y,
             pressure: e.pressure * 65535,
             buttons: 0,
         });
@@ -627,6 +638,23 @@ class ScrcpyPageState {
         }
         e.currentTarget.releasePointerCapture(e.pointerId);
         this.injectTouch(AndroidMotionEventAction.Up, e);
+    };
+
+    handleWheel = (e: WheelEvent) => {
+        if (!this.client) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
+        this.client.injectScroll({
+            pointerX: x,
+            pointerY: y,
+            scrollX: -e.deltaX,
+            scrollY: -e.deltaY,
+        });
     };
 
     handleKeyDown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
