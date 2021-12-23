@@ -66,7 +66,7 @@ class LineReader {
 function* parseScrcpyOutput(text: string): Generator<ScrcpyOutput> {
     const lines = new LineReader(text);
     let line: string | undefined;
-    while (line = lines.next()) {
+    while ((line = lines.next()) !== undefined) {
         if (line === '') {
             continue;
         }
@@ -176,7 +176,12 @@ export class ScrcpyClient {
         pushServer(device, file, options);
     }
 
-    public static async getEncoders(device: Adb, options: ScrcpyOptions): Promise<string[]> {
+    public static async getEncoders(
+        device: Adb,
+        path: string,
+        version: string,
+        options: ScrcpyOptions
+    ): Promise<string[]> {
         const client = new ScrcpyClient(device);
         const encoderNameRegex = options.getOutputEncoderNameRegex();
 
@@ -201,6 +206,8 @@ export class ScrcpyClient {
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
         await client.startCore(
+            path,
+            version,
             options.formatGetEncoderListArguments(),
             options.createConnection(device)
         );
@@ -256,6 +263,8 @@ export class ScrcpyClient {
     }
 
     private async startCore(
+        path: string,
+        version: string,
         serverArguments: string[],
         connection: ScrcpyClientConnection
     ): Promise<void> {
@@ -265,7 +274,14 @@ export class ScrcpyClient {
             await connection.initialize();
 
             process = await this.device.childProcess.spawn(
-                serverArguments,
+                [
+                    `CLASSPATH=${path}`,
+                    'app_process',
+                    /* unused */ '/',
+                    'com.genymobile.scrcpy.Server',
+                    version,
+                    ...serverArguments
+                ],
                 {
                     // Scrcpy server doesn't split stdout and stderr,
                     // so disable Shell Protocol to simplify processing
@@ -302,9 +318,15 @@ export class ScrcpyClient {
         }
     }
 
-    public start(options: ScrcpyOptions) {
+    public start(
+        path: string,
+        version: string,
+        options: ScrcpyOptions
+    ) {
         this.options = options;
         return this.startCore(
+            path,
+            version,
             options.formatServerArguments(),
             options.createConnection(this.device)
         );

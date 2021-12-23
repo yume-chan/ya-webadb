@@ -22,11 +22,13 @@
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
     },
+    "bin": {
+        "fetch-scrcpy-server": "scripts/fetch-server.js"
+    },
     "main": "cjs/index.js",
     "module": "esm/index.js",
     "types": "dts/index.d.ts",
     "scripts": {
-        "postinstall": "node scripts/fetch-server",
         "build": "build-ts-package",
         "build:watch": "build-ts-package --incremental",
         "test": "jest --coverage",

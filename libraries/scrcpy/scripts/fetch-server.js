@@ -1,26 +1,28 @@
+#!/usr/bin/env node
+
 const { fetchVersion } = require('gh-release-fetch');
 const path = require('path');
 const fs = require('fs').promises;
 
-const SERVER_VERSION = '1.19';
-
 (async () => {
-    console.log('Downloading scrcpy server binary...');
+    const serverVerision = process.argv[2];
+    console.log(`Downloading Scrcpy server binary version ${serverVerision}...`);
 
     const binFolder = path.resolve(__dirname, '..', 'bin');
 
     await fetchVersion({
         repository: 'Genymobile/scrcpy',
-        version: `v${SERVER_VERSION}`,
-        package: `scrcpy-server-v${SERVER_VERSION}`,
+        version: `v${serverVerision}`,
+        package: `scrcpy-server-v${serverVerision}`,
         destination: binFolder,
         extract: false,
     });
 
     await fs.rename(
-        path.resolve(binFolder, `scrcpy-server-v${SERVER_VERSION}`),
+        path.resolve(binFolder, `scrcpy-server-v${serverVerision}`),
         path.resolve(binFolder, 'scrcpy-server')
     );
 
-    fs.writeFile(path.resolve(binFolder, 'version'), SERVER_VERSION);
+    fs.writeFile(path.resolve(binFolder, 'version.js'), `export default '${serverVerision}';`);
+    fs.writeFile(path.resolve(binFolder, 'version.d.ts'), `export default '${serverVerision}';`);
 })();

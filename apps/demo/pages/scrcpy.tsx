@@ -1,7 +1,7 @@
 import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_18, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
+import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_21, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -10,10 +10,9 @@ import React, { useEffect, useState } from "react";
 import { DemoMode, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { global } from "../state";
 import { CommonStackTokens, formatSpeed, Icons, RouteStackProps } from "../utils";
+import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 
 const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url).toString();
-
-export const ScrcpyServerVersion = '1.19';
 
 class FetchWithProgress {
     public readonly promise: Promise<ArrayBuffer>;
@@ -400,8 +399,9 @@ class ScrcpyPageState {
 
             const encoders = await ScrcpyClient.getEncoders(
                 global.device,
-                new ScrcpyOptions1_18({
-                    version: ScrcpyServerVersion,
+                DEFAULT_SERVER_PATH,
+                SCRCPY_SERVER_VERSION,
+                new ScrcpyOptions1_21({
                     logLevel: ScrcpyLogLevel.Debug,
                     bitRate: 4_000_000,
                     tunnelForward: this.tunnelForward,
@@ -456,17 +456,20 @@ class ScrcpyPageState {
             });
 
             await client.start(
-                new ScrcpyOptions1_18({
-                    version: ScrcpyServerVersion,
+                DEFAULT_SERVER_PATH,
+                SCRCPY_SERVER_VERSION,
+                new ScrcpyOptions1_21({
                     logLevel: ScrcpyLogLevel.Debug,
                     maxSize: this.resolution,
                     bitRate: this.bitRate,
-                    orientation: ScrcpyScreenOrientation.Unlocked,
+                    lockVideoOrientation: ScrcpyScreenOrientation.Unlocked,
                     tunnelForward: this.tunnelForward,
-                    encoder: this.selectedEncoder ?? encoders[0],
-                    profile: decoder.maxProfile,
-                    level: decoder.maxLevel,
-                })
+                    encoderName: this.selectedEncoder ?? encoders[0],
+                    codecOptions: new CodecOptions({
+                        profile: decoder.maxProfile,
+                        level: decoder.maxLevel,
+                    }),
+                }),
             );
 
             runInAction(() => {

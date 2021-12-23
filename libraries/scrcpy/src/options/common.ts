@@ -32,3 +32,25 @@ export interface ScrcpyOptions {
 
     createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb): ArrayBuffer | undefined;
 }
+
+export interface ToScrcpyOption {
+    toScrcpyOption(): string;
+}
+
+export function isToScrcpyOption(value: any): value is ToScrcpyOption {
+    return typeof value === 'object' &&
+        value !== null &&
+        typeof value.toScrcpyOption === 'function';
+}
+
+export function toScrcpyOption(value: any, empty: string): string {
+    if (value === undefined) {
+        return empty;
+    }
+
+    if (isToScrcpyOption(value)) {
+        return value.toScrcpyOption();
+    }
+
+    return `${value}`;
+}

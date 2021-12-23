@@ -1,11 +1,10 @@
 import { Adb } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../message";
-import { ScrcpyOptions1_17, ScrcpyOptions1_17Init } from "./1_17";
-import { ScrcpyLogLevel, ScrcpyScreenOrientation } from "./common";
+import { ScrcpyOptions1_16, ScrcpyOptions1_16Type } from "./1_16";
 
-export interface ScrcpyOptions1_18Init extends ScrcpyOptions1_17Init {
-    powerOffOnClose?: boolean;
+export interface ScrcpyOptions1_18Type extends ScrcpyOptions1_16Type {
+    powerOffOnClose: boolean;
 }
 
 export const ScrcpyBackOrScreenOnEvent1_18 =
@@ -13,40 +12,24 @@ export const ScrcpyBackOrScreenOnEvent1_18 =
         .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>())
         .uint8('action', placeholder<AndroidKeyEventAction>());
 
-export class ScrcpyOptions1_18 extends ScrcpyOptions1_17 {
-    powerOffOnClose: boolean;
-
-    constructor(init: ScrcpyOptions1_18Init) {
+export class ScrcpyOptions1_18<T extends ScrcpyOptions1_18Type = ScrcpyOptions1_18Type> extends ScrcpyOptions1_16<T> {
+    constructor(init: Partial<ScrcpyOptions1_18Type>) {
         super(init);
         const {
-            logLevel = ScrcpyLogLevel.Error,
-            orientation = ScrcpyScreenOrientation.Unlocked,
             powerOffOnClose = false,
         } = init;
-        this.logLevel = logLevel;
-        this.orientation = orientation;
-        this.powerOffOnClose = powerOffOnClose;
+        this.value.powerOffOnClose = powerOffOnClose;
     }
 
-    public override formatServerArguments(): string[] {
-        return [
-            ...super.formatServerArguments(),
-            this.powerOffOnClose.toString()
-        ];
-    }
-
-    public override formatGetEncoderListArguments(): string[] {
-        return [
-            ...super.formatGetEncoderListArguments(),
-            this.powerOffOnClose.toString()
-        ];
+    protected override getArgumnetOrder(): (keyof T)[] {
+        return super.getArgumnetOrder().concat(['powerOffOnClose']);
     }
 
     public override getOutputEncoderNameRegex(): RegExp {
         return /^\s+scrcpy --encoder '(.*?)'/;
     }
 
-    public createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb) {
+    public override createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb) {
         return ScrcpyBackOrScreenOnEvent1_18.serialize(
             {
                 type: ScrcpyControlMessageType.BackOrScreenOn,
