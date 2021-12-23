@@ -1,5 +1,5 @@
 import { registerIcons } from "@fluentui/react";
-import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, NavigationRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, NavigationRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
@@ -9,6 +9,7 @@ export function register() {
             AddCircle: <AddCircleRegular style={STYLE} />,
             ArrowClockwise: <ArrowClockwiseRegular style={STYLE} />,
             Bookmark: <BookmarkRegular style={STYLE} />,
+            Box: <BoxRegular style={STYLE} />,
             Camera: <CameraRegular style={STYLE} />,
             ChevronDown: <ChevronDownRegular style={STYLE} />,
             ChevronRight: <ChevronRightRegular style={STYLE} />,
@@ -54,6 +55,7 @@ export default {
     AddCircle: 'AddCircle',
     ArrowClockwise: 'ArrowClockwise',
     Bookmark: 'Bookmark',
+    Box: 'Box',
     Camera: 'Camera',
     Copy: 'Copy',
     Circle: 'Circle',

@@ -46,6 +46,11 @@ const ROUTES = [
         icon: Icons.WifiSettings,
         name: 'ADB over WiFi',
     },
+    {
+        url: '/install',
+        icon: Icons.Box,
+        name: 'Install APK',
+    },
 ];
 
 function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsProps<INavButtonProps>) {
