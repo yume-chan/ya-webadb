@@ -30,16 +30,15 @@
         "react": "^17.0.2",
         "react-dom": "^17.0.2",
         "streamsaver": "^2.0.5",
-        "xterm": "^4.15.0",
+        "xterm": "^4.16.0",
         "xterm-addon-fit": "^0.5.0",
-        "xterm-addon-search": "^0.8.1",
-        "xterm-addon-webgl": "^0.11.3"
+        "xterm-addon-search": "^0.8.2",
+        "xterm-addon-webgl": "^0.11.4"
     },
     "devDependencies": {
         "@mdx-js/loader": "^1.6.22",
         "@next/mdx": "^11.1.2",
         "@types/react": "17.0.27",
-        "copy-webpack-plugin": "^9.0.1",
         "eslint": "7.32.0",
         "eslint-config-next": "^12.0.7",
         "typescript": "^4.4.3"

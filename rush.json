@@ -15,7 +15,7 @@
      * path segment in the "$schema" field for all your Rush config files.  This will ensure
      * correct error-underlining and tab-completion for editors such as VS Code.
      */
-    "rushVersion": "5.55.1",
+    "rushVersion": "5.57.1",
     /**
      * The next field selects which package manager should be installed and determines its version.
      * Rush installs its own local copy of the package manager to ensure that your build process
@@ -24,7 +24,7 @@
      * Specify one of: "pnpmVersion", "npmVersion", or "yarnVersion".  See the Rush documentation
      * for details about these alternatives.
      */
-    "pnpmVersion": "5.15.2",
+    "pnpmVersion": "6.7.1",
     // "npmVersion": "4.5.0",
     // "yarnVersion": "1.9.4",
     /**
@@ -115,7 +115,7 @@
      * LTS schedule: https://nodejs.org/en/about/releases/
      * LTS versions: https://nodejs.org/en/download/releases/
      */
-    "nodeSupportedVersionRange": ">=12.13.0 <13.0.0 || >=14.15.0 <15.0.0",
+    "nodeSupportedVersionRange": ">=12.13.0 <13.0.0 || >=14.15.0 <15.0.0 || >=16.13.0 <17.0.0",
     /**
      * Odd-numbered major versions of Node.js are experimental.  Even-numbered releases
      * spend six months in a stabilization period before the first Long Term Support (LTS) version.
@@ -163,8 +163,8 @@
      * To remove these restrictions, you could set projectFolderMinDepth=1
      * and set projectFolderMaxDepth to a large number.
      */
-    // "projectFolderMinDepth": 2,
-    // "projectFolderMaxDepth": 2,
+    "projectFolderMinDepth": 2,
+    "projectFolderMaxDepth": 2,
     /**
      * Today the npmjs.com registry enforces fairly strict naming rules for packages, but in the early
      * days there was no standard and hardly any enforcement.  A few large legacy projects are still using
@@ -346,7 +346,7 @@
      * that read these JSON files and do something with them.  These scripts are typically registered
      * in the "eventHooks" section.
      */
-    // "telemetryEnabled": false,
+    "telemetryEnabled": false,
     /**
      * Allows creation of hotfix changes. This feature is experimental so it is disabled by default.
      * If this is set, 'rush change' only allows a 'hotfix' change type to be specified. This change type
@@ -460,7 +460,8 @@
         },
         {
             "packageName": "@yume-chan/adb-credential-web",
-            "projectFolder": "libraries/adb-credential-web"
+            "projectFolder": "libraries/adb-credential-web",
+            "shouldPublish": true
         },
         {
             "packageName": "@yume-chan/scrcpy",

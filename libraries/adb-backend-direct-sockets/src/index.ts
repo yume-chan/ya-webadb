@@ -113,5 +113,6 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
 
     public dispose(): void | Promise<void> {
         this.socket?.close();
+        this._connected = false;
     }
 }

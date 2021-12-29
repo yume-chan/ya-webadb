@@ -75,8 +75,6 @@ export class AdbTerminal extends AutoDisposable {
 
     public fit() {
         this.fitAddon.fit();
-        // workaround https://github.com/xtermjs/xterm.js/issues/3504
-        (this.terminal as any)._core.viewport._refresh();
         // Resize remote terminal
         const { rows, cols } = this.terminal;
         this._shell?.resize(rows, cols);
