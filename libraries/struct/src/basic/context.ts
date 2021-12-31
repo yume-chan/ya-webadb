@@ -10,6 +10,12 @@ export interface StructSerializationContext {
     encodeUtf8(input: string): ArrayBuffer;
 }
 
+export interface StructSyncDeserializationContext extends StructSerializationContext {
+    decodeUtf8(buffer: ArrayBuffer): string;
+
+    read(length: number): ArrayBuffer;
+}
+
 /**
  * Context with enough methods to deserialize a struct
  */
@@ -22,10 +28,10 @@ export interface StructDeserializationContext extends StructSerializationContext
     /**
      * Read data from the underlying data source.
      *
-     * Context should return exactly `length` bytes or data. If that's not possible
-     * (due to end of file or other error condition), it should throw an error.
+     * Context must return exactly `length` bytes or data. If that's not possible
+     * (due to end of file or other error condition), it must throw an error.
      */
-    read(length: number): ValueOrPromise<ArrayBuffer>;
+    read(length: number): Promise<ArrayBuffer>;
 }
 
 export interface StructOptions {

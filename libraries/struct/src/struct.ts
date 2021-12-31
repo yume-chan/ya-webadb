@@ -8,14 +8,12 @@ export interface StructLike<TValue> {
 
 /**
  * Extract the value type of the specified `Struct`
- *
- * The lack of generic constraint is on purpose to allow `StructLike` types
  */
 export type StructValueType<T extends StructLike<any>> =
     Awaited<ReturnType<T['deserialize']>>;
 
 /**
- * Create a new `Struct` type with `TDescriptor` appended
+ * Create a new `Struct` type with `TDefinition` appended
  */
 type AddFieldDescriptor<
     TFields extends object,
@@ -45,7 +43,7 @@ interface ArrayBufferLikeFieldCreator<
     TPostDeserialized
     > {
     /**
-     * Append a fixed-length array to the `Struct`
+     * Append a fixed-length array buffer like field to the `Struct`
      *
      * @param name Name of the field
      * @param type `Array.SubType.ArrayBuffer` or `Array.SubType.String`
@@ -75,7 +73,7 @@ interface ArrayBufferLikeFieldCreator<
     >;
 
     /**
-     * Append a variable-length array to the `Struct`
+     * Append a variable-length array buffer like field to the `Struct`
      */
     <
         TName extends PropertyKey,
@@ -101,9 +99,9 @@ interface ArrayBufferLikeFieldCreator<
 }
 
 /**
- * Similar to `ArrayBufferLikeFieldCreator`, but bind to a `ArrayBufferLikeFieldType`
+ * Similar to `ArrayBufferLikeFieldCreator`, but bind to `TType`
  */
-interface ArrayBufferTypeFieldDefinitionCreator<
+interface BindedArrayBufferLikeFieldDefinitionCreator<
     TFields extends object,
     TOmitInitKey extends PropertyKey,
     TExtra extends object,
@@ -420,7 +418,7 @@ export class Struct<
             }
         };
 
-    public arrayBuffer: ArrayBufferTypeFieldDefinitionCreator<
+    public arrayBuffer: BindedArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
@@ -433,7 +431,7 @@ export class Struct<
             return this.arrayBufferLike(name, ArrayBufferFieldType.instance, options);
         };
 
-    public uint8ClampedArray: ArrayBufferTypeFieldDefinitionCreator<
+    public uint8ClampedArray: BindedArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
@@ -446,7 +444,7 @@ export class Struct<
             return this.arrayBufferLike(name, Uint8ClampedArrayFieldType.instance, options);
         };
 
-    public string: ArrayBufferTypeFieldDefinitionCreator<
+    public string: BindedArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
@@ -460,14 +458,14 @@ export class Struct<
         };
 
     /**
-     * Adds some extra fields into every Struct value.
+     * Adds some extra properties into every `Struct` value.
      *
-     * Extra fields will not affect serialize or deserialize process.
+     * Extra properties will not affect serialize or deserialize process.
      *
-     * Multiple calls to `extra` will merge all values together.
+     * Multiple calls to `extra` will merge all properties together.
      *
      * @param value
-     * An object containing anything you want to add to the result object. Accessors and methods are also allowed.
+     * An object containing properties to be added to the result value. Accessors and methods are also allowed.
      */
     public extra<T extends Record<
         // This trick disallows any keys that are already in `TValue`
