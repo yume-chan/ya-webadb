@@ -34,8 +34,7 @@ export class ScrcpyOptions1_18<T extends ScrcpyOptions1_18Type = ScrcpyOptions1_
             {
                 type: ScrcpyControlMessageType.BackOrScreenOn,
                 action,
-            },
-            device.backend
+            }
         );
     }
 }

@@ -1,9 +1,6 @@
 import { AdbBackend, BufferedStream, Stream } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 
-const Utf8Encoder = new TextEncoder();
-const Utf8Decoder = new TextDecoder();
-
 declare global {
     interface TCPSocket {
         close(): Promise<void>;
@@ -31,14 +28,6 @@ declare global {
     interface Navigator {
         openTCPSocket(options?: SocketOptions): Promise<TCPSocket>;
     }
-}
-
-export function encodeUtf8(input: string): ArrayBuffer {
-    return Utf8Encoder.encode(input).buffer;
-}
-
-export function decodeUtf8(buffer: ArrayBuffer): string {
-    return Utf8Decoder.decode(buffer);
 }
 
 export default class AdbDirectSocketsBackend implements AdbBackend {
@@ -93,14 +82,6 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
         this.writer = this.socket.writable.getWriter();
 
         this._connected = true;
-    }
-
-    public encodeUtf8(input: string): ArrayBuffer {
-        return encodeUtf8(input);
-    }
-
-    public decodeUtf8(buffer: ArrayBuffer): string {
-        return decodeUtf8(buffer);
     }
 
     public write(buffer: ArrayBuffer): Promise<void> {

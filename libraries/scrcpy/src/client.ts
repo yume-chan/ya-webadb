@@ -7,6 +7,7 @@ import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageTy
 import { ScrcpyLogLevel, ScrcpyOptions } from "./options";
 import { pushServer, PushServerOptions } from "./push-server";
 import { parse_sequence_parameter_set, SequenceParameterSet } from './sps';
+import { decodeUtf8 } from "./utils";
 
 interface ScrcpyError {
     type: string;
@@ -333,7 +334,7 @@ export class ScrcpyClient {
     }
 
     private handleProcessOutput(data: ArrayBuffer) {
-        const string = this.device.backend.decodeUtf8(data);
+        const string = decodeUtf8(data);
         for (const output of parseScrcpyOutput(string)) {
             switch (output.level) {
                 case ScrcpyLogLevel.Debug:
@@ -470,7 +471,7 @@ export class ScrcpyClient {
         await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
             ...message,
             type: ScrcpyControlMessageType.InjectKeycode,
-        }, this.backend));
+        }));
     }
 
     public async injectText(text: string) {
@@ -481,7 +482,7 @@ export class ScrcpyClient {
         await this.controlStream.write(ScrcpyInjectTextControlMessage.serialize({
             type: ScrcpyControlMessageType.InjectText,
             text,
-        }, this.backend));
+        }));
     }
 
     public async injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, 'type' | 'screenWidth' | 'screenHeight'>) {
@@ -506,7 +507,7 @@ export class ScrcpyClient {
             type: ScrcpyControlMessageType.InjectTouch,
             screenWidth: this.screenWidth,
             screenHeight: this.screenHeight,
-        }, this.backend);
+        });
         await this.controlStream.write(buffer);
         this.sendingTouchMessage = false;
     }
@@ -525,7 +526,7 @@ export class ScrcpyClient {
             type: ScrcpyControlMessageType.InjectScroll,
             screenWidth: this.screenWidth,
             screenHeight: this.screenHeight,
-        }, this.backend);
+        });
         await this.controlStream.write(buffer);
     }
 

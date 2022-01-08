@@ -174,7 +174,6 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
         if (action === AndroidKeyEventAction.Down) {
             return ScrcpyBackOrScreenOnEvent1_16.serialize(
                 { type: ScrcpyControlMessageType.BackOrScreenOn },
-                device.backend
             );
         }
 

@@ -1,6 +1,5 @@
 import { AdbBackend } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
-import { decodeUtf8, encodeUtf8 } from './utils';
 
 export const WebUsbDeviceFilter: USBDeviceFilter = {
     classCode: 0xFF,
@@ -106,14 +105,6 @@ export class AdbWebUsbBackend implements AdbBackend {
         }
 
         throw new Error('Unknown error');
-    }
-
-    public encodeUtf8(input: string): ArrayBuffer {
-        return encodeUtf8(input);
-    }
-
-    public decodeUtf8(buffer: ArrayBuffer): string {
-        return decodeUtf8(buffer);
     }
 
     public async write(buffer: ArrayBuffer): Promise<void> {
