@@ -31,15 +31,14 @@ export type AdbPacketInit = Omit<typeof AdbPacketStruct['TInit'], 'checksum' | '
 
 export namespace AdbPacket {
     export async function read(backend: AdbBackend): Promise<AdbPacket> {
-        let buffer = await backend.read(24);
-
         // Detect boundary
         // Note that it relies on the backend to only return data from one write operation
-        while (buffer.byteLength !== 24) {
+        let buffer: ArrayBuffer;
+        do {
             // Maybe it's a payload from last connection.
             // Ignore and try again
             buffer = await backend.read(24);
-        }
+        } while (buffer.byteLength !== 24);
 
         let bufferUsed = false;
         const stream = new BufferedStream({
@@ -52,11 +51,7 @@ export namespace AdbPacket {
             }
         });
 
-        return AdbPacketStruct.deserialize({
-            read: stream.read.bind(stream),
-            decodeUtf8: backend.decodeUtf8.bind(backend),
-            encodeUtf8: backend.encodeUtf8.bind(backend),
-        });
+        return AdbPacketStruct.deserialize(stream);
     }
 
     export async function write(
@@ -80,7 +75,7 @@ export namespace AdbPacket {
         };
 
         // Write payload separately to avoid an extra copy
-        const header = AdbPacketHeader.serialize(packet, backend);
+        const header = AdbPacketHeader.serialize(packet);
         await backend.write(header);
         if (packet.payload.byteLength) {
             await backend.write(packet.payload);

@@ -1,5 +1,6 @@
-import Struct, { StructDeserializationContext, StructLike, StructValueType } from '@yume-chan/struct';
+import Struct, { StructAsyncDeserializeStream, StructLike, StructValueType } from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
+import { decodeUtf8 } from "../../utils";
 
 export enum AdbSyncResponseId {
     Entry = 'DENT',
@@ -25,8 +26,8 @@ export class AdbSyncDoneResponse implements StructLike<AdbSyncDoneResponse> {
         this.length = length;
     }
 
-    public async deserialize(context: StructDeserializationContext): Promise<this> {
-        await context.read(this.length);
+    public async deserialize(stream: StructAsyncDeserializeStream): Promise<this> {
+        await stream.read(this.length);
         return this;
     }
 }
@@ -43,7 +44,7 @@ export async function adbSyncReadResponse<T extends Record<string, StructLike<an
     stream: AdbBufferedStream,
     types: T,
 ): Promise<StructValueType<T[keyof T]>> {
-    const id = stream.backend.decodeUtf8(await stream.read(4));
+    const id = decodeUtf8(await stream.read(4));
 
     if (id === AdbSyncResponseId.Fail) {
         await AdbSyncFailResponse.deserialize(stream);

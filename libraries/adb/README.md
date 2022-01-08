@@ -2,6 +2,8 @@
 
 TypeScript implementation of Android Debug Bridge (ADB) protocol.
 
+**WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
+
 - [Compatibility](#compatibility)
 - [Connection](#connection)
   - [Backend](#backend)
@@ -16,8 +18,6 @@ TypeScript implementation of Android Debug Bridge (ADB) protocol.
     - [AdbAuthenticator](#adbauthenticator)
 - [Stream multiplex](#stream-multiplex)
   - [Backend](#backend-1)
-    - [`encodeUtf8`](#encodeutf8)
-    - [`decodeUtf8`](#decodeutf8)
 - [Commands](#commands)
   - [childProcess](#childprocess)
   - [usb](#usb)
@@ -133,25 +133,9 @@ ADB commands are all based on streams. Multiple streams can send and receive at 
 3. Client and server read/write on the stream.
 4. Client/server sends a `CLSE` to close the stream.
 
-The `Backend` is responsible for encoding and decoding UTF-8 strings.
+The `Backend` is responsible for reading and writing data from underlying source.
 
 ### Backend
-
-#### `encodeUtf8`
-
-```ts
-encodeUtf8(input: string): ArrayBuffer
-```
-
-Encode `input` into an `ArrayBuffer` with UTF-8 encoding.
-
-#### `decodeUtf8`
-
-```ts
-decodeUtf8(buffer: ArrayBuffer): string
-```
-
-Decode `buffer` into a string with UTF-8 encoding.
 
 ## Commands
 

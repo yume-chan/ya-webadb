@@ -6,6 +6,7 @@ import { AdbChildProcess, AdbDemoMode, AdbFrameBuffer, AdbReverseCommand, AdbSyn
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
+import { decodeUtf8 } from "./utils";
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -118,7 +119,7 @@ export class Adb {
                             this.packetDispatcher.appendNullToServiceString = false;
                         }
 
-                        this.parseBanner(this.backend.decodeUtf8(packet.payload!));
+                        this.parseBanner(decodeUtf8(packet.payload!));
                         resolver.resolve();
                         break;
                     case AdbCommand.Auth:
@@ -229,7 +230,7 @@ export class Adb {
         const resolver = new PromiseResolver<string>();
         let result = '';
         socket.onData(buffer => {
-            result += this.backend.decodeUtf8(buffer);
+            result += decodeUtf8(buffer);
         });
         socket.onClose(() => resolver.resolve(result));
         return resolver.promise;

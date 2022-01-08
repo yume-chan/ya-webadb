@@ -4,6 +4,7 @@ import type { Adb } from "../../adb";
 import { AdbFeatures } from "../../features";
 import type { AdbSocket } from "../../socket";
 import { AdbBufferedStream } from "../../stream";
+import { encodeUtf8 } from "../../utils";
 import type { AdbShell } from "./types";
 
 export enum AdbShellProtocolId {
@@ -93,8 +94,7 @@ export class AdbShellProtocol implements AdbShell {
                 {
                     id: AdbShellProtocolId.Stdin,
                     data,
-                },
-                this.stream
+                }
             )
         );
     }
@@ -104,14 +104,13 @@ export class AdbShellProtocol implements AdbShell {
             AdbShellProtocolPacket.serialize(
                 {
                     id: AdbShellProtocolId.WindowSizeChange,
-                    data: this.stream.encodeUtf8(
+                    data: encodeUtf8(
                         // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
                         // However, according to https://linux.die.net/man/4/tty_ioctl
                         // `x_pixels` and `y_pixels` are not used, so always pass `0` is fine.
                         `${rows}x${cols},0x0\0`
                     ),
-                },
-                this.stream
+                }
             )
         );
     }

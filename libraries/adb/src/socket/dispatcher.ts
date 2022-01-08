@@ -2,7 +2,7 @@ import { AsyncOperationManager } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbBackend } from '../backend';
 import { AdbCommand, AdbPacket, AdbPacketInit } from '../packet';
-import { AutoResetEvent } from '../utils';
+import { AutoResetEvent, decodeUtf8, encodeUtf8 } from '../utils';
 import { AdbSocketController } from './controller';
 import { AdbLogger } from './logger';
 import { AdbSocket } from './socket';
@@ -160,7 +160,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this.initializers.resolve(localId, undefined);
 
         const remoteId = packet.arg0;
-        const serviceString = this.backend.decodeUtf8(packet.payload!);
+        const serviceString = decodeUtf8(packet.payload!);
 
         const controller = new AdbSocketController({
             dispatcher: this,
@@ -234,7 +234,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
                 command: packetOrCommand as AdbCommand,
                 arg0: arg0 as number,
                 arg1: arg1 as number,
-                payload: typeof payload === 'string' ? this.backend.encodeUtf8(payload) : payload,
+                payload: typeof payload === 'string' ? encodeUtf8(payload) : payload,
             };
         }
 

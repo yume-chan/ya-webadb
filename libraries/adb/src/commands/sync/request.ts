@@ -1,5 +1,6 @@
 import Struct from '@yume-chan/struct';
-import { AdbBufferedStream } from '../../stream';
+import type { AdbBufferedStream } from '../../stream';
+import { encodeUtf8 } from "../../utils";
 
 export enum AdbSyncRequestId {
     List = 'LIST',
@@ -32,17 +33,17 @@ export async function adbSyncWriteRequest(
         buffer = AdbSyncNumberRequest.serialize({
             id,
             arg: value,
-        }, stream);
+        });
     } else if (typeof value === 'string') {
         buffer = AdbSyncDataRequest.serialize({
             id,
-            data: stream.encodeUtf8(value),
-        }, stream);
+            data: encodeUtf8(value),
+        });
     } else {
         buffer = AdbSyncDataRequest.serialize({
             id,
             data: value,
-        }, stream);
+        });
     }
     await stream.write(buffer);
 }

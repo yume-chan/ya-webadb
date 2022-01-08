@@ -12,10 +12,6 @@ export interface AdbBackend {
 
     connect?(): ValueOrPromise<void>;
 
-    encodeUtf8(input: string): ArrayBuffer;
-
-    decodeUtf8(buffer: ArrayBuffer): string;
-
     read(length: number): ValueOrPromise<ArrayBuffer>;
 
     write(buffer: ArrayBuffer): ValueOrPromise<void>;
