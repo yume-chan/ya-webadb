@@ -1,9 +1,11 @@
-import { StructDefaultOptions, StructDeserializationContext, StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from './basic';
+import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic';
+import { StructDefaultOptions, StructValue } from './basic';
+import { Syncbird } from "./syncbird";
 import { ArrayBufferFieldType, ArrayBufferLikeFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
-import { Awaited, Evaluate, Identity, Overwrite } from './utils';
+import { Awaited, Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils";
 
 export interface StructLike<TValue> {
-    deserialize(context: StructDeserializationContext): Promise<TValue>;
+    deserialize(stream: StructDeserializeStream | StructAsyncDeserializeStream): Promise<TValue>;
 }
 
 /**
@@ -53,7 +55,7 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends ArrayBufferLikeFieldType,
+        TType extends ArrayBufferLikeFieldType<any, any>,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
         name: TName,
@@ -77,7 +79,7 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends ArrayBufferLikeFieldType,
+        TType extends ArrayBufferLikeFieldType<any, any>,
         TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields>,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
@@ -106,7 +108,7 @@ interface BindedArrayBufferLikeFieldDefinitionCreator<
     TOmitInitKey extends PropertyKey,
     TExtra extends object,
     TPostDeserialized,
-    TType extends ArrayBufferLikeFieldType
+    TType extends ArrayBufferLikeFieldType<any, any>
     > {
     <
         TName extends PropertyKey,
@@ -520,33 +522,53 @@ export class Struct<
         return this as any;
     }
 
-    public async deserialize(
-        context: StructDeserializationContext
-    ): Promise<StructDeserializedResult<TFields, TExtra, TPostDeserialized>> {
+    public deserialize(
+        stream: StructDeserializeStream,
+    ): StructDeserializedResult<TFields, TExtra, TPostDeserialized>;
+    public deserialize(
+        stream: StructAsyncDeserializeStream,
+    ): Promise<StructDeserializedResult<TFields, TExtra, TPostDeserialized>>;
+    public deserialize(
+        stream: StructDeserializeStream | StructAsyncDeserializeStream,
+    ): ValueOrPromise<StructDeserializedResult<TFields, TExtra, TPostDeserialized>> {
         const value = new StructValue();
         Object.defineProperties(value.value, this._extra);
 
-        for (const [name, definition] of this._fields) {
-            const fieldValue = await definition.deserialize(this.options, context, value);
-            value.set(name, fieldValue);
-        }
+        return Syncbird.try(() => {
+            const iterator = this._fields[Symbol.iterator]();
+            const iterate: () => StructValue | Syncbird<StructValue> = () => {
+                const result = iterator.next();
+                if (result.done) {
+                    return value;
+                }
 
-        if (this._postDeserialized) {
-            const object = value.value as TFields;
-            const result = this._postDeserialized.call(object, object);
-            if (result) {
-                return result;
+                const [name, definition] = result.value;
+                return Syncbird.resolve(
+                    definition.deserialize(this.options, stream as any, value)
+                ).then(fieldValue => {
+                    value.set(name, fieldValue);
+                    return iterate();
+                });
+            };
+            return iterate();
+        }).then(value => {
+            if (this._postDeserialized) {
+                const object = value.value as TFields;
+                const result = this._postDeserialized.call(object, object);
+                if (result) {
+                    return result;
+                }
             }
-        }
 
-        return value.value as any;
+            return value.value;
+        }).valueOrPromise();
     }
 
-    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>, context: StructSerializationContext): ArrayBuffer {
+    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): ArrayBuffer {
         const value = new StructValue();
 
         for (const [name, definition] of this._fields) {
-            const fieldValue = definition.create(this.options, context, value, (init as any)[name]);
+            const fieldValue = definition.create(this.options, value, (init as any)[name]);
             value.set(name, fieldValue);
         }
 
@@ -564,7 +586,7 @@ export class Struct<
         const dataView = new DataView(buffer);
         let offset = 0;
         for (const { fieldValue, size } of fieldsInfo) {
-            fieldValue.serialize(dataView, offset, context);
+            fieldValue.serialize(dataView, offset);
             offset += size;
         }
 

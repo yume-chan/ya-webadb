@@ -1,4 +1,4 @@
-import type { StructOptions, StructSerializationContext } from './context';
+import type { StructOptions } from './context';
 import type { StructFieldDefinition } from './definition';
 import type { StructValue } from './struct-value';
 
@@ -17,9 +17,6 @@ export abstract class StructFieldValue<
     /** Gets the options of the associated `Struct` */
     public readonly options: Readonly<StructOptions>;
 
-    /** Gets the serialization context of the associated `Struct` instance */
-    public readonly context: StructSerializationContext;
-
     /** Gets the associated `Struct` instance */
     public readonly struct: StructValue;
 
@@ -28,13 +25,11 @@ export abstract class StructFieldValue<
     public constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
-        context: StructSerializationContext,
         struct: StructValue,
         value: TDefinition['TValue'],
     ) {
         this.definition = definition;
         this.options = options;
-        this.context = context;
         this.struct = struct;
         this.value = value;
     }
@@ -68,6 +63,5 @@ export abstract class StructFieldValue<
     public abstract serialize(
         dataView: DataView,
         offset: number,
-        context: StructSerializationContext
     ): void;
 }

@@ -1,14 +1,10 @@
-import { StructDefaultOptions, StructDeserializationContext, StructValue } from '../basic';
+import { StructDefaultOptions, StructDeserializeStream, StructValue } from '../basic';
 import { ArrayBufferFieldType, ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldType, StringFieldType, Uint8ClampedArrayFieldType } from './array-buffer';
 
-class MockDeserializationContext implements StructDeserializationContext {
+class MockDeserializationStream implements StructDeserializeStream {
     public buffer = new ArrayBuffer(0);
 
     public read = jest.fn((length: number) => this.buffer);
-
-    public encodeUtf8 = jest.fn((input: string) => Buffer.from(input, 'utf-8'));
-
-    public decodeUtf8 = jest.fn((buffer: ArrayBuffer) => Buffer.from(buffer).toString('utf-8'));
 }
 
 describe('Types', () => {
@@ -67,27 +63,13 @@ describe('Types', () => {
             it('`#toArrayBuffer` should return the decoded string', () => {
                 const text = 'foo';
                 const arrayBuffer = Buffer.from(text, 'utf-8');
-                const context = new MockDeserializationContext();
-                expect(StringFieldType.instance.toArrayBuffer(text, context)).toEqual(arrayBuffer);
-                expect(context.encodeUtf8).toBeCalledTimes(1);
-                expect(context.encodeUtf8).toBeCalledWith(text);
+                expect(StringFieldType.instance.toArrayBuffer(text)).toEqual(arrayBuffer);
             });
 
             it('`#fromArrayBuffer` should return the encoded ArrayBuffer', () => {
                 const text = 'foo';
                 const arrayBuffer = Buffer.from(text, 'utf-8');
-                const context: StructDeserializationContext = {
-                    decodeUtf8(arrayBuffer: ArrayBuffer): string {
-                        return Buffer.from(arrayBuffer).toString('utf-8');
-                    },
-                    encodeUtf8(input) {
-                        throw new Error('Method not implemented.');
-                    },
-                    read(length) {
-                        throw new Error('Method not implemented.');
-                    },
-                };
-                expect(StringFieldType.instance.fromArrayBuffer(arrayBuffer, context)).toBe(text);
+                expect(StringFieldType.instance.fromArrayBuffer(arrayBuffer)).toBe(text);
             });
 
             it('`#getSize` should return -1', () => {
@@ -107,7 +89,7 @@ describe('Types', () => {
                 const size = 10;
                 const definition = new MockArrayBufferFieldDefinition(ArrayBufferFieldType.instance, size);
 
-                const context = new MockDeserializationContext();
+                const context = new MockDeserializationStream();
                 const buffer = new ArrayBuffer(size);
                 context.buffer = buffer;
                 const struct = new StructValue();
@@ -124,7 +106,7 @@ describe('Types', () => {
                 const size = 10;
                 const definition = new MockArrayBufferFieldDefinition(Uint8ClampedArrayFieldType.instance, size);
 
-                const context = new MockDeserializationContext();
+                const context = new MockDeserializationStream();
                 const buffer = new ArrayBuffer(size);
                 context.buffer = buffer;
                 const struct = new StructValue();
@@ -143,7 +125,7 @@ describe('Types', () => {
                 const size = 0;
                 const definition = new MockArrayBufferFieldDefinition(ArrayBufferFieldType.instance, size);
 
-                const context = new MockDeserializationContext();
+                const context = new MockDeserializationStream();
                 const buffer = new ArrayBuffer(size);
                 context.buffer = buffer;
                 const struct = new StructValue();
@@ -165,7 +147,7 @@ describe('Types', () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(ArrayBufferFieldType.instance, size);
 
-                    const context = new MockDeserializationContext();
+                    const context = new MockDeserializationStream();
                     const buffer = new ArrayBuffer(size);
                     context.buffer = buffer;
                     const struct = new StructValue();
@@ -184,7 +166,7 @@ describe('Types', () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(ArrayBufferFieldType.instance, size);
 
-                    const context = new MockDeserializationContext();
+                    const context = new MockDeserializationStream();
                     const sourceArray = new Uint8Array(Array.from({ length: size }, (_, i) => i));
                     const buffer = sourceArray.buffer;
                     context.buffer = buffer;
@@ -194,7 +176,7 @@ describe('Types', () => {
 
                     const targetArray = new Uint8Array(size);
                     const targetView = new DataView(targetArray.buffer);
-                    fieldValue.serialize(targetView, 0, context);
+                    fieldValue.serialize(targetView, 0);
 
                     expect(targetArray).toEqual(sourceArray);
                 });
@@ -203,7 +185,7 @@ describe('Types', () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(ArrayBufferFieldType.instance, size);
 
-                    const context = new MockDeserializationContext();
+                    const context = new MockDeserializationStream();
                     const sourceArray = new Uint8Array(Array.from({ length: size }, (_, i) => i));
                     const buffer = sourceArray.buffer;
                     context.buffer = buffer;
@@ -215,7 +197,7 @@ describe('Types', () => {
 
                     const targetArray = new Uint8Array(size);
                     const targetView = new DataView(targetArray.buffer);
-                    fieldValue.serialize(targetView, 0, context);
+                    fieldValue.serialize(targetView, 0);
 
                     expect(targetArray).toEqual(sourceArray);
                 });

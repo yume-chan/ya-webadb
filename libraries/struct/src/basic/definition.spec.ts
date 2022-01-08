@@ -1,5 +1,5 @@
 import type { ValueOrPromise } from '../utils';
-import type { StructDeserializationContext, StructOptions, StructSerializationContext } from './context';
+import type { StructAsyncDeserializeStream, StructDeserializeStream, StructOptions } from './context';
 import { StructFieldDefinition } from './definition';
 import type { StructFieldValue } from './field-value';
 import type { StructValue } from './struct-value';
@@ -14,10 +14,24 @@ describe('StructFieldDefinition', () => {
                 public getSize(): number {
                     throw new Error('Method not implemented.');
                 }
-                public create(options: Readonly<StructOptions>, context: StructSerializationContext, struct: StructValue, value: unknown): StructFieldValue<this> {
+                public create(options: Readonly<StructOptions>, struct: StructValue, value: unknown): StructFieldValue<this> {
                     throw new Error('Method not implemented.');
                 }
-                public deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
+                public override deserialize(
+                    options: Readonly<StructOptions>,
+                    stream: StructDeserializeStream,
+                    struct: StructValue,
+                ): StructFieldValue<this>;
+                public override deserialize(
+                    options: Readonly<StructOptions>,
+                    stream: StructAsyncDeserializeStream,
+                    struct: StructValue,
+                ): Promise<StructFieldValue<this>>;
+                public deserialize(
+                    options: Readonly<StructOptions>,
+                    stream: StructDeserializeStream | StructAsyncDeserializeStream,
+                    struct: StructValue
+                ): ValueOrPromise<StructFieldValue<this>> {
                     throw new Error('Method not implemented.');
                 }
             }

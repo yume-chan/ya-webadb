@@ -1,4 +1,4 @@
-import { StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from '../basic';
+import { StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from '../basic';
 import type { KeysOfType } from '../utils';
 import { ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldType, ArrayBufferLikeFieldValue } from './array-buffer';
 
@@ -35,7 +35,6 @@ export class VariableLengthArrayBufferLikeFieldDefinition<
 
     public create(
         options: Readonly<StructOptions>,
-        context: StructSerializationContext,
         struct: StructValue,
         value: TType['TTypeScriptType'],
         arrayBuffer?: ArrayBuffer
@@ -43,7 +42,6 @@ export class VariableLengthArrayBufferLikeFieldDefinition<
         return new VariableLengthArrayBufferLikeStructFieldValue(
             this,
             options,
-            context,
             struct,
             value,
             arrayBuffer,
@@ -61,12 +59,11 @@ export class VariableLengthArrayBufferLikeStructFieldValue<
     public constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
-        context: StructSerializationContext,
         struct: StructValue,
         value: TDefinition['TValue'],
         arrayBuffer?: ArrayBuffer,
     ) {
-        super(definition, options, context, struct, value, arrayBuffer);
+        super(definition, options, struct, value, arrayBuffer);
 
         if (arrayBuffer) {
             this.length = arrayBuffer.byteLength;
@@ -87,7 +84,7 @@ export class VariableLengthArrayBufferLikeStructFieldValue<
         if (this.length === undefined) {
             this.length = this.definition.type.getSize(this.value);
             if (this.length === -1) {
-                this.arrayBuffer = this.definition.type.toArrayBuffer(this.value, this.context);
+                this.arrayBuffer = this.definition.type.toArrayBuffer(this.value);
                 this.length = this.arrayBuffer.byteLength;
             }
         }
@@ -116,7 +113,7 @@ export class VariableLengthArrayBufferLikeFieldLengthValue
         originalField: StructFieldValue,
         arrayBufferField: VariableLengthArrayBufferLikeFieldValueLike,
     ) {
-        super(originalField.definition, originalField.options, originalField.context, originalField.struct, 0);
+        super(originalField.definition, originalField.options, originalField.struct, 0);
         this.originalField = originalField;
         this.arrayBufferField = arrayBufferField;
     }
@@ -138,8 +135,8 @@ export class VariableLengthArrayBufferLikeFieldLengthValue
 
     set() { }
 
-    serialize(dataView: DataView, offset: number, context: StructSerializationContext) {
+    serialize(dataView: DataView, offset: number) {
         this.originalField.set(this.get());
-        this.originalField.serialize(dataView, offset, context);
+        this.originalField.serialize(dataView, offset);
     }
 }

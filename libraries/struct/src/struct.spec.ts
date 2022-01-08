@@ -1,16 +1,12 @@
-import { StructDefaultOptions, StructDeserializationContext, StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from './basic';
+import { StructAsyncDeserializeStream, StructDefaultOptions, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from './basic';
 import { Struct } from './struct';
 import { ArrayBufferFieldType, FixedLengthArrayBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition } from './types';
 import { ValueOrPromise } from './utils';
 
-class MockDeserializationContext implements StructDeserializationContext {
+class MockDeserializationStream implements StructDeserializeStream {
     public buffer = new ArrayBuffer(0);
 
     public read = jest.fn((length: number) => this.buffer);
-
-    public encodeUtf8 = jest.fn((input: string) => Buffer.from(input, 'utf-8'));
-
-    public decodeUtf8 = jest.fn((buffer: ArrayBuffer) => Buffer.from(buffer).toString('utf-8'));
 }
 
 describe('Struct', () => {
@@ -32,10 +28,24 @@ describe('Struct', () => {
                 return this.options;
             });
 
-            public create(options: Readonly<StructOptions>, context: StructSerializationContext, struct: StructValue, value: unknown): StructFieldValue<this> {
+            public create(options: Readonly<StructOptions>, struct: StructValue, value: unknown): StructFieldValue<this> {
                 throw new Error('Method not implemented.');
             }
-            public deserialize(options: Readonly<StructOptions>, context: StructDeserializationContext, struct: StructValue): ValueOrPromise<StructFieldValue<this>> {
+            public override deserialize(
+                options: Readonly<StructOptions>,
+                stream: StructDeserializeStream,
+                struct: StructValue,
+            ): StructFieldValue<this>;
+            public override deserialize(
+                options: Readonly<StructOptions>,
+                stream: StructAsyncDeserializeStream,
+                struct: StructValue,
+            ): Promise<StructFieldValue<this>>;
+            public override deserialize(
+                options: Readonly<StructOptions>,
+                stream: StructDeserializeStream | StructAsyncDeserializeStream,
+                struct: StructValue
+            ): ValueOrPromise<StructFieldValue<this>> {
                 throw new Error('Method not implemented.');
             }
         }
@@ -265,17 +275,17 @@ describe('Struct', () => {
                     .int8('foo')
                     .int16('bar');
 
-                const context = new MockDeserializationContext();
-                context.read
+                const stream = new MockDeserializationStream();
+                stream.read
                     .mockReturnValueOnce(new Uint8Array([2]).buffer)
                     .mockReturnValueOnce(new Uint8Array([0, 16]).buffer);
 
-                const result = await struct.deserialize(context);
+                const result = await struct.deserialize(stream);
                 expect(result).toEqual({ foo: 2, bar: 16 });
 
-                expect(context.read).toBeCalledTimes(2);
-                expect(context.read).nthCalledWith(1, 1);
-                expect(context.read).nthCalledWith(2, 2);
+                expect(stream.read).toBeCalledTimes(2);
+                expect(stream.read).nthCalledWith(1, 1);
+                expect(stream.read).nthCalledWith(2, 2);
             });
 
             it('should deserialize with dynamic size fields', async () => {
@@ -283,16 +293,16 @@ describe('Struct', () => {
                     .int8('fooLength')
                     .uint8ClampedArray('foo', { lengthField: 'fooLength' });
 
-                const context = new MockDeserializationContext();
-                context.read
+                const stream = new MockDeserializationStream();
+                stream.read
                     .mockReturnValueOnce(new Uint8Array([2]).buffer)
                     .mockReturnValueOnce(new Uint8Array([3, 4]).buffer);
 
-                const result = await struct.deserialize(context);
+                const result = await struct.deserialize(stream);
                 expect(result).toEqual({ fooLength: 2, foo: new Uint8ClampedArray([3, 4]) });
-                expect(context.read).toBeCalledTimes(2);
-                expect(context.read).nthCalledWith(1, 1);
-                expect(context.read).nthCalledWith(2, 2);
+                expect(stream.read).toBeCalledTimes(2);
+                expect(stream.read).nthCalledWith(1, 1);
+                expect(stream.read).nthCalledWith(2, 2);
             });
         });
 
@@ -301,8 +311,8 @@ describe('Struct', () => {
                 const struct = new Struct()
                     .extra({ foo: 42, bar: true });
 
-                const context = new MockDeserializationContext();
-                const result = await struct.deserialize(context);
+                const stream = new MockDeserializationStream();
+                const result = await struct.deserialize(stream);
 
                 expect(Object.entries(Object.getOwnPropertyDescriptors(result))).toEqual([
                     ['foo', { configurable: true, enumerable: true, writable: true, value: 42 }],
@@ -318,8 +328,8 @@ describe('Struct', () => {
                         set bar(value) { },
                     });
 
-                const context = new MockDeserializationContext();
-                const result = await struct.deserialize(context);
+                const stream = new MockDeserializationStream();
+                const result = await struct.deserialize(stream);
 
                 expect(Object.entries(Object.getOwnPropertyDescriptors(result))).toEqual([
                     ['foo', { configurable: true, enumerable: true, get: expect.any(Function) }],
@@ -334,8 +344,8 @@ describe('Struct', () => {
                 const callback = jest.fn(() => { throw new Error('mock'); });
                 struct.postDeserialize(callback);
 
-                const context = new MockDeserializationContext();
-                expect(struct.deserialize(context)).rejects.toThrowError('mock');
+                const stream = new MockDeserializationStream();
+                expect(struct.deserialize(stream)).rejects.toThrowError('mock');
                 expect(callback).toBeCalledTimes(1);
             });
 
@@ -344,8 +354,8 @@ describe('Struct', () => {
                 const callback = jest.fn(() => 'mock');
                 struct.postDeserialize(callback);
 
-                const context = new MockDeserializationContext();
-                expect(struct.deserialize(context)).resolves.toBe('mock');
+                const stream = new MockDeserializationStream();
+                expect(struct.deserialize(stream)).resolves.toBe('mock');
                 expect(callback).toBeCalledTimes(1);
                 expect(callback).toBeCalledWith({});
             });
@@ -355,8 +365,8 @@ describe('Struct', () => {
                 const callback = jest.fn();
                 struct.postDeserialize(callback);
 
-                const context = new MockDeserializationContext();
-                const result = await struct.deserialize(context);
+                const stream = new MockDeserializationStream();
+                const result = await struct.deserialize(stream);
 
                 expect(callback).toBeCalledTimes(1);
                 expect(callback).toBeCalledWith(result);
@@ -371,8 +381,8 @@ describe('Struct', () => {
                 const callback2 = jest.fn();
                 struct.postDeserialize(callback2);
 
-                const context = new MockDeserializationContext();
-                await struct.deserialize(context);
+                const stream = new MockDeserializationStream();
+                await struct.deserialize(stream);
 
                 expect(callback1).toBeCalledTimes(0);
                 expect(callback2).toBeCalledTimes(1);
@@ -386,8 +396,8 @@ describe('Struct', () => {
                     .int8('foo')
                     .int16('bar');
 
-                const context = new MockDeserializationContext();
-                const result = new Uint8Array(struct.serialize({ foo: 0x42, bar: 0x1024 }, context));
+                const stream = new MockDeserializationStream();
+                const result = new Uint8Array(struct.serialize({ foo: 0x42, bar: 0x1024 }));
 
                 expect(result).toEqual(new Uint8Array([0x42, 0x10, 0x24]));
             });
@@ -397,8 +407,8 @@ describe('Struct', () => {
                     .int8('fooLength')
                     .arrayBuffer('foo', { lengthField: 'fooLength' });
 
-                const context = new MockDeserializationContext();
-                const result = new Uint8Array(struct.serialize({ foo: new Uint8Array([0x03, 0x04, 0x05]).buffer }, context));
+                const stream = new MockDeserializationStream();
+                const result = new Uint8Array(struct.serialize({ foo: new Uint8Array([0x03, 0x04, 0x05]).buffer }));
 
                 expect(result).toEqual(new Uint8Array([0x03, 0x03, 0x04, 0x05]));
             });

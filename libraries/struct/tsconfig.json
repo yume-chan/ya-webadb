@@ -3,8 +3,8 @@
     "compilerOptions": {
         "types": [
             "node",
-            "jest"
-        ]
+            "jest",
+        ],
     },
     "testTypes": [
         "node",

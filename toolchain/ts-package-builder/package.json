@@ -13,11 +13,11 @@
     "author": "",
     "license": "MIT",
     "devDependencies": {
-        "@types/node": "^16.9.1"
+        "@types/node": "^16.11.19"
     },
     "dependencies": {
         "json5": "^2.2.0",
-        "@types/jest": "^26.0.23"
+        "@types/jest": "^27.4.0"
     },
     "peerDependencies": {
         "typescript": "^4.0.0"

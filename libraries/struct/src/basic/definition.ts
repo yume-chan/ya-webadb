@@ -1,5 +1,4 @@
-import type { ValueOrPromise } from '../utils';
-import type { StructDeserializationContext, StructOptions, StructSerializationContext } from './context';
+import type { StructAsyncDeserializeStream, StructDeserializeStream, StructOptions } from './context';
 import type { StructFieldValue } from './field-value';
 import type { StructValue } from './struct-value';
 
@@ -53,7 +52,6 @@ export abstract class StructFieldDefinition<
      */
     public abstract create(
         options: Readonly<StructOptions>,
-        context: StructSerializationContext,
         struct: StructValue,
         value: TValue,
     ): StructFieldValue<this>;
@@ -63,7 +61,12 @@ export abstract class StructFieldDefinition<
      */
     public abstract deserialize(
         options: Readonly<StructOptions>,
-        context: StructDeserializationContext,
+        stream: StructDeserializeStream,
         struct: StructValue,
-    ): ValueOrPromise<StructFieldValue<this>>;
+    ): StructFieldValue<this>;
+    public abstract deserialize(
+        options: Readonly<StructOptions>,
+        stream: StructAsyncDeserializeStream,
+        struct: StructValue,
+    ): Promise<StructFieldValue<this>>;
 }

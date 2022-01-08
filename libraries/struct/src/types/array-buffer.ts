@@ -1,4 +1,6 @@
-import { StructDeserializationContext, StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from '../basic';
+import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from '../basic';
+import { Syncbird } from "../syncbird";
+import { decodeUtf8, encodeUtf8, ValueOrPromise } from "../utils";
 
 /**
  * Base class for all types that
@@ -18,10 +20,10 @@ export abstract class ArrayBufferLikeFieldType<TValue = unknown, TTypeScriptType
      * This function should be "pure", i.e.,
      * same `value` should always be converted to `ArrayBuffer`s that have same content.
      */
-    public abstract toArrayBuffer(value: TValue, context: StructSerializationContext): ArrayBuffer;
+    public abstract toArrayBuffer(value: TValue): ArrayBuffer;
 
     /** When implemented in derived classes, converts the `ArrayBuffer` to a type-specific value */
-    public abstract fromArrayBuffer(arrayBuffer: ArrayBuffer, context: StructDeserializationContext): TValue;
+    public abstract fromArrayBuffer(arrayBuffer: ArrayBuffer): TValue;
 
     /**
      * When implemented in derived classes, gets the size in byte of the type-specific `value`.
@@ -76,17 +78,17 @@ export class Uint8ClampedArrayFieldType
     }
 }
 
-/** Am ArrayBufferLike type that converts between `ArrayBuffer` and `string` */
+/** An ArrayBufferLike type that converts between `ArrayBuffer` and `string` */
 export class StringFieldType<TTypeScriptType = string>
     extends ArrayBufferLikeFieldType<string, TTypeScriptType> {
     public static readonly instance = new StringFieldType();
 
-    public toArrayBuffer(value: string, context: StructSerializationContext): ArrayBuffer {
-        return context.encodeUtf8(value);
+    public toArrayBuffer(value: string): ArrayBuffer {
+        return encodeUtf8(value);
     }
 
-    public fromArrayBuffer(arrayBuffer: ArrayBuffer, context: StructDeserializationContext): string {
-        return context.decodeUtf8(arrayBuffer);
+    public fromArrayBuffer(arrayBuffer: ArrayBuffer): string {
+        return decodeUtf8(arrayBuffer);
     }
 
     public getSize(): number {
@@ -100,7 +102,7 @@ export class StringFieldType<TTypeScriptType = string>
 const EmptyArrayBuffer = new ArrayBuffer(0);
 
 export abstract class ArrayBufferLikeFieldDefinition<
-    TType extends ArrayBufferLikeFieldType = ArrayBufferLikeFieldType,
+    TType extends ArrayBufferLikeFieldType<any, any> = ArrayBufferLikeFieldType<unknown, unknown>,
     TOptions = void,
     TOmitInitKey extends PropertyKey = never,
     > extends StructFieldDefinition<
@@ -124,47 +126,55 @@ export abstract class ArrayBufferLikeFieldDefinition<
      */
     public create(
         options: Readonly<StructOptions>,
-        context: StructSerializationContext,
         struct: StructValue,
         value: TType['TTypeScriptType'],
         arrayBuffer?: ArrayBuffer,
     ): ArrayBufferLikeFieldValue<this> {
-        return new ArrayBufferLikeFieldValue(this, options, context, struct, value, arrayBuffer);
+        return new ArrayBufferLikeFieldValue(this, options, struct, value, arrayBuffer);
     }
 
-    public async deserialize(
+    public override deserialize(
         options: Readonly<StructOptions>,
-        context: StructDeserializationContext,
+        stream: StructDeserializeStream,
         struct: StructValue,
-    ): Promise<ArrayBufferLikeFieldValue<this>> {
-        const size = this.getDeserializeSize(struct);
-
-        let arrayBuffer: ArrayBuffer;
-        if (size === 0) {
-            arrayBuffer = EmptyArrayBuffer;
-        } else {
-            arrayBuffer = await context.read(size);
-        }
-
-        const value = this.type.fromArrayBuffer(arrayBuffer, context);
-        return this.create(options, context, struct, value, arrayBuffer);
+    ): ArrayBufferLikeFieldValue<this>;
+    public override deserialize(
+        options: Readonly<StructOptions>,
+        stream: StructAsyncDeserializeStream,
+        struct: StructValue,
+    ): Promise<ArrayBufferLikeFieldValue<this>>;
+    public override deserialize(
+        options: Readonly<StructOptions>,
+        stream: StructDeserializeStream | StructAsyncDeserializeStream,
+        struct: StructValue,
+    ): ValueOrPromise<ArrayBufferLikeFieldValue<this>> {
+        return Syncbird.resolve().then(() => {
+            const size = this.getDeserializeSize(struct);
+            if (size === 0) {
+                return EmptyArrayBuffer;
+            } else {
+                return stream.read(size);
+            }
+        }).then(arrayBuffer => {
+            const value = this.type.fromArrayBuffer(arrayBuffer);
+            return this.create(options, struct, value, arrayBuffer);
+        }).valueOrPromise();
     }
 }
 
 export class ArrayBufferLikeFieldValue<
-    TDefinition extends ArrayBufferLikeFieldDefinition<ArrayBufferLikeFieldType, any, any>,
+    TDefinition extends ArrayBufferLikeFieldDefinition<ArrayBufferLikeFieldType<unknown, unknown>, any, any>,
     > extends StructFieldValue<TDefinition> {
     protected arrayBuffer: ArrayBuffer | undefined;
 
     public constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
-        context: StructSerializationContext,
         struct: StructValue,
         value: TDefinition['TValue'],
         arrayBuffer?: ArrayBuffer,
     ) {
-        super(definition, options, context, struct, value);
+        super(definition, options, struct, value);
         this.arrayBuffer = arrayBuffer;
     }
 
@@ -173,9 +183,9 @@ export class ArrayBufferLikeFieldValue<
         this.arrayBuffer = undefined;
     }
 
-    public serialize(dataView: DataView, offset: number, context: StructSerializationContext): void {
+    public serialize(dataView: DataView, offset: number): void {
         if (!this.arrayBuffer) {
-            this.arrayBuffer = this.definition.type.toArrayBuffer(this.value, context);
+            this.arrayBuffer = this.definition.type.toArrayBuffer(this.value);
         }
 
         new Uint8Array(dataView.buffer)

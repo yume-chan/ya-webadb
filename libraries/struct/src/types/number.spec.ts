@@ -1,4 +1,4 @@
-import { StructDefaultOptions, StructDeserializationContext, StructSerializationContext, StructValue } from '../basic';
+import { StructDefaultOptions, StructDeserializeStream, StructValue } from '../basic';
 import { NumberFieldDefinition, NumberFieldType } from './number';
 
 describe('Types', () => {
@@ -78,17 +78,13 @@ describe('Types', () => {
             describe('#deserialize', () => {
                 it('should deserialize Uint8', async () => {
                     const read = jest.fn((length: number) => new Uint8Array([1, 2, 3, 4]).buffer);
-                    const context: StructDeserializationContext = {
-                        read,
-                        decodeUtf8(buffer) { throw new Error(''); },
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
+                    const stream: StructDeserializeStream = { read };
 
                     const definition = new NumberFieldDefinition(NumberFieldType.Uint8);
                     const struct = new StructValue();
                     const value = await definition.deserialize(
                         StructDefaultOptions,
-                        context,
+                        stream,
                         struct,
                     );
 
@@ -99,17 +95,13 @@ describe('Types', () => {
 
                 it('should deserialize Uint16', async () => {
                     const read = jest.fn((length: number) => new Uint8Array([1, 2, 3, 4]).buffer);
-                    const context: StructDeserializationContext = {
-                        read,
-                        decodeUtf8(buffer) { throw new Error(''); },
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
+                    const stream: StructDeserializeStream = { read };
 
                     const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
                     const struct = new StructValue();
                     const value = await definition.deserialize(
                         StructDefaultOptions,
-                        context,
+                        stream,
                         struct,
                     );
 
@@ -120,17 +112,13 @@ describe('Types', () => {
 
                 it('should deserialize Uint16LE', async () => {
                     const read = jest.fn((length: number) => new Uint8Array([1, 2, 3, 4]).buffer);
-                    const context: StructDeserializationContext = {
-                        read,
-                        decodeUtf8(buffer) { throw new Error(''); },
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
+                    const stream: StructDeserializeStream = { read };
 
                     const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
                     const struct = new StructValue();
                     const value = await definition.deserialize(
                         { ...StructDefaultOptions, littleEndian: true },
-                        context,
+                        stream,
                         struct,
                     );
 
@@ -144,16 +132,12 @@ describe('Types', () => {
         describe('NumberFieldValue', () => {
             describe('#getSize', () => {
                 it('should return size of its definition', () => {
-                    const context: StructSerializationContext = {
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
                     const struct = new StructValue();
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Int8)
                             .create(
                                 StructDefaultOptions,
-                                context,
                                 struct,
                                 42,
                             )
@@ -164,7 +148,6 @@ describe('Types', () => {
                         new NumberFieldDefinition(NumberFieldType.Uint8)
                             .create(
                                 StructDefaultOptions,
-                                context,
                                 struct,
                                 42,
                             )
@@ -175,7 +158,6 @@ describe('Types', () => {
                         new NumberFieldDefinition(NumberFieldType.Int16)
                             .create(
                                 StructDefaultOptions,
-                                context,
                                 struct,
                                 42,
                             )
@@ -186,7 +168,6 @@ describe('Types', () => {
                         new NumberFieldDefinition(NumberFieldType.Uint16)
                             .create(
                                 StructDefaultOptions,
-                                context,
                                 struct,
                                 42,
                             )
@@ -197,7 +178,6 @@ describe('Types', () => {
                         new NumberFieldDefinition(NumberFieldType.Int32)
                             .create(
                                 StructDefaultOptions,
-                                context,
                                 struct,
                                 42,
                             )
@@ -208,7 +188,6 @@ describe('Types', () => {
                         new NumberFieldDefinition(NumberFieldType.Uint32)
                             .create(
                                 StructDefaultOptions,
-                                context,
                                 struct,
                                 42,
                             )
@@ -219,7 +198,6 @@ describe('Types', () => {
                         new NumberFieldDefinition(NumberFieldType.Int64)
                             .create(
                                 StructDefaultOptions,
-                                context,
                                 struct,
                                 BigInt(100),
                             )
@@ -230,7 +208,6 @@ describe('Types', () => {
                         new NumberFieldDefinition(NumberFieldType.Uint64)
                             .create(
                                 StructDefaultOptions,
-                                context,
                                 struct,
                                 BigInt(100),
                             )
@@ -241,14 +218,10 @@ describe('Types', () => {
 
             describe('#serialize', () => {
                 it('should serialize uint8', () => {
-                    const context: StructSerializationContext = {
-                        encodeUtf8(input) { throw new Error(''); },
-                    };
                     const definition = new NumberFieldDefinition(NumberFieldType.Int8);
                     const struct = new StructValue();
                     const value = definition.create(
                         StructDefaultOptions,
-                        context,
                         struct,
                         42,
                     );

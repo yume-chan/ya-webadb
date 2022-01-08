@@ -1,4 +1,6 @@
-import { StructDeserializationContext, StructFieldDefinition, StructFieldValue, StructOptions, StructSerializationContext, StructValue } from '../basic';
+import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from '../basic';
+import { Syncbird } from "../syncbird";
+import { ValueOrPromise } from "../utils";
 
 export type DataViewGetters =
     { [TKey in keyof DataView]: TKey extends `get${string}` ? TKey : never }[keyof DataView];
@@ -62,25 +64,37 @@ export class NumberFieldDefinition<
 
     public create(
         options: Readonly<StructOptions>,
-        context: StructSerializationContext,
         struct: StructValue,
         value: TTypeScriptType,
     ): NumberFieldValue<this> {
-        return new NumberFieldValue(this, options, context, struct, value);
+        return new NumberFieldValue(this, options, struct, value);
     }
 
-    public async deserialize(
+    public override deserialize(
         options: Readonly<StructOptions>,
-        context: StructDeserializationContext,
+        stream: StructDeserializeStream,
         struct: StructValue,
-    ): Promise<NumberFieldValue<this>> {
-        const buffer = await context.read(this.getSize());
-        const view = new DataView(buffer);
-        const value = view[this.type.dataViewGetter](
-            0,
-            options.littleEndian
-        ) as any;
-        return this.create(options, context, struct, value);
+    ): NumberFieldValue<this>;
+    public override deserialize(
+        options: Readonly<StructOptions>,
+        stream: StructAsyncDeserializeStream,
+        struct: StructValue,
+    ): Promise<NumberFieldValue<this>>;
+    public override deserialize(
+        options: Readonly<StructOptions>,
+        stream: StructDeserializeStream | StructAsyncDeserializeStream,
+        struct: StructValue,
+    ): ValueOrPromise<NumberFieldValue<this>> {
+        return Syncbird.try(() => {
+            return stream.read(this.getSize());
+        }).then(buffer => {
+            const view = new DataView(buffer);
+            const value = view[this.type.dataViewGetter](
+                0,
+                options.littleEndian
+            ) as any;
+            return this.create(options, struct, value);
+        }).valueOrPromise();
     }
 }
 

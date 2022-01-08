@@ -8,6 +8,8 @@
 
 A C-style structure serializer and deserializer. Written in TypeScript and highly takes advantage of its type system.
 
+**WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
+
 ## Installation
 
 ```sh
@@ -214,9 +216,9 @@ So it's technically possible to pass in an incompatible type (e.g. `string`). Bu
     const value = await struct.deserialize(stream);
     value.foo; // number
 
-    struct.serialize({ }, context) // error: 'foo' is required
-    struct.serialize({ foo: 'bar' }, context) // error: 'foo' must be a number
-    struct.serialize({ foo: 42 }, context) // ok
+    struct.serialize({ }) // error: 'foo' is required
+    struct.serialize({ foo: 'bar' }) // error: 'foo' must be a number
+    struct.serialize({ foo: 42 }) // ok
     ```
 
 2. Set fields' type (can be used with [`placeholder` method](#placeholder))
@@ -235,9 +237,9 @@ So it's technically possible to pass in an incompatible type (e.g. `string`). Bu
     value.foo; // MyEnum
     value.bar; // MyEnum.a
 
-    struct.serialize({ foo: 42, bar: MyEnum.a }, context); // error: 'foo' must be of type `MyEnum`
-    struct.serialize({ foo: MyEnum.a, bar: MyEnum.b }, context); // error: 'bar' must be of type `MyEnum.a`
-    struct.serialize({ foo: MyEnum.a, bar: MyEnum.b }, context); // ok
+    struct.serialize({ foo: 42, bar: MyEnum.a }); // error: 'foo' must be of type `MyEnum`
+    struct.serialize({ foo: MyEnum.a, bar: MyEnum.b }); // error: 'bar' must be of type `MyEnum.a`
+    struct.serialize({ foo: MyEnum.a, bar: MyEnum.b }); // ok
     ```
 
 #### `int64`/`uint64`
@@ -334,7 +336,7 @@ Merges (flats) another `Struct`'s fields and extra fields into the current one.
             .fields(MyStructV1)
             .int32('field2');
 
-    const structV2 = await MyStructV2.deserialize(context);
+    const structV2 = await MyStructV2.deserialize(stream);
     structV2.field1; // number
     structV2.field2; // number
     // Fields are flatten
@@ -352,7 +354,7 @@ Merges (flats) another `Struct`'s fields and extra fields into the current one.
             .int32('field2')
             .fields(MyStructV1);
 
-    const structV2 = await MyStructV2.deserialize(context);
+    const structV2 = await MyStructV2.deserialize(stream);
     structV2.field1; // number
     structV2.field2; // number
     // Same result as above, but serialize/deserialize order is reversed
@@ -409,8 +411,8 @@ Multiple calls merge all extra fields together.
     value.foo; // number
     value.bar; // 'hello'
 
-    struct.serialize({ foo: 42 }, context); // ok
-    struct.serialize({ foo: 42, bar: 'hello' }, context); // error: 'bar' is redundant
+    struct.serialize({ foo: 42 }); // ok
+    struct.serialize({ foo: 42, bar: 'hello' }); // error: 'bar' is redundant
     ```
 
 2. Add getters and methods. `this` in functions refers to the result object.
@@ -520,37 +522,43 @@ A callback returning anything other than `undefined` will cause `deserialize` to
 #### `deserialize`
 
 ```ts
-interface StructDeserializationContext {
-    decodeUtf8(buffer: ArrayBuffer): string;
-
-    read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
+interface StructDeserializeStream {
+    /**
+     * Read data from the underlying data source.
+     *
+     * Stream must return exactly `length` bytes or data. If that's not possible
+     * (due to end of file or other error condition), it must throw an error.
+     */
+    read(length: number): ArrayBuffer;
 }
 
 deserialize(
-    context: StructDeserializationContext
+    stream: StructDeserializeStream,
+): TPostDeserialized extends undefined
+    ? Overwrite<TExtra, TValue>
+    : TPostDeserialized
+>;
+deserialize(
+    stream: StructAsyncDeserializeStream,
 ): Promise<
     TPostDeserialized extends undefined
         ? Overwrite<TExtra, TValue>
         : TPostDeserialized
-    >;
+    >
+>;
 ```
 
-Deserialize a Struct value from `context`.
+Deserialize a Struct value from `stream`.
 
 As the signature shows, if the `postDeserialize` callback returns any value, `deserialize` will return that value instead.
 
-The `read` method of `context`, when being called, should returns exactly `length` bytes of data (or throw an `Error` if it can't).
+The `read` method of `stream`, when being called, should returns exactly `length` bytes of data (or throw an `Error` if it can't).
 
 #### `serialize`
 
 ```ts
-interface StructSerializationContext {
-    encodeUtf8(input: string): ArrayBuffer;
-}
-
 serialize(
-    init: Omit<TFields, TOmitInitKey>,
-    context: StructSerializationContext
+    init: Omit<TFields, TOmitInitKey>
 ): ArrayBuffer;
 ```
 
@@ -634,7 +642,6 @@ Actual size should be returned from `StructFieldValue#getSize`
 ```ts
 abstract create(
     options: Readonly<StructOptions>,
-    context: StructSerializationContext,
     struct: StructValue,
     value: TValue,
 ): StructFieldValue<this>;
@@ -649,16 +656,21 @@ Derived classes must implement this method to create its own field value instanc
 ```ts
 abstract deserialize(
     options: Readonly<StructOptions>,
-    context: StructDeserializationContext,
+    stream: StructDeserializeStream,
     struct: StructValue,
-): ValueOrPromise<StructFieldValue<this>>;
+): StructFieldValue<this>;
+abstract deserialize(
+    options: Readonly<StructOptions>,
+    stream: StructAsyncDeserializeStream,
+    struct: StructValue,
+): Promise<StructFieldValue<this>>;
 ```
 
-Derived classes must implement this method to define how to deserialize a value from `context`. Can also return a `Promise`.
+Derived classes must implement this method to define how to deserialize a value from `stream`. Can also return a `Promise`.
 
 Usually implementations should be:
 
-1. Somehow parse the value from `context`
+1. Somehow parse the value from `stream`
 2. Pass the value into its `create` method
 
 Sometimes, some metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` can save those metadata on the `StructFieldValue` instance for later use.
@@ -701,8 +713,7 @@ If one needs to manipulate other states when getting/setting values, they can ov
 ```ts
 abstract serialize(
     dataView: DataView,
-    offset: number,
-    context: StructSerializationContext
+    offset: number
 ): void;
 ```
 
