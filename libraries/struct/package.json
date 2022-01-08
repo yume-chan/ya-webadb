@@ -23,7 +23,7 @@
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
     },
-    "main": "cjs/index.js",
+    "type": "module",
     "module": "esm/index.js",
     "types": "dts/index.d.ts",
     "scripts": {

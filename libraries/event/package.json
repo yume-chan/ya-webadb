@@ -13,16 +13,16 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/master/packages/event#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/master/libraries/event#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/event"
+        "directory": "libraries/event"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
     },
-    "main": "cjs/index.js",
+    "type": "module",
     "module": "esm/index.js",
     "types": "dts/index.d.ts",
     "scripts": {

@@ -7,22 +7,27 @@
         "websocket",
         "adb"
     ],
-    "author": "Simon Chan <cnsimonchan@live.com>",
-    "homepage": "https://github.com/yume-chan/ya-webadb#readme",
     "license": "MIT",
-    "main": "cjs/index.js",
-    "module": "esm/index.js",
-    "types": "dts/index.d.ts",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/master/libraries/adb-backend-ws#readme",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/yume-chan/ya-webadb.git"
-    },
-    "scripts": {
-        "build": "build-ts-package",
-        "build:watch": "build-ts-package --incremental"
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "libraries/adb-backend-ws"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "module": "esm/index.js",
+    "types": "dts/index.d.ts",
+    "scripts": {
+        "build": "build-ts-package",
+        "build:watch": "build-ts-package --incremental"
     },
     "devDependencies": {
         "typescript": "^4.4.3",

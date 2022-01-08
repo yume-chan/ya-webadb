@@ -13916,10 +13916,11 @@ packages:
     dev: false
 
   file:projects/adb-backend-direct-sockets.tgz:
-    resolution: {integrity: sha512-To21ySnzlUUAcBspOH3tqG4KH7e8evt+K2/D3kYZOCdgQ9P/y9jGHjm/loWzFj82/9h2OGIzM9rYF9gege8nkQ==, tarball: file:projects/adb-backend-direct-sockets.tgz}
+    resolution: {integrity: sha512-PAPSIervieQxx750pklyuxKu4qn9R7+AWpwMlwx2SCyEcDWZjXmJwy/OsOeyyKn31RVoFlncv1KxzqKW6v35tQ==, tarball: file:projects/adb-backend-direct-sockets.tgz}
     name: '@rush-temp/adb-backend-direct-sockets'
     version: 0.0.0
     dependencies:
+      '@types/jest': 27.4.0
       '@yume-chan/async': 2.1.4
       tslib: 2.3.1
       typescript: 4.5.4

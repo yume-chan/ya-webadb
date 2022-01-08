@@ -4,6 +4,8 @@ TypeScript implementation of [Scrcpy](https://github.com/Genymobile/scrcpy) clie
 
 It uses the official Scrcpy server releases.
 
+**WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
+
 ## Download Server Binary
 
 This package has a script `fetch-scrcpy-server` to help you download the official server binary.
