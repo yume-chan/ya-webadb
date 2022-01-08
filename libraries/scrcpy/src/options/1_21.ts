@@ -19,9 +19,10 @@ export class ScrcpyOptions1_21<T extends ScrcpyOptions1_21Type = ScrcpyOptions1_
     }
 
     public override formatServerArguments(): string[] {
-        return Object.entries(this.value).map(([key, value]) => {
-            return `${toSnakeCase(key)}=${toScrcpyOption(value, '')}`;
-        });
+        return Object.entries(this.value)
+            .map(([key, value]) => {
+                return `${toSnakeCase(key)}=${toScrcpyOption(value, '')}`;
+            });
     }
 
     public formatGetEncoderListArguments(): string[] {

@@ -42,7 +42,7 @@ export namespace AdbPacket {
 
         let bufferUsed = false;
         const stream = new BufferedStream({
-            read(length: number) {
+            async read(length: number) {
                 if (!bufferUsed) {
                     bufferUsed = true;
                     return buffer;

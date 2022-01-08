@@ -148,7 +148,7 @@ export abstract class ArrayBufferLikeFieldDefinition<
         stream: StructDeserializeStream | StructAsyncDeserializeStream,
         struct: StructValue,
     ): ValueOrPromise<ArrayBufferLikeFieldValue<this>> {
-        return Syncbird.resolve().then(() => {
+        return Syncbird.try(() => {
             const size = this.getDeserializeSize(struct);
             if (size === 0) {
                 return EmptyArrayBuffer;
