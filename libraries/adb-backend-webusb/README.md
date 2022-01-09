@@ -6,8 +6,6 @@ Backend for `@yume-chan/adb` using WebUSB API.
 - [`pickDevice`](#pickdevice)
 - [`fromDevice`](#fromdevice)
 - [`read`/`write`](#readwrite)
-- [`generateKey`](#generatekey)
-- [`iterateKeys`](#iteratekeys)
 
 ## Note
 
@@ -47,15 +45,3 @@ Create an `AdbWebBackend` instance from an exist `USBDevice` instance.
 **WebUSB API** ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB)) ([Spec](https://wicg.github.io/webusb))
 
 Read/write data from/to the underlying `USBDevice` instance.
-
-## `generateKey`
-
-**Web Crypto API** ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API))
-
-**Web Storage API** ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API))
-
-Generate a RSA private key and store it into LocalStorage.
-
-## `iterateKeys`
-
-Return the stored RSA private key. (This backend only supports a single key)
