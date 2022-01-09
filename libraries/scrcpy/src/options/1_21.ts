@@ -25,7 +25,7 @@ export class ScrcpyOptions1_21<T extends ScrcpyOptions1_21Type = ScrcpyOptions1_
             });
     }
 
-    public formatGetEncoderListArguments(): string[] {
+    public override formatGetEncoderListArguments(): string[] {
         return Object.entries(this.value).map(([key, value]) => {
             if (key === 'encoderName') {
                 value = '_';

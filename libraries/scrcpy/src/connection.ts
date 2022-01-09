@@ -53,7 +53,7 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
 
     private address!: string;
 
-    public async initialize(): Promise<void> {
+    public override async initialize(): Promise<void> {
         try {
             // try to unbind first
             await this.device.reverse.remove('localabstract:scrcpy');
@@ -80,7 +80,7 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
         ];
     }
 
-    public dispose() {
+    public override dispose() {
         // Don't await this!
         // `reverse.remove`'s response will never arrive
         // before we read all pending data from `videoStream`

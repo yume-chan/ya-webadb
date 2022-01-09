@@ -178,7 +178,7 @@ export class ArrayBufferLikeFieldValue<
         this.arrayBuffer = arrayBuffer;
     }
 
-    public set(value: TDefinition['TValue']): void {
+    public override set(value: TDefinition['TValue']): void {
         super.set(value);
         this.arrayBuffer = undefined;
     }

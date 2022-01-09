@@ -1,7 +1,7 @@
-import { Adb } from "@yume-chan/adb";
+import { type Adb } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
-import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../message";
-import { ScrcpyOptions1_16, ScrcpyOptions1_16Type } from "./1_16";
+import { type AndroidKeyEventAction, ScrcpyControlMessageType } from "../message";
+import { ScrcpyOptions1_16, type ScrcpyOptions1_16Type } from "./1_16";
 
 export interface ScrcpyOptions1_18Type extends ScrcpyOptions1_16Type {
     powerOffOnClose: boolean;

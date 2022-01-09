@@ -1,4 +1,4 @@
-import { Adb } from "@yume-chan/adb";
+import { type Adb } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../codec";
 import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";

@@ -25,7 +25,7 @@ export class VariableLengthArrayBufferLikeFieldDefinition<
         return 0;
     }
 
-    protected getDeserializeSize(struct: StructValue) {
+    protected override getDeserializeSize(struct: StructValue) {
         let value = struct.value[this.options.lengthField] as number | string;
         if (typeof value === 'string') {
             value = Number.parseInt(value, this.options.lengthFieldBase ?? 10);
@@ -33,7 +33,7 @@ export class VariableLengthArrayBufferLikeFieldDefinition<
         return value;
     }
 
-    public create(
+    public override create(
         options: Readonly<StructOptions>,
         struct: StructValue,
         value: TType['TTypeScriptType'],
@@ -80,7 +80,7 @@ export class VariableLengthArrayBufferLikeStructFieldValue<
         struct.set(lengthField, this.lengthFieldValue);
     }
 
-    public getSize() {
+    public override getSize() {
         if (this.length === undefined) {
             this.length = this.definition.type.getSize(this.value);
             if (this.length === -1) {
@@ -92,7 +92,7 @@ export class VariableLengthArrayBufferLikeStructFieldValue<
         return this.length;
     }
 
-    public set(value: unknown) {
+    public override set(value: unknown) {
         super.set(value);
         this.arrayBuffer = undefined;
         this.length = undefined;
@@ -118,11 +118,11 @@ export class VariableLengthArrayBufferLikeFieldLengthValue
         this.arrayBufferField = arrayBufferField;
     }
 
-    public getSize() {
+    public override getSize() {
         return this.originalField.getSize();
     }
 
-    get() {
+    public override get() {
         let value: string | number = this.arrayBufferField.getSize();
 
         const originalValue = this.originalField.get();
@@ -133,7 +133,7 @@ export class VariableLengthArrayBufferLikeFieldLengthValue
         return value;
     }
 
-    set() { }
+    public override set() { }
 
     serialize(dataView: DataView, offset: number) {
         this.originalField.set(this.get());

@@ -47,7 +47,7 @@ export class TinyH264Wrapper extends AutoDisposable {
         }, [data]);
     }
 
-    public dispose() {
+    public override dispose() {
         super.dispose();
         worker!.postMessage({
             type: 'release',

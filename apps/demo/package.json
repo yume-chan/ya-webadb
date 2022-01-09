@@ -41,6 +41,6 @@
         "@types/react": "17.0.27",
         "eslint": "7.32.0",
         "eslint-config-next": "^12.0.7",
-        "typescript": "^4.4.3"
+        "typescript": "^4.5.4"
     }
 }

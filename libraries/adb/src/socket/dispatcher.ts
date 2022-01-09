@@ -256,7 +256,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         }
     }
 
-    public dispose() {
+    public override dispose() {
         this._running = false;
 
         for (const socket of this.sockets.values()) {

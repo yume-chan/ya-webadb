@@ -6,7 +6,7 @@ NoopRemoveEventListener.dispose = NoopRemoveEventListener;
 export class CloseEventEmitter extends EventEmitter<void, void>{
     private closed = false;
 
-    protected addEventListener(info: EventListenerInfo<void, void>) {
+    protected override addEventListener(info: EventListenerInfo<void, void>) {
         if (this.closed) {
             info.listener.apply(info.thisArg, [undefined, ...info.args]);
             return NoopRemoveEventListener;
@@ -15,13 +15,13 @@ export class CloseEventEmitter extends EventEmitter<void, void>{
         }
     }
 
-    public fire() {
+    public override fire() {
         super.fire();
         this.closed = true;
         this.listeners.length = 0;
     }
 
-    public dispose() {
+    public override dispose() {
         this.fire();
         super.dispose();
     }

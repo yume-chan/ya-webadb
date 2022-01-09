@@ -97,7 +97,7 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
         }
     }
 
-    public dispose() {
+    public override dispose() {
         this._closed = true;
         this.closeEvent.fire();
         super.dispose();
