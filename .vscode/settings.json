@@ -78,5 +78,13 @@
         "*.mdx": "markdown",
         "*.json": "jsonc"
     },
-    "prettier.tabWidth": 4
+    "prettier.tabWidth": 4,
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "version-policies.json"
+            ],
+            "url": "https://developer.microsoft.com/json-schemas/rush/v5/version-policies.schema.json"
+        }
+    ]
 }

@@ -433,22 +433,26 @@
         {
             "packageName": "@yume-chan/adb",
             "projectFolder": "libraries/adb",
-            "shouldPublish": true
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/event",
             "projectFolder": "libraries/event",
-            "shouldPublish": true
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/struct",
             "projectFolder": "libraries/struct",
-            "shouldPublish": true
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/adb-backend-webusb",
             "projectFolder": "libraries/adb-backend-webusb",
-            "shouldPublish": true
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/adb-backend-ws",
@@ -461,11 +465,13 @@
         {
             "packageName": "@yume-chan/adb-credential-web",
             "projectFolder": "libraries/adb-credential-web",
-            "shouldPublish": true
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/scrcpy",
-            "projectFolder": "libraries/scrcpy"
+            "projectFolder": "libraries/scrcpy",
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "demo",
