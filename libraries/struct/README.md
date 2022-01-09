@@ -70,21 +70,26 @@ const buffer = MyStruct.serialize({
 
 ## Compatibility
 
-|                                                      | Chrome | Edge | Firefox | Internet Explorer | Safari         | Node.js |
-| ---------------------------------------------------- | ------ | ---- | ------- | ----------------- | -------------- | ------- |
-| [`Promise`][MDN_Promise]                             | 32     | 12   | 29      | No<sup>1</sup>    | 8              | 0.12    |
-| [`ArrayBuffer`][MDN_ArrayBuffer]                     | 7      | 12   | 4       | 10                | 5.1            | 0.10    |
-| [`Uint8Array`][MDN_Uint8Array]                       | 7      | 12   | 4       | 10                | 5.1            | 0.10    |
-| [`DataView`][MDN_DataView]                           | 9      | 12   | 15      | 10                | 5.1            | 0.10    |
-| **Basic usage**                                      | 32     | 12   | 29      | 10<sup>1</sup>    | 8              | 0.12    |
-| [`BigInt`][MDN_BigInt]                               | 67     | 79   | 68      | No                | 14             | 10.4    |
-| [`DataView#getBigUint64`][MDN_DataView_getBigUint64] | 67     | 79   | 68      | No                | No<sup>2</sup> | 10.4    |
-| [`DataView#setBigUint64`][MDN_DataView_setBigUint64] | 67     | 79   | 68      | No                | No<sup>2</sup> | 10.4    |
-| **Use [`int64/uint64`](#int64uint64) API**           | 67     | 79   | 68      | No                | 14<sup>2</sup> | 10.4    |
+|                                                             | Chrome | Edge | Firefox | Internet Explorer | Safari         | Node.js          |
+| ----------------------------------------------------------- | ------ | ---- | ------- | ----------------- | -------------- | ---------------- |
+| [`Promise`][MDN_Promise]                                    | 32     | 12   | 29      | No<sup>1</sup>    | 8              | 0.12             |
+| [`ArrayBuffer`][MDN_ArrayBuffer]                            | 7      | 12   | 4       | 10                | 5.1            | 0.10             |
+| [`Uint8Array`][MDN_Uint8Array]                              | 7      | 12   | 4       | 10                | 5.1            | 0.10             |
+| [`DataView`][MDN_DataView]                                  | 9      | 12   | 15      | 10                | 5.1            | 0.10             |
+| **Basic usage**                                             | 32     | 12   | 29      | 10<sup>1</sup>    | 8              | 0.12             |
+| [`BigInt`][MDN_BigInt]                                      | 67     | 79   | 68      | No                | 14             | 10.4             |
+| [`DataView#getBigUint64`][MDN_DataView_getBigUint64]        | 67     | 79   | 68      | No                | No<sup>2</sup> | 10.4             |
+| [`DataView#setBigUint64`][MDN_DataView_setBigUint64]        | 67     | 79   | 68      | No                | No<sup>2</sup> | 10.4             |
+| **Use [`int64`/`uint64`](#int64uint64) API**                | 67     | 79   | 68      | No                | 14<sup>2</sup> | 10.4             |
+| **Use [`string`](#arraybufferuint8clampedarraystring) API** | 38     | 79   | 19      | No<sup>3</sup>    | 10.1           | 11.0<sup>4</sup> |
 
 <sup>1</sup> Requires a polyfill for Promise (e.g. [promise-polyfill](https://www.npmjs.com/package/promise-polyfill))
 
 <sup>2</sup> Requires a polyfill for `DataView#getBigUint64` and `DataView#setBigUint64`
+
+<sup>3</sup> Requires a polyfill for [`TextEncoder` and `TextDecoder`][MDN_TextEncoder] (e.g. [fast-text-encoding](https://www.npmjs.com/package/fast-text-encoding))
+
+<sup>4</sup> From Node.js version 8.3, `TextEncoder` and `TextDecoder` are available in `util` module. You can assign them to global, or use a polyfill like above directly.
 
 [MDN_Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [MDN_ArrayBuffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
@@ -93,6 +98,7 @@ const buffer = MyStruct.serialize({
 [MDN_BigInt]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
 [MDN_DataView_getBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/getBigUint64
 [MDN_DataView_setBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/setBigUint64
+[MDN_TextEncoder]: https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder
 
 ## API
 

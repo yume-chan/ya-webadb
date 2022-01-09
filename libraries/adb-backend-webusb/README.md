@@ -8,7 +8,6 @@ Backend for `@yume-chan/adb` using WebUSB API.
 - [`read`/`write`](#readwrite)
 - [`generateKey`](#generatekey)
 - [`iterateKeys`](#iteratekeys)
-- [`encodeUtf8`/`decodeUtf8`](#encodeutf8decodeutf8)
 
 ## Note
 
@@ -60,7 +59,3 @@ Generate a RSA private key and store it into LocalStorage.
 ## `iterateKeys`
 
 Return the stored RSA private key. (This backend only supports a single key)
-
-## `encodeUtf8`/`decodeUtf8`
-
-Encode/decode string in UTF-8 with `TextEncoder` ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder/TextEncoder)) and `TextDecoder` ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/TextDecoder/TextDecoder)).

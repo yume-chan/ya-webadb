@@ -1,6 +1,5 @@
 {
     "name": "@yume-chan/adb-credential-web",
-    "private": true,
     "version": "0.0.10",
     "description": "Credential Store for `@yume-chan/adb` using Web LocalStorage API.",
     "keywords": [

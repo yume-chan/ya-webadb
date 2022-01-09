@@ -1,11 +1,7 @@
 # `@yume-chan/adb-backend-ws`
 
-> TODO: description
+Backend for `@yume-chan/adb` using WebSocket API.
 
-## Usage
+Requires WebSockify softwares to bridge the connection between TCP (ADB over Wi-Fi) and WebSocket.
 
-```
-const adbBackendWs = require('@yume-chan/adb-backend-ws');
-
-// TODO: DEMONSTRATE API
-```
+Note: This package only demostrate the possiblility. It's not intended to be used in production, thus not published to NPM registry.
