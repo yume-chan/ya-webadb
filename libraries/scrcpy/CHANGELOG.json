@@ -1,9 +1,9 @@
 {
-  "name": "@yume-chan/adb-credential-web",
+  "name": "@yume-chan/scrcpy",
   "entries": [
     {
       "version": "0.0.10",
-      "tag": "@yume-chan/adb-credential-web_v0.0.10",
+      "tag": "@yume-chan/scrcpy_v0.0.10",
       "date": "Sun, 09 Jan 2022 15:52:20 GMT",
       "comments": {}
     }

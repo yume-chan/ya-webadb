@@ -2,6 +2,18 @@
   "name": "@yume-chan/adb-backend-webusb",
   "entries": [
     {
+      "version": "0.0.10",
+      "tag": "@yume-chan/adb-backend-webusb_v0.0.10",
+      "date": "Sun, 09 Jan 2022 15:52:20 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Remove `encodeUtf8()` and `decodeUtf8()` from `AdbBackend`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.9",
       "tag": "@yume-chan/adb-backend-webusb_v0.0.9",
       "date": "Sun, 09 Jan 2022 15:50:20 GMT",

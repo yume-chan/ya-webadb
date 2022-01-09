@@ -2,6 +2,18 @@
   "name": "@yume-chan/struct",
   "entries": [
     {
+      "version": "0.0.10",
+      "tag": "@yume-chan/struct_v0.0.10",
+      "date": "Sun, 09 Jan 2022 15:52:20 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add synchronized deserialize support"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.9",
       "tag": "@yume-chan/struct_v0.0.9",
       "date": "Sun, 09 Jan 2022 15:50:20 GMT",
