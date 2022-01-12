@@ -25,110 +25,19 @@ interface ScrcpyOutput {
     error?: ScrcpyError;
 }
 
-class LineReader {
-    private readonly text: string;
+function* splitLines(text: string): Generator<string, void, void> {
+    let start = 0;
 
-    private start = 0;
-
-    private peekLine: string | undefined;
-
-    private peekEnd = 0;
-
-    constructor(text: string) {
-        this.text = text;
-    }
-
-    public next(): string | undefined {
-        let result = this.peek();
-        this.start = this.peekEnd;
-        this.peekEnd = 0;
-        return result;
-    }
-
-    public peek(): string | undefined {
-        if (this.peekEnd) {
-            return this.peekLine;
-        }
-
-        const index = this.text.indexOf('\n', this.start);
+    while (true) {
+        const index = text.indexOf('\n', start);
         if (index === -1) {
-            this.peekLine = undefined;
-            this.peekEnd = this.text.length;
-            return undefined;
+            return;
         }
 
-        const line = this.text.substring(this.start, index);
-        this.peekLine = line;
-        this.peekEnd = index + 1;
-        return line;
-    }
-}
+        const line = text.substring(start, index);
+        yield line;
 
-function* parseScrcpyOutput(text: string): Generator<ScrcpyOutput> {
-    const lines = new LineReader(text);
-    let line: string | undefined;
-    while ((line = lines.next()) !== undefined) {
-        if (line === '') {
-            continue;
-        }
-
-        if (line.startsWith('[server] ')) {
-            line = line.substring('[server] '.length);
-
-            if (line.startsWith('DEBUG: ')) {
-                yield {
-                    level: ScrcpyLogLevel.Debug,
-                    message: line.substring('DEBUG: '.length),
-                };
-                continue;
-            }
-
-            if (line.startsWith('INFO: ')) {
-                yield {
-                    level: ScrcpyLogLevel.Info,
-                    message: line.substring('INFO: '.length),
-                };
-                continue;
-            }
-
-            if (line.startsWith('ERROR: ')) {
-                line = line.substring('ERROR: '.length);
-                const message = line;
-
-                let error: ScrcpyError | undefined;
-                if (line.startsWith('Exception on thread')) {
-                    if (line = lines.next()) {
-                        const [errorType, errorMessage] = line.split(': ', 2);
-                        const stackTrace: string[] = [];
-                        while (line = lines.peek()) {
-                            if (line.startsWith('\t')) {
-                                stackTrace.push(line.trim());
-                                lines.next();
-                                continue;
-                            }
-                            break;
-                        }
-                        error = {
-                            type: errorType,
-                            message: errorMessage,
-                            stackTrace,
-                        };
-                    }
-                }
-
-                yield {
-                    level: ScrcpyLogLevel.Error,
-                    message,
-                    error,
-                };
-                continue;
-            }
-        }
-
-        yield {
-            level: ScrcpyLogLevel.Info,
-            message: line,
-        };
+        start = index + 1;
     }
 }
 
@@ -188,13 +97,8 @@ export class ScrcpyClient {
 
         const resolver = new PromiseResolver<string[]>();
         const encoders: string[] = [];
-        client.onError(({ message, error }) => {
-            if (error && error.type !== 'com.genymobile.scrcpy.InvalidEncoderException') {
-                resolver.reject(new Error(`${error.type}: ${error.message}`));
-                return;
-            }
-
-            const match = message.match(encoderNameRegex);
+        client.onOutput((line) => {
+            const match = line.match(encoderNameRegex);
             if (match) {
                 encoders.push(match[1]);
             }
@@ -226,14 +130,8 @@ export class ScrcpyClient {
 
     private controlStream: AdbBufferedStream | undefined;
 
-    private readonly debugEvent = new EventEmitter<string>();
-    public get onDebug() { return this.debugEvent.event; }
-
-    private readonly infoEvent = new EventEmitter<string>();
-    public get onInfo() { return this.infoEvent.event; }
-
-    private readonly errorEvent = new EventEmitter<ScrcpyOutput>();
-    public get onError() { return this.errorEvent.event; }
+    private readonly outputEvent = new EventEmitter<string>();
+    public get onOutput() { return this.outputEvent.event; }
 
     private readonly closeEvent = new EventEmitter<void>();
     public get onClose() { return this.closeEvent.event; }
@@ -334,19 +232,12 @@ export class ScrcpyClient {
     }
 
     private handleProcessOutput(data: ArrayBuffer) {
-        const string = decodeUtf8(data);
-        for (const output of parseScrcpyOutput(string)) {
-            switch (output.level) {
-                case ScrcpyLogLevel.Debug:
-                    this.debugEvent.fire(output.message);
-                    break;
-                case ScrcpyLogLevel.Info:
-                    this.infoEvent.fire(output.message);
-                    break;
-                case ScrcpyLogLevel.Error:
-                    this.errorEvent.fire(output);
-                    break;
+        const text = decodeUtf8(data);
+        for (const line of splitLines(text)) {
+            if (line === '') {
+                continue;
             }
+            this.outputEvent.fire(line);
         }
     }
 

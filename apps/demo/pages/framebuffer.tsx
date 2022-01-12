@@ -95,7 +95,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
             key: 'DemoMode',
             iconProps: { iconName: Icons.Wand, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
             checked: state.demoModeVisible,
-            text: 'Demo Mode Settings',
+            text: 'Demo Mode',
             onClick: state.toggleDemoModeVisible,
         },
         {

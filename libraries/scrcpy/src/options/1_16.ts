@@ -99,10 +99,12 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
             logLevel === ScrcpyLogLevel.Verbose) {
             logLevel = ScrcpyLogLevel.Debug;
         }
+
         if (new.target === ScrcpyOptions1_16 &&
             lockVideoOrientation === ScrcpyScreenOrientation.Initial) {
             lockVideoOrientation = ScrcpyScreenOrientation.Unlocked;
         }
+
         this.value = {
             logLevel,
             maxSize,
@@ -167,7 +169,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
     }
 
     public getOutputEncoderNameRegex(): RegExp {
-        return /^\s+scrcpy --encoder-name '(.*?)'/;
+        return /\s+scrcpy --encoder-name '(.*?)'/;
     }
 
     public createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb) {

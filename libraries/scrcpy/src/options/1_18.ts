@@ -26,7 +26,7 @@ export class ScrcpyOptions1_18<T extends ScrcpyOptions1_18Type = ScrcpyOptions1_
     }
 
     public override getOutputEncoderNameRegex(): RegExp {
-        return /^\s+scrcpy --encoder '(.*?)'/;
+        return /\s+scrcpy --encoder '(.*?)'/;
     }
 
     public override createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb) {

@@ -159,6 +159,8 @@ class ScrcpyPageState {
     deviceView: DeviceViewRef | null = null;
     rendererContainer: HTMLDivElement | null = null;
 
+    logVisible = false;
+    log: string[] = [];
     settingsVisible = false;
     demoModeVisible = false;
 
@@ -224,11 +226,20 @@ class ScrcpyPageState {
         return result;
     }
 
-    get commandBarFarItems() {
+    get commandBarFarItems(): ICommandBarItemProps[] {
         return [
             {
+                key: 'Log',
+                iconProps: { iconName: Icons.TextGrammarError },
+                checked: this.logVisible,
+                text: 'Log',
+                onClick: action(() => {
+                    this.logVisible = !this.logVisible;
+                }),
+            },
+            {
                 key: 'Settings',
-                iconProps: { iconName: 'Settings' },
+                iconProps: { iconName: Icons.Settings },
                 checked: this.settingsVisible,
                 text: 'Settings',
                 onClick: action(() => {
@@ -239,7 +250,7 @@ class ScrcpyPageState {
                 key: 'DemoMode',
                 iconProps: { iconName: Icons.Wand },
                 checked: this.demoModeVisible,
-                text: 'Demo Mode Settings',
+                text: 'Demo Mode',
                 onClick: action(() => {
                     this.demoModeVisible = !this.demoModeVisible;
                 }),
@@ -426,17 +437,9 @@ class ScrcpyPageState {
             });
 
             const client = new ScrcpyClient(global.device);
-
-            client.onDebug(message => {
-                console.debug('[server] ' + message);
-            });
-            client.onInfo(message => {
-                console.log('[server] ' + message);
-            });
-            client.onError(({ message }) => {
-                global.showErrorDialog(message);
-            });
-            client.onClose(stop);
+            runInAction(() => this.log = []);
+            client.onOutput(action(line => this.log.push(line)));
+            client.onClose(this.stop);
 
             client.onSizeChanged(action((size) => {
                 const { croppedWidth, croppedHeight, } = size;
@@ -655,8 +658,8 @@ class ScrcpyPageState {
         this.client.injectScroll({
             pointerX: x,
             pointerY: y,
-            scrollX: -e.deltaX,
-            scrollY: -e.deltaY,
+            scrollX: -Math.sign(e.deltaX),
+            scrollY: -Math.sign(e.deltaY),
         });
     };
 
@@ -694,6 +697,7 @@ class ScrcpyPageState {
 }
 
 const state = new ScrcpyPageState();
+console.log(state);
 
 const ConnectionDialog = observer(() => {
     const layerHostId = useId('layerHost');
@@ -793,6 +797,14 @@ const Scrcpy: NextPage = () => {
                         onKeyDown={state.handleKeyDown}
                     />
                 </DeviceView>
+
+                <div style={{ padding: 12, overflow: 'hidden auto', display: state.logVisible ? 'block' : 'none', width: 500, fontFamily: 'monospace', overflowY: 'auto' }}>
+                    {state.log.map((line, index) => (
+                        <div key={index}>
+                            {line}
+                        </div>
+                    ))}
+                </div>
 
                 <div style={{ padding: 12, overflow: 'hidden auto', display: state.settingsVisible ? 'block' : 'none', width: 300 }}>
                     <div>Changes will take effect on next connection</div>
