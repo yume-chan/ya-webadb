@@ -458,21 +458,28 @@ class ScrcpyPageState {
                 window.navigator.clipboard.writeText(content);
             });
 
+            const options = new ScrcpyOptions1_21({
+                logLevel: ScrcpyLogLevel.Debug,
+                maxSize: this.resolution,
+                bitRate: this.bitRate,
+                lockVideoOrientation: ScrcpyScreenOrientation.Unlocked,
+                tunnelForward: this.tunnelForward,
+                encoderName: this.selectedEncoder ?? encoders[0],
+                codecOptions: new CodecOptions({
+                    profile: decoder.maxProfile,
+                    level: decoder.maxLevel,
+                }),
+            });
+
+            runInAction(() => {
+                this.log.push(`Server version: ${SCRCPY_SERVER_VERSION}`);
+                this.log.push(`Server arguments: ${options.formatServerArguments()}`);
+            });
+
             await client.start(
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                new ScrcpyOptions1_21({
-                    logLevel: ScrcpyLogLevel.Debug,
-                    maxSize: this.resolution,
-                    bitRate: this.bitRate,
-                    lockVideoOrientation: ScrcpyScreenOrientation.Unlocked,
-                    tunnelForward: this.tunnelForward,
-                    encoderName: this.selectedEncoder ?? encoders[0],
-                    codecOptions: new CodecOptions({
-                        profile: decoder.maxProfile,
-                        level: decoder.maxLevel,
-                    }),
-                }),
+                options,
             );
 
             runInAction(() => {
@@ -798,7 +805,16 @@ const Scrcpy: NextPage = () => {
                     />
                 </DeviceView>
 
-                <div style={{ padding: 12, overflow: 'hidden auto', display: state.logVisible ? 'block' : 'none', width: 500, fontFamily: 'monospace', overflowY: 'auto' }}>
+                <div style={{
+                    padding: 12,
+                    overflow: 'hidden auto',
+                    display: state.logVisible ? 'block' : 'none',
+                    width: 500,
+                    fontFamily: 'monospace',
+                    overflowY: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    wordWrap: 'break-word',
+                }}>
                     {state.log.map((line, index) => (
                         <div key={index}>
                             {line}
