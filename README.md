@@ -38,6 +38,7 @@ Accessing USB devices (especially your phone) directly from a web page can be **
 * ⚙ Enable ADB over WiFi
 * 📦 Install APK
 * 🎥 [Scrcpy](https://github.com/Genymobile/scrcpy) compatible client (screen mirroring and controling device)
+* 🔌 Power and reboot to different modes
 
 [📋 Project Roadmap](https://github.com/yume-chan/ya-webadb/issues/348)
 
