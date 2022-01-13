@@ -5,7 +5,7 @@ import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import React from "react";
-import { global } from "../state";
+import { globalState } from "../state";
 import { chunkFile, pickFile, RouteStackProps } from "../utils";
 
 enum Stage {
@@ -57,7 +57,7 @@ class InstallPageState {
             };
         });
 
-        await global.device!.install(chunkFile(file, AdbSyncMaxPacketSize), uploaded => {
+        await globalState.device!.install(chunkFile(file, AdbSyncMaxPacketSize), uploaded => {
             runInAction(() => {
                 if (uploaded !== file.size) {
                     this.progress = {
@@ -103,7 +103,7 @@ const Install: NextPage = () => {
 
             <Stack horizontal>
                 <DefaultButton
-                    disabled={!global.device || state.installing}
+                    disabled={!globalState.device || state.installing}
                     text="Open"
                     onClick={state.install}
                 />

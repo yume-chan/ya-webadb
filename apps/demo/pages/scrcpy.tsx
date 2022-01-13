@@ -8,7 +8,7 @@ import { NextPage } from "next";
 import Head from "next/head";
 import React, { useEffect, useState } from "react";
 import { DemoMode, DeviceView, DeviceViewRef, ExternalLink } from "../components";
-import { global } from "../state";
+import { globalState } from "../state";
 import { CommonStackTokens, formatSpeed, Icons, RouteStackProps } from "../utils";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 
@@ -201,7 +201,7 @@ class ScrcpyPageState {
         if (!this.running) {
             result.push({
                 key: 'start',
-                disabled: !global.device,
+                disabled: !globalState.device,
                 iconProps: { iconName: Icons.Play },
                 text: 'Start',
                 onClick: this.start as VoidFunction,
@@ -310,7 +310,7 @@ class ScrcpyPageState {
         });
 
         autorun(() => {
-            if (global.device) {
+            if (globalState.device) {
                 runInAction(() => {
                     this.encoders = [];
                     this.selectedEncoder = undefined;
@@ -351,7 +351,7 @@ class ScrcpyPageState {
     }
 
     start = async () => {
-        if (!global.device) {
+        if (!globalState.device) {
             return;
         }
 
@@ -395,7 +395,7 @@ class ScrcpyPageState {
             }), 1000);
 
             try {
-                await pushServer(global.device, serverBuffer, {
+                await pushServer(globalState.device, serverBuffer, {
                     onProgress: action((progress) => {
                         this.serverUploadedSize = progress;
                     }),
@@ -409,7 +409,7 @@ class ScrcpyPageState {
             }
 
             const encoders = await ScrcpyClient.getEncoders(
-                global.device,
+                globalState.device,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 new ScrcpyOptions1_21({
@@ -428,7 +428,7 @@ class ScrcpyPageState {
 
             // Run scrcpy once will delete the server file
             // Re-push it
-            await pushServer(global.device, serverBuffer);
+            await pushServer(globalState.device, serverBuffer);
 
             const factory = this.selectedDecoder.factory;
             const decoder = new factory();
@@ -436,7 +436,7 @@ class ScrcpyPageState {
                 this.decoder = decoder;
             });
 
-            const client = new ScrcpyClient(global.device);
+            const client = new ScrcpyClient(globalState.device);
             runInAction(() => this.log = []);
             client.onOutput(action(line => this.log.push(line)));
             client.onClose(this.stop);
@@ -487,7 +487,7 @@ class ScrcpyPageState {
                 this.running = true;
             });
         } catch (e: any) {
-            global.showErrorDialog(e.message);
+            globalState.showErrorDialog(e.message);
         } finally {
             runInAction(() => {
                 this.connecting = false;

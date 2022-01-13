@@ -5,7 +5,7 @@ import { NextPage } from "next";
 import Head from "next/head";
 import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import 'xterm/css/xterm.css';
-import { global } from "../state";
+import { globalState } from "../state";
 import { Icons, ResizeObserver, RouteStackProps } from '../utils';
 
 let terminal: import('../components/terminal').AdbTerminal;
@@ -40,9 +40,9 @@ const Shell: NextPage = (): JSX.Element | null => {
     const connectingRef = useRef(false);
     useEffect(() => {
         return reaction(
-            () => global.device,
+            () => globalState.device,
             async () => {
-                if (!global.device) {
+                if (!globalState.device) {
                     terminal.socket = undefined;
                     return;
                 }
@@ -53,10 +53,10 @@ const Shell: NextPage = (): JSX.Element | null => {
 
                 try {
                     connectingRef.current = true;
-                    const socket = await global.device.childProcess.shell();
+                    const socket = await globalState.device.childProcess.shell();
                     terminal.socket = socket;
                 } catch (e) {
-                    global.showErrorDialog(e instanceof Error ? e.message : `${e}`);
+                    globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                 } finally {
                     connectingRef.current = false;
                 }

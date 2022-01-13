@@ -3,7 +3,7 @@ import { AdbPacketInit, decodeUtf8 } from '@yume-chan/adb';
 import { DisposableList } from '@yume-chan/event';
 import { observer } from "mobx-react-lite";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { global, logger } from "../state";
+import { globalState, logger } from "../state";
 import { Icons, withDisplayName } from '../utils';
 import { CommandBar } from './command-bar';
 
@@ -57,10 +57,10 @@ const LogLine = withDisplayName('LoggerLine')(({ packet }: { packet: [string, Ad
 export const ToggleLogView = observer(() => {
     return (
         <IconButton
-            checked={global.logVisible}
+            checked={globalState.logVisible}
             iconProps={{ iconName: Icons.TextGrammarError }}
             title="Toggle Log"
-            onClick={global.toggleLog}
+            onClick={globalState.toggleLog}
         />
     );
 });
@@ -142,7 +142,7 @@ export const LogView = observer(({
         classNames['logger-container'],
     ), [className]);
 
-    if (!global.logVisible) {
+    if (!globalState.logVisible) {
         return null;
     }
 

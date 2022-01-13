@@ -6,7 +6,7 @@ import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import AdbWebCredentialStore from '@yume-chan/adb-credential-web';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { global, logger } from '../state';
+import { globalState, logger } from '../state';
 import { CommonStackTokens, Icons } from '../utils';
 
 const DropdownStyles = { dropdown: { width: '100%' } };
@@ -33,7 +33,7 @@ function _Connect(): JSX.Element | null {
             setSupported(supported);
 
             if (!supported) {
-                global.showErrorDialog('Your browser does not support WebUSB standard, which is required for this site to work.\n\nLatest version of Google Chrome, Microsoft Edge, or other Chromium-based browsers are required.');
+                globalState.showErrorDialog('Your browser does not support WebUSB standard, which is required for this site to work.\n\nLatest version of Google Chrome, Microsoft Edge, or other Chromium-based browsers are required.');
                 return;
             }
 
@@ -134,24 +134,24 @@ function _Connect(): JSX.Element | null {
                 try {
                     setConnecting(true);
                     await device.connect(CredentialStore);
-                    global.setDevice(device);
+                    globalState.setDevice(device);
                 } catch (e) {
                     device.dispose();
                     throw e;
                 }
             }
         } catch (e: any) {
-            global.showErrorDialog(e.message);
+            globalState.showErrorDialog(e.message);
         } finally {
             setConnecting(false);
         }
     }, [selectedBackend]);
     const disconnect = useCallback(async () => {
         try {
-            await global.device!.dispose();
-            global.setDevice(undefined);
+            await globalState.device!.dispose();
+            globalState.setDevice(undefined);
         } catch (e: any) {
-            global.showErrorDialog(e.message);
+            globalState.showErrorDialog(e.message);
         }
     }, []);
 
@@ -214,7 +214,7 @@ function _Connect(): JSX.Element | null {
             tokens={{ childrenGap: 8, padding: '0 0 8px 8px' }}
         >
             <Dropdown
-                disabled={!!global.device || backendOptions.length === 0}
+                disabled={!!globalState.device || backendOptions.length === 0}
                 label="Available devices"
                 placeholder="No available devices"
                 options={backendOptions}
@@ -224,7 +224,7 @@ function _Connect(): JSX.Element | null {
                 onChange={handleSelectedBackendChange}
             />
 
-            {!global.device
+            {!globalState.device
                 ? (
                     <Stack horizontal tokens={CommonStackTokens}>
                         <StackItem grow shrink>

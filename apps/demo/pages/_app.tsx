@@ -51,6 +51,11 @@ const ROUTES = [
         icon: Icons.Box,
         name: 'Install APK',
     },
+    {
+        url: '/power',
+        icon: Icons.Power,
+        name: 'Power Menu',
+    },
 ];
 
 function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsProps<INavButtonProps>) {

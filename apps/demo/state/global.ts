@@ -36,4 +36,4 @@ export class GlobalState {
     }
 }
 
-export const global = new GlobalState();
+export const globalState = new GlobalState();

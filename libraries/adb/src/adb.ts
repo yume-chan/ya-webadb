@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbCredentialStore, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbChildProcess, AdbDemoMode, AdbFrameBuffer, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
+import { AdbChildProcess, AdbDemoMode, AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
@@ -44,22 +44,21 @@ export class Adb {
     private _features: AdbFeatures[] | undefined;
     public get features() { return this._features; }
 
-    public readonly tcpip: AdbTcpIpCommand;
-
-    public readonly reverse: AdbReverseCommand;
-
-    public readonly demoMode: AdbDemoMode;
-
     public readonly childProcess: AdbChildProcess;
+    public readonly demoMode: AdbDemoMode;
+    public readonly power: AdbPower;
+    public readonly reverse: AdbReverseCommand;
+    public readonly tcpip: AdbTcpIpCommand;
 
     public constructor(backend: AdbBackend, logger?: AdbLogger) {
         this._backend = backend;
         this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
 
-        this.tcpip = new AdbTcpIpCommand(this);
-        this.reverse = new AdbReverseCommand(this.packetDispatcher);
-        this.demoMode = new AdbDemoMode(this);
         this.childProcess = new AdbChildProcess(this);
+        this.demoMode = new AdbDemoMode(this);
+        this.power = new AdbPower(this);
+        this.reverse = new AdbReverseCommand(this.packetDispatcher);
+        this.tcpip = new AdbTcpIpCommand(this);
 
         backend.onDisconnected(this.dispose, this);
     }

@@ -1,5 +1,5 @@
 import { registerIcons } from "@fluentui/react";
-import { MoreHorizontalRegular, AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, NavigationRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
@@ -30,6 +30,7 @@ export function register() {
             Play: <PlayRegular style={STYLE} />,
             PlugConnected: <PlugConnectedRegular style={STYLE} />,
             PlugDisconnected: <PlugDisconnectedRegular style={STYLE} />,
+            Power: <PowerRegular style={STYLE} />,
             Save: <SaveRegular style={STYLE} />,
             Settings: <SettingsRegular style={STYLE} />,
             Stop: <StopRegular style={STYLE} />,
@@ -77,6 +78,7 @@ export default {
     Play: 'Play',
     PlugConnected: 'PlugConnected',
     PlugDisconnected: 'PlugDisconnected',
+    Power: 'Power',
     Save: 'Save',
     Settings: 'Settings',
     Stop: 'Stop',
