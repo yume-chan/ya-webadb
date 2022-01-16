@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "comment": "Update license year",
+      "type": "none",
+      "packageName": "@yume-chan/struct"
+    }
+  ],
+  "packageName": "@yume-chan/struct",
+  "email": "1330321+yume-chan@users.noreply.github.com"
+}
