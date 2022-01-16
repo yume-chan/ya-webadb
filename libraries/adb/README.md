@@ -36,18 +36,17 @@ TypeScript implementation of Android Debug Bridge (ADB) protocol.
 
 ## Compatibility
 
-The main limiting factor of compatibility is [@yume-chan/struct](https://www.npmjs.com/package/@yume-chan/struct).
+This table only applies to this library itself. Specific backend may require higher runtime versions.
 
-This library doesn't use any DOM or Node.js API.
+This library only uses standard JavaScript features.
 
-|                 | Chrome | Edge | Firefox | Internet Explorer | Safari         | Node.js |
-| --------------- | ------ | ---- | ------- | ----------------- | -------------- | ------- |
-| **Basic usage** | 68     | 79   | 68      | No                | 14<sup>1</sup> | 10.4    |
+|                 | Chrome | Edge | Firefox | Internet Explorer | Safari             | Node.js              |
+| --------------- | ------ | ---- | ------- | ----------------- | ------------------ | -------------------- |
+| **Basic usage** | 68     | 79   | 68      | No                | 14<sup>1</sup>, 15 | 10.4<sup>2</sup>, 11 |
 
-<sup>1</sup> Requires a polyfill for [`DataView#getBigUint64`][MDN_DataView_getBigUint64] and [`DataView#setBigUint64`][MDN_DataView_setBigUint64]
+<sup>1</sup> Requires a polyfill for `DataView#getBigInt64`, `DataView#getBigUint64`, `DataView#setBigInt64` and `DataView#setBigUint64`
 
-[MDN_DataView_getBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/getBigUint64
-[MDN_DataView_setBigUint64]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView/setBigUint64
+<sup>2</sup> `TextEncoder` and `TextDecoder` are only available in `util` module. Must be assigned to global object.
 
 ## Connection
 
