@@ -16,6 +16,7 @@ specifiers:
   '@rush-temp/adb-backend-webusb': file:./projects/adb-backend-webusb.tgz
   '@rush-temp/adb-backend-ws': file:./projects/adb-backend-ws.tgz
   '@rush-temp/adb-credential-web': file:./projects/adb-credential-web.tgz
+  '@rush-temp/dataview-bigint-polyfill': file:./projects/dataview-bigint-polyfill.tgz
   '@rush-temp/demo': file:./projects/demo.tgz
   '@rush-temp/event': file:./projects/event.tgz
   '@rush-temp/scrcpy': file:./projects/scrcpy.tgz
@@ -73,6 +74,7 @@ dependencies:
   '@rush-temp/adb-backend-webusb': file:projects/adb-backend-webusb.tgz
   '@rush-temp/adb-backend-ws': file:projects/adb-backend-ws.tgz
   '@rush-temp/adb-credential-web': file:projects/adb-credential-web.tgz
+  '@rush-temp/dataview-bigint-polyfill': file:projects/dataview-bigint-polyfill.tgz
   '@rush-temp/demo': file:projects/demo.tgz_@mdx-js+react@1.6.22
   '@rush-temp/event': file:projects/event.tgz
   '@rush-temp/scrcpy': file:projects/scrcpy.tgz
@@ -13916,7 +13918,7 @@ packages:
     dev: false
 
   file:projects/adb-backend-direct-sockets.tgz:
-    resolution: {integrity: sha512-PAPSIervieQxx750pklyuxKu4qn9R7+AWpwMlwx2SCyEcDWZjXmJwy/OsOeyyKn31RVoFlncv1KxzqKW6v35tQ==, tarball: file:projects/adb-backend-direct-sockets.tgz}
+    resolution: {integrity: sha512-qs1bNfJ9Prbs0FFkfOS08GtG8vv1QHzfiytnisOlkhrIxx4YGN5qVe0ustWUH/w+vpJyzfP1UZyw4OyCjx+u7Q==, tarball: file:projects/adb-backend-direct-sockets.tgz}
     name: '@rush-temp/adb-backend-direct-sockets'
     version: 0.0.0
     dependencies:
@@ -13927,7 +13929,7 @@ packages:
     dev: false
 
   file:projects/adb-backend-webusb.tgz:
-    resolution: {integrity: sha512-HSlDEP7ueAlPCjy6F+o9flrcykC54oul0iSug+ujAAuuEX2kjMOm2J2puyI/ZKag0dsNSUcojdm2J1ViXkbGMQ==, tarball: file:projects/adb-backend-webusb.tgz}
+    resolution: {integrity: sha512-2JTRQvg7s4zEktAvcs7WL6P4hnnbHDf8UJE6Qb1sf5+UKfXc0WfGBUWeB/ZlIpN1Zoq3tz8ADgkR/y2zN+y0yg==, tarball: file:projects/adb-backend-webusb.tgz}
     name: '@rush-temp/adb-backend-webusb'
     version: 0.0.0
     dependencies:
@@ -13944,7 +13946,7 @@ packages:
     dev: false
 
   file:projects/adb-backend-ws.tgz:
-    resolution: {integrity: sha512-gmOeTpe51r+uwYeeMuPIQ6LU2+DYXJbirNXafLgfLjpWWWH8sCblZADZlHLzI/wte6RfabrecbyTgxoTtJ6rvA==, tarball: file:projects/adb-backend-ws.tgz}
+    resolution: {integrity: sha512-K5obJNk6zcc8aiCYEQGXXqfmT3/tnjtACVAMd0cYkzpKukX57YX9uzwQmmfUkUd3sl+Wxc4TIApwKcc5ap4kLg==, tarball: file:projects/adb-backend-ws.tgz}
     name: '@rush-temp/adb-backend-ws'
     version: 0.0.0
     dependencies:
@@ -13954,7 +13956,7 @@ packages:
     dev: false
 
   file:projects/adb-credential-web.tgz:
-    resolution: {integrity: sha512-X7CGrXjmZMJZ1eodb8OPi7Gpf4Td6E82tVGmElOGyHGZQfQUAbquFZEA90Xy3fMkOEL044erE0z2K50FT1XgIA==, tarball: file:projects/adb-credential-web.tgz}
+    resolution: {integrity: sha512-/gH/lJTUhTQv8q2qJbHZyDLN5osWSEnFicJcMhpxE5Rz8/mxekby5F82eKa2lbCDfKFtT8Ut8YG+Gu61JwbmeQ==, tarball: file:projects/adb-credential-web.tgz}
     name: '@rush-temp/adb-credential-web'
     version: 0.0.0
     dependencies:
@@ -13964,7 +13966,7 @@ packages:
     dev: false
 
   file:projects/adb.tgz:
-    resolution: {integrity: sha512-ml4LnuWqxm//ml+VLLaRCxyfXCrbAmjOUupCyZOz8gOKgyhTNuNLd9KBxQFGH26qH7OFzn3oBttLJWKnaP2Q8Q==, tarball: file:projects/adb.tgz}
+    resolution: {integrity: sha512-X+1tRPT8Uulw1NQnHGaX2DTvMphOQ3vH9N4S1av7Y6k9FwdZrbagAdGF3HcI5COGlDdI5H9wSqxnCJhAkFHcZg==, tarball: file:projects/adb.tgz}
     name: '@rush-temp/adb'
     version: 0.0.0
     dependencies:
@@ -13980,8 +13982,24 @@ packages:
       - utf-8-validate
     dev: false
 
+  file:projects/dataview-bigint-polyfill.tgz:
+    resolution: {integrity: sha512-62uJPS9sWVREKIMV4TMcFwNCkzTYWz6B79H0R8AHFVykCMFDFC/Cgmbch4/VmCLSHzOHNuBlvVFS1axa3Rl7eA==, tarball: file:projects/dataview-bigint-polyfill.tgz}
+    name: '@rush-temp/dataview-bigint-polyfill'
+    version: 0.0.0
+    dependencies:
+      jest: 26.6.3
+      tslib: 2.3.1
+      typescript: 4.5.4
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - ts-node
+      - utf-8-validate
+    dev: false
+
   file:projects/demo.tgz_@mdx-js+react@1.6.22:
-    resolution: {integrity: sha512-LPJTIGKf70LHumnDflAgaGjEy96e6QgtUu6M2Nqcwizq+GxNTJH/a7BTs8pizMNIwMF0dSZLqzVcgGsc3GuDTg==, tarball: file:projects/demo.tgz}
+    resolution: {integrity: sha512-niJl4xSWMRHALfQW7ZdYKVc3fTKMDVsm/Btv/WnXjBbjgQk9hvcPvPMGltwbhVgOMCwV4wL76s5jSc52dXc9fg==, tarball: file:projects/demo.tgz}
     id: file:projects/demo.tgz
     name: '@rush-temp/demo'
     version: 0.0.0
@@ -14021,7 +14039,7 @@ packages:
     dev: false
 
   file:projects/event.tgz:
-    resolution: {integrity: sha512-xKXpC79xXSyXj/rzUHlyCAFT5X9mUejkCcF2DarGiRw+gT7tug6na+EvUz2dZUVCtIzyUJFtuhbS39n0qy0A+g==, tarball: file:projects/event.tgz}
+    resolution: {integrity: sha512-4blWUITFxuoHNLV23rXxIThRO6qqKbHXwQ06+fsfoc5fEDdWkBOUO0ctKrR9QKkQsjeITEjMvrAy4vN9yfRNHA==, tarball: file:projects/event.tgz}
     name: '@rush-temp/event'
     version: 0.0.0
     dependencies:
@@ -14038,7 +14056,7 @@ packages:
     dev: false
 
   file:projects/scrcpy.tgz:
-    resolution: {integrity: sha512-ZoKLRmeOhzbvUl1tXGFjRmPKRFcGWQjkfocPpSRiZLvU0kdb62Plq65M2m0tnQuSsge+m1VcsbC7zf0fyMNmhQ==, tarball: file:projects/scrcpy.tgz}
+    resolution: {integrity: sha512-LdZg4zlPZ0z1yUWhP/ujyGZRqi1HKdqiLUgUh5HFmnXM7i3ggNPVUeX7qL8HfbgqenVYZMnQ3stWmzRVm9IAAA==, tarball: file:projects/scrcpy.tgz}
     name: '@rush-temp/scrcpy'
     version: 0.0.0
     dependencies:
@@ -14061,7 +14079,7 @@ packages:
     dev: false
 
   file:projects/struct.tgz:
-    resolution: {integrity: sha512-bQp42RvxKuE6ql0/uinMby4wEgAWnpgnWrtd2+Z3QD+SSTLIc3HpoXuuahoeWnx6rIWjS3zYgA5FKijJZflyGQ==, tarball: file:projects/struct.tgz}
+    resolution: {integrity: sha512-digB+gUzniIfo4jioWpNnvwq4YY/sHpEjPIXjd1q0KMzFio6Y7p3ABarAHVuQQjHf2RtGv9oZ65YEqsSg6jxNw==, tarball: file:projects/struct.tgz}
     name: '@rush-temp/struct'
     version: 0.0.0
     dependencies:

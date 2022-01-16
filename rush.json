@@ -437,6 +437,10 @@
             "versionPolicyName": "adb"
         },
         {
+            "packageName": "@yume-chan/dataview-bigint-polyfill",
+            "projectFolder": "libraries/dataview-bigint-polyfill"
+        },
+        {
             "packageName": "@yume-chan/event",
             "projectFolder": "libraries/event",
             "shouldPublish": true,
