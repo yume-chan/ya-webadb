@@ -16,7 +16,7 @@ Manipulate Android devices from any (supported) web browsers, even from another 
 
 [WebUSB]: https://wicg.github.io/webusb/
 [WebSocket]: https://websockets.spec.whatwg.org/
-[Direct Sockets]: https://wicg.github.io/raw-sockets/
+[Direct Sockets]: https://wicg.github.io/direct-sockets/
 
 <sup>1</sup> Requires WebSockify softwares, see [instruction](https://github.com/yume-chan/ya-webadb/discussions/245#discussioncomment-384030) for detail.
 
