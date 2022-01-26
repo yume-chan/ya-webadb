@@ -6,7 +6,7 @@ export async function install(
     apk: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
     onProgress?: (uploaded: number) => void,
 ): Promise<void> {
-    const filename = `/data/local/tmp/${Math.random().toString().substr(2)}.apk`;
+    const filename = `/data/local/tmp/${Math.random().toString().substring(2)}.apk`;
 
     // Upload apk file to tmp folder
     const sync = await adb.sync();
