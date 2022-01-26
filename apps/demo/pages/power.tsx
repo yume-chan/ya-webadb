@@ -1,4 +1,4 @@
-import { DefaultButton, Icon, MessageBar, TooltipHost } from "@fluentui/react";
+import { DefaultButton, Icon, MessageBar, MessageBarType, TooltipHost } from "@fluentui/react";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import { globalState } from "../state";
@@ -9,6 +9,18 @@ const Power: NextPage = () => {
         <div style={{ padding: 20 }}>
             <div>
                 <DefaultButton text="Reboot" disabled={!globalState.device} onClick={() => globalState.device!.power.reboot()} />
+            </div>
+
+            <div style={{ marginTop: 20 }}>
+                <DefaultButton text="Power Off" disabled={!globalState.device} onClick={() => globalState.device!.power.powerOff()} />
+            </div>
+
+            <div style={{ marginTop: 20 }}>
+                <DefaultButton text="Press Power Button" disabled={!globalState.device} onClick={() => globalState.device!.power.powerButton()} />
+            </div>
+
+            <div style={{ marginTop: 20 }}>
+                <MessageBar messageBarType={MessageBarType.severeWarning}>Danger Zone Below</MessageBar>
             </div>
 
             <div style={{ marginTop: 20 }}>
@@ -35,11 +47,10 @@ const Power: NextPage = () => {
             </div>
 
             <div style={{ marginTop: 20 }}>
-                <DefaultButton text="Power Off" disabled={!globalState.device} onClick={() => globalState.device!.power.powerOff()} />
-            </div>
-
-            <div style={{ marginTop: 20 }}>
-                <DefaultButton text="Press Power Button" disabled={!globalState.device} onClick={() => globalState.device!.power.powerButton()} />
+                <DefaultButton text="Reboot to Samsung Odin Download Mode" disabled={!globalState.device} onClick={() => globalState.device!.power.samsungOdin()} />
+                <TooltipHost content={<span>Only works on Samsung devices.</span>}>
+                    <Icon style={{ verticalAlign: 'middle', marginLeft: 4, fontSize: 18 }} iconName={Icons.Info} />
+                </TooltipHost>
             </div>
         </div>
     );

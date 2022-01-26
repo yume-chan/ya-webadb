@@ -1,11 +1,12 @@
 import { registerIcons } from "@fluentui/react";
-import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { AddCircleRegular, WarningRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
 export function register() {
     registerIcons({
         icons: {
+            // General use
             AddCircle: <AddCircleRegular style={STYLE} />,
             ArrowClockwise: <ArrowClockwiseRegular style={STYLE} />,
             Bookmark: <BookmarkRegular style={STYLE} />,
@@ -36,9 +37,11 @@ export function register() {
             Stop: <StopRegular style={STYLE} />,
             TextGrammarError: <TextGrammarErrorRegular style={STYLE} />,
             Wand: <WandRegular style={STYLE} />,
+            Warning: <WarningRegular style={STYLE} />,
             WifiSettings: <WifiSettingsRegular style={STYLE} />,
             WindowConsole: <WindowConsoleRegular style={STYLE} />,
 
+            // Required by @fluentui/react
             StatusCircleCheckmark: <CheckmarkRegular style={STYLE} />,
             ChevronUpSmall: <ChevronUpRegular style={STYLE} />,
             ChevronDownSmall: <ChevronDownRegular style={STYLE} />,
@@ -48,6 +51,7 @@ export function register() {
             SortDown: <ArrowSortDownRegular style={STYLE} />,
             Search: <SearchRegular style={STYLE} />,
 
+            // Required by file manager page
             Document20: <DocumentRegular style={{ fontSize: 20, verticalAlign: 'middle' }} />
         }
     });
@@ -84,6 +88,7 @@ export default {
     Stop: 'Stop',
     TextGrammarError: 'TextGrammarError',
     Wand: 'Wand',
+    Warning: 'Warning',
     WifiSettings: 'WifiSettings',
     WindowConsole: 'WindowConsole',
     Document20: 'Document20'
