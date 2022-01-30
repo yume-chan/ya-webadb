@@ -48,6 +48,40 @@ Scrcpy server has no backward compatibility on options input format. Currently t
 | --------- | ------------------- |
 | 1.16~1.17 | `ScrcpyOptions1_16` |
 | 1.18~1.20 | `ScrcpyOptions1_18` |
-| 1.21      | `ScrcpyOptions1_21` |
+| 1.21~1.22 | `ScrcpyOptions1_21` |
 
 You must use the correct type according to the server version.
+
+## Video stream
+
+The data from `onVideoData` event is a raw H.264 stream. You can process it as you want, or use the following built-in decoders to render it in browsers:
+
+* WebCodecs decoder: Uses the [WebCodecs API](https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API). The video stream will be decoded into `VideoFrame`s and drawn on a 2D canvas.
+* TinyH264 decoder: TinyH264 compiles the old Android H.264 software decoder (now deprecated and removed) into WebAssembly, and wrap it in Web Worker to prevent blocking the main thread. The video stream will be decoded into YUV frames, then converted to RGB using a WebGL shader.
+
+| Name              | Chrome | Firefox | Safari | Performance                     | Supported H.264 profile/level |
+| ----------------- | ------ | ------- | ------ | ------------------------------- | ----------------------------- |
+| WebCodecs decoder | 94     | No      | No     | High with Hardware acceleration | High level 5                  |
+| TinyH264 decoder  | 57     | 52      | 11     | Poor                            | Baseline level 4              |
+
+TinyH264 decoder needs some extra setup:
+
+1. `tinyh264`, `yuv-buffer` and `yuv-canvas` packages are peer dependencies. You must install them separately.
+2. The bundler you use must support the `new Worker(new URL('./worker.js', import.meta.url), { type: 'module' })` syntax. It's known to work with Webpack 5.
+
+Example usage:
+
+```ts
+const client = new ScrcpyClient(adb);
+const decoder = new WebCodecsDecoder(); // Or `new TinyH264Decoder()`
+client.onSizeChanged(size => decoder.setSize(size));
+client.onVideoData(data => decoder.feed(data));
+client.start(serverPath, serverVersion, new ScrcpyOptionsX_XX({
+    ...options,
+    codecOptions: new CodecOptions({
+        profile: decoder.maxProfile,
+        level: decoder.maxLevel,
+    }),
+}));
+document.body.appendChild(decoder.element);
+```
