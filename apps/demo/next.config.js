@@ -18,6 +18,9 @@ module.exports = withMDX({
     pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
     reactStrictMode: true,
     productionBrowserSourceMaps: true,
+    experimental: {
+        esmExternals: 'loose',
+    },
     webpack(config, options) {
         config.module.rules.push({
             resourceQuery: /url/,

@@ -23,7 +23,7 @@
         "url": "https://github.com/yume-chan/ya-webadb/issues"
     },
     "bin": {
-        "fetch-scrcpy-server": "scripts/fetch-server.js"
+        "fetch-scrcpy-server": "scripts/fetch-server.cjs"
     },
     "type": "module",
     "module": "esm/index.js",
