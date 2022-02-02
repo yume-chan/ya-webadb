@@ -29,11 +29,11 @@ export class StructValue {
     }
 
     /**
-     * Gets a previously `StructFieldValue` for `key`
+     * Gets the `StructFieldValue` for `key`
      *
      * @param key The field name
      */
     public get(key: PropertyKey): StructFieldValue {
-        return this.fieldValues[key];
+        return this.fieldValues[key]!;
     }
 }

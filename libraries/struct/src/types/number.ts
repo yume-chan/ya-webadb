@@ -8,8 +8,8 @@ export type DataViewGetters =
 export type DataViewSetters =
     { [TKey in keyof DataView]: TKey extends `set${string}` ? TKey : never }[keyof DataView];
 
-export class NumberFieldType<TTypeScriptType extends number | bigint = number | bigint> {
-    public readonly TTypeScriptType!: TTypeScriptType;
+export class NumberFieldType {
+    public readonly TTypeScriptType!: number;
 
     public readonly size: number;
 
@@ -27,26 +27,22 @@ export class NumberFieldType<TTypeScriptType extends number | bigint = number | 
         this.dataViewSetter = dataViewSetter;
     }
 
-    public static readonly Int8 = new NumberFieldType<number>(1, 'getInt8', 'setInt8');
+    public static readonly Int8 = new NumberFieldType(1, 'getInt8', 'setInt8');
 
-    public static readonly Uint8 = new NumberFieldType<number>(1, 'getUint8', 'setUint8');
+    public static readonly Uint8 = new NumberFieldType(1, 'getUint8', 'setUint8');
 
-    public static readonly Int16 = new NumberFieldType<number>(2, 'getInt16', 'setInt16');
+    public static readonly Int16 = new NumberFieldType(2, 'getInt16', 'setInt16');
 
-    public static readonly Uint16 = new NumberFieldType<number>(2, 'getUint16', 'setUint16');
+    public static readonly Uint16 = new NumberFieldType(2, 'getUint16', 'setUint16');
 
-    public static readonly Int32 = new NumberFieldType<number>(4, 'getInt32', 'setInt32');
+    public static readonly Int32 = new NumberFieldType(4, 'getInt32', 'setInt32');
 
-    public static readonly Uint32 = new NumberFieldType<number>(4, 'getUint32', 'setUint32');
-
-    public static readonly Int64 = new NumberFieldType<bigint>(8, 'getBigInt64', 'setBigInt64');
-
-    public static readonly Uint64 = new NumberFieldType<bigint>(8, 'getBigUint64', 'setBigUint64');
+    public static readonly Uint32 = new NumberFieldType(4, 'getUint32', 'setUint32');
 }
 
 export class NumberFieldDefinition<
     TType extends NumberFieldType = NumberFieldType,
-    TTypeScriptType = TType['TTypeScriptType'],
+    TTypeScriptType = TType["TTypeScriptType"],
     > extends StructFieldDefinition<
     void,
     TTypeScriptType
@@ -92,8 +88,8 @@ export class NumberFieldDefinition<
             const value = view[this.type.dataViewGetter](
                 0,
                 options.littleEndian
-            ) as any;
-            return this.create(options, struct, value);
+            );
+            return this.create(options, struct, value as any);
         }).valueOrPromise();
     }
 }

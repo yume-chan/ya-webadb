@@ -1,7 +1,7 @@
 import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic';
 import { StructDefaultOptions, StructValue } from './basic';
 import { Syncbird } from "./syncbird";
-import { ArrayBufferFieldType, ArrayBufferLikeFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
+import { ArrayBufferFieldType, ArrayBufferLikeFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
 import { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils";
 
 export interface StructLike<TValue> {
@@ -185,7 +185,7 @@ export class Struct<
 
     private _extra: PropertyDescriptorMap = {};
 
-    private _postDeserialized?: StructPostDeserialized<any, any>;
+    private _postDeserialized?: StructPostDeserialized<any, any> | undefined;
 
     public constructor(options?: Partial<Readonly<StructOptions>>) {
         this.options = { ...StructDefaultOptions, ...options };
@@ -359,6 +359,21 @@ export class Struct<
         );
     }
 
+    private bigint<
+        TName extends PropertyKey,
+        TType extends BigIntFieldType = BigIntFieldType,
+        TTypeScriptType = TType['TTypeScriptType']
+    >(
+        name: TName,
+        type: TType,
+        _typescriptType?: TTypeScriptType,
+    ) {
+        return this.field(
+            name,
+            new BigIntFieldDefinition(type, _typescriptType),
+        );
+    }
+
     /**
      * Appends an `int64` field to the `Struct`
      *
@@ -366,14 +381,14 @@ export class Struct<
      */
     public int64<
         TName extends PropertyKey,
-        TTypeScriptType = (typeof NumberFieldType)['Int64']['TTypeScriptType']
+        TTypeScriptType = BigIntFieldType['TTypeScriptType']
     >(
         name: TName,
         _typescriptType?: TTypeScriptType,
     ) {
-        return this.number(
+        return this.bigint(
             name,
-            NumberFieldType.Int64,
+            BigIntFieldType.Int64,
             _typescriptType
         );
     }
@@ -385,14 +400,14 @@ export class Struct<
      */
     public uint64<
         TName extends PropertyKey,
-        TTypeScriptType = (typeof NumberFieldType)['Uint64']['TTypeScriptType']
+        TTypeScriptType = BigIntFieldType['TTypeScriptType']
     >(
         name: TName,
         _typescriptType?: TTypeScriptType,
     ) {
-        return this.number(
+        return this.bigint(
             name,
-            NumberFieldType.Uint64,
+            BigIntFieldType.Int64,
             _typescriptType
         );
     }
