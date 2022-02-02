@@ -67,7 +67,7 @@ The data from `onVideoData` event is a raw H.264 stream. You can process it as y
 TinyH264 decoder needs some extra setup:
 
 1. `tinyh264`, `yuv-buffer` and `yuv-canvas` packages are peer dependencies. You must install them separately.
-2. The bundler you use must support the `new Worker(new URL('./worker.js', import.meta.url), { type: 'module' })` syntax. It's known to work with Webpack 5.
+2. The bundler you use must support the `new Worker(new URL('./worker.js', import.meta.url))` syntax. It's known to work with Webpack 5.
 
 Example usage:
 

@@ -58,7 +58,7 @@ export class TinyH264Wrapper extends AutoDisposable {
 
 export function createTinyH264Wrapper(): Promise<TinyH264Wrapper> {
     if (!worker) {
-        worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+        worker = new Worker(new URL('./worker.js', import.meta.url));
         worker.addEventListener('message', (e) => {
             const { data } = e;
             switch (data.type) {
