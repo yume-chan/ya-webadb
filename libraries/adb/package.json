@@ -32,6 +32,7 @@
     },
     "dependencies": {
         "@yume-chan/async": "^2.1.4",
+        "@yume-chan/dataview-bigint-polyfill": "0.0.10",
         "@yume-chan/event": "^0.0.10",
         "@yume-chan/struct": "^0.0.10",
         "tslib": "^2.3.1"

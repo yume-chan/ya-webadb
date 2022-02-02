@@ -165,7 +165,7 @@ export class Adb {
 
         const pieces = banner.split('::');
         if (pieces.length > 1) {
-            const props = pieces[1];
+            const props = pieces[1]!;
             for (const prop of props.split(';')) {
                 if (!prop) {
                     continue;
@@ -188,7 +188,7 @@ export class Adb {
                         this._device = value;
                         break;
                     case AdbPropKey.Features:
-                        this._features = value.split(',') as AdbFeatures[];
+                        this._features = value!.split(',') as AdbFeatures[];
                         break;
                 }
             }

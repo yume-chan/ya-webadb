@@ -78,7 +78,7 @@ export class AdbReverseCommand extends AutoDisposable {
 
         const response = await AdbReverseStringResponse.deserialize(stream);
         return response.content!.split('\n').map(line => {
-            const [deviceSerial, localName, remoteName] = line.split(' ');
+            const [deviceSerial, localName, remoteName] = line.split(' ') as [string, string, string];
             return { deviceSerial, localName, remoteName };
         });
 

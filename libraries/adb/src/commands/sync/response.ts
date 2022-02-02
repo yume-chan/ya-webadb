@@ -51,7 +51,7 @@ export async function adbSyncReadResponse<T extends Record<string, StructLike<an
     }
 
     if (types[id]) {
-        return types[id].deserialize(stream);
+        return types[id]!.deserialize(stream);
     }
 
     throw new Error('Unexpected response id');

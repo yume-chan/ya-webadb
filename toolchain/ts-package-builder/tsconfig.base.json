@@ -8,10 +8,10 @@
             "ESNext"
         ],
         "rootDir": "../../../src",
-        "outDir": "../../../cjs",
+        "outDir": "../../../esm",
         "sourceMap": true,
         "declaration": true,
-        "declarationDir": "../../../dts",
+        "declarationDir": "../../../esm",
         "declarationMap": true,
         "stripInternal": true,
         // "jsx": "preserve",                     /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
@@ -23,12 +23,17 @@
         /* Strict Type-Checking Options */
         "strict": true, //                        /* Enable all strict type-checking options. */
         /* Additional Checks */
-        // "noUnusedLocals": true,                /* Report errors on unused locals. */
+        "noUnusedLocals": true, //                /* Report errors on unused locals. */
         // "noUnusedParameters": true,            /* Report errors on unused parameters. */
         "noImplicitOverride": true,
         "noImplicitReturns": true, //             /* Report error when not all code paths in function return a value. */
         "noFallthroughCasesInSwitch": true, //    /* Report errors for fallthrough cases in switch statement. */
         "forceConsistentCasingInFileNames": true, /* Disallow inconsistently-cased references to the same file. */
+        "exactOptionalPropertyTypes": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "noUncheckedIndexedAccess": true,
+        "resolveJsonModule": true,
         /* Module Resolution Options */
         "moduleResolution": "node", //            /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
         // "baseUrl": "./",                       /* Base directory to resolve non-absolute module names. */

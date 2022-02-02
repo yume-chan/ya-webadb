@@ -1,4 +1,3 @@
-
 import { getBigInt64, getBigUint64, setBigInt64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback';
 import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from "../basic";
 import { Syncbird } from "../syncbird";

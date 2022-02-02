@@ -18,7 +18,7 @@ class BitReader {
     }
 
     public next(): number {
-        const value = (this.buffer[this.bytePosition] >> (7 - this.bitPosition)) & 1;
+        const value = (this.buffer[this.bytePosition]! >> (7 - this.bitPosition)) & 1;
         this.bitPosition += 1;
         if (this.bitPosition === 8) {
             this.bytePosition += 1;
@@ -179,13 +179,17 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
             profile_idc === 134) {
             const chroma_format_idc = reader.decodeExponentialGolombNumber();
             if (chroma_format_idc === 3) {
-                const separate_colour_plane_flag = !!reader.next();
+                // separate_colour_plane_flag
+                reader.next();
             }
 
-            const bit_depth_luma_minus8 = reader.decodeExponentialGolombNumber();
-            const bit_depth_chroma_minus8 = reader.decodeExponentialGolombNumber();
+            // bit_depth_luma_minus8
+            reader.decodeExponentialGolombNumber();
+            // bit_depth_chroma_minus8
+            reader.decodeExponentialGolombNumber();
 
-            const qpprime_y_zero_transform_bypass_flag = !!reader.next();
+            // qpprime_y_zero_transform_bypass_flag
+            reader.next();
 
             const seq_scaling_matrix_present_flag = !!reader.next();
             if (seq_scaling_matrix_present_flag) {
@@ -206,14 +210,19 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
             }
         }
 
-        const log2_max_frame_num_minus4 = reader.decodeExponentialGolombNumber();
+        // log2_max_frame_num_minus4
+        reader.decodeExponentialGolombNumber();
         const pic_order_cnt_type = reader.decodeExponentialGolombNumber();
         if (pic_order_cnt_type === 0) {
-            const log2_max_pic_order_cnt_lsb_minus4 = reader.decodeExponentialGolombNumber();
+            // log2_max_pic_order_cnt_lsb_minus4
+            reader.decodeExponentialGolombNumber();
         } else if (pic_order_cnt_type === 1) {
-            const delta_pic_order_always_zero_flag = reader.next();
-            const offset_for_non_ref_pic = reader.decodeExponentialGolombNumber();
-            const offset_for_top_to_bottom_field = reader.decodeExponentialGolombNumber();
+            // delta_pic_order_always_zero_flag
+            reader.next();
+            // offset_for_non_ref_pic
+            reader.decodeExponentialGolombNumber();
+            // offset_for_top_to_bottom_field
+            reader.decodeExponentialGolombNumber();
             const num_ref_frames_in_pic_order_cnt_cycle = reader.decodeExponentialGolombNumber();
             const offset_for_ref_frame: number[] = [];
             for (let i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++) {
@@ -221,17 +230,21 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
             }
         }
 
-        const max_num_ref_frames = reader.decodeExponentialGolombNumber();
-        const gaps_in_frame_num_value_allowed_flag = reader.next();
+        // max_num_ref_frames
+        reader.decodeExponentialGolombNumber();
+        // gaps_in_frame_num_value_allowed_flag
+        reader.next();
         const pic_width_in_mbs_minus1 = reader.decodeExponentialGolombNumber();
         const pic_height_in_map_units_minus1 = reader.decodeExponentialGolombNumber();
 
         const frame_mbs_only_flag = reader.next();
         if (!frame_mbs_only_flag) {
-            const mb_adaptive_frame_field_flag = !!reader.next();
+            // mb_adaptive_frame_field_flag
+            reader.next();
         }
 
-        const direct_8x8_inference_flag = reader.next();
+        // direct_8x8_inference_flag
+        reader.next();
 
         const frame_cropping_flag = !!reader.next();
         let frame_crop_left_offset: number;

@@ -72,7 +72,7 @@ export class AdbShellProtocol implements AdbShell {
                         this.stderrEvent.fire(packet.data);
                         break;
                     case AdbShellProtocolId.Exit:
-                        this.exitEvent.fire(new Uint8Array(packet.data)[0]);
+                        this.exitEvent.fire(new Uint8Array(packet.data)[0]!);
                         break;
                     case AdbShellProtocolId.CloseStdin:
                     case AdbShellProtocolId.Stdin:

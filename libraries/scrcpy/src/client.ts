@@ -4,26 +4,10 @@ import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { ScrcpyClientConnection } from "./connection";
 import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectScrollControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
-import { ScrcpyLogLevel, ScrcpyOptions } from "./options";
+import { ScrcpyOptions } from "./options";
 import { pushServer, PushServerOptions } from "./push-server";
 import { parse_sequence_parameter_set, SequenceParameterSet } from './sps';
 import { decodeUtf8 } from "./utils";
-
-interface ScrcpyError {
-    type: string;
-
-    message: string;
-
-    stackTrace: string[];
-}
-
-interface ScrcpyOutput {
-    level: ScrcpyLogLevel;
-
-    message: string;
-
-    error?: ScrcpyError;
-}
 
 function* splitLines(text: string): Generator<string, void, void> {
     let start = 0;
@@ -100,7 +84,7 @@ export class ScrcpyClient {
         client.onOutput((line) => {
             const match = line.match(encoderNameRegex);
             if (match) {
-                encoders.push(match[1]);
+                encoders.push(match[1]!);
             }
         });
 

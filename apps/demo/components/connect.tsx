@@ -207,7 +207,7 @@ function _Connect(): JSX.Element | null {
         return {
             items,
         };
-    }, [addWsBackend, addTcpBackend]);
+    }, [addUsbBackend, addWsBackend, addTcpBackend]);
 
     return (
         <Stack

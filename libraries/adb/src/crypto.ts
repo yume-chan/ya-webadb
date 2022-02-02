@@ -1,8 +1,9 @@
+import { getBigUint64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback';
+
 const BigInt0 = BigInt(0);
 const BigInt1 = BigInt(1);
 const BigInt2 = BigInt(2);
-
-const BigInt2To64 = BigInt2 ** BigInt(64);
+const BigInt64 = BigInt(64);
 
 export function getBig(
     buffer: ArrayBuffer,
@@ -17,8 +18,8 @@ export function getBig(
     // Support for arbitrary length can be easily added
 
     for (let i = offset; i < offset + length; i += 8) {
-        result *= BigInt2To64;
-        const value = view.getBigUint64(i, false);
+        result <<= BigInt64;
+        const value = getBigUint64(view, i, false);
         result += value;
     }
 
@@ -29,12 +30,12 @@ export function setBig(buffer: ArrayBuffer, value: bigint, offset: number = 0) {
     const uint64Array: bigint[] = [];
     while (value > BigInt0) {
         uint64Array.push(BigInt.asUintN(64, value));
-        value /= BigInt2To64;
+        value >>= BigInt64;
     }
 
     const view = new DataView(buffer);
     for (let i = uint64Array.length - 1; i >= 0; i -= 1) {
-        view.setBigUint64(offset, uint64Array[i], false);
+        setBigUint64(view, offset, uint64Array[i]!, false);
         offset += 8;
     }
 }
@@ -42,9 +43,9 @@ export function setBig(buffer: ArrayBuffer, value: bigint, offset: number = 0) {
 export function setBigLE(buffer: ArrayBuffer, value: bigint, offset = 0) {
     const view = new DataView(buffer);
     while (value > BigInt0) {
-        view.setBigUint64(offset, value, true);
+        setBigUint64(view, offset, value, true);
         offset += 8;
-        value /= BigInt2To64;
+        value >>= BigInt64;
     }
 }
 
@@ -108,7 +109,7 @@ export function modInverse(a: number, m: number) {
     let x = 1;
     let y = 0;
     for (let i = s.length - 2; i >= 0; --i) {
-        [x, y] = [y, x - y * Math.floor(s[i].a / s[i].b)];
+        [x, y] = [y, x - y * Math.floor(s[i]!.a / s[i]!.b)];
     }
     return (y % m + m) % m;
 }

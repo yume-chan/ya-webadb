@@ -22,9 +22,9 @@ interface LinkedListItem<T> {
 }
 
 class LinkedList<T>{
-    private head?: LinkedListItem<T>;
+    private head?: LinkedListItem<T> | undefined;
 
-    private tail?: LinkedListItem<T>;
+    private tail?: LinkedListItem<T> | undefined;
 
     private _length = 0;
     public get length() { return this._length; }
