@@ -704,7 +704,6 @@ class ScrcpyPageState {
 }
 
 const state = new ScrcpyPageState();
-console.log(state);
 
 const ConnectionDialog = observer(() => {
     const layerHostId = useId('layerHost');

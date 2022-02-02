@@ -167,6 +167,14 @@
         // }
         {
             "commandKind": "bulk",
+            "name": "build",
+            "summary": "Builds all projects",
+            "enableParallelism": true,
+            "incremental": true,
+            "allowWarningsInSuccessfulBuild": true
+        },
+        {
+            "commandKind": "bulk",
             "name": "test",
             "summary": "Run Jest tests in each projects",
             "ignoreMissingScript": true,
