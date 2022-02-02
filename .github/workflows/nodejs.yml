@@ -30,7 +30,7 @@ jobs:
       - run: node common/scripts/install-run-rush.js change -v
       - run: node common/scripts/install-run-rush.js install
 
-      - run: node common/scripts/install-run-rush.js rebuild --verbose
+      - run: node common/scripts/install-run-rush.js build --verbose
       - run: npx next export
         working-directory: ./apps/demo
 
