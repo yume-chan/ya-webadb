@@ -24,10 +24,10 @@
     "license": "MIT",
     "type": "module",
     "module": "esm/index.js",
-    "types": "dts/index.d.ts",
     "scripts": {
         "build": "build-ts-package",
-        "build:watch": "build-ts-package --incremental"
+        "build:watch": "build-ts-package --incremental",
+        "prepublishOnly": "npm run build"
     },
     "devDependencies": {
         "typescript": "^4.5.4",
