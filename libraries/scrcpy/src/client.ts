@@ -2,8 +2,9 @@ import { Adb, AdbBufferedStream, AdbLegacyShell, AdbShell, DataEventEmitter } fr
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectScrollControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
+import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
 import { ScrcpyOptions } from "./options";
+import { ScrcpyInjectScrollControlMessage1_22 } from "./options/1_22";
 import { pushServer, PushServerOptions } from "./push-server";
 import { parse_sequence_parameter_set, SequenceParameterSet } from './sps';
 import { decodeUtf8 } from "./utils";
@@ -362,7 +363,8 @@ export class ScrcpyClient {
         // ADB streams are actually pretty low-bandwidth and laggy
         // Re-sample move events to avoid flooding the connection
         if (this.sendingTouchMessage &&
-            message.action === AndroidMotionEventAction.Move) {
+            (message.action === AndroidMotionEventAction.Move ||
+                message.action === AndroidMotionEventAction.HoverMove)) {
             return;
         }
 
@@ -377,7 +379,7 @@ export class ScrcpyClient {
         this.sendingTouchMessage = false;
     }
 
-    public async injectScroll(message: Omit<ScrcpyInjectScrollControlMessage, 'type' | 'screenWidth' | 'screenHeight'>) {
+    public async injectScroll(message: Omit<ScrcpyInjectScrollControlMessage1_22, 'type' | 'screenWidth' | 'screenHeight'>) {
         if (!this.controlStream) {
             throw new Error('injectScroll called before initialization');
         }
@@ -386,7 +388,7 @@ export class ScrcpyClient {
             return;
         }
 
-        const buffer = ScrcpyInjectScrollControlMessage.serialize({
+        const buffer = this.options!.serializeInjectScrollControlMessage({
             ...message,
             type: ScrcpyControlMessageType.InjectScroll,
             screenWidth: this.screenWidth,
@@ -400,7 +402,7 @@ export class ScrcpyClient {
             throw new Error('pressBackOrTurnOnScreen called before initialization');
         }
 
-        const buffer = this.options!.createBackOrScreenOnEvent(action, this.device);
+        const buffer = this.options!.serializeBackOrScreenOnControlMessage(action, this.device);
         if (buffer) {
             await this.controlStream.write(buffer);
         }

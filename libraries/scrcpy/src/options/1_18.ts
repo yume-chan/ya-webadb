@@ -32,7 +32,7 @@ export class ScrcpyOptions1_18<T extends ScrcpyOptions1_18Type = ScrcpyOptions1_
         return /\s+scrcpy --encoder '(.*?)'/;
     }
 
-    public override createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb) {
+    public override serializeBackOrScreenOnControlMessage(action: AndroidKeyEventAction, device: Adb) {
         return ScrcpyBackOrScreenOnEvent1_18.serialize(
             {
                 type: ScrcpyControlMessageType.BackOrScreenOn,

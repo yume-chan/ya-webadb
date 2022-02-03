@@ -1,8 +1,9 @@
-import { type Adb } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../codec";
 import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../message";
+import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22";
 import { ScrcpyLogLevel, ScrcpyOptions, ScrcpyOptionValue, ScrcpyScreenOrientation, toScrcpyOptionValue } from "./common";
 
 export interface CodecOptionsType {
@@ -56,8 +57,16 @@ export interface ScrcpyOptions1_16Type {
 
     crop: string;
 
+    /**
+     * Send PTS so that the client may record properly
+     *
+     * TODO: This is not implemented yet
+     */
     sendFrameMeta: boolean;
 
+    /**
+     * TODO: Scrcpy 1.22 changed how `control: false` works, and it's not supported yet
+     */
     control: boolean;
 
     displayId: number;
@@ -74,6 +83,16 @@ export interface ScrcpyOptions1_16Type {
 export const ScrcpyBackOrScreenOnEvent1_16 =
     new Struct()
         .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>());
+
+export const ScrcpyInjectScrollControlMessage1_16 =
+    new Struct()
+        .uint8('type', ScrcpyControlMessageType.InjectScroll as const)
+        .uint32('pointerX')
+        .uint32('pointerY')
+        .uint16('screenWidth')
+        .uint16('screenHeight')
+        .int32('scrollX')
+        .int32('scrollY');
 
 export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_16Type> implements ScrcpyOptions<T> {
     public value: Partial<T>;
@@ -113,7 +132,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
 
     protected getDefaultValue(): T {
         return {
-            logLevel: ScrcpyLogLevel.Error,
+            logLevel: ScrcpyLogLevel.Debug,
             maxSize: 0,
             bitRate: 8_000_000,
             maxFps: 0,
@@ -124,7 +143,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
             control: true,
             displayId: 0,
             showTouches: false,
-            stayAwake: true,
+            stayAwake: false,
             codecOptions: new CodecOptions({}),
             encoderName: '-',
         } as T;
@@ -148,7 +167,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
         return /\s+scrcpy --encoder-name '(.*?)'/;
     }
 
-    public createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb) {
+    public serializeBackOrScreenOnControlMessage(action: AndroidKeyEventAction, device: Adb) {
         if (action === AndroidKeyEventAction.Down) {
             return ScrcpyBackOrScreenOnEvent1_16.serialize(
                 { type: ScrcpyControlMessageType.BackOrScreenOn },
@@ -156,5 +175,11 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
         }
 
         return undefined;
+    }
+
+    public serializeInjectScrollControlMessage(
+        message: ScrcpyInjectScrollControlMessage1_22,
+    ): ArrayBuffer {
+        return ScrcpyInjectScrollControlMessage1_16.serialize(message);
     }
 }

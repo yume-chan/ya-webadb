@@ -102,16 +102,3 @@ export const ScrcpyInjectKeyCodeControlMessage =
 
 export type ScrcpyInjectKeyCodeControlMessage =
     typeof ScrcpyInjectKeyCodeControlMessage['TInit'];
-
-export const ScrcpyInjectScrollControlMessage =
-    new Struct()
-        .uint8('type', ScrcpyControlMessageType.InjectScroll as const)
-        .uint32('pointerX')
-        .uint32('pointerY')
-        .uint16('screenWidth')
-        .uint16('screenHeight')
-        .int32('scrollX')
-        .int32('scrollY');
-
-export type ScrcpyInjectScrollControlMessage =
-    typeof ScrcpyInjectScrollControlMessage['TInit'];

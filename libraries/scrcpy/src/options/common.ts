@@ -1,6 +1,7 @@
 import type { Adb } from "@yume-chan/adb";
 import type { ScrcpyClientConnection } from "../connection";
 import type { AndroidKeyEventAction } from "../message";
+import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22";
 
 export const DEFAULT_SERVER_PATH = '/data/local/tmp/scrcpy-server.jar';
 
@@ -30,7 +31,14 @@ export interface ScrcpyOptions<T> {
 
     createConnection(device: Adb): ScrcpyClientConnection;
 
-    createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb): ArrayBuffer | undefined;
+    serializeBackOrScreenOnControlMessage(
+        action: AndroidKeyEventAction,
+        device: Adb
+    ): ArrayBuffer | undefined;
+
+    serializeInjectScrollControlMessage(
+        message: ScrcpyInjectScrollControlMessage1_22,
+    ): ArrayBuffer;
 }
 
 export interface ScrcpyOptionValue {

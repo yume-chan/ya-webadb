@@ -1,7 +1,8 @@
 import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_21, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
+import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_22, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
+import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -10,7 +11,6 @@ import React, { useEffect, useState } from "react";
 import { DemoMode, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { globalState } from "../state";
 import { CommonStackTokens, formatSpeed, Icons, RouteStackProps } from "../utils";
-import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 
 const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url).toString();
 
@@ -412,7 +412,7 @@ class ScrcpyPageState {
                 globalState.device,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                new ScrcpyOptions1_21({
+                new ScrcpyOptions1_22({
                     logLevel: ScrcpyLogLevel.Debug,
                     bitRate: 4_000_000,
                     tunnelForward: this.tunnelForward,
@@ -460,7 +460,7 @@ class ScrcpyPageState {
                 window.navigator.clipboard.writeText(content);
             });
 
-            const options = new ScrcpyOptions1_21({
+            const options = new ScrcpyOptions1_22({
                 logLevel: ScrcpyLogLevel.Debug,
                 maxSize: this.resolution,
                 bitRate: this.bitRate,

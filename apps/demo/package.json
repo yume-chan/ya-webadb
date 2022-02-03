@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "postinstall": "fetch-scrcpy-server 1.21",
+        "postinstall": "fetch-scrcpy-server 1.22",
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
