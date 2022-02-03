@@ -2,7 +2,6 @@ import { Adb, AdbBufferedStream, AdbLegacyShell, AdbShell, DataEventEmitter } fr
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import { ScrcpyClientConnection } from "./connection";
 import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectScrollControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
 import { ScrcpyOptions } from "./options";
 import { pushServer, PushServerOptions } from "./push-server";
@@ -74,13 +73,13 @@ export class ScrcpyClient {
         device: Adb,
         path: string,
         version: string,
-        options: ScrcpyOptions
+        options: ScrcpyOptions<any>
     ): Promise<string[]> {
-        const client = new ScrcpyClient(device);
-        const encoderNameRegex = options.getOutputEncoderNameRegex();
-
         const resolver = new PromiseResolver<string[]>();
+        const encoderNameRegex = options.getOutputEncoderNameRegex();
         const encoders: string[] = [];
+
+        const client = new ScrcpyClient(device);
         client.onOutput((line) => {
             const match = line.match(encoderNameRegex);
             if (match) {
@@ -92,13 +91,16 @@ export class ScrcpyClient {
             resolver.resolve(encoders);
         });
 
+        // Provide an invalid encoder name
+        // So the server will return all available encoders
+        options.value.encoderName = '_';
+
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
-        await client.startCore(
+        await client.start(
             path,
             version,
-            options.formatGetEncoderListArguments(),
-            options.createConnection(device)
+            options
         );
 
         return resolver.promise;
@@ -138,19 +140,21 @@ export class ScrcpyClient {
     private readonly clipboardChangeEvent = new EventEmitter<string>();
     public get onClipboardChange() { return this.clipboardChangeEvent.event; }
 
-    private options: ScrcpyOptions | undefined;
+    private options: ScrcpyOptions<any> | undefined;
     private sendingTouchMessage = false;
 
     public constructor(device: Adb) {
         this.device = device;
     }
 
-    private async startCore(
+    public async start(
         path: string,
         version: string,
-        serverArguments: string[],
-        connection: ScrcpyClientConnection
-    ): Promise<void> {
+        options: ScrcpyOptions<any>
+    ) {
+        this.options = options;
+
+        const connection = options.createConnection(this.device);
         let process: AdbShell | undefined;
 
         try {
@@ -163,7 +167,7 @@ export class ScrcpyClient {
                     /* unused */ '/',
                     'com.genymobile.scrcpy.Server',
                     version,
-                    ...serverArguments
+                    ...options.formatServerArguments(),
                 ],
                 {
                     // Scrcpy server doesn't split stdout and stderr,
@@ -199,20 +203,6 @@ export class ScrcpyClient {
         } finally {
             connection.dispose();
         }
-    }
-
-    public start(
-        path: string,
-        version: string,
-        options: ScrcpyOptions
-    ) {
-        this.options = options;
-        return this.startCore(
-            path,
-            version,
-            options.formatServerArguments(),
-            options.createConnection(this.device)
-        );
     }
 
     private handleProcessOutput(data: ArrayBuffer) {

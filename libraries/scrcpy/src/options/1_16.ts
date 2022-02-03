@@ -3,7 +3,7 @@ import Struct, { placeholder } from "@yume-chan/struct";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../codec";
 import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../message";
-import { ScrcpyLogLevel, ScrcpyOptions, ScrcpyScreenOrientation, toScrcpyOption, ToScrcpyOption } from "./common";
+import { ScrcpyLogLevel, ScrcpyOptions, ScrcpyOptionValue, ScrcpyScreenOrientation, toScrcpyOptionValue } from "./common";
 
 export interface CodecOptionsType {
     profile: AndroidCodecProfile;
@@ -11,21 +11,22 @@ export interface CodecOptionsType {
     level: AndroidCodecLevel;
 }
 
-export class CodecOptions implements ToScrcpyOption {
-    public value: CodecOptionsType;
+export class CodecOptions implements ScrcpyOptionValue {
+    public value: Partial<CodecOptionsType>;
 
-    public constructor({
-        profile = AndroidCodecProfile.Baseline,
-        level = AndroidCodecLevel.Level4,
-    }: Partial<CodecOptionsType>) {
-        this.value = {
-            profile,
-            level,
-        };
+    public constructor(value: Partial<CodecOptionsType>) {
+        this.value = value;
     }
 
-    public toScrcpyOption(): string {
-        return Object.entries(this.value)
+    public toOptionValue(): string | undefined {
+        const entries = Object.entries(this.value)
+            .filter(([key, value]) => value !== undefined);
+
+        if (entries.length === 0) {
+            return undefined;
+        }
+
+        return entries
             .map(([key, value]) => `${key}=${value}`)
             .join(',');
     }
@@ -53,9 +54,7 @@ export interface ScrcpyOptions1_16Type {
 
     tunnelForward: boolean;
 
-    // Because Scrcpy 1.21 changed the empty value from '-' to '',
-    // We mark properties which can be empty with `| undefined`
-    crop: string | undefined;
+    crop: string;
 
     sendFrameMeta: boolean;
 
@@ -67,60 +66,30 @@ export interface ScrcpyOptions1_16Type {
 
     stayAwake: boolean;
 
-    codecOptions: CodecOptions | undefined;
+    codecOptions: CodecOptions;
 
-    encoderName: string | undefined;
+    encoderName: string;
 }
 
 export const ScrcpyBackOrScreenOnEvent1_16 =
     new Struct()
         .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>());
 
-export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_16Type> implements ScrcpyOptions {
-    public value: T;
+export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_16Type> implements ScrcpyOptions<T> {
+    public value: Partial<T>;
 
-    public constructor({
-        logLevel = ScrcpyLogLevel.Error,
-        maxSize = 0,
-        bitRate = 8_000_000,
-        maxFps = 0,
-        lockVideoOrientation = ScrcpyScreenOrientation.Unlocked,
-        tunnelForward = false,
-        crop,
-        sendFrameMeta = true,
-        control = true,
-        displayId = 0,
-        showTouches = false,
-        stayAwake = true,
-        codecOptions,
-        encoderName,
-    }: Partial<ScrcpyOptions1_16Type>) {
+    public constructor(value: Partial<ScrcpyOptions1_16Type>) {
         if (new.target === ScrcpyOptions1_16 &&
-            logLevel === ScrcpyLogLevel.Verbose) {
-            logLevel = ScrcpyLogLevel.Debug;
+            value.logLevel === ScrcpyLogLevel.Verbose) {
+            value.logLevel = ScrcpyLogLevel.Debug;
         }
 
         if (new.target === ScrcpyOptions1_16 &&
-            lockVideoOrientation === ScrcpyScreenOrientation.Initial) {
-            lockVideoOrientation = ScrcpyScreenOrientation.Unlocked;
+            value.lockVideoOrientation === ScrcpyScreenOrientation.Initial) {
+            value.lockVideoOrientation = ScrcpyScreenOrientation.Unlocked;
         }
 
-        this.value = {
-            logLevel,
-            maxSize,
-            bitRate,
-            maxFps,
-            lockVideoOrientation,
-            tunnelForward,
-            crop,
-            sendFrameMeta,
-            control,
-            displayId,
-            showTouches,
-            stayAwake,
-            codecOptions,
-            encoderName,
-        } as T;
+        this.value = value as Partial<T>;
     }
 
     protected getArgumnetOrder(): (keyof T)[] {
@@ -142,22 +111,29 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
         ];
     }
 
-    public formatServerArguments(): string[] {
-        return this.getArgumnetOrder().map(key => {
-            return toScrcpyOption(this.value[key], '-');
-        });
+    protected getDefaultValue(): T {
+        return {
+            logLevel: ScrcpyLogLevel.Error,
+            maxSize: 0,
+            bitRate: 8_000_000,
+            maxFps: 0,
+            lockVideoOrientation: ScrcpyScreenOrientation.Unlocked,
+            tunnelForward: false,
+            crop: '-',
+            sendFrameMeta: true,
+            control: true,
+            displayId: 0,
+            showTouches: false,
+            stayAwake: true,
+            codecOptions: new CodecOptions({}),
+            encoderName: '-',
+        } as T;
     }
 
-    public formatGetEncoderListArguments(): string[] {
-        return this.getArgumnetOrder().map(key => {
-            if (key === 'encoderName') {
-                // Provide an invalid encoder name
-                // So the server will return all available encoders
-                return '_';
-            }
-
-            return toScrcpyOption(this.value[key], '-');
-        });
+    public formatServerArguments(): string[] {
+        const defaults = this.getDefaultValue();
+        return this.getArgumnetOrder()
+            .map(key => toScrcpyOptionValue(this.value[key] || defaults[key], '-'));
     }
 
     public createConnection(device: Adb): ScrcpyClientConnection {

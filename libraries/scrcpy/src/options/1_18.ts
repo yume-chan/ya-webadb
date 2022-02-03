@@ -13,16 +13,19 @@ export const ScrcpyBackOrScreenOnEvent1_18 =
         .uint8('action', placeholder<AndroidKeyEventAction>());
 
 export class ScrcpyOptions1_18<T extends ScrcpyOptions1_18Type = ScrcpyOptions1_18Type> extends ScrcpyOptions1_16<T> {
-    constructor(init: Partial<ScrcpyOptions1_18Type>) {
-        super(init);
-        const {
-            powerOffOnClose = false,
-        } = init;
-        this.value.powerOffOnClose = powerOffOnClose;
+    constructor(value: Partial<ScrcpyOptions1_18Type>) {
+        super(value);
     }
 
     protected override getArgumnetOrder(): (keyof T)[] {
         return super.getArgumnetOrder().concat(['powerOffOnClose']);
+    }
+
+    protected override getDefaultValue(): T {
+        return {
+            ...super.getDefaultValue(),
+            powerOffOnClose: false,
+        };
     }
 
     public override getOutputEncoderNameRegex(): RegExp {

@@ -21,10 +21,10 @@ export enum ScrcpyScreenOrientation {
     LandscapeFlipped = 3,
 }
 
-export interface ScrcpyOptions {
-    formatServerArguments(): string[];
+export interface ScrcpyOptions<T> {
+    value: Partial<T>;
 
-    formatGetEncoderListArguments(): string[];
+    formatServerArguments(): string[];
 
     getOutputEncoderNameRegex(): RegExp;
 
@@ -33,23 +33,23 @@ export interface ScrcpyOptions {
     createBackOrScreenOnEvent(action: AndroidKeyEventAction, device: Adb): ArrayBuffer | undefined;
 }
 
-export interface ToScrcpyOption {
-    toScrcpyOption(): string;
+export interface ScrcpyOptionValue {
+    toOptionValue(): string | undefined;
 }
 
-export function isToScrcpyOption(value: any): value is ToScrcpyOption {
+export function isScrcpyOptionValue(value: any): value is ScrcpyOptionValue {
     return typeof value === 'object' &&
         value !== null &&
-        typeof value.toScrcpyOption === 'function';
+        typeof value.toOptionValue === 'function';
 }
 
-export function toScrcpyOption(value: any, empty: string): string {
-    if (value === undefined) {
-        return empty;
+export function toScrcpyOptionValue<T>(value: any, empty: T): string | T {
+    if (isScrcpyOptionValue(value)) {
+        value = value.toOptionValue();
     }
 
-    if (isToScrcpyOption(value)) {
-        return value.toScrcpyOption();
+    if (value === undefined) {
+        return empty;
     }
 
     return `${value}`;

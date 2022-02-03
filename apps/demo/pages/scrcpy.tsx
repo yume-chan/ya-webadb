@@ -444,6 +444,8 @@ class ScrcpyPageState {
             client.onSizeChanged(action((size) => {
                 const { croppedWidth, croppedHeight, } = size;
 
+                this.log.push(`[client] Video size changed: ${croppedWidth}x${croppedHeight}`);
+
                 this.width = croppedWidth;
                 this.height = croppedHeight;
 
@@ -472,8 +474,8 @@ class ScrcpyPageState {
             });
 
             runInAction(() => {
-                this.log.push(`Server version: ${SCRCPY_SERVER_VERSION}`);
-                this.log.push(`Server arguments: ${options.formatServerArguments()}`);
+                this.log.push(`[client] Server version: ${SCRCPY_SERVER_VERSION}`);
+                this.log.push(`[client] Server arguments: ${options.formatServerArguments().join(' ')}`);
             });
 
             await client.start(
