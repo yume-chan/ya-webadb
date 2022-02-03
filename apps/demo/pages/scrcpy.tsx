@@ -304,6 +304,7 @@ class ScrcpyPageState {
             handlePointerMove: false,
             handlePointerUp: false,
             handleWheel: false,
+            handleContextMenu: false,
             handleKeyDown: false,
             homeKeyRepeater: false,
             appSwitchKeyRepeater: false,
@@ -623,35 +624,29 @@ class ScrcpyPageState {
         const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
         this.client.injectTouch({
             action,
-            pointerId: BigInt(e.pointerId),
+            pointerId: e.pointerType === "mouse" ? BigInt(-1) : BigInt(e.pointerId),
             pointerX: x,
             pointerY: y,
             pressure: e.pressure * 65535,
-            buttons: 0,
+            buttons: e.buttons,
         });
     };
 
     handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (e.button !== 0) {
-            return;
-        }
         this.rendererContainer!.focus();
+        e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
         this.injectTouch(AndroidMotionEventAction.Down, e);
     };
 
     handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (e.buttons !== 1) {
-            return;
-        }
-        this.injectTouch(AndroidMotionEventAction.Move, e);
+        this.injectTouch(
+            e.buttons === 0 ? AndroidMotionEventAction.HoverMove : AndroidMotionEventAction.Move,
+            e
+        );
     };
 
     handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (e.button !== 0) {
-            return;
-        }
-        e.currentTarget.releasePointerCapture(e.pointerId);
         this.injectTouch(AndroidMotionEventAction.Up, e);
     };
 
@@ -669,7 +664,12 @@ class ScrcpyPageState {
             pointerY: y,
             scrollX: -Math.sign(e.deltaX),
             scrollY: -Math.sign(e.deltaY),
+            buttons: 0,
         });
+    };
+
+    handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
     };
 
     handleKeyDown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -803,6 +803,7 @@ const Scrcpy: NextPage = () => {
                         onPointerUp={state.handlePointerUp}
                         onPointerCancel={state.handlePointerUp}
                         onKeyDown={state.handleKeyDown}
+                        onContextMenu={state.handleContextMenu}
                     />
                 </DeviceView>
 
