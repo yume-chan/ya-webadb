@@ -52,6 +52,13 @@ const Power: NextPage = () => {
                     <Icon style={{ verticalAlign: 'middle', marginLeft: 4, fontSize: 18 }} iconName={Icons.Info} />
                 </TooltipHost>
             </div>
+
+            <div style={{ marginTop: 20 }}>
+                <DefaultButton text="Reboot to Factory" disabled={!globalState.device} onClick={() => globalState.device!.power.reboot('factory')} />
+                <TooltipHost content={<span>Only works on some devices.</span>}>
+                    <Icon style={{ verticalAlign: 'middle', marginLeft: 4, fontSize: 18 }} iconName={Icons.Info} />
+                </TooltipHost>
+            </div>
         </div>
     );
 };
