@@ -6,6 +6,8 @@ const withMDX = require('@next/mdx')({
         renderer: `
             import React from 'react';
             const mdx = (name, props, ...children) => {
+                if (name === 'inlineCode') { name = 'code'; }
+                delete props?.parentName;
                 return React.createElement(name, props, ...children);
             }
         `,

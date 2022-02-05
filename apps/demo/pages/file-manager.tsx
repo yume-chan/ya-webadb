@@ -1,4 +1,4 @@
-import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IDetailsList, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, ScrollToMode, Selection, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
+import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, Selection, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
 import { FileIconType } from "@fluentui/react-file-type-icons";
 import { getFileTypeIconNameFromExtensionOrType } from '@fluentui/react-file-type-icons/lib-commonjs/getFileTypeIconProps';
 import { DEFAULT_BASE_URL as FILE_TYPE_ICONS_BASE_URL } from '@fluentui/react-file-type-icons/lib-commonjs/initializeFileTypeIcons';
@@ -10,8 +10,8 @@ import { NextPage } from "next";
 import Head from "next/head";
 import Router, { useRouter } from "next/router";
 import path from 'path';
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { CommandBar } from '../components';
+import React, { useCallback, useEffect, useState } from 'react';
+import { CommandBar, NoSsr } from '../components';
 import { globalState } from '../state';
 import { asyncEffect, chunkFile, formatSize, formatSpeed, Icons, pickFile, RouteStackProps } from '../utils';
 
@@ -91,7 +91,6 @@ class FileManagerState {
     items: ListItem[] = [];
     sortKey: keyof ListItem = 'name';
     sortDescending = false;
-    startItemIndexInView = 0;
 
     uploading = false;
     uploadPath: string | undefined = undefined;
@@ -549,21 +548,6 @@ const FileManager: NextPage = (): JSX.Element | null => {
         state.changeDirectory(pathQuery);
     }, [router]);
 
-    const listRef = useRef<IDetailsList | null>(null);
-    useLayoutEffect(() => {
-        const list = listRef.current;
-        return () => {
-            state.startItemIndexInView = list?.getStartItemIndexInView() ?? 0;
-        };
-    }, []);
-    const scrolledRef = useRef(false);
-    const handleListUpdate = useCallback((list?: IDetailsList) => {
-        if (!scrolledRef.current) {
-            list?.scrollToIndex(state.startItemIndexInView, undefined, ScrollToMode.top);
-            scrolledRef.current = true;
-        }
-    }, []);
-
     const [previewUrl, setPreviewUrl] = useState<string | undefined>();
     const previewImage = useCallback(async (path: string) => {
         const sync = await globalState.device!.sync();
@@ -649,7 +633,6 @@ const FileManager: NextPage = (): JSX.Element | null => {
                     <Breadcrumb items={state.breadcrumbItems} />
 
                     <ShimmeredDetailsList
-                        componentRef={listRef}
                         items={state.sortedList}
                         columns={state.columns}
                         setKey={state.path}
@@ -659,7 +642,6 @@ const FileManager: NextPage = (): JSX.Element | null => {
                         onItemInvoked={handleItemInvoked}
                         onItemContextMenu={showContextMenu}
                         onRenderDetailsHeader={renderDetailsHeader}
-                        onDidUpdate={handleListUpdate}
                         usePageCache
                         useReducedRowRenderer
                     />
@@ -676,14 +658,16 @@ const FileManager: NextPage = (): JSX.Element | null => {
                     </Layer>
                 )}
 
-                <ContextualMenu
-                    items={state.menuItems}
-                    hidden={!state.contextMenuTarget}
-                    directionalHint={DirectionalHint.bottomLeftEdge}
-                    target={state.contextMenuTarget}
-                    onDismiss={hideContextMenu}
-                    contextualMenuItemAs={props => <ContextualMenuItem {...props} hasIcons={false} />}
-                />
+                <NoSsr>
+                    <ContextualMenu
+                        items={state.menuItems}
+                        hidden={!state.contextMenuTarget}
+                        directionalHint={DirectionalHint.bottomLeftEdge}
+                        target={state.contextMenuTarget}
+                        onDismiss={hideContextMenu}
+                        contextualMenuItemAs={props => <ContextualMenuItem {...props} hasIcons={false} />}
+                    />
+                </NoSsr>
 
                 <UploadDialog />
             </StackItem>

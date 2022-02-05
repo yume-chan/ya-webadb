@@ -2,7 +2,7 @@ import { IconButton, IListProps, List, mergeStyles, mergeStyleSets, Stack } from
 import { AdbPacketInit, decodeUtf8 } from '@yume-chan/adb';
 import { DisposableList } from '@yume-chan/event';
 import { observer } from "mobx-react-lite";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { PropsWithChildren, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { globalState, logger } from "../state";
 import { Icons, withDisplayName } from '../utils';
 import { CommandBar } from './command-bar';
@@ -162,3 +162,18 @@ export const LogView = observer(({
         </Stack>
     );
 });
+
+export function NoSsr({ children }: PropsWithChildren<{}>) {
+    const [showChild, setShowChild] = useState(false);
+
+    // Wait until after client-side hydration to show
+    useEffect(() => {
+        setShowChild(true);
+    }, []);
+
+    if (!showChild) {
+        return null;
+    }
+
+    return <>{children}</>;
+}

@@ -3,7 +3,7 @@ import type { AppProps } from 'next/app';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from "react";
-import { Connect, ErrorDialogProvider, LogView, ToggleLogView } from "../components";
+import { Connect, ErrorDialogProvider, LogView, NoSsr, ToggleLogView } from "../components";
 import '../styles/globals.css';
 import { Icons } from "../utils";
 import { register as registerIcons } from '../utils/icons';
@@ -147,7 +147,9 @@ function MyApp({ Component, pageProps }: AppProps) {
                         <Component {...pageProps} />
                     </StackItem>
 
-                    <LogView className={classNames['right-column']} />
+                    <NoSsr>
+                        <LogView className={classNames['right-column']} />
+                    </NoSsr>
                 </Stack>
             </Stack>
         </ErrorDialogProvider >
