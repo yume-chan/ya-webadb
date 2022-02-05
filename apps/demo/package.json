@@ -10,11 +10,11 @@
         "lint": "next lint"
     },
     "dependencies": {
-        "@fluentui/react": "^8.36.3",
-        "@fluentui/react-file-type-icons": "^8.4.3",
-        "@fluentui/react-hooks": "^8.3.4",
-        "@fluentui/react-icons": "^2.0.154-beta.5",
-        "@fluentui/react-make-styles": "^9.0.0-beta.3",
+        "@fluentui/react": "^8.52.3",
+        "@fluentui/react-file-type-icons": "^8.5.9",
+        "@fluentui/react-hooks": "^8.3.10",
+        "@fluentui/react-icons": "^2.0.160-beta.11",
+        "@griffel/react": "^1.0.0",
         "@yume-chan/adb": "^0.0.10",
         "@yume-chan/adb-backend-direct-sockets": "^0.0.9",
         "@yume-chan/adb-backend-webusb": "^0.0.10",
@@ -24,13 +24,13 @@
         "@yume-chan/event": "^0.0.10",
         "@yume-chan/scrcpy": "^0.0.10",
         "@yume-chan/struct": "^0.0.10",
-        "mobx": "^6.3.3",
-        "mobx-react-lite": "^3.2.1",
-        "next": "12.0.7",
+        "mobx": "^6.3.13",
+        "mobx-react-lite": "^3.2.3",
+        "next": "12.0.11-canary.6",
         "react": "^17.0.2",
         "react-dom": "^17.0.2",
         "streamsaver": "^2.0.5",
-        "xterm": "^4.16.0",
+        "xterm": "^4.17.0",
         "xterm-addon-fit": "^0.5.0",
         "xterm-addon-search": "^0.8.2",
         "xterm-addon-webgl": "^0.11.4"
@@ -39,8 +39,8 @@
         "@mdx-js/loader": "^1.6.22",
         "@next/mdx": "^11.1.2",
         "@types/react": "17.0.27",
-        "eslint": "7.32.0",
-        "eslint-config-next": "12.0.7",
-        "typescript": "^4.5.4"
+        "eslint": "8.8.0",
+        "eslint-config-next": "12.0.11-canary.6",
+        "typescript": "^4.5.5"
     }
 }
