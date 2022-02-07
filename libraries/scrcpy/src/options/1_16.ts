@@ -1,7 +1,7 @@
 import type { Adb } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../codec";
-import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";
+import { ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../message";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22";
 import { ScrcpyLogLevel, ScrcpyOptions, ScrcpyOptionValue, ScrcpyScreenOrientation, toScrcpyOptionValue } from "./common";
@@ -43,6 +43,11 @@ export interface ScrcpyOptions1_16Type {
 
     bitRate: number;
 
+    /**
+     * 0 for unlimited.
+     *
+     * @default 0
+     */
     maxFps: number;
 
     /**
@@ -60,12 +65,14 @@ export interface ScrcpyOptions1_16Type {
     /**
      * Send PTS so that the client may record properly
      *
-     * TODO: This is not implemented yet
+     * @default true
+     *
+     * TODO: Add support for `sendFrameMeta: false`
      */
     sendFrameMeta: boolean;
 
     /**
-     * TODO: Scrcpy 1.22 changed how `control: false` works, and it's not supported yet
+     * @default true
      */
     control: boolean;
 
@@ -156,10 +163,16 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
     }
 
     public createConnection(device: Adb): ScrcpyClientConnection {
+        const options: ScrcpyClientConnectionOptions = {
+            // Old scrcpy connection always have control stream no matter what the option is
+            control: true,
+            sendDummyByte: true,
+            sendDeviceMeta: true,
+        };
         if (this.value.tunnelForward) {
-            return new ScrcpyClientForwardConnection(device);
+            return new ScrcpyClientForwardConnection(device, options);
         } else {
-            return new ScrcpyClientReverseConnection(device);
+            return new ScrcpyClientReverseConnection(device, options);
         }
     }
 

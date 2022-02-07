@@ -3,16 +3,33 @@ import { Disposable } from "@yume-chan/event";
 import { ValueOrPromise } from "@yume-chan/struct";
 import { delay } from "./utils";
 
+export interface ScrcpyClientConnectionOptions {
+    control: boolean;
+
+    /**
+     * Write a byte on start to detect connection issues
+     */
+    sendDummyByte: boolean;
+
+    /**
+     * Send device name and size
+     */
+    sendDeviceMeta: boolean;
+}
+
 export abstract class ScrcpyClientConnection implements Disposable {
     protected device: Adb;
 
-    public constructor(device: Adb) {
+    protected options: ScrcpyClientConnectionOptions;
+
+    public constructor(device: Adb, options: ScrcpyClientConnectionOptions) {
         this.device = device;
+        this.options = options;
     }
 
     public initialize(): ValueOrPromise<void> { }
 
-    public abstract getStreams(): ValueOrPromise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream]>;
+    public abstract getStreams(): ValueOrPromise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream | undefined]>;
 
     public dispose(): void { }
 }
@@ -33,18 +50,26 @@ export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
         throw new Error(`Can't connect to server after 100 retries`);
     }
 
-    private async connectAndReadByte(): Promise<AdbBufferedStream> {
+    private async connectVideoStream(): Promise<AdbBufferedStream> {
         const stream = await this.connectAndRetry();
-        // server will write a `0` to signal connection success
-        await stream.read(1);
+        if (this.options.sendDummyByte) {
+            // server will write a `0` to signal connection success
+            await stream.read(1);
+        }
         return stream;
     }
 
-    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream]> {
-        return [
-            await this.connectAndReadByte(),
-            await this.connectAndRetry()
-        ];
+    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream | undefined]> {
+        const videoStream = await this.connectVideoStream();
+        let controlStream: AdbBufferedStream | undefined;
+        if (this.options.control) {
+            controlStream = await this.connectAndRetry();
+        }
+        if (this.options.sendDeviceMeta) {
+            // 64 bytes device name + 2 bytes video width + 2 bytes video height
+            await videoStream.read(64 + 2 + 2);
+        }
+        return [videoStream, controlStream];
     }
 }
 
@@ -73,11 +98,17 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
         return new AdbBufferedStream(await this.streams.dequeue());
     }
 
-    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream]> {
-        return [
-            await this.accept(),
-            await this.accept(),
-        ];
+    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream | undefined]> {
+        const videoStream = await this.accept();
+        let controlStream: AdbBufferedStream | undefined;
+        if (this.options.control) {
+            controlStream = await this.accept();
+        }
+        if (this.options.sendDeviceMeta) {
+            // 64 bytes device name + 2 bytes video width + 2 bytes video height
+            await videoStream.read(64 + 2 + 2);
+        }
+        return [videoStream, controlStream];
     }
 
     public override dispose() {

@@ -25,11 +25,6 @@ function* splitLines(text: string): Generator<string, void, void> {
     }
 }
 
-const Size =
-    new Struct()
-        .uint16('width')
-        .uint16('height');
-
 const VideoPacket =
     new Struct()
         .int64('pts')
@@ -95,6 +90,8 @@ export class ScrcpyClient {
         // Provide an invalid encoder name
         // So the server will return all available encoders
         options.value.encoderName = '_';
+        // Disable control for faster connection in 1.22+
+        options.value.control = false;
 
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
@@ -227,14 +224,6 @@ export class ScrcpyClient {
         }
 
         try {
-            // Device name, we don't need it
-            await this.videoStream.read(64);
-
-            // Initial video size
-            const { width, height } = await Size.deserialize(this.videoStream);
-            this._screenWidth = width;
-            this._screenHeight = height;
-
             let buffer: ArrayBuffer | undefined;
             while (this._running) {
                 const { pts, data } = await VideoPacket.deserialize(this.videoStream);
@@ -307,7 +296,8 @@ export class ScrcpyClient {
 
     private async receiveControl() {
         if (!this.controlStream) {
-            throw new Error('receiveControl started before initialization');
+            // control disabled
+            return;
         }
 
         try {
@@ -329,32 +319,38 @@ export class ScrcpyClient {
         }
     }
 
-    public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type'>) {
-        if (!this.controlStream) {
-            throw new Error('injectKeyCode called before initialization');
+    private checkControlStream(caller: string) {
+        if (!this._running) {
+            throw new Error(`${caller} called before start`);
         }
 
-        await this.controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
+        if (!this.controlStream) {
+            throw new Error(`${caller} called with control disabled`);
+        }
+
+        return this.controlStream;
+    }
+
+    public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type'>) {
+        const controlStream = this.checkControlStream('injectKeyCode');
+
+        await controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
             ...message,
             type: ScrcpyControlMessageType.InjectKeycode,
         }));
     }
 
     public async injectText(text: string) {
-        if (!this.controlStream) {
-            throw new Error('injectText called before initialization');
-        }
+        const controlStream = this.checkControlStream('injectText');
 
-        await this.controlStream.write(ScrcpyInjectTextControlMessage.serialize({
+        await controlStream.write(ScrcpyInjectTextControlMessage.serialize({
             type: ScrcpyControlMessageType.InjectText,
             text,
         }));
     }
 
     public async injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, 'type' | 'screenWidth' | 'screenHeight'>) {
-        if (!this.controlStream) {
-            throw new Error('injectTouch called before initialization');
-        }
+        const controlStream = this.checkControlStream('injectTouch');
 
         if (!this.screenWidth || !this.screenHeight) {
             return;
@@ -369,20 +365,17 @@ export class ScrcpyClient {
         }
 
         this.sendingTouchMessage = true;
-        const buffer = ScrcpyInjectTouchControlMessage.serialize({
+        await controlStream.write(ScrcpyInjectTouchControlMessage.serialize({
             ...message,
             type: ScrcpyControlMessageType.InjectTouch,
             screenWidth: this.screenWidth,
             screenHeight: this.screenHeight,
-        });
-        await this.controlStream.write(buffer);
+        }));
         this.sendingTouchMessage = false;
     }
 
     public async injectScroll(message: Omit<ScrcpyInjectScrollControlMessage1_22, 'type' | 'screenWidth' | 'screenHeight'>) {
-        if (!this.controlStream) {
-            throw new Error('injectScroll called before initialization');
-        }
+        const controlStream = this.checkControlStream('injectScroll');
 
         if (!this.screenWidth || !this.screenHeight) {
             return;
@@ -394,17 +387,15 @@ export class ScrcpyClient {
             screenWidth: this.screenWidth,
             screenHeight: this.screenHeight,
         });
-        await this.controlStream.write(buffer);
+        await controlStream.write(buffer);
     }
 
     public async pressBackOrTurnOnScreen(action: AndroidKeyEventAction) {
-        if (!this.controlStream) {
-            throw new Error('pressBackOrTurnOnScreen called before initialization');
-        }
+        const controlStream = this.checkControlStream('pressBackOrTurnOnScreen');
 
         const buffer = this.options!.serializeBackOrScreenOnControlMessage(action, this.device);
         if (buffer) {
-            await this.controlStream.write(buffer);
+            await controlStream.write(buffer);
         }
     }
 
@@ -414,8 +405,13 @@ export class ScrcpyClient {
         }
 
         this._running = false;
+
         this.videoStream?.close();
+        this.videoStream = undefined;
+
         this.controlStream?.close();
+        this.controlStream = undefined;
+
         await this.process?.kill();
     }
 }

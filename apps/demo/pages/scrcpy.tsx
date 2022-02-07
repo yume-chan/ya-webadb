@@ -417,6 +417,8 @@ class ScrcpyPageState {
                     logLevel: ScrcpyLogLevel.Debug,
                     bitRate: 4_000_000,
                     tunnelForward: this.tunnelForward,
+                    sendDeviceMeta: false,
+                    sendDummyByte: false,
                 })
             );
             if (encoders.length === 0) {
@@ -468,6 +470,8 @@ class ScrcpyPageState {
                 lockVideoOrientation: ScrcpyScreenOrientation.Unlocked,
                 tunnelForward: this.tunnelForward,
                 encoderName: this.selectedEncoder ?? encoders[0],
+                sendDeviceMeta: false,
+                sendDummyByte: false,
                 codecOptions: new CodecOptions({
                     profile: decoder.maxProfile,
                     level: decoder.maxLevel,
