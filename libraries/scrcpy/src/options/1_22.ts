@@ -49,7 +49,7 @@ export class ScrcpyOptions1_22<T extends ScrcpyOptions1_22Type = ScrcpyOptions1_
             throw new Error('`rawVideoStream:true` is not supported');
         }
 
-        if (!init.sendFrameMeta) {
+        if (init.sendFrameMeta === false) {
             // TODO: Add support for `sendFrameMeta: false`
             throw new Error('`sendFrameMeta:false` is not supported');
         }
