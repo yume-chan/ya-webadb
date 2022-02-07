@@ -1,20 +1,15 @@
-name: Bug Report
-description: File a bug in the library
+name: Demo Bug
+description: File a bug in the official demo
 labels:
   - bug
+  - demo
 body:
   - type: checkboxes
     attributes:
       label: Issue Checklist
       options:
-        - label: I'm using the library programmatically
+        - label: I'm using the official demo at https://yume-chan.github.io/ya-webadb
           required: true
-  - type: input
-    attributes:
-      label: Library version
-      placeholder: 0.0.10
-    validations:
-      required: true
   - type: input
     attributes:
       label: Runtime
@@ -32,6 +27,7 @@ body:
   - type: textarea
     attributes:
       label: Describe the bug
+      description: If applicable, add screenshots to help explain your problem.
     validations:
       required: true
   - type: textarea
