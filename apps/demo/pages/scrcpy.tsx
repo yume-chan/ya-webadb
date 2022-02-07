@@ -7,7 +7,7 @@ import { action, autorun, makeAutoObservable, observable, runInAction } from "mo
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { DemoMode, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { globalState } from "../state";
 import { CommonStackTokens, formatSpeed, Icons, RouteStackProps } from "../utils";
@@ -163,6 +163,7 @@ class ScrcpyPageState {
     log: string[] = [];
     settingsVisible = false;
     demoModeVisible = false;
+    navigationBarVisible = true;
 
     width = 0;
     height = 0;
@@ -228,6 +229,15 @@ class ScrcpyPageState {
 
     get commandBarFarItems(): ICommandBarItemProps[] {
         return [
+            {
+                key: 'NavigationBar',
+                iconProps: { iconName: Icons.PanelBottom },
+                checked: this.navigationBarVisible,
+                text: 'Navigation Bar',
+                onClick: action(() => {
+                    this.navigationBarVisible = !this.navigationBarVisible;
+                }),
+            },
             {
                 key: 'Log',
                 iconProps: { iconName: Icons.TextGrammarError },
@@ -758,29 +768,32 @@ const ConnectionDialog = observer(() => {
 });
 
 const Scrcpy: NextPage = () => {
-    const bottomElement = (
-        <Stack verticalFill horizontalAlign="center" style={{ background: '#999' }}>
-            <Stack verticalFill horizontal style={{ width: '100%', maxWidth: 300 }} horizontalAlign="space-evenly" verticalAlign="center">
-                <IconButton
-                    iconProps={{ iconName: Icons.Play }}
-                    style={{ transform: 'rotate(180deg)', color: 'white' }}
-                    onPointerDown={state.handleBackPointerDown}
-                    onPointerUp={state.handleBackPointerUp}
-                />
-                <IconButton
-                    iconProps={{ iconName: Icons.Circle }}
-                    style={{ color: 'white' }}
-                    onPointerDown={state.handleHomePointerDown}
-                    onPointerUp={state.handleHomePointerUp}
-                />
-                <IconButton
-                    iconProps={{ iconName: Icons.Stop }}
-                    style={{ color: 'white' }}
-                    onPointerDown={state.handleAppSwitchPointerDown}
-                    onPointerUp={state.handleAppSwitchPointerUp}
-                />
+    const bottomElement = useMemo(() =>
+        state.navigationBarVisible && (
+            <Stack verticalFill horizontalAlign="center" style={{ height: '40px', background: '#999' }}>
+                <Stack verticalFill horizontal style={{ width: '100%', maxWidth: 300 }} horizontalAlign="space-evenly" verticalAlign="center">
+                    <IconButton
+                        iconProps={{ iconName: Icons.Play }}
+                        style={{ transform: 'rotate(180deg)', color: 'white' }}
+                        onPointerDown={state.handleBackPointerDown}
+                        onPointerUp={state.handleBackPointerUp}
+                    />
+                    <IconButton
+                        iconProps={{ iconName: Icons.Circle }}
+                        style={{ color: 'white' }}
+                        onPointerDown={state.handleHomePointerDown}
+                        onPointerUp={state.handleHomePointerUp}
+                    />
+                    <IconButton
+                        iconProps={{ iconName: Icons.Stop }}
+                        style={{ color: 'white' }}
+                        onPointerDown={state.handleAppSwitchPointerDown}
+                        onPointerUp={state.handleAppSwitchPointerUp}
+                    />
+                </Stack>
             </Stack>
-        </Stack>
+        ),
+        [state.navigationBarVisible]
     );
 
     return (
@@ -797,7 +810,6 @@ const Scrcpy: NextPage = () => {
                     width={state.width}
                     height={state.height}
                     bottomElement={bottomElement}
-                    bottomHeight={40}
                 >
                     <div
                         ref={state.handleRendererContainerRef}

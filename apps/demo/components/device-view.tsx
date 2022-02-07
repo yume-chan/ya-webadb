@@ -10,8 +10,6 @@ export interface DeviceViewProps {
 
     bottomElement?: ReactNode;
 
-    bottomHeight?: number;
-
     children?: ReactNode;
 }
 
@@ -23,16 +21,16 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
     width,
     height,
     bottomElement,
-    bottomHeight,
     children,
 }: DeviceViewProps, ref) => {
     const [containerSize, setContainerSize] = useState<Size>({ width: 0, height: 0 });
+    const [bottomSize, setBottomSize] = useState<Size>({ width: 0, height: 0 });
 
     // Container size minus bottom element size
     const usableSize = useMemo(() => ({
         width: containerSize.width,
-        height: containerSize.height - (bottomHeight ?? 0),
-    }), [containerSize, bottomHeight]);
+        height: containerSize.height - bottomSize.height,
+    }), [containerSize, bottomSize]);
 
     // Compute sizes after scaling
     const childrenStyle = useMemo(() => {
@@ -107,17 +105,17 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
                     {children}
                 </div>
 
-                {(!!width && !!bottomElement) && (
-                    <div style={{
+                <ResizeObserver
+                    style={{
                         position: 'absolute',
                         top: childrenStyle.top + childrenStyle.height,
                         left: childrenStyle.left,
                         width: childrenStyle.width,
-                        height: bottomHeight,
-                    }}>
-                        {bottomElement}
-                    </div>
-                )}
+                    }}
+                    onResize={setBottomSize}
+                >
+                    {(!!width && !!bottomElement) && bottomElement}
+                </ResizeObserver>
             </ResizeObserver>
         </StackItem>
     );

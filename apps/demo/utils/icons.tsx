@@ -1,5 +1,5 @@
 import { registerIcons } from "@fluentui/react";
-import { AddCircleRegular, WarningRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, PanelBottomRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WarningRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
@@ -25,6 +25,7 @@ export function register() {
             FullScreenMaximize: <FullScreenMaximizeRegular style={STYLE} />,
             Info: <InfoRegular style={STYLE} />,
             Navigation: <NavigationRegular style={STYLE} />,
+            PanelBottom: <PanelBottomRegular style={STYLE} />,
             PersonFeedback: <PersonFeedbackRegular style={STYLE} />,
             Phone: <PhoneRegular style={STYLE} />,
             PhoneLaptop: <PhoneLaptopRegular style={STYLE} />,
@@ -76,6 +77,7 @@ export default {
     FullScreenMaximize: 'FullScreenMaximize',
     Info: 'Info',
     Navigation: 'Navigation',
+    PanelBottom: 'PanelBottom',
     PersonFeedback: 'PersonFeedback',
     Phone: 'Phone',
     PhoneLaptop: 'PhoneLaptop',
