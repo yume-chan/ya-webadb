@@ -1,0 +1,45 @@
+name: Bug Report
+description: File a bug when using the library programmatically
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Only use this template if you are using the library programmatically.
+
+        For bug about the official demo, use the "Demo Bug" template.
+  - type: input
+    attributes:
+      label: Library version
+      placeholder: 0.0.10
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Runtime
+      description: Operating system, runtime name and version
+      placeholder: e.g. macOS 12.1, Chrome 99
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Device
+      description: Device model and Android version
+      placeholder: e.g. Pixel 5, Android 12
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Describe the bug
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true

@@ -1,8 +1,10 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: Demo bug
+about: File a bug when using the official demo website
 title: ''
-labels: bug
+labels:
+  - bug
+  - demo
 assignees: ''
 
 ---
