@@ -1,71 +1,10 @@
 import type { Adb, AdbBufferedStream } from "@yume-chan/adb";
 import type { ScrcpyClientConnection } from "../connection";
-import type { AndroidKeyEventAction } from "../message";
+import type { H264EncodingInfo } from "../decoder";
+import type { ScrcpyBackOrScreenOnEvent1_18 } from "./1_18";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22";
 
 export const DEFAULT_SERVER_PATH = '/data/local/tmp/scrcpy-server.jar';
-
-export enum ScrcpyLogLevel {
-    Verbose = 'verbose',
-    Debug = 'debug',
-    Info = 'info',
-    Warn = 'warn',
-    Error = 'error',
-}
-
-export enum ScrcpyScreenOrientation {
-    Initial = -2,
-    Unlocked = -1,
-    Portrait = 0,
-    Landscape = 1,
-    PortraitFlipped = 2,
-    LandscapeFlipped = 3,
-}
-
-export interface H264EncodingInfo {
-    profileIndex: number;
-    constraintSet: number;
-    levelIndex: number;
-
-    encodedWidth: number;
-    encodedHeight: number;
-
-    cropLeft: number;
-    cropRight: number;
-
-    cropTop: number;
-    cropBottom: number;
-
-    croppedWidth: number;
-    croppedHeight: number;
-}
-
-export interface VideoStreamPacket {
-    encodingInfo?: H264EncodingInfo | undefined;
-
-    videoData?: ArrayBuffer | undefined;
-}
-
-export interface ScrcpyOptions<T> {
-    value: Partial<T>;
-
-    formatServerArguments(): string[];
-
-    getOutputEncoderNameRegex(): RegExp;
-
-    createConnection(device: Adb): ScrcpyClientConnection;
-
-    parseVideoStream(stream: AdbBufferedStream): Promise<VideoStreamPacket>;
-
-    serializeBackOrScreenOnControlMessage(
-        action: AndroidKeyEventAction,
-        device: Adb
-    ): ArrayBuffer | undefined;
-
-    serializeInjectScrollControlMessage(
-        message: ScrcpyInjectScrollControlMessage1_22,
-    ): ArrayBuffer;
-}
 
 export interface ScrcpyOptionValue {
     toOptionValue(): string | undefined;
@@ -87,4 +26,30 @@ export function toScrcpyOptionValue<T>(value: any, empty: T): string | T {
     }
 
     return `${value}`;
+}
+
+export interface VideoStreamPacket {
+    encodingInfo?: H264EncodingInfo | undefined;
+
+    videoData?: ArrayBuffer | undefined;
+}
+
+export interface ScrcpyOptions<T> {
+    value: Partial<T>;
+
+    formatServerArguments(): string[];
+
+    getOutputEncoderNameRegex(): RegExp;
+
+    createConnection(device: Adb): ScrcpyClientConnection;
+
+    parseVideoStream(stream: AdbBufferedStream): Promise<VideoStreamPacket>;
+
+    serializeBackOrScreenOnControlMessage(
+        message: ScrcpyBackOrScreenOnEvent1_18,
+    ): ArrayBuffer | undefined;
+
+    serializeInjectScrollControlMessage(
+        message: ScrcpyInjectScrollControlMessage1_22,
+    ): ArrayBuffer;
 }

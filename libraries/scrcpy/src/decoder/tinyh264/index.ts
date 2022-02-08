@@ -1,7 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
-import type { H264Decoder } from "..";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
-import type { H264EncodingInfo } from '../../options';
+import type { H264Decoder, H264EncodingInfo } from '../common';
 import { createTinyH264Wrapper, TinyH264Wrapper } from "./wrapper";
 
 let cachedInitializePromise: Promise<{ YuvBuffer: typeof import('yuv-buffer'), YuvCanvas: typeof import('yuv-canvas').default; }> | undefined;
@@ -22,15 +21,15 @@ export class TinyH264Decoder implements H264Decoder {
 
     public readonly maxLevel = AndroidCodecLevel.Level4;
 
-    private _element: HTMLCanvasElement;
-    public get renderer() { return this._element; }
+    private _renderer: HTMLCanvasElement;
+    public get renderer() { return this._renderer; }
 
     private _yuvCanvas: import('yuv-canvas').default | undefined;
     private _initializer: PromiseResolver<TinyH264Wrapper> | undefined;
 
     public constructor() {
         initialize();
-        this._element = document.createElement('canvas');
+        this._renderer = document.createElement('canvas');
     }
 
     public async changeEncoding(size: H264EncodingInfo) {
@@ -40,15 +39,15 @@ export class TinyH264Decoder implements H264Decoder {
         const { YuvBuffer, YuvCanvas } = await initialize();
 
         if (!this._yuvCanvas) {
-            this._yuvCanvas = YuvCanvas.attach(this._element);;
+            this._yuvCanvas = YuvCanvas.attach(this._renderer);;
         }
 
         const { encodedWidth, encodedHeight } = size;
         const chromaWidth = encodedWidth / 2;
         const chromaHeight = encodedHeight / 2;
 
-        this._element.width = size.croppedWidth;
-        this._element.height = size.croppedHeight;
+        this._renderer.width = size.croppedWidth;
+        this._renderer.height = size.croppedHeight;
         const format = YuvBuffer.format({
             width: encodedWidth,
             height: encodedHeight,

@@ -1,22 +1,40 @@
 import type { Adb, AdbBufferedStream } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
-import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
+import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
 import { ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../../connection";
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../../message";
+import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22";
-import { ScrcpyLogLevel, ScrcpyOptions, ScrcpyOptionValue, ScrcpyScreenOrientation, toScrcpyOptionValue, VideoStreamPacket } from "../common";
+import { type ScrcpyOptionValue, toScrcpyOptionValue, VideoStreamPacket, type ScrcpyOptions } from "../common";
 import { parse_sequence_parameter_set } from "./sps";
 
-export interface CodecOptionsType {
+export enum ScrcpyLogLevel {
+    Verbose = 'verbose',
+    Debug = 'debug',
+    Info = 'info',
+    Warn = 'warn',
+    Error = 'error',
+}
+
+export enum ScrcpyScreenOrientation {
+    Initial = -2,
+    Unlocked = -1,
+    Portrait = 0,
+    Landscape = 1,
+    PortraitFlipped = 2,
+    LandscapeFlipped = 3,
+}
+
+export interface CodecOptionsInit {
     profile: AndroidCodecProfile;
 
     level: AndroidCodecLevel;
 }
 
 export class CodecOptions implements ScrcpyOptionValue {
-    public value: Partial<CodecOptionsType>;
+    public value: Partial<CodecOptionsInit>;
 
-    public constructor(value: Partial<CodecOptionsType>) {
+    public constructor(value: Partial<CodecOptionsInit>) {
         this.value = value;
     }
 
@@ -34,7 +52,7 @@ export class CodecOptions implements ScrcpyOptionValue {
     }
 }
 
-export interface ScrcpyOptions1_16Type {
+export interface ScrcpyOptionsInit1_16 {
     logLevel: ScrcpyLogLevel;
 
     /**
@@ -114,12 +132,12 @@ export const ScrcpyInjectScrollControlMessage1_16 =
         .int32('scrollX')
         .int32('scrollY');
 
-export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_16Type> implements ScrcpyOptions<T> {
+export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16> implements ScrcpyOptions<T> {
     public value: Partial<T>;
 
     private _streamHeader: ArrayBuffer | undefined;
 
-    public constructor(value: Partial<ScrcpyOptions1_16Type>) {
+    public constructor(value: Partial<ScrcpyOptionsInit1_16>) {
         if (new.target === ScrcpyOptions1_16 &&
             value.logLevel === ScrcpyLogLevel.Verbose) {
             value.logLevel = ScrcpyLogLevel.Debug;
@@ -266,11 +284,11 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
         };
     }
 
-    public serializeBackOrScreenOnControlMessage(action: AndroidKeyEventAction, device: Adb) {
-        if (action === AndroidKeyEventAction.Down) {
-            return ScrcpyBackOrScreenOnEvent1_16.serialize(
-                { type: ScrcpyControlMessageType.BackOrScreenOn },
-            );
+    public serializeBackOrScreenOnControlMessage(
+        message: ScrcpyBackOrScreenOnEvent1_18,
+    ) {
+        if (message.action === AndroidKeyEventAction.Down) {
+            return ScrcpyBackOrScreenOnEvent1_16.serialize(message);
         }
 
         return undefined;

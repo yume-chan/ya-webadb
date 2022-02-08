@@ -1,19 +1,20 @@
-import { type Adb } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
-import { type AndroidKeyEventAction, ScrcpyControlMessageType } from "../message";
-import { ScrcpyOptions1_16, type ScrcpyOptions1_16Type } from "./1_16";
+import type { AndroidKeyEventAction } from "../message";
+import { ScrcpyBackOrScreenOnEvent1_16, ScrcpyOptions1_16, type ScrcpyOptionsInit1_16 } from "./1_16";
 
-export interface ScrcpyOptions1_18Type extends ScrcpyOptions1_16Type {
+export interface ScrcpyOptionsInit1_18 extends ScrcpyOptionsInit1_16 {
     powerOffOnClose: boolean;
 }
 
 export const ScrcpyBackOrScreenOnEvent1_18 =
     new Struct()
-        .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>())
+        .fields(ScrcpyBackOrScreenOnEvent1_16)
         .uint8('action', placeholder<AndroidKeyEventAction>());
 
-export class ScrcpyOptions1_18<T extends ScrcpyOptions1_18Type = ScrcpyOptions1_18Type> extends ScrcpyOptions1_16<T> {
-    constructor(value: Partial<ScrcpyOptions1_18Type>) {
+export type ScrcpyBackOrScreenOnEvent1_18 = typeof ScrcpyBackOrScreenOnEvent1_18["TInit"];
+
+export class ScrcpyOptions1_18<T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsInit1_18> extends ScrcpyOptions1_16<T> {
+    constructor(value: Partial<ScrcpyOptionsInit1_18>) {
         super(value);
     }
 
@@ -32,12 +33,9 @@ export class ScrcpyOptions1_18<T extends ScrcpyOptions1_18Type = ScrcpyOptions1_
         return /\s+scrcpy --encoder '(.*?)'/;
     }
 
-    public override serializeBackOrScreenOnControlMessage(action: AndroidKeyEventAction, device: Adb) {
-        return ScrcpyBackOrScreenOnEvent1_18.serialize(
-            {
-                type: ScrcpyControlMessageType.BackOrScreenOn,
-                action,
-            }
-        );
+    public override serializeBackOrScreenOnControlMessage(
+        message: ScrcpyBackOrScreenOnEvent1_18,
+    ) {
+        return ScrcpyBackOrScreenOnEvent1_18.serialize(message);
     }
 }

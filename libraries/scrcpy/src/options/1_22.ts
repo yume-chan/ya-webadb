@@ -2,9 +2,9 @@ import { Adb } from "@yume-chan/adb";
 import Struct from "@yume-chan/struct";
 import { ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";
 import { ScrcpyInjectScrollControlMessage1_16 } from "./1_16";
-import { ScrcpyOptions1_21, ScrcpyOptions1_21Type } from "./1_21";
+import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from "./1_21";
 
-export interface ScrcpyOptions1_22Type extends ScrcpyOptions1_21Type {
+export interface ScrcpyOptionsInit1_22 extends ScrcpyOptionsInit1_21 {
     downsizeOnError: boolean;
 
     /**
@@ -36,8 +36,8 @@ export const ScrcpyInjectScrollControlMessage1_22 =
 
 export type ScrcpyInjectScrollControlMessage1_22 = typeof ScrcpyInjectScrollControlMessage1_22["TInit"];
 
-export class ScrcpyOptions1_22<T extends ScrcpyOptions1_22Type = ScrcpyOptions1_22Type> extends ScrcpyOptions1_21<T> {
-    public constructor(init: Partial<ScrcpyOptions1_22Type>) {
+export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22> extends ScrcpyOptions1_21<T> {
+    public constructor(init: Partial<ScrcpyOptionsInit1_22>) {
         if (init.rawVideoStream) {
             // Set implied options for client-side processing
             init.sendDeviceMeta = false;

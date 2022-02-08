@@ -2,9 +2,9 @@ import { Adb, AdbBufferedStream, AdbLegacyShell, AdbShell, DataEventEmitter } fr
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
-import { H264EncodingInfo, ScrcpyOptions } from "./options";
-import { ScrcpyInjectScrollControlMessage1_22 } from "./options/1_22";
+import type { H264EncodingInfo } from "./decoder";
+import { type AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
+import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions } from "./options";
 import { pushServer, PushServerOptions } from "./push-server";
 import { decodeUtf8 } from "./utils";
 
@@ -315,7 +315,10 @@ export class ScrcpyClient {
     public async pressBackOrTurnOnScreen(action: AndroidKeyEventAction) {
         const controlStream = this.checkControlStream('pressBackOrTurnOnScreen');
 
-        const buffer = this.options!.serializeBackOrScreenOnControlMessage(action, this.device);
+        const buffer = this.options!.serializeBackOrScreenOnControlMessage({
+            type: ScrcpyControlMessageType.BackOrScreenOn,
+            action,
+        });
         if (buffer) {
             await controlStream.write(buffer);
         }

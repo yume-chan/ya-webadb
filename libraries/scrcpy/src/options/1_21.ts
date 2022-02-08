@@ -1,9 +1,9 @@
 // cspell: ignore autosync
 
-import { ScrcpyOptions1_18, ScrcpyOptions1_18Type } from './1_18';
+import { ScrcpyOptions1_18, ScrcpyOptionsInit1_18 } from './1_18';
 import { toScrcpyOptionValue } from "./common";
 
-export interface ScrcpyOptions1_21Type extends ScrcpyOptions1_18Type {
+export interface ScrcpyOptionsInit1_21 extends ScrcpyOptionsInit1_18 {
     clipboardAutosync?: boolean;
 }
 
@@ -11,8 +11,8 @@ function toSnakeCase(input: string): string {
     return input.replace(/([A-Z])/g, '_$1').toLowerCase();
 }
 
-export class ScrcpyOptions1_21<T extends ScrcpyOptions1_21Type = ScrcpyOptions1_21Type> extends ScrcpyOptions1_18<T> {
-    public constructor(init: Partial<ScrcpyOptions1_21Type>) {
+export class ScrcpyOptions1_21<T extends ScrcpyOptionsInit1_21 = ScrcpyOptionsInit1_21> extends ScrcpyOptions1_18<T> {
+    public constructor(init: Partial<ScrcpyOptionsInit1_21>) {
         super(init);
     }
 

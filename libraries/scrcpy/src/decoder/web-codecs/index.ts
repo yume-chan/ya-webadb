@@ -1,7 +1,6 @@
 import type { ValueOrPromise } from "@yume-chan/struct";
-import type { H264Decoder } from "..";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
-import type { H264EncodingInfo } from "../../options";
+import type { H264Decoder, H264EncodingInfo } from "../common";
 
 function toHex(value: number) {
     return value.toString(16).padStart(2, '0').toUpperCase();
@@ -12,16 +11,16 @@ export class WebCodecsDecoder implements H264Decoder {
 
     public readonly maxLevel = AndroidCodecLevel.Level5;
 
-    private _element: HTMLCanvasElement;
-    public get renderer() { return this._element; }
+    private _renderer: HTMLCanvasElement;
+    public get renderer() { return this._renderer; }
 
     private context: CanvasRenderingContext2D;
     private decoder: VideoDecoder;
 
     public constructor() {
-        this._element = document.createElement('canvas');
+        this._renderer = document.createElement('canvas');
 
-        this.context = this._element.getContext('2d')!;
+        this.context = this._renderer.getContext('2d')!;
         this.decoder = new VideoDecoder({
             output: (frame) => {
                 this.context.drawImage(frame, 0, 0);
@@ -34,8 +33,8 @@ export class WebCodecsDecoder implements H264Decoder {
     public changeEncoding(encoding: H264EncodingInfo): ValueOrPromise<void> {
         const { profileIndex, constraintSet, levelIndex } = encoding;
 
-        this._element.width = encoding.croppedWidth;
-        this._element.height = encoding.croppedHeight;
+        this._renderer.width = encoding.croppedWidth;
+        this._renderer.height = encoding.croppedHeight;
 
         // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
         // ISO Base Media File Format Name Space
