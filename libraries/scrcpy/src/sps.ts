@@ -1,3 +1,6 @@
+// cspell: ignore golomb
+// cspell: ignore qpprime
+
 class BitReader {
     private buffer: Uint8Array;
 

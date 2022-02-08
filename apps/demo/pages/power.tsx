@@ -1,3 +1,6 @@
+// cspell: ignore bootloader
+// cspell: ignore fastboot
+
 import { DefaultButton, Icon, MessageBar, MessageBarType, TooltipHost } from "@fluentui/react";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";

@@ -1,3 +1,4 @@
+// cspell: ignore scrollback
 
 import { AdbShell, encodeUtf8 } from "@yume-chan/adb";
 import { AutoDisposable } from "@yume-chan/event";

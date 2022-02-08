@@ -2,6 +2,13 @@
 sidebar_position: 3
 ---
 
+<!--
+cspell: ignore bootloader
+cspell: ignore enduml
+cspell: ignore mkdir
+cspell: ignore startuml
+-->
+
 # Connection
 
 In native ADB architecture, once ADB **server** detects a new device, it initiates a connection by sending a `CNXN` [packet](./packet.md).
@@ -48,7 +55,7 @@ Device banners describe device information and capabilities. It has the followin
 *DeviceBanner* **:**<br/>
   *DeviceIdentifier* **::** *ParameterList* **\0**
 
-*DeviceIdentifer* **:**<br/>
+*DeviceIdentifier* **:**<br/>
   **host**<br/>
   **device**<br/>
   **bootloader**

@@ -1,3 +1,5 @@
+// cspell: ignore addrs
+
 import { CommandBar, ICommandBarItemProps, MessageBar, Stack, StackItem, Text, TextField, Toggle } from "@fluentui/react";
 import { autorun, makeAutoObservable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";

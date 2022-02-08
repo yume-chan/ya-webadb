@@ -17,8 +17,8 @@ export class ScrcpyOptions1_18<T extends ScrcpyOptions1_18Type = ScrcpyOptions1_
         super(value);
     }
 
-    protected override getArgumnetOrder(): (keyof T)[] {
-        return super.getArgumnetOrder().concat(['powerOffOnClose']);
+    protected override getArgumentOrder(): (keyof T)[] {
+        return super.getArgumentOrder().concat(['powerOffOnClose']);
     }
 
     protected override getDefaultValue(): T {

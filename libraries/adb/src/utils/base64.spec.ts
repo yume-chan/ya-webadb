@@ -45,18 +45,22 @@ describe('base64', () => {
         });
 
         it("input length 3", () => {
+            /* cspell: disable-next-line */
             expect(new Uint8Array(decodeBase64('AAEC'))).toEqual(new Uint8Array([0, 1, 2]));
         });
 
         it("input length 4", () => {
+            /* cspell: disable-next-line */
             expect(new Uint8Array(decodeBase64('AAECAw=='))).toEqual(new Uint8Array([0, 1, 2, 3]));
         });
 
         it("input length 5", () => {
+            /* cspell: disable-next-line */
             expect(new Uint8Array(decodeBase64('AAECAwQ='))).toEqual(new Uint8Array([0, 1, 2, 3, 4]));
         });
 
         it("input length 6", () => {
+            /* cspell: disable-next-line */
             expect(new Uint8Array(decodeBase64('AAECAwQF'))).toEqual(new Uint8Array([0, 1, 2, 3, 4, 5]));
         });
 
@@ -115,6 +119,7 @@ describe('base64', () => {
                         )
                     )
                 )
+                /* cspell: disable-next-line */
             ).toEqual(new Uint8Array([65, 65, 69, 67])); // AAEC
         });
 
@@ -127,6 +132,7 @@ describe('base64', () => {
                         )
                     )
                 )
+                /* cspell: disable-next-line */
             ).toEqual(new Uint8Array([65, 65, 69, 67, 65, 119, 61, 61])); // AAECAw==
         });
 
@@ -139,6 +145,7 @@ describe('base64', () => {
                         )
                     )
                 )
+                /* cspell: disable-next-line */
             ).toEqual(new Uint8Array([65, 65, 69, 67, 65, 119, 81, 61])); // AAECAwQ=
         });
 
@@ -151,6 +158,7 @@ describe('base64', () => {
                         )
                     )
                 )
+                /* cspell: disable-next-line */
             ).toEqual(new Uint8Array([65, 65, 69, 67, 65, 119, 81, 70])); // AAECAwQF
         });
 

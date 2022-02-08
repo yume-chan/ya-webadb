@@ -160,6 +160,7 @@ export class ScrcpyClient {
 
             process = await this.device.childProcess.spawn(
                 [
+                    // cspell: disable-next-line
                     `CLASSPATH=${path}`,
                     'app_process',
                     /* unused */ '/',

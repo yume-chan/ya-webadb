@@ -1,5 +1,10 @@
 # @yume-chan/struct
 
+<!--
+cspell: ignore Codecov
+cspell: ignore arraybufferuint8clampedarraystring
+-->
+
 ![license](https://img.shields.io/npm/l/@yume-chan/struct)
 ![npm type definitions](https://img.shields.io/npm/types/@yume-chan/struct)
 [![npm version](https://img.shields.io/npm/v/@yume-chan/struct)](https://www.npmjs.com/package/@yume-chan/struct)
@@ -42,6 +47,8 @@ const buffer = MyStruct.serialize({
 });
 ```
 
+<!-- cspell: disable -->
+
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Compatibility](#compatibility)
@@ -67,6 +74,8 @@ const buffer = MyStruct.serialize({
     - [`getSize`](#getsize-1)
     - [`get`/`set`](#getset)
     - [`serialize`](#serialize-1)
+
+<!-- cspell: enable -->
 
 ## Compatibility
 
@@ -447,7 +456,7 @@ Multiple calls merge all extra fields together.
 postDeserialize(): Struct<TFields, TOmitInitKey, TExtra, undefined>;
 ```
 
-Remove any registered post deserialization callback.
+Remove any registered post-deserialization callback.
 
 ```ts
 postDeserialize(

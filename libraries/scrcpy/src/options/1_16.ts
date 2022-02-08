@@ -118,7 +118,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
         this.value = value as Partial<T>;
     }
 
-    protected getArgumnetOrder(): (keyof T)[] {
+    protected getArgumentOrder(): (keyof T)[] {
         return [
             'logLevel',
             'maxSize',
@@ -158,7 +158,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptions1_16Type = ScrcpyOptions1_
 
     public formatServerArguments(): string[] {
         const defaults = this.getDefaultValue();
-        return this.getArgumnetOrder()
+        return this.getArgumentOrder()
             .map(key => toScrcpyOptionValue(this.value[key] || defaults[key], '-'));
     }
 

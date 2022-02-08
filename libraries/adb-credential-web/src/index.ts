@@ -1,3 +1,5 @@
+// cspell: ignore RSASSA
+
 import { AdbCredentialStore, calculateBase64EncodedLength, calculatePublicKey, calculatePublicKeyLength, decodeBase64, encodeBase64 } from "@yume-chan/adb";
 
 const Utf8Encoder = new TextEncoder();

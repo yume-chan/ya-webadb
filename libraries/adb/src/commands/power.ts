@@ -1,3 +1,8 @@
+// cspell: ignore bootloader
+// cspell: ignore fastboot
+// cspell: ignore keyevent
+// cspell: ignore longpress
+
 import { AdbCommandBase } from "./base";
 
 export class AdbPower extends AdbCommandBase {

@@ -1,3 +1,9 @@
+// cspell: ignore carriernetworkchange
+// cspell: ignore powersave
+// cspell: ignore nosim
+// cspell: ignore systemui
+// cspell: ignore sysui
+
 import { AdbCommandBase } from './base';
 
 export enum AdbDemoModeSignalStrength {
@@ -155,6 +161,11 @@ export class AdbDemoMode extends AdbCommandBase {
     }
 
     public async setTime(hour: number, minute: number): Promise<void> {
-        await this.broadcast('clock', { hhmm: `${hour.toString().padStart(2, '0')}${minute.toString().padStart(2, '0')}` });
+        await this.broadcast('clock', {
+            // cspell: disable-next-line
+            hhmm:
+                hour.toString().padStart(2, '0') +
+                minute.toString().padStart(2, '0'),
+        });
     }
 }

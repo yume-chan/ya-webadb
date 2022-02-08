@@ -1,3 +1,5 @@
+// cspell: ignore autosync
+
 import { ScrcpyOptions1_18, ScrcpyOptions1_18Type } from './1_18';
 import { toScrcpyOptionValue } from "./common";
 
@@ -22,6 +24,8 @@ export class ScrcpyOptions1_21<T extends ScrcpyOptions1_21Type = ScrcpyOptions1_
     }
 
     public override formatServerArguments(): string[] {
+        // 1.21 changed the format of arguments
+        // So `getArgumentOrder()` is no longer needed
         return Object.entries(this.value)
             .map(([key, value]) => [key, toScrcpyOptionValue(value, undefined)] as const)
             .filter((pair): pair is [string, string] => pair[1] !== undefined)

@@ -32,8 +32,11 @@ const MobileDataTypeOptions =
                 '5ge': '5GE',
                 '5g+': '5G+',
                 'e': 'EDGE',
+                // cspell: disable-next-line
                 'g': 'GPRS',
+                // cspell: disable-next-line
                 'h': 'HSPA',
+                // cspell: disable-next-line
                 'h+': 'HSPA+',
                 'lte': 'LTE',
                 'lte+': 'LTE+',

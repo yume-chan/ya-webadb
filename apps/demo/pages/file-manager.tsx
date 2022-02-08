@@ -154,8 +154,8 @@ class FileManagerState {
                 });
                 break;
             case 1:
-                // StreamSaver doens't work with strict site isolation enabled (`Cross-Origin-Embedder-Policy: require-corp`),
-                // `SharedArrayBuffer` doesn't work WHITHOUT strict site isolation.
+                // StreamSaver doesn't work with strict site isolation enabled (`Cross-Origin-Embedder-Policy: require-corp`),
+                // `SharedArrayBuffer` doesn't work WITHOUT strict site isolation.
                 if (this.selectedItems[0].type === LinuxFileType.File && typeof SharedArrayBuffer === 'undefined') {
                     result.push({
                         key: 'download',

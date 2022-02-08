@@ -1,3 +1,5 @@
+// cspell: ignore killforward
+
 import { AutoDisposable } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import type { AdbPacket } from '../packet';

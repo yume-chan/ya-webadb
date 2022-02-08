@@ -2,7 +2,12 @@
 sidebar_position: 1
 ---
 
-# Achitecture
+<!--
+cspell: ignore libusb
+cspell: ignore nodaemon
+-->
+
+# Architecture
 
 This part describes the architecture of native ADB and Web ADB, and why there are designed in this way.
 
@@ -110,7 +115,7 @@ Web ADB reuses native ADB daemons, but there is no **client**/**server**: One ap
 
 ### Core
 
-**Core** is the `@yume-chan/adb` package. It generates data in ADB protocol, without "host prefix" (not needed because packets are directly sent to **daemons** via **backends**).
+**Core** is the `@yume-chan/adb` package. It generates data in ADB protocol, without "host prefix" (not needed because packets are directly sent to **daemons** via a **backend**).
 
 ### Backend
 

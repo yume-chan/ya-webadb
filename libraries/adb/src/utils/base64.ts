@@ -140,6 +140,7 @@ export function encodeBase64(
     let outputIndex = outputOffset + outputLength - 1;
 
     if (paddingLength === 2) {
+        /* cspell: disable-next-line */
         // aaaaaabb
         const x = input[inputIndex]!;
         inputIndex -= 1;
@@ -156,10 +157,12 @@ export function encodeBase64(
         output[outputIndex] = indexToChar[x >> 2]!;
         outputIndex -= 1;
     } else if (paddingLength === 1) {
+        /* cspell: disable-next-line */
         // bbbbcccc
         const y = input[inputIndex]!;
         inputIndex -= 1;
 
+        /* cspell: disable-next-line */
         // aaaaaabb
         const x = input[inputIndex]!;
         inputIndex -= 1;
@@ -178,14 +181,17 @@ export function encodeBase64(
     }
 
     while (inputIndex >= inputOffset) {
+        /* cspell: disable-next-line */
         // ccdddddd
         const z = input[inputIndex]!;
         inputIndex -= 1;
 
+        /* cspell: disable-next-line */
         // bbbbcccc
         const y = input[inputIndex]!;
         inputIndex -= 1;
 
+        /* cspell: disable-next-line */
         // aaaaaabb
         const x = input[inputIndex]!;
         inputIndex -= 1;
