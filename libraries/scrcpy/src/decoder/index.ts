@@ -1,17 +1,17 @@
 import { Disposable } from "@yume-chan/event";
-import type { FrameSize } from "../client";
 import type { AndroidCodecLevel, AndroidCodecProfile } from "../codec";
+import type { H264EncodingInfo } from "../options";
 
 export interface H264Decoder extends Disposable {
     readonly maxProfile: AndroidCodecProfile;
 
     readonly maxLevel: AndroidCodecLevel;
 
-    readonly element: HTMLElement;
+    readonly renderer: HTMLElement;
 
-    setSize(size: FrameSize): void;
+    changeEncoding(size: H264EncodingInfo): void;
 
-    feed(data: ArrayBuffer): void;
+    feedData(data: ArrayBuffer): void;
 }
 
 export interface H264DecoderConstructor {

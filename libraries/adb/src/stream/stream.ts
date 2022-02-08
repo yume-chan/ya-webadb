@@ -2,6 +2,7 @@ import { once } from '@yume-chan/event';
 import { ValueOrPromise } from '@yume-chan/struct';
 import { AdbSocket, AdbSocketInfo } from '../socket';
 import { EventQueue } from '../utils';
+import { StreamEndedError } from "./buffered-stream";
 
 export class AdbSocketStream implements AdbSocketInfo {
     private socket: AdbSocket;
@@ -36,7 +37,7 @@ export class AdbSocketStream implements AdbSocketInfo {
         try {
             return await this.queue.dequeue();
         } catch {
-            throw new Error('Can not read after AdbSocketStream has been closed');
+            throw new StreamEndedError();
         }
     }
 

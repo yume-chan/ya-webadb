@@ -336,7 +336,7 @@ class ScrcpyPageState {
                 while (this.rendererContainer.firstChild) {
                     this.rendererContainer.firstChild.remove();
                 }
-                this.rendererContainer.appendChild(this.decoder.element);
+                this.rendererContainer.appendChild(this.decoder.renderer);
             }
         });
 
@@ -454,19 +454,19 @@ class ScrcpyPageState {
             client.onOutput(action(line => this.log.push(line)));
             client.onClose(this.stop);
 
-            client.onSizeChanged(action((size) => {
-                const { croppedWidth, croppedHeight, } = size;
+            client.onEncodingChanged(action((encoding) => {
+                const { croppedWidth, croppedHeight, } = encoding;
 
                 this.log.push(`[client] Video size changed: ${croppedWidth}x${croppedHeight}`);
 
                 this.width = croppedWidth;
                 this.height = croppedHeight;
 
-                decoder.setSize(size);
+                decoder.changeEncoding(encoding);
             }));
 
-            client.onVideoData(({ data }) => {
-                decoder.feed(data);
+            client.onVideoData((data) => {
+                decoder.feedData(data);
             });
 
             client.onClipboardChange(content => {

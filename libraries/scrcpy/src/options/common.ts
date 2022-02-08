@@ -1,4 +1,4 @@
-import type { Adb } from "@yume-chan/adb";
+import type { Adb, AdbBufferedStream } from "@yume-chan/adb";
 import type { ScrcpyClientConnection } from "../connection";
 import type { AndroidKeyEventAction } from "../message";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22";
@@ -22,6 +22,30 @@ export enum ScrcpyScreenOrientation {
     LandscapeFlipped = 3,
 }
 
+export interface H264EncodingInfo {
+    profileIndex: number;
+    constraintSet: number;
+    levelIndex: number;
+
+    encodedWidth: number;
+    encodedHeight: number;
+
+    cropLeft: number;
+    cropRight: number;
+
+    cropTop: number;
+    cropBottom: number;
+
+    croppedWidth: number;
+    croppedHeight: number;
+}
+
+export interface VideoStreamPacket {
+    encodingInfo?: H264EncodingInfo | undefined;
+
+    videoData?: ArrayBuffer | undefined;
+}
+
 export interface ScrcpyOptions<T> {
     value: Partial<T>;
 
@@ -30,6 +54,8 @@ export interface ScrcpyOptions<T> {
     getOutputEncoderNameRegex(): RegExp;
 
     createConnection(device: Adb): ScrcpyClientConnection;
+
+    parseVideoStream(stream: AdbBufferedStream): Promise<VideoStreamPacket>;
 
     serializeBackOrScreenOnControlMessage(
         action: AndroidKeyEventAction,

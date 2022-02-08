@@ -3,10 +3,9 @@ import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
-import { ScrcpyOptions } from "./options";
+import { H264EncodingInfo, ScrcpyOptions } from "./options";
 import { ScrcpyInjectScrollControlMessage1_22 } from "./options/1_22";
 import { pushServer, PushServerOptions } from "./push-server";
-import { parse_sequence_parameter_set, SequenceParameterSet } from './sps';
 import { decodeUtf8 } from "./utils";
 
 function* splitLines(text: string): Generator<string, void, void> {
@@ -25,36 +24,10 @@ function* splitLines(text: string): Generator<string, void, void> {
     }
 }
 
-const VideoPacket =
-    new Struct()
-        .int64('pts')
-        .uint32('size')
-        .arrayBuffer('data', { lengthField: 'size' });
-
-export const NoPts = BigInt(-1);
-
-export type VideoPacket = typeof VideoPacket['TDeserializeResult'];
-
 const ClipboardMessage =
     new Struct()
         .uint32('length')
         .string('content', { lengthField: 'length' });
-
-export interface FrameSize {
-    sequenceParameterSet: SequenceParameterSet;
-
-    width: number;
-    height: number;
-
-    cropLeft: number;
-    cropRight: number;
-
-    cropTop: number;
-    cropBottom: number;
-
-    croppedWidth: number;
-    croppedHeight: number;
-}
 
 export class ScrcpyClient {
     public static pushServer(
@@ -129,10 +102,10 @@ export class ScrcpyClient {
     private _screenHeight: number | undefined;
     public get screenHeight() { return this._screenHeight; }
 
-    private readonly sizeChangedEvent = new EventEmitter<FrameSize>();
-    public get onSizeChanged() { return this.sizeChangedEvent.event; }
+    private readonly encodingChangedEvent = new EventEmitter<H264EncodingInfo>();
+    public get onEncodingChanged() { return this.encodingChangedEvent.event; }
 
-    private readonly videoDataEvent = new DataEventEmitter<VideoPacket>();
+    private readonly videoDataEvent = new DataEventEmitter<ArrayBuffer>();
     public get onVideoData() { return this.videoDataEvent.event; }
 
     private readonly clipboardChangeEvent = new EventEmitter<string>();
@@ -225,68 +198,16 @@ export class ScrcpyClient {
         }
 
         try {
-            let buffer: ArrayBuffer | undefined;
             while (this._running) {
-                const { pts, data } = await VideoPacket.deserialize(this.videoStream);
-                if (!data || data.byteLength === 0) {
-                    continue;
+                const { encodingInfo, videoData } = await this.options!.parseVideoStream(this.videoStream);
+                if (encodingInfo) {
+                    this._screenWidth = encodingInfo.croppedWidth;
+                    this._screenHeight = encodingInfo.croppedHeight;
+                    this.encodingChangedEvent.fire(encodingInfo);
                 }
-
-                if (pts === NoPts) {
-                    const sequenceParameterSet = parse_sequence_parameter_set(data.slice(0));
-
-                    const {
-                        pic_width_in_mbs_minus1,
-                        pic_height_in_map_units_minus1,
-                        frame_mbs_only_flag,
-                        frame_crop_left_offset,
-                        frame_crop_right_offset,
-                        frame_crop_top_offset,
-                        frame_crop_bottom_offset,
-                    } = sequenceParameterSet;
-                    const width = (pic_width_in_mbs_minus1 + 1) * 16;
-                    const height = (pic_height_in_map_units_minus1 + 1) * (2 - frame_mbs_only_flag) * 16;
-                    const cropLeft = frame_crop_left_offset * 2;
-                    const cropRight = frame_crop_right_offset * 2;
-                    const cropTop = frame_crop_top_offset * 2;
-                    const cropBottom = frame_crop_bottom_offset * 2;
-
-                    const screenWidth = width - cropLeft - cropRight;
-                    const screenHeight = height - cropTop - cropBottom;
-                    this._screenWidth = screenWidth;
-                    this._screenHeight = screenHeight;
-
-                    this.sizeChangedEvent.fire({
-                        sequenceParameterSet,
-                        width,
-                        height,
-                        cropLeft: cropLeft,
-                        cropRight: cropRight,
-                        cropTop: cropTop,
-                        cropBottom: cropBottom,
-                        croppedWidth: screenWidth,
-                        croppedHeight: screenHeight,
-                    });
-
-                    buffer = data;
-                    continue;
+                if (videoData) {
+                    this.videoDataEvent.fire(videoData);
                 }
-
-                let array: Uint8Array;
-                if (buffer) {
-                    array = new Uint8Array(buffer.byteLength + data!.byteLength);
-                    array.set(new Uint8Array(buffer));
-                    array.set(new Uint8Array(data!), buffer.byteLength);
-                    buffer = undefined;
-                } else {
-                    array = new Uint8Array(data!);
-                }
-
-                await this.videoDataEvent.fire({
-                    pts,
-                    size: array.byteLength,
-                    data: array.buffer,
-                });
             }
         } catch (e) {
             if (!this._running) {

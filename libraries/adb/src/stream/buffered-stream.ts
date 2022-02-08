@@ -1,13 +1,25 @@
-import { StructAsyncDeserializeStream } from '@yume-chan/struct';
+import { StructAsyncDeserializeStream, ValueOrPromise } from '@yume-chan/struct';
 import { AdbSocket, AdbSocketInfo } from '../socket';
 import { AdbSocketStream } from './stream';
 
+export class StreamEndedError extends Error {
+    public constructor() {
+        super('Stream ended');
+
+        // Fix Error's prototype chain when compiling to ES5
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
+
 export interface Stream {
     /**
+     * When the stream is ended (no more data can be read),
+     * An `StreamEndedError` should be thrown.
+     *
      * @param length A hint of how much data should be read.
-     * @returns Data, which can be either more or less than `length`
+     * @returns Data, which can be either more or less than `length`.
      */
-    read(length: number): ArrayBuffer | Promise<ArrayBuffer>;
+    read(length: number): ValueOrPromise<ArrayBuffer>;
 
     close?(): void;
 }
@@ -21,7 +33,13 @@ export class BufferedStream<T extends Stream> {
         this.stream = stream;
     }
 
-    public async read(length: number): Promise<ArrayBuffer> {
+    /**
+     *
+     * @param length
+     * @param readToEnd When `true`, allow less data to be returned if the stream has reached its end.
+     * @returns
+     */
+    public async read(length: number, readToEnd: boolean = false): Promise<ArrayBuffer> {
         let array: Uint8Array;
         let index: number;
         if (this.buffer) {
@@ -51,18 +69,27 @@ export class BufferedStream<T extends Stream> {
             index = buffer.byteLength;
         }
 
-        while (index < length) {
-            const left = length - index;
+        try {
+            while (index < length) {
+                const left = length - index;
 
-            const buffer = await this.stream.read(left);
-            if (buffer.byteLength > left) {
-                array.set(new Uint8Array(buffer, 0, left), index);
-                this.buffer = new Uint8Array(buffer, left);
+                const buffer = await this.stream.read(left);
+                if (buffer.byteLength > left) {
+                    array.set(new Uint8Array(buffer, 0, left), index);
+                    this.buffer = new Uint8Array(buffer, left);
+                    return array.buffer;
+                }
+
+                array.set(new Uint8Array(buffer), index);
+                index += buffer.byteLength;
+            }
+        }
+        catch (e) {
+            if (readToEnd && e instanceof StreamEndedError) {
                 return array.buffer;
             }
 
-            array.set(new Uint8Array(buffer), index);
-            index += buffer.byteLength;
+            throw e;
         }
 
         return array.buffer;

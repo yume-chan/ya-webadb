@@ -25,8 +25,6 @@ export interface ScrcpyOptions1_22Type extends ScrcpyOptions1_21Type {
      * Implies `sendDeviceMeta: false`, `sendFrameMeta: false` and `sendDummyByte: false`
      *
      * @default false
-     *
-     * TODO: Add support for `sendFrameMeta: false`
      */
     rawVideoStream: boolean;
 }
@@ -45,13 +43,6 @@ export class ScrcpyOptions1_22<T extends ScrcpyOptions1_22Type = ScrcpyOptions1_
             init.sendDeviceMeta = false;
             init.sendFrameMeta = false;
             init.sendDummyByte = false;
-            // TODO: Add support for `sendFrameMeta: false`
-            throw new Error('`rawVideoStream:true` is not supported');
-        }
-
-        if (init.sendFrameMeta === false) {
-            // TODO: Add support for `sendFrameMeta: false`
-            throw new Error('`sendFrameMeta:false` is not supported');
         }
 
         super(init);
@@ -67,7 +58,7 @@ export class ScrcpyOptions1_22<T extends ScrcpyOptions1_22Type = ScrcpyOptions1_
         };
     }
 
-    public override  createConnection(device: Adb): ScrcpyClientConnection {
+    public override createConnection(device: Adb): ScrcpyClientConnection {
         const defaultValue = this.getDefaultValue();
         const options: ScrcpyClientConnectionOptions = {
             control: this.value.control ?? defaultValue.control,

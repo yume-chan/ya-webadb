@@ -1,3 +1,5 @@
+// cspell: ignore Syncbird
+
 import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic';
 import { StructDefaultOptions, StructValue } from './basic';
 import { Syncbird } from "./syncbird";
@@ -103,7 +105,7 @@ interface ArrayBufferLikeFieldCreator<
 /**
  * Similar to `ArrayBufferLikeFieldCreator`, but bind to `TType`
  */
-interface BindedArrayBufferLikeFieldDefinitionCreator<
+interface BoundArrayBufferLikeFieldDefinitionCreator<
     TFields extends object,
     TOmitInitKey extends PropertyKey,
     TExtra extends object,
@@ -435,7 +437,7 @@ export class Struct<
             }
         };
 
-    public arrayBuffer: BindedArrayBufferLikeFieldDefinitionCreator<
+    public arrayBuffer: BoundArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
@@ -448,7 +450,7 @@ export class Struct<
             return this.arrayBufferLike(name, ArrayBufferFieldType.instance, options);
         };
 
-    public uint8ClampedArray: BindedArrayBufferLikeFieldDefinitionCreator<
+    public uint8ClampedArray: BoundArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
@@ -461,7 +463,7 @@ export class Struct<
             return this.arrayBufferLike(name, Uint8ClampedArrayFieldType.instance, options);
         };
 
-    public string: BindedArrayBufferLikeFieldDefinitionCreator<
+    public string: BoundArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
