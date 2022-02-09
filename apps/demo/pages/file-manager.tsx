@@ -18,7 +18,7 @@ import { asyncEffect, chunkFile, formatSize, formatSpeed, Icons, pickFile, Route
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
     StreamSaver = require('streamsaver');
-    // StreamSaver.mitm = new URL('streamsaver/mitm.html?url', import.meta.url).toString() + '?sw=' + new URL('streamsaver/sw.js?url', import.meta.url);
+    StreamSaver.mitm = '/StreamSaver/mitm.html';
 }
 
 interface ListItem extends AdbSyncEntryResponse {
@@ -154,9 +154,7 @@ class FileManagerState {
                 });
                 break;
             case 1:
-                // StreamSaver doesn't work with strict site isolation enabled (`Cross-Origin-Embedder-Policy: require-corp`),
-                // `SharedArrayBuffer` doesn't work WITHOUT strict site isolation.
-                if (this.selectedItems[0].type === LinuxFileType.File && typeof SharedArrayBuffer === 'undefined') {
+                if (this.selectedItems[0].type === LinuxFileType.File) {
                     result.push({
                         key: 'download',
                         text: 'Download',
