@@ -23,6 +23,9 @@ module.exports = withMDX({
     experimental: {
         esmExternals: 'loose',
     },
+    publicRuntimeConfig: {
+        basePath: process.env.BASE_PATH || '',
+    },
     webpack(config, options) {
         config.module.rules.push({
             resourceQuery: /url/,

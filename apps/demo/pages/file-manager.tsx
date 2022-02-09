@@ -7,6 +7,7 @@ import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
+import getConfig from "next/config";
 import Head from "next/head";
 import Router, { useRouter } from "next/router";
 import path from 'path';
@@ -17,8 +18,9 @@ import { asyncEffect, chunkFile, formatSize, formatSpeed, Icons, pickFile, Route
 
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
+    const { publicRuntimeConfig } = getConfig();
     StreamSaver = require('streamsaver');
-    StreamSaver.mitm = (process.env.BASE_PATH || '') + '/StreamSaver/mitm.html';
+    StreamSaver.mitm = publicRuntimeConfig.basePath + '/StreamSaver/mitm.html';
 }
 
 interface ListItem extends AdbSyncEntryResponse {
