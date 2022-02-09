@@ -4,7 +4,7 @@
 // cspell: ignore systemui
 // cspell: ignore sysui
 
-import { AdbCommandBase, AdbLegacyShell } from '@yume-chan/adb';
+import { Adb, AdbCommandBase } from '@yume-chan/adb';
 
 export enum DemoModeSignalStrength {
     Hidden = 'null',
@@ -26,13 +26,42 @@ export const DemoModeStatusBarModes = ['opaque', 'translucent', 'semi-transparen
 
 export type DemoModeStatusBarMode = (typeof DemoModeStatusBarModes)[number];
 
-export class Settings extends AdbCommandBase {
-    public get(key: string, global: boolean = false) {
+export type SettingsNamespace = 'system' | 'secure' | 'global';
 
+// frameworks/base/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
+export class Settings extends AdbCommandBase {
+    public run(command: string, namespace: SettingsNamespace, ...args: string[]) {
+        return this.adb.childProcess.spawnAndWaitLegacy(['settings', command, namespace, ...args]);
+    }
+
+    public get(namespace: SettingsNamespace, key: string) {
+        return this.run('get', namespace, key);
+    }
+
+    public delete(namespace: SettingsNamespace, key: string) {
+        return this.run('delete', namespace, key);
+    }
+
+    public put(namespace: SettingsNamespace, key: string, value: string, tag?: string, makeDefault?: boolean) {
+        return this.run(
+            'put',
+            namespace,
+            key,
+            value,
+            ...(tag ? [tag] : []),
+            ...(makeDefault ? ['default'] : []),
+        );
     }
 }
 
 export class DemoMode extends AdbCommandBase {
+    private settings: Settings;
+
+    constructor(adb: Adb) {
+        super(adb);
+        this.settings = new Settings(adb);
+    }
+
     public static readonly AllowedSettingKey = 'sysui_demo_allowed';
 
     // Demo Mode actually doesn't have a setting indicates its enablement
@@ -40,35 +69,30 @@ export class DemoMode extends AdbCommandBase {
     // So we can only try our best to guess if it's enabled
     public static readonly EnabledSettingKey = 'sysui_tuner_demo_on';
 
-    private async settings(...command: string[]): Promise<string> {
-        const { stdout } = await this.adb.childProcess.spawnAndWait(command, { shells: [AdbLegacyShell] });
-        return stdout.trim();
-    }
-
     public async getAllowed(): Promise<boolean> {
-        const output = await this.settings('settings', 'get', 'global', DemoMode.AllowedSettingKey);
+        const output = await this.settings.get('global', DemoMode.AllowedSettingKey);
         return output.trim() === '1';
     }
 
     public async setAllowed(value: boolean): Promise<void> {
         if (value) {
-            await this.settings('settings', 'put', 'global', DemoMode.AllowedSettingKey, '1');
+            await this.settings.put('global', DemoMode.AllowedSettingKey, '1');
         } else {
             await this.setEnabled(false);
-            await this.settings('settings', 'delete', 'global', DemoMode.AllowedSettingKey);
+            await this.settings.delete('global', DemoMode.AllowedSettingKey);
         }
     }
 
     public async getEnabled(): Promise<boolean> {
-        const result = await this.settings('settings', 'get', 'global', DemoMode.EnabledSettingKey);
+        const result = await this.settings.get('global', DemoMode.EnabledSettingKey);
         return result.trim() === '1';
     }
 
     public async setEnabled(value: boolean): Promise<void> {
         if (value) {
-            await this.settings('settings', 'put', 'global', DemoMode.EnabledSettingKey, '1');
+            await this.settings.put('global', DemoMode.EnabledSettingKey, '1');
         } else {
-            await this.settings('settings', 'delete', 'global', DemoMode.EnabledSettingKey);
+            await this.settings.delete('global', DemoMode.EnabledSettingKey);
             await this.broadcast('exit');
         }
     }
