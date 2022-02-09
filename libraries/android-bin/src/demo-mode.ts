@@ -5,6 +5,7 @@
 // cspell: ignore sysui
 
 import { Adb, AdbCommandBase } from '@yume-chan/adb';
+import { Settings } from "./settings";
 
 export enum DemoModeSignalStrength {
     Hidden = 'null',
@@ -25,34 +26,6 @@ export type DemoModeMobileDataType = (typeof DemoModeMobileDataTypes)[number];
 export const DemoModeStatusBarModes = ['opaque', 'translucent', 'semi-transparent', 'transparent', 'warning'] as const;
 
 export type DemoModeStatusBarMode = (typeof DemoModeStatusBarModes)[number];
-
-export type SettingsNamespace = 'system' | 'secure' | 'global';
-
-// frameworks/base/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
-export class Settings extends AdbCommandBase {
-    public run(command: string, namespace: SettingsNamespace, ...args: string[]) {
-        return this.adb.childProcess.spawnAndWaitLegacy(['settings', command, namespace, ...args]);
-    }
-
-    public get(namespace: SettingsNamespace, key: string) {
-        return this.run('get', namespace, key);
-    }
-
-    public delete(namespace: SettingsNamespace, key: string) {
-        return this.run('delete', namespace, key);
-    }
-
-    public put(namespace: SettingsNamespace, key: string, value: string, tag?: string, makeDefault?: boolean) {
-        return this.run(
-            'put',
-            namespace,
-            key,
-            value,
-            ...(tag ? [tag] : []),
-            ...(makeDefault ? ['default'] : []),
-        );
-    }
-}
 
 export class DemoMode extends AdbCommandBase {
     private settings: Settings;
