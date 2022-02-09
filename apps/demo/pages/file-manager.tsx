@@ -18,7 +18,7 @@ import { asyncEffect, chunkFile, formatSize, formatSpeed, Icons, pickFile, Route
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
     StreamSaver = require('streamsaver');
-    StreamSaver.mitm = Router.basePath + '/StreamSaver/mitm.html';
+    StreamSaver.mitm = (process.env.BASE_PATH || '') + '/StreamSaver/mitm.html';
 }
 
 interface ListItem extends AdbSyncEntryResponse {
