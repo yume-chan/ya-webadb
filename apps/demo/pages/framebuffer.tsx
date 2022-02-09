@@ -5,7 +5,7 @@ import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import React, { useCallback, useEffect, useRef } from 'react';
-import { CommandBar, DemoMode, DeviceView } from '../components';
+import { CommandBar, DemoModePanel, DeviceView } from '../components';
 import { globalState } from "../state";
 import { Icons, RouteStackProps } from "../utils";
 
@@ -123,7 +123,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
                     <canvas ref={canvasRef} style={{ display: 'block' }} />
                 </DeviceView>
 
-                <DemoMode style={{ display: state.demoModeVisible ? 'block' : 'none' }} />
+                <DemoModePanel style={{ display: state.demoModeVisible ? 'block' : 'none' }} />
             </Stack>
         </Stack>
     );

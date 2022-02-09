@@ -1,26 +1,26 @@
 import { Dropdown, IDropdownOption, Position, Separator, SpinButton, Toggle } from '@fluentui/react';
-import { AdbDemoModeMobileDataType, AdbDemoModeMobileDataTypes, AdbDemoModeSignalStrength, AdbDemoModeStatusBarMode, AdbDemoModeStatusBarModes } from '@yume-chan/adb';
+import { DemoMode, DemoModeMobileDataType, DemoModeMobileDataTypes, DemoModeSignalStrength, DemoModeStatusBarMode, DemoModeStatusBarModes } from '@yume-chan/android-bin';
 import { autorun, makeAutoObservable, reaction, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { CSSProperties, useCallback } from 'react';
 import { globalState } from "../state";
 
 const SignalStrengthOptions =
-    Object.values(AdbDemoModeSignalStrength)
+    Object.values(DemoModeSignalStrength)
         .map((key) => ({
             key,
             text: {
-                [AdbDemoModeSignalStrength.Hidden]: 'Hidden',
-                [AdbDemoModeSignalStrength.Level0]: 'Level 0',
-                [AdbDemoModeSignalStrength.Level1]: 'Level 1',
-                [AdbDemoModeSignalStrength.Level2]: 'Level 2',
-                [AdbDemoModeSignalStrength.Level3]: 'Level 3',
-                [AdbDemoModeSignalStrength.Level4]: 'Level 4',
+                [DemoModeSignalStrength.Hidden]: 'Hidden',
+                [DemoModeSignalStrength.Level0]: 'Level 0',
+                [DemoModeSignalStrength.Level1]: 'Level 1',
+                [DemoModeSignalStrength.Level2]: 'Level 2',
+                [DemoModeSignalStrength.Level3]: 'Level 3',
+                [DemoModeSignalStrength.Level4]: 'Level 4',
             }[key],
         }));
 
 const MobileDataTypeOptions =
-    AdbDemoModeMobileDataTypes
+    DemoModeMobileDataTypes
         .map((key) => ({
             key,
             text: {
@@ -47,7 +47,7 @@ const MobileDataTypeOptions =
         }));
 
 const StatusBarModeOptions =
-    AdbDemoModeStatusBarModes
+    DemoModeStatusBarModes
         .map((key) => ({
             key,
             text: {
@@ -59,7 +59,9 @@ const StatusBarModeOptions =
             }[key],
         }));
 
-class DemoModeState {
+class DemoModePanelState {
+    demoMode: DemoMode | undefined;
+
     allowed = false;
     enabled = false;
     features: Map<string, unknown> = new Map();
@@ -71,13 +73,15 @@ class DemoModeState {
             () => globalState.device,
             async (device) => {
                 if (device) {
-                    const allowed = await device.demoMode.getAllowed();
+                    runInAction(() => this.demoMode = new DemoMode(device));
+                    const allowed = await this.demoMode!.getAllowed();
                     runInAction(() => this.allowed = allowed);
                     if (allowed) {
-                        const enabled = await device.demoMode.getEnabled();
+                        const enabled = await this.demoMode!.getEnabled();
                         runInAction(() => this.enabled = enabled);
                     }
                 } else {
+                    this.demoMode = undefined;
                     this.allowed = false;
                     this.enabled = false;
                     this.features.clear();
@@ -99,7 +103,7 @@ class DemoModeState {
     }
 }
 
-const state = new DemoModeState();
+const state = new DemoModePanelState();
 
 interface FeatureDefinition {
     key: string;
@@ -123,21 +127,21 @@ const FEATURES: FeatureDefinition[][] = [
             max: 100,
             step: 1,
             initial: 100,
-            onChange: (value) => globalState.device!.demoMode.setBatteryLevel(value as number),
+            onChange: (value) => state.demoMode!.setBatteryLevel(value as number),
         },
         {
             key: 'batteryCharging',
             label: 'Battery Charging',
             type: 'boolean',
             initial: false,
-            onChange: (value) => globalState.device!.demoMode.setBatteryCharging(value as boolean),
+            onChange: (value) => state.demoMode!.setBatteryCharging(value as boolean),
         },
         {
             key: 'powerSaveMode',
             label: 'Power Save Mode',
             type: 'boolean',
             initial: false,
-            onChange: (value) => globalState.device!.demoMode.setPowerSaveMode(value as boolean),
+            onChange: (value) => state.demoMode!.setPowerSaveMode(value as boolean),
         },
     ],
     [
@@ -146,15 +150,15 @@ const FEATURES: FeatureDefinition[][] = [
             label: 'Wifi Signal Strength',
             type: 'select',
             options: SignalStrengthOptions,
-            initial: AdbDemoModeSignalStrength.Level4,
-            onChange: (value) => globalState.device!.demoMode.setWifiSignalStrength(value as AdbDemoModeSignalStrength),
+            initial: DemoModeSignalStrength.Level4,
+            onChange: (value) => state.demoMode!.setWifiSignalStrength(value as DemoModeSignalStrength),
         },
         {
             key: 'airplaneMode',
             label: 'Airplane Mode',
             type: 'boolean',
             initial: false,
-            onChange: (value) => globalState.device!.demoMode.setAirplaneMode(value as boolean),
+            onChange: (value) => state.demoMode!.setAirplaneMode(value as boolean),
         },
         {
             key: 'mobileDataType',
@@ -162,15 +166,15 @@ const FEATURES: FeatureDefinition[][] = [
             type: 'select',
             options: MobileDataTypeOptions,
             initial: 'lte',
-            onChange: (value) => globalState.device!.demoMode.setMobileDataType(value as AdbDemoModeMobileDataType),
+            onChange: (value) => state.demoMode!.setMobileDataType(value as DemoModeMobileDataType),
         },
         {
             key: 'mobileSignalStrength',
             label: 'Mobile Signal Strength',
             type: 'select',
             options: SignalStrengthOptions,
-            initial: AdbDemoModeSignalStrength.Level4,
-            onChange: (value) => globalState.device!.demoMode.setMobileSignalStrength(value as AdbDemoModeSignalStrength),
+            initial: DemoModeSignalStrength.Level4,
+            onChange: (value) => state.demoMode!.setMobileSignalStrength(value as DemoModeSignalStrength),
         },
     ],
     [
@@ -180,42 +184,42 @@ const FEATURES: FeatureDefinition[][] = [
             type: 'select',
             options: StatusBarModeOptions,
             initial: 'transparent',
-            onChange: (value) => globalState.device!.demoMode.setStatusBarMode(value as AdbDemoModeStatusBarMode),
+            onChange: (value) => state.demoMode!.setStatusBarMode(value as DemoModeStatusBarMode),
         },
         {
             key: 'vibrateMode',
             label: 'Vibrate Mode Indicator',
             type: 'boolean',
             initial: false,
-            onChange: (value) => globalState.device!.demoMode.setVibrateModeEnabled(value as boolean),
+            onChange: (value) => state.demoMode!.setVibrateModeEnabled(value as boolean),
         },
         {
             key: 'bluetoothConnected',
             label: 'Bluetooth Indicator',
             type: 'boolean',
             initial: false,
-            onChange: (value) => globalState.device!.demoMode.setBluetoothConnected(value as boolean),
+            onChange: (value) => state.demoMode!.setBluetoothConnected(value as boolean),
         },
         {
             key: 'locatingIcon',
             label: 'Locating Icon',
             type: 'boolean',
             initial: false,
-            onChange: (value) => globalState.device!.demoMode.setLocatingIcon(value as boolean),
+            onChange: (value) => state.demoMode!.setLocatingIcon(value as boolean),
         },
         {
             key: 'alarmIcon',
             label: 'Alarm Icon',
             type: 'boolean',
             initial: false,
-            onChange: (value) => globalState.device!.demoMode.setAlarmIcon(value as boolean),
+            onChange: (value) => state.demoMode!.setAlarmIcon(value as boolean),
         },
         {
             key: 'notificationsVisibility',
             label: 'Notifications Visibility',
             type: 'boolean',
             initial: true,
-            onChange: (value) => globalState.device!.demoMode.setNotificationsVisibility(value as boolean),
+            onChange: (value) => state.demoMode!.setNotificationsVisibility(value as boolean),
         },
         {
             key: 'hour',
@@ -225,7 +229,7 @@ const FEATURES: FeatureDefinition[][] = [
             max: 23,
             step: 1,
             initial: 12,
-            onChange: (value) => globalState.device!.demoMode.setTime(value as number, state.features.get('minute') as number | undefined ?? 34)
+            onChange: (value) => state.demoMode!.setTime(value as number, state.features.get('minute') as number | undefined ?? 34)
         },
         {
             key: 'minute',
@@ -235,7 +239,7 @@ const FEATURES: FeatureDefinition[][] = [
             max: 59,
             step: 1,
             initial: 34,
-            onChange: (value) => globalState.device!.demoMode.setTime(state.features.get('hour') as number | undefined ?? 34, value as number)
+            onChange: (value) => state.demoMode!.setTime(state.features.get('hour') as number | undefined ?? 34, value as number)
         },
     ],
 ];
@@ -301,15 +305,15 @@ const FeatureBase = ({ feature }: { feature: FeatureDefinition; }) => {
 
 const Feature = observer(FeatureBase);
 
-export interface DemoModeProps {
+export interface DemoModePanelProps {
     style?: CSSProperties;
 }
 
-const DemoModeBase = ({
+export const DemoModePanel = observer(({
     style,
-}: DemoModeProps) => {
+}: DemoModePanelProps) => {
     const handleAllowedChange = useCallback(async (e, value?: boolean) => {
-        await globalState.device!.demoMode.setAllowed(value!);
+        await state.demoMode!.setAllowed(value!);
         runInAction(() => {
             state.allowed = value!;
             state.enabled = false;
@@ -317,7 +321,7 @@ const DemoModeBase = ({
     }, []);
 
     const handleEnabledChange = useCallback(async (e, value?: boolean) => {
-        await globalState.device!.demoMode.setEnabled(value!);
+        await state.demoMode!.setEnabled(value!);
         runInAction(() => state.enabled = value!);
     }, []);
 
@@ -351,6 +355,4 @@ const DemoModeBase = ({
             ))}
         </div>
     );
-};
-
-export const DemoMode = observer(DemoModeBase);
+});

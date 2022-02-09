@@ -1,4 +1,6 @@
+import { once } from "@yume-chan/event";
 import type { Adb } from '../../adb';
+import { decodeUtf8 } from "../../utils";
 import { AdbLegacyShell } from './legacy';
 import { AdbShellProtocol } from './protocol';
 import type { AdbShell, AdbShellConstructor } from './types';
@@ -26,6 +28,12 @@ export interface AdbChildProcessOptions {
 const DefaultOptions: AdbChildProcessOptions = {
     shells: [AdbShellProtocol, AdbLegacyShell],
 };
+
+export interface ChildProcessResult {
+    stdout: string;
+    stderr: string;
+    exitCode: number;
+}
 
 export class AdbChildProcess {
     public readonly adb: Adb;
@@ -80,8 +88,23 @@ export class AdbChildProcess {
      * @param args List of command arguments
      * @returns The entire output of the command
      */
-    public exec(command: string, ...args: string[]): Promise<string> {
-        // `exec` only needs the entire output, use Legacy Shell is simpler.
-        return this.adb.createSocketAndReadAll(`shell:${command} ${args.join(' ')}`);
+    public async spawnAndWait(command: string | string[], options?: Partial<AdbChildProcessOptions>): Promise<ChildProcessResult> {
+        const shell = await this.spawn(command, options);
+        // Optimization: rope (concat strings) is faster than `[].join('')`
+        let stdout = '';
+        let stderr = '';
+        shell.onStdout(buffer => stdout += decodeUtf8(buffer));
+        shell.onStderr(buffer => stderr += decodeUtf8(buffer));
+        const exitCode = await once(shell.onExit);
+        return {
+            stdout,
+            stderr,
+            exitCode,
+        };
+    }
+
+    public async spawnAndWaitLegacy(command: string | string[]): Promise<string> {
+        const { stdout } = await this.spawnAndWait(command, { shells: [AdbLegacyShell] });
+        return stdout;
     }
 }

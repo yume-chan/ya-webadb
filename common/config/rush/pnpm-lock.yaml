@@ -16,6 +16,7 @@ specifiers:
   '@rush-temp/adb-backend-webusb': file:./projects/adb-backend-webusb.tgz
   '@rush-temp/adb-backend-ws': file:./projects/adb-backend-ws.tgz
   '@rush-temp/adb-credential-web': file:./projects/adb-credential-web.tgz
+  '@rush-temp/android-bin': file:./projects/android-bin.tgz
   '@rush-temp/dataview-bigint-polyfill': file:./projects/dataview-bigint-polyfill.tgz
   '@rush-temp/demo': file:./projects/demo.tgz
   '@rush-temp/event': file:./projects/event.tgz
@@ -74,6 +75,7 @@ dependencies:
   '@rush-temp/adb-backend-webusb': file:projects/adb-backend-webusb.tgz
   '@rush-temp/adb-backend-ws': file:projects/adb-backend-ws.tgz
   '@rush-temp/adb-credential-web': file:projects/adb-credential-web.tgz
+  '@rush-temp/android-bin': file:projects/android-bin.tgz
   '@rush-temp/dataview-bigint-polyfill': file:projects/dataview-bigint-polyfill.tgz
   '@rush-temp/demo': file:projects/demo.tgz_@mdx-js+react@1.6.22
   '@rush-temp/event': file:projects/event.tgz
@@ -13106,6 +13108,15 @@ packages:
       - supports-color
       - ts-node
       - utf-8-validate
+    dev: false
+
+  file:projects/android-bin.tgz:
+    resolution: {integrity: sha512-+POm1mf4P1s+NhgwA6IHN+GBBmc00lDi7k+geCc04ts836duRlnJfkIEeIIJmjQHVwDz36BONp8rCXAaX4U/fA==, tarball: file:projects/android-bin.tgz}
+    name: '@rush-temp/android-bin'
+    version: 0.0.0
+    dependencies:
+      tslib: 2.3.1
+      typescript: 4.5.5
     dev: false
 
   file:projects/dataview-bigint-polyfill.tgz:

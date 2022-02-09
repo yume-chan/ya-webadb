@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbCredentialStore, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbChildProcess, AdbDemoMode, AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
+import { AdbChildProcess, AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
@@ -45,7 +45,6 @@ export class Adb {
     public get features() { return this._features; }
 
     public readonly childProcess: AdbChildProcess;
-    public readonly demoMode: AdbDemoMode;
     public readonly power: AdbPower;
     public readonly reverse: AdbReverseCommand;
     public readonly tcpip: AdbTcpIpCommand;
@@ -55,7 +54,6 @@ export class Adb {
         this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
 
         this.childProcess = new AdbChildProcess(this);
-        this.demoMode = new AdbDemoMode(this);
         this.power = new AdbPower(this);
         this.reverse = new AdbReverseCommand(this.packetDispatcher);
         this.tcpip = new AdbTcpIpCommand(this);
@@ -196,12 +194,17 @@ export class Adb {
     }
 
     public async getProp(key: string): Promise<string> {
-        const output = await this.childProcess.exec('getprop', key);
-        return output.trim();
+        const stdout = await this.childProcess.spawnAndWaitLegacy(
+            ['getprop', key]
+        );
+        return stdout.trim();
     }
 
     public async rm(...filenames: string[]): Promise<string> {
-        return await this.childProcess.exec('rm', '-rf', ...filenames.map(arg => escapeArg(arg)));
+        const stdout = await this.childProcess.spawnAndWaitLegacy(
+            ['rm', '-rf', ...filenames.map(arg => escapeArg(arg))],
+        );
+        return stdout;
     }
 
     public async install(

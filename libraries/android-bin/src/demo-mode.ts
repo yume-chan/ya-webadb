@@ -4,9 +4,9 @@
 // cspell: ignore systemui
 // cspell: ignore sysui
 
-import { AdbCommandBase } from './base';
+import { AdbCommandBase, AdbLegacyShell } from '@yume-chan/adb';
 
-export enum AdbDemoModeSignalStrength {
+export enum DemoModeSignalStrength {
     Hidden = 'null',
     Level0 = '0',
     Level1 = '1',
@@ -16,17 +16,23 @@ export enum AdbDemoModeSignalStrength {
 }
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkControllerImpl.java;l=1073
-export const AdbDemoModeMobileDataTypes = ['1x', '3g', '4g', '4g+', '5g', '5ge', '5g+',
+export const DemoModeMobileDataTypes = ['1x', '3g', '4g', '4g+', '5g', '5ge', '5g+',
     'e', 'g', 'h', 'h+', 'lte', 'lte+', 'dis', 'not', 'null'] as const;
 
-export type AdbDemoModeMobileDataType = (typeof AdbDemoModeMobileDataTypes)[number];
+export type DemoModeMobileDataType = (typeof DemoModeMobileDataTypes)[number];
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java;l=3136
-export const AdbDemoModeStatusBarModes = ['opaque', 'translucent', 'semi-transparent', 'transparent', 'warning'] as const;
+export const DemoModeStatusBarModes = ['opaque', 'translucent', 'semi-transparent', 'transparent', 'warning'] as const;
 
-export type AdbDemoModeStatusBarMode = (typeof AdbDemoModeStatusBarModes)[number];
+export type DemoModeStatusBarMode = (typeof DemoModeStatusBarModes)[number];
 
-export class AdbDemoMode extends AdbCommandBase {
+export class Settings extends AdbCommandBase {
+    public get(key: string, global: boolean = false) {
+
+    }
+}
+
+export class DemoMode extends AdbCommandBase {
     public static readonly AllowedSettingKey = 'sysui_demo_allowed';
 
     // Demo Mode actually doesn't have a setting indicates its enablement
@@ -34,36 +40,41 @@ export class AdbDemoMode extends AdbCommandBase {
     // So we can only try our best to guess if it's enabled
     public static readonly EnabledSettingKey = 'sysui_tuner_demo_on';
 
+    private async settings(...command: string[]): Promise<string> {
+        const { stdout } = await this.adb.childProcess.spawnAndWait(command, { shells: [AdbLegacyShell] });
+        return stdout.trim();
+    }
+
     public async getAllowed(): Promise<boolean> {
-        const result = await this.adb.childProcess.exec('settings', 'get', 'global', AdbDemoMode.AllowedSettingKey);
-        return result.trim() === '1';
+        const output = await this.settings('settings', 'get', 'global', DemoMode.AllowedSettingKey);
+        return output.trim() === '1';
     }
 
     public async setAllowed(value: boolean): Promise<void> {
         if (value) {
-            await this.adb.childProcess.exec('settings', 'put', 'global', AdbDemoMode.AllowedSettingKey, '1');
+            await this.settings('settings', 'put', 'global', DemoMode.AllowedSettingKey, '1');
         } else {
             await this.setEnabled(false);
-            await this.adb.childProcess.exec('settings', 'delete', 'global', AdbDemoMode.AllowedSettingKey);
+            await this.settings('settings', 'delete', 'global', DemoMode.AllowedSettingKey);
         }
     }
 
     public async getEnabled(): Promise<boolean> {
-        const result = await this.adb.childProcess.exec('settings', 'get', 'global', AdbDemoMode.EnabledSettingKey);
+        const result = await this.settings('settings', 'get', 'global', DemoMode.EnabledSettingKey);
         return result.trim() === '1';
     }
 
     public async setEnabled(value: boolean): Promise<void> {
         if (value) {
-            await this.adb.childProcess.exec('settings', 'put', 'global', AdbDemoMode.EnabledSettingKey, '1');
+            await this.settings('settings', 'put', 'global', DemoMode.EnabledSettingKey, '1');
         } else {
-            await this.adb.childProcess.exec('settings', 'delete', 'global', AdbDemoMode.EnabledSettingKey);
+            await this.settings('settings', 'delete', 'global', DemoMode.EnabledSettingKey);
             await this.broadcast('exit');
         }
     }
 
     public async broadcast(command: string, extra?: Record<string, string>): Promise<void> {
-        await this.adb.childProcess.exec(
+        await this.adb.childProcess.spawnAndWaitLegacy([
             'am',
             'broadcast',
             '-a',
@@ -72,7 +83,7 @@ export class AdbDemoMode extends AdbCommandBase {
             'command',
             command,
             ...(extra ? Object.entries(extra).flatMap(([key, value]) => ['-e', key, value]) : []),
-        );
+        ]);
     }
 
     public async setBatteryLevel(level: number): Promise<void> {
@@ -91,11 +102,11 @@ export class AdbDemoMode extends AdbCommandBase {
         await this.broadcast('network', { airplane: show ? 'show' : 'hide' });
     }
 
-    public async setWifiSignalStrength(value: AdbDemoModeSignalStrength): Promise<void> {
+    public async setWifiSignalStrength(value: DemoModeSignalStrength): Promise<void> {
         await this.broadcast('network', { wifi: 'show', level: value });
     }
 
-    public async setMobileDataType(value: AdbDemoModeMobileDataType): Promise<void> {
+    public async setMobileDataType(value: DemoModeMobileDataType): Promise<void> {
         for (let i = 0; i < 2; i += 1) {
             await this.broadcast('network', {
                 mobile: 'show',
@@ -113,7 +124,7 @@ export class AdbDemoMode extends AdbCommandBase {
         }
     }
 
-    public async setMobileSignalStrength(value: AdbDemoModeSignalStrength): Promise<void> {
+    public async setMobileSignalStrength(value: DemoModeSignalStrength): Promise<void> {
         await this.broadcast('network', { mobile: 'show', level: value });
     }
 
@@ -121,7 +132,7 @@ export class AdbDemoMode extends AdbCommandBase {
         await this.broadcast('network', { nosim: show ? 'show' : 'hide' });
     }
 
-    public async setStatusBarMode(mode: AdbDemoModeStatusBarMode): Promise<void> {
+    public async setStatusBarMode(mode: DemoModeStatusBarMode): Promise<void> {
         await this.broadcast('bars', { mode });
     }
 

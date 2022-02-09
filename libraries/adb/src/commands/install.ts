@@ -14,7 +14,7 @@ export async function install(
     sync.dispose();
 
     // Invoke `pm install` to install it
-    await adb.childProcess.exec('pm', 'install', escapeArg(filename));
+    await adb.childProcess.spawnAndWaitLegacy(['pm', 'install', escapeArg(filename)]);
 
     // Remove the temp file
     await adb.rm(filename);

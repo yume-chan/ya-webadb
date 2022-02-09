@@ -8,7 +8,7 @@ import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import React, { useEffect, useMemo, useState } from "react";
-import { DemoMode, DeviceView, DeviceViewRef, ExternalLink } from "../components";
+import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { globalState } from "../state";
 import { CommonStackTokens, formatSpeed, Icons, RouteStackProps } from "../utils";
 
@@ -894,7 +894,7 @@ const Scrcpy: NextPage = () => {
                     />
                 </div>
 
-                <DemoMode
+                <DemoModePanel
                     style={{ display: state.demoModeVisible ? 'block' : 'none' }}
                 />
 

@@ -475,6 +475,12 @@
             "versionPolicyName": "adb"
         },
         {
+            "packageName": "@yume-chan/android-bin",
+            "projectFolder": "libraries/android-bin",
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
+        },
+        {
             "packageName": "@yume-chan/scrcpy",
             "projectFolder": "libraries/scrcpy",
             "versionPolicyName": "adb"
