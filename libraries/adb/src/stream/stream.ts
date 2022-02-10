@@ -1,7 +1,7 @@
 import { once } from '@yume-chan/event';
 import { ValueOrPromise } from '@yume-chan/struct';
 import { AdbSocket, AdbSocketInfo } from '../socket';
-import { EventQueue } from '../utils';
+import { EventQueue, EventQueueEndedError } from '../utils';
 import { StreamEndedError } from "./buffered-stream";
 
 export class AdbSocketStream implements AdbSocketInfo {
@@ -36,8 +36,12 @@ export class AdbSocketStream implements AdbSocketInfo {
     public async read(): Promise<ArrayBuffer> {
         try {
             return await this.queue.dequeue();
-        } catch {
-            throw new StreamEndedError();
+        } catch (e) {
+            if (e instanceof EventQueueEndedError) {
+                throw new StreamEndedError();
+            }
+
+            throw e;
         }
     }
 

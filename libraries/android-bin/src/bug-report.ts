@@ -1,7 +1,7 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import { AdbCommandBase, AdbShellProtocol } from "@yume-chan/adb";
+import { AdbCommandBase, AdbShellProtocol, EventQueue, EventQueueEndedError } from "@yume-chan/adb";
 
 export interface BugReportVersion {
     major: number;
@@ -31,5 +31,27 @@ export class BugReport extends AdbCommandBase {
             major: parseInt(match[1]!, 10),
             minor: parseInt(match[2]!, 10),
         };
+    }
+
+    public bugReportZSupportStream(version: BugReportVersion): boolean {
+        return version.major > 1 || version.minor >= 2;
+    }
+
+    public async *bugReportZStream(): AsyncGenerator<ArrayBuffer, void, void> {
+        const process = await this.adb.childProcess.spawn(['bugreportz', '-s']);
+        const queue = new EventQueue<ArrayBuffer>();
+        process.onStdout(buffer => queue.enqueue(buffer));
+        process.onExit(() => queue.end());
+        try {
+            while (true) {
+                yield await queue.dequeue();
+            }
+        } catch (e) {
+            if (e instanceof EventQueueEndedError) {
+                return;
+            }
+
+            throw e;
+        }
     }
 }

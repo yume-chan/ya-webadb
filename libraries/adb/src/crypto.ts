@@ -86,11 +86,6 @@ export function parsePrivateKey(key: ArrayBuffer): [n: bigint, d: bigint] {
 // I can't understand, but it does work
 // Only used with numbers less than 2^32 so doesn't need BigInt
 export function modInverse(a: number, m: number) {
-    // validate inputs
-    [a, m] = [Number(a), Number(m)];
-    if (Number.isNaN(a) || Number.isNaN(m)) {
-        return NaN; // invalid input
-    }
     a = (a % m + m) % m;
     if (!a || m < 2) {
         return NaN; // invalid input

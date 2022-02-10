@@ -58,6 +58,15 @@ class LinkedList<T>{
     }
 }
 
+export class EventQueueEndedError extends Error {
+    public constructor() {
+        super('Event queue ended');
+
+        // Fix Error's prototype chain when compiling to ES5
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
+
 /**
  * Basically an object-mode ReadableStream with Promise-based API
  *
@@ -123,7 +132,7 @@ export class EventQueue<T> {
         }
 
         if (this.ended) {
-            return Promise.reject(new Error('The EventQueue has already ended'));
+            return Promise.reject(new EventQueueEndedError());
         }
 
         if (this.awaiters.length === this.options.maxWaitCount - 1) {
