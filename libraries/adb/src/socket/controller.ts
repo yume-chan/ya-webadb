@@ -1,9 +1,7 @@
 import { AutoDisposable } from '@yume-chan/event';
 import { AdbBackend } from '../backend';
 import { AdbCommand } from '../packet';
-import { AutoResetEvent, chunkArrayLike } from '../utils';
-import { CloseEventEmitter } from './close-event-emitter';
-import { DataEventEmitter } from './data-event-emitter';
+import { AutoResetEvent, chunkArrayLike, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../utils';
 import { AdbPacketDispatcher } from './dispatcher';
 
 export interface AdbSocketInfo {
@@ -28,6 +26,8 @@ export interface AdbSocketConstructionOptions {
     localCreated: boolean;
 
     serviceString: string;
+
+    highWaterMark?: number | undefined;
 }
 
 export class AdbSocketController extends AutoDisposable implements AdbSocketInfo {
@@ -42,17 +42,40 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
     public readonly localCreated!: boolean;
     public readonly serviceString!: string;
 
-    public readonly dataEvent = this.addDisposable(new DataEventEmitter<ArrayBuffer>());
+    private readonly _transform: TransformStream<ArrayBuffer, ArrayBuffer>;
+    private readonly _transformWriter: WritableStreamDefaultWriter<ArrayBuffer>;
+    public get readable() { return this._transform.readable; }
+
+    public readonly writable: WritableStream<ArrayBuffer>;
 
     private _closed = false;
     public get closed() { return this._closed; }
 
-    private readonly closeEvent = this.addDisposable(new CloseEventEmitter());
-    public get onClose() { return this.closeEvent.event; }
-
     public constructor(options: AdbSocketConstructionOptions) {
         super();
         Object.assign(this, options);
+
+        this._transform = new TransformStream({}, {
+            highWaterMark: options.highWaterMark ?? 16 * 1024,
+            size(chunk) { return chunk.byteLength; }
+        });
+        this._transformWriter = this._transform.writable.getWriter();
+
+        this.writable = new WritableStream({
+            write: (chunk) => {
+                return this.write(chunk);
+            },
+            close: () => {
+                this.close();
+            },
+        }, {
+            highWaterMark: options.highWaterMark ?? 16 * 1024,
+            size(chunk) { return chunk.byteLength; }
+        });
+    }
+
+    public enqueue(packet: ArrayBuffer) {
+        return this._transformWriter.write(packet);
     }
 
     private async writeChunk(data: ArrayBuffer): Promise<void> {
@@ -88,18 +111,22 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
 
     public async close(): Promise<void> {
         if (!this._closed) {
+            // prevent nested calls
+            this._closed = true;
+
             // Immediately cancel all pending writes
             this.writeLock.dispose();
             this.writeChunkLock.dispose();
 
             await this.dispatcher.sendPacket(AdbCommand.Close, this.localId, this.remoteId);
-            this._closed = true;
+            this._transform.writable.close();
+            this.writable.close();
         }
     }
 
     public override dispose() {
         this._closed = true;
-        this.closeEvent.fire();
+        this.close();
         super.dispose();
     }
 }

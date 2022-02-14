@@ -1,3 +1,4 @@
+import { ReadableStream, WritableStream } from "../utils";
 import { AdbSocketController, AdbSocketInfo } from './controller';
 
 export class AdbSocket implements AdbSocketInfo {
@@ -9,17 +10,11 @@ export class AdbSocket implements AdbSocketInfo {
     public get localCreated() { return this.controller.localCreated; }
     public get serviceString() { return this.controller.serviceString; }
 
-    public get closed() { return this.controller.closed; }
-
-    public get onData() { return this.controller.dataEvent.event; }
-    public get onClose() { return this.controller.onClose; }
+    public get readable(): ReadableStream<ArrayBuffer> { return this.controller.readable; }
+    public get writable(): WritableStream<ArrayBuffer> { return this.controller.writable; }
 
     public constructor(controller: AdbSocketController) {
         this.controller = controller;
-    }
-
-    public write(data: ArrayBuffer): Promise<void> {
-        return this.controller.write(data);
     }
 
     public close(): Promise<void> {
