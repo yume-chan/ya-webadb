@@ -19,7 +19,7 @@ export function adbSyncPull(
     stream: AdbBufferedStream,
     writer: WritableStreamDefaultWriter<ArrayBuffer>,
     path: string,
-    highWaterMark: number = 16 * 1024,
+    bufferSize: number = 16 * 1024,
 ): ReadableStream<ArrayBuffer> {
     return new ReadableStream({
         async start(controller) {
@@ -37,13 +37,14 @@ export function adbSyncPull(
                     break;
                 case AdbSyncResponseId.Done:
                     controller.close();
-                    return;
+                    break;
                 default:
                     controller.error(new Error('Unexpected response id'));
+                    break;
             }
         }
     }, {
-        highWaterMark,
+        highWaterMark: bufferSize,
         size(chunk) { return chunk.byteLength; }
     });
 }

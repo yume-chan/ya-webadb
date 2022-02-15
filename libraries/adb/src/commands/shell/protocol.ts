@@ -61,8 +61,8 @@ class StdinTransformStream extends TransformStream<ArrayBuffer, ArrayBuffer>{
  * Shell v2 a.k.a Shell Protocol
  *
  * Features:
- * * `onStderr`: Yes
- * * `onExit` exit code: Yes
+ * * `stderr`: Yes
+ * * `exit` exit code: Yes
  * * `resize`: Yes
  */
 export class AdbShellProtocol implements AdbShell {
@@ -83,11 +83,11 @@ export class AdbShellProtocol implements AdbShell {
     private _stdin = new StdinTransformStream();
     public get stdin() { return this._stdin.writable; }
 
-    private _stdout = new TransformStream();
+    private _stdout = new TransformStream<ArrayBuffer, ArrayBuffer>();
     private _stdoutWriter = this._stdout.writable.getWriter();
     public get stdout() { return this._stdout.readable; }
 
-    private _stderr = new TransformStream();
+    private _stderr = new TransformStream<ArrayBuffer, ArrayBuffer>();
     private _stderrWriter = this._stderr.writable.getWriter();
     public get stderr() { return this._stderr.readable; }
 
@@ -105,6 +105,7 @@ export class AdbShellProtocol implements AdbShell {
     private async readData() {
         while (true) {
             try {
+                // TODO: add back pressure to AdbShellProtocol
                 const packet = await AdbShellProtocolPacket.deserialize(this.stream);
                 switch (packet.id) {
                     case AdbShellProtocolId.Stdout:

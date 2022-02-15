@@ -5,28 +5,28 @@ import type { ReadableStream, WritableStream } from "../../utils";
 
 export interface AdbShell {
     /**
-     * Writes raw PTY data into the `stdin` stream.
+     * A WritableStream that writes to the `stdin` pipe.
      */
     readonly stdin: WritableStream<ArrayBuffer>;
 
     /**
-     * Notifies that new data has been written into the `stdout` stream.
+     * The `stdout` pipe of the process.
      */
     readonly stdout: ReadableStream<ArrayBuffer>;
 
     /**
-     * Notifies that new data has been written into the `stderr` stream.
+     * The `stderr` pipe of the process.
      *
-     * Some `AdbShell`s may not support separate output streams
-     * and will always fire the `onStdout` event instead.
+     * Note: Some `AdbShell` doesn't separate `stdout` and `stderr`,
+     * All output will be sent to `stdout`.
      */
     readonly stderr: ReadableStream<ArrayBuffer>;
 
     /**
-     * Notifies that the current process has exited.
+     * A `Promise` that resolves to the exit code of the process.
      *
-     * The event arg is the exit code.
-     * Some `AdbShell`s may not support returning exit code and will always return `0` instead.
+     * Note: Some `AdbShell` doesn't support exit code,
+     * They will always resolve with `0`.
      */
     readonly exit: Promise<number>;
 

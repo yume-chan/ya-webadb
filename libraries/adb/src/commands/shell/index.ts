@@ -84,7 +84,7 @@ export class AdbChildProcess {
     /**
      * Spawns a new process, waits until it exits, and returns the entire output.
      * @param command The command to run
-     * @param args List of command arguments
+     * @param options The options for creating the `AdbShell`
      * @returns The entire output of the command
      */
     public async spawnAndWait(command: string | string[], options?: Partial<AdbChildProcessOptions>): Promise<ChildProcessResult> {
@@ -110,6 +110,11 @@ export class AdbChildProcess {
         };
     }
 
+    /**
+     * Spawns a new process, waits until it exits, and returns the entire output.
+     * @param command The command to run
+     * @returns The entire output of the command
+     */
     public async spawnAndWaitLegacy(command: string | string[]): Promise<string> {
         const { stdout } = await this.spawnAndWait(command, { shells: [AdbLegacyShell] });
         return stdout;

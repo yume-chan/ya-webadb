@@ -1,14 +1,14 @@
 import type { Adb } from "../../adb";
 import type { AdbSocket } from "../../socket";
-import { ReadableStream } from "../../utils";
+import { ReadableStream, TransformStream } from "../../utils";
 import type { AdbShell } from "./types";
 
 /**
  * The legacy shell
  *
  * Features:
- * * `onStderr`: No
- * * `onExit` exit code: No
+ * * `stderr`: No
+ * * `exit` exit code: No
  * * `resize`: No
  */
 export class AdbLegacyShell implements AdbShell {
@@ -28,7 +28,8 @@ export class AdbLegacyShell implements AdbShell {
     public get stdout() { return this._stdout; }
 
     // `stderr` of Legacy shell is always empty.
-    public readonly stderr = new ReadableStream({});
+    private _stderr = new TransformStream<ArrayBuffer, ArrayBuffer>();
+    public get stderr() { return this._stderr.readable; }
 
     private _exit: Promise<number>;
     public get exit() { return this._exit; }
@@ -37,7 +38,10 @@ export class AdbLegacyShell implements AdbShell {
         this.socket = socket;
         let exit;
         [this._stdout, exit] = this.socket.readable.tee();
-        this._exit = exit.getReader().closed.then(() => 0);
+        this._exit = exit.getReader().closed.then(() => {
+            this._stderr.writable.close();
+            return 0;
+        });
     }
 
     public resize() {

@@ -10,15 +10,23 @@ import { adbSyncPush } from './push';
 import { adbSyncLstat, adbSyncStat } from './stat';
 
 class LockTransformStream<T> extends TransformStream<T, T>{
-    constructor(lock: AutoResetEvent, writableStrategy?: QueuingStrategy<T>, readableStrategy?: QueuingStrategy<T>) {
-        super({
-            start() {
-                return lock.wait();
+    constructor(
+        lock: AutoResetEvent,
+        writableStrategy?: QueuingStrategy<T>,
+        readableStrategy?: QueuingStrategy<T>
+    ) {
+        super(
+            {
+                start() {
+                    return lock.wait();
+                },
+                flush() {
+                    lock.notify();
+                },
             },
-            flush() {
-                lock.notify();
-            }
-        }, writableStrategy, readableStrategy);
+            writableStrategy,
+            readableStrategy
+        );
     }
 }
 
