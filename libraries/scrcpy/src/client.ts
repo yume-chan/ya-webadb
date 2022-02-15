@@ -1,9 +1,9 @@
-import { Adb, AdbBufferedStream, AdbLegacyShell, AdbShell, DataEventEmitter } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSubprocessProtocol, ReadableStream } from '@yume-chan/adb';
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import type { H264EncodingInfo } from "./decoder";
-import { type AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
+import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message';
 import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions } from "./options";
 import { pushServer, PushServerOptions } from "./push-server";
 import { decodeUtf8 } from "./utils";
@@ -81,14 +81,12 @@ export class ScrcpyClient {
 
     public get backend() { return this.device.backend; }
 
-    private process: AdbShell | undefined;
-
-    private videoStream: AdbBufferedStream | undefined;
+    private process: AdbSubprocessProtocol | undefined;
 
     private controlStream: AdbBufferedStream | undefined;
 
-    private readonly outputEvent = new EventEmitter<string>();
-    public get onOutput() { return this.outputEvent.event; }
+    private stdout: ReadableStream<string> | undefined;
+    public get onOutput() { return this.stdout; }
 
     private readonly closeEvent = new EventEmitter<void>();
     public get onClose() { return this.closeEvent.event; }
@@ -105,8 +103,8 @@ export class ScrcpyClient {
     private readonly encodingChangedEvent = new EventEmitter<H264EncodingInfo>();
     public get onEncodingChanged() { return this.encodingChangedEvent.event; }
 
-    private readonly videoDataEvent = new DataEventEmitter<ArrayBuffer>();
-    public get onVideoData() { return this.videoDataEvent.event; }
+    private _videoStream: ReadableStream<ArrayBuffer> | undefined;
+    public get onVideoData() { return this._videoStream; }
 
     private readonly clipboardChangeEvent = new EventEmitter<string>();
     public get onClipboardChange() { return this.clipboardChangeEvent.event; }
@@ -126,12 +124,12 @@ export class ScrcpyClient {
         this.options = options;
 
         const connection = options.createConnection(this.device);
-        let process: AdbShell | undefined;
+        let process: AdbSubprocessProtocol | undefined;
 
         try {
             await connection.initialize();
 
-            process = await this.device.childProcess.spawn(
+            process = await this.device.subprocess.spawn(
                 [
                     // cspell: disable-next-line
                     `CLASSPATH=${path}`,
@@ -144,7 +142,7 @@ export class ScrcpyClient {
                 {
                     // Scrcpy server doesn't split stdout and stderr,
                     // so disable Shell Protocol to simplify processing
-                    shells: [AdbLegacyShell],
+                    protocols: [AdbNoneSubprocessProtocol],
                 }
             );
 
@@ -183,7 +181,7 @@ export class ScrcpyClient {
             if (line === '') {
                 continue;
             }
-            this.outputEvent.fire(line);
+            this.stdout.fire(line);
         }
     }
 

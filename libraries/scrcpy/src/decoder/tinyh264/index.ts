@@ -1,3 +1,4 @@
+import { WritableStream } from "@yume-chan/adb";
 import { PromiseResolver } from "@yume-chan/async";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
 import type { H264Decoder, H264EncodingInfo } from '../common';
@@ -23,6 +24,18 @@ export class TinyH264Decoder implements H264Decoder {
 
     private _renderer: HTMLCanvasElement;
     public get renderer() { return this._renderer; }
+
+    private _writable = new WritableStream<ArrayBuffer>({
+        write: async (chunk) => {
+            if (!this._initializer) {
+                throw new Error('Decoder not initialized');
+            }
+
+            const wrapper = await this._initializer.promise;
+            wrapper.feed(chunk);
+        }
+    });
+    public get writable() { return this._writable; }
 
     private _yuvCanvas: import('yuv-canvas').default | undefined;
     private _initializer: PromiseResolver<TinyH264Wrapper> | undefined;
@@ -75,15 +88,6 @@ export class TinyH264Decoder implements H264Decoder {
             );
             this._yuvCanvas!.drawFrame(frame);
         });
-    }
-
-    public async feedData(data: ArrayBuffer) {
-        if (!this._initializer) {
-            throw new Error('Decoder not initialized');
-        }
-
-        const wrapper = await this._initializer.promise;
-        wrapper.feed(data);
     }
 
     public dispose(): void {

@@ -1,4 +1,4 @@
-import { Adb, AdbBufferedStream, AdbSocket, EventQueue } from "@yume-chan/adb";
+import { Adb, AdbBufferedStream, AdbSocket } from "@yume-chan/adb";
 import { Disposable } from "@yume-chan/event";
 import { ValueOrPromise } from "@yume-chan/struct";
 import { delay } from "./utils";

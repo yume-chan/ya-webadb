@@ -11,6 +11,17 @@ export class WebCodecsDecoder implements H264Decoder {
 
     public readonly maxLevel = AndroidCodecLevel.Level5;
 
+    private _writable = new WritableStream<ArrayBuffer>({
+        write: async (chunk) => {
+            this.decoder.decode(new EncodedVideoChunk({
+                type: 'key',
+                timestamp: 0,
+                data: chunk,
+            }));
+        }
+    });
+    public get writable() { return this._writable; }
+
     private _renderer: HTMLCanvasElement;
     public get renderer() { return this._renderer; }
 

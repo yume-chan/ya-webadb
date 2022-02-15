@@ -1,6 +1,6 @@
 import Struct from '@yume-chan/struct';
 import { BufferedStream } from './stream';
-import { TransformStream, TransformStreamDefaultController, WritableStreamDefaultWriter } from "./utils";
+import { ReadableWritablePair, TransformStream, WritableStreamDefaultWriter } from "./utils";
 
 export enum AdbCommand {
     Auth = 0x48545541,    // 'AUTH'
@@ -29,41 +29,27 @@ export type AdbPacket = typeof AdbPacketStruct['TDeserializeResult'];
 
 export type AdbPacketInit = Omit<typeof AdbPacketStruct['TInit'], 'checksum' | 'magic'>;
 
-export class AdbPacketStream extends TransformStream<ArrayBuffer, AdbPacket> {
-    private _passthrough = new TransformStream<ArrayBuffer, ArrayBuffer>();
-    private _passthroughWriter = this._passthrough.writable.getWriter();
-    private _buffered = new BufferedStream(this._passthrough.readable);
-    private _controller!: TransformStreamDefaultController<AdbPacket>;
-    private _closed = false;
+export class AdbPacketStream implements ReadableWritablePair<AdbPacket, ArrayBuffer> {
+    private _writeable = new TransformStream<ArrayBuffer, ArrayBuffer>();
+    private _buffered = new BufferedStream(this._writeable.readable);
+    public get writable() { return this._writeable.writable; }
+
+    private _readable = new TransformStream<AdbPacket, AdbPacket>();
+    private _readableWriter = this._readable.writable.getWriter();
+    public get readable() { return this._readable.readable; }
 
     public constructor() {
-        super({
-            start: (controller) => {
-                this._controller = controller;
-                this.receiveLoop();
-            },
-            transform: (chunk) => {
-                this._passthroughWriter.write(chunk);
-            },
-            flush: () => {
-                this._closed = true;
-                this._passthroughWriter.close();
-            },
-        });
+        this.receiveLoop();
     }
 
     private async receiveLoop() {
         try {
             while (true) {
                 const packet = await AdbPacketStruct.deserialize(this._buffered);
-                this._controller.enqueue(packet);
+                this._readableWriter.write(packet);
             }
         } catch (e) {
-            if (this._closed) {
-                return;
-            }
-
-            this._controller.error(e);
+            this._readableWriter.close();
         }
     }
 }
