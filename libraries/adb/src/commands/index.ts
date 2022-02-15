@@ -3,6 +3,6 @@ export * from './framebuffer';
 export * from './install';
 export * from './power';
 export * from './reverse';
-export * from './shell';
+export * from './subprocess';
 export * from './sync';
 export * from './tcpip';

@@ -7,8 +7,8 @@ declare global {
 
         readonly remoteAddress: string;
         readonly remotePort: number;
-        readonly readable: ReadableStream;
-        readonly writable: WritableStream;
+        readonly readable: ReadableStream<Uint8Array>;
+        readonly writable: WritableStream<BufferSource>;
     }
 
     interface SocketOptions {
@@ -45,22 +45,19 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
 
     private socket: TCPSocket | undefined;
 
-    private _readablePassthrough = new TransformStream<Uint8Array, ArrayBuffer>({
+    private _readableTransformStream = new TransformStream<Uint8Array, ArrayBuffer>({
         transform(chunk, controller) {
+            // Although spec didn't say,
+            // the chunk always has `byteOffset` of 0 and `byteLength` same as its buffer
             controller.enqueue(chunk.buffer);
         },
     });
     public get readable(): ReadableStream<ArrayBuffer> {
-        return this._readablePassthrough.readable;
+        return this._readableTransformStream.readable;
     }
 
-    private _writablePassthrough = new TransformStream<ArrayBuffer, Uint8Array>({
-        transform(chunk, controller) {
-            controller.enqueue(new Uint8Array(chunk));
-        },
-    });
-    public get writable(): WritableStream<ArrayBuffer> {
-        return this._writablePassthrough.writable;
+    public get writable(): WritableStream<ArrayBuffer> | undefined {
+        return this.socket?.writable;
     }
 
     private _connected = false;
@@ -84,8 +81,13 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
         });
 
         this.socket = socket;
-        this.socket.readable.pipeTo(this._readablePassthrough.writable);
-        this._writablePassthrough.readable.pipeTo(this.socket.writable);
+        this.socket.readable
+            .pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+                flush: () => {
+                    this.disconnectEvent.fire();
+                },
+            }))
+            .pipeTo(this._readableTransformStream.writable);
 
         this._connected = true;
     }

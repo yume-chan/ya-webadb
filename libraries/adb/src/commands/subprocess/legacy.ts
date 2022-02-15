@@ -1,7 +1,8 @@
+import { PromiseResolver } from "@yume-chan/async";
 import type { Adb } from "../../adb";
 import type { AdbSocket } from "../../socket";
 import { ReadableStream, TransformStream } from "../../utils";
-import type { AdbShell } from "./types";
+import type { AdbSubprocessProtocol } from "./types";
 
 /**
  * The legacy shell
@@ -11,11 +12,11 @@ import type { AdbShell } from "./types";
  * * `exit` exit code: No
  * * `resize`: No
  */
-export class AdbLegacyShell implements AdbShell {
+export class AdbNoneSubprocessProtocol implements AdbSubprocessProtocol {
     public static isSupported() { return true; }
 
     public static async spawn(adb: Adb, command: string) {
-        return new AdbLegacyShell(await adb.createSocket(`shell:${command}`));
+        return new AdbNoneSubprocessProtocol(await adb.createSocket(`shell:${command}`));
     }
 
     private readonly socket: AdbSocket;
@@ -31,17 +32,17 @@ export class AdbLegacyShell implements AdbShell {
     private _stderr = new TransformStream<ArrayBuffer, ArrayBuffer>();
     public get stderr() { return this._stderr.readable; }
 
-    private _exit: Promise<number>;
-    public get exit() { return this._exit; }
+    private _exit = new PromiseResolver<number>();
+    public get exit() { return this._exit.promise; }
 
     public constructor(socket: AdbSocket) {
         this.socket = socket;
-        let exit;
-        [this._stdout, exit] = this.socket.readable.tee();
-        this._exit = exit.getReader().closed.then(() => {
-            this._stderr.writable.close();
-            return 0;
-        });
+        this._stdout = this.socket.readable.pipeThrough(new TransformStream({
+            flush: () => {
+                this._stderr.writable.close();
+                this._exit.resolve(0);
+            },
+        }));
     }
 
     public resize() {

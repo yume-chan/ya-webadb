@@ -9,7 +9,7 @@ export class Settings extends AdbCommandBase {
     // TODO: `--user <user>` argument
 
     public base(command: string, namespace: SettingsNamespace, ...args: string[]) {
-        return this.adb.childProcess.spawnAndWaitLegacy(['settings', command, namespace, ...args]);
+        return this.adb.subprocess.spawnAndWaitLegacy(['settings', command, namespace, ...args]);
     }
 
     public get(namespace: SettingsNamespace, key: string) {

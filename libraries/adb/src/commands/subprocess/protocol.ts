@@ -5,7 +5,7 @@ import { AdbFeatures } from "../../features";
 import type { AdbSocket } from "../../socket";
 import { AdbBufferedStream } from "../../stream";
 import { encodeUtf8, TransformStream, WritableStream, WritableStreamDefaultWriter } from "../../utils";
-import type { AdbShell } from "./types";
+import type { AdbSubprocessProtocol } from "./types";
 
 export enum AdbShellProtocolId {
     Stdin,
@@ -24,22 +24,6 @@ const AdbShellProtocolPacket = new Struct({ littleEndian: true })
 
 function assertUnreachable(x: never): never {
     throw new Error("Unreachable");
-}
-
-class WritableMultiplexer<T> {
-    private writer: WritableStreamDefaultWriter<T>;
-
-    public constructor(writer: WritableStreamDefaultWriter<T>) {
-        this.writer = writer;
-    }
-
-    public createWritable(): WritableStream<T> {
-        return new WritableStream({
-            write: (chunk) => {
-                return this.writer.write(chunk);
-            },
-        });
-    }
 }
 
 class StdinTransformStream extends TransformStream<ArrayBuffer, ArrayBuffer>{
@@ -65,20 +49,19 @@ class StdinTransformStream extends TransformStream<ArrayBuffer, ArrayBuffer>{
  * * `exit` exit code: Yes
  * * `resize`: Yes
  */
-export class AdbShellProtocol implements AdbShell {
+export class AdbShellSubprocessProtocol implements AdbSubprocessProtocol {
     public static isSupported(adb: Adb) {
         return adb.features!.includes(AdbFeatures.ShellV2);
     }
 
     public static async spawn(adb: Adb, command: string) {
         // TODO: the service string may support more parameters
-        return new AdbShellProtocol(await adb.createSocket(`shell,v2,pty:${command}`));
+        return new AdbShellSubprocessProtocol(await adb.createSocket(`shell,v2,pty:${command}`));
     }
 
-    private readonly stream: AdbBufferedStream;
+    private readonly _buffered: AdbBufferedStream;
 
-    private _writableMultiplexer: WritableMultiplexer<ArrayBuffer>;
-    private _writer: WritableStreamDefaultWriter<ArrayBuffer>;
+    private _socketWriter: WritableStreamDefaultWriter<ArrayBuffer>;
 
     private _stdin = new StdinTransformStream();
     public get stdin() { return this._stdin.writable; }
@@ -95,26 +78,39 @@ export class AdbShellProtocol implements AdbShell {
     public get exit() { return this._exit.promise; }
 
     public constructor(socket: AdbSocket) {
-        this.stream = new AdbBufferedStream(socket);
+        this._buffered = new AdbBufferedStream(socket);
         this.readData();
-        this._writableMultiplexer = new WritableMultiplexer(socket.writable.getWriter());
-        this._writer = this._writableMultiplexer.createWritable().getWriter();
-        this._stdin.readable.pipeTo(this._writableMultiplexer.createWritable());
+        this._socketWriter = socket.writable.getWriter();
+        this._stdin.readable.pipeTo(new WritableStream<ArrayBuffer>({
+            write: async (chunk) => {
+                await this._socketWriter.ready;
+                await this._socketWriter.write(chunk);
+            },
+            close() {
+                // TODO: Shell protocol: close stdin
+            },
+        }, {
+            highWaterMark: 16 * 1024,
+            size(chunk) { return chunk.byteLength; },
+        }));
     }
 
     private async readData() {
         while (true) {
             try {
-                // TODO: add back pressure to AdbShellProtocol
-                const packet = await AdbShellProtocolPacket.deserialize(this.stream);
+                const packet = await AdbShellProtocolPacket.deserialize(this._buffered);
                 switch (packet.id) {
                     case AdbShellProtocolId.Stdout:
+                        await this._stdoutWriter.ready;
                         this._stdoutWriter.write(packet.data);
                         break;
                     case AdbShellProtocolId.Stderr:
+                        await this._stderrWriter.ready;
                         this._stderrWriter.write(packet.data);
                         break;
                     case AdbShellProtocolId.Exit:
+                        this._stdoutWriter.close();
+                        this._stderrWriter.close();
                         this._exit.resolve(new Uint8Array(packet.data)[0]!);
                         break;
                     case AdbShellProtocolId.CloseStdin:
@@ -132,7 +128,7 @@ export class AdbShellProtocol implements AdbShell {
     }
 
     public async resize(rows: number, cols: number) {
-        await this._writer.write(
+        await this._socketWriter.write(
             AdbShellProtocolPacket.serialize(
                 {
                     id: AdbShellProtocolId.WindowSizeChange,
@@ -148,6 +144,6 @@ export class AdbShellProtocol implements AdbShell {
     }
 
     public kill() {
-        return this.stream.close();
+        return this._buffered.close();
     }
 }

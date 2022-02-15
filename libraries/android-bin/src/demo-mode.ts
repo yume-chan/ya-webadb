@@ -71,7 +71,7 @@ export class DemoMode extends AdbCommandBase {
     }
 
     public async broadcast(command: string, extra?: Record<string, string>): Promise<void> {
-        await this.adb.childProcess.spawnAndWaitLegacy([
+        await this.adb.subprocess.spawnAndWaitLegacy([
             'am',
             'broadcast',
             '-a',

@@ -104,27 +104,17 @@ export class AdbSync extends AutoDisposable {
         return results;
     }
 
-    public read(filename: string, highWaterMark = 16 * 1024): ReadableStream<ArrayBuffer> {
-        const readable = adbSyncPull(this.stream, this.writer, filename, highWaterMark);
-        return readable.pipeThrough(new LockTransformStream(
-            this.sendLock,
-            { highWaterMark, size(chunk) { return chunk.byteLength; } },
-            { highWaterMark, size(chunk) { return chunk.byteLength; } }
-        ));
+    public read(filename: string): ReadableStream<ArrayBuffer> {
+        const readable = adbSyncPull(this.stream, this.writer, filename);
+        return readable.pipeThrough(new LockTransformStream(this.sendLock));
     }
 
     public write(
         filename: string,
         mode?: number,
         mtime?: number,
-        onProgress?: (uploaded: number) => void,
-        highWaterMark = 16 * 1024,
     ): WritableStream<ArrayBuffer> {
-        const lockStream = new LockTransformStream<ArrayBuffer>(
-            this.sendLock,
-            { highWaterMark, size(chunk) { return chunk.byteLength; } },
-            { highWaterMark, size(chunk) { return chunk.byteLength; } }
-        );
+        const lockStream = new LockTransformStream<ArrayBuffer>(this.sendLock);
 
         const writable = adbSyncPush(
             this.stream,
@@ -132,8 +122,6 @@ export class AdbSync extends AutoDisposable {
             filename,
             mode,
             mtime,
-            undefined,
-            onProgress
         );
         lockStream.readable.pipeTo(writable);
 

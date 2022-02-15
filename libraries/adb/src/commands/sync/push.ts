@@ -22,9 +22,7 @@ export function adbSyncPush(
     mode: number = (LinuxFileType.File << 12) | 0o666,
     mtime: number = (Date.now() / 1000) | 0,
     packetSize: number = AdbSyncMaxPacketSize,
-    onProgress?: (uploaded: number) => void,
 ): WritableStream<ArrayBuffer> {
-    let uploaded = 0;
     return new WritableStream({
         async start() {
             const pathAndMode = `${filename},${mode.toString()}`;
@@ -33,13 +31,14 @@ export function adbSyncPush(
         async write(chunk) {
             for (const buffer of chunkArrayLike(chunk, packetSize)) {
                 await adbSyncWriteRequest(writer, AdbSyncRequestId.Data, buffer);
-                uploaded += buffer.byteLength;
-                onProgress?.(uploaded);
             }
         },
         async close() {
             await adbSyncWriteRequest(writer, AdbSyncRequestId.Done, mtime);
             await adbSyncReadResponse(stream, ResponseTypes);
         }
+    }, {
+        highWaterMark: 16 * 1024,
+        size(chunk) { return chunk.byteLength; }
     });
 }

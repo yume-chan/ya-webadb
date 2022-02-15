@@ -3,7 +3,7 @@ import type { Adb } from "../../adb";
 import type { AdbSocket } from "../../socket";
 import type { ReadableStream, WritableStream } from "../../utils";
 
-export interface AdbShell {
+export interface AdbSubprocessProtocol {
     /**
      * A WritableStream that writes to the `stdin` pipe.
      */
@@ -43,13 +43,13 @@ export interface AdbShell {
     kill(): ValueOrPromise<void>;
 }
 
-export interface AdbShellConstructor {
+export interface AdbSubprocessProtocolConstructor {
     /** Returns `true` if the `adb` instance supports this shell */
     isSupported(adb: Adb): ValueOrPromise<boolean>;
 
     /** Creates a new `AdbShell` using the specified `Adb` and `command` */
-    spawn(adb: Adb, command: string): ValueOrPromise<AdbShell>;
+    spawn(adb: Adb, command: string): ValueOrPromise<AdbSubprocessProtocol>;
 
     /** Creates a new `AdbShell` by attaching to an exist `AdbSocket` */
-    new(socket: AdbSocket): AdbShell;
+    new(socket: AdbSocket): AdbSubprocessProtocol;
 }

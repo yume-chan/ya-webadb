@@ -103,6 +103,9 @@ export class AdbWebUsbBackend implements AdbBackend {
                                         cancel: () => {
                                             this.dispose();
                                         },
+                                    }, {
+                                        highWaterMark: 16 * 1024,
+                                        size(chunk) { return chunk.byteLength; },
                                     });
                                     if (this._writable !== undefined) {
                                         this._connected = true;
@@ -117,6 +120,9 @@ export class AdbWebUsbBackend implements AdbBackend {
                                         close: () => {
                                             this.dispose();
                                         },
+                                    }, {
+                                        highWaterMark: 16 * 1024,
+                                        size(chunk) { return chunk.byteLength; },
                                     });
                                     if (this.readable !== undefined) {
                                         this._connected = true;

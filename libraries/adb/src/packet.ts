@@ -30,7 +30,7 @@ export type AdbPacket = typeof AdbPacketStruct['TDeserializeResult'];
 export type AdbPacketInit = Omit<typeof AdbPacketStruct['TInit'], 'checksum' | 'magic'>;
 
 export class AdbPacketStream extends TransformStream<ArrayBuffer, AdbPacket> {
-    private _passthrough = new TransformStream<ArrayBuffer, ArrayBuffer>({});
+    private _passthrough = new TransformStream<ArrayBuffer, ArrayBuffer>();
     private _passthroughWriter = this._passthrough.writable.getWriter();
     private _buffered = new BufferedStream(this._passthrough.readable);
     private _controller!: TransformStreamDefaultController<AdbPacket>;

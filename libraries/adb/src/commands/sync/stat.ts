@@ -120,5 +120,5 @@ export async function adbSyncStat(
     path: string,
 ): Promise<AdbSyncStatResponse> {
     await adbSyncWriteRequest(writer, AdbSyncRequestId.Stat, path);
-    return adbSyncReadResponse(stream, StatResponseType);
+    return await adbSyncReadResponse(stream, StatResponseType);
 }

@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbCredentialStore, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbChildProcess, AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
+import { AdbSubprocess, AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
@@ -44,7 +44,7 @@ export class Adb {
     private _features: AdbFeatures[] | undefined;
     public get features() { return this._features; }
 
-    public readonly childProcess: AdbChildProcess;
+    public readonly subprocess: AdbSubprocess;
     public readonly power: AdbPower;
     public readonly reverse: AdbReverseCommand;
     public readonly tcpip: AdbTcpIpCommand;
@@ -53,7 +53,7 @@ export class Adb {
         this._backend = backend;
         this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
 
-        this.childProcess = new AdbChildProcess(this);
+        this.subprocess = new AdbSubprocess(this);
         this.power = new AdbPower(this);
         this.reverse = new AdbReverseCommand(this.packetDispatcher);
         this.tcpip = new AdbTcpIpCommand(this);
@@ -194,24 +194,21 @@ export class Adb {
     }
 
     public async getProp(key: string): Promise<string> {
-        const stdout = await this.childProcess.spawnAndWaitLegacy(
+        const stdout = await this.subprocess.spawnAndWaitLegacy(
             ['getprop', key]
         );
         return stdout.trim();
     }
 
     public async rm(...filenames: string[]): Promise<string> {
-        const stdout = await this.childProcess.spawnAndWaitLegacy(
+        const stdout = await this.subprocess.spawnAndWaitLegacy(
             ['rm', '-rf', ...filenames.map(arg => escapeArg(arg))],
         );
         return stdout;
     }
 
-    public async install(
-        apk: ReadableStream<ArrayBuffer>,
-        onProgress?: (uploaded: number) => void,
-    ): Promise<void> {
-        return await install(this, apk, onProgress);
+    public async install(apk: ReadableStream<ArrayBuffer>): Promise<void> {
+        return await install(this, apk);
     }
 
     public async sync(): Promise<AdbSync> {

@@ -1,4 +1,4 @@
-import { AdbBackend, BufferedStream, EventQueue, Stream } from '@yume-chan/adb';
+import { AdbBackend, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { PromiseResolver } from '@yume-chan/async';
 import { EventEmitter } from '@yume-chan/event';
 
@@ -20,7 +20,11 @@ export default class AdbWsBackend implements AdbBackend {
 
     private socket: WebSocket | undefined;
 
-    private bufferedStream: BufferedStream<Stream> | undefined;
+    private _readable: ReadableStream<ArrayBuffer> | undefined;
+    public get readable() { return this._readable; }
+
+    private _writable: WritableStream<ArrayBuffer> | undefined;
+    public get writable() { return this._writable; }
 
     private _connected = false;
     public get connected() { return this._connected; }
@@ -44,20 +48,31 @@ export default class AdbWsBackend implements AdbBackend {
         };
         await resolver.promise;
 
-        const queue = new EventQueue<ArrayBuffer>();
-        socket.onmessage = ({ data }: { data: ArrayBuffer; }) => {
-            queue.enqueue(data, data.byteLength);
-        };
-        socket.onclose = () => {
-            queue.end();
-            this._connected = false;
-            this.disconnectEvent.fire();
-        };
+        this._readable = new ReadableStream({
+            start: (controller) => {
+                socket.onmessage = ({ data }: { data: ArrayBuffer; }) => {
+                    controller.enqueue(data);
+                };
+                socket.onclose = () => {
+                    controller.close();
+                    this._connected = false;
+                    this.disconnectEvent.fire();
+                };
+            }
+        }, {
+            highWaterMark: 16 * 1024,
+            size(chunk) { return chunk.byteLength; },
+        });
+        this._writable = new WritableStream({
+            write: (chunk) => {
+                socket.send(chunk);
+            },
+        }, {
+            highWaterMark: 16 * 1024,
+            size(chunk) { return chunk.byteLength; },
+        });
 
         this.socket = socket;
-        this.bufferedStream = new BufferedStream({
-            read() { return queue.dequeue(); },
-        });
         this._connected = true;
     }
 
@@ -71,10 +86,6 @@ export default class AdbWsBackend implements AdbBackend {
 
     public write(buffer: ArrayBuffer): void | Promise<void> {
         this.socket?.send(buffer);
-    }
-
-    public read(length: number): ArrayBuffer | Promise<ArrayBuffer> {
-        return this.bufferedStream!.read(length);
     }
 
     public dispose(): void | Promise<void> {
