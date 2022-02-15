@@ -1,5 +1,6 @@
 import Struct from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
+import { ReadableStream, WritableStreamDefaultWriter } from "../../utils";
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
 import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './response';
 
@@ -14,21 +15,35 @@ const ResponseTypes = {
     [AdbSyncResponseId.Done]: new AdbSyncDoneResponse(AdbSyncDataResponse.size),
 };
 
-export async function* adbSyncPull(
+export function adbSyncPull(
     stream: AdbBufferedStream,
+    writer: WritableStreamDefaultWriter<ArrayBuffer>,
     path: string,
-): AsyncGenerator<ArrayBuffer, void, void> {
-    await adbSyncWriteRequest(stream, AdbSyncRequestId.Receive, path);
-    while (true) {
-        const response = await adbSyncReadResponse(stream, ResponseTypes);
-        switch (response.id) {
-            case AdbSyncResponseId.Data:
-                yield response.data!;
-                break;
-            case AdbSyncResponseId.Done:
-                return;
-            default:
-                throw new Error('Unexpected response id');
+    highWaterMark: number = 16 * 1024,
+): ReadableStream<ArrayBuffer> {
+    return new ReadableStream({
+        async start(controller) {
+            try {
+                await adbSyncWriteRequest(writer, AdbSyncRequestId.Receive, path);
+            } catch (e) {
+                controller.error(e);
+            }
+        },
+        async pull(controller) {
+            const response = await adbSyncReadResponse(stream, ResponseTypes);
+            switch (response.id) {
+                case AdbSyncResponseId.Data:
+                    controller.enqueue(response.data!);
+                    break;
+                case AdbSyncResponseId.Done:
+                    controller.close();
+                    return;
+                default:
+                    controller.error(new Error('Unexpected response id'));
+            }
         }
-    }
+    }, {
+        highWaterMark,
+        size(chunk) { return chunk.byteLength; }
+    });
 }

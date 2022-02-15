@@ -1,4 +1,4 @@
-import { AdbBackend } from '@yume-chan/adb';
+import { AdbBackend, ReadableStream } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 
 export const WebUsbDeviceFilter: USBDeviceFilter = {
@@ -43,8 +43,11 @@ export class AdbWebUsbBackend implements AdbBackend {
     private readonly disconnectEvent = new EventEmitter<void>();
     public readonly onDisconnected = this.disconnectEvent.event;
 
-    private _inEndpointNumber!: number;
-    private _outEndpointNumber!: number;
+    private _readable: ReadableStream<ArrayBuffer> | undefined;
+    public get readable() { return this._readable; }
+
+    private _writable: WritableStream<ArrayBuffer> | undefined;
+    public get writable() { return this._writable; }
 
     public constructor(device: USBDevice) {
         this._device = device;
@@ -84,15 +87,38 @@ export class AdbWebUsbBackend implements AdbBackend {
                         for (const endpoint of alternate.endpoints) {
                             switch (endpoint.direction) {
                                 case 'in':
-                                    this._inEndpointNumber = endpoint.endpointNumber;
-                                    if (this._outEndpointNumber !== undefined) {
+                                    this._readable = new ReadableStream({
+                                        pull: async (controller) => {
+                                            let result = await this._device.transferIn(endpoint.endpointNumber, endpoint.packetSize);
+
+                                            if (result.status === 'stall') {
+                                                // https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/client/usb_osx.cpp#543
+                                                await this._device.clearHalt('in', endpoint.endpointNumber);
+                                                result = await this._device.transferIn(endpoint.endpointNumber, endpoint.packetSize);
+                                            }
+
+                                            const { buffer } = result.data!;
+                                            controller.enqueue(buffer);
+                                        },
+                                        cancel: () => {
+                                            this.dispose();
+                                        },
+                                    });
+                                    if (this._writable !== undefined) {
                                         this._connected = true;
                                         return;
                                     }
                                     break;
                                 case 'out':
-                                    this._outEndpointNumber = endpoint.endpointNumber;
-                                    if (this._inEndpointNumber !== undefined) {
+                                    this._writable = new WritableStream({
+                                        write: async (chunk) => {
+                                            await this._device.transferOut(endpoint.endpointNumber, chunk);
+                                        },
+                                        close: () => {
+                                            this.dispose();
+                                        },
+                                    });
+                                    if (this.readable !== undefined) {
                                         this._connected = true;
                                         return;
                                     }
@@ -105,21 +131,6 @@ export class AdbWebUsbBackend implements AdbBackend {
         }
 
         throw new Error('Unknown error');
-    }
-
-    public async write(buffer: ArrayBuffer): Promise<void> {
-        await this._device.transferOut(this._outEndpointNumber, buffer);
-    }
-
-    public async read(length: number): Promise<ArrayBuffer> {
-        const result = await this._device.transferIn(this._inEndpointNumber, length);
-
-        if (result.status === 'stall') {
-            await this._device.clearHalt('in', this._inEndpointNumber);
-        }
-
-        const { buffer } = result.data!;
-        return buffer;
     }
 
     public async dispose() {

@@ -1,5 +1,6 @@
 import Struct, { placeholder } from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
+import { WritableStreamDefaultWriter } from "../../utils";
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
 import { adbSyncReadResponse, AdbSyncResponseId } from './response';
 
@@ -94,6 +95,7 @@ const Lstat2ResponseType = {
 
 export async function adbSyncLstat(
     stream: AdbBufferedStream,
+    writer: WritableStreamDefaultWriter<ArrayBuffer>,
     path: string,
     v2: boolean,
 ): Promise<AdbSyncLstatResponse | AdbSyncStatResponse> {
@@ -108,14 +110,15 @@ export async function adbSyncLstat(
         responseType = LstatResponseType;
     }
 
-    await adbSyncWriteRequest(stream, requestId, path);
+    await adbSyncWriteRequest(writer, requestId, path);
     return adbSyncReadResponse(stream, responseType);
 }
 
 export async function adbSyncStat(
     stream: AdbBufferedStream,
+    writer: WritableStreamDefaultWriter<ArrayBuffer>,
     path: string,
 ): Promise<AdbSyncStatResponse> {
-    await adbSyncWriteRequest(stream, AdbSyncRequestId.Stat, path);
+    await adbSyncWriteRequest(writer, AdbSyncRequestId.Stat, path);
     return adbSyncReadResponse(stream, StatResponseType);
 }

@@ -1,16 +1,18 @@
 import { Adb } from "../adb";
+import { ReadableStream } from "../utils";
 import { escapeArg } from "./shell";
 
 export async function install(
     adb: Adb,
-    apk: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
+    apk: ReadableStream<ArrayBuffer>,
     onProgress?: (uploaded: number) => void,
 ): Promise<void> {
     const filename = `/data/local/tmp/${Math.random().toString().substring(2)}.apk`;
 
     // Upload apk file to tmp folder
     const sync = await adb.sync();
-    await sync.write(filename, apk, undefined, undefined, onProgress);
+    const writable = sync.write(filename, undefined, undefined, onProgress);
+    await apk.pipeTo(writable);
     sync.dispose();
 
     // Invoke `pm install` to install it

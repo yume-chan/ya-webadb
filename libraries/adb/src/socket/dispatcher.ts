@@ -1,8 +1,8 @@
 import { AsyncOperationManager } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbBackend } from '../backend';
-import { AdbCommand, AdbPacket, AdbPacketInit } from '../packet';
-import { AutoResetEvent, decodeUtf8, encodeUtf8 } from '../utils';
+import { AdbCommand, AdbPacket, AdbPacketInit, AdbPacketStream, writeAdbPacket } from '../packet';
+import { AbortController, AutoResetEvent, decodeUtf8, encodeUtf8, WritableStreamDefaultWriter } from '../utils';
 import { AdbSocketController } from './controller';
 import { AdbLogger } from './logger';
 import { AdbSocket } from './socket';
@@ -34,6 +34,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly logger: AdbLogger | undefined;
 
     public readonly backend: AdbBackend;
+    private _backendWriter!: WritableStreamDefaultWriter<ArrayBuffer>;
 
     public maxPayloadSize = 0;
     public calculateChecksum = true;
@@ -50,6 +51,9 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
     private _running = false;
     public get running() { return this._running; }
+    private _runningAbortController!: AbortController;
+
+    private _packetStream!: AdbPacketStream;
 
     public constructor(backend: AdbBackend, logger?: AdbLogger) {
         super();
@@ -60,8 +64,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
     private async receiveLoop() {
         try {
-            while (this._running) {
-                const packet = await AdbPacket.read(this.backend);
+            for await (const packet of this._packetStream.readable) {
                 this.logger?.onIncomingPacket?.(packet);
 
                 switch (packet.command) {
@@ -73,7 +76,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
                         continue;
                     case AdbCommand.Write:
                         if (this.sockets.has(packet.arg1)) {
-                            await this.sockets.get(packet.arg1)!.dataEvent.fire(packet.payload!);
+                            await this.sockets.get(packet.arg1)!.enqueue(packet.payload!);
                             await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
                         }
 
@@ -97,7 +100,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
             }
         } catch (e) {
             if (!this._running) {
-                // ignore error
+                // ignore error when not running
                 return;
             }
 
@@ -188,7 +191,18 @@ export class AdbPacketDispatcher extends AutoDisposable {
     }
 
     public start() {
+        this._backendWriter = this.backend.writable!.getWriter();
+
         this._running = true;
+        this._runningAbortController = new AbortController();
+
+        this._packetStream = new AdbPacketStream();
+        this.backend.readable!.pipeTo(this._packetStream.writable, {
+            preventAbort: true,
+            preventCancel: true,
+            signal: this._runningAbortController.signal,
+        });
+
         this.receiveLoop();
     }
 
@@ -250,7 +264,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
             this.logger?.onOutgoingPacket?.(init);
 
-            await AdbPacket.write(init, this.calculateChecksum, this.backend);
+            await writeAdbPacket(init, this.calculateChecksum, this._backendWriter);
         } finally {
             this.sendLock.notify();
         }
@@ -258,6 +272,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
     public override dispose() {
         this._running = false;
+        this._runningAbortController.abort();
 
         for (const socket of this.sockets.values()) {
             socket.dispose();

@@ -3,16 +3,31 @@ import { Adb } from '../../adb';
 import { AdbFeatures } from '../../features';
 import { AdbSocket } from '../../socket';
 import { AdbBufferedStream } from '../../stream';
-import { AutoResetEvent } from '../../utils';
+import { AutoResetEvent, QueuingStrategy, ReadableStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../../utils';
 import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';
 import { adbSyncPull } from './pull';
 import { adbSyncPush } from './push';
 import { adbSyncLstat, adbSyncStat } from './stat';
 
+class LockTransformStream<T> extends TransformStream<T, T>{
+    constructor(lock: AutoResetEvent, writableStrategy?: QueuingStrategy<T>, readableStrategy?: QueuingStrategy<T>) {
+        super({
+            start() {
+                return lock.wait();
+            },
+            flush() {
+                lock.notify();
+            }
+        }, writableStrategy, readableStrategy);
+    }
+}
+
 export class AdbSync extends AutoDisposable {
     protected adb: Adb;
 
     protected stream: AdbBufferedStream;
+
+    protected writer: WritableStreamDefaultWriter<ArrayBuffer>;
 
     protected sendLock = this.addDisposable(new AutoResetEvent());
 
@@ -25,13 +40,14 @@ export class AdbSync extends AutoDisposable {
 
         this.adb = adb;
         this.stream = new AdbBufferedStream(socket);
+        this.writer = socket.writable.getWriter();
     }
 
     public async lstat(path: string) {
         await this.sendLock.wait();
 
         try {
-            return adbSyncLstat(this.stream, path, this.supportsStat);
+            return adbSyncLstat(this.stream, this.writer, path, this.supportsStat);
         } finally {
             this.sendLock.notify();
         }
@@ -45,7 +61,7 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            return adbSyncStat(this.stream, path);
+            return adbSyncStat(this.stream, this.writer, path);
         } finally {
             this.sendLock.notify();
         }
@@ -66,7 +82,7 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            yield* adbSyncOpenDir(this.stream, path);
+            yield* adbSyncOpenDir(this.stream, this.writer, path);
         } finally {
             this.sendLock.notify();
         }
@@ -80,34 +96,45 @@ export class AdbSync extends AutoDisposable {
         return results;
     }
 
-    public async *read(filename: string): AsyncGenerator<ArrayBuffer, void, void> {
-        await this.sendLock.wait();
-
-        try {
-            yield* adbSyncPull(this.stream, filename);
-        } finally {
-            this.sendLock.notify();
-        }
+    public read(filename: string, highWaterMark = 16 * 1024): ReadableStream<ArrayBuffer> {
+        const readable = adbSyncPull(this.stream, this.writer, filename, highWaterMark);
+        return readable.pipeThrough(new LockTransformStream(
+            this.sendLock,
+            { highWaterMark, size(chunk) { return chunk.byteLength; } },
+            { highWaterMark, size(chunk) { return chunk.byteLength; } }
+        ));
     }
 
-    public async write(
+    public write(
         filename: string,
-        content: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
         mode?: number,
         mtime?: number,
         onProgress?: (uploaded: number) => void,
-    ): Promise<void> {
-        await this.sendLock.wait();
+        highWaterMark = 16 * 1024,
+    ): WritableStream<ArrayBuffer> {
+        const lockStream = new LockTransformStream<ArrayBuffer>(
+            this.sendLock,
+            { highWaterMark, size(chunk) { return chunk.byteLength; } },
+            { highWaterMark, size(chunk) { return chunk.byteLength; } }
+        );
 
-        try {
-            await adbSyncPush(this.stream, filename, content, mode, mtime, undefined, onProgress);
-        } finally {
-            this.sendLock.notify();
-        }
+        const writable = adbSyncPush(
+            this.stream,
+            this.writer,
+            filename,
+            mode,
+            mtime,
+            undefined,
+            onProgress
+        );
+        lockStream.readable.pipeTo(writable);
+
+        return lockStream.writable;
     }
 
     public override dispose() {
         super.dispose();
         this.stream.close();
+        this.writer.close();
     }
 }

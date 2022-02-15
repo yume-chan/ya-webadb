@@ -1,3 +1,44 @@
+// cspell: ignore chainable
+// cspell: ignore backpressure
+// cspell: ignore endregion
+
+//#region borrowed
+// from https://github.com/microsoft/TypeScript/blob/38da7c600c83e7b31193a62495239a0fe478cb67/lib/lib.webworker.d.ts#L633 until moved to separate lib
+/** A controller object that allows you to abort one or more DOM requests as and when desired. */
+export interface AbortController {
+    /**
+     * Returns the AbortSignal object associated with this object.
+     */
+
+    readonly signal: AbortSignal;
+    /**
+     * Invoking this method will set this object's AbortSignal's aborted flag and signal to any observers that the associated activity is to be aborted.
+     */
+    abort(): void;
+}
+
+/** A signal object that allows you to communicate with a DOM request (such as a Fetch) and abort it if required via an AbortController object. */
+export interface AbortSignal {
+    /**
+     * Returns true if this AbortSignal's AbortController has signaled to abort, and false otherwise.
+     */
+    readonly aborted: boolean;
+}
+
+export let AbortController: {
+    prototype: AbortController;
+    new(): AbortController;
+};
+
+export let AbortSignal: {
+    prototype: AbortSignal;
+    new(): AbortSignal;
+    // TODO: Add abort() static
+};
+
+({ AbortController, AbortSignal } = globalThis as any);
+//#endregion borrowed
+
 // https://github.com/microsoft/TypeScript-DOM-lib-generator/blob/11d922f302743cb3fcee9ab59b03d40074a2965c/baselines/dom.generated.d.ts#L1194-L1206
 export interface QueuingStrategy<T = any> {
     highWaterMark?: number;
@@ -241,8 +282,33 @@ export type ReadableStreamDefaultReadResult<T> = ReadableStreamDefaultReadValueR
 export type ReadableStreamReader<T> = ReadableStreamDefaultReader<T>;
 
 // Extra
+export interface ReadableStreamIteratorOptions {
+    preventCancel?: boolean;
+}
+
 export interface ReadableStream<R> {
     [Symbol.asyncIterator](): AsyncIterableIterator<R>;
+
+    values(options?: ReadableStreamIteratorOptions): AsyncIterableIterator<R>;
+}
+
+async function* values(this: ReadableStream, options?: ReadableStreamIteratorOptions) {
+    let reader = this.getReader();
+
+    try {
+        while (true) {
+            const result = await reader.read();
+            if (result.done) {
+                reader.releaseLock();
+                return;
+            }
+            yield result.value;
+        }
+    } finally {
+        if (!options?.preventCancel) {
+            reader.cancel();
+        }
+    }
 }
 
 try {
@@ -262,14 +328,20 @@ try {
             ReadableStream,
             ReadableStreamDefaultController,
             ReadableStreamDefaultReader,
-            // @ts-expect-error `@types/node` is slightly different from `@types/web`
             TransformStream,
             TransformStreamDefaultController,
-            // @ts-expect-error `@types/node` is slightly different from `@types/web`
             WritableStream,
             WritableStreamDefaultController,
             WritableStreamDefaultWriter,
+            // @ts-expect-error
         } = await import('stream/web'));
+    }
+
+    if (!(Symbol.asyncIterator in ReadableStream.prototype)) {
+        ReadableStream.prototype[Symbol.asyncIterator] = values;
+    }
+    if (!('values' in ReadableStream.prototype)) {
+        ReadableStream.prototype.values = values;
     }
 } catch {
     throw new Error('Web Streams API is not available');

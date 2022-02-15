@@ -1,6 +1,6 @@
 import Struct from '@yume-chan/struct';
-import { AdbBackend } from './backend';
 import { BufferedStream } from './stream';
+import { TransformStream, TransformStreamDefaultController, WritableStreamDefaultWriter } from "./utils";
 
 export enum AdbCommand {
     Auth = 0x48545541,    // 'AUTH'
@@ -29,56 +29,69 @@ export type AdbPacket = typeof AdbPacketStruct['TDeserializeResult'];
 
 export type AdbPacketInit = Omit<typeof AdbPacketStruct['TInit'], 'checksum' | 'magic'>;
 
-export namespace AdbPacket {
-    export async function read(backend: AdbBackend): Promise<AdbPacket> {
-        // Detect boundary
-        // Note that it relies on the backend to only return data from one write operation
-        let buffer: ArrayBuffer;
-        do {
-            // Maybe it's a payload from last connection.
-            // Ignore and try again
-            buffer = await backend.read(24);
-        } while (buffer.byteLength !== 24);
+export class AdbPacketStream extends TransformStream<ArrayBuffer, AdbPacket> {
+    private _passthrough = new TransformStream<ArrayBuffer, ArrayBuffer>({});
+    private _passthroughWriter = this._passthrough.writable.getWriter();
+    private _buffered = new BufferedStream(this._passthrough.readable);
+    private _controller!: TransformStreamDefaultController<AdbPacket>;
+    private _closed = false;
 
-        let bufferUsed = false;
-        const stream = new BufferedStream({
-            async read(length: number) {
-                if (!bufferUsed) {
-                    bufferUsed = true;
-                    return buffer;
-                }
-                return backend.read(length);
-            }
+    public constructor() {
+        super({
+            start: (controller) => {
+                this._controller = controller;
+                this.receiveLoop();
+            },
+            transform: (chunk) => {
+                this._passthroughWriter.write(chunk);
+            },
+            flush: () => {
+                this._closed = true;
+                this._passthroughWriter.close();
+            },
         });
-
-        return AdbPacketStruct.deserialize(stream);
     }
 
-    export async function write(
-        init: AdbPacketInit,
-        calculateChecksum: boolean,
-        backend: AdbBackend
-    ): Promise<void> {
-        let checksum: number;
-        if (calculateChecksum && init.payload) {
-            const array = new Uint8Array(init.payload);
-            checksum = array.reduce((result, item) => result + item, 0);
-        } else {
-            checksum = 0;
-        }
+    private async receiveLoop() {
+        try {
+            while (true) {
+                const packet = await AdbPacketStruct.deserialize(this._buffered);
+                this._controller.enqueue(packet);
+            }
+        } catch (e) {
+            if (this._closed) {
+                return;
+            }
 
-        const packet = {
-            ...init,
-            checksum,
-            magic: init.command ^ 0xFFFFFFFF,
-            payloadLength: init.payload.byteLength,
-        };
-
-        // Write payload separately to avoid an extra copy
-        const header = AdbPacketHeader.serialize(packet);
-        await backend.write(header);
-        if (packet.payload.byteLength) {
-            await backend.write(packet.payload);
+            this._controller.error(e);
         }
+    }
+}
+
+export async function writeAdbPacket(
+    init: AdbPacketInit,
+    calculateChecksum: boolean,
+    writer: WritableStreamDefaultWriter<ArrayBuffer>
+): Promise<void> {
+    let checksum: number;
+    if (calculateChecksum && init.payload) {
+        const array = new Uint8Array(init.payload);
+        checksum = array.reduce((result, item) => result + item, 0);
+    } else {
+        checksum = 0;
+    }
+
+    const packet = {
+        ...init,
+        checksum,
+        magic: init.command ^ 0xFFFFFFFF,
+        payloadLength: init.payload.byteLength,
+    };
+
+    // Write payload separately to avoid an extra copy
+    const header = AdbPacketHeader.serialize(packet);
+    await writer.write(header);
+    if (packet.payload.byteLength) {
+        await writer.write(packet.payload);
     }
 }

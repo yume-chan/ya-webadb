@@ -1,6 +1,6 @@
 # @yume-chan/adb-backend-webusb
 
-Backend for `@yume-chan/adb` using WebUSB API.
+Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB), [Spec](https://wicg.github.io/webusb)) API.
 
 - [Note](#note)
 - [`pickDevice`](#pickdevice)
@@ -9,7 +9,7 @@ Backend for `@yume-chan/adb` using WebUSB API.
 
 ## Note
 
-WebUSB API requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (basically means HTTPS).
+WebUSB API requires [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (basically means HTTPS).
 
 Chrome will treat `localhost` as secure, but if you want to access a dev server running on another machine, you need to add the domain to the allowlist:
 
@@ -24,8 +24,6 @@ Chrome will treat `localhost` as secure, but if you want to access a dev server 
 static async pickDevice(): Promise<AdbWebBackend | undefined>
 ```
 
-**WebUSB API** ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB)) ([Spec](https://wicg.github.io/webusb))
-
 Request browser to present a list of connected Android devices to let the user choose from.
 
 Returns `undefined` if the user canceled the picker.
@@ -36,12 +34,8 @@ Returns `undefined` if the user canceled the picker.
 static async fromDevice(device: USBDevice): Promise<AdbWebBackend>
 ```
 
-**WebUSB API** ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB)) ([Spec](https://wicg.github.io/webusb))
-
 Create an `AdbWebBackend` instance from an exist `USBDevice` instance.
 
 ## `read`/`write`
-
-**WebUSB API** ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB)) ([Spec](https://wicg.github.io/webusb))
 
 Read/write data from/to the underlying `USBDevice` instance.

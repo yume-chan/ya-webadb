@@ -6,7 +6,7 @@ import { AdbChildProcess, AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSync, 
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
-import { decodeUtf8 } from "./utils";
+import { decodeUtf8, ReadableStream } from "./utils";
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -208,7 +208,7 @@ export class Adb {
     }
 
     public async install(
-        apk: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
+        apk: ReadableStream<ArrayBuffer>,
         onProgress?: (uploaded: number) => void,
     ): Promise<void> {
         return await install(this, apk, onProgress);
@@ -229,13 +229,11 @@ export class Adb {
 
     public async createSocketAndReadAll(service: string): Promise<string> {
         const socket = await this.createSocket(service);
-        const resolver = new PromiseResolver<string>();
         let result = '';
-        socket.onData(buffer => {
-            result += decodeUtf8(buffer);
-        });
-        socket.onClose(() => resolver.resolve(result));
-        return resolver.promise;
+        for await (const chunk of socket.readable) {
+            result += decodeUtf8(chunk);
+        }
+        return result;
     }
 
     public async dispose(): Promise<void> {

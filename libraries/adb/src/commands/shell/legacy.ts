@@ -1,6 +1,6 @@
-import { EventEmitter } from "@yume-chan/event";
 import type { Adb } from "../../adb";
 import type { AdbSocket } from "../../socket";
+import { ReadableStream } from "../../utils";
 import type { AdbShell } from "./types";
 
 /**
@@ -20,33 +20,24 @@ export class AdbLegacyShell implements AdbShell {
 
     private readonly socket: AdbSocket;
 
-    private readonly stdoutEvent = new EventEmitter<ArrayBuffer>();
-    public get onStdout() { return this.stdoutEvent.event; }
+    // Legacy shell forwards all data to stdin.
+    public get stdin() { return this.socket.writable; }
 
-    private readonly stderrEvent = new EventEmitter<ArrayBuffer>();
-    public get onStderr() { return this.stderrEvent.event; }
+    private _stdout: ReadableStream<ArrayBuffer>;
+    // Legacy shell doesn't support splitting output streams.
+    public get stdout() { return this._stdout; }
 
-    private readonly exitEvent = new EventEmitter<number>();
-    public get onExit() { return this.exitEvent.event; }
+    // `stderr` of Legacy shell is always empty.
+    public readonly stderr = new ReadableStream({});
+
+    private _exit: Promise<number>;
+    public get exit() { return this._exit; }
 
     public constructor(socket: AdbSocket) {
         this.socket = socket;
-        this.socket.onData(this.handleData, this);
-        this.socket.onClose(this.handleExit, this);
-    }
-
-    private handleData(data: ArrayBuffer) {
-        // Legacy shell doesn't support splitting output streams.
-        this.stdoutEvent.fire(data);
-    }
-
-    private handleExit() {
-        // Legacy shell doesn't support returning exit code.
-        this.exitEvent.fire(0);
-    }
-
-    public async write(data: ArrayBuffer) {
-        this.socket.write(data);
+        let exit;
+        [this._stdout, exit] = this.socket.readable.tee();
+        this._exit = exit.getReader().closed.then(() => 0);
     }
 
     public resize() {

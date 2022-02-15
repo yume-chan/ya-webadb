@@ -1,4 +1,4 @@
-import { AdbBackend, BufferedStream, Stream } from '@yume-chan/adb';
+import { AdbBackend, ReadableStream, TransformStream, WritableStream } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 
 declare global {
@@ -44,9 +44,24 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
     public name: string | undefined;
 
     private socket: TCPSocket | undefined;
-    private reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
-    private bufferedStream: BufferedStream<Stream> | undefined;
-    private writer: WritableStreamDefaultWriter<Uint8Array> | undefined;
+
+    private _readablePassthrough = new TransformStream<Uint8Array, ArrayBuffer>({
+        transform(chunk, controller) {
+            controller.enqueue(chunk.buffer);
+        },
+    });
+    public get readable(): ReadableStream<ArrayBuffer> {
+        return this._readablePassthrough.readable;
+    }
+
+    private _writablePassthrough = new TransformStream<ArrayBuffer, Uint8Array>({
+        transform(chunk, controller) {
+            controller.enqueue(new Uint8Array(chunk));
+        },
+    });
+    public get writable(): WritableStream<ArrayBuffer> {
+        return this._writablePassthrough.writable;
+    }
 
     private _connected = false;
     public get connected() { return this._connected; }
@@ -69,27 +84,10 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
         });
 
         this.socket = socket;
-        this.reader = this.socket.readable.getReader();
-        this.bufferedStream = new BufferedStream({
-            read: async () => {
-                const result = await this.reader!.read();
-                if (result.value) {
-                    return result.value.buffer;
-                }
-                throw new Error('Stream ended');
-            }
-        });
-        this.writer = this.socket.writable.getWriter();
+        this.socket.readable.pipeTo(this._readablePassthrough.writable);
+        this._writablePassthrough.readable.pipeTo(this.socket.writable);
 
         this._connected = true;
-    }
-
-    public write(buffer: ArrayBuffer): Promise<void> {
-        return this.writer!.write(new Uint8Array(buffer));
-    }
-
-    public async read(length: number): Promise<ArrayBuffer> {
-        return this.bufferedStream!.read(length);
     }
 
     public dispose(): void | Promise<void> {

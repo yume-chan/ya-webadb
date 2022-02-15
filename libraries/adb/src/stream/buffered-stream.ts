@@ -1,36 +1,17 @@
-import { StructAsyncDeserializeStream, ValueOrPromise } from '@yume-chan/struct';
+import { StructAsyncDeserializeStream } from '@yume-chan/struct';
 import { AdbSocket, AdbSocketInfo } from '../socket';
-import { AdbSocketStream } from './stream';
+import { ReadableStream, ReadableStreamDefaultReader } from '../utils';
 
-export class StreamEndedError extends Error {
-    public constructor() {
-        super('Stream ended');
-
-        // Fix Error's prototype chain when compiling to ES5
-        Object.setPrototypeOf(this, new.target.prototype);
-    }
-}
-
-export interface Stream {
-    /**
-     * When the stream is ended (no more data can be read),
-     * An `StreamEndedError` should be thrown.
-     *
-     * @param length A hint of how much data should be read.
-     * @returns Data, which can be either more or less than `length`.
-     */
-    read(length: number): ValueOrPromise<ArrayBuffer>;
-
-    close?(): void;
-}
-
-export class BufferedStream<T extends Stream> {
+export class BufferedStream {
     private buffer: Uint8Array | undefined;
 
-    protected readonly stream: T;
+    protected readonly stream: ReadableStream<ArrayBuffer>;
 
-    public constructor(stream: T) {
+    protected readonly reader: ReadableStreamDefaultReader<ArrayBuffer>;
+
+    public constructor(stream: ReadableStream<ArrayBuffer>) {
         this.stream = stream;
+        this.reader = stream.getReader();
     }
 
     /**
@@ -54,66 +35,76 @@ export class BufferedStream<T extends Stream> {
             index = buffer.byteLength;
             this.buffer = undefined;
         } else {
-            const buffer = await this.stream.read(length);
-            if (buffer.byteLength === length) {
-                return buffer;
+            const result = await this.reader.read();
+            if (result.done) {
+                if (readToEnd) {
+                    return new ArrayBuffer(0);
+                } else {
+                    throw new Error('Unexpected end of stream');
+                }
             }
 
-            if (buffer.byteLength > length) {
-                this.buffer = new Uint8Array(buffer, length);
-                return buffer.slice(0, length);
+            const { value } = result;
+            if (value.byteLength === length) {
+                return value;
+            }
+
+            if (value.byteLength > length) {
+                this.buffer = new Uint8Array(value, length);
+                return value.slice(0, length);
             }
 
             array = new Uint8Array(length);
-            array.set(new Uint8Array(buffer), 0);
-            index = buffer.byteLength;
+            array.set(new Uint8Array(value), 0);
+            index = value.byteLength;
         }
 
-        try {
-            while (index < length) {
-                const left = length - index;
+        while (index < length) {
+            const left = length - index;
 
-                const buffer = await this.stream.read(left);
-                if (buffer.byteLength > left) {
-                    array.set(new Uint8Array(buffer, 0, left), index);
-                    this.buffer = new Uint8Array(buffer, left);
-                    return array.buffer;
+            const result = await this.reader.read();
+            if (result.done) {
+                if (readToEnd) {
+                    return new ArrayBuffer(0);
+                } else {
+                    throw new Error('Unexpected end of stream');
                 }
-
-                array.set(new Uint8Array(buffer), index);
-                index += buffer.byteLength;
             }
-        }
-        catch (e) {
-            if (readToEnd && e instanceof StreamEndedError) {
+
+            const { value } = result;
+            if (value.byteLength > left) {
+                array.set(new Uint8Array(value, 0, left), index);
+                this.buffer = new Uint8Array(value, left);
                 return array.buffer;
             }
 
-            throw e;
+            array.set(new Uint8Array(value), index);
+            index += value.byteLength;
         }
 
         return array.buffer;
     }
 
     public close() {
-        this.stream.close?.();
+        this.reader.cancel();
     }
 }
 
 export class AdbBufferedStream
-    extends BufferedStream<AdbSocketStream>
+    extends BufferedStream
     implements AdbSocketInfo, StructAsyncDeserializeStream {
-    public get backend() { return this.stream.backend; }
-    public get localId() { return this.stream.localId; }
-    public get remoteId() { return this.stream.remoteId; }
-    public get localCreated() { return this.stream.localCreated; }
-    public get serviceString() { return this.stream.serviceString; }
+    protected readonly socket: AdbSocket;
+
+    public get backend() { return this.socket.backend; }
+    public get localId() { return this.socket.localId; }
+    public get remoteId() { return this.socket.remoteId; }
+    public get localCreated() { return this.socket.localCreated; }
+    public get serviceString() { return this.socket.serviceString; }
+
+    public get writable() { return this.socket.writable; }
 
     public constructor(socket: AdbSocket) {
-        super(new AdbSocketStream(socket));
-    }
-
-    public write(data: ArrayBuffer): Promise<void> {
-        return this.stream.write(data);
+        super(socket.readable);
+        this.socket = socket;
     }
 }

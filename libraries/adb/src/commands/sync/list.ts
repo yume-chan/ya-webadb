@@ -1,5 +1,6 @@
 import Struct from '@yume-chan/struct';
 import { AdbBufferedStream } from '../../stream';
+import { WritableStreamDefaultWriter } from "../../utils";
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
 import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './response';
 import { AdbSyncLstatResponse } from './stat';
@@ -20,9 +21,10 @@ const ResponseTypes = {
 
 export async function* adbSyncOpenDir(
     stream: AdbBufferedStream,
-    path: string
+    writer: WritableStreamDefaultWriter<ArrayBuffer>,
+    path: string,
 ): AsyncGenerator<AdbSyncEntryResponse, void, void> {
-    await adbSyncWriteRequest(stream, AdbSyncRequestId.List, path);
+    await adbSyncWriteRequest(writer, AdbSyncRequestId.List, path);
 
     while (true) {
         const response = await adbSyncReadResponse(stream, ResponseTypes);

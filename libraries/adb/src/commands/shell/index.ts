@@ -1,6 +1,5 @@
-import { once } from "@yume-chan/event";
 import type { Adb } from '../../adb';
-import { decodeUtf8 } from "../../utils";
+import { decodeUtf8, WritableStream } from "../../utils";
 import { AdbLegacyShell } from './legacy';
 import { AdbShellProtocol } from './protocol';
 import type { AdbShell, AdbShellConstructor } from './types';
@@ -93,9 +92,17 @@ export class AdbChildProcess {
         // Optimization: rope (concat strings) is faster than `[].join('')`
         let stdout = '';
         let stderr = '';
-        shell.onStdout(buffer => stdout += decodeUtf8(buffer));
-        shell.onStderr(buffer => stderr += decodeUtf8(buffer));
-        const exitCode = await once(shell.onExit);
+        shell.stdout.pipeTo(new WritableStream({
+            write(chunk) {
+                stdout += decodeUtf8(chunk);
+            }
+        }));
+        shell.stderr.pipeTo(new WritableStream({
+            write(chunk) {
+                stderr += decodeUtf8(chunk);
+            }
+        }));
+        const exitCode = await shell.exit;
         return {
             stdout,
             stderr,
