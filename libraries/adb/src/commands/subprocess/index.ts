@@ -1,5 +1,5 @@
 import type { Adb } from '../../adb';
-import { decodeUtf8, WritableStream } from "../../utils";
+import { DecodeUtf8Stream, GatherStringStream } from "../../utils";
 import { AdbNoneSubprocessProtocol } from './legacy';
 import { AdbShellSubprocessProtocol } from './protocol';
 import type { AdbSubprocessProtocol, AdbSubprocessProtocolConstructor } from './types';
@@ -87,25 +87,27 @@ export class AdbSubprocess {
      * @param options The options for creating the `AdbShell`
      * @returns The entire output of the command
      */
-    public async spawnAndWait(command: string | string[], options?: Partial<AdbSubprocessOptions>): Promise<SubprocessResult> {
+    public async spawnAndWait(
+        command: string | string[],
+        options?: Partial<AdbSubprocessOptions>
+    ): Promise<SubprocessResult> {
         const shell = await this.spawn(command, options);
-        // Optimization: rope (concat strings) is faster than `[].join('')`
-        let stdout = '';
-        let stderr = '';
-        shell.stdout.pipeTo(new WritableStream({
-            write(chunk) {
-                stdout += decodeUtf8(chunk);
-            }
-        }));
-        shell.stderr.pipeTo(new WritableStream({
-            write(chunk) {
-                stderr += decodeUtf8(chunk);
-            }
-        }));
+
+        const stdout = new GatherStringStream();
+        shell.stdout
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(stdout);
+
+        const stderr = new GatherStringStream();
+        shell.stderr
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(stderr);
+
         const exitCode = await shell.exit;
+
         return {
-            stdout,
-            stderr,
+            stdout: stdout.result,
+            stderr: stderr.result,
             exitCode,
         };
     }

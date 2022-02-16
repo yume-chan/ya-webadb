@@ -53,7 +53,7 @@ export class AdbReverseCommand extends AutoDisposable {
         }
 
         const address = decodeUtf8(e.packet.payload!);
-        // tcp:12345\0
+        // Address format: `tcp:12345\0`
         const port = Number.parseInt(address.substring(4));
         if (this.localPortToHandler.has(port)) {
             this.localPortToHandler.get(port)!.onSocket(e.packet, e.socket);

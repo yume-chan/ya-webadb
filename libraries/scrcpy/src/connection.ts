@@ -74,7 +74,7 @@ export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
 }
 
 export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
-    private streams!: EventQueue<AdbSocket>;
+    private streams!: ReadableStreamDefaultReader<AdbSocket>;
 
     private address!: string;
 
@@ -86,16 +86,18 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
             // ignore error
         }
 
-        this.streams = new EventQueue<AdbSocket>();
+        const queue = new TransformStream<AdbSocket>();
+        this.streams = queue.readable.getReader();
+        const writer = queue.writable.getWriter();
         this.address = await this.device.reverse.add('localabstract:scrcpy', 27183, {
             onSocket: (packet, stream) => {
-                this.streams.enqueue(stream);
+                writer.write(stream);
             },
         });
     }
 
     private async accept(): Promise<AdbBufferedStream> {
-        return new AdbBufferedStream(await this.streams.dequeue());
+        return new AdbBufferedStream((await this.streams.read()).value!);
     }
 
     public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream | undefined]> {

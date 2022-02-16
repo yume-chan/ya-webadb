@@ -1,5 +1,4 @@
-import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSubprocessProtocol, ReadableStream } from '@yume-chan/adb';
-import { PromiseResolver } from '@yume-chan/async';
+import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSubprocessProtocol, ReadableStream, TransformStream } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import type { H264EncodingInfo } from "./decoder";
@@ -32,7 +31,7 @@ const ClipboardMessage =
 export class ScrcpyClient {
     public static pushServer(
         device: Adb,
-        file: ArrayBuffer,
+        file: ReadableStream<ArrayBuffer>,
         options?: PushServerOptions
     ) {
         pushServer(device, file, options);
@@ -44,37 +43,29 @@ export class ScrcpyClient {
         version: string,
         options: ScrcpyOptions<any>
     ): Promise<string[]> {
-        const resolver = new PromiseResolver<string[]>();
-        const encoderNameRegex = options.getOutputEncoderNameRegex();
-        const encoders: string[] = [];
-
-        const client = new ScrcpyClient(device);
-        client.onOutput((line) => {
-            const match = line.match(encoderNameRegex);
-            if (match) {
-                encoders.push(match[1]!);
-            }
-        });
-
-        client.onClose(() => {
-            resolver.resolve(encoders);
-        });
-
         // Provide an invalid encoder name
         // So the server will return all available encoders
         options.value.encoderName = '_';
         // Disable control for faster connection in 1.22+
         options.value.control = false;
 
+        const client = new ScrcpyClient(device);
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
-        await client.start(
-            path,
-            version,
-            options
-        );
+        await client.start(path, version, options);
 
-        return resolver.promise;
+        const encoderNameRegex = options.getOutputEncoderNameRegex();
+        const encoders: string[] = [];
+        await client.stdout?.pipeTo(new WritableStream({
+            write(line) {
+                const match = line.match(encoderNameRegex);
+                if (match) {
+                    encoders.push(match[1]!);
+                }
+            },
+        }));
+
+        return encoders;
     }
 
     private readonly device: Adb;
@@ -85,11 +76,10 @@ export class ScrcpyClient {
 
     private controlStream: AdbBufferedStream | undefined;
 
-    private stdout: ReadableStream<string> | undefined;
-    public get onOutput() { return this.stdout; }
+    private _stdout: TransformStream<ArrayBuffer, string>;
+    public get stdout() { return this._stdout.readable; }
 
-    private readonly closeEvent = new EventEmitter<void>();
-    public get onClose() { return this.closeEvent.event; }
+    public get exit() { return this.process?.exit; }
 
     private _running = false;
     public get running() { return this._running; }
@@ -114,6 +104,18 @@ export class ScrcpyClient {
 
     public constructor(device: Adb) {
         this.device = device;
+
+        this._stdout = new TransformStream<ArrayBuffer, string>({
+            transform(chunk, controller) {
+                const text = decodeUtf8(chunk);
+                for (const line of splitLines(text)) {
+                    if (line === '') {
+                        continue;
+                    }
+                    controller.enqueue(line);
+                }
+            },
+        });
     }
 
     public async start(
@@ -146,21 +148,21 @@ export class ScrcpyClient {
                 }
             );
 
-            process.onStdout(this.handleProcessOutput, this);
+            process.stdout.pipeThrough(this._stdout);
 
-            const resolver = new PromiseResolver<never>();
-            const removeExitListener = process.onExit(() => {
-                resolver.reject(new Error('scrcpy server exited prematurely'));
-            });
-
-            const [videoStream, controlStream] = await Promise.race([
-                resolver.promise,
+            const result = await Promise.race([
+                process.exit,
                 connection.getStreams(),
             ]);
 
-            removeExitListener();
+            if (typeof result === 'number') {
+                throw new Error('scrcpy server exited prematurely');
+            }
+
+            const [videoStream, controlStream] = result;
+
             this.process = process;
-            this.process.onExit(this.handleProcessClosed, this);
+            this.process.exit.then(() => this.handleProcessClosed());
             this.videoStream = videoStream;
             this.controlStream = controlStream;
 
@@ -175,19 +177,8 @@ export class ScrcpyClient {
         }
     }
 
-    private handleProcessOutput(data: ArrayBuffer) {
-        const text = decodeUtf8(data);
-        for (const line of splitLines(text)) {
-            if (line === '') {
-                continue;
-            }
-            this.stdout.fire(line);
-        }
-    }
-
     private handleProcessClosed() {
         this._running = false;
-        this.closeEvent.fire();
     }
 
     private async receiveVideo() {

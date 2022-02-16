@@ -13,7 +13,7 @@ const ResponseTypes = {
     [AdbSyncResponseId.Ok]: AdbSyncOkResponse,
 };
 
-export const AdbSyncMaxPacketSize = 64 * 1024;
+export const ADB_SYNC_MAX_PACKET_SIZE = 64 * 1024;
 
 export function adbSyncPush(
     stream: AdbBufferedStream,
@@ -21,7 +21,7 @@ export function adbSyncPush(
     filename: string,
     mode: number = (LinuxFileType.File << 12) | 0o666,
     mtime: number = (Date.now() / 1000) | 0,
-    packetSize: number = AdbSyncMaxPacketSize,
+    packetSize: number = ADB_SYNC_MAX_PACKET_SIZE,
 ): WritableStream<ArrayBuffer> {
     return new WritableStream({
         async start() {

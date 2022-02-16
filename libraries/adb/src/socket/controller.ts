@@ -42,9 +42,9 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
     public readonly localCreated!: boolean;
     public readonly serviceString!: string;
 
-    private readonly _transform: TransformStream<ArrayBuffer, ArrayBuffer>;
-    private readonly _transformWriter: WritableStreamDefaultWriter<ArrayBuffer>;
-    public get readable() { return this._transform.readable; }
+    private readonly _passthrough: TransformStream<ArrayBuffer, ArrayBuffer>;
+    private readonly _passthroughWriter: WritableStreamDefaultWriter<ArrayBuffer>;
+    public get readable() { return this._passthrough.readable; }
 
     public readonly writable: WritableStream<ArrayBuffer>;
 
@@ -55,15 +55,15 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
         super();
         Object.assign(this, options);
 
-        this._transform = new TransformStream({}, {
+        this._passthrough = new TransformStream({}, {
             highWaterMark: options.highWaterMark ?? 16 * 1024,
             size(chunk) { return chunk.byteLength; }
         });
-        this._transformWriter = this._transform.writable.getWriter();
+        this._passthroughWriter = this._passthrough.writable.getWriter();
 
         this.writable = new WritableStream({
-            write: (chunk) => {
-                return this.write(chunk);
+            write: async (chunk) => {
+                await this.write(chunk);
             },
             close: () => {
                 this.close();
@@ -75,7 +75,7 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
     }
 
     public enqueue(packet: ArrayBuffer) {
-        return this._transformWriter.write(packet);
+        return this._passthroughWriter.write(packet);
     }
 
     private async writeChunk(data: ArrayBuffer): Promise<void> {
@@ -87,7 +87,12 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
             throw new Error('Can not write after closed');
         }
 
-        await this.dispatcher.sendPacket(AdbCommand.Write, this.localId, this.remoteId, data);
+        await this.dispatcher.sendPacket(
+            AdbCommand.Write,
+            this.localId,
+            this.remoteId,
+            data
+        );
     }
 
     public async write(data: ArrayBuffer): Promise<void> {
@@ -119,7 +124,7 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
             this.writeChunkLock.dispose();
 
             await this.dispatcher.sendPacket(AdbCommand.Close, this.localId, this.remoteId);
-            this._transform.writable.close();
+            this._passthrough.writable.close();
             this.writable.close();
         }
     }

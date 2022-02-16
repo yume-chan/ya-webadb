@@ -67,7 +67,8 @@ export class Adb {
     ): Promise<void> {
         await this.backend.connect?.();
         this.packetDispatcher.maxPayloadSize = 0x1000;
-        this.packetDispatcher.calculateChecksum = true;
+        // TODO: Adb: properly set `calculateChecksum`
+        // this.packetDispatcher.calculateChecksum = true;
         this.packetDispatcher.appendNullToServiceString = true;
         this.packetDispatcher.start();
 
@@ -224,7 +225,7 @@ export class Adb {
         return this.packetDispatcher.createSocket(service);
     }
 
-    public async createSocketAndReadAll(service: string): Promise<string> {
+    public async createSocketAndWait(service: string): Promise<string> {
         const socket = await this.createSocket(service);
         let result = '';
         for await (const chunk of socket.readable) {

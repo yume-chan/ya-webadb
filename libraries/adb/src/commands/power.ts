@@ -7,7 +7,7 @@ import { AdbCommandBase } from "./base";
 
 export class AdbPower extends AdbCommandBase {
     public reboot(name: string = '') {
-        return this.adb.createSocketAndReadAll(`reboot:${name}`);
+        return this.adb.createSocketAndWait(`reboot:${name}`);
     }
 
     public bootloader() {

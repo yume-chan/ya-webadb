@@ -1,8 +1,8 @@
 import { AsyncOperationManager } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbBackend } from '../backend';
-import { AdbCommand, AdbPacket, AdbPacketInit, AdbPacketStream, writeAdbPacket } from '../packet';
-import { AbortController, AutoResetEvent, decodeUtf8, encodeUtf8, WritableStreamDefaultWriter } from '../utils';
+import { AdbCommand, AdbPacket, AdbPacketInit, AdbPacketSerializeStream } from '../packet';
+import { AbortController, decodeUtf8, encodeUtf8, StructDeserializeStream, WritableStream, WritableStreamDefaultWriter } from '../utils';
 import { AdbSocketController } from './controller';
 import { AdbLogger } from './logger';
 import { AdbSocket } from './socket';
@@ -30,14 +30,15 @@ export class AdbPacketDispatcher extends AutoDisposable {
     // (0 means open failed)
     private readonly initializers = new AsyncOperationManager(1);
     private readonly sockets = new Map<number, AdbSocketController>();
-    private readonly sendLock = new AutoResetEvent();
     private readonly logger: AdbLogger | undefined;
 
     public readonly backend: AdbBackend;
-    private _backendWriter!: WritableStreamDefaultWriter<ArrayBuffer>;
+    private _packetSerializeStream!: AdbPacketSerializeStream;
+    private _packetSerializeStreamWriter!: WritableStreamDefaultWriter<AdbPacketInit>;
 
     public maxPayloadSize = 0;
-    public calculateChecksum = true;
+    public get calculateChecksum() { return this._packetSerializeStream.calculateChecksum; }
+    public set calculateChecksum(value: boolean) { this._packetSerializeStream.calculateChecksum = value; }
     public appendNullToServiceString = true;
 
     private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketReceivedEventArgs>());
@@ -53,59 +54,11 @@ export class AdbPacketDispatcher extends AutoDisposable {
     public get running() { return this._running; }
     private _runningAbortController!: AbortController;
 
-    private _packetStream!: AdbPacketStream;
-
     public constructor(backend: AdbBackend, logger?: AdbLogger) {
         super();
 
         this.backend = backend;
         this.logger = logger;
-    }
-
-    private async receiveLoop() {
-        try {
-            for await (const packet of this._packetStream.readable) {
-                this.logger?.onIncomingPacket?.(packet);
-
-                switch (packet.command) {
-                    case AdbCommand.OK:
-                        this.handleOk(packet);
-                        continue;
-                    case AdbCommand.Close:
-                        await this.handleClose(packet);
-                        continue;
-                    case AdbCommand.Write:
-                        if (this.sockets.has(packet.arg1)) {
-                            await this.sockets.get(packet.arg1)!.enqueue(packet.payload!);
-                            await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
-                        }
-
-                        // Maybe the device is responding to a packet of last connection
-                        // Just ignore it
-                        continue;
-                    case AdbCommand.Open:
-                        await this.handleOpen(packet);
-                        continue;
-                }
-
-                const args: AdbPacketReceivedEventArgs = {
-                    handled: false,
-                    packet,
-                };
-                this.packetEvent.fire(args);
-                if (!args.handled) {
-                    this.dispose();
-                    throw new Error(`Unhandled packet with command '${packet.command}'`);
-                }
-            }
-        } catch (e) {
-            if (!this._running) {
-                // ignore error when not running
-                return;
-            }
-
-            this.errorEvent.fire(e as Error);
-        }
     }
 
     private handleOk(packet: AdbPacket) {
@@ -191,19 +144,67 @@ export class AdbPacketDispatcher extends AutoDisposable {
     }
 
     public start() {
-        this._backendWriter = this.backend.writable!.getWriter();
-
         this._running = true;
         this._runningAbortController = new AbortController();
 
-        this._packetStream = new AdbPacketStream();
-        this.backend.readable!.pipeTo(this._packetStream.writable, {
-            preventAbort: true,
-            preventCancel: true,
-            signal: this._runningAbortController.signal,
-        });
+        this.backend.readable!
+            .pipeThrough(
+                new StructDeserializeStream(AdbPacket),
+                {
+                    preventAbort: true,
+                    preventCancel: true,
+                    signal: this._runningAbortController.signal,
+                }
+            )
+            .pipeTo(new WritableStream({
+                write: async (packet) => {
+                    try {
+                        this.logger?.onIncomingPacket?.(packet);
 
-        this.receiveLoop();
+                        switch (packet.command) {
+                            case AdbCommand.OK:
+                                this.handleOk(packet);
+                                return;
+                            case AdbCommand.Close:
+                                await this.handleClose(packet);
+                                return;
+                            case AdbCommand.Write:
+                                if (this.sockets.has(packet.arg1)) {
+                                    await this.sockets.get(packet.arg1)!.enqueue(packet.payload!);
+                                    await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
+                                }
+
+                                // Maybe the device is responding to a packet of last connection
+                                // Just ignore it
+                                return;
+                            case AdbCommand.Open:
+                                await this.handleOpen(packet);
+                                return;
+                        }
+
+                        const args: AdbPacketReceivedEventArgs = {
+                            handled: false,
+                            packet,
+                        };
+                        this.packetEvent.fire(args);
+                        if (!args.handled) {
+                            this.dispose();
+                            throw new Error(`Unhandled packet with command '${packet.command}'`);
+                        }
+                    } catch (e) {
+                        if (!this._running) {
+                            // ignore error when not running
+                            return;
+                        }
+
+                        this.errorEvent.fire(e as Error);
+                    }
+                }
+            }));
+
+        this._packetSerializeStream = new AdbPacketSerializeStream();
+        this._packetSerializeStream.readable.pipeTo(this.backend.writable!);
+        this._packetSerializeStreamWriter = this._packetSerializeStream.writable.getWriter();
     }
 
     public async createSocket(serviceString: string): Promise<AdbSocket> {
@@ -257,17 +258,8 @@ export class AdbPacketDispatcher extends AutoDisposable {
             throw new Error('payload too large');
         }
 
-        try {
-            // `AdbPacket.write` writes each packet in two parts
-            // Use a lock to prevent packets been interlaced
-            await this.sendLock.wait();
-
-            this.logger?.onOutgoingPacket?.(init);
-
-            await writeAdbPacket(init, this.calculateChecksum, this._backendWriter);
-        } finally {
-            this.sendLock.notify();
-        }
+        this.logger?.onOutgoingPacket?.(init);
+        await this._packetSerializeStreamWriter.write(init);
     }
 
     public override dispose() {

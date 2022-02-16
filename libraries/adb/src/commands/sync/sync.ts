@@ -9,7 +9,7 @@ import { adbSyncPull } from './pull';
 import { adbSyncPush } from './push';
 import { adbSyncLstat, adbSyncStat } from './stat';
 
-class LockTransformStream<T> extends TransformStream<T, T>{
+class GuardedStream<T> extends TransformStream<T, T>{
     constructor(
         lock: AutoResetEvent,
         writableStrategy?: QueuingStrategy<T>,
@@ -106,7 +106,7 @@ export class AdbSync extends AutoDisposable {
 
     public read(filename: string): ReadableStream<ArrayBuffer> {
         const readable = adbSyncPull(this.stream, this.writer, filename);
-        return readable.pipeThrough(new LockTransformStream(this.sendLock));
+        return readable.pipeThrough(new GuardedStream(this.sendLock));
     }
 
     public write(
@@ -114,7 +114,7 @@ export class AdbSync extends AutoDisposable {
         mode?: number,
         mtime?: number,
     ): WritableStream<ArrayBuffer> {
-        const lockStream = new LockTransformStream<ArrayBuffer>(this.sendLock);
+        const lockStream = new GuardedStream<ArrayBuffer>(this.sendLock);
 
         const writable = adbSyncPush(
             this.stream,

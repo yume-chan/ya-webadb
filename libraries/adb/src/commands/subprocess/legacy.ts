@@ -37,12 +37,13 @@ export class AdbNoneSubprocessProtocol implements AdbSubprocessProtocol {
 
     public constructor(socket: AdbSocket) {
         this.socket = socket;
-        this._stdout = this.socket.readable.pipeThrough(new TransformStream({
-            flush: () => {
-                this._stderr.writable.close();
-                this._exit.resolve(0);
-            },
-        }));
+        this._stdout = this.socket.readable
+            .pipeThrough(new TransformStream({
+                flush: () => {
+                    this._stderr.writable.close();
+                    this._exit.resolve(0);
+                },
+            }));
     }
 
     public resize() {

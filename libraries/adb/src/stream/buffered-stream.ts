@@ -2,6 +2,15 @@ import { StructAsyncDeserializeStream } from '@yume-chan/struct';
 import { AdbSocket, AdbSocketInfo } from '../socket';
 import { ReadableStream, ReadableStreamDefaultReader } from '../utils';
 
+export class BufferedStreamEndedError extends Error {
+    public constructor() {
+        super('Stream ended');
+
+        // Fix Error's prototype chain when compiling to ES5
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
+
 export class BufferedStream {
     private buffer: Uint8Array | undefined;
 

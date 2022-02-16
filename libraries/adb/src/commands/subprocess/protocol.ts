@@ -1,10 +1,9 @@
 import { PromiseResolver } from "@yume-chan/async";
-import Struct, { placeholder } from "@yume-chan/struct";
+import Struct, { placeholder, StructValueType } from "@yume-chan/struct";
 import type { Adb } from "../../adb";
 import { AdbFeatures } from "../../features";
 import type { AdbSocket } from "../../socket";
-import { AdbBufferedStream } from "../../stream";
-import { encodeUtf8, TransformStream, WritableStream, WritableStreamDefaultWriter } from "../../utils";
+import { encodeUtf8, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from "../../utils";
 import type { AdbSubprocessProtocol } from "./types";
 
 export enum AdbShellProtocolId {
@@ -22,21 +21,64 @@ const AdbShellProtocolPacket = new Struct({ littleEndian: true })
     .uint32('length')
     .arrayBuffer('data', { lengthField: 'length' });
 
-function assertUnreachable(x: never): never {
-    throw new Error("Unreachable");
-}
+type AdbShellProtocolPacketInit = typeof AdbShellProtocolPacket['TInit'];
 
-class StdinTransformStream extends TransformStream<ArrayBuffer, ArrayBuffer>{
+type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
+
+class StdinSerializeStream extends TransformStream<ArrayBuffer, AdbShellProtocolPacketInit>{
     constructor() {
         super({
             transform(chunk, controller) {
-                controller.enqueue(AdbShellProtocolPacket.serialize(
-                    {
-                        id: AdbShellProtocolId.Stdin,
-                        data: chunk,
-                    }
-                ));
+                controller.enqueue({
+                    id: AdbShellProtocolId.Stdin,
+                    data: chunk,
+                });
+            },
+            flush() {
+                // TODO: AdbShellSubprocessProtocol: support closing stdin
             }
+        });
+    }
+}
+
+class StdoutDeserializeStream extends TransformStream<AdbShellProtocolPacket, ArrayBuffer>{
+    constructor(type: AdbShellProtocolId.Stdout | AdbShellProtocolId.Stderr) {
+        super({
+            transform(chunk, controller) {
+                if (chunk.id === type) {
+                    controller.enqueue(chunk.data);
+                }
+            },
+        });
+    }
+}
+
+class MultiplexTransformStream<T>{
+    private _passthrough = new TransformStream<T, T>();
+    private _writer = this._passthrough.writable.getWriter();
+    public get readable() { return this._passthrough.readable; }
+
+    private _activeCount = 0;
+
+    public createWriteable() {
+        return new WritableStream<T>({
+            start: () => {
+                this._activeCount += 1;
+            },
+            write: async (chunk) => {
+                // Take care back pressure
+                await this._writer.ready;
+                await this._writer.write(chunk);
+            },
+            abort: async (e) => {
+                await this._writer.abort(e);
+            },
+            close: async () => {
+                this._activeCount -= 1;
+                if (this._activeCount === 0) {
+                    await this._writer.close();
+                }
+            },
         });
     }
 }
@@ -55,95 +97,79 @@ export class AdbShellSubprocessProtocol implements AdbSubprocessProtocol {
     }
 
     public static async spawn(adb: Adb, command: string) {
-        // TODO: the service string may support more parameters
+        // TODO: AdbShellSubprocessProtocol: Support raw mode
+        // TODO: AdbShellSubprocessProtocol: Support setting `XTERM` environment variable
         return new AdbShellSubprocessProtocol(await adb.createSocket(`shell,v2,pty:${command}`));
     }
 
-    private readonly _buffered: AdbBufferedStream;
+    private readonly _socket: AdbSocket;
+    private _socketWriter: WritableStreamDefaultWriter<AdbShellProtocolPacketInit>;
 
-    private _socketWriter: WritableStreamDefaultWriter<ArrayBuffer>;
-
-    private _stdin = new StdinTransformStream();
+    private _stdin = new TransformStream<ArrayBuffer, ArrayBuffer>();
     public get stdin() { return this._stdin.writable; }
 
-    private _stdout = new TransformStream<ArrayBuffer, ArrayBuffer>();
-    private _stdoutWriter = this._stdout.writable.getWriter();
-    public get stdout() { return this._stdout.readable; }
+    private _stdout: ReadableStream<ArrayBuffer>;
+    public get stdout() { return this._stdout; }
 
-    private _stderr = new TransformStream<ArrayBuffer, ArrayBuffer>();
-    private _stderrWriter = this._stderr.writable.getWriter();
-    public get stderr() { return this._stderr.readable; }
+    private _stderr: ReadableStream<ArrayBuffer>;
+    public get stderr() { return this._stderr; }
 
     private readonly _exit = new PromiseResolver<number>();
     public get exit() { return this._exit.promise; }
 
     public constructor(socket: AdbSocket) {
-        this._buffered = new AdbBufferedStream(socket);
-        this.readData();
-        this._socketWriter = socket.writable.getWriter();
-        this._stdin.readable.pipeTo(new WritableStream<ArrayBuffer>({
-            write: async (chunk) => {
-                await this._socketWriter.ready;
-                await this._socketWriter.write(chunk);
-            },
-            close() {
-                // TODO: Shell protocol: close stdin
-            },
-        }, {
-            highWaterMark: 16 * 1024,
-            size(chunk) { return chunk.byteLength; },
-        }));
-    }
+        this._socket = socket;
 
-    private async readData() {
-        while (true) {
-            try {
-                const packet = await AdbShellProtocolPacket.deserialize(this._buffered);
-                switch (packet.id) {
-                    case AdbShellProtocolId.Stdout:
-                        await this._stdoutWriter.ready;
-                        this._stdoutWriter.write(packet.data);
-                        break;
-                    case AdbShellProtocolId.Stderr:
-                        await this._stderrWriter.ready;
-                        this._stderrWriter.write(packet.data);
-                        break;
-                    case AdbShellProtocolId.Exit:
-                        this._stdoutWriter.close();
-                        this._stderrWriter.close();
-                        this._exit.resolve(new Uint8Array(packet.data)[0]!);
-                        break;
-                    case AdbShellProtocolId.CloseStdin:
-                    case AdbShellProtocolId.Stdin:
-                    case AdbShellProtocolId.WindowSizeChange:
-                        // These ids are client-to-server
-                        throw new Error('unreachable');
-                    default:
-                        assertUnreachable(packet.id);
+        // Check this image to help you understand the stream graph
+        // cspell: disable-next-line
+        // https://www.plantuml.com/plantuml/png/bL91QiCm4Bpx5SAdv90lb1JISmiw5XzaQKf5PIkiLZIqzEyLSg8ks13gYtOykpFhiOw93N6UGjVDqK7rZsxKqNw0U_NTgVAy4empOy2mm4_olC0VEVEE47GUpnGjKdgXoD76q4GIEpyFhOwP_m28hW0NNzxNUig1_JdW0bA7muFIJDco1daJ_1SAX9bgvoPJPyIkSekhNYctvIGXrCH6tIsPL5fs-s6J5yc9BpWXhKtNdF2LgVYPGM_6GlMwfhWUsIt4lbScANrwlgVVUifPSVi__t44qStnwPvZwobdSmHHlL57p2vFuHS0
+
+        const [stdout, stderr] = socket.readable
+            .pipeThrough(new StructDeserializeStream(AdbShellProtocolPacket))
+            .pipeThrough(new TransformStream({
+                transform: (chunk, controller) => {
+                    if (chunk.id === AdbShellProtocolId.Exit) {
+                        this._exit.resolve(new Uint8Array(chunk.data)[0]!);
+                        // We can let `StdoutTransformStream` to process `AdbShellProtocolId.Exit`,
+                        // but since we need this `TransformStream` to capture the exit code anyway,
+                        // terminating child streams here is killing two birds with one stone.
+                        controller.terminate();
+                        return;
+                    }
+                    controller.enqueue(chunk);
                 }
-            } catch {
-                return;
-            }
-        }
+            }))
+            .tee();
+        this._stdout = stdout
+            .pipeThrough(new StdoutDeserializeStream(AdbShellProtocolId.Stdout));
+        this._stderr = stderr
+            .pipeThrough(new StdoutDeserializeStream(AdbShellProtocolId.Stderr));
+
+        const multiplexer = new MultiplexTransformStream<AdbShellProtocolPacketInit>();
+        multiplexer.readable
+            .pipeThrough(new StructSerializeStream(AdbShellProtocolPacket))
+            .pipeTo(socket.writable);
+
+        this._stdin.readable
+            .pipeThrough(new StdinSerializeStream())
+            .pipeTo(multiplexer.createWriteable());
+
+        this._socketWriter = multiplexer.createWriteable().getWriter();
     }
 
     public async resize(rows: number, cols: number) {
-        await this._socketWriter.write(
-            AdbShellProtocolPacket.serialize(
-                {
-                    id: AdbShellProtocolId.WindowSizeChange,
-                    data: encodeUtf8(
-                        // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
-                        // However, according to https://linux.die.net/man/4/tty_ioctl
-                        // `x_pixels` and `y_pixels` are not used, so always pass `0` is fine.
-                        `${rows}x${cols},0x0\0`
-                    ),
-                }
-            )
-        );
+        await this._socketWriter.write({
+            id: AdbShellProtocolId.WindowSizeChange,
+            data: encodeUtf8(
+                // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
+                // However, according to https://linux.die.net/man/4/tty_ioctl
+                // `x_pixels` and `y_pixels` are not used, so always passing `0` is fine.
+                `${rows}x${cols},0x0\0`
+            ),
+        });
     }
 
     public kill() {
-        return this._buffered.close();
+        return this._socket.close();
     }
 }
