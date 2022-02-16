@@ -1,4 +1,3 @@
-import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
 import type { VideoStreamPacket } from "../../options";
 import type { H264Configuration, H264Decoder } from "../common";
 
@@ -7,9 +6,10 @@ function toHex(value: number) {
 }
 
 export class WebCodecsDecoder implements H264Decoder {
-    public readonly maxProfile = AndroidCodecProfile.High;
-
-    public readonly maxLevel = AndroidCodecLevel.Level5;
+    // Usually, browsers can decode most configurations,
+    // So let device choose best profile and level for itself.
+    public readonly maxProfile = undefined;
+    public readonly maxLevel = undefined;
 
     private _writable: WritableStream<VideoStreamPacket>;
     public get writable() { return this._writable; }
