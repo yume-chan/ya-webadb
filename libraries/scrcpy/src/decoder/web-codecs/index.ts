@@ -1,5 +1,4 @@
 import type { ValueOrPromise } from "@yume-chan/struct";
-import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
 import type { H264Decoder, H264EncodingInfo } from "../common";
 
 function toHex(value: number) {
@@ -7,9 +6,10 @@ function toHex(value: number) {
 }
 
 export class WebCodecsDecoder implements H264Decoder {
-    public readonly maxProfile = AndroidCodecProfile.High;
-
-    public readonly maxLevel = AndroidCodecLevel.Level5;
+    // Usually, browsers can decode most configurations,
+    // So let device choose best profile and level for itself.
+    public readonly maxProfile = undefined;
+    public readonly maxLevel = undefined;
 
     private _renderer: HTMLCanvasElement;
     public get renderer() { return this._renderer; }

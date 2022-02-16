@@ -20,9 +20,8 @@ export interface H264EncodingInfo {
 }
 
 export interface H264Decoder extends Disposable {
-    readonly maxProfile: AndroidCodecProfile;
-
-    readonly maxLevel: AndroidCodecLevel;
+    readonly maxProfile: AndroidCodecProfile | undefined;
+    readonly maxLevel: AndroidCodecLevel | undefined;
 
     readonly renderer: HTMLElement;
 
