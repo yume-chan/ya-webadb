@@ -1,7 +1,7 @@
 import { WritableStream } from "@yume-chan/adb";
 import { PromiseResolver } from "@yume-chan/async";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
-import type { H264Decoder, H264EncodingInfo } from '../common';
+import type { H264Configuration, H264Decoder } from '../common';
 import { createTinyH264Wrapper, TinyH264Wrapper } from "./wrapper";
 
 let cachedInitializePromise: Promise<{ YuvBuffer: typeof import('yuv-buffer'), YuvCanvas: typeof import('yuv-canvas').default; }> | undefined;
@@ -45,7 +45,7 @@ export class TinyH264Decoder implements H264Decoder {
         this._renderer = document.createElement('canvas');
     }
 
-    public async changeEncoding(size: H264EncodingInfo) {
+    public async configure(config: H264Configuration) {
         this.dispose();
 
         this._initializer = new PromiseResolver<TinyH264Wrapper>();
@@ -55,23 +55,23 @@ export class TinyH264Decoder implements H264Decoder {
             this._yuvCanvas = YuvCanvas.attach(this._renderer);;
         }
 
-        const { encodedWidth, encodedHeight } = size;
+        const { encodedWidth, encodedHeight } = config;
         const chromaWidth = encodedWidth / 2;
         const chromaHeight = encodedHeight / 2;
 
-        this._renderer.width = size.croppedWidth;
-        this._renderer.height = size.croppedHeight;
+        this._renderer.width = config.croppedWidth;
+        this._renderer.height = config.croppedHeight;
         const format = YuvBuffer.format({
             width: encodedWidth,
             height: encodedHeight,
             chromaWidth,
             chromaHeight,
-            cropLeft: size.cropLeft,
-            cropTop: size.cropTop,
-            cropWidth: size.croppedWidth,
-            cropHeight: size.croppedHeight,
-            displayWidth: size.croppedWidth,
-            displayHeight: size.croppedHeight,
+            cropLeft: config.cropLeft,
+            cropTop: config.cropTop,
+            cropWidth: config.croppedWidth,
+            cropHeight: config.croppedHeight,
+            displayWidth: config.croppedWidth,
+            displayHeight: config.croppedHeight,
         });
 
         const wrapper = await createTinyH264Wrapper();

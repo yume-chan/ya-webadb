@@ -4,7 +4,6 @@ import { AdbSocketController, AdbSocketInfo } from './controller';
 export class AdbSocket implements AdbSocketInfo {
     private readonly controller: AdbSocketController;
 
-    public get backend() { return this.controller.backend; }
     public get localId() { return this.controller.localId; }
     public get remoteId() { return this.controller.remoteId; }
     public get localCreated() { return this.controller.localCreated; }

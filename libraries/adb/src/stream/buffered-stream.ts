@@ -104,7 +104,6 @@ export class AdbBufferedStream
     implements AdbSocketInfo, StructAsyncDeserializeStream {
     protected readonly socket: AdbSocket;
 
-    public get backend() { return this.socket.backend; }
     public get localId() { return this.socket.localId; }
     public get remoteId() { return this.socket.remoteId; }
     public get localCreated() { return this.socket.localCreated; }

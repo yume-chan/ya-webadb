@@ -1,5 +1,4 @@
-import { AdbBackend, ReadableStream, TransformStream, WritableStream } from '@yume-chan/adb';
-import { EventEmitter } from '@yume-chan/event';
+import { AdbBackend, ReadableStream, ReadableWritablePair, TransformStream, WritableStream } from '@yume-chan/adb';
 
 declare global {
     interface TCPSocket {
@@ -30,20 +29,8 @@ declare global {
     }
 }
 
-export default class AdbDirectSocketsBackend implements AdbBackend {
-    public static isSupported(): boolean {
-        return typeof window !== 'undefined' && !!window.navigator?.openTCPSocket;
-    }
-
-    public readonly serial: string;
-
-    public readonly address: string;
-
-    public readonly port: number;
-
-    public name: string | undefined;
-
-    private socket: TCPSocket | undefined;
+export class AdbDirectSocketsBackendStreams implements ReadableWritablePair<ArrayBuffer, ArrayBuffer>{
+    private socket: TCPSocket;
 
     private _readableTransformStream = new TransformStream<Uint8Array, ArrayBuffer>({
         transform(chunk, controller) {
@@ -56,44 +43,43 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
         return this._readableTransformStream.readable;
     }
 
-    public get writable(): WritableStream<ArrayBuffer> | undefined {
-        return this.socket?.writable;
+    public get writable(): WritableStream<ArrayBuffer> {
+        return this.socket.writable;
     }
 
-    private _connected = false;
-    public get connected() { return this._connected; }
+    constructor(socket: TCPSocket) {
+        this.socket = socket;
+        this.socket.readable.pipeTo(this._readableTransformStream.writable);
+    }
+}
 
-    private readonly disconnectEvent = new EventEmitter<void>();
-    public readonly onDisconnected = this.disconnectEvent.event;
+export default class AdbDirectSocketsBackend implements AdbBackend {
+    public static isSupported(): boolean {
+        return typeof window !== 'undefined' && !!window.navigator?.openTCPSocket;
+    }
 
-    public constructor(address: string, port: number = 5555, name?: string) {
-        this.address = address;
+    public readonly serial: string;
+
+    public readonly host: string;
+
+    public readonly port: number;
+
+    public name: string | undefined;
+
+    public constructor(host: string, port: number = 5555, name?: string) {
+        this.host = host;
         this.port = port;
-        this.serial = `${address}:${port}`;
+        this.serial = `${host}:${port}`;
         this.name = name;
     }
 
     public async connect() {
         const socket = await navigator.openTCPSocket({
-            remoteAddress: this.address,
+            remoteAddress: this.host,
             remotePort: this.port,
             noDelay: true,
         });
 
-        this.socket = socket;
-        this.socket.readable
-            .pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
-                flush: () => {
-                    this.disconnectEvent.fire();
-                },
-            }))
-            .pipeTo(this._readableTransformStream.writable);
-
-        this._connected = true;
-    }
-
-    public dispose(): void | Promise<void> {
-        this.socket?.close();
-        this._connected = false;
+        return new AdbDirectSocketsBackendStreams(socket);
     }
 }

@@ -13074,13 +13074,20 @@ packages:
     dev: false
 
   file:projects/adb-backend-ws.tgz:
-    resolution: {integrity: sha512-FCm/eOTkUVJ+hsthYXzX2GrLsrapfStzJ/aXIjv/gRGG1sE9bxL1YOGyJl28K7PldM0oiLXW8zedvB7Ry57w9g==, tarball: file:projects/adb-backend-ws.tgz}
+    resolution: {integrity: sha512-68/Hp311ik7D+hvQyWS3p3SJah0w7ypo1ZFcPMtX+6W443UF2J+0qr6BHMwD/3kXvIvUI3nIeBvfuQFFpXwP0w==, tarball: file:projects/adb-backend-ws.tgz}
     name: '@rush-temp/adb-backend-ws'
     version: 0.0.0
     dependencies:
       '@yume-chan/async': 2.1.4
+      jest: 26.6.3
       tslib: 2.3.1
       typescript: 4.5.5
+    transitivePeerDependencies:
+      - bufferutil
+      - canvas
+      - supports-color
+      - ts-node
+      - utf-8-validate
     dev: false
 
   file:projects/adb-credential-web.tgz:
@@ -13094,7 +13101,7 @@ packages:
     dev: false
 
   file:projects/adb.tgz:
-    resolution: {integrity: sha512-g2UseeMAhatJMFHZFEzJLFPricrQdJeHKXH5KE9XBDIoNla+2aB5UlZRLC+a/WKIa+WBQBD6bWT/3Ydwm5iexA==, tarball: file:projects/adb.tgz}
+    resolution: {integrity: sha512-ERJiC9hMtOFRZhGBqQ76HXFVsjsGHajyWrPoHqOrAW4LqTdHf8jJueqhzPt6e9asmTuxcOynqz4MzbYnahcTtA==, tarball: file:projects/adb.tgz}
     name: '@rush-temp/adb'
     version: 0.0.0
     dependencies:

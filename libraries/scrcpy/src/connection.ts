@@ -29,17 +29,17 @@ export abstract class ScrcpyClientConnection implements Disposable {
 
     public initialize(): ValueOrPromise<void> { }
 
-    public abstract getStreams(): ValueOrPromise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream | undefined]>;
+    public abstract getStreams(): ValueOrPromise<[videoSteam: AdbBufferedStream, controlStream: AdbSocket | undefined]>;
 
     public dispose(): void { }
 }
 
 export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
-    private async connect(): Promise<AdbBufferedStream> {
-        return new AdbBufferedStream(await this.device.createSocket('localabstract:scrcpy'));
+    private async connect(): Promise<AdbSocket> {
+        return await this.device.createSocket('localabstract:scrcpy');
     }
 
-    private async connectAndRetry(): Promise<AdbBufferedStream> {
+    private async connectAndRetry(): Promise<AdbSocket> {
         for (let i = 0; i < 100; i++) {
             try {
                 return await this.connect();
@@ -51,7 +51,8 @@ export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
     }
 
     private async connectVideoStream(): Promise<AdbBufferedStream> {
-        const stream = await this.connectAndRetry();
+        const socket = await this.connectAndRetry();
+        const stream = new AdbBufferedStream(socket);
         if (this.options.sendDummyByte) {
             // server will write a `0` to signal connection success
             await stream.read(1);
@@ -59,9 +60,9 @@ export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
         return stream;
     }
 
-    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream | undefined]> {
+    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbSocket | undefined]> {
         const videoStream = await this.connectVideoStream();
-        let controlStream: AdbBufferedStream | undefined;
+        let controlStream: AdbSocket | undefined;
         if (this.options.control) {
             controlStream = await this.connectAndRetry();
         }
@@ -96,13 +97,13 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
         });
     }
 
-    private async accept(): Promise<AdbBufferedStream> {
-        return new AdbBufferedStream((await this.streams.read()).value!);
+    private async accept(): Promise<AdbSocket> {
+        return (await this.streams.read()).value!;
     }
 
-    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbBufferedStream | undefined]> {
-        const videoStream = await this.accept();
-        let controlStream: AdbBufferedStream | undefined;
+    public async getStreams(): Promise<[videoSteam: AdbBufferedStream, controlStream: AdbSocket | undefined]> {
+        const videoStream = new AdbBufferedStream(await this.accept());
+        let controlStream: AdbSocket | undefined;
         if (this.options.control) {
             controlStream = await this.accept();
         }

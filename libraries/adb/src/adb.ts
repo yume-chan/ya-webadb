@@ -2,11 +2,11 @@ import { PromiseResolver } from '@yume-chan/async';
 import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbCredentialStore, AdbDefaultAuthenticators } from './auth';
 import { AdbBackend } from './backend';
-import { AdbSubprocess, AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
+import { AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
-import { decodeUtf8, ReadableStream } from "./utils";
+import { decodeUtf8, ReadableStream, WritableStream } from "./utils";
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -16,16 +16,16 @@ export enum AdbPropKey {
 }
 
 export class Adb {
+    public static async connect(backend: AdbBackend, logger?: AdbLogger) {
+        const { readable, writable } = await backend.connect();
+        return new Adb(backend, readable, writable, logger);
+    }
+
     private readonly _backend: AdbBackend;
 
     public get backend(): AdbBackend { return this._backend; }
 
     private readonly packetDispatcher: AdbPacketDispatcher;
-
-    public get onDisconnected() { return this.backend.onDisconnected; }
-
-    private _connected = false;
-    public get connected() { return this._connected; }
 
     public get name() { return this.backend.name; }
 
@@ -49,28 +49,28 @@ export class Adb {
     public readonly reverse: AdbReverseCommand;
     public readonly tcpip: AdbTcpIpCommand;
 
-    public constructor(backend: AdbBackend, logger?: AdbLogger) {
+    public constructor(
+        backend: AdbBackend,
+        readable: ReadableStream<ArrayBuffer>,
+        writable: WritableStream<ArrayBuffer>,
+        logger?: AdbLogger
+    ) {
         this._backend = backend;
-        this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
+        this.packetDispatcher = new AdbPacketDispatcher(readable, writable, logger);
 
         this.subprocess = new AdbSubprocess(this);
         this.power = new AdbPower(this);
         this.reverse = new AdbReverseCommand(this.packetDispatcher);
         this.tcpip = new AdbTcpIpCommand(this);
-
-        backend.onDisconnected(this.dispose, this);
     }
 
-    public async connect(
+    public async authenticate(
         credentialStore: AdbCredentialStore,
         authenticators = AdbDefaultAuthenticators
     ): Promise<void> {
-        await this.backend.connect?.();
         this.packetDispatcher.maxPayloadSize = 0x1000;
-        // TODO: Adb: properly set `calculateChecksum`
-        // this.packetDispatcher.calculateChecksum = true;
+        this.packetDispatcher.calculateChecksum = true;
         this.packetDispatcher.appendNullToServiceString = true;
-        this.packetDispatcher.start();
 
         const version = 0x01000001;
         const versionNoChecksum = 0x01000001;
@@ -140,20 +140,17 @@ export class Adb {
             resolver.reject(e);
         }));
 
-        // Android prior 9.0.0 requires the null character
-        // Newer versions can also handle the null character
-        // The terminating `;` is required in formal definition
-        // But ADB daemon can also work without it
         await this.packetDispatcher.sendPacket(
             AdbCommand.Connect,
             version,
             maxPayloadSize,
-            `host::features=${features};\0`
+            // The terminating `;` is required in formal definition
+            // But ADB daemon can also work without it
+            `host::features=${features};`
         );
 
         try {
             await resolver.promise;
-            this._connected = true;
         } finally {
             disposableList.dispose();
         }
@@ -236,6 +233,5 @@ export class Adb {
 
     public async dispose(): Promise<void> {
         this.packetDispatcher.dispose();
-        await this.backend.dispose();
     }
 }

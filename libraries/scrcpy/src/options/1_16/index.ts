@@ -5,7 +5,7 @@ import { ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForw
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../../message";
 import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22";
-import { type ScrcpyOptionValue, toScrcpyOptionValue, VideoStreamPacket, type ScrcpyOptions } from "../common";
+import { toScrcpyOptionValue, type VideoStreamPacket, type ScrcpyOptions, type ScrcpyOptionValue } from "../common";
 import { parse_sequence_parameter_set } from "./sps";
 
 export enum ScrcpyLogLevel {
@@ -216,15 +216,12 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
     public async parseVideoStream(stream: AdbBufferedStream): Promise<VideoStreamPacket> {
         if (this.value.sendFrameMeta === false) {
             return {
-                videoData: await stream.read(1 * 1024 * 1024, true),
+                type: 'frame',
+                data: await stream.read(1 * 1024 * 1024, true),
             };
         }
 
         const { pts, data } = await VideoPacket.deserialize(stream);
-        if (!data || data.byteLength === 0) {
-            return {};
-        }
-
         if (pts === NoPts) {
             const sequenceParameterSet = parse_sequence_parameter_set(data.slice(0));
 
@@ -253,7 +250,8 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
 
             this._streamHeader = data;
             return {
-                encodingInfo: {
+                type: 'configuration',
+                data: {
                     profileIndex,
                     constraintSet,
                     levelIndex,
@@ -269,18 +267,20 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
             };
         }
 
-        let array: Uint8Array;
+        let frameData: ArrayBuffer;
         if (this._streamHeader) {
-            array = new Uint8Array(this._streamHeader.byteLength + data!.byteLength);
+            frameData = new ArrayBuffer(this._streamHeader.byteLength + data.byteLength);
+            const array = new Uint8Array(frameData);
             array.set(new Uint8Array(this._streamHeader));
             array.set(new Uint8Array(data!), this._streamHeader.byteLength);
             this._streamHeader = undefined;
         } else {
-            array = new Uint8Array(data!);
+            frameData = data;
         }
 
         return {
-            videoData: array.buffer,
+            type: 'frame',
+            data: frameData,
         };
     }
 

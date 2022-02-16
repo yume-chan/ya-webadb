@@ -1,14 +1,10 @@
 import { AutoDisposable } from '@yume-chan/event';
-import { AdbBackend } from '../backend';
 import { AdbCommand } from '../packet';
 import { AutoResetEvent, chunkArrayLike, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../utils';
 import { AdbPacketDispatcher } from './dispatcher';
 
 export interface AdbSocketInfo {
-    backend: AdbBackend;
-
     localId: number;
-
     remoteId: number;
 
     localCreated: boolean;
@@ -35,7 +31,6 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
     private readonly writeLock = this.addDisposable(new AutoResetEvent());
 
     private readonly dispatcher!: AdbPacketDispatcher;
-    public get backend() { return this.dispatcher.backend; }
 
     public readonly localId!: number;
     public readonly remoteId!: number;

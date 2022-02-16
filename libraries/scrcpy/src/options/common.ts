@@ -1,6 +1,6 @@
 import type { Adb, AdbBufferedStream } from "@yume-chan/adb";
 import type { ScrcpyClientConnection } from "../connection";
-import type { H264EncodingInfo } from "../decoder";
+import type { H264Configuration } from "../decoder";
 import type { ScrcpyBackOrScreenOnEvent1_18 } from "./1_18";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22";
 
@@ -28,11 +28,17 @@ export function toScrcpyOptionValue<T>(value: any, empty: T): string | T {
     return `${value}`;
 }
 
-export interface VideoStreamPacket {
-    encodingInfo?: H264EncodingInfo | undefined;
-
-    videoData?: ArrayBuffer | undefined;
+export interface VideoStreamConfigurationPacket {
+    type: 'configuration';
+    data: H264Configuration;
 }
+
+export interface VideoStreamFramePacket {
+    type: 'frame';
+    data: ArrayBuffer;
+}
+
+export type VideoStreamPacket = VideoStreamConfigurationPacket | VideoStreamFramePacket;
 
 export interface ScrcpyOptions<T> {
     value: Partial<T>;

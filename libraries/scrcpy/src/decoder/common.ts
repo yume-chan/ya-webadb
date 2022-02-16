@@ -1,8 +1,8 @@
-import type { Disposable } from "@yume-chan/event";
 import type { WritableStream } from '@yume-chan/adb';
+import type { Disposable } from "@yume-chan/event";
 import type { AndroidCodecLevel, AndroidCodecProfile } from "../codec";
 
-export interface H264EncodingInfo {
+export interface H264Configuration {
     profileIndex: number;
     constraintSet: number;
     levelIndex: number;
@@ -29,7 +29,7 @@ export interface H264Decoder extends Disposable {
 
     readonly writable: WritableStream<ArrayBuffer>;
 
-    changeEncoding(size: H264EncodingInfo): void;
+    configure(config: H264Configuration): void;
 }
 
 export interface H264DecoderConstructor {

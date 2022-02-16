@@ -1,6 +1,6 @@
-import { Adb } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 import Struct from "@yume-chan/struct";
-import { ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";
+import { type ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";
 import { ScrcpyInjectScrollControlMessage1_16 } from "./1_16";
 import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from "./1_21";
 

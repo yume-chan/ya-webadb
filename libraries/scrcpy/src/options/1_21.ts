@@ -1,6 +1,6 @@
 // cspell: ignore autosync
 
-import { ScrcpyOptions1_18, ScrcpyOptionsInit1_18 } from './1_18';
+import { ScrcpyOptions1_18, type ScrcpyOptionsInit1_18 } from './1_18';
 import { toScrcpyOptionValue } from "./common";
 
 export interface ScrcpyOptionsInit1_21 extends ScrcpyOptionsInit1_18 {
