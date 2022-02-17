@@ -1,5 +1,4 @@
 import { AdbBackend, ReadableStream, WritableStream } from '@yume-chan/adb';
-import { PromiseResolver } from '@yume-chan/async';
 
 export default class AdbWsBackend implements AdbBackend {
     public readonly serial: string;
@@ -15,12 +14,12 @@ export default class AdbWsBackend implements AdbBackend {
         const socket = new WebSocket(this.serial);
         socket.binaryType = "arraybuffer";
 
-        const resolver = new PromiseResolver();
-        socket.onopen = resolver.resolve;
-        socket.onerror = () => {
-            resolver.reject(new Error('WebSocket connect failed'));
-        };
-        await resolver.promise;
+        await new Promise((resolve, reject) => {
+            socket.onopen = resolve;
+            socket.onerror = () => {
+                reject(new Error('WebSocket connect failed'));
+            };
+        });
 
         const readable = new ReadableStream({
             start: (controller) => {

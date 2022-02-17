@@ -3,7 +3,7 @@ import { FileIconType } from "@fluentui/react-file-type-icons";
 import { getFileTypeIconNameFromExtensionOrType } from '@fluentui/react-file-type-icons/lib-commonjs/getFileTypeIconProps';
 import { DEFAULT_BASE_URL as FILE_TYPE_ICONS_BASE_URL } from '@fluentui/react-file-type-icons/lib-commonjs/initializeFileTypeIcons';
 import { useConst } from '@fluentui/react-hooks';
-import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume-chan/adb';
+import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, LinuxFileType } from '@yume-chan/adb';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -15,6 +15,23 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { CommandBar, NoSsr } from '../components';
 import { globalState } from '../state';
 import { asyncEffect, chunkFile, formatSize, formatSpeed, Icons, pickFile, RouteStackProps } from '../utils';
+
+/**
+ * Because of internal buffer of upstream/downstream streams,
+ * the progress value won't be 100% accurate. But it's usually good enough.
+ */
+export class ProgressStream extends TransformStream<ArrayBuffer, ArrayBuffer> {
+    public constructor(onProgress: (value: number) => void) {
+        let progress = 0;
+        super({
+            transform(chunk, controller) {
+                progress += chunk.byteLength;
+                onProgress(progress);
+                controller.enqueue(chunk);
+            }
+        });
+    }
+}
 
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
@@ -169,7 +186,7 @@ class FileManagerState {
                                 const sync = await globalState.device!.sync();
                                 try {
                                     const itemPath = path.resolve(this.path, this.selectedItems[0].name!);
-                                    const readableStream = createReadableStreamFromBufferIterator(sync.read(itemPath));
+                                    const readableStream = sync.read(itemPath);
 
                                     const writeableStream = StreamSaver!.createWriteStream(this.selectedItems[0].name!, {
                                         size: this.selectedItems[0].size,
@@ -473,15 +490,17 @@ class FileManagerState {
             }), 1000);
 
             try {
-                await sync.write(
+                const writable = sync.write(
                     itemPath,
-                    chunkFile(file, AdbSyncMaxPacketSize),
+                    chunkFile(file, ADB_SYNC_MAX_PACKET_SIZE),
                     (LinuxFileType.File << 12) | 0o666,
                     file.lastModified / 1000,
                     action((uploaded) => {
                         this.uploadedSize = uploaded;
                     }),
                 );
+                const readable: ReadableStream<ArrayBuffer> = file.stream();
+                readable.pipeThrough();
                 runInAction(() => {
                     this.uploadSpeed = this.uploadedSize - this.debouncedUploadedSize;
                     this.debouncedUploadedSize = this.uploadedSize;

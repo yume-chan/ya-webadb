@@ -35,7 +35,6 @@
     },
     "dependencies": {
         "@yume-chan/adb": "^0.0.10",
-        "@yume-chan/event": "^0.0.10",
         "tslib": "^2.3.1"
     }
 }

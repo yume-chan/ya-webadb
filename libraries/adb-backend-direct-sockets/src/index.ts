@@ -1,5 +1,20 @@
 import { AdbBackend, ReadableStream, ReadableWritablePair, TransformStream, WritableStream } from '@yume-chan/adb';
 
+/**
+ * Transform an `ArrayBufferView` stream to an `ArrayBuffer` stream.
+ *
+ * The view must wrap the whole buffer (`byteOffset === 0` && `byteLength === buffer.byteLength`).
+ */
+export class ExtractViewBufferStream extends TransformStream<ArrayBufferView, ArrayBuffer>{
+    constructor() {
+        super({
+            transform(chunk, controller) {
+                controller.enqueue(chunk.buffer);
+            }
+        });
+    }
+}
+
 declare global {
     interface TCPSocket {
         close(): Promise<void>;
@@ -32,13 +47,7 @@ declare global {
 export class AdbDirectSocketsBackendStreams implements ReadableWritablePair<ArrayBuffer, ArrayBuffer>{
     private socket: TCPSocket;
 
-    private _readableTransformStream = new TransformStream<Uint8Array, ArrayBuffer>({
-        transform(chunk, controller) {
-            // Although spec didn't say,
-            // the chunk always has `byteOffset` of 0 and `byteLength` same as its buffer
-            controller.enqueue(chunk.buffer);
-        },
-    });
+    private _readableTransformStream: ExtractViewBufferStream;
     public get readable(): ReadableStream<ArrayBuffer> {
         return this._readableTransformStream.readable;
     }
@@ -49,6 +58,10 @@ export class AdbDirectSocketsBackendStreams implements ReadableWritablePair<Arra
 
     constructor(socket: TCPSocket) {
         this.socket = socket;
+
+        // Although Direct Sockets spec didn't say,
+        // WebTransport spec and File spec all have the `Uint8Array` wraps the while `ArrayBuffer`.
+        this._readableTransformStream = new ExtractViewBufferStream();
         this.socket.readable.pipeTo(this._readableTransformStream.writable);
     }
 }

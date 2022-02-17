@@ -3,32 +3,11 @@ import { Adb } from '../../adb';
 import { AdbFeatures } from '../../features';
 import { AdbSocket } from '../../socket';
 import { AdbBufferedStream } from '../../stream';
-import { AutoResetEvent, QueuingStrategy, ReadableStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../../utils';
+import { AutoResetEvent, ReadableStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../../utils';
 import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';
 import { adbSyncPull } from './pull';
 import { adbSyncPush } from './push';
 import { adbSyncLstat, adbSyncStat } from './stat';
-
-class GuardedStream<T> extends TransformStream<T, T>{
-    constructor(
-        lock: AutoResetEvent,
-        writableStrategy?: QueuingStrategy<T>,
-        readableStrategy?: QueuingStrategy<T>
-    ) {
-        super(
-            {
-                start() {
-                    return lock.wait();
-                },
-                flush() {
-                    lock.notify();
-                },
-            },
-            writableStrategy,
-            readableStrategy
-        );
-    }
-}
 
 export class AdbSync extends AutoDisposable {
     protected adb: Adb;
@@ -104,17 +83,47 @@ export class AdbSync extends AutoDisposable {
         return results;
     }
 
-    public read(filename: string): ReadableStream<ArrayBuffer> {
+    /**
+     * Read the content of a file on device.
+     *
+     * @param filename The full path of the file on device to read.
+     * @returns
+     * A promise that resolves to a `ReadableStream`.
+     *
+     * If the promise doesn't resolve immediately, it means the sync object is busy processing another command.
+     */
+    public async read(filename: string): Promise<ReadableStream<ArrayBuffer>> {
+        await this.sendLock.wait();
+
         const readable = adbSyncPull(this.stream, this.writer, filename);
-        return readable.pipeThrough(new GuardedStream(this.sendLock));
+
+        const lockStream = new TransformStream<ArrayBuffer, ArrayBuffer>();
+        readable
+            .pipeTo(lockStream.writable)
+            .then(() => {
+                this.sendLock.notify();
+            });
+
+        return lockStream.readable;
     }
 
-    public write(
+    /**
+     * Write (or overwrite) a file on device.
+     *
+     * @param filename The full path of the file on device to write.
+     * @param mode The unix permissions of the file.
+     * @param mtime The modified time of the file.
+     * @returns
+     * A promise that resolves to a `WritableStream`.
+     *
+     * If the promise doesn't resolve immediately, it means the sync object is busy processing another command.
+     */
+    public async write(
         filename: string,
         mode?: number,
         mtime?: number,
-    ): WritableStream<ArrayBuffer> {
-        const lockStream = new GuardedStream<ArrayBuffer>(this.sendLock);
+    ): Promise<WritableStream<ArrayBuffer>> {
+        await this.sendLock.wait();
 
         const writable = adbSyncPush(
             this.stream,
@@ -123,14 +132,22 @@ export class AdbSync extends AutoDisposable {
             mode,
             mtime,
         );
-        lockStream.readable.pipeTo(writable);
+
+        const lockStream = new TransformStream<ArrayBuffer, ArrayBuffer>();
+        // `lockStream`'s `flush` will be invoked before `writable` fully closes,
+        // but `lockStream.readable.pipeTo` will wait for `writable` to close.
+        lockStream.readable
+            .pipeTo(writable)
+            .then(() => {
+                this.sendLock.notify();
+            });
 
         return lockStream.writable;
     }
 
-    public override dispose() {
+    public override async dispose() {
         super.dispose();
         this.stream.close();
-        this.writer.close();
+        await this.writer.close();
     }
 }

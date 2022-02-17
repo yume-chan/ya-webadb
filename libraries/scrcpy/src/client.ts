@@ -1,9 +1,9 @@
-import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSocket, AdbSubprocessProtocol, DecodeUtf8Stream, ReadableStream, TransformStream, WritableStreamDefaultWriter } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSocket, AdbSubprocessProtocol, DecodeUtf8Stream, TransformStream, WritableStreamDefaultWriter } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message';
 import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions, VideoStreamPacket } from "./options";
-import { pushServer, PushServerOptions } from "./push-server";
+import { PushServerOptions, pushServerStream } from "./push-server";
 
 function* splitLines(text: string): Generator<string, void, void> {
     let start = 0;
@@ -27,12 +27,11 @@ const ClipboardMessage =
         .string('content', { lengthField: 'length' });
 
 export class ScrcpyClient {
-    public static pushServer(
+    public static pushServerStream(
         device: Adb,
-        file: ReadableStream<ArrayBuffer>,
         options?: PushServerOptions
     ) {
-        pushServer(device, file, options);
+        return pushServerStream(device, options);
     }
 
     public static async getEncoders(
@@ -128,7 +127,7 @@ export class ScrcpyClient {
     public get screenHeight() { return this._screenHeight; }
 
     private _videoStream: TransformStream<VideoStreamPacket, VideoStreamPacket>;
-    public get videoStream() { return this._videoStream; }
+    public get videoStream() { return this._videoStream.readable; }
 
     private _controlStreamWriter: WritableStreamDefaultWriter<ArrayBuffer> | undefined;
 

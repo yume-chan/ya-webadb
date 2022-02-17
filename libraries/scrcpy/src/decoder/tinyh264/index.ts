@@ -1,8 +1,9 @@
 import { WritableStream } from "@yume-chan/adb";
 import { PromiseResolver } from "@yume-chan/async";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
+import type { VideoStreamPacket } from "../../options";
 import type { H264Configuration, H264Decoder } from '../common';
-import { createTinyH264Wrapper, TinyH264Wrapper } from "./wrapper";
+import { createTinyH264Wrapper, type TinyH264Wrapper } from "./wrapper";
 
 let cachedInitializePromise: Promise<{ YuvBuffer: typeof import('yuv-buffer'), YuvCanvas: typeof import('yuv-canvas').default; }> | undefined;
 function initialize() {
@@ -25,16 +26,7 @@ export class TinyH264Decoder implements H264Decoder {
     private _renderer: HTMLCanvasElement;
     public get renderer() { return this._renderer; }
 
-    private _writable = new WritableStream<ArrayBuffer>({
-        write: async (chunk) => {
-            if (!this._initializer) {
-                throw new Error('Decoder not initialized');
-            }
-
-            const wrapper = await this._initializer.promise;
-            wrapper.feed(chunk);
-        }
-    });
+    private _writable: WritableStream<VideoStreamPacket>;
     public get writable() { return this._writable; }
 
     private _yuvCanvas: import('yuv-canvas').default | undefined;
@@ -42,10 +34,29 @@ export class TinyH264Decoder implements H264Decoder {
 
     public constructor() {
         initialize();
+
         this._renderer = document.createElement('canvas');
+
+        this._writable = new WritableStream({
+            write: async (packet) => {
+                switch (packet.type) {
+                    case 'configuration':
+                        this.configure(packet.data);
+                        break;
+                    case 'frame':
+                        if (!this._initializer) {
+                            throw new Error('Decoder not initialized');
+                        }
+
+                        const wrapper = await this._initializer.promise;
+                        wrapper.feed(packet.data);
+                        break;
+                }
+            }
+        });
     }
 
-    public async configure(config: H264Configuration) {
+    private async configure(config: H264Configuration) {
         this.dispose();
 
         this._initializer = new PromiseResolver<TinyH264Wrapper>();

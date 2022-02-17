@@ -1,7 +1,8 @@
 import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
+import { TransformStream } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_22, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
+import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServerStream, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_22, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -406,11 +407,9 @@ class ScrcpyPageState {
             }), 1000);
 
             try {
-                await pushServer(globalState.device, serverBuffer, {
-                    onProgress: action((progress) => {
-                        this.serverUploadedSize = progress;
-                    }),
-                });
+                const writable = await pushServerStream(globalState.device);
+                // TODO: Scrcpy: push server
+
                 runInAction(() => {
                     this.serverUploadSpeed = this.serverUploadedSize - this.debouncedServerUploadedSize;
                     this.debouncedServerUploadedSize = this.serverUploadedSize;
@@ -441,36 +440,13 @@ class ScrcpyPageState {
 
             // Run scrcpy once will delete the server file
             // Re-push it
-            await pushServer(globalState.device, serverBuffer);
+            const writable = await pushServerStream(globalState.device);
+            // TODO: Scrcpy: push server
 
             const factory = this.selectedDecoder.factory;
             const decoder = new factory();
             runInAction(() => {
                 this.decoder = decoder;
-            });
-
-            const client = new ScrcpyClient(globalState.device);
-            runInAction(() => this.log = []);
-            client.onOutput(action(line => this.log.push(line)));
-            client.onClose(this.stop);
-
-            client.onEncodingChanged(action((encoding) => {
-                const { croppedWidth, croppedHeight, } = encoding;
-
-                this.log.push(`[client] Video size changed: ${croppedWidth}x${croppedHeight}`);
-
-                this.width = croppedWidth;
-                this.height = croppedHeight;
-
-                decoder.changeEncoding(encoding);
-            }));
-
-            client.onVideoData((data) => {
-                decoder.feedData(data);
-            });
-
-            client.onClipboardChange(content => {
-                window.navigator.clipboard.writeText(content);
             });
 
             const options = new ScrcpyOptions1_22({
@@ -489,15 +465,42 @@ class ScrcpyPageState {
             });
 
             runInAction(() => {
+                this.log = [];
                 this.log.push(`[client] Server version: ${SCRCPY_SERVER_VERSION}`);
                 this.log.push(`[client] Server arguments: ${options.formatServerArguments().join(' ')}`);
             });
 
-            await client.start(
+            const client = await ScrcpyClient.start(
+                globalState.device,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                options,
+                options
             );
+
+            client.stdout.pipeTo(new WritableStream({
+                write: (line) => {
+                    this.log.push(line);
+                }
+            }));
+
+            client.close().then(() => this.stop());
+
+            client.videoStream.pipeThrough(new TransformStream({
+                transform: (chunk, controller) => {
+                    if (chunk.type === 'configuration') {
+                        const { croppedWidth, croppedHeight, } = chunk.data;
+                        this.log.push(`[client] Video size changed: ${croppedWidth}x${croppedHeight}`);
+
+                        this.width = croppedWidth;
+                        this.height = croppedHeight;
+                    }
+                    controller.enqueue(chunk);
+                }
+            })).pipeTo(decoder.writable);
+
+            client.onClipboardChange(content => {
+                window.navigator.clipboard.writeText(content);
+            });
 
             runInAction(() => {
                 this.client = client;

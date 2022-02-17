@@ -53,7 +53,7 @@ const Shell: NextPage = (): JSX.Element | null => {
 
                 try {
                     connectingRef.current = true;
-                    const socket = await globalState.device.childProcess.shell();
+                    const socket = await globalState.device.subprocess.shell();
                     terminal.socket = socket;
                 } catch (e) {
                     globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);

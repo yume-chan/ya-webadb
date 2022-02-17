@@ -1,6 +1,6 @@
 // cspell: ignore scrollback
 
-import { AdbShell, encodeUtf8 } from "@yume-chan/adb";
+import { AdbSubprocessProtocol, encodeUtf8 } from "@yume-chan/adb";
 import { AutoDisposable } from "@yume-chan/event";
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -18,29 +18,43 @@ export class AdbTerminal extends AutoDisposable {
 
     private readonly fitAddon = new FitAddon();
 
-    private _shell: AdbShell | undefined;
-    public get socket() { return this._shell; }
+    private _socket: AdbSubprocessProtocol | undefined;
+    private _socketAbortController: AbortController | undefined;
+    public get socket() { return this._socket; }
     public set socket(value) {
-        if (this._shell) {
+        if (this._socket) {
             // Remove event listeners
             this.dispose();
+            this._socketAbortController?.abort();
         }
 
-        this._shell = value;
+        this._socket = value;
 
         if (value) {
             this.terminal.clear();
             this.terminal.reset();
 
-            this.addDisposable(value.onStdout(data => {
-                this.terminal.write(new Uint8Array(data));
-            }));
-            this.addDisposable(value.onStderr(data => {
-                this.terminal.write(new Uint8Array(data));
-            }));
+            this._socketAbortController = new AbortController();
+
+            value.stdout.pipeTo(new WritableStream({
+                write: (chunk) => {
+                    this.terminal.write(new Uint8Array(chunk));
+                },
+            }), {
+                signal: this._socketAbortController.signal,
+            });
+            value.stderr.pipeTo(new WritableStream({
+                write: (chunk) => {
+                    this.terminal.write(new Uint8Array(chunk));
+                },
+            }), {
+                signal: this._socketAbortController.signal,
+            });
+
+            const _writer = value.stdin.getWriter();
             this.addDisposable(this.terminal.onData(data => {
                 const buffer = encodeUtf8(data);
-                value.write(buffer);
+                _writer.write(buffer);
             }));
 
             this.fit();
@@ -77,6 +91,6 @@ export class AdbTerminal extends AutoDisposable {
         this.fitAddon.fit();
         // Resize remote terminal
         const { rows, cols } = this.terminal;
-        this._shell?.resize(rows, cols);
+        this._socket?.resize(rows, cols);
     }
 }

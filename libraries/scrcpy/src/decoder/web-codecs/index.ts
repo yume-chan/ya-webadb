@@ -1,5 +1,5 @@
-import type { ValueOrPromise } from "@yume-chan/struct";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
+import type { VideoStreamPacket } from "../../options";
 import type { H264Configuration, H264Decoder } from "../common";
 
 function toHex(value: number) {
@@ -11,15 +11,7 @@ export class WebCodecsDecoder implements H264Decoder {
 
     public readonly maxLevel = AndroidCodecLevel.Level5;
 
-    private _writable = new WritableStream<ArrayBuffer>({
-        write: async (chunk) => {
-            this.decoder.decode(new EncodedVideoChunk({
-                type: 'key',
-                timestamp: 0,
-                data: chunk,
-            }));
-        }
-    });
+    private _writable: WritableStream<VideoStreamPacket>;
     public get writable() { return this._writable; }
 
     private _renderer: HTMLCanvasElement;
@@ -39,9 +31,26 @@ export class WebCodecsDecoder implements H264Decoder {
             },
             error() { },
         });
+
+        this._writable = new WritableStream({
+            write: async (packet) => {
+                switch (packet.type) {
+                    case 'configuration':
+                        this.configure(packet.data);
+                        break;
+                    case 'frame':
+                        this.decoder.decode(new EncodedVideoChunk({
+                            type: 'key',
+                            timestamp: 0,
+                            data: packet.data,
+                        }));
+                        break;
+                }
+            }
+        });
     }
 
-    public configure(config: H264Configuration): ValueOrPromise<void> {
+    private configure(config: H264Configuration) {
         const { profileIndex, constraintSet, levelIndex } = config;
 
         this._renderer.width = config.croppedWidth;
@@ -54,14 +63,6 @@ export class WebCodecsDecoder implements H264Decoder {
             codec: codec,
             optimizeForLatency: true,
         });
-    }
-
-    feedData(data: ArrayBuffer): ValueOrPromise<void> {
-        this.decoder.decode(new EncodedVideoChunk({
-            type: 'key',
-            timestamp: 0,
-            data,
-        }));
     }
 
     public dispose() {
