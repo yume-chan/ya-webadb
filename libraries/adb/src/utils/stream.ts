@@ -334,7 +334,7 @@ try {
             WritableStreamDefaultController,
             WritableStreamDefaultWriter,
             // @ts-expect-error
-        } = await import('stream/web'));
+        } = await import(/* webpackIgnore: true */ 'stream/web'));
     }
 
     if (!(Symbol.asyncIterator in ReadableStream.prototype)) {

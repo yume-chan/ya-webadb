@@ -119,7 +119,7 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
             this.writeChunkLock.dispose();
 
             await this.dispatcher.sendPacket(AdbCommand.Close, this.localId, this.remoteId);
-            this._passthrough.writable.close();
+            this._passthroughWriter.close();
             this.writable.close();
         }
     }

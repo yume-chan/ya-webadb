@@ -205,8 +205,8 @@ export class Adb {
         return stdout;
     }
 
-    public async install(apk: ReadableStream<ArrayBuffer>): Promise<void> {
-        return await install(this, apk);
+    public install() {
+        return install(this);
     }
 
     public async sync(): Promise<AdbSync> {

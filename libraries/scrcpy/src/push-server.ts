@@ -1,4 +1,4 @@
-import { Adb, TransformStream } from "@yume-chan/adb";
+import { Adb, AdbSync, WritableStream, WritableStreamDefaultWriter } from "@yume-chan/adb";
 import { DEFAULT_SERVER_PATH } from "./options";
 
 export interface PushServerOptions {
@@ -9,21 +9,28 @@ export async function pushServerStream(
     device: Adb,
     options: PushServerOptions = {}
 ) {
-    const {
-        path = DEFAULT_SERVER_PATH,
-    } = options;
+    const { path = DEFAULT_SERVER_PATH } = options;
 
-    const sync = await device.sync();
-    const writable = sync.write(path);
-
-    const lockStream = new TransformStream<ArrayBuffer, ArrayBuffer>();
-    // Same as inside AdbSync,
-    // can only use `pipeTo` to detect the writable is fully closed.
-    lockStream.readable
-        .pipeTo(writable)
-        .then(() => {
+    let sync!: AdbSync;
+    let writable!: WritableStream<ArrayBuffer>;
+    let writer!: WritableStreamDefaultWriter<ArrayBuffer>;
+    return new WritableStream<ArrayBuffer>({
+        async start() {
+            sync = await device.sync();
+            writable = sync.write(path);
+            writer = writable.getWriter();
+        },
+        async write(chunk: ArrayBuffer) {
+            await writer.ready;
+            await writer.write(chunk);
+        },
+        async abort(e) {
+            await writer.abort(e);
             sync.dispose();
-        });
-
-    return lockStream.writable;
+        },
+        async close() {
+            await writer.close();
+            await sync.dispose();
+        },
+    });
 }

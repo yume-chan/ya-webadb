@@ -94,8 +94,8 @@ function _Connect(): JSX.Element | null {
     }, []);
 
     const addTcpBackend = useCallback(() => {
-        const address = window.prompt('Enter the address of device');
-        if (!address) {
+        const host = window.prompt('Enter the address of device');
+        if (!host) {
             return;
         }
 
@@ -108,8 +108,18 @@ function _Connect(): JSX.Element | null {
 
         setTcpBackendList(list => {
             const copy = list.slice();
-            copy.push(new AdbDirectSocketsBackend(address, portNumber));
-            window.localStorage.setItem('tcp-backend-list', JSON.stringify(copy.map(x => ({ address: x.address, port: x.port }))));
+            copy.push(new AdbDirectSocketsBackend(host, portNumber));
+            window.localStorage.setItem(
+                'tcp-backend-list',
+                JSON.stringify(
+                    copy.map(
+                        x => ({
+                            address: x.host,
+                            port: x.port
+                        })
+                    )
+                )
+            );
             return copy;
         });
     }, []);
@@ -130,13 +140,14 @@ function _Connect(): JSX.Element | null {
     const connect = useCallback(async () => {
         try {
             if (selectedBackend) {
-                const device = new Adb(selectedBackend, logger.logger);
+                let device: Adb | undefined;
                 try {
                     setConnecting(true);
-                    await device.connect(CredentialStore);
+                    device = await Adb.connect(selectedBackend, logger.logger);
+                    await device.authenticate(CredentialStore);
                     globalState.setDevice(device);
                 } catch (e) {
-                    device.dispose();
+                    device?.dispose();
                     throw e;
                 }
             }

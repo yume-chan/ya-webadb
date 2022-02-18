@@ -3,7 +3,7 @@ import { Adb } from '../../adb';
 import { AdbFeatures } from '../../features';
 import { AdbSocket } from '../../socket';
 import { AdbBufferedStream } from '../../stream';
-import { AutoResetEvent, ReadableStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../../utils';
+import { AutoResetEvent, HookWritableStream, ReadableStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../../utils';
 import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';
 import { adbSyncPull } from './pull';
 import { adbSyncPush } from './push';
@@ -118,31 +118,29 @@ export class AdbSync extends AutoDisposable {
      *
      * If the promise doesn't resolve immediately, it means the sync object is busy processing another command.
      */
-    public async write(
+    public write(
         filename: string,
         mode?: number,
         mtime?: number,
-    ): Promise<WritableStream<ArrayBuffer>> {
-        await this.sendLock.wait();
-
-        const writable = adbSyncPush(
-            this.stream,
-            this.writer,
-            filename,
-            mode,
-            mtime,
-        );
-
-        const lockStream = new TransformStream<ArrayBuffer, ArrayBuffer>();
-        // `lockStream`'s `flush` will be invoked before `writable` fully closes,
-        // but `lockStream.readable.pipeTo` will wait for `writable` to close.
-        lockStream.readable
-            .pipeTo(writable)
-            .then(() => {
+    ): WritableStream<ArrayBuffer> {
+        return new HookWritableStream({
+            start: async () => {
+                await this.sendLock.wait();
+                return {
+                    writable: adbSyncPush(
+                        this.stream,
+                        this.writer,
+                        filename,
+                        mode,
+                        mtime,
+                    ),
+                    state: {},
+                };
+            },
+            close: async () => {
                 this.sendLock.notify();
-            });
-
-        return lockStream.writable;
+            }
+        });
     }
 
     public override async dispose() {

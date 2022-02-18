@@ -17,9 +17,6 @@ export class GlobalState {
 
     setDevice(device: Adb | undefined) {
         this.device = device;
-        device?.onDisconnected(() => {
-            this.setDevice(undefined);
-        });
     }
 
     showErrorDialog(message: string) {

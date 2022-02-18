@@ -1,22 +1,32 @@
 import { Adb } from "../adb";
-import { ReadableStream } from "../utils";
+import { HookWritableStream, WritableStream } from "../utils";
 import { escapeArg } from "./subprocess";
+import { AdbSync } from "./sync";
 
-export async function install(
+export function install(
     adb: Adb,
-    apk: ReadableStream<ArrayBuffer>,
-): Promise<void> {
+): WritableStream<ArrayBuffer> {
     const filename = `/data/local/tmp/${Math.random().toString().substring(2)}.apk`;
 
-    // Upload apk file to tmp folder
-    const sync = await adb.sync();
-    const writable = sync.write(filename, undefined, undefined);
-    await apk.pipeTo(writable);
-    sync.dispose();
+    return new HookWritableStream<ArrayBuffer, WritableStream<ArrayBuffer>, AdbSync>({
+        async start() {
+            // Upload apk file to tmp folder
+            const sync = await adb.sync();
+            const writable = sync.write(filename, undefined, undefined);
 
-    // Invoke `pm install` to install it
-    await adb.subprocess.spawnAndWaitLegacy(['pm', 'install', escapeArg(filename)]);
+            return {
+                writable,
+                state: sync,
+            };
+        },
+        async close(sync) {
+            sync.dispose();
 
-    // Remove the temp file
-    await adb.rm(filename);
+            // Invoke `pm install` to install it
+            await adb.subprocess.spawnAndWaitLegacy(['pm', 'install', escapeArg(filename)]);
+
+            // Remove the temp file
+            await adb.rm(filename);
+        }
+    });
 }
