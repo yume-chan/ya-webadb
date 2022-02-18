@@ -37,7 +37,9 @@ export class ProgressStream extends TransformStream<ArrayBuffer, ArrayBuffer> {
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
     const { publicRuntimeConfig } = getConfig();
-    StreamSaver = require('streamsaver');
+    // Can't use `import` here because ESM is read-only (can't set `mitm` field)
+    // Add `await` here because top-level await is on, so every import can be a `Promise`
+    StreamSaver = await require('streamsaver');
     StreamSaver.mitm = publicRuntimeConfig.basePath + '/StreamSaver/mitm.html';
 }
 
@@ -186,13 +188,21 @@ class FileManagerState {
                             (async () => {
                                 const sync = await globalState.device!.sync();
                                 try {
-                                    const itemPath = path.resolve(this.path, this.selectedItems[0].name!);
-                                    const readableStream = await sync.read(itemPath);
+                                    const item = this.selectedItems[0];
+                                    const itemPath = path.resolve(this.path, item.name);
+                                    const readable = await sync.read(itemPath);
 
-                                    const writeable = StreamSaver!.createWriteStream(this.selectedItems[0].name!, {
-                                        size: this.selectedItems[0].size,
-                                    });
-                                    await readableStream.pipeTo(writeable);
+                                    const writeable = StreamSaver!.createWriteStream(
+                                        item.name,
+                                        { size: item.size }
+                                    );
+                                    await readable
+                                        .pipeThrough(new TransformStream({
+                                            transform(chunk, controller) {
+                                                controller.enqueue(new Uint8Array(chunk));
+                                            },
+                                        }))
+                                        .pipeTo(writeable);
                                 } catch (e) {
                                     globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                                 } finally {

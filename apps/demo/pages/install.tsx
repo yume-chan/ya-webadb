@@ -5,9 +5,8 @@ import { action, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React from "react";
 import { globalState } from "../state";
-import { chunkFile, pickFile, RouteStackProps } from "../utils";
+import { pickFile, RouteStackProps } from "../utils";
 import { ProgressStream } from './file-manager';
 
 enum Stage {

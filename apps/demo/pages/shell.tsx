@@ -3,14 +3,14 @@ import { reaction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import 'xterm/css/xterm.css';
 import { globalState } from "../state";
 import { Icons, ResizeObserver, RouteStackProps } from '../utils';
 
 let terminal: import('../components/terminal').AdbTerminal;
 if (typeof window !== 'undefined') {
-    const AdbTerminal: typeof import('../components/terminal').AdbTerminal = require('../components/terminal').AdbTerminal;
+    const AdbTerminal: typeof import('../components/terminal').AdbTerminal = (await import('../components/terminal')).AdbTerminal;
     terminal = new AdbTerminal();
 }
 

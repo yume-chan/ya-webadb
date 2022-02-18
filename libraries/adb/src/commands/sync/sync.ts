@@ -113,10 +113,7 @@ export class AdbSync extends AutoDisposable {
      * @param filename The full path of the file on device to write.
      * @param mode The unix permissions of the file.
      * @param mtime The modified time of the file.
-     * @returns
-     * A promise that resolves to a `WritableStream`.
-     *
-     * If the promise doesn't resolve immediately, it means the sync object is busy processing another command.
+     * @returns A `WritableStream` that writes to the file.
      */
     public write(
         filename: string,

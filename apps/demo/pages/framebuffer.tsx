@@ -4,7 +4,7 @@ import { action, autorun, computed, makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { CommandBar, DemoModePanel, DeviceView } from '../components';
 import { globalState } from "../state";
 import { Icons, RouteStackProps } from "../utils";

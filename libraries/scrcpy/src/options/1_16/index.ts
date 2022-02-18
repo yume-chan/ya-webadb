@@ -195,7 +195,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
             .map(key => toScrcpyOptionValue(this.value[key] || defaults[key], '-'));
     }
 
-    public createConnection(device: Adb): ScrcpyClientConnection {
+    public createConnection(adb: Adb): ScrcpyClientConnection {
         const options: ScrcpyClientConnectionOptions = {
             // Old scrcpy connection always have control stream no matter what the option is
             control: true,
@@ -203,9 +203,9 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
             sendDeviceMeta: true,
         };
         if (this.value.tunnelForward) {
-            return new ScrcpyClientForwardConnection(device, options);
+            return new ScrcpyClientForwardConnection(adb, options);
         } else {
-            return new ScrcpyClientReverseConnection(device, options);
+            return new ScrcpyClientReverseConnection(adb, options);
         }
     }
 

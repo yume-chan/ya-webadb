@@ -47,7 +47,7 @@ export interface ScrcpyOptions<T> {
 
     getOutputEncoderNameRegex(): RegExp;
 
-    createConnection(device: Adb): ScrcpyClientConnection;
+    createConnection(adb: Adb): ScrcpyClientConnection;
 
     parseVideoStream(stream: AdbBufferedStream): Promise<VideoStreamPacket>;
 
