@@ -71,31 +71,6 @@ const renderDetailsHeader: IRenderFunction<IDetailsHeaderProps> = (props?, defau
     });
 };
 
-function createReadableStreamFromBufferIterator(
-    iterator: AsyncIterator<ArrayBuffer>
-): ReadableStream<Uint8Array> {
-    return new ReadableStream<Uint8Array>({
-        async pull(controller) {
-            const { desiredSize } = controller;
-            if (!desiredSize || desiredSize < 0) {
-                return;
-            }
-
-            let written = 0;
-            while (written < desiredSize) {
-                const result = await iterator.next();
-                if (result.done) {
-                    controller.close();
-                    return;
-                }
-
-                controller.enqueue(new Uint8Array(result.value));
-                written += result.value.byteLength;
-            }
-        },
-    });
-}
-
 function compareCaseInsensitively(a: string, b: string) {
     let result = a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase());
     if (result !== 0) {
@@ -583,7 +558,12 @@ const FileManager: NextPage = (): JSX.Element | null => {
     const previewImage = useCallback(async (path: string) => {
         const sync = await globalState.device!.sync();
         try {
-            const readable = await sync.read(path);
+            const readable = (await sync.read(path))
+                .pipeThrough(new TransformStream({
+                    transform(chunk, controller) {
+                        controller.enqueue(new Uint8Array(chunk));
+                    },
+                }));
             const response = new Response(readable);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);

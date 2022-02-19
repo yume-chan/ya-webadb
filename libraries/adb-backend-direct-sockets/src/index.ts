@@ -60,7 +60,7 @@ export class AdbDirectSocketsBackendStreams implements ReadableWritablePair<Arra
         this.socket = socket;
 
         // Although Direct Sockets spec didn't say,
-        // WebTransport spec and File spec all have the `Uint8Array` wraps the while `ArrayBuffer`.
+        // WebTransport spec and File spec all have the `Uint8Array` wraps the whole `ArrayBuffer`.
         this._readableTransformStream = new ExtractViewBufferStream();
         this.socket.readable.pipeTo(this._readableTransformStream.writable);
     }

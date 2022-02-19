@@ -495,7 +495,7 @@ class ScrcpyPageState {
             client.stdout.pipeTo(new WritableStream({
                 write: (line) => {
                     this.log.push(line);
-                }
+                },
             }));
 
             client.close().then(() => this.stop());

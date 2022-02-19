@@ -205,7 +205,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
             localCreated: true,
             serviceString,
         });
-        this.sockets.set(controller.localId, controller);
+        this.sockets.set(localId, controller);
 
         return new AdbSocket(controller);
     }
