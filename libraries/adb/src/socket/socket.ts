@@ -1,4 +1,4 @@
-import { ReadableStream, WritableStream } from "../utils";
+import { ReadableStream, WritableStream } from "../stream";
 import { AdbSocketController, AdbSocketInfo } from './controller';
 
 export class AdbSocket implements AdbSocketInfo {

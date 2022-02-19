@@ -1,7 +1,8 @@
 import { AsyncOperationManager } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbCommand, AdbPacket, AdbPacketInit, AdbPacketSerializeStream } from '../packet';
-import { AbortController, decodeUtf8, encodeUtf8, ReadableStream, StructDeserializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../utils';
+import { AbortController, ReadableStream, StructDeserializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../stream';
+import { decodeUtf8, encodeUtf8 } from '../utils';
 import { AdbSocketController } from './controller';
 import { AdbLogger } from './logger';
 import { AdbSocket } from './socket';

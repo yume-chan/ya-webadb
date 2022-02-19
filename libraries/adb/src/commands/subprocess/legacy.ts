@@ -1,7 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type { Adb } from "../../adb";
 import type { AdbSocket } from "../../socket";
-import { ReadableStream, TransformStream } from "../../utils";
+import { ReadableStream, TransformStream } from "../../stream";
 import type { AdbSubprocessProtocol } from "./types";
 
 /**

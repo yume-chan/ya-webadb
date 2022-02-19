@@ -1,1 +1,3 @@
-export * from './buffered-stream';
+export * from './buffered';
+export * from './detect';
+export * from './transform';

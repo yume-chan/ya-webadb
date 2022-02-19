@@ -1,5 +1,5 @@
 import { Adb } from "../adb";
-import { HookWritableStream, WritableStream } from "../utils";
+import { WrapWritableStream, WritableStream } from "../stream";
 import { escapeArg } from "./subprocess";
 import { AdbSync } from "./sync";
 
@@ -8,7 +8,7 @@ export function install(
 ): WritableStream<ArrayBuffer> {
     const filename = `/data/local/tmp/${Math.random().toString().substring(2)}.apk`;
 
-    return new HookWritableStream<ArrayBuffer, WritableStream<ArrayBuffer>, AdbSync>({
+    return new WrapWritableStream<ArrayBuffer, WritableStream<ArrayBuffer>, AdbSync>({
         async start() {
             // Upload apk file to tmp folder
             const sync = await adb.sync();

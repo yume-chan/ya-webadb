@@ -1,6 +1,5 @@
 import Struct, { placeholder } from '@yume-chan/struct';
-import { AdbBufferedStream } from '../../stream';
-import { WritableStreamDefaultWriter } from "../../utils";
+import { AdbBufferedStream, WritableStreamDefaultWriter } from '../../stream';
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
 import { adbSyncReadResponse, AdbSyncResponseId } from './response';
 

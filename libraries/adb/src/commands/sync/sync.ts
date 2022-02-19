@@ -2,8 +2,8 @@ import { AutoDisposable } from '@yume-chan/event';
 import { Adb } from '../../adb';
 import { AdbFeatures } from '../../features';
 import { AdbSocket } from '../../socket';
-import { AdbBufferedStream } from '../../stream';
-import { AutoResetEvent, HookWritableStream, ReadableStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../../utils';
+import { AdbBufferedStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '../../stream';
+import { AutoResetEvent } from '../../utils';
 import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';
 import { adbSyncPull } from './pull';
 import { adbSyncPush } from './push';
@@ -87,24 +87,21 @@ export class AdbSync extends AutoDisposable {
      * Read the content of a file on device.
      *
      * @param filename The full path of the file on device to read.
-     * @returns
-     * A promise that resolves to a `ReadableStream`.
-     *
-     * If the promise doesn't resolve immediately, it means the sync object is busy processing another command.
+     * @returns A `ReadableStream` that reads from the file.
      */
-    public async read(filename: string): Promise<ReadableStream<ArrayBuffer>> {
-        await this.sendLock.wait();
-
-        const readable = adbSyncPull(this.stream, this.writer, filename);
-
-        const lockStream = new TransformStream<ArrayBuffer, ArrayBuffer>();
-        readable
-            .pipeTo(lockStream.writable)
-            .then(() => {
+    public read(filename: string): ReadableStream<ArrayBuffer> {
+        return new WrapReadableStream<ArrayBuffer, ReadableStream<ArrayBuffer>, undefined>({
+            start: async () => {
+                await this.sendLock.wait();
+                return {
+                    readable: adbSyncPull(this.stream, this.writer, filename),
+                    state: undefined,
+                };
+            },
+            close: async () => {
                 this.sendLock.notify();
-            });
-
-        return lockStream.readable;
+            },
+        });
     }
 
     /**
@@ -120,7 +117,7 @@ export class AdbSync extends AutoDisposable {
         mode?: number,
         mtime?: number,
     ): WritableStream<ArrayBuffer> {
-        return new HookWritableStream({
+        return new WrapWritableStream({
             start: async () => {
                 await this.sendLock.wait();
                 return {

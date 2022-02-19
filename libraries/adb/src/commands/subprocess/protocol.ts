@@ -3,7 +3,8 @@ import Struct, { placeholder, StructValueType } from "@yume-chan/struct";
 import type { Adb } from "../../adb";
 import { AdbFeatures } from "../../features";
 import type { AdbSocket } from "../../socket";
-import { encodeUtf8, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from "../../utils";
+import { ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from "../../stream";
+import { encodeUtf8 } from "../../utils";
 import type { AdbSubprocessProtocol } from "./types";
 
 export enum AdbShellProtocolId {

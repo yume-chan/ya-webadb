@@ -1,23 +1,7 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import { AdbCommandBase, AdbShellSubprocessProtocol, decodeUtf8, TransformStream } from "@yume-chan/adb";
-
-function* splitLines(text: string): Generator<string, void, void> {
-    let start = 0;
-
-    while (true) {
-        const index = text.indexOf('\n', start);
-        if (index === -1) {
-            return;
-        }
-
-        const line = text.substring(start, index);
-        yield line;
-
-        start = index + 1;
-    }
-}
+import { AdbCommandBase, AdbShellSubprocessProtocol, DecodeUtf8Stream, ReadableStream, SplitLineStream, WrapReadableStream } from "@yume-chan/adb";
 
 export interface BugReportVersion {
     major: number;
@@ -66,9 +50,16 @@ export class BugReportZ extends AdbCommandBase {
         return version.major > 1 || version.minor >= 2;
     }
 
-    public async stream(): Promise<ReadableStream<ArrayBuffer>> {
-        const process = await this.adb.subprocess.spawn(['bugreportz', '-s']);
-        return process.stdout;
+    public stream(): ReadableStream<ArrayBuffer> {
+        return new WrapReadableStream<ArrayBuffer, ReadableStream<ArrayBuffer>, undefined>({
+            start: async () => {
+                const process = await this.adb.subprocess.spawn(['bugreportz', '-s']);
+                return {
+                    readable: process.stdout,
+                    state: undefined,
+                };
+            },
+        });
     }
 
     public supportProgress(version: BugReportVersion): boolean {
@@ -92,10 +83,11 @@ export class BugReportZ extends AdbCommandBase {
         let filename: string | undefined;
         let error: string | undefined;
 
-        await process.stdout.pipeTo(new WritableStream({
-            write(chunk) {
-                const string = decodeUtf8(chunk);
-                for (const line of splitLines(string)) {
+        await process.stdout
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new SplitLineStream())
+            .pipeTo(new WritableStream({
+                write(line) {
                     // (Not 100% sure) `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
                     let match = line.match(BugReportZ.PROGRESS_REGEX);
                     if (match) {
@@ -117,10 +109,10 @@ export class BugReportZ extends AdbCommandBase {
                         // Don't report error now
                         // We want to gather all output.
                         error = match[1];
+
                     }
                 }
-            }
-        }));
+            }));
 
         if (error) {
             throw new Error(error);
@@ -136,12 +128,16 @@ export class BugReportZ extends AdbCommandBase {
 }
 
 export class BugReport extends AdbCommandBase {
-    public async generate(): Promise<ReadableStream<string>> {
-        const process = await this.adb.subprocess.spawn(['bugreport']);
-        return process.stdout.pipeThrough(new TransformStream({
-            transform(chunk, controller) {
-                controller.enqueue(decodeUtf8(chunk));
+    public generate(): ReadableStream<string> {
+        return new WrapReadableStream<string, ReadableStream<string>, undefined>({
+            start: async () => {
+                const process = await this.adb.subprocess.spawn(['bugreport']);
+                return {
+                    readable: process.stdout
+                        .pipeThrough(new DecodeUtf8Stream()),
+                    state: undefined,
+                };
             }
-        }));
+        });
     }
 }

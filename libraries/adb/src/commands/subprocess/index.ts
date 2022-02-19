@@ -1,5 +1,5 @@
 import type { Adb } from '../../adb';
-import { DecodeUtf8Stream, GatherStringStream } from "../../utils";
+import { DecodeUtf8Stream, GatherStringStream } from "../../stream";
 import { AdbNoneSubprocessProtocol } from './legacy';
 import { AdbShellSubprocessProtocol } from './protocol';
 import type { AdbSubprocessProtocol, AdbSubprocessProtocolConstructor } from './types';

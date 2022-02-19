@@ -1,5 +1,6 @@
 import Struct from '@yume-chan/struct';
-import { encodeUtf8, WritableStreamDefaultWriter } from "../../utils";
+import { WritableStreamDefaultWriter } from "../../stream";
+import { encodeUtf8 } from "../../utils";
 
 export enum AdbSyncRequestId {
     List = 'LIST',

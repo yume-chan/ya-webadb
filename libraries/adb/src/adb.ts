@@ -6,7 +6,8 @@ import { AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, Ad
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
-import { decodeUtf8, ReadableStream, WritableStream } from "./utils";
+import { ReadableStream, WritableStream } from "./stream";
+import { decodeUtf8 } from "./utils";
 
 export enum AdbPropKey {
     Product = 'ro.product.name',

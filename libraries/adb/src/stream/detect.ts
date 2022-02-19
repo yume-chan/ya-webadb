@@ -2,6 +2,13 @@
 // cspell: ignore backpressure
 // cspell: ignore endregion
 
+// Because Node.js exports Web Streams types from `stream/web` package,
+// this module uses Top-Level Await to support both Web Browsers and Node.js.
+// For Webpack, the `experimental.topLevelAwait` option is required.
+// (See: https://webpack.js.org/configuration/experiments/)
+
+// It's also possible to add fallback to some polyfill.
+
 //#region borrowed
 // from https://github.com/microsoft/TypeScript/blob/38da7c600c83e7b31193a62495239a0fe478cb67/lib/lib.webworker.d.ts#L633 until moved to separate lib
 /** A controller object that allows you to abort one or more DOM requests as and when desired. */

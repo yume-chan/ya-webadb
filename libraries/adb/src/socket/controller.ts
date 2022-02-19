@@ -1,7 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 import { AutoDisposable } from '@yume-chan/event';
 import { AdbCommand } from '../packet';
-import { ChunkStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../utils';
+import { ChunkStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../stream';
 import { AdbPacketDispatcher } from './dispatcher';
 
 export interface AdbSocketInfo {

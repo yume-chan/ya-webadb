@@ -1,5 +1,5 @@
 import type { ValueOrPromise } from '@yume-chan/struct';
-import type { ReadableWritablePair } from "./utils";
+import type { ReadableWritablePair } from "./stream";
 
 export interface AdbBackend {
     readonly serial: string;
