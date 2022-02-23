@@ -5,7 +5,7 @@ export interface StructDeserializeStream {
      * Stream must return exactly `length` bytes or data. If that's not possible
      * (due to end of file or other error condition), it must throw an error.
      */
-    read(length: number): ArrayBuffer;
+    read(length: number): Uint8Array;
 }
 
 export interface StructAsyncDeserializeStream {
@@ -15,7 +15,7 @@ export interface StructAsyncDeserializeStream {
      * Context must return exactly `length` bytes or data. If that's not possible
      * (due to end of file or other error condition), it must throw an error.
      */
-    read(length: number): Promise<ArrayBuffer>;
+    read(length: number): Promise<Uint8Array>;
 }
 
 export interface StructOptions {

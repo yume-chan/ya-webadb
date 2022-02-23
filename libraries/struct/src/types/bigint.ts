@@ -1,3 +1,5 @@
+// cspell: ignore syncbird
+
 import { getBigInt64, getBigUint64, setBigInt64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback';
 import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from "../basic";
 import { Syncbird } from "../syncbird";
@@ -74,8 +76,8 @@ export class BigIntFieldDefinition<
     ): ValueOrPromise<BigIntFieldValue<this>> {
         return Syncbird.try(() => {
             return stream.read(this.getSize());
-        }).then(buffer => {
-            const view = new DataView(buffer);
+        }).then(array => {
+            const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
             const value = this.type.getter(
                 view,
                 0,

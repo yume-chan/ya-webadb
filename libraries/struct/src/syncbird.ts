@@ -1,3 +1,5 @@
+// cspell: ignore syncbird
+
 import Bluebird from 'bluebird';
 
 type Resolvable<R> = R | PromiseLike<R>;

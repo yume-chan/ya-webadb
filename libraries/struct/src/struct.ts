@@ -594,7 +594,9 @@ export class Struct<
         }).valueOrPromise();
     }
 
-    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): ArrayBuffer {
+    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): Uint8Array;
+    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>, output: Uint8Array): number;
+    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>, output?: Uint8Array): Uint8Array | number {
         const value = new StructValue();
 
         for (const [name, definition] of this._fields) {
@@ -612,14 +614,23 @@ export class Struct<
             structSize += size;
         }
 
-        const buffer = new ArrayBuffer(structSize);
-        const dataView = new DataView(buffer);
+        let outputType = 'number';
+        if (!output) {
+            output = new Uint8Array(structSize);
+            outputType = 'Uint8Array';
+        }
+
+        const dataView = new DataView(output.buffer, output.byteOffset, output.byteLength);
         let offset = 0;
         for (const { fieldValue, size } of fieldsInfo) {
             fieldValue.serialize(dataView, offset);
             offset += size;
         }
 
-        return buffer;
+        if (outputType === 'number') {
+            return structSize;
+        } else {
+            return output;
+        }
     }
 }
