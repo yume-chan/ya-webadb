@@ -14,7 +14,7 @@ export class AdbSync extends AutoDisposable {
 
     protected stream: AdbBufferedStream;
 
-    protected writer: WritableStreamDefaultWriter<ArrayBuffer>;
+    protected writer: WritableStreamDefaultWriter<Uint8Array>;
 
     protected sendLock = this.addDisposable(new AutoResetEvent());
 
@@ -89,8 +89,8 @@ export class AdbSync extends AutoDisposable {
      * @param filename The full path of the file on device to read.
      * @returns A `ReadableStream` that reads from the file.
      */
-    public read(filename: string): ReadableStream<ArrayBuffer> {
-        return new WrapReadableStream<ArrayBuffer, ReadableStream<ArrayBuffer>, undefined>({
+    public read(filename: string): ReadableStream<Uint8Array> {
+        return new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, undefined>({
             start: async () => {
                 await this.sendLock.wait();
                 return {
@@ -116,7 +116,7 @@ export class AdbSync extends AutoDisposable {
         filename: string,
         mode?: number,
         mtime?: number,
-    ): WritableStream<ArrayBuffer> {
+    ): WritableStream<Uint8Array> {
         return new WrapWritableStream({
             start: async () => {
                 await this.sendLock.wait();
@@ -128,7 +128,7 @@ export class AdbSync extends AutoDisposable {
                         mode,
                         mtime,
                     ),
-                    state: {},
+                    state: undefined,
                 };
             },
             close: async () => {

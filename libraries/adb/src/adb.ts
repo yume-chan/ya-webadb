@@ -6,7 +6,7 @@ import { AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, Ad
 import { AdbFeatures } from './features';
 import { AdbCommand } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
-import { ReadableStream, WritableStream } from "./stream";
+import { DecodeUtf8Stream, GatherStringStream, ReadableStream, WritableStream } from "./stream";
 import { decodeUtf8 } from "./utils";
 
 export enum AdbPropKey {
@@ -52,8 +52,8 @@ export class Adb {
 
     public constructor(
         backend: AdbBackend,
-        readable: ReadableStream<ArrayBuffer>,
-        writable: WritableStream<ArrayBuffer>,
+        readable: ReadableStream<Uint8Array>,
+        writable: WritableStream<Uint8Array>,
         logger?: AdbLogger
     ) {
         this._backend = backend;
@@ -225,11 +225,11 @@ export class Adb {
 
     public async createSocketAndWait(service: string): Promise<string> {
         const socket = await this.createSocket(service);
-        let result = '';
-        for await (const chunk of socket.readable) {
-            result += decodeUtf8(chunk);
-        }
-        return result;
+        const gatherStream = new GatherStringStream();
+        await socket.readable
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeTo(gatherStream.writable);
+        return gatherStream.result;
     }
 
     public async dispose(): Promise<void> {

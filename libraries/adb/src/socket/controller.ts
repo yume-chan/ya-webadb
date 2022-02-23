@@ -34,12 +34,12 @@ export class AdbSocketController implements AdbSocketInfo {
     public readonly localCreated!: boolean;
     public readonly serviceString!: string;
 
-    private readonly _readablePassthrough: TransformStream<ArrayBuffer, ArrayBuffer>;
-    private readonly _readablePassthroughWriter: WritableStreamDefaultWriter<ArrayBuffer>;
+    private readonly _readablePassthrough: TransformStream<Uint8Array, Uint8Array>;
+    private readonly _readablePassthroughWriter: WritableStreamDefaultWriter<Uint8Array>;
     public get readable() { return this._readablePassthrough.readable; }
 
     private _writePromise: PromiseResolver<void> | undefined;
-    public readonly writable: WritableStream<ArrayBuffer>;
+    public readonly writable: WritableStream<Uint8Array>;
 
     private _writableClosed = false;
 
@@ -61,7 +61,7 @@ export class AdbSocketController implements AdbSocketInfo {
 
         const { readable, writable } = new ChunkStream(this.dispatcher.maxPayloadSize);
         this.writable = writable;
-        readable.pipeTo(new WritableStream<ArrayBuffer>({
+        readable.pipeTo(new WritableStream<Uint8Array>({
             write: async (chunk) => {
                 if (this._writableClosed) {
                     throw new Error('Socket closed');
@@ -87,7 +87,7 @@ export class AdbSocketController implements AdbSocketInfo {
         }));
     }
 
-    public enqueue(packet: ArrayBuffer) {
+    public enqueue(packet: Uint8Array) {
         return this._readablePassthroughWriter.write(packet);
     }
 

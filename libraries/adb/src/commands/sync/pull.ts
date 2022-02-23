@@ -6,7 +6,7 @@ import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './r
 export const AdbSyncDataResponse =
     new Struct({ littleEndian: true })
         .uint32('dataLength')
-        .arrayBuffer('data', { lengthField: 'dataLength' })
+        .uint8Array('data', { lengthField: 'dataLength' })
         .extra({ id: AdbSyncResponseId.Data as const });
 
 const ResponseTypes = {
@@ -16,9 +16,9 @@ const ResponseTypes = {
 
 export function adbSyncPull(
     stream: AdbBufferedStream,
-    writer: WritableStreamDefaultWriter<ArrayBuffer>,
+    writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
-): ReadableStream<ArrayBuffer> {
+): ReadableStream<Uint8Array> {
     return new ReadableStream({
         async start() {
             await adbSyncWriteRequest(writer, AdbSyncRequestId.Receive, path);

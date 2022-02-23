@@ -23,7 +23,7 @@ export interface AdbIncomingSocketEventArgs {
     socket: AdbSocket;
 }
 
-const EmptyArrayBuffer = new ArrayBuffer(0);
+const EmptyUint8Array = new Uint8Array(0);
 
 export class AdbPacketDispatcher extends AutoDisposable {
     // ADB socket id starts from 1
@@ -51,7 +51,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
     private _abortController = new AbortController();
 
-    public constructor(readable: ReadableStream<ArrayBuffer>, writable: WritableStream<ArrayBuffer>, logger?: AdbLogger) {
+    public constructor(readable: ReadableStream<Uint8Array>, writable: WritableStream<Uint8Array>, logger?: AdbLogger) {
         super();
 
         this.logger = logger;
@@ -221,23 +221,27 @@ export class AdbPacketDispatcher extends AutoDisposable {
         command: AdbCommand,
         arg0: number,
         arg1: number,
-        payload?: string | ArrayBuffer
+        payload?: string | Uint8Array
     ): Promise<void>;
     public async sendPacket(
         packetOrCommand: AdbPacketInit | AdbCommand,
         arg0?: number,
         arg1?: number,
-        payload: string | ArrayBuffer = EmptyArrayBuffer,
+        payload: string | Uint8Array = EmptyUint8Array,
     ): Promise<void> {
         let init: AdbPacketInit;
         if (arg0 === undefined) {
             init = packetOrCommand as AdbPacketInit;
         } else {
+            if (typeof payload === 'string') {
+                payload = encodeUtf8(payload);
+            }
+
             init = {
                 command: packetOrCommand as AdbCommand,
                 arg0: arg0 as number,
                 arg1: arg1 as number,
-                payload: typeof payload === 'string' ? encodeUtf8(payload) : payload,
+                payload,
             };
         }
 

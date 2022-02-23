@@ -3,7 +3,7 @@
 import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic';
 import { StructDefaultOptions, StructValue } from './basic';
 import { Syncbird } from "./syncbird";
-import { ArrayBufferFieldType, ArrayBufferLikeFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
+import { ArrayBufferFieldType, ArrayBufferLikeFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringFieldType, ArrayBufferViewFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
 import { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils";
 
 export interface StructLike<TValue> {
@@ -450,17 +450,30 @@ export class Struct<
             return this.arrayBufferLike(name, ArrayBufferFieldType.instance, options);
         };
 
+    public uint8Array: BoundArrayBufferLikeFieldDefinitionCreator<
+        TFields,
+        TOmitInitKey,
+        TExtra,
+        TPostDeserialized,
+        ArrayBufferViewFieldType<Uint8Array>
+    > = (
+        name: PropertyKey,
+        options: any
+    ): any => {
+            return this.arrayBufferLike(name, ArrayBufferViewFieldType.uint8Array, options);
+        };
+
     public uint8ClampedArray: BoundArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
         TPostDeserialized,
-        Uint8ClampedArrayFieldType
+        ArrayBufferViewFieldType<Uint8ClampedArray>
     > = (
         name: PropertyKey,
         options: any
     ): any => {
-            return this.arrayBufferLike(name, Uint8ClampedArrayFieldType.instance, options);
+        return this.arrayBufferLike(name, ArrayBufferViewFieldType.uint8ClampedArray, options);
         };
 
     public string: BoundArrayBufferLikeFieldDefinitionCreator<

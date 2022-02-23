@@ -1,5 +1,5 @@
 import { StructDefaultOptions, StructDeserializeStream, StructValue } from '../basic';
-import { ArrayBufferFieldType, ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldType, StringFieldType, Uint8ClampedArrayFieldType } from './array-buffer';
+import { ArrayBufferFieldType, ArrayBufferLikeFieldDefinition, ArrayBufferLikeFieldType, StringFieldType, ArrayBufferViewFieldType } from './array-buffer';
 
 class MockDeserializationStream implements StructDeserializeStream {
     public buffer = new ArrayBuffer(0);
@@ -32,18 +32,18 @@ describe('Types', () => {
 
         describe('Uint8ClampedArrayFieldType', () => {
             it('should have a static instance', () => {
-                expect(Uint8ClampedArrayFieldType.instance).toBeInstanceOf(Uint8ClampedArrayFieldType);
+                expect(ArrayBufferViewFieldType.instance).toBeInstanceOf(ArrayBufferViewFieldType);
             });
 
             it('`#toArrayBuffer` should return its `buffer`', () => {
                 const array = new Uint8ClampedArray(10);
                 const buffer = array.buffer;
-                expect(Uint8ClampedArrayFieldType.instance.toArrayBuffer(array)).toBe(buffer);
+                expect(ArrayBufferViewFieldType.instance.toArrayBuffer(array)).toBe(buffer);
             });
 
             it('`#fromArrayBuffer` should return a view of the `ArrayBuffer`', () => {
                 const arrayBuffer = new ArrayBuffer(10);
-                const array = Uint8ClampedArrayFieldType.instance.fromArrayBuffer(arrayBuffer);
+                const array = ArrayBufferViewFieldType.instance.fromArrayBuffer(arrayBuffer);
                 expect(array).toHaveProperty('buffer', arrayBuffer);
                 expect(array).toHaveProperty('byteOffset', 0);
                 expect(array).toHaveProperty('byteLength', 10);
@@ -51,7 +51,7 @@ describe('Types', () => {
 
             it('`#getSize` should return the `byteLength` of the `Uint8ClampedArray`', () => {
                 const array = new Uint8ClampedArray(10);
-                expect(Uint8ClampedArrayFieldType.instance.getSize(array)).toBe(10);
+                expect(ArrayBufferViewFieldType.instance.getSize(array)).toBe(10);
             });
         });
 
@@ -104,7 +104,7 @@ describe('Types', () => {
 
             it('should work with `Uint8ClampedArrayFieldType`', async () => {
                 const size = 10;
-                const definition = new MockArrayBufferFieldDefinition(Uint8ClampedArrayFieldType.instance, size);
+                const definition = new MockArrayBufferFieldDefinition(ArrayBufferViewFieldType.instance, size);
 
                 const context = new MockDeserializationStream();
                 const buffer = new ArrayBuffer(size);

@@ -1,6 +1,6 @@
 import { StructAsyncDeserializeStream, StructDefaultOptions, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from './basic';
 import { Struct } from './struct';
-import { ArrayBufferFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition } from './types';
+import { ArrayBufferFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringFieldType, ArrayBufferViewFieldType, VariableLengthArrayBufferLikeFieldDefinition } from './types';
 import { ValueOrPromise } from './utils';
 
 class MockDeserializationStream implements StructDeserializeStream {
@@ -181,7 +181,7 @@ describe('Struct', () => {
 
                     const definition = struct['_fields'][0]![1] as FixedLengthArrayBufferLikeFieldDefinition;
                     expect(definition).toBeInstanceOf(FixedLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(Uint8ClampedArrayFieldType);
+                    expect(definition.type).toBeInstanceOf(ArrayBufferViewFieldType);
                     expect(definition.options.length).toBe(10);
                 });
 
@@ -220,7 +220,7 @@ describe('Struct', () => {
 
                     const definition = struct['_fields'][1]![1] as VariableLengthArrayBufferLikeFieldDefinition;
                     expect(definition).toBeInstanceOf(VariableLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(Uint8ClampedArrayFieldType);
+                    expect(definition.type).toBeInstanceOf(ArrayBufferViewFieldType);
                     expect(definition.options.lengthField).toBe('barLength');
                 });
 

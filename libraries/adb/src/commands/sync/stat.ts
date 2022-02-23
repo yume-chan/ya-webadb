@@ -94,7 +94,7 @@ const Lstat2ResponseType = {
 
 export async function adbSyncLstat(
     stream: AdbBufferedStream,
-    writer: WritableStreamDefaultWriter<ArrayBuffer>,
+    writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
     v2: boolean,
 ): Promise<AdbSyncLstatResponse | AdbSyncStatResponse> {
@@ -115,7 +115,7 @@ export async function adbSyncLstat(
 
 export async function adbSyncStat(
     stream: AdbBufferedStream,
-    writer: WritableStreamDefaultWriter<ArrayBuffer>,
+    writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
 ): Promise<AdbSyncStatResponse> {
     await adbSyncWriteRequest(writer, AdbSyncRequestId.Stat, path);

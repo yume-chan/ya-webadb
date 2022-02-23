@@ -6,5 +6,5 @@ export interface AdbBackend {
 
     readonly name: string | undefined;
 
-    connect(): ValueOrPromise<ReadableWritablePair<ArrayBuffer, ArrayBuffer>>;
+    connect(): ValueOrPromise<ReadableWritablePair<Uint8Array, Uint8Array>>;
 }

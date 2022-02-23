@@ -20,7 +20,7 @@ const ResponseTypes = {
 
 export async function* adbSyncOpenDir(
     stream: AdbBufferedStream,
-    writer: WritableStreamDefaultWriter<ArrayBuffer>,
+    writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
 ): AsyncGenerator<AdbSyncEntryResponse, void, void> {
     await adbSyncWriteRequest(writer, AdbSyncRequestId.List, path);

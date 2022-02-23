@@ -5,15 +5,15 @@ import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto';
 import { AdbCommand, AdbPacket, AdbPacketInit } from './packet';
 import { calculateBase64EncodedLength, encodeBase64 } from './utils';
 
-export type AdbKeyIterable = Iterable<ArrayBuffer> | AsyncIterable<ArrayBuffer>;
+export type AdbKeyIterable = Iterable<Uint8Array> | AsyncIterable<Uint8Array>;
 
 export interface AdbCredentialStore {
     /**
      * Generate and store a RSA private key with modulus length `2048` and public exponent `65537`.
      *
-     * The returned `ArrayBuffer` is the private key in PKCS #8 format.
+     * The returned `Uint8Array` is the private key in PKCS #8 format.
      */
-    generateKey(): ValueOrPromise<ArrayBuffer>;
+    generateKey(): ValueOrPromise<Uint8Array>;
 
     /**
      * Synchronously or asynchronously iterate through all stored RSA private keys.
@@ -63,7 +63,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
             command: AdbCommand.Auth,
             arg0: AdbAuthType.Signature,
             arg1: 0,
-            payload: signature,
+            payload: new Uint8Array(signature),
         };
     }
 };
@@ -78,11 +78,12 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
         return;
     }
 
-    let privateKey: ArrayBuffer | undefined;
+    let privateKey: Uint8Array | undefined;
     for await (const key of credentialStore.iterateKeys()) {
         privateKey = key;
         break;
     }
+
 
     if (!privateKey) {
         privateKey = await credentialStore.generateKey();
@@ -93,7 +94,7 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
 
     // The public key is null terminated,
     // So we allocate the buffer with one extra byte.
-    const publicKeyBuffer = new ArrayBuffer(publicKeyBase64Length + 1);
+    const publicKeyBuffer = new Uint8Array(publicKeyBase64Length + 1);
 
     calculatePublicKey(privateKey, publicKeyBuffer);
     encodeBase64(publicKeyBuffer, 0, publicKeyLength, publicKeyBuffer);

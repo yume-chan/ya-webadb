@@ -9,8 +9,8 @@ export class AdbSocket implements AdbSocketInfo {
     public get localCreated() { return this.controller.localCreated; }
     public get serviceString() { return this.controller.serviceString; }
 
-    public get readable(): ReadableStream<ArrayBuffer> { return this.controller.readable; }
-    public get writable(): WritableStream<ArrayBuffer> { return this.controller.writable; }
+    public get readable(): ReadableStream<Uint8Array> { return this.controller.readable; }
+    public get writable(): WritableStream<Uint8Array> { return this.controller.writable; }
 
     public constructor(controller: AdbSocketController) {
         this.controller = controller;

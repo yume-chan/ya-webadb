@@ -26,46 +26,35 @@ export function calculateBase64EncodedLength(inputLength: number): [outputLength
 }
 
 export function encodeBase64(
-    input: ArrayBuffer | Uint8Array,
+    input: Uint8Array,
     inputOffset?: number,
     inputLength?: number,
-): ArrayBuffer; // overload 1
+): Uint8Array; // overload 1
 export function encodeBase64(
-    input: ArrayBuffer | Uint8Array,
-    output: ArrayBuffer | Uint8Array,
+    input: Uint8Array,
+    output: Uint8Array,
     outputOffset?: number
 ): number; // overload 2
 export function encodeBase64(
-    input: ArrayBuffer | Uint8Array,
+    input: Uint8Array,
     inputOffset: number,
-    output: ArrayBuffer | Uint8Array,
+    output: Uint8Array,
     outputOffset?: number
 ): number; // overload 3
 export function encodeBase64(
-    input: ArrayBuffer | Uint8Array,
+    input: Uint8Array,
     inputOffset: number,
     inputLength: number,
-    output: ArrayBuffer | Uint8Array,
+    output: Uint8Array,
     outputOffset?: number
 ): number; // overload 4
 export function encodeBase64(
-    input: ArrayBuffer | Uint8Array,
-    arg1?: number | ArrayBuffer | Uint8Array,
-    arg2?: number | ArrayBuffer | Uint8Array,
-    _arg3?: number | ArrayBuffer | Uint8Array,
+    input: Uint8Array,
+    arg1?: number | Uint8Array,
+    arg2?: number | Uint8Array,
+    _arg3?: number | Uint8Array,
     _arg4?: number,
-): ArrayBuffer | number {
-    if (input instanceof ArrayBuffer) {
-        input = new Uint8Array(input);
-    }
-
-    // Because `Uint8Array` is type compatible with `ArrayBuffer`,
-    // TypeScript doesn't correctly narrow `input` to `Uint8Array` when assigning.
-    // Manually eliminate `ArrayBuffer` from `input` with a type guard.
-    if (input instanceof ArrayBuffer) {
-        return input;
-    }
-
+): Uint8Array | number {
     let inputOffset: number;
     let inputLength: number;
     let output: Uint8Array;
@@ -82,46 +71,33 @@ export function encodeBase64(
             outputArgumentIndex = 3;
         } else {
             // overload 3
-            inputLength = input.byteLength - inputOffset;
+            inputLength = input.length - inputOffset;
             outputArgumentIndex = 2;
         }
     } else {
         // overload 2
         inputOffset = 0;
-        inputLength = input.byteLength;
+        inputLength = input.length;
         outputArgumentIndex = 1;
     }
 
     const [outputLength, paddingLength] = calculateBase64EncodedLength(inputLength);
 
-    let maybeOutput: ArrayBuffer | Uint8Array | undefined = arguments[outputArgumentIndex];
-    let outputType: 'ArrayBuffer' | 'number';
+    let maybeOutput: Uint8Array | undefined = arguments[outputArgumentIndex];
+    let outputType: 'Uint8Array' | 'number';
     if (maybeOutput) {
         outputOffset = arguments[outputArgumentIndex + 1] ?? 0;
 
-        if (maybeOutput.byteLength - outputOffset < outputLength) {
+        if (maybeOutput.length - outputOffset < outputLength) {
             throw new Error('output buffer is too small');
         }
 
-        if (maybeOutput instanceof ArrayBuffer) {
-            output = new Uint8Array(maybeOutput);
-        } else {
-            output = maybeOutput;
-        }
-
+        output = maybeOutput;
         outputType = 'number';
     } else {
-        const buffer = new ArrayBuffer(outputLength);
-        output = new Uint8Array(buffer);
+        output = new Uint8Array(outputLength);
         outputOffset = 0;
-        outputType = 'ArrayBuffer';
-    }
-
-    // Because `Uint8Array` is type compatible with `ArrayBuffer`,
-    // TypeScript doesn't correctly narrow `output` to `Uint8Array` when assigning.
-    // Manually eliminate `ArrayBuffer` from `output` with a type guard.
-    if (output instanceof ArrayBuffer) {
-        return output;
+        outputType = 'Uint8Array';
     }
 
     if (input.buffer === output.buffer) {
@@ -209,14 +185,14 @@ export function encodeBase64(
         outputIndex -= 1;
     }
 
-    if (outputType === 'ArrayBuffer') {
-        return output.buffer;
+    if (outputType === 'Uint8Array') {
+        return output;
     } else {
         return outputLength;
     }
 }
 
-export function decodeBase64(input: string): ArrayBuffer {
+export function decodeBase64(input: string): Uint8Array {
     let padding: number;
     if (input[input.length - 2] === '=') {
         padding = 2;
@@ -275,5 +251,5 @@ export function decodeBase64(input: string): ArrayBuffer {
         result[dIndex] = (a << 2) | ((b & 0b11_0000) >> 4);
     }
 
-    return result.buffer;
+    return result;
 }

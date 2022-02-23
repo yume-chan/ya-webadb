@@ -20,13 +20,13 @@ export enum AdbShellProtocolId {
 const AdbShellProtocolPacket = new Struct({ littleEndian: true })
     .uint8('id', placeholder<AdbShellProtocolId>())
     .uint32('length')
-    .arrayBuffer('data', { lengthField: 'length' });
+    .uint8Array('data', { lengthField: 'length' });
 
 type AdbShellProtocolPacketInit = typeof AdbShellProtocolPacket['TInit'];
 
 type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
 
-class StdinSerializeStream extends TransformStream<ArrayBuffer, AdbShellProtocolPacketInit>{
+class StdinSerializeStream extends TransformStream<Uint8Array, AdbShellProtocolPacketInit>{
     constructor() {
         super({
             transform(chunk, controller) {
@@ -42,7 +42,7 @@ class StdinSerializeStream extends TransformStream<ArrayBuffer, AdbShellProtocol
     }
 }
 
-class StdoutDeserializeStream extends TransformStream<AdbShellProtocolPacket, ArrayBuffer>{
+class StdoutDeserializeStream extends TransformStream<AdbShellProtocolPacket, Uint8Array>{
     constructor(type: AdbShellProtocolId.Stdout | AdbShellProtocolId.Stderr) {
         super({
             transform(chunk, controller) {
@@ -106,13 +106,13 @@ export class AdbShellSubprocessProtocol implements AdbSubprocessProtocol {
     private readonly _socket: AdbSocket;
     private _socketWriter: WritableStreamDefaultWriter<AdbShellProtocolPacketInit>;
 
-    private _stdin = new TransformStream<ArrayBuffer, ArrayBuffer>();
-    public get stdin() { return this._stdin.writable; }
+    private _stdin: WritableStream<Uint8Array>;
+    public get stdin() { return this._stdin; }
 
-    private _stdout: ReadableStream<ArrayBuffer>;
+    private _stdout: ReadableStream<Uint8Array>;
     public get stdout() { return this._stdout; }
 
-    private _stderr: ReadableStream<ArrayBuffer>;
+    private _stderr: ReadableStream<Uint8Array>;
     public get stderr() { return this._stderr; }
 
     private readonly _exit = new PromiseResolver<number>();
@@ -125,9 +125,11 @@ export class AdbShellSubprocessProtocol implements AdbSubprocessProtocol {
         // cspell: disable-next-line
         // https://www.plantuml.com/plantuml/png/bL91QiCm4Bpx5SAdv90lb1JISmiw5XzaQKf5PIkiLZIqzEyLSg8ks13gYtOykpFhiOw93N6UGjVDqK7rZsxKqNw0U_NTgVAy4empOy2mm4_olC0VEVEE47GUpnGjKdgXoD76q4GIEpyFhOwP_m28hW0NNzxNUig1_JdW0bA7muFIJDco1daJ_1SAX9bgvoPJPyIkSekhNYctvIGXrCH6tIsPL5fs-s6J5yc9BpWXhKtNdF2LgVYPGM_6GlMwfhWUsIt4lbScANrwlgVVUifPSVi__t44qStnwPvZwobdSmHHlL57p2vFuHS0
 
+        // TODO: AdbShellSubprocessProtocol: Optimize stream graph
+
         const [stdout, stderr] = socket.readable
             .pipeThrough(new StructDeserializeStream(AdbShellProtocolPacket))
-            .pipeThrough(new TransformStream({
+            .pipeThrough(new TransformStream<AdbShellProtocolPacket, AdbShellProtocolPacket>({
                 transform: (chunk, controller) => {
                     if (chunk.id === AdbShellProtocolId.Exit) {
                         this._exit.resolve(new Uint8Array(chunk.data)[0]!);
@@ -151,9 +153,9 @@ export class AdbShellSubprocessProtocol implements AdbSubprocessProtocol {
             .pipeThrough(new StructSerializeStream(AdbShellProtocolPacket))
             .pipeTo(socket.writable);
 
-        this._stdin.readable
-            .pipeThrough(new StdinSerializeStream())
-            .pipeTo(multiplexer.createWriteable());
+        const { readable, writable } = new StdinSerializeStream();
+        this._stdin = writable;
+        readable.pipeTo(multiplexer.createWriteable());
 
         this._socketWriter = multiplexer.createWriteable().getWriter();
     }

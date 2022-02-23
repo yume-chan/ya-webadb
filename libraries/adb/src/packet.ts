@@ -22,13 +22,13 @@ const AdbPacketHeader =
 export const AdbPacket =
     new Struct({ littleEndian: true })
         .fields(AdbPacketHeader)
-        .arrayBuffer('payload', { lengthField: 'payloadLength' });
+        .uint8Array('payload', { lengthField: 'payloadLength' });
 
 export type AdbPacket = typeof AdbPacket['TDeserializeResult'];
 
 export type AdbPacketInit = Omit<typeof AdbPacket['TInit'], 'checksum' | 'magic'>;
 
-export class AdbPacketSerializeStream extends TransformStream<AdbPacketInit, ArrayBuffer>{
+export class AdbPacketSerializeStream extends TransformStream<AdbPacketInit, Uint8Array>{
     public calculateChecksum = true;
 
     public constructor() {
@@ -49,7 +49,7 @@ export class AdbPacketSerializeStream extends TransformStream<AdbPacketInit, Arr
                     payloadLength: init.payload.byteLength,
                 };
 
-                controller.enqueue(AdbPacketHeader.serialize(packet));
+                controller.enqueue(new Uint8Array(AdbPacketHeader.serialize(packet)));
 
                 if (packet.payloadLength) {
                     controller.enqueue(packet.payload);

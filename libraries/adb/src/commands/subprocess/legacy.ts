@@ -1,7 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type { Adb } from "../../adb";
 import type { AdbSocket } from "../../socket";
-import { ReadableStream, TransformStream } from "../../stream";
+import { ReadableStream, ReadableStreamDefaultController, WrapReadableStream } from "../../stream";
 import type { AdbSubprocessProtocol } from "./types";
 
 /**
@@ -24,26 +24,39 @@ export class AdbNoneSubprocessProtocol implements AdbSubprocessProtocol {
     // Legacy shell forwards all data to stdin.
     public get stdin() { return this.socket.writable; }
 
-    private _stdout: ReadableStream<ArrayBuffer>;
+    private _stdout: ReadableStream<Uint8Array>;
     // Legacy shell doesn't support splitting output streams.
     public get stdout() { return this._stdout; }
 
     // `stderr` of Legacy shell is always empty.
-    private _stderr = new TransformStream<ArrayBuffer, ArrayBuffer>();
-    public get stderr() { return this._stderr.readable; }
+    private _stderr: ReadableStream<Uint8Array>;
+    public get stderr() { return this._stderr; }
 
     private _exit = new PromiseResolver<number>();
     public get exit() { return this._exit.promise; }
 
     public constructor(socket: AdbSocket) {
         this.socket = socket;
-        this._stdout = this.socket.readable
-            .pipeThrough(new TransformStream({
-                flush: () => {
-                    this._stderr.writable.close();
-                    this._exit.resolve(0);
-                },
-            }));
+
+        let stderrController!: ReadableStreamDefaultController<Uint8Array>;
+        this._stderr = new ReadableStream<Uint8Array>({
+            start(controller) {
+                stderrController = controller;
+            },
+        });
+
+        this._stdout = new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, undefined>({
+            async start() {
+                return {
+                    readable: socket.readable,
+                    state: undefined,
+                };
+            },
+            async close() {
+                // Close `stderr` on exit.
+                stderrController.close();
+            }
+        });
     }
 
     public resize() {

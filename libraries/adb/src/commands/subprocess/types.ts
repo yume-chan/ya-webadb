@@ -7,12 +7,12 @@ export interface AdbSubprocessProtocol {
     /**
      * A WritableStream that writes to the `stdin` pipe.
      */
-    readonly stdin: WritableStream<ArrayBuffer>;
+    readonly stdin: WritableStream<Uint8Array>;
 
     /**
      * The `stdout` pipe of the process.
      */
-    readonly stdout: ReadableStream<ArrayBuffer>;
+    readonly stdout: ReadableStream<Uint8Array>;
 
     /**
      * The `stderr` pipe of the process.
@@ -20,7 +20,7 @@ export interface AdbSubprocessProtocol {
      * Note: Some `AdbShell` doesn't separate `stdout` and `stderr`,
      * All output will be sent to `stdout`.
      */
-    readonly stderr: ReadableStream<ArrayBuffer>;
+    readonly stderr: ReadableStream<Uint8Array>;
 
     /**
      * A `Promise` that resolves to the exit code of the process.

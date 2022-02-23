@@ -1,3 +1,5 @@
+// cspell: ignore syncbird
+
 import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from '../basic';
 import { Syncbird } from "../syncbird";
 import { decodeUtf8, encodeUtf8, ValueOrPromise } from "../utils";
@@ -56,24 +58,30 @@ export class ArrayBufferFieldType extends ArrayBufferLikeFieldType<ArrayBuffer> 
     }
 }
 
-/** Am ArrayBufferLike type that converts between `ArrayBuffer` and `Uint8ClampedArray` */
-export class Uint8ClampedArrayFieldType
-    extends ArrayBufferLikeFieldType<Uint8ClampedArray, Uint8ClampedArray> {
-    public static readonly instance = new Uint8ClampedArrayFieldType();
+export type ArrayBufferViewConstructor<T> = new (array: ArrayLike<number> | ArrayBufferLike) => T;
 
-    protected constructor() {
+/** Am ArrayBufferLike type that converts between `ArrayBuffer` and `Uint8ClampedArray` */
+export class ArrayBufferViewFieldType<T extends ArrayBufferView>
+    extends ArrayBufferLikeFieldType<T, T> {
+    public static readonly uint8Array = new ArrayBufferViewFieldType(Uint8Array);
+    public static readonly uint8ClampedArray = new ArrayBufferViewFieldType(Uint8ClampedArray);
+
+    protected type: ArrayBufferViewConstructor<T>;
+
+    public constructor(type: ArrayBufferViewConstructor<T>) {
         super();
+        this.type = type;
     }
 
-    public toArrayBuffer(value: Uint8ClampedArray): ArrayBuffer {
+    public toArrayBuffer(value: T): ArrayBuffer {
         return value.buffer;
     }
 
-    public fromArrayBuffer(arrayBuffer: ArrayBuffer): Uint8ClampedArray {
-        return new Uint8ClampedArray(arrayBuffer);
+    public fromArrayBuffer(arrayBuffer: ArrayBuffer): T {
+        return new this.type(arrayBuffer);
     }
 
-    public getSize(value: Uint8ClampedArray): number {
+    public getSize(value: T): number {
         return value.byteLength;
     }
 }

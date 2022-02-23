@@ -14,11 +14,11 @@ export class BufferedStreamEndedError extends Error {
 export class BufferedStream {
     private buffer: Uint8Array | undefined;
 
-    protected readonly stream: ReadableStream<ArrayBuffer>;
+    protected readonly stream: ReadableStream<Uint8Array>;
 
-    protected readonly reader: ReadableStreamDefaultReader<ArrayBuffer>;
+    protected readonly reader: ReadableStreamDefaultReader<Uint8Array>;
 
-    public constructor(stream: ReadableStream<ArrayBuffer>) {
+    public constructor(stream: ReadableStream<Uint8Array>) {
         this.stream = stream;
         this.reader = stream.getReader();
     }
@@ -29,14 +29,14 @@ export class BufferedStream {
      * @param readToEnd When `true`, allow less data to be returned if the stream has reached its end.
      * @returns
      */
-    public async read(length: number, readToEnd: boolean = false): Promise<ArrayBuffer> {
+    public async read(length: number, readToEnd: boolean = false): Promise<Uint8Array> {
         let array: Uint8Array;
         let index: number;
         if (this.buffer) {
             const buffer = this.buffer;
             if (buffer.byteLength > length) {
                 this.buffer = buffer.subarray(length);
-                return buffer.slice(0, length).buffer;
+                return buffer.slice(0, length);
             }
 
             array = new Uint8Array(length);
@@ -47,7 +47,7 @@ export class BufferedStream {
             const result = await this.reader.read();
             if (result.done) {
                 if (readToEnd) {
-                    return new ArrayBuffer(0);
+                    return new Uint8Array(0);
                 } else {
                     throw new Error('Unexpected end of stream');
                 }
@@ -59,7 +59,7 @@ export class BufferedStream {
             }
 
             if (value.byteLength > length) {
-                this.buffer = new Uint8Array(value, length);
+                this.buffer = value.subarray(length);
                 return value.slice(0, length);
             }
 
@@ -74,7 +74,7 @@ export class BufferedStream {
             const result = await this.reader.read();
             if (result.done) {
                 if (readToEnd) {
-                    return new ArrayBuffer(0);
+                    return new Uint8Array(0);
                 } else {
                     throw new Error('Unexpected end of stream');
                 }
@@ -82,16 +82,16 @@ export class BufferedStream {
 
             const { value } = result;
             if (value.byteLength > left) {
-                array.set(new Uint8Array(value, 0, left), index);
-                this.buffer = new Uint8Array(value, left);
-                return array.buffer;
+                array.set(value.subarray(0, left), index);
+                this.buffer = value.subarray(left);
+                return array;
             }
 
-            array.set(new Uint8Array(value), index);
+            array.set(value, index);
             index += value.byteLength;
         }
 
-        return array.buffer;
+        return array;
     }
 
     public close() {

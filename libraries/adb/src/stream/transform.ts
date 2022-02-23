@@ -1,9 +1,9 @@
-import Struct, { decodeUtf8, StructLike, StructValueType } from "@yume-chan/struct";
-import { chunkArrayLike } from "../utils/chunk";
+import Struct, { StructLike, StructValueType } from "@yume-chan/struct";
+import { decodeUtf8 } from "../utils";
 import { BufferedStream, BufferedStreamEndedError } from "./buffered";
-import { TransformStream, WritableStream, WritableStreamDefaultWriter, ReadableStream, ReadableStreamDefaultReader } from "./detect";
+import { ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter } from "./detect";
 
-export class DecodeUtf8Stream extends TransformStream<ArrayBuffer, string>{
+export class DecodeUtf8Stream extends TransformStream<Uint8Array, string>{
     public constructor() {
         super({
             transform(chunk, controller) {
@@ -29,10 +29,10 @@ export class GatherStringStream extends TransformStream<string, string>{
 
 // TODO: Find other ways to implement `StructTransformStream`
 export class StructDeserializeStream<T extends StructLike<any>>
-    extends TransformStream<ArrayBuffer, StructValueType<T>>{
+    extends TransformStream<Uint8Array, StructValueType<T>>{
     public constructor(struct: T) {
         // Convert incoming chunk to a `ReadableStream`
-        const passthrough = new TransformStream<ArrayBuffer, ArrayBuffer>();
+        const passthrough = new TransformStream<Uint8Array, Uint8Array>();
         const passthroughWriter = passthrough.writable.getWriter();
         // Convert the `ReadableSteam` to a `BufferedStream`
         const bufferedStream = new BufferedStream(passthrough.readable);
@@ -66,11 +66,11 @@ export class StructDeserializeStream<T extends StructLike<any>>
 }
 
 export class StructSerializeStream<T extends Struct<any, any, any, any>>
-    extends TransformStream<T['TInit'], ArrayBuffer>{
+    extends TransformStream<T['TInit'], Uint8Array>{
     constructor(struct: T) {
         super({
             transform(chunk, controller) {
-                controller.enqueue(struct.serialize(chunk));
+                controller.enqueue(new Uint8Array(struct.serialize(chunk)));
             },
         });
     }
@@ -149,12 +149,14 @@ export class WrapReadableStream<T, R extends ReadableStream<T>, S> extends Reada
     }
 }
 
-export class ChunkStream extends TransformStream<ArrayBuffer, ArrayBuffer>{
+export class ChunkStream extends TransformStream<Uint8Array, Uint8Array>{
     public constructor(size: number) {
         super({
             transform(chunk, controller) {
-                for (const piece of chunkArrayLike(chunk, size)) {
-                    controller.enqueue(piece);
+                for (let start = 0; start < chunk.length; start += size) {
+                    const end = start + size;
+                    controller.enqueue(chunk.slice(start, end));
+                    start = end;
                 }
             }
         });
