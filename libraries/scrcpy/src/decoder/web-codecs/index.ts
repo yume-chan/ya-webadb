@@ -32,7 +32,7 @@ export class WebCodecsDecoder implements H264Decoder {
             error() { },
         });
 
-        this._writable = new WritableStream({
+        this._writable = new WritableStream<VideoStreamPacket>({
             write: async (packet) => {
                 switch (packet.type) {
                     case 'configuration':

@@ -62,7 +62,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
                 { signal: this._abortController.signal, preventCancel: true }
             )
             .pipeThrough(new StructDeserializeStream(AdbPacket))
-            .pipeTo(new WritableStream({
+            .pipeTo(new WritableStream<AdbPacket>({
                 write: async (packet) => {
                     try {
                         this.logger?.onIncomingPacket?.(packet);

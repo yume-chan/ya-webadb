@@ -37,7 +37,7 @@ export class TinyH264Decoder implements H264Decoder {
 
         this._renderer = document.createElement('canvas');
 
-        this._writable = new WritableStream({
+        this._writable = new WritableStream<VideoStreamPacket>({
             write: async (packet) => {
                 switch (packet.type) {
                     case 'configuration':
@@ -49,7 +49,7 @@ export class TinyH264Decoder implements H264Decoder {
                         }
 
                         const wrapper = await this._initializer.promise;
-                        wrapper.feed(packet.data);
+                        wrapper.feed(packet.data.slice().buffer);
                         break;
                 }
             }

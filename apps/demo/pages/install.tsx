@@ -1,6 +1,5 @@
 import { DefaultButton, ProgressIndicator, Stack } from "@fluentui/react";
 import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, ReadableStream } from "@yume-chan/adb";
-import { ExtractViewBufferStream } from "@yume-chan/adb-backend-direct-sockets";
 import { action, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -59,7 +58,6 @@ class InstallPageState {
         });
 
         await (file.stream() as unknown as ReadableStream<Uint8Array>)
-            .pipeThrough(new ExtractViewBufferStream())
             .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
             .pipeThrough(new ProgressStream(action((uploaded) => {
                 if (uploaded !== file.size) {

@@ -1,19 +1,4 @@
-import { AdbBackend, ReadableStream, ReadableWritablePair, TransformStream, WritableStream } from '@yume-chan/adb';
-
-/**
- * Transform an `ArrayBufferView` stream to an `ArrayBuffer` stream.
- *
- * The view must wrap the whole buffer (`byteOffset === 0` && `byteLength === buffer.byteLength`).
- */
-export class ExtractViewBufferStream extends TransformStream<ArrayBufferView, ArrayBuffer>{
-    constructor() {
-        super({
-            transform(chunk, controller) {
-                controller.enqueue(chunk.buffer);
-            }
-        });
-    }
-}
+import { AdbBackend, ReadableStream, WritableStream } from '@yume-chan/adb';
 
 declare global {
     interface TCPSocket {
@@ -44,28 +29,6 @@ declare global {
     }
 }
 
-export class AdbDirectSocketsBackendStreams implements ReadableWritablePair<ArrayBuffer, ArrayBuffer>{
-    private socket: TCPSocket;
-
-    private _readableTransformStream: ExtractViewBufferStream;
-    public get readable(): ReadableStream<ArrayBuffer> {
-        return this._readableTransformStream.readable;
-    }
-
-    public get writable(): WritableStream<ArrayBuffer> {
-        return this.socket.writable;
-    }
-
-    constructor(socket: TCPSocket) {
-        this.socket = socket;
-
-        // Although Direct Sockets spec didn't say,
-        // WebTransport spec and File spec all have the `Uint8Array` wraps the whole `ArrayBuffer`.
-        this._readableTransformStream = new ExtractViewBufferStream();
-        this.socket.readable.pipeTo(this._readableTransformStream.writable);
-    }
-}
-
 export default class AdbDirectSocketsBackend implements AdbBackend {
     public static isSupported(): boolean {
         return typeof window !== 'undefined' && !!window.navigator?.openTCPSocket;
@@ -87,12 +50,10 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
     }
 
     public async connect() {
-        const socket = await navigator.openTCPSocket({
+        return await navigator.openTCPSocket({
             remoteAddress: this.host,
             remotePort: this.port,
             noDelay: true,
         });
-
-        return new AdbDirectSocketsBackendStreams(socket);
     }
 }

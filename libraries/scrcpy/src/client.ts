@@ -124,7 +124,7 @@ export class ScrcpyClient {
     private _videoStream: TransformStream<VideoStreamPacket, VideoStreamPacket>;
     public get videoStream() { return this._videoStream.readable; }
 
-    private _controlStreamWriter: WritableStreamDefaultWriter<ArrayBuffer> | undefined;
+    private _controlStreamWriter: WritableStreamDefaultWriter<Uint8Array> | undefined;
 
     private readonly clipboardChangeEvent = new EventEmitter<string>();
     public get onClipboardChange() { return this.clipboardChangeEvent.event; }
@@ -179,7 +179,7 @@ export class ScrcpyClient {
                 try {
                     while (true) {
                         const type = await buffered.read(1);
-                        switch (new Uint8Array(type)[0]) {
+                        switch (type[0]) {
                             case 0:
                                 const { content } = await ClipboardMessage.deserialize(buffered);
                                 this.clipboardChangeEvent.fire(content!);

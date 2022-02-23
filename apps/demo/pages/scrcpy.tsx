@@ -17,7 +17,7 @@ import { ProgressStream } from "./file-manager";
 const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url).toString();
 
 class FetchWithProgress {
-    public readonly promise: Promise<ArrayBuffer>;
+    public readonly promise: Promise<Uint8Array>;
 
     private _downloaded = 0;
     public get downloaded() { return this._downloaded; }
@@ -56,7 +56,7 @@ class FetchWithProgress {
             result.set(chunk, position);
             position += chunk.byteLength;
         }
-        return result.buffer;
+        return result;
     }
 }
 
@@ -387,7 +387,7 @@ class ScrcpyPageState {
                 this.debouncedServerDownloadedSize = this.serverDownloadedSize;
             }), 1000);
 
-            let serverBuffer: ArrayBuffer;
+            let serverBuffer: Uint8Array;
 
             try {
                 serverBuffer = await fetchServer(action(([downloaded, total]) => {
@@ -408,7 +408,7 @@ class ScrcpyPageState {
             }), 1000);
 
             try {
-                await new ReadableStream({
+                await new ReadableStream<Uint8Array>({
                     start(controller) {
                         controller.enqueue(serverBuffer);
                         controller.close();
@@ -450,7 +450,7 @@ class ScrcpyPageState {
 
             // Run scrcpy once will delete the server file
             // Re-push it
-            await new ReadableStream({
+            await new ReadableStream<Uint8Array>({
                 start(controller) {
                     controller.enqueue(serverBuffer);
                     controller.close();
@@ -492,7 +492,7 @@ class ScrcpyPageState {
                 options
             );
 
-            client.stdout.pipeTo(new WritableStream({
+            client.stdout.pipeTo(new WritableStream<string>({
                 write: action((line) => {
                     this.log.push(line);
                 }),

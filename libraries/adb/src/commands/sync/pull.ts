@@ -19,7 +19,7 @@ export function adbSyncPull(
     writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
 ): ReadableStream<Uint8Array> {
-    return new ReadableStream({
+    return new ReadableStream<Uint8Array>({
         async start() {
             await adbSyncWriteRequest(writer, AdbSyncRequestId.Receive, path);
         },

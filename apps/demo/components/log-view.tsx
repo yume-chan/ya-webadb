@@ -24,7 +24,7 @@ const classNames = mergeStyleSets({
 });
 
 function serializePacket(packet: AdbPacketInit) {
-    const command = decodeUtf8(new Uint32Array([packet.command]).buffer);
+    const command = decodeUtf8(new Uint32Array([packet.command]));
 
     const parts = [
         command,
@@ -35,7 +35,7 @@ function serializePacket(packet: AdbPacketInit) {
     if (packet.payload) {
         parts.push(
             Array.from(
-                new Uint8Array(packet.payload),
+                packet.payload,
                 byte => byte.toString(16).padStart(2, '0')
             ).join(' ')
         );

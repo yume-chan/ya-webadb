@@ -5,7 +5,7 @@ import { ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForw
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../../message";
 import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22";
-import { toScrcpyOptionValue, type VideoStreamPacket, type ScrcpyOptions, type ScrcpyOptionValue } from "../common";
+import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyOptionValue, type VideoStreamPacket } from "../common";
 import { parse_sequence_parameter_set } from "./sps";
 
 export enum ScrcpyLogLevel {
@@ -114,7 +114,7 @@ export const VideoPacket =
     new Struct()
         .int64('pts')
         .uint32('size')
-        .arrayBuffer('data', { lengthField: 'size' });
+        .uint8Array('data', { lengthField: 'size' });
 
 export const NoPts = BigInt(-1);
 
@@ -135,7 +135,7 @@ export const ScrcpyInjectScrollControlMessage1_16 =
 export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16> implements ScrcpyOptions<T> {
     public value: Partial<T>;
 
-    private _streamHeader: ArrayBuffer | undefined;
+    private _streamHeader: Uint8Array | undefined;
 
     public constructor(value: Partial<ScrcpyOptionsInit1_16>) {
         if (new.target === ScrcpyOptions1_16 &&
@@ -223,7 +223,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
 
         const { pts, data } = await VideoPacket.deserialize(stream);
         if (pts === NoPts) {
-            const sequenceParameterSet = parse_sequence_parameter_set(data.slice(0));
+            const sequenceParameterSet = parse_sequence_parameter_set(data.slice().buffer);
 
             const {
                 profile_idc: profileIndex,
@@ -267,12 +267,11 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
             };
         }
 
-        let frameData: ArrayBuffer;
+        let frameData: Uint8Array;
         if (this._streamHeader) {
-            frameData = new ArrayBuffer(this._streamHeader.byteLength + data.byteLength);
-            const array = new Uint8Array(frameData);
-            array.set(new Uint8Array(this._streamHeader));
-            array.set(new Uint8Array(data!), this._streamHeader.byteLength);
+            frameData = new Uint8Array(this._streamHeader.byteLength + data.byteLength);
+            frameData.set(this._streamHeader);
+            frameData.set(data!, this._streamHeader.byteLength);
             this._streamHeader = undefined;
         } else {
             frameData = data;
@@ -296,7 +295,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
 
     public serializeInjectScrollControlMessage(
         message: ScrcpyInjectScrollControlMessage1_22,
-    ): ArrayBuffer {
+    ): Uint8Array {
         return ScrcpyInjectScrollControlMessage1_16.serialize(message);
     }
 }

@@ -8,6 +8,6 @@ export function encodeUtf8(input: string): Uint8Array {
     return Utf8Encoder.encode(input);
 }
 
-export function decodeUtf8(buffer: Uint8Array): string {
+export function decodeUtf8(buffer: ArrayBufferView | ArrayBuffer): string {
     return Utf8Decoder.decode(buffer);
 }

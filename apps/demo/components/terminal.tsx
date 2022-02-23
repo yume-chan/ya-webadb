@@ -36,16 +36,16 @@ export class AdbTerminal extends AutoDisposable {
 
             this._socketAbortController = new AbortController();
 
-            value.stdout.pipeTo(new WritableStream({
+            value.stdout.pipeTo(new WritableStream<Uint8Array>({
                 write: (chunk) => {
-                    this.terminal.write(new Uint8Array(chunk));
+                    this.terminal.write(chunk);
                 },
             }), {
                 signal: this._socketAbortController.signal,
             });
-            value.stderr.pipeTo(new WritableStream({
+            value.stderr.pipeTo(new WritableStream<Uint8Array>({
                 write: (chunk) => {
-                    this.terminal.write(new Uint8Array(chunk));
+                    this.terminal.write(chunk);
                 },
             }), {
                 signal: this._socketAbortController.signal,

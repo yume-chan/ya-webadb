@@ -70,7 +70,7 @@ export class StructSerializeStream<T extends Struct<any, any, any, any>>
     constructor(struct: T) {
         super({
             transform(chunk, controller) {
-                controller.enqueue(new Uint8Array(struct.serialize(chunk)));
+                controller.enqueue(struct.serialize(chunk));
             },
         });
     }
@@ -140,6 +140,7 @@ export class WrapReadableStream<T, R extends ReadableStream<T>, S> extends Reada
             pull: async (controller) => {
                 const result = await this.reader.read();
                 if (result.done) {
+                    wrapper.close?.(this.state);
                     controller.close();
                 } else {
                     controller.enqueue(result.value);
@@ -153,9 +154,9 @@ export class ChunkStream extends TransformStream<Uint8Array, Uint8Array>{
     public constructor(size: number) {
         super({
             transform(chunk, controller) {
-                for (let start = 0; start < chunk.length; start += size) {
+                for (let start = 0; start < chunk.byteLength;) {
                     const end = start + size;
-                    controller.enqueue(chunk.slice(start, end));
+                    controller.enqueue(chunk.subarray(start, end));
                     start = end;
                 }
             }

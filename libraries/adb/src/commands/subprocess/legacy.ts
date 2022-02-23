@@ -52,9 +52,11 @@ export class AdbNoneSubprocessProtocol implements AdbSubprocessProtocol {
                     state: undefined,
                 };
             },
-            async close() {
+            close: async () => {
                 // Close `stderr` on exit.
                 stderrController.close();
+
+                this._exit.resolve(0);
             }
         });
     }

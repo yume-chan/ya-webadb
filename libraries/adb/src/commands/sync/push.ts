@@ -23,7 +23,7 @@ export function adbSyncPush(
     packetSize: number = ADB_SYNC_MAX_PACKET_SIZE,
 ): WritableStream<Uint8Array> {
     const { readable, writable } = new ChunkStream(packetSize);
-    readable.pipeTo(new WritableStream({
+    readable.pipeTo(new WritableStream<Uint8Array>({
         async start() {
             const pathAndMode = `${filename},${mode.toString()}`;
             await adbSyncWriteRequest(writer, AdbSyncRequestId.Send, pathAndMode);

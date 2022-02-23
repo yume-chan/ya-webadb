@@ -21,10 +21,10 @@ export default class AdbWsBackend implements AdbBackend {
             };
         });
 
-        const readable = new ReadableStream({
+        const readable = new ReadableStream<Uint8Array>({
             start: (controller) => {
                 socket.onmessage = ({ data }: { data: ArrayBuffer; }) => {
-                    controller.enqueue(data);
+                    controller.enqueue(new Uint8Array(data));
                 };
                 socket.onclose = () => {
                     controller.close();
@@ -35,7 +35,7 @@ export default class AdbWsBackend implements AdbBackend {
             size(chunk) { return chunk.byteLength; },
         });
 
-        const writable = new WritableStream({
+        const writable = new WritableStream<Uint8Array>({
             write: (chunk) => {
                 socket.send(chunk);
             },

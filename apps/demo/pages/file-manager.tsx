@@ -4,7 +4,6 @@ import { getFileTypeIconNameFromExtensionOrType } from '@fluentui/react-file-typ
 import { DEFAULT_BASE_URL as FILE_TYPE_ICONS_BASE_URL } from '@fluentui/react-file-type-icons/lib-commonjs/initializeFileTypeIcons';
 import { useConst } from '@fluentui/react-hooks';
 import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, LinuxFileType, ReadableStream, TransformStream } from '@yume-chan/adb';
-import { ExtractViewBufferStream } from "@yume-chan/adb-backend-direct-sockets";
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -21,7 +20,7 @@ import { asyncEffect, formatSize, formatSpeed, Icons, pickFile, RouteStackProps 
  * Because of internal buffer of upstream/downstream streams,
  * the progress value won't be 100% accurate. But it's usually good enough.
  */
-export class ProgressStream extends TransformStream<ArrayBuffer, ArrayBuffer> {
+export class ProgressStream extends TransformStream<Uint8Array, Uint8Array> {
     public constructor(onProgress: (value: number) => void) {
         let progress = 0;
         super({
@@ -171,13 +170,7 @@ class FileManagerState {
                                         item.name,
                                         { size: item.size }
                                     );
-                                    await readable
-                                        .pipeThrough(new TransformStream({
-                                            transform(chunk, controller) {
-                                                controller.enqueue(new Uint8Array(chunk));
-                                            },
-                                        }))
-                                        .pipeTo(writeable);
+                                    await readable.pipeTo(writeable);
                                 } catch (e) {
                                     globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                                 } finally {
@@ -477,7 +470,6 @@ class FileManagerState {
 
             try {
                 await (file.stream() as unknown as ReadableStream<Uint8Array>)
-                    .pipeThrough(new ExtractViewBufferStream())
                     .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
                     .pipeThrough(new ProgressStream(action((uploaded) => {
                         this.uploadedSize = uploaded;
@@ -558,12 +550,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
     const previewImage = useCallback(async (path: string) => {
         const sync = await globalState.device!.sync();
         try {
-            const readable = (await sync.read(path))
-                .pipeThrough(new TransformStream({
-                    transform(chunk, controller) {
-                        controller.enqueue(new Uint8Array(chunk));
-                    },
-                }));
+            const readable = sync.read(path);
             const response = new Response(readable);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);

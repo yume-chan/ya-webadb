@@ -6,15 +6,15 @@ export const WebUsbDeviceFilter: USBDeviceFilter = {
     protocolCode: 1,
 };
 
-export class AdbWebUsbBackendStream implements ReadableWritablePair<ArrayBuffer, ArrayBuffer>{
-    private _readable: ReadableStream<ArrayBuffer>;
+export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, Uint8Array>{
+    private _readable: ReadableStream<Uint8Array>;
     public get readable() { return this._readable; }
 
-    private _writable: WritableStream<ArrayBuffer>;
+    private _writable: WritableStream<Uint8Array>;
     public get writable() { return this._writable; }
 
     public constructor(device: USBDevice, inEndpoint: USBEndpoint, outEndpoint: USBEndpoint) {
-        this._readable = new ReadableStream({
+        this._readable = new ReadableStream<Uint8Array>({
             pull: async (controller) => {
                 let result = await device.transferIn(inEndpoint.endpointNumber, inEndpoint.packetSize);
 
@@ -24,8 +24,8 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<ArrayBuffer,
                     result = await device.transferIn(inEndpoint.endpointNumber, inEndpoint.packetSize);
                 }
 
-                const { buffer } = result.data!;
-                controller.enqueue(buffer);
+                const view = result.data!;
+                controller.enqueue(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
             },
             cancel: async () => {
                 await device.close();
@@ -35,7 +35,7 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<ArrayBuffer,
             size(chunk) { return chunk.byteLength; },
         });
 
-        this._writable = new WritableStream({
+        this._writable = new WritableStream<Uint8Array>({
             write: async (chunk) => {
                 await device.transferOut(outEndpoint.endpointNumber, chunk);
             },

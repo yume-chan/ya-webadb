@@ -24,7 +24,7 @@ class FrameBufferState {
     setImage(image: AdbFrameBuffer) {
         this.width = image.width;
         this.height = image.height;
-        this.imageData = new ImageData(image.data, image.width, image.height);
+        this.imageData = new ImageData(new Uint8ClampedArray(image.data), image.width, image.height);
     }
 
     toggleDemoModeVisible() {

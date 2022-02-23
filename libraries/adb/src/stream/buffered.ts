@@ -36,7 +36,7 @@ export class BufferedStream {
             const buffer = this.buffer;
             if (buffer.byteLength > length) {
                 this.buffer = buffer.subarray(length);
-                return buffer.slice(0, length);
+                return buffer.subarray(0, length);
             }
 
             array = new Uint8Array(length);
@@ -60,11 +60,11 @@ export class BufferedStream {
 
             if (value.byteLength > length) {
                 this.buffer = value.subarray(length);
-                return value.slice(0, length);
+                return value.subarray(0, length);
             }
 
             array = new Uint8Array(length);
-            array.set(new Uint8Array(value), 0);
+            array.set(value, 0);
             index = value.byteLength;
         }
 

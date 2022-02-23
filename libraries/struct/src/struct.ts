@@ -3,7 +3,7 @@
 import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic';
 import { StructDefaultOptions, StructValue } from './basic';
 import { Syncbird } from "./syncbird";
-import { ArrayBufferFieldType, ArrayBufferLikeFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringFieldType, ArrayBufferViewFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
+import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, FixedLengthBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, VariableLengthBufferLikeFieldOptions } from './types';
 import { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils";
 
 export interface StructLike<TValue> {
@@ -57,12 +57,12 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends ArrayBufferLikeFieldType<any, any>,
+        TType extends BufferFieldSubType<any, any>,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
         name: TName,
         type: TType,
-        options: FixedLengthArrayBufferLikeFieldOptions,
+        options: FixedLengthBufferLikeFieldOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
@@ -70,9 +70,9 @@ interface ArrayBufferLikeFieldCreator<
         TExtra,
         TPostDeserialized,
         TName,
-        FixedLengthArrayBufferLikeFieldDefinition<
+        FixedLengthBufferLikeFieldDefinition<
             TType,
-            FixedLengthArrayBufferLikeFieldOptions
+            FixedLengthBufferLikeFieldOptions
         >
     >;
 
@@ -81,8 +81,8 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends ArrayBufferLikeFieldType<any, any>,
-        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields>,
+        TType extends BufferFieldSubType<any, any>,
+        TOptions extends VariableLengthBufferLikeFieldOptions<TFields>,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
         name: TName,
@@ -95,7 +95,7 @@ interface ArrayBufferLikeFieldCreator<
         TExtra,
         TPostDeserialized,
         TName,
-        VariableLengthArrayBufferLikeFieldDefinition<
+        VariableLengthBufferLikeFieldDefinition<
             TType,
             TOptions
         >
@@ -110,14 +110,14 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
     TOmitInitKey extends PropertyKey,
     TExtra extends object,
     TPostDeserialized,
-    TType extends ArrayBufferLikeFieldType<any, any>
+    TType extends BufferFieldSubType<any, any>
     > {
     <
         TName extends PropertyKey,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
         name: TName,
-        options: FixedLengthArrayBufferLikeFieldOptions,
+        options: FixedLengthBufferLikeFieldOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
@@ -125,16 +125,16 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
         TExtra,
         TPostDeserialized,
         TName,
-        FixedLengthArrayBufferLikeFieldDefinition<
+        FixedLengthBufferLikeFieldDefinition<
             TType,
-            FixedLengthArrayBufferLikeFieldOptions
+            FixedLengthBufferLikeFieldOptions
         >
     >;
 
     <
         TName extends PropertyKey,
         TLengthField extends LengthField<TFields>,
-        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields, TLengthField>,
+        TOptions extends VariableLengthBufferLikeFieldOptions<TFields, TLengthField>,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
         name: TName,
@@ -146,7 +146,7 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
         TExtra,
         TPostDeserialized,
         TName,
-        VariableLengthArrayBufferLikeFieldDefinition<
+        VariableLengthBufferLikeFieldDefinition<
             TType,
             TOptions
         >
@@ -421,33 +421,20 @@ export class Struct<
         TPostDeserialized
     > = (
         name: PropertyKey,
-        type: ArrayBufferLikeFieldType,
-        options: FixedLengthArrayBufferLikeFieldOptions | VariableLengthArrayBufferLikeFieldOptions
+        type: BufferFieldSubType,
+        options: FixedLengthBufferLikeFieldOptions | VariableLengthBufferLikeFieldOptions
     ): any => {
             if ('length' in options) {
                 return this.field(
                     name,
-                    new FixedLengthArrayBufferLikeFieldDefinition(type, options),
+                    new FixedLengthBufferLikeFieldDefinition(type, options),
                 );
             } else {
                 return this.field(
                     name,
-                    new VariableLengthArrayBufferLikeFieldDefinition(type, options),
+                    new VariableLengthBufferLikeFieldDefinition(type, options),
                 );
             }
-        };
-
-    public arrayBuffer: BoundArrayBufferLikeFieldDefinitionCreator<
-        TFields,
-        TOmitInitKey,
-        TExtra,
-        TPostDeserialized,
-        ArrayBufferFieldType
-    > = (
-        name: PropertyKey,
-        options: any
-    ): any => {
-            return this.arrayBufferLike(name, ArrayBufferFieldType.instance, options);
         };
 
     public uint8Array: BoundArrayBufferLikeFieldDefinitionCreator<
@@ -455,25 +442,12 @@ export class Struct<
         TOmitInitKey,
         TExtra,
         TPostDeserialized,
-        ArrayBufferViewFieldType<Uint8Array>
+        Uint8ArrayBufferFieldSubType
     > = (
         name: PropertyKey,
         options: any
     ): any => {
-            return this.arrayBufferLike(name, ArrayBufferViewFieldType.uint8Array, options);
-        };
-
-    public uint8ClampedArray: BoundArrayBufferLikeFieldDefinitionCreator<
-        TFields,
-        TOmitInitKey,
-        TExtra,
-        TPostDeserialized,
-        ArrayBufferViewFieldType<Uint8ClampedArray>
-    > = (
-        name: PropertyKey,
-        options: any
-    ): any => {
-        return this.arrayBufferLike(name, ArrayBufferViewFieldType.uint8ClampedArray, options);
+        return this.arrayBufferLike(name, Uint8ArrayBufferFieldSubType.Instance, options);
         };
 
     public string: BoundArrayBufferLikeFieldDefinitionCreator<
@@ -481,12 +455,12 @@ export class Struct<
         TOmitInitKey,
         TExtra,
         TPostDeserialized,
-        StringFieldType
+        StringBufferFieldSubType
     > = (
         name: PropertyKey,
         options: any
     ): any => {
-            return this.arrayBufferLike(name, StringFieldType.instance, options);
+        return this.arrayBufferLike(name, StringBufferFieldSubType.Instance, options);
         };
 
     /**

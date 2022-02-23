@@ -50,8 +50,8 @@ export class BugReportZ extends AdbCommandBase {
         return version.major > 1 || version.minor >= 2;
     }
 
-    public stream(): ReadableStream<ArrayBuffer> {
-        return new WrapReadableStream<ArrayBuffer, ReadableStream<ArrayBuffer>, undefined>({
+    public stream(): ReadableStream<Uint8Array> {
+        return new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, undefined>({
             start: async () => {
                 const process = await this.adb.subprocess.spawn(['bugreportz', '-s']);
                 return {
@@ -86,7 +86,7 @@ export class BugReportZ extends AdbCommandBase {
         await process.stdout
             .pipeThrough(new DecodeUtf8Stream())
             .pipeThrough(new SplitLineStream())
-            .pipeTo(new WritableStream({
+            .pipeTo(new WritableStream<string>({
                 write(line) {
                     // (Not 100% sure) `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
                     let match = line.match(BugReportZ.PROGRESS_REGEX);

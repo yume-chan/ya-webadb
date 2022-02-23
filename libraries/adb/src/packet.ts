@@ -36,7 +36,7 @@ export class AdbPacketSerializeStream extends TransformStream<AdbPacketInit, Uin
             transform: async (init, controller) => {
                 let checksum: number;
                 if (this.calculateChecksum && init.payload) {
-                    const array = new Uint8Array(init.payload);
+                    const array = init.payload;
                     checksum = array.reduce((result, item) => result + item, 0);
                 } else {
                     checksum = 0;
@@ -49,7 +49,7 @@ export class AdbPacketSerializeStream extends TransformStream<AdbPacketInit, Uin
                     payloadLength: init.payload.byteLength,
                 };
 
-                controller.enqueue(new Uint8Array(AdbPacketHeader.serialize(packet)));
+                controller.enqueue(AdbPacketHeader.serialize(packet));
 
                 if (packet.payloadLength) {
                     controller.enqueue(packet.payload);

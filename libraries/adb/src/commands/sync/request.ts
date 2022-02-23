@@ -30,20 +30,20 @@ export async function adbSyncWriteRequest(
 ): Promise<void> {
     let buffer: Uint8Array;
     if (typeof value === 'number') {
-        buffer = new Uint8Array(AdbSyncNumberRequest.serialize({
+        buffer = AdbSyncNumberRequest.serialize({
             id,
             arg: value,
-        }));
+        });
     } else if (typeof value === 'string') {
-        buffer = new Uint8Array(AdbSyncDataRequest.serialize({
+        buffer = AdbSyncDataRequest.serialize({
             id,
             data: encodeUtf8(value),
-        }));
+        });
     } else {
-        buffer = new Uint8Array(AdbSyncDataRequest.serialize({
+        buffer = AdbSyncDataRequest.serialize({
             id,
             data: value,
-        }));
+        });
     }
     await writer.write(buffer);
 }

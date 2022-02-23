@@ -1,6 +1,6 @@
 import type { Adb } from "@yume-chan/adb";
 import Struct from "@yume-chan/struct";
-import { type ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../connection";
+import { ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnection } from "../connection";
 import { ScrcpyInjectScrollControlMessage1_16 } from "./1_16";
 import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from "./1_21";
 
@@ -74,7 +74,7 @@ export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsIn
 
     public override serializeInjectScrollControlMessage(
         message: ScrcpyInjectScrollControlMessage1_22,
-    ): ArrayBuffer {
+    ): Uint8Array {
         return ScrcpyInjectScrollControlMessage1_22.serialize(message);
     }
 }

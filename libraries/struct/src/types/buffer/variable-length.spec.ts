@@ -1,21 +1,21 @@
-import { StructDefaultOptions, StructFieldValue, StructValue } from '../basic';
-import { ArrayBufferFieldType, ArrayBufferLikeFieldType } from './array-buffer';
-import { VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldLengthValue, VariableLengthArrayBufferLikeStructFieldValue } from './variable-length-array-buffer';
+import { StructDefaultOptions, StructFieldValue, StructValue } from '../../basic';
+import { BufferFieldSubType, Uint8ArrayBufferFieldSubType } from './base';
+import { VariableLengthBufferLikeFieldDefinition, VariableLengthBufferLikeFieldLengthValue, VariableLengthBufferLikeStructFieldValue } from './variable-length';
 
 class MockOriginalFieldValue extends StructFieldValue {
     public constructor() {
         super({} as any, {} as any, {} as any, {});
     }
 
-    public value: string | number = 0;
+    public override value: string | number = 0;
 
-    public get = jest.fn((): string | number => this.value);
+    public override get = jest.fn((): string | number => this.value);
 
     public size = 0;
 
-    public getSize = jest.fn((): number => this.size);
+    public override getSize = jest.fn((): number => this.size);
 
-    public set = jest.fn((value: string | number) => { });
+    public override set = jest.fn((value: string | number) => { });
 
     public serialize = jest.fn((dataView: DataView, offset: number): void => { });
 }
@@ -29,7 +29,7 @@ describe('Types', () => {
 
             public size = 0;
 
-            public getSize = jest.fn(() => this.size);
+            public override getSize = jest.fn(() => this.size);
 
             public serialize(dataView: DataView, offset: number): void {
                 throw new Error('Method not implemented.');
@@ -40,7 +40,7 @@ describe('Types', () => {
             it('should return size of its original field value', () => {
                 const mockOriginalFieldValue = new MockOriginalFieldValue();
                 const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
-                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                const lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
                     mockOriginalFieldValue,
                     mockArrayBufferFieldValue,
                 );
@@ -60,7 +60,7 @@ describe('Types', () => {
             it('should return size of its `arrayBufferField`', async () => {
                 const mockOriginalFieldValue = new MockOriginalFieldValue();
                 const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
-                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                const lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
                     mockOriginalFieldValue,
                     mockArrayBufferFieldValue,
                 );
@@ -82,7 +82,7 @@ describe('Types', () => {
             it('should return size of its `arrayBufferField` as string', async () => {
                 const mockOriginalFieldValue = new MockOriginalFieldValue();
                 const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
-                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                const lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
                     mockOriginalFieldValue,
                     mockArrayBufferFieldValue,
                 );
@@ -106,7 +106,7 @@ describe('Types', () => {
             it('should does nothing', async () => {
                 const mockOriginalFieldValue = new MockOriginalFieldValue();
                 const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
-                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                const lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
                     mockOriginalFieldValue,
                     mockArrayBufferFieldValue,
                 );
@@ -124,7 +124,7 @@ describe('Types', () => {
             it('should call `serialize` of its `originalField`', async () => {
                 const mockOriginalFieldValue = new MockOriginalFieldValue();
                 const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
-                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                const lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
                     mockOriginalFieldValue,
                     mockArrayBufferFieldValue,
                 );
@@ -155,7 +155,7 @@ describe('Types', () => {
             it('should stringify its length if `originalField` is a string', async () => {
                 const mockOriginalFieldValue = new MockOriginalFieldValue();
                 const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
-                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                const lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
                     mockOriginalFieldValue,
                     mockArrayBufferFieldValue,
                 );
@@ -186,7 +186,7 @@ describe('Types', () => {
             it('should stringify its length in specified base if `originalField` is a string', async () => {
                 const mockOriginalFieldValue = new MockOriginalFieldValue();
                 const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
-                const lengthFieldValue = new VariableLengthArrayBufferLikeFieldLengthValue(
+                const lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
                     mockOriginalFieldValue,
                     mockArrayBufferFieldValue,
                 );
@@ -228,14 +228,14 @@ describe('Types', () => {
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const arrayBufferFieldDefinition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(0);
+                const value = new Uint8Array(0);
 
-                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     struct,
@@ -257,14 +257,14 @@ describe('Types', () => {
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const arrayBufferFieldDefinition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(100);
+                const value = new Uint8Array(100);
 
-                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     struct,
@@ -276,7 +276,7 @@ describe('Types', () => {
                 expect(arrayBufferFieldValue).toHaveProperty('options', StructDefaultOptions);
                 expect(arrayBufferFieldValue).toHaveProperty('struct', struct);
                 expect(arrayBufferFieldValue).toHaveProperty('value', value);
-                expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', value);
+                expect(arrayBufferFieldValue).toHaveProperty('array', value);
                 expect(arrayBufferFieldValue).toHaveProperty('length', 100);
             });
 
@@ -287,14 +287,14 @@ describe('Types', () => {
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const arrayBufferFieldDefinition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(0);
+                const value = new Uint8Array(0);
 
-                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     struct,
@@ -307,18 +307,18 @@ describe('Types', () => {
         });
 
         describe('#getSize', () => {
-            class MockArrayBufferFieldType extends ArrayBufferLikeFieldType<ArrayBuffer> {
-                public toArrayBuffer = jest.fn((value: ArrayBuffer): ArrayBuffer => {
+            class MockArrayBufferFieldType extends BufferFieldSubType<Uint8Array> {
+                public override toBuffer = jest.fn((value: Uint8Array): Uint8Array => {
                     return value;
                 });
 
-                public fromArrayBuffer = jest.fn((arrayBuffer: ArrayBuffer): ArrayBuffer => {
+                public override toValue = jest.fn((arrayBuffer: Uint8Array): Uint8Array => {
                     return arrayBuffer;
                 });
 
                 public size = 0;
 
-                public getSize = jest.fn((value: ArrayBuffer): number => {
+                public override getSize = jest.fn((value: Uint8Array): number => {
                     return this.size;
                 });
             }
@@ -331,14 +331,14 @@ describe('Types', () => {
                 struct.set(lengthField, originalLengthFieldValue);
 
                 const arrayBufferFieldType = new MockArrayBufferFieldType();
-                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                const arrayBufferFieldDefinition = new VariableLengthBufferLikeFieldDefinition(
                     arrayBufferFieldType,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(100);
+                const value = new Uint8Array(100);
 
-                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     struct,
@@ -347,8 +347,8 @@ describe('Types', () => {
                 );
 
                 expect(arrayBufferFieldValue.getSize()).toBe(100);
-                expect(arrayBufferFieldType.fromArrayBuffer).toBeCalledTimes(0);
-                expect(arrayBufferFieldType.toArrayBuffer).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.toValue).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.toBuffer).toBeCalledTimes(0);
                 expect(arrayBufferFieldType.getSize).toBeCalledTimes(0);
             });
 
@@ -360,14 +360,14 @@ describe('Types', () => {
                 struct.set(lengthField, originalLengthFieldValue);
 
                 const arrayBufferFieldType = new MockArrayBufferFieldType();
-                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                const arrayBufferFieldDefinition = new VariableLengthBufferLikeFieldDefinition(
                     arrayBufferFieldType,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(100);
+                const value = new Uint8Array(100);
 
-                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     struct,
@@ -376,8 +376,8 @@ describe('Types', () => {
 
                 arrayBufferFieldType.size = 100;
                 expect(arrayBufferFieldValue.getSize()).toBe(100);
-                expect(arrayBufferFieldType.fromArrayBuffer).toBeCalledTimes(0);
-                expect(arrayBufferFieldType.toArrayBuffer).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.toValue).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.toBuffer).toBeCalledTimes(0);
                 expect(arrayBufferFieldType.getSize).toBeCalledTimes(1);
                 expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', undefined);
                 expect(arrayBufferFieldValue).toHaveProperty('length', 100);
@@ -391,14 +391,14 @@ describe('Types', () => {
                 struct.set(lengthField, originalLengthFieldValue);
 
                 const arrayBufferFieldType = new MockArrayBufferFieldType();
-                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
+                const arrayBufferFieldDefinition = new VariableLengthBufferLikeFieldDefinition(
                     arrayBufferFieldType,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(100);
+                const value = new Uint8Array(100);
 
-                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     struct,
@@ -407,8 +407,8 @@ describe('Types', () => {
 
                 arrayBufferFieldType.size = -1;
                 expect(arrayBufferFieldValue.getSize()).toBe(100);
-                expect(arrayBufferFieldType.fromArrayBuffer).toBeCalledTimes(0);
-                expect(arrayBufferFieldType.toArrayBuffer).toBeCalledTimes(1);
+                expect(arrayBufferFieldType.toValue).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.toBuffer).toBeCalledTimes(1);
                 expect(arrayBufferFieldType.getSize).toBeCalledTimes(1);
                 expect(arrayBufferFieldValue).toHaveProperty('arrayBuffer', value);
                 expect(arrayBufferFieldValue).toHaveProperty('length', 100);
@@ -423,14 +423,14 @@ describe('Types', () => {
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const arrayBufferFieldDefinition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(100);
+                const value = new Uint8Array(100);
 
-                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     struct,
@@ -451,14 +451,14 @@ describe('Types', () => {
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const arrayBufferFieldDefinition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const arrayBufferFieldDefinition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(100);
+                const value = new Uint8Array(100);
 
-                const arrayBufferFieldValue = new VariableLengthArrayBufferLikeStructFieldValue(
+                const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,
                     StructDefaultOptions,
                     struct,
@@ -476,8 +476,8 @@ describe('Types', () => {
     describe('VariableLengthArrayBufferLikeFieldDefinition', () => {
         describe('#getSize', () => {
             it('should always return `0`', () => {
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const definition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField: 'foo' },
                 );
                 expect(definition.getSize()).toBe(0);
@@ -492,8 +492,8 @@ describe('Types', () => {
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const definition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField },
                 );
 
@@ -514,8 +514,8 @@ describe('Types', () => {
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const definition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField },
                 );
 
@@ -537,8 +537,8 @@ describe('Types', () => {
                 struct.set(lengthField, originalLengthFieldValue);
 
                 const base = 8;
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const definition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField, lengthFieldBase: base },
                 );
 
@@ -561,12 +561,12 @@ describe('Types', () => {
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const definition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(100);
+                const value = new Uint8Array(100);
                 const arrayBufferFieldValue = definition.create(
                     StructDefaultOptions,
                     struct,
@@ -588,12 +588,12 @@ describe('Types', () => {
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const definition = new VariableLengthArrayBufferLikeFieldDefinition(
-                    ArrayBufferFieldType.instance,
+                const definition = new VariableLengthBufferLikeFieldDefinition(
+                    Uint8ArrayBufferFieldSubType.Instance,
                     { lengthField },
                 );
 
-                const value = new ArrayBuffer(100);
+                const value = new Uint8Array(100);
                 const arrayBufferFieldValue = definition.create(
                     StructDefaultOptions,
                     struct,

@@ -11,7 +11,7 @@ export function pushServer(
 ) {
     const { path = DEFAULT_SERVER_PATH } = options;
 
-    return new WrapWritableStream<ArrayBuffer, WritableStream<ArrayBuffer>, AdbSync>({
+    return new WrapWritableStream<Uint8Array, WritableStream<Uint8Array>, AdbSync>({
         async start() {
             const sync = await device.sync();
             return {

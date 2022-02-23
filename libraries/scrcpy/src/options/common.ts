@@ -35,7 +35,7 @@ export interface VideoStreamConfigurationPacket {
 
 export interface VideoStreamFramePacket {
     type: 'frame';
-    data: ArrayBuffer;
+    data: Uint8Array;
 }
 
 export type VideoStreamPacket = VideoStreamConfigurationPacket | VideoStreamFramePacket;
@@ -53,9 +53,9 @@ export interface ScrcpyOptions<T> {
 
     serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnEvent1_18,
-    ): ArrayBuffer | undefined;
+    ): Uint8Array | undefined;
 
     serializeInjectScrollControlMessage(
         message: ScrcpyInjectScrollControlMessage1_22,
-    ): ArrayBuffer;
+    ): Uint8Array;
 }
