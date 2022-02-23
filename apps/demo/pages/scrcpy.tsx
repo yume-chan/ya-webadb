@@ -498,8 +498,6 @@ class ScrcpyPageState {
                 }),
             }));
 
-            client.exit.then(() => this.stop());
-
             client.videoStream
                 .pipeThrough(new TransformStream<VideoStreamPacket, VideoStreamPacket>({
                     transform: action((chunk, controller) => {
@@ -515,6 +513,8 @@ class ScrcpyPageState {
                 }))
                 .pipeTo(decoder.writable)
                 .catch(() => { });
+
+            client.exit.then(() => this.stop());
 
             client.onClipboardChange(content => {
                 window.navigator.clipboard.writeText(content);

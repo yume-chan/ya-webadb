@@ -10,7 +10,7 @@ import { Icons, ResizeObserver, RouteStackProps } from '../utils';
 
 let terminal: import('../components/terminal').AdbTerminal;
 if (typeof window !== 'undefined') {
-    const AdbTerminal: typeof import('../components/terminal').AdbTerminal = (await import('../components/terminal')).AdbTerminal;
+    const { AdbTerminal } = await import('../components/terminal');
     terminal = new AdbTerminal();
 }
 

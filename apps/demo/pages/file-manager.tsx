@@ -164,7 +164,7 @@ class FileManagerState {
                                 try {
                                     const item = this.selectedItems[0];
                                     const itemPath = path.resolve(this.path, item.name);
-                                    const readable = await sync.read(itemPath);
+                                    const readable = sync.read(itemPath);
 
                                     const writeable = StreamSaver!.createWriteStream(
                                         item.name,

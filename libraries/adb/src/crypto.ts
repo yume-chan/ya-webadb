@@ -146,11 +146,11 @@ export function calculatePublicKey(
     // extract `n` from private key
     const [n] = parsePrivateKey(privateKey);
 
-    let outputType: 'ArrayBuffer' | 'number';
+    let outputType: 'Uint8Array' | 'number';
     const outputLength = calculatePublicKeyLength();
     if (!output) {
         output = new Uint8Array(outputLength);
-        outputType = 'ArrayBuffer';
+        outputType = 'Uint8Array';
     } else {
         if (output.byteLength - outputOffset < outputLength) {
             throw new Error('output buffer is too small');
@@ -185,7 +185,7 @@ export function calculatePublicKey(
     outputView.setUint32(outputOffset, 65537, true);
     outputOffset += 4;
 
-    if (outputType === 'ArrayBuffer') {
+    if (outputType === 'Uint8Array') {
         return output;
     } else {
         return outputLength;
