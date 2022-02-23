@@ -22,6 +22,7 @@ export function adbSyncPush(
     mtime: number = (Date.now() / 1000) | 0,
     packetSize: number = ADB_SYNC_MAX_PACKET_SIZE,
 ): WritableStream<Uint8Array> {
+    // FIXME: `ChunkStream` can't forward `close` Promise.
     const { readable, writable } = new ChunkStream(packetSize);
     readable.pipeTo(new WritableStream<Uint8Array>({
         async start() {
