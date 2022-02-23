@@ -2,7 +2,7 @@ import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, I
 import { useId } from "@fluentui/react-hooks";
 import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, TransformStream } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_22, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
+import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_22, ScrcpyScreenOrientation, TinyH264Decoder, VideoStreamPacket, WebCodecsDecoder } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -415,9 +415,9 @@ class ScrcpyPageState {
                     },
                 })
                     .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
-                    .pipeThrough(new ProgressStream((progress) => {
+                    .pipeThrough(new ProgressStream(action((progress) => {
                         this.serverUploadedSize = progress;
-                    }))
+                    })))
                     .pipeTo(pushServer(globalState.device));
 
                 runInAction(() => {
@@ -493,25 +493,28 @@ class ScrcpyPageState {
             );
 
             client.stdout.pipeTo(new WritableStream({
-                write: (line) => {
+                write: action((line) => {
                     this.log.push(line);
-                },
+                }),
             }));
 
-            client.close().then(() => this.stop());
+            client.exit.then(() => this.stop());
 
-            client.videoStream.pipeThrough(new TransformStream({
-                transform: (chunk, controller) => {
-                    if (chunk.type === 'configuration') {
-                        const { croppedWidth, croppedHeight, } = chunk.data;
-                        this.log.push(`[client] Video size changed: ${croppedWidth}x${croppedHeight}`);
+            client.videoStream
+                .pipeThrough(new TransformStream<VideoStreamPacket, VideoStreamPacket>({
+                    transform: action((chunk, controller) => {
+                        if (chunk.type === 'configuration') {
+                            const { croppedWidth, croppedHeight, } = chunk.data;
+                            this.log.push(`[client] Video size changed: ${croppedWidth}x${croppedHeight}`);
 
-                        this.width = croppedWidth;
-                        this.height = croppedHeight;
-                    }
-                    controller.enqueue(chunk);
-                }
-            })).pipeTo(decoder.writable);
+                            this.width = croppedWidth;
+                            this.height = croppedHeight;
+                        }
+                        controller.enqueue(chunk);
+                    }),
+                }))
+                .pipeTo(decoder.writable)
+                .catch(() => { });
 
             client.onClipboardChange(content => {
                 window.navigator.clipboard.writeText(content);

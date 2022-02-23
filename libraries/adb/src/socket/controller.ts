@@ -1,5 +1,4 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { AutoDisposable } from '@yume-chan/event';
 import { AdbCommand } from '../packet';
 import { ChunkStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../stream';
 import { AdbPacketDispatcher } from './dispatcher';
@@ -27,7 +26,7 @@ export interface AdbSocketConstructionOptions {
     highWaterMark?: number | undefined;
 }
 
-export class AdbSocketController extends AutoDisposable implements AdbSocketInfo {
+export class AdbSocketController implements AdbSocketInfo {
     private readonly dispatcher!: AdbPacketDispatcher;
 
     public readonly localId!: number;
@@ -48,7 +47,6 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
     public get closed() { return this._closed; }
 
     public constructor(options: AdbSocketConstructionOptions) {
-        super();
         Object.assign(this, options);
 
         // Check this image to help you understand the stream graph
@@ -61,27 +59,32 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
         });
         this._readablePassthroughWriter = this._readablePassthrough.writable.getWriter();
 
-        const writablePassthrough = new TransformStream();
-        writablePassthrough.readable
-            .pipeThrough(new ChunkStream(this.dispatcher.maxPayloadSize))
-            .pipeTo(new WritableStream<ArrayBuffer>({
-                write: async (chunk) => {
-                    // Wait for an ack packet
-                    this._writePromise = new PromiseResolver();
-                    await this.dispatcher.sendPacket(
-                        AdbCommand.Write,
-                        this.localId,
-                        this.remoteId,
-                        chunk
-                    );
-                    await this._writePromise.promise;
-                },
-                close: async () => {
-                    this._writableClosed = true;
-                    await this.close();
-                },
-            }));
-        this.writable = writablePassthrough.writable;
+        const { readable, writable } = new ChunkStream(this.dispatcher.maxPayloadSize);
+        this.writable = writable;
+        readable.pipeTo(new WritableStream<ArrayBuffer>({
+            write: async (chunk) => {
+                if (this._writableClosed) {
+                    throw new Error('Socket closed');
+                }
+
+                // Wait for an ack packet
+                this._writePromise = new PromiseResolver();
+                await this.dispatcher.sendPacket(
+                    AdbCommand.Write,
+                    this.localId,
+                    this.remoteId,
+                    chunk
+                );
+                await this._writePromise.promise;
+            },
+            close: async () => {
+                await this.close();
+            },
+            abort: async () => {
+                // Abort a socket is equivalent to close it
+                await this.close();
+            }
+        }));
     }
 
     public enqueue(packet: ArrayBuffer) {
@@ -94,14 +97,11 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
 
     public async close(): Promise<void> {
         if (!this._writableClosed) {
-            // Disallow more data to be written
-            this.writable.close();
+            this._writableClosed = true;
 
             // Error out the pending writes
             this._writePromise?.reject(new Error('Socket closed'));
-        }
 
-        if (!this._closed) {
             // Only send close packet when `close` is called before `dispose`
             // (the client initiated the close)
             await this.dispatcher.sendPacket(
@@ -112,15 +112,19 @@ export class AdbSocketController extends AutoDisposable implements AdbSocketInfo
         }
     }
 
-    public override dispose() {
+    public dispose() {
+        if (this._closed) {
+            // @ts-ignore
+            console.log('double close', new Error('').stack);
+            throw new Error('double close');
+        }
+
         this._closed = true;
 
         // Close `writable` side
         this.close();
 
         // Close `readable` side
-        this._readablePassthroughWriter.close();
-
-        super.dispose();
+        this._readablePassthroughWriter.close().catch(() => { });
     }
 }
