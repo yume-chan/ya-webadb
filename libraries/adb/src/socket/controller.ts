@@ -1,6 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
 import { AdbCommand } from '../packet';
-import { ChunkStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../stream';
+import { ChunkStream, ReadableStreamDefaultController, ReadableStream, WritableStream } from '../stream';
 import { AdbPacketDispatcher } from './dispatcher';
 
 export interface AdbSocketInfo {
@@ -34,9 +34,9 @@ export class AdbSocketController implements AdbSocketInfo {
     public readonly localCreated!: boolean;
     public readonly serviceString!: string;
 
-    private readonly _readablePassthrough: TransformStream<Uint8Array, Uint8Array>;
-    private readonly _readablePassthroughWriter: WritableStreamDefaultWriter<Uint8Array>;
-    public get readable() { return this._readablePassthrough.readable; }
+    private _readable: ReadableStream<Uint8Array>;
+    private _readableController!: ReadableStreamDefaultController<Uint8Array>;
+    public get readable() { return this._readable; }
 
     private _writePromise: PromiseResolver<void> | undefined;
     public readonly writable: WritableStream<Uint8Array>;
@@ -53,11 +53,17 @@ export class AdbSocketController implements AdbSocketInfo {
         // cspell: disable-next-line
         // https://www.plantuml.com/plantuml/png/TL0zoeGm4ErpYc3l5JxyS0yWM6mX5j4C6p4cxcJ25ejttuGX88ZftizxUKmJI275pGhXl0PP_UkfK_CAz5Z2hcWsW9Ny2fdU4C1f5aSchFVxA8vJjlTPRhqZzDQMRB7AklwJ0xXtX0ZSKH1h24ghoKAdGY23FhxC4nS2pDvxzIvxb-8THU0XlEQJ-ZB7SnXTAvc_LhOckhMdLBnbtndpb-SB7a8q2SRD_W00
 
-        this._readablePassthrough = new TransformStream({}, {
+        this._readable = new ReadableStream<Uint8Array>({
+            start: (controller) => {
+                this._readableController = controller;
+            },
+            cancel: async () => {
+                await this.close();
+            },
+        }, {
             highWaterMark: options.highWaterMark ?? 16 * 1024,
             size(chunk) { return chunk.byteLength; }
         });
-        this._readablePassthroughWriter = this._readablePassthrough.writable.getWriter();
 
         const { readable, writable } = new ChunkStream(this.dispatcher.maxPayloadSize);
         this.writable = writable;
@@ -88,7 +94,8 @@ export class AdbSocketController implements AdbSocketInfo {
     }
 
     public enqueue(packet: Uint8Array) {
-        return this._readablePassthroughWriter.write(packet);
+        // TODO: AdbSocketController: This will ignore readable back pressure
+        return this._readableController.enqueue(packet);
     }
 
     public ack() {
@@ -124,7 +131,9 @@ export class AdbSocketController implements AdbSocketInfo {
         // Close `writable` side
         this.close();
 
-        // Close `readable` side
-        this._readablePassthroughWriter.close().catch(() => { });
+        try {
+            // Close `readable` side
+            this._readableController.close();
+        } catch { }
     }
 }

@@ -99,8 +99,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
                     } catch (e) {
                         this.errorEvent.fire(e as Error);
 
-                        // Also stops the `writable`
-                        this._abortController.abort();
+                        this.dispose();
 
                         // Throw error here will stop the pipe
                         // But won't close `readable` because of `preventCancel: true`
@@ -111,10 +110,12 @@ export class AdbPacketDispatcher extends AutoDisposable {
             .catch(() => { });
 
         this._packetSerializeStream = new AdbPacketSerializeStream();
-        this._packetSerializeStream.readable.pipeTo(
-            writable,
-            { signal: this._abortController.signal, preventClose: true }
-        );
+        this._packetSerializeStream.readable
+            .pipeTo(
+                writable,
+                { signal: this._abortController.signal, preventClose: true }
+        )
+            .catch(() => { });;
         this._packetSerializeStreamWriter = this._packetSerializeStream.writable.getWriter();
     }
 
@@ -265,7 +266,11 @@ export class AdbPacketDispatcher extends AutoDisposable {
         }
         this.sockets.clear();
 
-        this._abortController.abort();
+        try {
+            // Stop pipes
+            this._abortController.abort();
+        } catch { }
+
         super.dispose();
     }
 }
