@@ -160,6 +160,8 @@ export class BufferLikeFieldValue<
 
     public override set(value: TDefinition['TValue']): void {
         super.set(value);
+        // When value changes, clear the cached `array`
+        // It will be lazily calculated in `serialize()`
         this.array = undefined;
     }
 

@@ -52,6 +52,7 @@ export class AdbPacketSerializeStream extends TransformStream<AdbPacketInit, Uin
                 controller.enqueue(AdbPacketHeader.serialize(packet));
 
                 if (packet.payloadLength) {
+                    // Enqueue payload separately to avoid copying
                     controller.enqueue(packet.payload);
                 }
             },

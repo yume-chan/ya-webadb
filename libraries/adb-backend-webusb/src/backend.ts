@@ -16,16 +16,13 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
     public constructor(device: USBDevice, inEndpoint: USBEndpoint, outEndpoint: USBEndpoint) {
         this._readable = new ReadableStream<Uint8Array>({
             pull: async (controller) => {
-                let result = await device.transferIn(inEndpoint.endpointNumber, inEndpoint.packetSize);
-
-                if (result.status === 'stall') {
-                    // https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/client/usb_osx.cpp#543
-                    await device.clearHalt('in', inEndpoint.endpointNumber);
-                    result = await device.transferIn(inEndpoint.endpointNumber, inEndpoint.packetSize);
-                }
-
-                const view = result.data!;
-                controller.enqueue(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
+                const result = await device.transferIn(inEndpoint.endpointNumber, inEndpoint.packetSize);
+                // `USBTransferResult` has three states: "ok", "stall" and "babble",
+                // adbd on Android won't enter the "stall" (halt) state,
+                // "ok" and "babble" both have received `data`,
+                // "babble" just means there is more data to be read.
+                // From spec, the `result.data` always covers the whole `buffer`.
+                controller.enqueue(new Uint8Array(result.data!.buffer));
             },
             cancel: async () => {
                 await device.close();
@@ -40,6 +37,9 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
                 await device.transferOut(outEndpoint.endpointNumber, chunk);
             },
             close: async () => {
+                await device.close();
+            },
+            abort: async () => {
                 await device.close();
             },
         }, {

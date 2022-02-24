@@ -1,7 +1,7 @@
 import { AsyncOperationManager } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbCommand, AdbPacket, AdbPacketInit, AdbPacketSerializeStream } from '../packet';
-import { AbortController, ReadableStream, StructDeserializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from '../stream';
+import { AbortController, ReadableStream, StructDeserializeStream, WritableStream, WritableStreamDefaultWriter } from '../stream';
 import { decodeUtf8, encodeUtf8 } from '../utils';
 import { AdbSocketController } from './controller';
 import { AdbLogger } from './logger';
@@ -58,10 +58,9 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
         readable
             .pipeThrough(
-                new TransformStream(),
+                new StructDeserializeStream(AdbPacket),
                 { signal: this._abortController.signal, preventCancel: true }
-            )
-            .pipeThrough(new StructDeserializeStream(AdbPacket))
+        )
             .pipeTo(new WritableStream<AdbPacket>({
                 write: async (packet) => {
                     try {
@@ -98,12 +97,18 @@ export class AdbPacketDispatcher extends AutoDisposable {
                             throw new Error(`Unhandled packet with command '${packet.command}'`);
                         }
                     } catch (e) {
-                        readable.cancel(e);
-                        writable.abort(e);
                         this.errorEvent.fire(e as Error);
+
+                        // Also stops the `writable`
+                        this._abortController.abort();
+
+                        // Throw error here will stop the pipe
+                        // But won't close `readable` because of `preventCancel: true`
+                        throw e;
                     }
                 }
-            }));
+            }))
+            .catch(() => { });
 
         this._packetSerializeStream = new AdbPacketSerializeStream();
         this._packetSerializeStream.readable.pipeTo(

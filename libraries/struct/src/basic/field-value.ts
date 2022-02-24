@@ -1,12 +1,12 @@
-import type { StructOptions } from './context';
 import type { StructFieldDefinition } from './definition';
+import type { StructOptions } from './options';
 import type { StructValue } from './struct-value';
 
 /**
- * Field runtime value manages one field of one `Struct` instance.
+ * A field value defines how to serialize a field.
  *
- * If one `StructFieldDefinition` needs to change other field's semantics
- * It can override other fields' `StructFieldValue` in its own `StructFieldValue`'s constructor
+ * It may contains extra metadata about the value which are essential or
+ * helpful for the serialization process.
  */
 export abstract class StructFieldValue<
     TDefinition extends StructFieldDefinition<any, any, any> = StructFieldDefinition<any, any, any>
@@ -44,14 +44,14 @@ export abstract class StructFieldValue<
     }
 
     /**
-     * When implemented in derived classes, returns the current value of this field
+     * When implemented in derived classes, reads current field's value.
      */
     public get(): TDefinition['TValue'] {
         return this.value;
     }
 
     /**
-     * When implemented in derived classes, update the current value of this field
+     * When implemented in derived classes, updates current field's value.
      */
     public set(value: TDefinition['TValue']): void {
         this.value = value;

@@ -1,7 +1,8 @@
 import type { ValueOrPromise } from '../utils';
-import type { StructAsyncDeserializeStream, StructDeserializeStream, StructOptions } from './context';
 import { StructFieldDefinition } from './definition';
 import type { StructFieldValue } from './field-value';
+import type { StructOptions } from './options';
+import type { StructAsyncDeserializeStream, StructDeserializeStream } from './stream';
 import type { StructValue } from './struct-value';
 
 describe('StructFieldDefinition', () => {

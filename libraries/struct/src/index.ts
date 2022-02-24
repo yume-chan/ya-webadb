@@ -1,6 +1,6 @@
 declare global {
     interface ArrayBuffer {
-        // Disallow assigning `Arraybuffer` to `Uint8Array`
+        // Disallow assigning `Uint8Array` to `Arraybuffer`
         __brand: never;
     }
 

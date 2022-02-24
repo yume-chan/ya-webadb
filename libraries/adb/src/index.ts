@@ -1,9 +1,3 @@
-declare global {
-    interface ArrayBuffer {
-        // Disallow assigning `Arraybuffer` to `Uint8Array`
-        __brand: never;
-    }
-}
 
 export * from './adb';
 export * from './auth';

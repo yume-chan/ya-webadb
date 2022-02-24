@@ -64,7 +64,7 @@ export class BufferedStream {
             }
 
             array = new Uint8Array(length);
-            array.set(value, 0);
+            array.set(value);
             index = value.byteLength;
         }
 
@@ -81,6 +81,11 @@ export class BufferedStream {
             }
 
             const { value } = result;
+            if (value.byteLength === left) {
+                array.set(value, index);
+                return array;
+            }
+
             if (value.byteLength > left) {
                 array.set(value.subarray(0, left), index);
                 this.buffer = value.subarray(left);

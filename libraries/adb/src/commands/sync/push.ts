@@ -22,23 +22,25 @@ export function adbSyncPush(
     mtime: number = (Date.now() / 1000) | 0,
     packetSize: number = ADB_SYNC_MAX_PACKET_SIZE,
 ): WritableStream<Uint8Array> {
-    // FIXME: `ChunkStream` can't forward `close` Promise.
     const { readable, writable } = new ChunkStream(packetSize);
+
     readable.pipeTo(new WritableStream<Uint8Array>({
+        async write(chunk) {
+            await adbSyncWriteRequest(writer, AdbSyncRequestId.Data, chunk);
+        }
+    }));
+
+    return new WritableStream<Uint8Array>({
         async start() {
             const pathAndMode = `${filename},${mode.toString()}`;
             await adbSyncWriteRequest(writer, AdbSyncRequestId.Send, pathAndMode);
         },
         async write(chunk) {
-            await adbSyncWriteRequest(writer, AdbSyncRequestId.Data, chunk);
+            await writable.getWriter().write(chunk);
         },
         async close() {
             await adbSyncWriteRequest(writer, AdbSyncRequestId.Done, mtime);
             await adbSyncReadResponse(stream, ResponseTypes);
-        }
-    }, {
-        highWaterMark: 16 * 1024,
-        size(chunk) { return chunk.byteLength; }
-    }));
-    return writable;
+        },
+    });
 }

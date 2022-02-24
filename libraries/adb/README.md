@@ -5,6 +5,8 @@ TypeScript implementation of Android Debug Bridge (ADB) protocol.
 **WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
 
 - [Compatibility](#compatibility)
+  - [Basic usage](#basic-usage)
+  - [Use without bundlers](#use-without-bundlers)
 - [Connection](#connection)
   - [Backend](#backend)
     - [`connect`](#connect)
@@ -36,18 +38,31 @@ TypeScript implementation of Android Debug Bridge (ADB) protocol.
 
 ## Compatibility
 
-This table only applies to this library itself. Specific backend may have different requirements.
+Here is a list of features, their used APIs, and their compatibilities. If you don't use an optional feature, you can ignore its requirement.
 
-|                                  | Chrome | Edge | Firefox | Internet Explorer | Safari             | Node.js              |
-| -------------------------------- | ------ | ---- | ------- | ----------------- | ------------------ | -------------------- |
-| Basic usage                      | 68     | 79   | 68      | No                | 14<sup>1</sup>, 15 | 10.4<sup>2</sup>, 11 |
-| Use without bundlers<sup>3</sup> | 89     | 89   | 89      | No                | 15                 | 14.8                 |
+Some features can be polyfilled to support older runtimes, but this library doesn't ship with any polyfills.
 
-<sup>1</sup> Requires a polyfill for `DataView#getBigInt64`, `DataView#getBigUint64`, `DataView#setBigInt64` and `DataView#setBigUint64`
+Each backend may have different requirements.
 
-<sup>2</sup> `TextEncoder` and `TextDecoder` are only available in `util` module. Must be assigned to global object.
+### Basic usage
 
-<sup>3</sup> Because usage of Top-Level Await.
+|                                 | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js             |
+| ------------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------------------- |
+| `@yume-chan/struct`<sup>1</sup> | 67     | 79   | 68      | No                | 14     | 8.3<sup>2</sup>, 11 |
+| [Streams][MDN_Streams]          | 67     | 79   | No      | No                | 14.1   | 16.5                |
+| *Overall*                       | 67     | 79   | No      | No                | 14.1   | 16.5                |
+
+<sup>1</sup> `uint64` and `string` used.
+
+<sup>2</sup> `TextEncoder` and `TextDecoder` are only available in `util` module. Need to be assigned to `globalThis`.
+
+### Use without bundlers
+
+|                             | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js |
+| --------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------- |
+| Top-level await<sup>1</sup> | 89     | 89   | 89      | No                | 15     | 14.8    |
+
+[MDN_Streams]: https://developer.mozilla.org/en-US/docs/Web/API/Streams_API
 
 ## Connection
 

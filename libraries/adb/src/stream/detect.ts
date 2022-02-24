@@ -318,38 +318,51 @@ async function* values(this: ReadableStream, options?: ReadableStreamIteratorOpt
     }
 }
 
-try {
-    if ('ReadableStream' in globalThis && 'WritableStream' in globalThis && 'TransformStream' in globalThis) {
-        ({
-            ReadableStream,
-            ReadableStreamDefaultController,
-            ReadableStreamDefaultReader,
-            TransformStream,
-            TransformStreamDefaultController,
-            WritableStream,
-            WritableStreamDefaultController,
-            WritableStreamDefaultWriter,
-        } = globalThis as any);
-    } else {
-        ({
-            ReadableStream,
-            ReadableStreamDefaultController,
-            ReadableStreamDefaultReader,
-            TransformStream,
-            TransformStreamDefaultController,
-            WritableStream,
-            WritableStreamDefaultController,
-            WritableStreamDefaultWriter,
-            // @ts-expect-error
-        } = await import(/* webpackIgnore: true */ 'stream/web'));
-    }
+// This library can't use `@types/node` or `lib: dom`
+// because they will pollute the global scope
+// So `ReadableStream`, `WritableStream` and `TransformStream` are not available
 
-    if (!(Symbol.asyncIterator in ReadableStream.prototype)) {
-        ReadableStream.prototype[Symbol.asyncIterator] = values;
-    }
-    if (!('values' in ReadableStream.prototype)) {
-        ReadableStream.prototype.values = values;
-    }
-} catch {
+if ('ReadableStream' in globalThis && 'WritableStream' in globalThis && 'TransformStream' in globalThis) {
+    ({
+        ReadableStream,
+        ReadableStreamDefaultController,
+        ReadableStreamDefaultReader,
+        TransformStream,
+        TransformStreamDefaultController,
+        WritableStream,
+        WritableStreamDefaultController,
+        WritableStreamDefaultWriter,
+    } = globalThis as any);
+} else {
+    try {
+        // Node.js 16 has Web Streams types in `stream/web` module
+        ({
+            // @ts-ignore
+            ReadableStream,
+            ReadableStreamDefaultController,
+            ReadableStreamDefaultReader,
+            // @ts-ignore
+            TransformStream,
+            TransformStreamDefaultController,
+            // @ts-ignore
+            WritableStream,
+            WritableStreamDefaultController,
+            WritableStreamDefaultWriter,
+            // @ts-ignore
+        } = await import(/* webpackIgnore: true */ 'stream/web'));
+    } catch { }
+}
+
+// TODO: stream/detect: Load some polyfills
+
+// @ts-ignore
+if (!ReadableStream || !WritableStream || !TransformStream) {
     throw new Error('Web Streams API is not available');
+}
+
+if (!(Symbol.asyncIterator in ReadableStream.prototype)) {
+    ReadableStream.prototype[Symbol.asyncIterator] = values;
+}
+if (!('values' in ReadableStream.prototype)) {
+    ReadableStream.prototype.values = values;
 }

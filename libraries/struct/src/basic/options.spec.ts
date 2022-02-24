@@ -1,4 +1,4 @@
-import { StructDefaultOptions } from './context';
+import { StructDefaultOptions } from './options';
 
 describe('StructDefaultOptions', () => {
     describe('.littleEndian', () => {

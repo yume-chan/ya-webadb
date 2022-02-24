@@ -1,6 +1,6 @@
-import { StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from '../../basic';
+import { StructFieldValue, type StructFieldDefinition, type StructOptions, type StructValue } from '../../basic';
 import type { KeysOfType } from '../../utils';
-import { BufferFieldSubType, BufferLikeFieldDefinition, BufferLikeFieldValue } from './base';
+import { BufferLikeFieldDefinition, BufferLikeFieldValue, type BufferFieldSubType } from './base';
 
 export type LengthField<TFields> = KeysOfType<TFields, number | string>;
 
@@ -8,9 +8,20 @@ export interface VariableLengthBufferLikeFieldOptions<
     TFields = object,
     TLengthField extends LengthField<TFields> = any,
     > {
+    /**
+     * The name of the field that contains the length of the buffer.
+     *
+     * This field must be a `number` or `string` (can't be `bigint`) field.
+     */
     lengthField: TLengthField;
 
-    lengthFieldBase?: number;
+    /**
+     * If the `lengthField` refers to a string field,
+     * what radix to use when converting the string to a number.
+     *
+     * @default 10
+     */
+    lengthFieldRadix?: number;
 }
 
 export class VariableLengthBufferLikeFieldDefinition<
@@ -28,7 +39,7 @@ export class VariableLengthBufferLikeFieldDefinition<
     protected override getDeserializeSize(struct: StructValue) {
         let value = struct.value[this.options.lengthField] as number | string;
         if (typeof value === 'string') {
-            value = Number.parseInt(value, this.options.lengthFieldBase ?? 10);
+            value = Number.parseInt(value, this.options.lengthFieldRadix ?? 10);
         }
         return value;
     }
@@ -127,13 +138,16 @@ export class VariableLengthBufferLikeFieldLengthValue
 
         const originalValue = this.originalField.get();
         if (typeof originalValue === 'string') {
-            value = value.toString(this.arrayBufferField.definition.options.lengthFieldBase ?? 10);
+            value = value.toString(this.arrayBufferField.definition.options.lengthFieldRadix ?? 10);
         }
 
         return value;
     }
 
-    public override set() { }
+    public override set() {
+        // Ignore setting
+        // It will always be in sync with the buffer size
+    }
 
     serialize(dataView: DataView, offset: number) {
         this.originalField.set(this.get());

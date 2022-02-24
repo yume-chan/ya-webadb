@@ -526,6 +526,9 @@ export class Struct<
         return this as any;
     }
 
+    /**
+     * Deserialize a struct value from `stream`.
+     */
     public deserialize(
         stream: StructDeserializeStream,
     ): StructDeserializedResult<TFields, TExtra, TPostDeserialized>;

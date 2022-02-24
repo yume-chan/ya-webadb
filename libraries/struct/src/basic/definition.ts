@@ -1,17 +1,12 @@
-import type { StructAsyncDeserializeStream, StructDeserializeStream, StructOptions } from './context';
+// cspell: ignore Syncbird
+
+import type { StructAsyncDeserializeStream, StructDeserializeStream } from './stream';
 import type { StructFieldValue } from './field-value';
 import type { StructValue } from './struct-value';
+import type { StructOptions } from "./options";
 
 /**
- * A field definition is a bridge between its type and its runtime value.
- *
- * `Struct` record fields in a list of `StructFieldDefinition`s.
- *
- * When `Struct#create` or `Struct#deserialize` are called, each field's definition
- * crates its own type of `StructFieldValue` to manage the field value in that `Struct` instance.
- *
- * One `StructFieldDefinition` can represents multiple similar types, just returns the corresponding
- * `StructFieldValue` when `createValue` was called.
+ * A field definition defines how to deserialize a field.
  *
  * @template TOptions TypeScript type of this definition's `options`.
  * @template TValue TypeScript type of this field.
@@ -57,7 +52,10 @@ export abstract class StructFieldDefinition<
     ): StructFieldValue<this>;
 
     /**
-     * When implemented in derived classes, creates a `StructFieldValue` by parsing `context`.
+     * When implemented in derived classes,It must be synchronous (returns a value) or asynchronous (returns a `Promise`) depending
+     * on the type of `stream`. reads and creates a `StructFieldValue` from `stream`.
+     *
+     *  `Syncbird` can be used to make the implementation easier.
      */
     public abstract deserialize(
         options: Readonly<StructOptions>,
