@@ -1,4 +1,4 @@
-import { AdbBackend, ReadableStream, ReadableWritablePair } from '@yume-chan/adb';
+import { AdbBackend, DuplexStreamFactory, ReadableStream, ReadableWritablePair } from '@yume-chan/adb';
 
 export const WebUsbDeviceFilter: USBDeviceFilter = {
     classCode: 0xFF,
@@ -14,7 +14,22 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
     public get writable() { return this._writable; }
 
     public constructor(device: USBDevice, inEndpoint: USBEndpoint, outEndpoint: USBEndpoint) {
-        this._readable = new ReadableStream<Uint8Array>({
+        const factory = new DuplexStreamFactory<Uint8Array, Uint8Array>({
+            close: async () => {
+                navigator.usb.removeEventListener('disconnect', handleUsbDisconnect);
+                await device.close();
+            },
+        });
+
+        function handleUsbDisconnect(e: USBConnectionEvent) {
+            if (e.device === device) {
+                factory.close();
+            }
+        }
+
+        navigator.usb.addEventListener('disconnect', handleUsbDisconnect);
+
+        this._readable = factory.createReadable({
             pull: async (controller) => {
                 const result = await device.transferIn(inEndpoint.endpointNumber, inEndpoint.packetSize);
                 // `USBTransferResult` has three states: "ok", "stall" and "babble",
@@ -24,23 +39,14 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
                 // From spec, the `result.data` always covers the whole `buffer`.
                 controller.enqueue(new Uint8Array(result.data!.buffer));
             },
-            cancel: async () => {
-                await device.close();
-            },
         }, {
             highWaterMark: 16 * 1024,
             size(chunk) { return chunk.byteLength; },
         });
 
-        this._writable = new WritableStream<Uint8Array>({
+        this._writable = factory.createWritable({
             write: async (chunk) => {
                 await device.transferOut(outEndpoint.endpointNumber, chunk);
-            },
-            close: async () => {
-                await device.close();
-            },
-            abort: async () => {
-                await device.close();
             },
         }, {
             highWaterMark: 16 * 1024,

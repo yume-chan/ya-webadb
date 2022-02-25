@@ -1,7 +1,6 @@
-import { PromiseResolver } from "@yume-chan/async";
 import type { Adb } from "../../adb";
 import type { AdbSocket } from "../../socket";
-import { ReadableStream, ReadableStreamDefaultController, WrapReadableStream } from "../../stream";
+import { DuplexStreamFactory, type ReadableStream } from "../../stream";
 import type { AdbSubprocessProtocol } from "./types";
 
 /**
@@ -32,33 +31,32 @@ export class AdbNoneSubprocessProtocol implements AdbSubprocessProtocol {
     private _stderr: ReadableStream<Uint8Array>;
     public get stderr() { return this._stderr; }
 
-    private _exit = new PromiseResolver<number>();
-    public get exit() { return this._exit.promise; }
+    private _exit: Promise<number>;
+    public get exit() { return this._exit; }
 
     public constructor(socket: AdbSocket) {
         this.socket = socket;
 
-        let stderrController!: ReadableStreamDefaultController<Uint8Array>;
-        this._stderr = new ReadableStream<Uint8Array>({
-            start(controller) {
-                stderrController = controller;
-            },
-        });
-
-        this._stdout = new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, undefined>({
-            async start() {
-                return {
-                    readable: socket.readable,
-                    state: undefined,
-                };
-            },
+        const factory = new DuplexStreamFactory<Uint8Array, Uint8Array>({
             close: async () => {
-                // Close `stderr` on exit.
-                stderrController.close();
-
-                this._exit.resolve(0);
-            }
+                await this.socket.close();
+            },
         });
+
+        this._stdout = factory.createReadable({
+            pull: async (controller) => {
+                const reader = this.socket.readable.getReader();
+                const result = await reader.read();
+                if (result.done) {
+                    factory.close();
+                } else {
+                    controller.enqueue(result.value);
+                }
+            },
+        });
+
+        this._stderr = factory.createReadable();
+        this._exit = factory.closed.then(() => 0);
     }
 
     public resize() {

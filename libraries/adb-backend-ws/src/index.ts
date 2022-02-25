@@ -1,4 +1,4 @@
-import { AdbBackend, ReadableStream, WritableStream } from '@yume-chan/adb';
+import { AdbBackend, DuplexStreamFactory } from '@yume-chan/adb';
 
 export default class AdbWsBackend implements AdbBackend {
     public readonly serial: string;
@@ -21,13 +21,20 @@ export default class AdbWsBackend implements AdbBackend {
             };
         });
 
-        const readable = new ReadableStream<Uint8Array>({
+        const factory = new DuplexStreamFactory<Uint8Array, Uint8Array>({
+            close: () => {
+                socket.close();
+            },
+        });
+
+        socket.onclose = () => {
+            factory.close();
+        };
+
+        const readable = factory.createReadable({
             start: (controller) => {
                 socket.onmessage = ({ data }: { data: ArrayBuffer; }) => {
                     controller.enqueue(new Uint8Array(data));
-                };
-                socket.onclose = () => {
-                    controller.close();
                 };
             }
         }, {
@@ -35,7 +42,7 @@ export default class AdbWsBackend implements AdbBackend {
             size(chunk) { return chunk.byteLength; },
         });
 
-        const writable = new WritableStream<Uint8Array>({
+        const writable = factory.createWritable({
             write: (chunk) => {
                 socket.send(chunk);
             },

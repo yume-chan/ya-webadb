@@ -1,5 +1,5 @@
 import Struct from '@yume-chan/struct';
-import { AdbBufferedStream, ChunkStream, WritableStream, WritableStreamDefaultWriter } from '../../stream';
+import { AdbBufferedStream, ChunkStream, pipeFrom, WritableStream, WritableStreamDefaultWriter } from '../../stream';
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
 import { adbSyncReadResponse, AdbSyncResponseId } from './response';
 import { LinuxFileType } from './stat';
@@ -22,25 +22,20 @@ export function adbSyncPush(
     mtime: number = (Date.now() / 1000) | 0,
     packetSize: number = ADB_SYNC_MAX_PACKET_SIZE,
 ): WritableStream<Uint8Array> {
-    const { readable, writable } = new ChunkStream(packetSize);
-
-    readable.pipeTo(new WritableStream<Uint8Array>({
-        async write(chunk) {
-            await adbSyncWriteRequest(writer, AdbSyncRequestId.Data, chunk);
-        }
-    }));
-
-    return new WritableStream<Uint8Array>({
-        async start() {
-            const pathAndMode = `${filename},${mode.toString()}`;
-            await adbSyncWriteRequest(writer, AdbSyncRequestId.Send, pathAndMode);
-        },
-        async write(chunk) {
-            await writable.getWriter().write(chunk);
-        },
-        async close() {
-            await adbSyncWriteRequest(writer, AdbSyncRequestId.Done, mtime);
-            await adbSyncReadResponse(stream, ResponseTypes);
-        },
-    });
+    return pipeFrom(
+        new WritableStream<Uint8Array>({
+            async start() {
+                const pathAndMode = `${filename},${mode.toString()}`;
+                await adbSyncWriteRequest(writer, AdbSyncRequestId.Send, pathAndMode);
+            },
+            async write(chunk) {
+                await adbSyncWriteRequest(writer, AdbSyncRequestId.Data, chunk);
+            },
+            async close() {
+                await adbSyncWriteRequest(writer, AdbSyncRequestId.Done, mtime);
+                await adbSyncReadResponse(stream, ResponseTypes);
+            },
+        }),
+        new ChunkStream(packetSize)
+    );
 }

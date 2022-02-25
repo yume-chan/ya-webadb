@@ -1,7 +1,92 @@
+import { PromiseResolver } from "@yume-chan/async";
 import Struct, { StructLike, StructValueType } from "@yume-chan/struct";
 import { decodeUtf8 } from "../utils";
 import { BufferedStream, BufferedStreamEndedError } from "./buffered";
-import { ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter } from "./detect";
+import { QueuingStrategy, ReadableStream, ReadableStreamController, ReadableStreamDefaultReader, ReadableWritablePair, TransformStream, UnderlyingSink, UnderlyingSource, WritableStream, WritableStreamDefaultWriter } from "./detect";
+
+export interface DuplexStreamFactoryOptions {
+    preventCloseReadableStreams?: boolean | undefined;
+
+    close?: (() => void | Promise<void>) | undefined;
+}
+
+export class DuplexStreamFactory<R, W> {
+    private readableStreamControllers: ReadableStreamController<R>[] = [];
+
+    private _closed = new PromiseResolver<void>();
+    public get closed() { return this._closed.promise; }
+
+    private options: DuplexStreamFactoryOptions;
+
+    private _readableClosed = false;
+    private _writableClosed = false;
+
+    public constructor(options?: DuplexStreamFactoryOptions) {
+        this.options = options ?? {};
+    }
+
+    public createReadable(source?: UnderlyingSource<R>, strategy?: QueuingStrategy<R>): ReadableStream<R> {
+        const stream = new ReadableStream<R>({
+            start: async (controller) => {
+                this.readableStreamControllers.push(controller);
+                await source?.start?.(controller);
+            },
+            pull: async (controller) => {
+                await source?.pull?.(controller);
+            },
+            cancel: async (reason) => {
+                await source?.cancel?.(reason);
+                this._readableClosed = true;
+                await this.close();
+            },
+        }, strategy);
+        return stream;
+    }
+
+    public createWritable(sink: UnderlyingSink<W>, strategy?: QueuingStrategy<W>): WritableStream<W> {
+        const stream = new WritableStream<W>({
+            start: async (controller) => {
+                await sink.start?.(controller);
+            },
+            write: async (chunk, controller) => {
+                if (this._writableClosed) {
+                    throw new Error("stream is closed");
+                }
+
+                await sink.write?.(chunk, controller);
+            },
+            close: async () => {
+                await sink.close?.();
+                this.close();
+            },
+            abort: async (reason) => {
+                await sink.abort?.(reason);
+                await this.close();
+            },
+        }, strategy);
+        return stream;
+    }
+
+    public async closeReadableStreams() {
+        this._closed.resolve();
+        await this.options.close?.();
+
+        for (const controller of this.readableStreamControllers) {
+            try {
+                controller.close();
+            } catch { }
+        }
+    }
+
+    public async close() {
+        this._writableClosed = true;
+
+        if (this._readableClosed ||
+            !this.options.preventCloseReadableStreams) {
+            await this.closeReadableStreams();
+        }
+    }
+}
 
 export class DecodeUtf8Stream extends TransformStream<Uint8Array, string>{
     public constructor() {
@@ -190,4 +275,20 @@ export class SplitLineStream extends TransformStream<string, string> {
             }
         });
     }
+}
+
+export function pipeFrom<W, T>(writable: WritableStream<W>, pair: ReadableWritablePair<W, T>) {
+    const writer = pair.writable.getWriter();
+    const pipe = pair.readable
+        .pipeTo(writable);
+    return new WritableStream<T>({
+        async write(chunk) {
+            await writer.ready;
+            await writer.write(chunk);
+        },
+        async close() {
+            await writer.close();
+            await pipe;
+        }
+    });
 }
