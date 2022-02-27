@@ -1,8 +1,8 @@
 import { PromiseResolver } from "@yume-chan/async";
-import Struct, { StructLike, StructValueType } from "@yume-chan/struct";
+import Struct, { StructValueType } from "@yume-chan/struct";
 import { decodeUtf8 } from "../utils";
 import { BufferedStream, BufferedStreamEndedError } from "./buffered";
-import { QueuingStrategy, ReadableStream, ReadableStreamController, ReadableStreamDefaultReader, ReadableWritablePair, TransformStream, UnderlyingSink, UnderlyingSource, WritableStream, WritableStreamDefaultWriter } from "./detect";
+import { AbortController, AbortSignal, QueuingStrategy, ReadableStream, ReadableStreamController, ReadableStreamDefaultReader, ReadableWritablePair, TransformStream, UnderlyingSink, UnderlyingSource, WritableStream, WritableStreamDefaultWriter } from "./detect";
 
 export interface DuplexStreamFactoryOptions {
     preventCloseReadableStreams?: boolean | undefined;
@@ -11,7 +11,8 @@ export interface DuplexStreamFactoryOptions {
 }
 
 export class DuplexStreamFactory<R, W> {
-    private readableStreamControllers: ReadableStreamController<R>[] = [];
+    private readableControllers: ReadableStreamController<R>[] = [];
+    private pushReadableControllers: PushReadableStreamController<R>[] = [];
 
     private _closed = new PromiseResolver<void>();
     public get closed() { return this._closed.promise; }
@@ -25,10 +26,53 @@ export class DuplexStreamFactory<R, W> {
         this.options = options ?? {};
     }
 
+    public createPushReadable(source: PushReadableStreamSource<R>, strategy?: QueuingStrategy<R>): PushReadableStream<R> {
+        return new PushReadableStream<R>(controller => {
+            this.pushReadableControllers.push(controller);
+
+            controller.abortSignal.addEventListener('abort', async () => {
+                this._readableClosed = true;
+                await this.close();
+            });
+
+            source({
+                abortSignal: controller.abortSignal,
+                async enqueue(chunk) {
+                    await controller.enqueue(chunk);
+                },
+                close: async () => {
+                    controller.close();
+                    this._readableClosed = true;
+                    await this.close();
+                },
+                error: async (e?: any) => {
+                    controller.error(e);
+                    this._readableClosed = true;
+                    await this.close();
+                },
+            });
+        }, strategy);
+    };
+
+    public createWrapReadable(readable: ReadableStream<R>): WrapReadableStream<R, ReadableStream<R>, void> {
+        return new WrapReadableStream<R, ReadableStream<R>, void>({
+            async start() {
+                return {
+                    readable,
+                    state: undefined,
+                };
+            },
+            close: async () => {
+                this._readableClosed = true;
+                await this.close();
+            },
+        });
+    }
+
     public createReadable(source?: UnderlyingSource<R>, strategy?: QueuingStrategy<R>): ReadableStream<R> {
-        const stream = new ReadableStream<R>({
+        return new ReadableStream<R>({
             start: async (controller) => {
-                this.readableStreamControllers.push(controller);
+                this.readableControllers.push(controller);
                 await source?.start?.(controller);
             },
             pull: async (controller) => {
@@ -40,11 +84,10 @@ export class DuplexStreamFactory<R, W> {
                 await this.close();
             },
         }, strategy);
-        return stream;
     }
 
     public createWritable(sink: UnderlyingSink<W>, strategy?: QueuingStrategy<W>): WritableStream<W> {
-        const stream = new WritableStream<W>({
+        return new WritableStream<W>({
             start: async (controller) => {
                 await sink.start?.(controller);
             },
@@ -64,14 +107,19 @@ export class DuplexStreamFactory<R, W> {
                 await this.close();
             },
         }, strategy);
-        return stream;
     }
 
     public async closeReadableStreams() {
         this._closed.resolve();
         await this.options.close?.();
 
-        for (const controller of this.readableStreamControllers) {
+        for (const controller of this.readableControllers) {
+            try {
+                controller.close();
+            } catch { }
+        }
+
+        for (const controller of this.pushReadableControllers) {
             try {
                 controller.close();
             } catch { }
@@ -113,38 +161,48 @@ export class GatherStringStream extends TransformStream<string, string>{
 }
 
 // TODO: Find other ways to implement `StructTransformStream`
-export class StructDeserializeStream<T extends StructLike<any>>
-    extends TransformStream<Uint8Array, StructValueType<T>>{
+export class StructDeserializeStream<T extends Struct<any, any, any, any>>
+    implements ReadableWritablePair<Uint8Array, StructValueType<T>>{
+    private _readable: ReadableStream<StructValueType<T>>;
+    public get readable() { return this._readable; }
+
+    private _writable: WritableStream<Uint8Array>;
+    public get writable() { return this._writable; }
+
     public constructor(struct: T) {
-        // Convert incoming chunk to a `ReadableStream`
-        const passthrough = new TransformStream<Uint8Array, Uint8Array>();
-        const passthroughWriter = passthrough.writable.getWriter();
-        // Convert the `ReadableSteam` to a `BufferedStream`
-        const bufferedStream = new BufferedStream(passthrough.readable);
-        super({
-            start(controller) {
-                // Don't wait the receive loop
-                (async () => {
-                    try {
-                        // Unless we make `deserialize` be capable of pausing/resuming,
-                        // We always need at least one pull loop
-                        while (true) {
-                            const value = await struct.deserialize(bufferedStream);
-                            controller.enqueue(value);
-                        }
-                    } catch (e) {
-                        if (e instanceof BufferedStreamEndedError) {
-                            return;
-                        }
-                        controller.error(e);
-                    }
-                })();
+        // Convert incoming chunks to a `BufferedStream`
+        let incomingStreamController!: PushReadableStreamController<Uint8Array>;
+        const incomingStream = new BufferedStream(new PushReadableStream<Uint8Array>(
+            controller => incomingStreamController = controller,
+            {
+                highWaterMark: struct.size * 5,
+                size(chunk) { return chunk.byteLength; },
+            }
+        ));
+
+        this._readable = new PushReadableStream<StructValueType<T>>(async controller => {
+            try {
+                // Unless we make `deserialize` be capable of pausing/resuming,
+                // We always need at least one pull loop
+                while (true) {
+                    const value = await struct.deserialize(incomingStream);
+                    controller.enqueue(value);
+                }
+            } catch (e) {
+                if (e instanceof BufferedStreamEndedError) {
+                    controller.close();
+                    return;
+                }
+                controller.error(e);
+            }
+        });
+
+        this._writable = new WritableStream({
+            async write(chunk) {
+                await incomingStreamController.enqueue(chunk);
             },
-            transform(chunk) {
-                passthroughWriter.write(chunk);
-            },
-            flush() {
-                passthroughWriter.close();
+            close() {
+                incomingStreamController.close();
             },
         });
     }
@@ -291,4 +349,89 @@ export function pipeFrom<W, T>(writable: WritableStream<W>, pair: ReadableWritab
             await pipe;
         }
     });
+}
+
+export class InspectStream<T> extends TransformStream<T, T> {
+    constructor(callback: (value: T) => void) {
+        super({
+            transform(chunk, controller) {
+                callback(chunk);
+                controller.enqueue(chunk);
+            }
+        });
+    }
+}
+
+export interface PushReadableStreamController<T> {
+    abortSignal: AbortSignal;
+
+    enqueue(chunk: T): Promise<void>;
+
+    close(): void;
+
+    error(e?: any): void;
+}
+
+export type PushReadableStreamSource<T> = (controller: PushReadableStreamController<T>) => void;
+
+export class PushReadableStream<T> extends ReadableStream<T> {
+    public constructor(source: PushReadableStreamSource<T>, strategy?: QueuingStrategy<T>) {
+        let pendingPull: PromiseResolver<T> | undefined;
+
+        let pendingPush: T | undefined;
+        let pendingPushFinished: PromiseResolver<void> | undefined;
+
+        let canceled = false;
+        let canceledAbortController: AbortController = new AbortController();
+
+        super({
+            start: (controller) => {
+                source({
+                    abortSignal: canceledAbortController.signal,
+                    async enqueue(chunk) {
+                        if (pendingPull) {
+                            pendingPull.resolve(chunk);
+                            pendingPull = undefined;
+                            return;
+                        }
+
+                        // When cancelled, let `enqueue` to throw an native error
+                        if (canceled || (controller.desiredSize ?? 1 > 0)) {
+                            controller.enqueue(chunk);
+                            return;
+                        }
+
+                        pendingPush = chunk;
+                        pendingPushFinished = new PromiseResolver();
+                        return pendingPushFinished.promise;
+                    },
+                    close() {
+                        controller.close();
+                    },
+                    error(e) {
+                        controller.error(e);
+                    },
+                });
+            },
+            pull: async (controller) => {
+                if (pendingPushFinished) {
+                    controller.enqueue(pendingPush);
+                    pendingPushFinished!.resolve();
+                    pendingPushFinished = undefined;
+                    return;
+                }
+
+                pendingPull = new PromiseResolver<T>();
+                return pendingPull.promise.then((chunk) => {
+                    controller.enqueue(chunk);
+                });
+            },
+            cancel: async (reason) => {
+                if (pendingPushFinished) {
+                    pendingPushFinished.reject(reason);
+                }
+                canceledAbortController.abort();
+            },
+        }, strategy);
+    }
 }

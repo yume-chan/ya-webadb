@@ -43,18 +43,7 @@ export class AdbNoneSubprocessProtocol implements AdbSubprocessProtocol {
             },
         });
 
-        this._stdout = factory.createReadable({
-            pull: async (controller) => {
-                const reader = this.socket.readable.getReader();
-                const result = await reader.read();
-                if (result.done) {
-                    factory.close();
-                } else {
-                    controller.enqueue(result.value);
-                }
-            },
-        });
-
+        this._stdout = factory.createWrapReadable(this.socket.readable);
         this._stderr = factory.createReadable();
         this._exit = factory.closed.then(() => 0);
     }

@@ -3,7 +3,7 @@ import { FileIconType } from "@fluentui/react-file-type-icons";
 import { getFileTypeIconNameFromExtensionOrType } from '@fluentui/react-file-type-icons/lib-commonjs/getFileTypeIconProps';
 import { DEFAULT_BASE_URL as FILE_TYPE_ICONS_BASE_URL } from '@fluentui/react-file-type-icons/lib-commonjs/initializeFileTypeIcons';
 import { useConst } from '@fluentui/react-hooks';
-import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, LinuxFileType, ReadableStream, TransformStream } from '@yume-chan/adb';
+import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, LinuxFileType, ReadableStream } from '@yume-chan/adb';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -20,15 +20,12 @@ import { asyncEffect, formatSize, formatSpeed, Icons, pickFile, RouteStackProps 
  * Because of internal buffer of upstream/downstream streams,
  * the progress value won't be 100% accurate. But it's usually good enough.
  */
-export class ProgressStream extends TransformStream<Uint8Array, Uint8Array> {
+export class ProgressStream extends InspectStream<Uint8Array> {
     public constructor(onProgress: (value: number) => void) {
         let progress = 0;
-        super({
-            transform(chunk, controller) {
-                progress += chunk.byteLength;
-                onProgress(progress);
-                controller.enqueue(chunk);
-            }
+        super(chunk => {
+            progress += chunk.byteLength;
+            onProgress(progress);
         });
     }
 }

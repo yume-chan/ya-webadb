@@ -1,4 +1,4 @@
-import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSocket, AdbSubprocessProtocol, DecodeUtf8Stream, TransformStream, WritableStreamDefaultWriter } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSocket, AdbSubprocessProtocol, DecodeUtf8Stream, PushReadableStream, ReadableStream, TransformStream, WritableStreamDefaultWriter } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message';
@@ -44,7 +44,7 @@ export class ScrcpyClient {
 
         const encoderNameRegex = options.getOutputEncoderNameRegex();
         const encoders: string[] = [];
-        await client.stdout?.pipeTo(new WritableStream({
+        await client.stdout.pipeTo(new WritableStream({
             write(line) {
                 const match = line.match(encoderNameRegex);
                 if (match) {
@@ -121,8 +121,8 @@ export class ScrcpyClient {
     private _screenHeight: number | undefined;
     public get screenHeight() { return this._screenHeight; }
 
-    private _videoStream: TransformStream<VideoStreamPacket, VideoStreamPacket>;
-    public get videoStream() { return this._videoStream.readable; }
+    private _videoStream: ReadableStream<VideoStreamPacket>;
+    public get videoStream() { return this._videoStream; }
 
     private _controlStreamWriter: WritableStreamDefaultWriter<Uint8Array> | undefined;
 
@@ -155,9 +155,7 @@ export class ScrcpyClient {
                 },
             }));
 
-        this._videoStream = new TransformStream();
-        const videoStreamWriter = this._videoStream.writable.getWriter();
-        (async () => {
+        this._videoStream = new PushReadableStream(async controller => {
             try {
                 while (true) {
                     const packet = await options.parseVideoStream(videoStream);
@@ -165,12 +163,12 @@ export class ScrcpyClient {
                         this._screenWidth = packet.data.croppedWidth;
                         this._screenHeight = packet.data.croppedHeight;
                     }
-                    videoStreamWriter.write(packet);
+                    await controller.enqueue(packet);
                 }
             } catch {
-                videoStreamWriter.close();
+                controller.close();
             }
-        })();
+        });
 
         if (controlStream) {
             const buffered = new AdbBufferedStream(controlStream);

@@ -3,7 +3,7 @@ import Struct, { placeholder, StructValueType } from "@yume-chan/struct";
 import type { Adb } from "../../adb";
 import { AdbFeatures } from "../../features";
 import type { AdbSocket } from "../../socket";
-import { ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from "../../stream";
+import { PushReadableStream, PushReadableStreamController, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from "../../stream";
 import { encodeUtf8 } from "../../utils";
 import type { AdbSubprocessProtocol } from "./types";
 
@@ -54,12 +54,18 @@ class StdoutDeserializeStream extends TransformStream<AdbShellProtocolPacket, Ui
     }
 }
 
-class MultiplexTransformStream<T>{
-    private _passthrough = new TransformStream<T, T>();
-    private _writer = this._passthrough.writable.getWriter();
-    public get readable() { return this._passthrough.readable; }
+class MultiplexStream<T>{
+    private _readable: PushReadableStream<T>;
+    private _readableController!: PushReadableStreamController<T>;
+    public get readable() { return this._readable; }
 
     private _activeCount = 0;
+
+    constructor() {
+        this._readable = new PushReadableStream(controller => {
+            this._readableController = controller;
+        });
+    }
 
     public createWriteable() {
         return new WritableStream<T>({
@@ -67,17 +73,18 @@ class MultiplexTransformStream<T>{
                 this._activeCount += 1;
             },
             write: async (chunk) => {
-                // Take care back pressure
-                await this._writer.ready;
-                await this._writer.write(chunk);
+                await this._readableController.enqueue(chunk);
             },
             abort: async (e) => {
-                await this._writer.abort(e);
+                this._activeCount -= 1;
+                if (this._activeCount === 0) {
+                    this._readableController.close();
+                }
             },
             close: async () => {
                 this._activeCount -= 1;
                 if (this._activeCount === 0) {
-                    await this._writer.close();
+                    this._readableController.close();
                 }
             },
         });
@@ -148,7 +155,7 @@ export class AdbShellSubprocessProtocol implements AdbSubprocessProtocol {
         this._stderr = stderr
             .pipeThrough(new StdoutDeserializeStream(AdbShellProtocolId.Stderr));
 
-        const multiplexer = new MultiplexTransformStream<AdbShellProtocolPacketInit>();
+        const multiplexer = new MultiplexStream<AdbShellProtocolPacketInit>();
         multiplexer.readable
             .pipeThrough(new StructSerializeStream(AdbShellProtocolPacket))
             .pipeTo(socket.writable);

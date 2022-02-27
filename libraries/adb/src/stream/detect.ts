@@ -24,12 +24,33 @@ export interface AbortController {
     abort(): void;
 }
 
+// A simplified version of AbortSignal events.
+export interface AbortSignalEventMap {
+    "abort": any;
+}
+
+export interface EventListenerOptions {
+    capture?: boolean;
+}
+
+export interface AddEventListenerOptions extends EventListenerOptions {
+    once?: boolean;
+    passive?: boolean;
+    signal?: AbortSignal;
+}
+
 /** A signal object that allows you to communicate with a DOM request (such as a Fetch) and abort it if required via an AbortController object. */
 export interface AbortSignal {
     /**
      * Returns true if this AbortSignal's AbortController has signaled to abort, and false otherwise.
      */
     readonly aborted: boolean;
+
+    onabort: ((this: AbortSignal, ev: any) => any) | null;
+    addEventListener<K extends keyof AbortSignalEventMap>(type: K, listener: (this: AbortSignal, ev: AbortSignalEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: string, listener: (ev: any) => void, options?: boolean | AddEventListenerOptions): void;
+    removeEventListener<K extends keyof AbortSignalEventMap>(type: K, listener: (this: AbortSignal, ev: AbortSignalEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+    removeEventListener(type: string, listener: (ev: any) => void, options?: boolean | EventListenerOptions): void;
 }
 
 export let AbortController: {
@@ -293,31 +314,6 @@ export interface ReadableStreamIteratorOptions {
     preventCancel?: boolean;
 }
 
-export interface ReadableStream<R> {
-    [Symbol.asyncIterator](): AsyncIterableIterator<R>;
-
-    values(options?: ReadableStreamIteratorOptions): AsyncIterableIterator<R>;
-}
-
-async function* values(this: ReadableStream, options?: ReadableStreamIteratorOptions) {
-    let reader = this.getReader();
-
-    try {
-        while (true) {
-            const result = await reader.read();
-            if (result.done) {
-                reader.releaseLock();
-                return;
-            }
-            yield result.value;
-        }
-    } finally {
-        if (!options?.preventCancel) {
-            reader.cancel();
-        }
-    }
-}
-
 // This library can't use `@types/node` or `lib: dom`
 // because they will pollute the global scope
 // So `ReadableStream`, `WritableStream` and `TransformStream` are not available
@@ -358,11 +354,4 @@ if ('ReadableStream' in globalThis && 'WritableStream' in globalThis && 'Transfo
 // @ts-ignore
 if (!ReadableStream || !WritableStream || !TransformStream) {
     throw new Error('Web Streams API is not available');
-}
-
-if (!(Symbol.asyncIterator in ReadableStream.prototype)) {
-    ReadableStream.prototype[Symbol.asyncIterator] = values;
-}
-if (!('values' in ReadableStream.prototype)) {
-    ReadableStream.prototype.values = values;
 }
