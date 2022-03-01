@@ -541,34 +541,30 @@ export class Struct<
         const value = new StructValue();
         Object.defineProperties(value.value, this._extra);
 
-        return Syncbird.try(() => {
-            const iterator = this._fields[Symbol.iterator]();
-            const iterate: () => StructValue | Syncbird<StructValue> = () => {
-                const result = iterator.next();
-                if (result.done) {
-                    return value;
-                }
-
-                const [name, definition] = result.value;
+        return Syncbird
+            .each(this._fields, ([name, definition]) => {
                 return Syncbird.resolve(
                     definition.deserialize(this.options, stream as any, value)
                 ).then(fieldValue => {
                     value.set(name, fieldValue);
-                    return iterate();
                 });
-            };
-            return iterate();
-        }).then(value => {
-            if (this._postDeserialized) {
-                const object = value.value as TFields;
-                const result = this._postDeserialized.call(object, object);
-                if (result) {
-                    return result;
-                }
-            }
+            })
+            .then(() => {
+                const object = value.value;
 
-            return value.value;
-        }).valueOrPromise();
+                // Run `postDeserialized`
+                if (this._postDeserialized) {
+                    const override = this._postDeserialized.call(object, object);
+                    // If it returns a new value, use that as result
+                    // Otherwise it only inspects/mutates the object in place.
+                    if (override) {
+                        return override;
+                    }
+                }
+
+                return object;
+            })
+            .valueOrPromise();
     }
 
     public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): Uint8Array;

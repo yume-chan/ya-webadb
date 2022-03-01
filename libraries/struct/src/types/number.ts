@@ -83,16 +83,19 @@ export class NumberFieldDefinition<
         stream: StructDeserializeStream | StructAsyncDeserializeStream,
         struct: StructValue,
     ): ValueOrPromise<NumberFieldValue<this>> {
-        return Syncbird.try(() => {
-            return stream.read(this.getSize());
-        }).then(array => {
-            const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
-            const value = view[this.type.dataViewGetter](
-                0,
-                options.littleEndian
-            );
-            return this.create(options, struct, value as any);
-        }).valueOrPromise();
+        return Syncbird
+            .try(() => {
+                return stream.read(this.getSize());
+            })
+            .then(array => {
+                const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
+                const value = view[this.type.dataViewGetter](
+                    0,
+                    options.littleEndian
+                );
+                return this.create(options, struct, value as any);
+            })
+            .valueOrPromise();
     }
 }
 

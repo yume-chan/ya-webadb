@@ -172,30 +172,30 @@ export class StructDeserializeStream<T extends Struct<any, any, any, any>>
     public constructor(struct: T) {
         // Convert incoming chunks to a `BufferedStream`
         let incomingStreamController!: PushReadableStreamController<Uint8Array>;
-        const incomingStream = new BufferedStream(new PushReadableStream<Uint8Array>(
-            controller => incomingStreamController = controller,
-            {
-                highWaterMark: struct.size * 5,
-                size(chunk) { return chunk.byteLength; },
-            }
-        ));
+        const incomingStream = new BufferedStream(
+            new PushReadableStream<Uint8Array>(
+                controller => incomingStreamController = controller,
+            )
+        );
 
-        this._readable = new PushReadableStream<StructValueType<T>>(async controller => {
-            try {
-                // Unless we make `deserialize` be capable of pausing/resuming,
-                // We always need at least one pull loop
-                while (true) {
-                    const value = await struct.deserialize(incomingStream);
-                    controller.enqueue(value);
+        this._readable = new PushReadableStream<StructValueType<T>>(
+            async controller => {
+                try {
+                    // Unless we make `deserialize` be capable of pausing/resuming,
+                    // We always need at least one pull loop
+                    while (true) {
+                        const value = await struct.deserialize(incomingStream);
+                        await controller.enqueue(value);
+                    }
+                } catch (e) {
+                    if (e instanceof BufferedStreamEndedError) {
+                        controller.close();
+                        return;
+                    }
+                    controller.error(e);
                 }
-            } catch (e) {
-                if (e instanceof BufferedStreamEndedError) {
-                    controller.close();
-                    return;
-                }
-                controller.error(e);
             }
-        });
+        );
 
         this._writable = new WritableStream({
             async write(chunk) {
@@ -376,34 +376,26 @@ export type PushReadableStreamSource<T> = (controller: PushReadableStreamControl
 
 export class PushReadableStream<T> extends ReadableStream<T> {
     public constructor(source: PushReadableStreamSource<T>, strategy?: QueuingStrategy<T>) {
-        let pendingPull: PromiseResolver<T> | undefined;
-
-        let pendingPush: T | undefined;
-        let pendingPushFinished: PromiseResolver<void> | undefined;
-
-        let canceled = false;
-        let canceledAbortController: AbortController = new AbortController();
+        let waterMarkLow: PromiseResolver<void> | undefined;
+        const canceled: AbortController = new AbortController();
 
         super({
             start: (controller) => {
                 source({
-                    abortSignal: canceledAbortController.signal,
+                    abortSignal: canceled.signal,
                     async enqueue(chunk) {
-                        if (pendingPull) {
-                            pendingPull.resolve(chunk);
-                            pendingPull = undefined;
-                            return;
+                        // Only when the stream in errored, `desiredSize` will be `null`.
+                        // But since `null <= 0` is `true`
+                        // (`null <= 0` is evaluated as `!(null > 0)` => `!false` => `true`),
+                        // not handling it will cause a deadlock.
+                        if ((controller.desiredSize ?? 1) <= 0) {
+                            waterMarkLow = new PromiseResolver<void>();
+                            await waterMarkLow.promise;
                         }
 
-                        // When cancelled, let `enqueue` to throw an native error
-                        if (canceled || (controller.desiredSize ?? 1 > 0)) {
-                            controller.enqueue(chunk);
-                            return;
-                        }
-
-                        pendingPush = chunk;
-                        pendingPushFinished = new PromiseResolver();
-                        return pendingPushFinished.promise;
+                        // `controller.enqueue` will throw error for us
+                        // if the stream is already errored.
+                        controller.enqueue(chunk);
                     },
                     close() {
                         controller.close();
@@ -413,24 +405,12 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                     },
                 });
             },
-            pull: async (controller) => {
-                if (pendingPushFinished) {
-                    controller.enqueue(pendingPush);
-                    pendingPushFinished!.resolve();
-                    pendingPushFinished = undefined;
-                    return;
-                }
-
-                pendingPull = new PromiseResolver<T>();
-                return pendingPull.promise.then((chunk) => {
-                    controller.enqueue(chunk);
-                });
+            pull: () => {
+                waterMarkLow?.resolve();
             },
             cancel: async (reason) => {
-                if (pendingPushFinished) {
-                    pendingPushFinished.reject(reason);
-                }
-                canceledAbortController.abort();
+                waterMarkLow?.reject(reason);
+                canceled.abort();
             },
         }, strategy);
     }

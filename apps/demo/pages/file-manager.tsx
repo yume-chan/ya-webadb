@@ -548,6 +548,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
         const sync = await globalState.device!.sync();
         try {
             const readable = sync.read(path);
+            // @ts-ignore ReadableStream definitions are slightly incompatible
             const response = new Response(readable);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);

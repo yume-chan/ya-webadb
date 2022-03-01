@@ -533,13 +533,15 @@ class ScrcpyPageState {
     async stop() {
         // Request to close client first
         await this.client?.close();
-        this.client = undefined;
 
         // Otherwise some packets may still arrive at decoder
         this.decoder?.dispose();
-        this.decoder = undefined;
 
-        this.running = false;
+        runInAction(() => {
+            this.client = undefined;
+            this.decoder = undefined;
+            this.running = false;
+        });
     }
 
     handleDeviceViewRef(element: DeviceViewRef | null) {

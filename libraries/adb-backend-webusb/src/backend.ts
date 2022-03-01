@@ -37,7 +37,8 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
                 // "ok" and "babble" both have received `data`,
                 // "babble" just means there is more data to be read.
                 // From spec, the `result.data` always covers the whole `buffer`.
-                controller.enqueue(new Uint8Array(result.data!.buffer));
+                const chunk = new Uint8Array(result.data!.buffer);
+                controller.enqueue(chunk);
             },
         }, {
             highWaterMark: 16 * 1024,
