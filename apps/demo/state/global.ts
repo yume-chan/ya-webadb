@@ -1,8 +1,11 @@
-import { Adb } from "@yume-chan/adb";
+import { Adb, AdbBackend } from "@yume-chan/adb";
 import { action, makeAutoObservable } from 'mobx';
 
 export class GlobalState {
+    backend: AdbBackend | undefined = undefined;
+
     device: Adb | undefined = undefined;
+
     errorDialogVisible = false;
     errorDialogMessage = '';
 
@@ -15,7 +18,8 @@ export class GlobalState {
         });
     }
 
-    setDevice(device: Adb | undefined) {
+    setDevice(backend: AdbBackend | undefined, device: Adb | undefined) {
+        this.backend = backend;
         this.device = device;
     }
 

@@ -1,4 +1,4 @@
-import type { Adb, AdbBufferedStream } from "@yume-chan/adb";
+import { BufferedStreamEndedError, ReadableStream, TransformStream, type Adb, type AdbBufferedStream } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
 import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
 import { ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../../connection";
@@ -135,8 +135,6 @@ export const ScrcpyInjectScrollControlMessage1_16 =
 export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16> implements ScrcpyOptions<T> {
     public value: Partial<T>;
 
-    private _streamHeader: Uint8Array | undefined;
-
     public constructor(value: Partial<ScrcpyOptionsInit1_16>) {
         if (new.target === ScrcpyOptions1_16 &&
             value.logLevel === ScrcpyLogLevel.Verbose) {
@@ -213,74 +211,97 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
         return /\s+scrcpy --encoder-name '(.*?)'/;
     }
 
-    public async parseVideoStream(stream: AdbBufferedStream): Promise<VideoStreamPacket> {
+    public parseVideoStream(stream: AdbBufferedStream): ReadableStream<VideoStreamPacket> {
+        // Optimized path for video frames only
         if (this.value.sendFrameMeta === false) {
-            return {
-                type: 'frame',
-                data: await stream.read(1 * 1024 * 1024, true),
-            };
+            return stream
+                .release()
+                .pipeThrough(new TransformStream<Uint8Array, VideoStreamPacket>({
+                    transform(chunk, controller) {
+                        controller.enqueue({
+                            type: 'frame',
+                            data: chunk,
+                        });
+                    },
+                }));
         }
 
-        const { pts, data } = await VideoPacket.deserialize(stream);
-        if (pts === NoPts) {
-            const sequenceParameterSet = parse_sequence_parameter_set(data.slice().buffer);
+        let header: Uint8Array | undefined;
 
-            const {
-                profile_idc: profileIndex,
-                constraint_set: constraintSet,
-                level_idc: levelIndex,
-                pic_width_in_mbs_minus1,
-                pic_height_in_map_units_minus1,
-                frame_mbs_only_flag,
-                frame_crop_left_offset,
-                frame_crop_right_offset,
-                frame_crop_top_offset,
-                frame_crop_bottom_offset,
-            } = sequenceParameterSet;
+        return new ReadableStream<VideoStreamPacket>({
+            async pull(controller) {
+                try {
+                    const { pts, data } = await VideoPacket.deserialize(stream);
+                    if (pts === NoPts) {
+                        const sequenceParameterSet = parse_sequence_parameter_set(data.slice().buffer);
 
-            const encodedWidth = (pic_width_in_mbs_minus1 + 1) * 16;
-            const encodedHeight = (pic_height_in_map_units_minus1 + 1) * (2 - frame_mbs_only_flag) * 16;
-            const cropLeft = frame_crop_left_offset * 2;
-            const cropRight = frame_crop_right_offset * 2;
-            const cropTop = frame_crop_top_offset * 2;
-            const cropBottom = frame_crop_bottom_offset * 2;
+                        const {
+                            profile_idc: profileIndex,
+                            constraint_set: constraintSet,
+                            level_idc: levelIndex,
+                            pic_width_in_mbs_minus1,
+                            pic_height_in_map_units_minus1,
+                            frame_mbs_only_flag,
+                            frame_crop_left_offset,
+                            frame_crop_right_offset,
+                            frame_crop_top_offset,
+                            frame_crop_bottom_offset,
+                        } = sequenceParameterSet;
 
-            const croppedWidth = encodedWidth - cropLeft - cropRight;
-            const croppedHeight = encodedHeight - cropTop - cropBottom;
+                        const encodedWidth = (pic_width_in_mbs_minus1 + 1) * 16;
+                        const encodedHeight = (pic_height_in_map_units_minus1 + 1) * (2 - frame_mbs_only_flag) * 16;
+                        const cropLeft = frame_crop_left_offset * 2;
+                        const cropRight = frame_crop_right_offset * 2;
+                        const cropTop = frame_crop_top_offset * 2;
+                        const cropBottom = frame_crop_bottom_offset * 2;
 
-            this._streamHeader = data;
-            return {
-                type: 'configuration',
-                data: {
-                    profileIndex,
-                    constraintSet,
-                    levelIndex,
-                    encodedWidth,
-                    encodedHeight,
-                    cropLeft,
-                    cropRight,
-                    cropTop,
-                    cropBottom,
-                    croppedWidth,
-                    croppedHeight,
+                        const croppedWidth = encodedWidth - cropLeft - cropRight;
+                        const croppedHeight = encodedHeight - cropTop - cropBottom;
+
+                        header = data;
+                        controller.enqueue({
+                            type: 'configuration',
+                            data: {
+                                profileIndex,
+                                constraintSet,
+                                levelIndex,
+                                encodedWidth,
+                                encodedHeight,
+                                cropLeft,
+                                cropRight,
+                                cropTop,
+                                cropBottom,
+                                croppedWidth,
+                                croppedHeight,
+                            }
+                        });
+                        return;
+                    }
+
+                    let frameData: Uint8Array;
+                    if (header) {
+                        frameData = new Uint8Array(header.byteLength + data.byteLength);
+                        frameData.set(header);
+                        frameData.set(data!, header.byteLength);
+                        header = undefined;
+                    } else {
+                        frameData = data;
+                    }
+
+                    controller.enqueue({
+                        type: 'frame',
+                        data: frameData,
+                    });
+                } catch (e) {
+                    if (e instanceof BufferedStreamEndedError) {
+                        controller.close();
+                        return;
+                    }
+
+                    throw e;
                 }
-            };
-        }
-
-        let frameData: Uint8Array;
-        if (this._streamHeader) {
-            frameData = new Uint8Array(this._streamHeader.byteLength + data.byteLength);
-            frameData.set(this._streamHeader);
-            frameData.set(data!, this._streamHeader.byteLength);
-            this._streamHeader = undefined;
-        } else {
-            frameData = data;
-        }
-
-        return {
-            type: 'frame',
-            data: frameData,
-        };
+            }
+        });
     }
 
     public serializeBackOrScreenOnControlMessage(

@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async';
 import { Disposable } from '@yume-chan/event';
 import { ValueOrPromise } from '@yume-chan/struct';
 import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto';
-import { AdbCommand, AdbPacket, AdbPacketInit } from './packet';
+import { AdbCommand, AdbPacket, AdbPacketCore } from './packet';
 import { calculateBase64EncodedLength, encodeBase64 } from './utils';
 
 export type AdbKeyIterable = Iterable<Uint8Array> | AsyncIterable<Uint8Array>;
@@ -44,13 +44,13 @@ export interface AdbAuthenticator {
     (
         credentialStore: AdbCredentialStore,
         getNextRequest: () => Promise<AdbPacket>
-    ): AsyncIterable<AdbPacketInit>;
+    ): AsyncIterable<AdbPacketCore>;
 }
 
 export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
     credentialStore: AdbCredentialStore,
     getNextRequest: () => Promise<AdbPacket>,
-): AsyncIterable<AdbPacketInit> {
+): AsyncIterable<AdbPacketCore> {
     for await (const key of credentialStore.iterateKeys()) {
         const packet = await getNextRequest();
 
@@ -58,7 +58,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
             return;
         }
 
-        const signature = sign(key, packet.payload!);
+        const signature = sign(key, packet.payload);
         yield {
             command: AdbCommand.Auth,
             arg0: AdbAuthType.Signature,
@@ -71,7 +71,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
 export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     credentialStore: AdbCredentialStore,
     getNextRequest: () => Promise<AdbPacket>,
-): AsyncIterable<AdbPacketInit> {
+): AsyncIterable<AdbPacketCore> {
     const packet = await getNextRequest();
 
     if (packet.arg0 !== AdbAuthType.Token) {
@@ -119,7 +119,7 @@ export class AdbAuthenticationHandler implements Disposable {
 
     private pendingRequest = new PromiseResolver<AdbPacket>();
 
-    private iterator: AsyncIterator<AdbPacketInit> | undefined;
+    private iterator: AsyncIterator<AdbPacketCore> | undefined;
 
     public constructor(
         authenticators: readonly AdbAuthenticator[],
@@ -133,7 +133,7 @@ export class AdbAuthenticationHandler implements Disposable {
         return this.pendingRequest.promise;
     };
 
-    private async* runAuthenticator(): AsyncGenerator<AdbPacketInit> {
+    private async* runAuthenticator(): AsyncGenerator<AdbPacketCore> {
         for (const authenticator of this.authenticators) {
             for await (const packet of authenticator(this.credentialStore, this.getNextRequest)) {
                 // If the authenticator yielded a response
@@ -151,7 +151,7 @@ export class AdbAuthenticationHandler implements Disposable {
         throw new Error('Cannot authenticate with device');
     }
 
-    public async handle(packet: AdbPacket): Promise<AdbPacketInit> {
+    public async handle(packet: AdbPacket): Promise<AdbPacketCore> {
         if (!this.iterator) {
             this.iterator = this.runAuthenticator();
         }

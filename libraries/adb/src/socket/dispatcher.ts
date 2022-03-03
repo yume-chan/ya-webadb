@@ -1,7 +1,7 @@
 import { AsyncOperationManager } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
-import { AdbCommand, AdbPacket, AdbPacketInit, AdbPacketSerializeStream } from '../packet';
-import { AbortController, ReadableStream, StructDeserializeStream, WritableStream, WritableStreamDefaultWriter } from '../stream';
+import { AdbCommand, AdbPacket, AdbPacketCore, AdbPacketInit, calculateChecksum } from '../packet';
+import { AbortController, ReadableWritablePair, WritableStream, WritableStreamDefaultWriter } from '../stream';
 import { decodeUtf8, encodeUtf8 } from '../utils';
 import { AdbSocketController } from './controller';
 import { AdbLogger } from './logger';
@@ -32,12 +32,10 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly sockets = new Map<number, AdbSocketController>();
     private readonly logger: AdbLogger | undefined;
 
-    private _packetSerializeStream!: AdbPacketSerializeStream;
     private _packetSerializeStreamWriter!: WritableStreamDefaultWriter<AdbPacketInit>;
 
     public maxPayloadSize = 0;
-    public get calculateChecksum() { return this._packetSerializeStream.calculateChecksum; }
-    public set calculateChecksum(value: boolean) { this._packetSerializeStream.calculateChecksum = value; }
+    public calculateChecksum = true;
     public appendNullToServiceString = true;
 
     private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketReceivedEventArgs>());
@@ -51,17 +49,16 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
     private _abortController = new AbortController();
 
-    public constructor(readable: ReadableStream<Uint8Array>, writable: WritableStream<Uint8Array>, logger?: AdbLogger) {
+    public constructor(
+        connection: ReadableWritablePair<AdbPacket, AdbPacketInit>,
+        logger?: AdbLogger
+    ) {
         super();
 
         this.logger = logger;
 
-        readable
-            .pipeThrough(
-                new StructDeserializeStream(AdbPacket),
-                { signal: this._abortController.signal, preventCancel: true }
-        )
-            .pipeTo(new WritableStream<AdbPacket>({
+        connection.readable
+            .pipeTo(new WritableStream({
                 write: async (packet) => {
                     try {
                         this.logger?.onIncomingPacket?.(packet);
@@ -75,7 +72,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
                                 return;
                             case AdbCommand.Write:
                                 if (this.sockets.has(packet.arg1)) {
-                                    await this.sockets.get(packet.arg1)!.enqueue(packet.payload!);
+                                    await this.sockets.get(packet.arg1)!.enqueue(packet.payload);
                                     await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
                                 }
 
@@ -106,17 +103,13 @@ export class AdbPacketDispatcher extends AutoDisposable {
                         throw e;
                     }
                 }
-            }))
+            }), {
+                preventCancel: false,
+                signal: this._abortController.signal,
+            })
             .catch(() => { });
 
-        this._packetSerializeStream = new AdbPacketSerializeStream();
-        this._packetSerializeStream.readable
-            .pipeTo(
-                writable,
-                { signal: this._abortController.signal, preventClose: true }
-        )
-            .catch(() => { });;
-        this._packetSerializeStreamWriter = this._packetSerializeStream.writable.getWriter();
+        this._packetSerializeStreamWriter = connection.writable.getWriter();
     }
 
     private handleOk(packet: AdbPacket) {
@@ -174,7 +167,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this.initializers.resolve(localId, undefined);
 
         const remoteId = packet.arg0;
-        const serviceString = decodeUtf8(packet.payload!);
+        const serviceString = decodeUtf8(packet.payload);
 
         const controller = new AdbSocketController({
             dispatcher: this,
@@ -235,7 +228,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         arg1?: number,
         payload: string | Uint8Array = EmptyUint8Array,
     ): Promise<void> {
-        let init: AdbPacketInit;
+        let init: AdbPacketCore;
         if (arg0 === undefined) {
             init = packetOrCommand as AdbPacketInit;
         } else {
@@ -256,8 +249,14 @@ export class AdbPacketDispatcher extends AutoDisposable {
             throw new Error('payload too large');
         }
 
+        if (this.calculateChecksum) {
+            calculateChecksum(init);
+        } else {
+            (init as AdbPacketInit).checksum = 0;
+        }
+
         this.logger?.onOutgoingPacket?.(init);
-        await this._packetSerializeStreamWriter.write(init);
+        await this._packetSerializeStreamWriter.write(init as AdbPacketInit);
     }
 
     public override dispose() {
@@ -270,6 +269,8 @@ export class AdbPacketDispatcher extends AutoDisposable {
             // Stop pipes
             this._abortController.abort();
         } catch { }
+
+        this._packetSerializeStreamWriter.releaseLock();
 
         super.dispose();
     }

@@ -143,9 +143,10 @@ function _Connect(): JSX.Element | null {
                 let device: Adb | undefined;
                 try {
                     setConnecting(true);
-                    device = await Adb.connect(selectedBackend, logger.logger);
-                    await device.authenticate(CredentialStore);
-                    globalState.setDevice(device);
+                    const connection = await selectedBackend.connect();
+                    const adbConnection = Adb.createConnection(connection);
+                    device = await Adb.authenticate(adbConnection, CredentialStore, undefined, logger.logger);
+                    globalState.setDevice(selectedBackend, device);
                 } catch (e) {
                     device?.dispose();
                     throw e;
@@ -160,7 +161,7 @@ function _Connect(): JSX.Element | null {
     const disconnect = useCallback(async () => {
         try {
             await globalState.device!.dispose();
-            globalState.setDevice(undefined);
+            globalState.setDevice(undefined, undefined);
         } catch (e: any) {
             globalState.showErrorDialog(e.message);
         }

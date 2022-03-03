@@ -19,6 +19,8 @@ const AdbPacketHeader =
         .uint32('checksum')
         .int32('magic');
 
+type AdbPacketHeaderInit = typeof AdbPacketHeader['TInit'];
+
 export const AdbPacket =
     new Struct({ littleEndian: true })
         .fields(AdbPacketHeader)
@@ -26,34 +28,40 @@ export const AdbPacket =
 
 export type AdbPacket = typeof AdbPacket['TDeserializeResult'];
 
-export type AdbPacketInit = Omit<typeof AdbPacket['TInit'], 'checksum' | 'magic'>;
+// All the useful fields
+export type AdbPacketCore = Omit<typeof AdbPacket['TInit'], 'checksum' | 'magic'>;
+
+// All fields except `magic`, which can be calculated in `AdbPacketSerializeStream`
+export type AdbPacketInit = Omit<typeof AdbPacket['TInit'], 'magic'>;
+
+export function calculateChecksum(payload: Uint8Array): number;
+export function calculateChecksum(init: AdbPacketCore): AdbPacketInit;
+export function calculateChecksum(payload: Uint8Array | AdbPacketCore): number | AdbPacketInit {
+    if (payload instanceof Uint8Array) {
+        return payload.reduce((result, item) => result + item, 0);
+    } else {
+        (payload as AdbPacketInit).checksum = calculateChecksum(payload.payload);
+        return payload as AdbPacketInit;
+    }
+}
 
 export class AdbPacketSerializeStream extends TransformStream<AdbPacketInit, Uint8Array>{
-    public calculateChecksum = true;
-
     public constructor() {
         super({
             transform: async (init, controller) => {
-                let checksum: number;
-                if (this.calculateChecksum && init.payload) {
-                    const array = init.payload;
-                    checksum = array.reduce((result, item) => result + item, 0);
-                } else {
-                    checksum = 0;
-                }
+                // This syntax is ugly, but I don't want to create an new object.
+                (init as unknown as AdbPacketHeaderInit).magic = init.command ^ 0xFFFFFFFF;
+                (init as unknown as AdbPacketHeaderInit).payloadLength = init.payload.byteLength;
 
-                const packet = {
-                    ...init,
-                    checksum,
-                    magic: init.command ^ 0xFFFFFFFF,
-                    payloadLength: init.payload.byteLength,
-                };
+                controller.enqueue(
+                    AdbPacketHeader.serialize(
+                        init as unknown as AdbPacketHeaderInit
+                    )
+                );
 
-                controller.enqueue(AdbPacketHeader.serialize(packet));
-
-                if (packet.payloadLength) {
+                if (init.payload.byteLength) {
                     // Enqueue payload separately to avoid copying
-                    controller.enqueue(packet.payload);
+                    controller.enqueue(init.payload);
                 }
             },
         });

@@ -1,4 +1,4 @@
-import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSocket, AdbSubprocessProtocol, DecodeUtf8Stream, PushReadableStream, ReadableStream, TransformStream, WritableStreamDefaultWriter } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSocket, AdbSubprocessProtocol, DecodeUtf8Stream, InspectStream, ReadableStream, TransformStream, WritableStreamDefaultWriter } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message';
@@ -155,20 +155,14 @@ export class ScrcpyClient {
                 },
             }));
 
-        this._videoStream = new PushReadableStream(async controller => {
-            try {
-                while (true) {
-                    const packet = await options.parseVideoStream(videoStream);
-                    if (packet.type === 'configuration') {
-                        this._screenWidth = packet.data.croppedWidth;
-                        this._screenHeight = packet.data.croppedHeight;
-                    }
-                    await controller.enqueue(packet);
+        this._videoStream = options
+            .parseVideoStream(videoStream)
+            .pipeThrough(new InspectStream(packet => {
+                if (packet.type === 'configuration') {
+                    this._screenWidth = packet.data.croppedWidth;
+                    this._screenHeight = packet.data.croppedHeight;
                 }
-            } catch {
-                controller.close();
-            }
-        });
+            }));
 
         if (controlStream) {
             const buffered = new AdbBufferedStream(controlStream);

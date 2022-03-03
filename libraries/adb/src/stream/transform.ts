@@ -335,6 +335,16 @@ export class SplitLineStream extends TransformStream<string, string> {
     }
 }
 
+/**
+ * Create a new `WritableStream` that, when written to, will write that chunk to
+ * `pair.writable`, when pipe `pair.readable` to `writable`.
+ *
+ * It's the opposite of `ReadableStream.pipeThrough`.
+ *
+ * @param writable The `WritableStream` to write to.
+ * @param pair A `TransformStream` that converts chunks.
+ * @returns A new `WritableStream`.
+ */
 export function pipeFrom<W, T>(writable: WritableStream<W>, pair: ReadableWritablePair<W, T>) {
     const writer = pair.writable.getWriter();
     const pipe = pair.readable

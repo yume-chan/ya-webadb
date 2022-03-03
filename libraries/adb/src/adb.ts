@@ -1,13 +1,11 @@
 import { PromiseResolver } from '@yume-chan/async';
-import { DisposableList } from '@yume-chan/event';
 import { AdbAuthenticationHandler, AdbCredentialStore, AdbDefaultAuthenticators } from './auth';
-import { AdbBackend } from './backend';
 import { AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
-import { AdbCommand } from './packet';
+import { AdbCommand, AdbPacket, AdbPacketCore, AdbPacketInit, AdbPacketSerializeStream, calculateChecksum } from './packet';
 import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
-import { DecodeUtf8Stream, GatherStringStream, ReadableStream, WritableStream } from "./stream";
-import { decodeUtf8 } from "./utils";
+import { AbortController, DecodeUtf8Stream, GatherStringStream, pipeFrom, ReadableWritablePair, StructDeserializeStream, WritableStream } from "./stream";
+import { decodeUtf8, encodeUtf8 } from "./utils";
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -16,19 +14,131 @@ export enum AdbPropKey {
     Features = 'features',
 }
 
+export const VERSION_OMIT_CHECKSUM = 0x01000001;
+
 export class Adb {
-    public static async connect(backend: AdbBackend, logger?: AdbLogger) {
-        const { readable, writable } = await backend.connect();
-        return new Adb(backend, readable, writable, logger);
+    public static createConnection(
+        connection: ReadableWritablePair<Uint8Array, Uint8Array>
+    ): ReadableWritablePair<AdbPacket, AdbPacketCore> {
+        return {
+            readable: connection.readable.pipeThrough(
+                new StructDeserializeStream(AdbPacket)
+            ),
+            writable: pipeFrom(
+                connection.writable,
+                new AdbPacketSerializeStream()
+            ),
+        };
     }
 
-    private readonly _backend: AdbBackend;
+    /**
+     * It's possible to call `authenticate` multiple times on a single connection,
+     * every time the device receives a `CNXN` packet it will reset its internal state,
+     * and begin authentication again.
+     */
+    public static async authenticate(
+        connection: ReadableWritablePair<AdbPacket, AdbPacketCore>,
+        credentialStore: AdbCredentialStore,
+        authenticators = AdbDefaultAuthenticators,
+        logger?: AdbLogger
+    ) {
+        let version = 0x01000001;
+        let maxPayloadSize = 0x100000;
 
-    public get backend(): AdbBackend { return this._backend; }
+        const features = [
+            'shell_v2',
+            'cmd',
+            AdbFeatures.StatV2,
+            'ls_v2',
+            'fixed_push_mkdir',
+            'apex',
+            'abb',
+            'fixed_push_symlink_timestamp',
+            'abb_exec',
+            'remount_shell',
+            'track_app',
+            'sendrecv_v2',
+            'sendrecv_v2_brotli',
+            'sendrecv_v2_lz4',
+            'sendrecv_v2_zstd',
+            'sendrecv_v2_dry_run_send',
+        ].join(',');
+
+        const resolver = new PromiseResolver<string>();
+        const authHandler = new AdbAuthenticationHandler(authenticators, credentialStore);
+
+        const abortController = new AbortController();
+        const pipe = connection.readable
+            .pipeTo(new WritableStream({
+                async write(packet: AdbPacket) {
+                    logger?.onIncomingPacket?.(packet);
+
+                    switch (packet.command) {
+                        case AdbCommand.Connect:
+                            version = Math.min(version, packet.arg0);
+                            maxPayloadSize = Math.min(maxPayloadSize, packet.arg1);
+                            resolver.resolve(decodeUtf8(packet.payload));
+                            break;
+                        case AdbCommand.Auth:
+                            const response = await authHandler.handle(packet);
+                            await sendPacket(response);
+                            break;
+                        case AdbCommand.Close:
+                            // Last connection was interrupted
+                            // Ignore this packet, device will recover
+                            break;
+                        default:
+                            throw new Error('Device not in correct state. Reconnect your device and try again');
+                    }
+                }
+            }), {
+                preventCancel: true,
+                signal: abortController.signal,
+            })
+            .catch((e) => { resolver.reject(e); });
+
+        const writer = connection.writable.getWriter();
+        async function sendPacket(init: AdbPacketCore) {
+            logger?.onOutgoingPacket?.(init);
+
+            // Always send checksum in auth steps
+            // Because we don't know if the device will ignore it yet.
+            await writer.write(calculateChecksum(init));
+        }
+
+        await sendPacket({
+            command: AdbCommand.Connect,
+            arg0: version,
+            arg1: maxPayloadSize,
+            // The terminating `;` is required in formal definition
+            // But ADB daemon (all versions) can still work without it
+            payload: encodeUtf8(`host::features=${features};`),
+        });
+
+        try {
+            const banner = await resolver.promise;
+
+            // Stop piping before creating Adb object
+            // Because AdbPacketDispatcher will try to lock the streams when initializing
+            abortController.abort();
+            await pipe;
+
+            writer.releaseLock();
+
+            return new Adb(
+                connection,
+                version,
+                maxPayloadSize,
+                banner,
+                logger
+            );
+        } finally {
+            abortController.abort();
+            writer.releaseLock();
+        }
+    }
 
     private readonly packetDispatcher: AdbPacketDispatcher;
-
-    public get name() { return this.backend.name; }
 
     private _protocolVersion: number | undefined;
     public get protocolVersion() { return this._protocolVersion; }
@@ -51,110 +161,28 @@ export class Adb {
     public readonly tcpip: AdbTcpIpCommand;
 
     public constructor(
-        backend: AdbBackend,
-        readable: ReadableStream<Uint8Array>,
-        writable: WritableStream<Uint8Array>,
+        connection: ReadableWritablePair<AdbPacket, AdbPacketInit>,
+        version: number,
+        maxPayloadSize: number,
+        banner: string,
         logger?: AdbLogger
     ) {
-        this._backend = backend;
-        this.packetDispatcher = new AdbPacketDispatcher(readable, writable, logger);
+        this.parseBanner(banner);
+        this.packetDispatcher = new AdbPacketDispatcher(connection, logger);
+
+        this._protocolVersion = version;
+        if (version >= VERSION_OMIT_CHECKSUM) {
+            this.packetDispatcher.calculateChecksum = false;
+            // Android prior to 9.0.0 uses char* to parse service string
+            // thus requires an extra null character
+            this.packetDispatcher.appendNullToServiceString = false;
+        }
+        this.packetDispatcher.maxPayloadSize = maxPayloadSize;
 
         this.subprocess = new AdbSubprocess(this);
         this.power = new AdbPower(this);
         this.reverse = new AdbReverseCommand(this.packetDispatcher);
         this.tcpip = new AdbTcpIpCommand(this);
-    }
-
-    public async authenticate(
-        credentialStore: AdbCredentialStore,
-        authenticators = AdbDefaultAuthenticators
-    ): Promise<void> {
-        this.packetDispatcher.maxPayloadSize = 0x1000;
-        this.packetDispatcher.calculateChecksum = true;
-        this.packetDispatcher.appendNullToServiceString = true;
-
-        const version = 0x01000001;
-        const versionNoChecksum = 0x01000001;
-        const maxPayloadSize = 0x100000;
-
-        const features = [
-            'shell_v2',
-            'cmd',
-            AdbFeatures.StatV2,
-            'ls_v2',
-            'fixed_push_mkdir',
-            'apex',
-            'abb',
-            'fixed_push_symlink_timestamp',
-            'abb_exec',
-            'remount_shell',
-            'track_app',
-            'sendrecv_v2',
-            'sendrecv_v2_brotli',
-            'sendrecv_v2_lz4',
-            'sendrecv_v2_zstd',
-            'sendrecv_v2_dry_run_send',
-        ].join(',');
-
-        const resolver = new PromiseResolver<void>();
-        const authHandler = new AdbAuthenticationHandler(authenticators, credentialStore);
-        const disposableList = new DisposableList();
-        disposableList.add(this.packetDispatcher.onPacket(async (e) => {
-            e.handled = true;
-
-            const { packet } = e;
-            try {
-                switch (packet.command) {
-                    case AdbCommand.Connect:
-                        this.packetDispatcher.maxPayloadSize = Math.min(maxPayloadSize, packet.arg1);
-
-                        const finalVersion = Math.min(version, packet.arg0);
-                        this._protocolVersion = finalVersion;
-
-                        if (finalVersion >= versionNoChecksum) {
-                            this.packetDispatcher.calculateChecksum = false;
-                            // Android prior to 9.0.0 uses char* to parse service string
-                            // thus requires an extra null character
-                            this.packetDispatcher.appendNullToServiceString = false;
-                        }
-
-                        this.parseBanner(decodeUtf8(packet.payload!));
-                        resolver.resolve();
-                        break;
-                    case AdbCommand.Auth:
-                        const authPacket = await authHandler.handle(e.packet);
-                        await this.packetDispatcher.sendPacket(authPacket);
-                        break;
-                    case AdbCommand.Close:
-                        // Last connection was interrupted
-                        // Ignore this packet, device will recover
-                        break;
-                    default:
-                        throw new Error('Device not in correct state. Reconnect your device and try again');
-                }
-            } catch (e) {
-                resolver.reject(e);
-            }
-        }));
-
-        disposableList.add(this.packetDispatcher.onError(e => {
-            resolver.reject(e);
-        }));
-
-        await this.packetDispatcher.sendPacket(
-            AdbCommand.Connect,
-            version,
-            maxPayloadSize,
-            // The terminating `;` is required in formal definition
-            // But ADB daemon can also work without it
-            `host::features=${features};`
-        );
-
-        try {
-            await resolver.promise;
-        } finally {
-            disposableList.dispose();
-        }
     }
 
     private parseBanner(banner: string): void {

@@ -1,6 +1,7 @@
 import { StructAsyncDeserializeStream } from '@yume-chan/struct';
 import { AdbSocket, AdbSocketInfo } from '../socket';
 import { ReadableStream, ReadableStreamDefaultReader } from './detect';
+import { PushReadableStream } from "./transform";
 
 export class BufferedStreamEndedError extends Error {
     public constructor() {
@@ -26,10 +27,9 @@ export class BufferedStream {
     /**
      *
      * @param length
-     * @param readToEnd When `true`, allow less data to be returned if the stream has reached its end.
      * @returns
      */
-    public async read(length: number, readToEnd: boolean = false): Promise<Uint8Array> {
+    public async read(length: number): Promise<Uint8Array> {
         let array: Uint8Array;
         let index: number;
         if (this.buffer) {
@@ -44,16 +44,11 @@ export class BufferedStream {
             index = buffer.byteLength;
             this.buffer = undefined;
         } else {
-            const result = await this.reader.read();
-            if (result.done) {
-                if (readToEnd) {
-                    return new Uint8Array(0);
-                } else {
-                    throw new Error('Unexpected end of stream');
-                }
+            const { done, value } = await this.reader.read();
+            if (done) {
+                throw new Error('Unexpected end of stream');
             }
 
-            const { value } = result;
             if (value.byteLength === length) {
                 return value;
             }
@@ -71,16 +66,11 @@ export class BufferedStream {
         while (index < length) {
             const left = length - index;
 
-            const result = await this.reader.read();
-            if (result.done) {
-                if (readToEnd) {
-                    return new Uint8Array(0);
-                } else {
-                    throw new Error('Unexpected end of stream');
-                }
+            const { done, value } = await this.reader.read();
+            if (done) {
+                throw new Error('Unexpected end of stream');
             }
 
-            const { value } = result;
             if (value.byteLength === left) {
                 array.set(value, index);
                 return array;
@@ -97,6 +87,40 @@ export class BufferedStream {
         }
 
         return array;
+    }
+
+    /**
+     * Return a readable stream with unconsumed data (if any) and
+     * all data from the wrapped stream.
+     * @returns A `ReadableStream`
+     */
+    public release(): ReadableStream<Uint8Array> {
+        if (this.buffer) {
+            return new PushReadableStream<Uint8Array>(async controller => {
+                // Put the remaining data back to the stream
+                await controller.enqueue(this.buffer!);
+
+                // Manually pipe the stream
+                while (true) {
+                    try {
+                        const { done, value } = await this.reader.read();
+                        if (done) {
+                            controller.close();
+                            break;
+                        } else {
+                            await controller.enqueue(value);
+                        }
+                    } catch (e) {
+                        controller.error(e);
+                        break;
+                    }
+                }
+            });
+        } else {
+            // Simply release the reader and return the stream
+            this.reader.releaseLock();
+            return this.stream;
+        }
     }
 
     public close() {

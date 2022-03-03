@@ -1,4 +1,4 @@
-import { AdbLogger, AdbPacket, AdbPacketInit } from "@yume-chan/adb";
+import { AdbLogger, AdbPacket, AdbPacketCore } from "@yume-chan/adb";
 import { EventEmitter } from "@yume-chan/event";
 
 export class AdbEventLogger {
@@ -8,7 +8,7 @@ export class AdbEventLogger {
     private readonly _incomingPacketEvent = new EventEmitter<AdbPacket>();
     public get onIncomingPacket() { return this._incomingPacketEvent.event; }
 
-    private readonly _outgoingPacketEvent = new EventEmitter<AdbPacketInit>();
+    private readonly _outgoingPacketEvent = new EventEmitter<AdbPacketCore>();
     public get onOutgoingPacket() { return this._outgoingPacketEvent.event; }
 
     public constructor() {
