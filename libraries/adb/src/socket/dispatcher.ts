@@ -7,12 +7,6 @@ import { AdbSocketController } from './controller';
 import { AdbLogger } from './logger';
 import { AdbSocket } from './socket';
 
-export interface AdbPacketReceivedEventArgs {
-    handled: boolean;
-
-    packet: AdbPacket;
-}
-
 export interface AdbIncomingSocketEventArgs {
     handled: boolean;
 
@@ -37,9 +31,6 @@ export class AdbPacketDispatcher extends AutoDisposable {
     public maxPayloadSize = 0;
     public calculateChecksum = true;
     public appendNullToServiceString = true;
-
-    private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketReceivedEventArgs>());
-    public get onPacket() { return this.packetEvent.event; }
 
     private readonly incomingSocketEvent = this.addDisposable(new EventEmitter<AdbIncomingSocketEventArgs>());
     public get onIncomingSocket() { return this.incomingSocketEvent.event; }
@@ -82,16 +73,6 @@ export class AdbPacketDispatcher extends AutoDisposable {
                             case AdbCommand.Open:
                                 await this.handleOpen(packet);
                                 return;
-                        }
-
-                        const args: AdbPacketReceivedEventArgs = {
-                            handled: false,
-                            packet,
-                        };
-                        this.packetEvent.fire(args);
-                        if (!args.handled) {
-                            this.dispose();
-                            throw new Error(`Unhandled packet with command '${packet.command}'`);
                         }
                     } catch (e) {
                         this.errorEvent.fire(e as Error);
