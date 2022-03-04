@@ -3,7 +3,7 @@ import { AdbAuthenticationHandler, AdbCredentialStore, AdbDefaultAuthenticators 
 import { AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
 import { AdbFeatures } from './features';
 import { AdbCommand, AdbPacket, AdbPacketCore, AdbPacketInit, AdbPacketSerializeStream, calculateChecksum } from './packet';
-import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
+import { AdbPacketDispatcher, AdbSocket } from './socket';
 import { AbortController, DecodeUtf8Stream, GatherStringStream, pipeFrom, ReadableWritablePair, StructDeserializeStream, WritableStream } from "./stream";
 import { decodeUtf8, encodeUtf8 } from "./utils";
 
@@ -40,7 +40,6 @@ export class Adb {
         connection: ReadableWritablePair<AdbPacket, AdbPacketCore>,
         credentialStore: AdbCredentialStore,
         authenticators = AdbDefaultAuthenticators,
-        logger?: AdbLogger
     ) {
         let version = 0x01000001;
         let maxPayloadSize = 0x100000;
@@ -71,8 +70,6 @@ export class Adb {
         const pipe = connection.readable
             .pipeTo(new WritableStream({
                 async write(packet: AdbPacket) {
-                    logger?.onIncomingPacket?.(packet);
-
                     switch (packet.command) {
                         case AdbCommand.Connect:
                             version = Math.min(version, packet.arg0);
@@ -99,8 +96,6 @@ export class Adb {
 
         const writer = connection.writable.getWriter();
         async function sendPacket(init: AdbPacketCore) {
-            logger?.onOutgoingPacket?.(init);
-
             // Always send checksum in auth steps
             // Because we don't know if the device will ignore it yet.
             await writer.write(calculateChecksum(init));
@@ -130,7 +125,6 @@ export class Adb {
                 version,
                 maxPayloadSize,
                 banner,
-                logger
             );
         } finally {
             abortController.abort();
@@ -165,10 +159,9 @@ export class Adb {
         version: number,
         maxPayloadSize: number,
         banner: string,
-        logger?: AdbLogger
     ) {
         this.parseBanner(banner);
-        this.packetDispatcher = new AdbPacketDispatcher(connection, logger);
+        this.packetDispatcher = new AdbPacketDispatcher(connection);
 
         this._protocolVersion = version;
         if (version >= VERSION_OMIT_CHECKSUM) {

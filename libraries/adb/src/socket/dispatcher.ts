@@ -4,7 +4,6 @@ import { AdbCommand, AdbPacket, AdbPacketCore, AdbPacketInit, calculateChecksum 
 import { AbortController, ReadableWritablePair, WritableStream, WritableStreamDefaultWriter } from '../stream';
 import { decodeUtf8, encodeUtf8 } from '../utils';
 import { AdbSocketController } from './controller';
-import { AdbLogger } from './logger';
 import { AdbSocket } from './socket';
 
 export interface AdbIncomingSocketEventArgs {
@@ -24,9 +23,8 @@ export class AdbPacketDispatcher extends AutoDisposable {
     // (0 means open failed)
     private readonly initializers = new AsyncOperationManager(1);
     private readonly sockets = new Map<number, AdbSocketController>();
-    private readonly logger: AdbLogger | undefined;
 
-    private _packetSerializeStreamWriter!: WritableStreamDefaultWriter<AdbPacketInit>;
+    private _writer!: WritableStreamDefaultWriter<AdbPacketInit>;
 
     public maxPayloadSize = 0;
     public calculateChecksum = true;
@@ -42,18 +40,13 @@ export class AdbPacketDispatcher extends AutoDisposable {
 
     public constructor(
         connection: ReadableWritablePair<AdbPacket, AdbPacketInit>,
-        logger?: AdbLogger
     ) {
         super();
-
-        this.logger = logger;
 
         connection.readable
             .pipeTo(new WritableStream({
                 write: async (packet) => {
                     try {
-                        this.logger?.onIncomingPacket?.(packet);
-
                         switch (packet.command) {
                             case AdbCommand.OK:
                                 this.handleOk(packet);
@@ -90,7 +83,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
             })
             .catch(() => { });
 
-        this._packetSerializeStreamWriter = connection.writable.getWriter();
+        this._writer = connection.writable.getWriter();
     }
 
     private handleOk(packet: AdbPacket) {
@@ -236,8 +229,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
             (init as AdbPacketInit).checksum = 0;
         }
 
-        this.logger?.onOutgoingPacket?.(init);
-        await this._packetSerializeStreamWriter.write(init as AdbPacketInit);
+        await this._writer.write(init as AdbPacketInit);
     }
 
     public override dispose() {
@@ -251,7 +243,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
             this._abortController.abort();
         } catch { }
 
-        this._packetSerializeStreamWriter.releaseLock();
+        this._writer.releaseLock();
 
         super.dispose();
     }

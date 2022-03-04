@@ -1,9 +1,8 @@
 import { IconButton, IListProps, List, mergeStyles, mergeStyleSets, Stack } from '@fluentui/react';
 import { AdbPacketCore, decodeUtf8 } from '@yume-chan/adb';
-import { DisposableList } from '@yume-chan/event';
 import { observer } from "mobx-react-lite";
 import { PropsWithChildren, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { globalState, logger } from "../state";
+import { globalState } from "../state";
 import { Icons, withDisplayName } from '../utils';
 import { CommandBar } from './command-bar';
 
@@ -86,27 +85,7 @@ function renderCell(item?: [string, AdbPacketCore]) {
 export const LogView = observer(({
     className,
 }: LoggerProps) => {
-    const [packets, setPackets] = useState<[string, AdbPacketCore][]>([]);
     const scrollerRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const disposables = new DisposableList();
-        disposables.add(logger.onIncomingPacket((packet => {
-            setPackets(packets => {
-                packets = packets.slice();
-                packets.push(['Incoming', packet]);
-                return packets;
-            });
-        })));
-        disposables.add(logger.onOutgoingPacket(packet => {
-            setPackets(packets => {
-                packets = packets.slice();
-                packets.push(['Outgoing', packet]);
-                return packets;
-            });
-        }));
-        return disposables.dispose;
-    }, []);
 
     useLayoutEffect(() => {
         const scroller = scrollerRef.current;
@@ -121,10 +100,12 @@ export const LogView = observer(({
             text: 'Copy',
             iconProps: { iconName: Icons.Copy },
             onClick: () => {
-                setPackets(lines => {
-                    window.navigator.clipboard.writeText(lines.join('\r'));
-                    return lines;
-                });
+                window.navigator.clipboard.writeText(
+                    globalState.logs
+                        .map(
+                            ([direction, packet]) => `${direction}${serializePacket((packet))}`
+                        )
+                        .join('\n'));
             },
         },
         {
@@ -132,7 +113,7 @@ export const LogView = observer(({
             text: 'Clear',
             iconProps: { iconName: Icons.Delete },
             onClick: () => {
-                setPackets([]);
+                globalState.clearLog();
             },
         },
     ], []);
@@ -154,7 +135,7 @@ export const LogView = observer(({
             <CommandBar items={commandBarItems} />
             <div ref={scrollerRef} className={classNames.grow}>
                 <List
-                    items={packets}
+                    items={globalState.logs}
                     onShouldVirtualize={shouldVirtualize}
                     onRenderCell={renderCell}
                 />

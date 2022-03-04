@@ -1,12 +1,12 @@
 import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
-import { Adb, AdbBackend } from '@yume-chan/adb';
+import { Adb, AdbBackend, InspectStream, pipeFrom } from '@yume-chan/adb';
 import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
 import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import AdbWebCredentialStore from '@yume-chan/adb-credential-web';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { globalState, logger } from '../state';
+import { globalState } from '../state';
 import { CommonStackTokens, Icons } from '../utils';
 
 const DropdownStyles = { dropdown: { width: '100%' } };
@@ -143,9 +143,22 @@ function _Connect(): JSX.Element | null {
                 let device: Adb | undefined;
                 try {
                     setConnecting(true);
-                    const connection = await selectedBackend.connect();
-                    const adbConnection = Adb.createConnection(connection);
-                    device = await Adb.authenticate(adbConnection, CredentialStore, undefined, logger.logger);
+                    const dataStreamPair = await selectedBackend.connect();
+                    const packetStreamPair = Adb.createConnection(dataStreamPair);
+                    // Use `TransformStream` to intercept packets and log them
+                    const readable = packetStreamPair.readable
+                        .pipeThrough(
+                            new InspectStream(packet => {
+                                globalState.appendLog('Incoming', packet);
+                            })
+                        );
+                    const writable = pipeFrom(
+                        packetStreamPair.writable,
+                        new InspectStream(packet => {
+                            globalState.appendLog('Outgoing', packet);
+                        })
+                    );
+                    device = await Adb.authenticate({ readable, writable }, CredentialStore, undefined);
                     globalState.setDevice(selectedBackend, device);
                 } catch (e) {
                     device?.dispose();

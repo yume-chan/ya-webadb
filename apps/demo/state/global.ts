@@ -1,4 +1,4 @@
-import { Adb, AdbBackend } from "@yume-chan/adb";
+import { Adb, AdbBackend, AdbPacketCore } from "@yume-chan/adb";
 import { action, makeAutoObservable } from 'mobx';
 
 export class GlobalState {
@@ -10,6 +10,7 @@ export class GlobalState {
     errorDialogMessage = '';
 
     logVisible = false;
+    logs: [string, AdbPacketCore][] = [];
 
     constructor() {
         makeAutoObservable(this, {
@@ -34,6 +35,14 @@ export class GlobalState {
 
     toggleLog() {
         this.logVisible = !this.logVisible;
+    }
+
+    appendLog(direction: string, packet: AdbPacketCore) {
+        this.logs.push([direction, packet]);
+    }
+
+    clearLog() {
+        this.logs = [];
     }
 }
 
