@@ -1,5 +1,5 @@
-import { StructDefaultOptions, StructDeserializeStream, StructValue } from '../../basic';
-import { BufferFieldSubType, BufferLikeFieldDefinition, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType } from './base';
+import { StructDefaultOptions, StructDeserializeStream, StructValue } from '../../basic/index.js';
+import { BufferFieldSubType, BufferLikeFieldDefinition, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType } from './base.js';
 
 class MockDeserializationStream implements StructDeserializeStream {
     public array = new Uint8Array(0);

@@ -1,12 +1,12 @@
 import { BufferedStreamEndedError, ReadableStream, TransformStream, type Adb, type AdbBufferedStream } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
-import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
-import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnectionOptions } from "../../connection";
-import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../../message";
-import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18";
-import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22";
-import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyOptionValue, type VideoStreamPacket } from "../common";
-import { parse_sequence_parameter_set } from "./sps";
+import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec.js";
+import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnectionOptions } from "../../connection.js";
+import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../../message.js";
+import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18.js";
+import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22.js";
+import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyOptionValue, type VideoStreamPacket } from "../common.js";
+import { parse_sequence_parameter_set } from "./sps.js";
 
 export enum ScrcpyLogLevel {
     Verbose = 'verbose',

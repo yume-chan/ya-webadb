@@ -1,7 +1,7 @@
-import type { Adb } from "../adb";
-import { WrapWritableStream, WritableStream } from "../stream";
-import { escapeArg } from "./subprocess";
-import type { AdbSync } from "./sync";
+import type { Adb } from "../adb.js";
+import { WrapWritableStream, WritableStream } from "../stream/index.js";
+import { escapeArg } from "./subprocess/index.js";
+import type { AdbSync } from "./sync/index.js";
 
 export function install(
     adb: Adb,

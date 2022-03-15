@@ -1,8 +1,8 @@
 import type { Adb, AdbBufferedStream, ReadableStream } from "@yume-chan/adb";
-import type { ScrcpyClientConnection } from "../connection";
-import type { H264Configuration } from "../decoder";
-import type { ScrcpyBackOrScreenOnEvent1_18 } from "./1_18";
-import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22";
+import type { ScrcpyClientConnection } from "../connection.js";
+import type { H264Configuration } from "../decoder/index.js";
+import type { ScrcpyBackOrScreenOnEvent1_18 } from "./1_18.js";
+import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22.js";
 
 export const DEFAULT_SERVER_PATH = '/data/local/tmp/scrcpy-server.jar';
 

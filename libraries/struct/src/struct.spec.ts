@@ -1,7 +1,7 @@
-import { StructAsyncDeserializeStream, StructDefaultOptions, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from './basic';
-import { Struct } from './struct';
-import { ArrayBufferFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringFieldType, ArrayBufferViewFieldType, VariableLengthArrayBufferLikeFieldDefinition } from './types';
-import { ValueOrPromise } from './utils';
+import { StructAsyncDeserializeStream, StructDefaultOptions, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from './basic/index.js';
+import { Struct } from './struct.js';
+import { ArrayBufferFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringFieldType, ArrayBufferViewFieldType, VariableLengthArrayBufferLikeFieldDefinition } from './types/index.js';
+import { ValueOrPromise } from './utils.js';
 
 class MockDeserializationStream implements StructDeserializeStream {
     public buffer = new ArrayBuffer(0);

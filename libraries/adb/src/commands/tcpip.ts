@@ -1,4 +1,4 @@
-import { AdbCommandBase } from './base';
+import { AdbCommandBase } from './base.js';
 
 export class AdbTcpIpCommand extends AdbCommandBase {
     public async setPort(port: number): Promise<void> {

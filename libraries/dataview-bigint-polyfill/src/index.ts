@@ -1,1 +1,1 @@
-export * from './pure';
+export * from './pure.js';

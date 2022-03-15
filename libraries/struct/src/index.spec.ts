@@ -1,4 +1,4 @@
-import Struct from './index';
+import Struct from './index.js';
 
 describe('Struct', () => {
     describe("Index", () => {

@@ -1,4 +1,4 @@
-import type { StructFieldValue } from './field-value';
+import type { StructFieldValue } from "./field-value.js";
 
 /**
  * A struct value is a map between keys in a struct and their field values.

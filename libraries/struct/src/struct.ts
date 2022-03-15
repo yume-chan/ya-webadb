@@ -1,10 +1,10 @@
 // cspell: ignore Syncbird
 
-import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic';
-import { StructDefaultOptions, StructValue } from './basic';
-import { Syncbird } from "./syncbird";
-import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, type FixedLengthBufferLikeFieldOptions, type LengthField, type VariableLengthBufferLikeFieldOptions } from './types';
-import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils";
+import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic/index.js';
+import { StructDefaultOptions, StructValue } from './basic/index.js';
+import { Syncbird } from "./syncbird.js";
+import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, type FixedLengthBufferLikeFieldOptions, type LengthField, type VariableLengthBufferLikeFieldOptions } from './types/index.js';
+import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils.js";
 
 export interface StructLike<TValue> {
     deserialize(stream: StructDeserializeStream | StructAsyncDeserializeStream): Promise<TValue>;

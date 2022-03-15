@@ -1,2 +1,2 @@
-export * from './socket';
-export * from './dispatcher';
+export * from './socket.js';
+export * from './dispatcher.js';

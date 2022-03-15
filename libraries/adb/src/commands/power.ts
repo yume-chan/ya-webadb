@@ -3,7 +3,7 @@
 // cspell: ignore keyevent
 // cspell: ignore longpress
 
-import { AdbCommandBase } from "./base";
+import { AdbCommandBase } from "./base.js";
 
 export class AdbPower extends AdbCommandBase {
     public reboot(name: string = '') {

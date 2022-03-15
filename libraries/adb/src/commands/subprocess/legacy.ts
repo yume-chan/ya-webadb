@@ -1,7 +1,7 @@
-import type { Adb } from "../../adb";
-import type { AdbSocket } from "../../socket";
-import { DuplexStreamFactory, type ReadableStream } from "../../stream";
-import type { AdbSubprocessProtocol } from "./types";
+import type { Adb } from "../../adb.js";
+import type { AdbSocket } from "../../socket/index.js";
+import { DuplexStreamFactory, type ReadableStream } from "../../stream/index.js";
+import type { AdbSubprocessProtocol } from "./types.js";
 
 /**
  * The legacy shell

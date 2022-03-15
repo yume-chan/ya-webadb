@@ -1,8 +1,8 @@
 import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSocket, DecodeUtf8Stream, InspectStream, ReadableStream, TransformStream, WritableStreamDefaultWriter, type AdbSubprocessProtocol } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message';
-import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions, VideoStreamPacket } from "./options";
+import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message.js';
+import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions, VideoStreamPacket } from "./options/index.js";
 
 function* splitLines(text: string): Generator<string, void, void> {
     let start = 0;

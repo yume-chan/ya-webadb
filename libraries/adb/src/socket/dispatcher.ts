@@ -1,9 +1,9 @@
 import { AsyncOperationManager } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
-import { AdbCommand, AdbPacket, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from '../packet';
-import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '../stream';
-import { decodeUtf8, encodeUtf8 } from '../utils';
-import { AdbSocket } from './socket';
+import { AdbCommand, AdbPacket, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from '../packet.js';
+import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '../stream/index.js';
+import { decodeUtf8, encodeUtf8 } from '../utils/index.js';
+import { AdbSocket } from './socket.js';
 
 export interface AdbIncomingSocketEventArgs {
     handled: boolean;

@@ -1,9 +1,9 @@
 import { WritableStream } from "@yume-chan/adb";
 import { PromiseResolver } from "@yume-chan/async";
-import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
-import type { VideoStreamPacket } from "../../options";
-import type { H264Configuration, H264Decoder } from '../common';
-import { createTinyH264Wrapper, type TinyH264Wrapper } from "./wrapper";
+import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec.js";
+import type { VideoStreamPacket } from "../../options/index.js";
+import type { H264Configuration, H264Decoder } from "../common.js";
+import { createTinyH264Wrapper, type TinyH264Wrapper } from "./wrapper.js";
 
 let cachedInitializePromise: Promise<{ YuvBuffer: typeof import('yuv-buffer'), YuvCanvas: typeof import('yuv-canvas').default; }> | undefined;
 function initialize() {

@@ -1,4 +1,4 @@
-import { getBigInt64, getBigUint64, setBigInt64, setBigUint64 } from './pure';
+import { getBigInt64, getBigUint64, setBigInt64, setBigUint64 } from './pure.js';
 
 if (!('getBigInt64' in DataView)) {
     DataView.prototype.getBigInt64 = function (byteOffset, littleEndian) {

@@ -1,3 +1,3 @@
-export * from './buffered';
-export * from './detect';
-export * from './transform';
+export * from './buffered.js';
+export * from './detect.js';
+export * from './transform.js';

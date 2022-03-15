@@ -1,13 +1,13 @@
-import type { Adb } from '../../adb';
-import { DecodeUtf8Stream, GatherStringStream } from "../../stream";
-import { AdbNoneSubprocessProtocol } from './legacy';
-import { AdbShellSubprocessProtocol } from './protocol';
-import type { AdbSubprocessProtocol, AdbSubprocessProtocolConstructor } from './types';
+import type { Adb } from '../../adb.js';
+import { DecodeUtf8Stream, GatherStringStream } from "../../stream/index.js";
+import { AdbNoneSubprocessProtocol } from './legacy.js';
+import { AdbShellSubprocessProtocol } from './protocol.js';
+import type { AdbSubprocessProtocol, AdbSubprocessProtocolConstructor } from './types.js';
 
-export * from './legacy';
-export * from './protocol';
-export * from './types';
-export * from './utils';
+export * from './legacy.js';
+export * from './protocol.js';
+export * from './types.js';
+export * from './utils.js';
 
 export interface AdbSubprocessOptions {
     /**

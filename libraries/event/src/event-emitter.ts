@@ -1,5 +1,5 @@
-import type { Disposable } from './disposable';
-import type { EventListener, RemoveEventListener } from './event';
+import type { Disposable } from './disposable.js';
+import type { EventListener, RemoveEventListener } from './event.js';
 
 export interface EventListenerInfo<TEvent, TResult = unknown> {
     listener: EventListener<TEvent, any, any, TResult>;

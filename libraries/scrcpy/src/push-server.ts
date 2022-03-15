@@ -1,5 +1,5 @@
 import { Adb, AdbSync, WrapWritableStream, WritableStream } from "@yume-chan/adb";
-import { DEFAULT_SERVER_PATH } from "./options";
+import { DEFAULT_SERVER_PATH } from "./options/index.js";
 
 export interface PushServerOptions {
     path?: string;

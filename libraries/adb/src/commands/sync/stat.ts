@@ -1,7 +1,7 @@
 import Struct, { placeholder } from '@yume-chan/struct';
-import type { AdbBufferedStream, WritableStreamDefaultWriter } from '../../stream';
-import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
-import { adbSyncReadResponse, AdbSyncResponseId } from './response';
+import type { AdbBufferedStream, WritableStreamDefaultWriter } from '../../stream/index.js';
+import { AdbSyncRequestId, adbSyncWriteRequest } from './request.js';
+import { adbSyncReadResponse, AdbSyncResponseId } from './response.js';
 
 // https://github.com/python/cpython/blob/4e581d64b8aff3e2eda99b12f080c877bb78dfca/Lib/stat.py#L36
 export enum LinuxFileType {

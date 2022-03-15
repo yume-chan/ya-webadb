@@ -1,11 +1,11 @@
 import { PromiseResolver } from '@yume-chan/async';
-import { AdbAuthenticationHandler, AdbDefaultAuthenticators, type AdbCredentialStore } from './auth';
-import { AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install, type AdbFrameBuffer } from './commands';
-import { AdbFeatures } from './features';
-import { AdbCommand, AdbPacket, AdbPacketSerializeStream, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from './packet';
-import { AdbPacketDispatcher, AdbSocket } from './socket';
-import { AbortController, DecodeUtf8Stream, GatherStringStream, pipeFrom, StructDeserializeStream, WritableStream, type ReadableWritablePair } from "./stream";
-import { decodeUtf8, encodeUtf8 } from "./utils";
+import { AdbAuthenticationHandler, AdbDefaultAuthenticators, type AdbCredentialStore } from './auth.js';
+import { AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install, type AdbFrameBuffer } from './commands/index.js';
+import { AdbFeatures } from './features.js';
+import { AdbCommand, AdbPacket, AdbPacketSerializeStream, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from './packet.js';
+import { AdbPacketDispatcher, AdbSocket } from './socket/index.js';
+import { AbortController, DecodeUtf8Stream, GatherStringStream, pipeFrom, StructDeserializeStream, WritableStream, type ReadableWritablePair } from "./stream/index.js";
+import { decodeUtf8, encodeUtf8 } from "./utils/index.js";
 
 export enum AdbPropKey {
     Product = 'ro.product.name',

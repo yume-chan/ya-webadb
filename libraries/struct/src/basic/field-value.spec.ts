@@ -1,9 +1,9 @@
-import type { ValueOrPromise } from '../utils';
-import { StructFieldDefinition } from './definition';
-import { StructFieldValue } from './field-value';
-import type { StructOptions } from './options';
-import type { StructAsyncDeserializeStream, StructDeserializeStream } from './stream';
-import type { StructValue } from './struct-value';
+import type { ValueOrPromise } from "../utils.js";
+import { StructFieldDefinition } from "./definition.js";
+import { StructFieldValue } from "./field-value.js";
+import type { StructOptions } from "./options.js";
+import type { StructAsyncDeserializeStream, StructDeserializeStream } from "./stream.js";
+import type { StructValue } from "./struct-value.js";
 
 describe('StructFieldValue', () => {
     describe('.constructor', () => {

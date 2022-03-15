@@ -79,11 +79,10 @@ Or add a script to `package.json`
 }
 ```
 
-The builder compiles for both CommonJS and ESModule, also generates source maps, TypeScript declarations, and declaration maps.
+The builder outputs Node.js compatible ES Module, with source maps, TypeScript declarations, and declaration maps.
 
 | Module             | Output Directory | Excluded Files | Excluded Types |
 | ------------------ | ---------------- | -------------- | -------------- |
-| CommonJS           | `cjs`            | -              | -              |
 | ESModule           | `esm`            | `*.spec.ts`    | `@types/jest`  |
 | Declaration (d.ts) | `dts`            | `*.spec.ts`    | `@types/jest`  |
 
@@ -91,8 +90,7 @@ Example `package.json`:
 
 ```json
 {
-    "main": "cjs/index.js",
-    "module": "esm/index.js",
+    "main": "esm/index.js",
     "types": "dts/index.d.ts",
 }
 ```

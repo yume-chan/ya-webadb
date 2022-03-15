@@ -10,8 +10,8 @@ declare global {
     }
 }
 
-export * from './basic';
-export * from './struct';
-export { Struct as default } from './struct';
-export * from './types';
-export * from './utils';
+export * from './basic/index.js';
+export * from './struct.js';
+export { Struct as default } from './struct.js';
+export * from './types/index.js';
+export * from './utils.js';

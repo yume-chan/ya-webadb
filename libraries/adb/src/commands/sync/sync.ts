@@ -1,13 +1,13 @@
 import { AutoDisposable } from '@yume-chan/event';
-import type { Adb } from '../../adb';
-import { AdbFeatures } from '../../features';
-import type { AdbSocket } from '../../socket';
-import { AdbBufferedStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '../../stream';
-import { AutoResetEvent } from '../../utils';
-import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';
-import { adbSyncPull } from './pull';
-import { adbSyncPush } from './push';
-import { adbSyncLstat, adbSyncStat } from './stat';
+import type { Adb } from '../../adb.js';
+import { AdbFeatures } from '../../features.js';
+import type { AdbSocket } from '../../socket/index.js';
+import { AdbBufferedStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '../../stream/index.js';
+import { AutoResetEvent } from '../../utils/index.js';
+import { AdbSyncEntryResponse, adbSyncOpenDir } from './list.js';
+import { adbSyncPull } from './pull.js';
+import { adbSyncPush } from './push.js';
+import { adbSyncLstat, adbSyncStat } from './stat.js';
 
 export class AdbSync extends AutoDisposable {
     protected adb: Adb;

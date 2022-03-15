@@ -1,3 +1,3 @@
-export * from './auto-reset-event';
-export * from './base64';
-export * from './encoding';
+export * from './auto-reset-event.js';
+export * from './base64.js';
+export * from './encoding.js';

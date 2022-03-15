@@ -1,4 +1,4 @@
-import { AutoDisposable, Disposable } from './disposable';
+import { AutoDisposable, Disposable } from './disposable.js';
 
 describe('Event', () => {
     describe('AutoDisposable', () => {

@@ -1,5 +1,5 @@
-import type { VideoStreamPacket } from "../../options";
-import type { H264Configuration, H264Decoder } from "../common";
+import type { VideoStreamPacket } from "../../options/index.js";
+import type { H264Configuration, H264Decoder } from "../common.js";
 
 function toHex(value: number) {
     return value.toString(16).padStart(2, '0').toUpperCase();

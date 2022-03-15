@@ -1,3 +1,3 @@
-export * from './base';
-export * from './fixed-length';
-export * from './variable-length';
+export * from "./base.js";
+export * from "./fixed-length.js";
+export * from "./variable-length.js";

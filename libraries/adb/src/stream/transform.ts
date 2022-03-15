@@ -1,9 +1,9 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type Struct from "@yume-chan/struct";
 import type { StructValueType } from "@yume-chan/struct";
-import { decodeUtf8 } from "../utils";
-import { BufferedStream, BufferedStreamEndedError } from "./buffered";
-import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamController, type ReadableWritablePair, type UnderlyingSink, type UnderlyingSource } from "./detect";
+import { decodeUtf8 } from "../utils/index.js";
+import { BufferedStream, BufferedStreamEndedError } from "./buffered.js";
+import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamController, type ReadableWritablePair, type UnderlyingSink, type UnderlyingSource } from "./detect.js";
 
 export interface DuplexStreamFactoryOptions {
     preventCloseReadableStreams?: boolean | undefined;

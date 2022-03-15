@@ -1,6 +1,6 @@
 import Struct from "@yume-chan/struct";
-import type { Adb } from '../adb';
-import { AdbBufferedStream } from '../stream';
+import type { Adb } from '../adb.js';
+import { AdbBufferedStream } from '../stream/index.js';
 
 const Version =
     new Struct({ littleEndian: true })

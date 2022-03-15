@@ -26,7 +26,7 @@
         "fetch-scrcpy-server": "scripts/fetch-server.cjs"
     },
     "type": "module",
-    "module": "esm/index.js",
+    "main": "esm/index.js",
     "types": "esm/index.d.ts",
     "scripts": {
         "build": "build-ts-package",
@@ -48,7 +48,7 @@
         "gh-release-fetch": "^2.0.4",
         "jest": "^26.6.3",
         "tinyh264": "^0.0.7",
-        "typescript": "^4.6.2",
+        "typescript": "next",
         "yuv-buffer": "^1.0.0",
         "yuv-canvas": "^1.2.7"
     },

@@ -1,11 +1,11 @@
 import { PromiseResolver } from "@yume-chan/async";
 import Struct, { placeholder, type StructValueType } from "@yume-chan/struct";
-import type { Adb } from "../../adb";
-import { AdbFeatures } from "../../features";
-import type { AdbSocket } from "../../socket";
-import { PushReadableStream, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter, type PushReadableStreamController } from "../../stream";
-import { encodeUtf8 } from "../../utils";
-import type { AdbSubprocessProtocol } from "./types";
+import type { Adb } from "../../adb.js";
+import { AdbFeatures } from "../../features.js";
+import type { AdbSocket } from "../../socket/index.js";
+import { PushReadableStream, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter, type PushReadableStreamController } from "../../stream/index.js";
+import { encodeUtf8 } from "../../utils/index.js";
+import type { AdbSubprocessProtocol } from "./types.js";
 
 export enum AdbShellProtocolId {
     Stdin,

@@ -5,7 +5,7 @@
 // cspell: ignore sysui
 
 import { Adb, AdbCommandBase } from '@yume-chan/adb';
-import { Settings } from "./settings";
+import { Settings } from "./settings.js";
 
 export enum DemoModeSignalStrength {
     Hidden = 'null',

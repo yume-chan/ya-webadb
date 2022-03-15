@@ -1,9 +1,9 @@
 // cspell: ignore Syncbird
 
-import type { StructAsyncDeserializeStream, StructDeserializeStream } from './stream';
-import type { StructFieldValue } from './field-value';
-import type { StructValue } from './struct-value';
-import type { StructOptions } from "./options";
+import type { StructAsyncDeserializeStream, StructDeserializeStream } from "./stream.js";
+import type { StructFieldValue } from "./field-value.js";
+import type { StructValue } from "./struct-value.js";
+import type { StructOptions } from "./options.js";
 
 /**
  * A field definition defines how to deserialize a field.

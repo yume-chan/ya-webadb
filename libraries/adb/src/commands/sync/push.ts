@@ -1,8 +1,8 @@
 import Struct from '@yume-chan/struct';
-import { AdbBufferedStream, ChunkStream, pipeFrom, WritableStream, WritableStreamDefaultWriter } from '../../stream';
-import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
-import { adbSyncReadResponse, AdbSyncResponseId } from './response';
-import { LinuxFileType } from './stat';
+import { AdbBufferedStream, ChunkStream, pipeFrom, WritableStream, WritableStreamDefaultWriter } from '../../stream/index.js';
+import { AdbSyncRequestId, adbSyncWriteRequest } from './request.js';
+import { adbSyncReadResponse, AdbSyncResponseId } from './response.js';
+import { LinuxFileType } from './stat.js';
 
 export const AdbSyncOkResponse =
     new Struct({ littleEndian: true })

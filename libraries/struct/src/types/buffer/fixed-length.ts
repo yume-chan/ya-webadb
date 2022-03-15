@@ -1,4 +1,4 @@
-import { BufferLikeFieldDefinition, type BufferFieldSubType } from './base';
+import { BufferLikeFieldDefinition, type BufferFieldSubType } from "./base.js";
 
 export interface FixedLengthBufferLikeFieldOptions {
     length: number;

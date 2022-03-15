@@ -1,4 +1,4 @@
-import { getBigUint64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback';
+import { getBigUint64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback.js';
 
 const BigInt0 = BigInt(0);
 const BigInt1 = BigInt(1);
