@@ -1,9 +1,9 @@
 import { PromiseResolver } from "@yume-chan/async";
-import Struct, { placeholder, StructValueType } from "@yume-chan/struct";
+import Struct, { placeholder, type StructValueType } from "@yume-chan/struct";
 import type { Adb } from "../../adb";
 import { AdbFeatures } from "../../features";
 import type { AdbSocket } from "../../socket";
-import { PushReadableStream, PushReadableStreamController, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter } from "../../stream";
+import { PushReadableStream, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter, type PushReadableStreamController } from "../../stream";
 import { encodeUtf8 } from "../../utils";
 import type { AdbSubprocessProtocol } from "./types";
 

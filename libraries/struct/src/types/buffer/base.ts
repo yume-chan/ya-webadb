@@ -1,8 +1,8 @@
 // cspell: ignore syncbird
 
-import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from '../../basic';
+import { StructFieldDefinition, StructFieldValue, StructValue, type StructAsyncDeserializeStream, type StructDeserializeStream, type StructOptions } from '../../basic';
 import { Syncbird } from "../../syncbird";
-import { decodeUtf8, encodeUtf8, ValueOrPromise } from "../../utils";
+import { decodeUtf8, encodeUtf8, type ValueOrPromise } from "../../utils";
 
 /**
  * Base class for all types that

@@ -1,7 +1,7 @@
 import { BufferedStreamEndedError, ReadableStream, TransformStream, type Adb, type AdbBufferedStream } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
 import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
-import { ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../../connection";
+import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnectionOptions } from "../../connection";
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../../message";
 import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22";

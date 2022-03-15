@@ -1,4 +1,4 @@
-import { AdbBackend, DuplexStreamFactory } from '@yume-chan/adb';
+import { DuplexStreamFactory, type AdbBackend } from '@yume-chan/adb';
 
 export default class AdbWsBackend implements AdbBackend {
     public readonly serial: string;

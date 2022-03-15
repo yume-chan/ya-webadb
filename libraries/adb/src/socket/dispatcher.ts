@@ -1,7 +1,7 @@
 import { AsyncOperationManager } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
-import { AdbCommand, AdbPacket, AdbPacketCore, AdbPacketInit, calculateChecksum } from '../packet';
-import { AbortController, ReadableWritablePair, WritableStream, WritableStreamDefaultWriter } from '../stream';
+import { AdbCommand, AdbPacket, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from '../packet';
+import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '../stream';
 import { decodeUtf8, encodeUtf8 } from '../utils';
 import { AdbSocket } from './socket';
 

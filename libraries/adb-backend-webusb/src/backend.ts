@@ -1,4 +1,4 @@
-import { AdbBackend, DuplexStreamFactory, ReadableStream, ReadableWritablePair } from '@yume-chan/adb';
+import { DuplexStreamFactory, type AdbBackend, type ReadableStream, type ReadableWritablePair } from '@yume-chan/adb';
 
 export const WebUsbDeviceFilter: USBDeviceFilter = {
     classCode: 0xFF,

@@ -1,4 +1,4 @@
-import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSocket, AdbSubprocessProtocol, DecodeUtf8Stream, InspectStream, ReadableStream, TransformStream, WritableStreamDefaultWriter } from '@yume-chan/adb';
+import { Adb, AdbBufferedStream, AdbNoneSubprocessProtocol, AdbSocket, DecodeUtf8Stream, InspectStream, ReadableStream, TransformStream, WritableStreamDefaultWriter, type AdbSubprocessProtocol } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message';

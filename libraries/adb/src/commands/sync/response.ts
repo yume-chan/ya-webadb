@@ -1,4 +1,4 @@
-import Struct, { StructAsyncDeserializeStream, StructLike, StructValueType } from '@yume-chan/struct';
+import Struct, { type StructAsyncDeserializeStream, type StructLike, type StructValueType } from '@yume-chan/struct';
 import type { AdbBufferedStream } from '../../stream';
 import { decodeUtf8 } from "../../utils";
 

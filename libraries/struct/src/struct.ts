@@ -3,7 +3,7 @@
 import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic';
 import { StructDefaultOptions, StructValue } from './basic';
 import { Syncbird } from "./syncbird";
-import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, FixedLengthBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, VariableLengthBufferLikeFieldOptions } from './types';
+import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, type FixedLengthBufferLikeFieldOptions, type LengthField, type VariableLengthBufferLikeFieldOptions } from './types';
 import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils";
 
 export interface StructLike<TValue> {
