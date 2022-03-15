@@ -1,6 +1,6 @@
 import { Adb, AdbBufferedStream, AdbSocket } from "@yume-chan/adb";
-import { Disposable } from "@yume-chan/event";
-import { ValueOrPromise } from "@yume-chan/struct";
+import type { Disposable } from "@yume-chan/event";
+import type { ValueOrPromise } from "@yume-chan/struct";
 import { delay } from "./utils";
 
 export interface ScrcpyClientConnectionOptions {

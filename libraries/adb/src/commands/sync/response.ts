@@ -1,5 +1,5 @@
 import Struct, { StructAsyncDeserializeStream, StructLike, StructValueType } from '@yume-chan/struct';
-import { AdbBufferedStream } from '../../stream';
+import type { AdbBufferedStream } from '../../stream';
 import { decodeUtf8 } from "../../utils";
 
 export enum AdbSyncResponseId {

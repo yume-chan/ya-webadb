@@ -1,7 +1,7 @@
 import { AutoDisposable } from '@yume-chan/event';
-import { Adb } from '../../adb';
+import type { Adb } from '../../adb';
 import { AdbFeatures } from '../../features';
-import { AdbSocket } from '../../socket';
+import type { AdbSocket } from '../../socket';
 import { AdbBufferedStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '../../stream';
 import { AutoResetEvent } from '../../utils';
 import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';

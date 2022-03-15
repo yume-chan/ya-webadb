@@ -1,7 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 import { AdbCommand } from '../packet';
 import { ChunkStream, DuplexStreamFactory, pipeFrom, PushReadableStreamController, ReadableStream, WritableStream } from '../stream';
-import { AdbPacketDispatcher } from './dispatcher';
+import type { AdbPacketDispatcher } from './dispatcher';
 
 export interface AdbSocketInfo {
     localId: number;

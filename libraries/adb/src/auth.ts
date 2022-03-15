@@ -1,6 +1,6 @@
 import { PromiseResolver } from '@yume-chan/async';
-import { Disposable } from '@yume-chan/event';
-import { ValueOrPromise } from '@yume-chan/struct';
+import type { Disposable } from '@yume-chan/event';
+import type { ValueOrPromise } from '@yume-chan/struct';
 import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto';
 import { AdbCommand, AdbPacket, AdbPacketCore } from './packet';
 import { calculateBase64EncodedLength, encodeBase64 } from './utils';

@@ -1,4 +1,4 @@
-import { AdbBackend, ReadableStream, WritableStream } from '@yume-chan/adb';
+import type { AdbBackend, ReadableStream, WritableStream } from '@yume-chan/adb';
 
 declare global {
     interface TCPSocket {

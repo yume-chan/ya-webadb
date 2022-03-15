@@ -1,5 +1,5 @@
 import Struct from "@yume-chan/struct";
-import { Adb } from '../adb';
+import type { Adb } from '../adb';
 import { AdbBufferedStream } from '../stream';
 
 const Version =

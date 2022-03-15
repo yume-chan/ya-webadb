@@ -1,6 +1,6 @@
-import { StructAsyncDeserializeStream } from '@yume-chan/struct';
-import { AdbSocket, AdbSocketInfo } from '../socket';
-import { ReadableStream, ReadableStreamDefaultReader } from './detect';
+import type { StructAsyncDeserializeStream } from '@yume-chan/struct';
+import type { AdbSocket, AdbSocketInfo } from '../socket';
+import type { ReadableStream, ReadableStreamDefaultReader } from './detect';
 import { PushReadableStream } from "./transform";
 
 export class BufferedStreamEndedError extends Error {

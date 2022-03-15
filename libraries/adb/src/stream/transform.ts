@@ -1,5 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
-import Struct, { StructValueType } from "@yume-chan/struct";
+import type Struct from "@yume-chan/struct";
+import type { StructValueType } from "@yume-chan/struct";
 import { decodeUtf8 } from "../utils";
 import { BufferedStream, BufferedStreamEndedError } from "./buffered";
 import { AbortController, AbortSignal, QueuingStrategy, ReadableStream, ReadableStreamController, ReadableStreamDefaultReader, ReadableWritablePair, TransformStream, UnderlyingSink, UnderlyingSource, WritableStream, WritableStreamDefaultWriter } from "./detect";

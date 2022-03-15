@@ -1,5 +1,5 @@
-import { ReadableStream, WritableStream } from "../stream";
-import { AdbSocketController, AdbSocketInfo } from './controller';
+import type { ReadableStream, WritableStream } from "../stream";
+import type { AdbSocketController, AdbSocketInfo } from './controller';
 
 export class AdbSocket implements AdbSocketInfo {
     private readonly controller: AdbSocketController;
