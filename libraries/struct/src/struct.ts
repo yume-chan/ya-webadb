@@ -4,7 +4,7 @@ import type { StructAsyncDeserializeStream, StructDeserializeStream, StructField
 import { StructDefaultOptions, StructValue } from './basic';
 import { Syncbird } from "./syncbird";
 import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, FixedLengthBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, VariableLengthBufferLikeFieldOptions } from './types';
-import { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils";
+import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils";
 
 export interface StructLike<TValue> {
     deserialize(stream: StructDeserializeStream | StructAsyncDeserializeStream): Promise<TValue>;
@@ -212,7 +212,7 @@ export class Struct<
     > {
         for (const field of this._fields) {
             if (field[0] === name) {
-                throw new Error(`This struct already have a field with name '${name}'`);
+                throw new Error(`This struct already have a field with name '${String(name)}'`);
             }
         }
 

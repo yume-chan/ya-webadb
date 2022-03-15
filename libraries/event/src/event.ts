@@ -1,4 +1,4 @@
-import { Disposable } from './disposable';
+import type { Disposable } from './disposable';
 
 export interface EventListener<TEvent, TThis, TArgs extends unknown[], TResult> {
     (this: TThis, e: TEvent, ...args: TArgs): TResult;

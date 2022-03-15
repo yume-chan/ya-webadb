@@ -1,3 +1,2 @@
-export * from './controller';
-export * from './dispatcher';
 export * from './socket';
+export * from './dispatcher';

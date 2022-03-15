@@ -2,7 +2,7 @@
 
 import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from '../basic';
 import { Syncbird } from "../syncbird";
-import { ValueOrPromise } from "../utils";
+import type { ValueOrPromise } from "../utils";
 
 export type DataViewGetters =
     { [TKey in keyof DataView]: TKey extends `get${string}` ? TKey : never }[keyof DataView];

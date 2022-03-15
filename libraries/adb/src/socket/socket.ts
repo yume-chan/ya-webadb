@@ -26,7 +26,7 @@ export interface AdbSocketConstructionOptions {
     highWaterMark?: number | undefined;
 }
 
-export class AdbSocketController implements AdbSocketInfo {
+export class AdbSocket implements AdbSocketInfo {
     private readonly dispatcher!: AdbPacketDispatcher;
 
     public readonly localId!: number;
@@ -84,10 +84,16 @@ export class AdbSocketController implements AdbSocketInfo {
         );
     }
 
+    /**
+     * @internal
+     */
     public async enqueue(packet: Uint8Array) {
         await this._readableController.enqueue(packet);
     }
 
+    /**
+     * @internal
+     */
     public ack() {
         this._writePromise?.resolve();
     }
@@ -109,6 +115,9 @@ export class AdbSocketController implements AdbSocketInfo {
         }
     }
 
+    /**
+     * @internal
+     */
     public dispose() {
         this._closed = true;
 

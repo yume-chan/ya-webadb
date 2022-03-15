@@ -3,7 +3,6 @@ import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbCommand, AdbPacket, AdbPacketCore, AdbPacketInit, calculateChecksum } from '../packet';
 import { AbortController, ReadableWritablePair, WritableStream, WritableStreamDefaultWriter } from '../stream';
 import { decodeUtf8, encodeUtf8 } from '../utils';
-import { AdbSocketController } from './controller';
 import { AdbSocket } from './socket';
 
 export interface AdbIncomingSocketEventArgs {
@@ -22,7 +21,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
     // ADB socket id starts from 1
     // (0 means open failed)
     private readonly initializers = new AsyncOperationManager(1);
-    private readonly sockets = new Map<number, AdbSocketController>();
+    private readonly sockets = new Map<number, AdbSocket>();
 
     private _writer!: WritableStreamDefaultWriter<AdbPacketInit>;
 
@@ -143,14 +142,13 @@ export class AdbPacketDispatcher extends AutoDisposable {
         const remoteId = packet.arg0;
         const serviceString = decodeUtf8(packet.payload);
 
-        const controller = new AdbSocketController({
+        const socket = new AdbSocket({
             dispatcher: this,
             localId,
             remoteId,
             localCreated: false,
             serviceString,
         });
-        const socket = new AdbSocket(controller);
 
         const args: AdbIncomingSocketEventArgs = {
             handled: false,
@@ -161,7 +159,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this.incomingSocketEvent.fire(args);
 
         if (args.handled) {
-            this.sockets.set(localId, controller);
+            this.sockets.set(localId, socket);
             await this.sendPacket(AdbCommand.OK, localId, remoteId);
         } else {
             await this.sendPacket(AdbCommand.Close, 0, remoteId);
@@ -177,16 +175,16 @@ export class AdbPacketDispatcher extends AutoDisposable {
         await this.sendPacket(AdbCommand.Open, localId, 0, serviceString);
 
         const remoteId = await initializer;
-        const controller = new AdbSocketController({
+        const socket = new AdbSocket({
             dispatcher: this,
             localId,
             remoteId,
             localCreated: true,
             serviceString,
         });
-        this.sockets.set(localId, controller);
+        this.sockets.set(localId, socket);
 
-        return new AdbSocket(controller);
+        return socket;
     }
 
     public sendPacket(packet: AdbPacketInit): Promise<void>;
