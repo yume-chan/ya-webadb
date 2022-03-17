@@ -1,5 +1,5 @@
 import { Adb, AdbBackend, AdbPacketCore } from "@yume-chan/adb";
-import { action, makeAutoObservable } from 'mobx';
+import { action, makeAutoObservable, observable } from 'mobx';
 
 export class GlobalState {
     backend: AdbBackend | undefined = undefined;
@@ -16,6 +16,7 @@ export class GlobalState {
         makeAutoObservable(this, {
             hideErrorDialog: action.bound,
             toggleLog: action.bound,
+            logs: observable.shallow,
         });
     }
 

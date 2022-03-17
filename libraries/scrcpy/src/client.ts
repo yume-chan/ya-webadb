@@ -129,7 +129,7 @@ export class ScrcpyClient {
     private readonly clipboardChangeEvent = new EventEmitter<string>();
     public get onClipboardChange() { return this.clipboardChangeEvent.event; }
 
-    private sendingTouchMessage = false;
+    private lastTouchMessage = 0;
 
     public constructor(
         adb: Adb,
@@ -222,20 +222,22 @@ export class ScrcpyClient {
 
         // ADB streams are actually pretty low-bandwidth and laggy
         // Re-sample move events to avoid flooding the connection
-        if (this.sendingTouchMessage &&
-            (message.action === AndroidMotionEventAction.Move ||
-                message.action === AndroidMotionEventAction.HoverMove)) {
+
+        // TODO: Scrcpy: investigate how to throttle touch events
+        // because 60FPS may still be too high
+        const now = Date.now();
+        if (now - this.lastTouchMessage < 16 &&
+            [AndroidMotionEventAction.Move, AndroidMotionEventAction.HoverMove].includes(message.action)) {
             return;
         }
 
-        this.sendingTouchMessage = true;
+        this.lastTouchMessage = now;
         await controlStream.write(ScrcpyInjectTouchControlMessage.serialize({
             ...message,
             type: ScrcpyControlMessageType.InjectTouch,
             screenWidth: this.screenWidth,
             screenHeight: this.screenHeight,
         }));
-        this.sendingTouchMessage = false;
     }
 
     public async injectScroll(message: Omit<ScrcpyInjectScrollControlMessage1_22, 'type' | 'screenWidth' | 'screenHeight'>) {

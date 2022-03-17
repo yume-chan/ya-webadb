@@ -20,7 +20,7 @@ export class DuplexStreamFactory<R, W> {
 
     private options: DuplexStreamFactoryOptions;
 
-    private _readableClosed = false;
+    private _closeRequestedByReadable = false;
     private _writableClosed = false;
 
     public constructor(options?: DuplexStreamFactoryOptions) {
@@ -32,7 +32,7 @@ export class DuplexStreamFactory<R, W> {
             this.pushReadableControllers.push(controller);
 
             controller.abortSignal.addEventListener('abort', async () => {
-                this._readableClosed = true;
+                this._closeRequestedByReadable = true;
                 await this.close();
             });
 
@@ -43,12 +43,12 @@ export class DuplexStreamFactory<R, W> {
                 },
                 close: async () => {
                     controller.close();
-                    this._readableClosed = true;
+                    this._closeRequestedByReadable = true;
                     await this.close();
                 },
                 error: async (e?: any) => {
                     controller.error(e);
-                    this._readableClosed = true;
+                    this._closeRequestedByReadable = true;
                     await this.close();
                 },
             });
@@ -64,7 +64,7 @@ export class DuplexStreamFactory<R, W> {
                 };
             },
             close: async () => {
-                this._readableClosed = true;
+                this._closeRequestedByReadable = true;
                 await this.close();
             },
         });
@@ -76,12 +76,10 @@ export class DuplexStreamFactory<R, W> {
                 this.readableControllers.push(controller);
                 await source?.start?.(controller);
             },
-            pull: async (controller) => {
-                await source?.pull?.(controller);
-            },
+            pull: source?.pull ?? undefined,
             cancel: async (reason) => {
                 await source?.cancel?.(reason);
-                this._readableClosed = true;
+                this._closeRequestedByReadable = true;
                 await this.close();
             },
         }, strategy);
@@ -130,7 +128,7 @@ export class DuplexStreamFactory<R, W> {
     public async close() {
         this._writableClosed = true;
 
-        if (this._readableClosed ||
+        if (this._closeRequestedByReadable ||
             !this.options.preventCloseReadableStreams) {
             await this.closeReadableStreams();
         }
@@ -193,16 +191,20 @@ export class StructDeserializeStream<T extends Struct<any, any, any, any>>
                         controller.close();
                         return;
                     }
-                    controller.error(e);
+                    throw e;
                 }
             }
         );
 
         this._writable = new WritableStream({
             async write(chunk) {
+                // @ts-ignore
+                console.log('deserialization stream write', chunk);
                 await incomingStreamController.enqueue(chunk);
             },
             close() {
+                // @ts-ignore
+                console.log('deserialization stream closed');
                 incomingStreamController.close();
             },
         });

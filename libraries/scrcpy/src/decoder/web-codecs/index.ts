@@ -20,14 +20,25 @@ export class WebCodecsDecoder implements H264Decoder {
     private context: CanvasRenderingContext2D;
     private decoder: VideoDecoder;
 
+    // Limit FPS to system refresh rate
+    private lastFrame: VideoFrame | undefined;
+    private animationFrame: number = 0;
+
     public constructor() {
         this._renderer = document.createElement('canvas');
 
         this.context = this._renderer.getContext('2d')!;
         this.decoder = new VideoDecoder({
             output: (frame) => {
-                this.context.drawImage(frame, 0, 0);
-                frame.close();
+                if (this.lastFrame) {
+                    this.lastFrame.close();
+                }
+                this.lastFrame = frame;
+
+                if (!this.animationFrame) {
+                    // Start render loop on first frame
+                    this.render();
+                }
             },
             error() { },
         });
@@ -50,6 +61,16 @@ export class WebCodecsDecoder implements H264Decoder {
         });
     }
 
+    private render = () => {
+        if (this.lastFrame) {
+            this.context.drawImage(this.lastFrame, 0, 0);
+            this.lastFrame.close();
+            this.lastFrame = undefined;
+        }
+
+        this.animationFrame = requestAnimationFrame(this.render);
+    };
+
     private configure(config: H264Configuration) {
         const { profileIndex, constraintSet, levelIndex } = config;
 
@@ -66,6 +87,7 @@ export class WebCodecsDecoder implements H264Decoder {
     }
 
     public dispose() {
+        cancelAnimationFrame(this.animationFrame);
         this.decoder.close();
     }
 }

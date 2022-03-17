@@ -58,10 +58,39 @@ interface SyncbirdStatic {
     try<R>(fn: () => Resolvable<R>): Syncbird<R>;
     attempt<R>(fn: () => Resolvable<R>): Syncbird<R>;
 
+    /**
+     * Configure long stack traces, warnings, monitoring and cancellation.
+     * Note that even though false is the default here, a development environment might be detected which automatically
+     *  enables long stack traces and warnings.
+     */
+    config(options: {
+        /** Enable warnings */
+        warnings?: boolean | {
+            /** Enables all warnings except forgotten return statements. */
+            wForgottenReturn: boolean;
+        } | undefined;
+        /** Enable long stack traces */
+        longStackTraces?: boolean | undefined;
+        /** Enable cancellation */
+        cancellation?: boolean | undefined;
+        /** Enable monitoring */
+        monitoring?: boolean | undefined;
+        /** Enable async hooks */
+        asyncHooks?: boolean | undefined;
+    }): void;
+
     new <R>(callback: (resolve: (thenableOrResult?: Resolvable<R>) => void, reject: (error?: any) => void, onCancel?: (callback: () => void) => void) => void): Syncbird<R>;
 }
 
 export const Syncbird: SyncbirdStatic = Bluebird.getNewLibraryCopy() as any;
+
+Syncbird.config({
+    asyncHooks: false,
+    cancellation: false,
+    longStackTraces: false,
+    monitoring: false,
+    warnings: false,
+});
 
 // Bluebird uses `_then` internally.
 const _then = (Syncbird.prototype as any)._then;

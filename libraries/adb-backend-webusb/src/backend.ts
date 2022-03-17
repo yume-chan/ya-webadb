@@ -6,6 +6,15 @@ export const WebUsbDeviceFilter: USBDeviceFilter = {
     protocolCode: 1,
 };
 
+let transferInCapacity = 0;
+let transferInBytes = 0;
+setInterval(() => {
+    if (transferInCapacity === 0) {
+        return;
+    }
+    console.log(`transferInEfficiency: ${transferInBytes} / ${transferInCapacity} = ${(transferInBytes / transferInCapacity * 100).toFixed(2)}%`);
+}, 1000);
+
 export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, Uint8Array>{
     private _readable: ReadableStream<Uint8Array>;
     public get readable() { return this._readable; }
@@ -17,7 +26,11 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
         const factory = new DuplexStreamFactory<Uint8Array, Uint8Array>({
             close: async () => {
                 navigator.usb.removeEventListener('disconnect', handleUsbDisconnect);
-                await device.close();
+                try {
+                    await device.close();
+                } catch {
+                    // device may already disconnected
+                }
             },
         });
 
@@ -32,12 +45,18 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
         this._readable = factory.createReadable({
             pull: async (controller) => {
                 const result = await device.transferIn(inEndpoint.endpointNumber, inEndpoint.packetSize);
+
                 // `USBTransferResult` has three states: "ok", "stall" and "babble",
-                // adbd on Android won't enter the "stall" (halt) state,
+                // but ADBd on Android won't enter "stall" (halt) state,
+
                 // "ok" and "babble" both have received `data`,
                 // "babble" just means there is more data to be read.
+
                 // From spec, the `result.data` always covers the whole `buffer`.
                 const chunk = new Uint8Array(result.data!.buffer);
+
+                transferInCapacity += inEndpoint.packetSize;
+                transferInBytes += chunk.byteLength;
                 controller.enqueue(chunk);
             },
         }, {

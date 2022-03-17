@@ -271,7 +271,7 @@ export interface UnderlyingSink<W = any> {
 
 export interface UnderlyingSource<R = any> {
     cancel?: UnderlyingSourceCancelCallback;
-    pull?: UnderlyingSourcePullCallback<R>;
+    pull?: UnderlyingSourcePullCallback<R> | undefined;
     start?: UnderlyingSourceStartCallback<R>;
     type?: undefined;
 }
@@ -336,6 +336,7 @@ if ('ReadableStream' in globalThis && 'WritableStream' in globalThis && 'Transfo
             // @ts-ignore
             ReadableStream,
             ReadableStreamDefaultController,
+            // @ts-ignore
             ReadableStreamDefaultReader,
             // @ts-ignore
             TransformStream,
