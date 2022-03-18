@@ -1,5 +1,6 @@
+import { WritableStream } from '@yume-chan/adb';
 import type { VideoStreamPacket } from "../../options/index.js";
-import type { H264Configuration, H264Decoder } from "../common.js";
+import { FpsCounter, H264Configuration, H264Decoder } from "../types.js";
 
 function toHex(value: number) {
     return value.toString(16).padStart(2, '0').toUpperCase();
@@ -10,6 +11,9 @@ export class WebCodecsDecoder implements H264Decoder {
     // So let device choose best profile and level for itself.
     public readonly maxProfile = undefined;
     public readonly maxLevel = undefined;
+
+    private _fpsCounter = new FpsCounter();
+    public get fpsCounter() { return this._fpsCounter; }
 
     private _writable: WritableStream<VideoStreamPacket>;
     public get writable() { return this._writable; }
@@ -63,6 +67,7 @@ export class WebCodecsDecoder implements H264Decoder {
 
     private render = () => {
         if (this.lastFrame) {
+            this._fpsCounter.add();
             this.context.drawImage(this.lastFrame, 0, 0);
             this.lastFrame.close();
             this.lastFrame = undefined;

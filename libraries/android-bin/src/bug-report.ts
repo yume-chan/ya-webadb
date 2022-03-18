@@ -1,7 +1,7 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import { AdbCommandBase, AdbShellSubprocessProtocol, DecodeUtf8Stream, ReadableStream, SplitLineStream, WrapReadableStream } from "@yume-chan/adb";
+import { AdbCommandBase, AdbShellSubprocessProtocol, DecodeUtf8Stream, ReadableStream, SplitLineStream, WrapReadableStream, WritableStream } from "@yume-chan/adb";
 
 export interface BugReportVersion {
     major: number;

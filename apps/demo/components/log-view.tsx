@@ -1,5 +1,5 @@
 import { IconButton, IListProps, List, mergeStyles, mergeStyleSets, Stack } from '@fluentui/react';
-import { AdbPacketCore, decodeUtf8 } from '@yume-chan/adb';
+import { AdbCommand, AdbPacketCore, decodeUtf8 } from '@yume-chan/adb';
 import { observer } from "mobx-react-lite";
 import { PropsWithChildren, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { globalState } from "../state";
@@ -22,8 +22,19 @@ const classNames = mergeStyleSets({
     },
 });
 
+const ADB_COMMAND_NAME = {
+    [AdbCommand.Auth]: 'AUTH',
+    [AdbCommand.Close]: 'CLSE',
+    [AdbCommand.Connect]: 'CNXN',
+    [AdbCommand.OK]: 'OKAY',
+    [AdbCommand.Open]: 'OPEN',
+    [AdbCommand.Write]: 'WRTE',
+};
+
 function serializePacket(packet: AdbPacketCore) {
-    const command = decodeUtf8(new Uint32Array([packet.command]));
+    const command =
+        ADB_COMMAND_NAME[packet.command as AdbCommand] ??
+        decodeUtf8(new Uint32Array([packet.command]));
 
     const parts = [
         command,

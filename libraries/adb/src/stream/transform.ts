@@ -3,7 +3,7 @@ import type Struct from "@yume-chan/struct";
 import type { StructValueType } from "@yume-chan/struct";
 import { decodeUtf8 } from "../utils/index.js";
 import { BufferedStream, BufferedStreamEndedError } from "./buffered.js";
-import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamController, type ReadableWritablePair, type UnderlyingSink, type UnderlyingSource } from "./detect.js";
+import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamDefaultController, type ReadableWritablePair, type UnderlyingSink, type UnderlyingSource } from "./detect.js";
 
 export interface DuplexStreamFactoryOptions {
     preventCloseReadableStreams?: boolean | undefined;
@@ -12,7 +12,7 @@ export interface DuplexStreamFactoryOptions {
 }
 
 export class DuplexStreamFactory<R, W> {
-    private readableControllers: ReadableStreamController<R>[] = [];
+    private readableControllers: ReadableStreamDefaultController<R>[] = [];
     private pushReadableControllers: PushReadableStreamController<R>[] = [];
 
     private _closed = new PromiseResolver<void>();
@@ -76,7 +76,9 @@ export class DuplexStreamFactory<R, W> {
                 this.readableControllers.push(controller);
                 await source?.start?.(controller);
             },
-            pull: source?.pull ?? undefined,
+            pull: (controller) => {
+                return source?.pull?.(controller);
+            },
             cancel: async (reason) => {
                 await source?.cancel?.(reason);
                 this._closeRequestedByReadable = true;

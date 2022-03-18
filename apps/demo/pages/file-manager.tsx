@@ -3,7 +3,7 @@ import { FileIconType } from "@fluentui/react-file-type-icons";
 import { getFileTypeIconNameFromExtensionOrType } from '@fluentui/react-file-type-icons/lib-commonjs/getFileTypeIconProps';
 import { DEFAULT_BASE_URL as FILE_TYPE_ICONS_BASE_URL } from '@fluentui/react-file-type-icons/lib-commonjs/initializeFileTypeIcons';
 import { useConst } from '@fluentui/react-hooks';
-import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, LinuxFileType, ReadableStream } from '@yume-chan/adb';
+import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, LinuxFileType, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -163,10 +163,10 @@ class FileManagerState {
                                     const itemPath = path.resolve(this.path, item.name);
                                     const readable = sync.read(itemPath);
 
-                                    const writeable = StreamSaver!.createWriteStream(
+                                    const writeable: WritableStream<Uint8Array> = StreamSaver!.createWriteStream(
                                         item.name,
                                         { size: item.size }
-                                    );
+                                    ) as any;
                                     await readable.pipeTo(writeable);
                                 } catch (e) {
                                     globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);

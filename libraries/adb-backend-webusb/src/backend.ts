@@ -1,19 +1,10 @@
-import { DuplexStreamFactory, type AdbBackend, type ReadableStream, type ReadableWritablePair } from '@yume-chan/adb';
+import { DuplexStreamFactory, type AdbBackend, type ReadableStream, type ReadableWritablePair, type WritableStream } from '@yume-chan/adb';
 
 export const WebUsbDeviceFilter: USBDeviceFilter = {
     classCode: 0xFF,
     subclassCode: 0x42,
     protocolCode: 1,
 };
-
-let transferInCapacity = 0;
-let transferInBytes = 0;
-setInterval(() => {
-    if (transferInCapacity === 0) {
-        return;
-    }
-    console.log(`transferInEfficiency: ${transferInBytes} / ${transferInCapacity} = ${(transferInBytes / transferInCapacity * 100).toFixed(2)}%`);
-}, 1000);
 
 export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, Uint8Array>{
     private _readable: ReadableStream<Uint8Array>;
@@ -54,9 +45,6 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
 
                 // From spec, the `result.data` always covers the whole `buffer`.
                 const chunk = new Uint8Array(result.data!.buffer);
-
-                transferInCapacity += inEndpoint.packetSize;
-                transferInBytes += chunk.byteLength;
                 controller.enqueue(chunk);
             },
         }, {

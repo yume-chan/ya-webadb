@@ -16,6 +16,8 @@ const CredentialStore = new AdbWebCredentialStore();
 function _Connect(): JSX.Element | null {
     const [supported, setSupported] = useState(true);
 
+    const [bytesIn, setBytesIn] = useState(0);
+
     const [selectedBackend, setSelectedBackend] = useState<AdbBackend | undefined>();
     const [connecting, setConnecting] = useState(false);
 
@@ -143,8 +145,23 @@ function _Connect(): JSX.Element | null {
                 let device: Adb | undefined;
                 try {
                     setConnecting(true);
+
+                    let count = 0;
+                    setInterval(() => {
+                        setBytesIn(count);
+                        count = 0;
+                    }, 1000);
+
                     const dataStreamPair = await selectedBackend.connect();
-                    const packetStreamPair = Adb.createConnection(dataStreamPair);
+
+                    const packetStreamPair = Adb.createConnection({
+                        readable: dataStreamPair.readable
+                            .pipeThrough(new InspectStream(chunk => {
+                                count += chunk.byteLength;
+                            })),
+                        writable: dataStreamPair.writable,
+                    });
+
                     // Use `TransformStream` to intercept packets and log them
                     const readable = packetStreamPair.readable
                         .pipeThrough(
@@ -284,6 +301,8 @@ function _Connect(): JSX.Element | null {
                         onClick={disconnect}
                     />
                 )}
+
+            {!!globalState.device && (<div>Transfer Rate: {bytesIn.toLocaleString()}B/s</div>)}
 
             <Dialog
                 hidden={!connecting}

@@ -35,7 +35,8 @@
         "@yume-chan/dataview-bigint-polyfill": "0.0.10",
         "@yume-chan/event": "^0.0.10",
         "@yume-chan/struct": "^0.0.10",
-        "tslib": "^2.3.1"
+        "tslib": "^2.3.1",
+        "web-streams-polyfill": "^3.2.0"
     },
     "devDependencies": {
         "jest": "^26.6.3",

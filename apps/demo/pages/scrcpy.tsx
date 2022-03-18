@@ -1,6 +1,6 @@
 import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
-import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, ReadableStream } from '@yume-chan/adb';
+import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
 import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_22, ScrcpyScreenOrientation, TinyH264Decoder, VideoStreamPacket, WebCodecsDecoder } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
@@ -349,6 +349,18 @@ class ScrcpyPageState {
             } else {
                 this.homeKeyRepeater = undefined;
                 this.appSwitchKeyRepeater = undefined;
+            }
+        });
+
+        let fpsIntervalId: any;
+        autorun(() => {
+            if (this.decoder) {
+                const decoder = this.decoder;
+                fpsIntervalId = setInterval(action(() => {
+                    this.log.push(`[renderer] FPS: ${decoder.fpsCounter.value}`);
+                }), 1000);
+            } else {
+                clearInterval(fpsIntervalId);
             }
         });
 

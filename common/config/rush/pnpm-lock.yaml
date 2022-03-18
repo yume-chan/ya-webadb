@@ -52,6 +52,7 @@ specifiers:
   tslib: ^2.3.1
   unist-util-visit: ^2.0.0
   url-loader: ^4.1.1
+  web-streams-polyfill: ^3.2.0
   xterm: ^4.17.0
   xterm-addon-fit: ^0.5.0
   xterm-addon-search: ^0.8.2
@@ -111,6 +112,7 @@ dependencies:
   tslib: 2.3.1
   unist-util-visit: 2.0.3
   url-loader: 4.1.1_file-loader@6.2.0
+  web-streams-polyfill: 3.2.0
   xterm: 4.17.0
   xterm-addon-fit: 0.5.0_xterm@4.17.0
   xterm-addon-search: 0.8.2_xterm@4.17.0
@@ -3745,6 +3747,26 @@ packages:
       '@types/yargs-parser': 20.2.1
     dev: false
 
+  /@typescript-eslint/parser/5.12.0_3f53dde5319a95053d07b3d0a37c767d:
+    resolution: {integrity: sha512-MfSwg9JMBojMUoGjUmX+D2stoQj1CBYTCP0qnnVtu9A+YQXVKNtLjasYh+jozOcrb/wau8TCfWOkQTiOAruBog==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    peerDependencies:
+      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      '@typescript-eslint/scope-manager': 5.12.0
+      '@typescript-eslint/types': 5.12.0
+      '@typescript-eslint/typescript-estree': 5.12.0_typescript@4.7.0-dev.20220317
+      debug: 4.3.3
+      eslint: 8.8.0
+      typescript: 4.7.0-dev.20220317
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@typescript-eslint/parser/5.12.0_eslint@8.8.0:
     resolution: {integrity: sha512-MfSwg9JMBojMUoGjUmX+D2stoQj1CBYTCP0qnnVtu9A+YQXVKNtLjasYh+jozOcrb/wau8TCfWOkQTiOAruBog==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -3760,26 +3782,6 @@ packages:
       '@typescript-eslint/typescript-estree': 5.12.0
       debug: 4.3.3
       eslint: 8.8.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
-  /@typescript-eslint/parser/5.12.0_eslint@8.8.0+typescript@4.6.2:
-    resolution: {integrity: sha512-MfSwg9JMBojMUoGjUmX+D2stoQj1CBYTCP0qnnVtu9A+YQXVKNtLjasYh+jozOcrb/wau8TCfWOkQTiOAruBog==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-      typescript: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      '@typescript-eslint/scope-manager': 5.12.0
-      '@typescript-eslint/types': 5.12.0
-      '@typescript-eslint/typescript-estree': 5.12.0_typescript@4.6.2
-      debug: 4.3.3
-      eslint: 8.8.0
-      typescript: 4.6.2
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -3817,7 +3819,7 @@ packages:
       - supports-color
     dev: false
 
-  /@typescript-eslint/typescript-estree/5.12.0_typescript@4.6.2:
+  /@typescript-eslint/typescript-estree/5.12.0_typescript@4.7.0-dev.20220317:
     resolution: {integrity: sha512-Dd9gVeOqt38QHR0BEA8oRaT65WYqPYbIc5tRFQPkfLquVEFPD1HAtbZT98TLBkEcCkvwDYOAvuSvAD9DnQhMfQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -3832,8 +3834,8 @@ packages:
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.3.5
-      tsutils: 3.21.0_typescript@4.6.2
-      typescript: 4.6.2
+      tsutils: 3.21.0_typescript@4.7.0-dev.20220317
+      typescript: 4.7.0-dev.20220317
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -6048,7 +6050,7 @@ packages:
       source-map: 0.6.1
     dev: false
 
-  /eslint-config-next/12.1.0_84a9f7b24d99c162ec5512424f921235:
+  /eslint-config-next/12.1.0_0db54fd445e40efa9031609b6d336017:
     resolution: {integrity: sha512-tBhuUgoDITcdcM7xFvensi9I5WTI4dnvH4ETGRg1U8ZKpXrZsWQFdOKIDzR3RLP5HR3xXrLviaMM4c3zVoE/pA==}
     peerDependencies:
       eslint: ^7.23.0 || ^8.0.0
@@ -6060,7 +6062,7 @@ packages:
     dependencies:
       '@next/eslint-plugin-next': 12.1.0
       '@rushstack/eslint-patch': 1.1.0
-      '@typescript-eslint/parser': 5.12.0_eslint@8.8.0+typescript@4.6.2
+      '@typescript-eslint/parser': 5.12.0_3f53dde5319a95053d07b3d0a37c767d
       eslint: 8.8.0
       eslint-import-resolver-node: 0.3.6
       eslint-import-resolver-typescript: 2.5.0_392f898cec7735a5f7a99430cbc0b4f4
@@ -6069,7 +6071,7 @@ packages:
       eslint-plugin-react: 7.28.0_eslint@8.8.0
       eslint-plugin-react-hooks: 4.3.0_eslint@8.8.0
       next: 12.1.0_react-dom@17.0.2+react@17.0.2
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -12269,14 +12271,14 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /tsutils/3.21.0_typescript@4.6.2:
+  /tsutils/3.21.0_typescript@4.7.0-dev.20220317:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
     engines: {node: '>= 6'}
     peerDependencies:
       typescript: '>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta'
     dependencies:
       tslib: 1.14.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     dev: false
 
   /type-check/0.3.2:
@@ -12334,6 +12336,12 @@ packages:
 
   /typescript/4.6.2:
     resolution: {integrity: sha512-HM/hFigTBHZhLXshn9sN37H085+hQGeJHJ/X7LpBWLID/fbc2acUMfU+lGD98X81sKP+pFa9f0DZmCwB9GnbAg==}
+    engines: {node: '>=4.2.0'}
+    hasBin: true
+    dev: false
+
+  /typescript/4.7.0-dev.20220317:
+    resolution: {integrity: sha512-BSWI2k1HSHl/NfXlTgth+3J/2BqqhbqrZB0gtgNvDsHSpiVzt1WEkGV3yab/U8We9r6X8YLebW3AFWXm/b5DGQ==}
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: false
@@ -12772,6 +12780,11 @@ packages:
     resolution: {integrity: sha512-wYxSGajtmoP4WxfejAPIr4l0fVh+jeMXZb08wNc0tMg6xsfZXj3cECqIK0G7ZAqUq0PP8WlMDtaOGVBTAWztNw==}
     dev: false
 
+  /web-streams-polyfill/3.2.0:
+    resolution: {integrity: sha512-EqPmREeOzttaLRm5HS7io98goBgZ7IVz79aDvqjD0kYXLtFZTc0T/U6wHTPKyIjb+MdN7DFIIX6hgdBEpWmfPA==}
+    engines: {node: '>= 8'}
+    dev: false
+
   /webidl-conversions/3.0.1:
     resolution: {integrity: sha1-JFNCdeKnvGvnvIZhHMFq4KVlSHE=}
     dev: false
@@ -13199,24 +13212,24 @@ packages:
     dev: false
 
   file:projects/adb-backend-direct-sockets.tgz:
-    resolution: {integrity: sha512-7lYtoXDESytDSbVwRclsL5Zei0SyHDrla2MDnOylREFhq9k+jD5y4QlGlp5BA7i8jxCcFO4X+ycdjeo03LgRNg==, tarball: file:projects/adb-backend-direct-sockets.tgz}
+    resolution: {integrity: sha512-4Pcpz/YTZjFdwHtL4C2aMR5i4jqRgmn8KK6U0lLjelFstZCy8aJJNsWIk8ugfAsr4hlQTM+jEs8YKNuXnGffuA==, tarball: file:projects/adb-backend-direct-sockets.tgz}
     name: '@rush-temp/adb-backend-direct-sockets'
     version: 0.0.0
     dependencies:
       '@types/jest': 27.4.0
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     dev: false
 
   file:projects/adb-backend-webusb.tgz:
-    resolution: {integrity: sha512-hLTGiBjXJCtaLLQGVVCSSQF27mpAXhWVPqkZv/pXm+6Gnvl+AeTtwZzI3gBcWLRKZt8kNqG7ZPPoWk+TV+ZLow==, tarball: file:projects/adb-backend-webusb.tgz}
+    resolution: {integrity: sha512-45QkfspjxJPm4hRfxwFXwAAGM4P6UhT6Yfoo/kXJVDwk4N3boonflC6ZMGG5OiSYUCOxs6oVN6MmooJuz9rxLA==, tarball: file:projects/adb-backend-webusb.tgz}
     name: '@rush-temp/adb-backend-webusb'
     version: 0.0.0
     dependencies:
       '@types/w3c-web-usb': 1.0.5
       jest: 26.6.3
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -13226,13 +13239,13 @@ packages:
     dev: false
 
   file:projects/adb-backend-ws.tgz:
-    resolution: {integrity: sha512-gYyPR7NoztGZMkMMApsw/n4hjU2mXpW0Q5ZytAendhOjxFhlgVuzUNVIseEeCZ5WcKZJq8UDcbm3t1XzjNnspg==, tarball: file:projects/adb-backend-ws.tgz}
+    resolution: {integrity: sha512-oNW7ce/LFd1K6TKQvaSoslnX0t5teYl3CxUcFlKQr5DVBg6H0rvn4bubVcZ0nQjPMxwMvmkL+gp+yQs79ERkvQ==, tarball: file:projects/adb-backend-ws.tgz}
     name: '@rush-temp/adb-backend-ws'
     version: 0.0.0
     dependencies:
       jest: 26.6.3
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -13242,23 +13255,24 @@ packages:
     dev: false
 
   file:projects/adb-credential-web.tgz:
-    resolution: {integrity: sha512-ScBUE3flU6eg6FvrtT9WtXbzebLkWF3gktNBTRXXzccRNzkHeERHGEWV6+9ikmUUV76q+Hyn36dY1p81mWlf1w==, tarball: file:projects/adb-credential-web.tgz}
+    resolution: {integrity: sha512-0Dgj0EhxJLZb1ExO4oNxIIliQPoQXD+O5l2y/DJ05/T7bjUs6xsthElTt3XLzolpP9RfKeYljLCMPtWZqB9zIA==, tarball: file:projects/adb-credential-web.tgz}
     name: '@rush-temp/adb-credential-web'
     version: 0.0.0
     dependencies:
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     dev: false
 
   file:projects/adb.tgz:
-    resolution: {integrity: sha512-5M3XhdG6BqRVn0LyI3z6Ig7qOFQwVJyH17fkNq+1cVYVALZHg2Q8MquZcY76GUfo7XR2Fl7Eiw5zNRBOkgUgbA==, tarball: file:projects/adb.tgz}
+    resolution: {integrity: sha512-FVnspJv92N+/DoFIFGT0wGpmaxGvWf/oCVKAZyLNPxT+R6JCd/VgU4xaNdsDxpa4kSAr9foEeTRjQFNEMtIm4Q==, tarball: file:projects/adb.tgz}
     name: '@rush-temp/adb'
     version: 0.0.0
     dependencies:
       '@yume-chan/async': 2.1.4
       jest: 26.6.3
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
+      web-streams-polyfill: 3.2.0
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -13268,22 +13282,22 @@ packages:
     dev: false
 
   file:projects/android-bin.tgz:
-    resolution: {integrity: sha512-FF55Xz9NTN3Og0oFF2ya/NBJb0Uz1x/kwJEE2cI93UqtHdJQ/eMwMm1mUcOxUcdIOkriy3eVCvVd1WWpv8Eqnw==, tarball: file:projects/android-bin.tgz}
+    resolution: {integrity: sha512-cKnCg4Xk/95Lve/m0/pqffXpMrkq3RkfHoEpQFUGxKrZBO5DHnh6qRGbOBc1I7Rb8bWQl6BWLpABkEvWXz18Lw==, tarball: file:projects/android-bin.tgz}
     name: '@rush-temp/android-bin'
     version: 0.0.0
     dependencies:
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     dev: false
 
   file:projects/dataview-bigint-polyfill.tgz:
-    resolution: {integrity: sha512-lbBWjYYtVRQA5JWUloB96WIAXPAIsUQKUqqSoETJdsw+jbea3glhdHvLUxQAc0TjxF/rQk0g7dhF1jOtcmkS/A==, tarball: file:projects/dataview-bigint-polyfill.tgz}
+    resolution: {integrity: sha512-Z/dUbpS3vRncEy55/MnfSuiphPU1/bW5quicsVgIzsYs7WQqrpubFSHbh3qmavHWZceeTSJr+8SiXYGSNPeBew==, tarball: file:projects/dataview-bigint-polyfill.tgz}
     name: '@rush-temp/dataview-bigint-polyfill'
     version: 0.0.0
     dependencies:
       jest: 26.6.3
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -13293,7 +13307,7 @@ packages:
     dev: false
 
   file:projects/demo.tgz_@mdx-js+react@1.6.22:
-    resolution: {integrity: sha512-fb7TRHuIGkcJHZRpdp76shGm+70hVRjUcr2WWD7d+PbK0aQUPvDi7loy9XCdyI3deTF0APfR44agm1irnymRAw==, tarball: file:projects/demo.tgz}
+    resolution: {integrity: sha512-S5zcKP4qkdQHd0SeFeb7ZPrtufS93vK8ogI3R99sK8yojFtukw0D2yXQg6yaojOf+NaqwBYA9ikfxjM92SwBNA==, tarball: file:projects/demo.tgz}
     id: file:projects/demo.tgz
     name: '@rush-temp/demo'
     version: 0.0.0
@@ -13308,14 +13322,14 @@ packages:
       '@types/react': 17.0.27
       '@yume-chan/async': 2.1.4
       eslint: 8.8.0
-      eslint-config-next: 12.1.0_84a9f7b24d99c162ec5512424f921235
+      eslint-config-next: 12.1.0_0db54fd445e40efa9031609b6d336017
       mobx: 6.3.13
       mobx-react-lite: 3.2.3_96b0034b8b6bfac1b4cc60715db17f02
       next: 12.1.0_react-dom@17.0.2+react@17.0.2
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       streamsaver: 2.0.6
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
       xterm: 4.17.0
       xterm-addon-fit: 0.5.0_xterm@4.17.0
       xterm-addon-search: 0.8.2_xterm@4.17.0
@@ -13333,14 +13347,14 @@ packages:
     dev: false
 
   file:projects/event.tgz:
-    resolution: {integrity: sha512-/nNG2wtotQQEddux5DQGXRTMa3h9X0y/IEn3jj07hsd/lb1DZz4EhXDaiuFHgxgYC9Vlt78yqcmI6vq3BynbMQ==, tarball: file:projects/event.tgz}
+    resolution: {integrity: sha512-pVev1KKJCTPOl6QVw//HTl+yGputAjlhgDI1teGtIdgCFQ09KBY7KAh6EqRGKEFrzBvtiS+cC7r9OwLlgzWvoQ==, tarball: file:projects/event.tgz}
     name: '@rush-temp/event'
     version: 0.0.0
     dependencies:
       '@yume-chan/async': 2.1.4
       jest: 26.6.3
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -13350,7 +13364,7 @@ packages:
     dev: false
 
   file:projects/scrcpy.tgz:
-    resolution: {integrity: sha512-t5PfOgkF6otyHa83xANbVLVXoWPqh+5V2BS0NW4LDY9wvOww9BEr4RW/LRwuP9WszHZZ8pQKApBomeu+fon6Yw==, tarball: file:projects/scrcpy.tgz}
+    resolution: {integrity: sha512-OuLb2ISi7yOLMgoOb7hN1FABs7aynnekRuJMi4Nq24s0HuOMkcdzvSzONUNdsrT5fiKMD3TTcoB35pZp/3a6Bw==, tarball: file:projects/scrcpy.tgz}
     name: '@rush-temp/scrcpy'
     version: 0.0.0
     dependencies:
@@ -13361,7 +13375,7 @@ packages:
       jest: 26.6.3
       tinyh264: 0.0.7
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
       yuv-buffer: 1.0.0
       yuv-canvas: 1.2.9
     transitivePeerDependencies:
@@ -13374,7 +13388,7 @@ packages:
     dev: false
 
   file:projects/struct.tgz:
-    resolution: {integrity: sha512-0FfQNcq/N527LPz/UOQ6get3JHRTsWkqg25yvF5iaCAYXpjdgIREQSGGUxru0+oSMaTl76cGEtSrbrOCa+FrWA==, tarball: file:projects/struct.tgz}
+    resolution: {integrity: sha512-R5/LhwM3aSZKwu2YpswfJuBZ4aEiLh5BvoIBUV7kyTngATaNa3ROI0eO2+yJiMjBo4yChPlVN4UfZqyoG6psJw==, tarball: file:projects/struct.tgz}
     name: '@rush-temp/struct'
     version: 0.0.0
     dependencies:
@@ -13383,7 +13397,7 @@ packages:
       bluebird: 3.7.2
       jest: 26.6.3
       tslib: 2.3.1
-      typescript: 4.6.2
+      typescript: 4.7.0-dev.20220317
     transitivePeerDependencies:
       - bufferutil
       - canvas
