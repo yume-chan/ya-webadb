@@ -38,7 +38,7 @@
         "tslib": "^2.3.1"
     },
     "devDependencies": {
-        "jest": "^26.6.3",
+        "jest": "^27.5.1",
         "typescript": "next",
         "@yume-chan/ts-package-builder": "^1.0.0"
     }

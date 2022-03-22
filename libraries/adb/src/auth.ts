@@ -97,7 +97,10 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     const publicKeyBuffer = new Uint8Array(publicKeyBase64Length + 1);
 
     calculatePublicKey(privateKey, publicKeyBuffer);
-    encodeBase64(publicKeyBuffer, 0, publicKeyLength, publicKeyBuffer);
+    encodeBase64(
+        publicKeyBuffer.subarray(0, publicKeyLength),
+        publicKeyBuffer
+    );
 
     yield {
         command: AdbCommand.Auth,

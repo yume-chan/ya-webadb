@@ -5,7 +5,7 @@ import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backen
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import AdbWebCredentialStore from '@yume-chan/adb-credential-web';
 import { observer } from 'mobx-react-lite';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { globalState } from '../state';
 import { CommonStackTokens, Icons } from '../utils';
 
@@ -17,6 +17,18 @@ function _Connect(): JSX.Element | null {
     const [supported, setSupported] = useState(true);
 
     const [bytesIn, setBytesIn] = useState(0);
+    const byteInAcc = useRef(0);
+
+    useEffect(() => {
+        const id = setInterval(() => {
+            setBytesIn(byteInAcc.current);
+            byteInAcc.current = 0;
+        }, 1000);
+
+        return () => {
+            clearInterval(id);
+        };
+    }, []);
 
     const [selectedBackend, setSelectedBackend] = useState<AdbBackend | undefined>();
     const [connecting, setConnecting] = useState(false);
@@ -146,18 +158,12 @@ function _Connect(): JSX.Element | null {
                 try {
                     setConnecting(true);
 
-                    let count = 0;
-                    setInterval(() => {
-                        setBytesIn(count);
-                        count = 0;
-                    }, 1000);
-
                     const dataStreamPair = await selectedBackend.connect();
 
                     const packetStreamPair = Adb.createConnection({
                         readable: dataStreamPair.readable
                             .pipeThrough(new InspectStream(chunk => {
-                                count += chunk.byteLength;
+                                byteInAcc.current += chunk.byteLength;
                             })),
                         writable: dataStreamPair.writable,
                     });

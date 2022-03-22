@@ -51,7 +51,10 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
         const [publicKeyBase64Length] = calculateBase64EncodedLength(publicKeyLength);
         const publicKeyBuffer = new Uint8Array(publicKeyBase64Length);
         calculatePublicKey(privateKey, publicKeyBuffer);
-        encodeBase64(publicKeyBuffer, 0, publicKeyLength, publicKeyBuffer);
+        encodeBase64(
+            publicKeyBuffer.subarray(0, publicKeyLength),
+            publicKeyBuffer
+        );
         window.localStorage.setItem(this.localStorageKey + '.pub', decodeUtf8(publicKeyBuffer));
 
         return privateKey;

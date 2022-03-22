@@ -333,15 +333,11 @@ if ('ReadableStream' in globalThis && 'WritableStream' in globalThis && 'Transfo
     try {
         // Node.js 16 has Web Streams types in `stream/web` module
         ({
-            // @ts-ignore
             ReadableStream,
             ReadableStreamDefaultController,
-            // @ts-ignore
             ReadableStreamDefaultReader,
-            // @ts-ignore
             TransformStream,
             TransformStreamDefaultController,
-            // @ts-ignore
             WritableStream,
             WritableStreamDefaultController,
             WritableStreamDefaultWriter,

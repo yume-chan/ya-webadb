@@ -27,93 +27,150 @@ export function calculateBase64EncodedLength(inputLength: number): [outputLength
 
 export function encodeBase64(
     input: Uint8Array,
-    inputOffset?: number,
-    inputLength?: number,
-): Uint8Array; // overload 1
+): Uint8Array;
 export function encodeBase64(
     input: Uint8Array,
     output: Uint8Array,
-    outputOffset?: number
-): number; // overload 2
+): number;
 export function encodeBase64(
     input: Uint8Array,
-    inputOffset: number,
-    output: Uint8Array,
-    outputOffset?: number
-): number; // overload 3
-export function encodeBase64(
-    input: Uint8Array,
-    inputOffset: number,
-    inputLength: number,
-    output: Uint8Array,
-    outputOffset?: number
-): number; // overload 4
-export function encodeBase64(
-    input: Uint8Array,
-    arg1?: number | Uint8Array,
-    arg2?: number | Uint8Array,
-    _arg3?: number | Uint8Array,
-    _arg4?: number,
+    output?: Uint8Array,
 ): Uint8Array | number {
-    let inputOffset: number;
-    let inputLength: number;
-    let output: Uint8Array;
-    let outputOffset: number;
+    const [outputLength, paddingLength] = calculateBase64EncodedLength(input.length);
 
-    let outputArgumentIndex: number;
-    if (typeof arg1 === 'number') {
-        // overload 1, 3, 4
-        inputOffset = arg1;
-
-        if (typeof arg2 === 'number') {
-            // overload 1, 4
-            inputLength = arg2;
-            outputArgumentIndex = 3;
-        } else {
-            // overload 3
-            inputLength = input.length - inputOffset;
-            outputArgumentIndex = 2;
-        }
+    if (!output) {
+        output = new Uint8Array(outputLength);
+        encodeForward(input, output, paddingLength);
+        return output;
     } else {
-        // overload 2
-        inputOffset = 0;
-        inputLength = input.length;
-        outputArgumentIndex = 1;
-    }
-
-    const [outputLength, paddingLength] = calculateBase64EncodedLength(inputLength);
-
-    let maybeOutput: Uint8Array | undefined = arguments[outputArgumentIndex];
-    let outputType: 'Uint8Array' | 'number';
-    if (maybeOutput) {
-        outputOffset = arguments[outputArgumentIndex + 1] ?? 0;
-
-        if (maybeOutput.length - outputOffset < outputLength) {
+        if (output.length < outputLength) {
             throw new Error('output buffer is too small');
         }
 
-        output = maybeOutput;
-        outputType = 'number';
-    } else {
-        output = new Uint8Array(outputLength);
-        outputOffset = 0;
-        outputType = 'Uint8Array';
-    }
+        output = output.subarray(0, outputLength);
 
-    if (input.buffer === output.buffer) {
-        const bufferInputStart = input.byteOffset + inputOffset;
-        const bufferOutputStart = output.byteOffset + outputOffset;
-        if (bufferOutputStart < bufferInputStart - 1) {
-            const bufferOutputEnd = bufferOutputStart + outputLength;
-            if (bufferOutputEnd >= bufferInputStart) {
-                throw new Error('input and output buffer can not be overlapping');
-            }
+        // When input and output are on same ArrayBuffer,
+        // we check if it's possible to encode in-place.
+        if (input.buffer !== output.buffer) {
+            encodeForward(input, output, paddingLength);
+        } else if (output.byteOffset + output.length - (paddingLength + 1) <= input.byteOffset + input.length) {
+            // Output ends before input ends
+            // So output won't catch up with input.
+
+            // Depends on padding length,
+            // it's possible to write 1-3 bytes after input ends.
+            // spell: disable-next-line
+            // | aaaaaabb |          |          |          |
+            // |  aaaaaa  |  bb0000  |    =     |    =     |
+            //
+            // spell: disable-next-line
+            // | aaaaaabb | bbbbcccc |          |          |
+            // |  aaaaaa  |  bbbbbb  |  cccc00  |    =     |
+            //
+            // spell: disable-next-line
+            // | aaaaaabb | bbbbcccc | ccdddddd |          |
+            // |  aaaaaa  |  bbbbbb  |  cccccc  |  dddddd  |
+
+            // Must encode forwards.
+            encodeForward(input, output, paddingLength);
+        } else if (output.byteOffset >= input.byteOffset - 1) {
+            // Output starts after input starts
+            // So in backwards, output can't catch up with input.
+
+            // Because first 3 bytes becomes 4 bytes,
+            // it's possible to write 1 byte before input starts.
+            // spell: disable-next-line
+            // |          | aaaaaabb | bbbbcccc | ccdddddd |
+            // |  aaaaaa  |  bbbbbb  |  cccccc  |  dddddd  |
+
+            // Must encode backwards.
+            encodeBackward(input, output, paddingLength);
+        } else {
+            // Input is in the middle of output,
+            // not possible to read neither first or last three bytes,
+            throw new Error('input and output cannot overlap');
         }
+
+        return outputLength;
+    }
+}
+
+function encodeForward(input: Uint8Array, output: Uint8Array, paddingLength: number) {
+    let inputIndex = 0;
+    let outputIndex = 0;
+
+    while (inputIndex < input.length - 2) {
+        /* cspell: disable-next-line */
+        // aaaaaabb
+        const x = input[inputIndex]!;
+        inputIndex += 1;
+
+        /* cspell: disable-next-line */
+        // bbbbcccc
+        const y = input[inputIndex]!;
+        inputIndex += 1;
+
+        /* cspell: disable-next-line */
+        // ccdddddd
+        const z = input[inputIndex]!;
+        inputIndex += 1;
+
+        output[outputIndex] = indexToChar[x >> 2]!;
+        outputIndex += 1;
+
+        output[outputIndex] = indexToChar[((x & 0b11) << 4) | (y >> 4)]!;
+        outputIndex += 1;
+
+        output[outputIndex] = indexToChar[((y & 0b1111) << 2) | (z >> 6)]!;
+        outputIndex += 1;
+
+        output[outputIndex] = indexToChar[z & 0b111111]!;
+        outputIndex += 1;
     }
 
-    // Run backward to do in-place overwrite
-    let inputIndex = inputOffset + inputLength - 1;
-    let outputIndex = outputOffset + outputLength - 1;
+    if (paddingLength === 2) {
+        /* cspell: disable-next-line */
+        // aaaaaabb
+        const x = input[inputIndex]!;
+        inputIndex += 1;
+
+        output[outputIndex] = indexToChar[x >> 2]!;
+        outputIndex += 1;
+
+        output[outputIndex] = indexToChar[((x & 0b11) << 4)]!;
+        outputIndex += 1;
+
+        output[outputIndex] = paddingChar;
+        outputIndex += 1;
+
+        output[outputIndex] = paddingChar;
+    } else if (paddingLength === 1) {
+        /* cspell: disable-next-line */
+        // aaaaaabb
+        const x = input[inputIndex]!;
+        inputIndex += 1;
+
+        /* cspell: disable-next-line */
+        // bbbbcccc
+        const y = input[inputIndex]!;
+        inputIndex += 1;
+
+        output[outputIndex] = indexToChar[x >> 2]!;
+        outputIndex += 1;
+
+        output[outputIndex] = indexToChar[((x & 0b11) << 4) | (y >> 4)]!;
+        outputIndex += 1;
+
+        output[outputIndex] = indexToChar[((y & 0b1111) << 2)]!;
+        outputIndex += 1;
+
+        output[outputIndex] = paddingChar;
+    }
+}
+
+function encodeBackward(input: Uint8Array, output: Uint8Array, paddingLength: number) {
+    let inputIndex = input.length - 1;
+    let outputIndex = output.length - 1;
 
     if (paddingLength === 2) {
         /* cspell: disable-next-line */
@@ -156,7 +213,7 @@ export function encodeBase64(
         outputIndex -= 1;
     }
 
-    while (inputIndex >= inputOffset) {
+    while (inputIndex >= 0) {
         /* cspell: disable-next-line */
         // ccdddddd
         const z = input[inputIndex]!;
@@ -183,12 +240,6 @@ export function encodeBase64(
 
         output[outputIndex] = indexToChar[x >> 2]!;
         outputIndex -= 1;
-    }
-
-    if (outputType === 'Uint8Array') {
-        return output;
-    } else {
-        return outputLength;
     }
 }
 

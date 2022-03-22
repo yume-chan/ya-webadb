@@ -200,8 +200,6 @@ export class StructDeserializeStream<T extends Struct<any, any, any, any>>
 
         this._writable = new WritableStream({
             async write(chunk) {
-                // @ts-ignore
-                console.log('deserialization stream write', chunk);
                 await incomingStreamController.enqueue(chunk);
             },
             close() {

@@ -119,12 +119,10 @@ export function calculatePublicKey(
 export function calculatePublicKey(
     privateKey: Uint8Array,
     output: Uint8Array,
-    outputOffset?: number
 ): number;
 export function calculatePublicKey(
     privateKey: Uint8Array,
     output?: Uint8Array,
-    outputOffset: number = 0
 ): Uint8Array | number {
     // Android has its own public key generation algorithm
     // See https://android.googlesource.com/platform/system/core.git/+/91784040db2b9273687f88d8b95f729d4a61ecc2/libcrypto_utils/android_pubkey.cpp#111
@@ -152,7 +150,7 @@ export function calculatePublicKey(
         output = new Uint8Array(outputLength);
         outputType = 'Uint8Array';
     } else {
-        if (output.byteLength - outputOffset < outputLength) {
+        if (output.byteLength < outputLength) {
             throw new Error('output buffer is too small');
         }
 
@@ -160,6 +158,7 @@ export function calculatePublicKey(
     }
 
     const outputView = new DataView(output.buffer, output.byteOffset, output.byteLength);
+    let outputOffset = 0;
 
     // modulusLengthInWords
     outputView.setUint32(outputOffset, 2048 / 8 / 4, true);
