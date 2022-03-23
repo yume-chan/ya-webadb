@@ -70,7 +70,7 @@ function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsP
     );
 }
 
-function MyApp({ Component, pageProps }: AppProps) {
+function App({ Component, pageProps }: AppProps) {
     const classNames = mergeStyleSets({
         'title-container': {
             borderBottom: '1px solid rgb(243, 242, 241)',
@@ -156,4 +156,4 @@ function MyApp({ Component, pageProps }: AppProps) {
     );
 }
 
-export default MyApp;
+export default App;
