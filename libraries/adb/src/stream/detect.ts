@@ -1,6 +1,6 @@
 // cspell: ignore ponyfill
 
-import { AbortSignal } from "web-streams-polyfill";
+import type { AbortSignal } from "web-streams-polyfill";
 // TODO: import the ponyfill instead (as a library should do)
 export * from 'web-streams-polyfill';
 
