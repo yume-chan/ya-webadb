@@ -224,7 +224,7 @@ export class StructSerializeStream<T extends Struct<any, any, any, any>>
 
 export interface WritableStreamWrapper<T, W extends WritableStream<T>, S> {
     start(): Promise<{ writable: W, state: S; }>;
-    close(state: S): Promise<void>;
+    close?(state: S): Promise<void>;
 }
 
 export class WrapWritableStream<T, W extends WritableStream<T>, S> extends WritableStream<T>{
@@ -249,11 +249,11 @@ export class WrapWritableStream<T, W extends WritableStream<T>, S> extends Writa
             },
             abort: async (reason) => {
                 await this.writer.abort(reason);
-                wrapper.close(this.state);
+                wrapper.close?.(this.state);
             },
             close: async () => {
                 await this.writer.close();
-                await wrapper.close(this.state);
+                await wrapper.close?.(this.state);
             },
         });
     }

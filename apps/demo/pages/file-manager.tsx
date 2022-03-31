@@ -1,7 +1,5 @@
 import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, Selection, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
-import { FileIconType } from "@fluentui/react-file-type-icons";
-import { getFileTypeIconNameFromExtensionOrType } from '@fluentui/react-file-type-icons/lib-commonjs/getFileTypeIconProps';
-import { DEFAULT_BASE_URL as FILE_TYPE_ICONS_BASE_URL } from '@fluentui/react-file-type-icons/lib-commonjs/initializeFileTypeIcons';
+import { FileIconType, getFileTypeIconProps } from "@fluentui/react-file-type-icons";
 import { useConst } from '@fluentui/react-hooks';
 import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, LinuxFileType, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
@@ -15,6 +13,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { CommandBar, NoSsr } from '../components';
 import { globalState } from '../state';
 import { asyncEffect, formatSize, formatSpeed, Icons, pickFile, RouteStackProps } from '../utils';
+
+const FILE_TYPE_ICONS_BASE_URL = "https://spoppe-b.azureedge.net/files/fabric-cdn-prod_20220309.001/assets/item-types/";
 
 /**
  * Because of internal buffer of upstream/downstream streams,
@@ -259,16 +259,16 @@ class FileManagerState {
 
                     switch (item.type) {
                         case LinuxFileType.Link:
-                            iconName = getFileTypeIconNameFromExtensionOrType(undefined, FileIconType.linkedFolder);
+                            ({ iconName } = getFileTypeIconProps({ type: FileIconType.linkedFolder }));
                             break;
                         case LinuxFileType.Directory:
-                            iconName = getFileTypeIconNameFromExtensionOrType(undefined, FileIconType.folder);
+                            ({ iconName } = getFileTypeIconProps({ type: FileIconType.folder }));
                             break;
                         case LinuxFileType.File:
-                            iconName = getFileTypeIconNameFromExtensionOrType(path.extname(item.name!), undefined);
+                            ({ iconName } = getFileTypeIconProps({ extension: path.extname(item.name!) }));
                             break;
                         default:
-                            iconName = getFileTypeIconNameFromExtensionOrType('txt', undefined);
+                            ({ iconName } = getFileTypeIconProps({ extension: 'txt' }));
                             break;
                     }
 

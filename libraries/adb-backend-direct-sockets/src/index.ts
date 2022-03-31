@@ -1,4 +1,4 @@
-import type { AdbBackend, ReadableStream, WritableStream } from '@yume-chan/adb';
+import { AdbBackend, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream } from '@yume-chan/adb';
 
 declare global {
     interface TCPSocket {
@@ -50,10 +50,29 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
     }
 
     public async connect() {
-        return await navigator.openTCPSocket({
+        const { readable, writable } = await navigator.openTCPSocket({
             remoteAddress: this.host,
             remotePort: this.port,
             noDelay: true,
         });
+        // Native streams can't `pipeTo()` or `pipeThrough()` polyfilled streams, so we need to wrap them
+        return {
+            readable: new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, void>({
+                async start() {
+                    return {
+                        readable,
+                        state: undefined,
+                    };
+                }
+            }),
+            writable: new WrapWritableStream({
+                async start() {
+                    return {
+                        writable,
+                        state: undefined,
+                    };
+                }
+            }),
+        };
     }
 }

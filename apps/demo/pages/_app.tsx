@@ -1,5 +1,6 @@
 import { IComponentAsProps, IconButton, INavButtonProps, mergeStyles, mergeStyleSets, Nav, Stack, StackItem } from "@fluentui/react";
 import type { AppProps } from 'next/app';
+import Head from "next/head";
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from "react";
@@ -103,6 +104,10 @@ function App({ Component, pageProps }: AppProps) {
 
     return (
         <ErrorDialogProvider>
+            <Head>
+                <link rel="manifest" href="/manifest.json" />
+            </Head>
+
             <Stack verticalFill>
                 <Stack className={classNames['title-container']} horizontal verticalAlign="center">
                     <IconButton
