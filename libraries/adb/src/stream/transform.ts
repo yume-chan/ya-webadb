@@ -202,9 +202,10 @@ export class StructDeserializeStream<T extends Struct<any, any, any, any>>
             async write(chunk) {
                 await incomingStreamController.enqueue(chunk);
             },
+            abort() {
+                incomingStreamController.close();
+            },
             close() {
-                // @ts-ignore
-                console.log('deserialization stream closed');
                 incomingStreamController.close();
             },
         });

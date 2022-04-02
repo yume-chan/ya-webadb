@@ -134,6 +134,8 @@ export class Adb {
 
     private readonly packetDispatcher: AdbPacketDispatcher;
 
+    public get disconnected() { return this.packetDispatcher.disconnected; }
+
     private _protocolVersion: number | undefined;
     public get protocolVersion() { return this._protocolVersion; }
 

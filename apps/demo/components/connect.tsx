@@ -182,6 +182,9 @@ function _Connect(): JSX.Element | null {
                         })
                     );
                     device = await Adb.authenticate({ readable, writable }, CredentialStore, undefined);
+                    device.disconnected.then(() => {
+                        globalState.setDevice(undefined, undefined);
+                    });
                     globalState.setDevice(selectedBackend, device);
                 } catch (e) {
                     device?.dispose();

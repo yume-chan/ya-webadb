@@ -1,4 +1,4 @@
-import { AsyncOperationManager } from '@yume-chan/async';
+import { AsyncOperationManager, PromiseResolver } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
 import { AdbCommand, AdbPacket, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from '../packet.js';
 import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '../stream/index.js';
@@ -28,6 +28,9 @@ export class AdbPacketDispatcher extends AutoDisposable {
     public maxPayloadSize = 0;
     public calculateChecksum = true;
     public appendNullToServiceString = true;
+
+    private _disconnected = new PromiseResolver<void>();
+    public get disconnected() { return this._disconnected.promise; }
 
     private readonly incomingSocketEvent = this.addDisposable(new EventEmitter<AdbIncomingSocketEventArgs>());
     public get onIncomingSocket() { return this.incomingSocketEvent.event; }
@@ -69,18 +72,21 @@ export class AdbPacketDispatcher extends AutoDisposable {
                     } catch (e) {
                         this.errorEvent.fire(e as Error);
 
-                        this.dispose();
-
                         // Throw error here will stop the pipe
                         // But won't close `readable` because of `preventCancel: true`
                         throw e;
                     }
-                }
+                },
             }), {
                 preventCancel: false,
                 signal: this._abortController.signal,
             })
-            .catch(() => { });
+            .then(() => {
+                this.dispose();
+            }, () => {
+                // TODO: AdbPacketDispatcher: reject `_disconnected` when pipe errored?
+                this.dispose();
+            });
 
         this._writer = connection.writable.getWriter();
     }
@@ -242,6 +248,8 @@ export class AdbPacketDispatcher extends AutoDisposable {
         } catch { }
 
         this._writer.releaseLock();
+
+        this._disconnected.resolve();
 
         super.dispose();
     }
