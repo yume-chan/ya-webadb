@@ -11,8 +11,7 @@ import Head from "next/head";
 import React, { useEffect, useMemo, useState } from "react";
 import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { globalState } from "../state";
-import { CommonStackTokens, formatSpeed, Icons, RouteStackProps } from "../utils";
-import { ProgressStream } from "./file-manager";
+import { CommonStackTokens, formatSpeed, Icons, ProgressStream, RouteStackProps } from "../utils";
 
 const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url).toString();
 

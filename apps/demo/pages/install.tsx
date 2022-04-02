@@ -5,8 +5,7 @@ import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import { globalState } from "../state";
-import { pickFile, RouteStackProps } from "../utils";
-import { ProgressStream } from './file-manager';
+import { pickFile, ProgressStream, RouteStackProps } from "../utils";
 
 enum Stage {
     Uploading,

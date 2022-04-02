@@ -7,6 +7,7 @@ specifiers:
   '@fluentui/react-file-type-icons': ^8.6.6
   '@fluentui/react-hooks': ^8.5.3
   '@fluentui/react-icons': ^2.0.164-rc.2
+  '@fluentui/style-utilities': ^8.6.5
   '@griffel/react': ^1.0.2
   '@mdx-js/loader': ^1.6.22
   '@mdx-js/react': ^1.6.21
@@ -69,6 +70,7 @@ dependencies:
   '@fluentui/react-file-type-icons': 8.6.6_b094b78811fc8d2f00a90f13d0251fb6
   '@fluentui/react-hooks': 8.5.3_b094b78811fc8d2f00a90f13d0251fb6
   '@fluentui/react-icons': 2.0.164-rc.2_6a473177d35e041349271dbf5c40a8b6
+  '@fluentui/style-utilities': 8.6.5_b094b78811fc8d2f00a90f13d0251fb6
   '@griffel/react': 1.0.2_react@17.0.2
   '@mdx-js/loader': 1.6.22_react@17.0.2
   '@mdx-js/react': 1.6.22_react@17.0.2
@@ -3754,7 +3756,7 @@ packages:
       '@types/yargs-parser': 20.2.1
     dev: false
 
-  /@typescript-eslint/parser/5.10.1_139a24fdeef53c5454dee983b904835a:
+  /@typescript-eslint/parser/5.10.1_afe153b908dca2f5fbccd916c875a0f1:
     resolution: {integrity: sha512-GReo3tjNBwR5RnRO0K2wDIDN31cM3MmDtgyQ85oAxAmC5K3j/g85IjP+cDfcqDsDDBf1HNKQAD0WqOYL8jXqUA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -3766,10 +3768,10 @@ packages:
     dependencies:
       '@typescript-eslint/scope-manager': 5.10.1
       '@typescript-eslint/types': 5.10.1
-      '@typescript-eslint/typescript-estree': 5.10.1_typescript@4.7.0-dev.20220330
+      '@typescript-eslint/typescript-estree': 5.10.1_typescript@4.7.0-dev.20220401
       debug: 4.3.3
       eslint: 8.8.0
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -3826,7 +3828,7 @@ packages:
       - supports-color
     dev: false
 
-  /@typescript-eslint/typescript-estree/5.10.1_typescript@4.7.0-dev.20220330:
+  /@typescript-eslint/typescript-estree/5.10.1_typescript@4.7.0-dev.20220401:
     resolution: {integrity: sha512-PwIGnH7jIueXv4opcwEbVGDATjGPO1dx9RkUl5LlHDSe+FXxPwFL5W/qYd5/NHr7f6lo/vvTrAzd0KlQtRusJQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -3841,8 +3843,8 @@ packages:
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.3.5
-      tsutils: 3.21.0_typescript@4.7.0-dev.20220330
-      typescript: 4.7.0-dev.20220330
+      tsutils: 3.21.0_typescript@4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220401
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -5917,7 +5919,7 @@ packages:
       source-map: 0.6.1
     dev: false
 
-  /eslint-config-next/12.1.3_5063112dcb586131c24aef9d22e20333:
+  /eslint-config-next/12.1.3_c89561272e8295d8c5b50727d5829a82:
     resolution: {integrity: sha512-aLtr2VfdvkpbXnqH0Do9HJfMeDq0ZkKlZ8h8g2T88njbE8/5KfJIQSoNnp18M8PUXZYD8kqTOUa1MJ0QU9T1hQ==}
     peerDependencies:
       eslint: ^7.23.0 || ^8.0.0
@@ -5929,7 +5931,7 @@ packages:
     dependencies:
       '@next/eslint-plugin-next': 12.1.3
       '@rushstack/eslint-patch': 1.0.8
-      '@typescript-eslint/parser': 5.10.1_139a24fdeef53c5454dee983b904835a
+      '@typescript-eslint/parser': 5.10.1_afe153b908dca2f5fbccd916c875a0f1
       eslint: 8.8.0
       eslint-import-resolver-node: 0.3.4
       eslint-import-resolver-typescript: 2.4.0_6b08c5e5089e84a3b13f5233184673d0
@@ -5938,7 +5940,7 @@ packages:
       eslint-plugin-react: 7.29.1_eslint@8.8.0
       eslint-plugin-react-hooks: 4.3.0_eslint@8.8.0
       next: 12.1.3_react-dom@17.0.2+react@17.0.2
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -11520,7 +11522,7 @@ packages:
     resolution: {integrity: sha512-rvuRbTarPXmMb79SmzEp8aqXNKcK+y0XaB298IXueQ8I2PsrATcPBCSPyK/dDNa2iWOhKlfNnOjdAOTBU/nkFA==}
     dev: false
 
-  /ts-jest/27.1.3_51125e7fba04a76d4671b5bf184ec68b:
+  /ts-jest/27.1.3_1766e319e8d052b5cf7cf33ad7bdf589:
     resolution: {integrity: sha512-6Nlura7s6uM9BVUAoqLH7JHyMXjz8gluryjpPXxr3IxZdAXnU6FhjvVLHFtfd1vsE1p8zD1OJfskkc0jhTSnkA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -11550,7 +11552,7 @@ packages:
       lodash.memoize: 4.1.2
       make-error: 1.3.6
       semver: 7.3.5
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
       yargs-parser: 20.2.9
     dev: false
 
@@ -11617,14 +11619,14 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /tsutils/3.21.0_typescript@4.7.0-dev.20220330:
+  /tsutils/3.21.0_typescript@4.7.0-dev.20220401:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
     engines: {node: '>= 6'}
     peerDependencies:
       typescript: '>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta'
     dependencies:
       tslib: 1.14.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     dev: false
 
   /type-check/0.3.2:
@@ -11676,8 +11678,8 @@ packages:
     hasBin: true
     dev: false
 
-  /typescript/4.7.0-dev.20220330:
-    resolution: {integrity: sha512-TNmxNhJa67ejR+va5t7dg0Qj/oWOtyqsA2K5IPrY/bavenA4gXNRPzJE/I9y/1lzTdLe0hl2CyREjSbeGBzKpQ==}
+  /typescript/4.7.0-dev.20220401:
+    resolution: {integrity: sha512-L6AjCHEw3nD3npBU7nMqbRJnfhDlupn3/sR322Ng/6h4z7tInP5u+8l58CZ05s91M7M808y8PLJMXHKbSZHroQ==}
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: false
@@ -12491,7 +12493,7 @@ packages:
     dependencies:
       '@types/jest': 27.4.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     dev: false
 
   file:projects/adb-backend-webusb.tgz:
@@ -12502,7 +12504,7 @@ packages:
       '@types/w3c-web-usb': 1.0.5
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -12519,7 +12521,7 @@ packages:
     dependencies:
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -12535,7 +12537,7 @@ packages:
     version: 0.0.0
     dependencies:
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     dev: false
 
   file:projects/adb.tgz:
@@ -12548,9 +12550,9 @@ packages:
       '@yume-chan/async': 2.1.4
       cross-env: 7.0.3
       jest: 27.5.1
-      ts-jest: 27.1.3_51125e7fba04a76d4671b5bf184ec68b
+      ts-jest: 27.1.3_1766e319e8d052b5cf7cf33ad7bdf589
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
       web-streams-polyfill: 3.2.0
     transitivePeerDependencies:
       - '@babel/core'
@@ -12570,7 +12572,7 @@ packages:
     version: 0.0.0
     dependencies:
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     dev: false
 
   file:projects/dataview-bigint-polyfill.tgz:
@@ -12580,7 +12582,7 @@ packages:
     dependencies:
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -12591,7 +12593,7 @@ packages:
     dev: false
 
   file:projects/demo.tgz_@mdx-js+react@1.6.22:
-    resolution: {integrity: sha512-7hwEqQvTRIM3VJBII3s6Oe99hwMvusRGhmnO3Eqpe3FEKJ6pNb9MZfkQq8/ZBAN7cGExrwi8SHgyJQtWqMIimg==, tarball: file:projects/demo.tgz}
+    resolution: {integrity: sha512-ClqjGhpge8N24GycjPKcGk2te3FjrTUUe1wH87DHsiDFhEbJK6zabMU6L9ny/7uQNkBB//wXFLm96sV7ztrZlw==, tarball: file:projects/demo.tgz}
     id: file:projects/demo.tgz
     name: '@rush-temp/demo'
     version: 0.0.0
@@ -12600,20 +12602,21 @@ packages:
       '@fluentui/react-file-type-icons': 8.6.6_b094b78811fc8d2f00a90f13d0251fb6
       '@fluentui/react-hooks': 8.5.3_b094b78811fc8d2f00a90f13d0251fb6
       '@fluentui/react-icons': 2.0.164-rc.2_6a473177d35e041349271dbf5c40a8b6
+      '@fluentui/style-utilities': 8.6.5_b094b78811fc8d2f00a90f13d0251fb6
       '@griffel/react': 1.0.2_react@17.0.2
       '@mdx-js/loader': 1.6.22_react@17.0.2
       '@next/mdx': 11.1.4_f56c41adb6190c4680be4a1c0222355d
       '@types/react': 17.0.27
       '@yume-chan/async': 2.1.4
       eslint: 8.8.0
-      eslint-config-next: 12.1.3_5063112dcb586131c24aef9d22e20333
+      eslint-config-next: 12.1.3_c89561272e8295d8c5b50727d5829a82
       mobx: 6.5.0
       mobx-react-lite: 3.3.0_3b110ddd052df537d55bc762cdd4d0b8
       next: 12.1.3_react-dom@17.0.2+react@17.0.2
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       streamsaver: 2.0.6
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
       xterm: 4.17.0
       xterm-addon-fit: 0.5.0_xterm@4.17.0
       xterm-addon-search: 0.8.2_xterm@4.17.0
@@ -12638,7 +12641,7 @@ packages:
       '@yume-chan/async': 2.1.4
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -12660,7 +12663,7 @@ packages:
       jest: 27.5.1
       tinyh264: 0.0.7
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
       yuv-buffer: 1.0.0
       yuv-canvas: 1.2.9
     transitivePeerDependencies:
@@ -12683,7 +12686,7 @@ packages:
       bluebird: 3.7.2
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220330
+      typescript: 4.7.0-dev.20220401
     transitivePeerDependencies:
       - bufferutil
       - canvas

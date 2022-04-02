@@ -46,7 +46,7 @@ export class BufferedStream {
         } else {
             const { done, value } = await this.reader.read();
             if (done) {
-                throw new Error('Unexpected end of stream');
+                throw new BufferedStreamEndedError();
             }
 
             if (value.byteLength === length) {
@@ -68,7 +68,7 @@ export class BufferedStream {
 
             const { done, value } = await this.reader.read();
             if (done) {
-                throw new Error('Unexpected end of stream');
+                throw new BufferedStreamEndedError();
             }
 
             if (value.byteLength === left) {

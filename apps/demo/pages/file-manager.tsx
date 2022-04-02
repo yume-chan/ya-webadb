@@ -1,7 +1,8 @@
 import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, Selection, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
-import { FileIconType, getFileTypeIconProps } from "@fluentui/react-file-type-icons";
+import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from "@fluentui/react-file-type-icons";
 import { useConst } from '@fluentui/react-hooks';
-import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, LinuxFileType, ReadableStream, WritableStream } from '@yume-chan/adb';
+import { getIcon } from '@fluentui/style-utilities';
+import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, LinuxFileType, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -12,23 +13,9 @@ import path from 'path';
 import { useCallback, useEffect, useState } from 'react';
 import { CommandBar, NoSsr } from '../components';
 import { globalState } from '../state';
-import { asyncEffect, formatSize, formatSpeed, Icons, pickFile, RouteStackProps } from '../utils';
+import { asyncEffect, formatSize, formatSpeed, Icons, pickFile, ProgressStream, RouteStackProps } from '../utils';
 
-const FILE_TYPE_ICONS_BASE_URL = "https://spoppe-b.azureedge.net/files/fabric-cdn-prod_20220309.001/assets/item-types/";
-
-/**
- * Because of internal buffer of upstream/downstream streams,
- * the progress value won't be 100% accurate. But it's usually good enough.
- */
-export class ProgressStream extends InspectStream<Uint8Array> {
-    public constructor(onProgress: (value: number) => void) {
-        let progress = 0;
-        super(chunk => {
-            progress += chunk.byteLength;
-            onProgress(progress);
-        });
-    }
-}
+initializeFileTypeIcons();
 
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
@@ -272,7 +259,9 @@ class FileManagerState {
                             break;
                     }
 
-                    return <Icon imageProps={{ crossOrigin: '', src: `${FILE_TYPE_ICONS_BASE_URL}${ICON_SIZE}/${iconName}.svg` }} style={{ width: ICON_SIZE, height: ICON_SIZE }} />;
+                    // `@fluentui/react-file-type-icons` doesn't export icon src.
+                    const iconSrc = (getIcon(iconName)!.code as unknown as JSX.Element).props.src;
+                    return <Icon imageProps={{ crossOrigin: 'anonymous', src: iconSrc }} style={{ width: ICON_SIZE, height: ICON_SIZE }} />;
                 }
             },
             {

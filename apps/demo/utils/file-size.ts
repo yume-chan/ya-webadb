@@ -1,4 +1,5 @@
 import { useSetInterval } from '@fluentui/react-hooks';
+import { InspectStream } from "@yume-chan/adb";
 import { useEffect, useRef, useState } from 'react';
 
 const units = [' B', ' KB', ' MB', ' GB'];
@@ -58,4 +59,18 @@ export function delay(time: number): Promise<void> {
     return new Promise(resolve => {
         window.setTimeout(resolve, time);
     });
+}
+
+/**
+ * Because of internal buffer of upstream/downstream streams,
+ * the progress value won't be 100% accurate. But it's usually good enough.
+ */
+export class ProgressStream extends InspectStream<Uint8Array> {
+    public constructor(onProgress: (value: number) => void) {
+        let progress = 0;
+        super(chunk => {
+            progress += chunk.byteLength;
+            onProgress(progress);
+        });
+    }
 }
