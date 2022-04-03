@@ -894,7 +894,7 @@ const Scrcpy: NextPage = () => {
                     <Toggle
                         label={
                             <>
-                                <span>Ignore decoder's codec arguments{' '}</span>
+                                <span>{`Ignore decoder's codec arguments `}</span>
                                 <TooltipHost content="Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.">
                                     <Icon iconName={Icons.Info} />
                                 </TooltipHost>
