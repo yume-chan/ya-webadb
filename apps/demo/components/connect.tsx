@@ -158,25 +158,17 @@ function _Connect(): JSX.Element | null {
                 try {
                     setConnecting(true);
 
-                    const dataStreamPair = await selectedBackend.connect();
-
-                    const packetStreamPair = Adb.createConnection({
-                        readable: dataStreamPair.readable
-                            .pipeThrough(new InspectStream(chunk => {
-                                byteInAcc.current += chunk.byteLength;
-                            })),
-                        writable: dataStreamPair.writable,
-                    });
+                    const streams = await selectedBackend.connect();
 
                     // Use `TransformStream` to intercept packets and log them
-                    const readable = packetStreamPair.readable
+                    const readable = streams.readable
                         .pipeThrough(
                             new InspectStream(packet => {
                                 globalState.appendLog('Incoming', packet);
                             })
                         );
                     const writable = pipeFrom(
-                        packetStreamPair.writable,
+                        streams.writable,
                         new InspectStream(packet => {
                             globalState.appendLog('Outgoing', packet);
                         })

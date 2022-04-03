@@ -2,9 +2,9 @@ import { PromiseResolver } from '@yume-chan/async';
 import { AdbAuthenticationHandler, AdbDefaultAuthenticators, type AdbCredentialStore } from './auth.js';
 import { AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install, type AdbFrameBuffer } from './commands/index.js';
 import { AdbFeatures } from './features.js';
-import { AdbCommand, AdbPacket, AdbPacketSerializeStream, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from './packet.js';
+import { AdbCommand, AdbPacket, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from './packet.js';
 import { AdbPacketDispatcher, AdbSocket } from './socket/index.js';
-import { AbortController, DecodeUtf8Stream, GatherStringStream, pipeFrom, StructDeserializeStream, WritableStream, type ReadableWritablePair } from "./stream/index.js";
+import { AbortController, DecodeUtf8Stream, GatherStringStream, WritableStream, type ReadableWritablePair } from "./stream/index.js";
 import { decodeUtf8, encodeUtf8 } from "./utils/index.js";
 
 export enum AdbPropKey {
@@ -17,27 +17,13 @@ export enum AdbPropKey {
 export const VERSION_OMIT_CHECKSUM = 0x01000001;
 
 export class Adb {
-    public static createConnection(
-        connection: ReadableWritablePair<Uint8Array, Uint8Array>
-    ): ReadableWritablePair<AdbPacket, AdbPacketCore> {
-        return {
-            readable: connection.readable.pipeThrough(
-                new StructDeserializeStream(AdbPacket)
-            ),
-            writable: pipeFrom(
-                connection.writable,
-                new AdbPacketSerializeStream()
-            ),
-        };
-    }
-
     /**
      * It's possible to call `authenticate` multiple times on a single connection,
      * every time the device receives a `CNXN` packet it will reset its internal state,
      * and begin authentication again.
      */
     public static async authenticate(
-        connection: ReadableWritablePair<AdbPacket, AdbPacketCore>,
+        connection: ReadableWritablePair<AdbPacketCore, AdbPacketCore>,
         credentialStore: AdbCredentialStore,
         authenticators = AdbDefaultAuthenticators,
     ) {
@@ -157,7 +143,7 @@ export class Adb {
     public readonly tcpip: AdbTcpIpCommand;
 
     public constructor(
-        connection: ReadableWritablePair<AdbPacket, AdbPacketInit>,
+        connection: ReadableWritablePair<AdbPacketCore, AdbPacketInit>,
         version: number,
         maxPayloadSize: number,
         banner: string,

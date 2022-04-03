@@ -1,4 +1,5 @@
-import { DuplexStreamFactory, type AdbBackend, type ReadableStream, type ReadableWritablePair, type WritableStream } from '@yume-chan/adb';
+import { AdbPacket, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, type AdbBackend, type AdbPacketCore, type AdbPacketInit, type ReadableWritablePair, type WritableStream } from '@yume-chan/adb';
+import type { StructAsyncDeserializeStream } from "@yume-chan/struct";
 
 export const WebUsbDeviceFilter: USBDeviceFilter = {
     classCode: 0xFF,
@@ -6,15 +7,15 @@ export const WebUsbDeviceFilter: USBDeviceFilter = {
     protocolCode: 1,
 };
 
-export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, Uint8Array>{
-    private _readable: ReadableStream<Uint8Array>;
+export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketCore, AdbPacketInit>{
+    private _readable: ReadableStream<AdbPacketCore>;
     public get readable() { return this._readable; }
 
-    private _writable: WritableStream<Uint8Array>;
+    private _writable: WritableStream<AdbPacketInit>;
     public get writable() { return this._writable; }
 
     public constructor(device: USBDevice, inEndpoint: USBEndpoint, outEndpoint: USBEndpoint) {
-        const factory = new DuplexStreamFactory<Uint8Array, Uint8Array>({
+        const factory = new DuplexStreamFactory<AdbPacketCore, Uint8Array>({
             close: async () => {
                 navigator.usb.removeEventListener('disconnect', handleUsbDisconnect);
                 try {
@@ -33,9 +34,13 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
 
         navigator.usb.addEventListener('disconnect', handleUsbDisconnect);
 
-        this._readable = factory.createReadable({
-            pull: async (controller) => {
-                const result = await device.transferIn(inEndpoint.endpointNumber, inEndpoint.packetSize);
+        const incomingStream: StructAsyncDeserializeStream = {
+            async read(length) {
+                // `ReadableStream<Uin8Array>` don't know how many bytes the consumer need in each `pull`,
+                // But `transferIn(endpointNumber, packetSize)` is much slower than `transferIn(endpointNumber, length)`
+                // So `AdbBackend` is refactored to use `ReadableStream<AdbPacketCore>` directly,
+                // (let each backend deserialize the packets in their own way)
+                const result = await device.transferIn(inEndpoint.endpointNumber, length);
 
                 // `USBTransferResult` has three states: "ok", "stall" and "babble",
                 // but ADBd on Android won't enter "stall" (halt) state,
@@ -44,22 +49,25 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<Uint8Array, 
                 // "babble" just means there is more data to be read.
 
                 // From spec, the `result.data` always covers the whole `buffer`.
-                const chunk = new Uint8Array(result.data!.buffer);
-                controller.enqueue(chunk);
-            },
-        }, {
-            highWaterMark: 16 * 1024,
-            size(chunk) { return chunk.byteLength; },
-        });
+                return new Uint8Array(result.data!.buffer);
+            }
+        };
 
-        this._writable = factory.createWritable({
+        this._readable = factory.createWrapReadable(new ReadableStream<AdbPacketCore>({
+            async pull(controller) {
+                const value = await AdbPacket.deserialize(incomingStream);
+                controller.enqueue(value);
+            },
+        }));
+
+        this._writable = pipeFrom(factory.createWritable({
             write: async (chunk) => {
                 await device.transferOut(outEndpoint.endpointNumber, chunk);
             },
         }, {
             highWaterMark: 16 * 1024,
             size(chunk) { return chunk.byteLength; },
-        });
+        }), new AdbPacketSerializeStream());
     }
 }
 

@@ -1,4 +1,5 @@
 import type { ValueOrPromise } from '@yume-chan/struct';
+import type { AdbPacketCore, AdbPacketInit } from "./packet.js";
 import type { ReadableWritablePair } from "./stream/index.js";
 
 export interface AdbBackend {
@@ -6,5 +7,5 @@ export interface AdbBackend {
 
     readonly name: string | undefined;
 
-    connect(): ValueOrPromise<ReadableWritablePair<Uint8Array, Uint8Array>>;
+    connect(): ValueOrPromise<ReadableWritablePair<AdbPacketCore, AdbPacketInit>>;
 }

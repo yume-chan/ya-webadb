@@ -1,4 +1,4 @@
-import { DuplexStreamFactory, type AdbBackend } from '@yume-chan/adb';
+import { AdbPacket, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, StructDeserializeStream, type AdbBackend } from '@yume-chan/adb';
 
 export default class AdbWsBackend implements AdbBackend {
     public readonly serial: string;
@@ -51,6 +51,9 @@ export default class AdbWsBackend implements AdbBackend {
             size(chunk) { return chunk.byteLength; },
         });
 
-        return { readable, writable };
+        return {
+            readable: readable.pipeThrough(new StructDeserializeStream(AdbPacket)),
+            writable: pipeFrom(writable, new AdbPacketSerializeStream()),
+        };
     }
 }

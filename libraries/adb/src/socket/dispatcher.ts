@@ -1,6 +1,6 @@
 import { AsyncOperationManager, PromiseResolver } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
-import { AdbCommand, AdbPacket, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from '../packet.js';
+import { AdbCommand, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from '../packet.js';
 import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '../stream/index.js';
 import { decodeUtf8, encodeUtf8 } from '../utils/index.js';
 import { AdbSocket } from './socket.js';
@@ -8,7 +8,7 @@ import { AdbSocket } from './socket.js';
 export interface AdbIncomingSocketEventArgs {
     handled: boolean;
 
-    packet: AdbPacket;
+    packet: AdbPacketCore;
 
     serviceString: string;
 
@@ -41,7 +41,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private _abortController = new AbortController();
 
     public constructor(
-        connection: ReadableWritablePair<AdbPacket, AdbPacketInit>,
+        connection: ReadableWritablePair<AdbPacketCore, AdbPacketInit>,
     ) {
         super();
 
@@ -91,7 +91,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this._writer = connection.writable.getWriter();
     }
 
-    private handleOk(packet: AdbPacket) {
+    private handleOk(packet: AdbPacketCore) {
         if (this.initializers.resolve(packet.arg1, packet.arg0)) {
             // Device successfully created the socket
             return;
@@ -109,7 +109,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
     }
 
-    private async handleClose(packet: AdbPacket) {
+    private async handleClose(packet: AdbPacketCore) {
         // From https://android.googlesource.com/platform/packages/modules/adb/+/65d18e2c1cc48b585811954892311b28a4c3d188/adb.cpp#459
         /* According to protocol.txt, p->msg.arg0 might be 0 to indicate
          * a failed OPEN only. However, due to a bug in previous ADB
@@ -139,7 +139,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         // Just ignore it
     }
 
-    private async handleOpen(packet: AdbPacket) {
+    private async handleOpen(packet: AdbPacketCore) {
         // AsyncOperationManager doesn't support get and skip an ID
         // Use `add` + `resolve` to simulate this behavior
         const [localId] = this.initializers.add<number>();

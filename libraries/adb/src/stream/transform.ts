@@ -179,15 +179,11 @@ export class StructDeserializeStream<T extends Struct<any, any, any, any>>
             )
         );
 
-        this._readable = new PushReadableStream<StructValueType<T>>(
-            async controller => {
+        this._readable = new ReadableStream<StructValueType<T>>({
+            async pull(controller) {
                 try {
-                    // Unless we make `deserialize` be capable of pausing/resuming,
-                    // We always need at least one pull loop
-                    while (true) {
-                        const value = await struct.deserialize(incomingStream);
-                        await controller.enqueue(value);
-                    }
+                    const value = await struct.deserialize(incomingStream);
+                    controller.enqueue(value);
                 } catch (e) {
                     if (e instanceof BufferedStreamEndedError) {
                         controller.close();
@@ -196,7 +192,7 @@ export class StructDeserializeStream<T extends Struct<any, any, any, any>>
                     throw e;
                 }
             }
-        );
+        });
 
         this._writable = new WritableStream({
             async write(chunk) {
