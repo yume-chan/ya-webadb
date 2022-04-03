@@ -14,6 +14,7 @@ export enum ScrcpyControlMessageType {
     RotateDevice,
 }
 
+// https://developer.android.com/reference/android/view/MotionEvent#constants_1
 export enum AndroidMotionEventAction {
     Down,
     Up,

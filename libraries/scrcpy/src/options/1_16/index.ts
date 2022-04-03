@@ -1,12 +1,12 @@
-import type { Adb, AdbBufferedStream } from "@yume-chan/adb";
+import { BufferedStreamEndedError, ReadableStream, TransformStream, type Adb, type AdbBufferedStream } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
-import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec";
-import { ScrcpyClientConnection, ScrcpyClientConnectionOptions, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection } from "../../connection";
-import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../../message";
-import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18";
-import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22";
-import { type ScrcpyOptionValue, toScrcpyOptionValue, VideoStreamPacket, type ScrcpyOptions } from "../common";
-import { parse_sequence_parameter_set } from "./sps";
+import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec.js";
+import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnectionOptions } from "../../connection.js";
+import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../../message.js";
+import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18.js";
+import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22.js";
+import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyOptionValue, type VideoStreamPacket } from "../common.js";
+import { parse_sequence_parameter_set } from "./sps.js";
 
 export enum ScrcpyLogLevel {
     Verbose = 'verbose',
@@ -114,7 +114,7 @@ export const VideoPacket =
     new Struct()
         .int64('pts')
         .uint32('size')
-        .arrayBuffer('data', { lengthField: 'size' });
+        .uint8Array('data', { lengthField: 'size' });
 
 export const NoPts = BigInt(-1);
 
@@ -134,8 +134,6 @@ export const ScrcpyInjectScrollControlMessage1_16 =
 
 export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16> implements ScrcpyOptions<T> {
     public value: Partial<T>;
-
-    private _streamHeader: ArrayBuffer | undefined;
 
     public constructor(value: Partial<ScrcpyOptionsInit1_16>) {
         if (new.target === ScrcpyOptions1_16 &&
@@ -195,7 +193,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
             .map(key => toScrcpyOptionValue(this.value[key] || defaults[key], '-'));
     }
 
-    public createConnection(device: Adb): ScrcpyClientConnection {
+    public createConnection(adb: Adb): ScrcpyClientConnection {
         const options: ScrcpyClientConnectionOptions = {
             // Old scrcpy connection always have control stream no matter what the option is
             control: true,
@@ -203,9 +201,9 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
             sendDeviceMeta: true,
         };
         if (this.value.tunnelForward) {
-            return new ScrcpyClientForwardConnection(device, options);
+            return new ScrcpyClientForwardConnection(adb, options);
         } else {
-            return new ScrcpyClientReverseConnection(device, options);
+            return new ScrcpyClientReverseConnection(adb, options);
         }
     }
 
@@ -213,75 +211,97 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
         return /\s+scrcpy --encoder-name '(.*?)'/;
     }
 
-    public async parseVideoStream(stream: AdbBufferedStream): Promise<VideoStreamPacket> {
+    public parseVideoStream(stream: AdbBufferedStream): ReadableStream<VideoStreamPacket> {
+        // Optimized path for video frames only
         if (this.value.sendFrameMeta === false) {
-            return {
-                videoData: await stream.read(1 * 1024 * 1024, true),
-            };
+            return stream
+                .release()
+                .pipeThrough(new TransformStream<Uint8Array, VideoStreamPacket>({
+                    transform(chunk, controller) {
+                        controller.enqueue({
+                            type: 'frame',
+                            data: chunk,
+                        });
+                    },
+                }));
         }
 
-        const { pts, data } = await VideoPacket.deserialize(stream);
-        if (!data || data.byteLength === 0) {
-            return {};
-        }
+        let header: Uint8Array | undefined;
 
-        if (pts === NoPts) {
-            const sequenceParameterSet = parse_sequence_parameter_set(data.slice(0));
+        return new ReadableStream<VideoStreamPacket>({
+            async pull(controller) {
+                try {
+                    const { pts, data } = await VideoPacket.deserialize(stream);
+                    if (pts === NoPts) {
+                        const sequenceParameterSet = parse_sequence_parameter_set(data.slice().buffer);
 
-            const {
-                profile_idc: profileIndex,
-                constraint_set: constraintSet,
-                level_idc: levelIndex,
-                pic_width_in_mbs_minus1,
-                pic_height_in_map_units_minus1,
-                frame_mbs_only_flag,
-                frame_crop_left_offset,
-                frame_crop_right_offset,
-                frame_crop_top_offset,
-                frame_crop_bottom_offset,
-            } = sequenceParameterSet;
+                        const {
+                            profile_idc: profileIndex,
+                            constraint_set: constraintSet,
+                            level_idc: levelIndex,
+                            pic_width_in_mbs_minus1,
+                            pic_height_in_map_units_minus1,
+                            frame_mbs_only_flag,
+                            frame_crop_left_offset,
+                            frame_crop_right_offset,
+                            frame_crop_top_offset,
+                            frame_crop_bottom_offset,
+                        } = sequenceParameterSet;
 
-            const encodedWidth = (pic_width_in_mbs_minus1 + 1) * 16;
-            const encodedHeight = (pic_height_in_map_units_minus1 + 1) * (2 - frame_mbs_only_flag) * 16;
-            const cropLeft = frame_crop_left_offset * 2;
-            const cropRight = frame_crop_right_offset * 2;
-            const cropTop = frame_crop_top_offset * 2;
-            const cropBottom = frame_crop_bottom_offset * 2;
+                        const encodedWidth = (pic_width_in_mbs_minus1 + 1) * 16;
+                        const encodedHeight = (pic_height_in_map_units_minus1 + 1) * (2 - frame_mbs_only_flag) * 16;
+                        const cropLeft = frame_crop_left_offset * 2;
+                        const cropRight = frame_crop_right_offset * 2;
+                        const cropTop = frame_crop_top_offset * 2;
+                        const cropBottom = frame_crop_bottom_offset * 2;
 
-            const croppedWidth = encodedWidth - cropLeft - cropRight;
-            const croppedHeight = encodedHeight - cropTop - cropBottom;
+                        const croppedWidth = encodedWidth - cropLeft - cropRight;
+                        const croppedHeight = encodedHeight - cropTop - cropBottom;
 
-            this._streamHeader = data;
-            return {
-                encodingInfo: {
-                    profileIndex,
-                    constraintSet,
-                    levelIndex,
-                    encodedWidth,
-                    encodedHeight,
-                    cropLeft,
-                    cropRight,
-                    cropTop,
-                    cropBottom,
-                    croppedWidth,
-                    croppedHeight,
+                        header = data;
+                        controller.enqueue({
+                            type: 'configuration',
+                            data: {
+                                profileIndex,
+                                constraintSet,
+                                levelIndex,
+                                encodedWidth,
+                                encodedHeight,
+                                cropLeft,
+                                cropRight,
+                                cropTop,
+                                cropBottom,
+                                croppedWidth,
+                                croppedHeight,
+                            }
+                        });
+                        return;
+                    }
+
+                    let frameData: Uint8Array;
+                    if (header) {
+                        frameData = new Uint8Array(header.byteLength + data.byteLength);
+                        frameData.set(header);
+                        frameData.set(data!, header.byteLength);
+                        header = undefined;
+                    } else {
+                        frameData = data;
+                    }
+
+                    controller.enqueue({
+                        type: 'frame',
+                        data: frameData,
+                    });
+                } catch (e) {
+                    if (e instanceof BufferedStreamEndedError) {
+                        controller.close();
+                        return;
+                    }
+
+                    throw e;
                 }
-            };
-        }
-
-        let array: Uint8Array;
-        if (this._streamHeader) {
-            array = new Uint8Array(this._streamHeader.byteLength + data!.byteLength);
-            array.set(new Uint8Array(this._streamHeader));
-            array.set(new Uint8Array(data!), this._streamHeader.byteLength);
-            this._streamHeader = undefined;
-        } else {
-            array = new Uint8Array(data!);
-        }
-
-        return {
-            videoData: array.buffer,
-        };
+            }
+        });
     }
 
     public serializeBackOrScreenOnControlMessage(
@@ -296,7 +316,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
 
     public serializeInjectScrollControlMessage(
         message: ScrcpyInjectScrollControlMessage1_22,
-    ): ArrayBuffer {
+    ): Uint8Array {
         return ScrcpyInjectScrollControlMessage1_16.serialize(message);
     }
 }

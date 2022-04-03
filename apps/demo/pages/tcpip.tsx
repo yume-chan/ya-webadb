@@ -5,7 +5,7 @@ import { autorun, makeAutoObservable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { ExternalLink } from "../components";
 import { globalState } from "../state";
 import { asyncEffect, Icons, RouteStackProps } from "../utils";
@@ -190,14 +190,12 @@ const TcpIp: NextPage = () => {
                     offText="Disabled"
                     onChange={handleServicePortEnabledChange}
                 />
-                {globalState && (
-                    <TextField
-                        disabled={!!state.serviceListenAddresses}
-                        value={state.servicePort}
-                        styles={{ root: { width: 300 } }}
-                        onChange={handleServicePortChange}
-                    />
-                )}
+                <TextField
+                    disabled={!globalState.device || !!state.serviceListenAddresses}
+                    value={state.servicePort}
+                    styles={{ root: { width: 300 } }}
+                    onChange={handleServicePortChange}
+                />
             </StackItem>
 
             <StackItem>

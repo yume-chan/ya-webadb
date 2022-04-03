@@ -1,6 +1,6 @@
 import Struct, { placeholder } from "@yume-chan/struct";
-import type { AndroidKeyEventAction } from "../message";
-import { ScrcpyBackOrScreenOnEvent1_16, ScrcpyOptions1_16, type ScrcpyOptionsInit1_16 } from "./1_16";
+import type { AndroidKeyEventAction } from "../message.js";
+import { ScrcpyBackOrScreenOnEvent1_16, ScrcpyOptions1_16, type ScrcpyOptionsInit1_16 } from "./1_16/index.js";
 
 export interface ScrcpyOptionsInit1_18 extends ScrcpyOptionsInit1_16 {
     powerOffOnClose: boolean;

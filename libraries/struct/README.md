@@ -2,7 +2,7 @@
 
 <!--
 cspell: ignore Codecov
-cspell: ignore arraybufferuint8clampedarraystring
+cspell: ignore uint8arraystring
 -->
 
 ![license](https://img.shields.io/npm/l/@yume-chan/struct)
@@ -42,7 +42,7 @@ value.baz // string
 const buffer = MyStruct.serialize({
     foo: 42,
     bar: 42n,
-    // `bazLength` automatically set to `baz.length`
+    // `bazLength` automatically set to `baz`'s byte length
     baz: 'Hello, World!',
 });
 ```
@@ -52,12 +52,15 @@ const buffer = MyStruct.serialize({
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Compatibility](#compatibility)
+  - [Basic usage](#basic-usage)
+  - [`int64`/`uint64`](#int64uint64)
+  - [`string`](#string)
 - [API](#api)
   - [`placeholder`](#placeholder)
   - [`Struct`](#struct)
     - [`int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32`](#int8uint8int16uint16int32uint32)
-    - [`int64`/`uint64`](#int64uint64)
-    - [`arraybuffer`/`uint8ClampedArray`/`string`](#arraybufferuint8clampedarraystring)
+    - [`int64`/`uint64`](#int64uint64-1)
+    - [`uint8Array`/`string`](#uint8arraystring)
     - [`fields`](#fields)
     - [`extra`](#extra)
     - [`postDeserialize`](#postdeserialize)
@@ -65,6 +68,7 @@ const buffer = MyStruct.serialize({
     - [`serialize`](#serialize)
 - [Custom field type](#custom-field-type)
   - [`Struct#field`](#structfield)
+  - [Relationship between types](#relationship-between-types)
   - [`StructFieldDefinition`](#structfielddefinition)
     - [`TValue`/`TOmitInitKey`](#tvaluetomitinitkey)
     - [`getSize`](#getsize)
@@ -79,25 +83,35 @@ const buffer = MyStruct.serialize({
 
 ## Compatibility
 
-|                                                              | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js             |
-| ------------------------------------------------------------ | ------ | ---- | ------- | ----------------- | ------ | ------------------- |
-| **Basic usage**                                              | 32     | 12   | 29      | 10<sup>1</sup>    | 8      | 0.12                |
-| &nbsp;&nbsp;&nbsp;&nbsp;[`Promise`][MDN_Promise]             | 32     | 12   | 29      | No<sup>1</sup>    | 8      | 0.12                |
-| &nbsp;&nbsp;&nbsp;&nbsp;[`ArrayBuffer`][MDN_ArrayBuffer]     | 7      | 12   | 4       | 10                | 5.1    | 0.10                |
-| &nbsp;&nbsp;&nbsp;&nbsp;[`Uint8Array`][MDN_Uint8Array]       | 7      | 12   | 4       | 10                | 5.1    | 0.10                |
-| &nbsp;&nbsp;&nbsp;&nbsp;[`DataView`][MDN_DataView]           | 9      | 12   | 15      | 10                | 5.1    | 0.10                |
-| **Use [`int64`/`uint64`](#int64uint64) type**                | 67     | 79   | 68      | No<sup>2</sup>    | 14     | 10.4                |
-| &nbsp;&nbsp;&nbsp;&nbsp;[`BigInt`][MDN_BigInt]               | 67     | 79   | 68      | No<sup>2</sup>    | 14     | 10.4                |
-| **Use [`string`](#arraybufferuint8clampedarraystring) type** | 38     | 79   | 29      | 10<sup>3</sup>    | 10.1   | 8.3<sup>4</sup>, 11 |
-| &nbsp;&nbsp;&nbsp;&nbsp;[`TextEncoder`][MDN_TextEncoder]     | 38     | 79   | 19      | No                | 10.1   | 11                  |
+Here is a list of features, their used APIs, and their compatibilities. If an optional feature is not actually used, its requirements can be ignored.
 
-<sup>1</sup> Requires a polyfill for Promise (e.g. [promise-polyfill](https://www.npmjs.com/package/promise-polyfill))
+Some features can be polyfilled to support older runtimes, but this library doesn't ship with any polyfills.
 
-<sup>2</sup> `BigInt` can't be polyfilled
+### Basic usage
 
-<sup>3</sup> Requires a polyfill for `TextEncoder` and `TextDecoder` (e.g. [fast-text-encoding](https://www.npmjs.com/package/fast-text-encoding))
+| API                              | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js |
+| -------------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------- |
+| [`Promise`][MDN_Promise]         | 32     | 12   | 29      | No                | 8      | 0.12    |
+| [`ArrayBuffer`][MDN_ArrayBuffer] | 7      | 12   | 4       | 10                | 5.1    | 0.10    |
+| [`Uint8Array`][MDN_Uint8Array]   | 7      | 12   | 4       | 10                | 5.1    | 0.10    |
+| [`DataView`][MDN_DataView]       | 9      | 12   | 15      | 10                | 5.1    | 0.10    |
+| *Overall*                        | 32     | 12   | 29      | No                | 8      | 0.12    |
 
-<sup>4</sup> `TextEncoder` and `TextDecoder` are only available in `util` module. Must be assigned to `globalThis`.
+### [`int64`/`uint64`](#int64uint64-1)
+
+| API                                | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js |
+| ---------------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------- |
+| [`BigInt`][MDN_BigInt]<sup>1</sup> | 67     | 79   | 68      | No                | 14     | 10.4    |
+
+<sup>1</sup> Can't be polyfilled
+
+### [`string`](#uint8arraystring)
+
+| API                              | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js             |
+| -------------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------------------- |
+| [`TextEncoder`][MDN_TextEncoder] | 38     | 79   | 19      | No                | 10.1   | 8.3<sup>1</sup>, 11 |
+
+<sup>1</sup> `TextEncoder` and `TextDecoder` are only available in `util` module. Need to be assigned to `globalThis`.
 
 [MDN_Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [MDN_ArrayBuffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
@@ -161,7 +175,7 @@ class Struct<
 }
 ```
 
-Creates a new structure declaration.
+Creates a new structure definition.
 
 <details>
 <summary>Generic parameters (click to expand)</summary>
@@ -169,7 +183,7 @@ Creates a new structure declaration.
 This information was added to help you understand how does it work. These are considered as "internal state" so don't specify them manually.
 
 1. `TFields`: Type of the Struct value. Modified when new fields are added.
-2. `TOmitInitKey`: When serializing a structure containing variable length arrays, the length field can be calculate from the array field, so they doesn't need to be provided explicitly.
+2. `TOmitInitKey`: When serializing a structure containing variable length buffers, the length field can be calculate from the buffer field, so they doesn't need to be provided explicitly.
 3. `TExtra`: Type of extra fields. Modified when `extra` is called.
 4. `TPostDeserialized`: State of the `postDeserialize` function. Modified when `postDeserialize` is called. Affects return type of `deserialize`
 </details>
@@ -209,7 +223,7 @@ Appends an `int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32` field to the `Struct
 
 **Parameters**
 
-1. `name`: (Required) Field name. Must have a [literal type](https://www.typescriptlang.org/docs/handbook/literal-types.html).
+1. `name`: (Required) Field name. Must be a string literal.
 2. `_typescriptType`: Set field's type. See examples below.
 
 **Note**
@@ -272,19 +286,19 @@ int64<
 >;
 ```
 
-Appends an `int64`/`uint64` field to the `Struct`.
+Appends an `int64`/`uint64` field to the `Struct`. The usage is same as `uint32`/`uint32`.
 
 Requires native support for `BigInt`. Check [compatibility table](#compatibility) for more information.
 
-#### `arraybuffer`/`uint8ClampedArray`/`string`
+#### `uint8Array`/`string`
 
 ```ts
-arraybuffer<
+uint8Array<
     TName extends string | number | symbol,
     TTypeScriptType = ArrayBuffer
 >(
     name: TName,
-    options: FixedLengthArrayBufferLikeFieldOptions,
+    options: FixedLengthBufferLikeFieldOptions,
     _typescriptType?: TTypeScriptType,
 ): Struct<
     TFields & Record<TName, TTypeScriptType>,
@@ -293,9 +307,10 @@ arraybuffer<
     TPostDeserialized
 >;
 
-arraybuffer<
+uint8Array<
     TName extends string | number | symbol,
-    TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields>,
+    TLengthField extends LengthField<TFields>,
+    TOptions extends VariableLengthBufferLikeFieldOptions<TFields, TLengthField>,
     TTypeScriptType = ArrayBuffer,
 >(
     name: TName,
@@ -303,20 +318,18 @@ arraybuffer<
     _typescriptType?: TTypeScriptType,
 ): Struct<
     TFields & Record<TName, TTypeScriptType>,
-    TOmitInitKey | TOptions['lengthField'],
+    TOmitInitKey | TLengthField,
     TExtra,
     TPostDeserialized
 >;
 ```
 
-Appends an `ArrayBuffer`/`Uint8ClampedArray`/`string` field to the `Struct`.
+Appends an `uint8Array`/`string` field to the `Struct`.
 
 The `options` parameter defines its length, it can be in two formats:
 
 * `{ length: number }`: Presence of the `length` option indicates that it's a fixed length array.
-* `{ lengthField: string }`: Presence of the `lengthField` option indicates it's a variable length array. The `lengthField` options must refers to a `number` or `string` typed field that's already defined in this `Struct`. When deserializing, it will use that field's value as its length. And when serializing, it will write its length to that field.
-
-All these three are actually deserialized to `ArrayBuffer`, then converted to `Uint8ClampedArray` or `string` for ease of use.
+* `{ lengthField: string; lengthFieldRadix?: number }`: Presence of the `lengthField` option indicates it's a variable length array. The `lengthField` options must refers to a `number` or `string` (can't be `bigint`) typed field that's already defined in this `Struct`. If the length field is a `string`, the optional `lengthFieldRadix` option (defaults to `10`) defines the radix when converting the string to a number. When deserializing, it will use that field's value as its length. When serializing, it will write its length to that field.
 
 #### `fields`
 
@@ -539,10 +552,20 @@ interface StructDeserializeStream {
     /**
      * Read data from the underlying data source.
      *
-     * Stream must return exactly `length` bytes or data. If that's not possible
+     * The stream must return exactly `length` bytes or data. If that's not possible
      * (due to end of file or other error condition), it must throw an error.
      */
-    read(length: number): ArrayBuffer;
+    read(length: number): Uint8Array;
+}
+
+interface StructAsyncDeserializeStream {
+    /**
+     * Read data from the underlying data source.
+     *
+     * The stream must return exactly `length` bytes or data. If that's not possible
+     * (due to end of file or other error condition), it must throw an error.
+     */
+    read(length: number): Promise<Uint8Array>;
 }
 
 deserialize(
@@ -561,7 +584,9 @@ deserialize(
 >;
 ```
 
-Deserialize a Struct value from `stream`.
+Deserialize a struct value from `stream`.
+
+It will be synchronous (returns a value) or asynchronous (returns a `Promise`) depending on the type of `stream`.
 
 As the signature shows, if the `postDeserialize` callback returns any value, `deserialize` will return that value instead.
 
@@ -570,16 +595,17 @@ The `read` method of `stream`, when being called, should returns exactly `length
 #### `serialize`
 
 ```ts
-serialize(
-    init: Omit<TFields, TOmitInitKey>
-): ArrayBuffer;
+serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): Uint8Array;
+serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>, output: Uint8Array): number;
 ```
 
-Serialize a Struct value into an `ArrayBuffer`.
+Serialize a struct value into an `Uint8Array`.
+
+If an `output` is given, it will serialize the struct into it, and returns the number of bytes written.
 
 ## Custom field type
 
-This library supports adding fields of user defined types.
+It's also possible to create your own field types.
 
 ### `Struct#field`
 
@@ -600,7 +626,7 @@ field<
 
 Appends a `StructFieldDefinition` to the `Struct`.
 
-Actually, all built-in field type methods are aliases of `field`. For example, calling
+All built-in field type methods are actually aliases to it. For example, calling
 
 ```ts
 struct.int8('foo')
@@ -617,6 +643,15 @@ struct.field(
 )
 ```
 
+### Relationship between types
+
+A `Struct` is a map between keys and `StructFieldDefinition`s.
+
+A `StructValue` is a map between keys and `StructFieldValue`s.
+
+A `Struct` can create (deserialize) multiple `StructValue`s with same field definitions.
+
+Each time a `Struct` deserialize, each `StructFieldDefinition` in it creates exactly one `StructFieldValue` to be put into the `StructValue`.
 
 ### `StructFieldDefinition`
 
@@ -632,13 +667,13 @@ abstract class StructFieldDefinition<
 }
 ```
 
-A `StructFieldDefinition` describes type, size and runtime semantics of a field.
+A field definition defines how to deserialize a field.
 
-It's an `abstract` class, means it lacks some method implementations, so it shouldn't be constructed.
+It's an `abstract` class, means it can't be constructed (`new`ed) directly. It's only used as a base class for other field types.
 
 #### `TValue`/`TOmitInitKey`
 
-These two fields are used to provide type information to TypeScript. Their values will always be `undefined`, but having correct types is enough. You don't need to care about them.
+These two fields provide type information to TypeScript compiler. Their values will always be `undefined`, but having correct types is enough. You don't need to touch them.
 
 #### `getSize`
 
@@ -679,14 +714,17 @@ abstract deserialize(
 ): Promise<StructFieldValue<this>>;
 ```
 
-Derived classes must implement this method to define how to deserialize a value from `stream`. Can also return a `Promise`.
+Derived classes must implement this method to define how to deserialize a value from `stream`.
+
+It must be synchronous (returns a value) or asynchronous (returns a `Promise`) depending on the type of `stream`.
 
 Usually implementations should be:
 
-1. Somehow parse the value from `stream`
-2. Pass the value into its `create` method
+1. Read required bytes from `stream`
+2. Parse it to your type
+3. Pass the value into your own `create` method
 
-Sometimes, some metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` can save those metadata on the `StructFieldValue` instance for later use.
+Sometimes, extra metadata is present when deserializing, but need to be calculated when serializing, for example a UTF-8 encoded string may have different length between itself (character count) and serialized form (byte length). So `deserialize` can save those metadata on the `StructFieldValue` instance for later use.
 
 ### `StructFieldValue`
 
@@ -696,9 +734,7 @@ abstract class StructFieldValue<
 >
 ```
 
-To define a custom type, one must create their own `StructFieldValue` type to define the runtime semantics.
-
-Each `StructFieldValue` is linked to a `StructFieldDefinition`.
+A field value defines how to serialize a field.
 
 #### `getSize`
 
@@ -717,7 +753,7 @@ get(): TDefinition['TValue'];
 set(value: TDefinition['TValue']): void;
 ```
 
-Defines how to get or set this field's value. By default, it store its value in `value` field.
+Defines how to get or set this field's value. By default, it reads/writes its `value` field.
 
 If one needs to manipulate other states when getting/setting values, they can override these methods.
 

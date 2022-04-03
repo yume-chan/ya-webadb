@@ -1,12 +1,11 @@
 import { PromiseResolver } from '@yume-chan/async';
-import { DisposableList } from '@yume-chan/event';
-import { AdbAuthenticationHandler, AdbCredentialStore, AdbDefaultAuthenticators } from './auth';
-import { AdbBackend } from './backend';
-import { AdbChildProcess, AdbFrameBuffer, AdbPower, AdbReverseCommand, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install } from './commands';
-import { AdbFeatures } from './features';
-import { AdbCommand } from './packet';
-import { AdbLogger, AdbPacketDispatcher, AdbSocket } from './socket';
-import { decodeUtf8 } from "./utils";
+import { AdbAuthenticationHandler, AdbDefaultAuthenticators, type AdbCredentialStore } from './auth.js';
+import { AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install, type AdbFrameBuffer } from './commands/index.js';
+import { AdbFeatures } from './features.js';
+import { AdbCommand, AdbPacket, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from './packet.js';
+import { AdbPacketDispatcher, AdbSocket } from './socket/index.js';
+import { AbortController, DecodeUtf8Stream, GatherStringStream, WritableStream, type ReadableWritablePair } from "./stream/index.js";
+import { decodeUtf8, encodeUtf8 } from "./utils/index.js";
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
@@ -15,65 +14,21 @@ export enum AdbPropKey {
     Features = 'features',
 }
 
+export const VERSION_OMIT_CHECKSUM = 0x01000001;
+
 export class Adb {
-    private readonly _backend: AdbBackend;
-
-    public get backend(): AdbBackend { return this._backend; }
-
-    private readonly packetDispatcher: AdbPacketDispatcher;
-
-    public get onDisconnected() { return this.backend.onDisconnected; }
-
-    private _connected = false;
-    public get connected() { return this._connected; }
-
-    public get name() { return this.backend.name; }
-
-    private _protocolVersion: number | undefined;
-    public get protocolVersion() { return this._protocolVersion; }
-
-    private _product: string | undefined;
-    public get product() { return this._product; }
-
-    private _model: string | undefined;
-    public get model() { return this._model; }
-
-    private _device: string | undefined;
-    public get device() { return this._device; }
-
-    private _features: AdbFeatures[] | undefined;
-    public get features() { return this._features; }
-
-    public readonly childProcess: AdbChildProcess;
-    public readonly power: AdbPower;
-    public readonly reverse: AdbReverseCommand;
-    public readonly tcpip: AdbTcpIpCommand;
-
-    public constructor(backend: AdbBackend, logger?: AdbLogger) {
-        this._backend = backend;
-        this.packetDispatcher = new AdbPacketDispatcher(backend, logger);
-
-        this.childProcess = new AdbChildProcess(this);
-        this.power = new AdbPower(this);
-        this.reverse = new AdbReverseCommand(this.packetDispatcher);
-        this.tcpip = new AdbTcpIpCommand(this);
-
-        backend.onDisconnected(this.dispose, this);
-    }
-
-    public async connect(
+    /**
+     * It's possible to call `authenticate` multiple times on a single connection,
+     * every time the device receives a `CNXN` packet, it resets its internal state,
+     * and starts a new authentication process.
+     */
+    public static async authenticate(
+        connection: ReadableWritablePair<AdbPacketCore, AdbPacketCore>,
         credentialStore: AdbCredentialStore,
-        authenticators = AdbDefaultAuthenticators
-    ): Promise<void> {
-        await this.backend.connect?.();
-        this.packetDispatcher.maxPayloadSize = 0x1000;
-        this.packetDispatcher.calculateChecksum = true;
-        this.packetDispatcher.appendNullToServiceString = true;
-        this.packetDispatcher.start();
-
-        const version = 0x01000001;
-        const versionNoChecksum = 0x01000001;
-        const maxPayloadSize = 0x100000;
+        authenticators = AdbDefaultAuthenticators,
+    ): Promise<Adb> {
+        let version = 0x01000001;
+        let maxPayloadSize = 0x100000;
 
         const features = [
             'shell_v2',
@@ -94,68 +49,121 @@ export class Adb {
             'sendrecv_v2_dry_run_send',
         ].join(',');
 
-        const resolver = new PromiseResolver<void>();
+        const resolver = new PromiseResolver<string>();
         const authHandler = new AdbAuthenticationHandler(authenticators, credentialStore);
-        const disposableList = new DisposableList();
-        disposableList.add(this.packetDispatcher.onPacket(async (e) => {
-            e.handled = true;
 
-            const { packet } = e;
-            try {
-                switch (packet.command) {
-                    case AdbCommand.Connect:
-                        this.packetDispatcher.maxPayloadSize = Math.min(maxPayloadSize, packet.arg1);
-
-                        const finalVersion = Math.min(version, packet.arg0);
-                        this._protocolVersion = finalVersion;
-
-                        if (finalVersion >= versionNoChecksum) {
-                            this.packetDispatcher.calculateChecksum = false;
-                            // Android prior to 9.0.0 uses char* to parse service string
-                            // thus requires an extra null character
-                            this.packetDispatcher.appendNullToServiceString = false;
-                        }
-
-                        this.parseBanner(decodeUtf8(packet.payload!));
-                        resolver.resolve();
-                        break;
-                    case AdbCommand.Auth:
-                        const authPacket = await authHandler.handle(e.packet);
-                        await this.packetDispatcher.sendPacket(authPacket);
-                        break;
-                    case AdbCommand.Close:
-                        // Last connection was interrupted
-                        // Ignore this packet, device will recover
-                        break;
-                    default:
-                        throw new Error('Device not in correct state. Reconnect your device and try again');
+        const abortController = new AbortController();
+        const pipe = connection.readable
+            .pipeTo(new WritableStream({
+                async write(packet: AdbPacket) {
+                    switch (packet.command) {
+                        case AdbCommand.Connect:
+                            version = Math.min(version, packet.arg0);
+                            maxPayloadSize = Math.min(maxPayloadSize, packet.arg1);
+                            resolver.resolve(decodeUtf8(packet.payload));
+                            break;
+                        case AdbCommand.Auth:
+                            const response = await authHandler.handle(packet);
+                            await sendPacket(response);
+                            break;
+                        case AdbCommand.Close:
+                            // Last connection was interrupted
+                            // Ignore this packet, device will recover
+                            break;
+                        default:
+                            throw new Error('Device not in correct state. Reconnect your device and try again');
+                    }
                 }
-            } catch (e) {
-                resolver.reject(e);
-            }
-        }));
+            }), {
+                preventCancel: true,
+                signal: abortController.signal,
+            })
+            .catch((e) => { resolver.reject(e); });
 
-        disposableList.add(this.packetDispatcher.onError(e => {
-            resolver.reject(e);
-        }));
+        const writer = connection.writable.getWriter();
+        async function sendPacket(init: AdbPacketCore) {
+            // Always send checksum in auth steps
+            // Because we don't know if the device will ignore it yet.
+            await writer.write(calculateChecksum(init));
+        }
 
-        // Android prior 9.0.0 requires the null character
-        // Newer versions can also handle the null character
-        // The terminating `;` is required in formal definition
-        // But ADB daemon can also work without it
-        await this.packetDispatcher.sendPacket(
-            AdbCommand.Connect,
-            version,
-            maxPayloadSize,
-            `host::features=${features};\0`
-        );
+        await sendPacket({
+            command: AdbCommand.Connect,
+            arg0: version,
+            arg1: maxPayloadSize,
+            // The terminating `;` is required in formal definition
+            // But ADB daemon (all versions) can still work without it
+            payload: encodeUtf8(`host::features=${features};`),
+        });
 
         try {
-            await resolver.promise;
-            this._connected = true;
+            const banner = await resolver.promise;
+
+            // Stop piping before creating Adb object
+            // Because AdbPacketDispatcher will try to lock the streams when initializing
+            abortController.abort();
+            await pipe;
+
+            writer.releaseLock();
+
+            return new Adb(
+                connection,
+                version,
+                maxPayloadSize,
+                banner,
+            );
         } finally {
-            disposableList.dispose();
+            abortController.abort();
+            writer.releaseLock();
         }
+    }
+
+    private readonly packetDispatcher: AdbPacketDispatcher;
+
+    public get disconnected() { return this.packetDispatcher.disconnected; }
+
+    private _protocolVersion: number | undefined;
+    public get protocolVersion() { return this._protocolVersion; }
+
+    private _product: string | undefined;
+    public get product() { return this._product; }
+
+    private _model: string | undefined;
+    public get model() { return this._model; }
+
+    private _device: string | undefined;
+    public get device() { return this._device; }
+
+    private _features: AdbFeatures[] | undefined;
+    public get features() { return this._features; }
+
+    public readonly subprocess: AdbSubprocess;
+    public readonly power: AdbPower;
+    public readonly reverse: AdbReverseCommand;
+    public readonly tcpip: AdbTcpIpCommand;
+
+    public constructor(
+        connection: ReadableWritablePair<AdbPacketCore, AdbPacketInit>,
+        version: number,
+        maxPayloadSize: number,
+        banner: string,
+    ) {
+        this.parseBanner(banner);
+        this.packetDispatcher = new AdbPacketDispatcher(connection);
+
+        this._protocolVersion = version;
+        if (version >= VERSION_OMIT_CHECKSUM) {
+            this.packetDispatcher.calculateChecksum = false;
+            // Android prior to 9.0.0 uses char* to parse service string
+            // thus requires an extra null character
+            this.packetDispatcher.appendNullToServiceString = false;
+        }
+        this.packetDispatcher.maxPayloadSize = maxPayloadSize;
+
+        this.subprocess = new AdbSubprocess(this);
+        this.power = new AdbPower(this);
+        this.reverse = new AdbReverseCommand(this.packetDispatcher);
+        this.tcpip = new AdbTcpIpCommand(this);
     }
 
     private parseBanner(banner: string): void {
@@ -194,24 +202,21 @@ export class Adb {
     }
 
     public async getProp(key: string): Promise<string> {
-        const stdout = await this.childProcess.spawnAndWaitLegacy(
+        const stdout = await this.subprocess.spawnAndWaitLegacy(
             ['getprop', key]
         );
         return stdout.trim();
     }
 
     public async rm(...filenames: string[]): Promise<string> {
-        const stdout = await this.childProcess.spawnAndWaitLegacy(
+        const stdout = await this.subprocess.spawnAndWaitLegacy(
             ['rm', '-rf', ...filenames.map(arg => escapeArg(arg))],
         );
         return stdout;
     }
 
-    public async install(
-        apk: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
-        onProgress?: (uploaded: number) => void,
-    ): Promise<void> {
-        return await install(this, apk, onProgress);
+    public install() {
+        return install(this);
     }
 
     public async sync(): Promise<AdbSync> {
@@ -227,19 +232,16 @@ export class Adb {
         return this.packetDispatcher.createSocket(service);
     }
 
-    public async createSocketAndReadAll(service: string): Promise<string> {
+    public async createSocketAndWait(service: string): Promise<string> {
         const socket = await this.createSocket(service);
-        const resolver = new PromiseResolver<string>();
-        let result = '';
-        socket.onData(buffer => {
-            result += decodeUtf8(buffer);
-        });
-        socket.onClose(() => resolver.resolve(result));
-        return resolver.promise;
+        const gatherStream = new GatherStringStream();
+        await socket.readable
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeTo(gatherStream.writable);
+        return gatherStream.result;
     }
 
     public async dispose(): Promise<void> {
         this.packetDispatcher.dispose();
-        await this.backend.dispose();
     }
 }

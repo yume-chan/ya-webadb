@@ -28,9 +28,3 @@ export function pickFile(options: { multiple?: boolean; } & PickFileOptions): Pr
         input.click();
     });
 }
-
-export async function* chunkFile(file: File, chunkSize: number): AsyncGenerator<ArrayBuffer, void, void> {
-    for (let i = 0; i < file.size; i += chunkSize) {
-        yield file.slice(i, i + chunkSize, file.type).arrayBuffer();
-    }
-}

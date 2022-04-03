@@ -48,15 +48,23 @@ export function placeholder<T>(): T {
     return undefined as unknown as T;
 }
 
-// @ts-expect-error @types/node missing `TextEncoder`
+// This library can't use `@types/node` or `lib: dom`
+// because they will pollute the global scope
+// So `TextEncoder` and `TextDecoder` are not available
+
+// Node.js 8.3 ships `TextEncoder` and `TextDecoder` in `util` module.
+// But using top level await to load them requires Node.js 14.1.
+// So there is no point to do that. Let's just assume they exists in global.
+
+// @ts-expect-error
 const Utf8Encoder = new TextEncoder();
-// @ts-expect-error @types/node missing `TextDecoder`
+// @ts-expect-error
 const Utf8Decoder = new TextDecoder();
 
-export function encodeUtf8(input: string): ArrayBuffer {
-    return Utf8Encoder.encode(input).buffer;
+export function encodeUtf8(input: string): Uint8Array {
+    return Utf8Encoder.encode(input);
 }
 
-export function decodeUtf8(buffer: ArrayBuffer): string {
+export function decodeUtf8(buffer: Uint8Array): string {
     return Utf8Decoder.decode(buffer);
 }

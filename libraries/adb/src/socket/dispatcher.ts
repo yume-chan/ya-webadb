@@ -1,46 +1,36 @@
-import { AsyncOperationManager } from '@yume-chan/async';
+import { AsyncOperationManager, PromiseResolver } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
-import { AdbBackend } from '../backend';
-import { AdbCommand, AdbPacket, AdbPacketInit } from '../packet';
-import { AutoResetEvent, decodeUtf8, encodeUtf8 } from '../utils';
-import { AdbSocketController } from './controller';
-import { AdbLogger } from './logger';
-import { AdbSocket } from './socket';
-
-export interface AdbPacketReceivedEventArgs {
-    handled: boolean;
-
-    packet: AdbPacket;
-}
+import { AdbCommand, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from '../packet.js';
+import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '../stream/index.js';
+import { decodeUtf8, encodeUtf8 } from '../utils/index.js';
+import { AdbSocket } from './socket.js';
 
 export interface AdbIncomingSocketEventArgs {
     handled: boolean;
 
-    packet: AdbPacket;
+    packet: AdbPacketCore;
 
     serviceString: string;
 
     socket: AdbSocket;
 }
 
-const EmptyArrayBuffer = new ArrayBuffer(0);
+const EmptyUint8Array = new Uint8Array(0);
 
 export class AdbPacketDispatcher extends AutoDisposable {
     // ADB socket id starts from 1
     // (0 means open failed)
     private readonly initializers = new AsyncOperationManager(1);
-    private readonly sockets = new Map<number, AdbSocketController>();
-    private readonly sendLock = new AutoResetEvent();
-    private readonly logger: AdbLogger | undefined;
+    private readonly sockets = new Map<number, AdbSocket>();
 
-    public readonly backend: AdbBackend;
+    private _writer!: WritableStreamDefaultWriter<AdbPacketInit>;
 
     public maxPayloadSize = 0;
     public calculateChecksum = true;
     public appendNullToServiceString = true;
 
-    private readonly packetEvent = this.addDisposable(new EventEmitter<AdbPacketReceivedEventArgs>());
-    public get onPacket() { return this.packetEvent.event; }
+    private _disconnected = new PromiseResolver<void>();
+    public get disconnected() { return this._disconnected.promise; }
 
     private readonly incomingSocketEvent = this.addDisposable(new EventEmitter<AdbIncomingSocketEventArgs>());
     public get onIncomingSocket() { return this.incomingSocketEvent.event; }
@@ -48,64 +38,60 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly errorEvent = this.addDisposable(new EventEmitter<Error>());
     public get onError() { return this.errorEvent.event; }
 
-    private _running = false;
-    public get running() { return this._running; }
+    private _abortController = new AbortController();
 
-    public constructor(backend: AdbBackend, logger?: AdbLogger) {
+    public constructor(
+        connection: ReadableWritablePair<AdbPacketCore, AdbPacketInit>,
+    ) {
         super();
 
-        this.backend = backend;
-        this.logger = logger;
-    }
+        connection.readable
+            .pipeTo(new WritableStream({
+                write: async (packet) => {
+                    try {
+                        switch (packet.command) {
+                            case AdbCommand.OK:
+                                this.handleOk(packet);
+                                return;
+                            case AdbCommand.Close:
+                                await this.handleClose(packet);
+                                return;
+                            case AdbCommand.Write:
+                                if (this.sockets.has(packet.arg1)) {
+                                    await this.sockets.get(packet.arg1)!.enqueue(packet.payload);
+                                    await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
+                                }
 
-    private async receiveLoop() {
-        try {
-            while (this._running) {
-                const packet = await AdbPacket.read(this.backend);
-                this.logger?.onIncomingPacket?.(packet);
-
-                switch (packet.command) {
-                    case AdbCommand.OK:
-                        this.handleOk(packet);
-                        continue;
-                    case AdbCommand.Close:
-                        await this.handleClose(packet);
-                        continue;
-                    case AdbCommand.Write:
-                        if (this.sockets.has(packet.arg1)) {
-                            await this.sockets.get(packet.arg1)!.dataEvent.fire(packet.payload!);
-                            await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
+                                // Maybe the device is responding to a packet of last connection
+                                // Just ignore it
+                                return;
+                            case AdbCommand.Open:
+                                await this.handleOpen(packet);
+                                return;
                         }
+                    } catch (e) {
+                        this.errorEvent.fire(e as Error);
 
-                        // Maybe the device is responding to a packet of last connection
-                        // Just ignore it
-                        continue;
-                    case AdbCommand.Open:
-                        await this.handleOpen(packet);
-                        continue;
-                }
+                        // Throw error here will stop the pipe
+                        // But won't close `readable` because of `preventCancel: true`
+                        throw e;
+                    }
+                },
+            }), {
+                preventCancel: false,
+                signal: this._abortController.signal,
+            })
+            .then(() => {
+                this.dispose();
+            }, () => {
+                // TODO: AdbPacketDispatcher: reject `_disconnected` when pipe errored?
+                this.dispose();
+            });
 
-                const args: AdbPacketReceivedEventArgs = {
-                    handled: false,
-                    packet,
-                };
-                this.packetEvent.fire(args);
-                if (!args.handled) {
-                    this.dispose();
-                    throw new Error(`Unhandled packet with command '${packet.command}'`);
-                }
-            }
-        } catch (e) {
-            if (!this._running) {
-                // ignore error
-                return;
-            }
-
-            this.errorEvent.fire(e as Error);
-        }
+        this._writer = connection.writable.getWriter();
     }
 
-    private handleOk(packet: AdbPacket) {
+    private handleOk(packet: AdbPacketCore) {
         if (this.initializers.resolve(packet.arg1, packet.arg0)) {
             // Device successfully created the socket
             return;
@@ -123,7 +109,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
     }
 
-    private async handleClose(packet: AdbPacket) {
+    private async handleClose(packet: AdbPacketCore) {
         // From https://android.googlesource.com/platform/packages/modules/adb/+/65d18e2c1cc48b585811954892311b28a4c3d188/adb.cpp#459
         /* According to protocol.txt, p->msg.arg0 might be 0 to indicate
          * a failed OPEN only. However, due to a bug in previous ADB
@@ -153,23 +139,22 @@ export class AdbPacketDispatcher extends AutoDisposable {
         // Just ignore it
     }
 
-    private async handleOpen(packet: AdbPacket) {
+    private async handleOpen(packet: AdbPacketCore) {
         // AsyncOperationManager doesn't support get and skip an ID
         // Use `add` + `resolve` to simulate this behavior
         const [localId] = this.initializers.add<number>();
         this.initializers.resolve(localId, undefined);
 
         const remoteId = packet.arg0;
-        const serviceString = decodeUtf8(packet.payload!);
+        const serviceString = decodeUtf8(packet.payload);
 
-        const controller = new AdbSocketController({
+        const socket = new AdbSocket({
             dispatcher: this,
             localId,
             remoteId,
             localCreated: false,
             serviceString,
         });
-        const socket = new AdbSocket(controller);
 
         const args: AdbIncomingSocketEventArgs = {
             handled: false,
@@ -180,16 +165,11 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this.incomingSocketEvent.fire(args);
 
         if (args.handled) {
-            this.sockets.set(localId, controller);
+            this.sockets.set(localId, socket);
             await this.sendPacket(AdbCommand.OK, localId, remoteId);
         } else {
             await this.sendPacket(AdbCommand.Close, 0, remoteId);
         }
-    }
-
-    public start() {
-        this._running = true;
-        this.receiveLoop();
     }
 
     public async createSocket(serviceString: string): Promise<AdbSocket> {
@@ -201,16 +181,16 @@ export class AdbPacketDispatcher extends AutoDisposable {
         await this.sendPacket(AdbCommand.Open, localId, 0, serviceString);
 
         const remoteId = await initializer;
-        const controller = new AdbSocketController({
+        const socket = new AdbSocket({
             dispatcher: this,
             localId,
             remoteId,
             localCreated: true,
             serviceString,
         });
-        this.sockets.set(controller.localId, controller);
+        this.sockets.set(localId, socket);
 
-        return new AdbSocket(controller);
+        return socket;
     }
 
     public sendPacket(packet: AdbPacketInit): Promise<void>;
@@ -218,23 +198,27 @@ export class AdbPacketDispatcher extends AutoDisposable {
         command: AdbCommand,
         arg0: number,
         arg1: number,
-        payload?: string | ArrayBuffer
+        payload?: string | Uint8Array
     ): Promise<void>;
     public async sendPacket(
         packetOrCommand: AdbPacketInit | AdbCommand,
         arg0?: number,
         arg1?: number,
-        payload: string | ArrayBuffer = EmptyArrayBuffer,
+        payload: string | Uint8Array = EmptyUint8Array,
     ): Promise<void> {
-        let init: AdbPacketInit;
+        let init: AdbPacketCore;
         if (arg0 === undefined) {
             init = packetOrCommand as AdbPacketInit;
         } else {
+            if (typeof payload === 'string') {
+                payload = encodeUtf8(payload);
+            }
+
             init = {
                 command: packetOrCommand as AdbCommand,
                 arg0: arg0 as number,
                 arg1: arg1 as number,
-                payload: typeof payload === 'string' ? encodeUtf8(payload) : payload,
+                payload,
             };
         }
 
@@ -243,26 +227,29 @@ export class AdbPacketDispatcher extends AutoDisposable {
             throw new Error('payload too large');
         }
 
-        try {
-            // `AdbPacket.write` writes each packet in two parts
-            // Use a lock to prevent packets been interlaced
-            await this.sendLock.wait();
-
-            this.logger?.onOutgoingPacket?.(init);
-
-            await AdbPacket.write(init, this.calculateChecksum, this.backend);
-        } finally {
-            this.sendLock.notify();
+        if (this.calculateChecksum) {
+            calculateChecksum(init);
+        } else {
+            (init as AdbPacketInit).checksum = 0;
         }
+
+        await this._writer.write(init as AdbPacketInit);
     }
 
     public override dispose() {
-        this._running = false;
-
         for (const socket of this.sockets.values()) {
             socket.dispose();
         }
         this.sockets.clear();
+
+        try {
+            // Stop pipes
+            this._abortController.abort();
+        } catch { }
+
+        this._writer.releaseLock();
+
+        this._disconnected.resolve();
 
         super.dispose();
     }

@@ -1,4 +1,4 @@
-import { placeholder } from './utils';
+import { placeholder } from './utils.js';
 
 describe('placeholder', () => {
     it('should return `undefined`', () => {

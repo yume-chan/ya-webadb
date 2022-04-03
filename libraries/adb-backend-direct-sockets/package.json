@@ -23,7 +23,7 @@
     },
     "license": "MIT",
     "type": "module",
-    "module": "esm/index.js",
+    "main": "esm/index.js",
     "types": "esm/index.d.ts",
     "scripts": {
         "build": "build-ts-package",
@@ -31,13 +31,12 @@
         "prepublishOnly": "npm run build"
     },
     "devDependencies": {
-        "typescript": "^4.5.5",
-        "@types/jest": "^27.4.0",
+        "typescript": "next",
+        "@types/jest": "^27.4.1",
         "@yume-chan/ts-package-builder": "^1.0.0"
     },
     "dependencies": {
         "@yume-chan/adb": "^0.0.10",
-        "@yume-chan/event": "^0.0.10",
         "tslib": "^2.3.1"
     }
 }

@@ -1,3 +1,3 @@
-export * from './backend';
-export { AdbWebUsbBackend as default } from './backend';
-export * from './watcher';
+export * from './backend.js';
+export { AdbWebUsbBackend as default } from './backend.js';
+export * from './watcher.js';

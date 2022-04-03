@@ -1,4 +1,4 @@
-import { getBigInt64 as fallbackGetBigInt64, getBigUint64 as fallbackGetBigUint64, setBigInt64 as fallbackSetBigInt64, setBigUint64 as fallbackSetBigUint64 } from './pure';
+import { getBigInt64 as fallbackGetBigInt64, getBigUint64 as fallbackGetBigUint64, setBigInt64 as fallbackSetBigInt64, setBigUint64 as fallbackSetBigUint64 } from './pure.js';
 
 export const getBigInt64 =
     'getBigInt64' in DataView.prototype ?

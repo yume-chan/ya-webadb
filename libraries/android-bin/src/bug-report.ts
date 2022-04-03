@@ -1,24 +1,7 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import { AdbCommandBase, AdbShellProtocol, decodeUtf8, EventQueue, EventQueueEndedError } from "@yume-chan/adb";
-import { once } from "@yume-chan/event";
-
-function* splitLines(text: string): Generator<string, void, void> {
-    let start = 0;
-
-    while (true) {
-        const index = text.indexOf('\n', start);
-        if (index === -1) {
-            return;
-        }
-
-        const line = text.substring(start, index);
-        yield line;
-
-        start = index + 1;
-    }
-}
+import { AdbCommandBase, AdbShellSubprocessProtocol, DecodeUtf8Stream, ReadableStream, SplitLineStream, WrapReadableStream, WritableStream } from "@yume-chan/adb";
 
 export interface BugReportVersion {
     major: number;
@@ -43,11 +26,11 @@ export class BugReportZ extends AdbCommandBase {
      */
     public async version(): Promise<BugReportVersion | undefined> {
         // bugreportz requires shell protocol
-        if (!AdbShellProtocol.isSupported(this.adb)) {
+        if (!AdbShellSubprocessProtocol.isSupported(this.adb)) {
             return undefined;
         }
 
-        const { stderr, exitCode } = await this.adb.childProcess.spawnAndWait(['bugreportz', '-v']);
+        const { stderr, exitCode } = await this.adb.subprocess.spawnAndWait(['bugreportz', '-v']);
         if (exitCode !== 0 || stderr === '') {
             return undefined;
         }
@@ -67,22 +50,16 @@ export class BugReportZ extends AdbCommandBase {
         return version.major > 1 || version.minor >= 2;
     }
 
-    public async *stream(): AsyncGenerator<ArrayBuffer, void, void> {
-        const process = await this.adb.childProcess.spawn(['bugreportz', '-s']);
-        const queue = new EventQueue<ArrayBuffer>();
-        process.onStdout(buffer => queue.enqueue(buffer));
-        process.onExit(() => queue.end());
-        try {
-            while (true) {
-                yield await queue.dequeue();
-            }
-        } catch (e) {
-            if (e instanceof EventQueueEndedError) {
-                return;
-            }
-
-            throw e;
-        }
+    public stream(): ReadableStream<Uint8Array> {
+        return new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, undefined>({
+            start: async () => {
+                const process = await this.adb.subprocess.spawn(['bugreportz', '-s']);
+                return {
+                    readable: process.stdout,
+                    state: undefined,
+                };
+            },
+        });
     }
 
     public supportProgress(version: BugReportVersion): boolean {
@@ -98,7 +75,7 @@ export class BugReportZ extends AdbCommandBase {
      * @returns The path of the bugreport file.
      */
     public async generate(onProgress?: (progress: string, total: string) => void): Promise<string> {
-        const process = await this.adb.childProcess.spawn([
+        const process = await this.adb.subprocess.spawn([
             'bugreportz',
             ...(onProgress ? ['-p'] : []),
         ]);
@@ -106,33 +83,36 @@ export class BugReportZ extends AdbCommandBase {
         let filename: string | undefined;
         let error: string | undefined;
 
-        process.onStdout(buffer => {
-            const string = decodeUtf8(buffer);
-            for (const line of splitLines(string)) {
-                // (Not 100% sure) `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
-                let match = line.match(BugReportZ.PROGRESS_REGEX);
-                if (match) {
-                    onProgress?.(match[1]!, match[2]!);
-                }
+        await process.stdout
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new SplitLineStream())
+            .pipeTo(new WritableStream<string>({
+                write(line) {
+                    // (Not 100% sure) `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
+                    let match = line.match(BugReportZ.PROGRESS_REGEX);
+                    if (match) {
+                        onProgress?.(match[1]!, match[2]!);
+                    }
 
-                match = line.match(BugReportZ.BEGIN_REGEX);
-                if (match) {
-                    filename = match[1]!;
-                }
+                    match = line.match(BugReportZ.BEGIN_REGEX);
+                    if (match) {
+                        filename = match[1]!;
+                    }
 
-                match = line.match(BugReportZ.OK_REGEX);
-                if (match) {
-                    filename = match[1];
-                }
+                    match = line.match(BugReportZ.OK_REGEX);
+                    if (match) {
+                        filename = match[1];
+                    }
 
-                match = line.match(BugReportZ.FAIL_REGEX);
-                if (match) {
-                    error = match[1];
-                }
-            }
-        });
+                    match = line.match(BugReportZ.FAIL_REGEX);
+                    if (match) {
+                        // Don't report error now
+                        // We want to gather all output.
+                        error = match[1];
 
-        await once(process.onExit);
+                    }
+                }
+            }));
 
         if (error) {
             throw new Error(error);
@@ -148,21 +128,16 @@ export class BugReportZ extends AdbCommandBase {
 }
 
 export class BugReport extends AdbCommandBase {
-    public async *generate(): AsyncGenerator<string, void, void> {
-        const process = await this.adb.childProcess.spawn(['bugreport']);
-        const queue = new EventQueue<ArrayBuffer>();
-        process.onStdout(buffer => queue.enqueue(buffer));
-        process.onExit(() => queue.end());
-        try {
-            while (true) {
-                yield decodeUtf8(await queue.dequeue());
+    public generate(): ReadableStream<string> {
+        return new WrapReadableStream<string, ReadableStream<string>, undefined>({
+            start: async () => {
+                const process = await this.adb.subprocess.spawn(['bugreport']);
+                return {
+                    readable: process.stdout
+                        .pipeThrough(new DecodeUtf8Stream()),
+                    state: undefined,
+                };
             }
-        } catch (e) {
-            if (e instanceof EventQueueEndedError) {
-                return;
-            }
-
-            throw e;
-        }
+        });
     }
 }

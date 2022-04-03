@@ -2,13 +2,13 @@
 
 import { AutoDisposable } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import type { AdbPacket } from '../packet';
-import type { AdbIncomingSocketEventArgs, AdbPacketDispatcher, AdbSocket } from '../socket';
-import { AdbBufferedStream } from '../stream';
-import { decodeUtf8 } from "../utils";
+import type { AdbPacketCore } from '../packet.js';
+import type { AdbIncomingSocketEventArgs, AdbPacketDispatcher, AdbSocket } from '../socket/index.js';
+import { AdbBufferedStream } from '../stream/index.js';
+import { decodeUtf8 } from "../utils/index.js";
 
 export interface AdbReverseHandler {
-    onSocket(packet: AdbPacket, socket: AdbSocket): void;
+    onSocket(packet: AdbPacketCore, socket: AdbSocket): void;
 }
 
 export interface AdbForwardListener {
@@ -52,8 +52,8 @@ export class AdbReverseCommand extends AutoDisposable {
             return;
         }
 
-        const address = decodeUtf8(e.packet.payload!);
-        // tcp:12345\0
+        const address = decodeUtf8(e.packet.payload);
+        // Address format: `tcp:12345\0`
         const port = Number.parseInt(address.substring(4));
         if (this.localPortToHandler.has(port)) {
             this.localPortToHandler.get(port)!.onSocket(e.packet, e.socket);

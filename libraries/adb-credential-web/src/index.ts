@@ -1,16 +1,16 @@
 // cspell: ignore RSASSA
 
-import { AdbCredentialStore, calculateBase64EncodedLength, calculatePublicKey, calculatePublicKeyLength, decodeBase64, encodeBase64 } from "@yume-chan/adb";
+import { calculateBase64EncodedLength, calculatePublicKey, calculatePublicKeyLength, decodeBase64, encodeBase64, type AdbCredentialStore } from "@yume-chan/adb";
 
 const Utf8Encoder = new TextEncoder();
 const Utf8Decoder = new TextDecoder();
 
-export function encodeUtf8(input: string): ArrayBuffer {
-    return Utf8Encoder.encode(input).buffer;
+export function encodeUtf8(input: string): Uint8Array {
+    return Utf8Encoder.encode(input);
 }
 
-export function decodeUtf8(buffer: ArrayBuffer): string {
-    return Utf8Decoder.decode(buffer);
+export function decodeUtf8(array: Uint8Array): string {
+    return Utf8Decoder.decode(array);
 }
 
 export default class AdbWebCredentialStore implements AdbCredentialStore {
@@ -20,14 +20,14 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
         this.localStorageKey = localStorageKey;
     }
 
-    public *iterateKeys(): Generator<ArrayBuffer, void, void> {
+    public *iterateKeys(): Generator<Uint8Array, void, void> {
         const privateKey = window.localStorage.getItem(this.localStorageKey);
         if (privateKey) {
             yield decodeBase64(privateKey);
         }
     }
 
-    public async generateKey(): Promise<ArrayBuffer> {
+    public async generateKey(): Promise<Uint8Array> {
         const { privateKey: cryptoKey } = await crypto.subtle.generateKey(
             {
                 name: 'RSASSA-PKCS1-v1_5',
@@ -40,7 +40,7 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
             ['sign', 'verify']
         );
 
-        const privateKey = await crypto.subtle.exportKey('pkcs8', cryptoKey!);
+        const privateKey = new Uint8Array(await crypto.subtle.exportKey('pkcs8', cryptoKey!));
         window.localStorage.setItem(this.localStorageKey, decodeUtf8(encodeBase64(privateKey)));
 
         // The authentication module in core doesn't need public keys.
@@ -49,9 +49,12 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
         // so also save the public key for their convenience.
         const publicKeyLength = calculatePublicKeyLength();
         const [publicKeyBase64Length] = calculateBase64EncodedLength(publicKeyLength);
-        const publicKeyBuffer = new ArrayBuffer(publicKeyBase64Length);
+        const publicKeyBuffer = new Uint8Array(publicKeyBase64Length);
         calculatePublicKey(privateKey, publicKeyBuffer);
-        encodeBase64(publicKeyBuffer, 0, publicKeyLength, publicKeyBuffer);
+        encodeBase64(
+            publicKeyBuffer.subarray(0, publicKeyLength),
+            publicKeyBuffer
+        );
         window.localStorage.setItem(this.localStorageKey + '.pub', decodeUtf8(publicKeyBuffer));
 
         return privateKey;

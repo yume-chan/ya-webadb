@@ -4,7 +4,7 @@ import { action, autorun, computed, makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { CommandBar, DemoModePanel, DeviceView } from '../components';
 import { globalState } from "../state";
 import { Icons, RouteStackProps } from "../utils";
@@ -24,7 +24,7 @@ class FrameBufferState {
     setImage(image: AdbFrameBuffer) {
         this.width = image.width;
         this.height = image.height;
-        this.imageData = new ImageData(image.data, image.width, image.height);
+        this.imageData = new ImageData(new Uint8ClampedArray(image.data), image.width, image.height);
     }
 
     toggleDemoModeVisible() {
@@ -84,7 +84,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
                 const url = canvas.toDataURL();
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `Screenshot of ${globalState.device!.name}.png`;
+                a.download = `Screenshot of ${globalState.backend!.name}.png`;
                 a.click();
             },
         },

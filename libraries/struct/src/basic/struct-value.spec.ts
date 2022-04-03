@@ -1,4 +1,4 @@
-import { StructValue } from './struct-value';
+import { StructValue } from "./struct-value.js";
 
 describe('StructValue', () => {
     describe('.constructor', () => {

@@ -1,6 +1,6 @@
 import Struct from "@yume-chan/struct";
-import { Adb } from '../adb';
-import { AdbBufferedStream } from '../stream';
+import type { Adb } from '../adb.js';
+import { AdbBufferedStream } from '../stream/index.js';
 
 const Version =
     new Struct({ littleEndian: true })
@@ -33,7 +33,7 @@ export const AdbFrameBufferV1 =
         .uint32('green_length')
         .uint32('alpha_offset')
         .uint32('alpha_length')
-        .uint8ClampedArray('data', { lengthField: 'size' });
+        .uint8Array('data', { lengthField: 'size' });
 
 export type AdbFrameBufferV1 = typeof AdbFrameBufferV1['TDeserializeResult'];
 
@@ -52,7 +52,7 @@ export const AdbFrameBufferV2 =
         .uint32('green_length')
         .uint32('alpha_offset')
         .uint32('alpha_length')
-        .uint8ClampedArray('data', { lengthField: 'size' });
+        .uint8Array('data', { lengthField: 'size' });
 
 export type AdbFrameBufferV2 = typeof AdbFrameBufferV2['TDeserializeResult'];
 

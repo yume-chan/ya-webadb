@@ -1,5 +1,4 @@
-import { AdbBackend, BufferedStream, Stream } from '@yume-chan/adb';
-import { EventEmitter } from '@yume-chan/event';
+import { AdbBackend, AdbPacket, AdbPacketSerializeStream, pipeFrom, ReadableStream, StructDeserializeStream, WrapReadableStream, WrapWritableStream, WritableStream } from '@yume-chan/adb';
 
 declare global {
     interface TCPSocket {
@@ -7,8 +6,8 @@ declare global {
 
         readonly remoteAddress: string;
         readonly remotePort: number;
-        readonly readable: ReadableStream;
-        readonly writable: WritableStream;
+        readonly readable: ReadableStream<Uint8Array>;
+        readonly writable: WritableStream<BufferSource>;
     }
 
     interface SocketOptions {
@@ -37,63 +36,44 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
 
     public readonly serial: string;
 
-    public readonly address: string;
+    public readonly host: string;
 
     public readonly port: number;
 
     public name: string | undefined;
 
-    private socket: TCPSocket | undefined;
-    private reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
-    private bufferedStream: BufferedStream<Stream> | undefined;
-    private writer: WritableStreamDefaultWriter<Uint8Array> | undefined;
-
-    private _connected = false;
-    public get connected() { return this._connected; }
-
-    private readonly disconnectEvent = new EventEmitter<void>();
-    public readonly onDisconnected = this.disconnectEvent.event;
-
-    public constructor(address: string, port: number = 5555, name?: string) {
-        this.address = address;
+    public constructor(host: string, port: number = 5555, name?: string) {
+        this.host = host;
         this.port = port;
-        this.serial = `${address}:${port}`;
+        this.serial = `${host}:${port}`;
         this.name = name;
     }
 
     public async connect() {
-        const socket = await navigator.openTCPSocket({
-            remoteAddress: this.address,
+        const { readable, writable } = await navigator.openTCPSocket({
+            remoteAddress: this.host,
             remotePort: this.port,
             noDelay: true,
         });
 
-        this.socket = socket;
-        this.reader = this.socket.readable.getReader();
-        this.bufferedStream = new BufferedStream({
-            read: async () => {
-                const result = await this.reader!.read();
-                if (result.value) {
-                    return result.value.buffer;
+        // Native streams can't `pipeTo()` or `pipeThrough()` polyfilled streams, so we need to wrap them
+        return {
+            readable: new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, void>({
+                async start() {
+                    return {
+                        readable,
+                        state: undefined,
+                    };
                 }
-                throw new Error('Stream ended');
-            }
-        });
-        this.writer = this.socket.writable.getWriter();
-
-        this._connected = true;
-    }
-
-    public write(buffer: ArrayBuffer): Promise<void> {
-        return this.writer!.write(new Uint8Array(buffer));
-    }
-
-    public async read(length: number): Promise<ArrayBuffer> {
-        return this.bufferedStream!.read(length);
-    }
-
-    public dispose(): void | Promise<void> {
-        this.socket?.close();
-        this._connected = false;
+            }).pipeThrough(new StructDeserializeStream(AdbPacket)),
+            writable: pipeFrom(new WrapWritableStream({
+                async start() {
+                    return {
+                        writable,
+                        state: undefined,
+                    };
+                }
+            }), new AdbPacketSerializeStream()),
+        };
     }
 }

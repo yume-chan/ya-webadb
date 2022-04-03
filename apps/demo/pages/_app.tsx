@@ -1,5 +1,6 @@
 import { IComponentAsProps, IconButton, INavButtonProps, mergeStyles, mergeStyleSets, Nav, Stack, StackItem } from "@fluentui/react";
 import type { AppProps } from 'next/app';
+import Head from "next/head";
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from "react";
@@ -70,7 +71,7 @@ function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsP
     );
 }
 
-function MyApp({ Component, pageProps }: AppProps) {
+function App({ Component, pageProps }: AppProps) {
     const classNames = mergeStyleSets({
         'title-container': {
             borderBottom: '1px solid rgb(243, 242, 241)',
@@ -103,6 +104,10 @@ function MyApp({ Component, pageProps }: AppProps) {
 
     return (
         <ErrorDialogProvider>
+            <Head>
+                <link rel="manifest" href="/manifest.json" />
+            </Head>
+
             <Stack verticalFill>
                 <Stack className={classNames['title-container']} horizontal verticalAlign="center">
                     <IconButton
@@ -156,4 +161,4 @@ function MyApp({ Component, pageProps }: AppProps) {
     );
 }
 
-export default MyApp;
+export default App;

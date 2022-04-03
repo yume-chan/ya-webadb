@@ -1,7 +1,9 @@
+import type { WritableStream } from '@yume-chan/adb';
 import type { Disposable } from "@yume-chan/event";
-import type { AndroidCodecLevel, AndroidCodecProfile } from "../codec";
+import type { AndroidCodecLevel, AndroidCodecProfile } from "../codec.js";
+import type { VideoStreamPacket } from "../options/index.js";
 
-export interface H264EncodingInfo {
+export interface H264Configuration {
     profileIndex: number;
     constraintSet: number;
     levelIndex: number;
@@ -24,10 +26,8 @@ export interface H264Decoder extends Disposable {
     readonly maxLevel: AndroidCodecLevel | undefined;
 
     readonly renderer: HTMLElement;
-
-    changeEncoding(size: H264EncodingInfo): void;
-
-    feedData(data: ArrayBuffer): void;
+    readonly frameRendered: number;
+    readonly writable: WritableStream<VideoStreamPacket>;
 }
 
 export interface H264DecoderConstructor {

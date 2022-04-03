@@ -1,9 +1,8 @@
 import { IconButton, IListProps, List, mergeStyles, mergeStyleSets, Stack } from '@fluentui/react';
-import { AdbPacketInit, decodeUtf8 } from '@yume-chan/adb';
-import { DisposableList } from '@yume-chan/event';
+import { AdbCommand, AdbPacketCore, decodeUtf8 } from '@yume-chan/adb';
 import { observer } from "mobx-react-lite";
 import { PropsWithChildren, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { globalState, logger } from "../state";
+import { globalState } from "../state";
 import { Icons, withDisplayName } from '../utils';
 import { CommandBar } from './command-bar';
 
@@ -23,8 +22,19 @@ const classNames = mergeStyleSets({
     },
 });
 
-function serializePacket(packet: AdbPacketInit) {
-    const command = decodeUtf8(new Uint32Array([packet.command]).buffer);
+const ADB_COMMAND_NAME = {
+    [AdbCommand.Auth]: 'AUTH',
+    [AdbCommand.Close]: 'CLSE',
+    [AdbCommand.Connect]: 'CNXN',
+    [AdbCommand.OK]: 'OKAY',
+    [AdbCommand.Open]: 'OPEN',
+    [AdbCommand.Write]: 'WRTE',
+};
+
+function serializePacket(packet: AdbPacketCore) {
+    const command =
+        ADB_COMMAND_NAME[packet.command as AdbCommand] ??
+        decodeUtf8(new Uint32Array([packet.command]));
 
     const parts = [
         command,
@@ -35,7 +45,7 @@ function serializePacket(packet: AdbPacketInit) {
     if (packet.payload) {
         parts.push(
             Array.from(
-                new Uint8Array(packet.payload),
+                packet.payload,
                 byte => byte.toString(16).padStart(2, '0')
             ).join(' ')
         );
@@ -44,7 +54,7 @@ function serializePacket(packet: AdbPacketInit) {
     return parts.join(' ');
 }
 
-const LogLine = withDisplayName('LoggerLine')(({ packet }: { packet: [string, AdbPacketInit]; }) => {
+const LogLine = withDisplayName('LoggerLine')(({ packet }: { packet: [string, AdbPacketCore]; }) => {
     const string = useMemo(() => serializePacket(packet[1]), [packet]);
 
     return (
@@ -69,11 +79,11 @@ export interface LoggerProps {
     className?: string;
 }
 
-function shouldVirtualize(props: IListProps<[string, AdbPacketInit]>) {
+function shouldVirtualize(props: IListProps<[string, AdbPacketCore]>) {
     return !!props.items && props.items.length > 100;
 }
 
-function renderCell(item?: [string, AdbPacketInit]) {
+function renderCell(item?: [string, AdbPacketCore]) {
     if (!item) {
         return null;
     }
@@ -86,27 +96,7 @@ function renderCell(item?: [string, AdbPacketInit]) {
 export const LogView = observer(({
     className,
 }: LoggerProps) => {
-    const [packets, setPackets] = useState<[string, AdbPacketInit][]>([]);
     const scrollerRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const disposables = new DisposableList();
-        disposables.add(logger.onIncomingPacket((packet => {
-            setPackets(packets => {
-                packets = packets.slice();
-                packets.push(['Incoming', packet]);
-                return packets;
-            });
-        })));
-        disposables.add(logger.onOutgoingPacket(packet => {
-            setPackets(packets => {
-                packets = packets.slice();
-                packets.push(['Outgoing', packet]);
-                return packets;
-            });
-        }));
-        return disposables.dispose;
-    }, []);
 
     useLayoutEffect(() => {
         const scroller = scrollerRef.current;
@@ -121,10 +111,12 @@ export const LogView = observer(({
             text: 'Copy',
             iconProps: { iconName: Icons.Copy },
             onClick: () => {
-                setPackets(lines => {
-                    window.navigator.clipboard.writeText(lines.join('\r'));
-                    return lines;
-                });
+                window.navigator.clipboard.writeText(
+                    globalState.logs
+                        .map(
+                            ([direction, packet]) => `${direction}${serializePacket((packet))}`
+                        )
+                        .join('\n'));
             },
         },
         {
@@ -132,7 +124,7 @@ export const LogView = observer(({
             text: 'Clear',
             iconProps: { iconName: Icons.Delete },
             onClick: () => {
-                setPackets([]);
+                globalState.clearLog();
             },
         },
     ], []);
@@ -154,7 +146,7 @@ export const LogView = observer(({
             <CommandBar items={commandBarItems} />
             <div ref={scrollerRef} className={classNames.grow}>
                 <List
-                    items={packets}
+                    items={globalState.logs}
                     onShouldVirtualize={shouldVirtualize}
                     onRenderCell={renderCell}
                 />

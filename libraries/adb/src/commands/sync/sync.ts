@@ -1,18 +1,20 @@
 import { AutoDisposable } from '@yume-chan/event';
-import { Adb } from '../../adb';
-import { AdbFeatures } from '../../features';
-import { AdbSocket } from '../../socket';
-import { AdbBufferedStream } from '../../stream';
-import { AutoResetEvent } from '../../utils';
-import { AdbSyncEntryResponse, adbSyncOpenDir } from './list';
-import { adbSyncPull } from './pull';
-import { adbSyncPush } from './push';
-import { adbSyncLstat, adbSyncStat } from './stat';
+import type { Adb } from '../../adb.js';
+import { AdbFeatures } from '../../features.js';
+import type { AdbSocket } from '../../socket/index.js';
+import { AdbBufferedStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '../../stream/index.js';
+import { AutoResetEvent } from '../../utils/index.js';
+import { AdbSyncEntryResponse, adbSyncOpenDir } from './list.js';
+import { adbSyncPull } from './pull.js';
+import { adbSyncPush } from './push.js';
+import { adbSyncLstat, adbSyncStat } from './stat.js';
 
 export class AdbSync extends AutoDisposable {
     protected adb: Adb;
 
     protected stream: AdbBufferedStream;
+
+    protected writer: WritableStreamDefaultWriter<Uint8Array>;
 
     protected sendLock = this.addDisposable(new AutoResetEvent());
 
@@ -25,13 +27,14 @@ export class AdbSync extends AutoDisposable {
 
         this.adb = adb;
         this.stream = new AdbBufferedStream(socket);
+        this.writer = socket.writable.getWriter();
     }
 
     public async lstat(path: string) {
         await this.sendLock.wait();
 
         try {
-            return adbSyncLstat(this.stream, path, this.supportsStat);
+            return adbSyncLstat(this.stream, this.writer, path, this.supportsStat);
         } finally {
             this.sendLock.notify();
         }
@@ -45,7 +48,7 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            return adbSyncStat(this.stream, path);
+            return adbSyncStat(this.stream, this.writer, path);
         } finally {
             this.sendLock.notify();
         }
@@ -66,7 +69,7 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            yield* adbSyncOpenDir(this.stream, path);
+            yield* adbSyncOpenDir(this.stream, this.writer, path);
         } finally {
             this.sendLock.notify();
         }
@@ -80,34 +83,63 @@ export class AdbSync extends AutoDisposable {
         return results;
     }
 
-    public async *read(filename: string): AsyncGenerator<ArrayBuffer, void, void> {
-        await this.sendLock.wait();
-
-        try {
-            yield* adbSyncPull(this.stream, filename);
-        } finally {
-            this.sendLock.notify();
-        }
+    /**
+     * Read the content of a file on device.
+     *
+     * @param filename The full path of the file on device to read.
+     * @returns A `ReadableStream` that reads from the file.
+     */
+    public read(filename: string): ReadableStream<Uint8Array> {
+        return new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, undefined>({
+            start: async () => {
+                await this.sendLock.wait();
+                return {
+                    readable: adbSyncPull(this.stream, this.writer, filename),
+                    state: undefined,
+                };
+            },
+            close: async () => {
+                this.sendLock.notify();
+            },
+        });
     }
 
-    public async write(
+    /**
+     * Write (or overwrite) a file on device.
+     *
+     * @param filename The full path of the file on device to write.
+     * @param mode The unix permissions of the file.
+     * @param mtime The modified time of the file.
+     * @returns A `WritableStream` that writes to the file.
+     */
+    public write(
         filename: string,
-        content: ArrayLike<number> | ArrayBufferLike | AsyncIterable<ArrayBuffer>,
         mode?: number,
         mtime?: number,
-        onProgress?: (uploaded: number) => void,
-    ): Promise<void> {
-        await this.sendLock.wait();
-
-        try {
-            await adbSyncPush(this.stream, filename, content, mode, mtime, undefined, onProgress);
-        } finally {
-            this.sendLock.notify();
-        }
+    ): WritableStream<Uint8Array> {
+        return new WrapWritableStream({
+            start: async () => {
+                await this.sendLock.wait();
+                return {
+                    writable: adbSyncPush(
+                        this.stream,
+                        this.writer,
+                        filename,
+                        mode,
+                        mtime,
+                    ),
+                    state: undefined,
+                };
+            },
+            close: async () => {
+                this.sendLock.notify();
+            }
+        });
     }
 
-    public override dispose() {
+    public override async dispose() {
         super.dispose();
         this.stream.close();
+        await this.writer.close();
     }
 }

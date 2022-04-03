@@ -1,7 +1,7 @@
-import { StructAsyncDeserializeStream, StructDefaultOptions, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from './basic';
-import { Struct } from './struct';
-import { ArrayBufferFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition } from './types';
-import { ValueOrPromise } from './utils';
+import { StructAsyncDeserializeStream, StructDefaultOptions, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from './basic/index.js';
+import { Struct } from './struct.js';
+import { ArrayBufferFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringFieldType, ArrayBufferViewFieldType, VariableLengthArrayBufferLikeFieldDefinition } from './types/index.js';
+import { ValueOrPromise } from './utils.js';
 
 class MockDeserializationStream implements StructDeserializeStream {
     public buffer = new ArrayBuffer(0);
@@ -181,7 +181,7 @@ describe('Struct', () => {
 
                     const definition = struct['_fields'][0]![1] as FixedLengthArrayBufferLikeFieldDefinition;
                     expect(definition).toBeInstanceOf(FixedLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(Uint8ClampedArrayFieldType);
+                    expect(definition.type).toBeInstanceOf(ArrayBufferViewFieldType);
                     expect(definition.options.length).toBe(10);
                 });
 
@@ -220,7 +220,7 @@ describe('Struct', () => {
 
                     const definition = struct['_fields'][1]![1] as VariableLengthArrayBufferLikeFieldDefinition;
                     expect(definition).toBeInstanceOf(VariableLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(Uint8ClampedArrayFieldType);
+                    expect(definition.type).toBeInstanceOf(ArrayBufferViewFieldType);
                     expect(definition.options.lengthField).toBe('barLength');
                 });
 

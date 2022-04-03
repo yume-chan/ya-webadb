@@ -1,10 +1,10 @@
 // cspell: ignore Syncbird
 
-import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic';
-import { StructDefaultOptions, StructValue } from './basic';
-import { Syncbird } from "./syncbird";
-import { ArrayBufferFieldType, ArrayBufferLikeFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, FixedLengthArrayBufferLikeFieldOptions, LengthField, NumberFieldDefinition, NumberFieldType, StringFieldType, Uint8ClampedArrayFieldType, VariableLengthArrayBufferLikeFieldDefinition, VariableLengthArrayBufferLikeFieldOptions } from './types';
-import { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils";
+import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic/index.js';
+import { StructDefaultOptions, StructValue } from './basic/index.js';
+import { Syncbird } from "./syncbird.js";
+import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, type FixedLengthBufferLikeFieldOptions, type LengthField, type VariableLengthBufferLikeFieldOptions } from './types/index.js';
+import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils.js";
 
 export interface StructLike<TValue> {
     deserialize(stream: StructDeserializeStream | StructAsyncDeserializeStream): Promise<TValue>;
@@ -57,12 +57,12 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends ArrayBufferLikeFieldType<any, any>,
+        TType extends BufferFieldSubType<any, any>,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
         name: TName,
         type: TType,
-        options: FixedLengthArrayBufferLikeFieldOptions,
+        options: FixedLengthBufferLikeFieldOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
@@ -70,9 +70,9 @@ interface ArrayBufferLikeFieldCreator<
         TExtra,
         TPostDeserialized,
         TName,
-        FixedLengthArrayBufferLikeFieldDefinition<
+        FixedLengthBufferLikeFieldDefinition<
             TType,
-            FixedLengthArrayBufferLikeFieldOptions
+            FixedLengthBufferLikeFieldOptions
         >
     >;
 
@@ -81,8 +81,8 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends ArrayBufferLikeFieldType<any, any>,
-        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields>,
+        TType extends BufferFieldSubType<any, any>,
+        TOptions extends VariableLengthBufferLikeFieldOptions<TFields>,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
         name: TName,
@@ -95,7 +95,7 @@ interface ArrayBufferLikeFieldCreator<
         TExtra,
         TPostDeserialized,
         TName,
-        VariableLengthArrayBufferLikeFieldDefinition<
+        VariableLengthBufferLikeFieldDefinition<
             TType,
             TOptions
         >
@@ -110,14 +110,14 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
     TOmitInitKey extends PropertyKey,
     TExtra extends object,
     TPostDeserialized,
-    TType extends ArrayBufferLikeFieldType<any, any>
+    TType extends BufferFieldSubType<any, any>
     > {
     <
         TName extends PropertyKey,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
         name: TName,
-        options: FixedLengthArrayBufferLikeFieldOptions,
+        options: FixedLengthBufferLikeFieldOptions,
         typescriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
@@ -125,16 +125,16 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
         TExtra,
         TPostDeserialized,
         TName,
-        FixedLengthArrayBufferLikeFieldDefinition<
+        FixedLengthBufferLikeFieldDefinition<
             TType,
-            FixedLengthArrayBufferLikeFieldOptions
+            FixedLengthBufferLikeFieldOptions
         >
     >;
 
     <
         TName extends PropertyKey,
         TLengthField extends LengthField<TFields>,
-        TOptions extends VariableLengthArrayBufferLikeFieldOptions<TFields, TLengthField>,
+        TOptions extends VariableLengthBufferLikeFieldOptions<TFields, TLengthField>,
         TTypeScriptType = TType['TTypeScriptType'],
         >(
         name: TName,
@@ -146,7 +146,7 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
         TExtra,
         TPostDeserialized,
         TName,
-        VariableLengthArrayBufferLikeFieldDefinition<
+        VariableLengthBufferLikeFieldDefinition<
             TType,
             TOptions
         >
@@ -212,7 +212,7 @@ export class Struct<
     > {
         for (const field of this._fields) {
             if (field[0] === name) {
-                throw new Error(`This struct already have a field with name '${name}'`);
+                throw new Error(`This struct already have a field with name '${String(name)}'`);
             }
         }
 
@@ -421,46 +421,33 @@ export class Struct<
         TPostDeserialized
     > = (
         name: PropertyKey,
-        type: ArrayBufferLikeFieldType,
-        options: FixedLengthArrayBufferLikeFieldOptions | VariableLengthArrayBufferLikeFieldOptions
+        type: BufferFieldSubType,
+        options: FixedLengthBufferLikeFieldOptions | VariableLengthBufferLikeFieldOptions
     ): any => {
             if ('length' in options) {
                 return this.field(
                     name,
-                    new FixedLengthArrayBufferLikeFieldDefinition(type, options),
+                    new FixedLengthBufferLikeFieldDefinition(type, options),
                 );
             } else {
                 return this.field(
                     name,
-                    new VariableLengthArrayBufferLikeFieldDefinition(type, options),
+                    new VariableLengthBufferLikeFieldDefinition(type, options),
                 );
             }
         };
 
-    public arrayBuffer: BoundArrayBufferLikeFieldDefinitionCreator<
+    public uint8Array: BoundArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
         TPostDeserialized,
-        ArrayBufferFieldType
+        Uint8ArrayBufferFieldSubType
     > = (
         name: PropertyKey,
         options: any
     ): any => {
-            return this.arrayBufferLike(name, ArrayBufferFieldType.instance, options);
-        };
-
-    public uint8ClampedArray: BoundArrayBufferLikeFieldDefinitionCreator<
-        TFields,
-        TOmitInitKey,
-        TExtra,
-        TPostDeserialized,
-        Uint8ClampedArrayFieldType
-    > = (
-        name: PropertyKey,
-        options: any
-    ): any => {
-            return this.arrayBufferLike(name, Uint8ClampedArrayFieldType.instance, options);
+        return this.arrayBufferLike(name, Uint8ArrayBufferFieldSubType.Instance, options);
         };
 
     public string: BoundArrayBufferLikeFieldDefinitionCreator<
@@ -468,12 +455,12 @@ export class Struct<
         TOmitInitKey,
         TExtra,
         TPostDeserialized,
-        StringFieldType
+        StringBufferFieldSubType
     > = (
         name: PropertyKey,
         options: any
     ): any => {
-            return this.arrayBufferLike(name, StringFieldType.instance, options);
+        return this.arrayBufferLike(name, StringBufferFieldSubType.Instance, options);
         };
 
     /**
@@ -539,6 +526,9 @@ export class Struct<
         return this as any;
     }
 
+    /**
+     * Deserialize a struct value from `stream`.
+     */
     public deserialize(
         stream: StructDeserializeStream,
     ): StructDeserializedResult<TFields, TExtra, TPostDeserialized>;
@@ -551,37 +541,35 @@ export class Struct<
         const value = new StructValue();
         Object.defineProperties(value.value, this._extra);
 
-        return Syncbird.try(() => {
-            const iterator = this._fields[Symbol.iterator]();
-            const iterate: () => StructValue | Syncbird<StructValue> = () => {
-                const result = iterator.next();
-                if (result.done) {
-                    return value;
-                }
-
-                const [name, definition] = result.value;
+        return Syncbird
+            .each(this._fields, ([name, definition]) => {
                 return Syncbird.resolve(
                     definition.deserialize(this.options, stream as any, value)
                 ).then(fieldValue => {
                     value.set(name, fieldValue);
-                    return iterate();
                 });
-            };
-            return iterate();
-        }).then(value => {
-            if (this._postDeserialized) {
-                const object = value.value as TFields;
-                const result = this._postDeserialized.call(object, object);
-                if (result) {
-                    return result;
-                }
-            }
+            })
+            .then(() => {
+                const object = value.value;
 
-            return value.value;
-        }).valueOrPromise();
+                // Run `postDeserialized`
+                if (this._postDeserialized) {
+                    const override = this._postDeserialized.call(object, object);
+                    // If it returns a new value, use that as result
+                    // Otherwise it only inspects/mutates the object in place.
+                    if (override) {
+                        return override;
+                    }
+                }
+
+                return object;
+            })
+            .valueOrPromise();
     }
 
-    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): ArrayBuffer {
+    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): Uint8Array;
+    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>, output: Uint8Array): number;
+    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>, output?: Uint8Array): Uint8Array | number {
         const value = new StructValue();
 
         for (const [name, definition] of this._fields) {
@@ -599,14 +587,23 @@ export class Struct<
             structSize += size;
         }
 
-        const buffer = new ArrayBuffer(structSize);
-        const dataView = new DataView(buffer);
+        let outputType = 'number';
+        if (!output) {
+            output = new Uint8Array(structSize);
+            outputType = 'Uint8Array';
+        }
+
+        const dataView = new DataView(output.buffer, output.byteOffset, output.byteLength);
         let offset = 0;
         for (const { fieldValue, size } of fieldsInfo) {
             fieldValue.serialize(dataView, offset);
             offset += size;
         }
 
-        return buffer;
+        if (outputType === 'number') {
+            return structSize;
+        } else {
+            return output;
+        }
     }
 }

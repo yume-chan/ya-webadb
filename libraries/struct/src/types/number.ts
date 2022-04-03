@@ -1,6 +1,8 @@
-import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from '../basic';
-import { Syncbird } from "../syncbird";
-import { ValueOrPromise } from "../utils";
+// cspell: ignore syncbird
+
+import { StructFieldDefinition, StructFieldValue, StructValue, type StructAsyncDeserializeStream, type StructDeserializeStream, type StructOptions } from '../basic/index.js';
+import { Syncbird } from "../syncbird.js";
+import type { ValueOrPromise } from "../utils.js";
 
 export type DataViewGetters =
     { [TKey in keyof DataView]: TKey extends `get${string}` ? TKey : never }[keyof DataView];
@@ -81,16 +83,19 @@ export class NumberFieldDefinition<
         stream: StructDeserializeStream | StructAsyncDeserializeStream,
         struct: StructValue,
     ): ValueOrPromise<NumberFieldValue<this>> {
-        return Syncbird.try(() => {
-            return stream.read(this.getSize());
-        }).then(buffer => {
-            const view = new DataView(buffer);
-            const value = view[this.type.dataViewGetter](
-                0,
-                options.littleEndian
-            );
-            return this.create(options, struct, value as any);
-        }).valueOrPromise();
+        return Syncbird
+            .try(() => {
+                return stream.read(this.getSize());
+            })
+            .then(array => {
+                const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
+                const value = view[this.type.dataViewGetter](
+                    0,
+                    options.littleEndian
+                );
+                return this.create(options, struct, value as any);
+            })
+            .valueOrPromise();
     }
 }
 

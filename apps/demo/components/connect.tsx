@@ -1,12 +1,12 @@
 import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
-import { Adb, AdbBackend } from '@yume-chan/adb';
+import { Adb, AdbBackend, InspectStream, pipeFrom } from '@yume-chan/adb';
 import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
 import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import AdbWebCredentialStore from '@yume-chan/adb-credential-web';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { globalState, logger } from '../state';
+import { globalState } from '../state';
 import { CommonStackTokens, Icons } from '../utils';
 
 const DropdownStyles = { dropdown: { width: '100%' } };
@@ -94,8 +94,8 @@ function _Connect(): JSX.Element | null {
     }, []);
 
     const addTcpBackend = useCallback(() => {
-        const address = window.prompt('Enter the address of device');
-        if (!address) {
+        const host = window.prompt('Enter the address of device');
+        if (!host) {
             return;
         }
 
@@ -108,8 +108,18 @@ function _Connect(): JSX.Element | null {
 
         setTcpBackendList(list => {
             const copy = list.slice();
-            copy.push(new AdbDirectSocketsBackend(address, portNumber));
-            window.localStorage.setItem('tcp-backend-list', JSON.stringify(copy.map(x => ({ address: x.address, port: x.port }))));
+            copy.push(new AdbDirectSocketsBackend(host, portNumber));
+            window.localStorage.setItem(
+                'tcp-backend-list',
+                JSON.stringify(
+                    copy.map(
+                        x => ({
+                            address: x.host,
+                            port: x.port
+                        })
+                    )
+                )
+            );
             return copy;
         });
     }, []);
@@ -130,13 +140,32 @@ function _Connect(): JSX.Element | null {
     const connect = useCallback(async () => {
         try {
             if (selectedBackend) {
-                const device = new Adb(selectedBackend, logger.logger);
+                let device: Adb | undefined;
                 try {
                     setConnecting(true);
-                    await device.connect(CredentialStore);
-                    globalState.setDevice(device);
+
+                    const streams = await selectedBackend.connect();
+
+                    // Use `TransformStream` to intercept packets and log them
+                    const readable = streams.readable
+                        .pipeThrough(
+                            new InspectStream(packet => {
+                                globalState.appendLog('Incoming', packet);
+                            })
+                        );
+                    const writable = pipeFrom(
+                        streams.writable,
+                        new InspectStream(packet => {
+                            globalState.appendLog('Outgoing', packet);
+                        })
+                    );
+                    device = await Adb.authenticate({ readable, writable }, CredentialStore, undefined);
+                    device.disconnected.then(() => {
+                        globalState.setDevice(undefined, undefined);
+                    });
+                    globalState.setDevice(selectedBackend, device);
                 } catch (e) {
-                    device.dispose();
+                    device?.dispose();
                     throw e;
                 }
             }
@@ -149,7 +178,7 @@ function _Connect(): JSX.Element | null {
     const disconnect = useCallback(async () => {
         try {
             await globalState.device!.dispose();
-            globalState.setDevice(undefined);
+            globalState.setDevice(undefined, undefined);
         } catch (e: any) {
             globalState.showErrorDialog(e.message);
         }

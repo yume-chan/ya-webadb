@@ -1,12 +1,11 @@
 import { DefaultButton, ProgressIndicator, Stack } from "@fluentui/react";
-import { AdbSyncMaxPacketSize } from "@yume-chan/adb";
-import { makeAutoObservable, observable, runInAction } from "mobx";
+import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, ReadableStream } from "@yume-chan/adb";
+import { action, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React from "react";
 import { globalState } from "../state";
-import { chunkFile, pickFile, RouteStackProps } from "../utils";
+import { pickFile, ProgressStream, RouteStackProps } from "../utils";
 
 enum Stage {
     Uploading,
@@ -57,8 +56,9 @@ class InstallPageState {
             };
         });
 
-        await globalState.device!.install(chunkFile(file, AdbSyncMaxPacketSize), uploaded => {
-            runInAction(() => {
+        await (file.stream() as unknown as ReadableStream<Uint8Array>)
+            .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
+            .pipeThrough(new ProgressStream(action((uploaded) => {
                 if (uploaded !== file.size) {
                     this.progress = {
                         filename: file.name,
@@ -76,8 +76,8 @@ class InstallPageState {
                         value: 0.8,
                     };
                 }
-            });
-        });
+            })))
+            .pipeTo(globalState.device!.install());
 
         runInAction(() => {
             this.progress = {

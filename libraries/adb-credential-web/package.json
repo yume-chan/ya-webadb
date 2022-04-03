@@ -21,7 +21,7 @@
         "url": "https://github.com/yume-chan/ya-webadb/issues"
     },
     "type": "module",
-    "module": "esm/index.js",
+    "main": "esm/index.js",
     "types": "esm/index.d.ts",
     "scripts": {
         "build": "build-ts-package",
@@ -29,7 +29,7 @@
         "prepublishOnly": "npm run build"
     },
     "devDependencies": {
-        "typescript": "^4.5.5",
+        "typescript": "next",
         "@yume-chan/ts-package-builder": "^1.0.0"
     },
     "dependencies": {

@@ -1,8 +1,8 @@
-import type { Adb, AdbBufferedStream } from "@yume-chan/adb";
-import type { ScrcpyClientConnection } from "../connection";
-import type { H264EncodingInfo } from "../decoder";
-import type { ScrcpyBackOrScreenOnEvent1_18 } from "./1_18";
-import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22";
+import type { Adb, AdbBufferedStream, ReadableStream } from "@yume-chan/adb";
+import type { ScrcpyClientConnection } from "../connection.js";
+import type { H264Configuration } from "../decoder/index.js";
+import type { ScrcpyBackOrScreenOnEvent1_18 } from "./1_18.js";
+import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22.js";
 
 export const DEFAULT_SERVER_PATH = '/data/local/tmp/scrcpy-server.jar';
 
@@ -28,11 +28,17 @@ export function toScrcpyOptionValue<T>(value: any, empty: T): string | T {
     return `${value}`;
 }
 
-export interface VideoStreamPacket {
-    encodingInfo?: H264EncodingInfo | undefined;
-
-    videoData?: ArrayBuffer | undefined;
+export interface VideoStreamConfigurationPacket {
+    type: 'configuration';
+    data: H264Configuration;
 }
+
+export interface VideoStreamFramePacket {
+    type: 'frame';
+    data: Uint8Array;
+}
+
+export type VideoStreamPacket = VideoStreamConfigurationPacket | VideoStreamFramePacket;
 
 export interface ScrcpyOptions<T> {
     value: Partial<T>;
@@ -41,15 +47,15 @@ export interface ScrcpyOptions<T> {
 
     getOutputEncoderNameRegex(): RegExp;
 
-    createConnection(device: Adb): ScrcpyClientConnection;
+    createConnection(adb: Adb): ScrcpyClientConnection;
 
-    parseVideoStream(stream: AdbBufferedStream): Promise<VideoStreamPacket>;
+    parseVideoStream(stream: AdbBufferedStream): ReadableStream<VideoStreamPacket>;
 
     serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnEvent1_18,
-    ): ArrayBuffer | undefined;
+    ): Uint8Array | undefined;
 
     serializeInjectScrollControlMessage(
         message: ScrcpyInjectScrollControlMessage1_22,
-    ): ArrayBuffer;
+    ): Uint8Array;
 }

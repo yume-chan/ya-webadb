@@ -1,8 +1,8 @@
 import Struct from '@yume-chan/struct';
-import { AdbBufferedStream } from '../../stream';
-import { AdbSyncRequestId, adbSyncWriteRequest } from './request';
-import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './response';
-import { AdbSyncLstatResponse } from './stat';
+import type { AdbBufferedStream, WritableStreamDefaultWriter } from '../../stream/index.js';
+import { AdbSyncRequestId, adbSyncWriteRequest } from './request.js';
+import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './response.js';
+import { AdbSyncLstatResponse } from './stat.js';
 
 export const AdbSyncEntryResponse =
     new Struct({ littleEndian: true })
@@ -20,9 +20,10 @@ const ResponseTypes = {
 
 export async function* adbSyncOpenDir(
     stream: AdbBufferedStream,
-    path: string
+    writer: WritableStreamDefaultWriter<Uint8Array>,
+    path: string,
 ): AsyncGenerator<AdbSyncEntryResponse, void, void> {
-    await adbSyncWriteRequest(stream, AdbSyncRequestId.List, path);
+    await adbSyncWriteRequest(writer, AdbSyncRequestId.List, path);
 
     while (true) {
         const response = await adbSyncReadResponse(stream, ResponseTypes);

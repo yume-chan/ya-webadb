@@ -1,6 +1,5 @@
 import Struct from '@yume-chan/struct';
-import { AdbBackend } from './backend';
-import { BufferedStream } from './stream';
+import { TransformStream } from "./stream/index.js";
 
 export enum AdbCommand {
     Auth = 0x48545541,    // 'AUTH'
@@ -20,65 +19,51 @@ const AdbPacketHeader =
         .uint32('checksum')
         .int32('magic');
 
-const AdbPacketStruct =
+type AdbPacketHeaderInit = typeof AdbPacketHeader['TInit'];
+
+export const AdbPacket =
     new Struct({ littleEndian: true })
         .fields(AdbPacketHeader)
-        .arrayBuffer('payload', { lengthField: 'payloadLength' });
+        .uint8Array('payload', { lengthField: 'payloadLength' });
 
-export type AdbPacket = typeof AdbPacketStruct['TDeserializeResult'];
+export type AdbPacket = typeof AdbPacket['TDeserializeResult'];
 
-export type AdbPacketInit = Omit<typeof AdbPacketStruct['TInit'], 'checksum' | 'magic'>;
+// All the useful fields
+export type AdbPacketCore = Omit<typeof AdbPacket['TInit'], 'checksum' | 'magic'>;
 
-export namespace AdbPacket {
-    export async function read(backend: AdbBackend): Promise<AdbPacket> {
-        // Detect boundary
-        // Note that it relies on the backend to only return data from one write operation
-        let buffer: ArrayBuffer;
-        do {
-            // Maybe it's a payload from last connection.
-            // Ignore and try again
-            buffer = await backend.read(24);
-        } while (buffer.byteLength !== 24);
+// All fields except `magic`, which can be calculated in `AdbPacketSerializeStream`
+export type AdbPacketInit = Omit<typeof AdbPacket['TInit'], 'magic'>;
 
-        let bufferUsed = false;
-        const stream = new BufferedStream({
-            async read(length: number) {
-                if (!bufferUsed) {
-                    bufferUsed = true;
-                    return buffer;
-                }
-                return backend.read(length);
-            }
-        });
-
-        return AdbPacketStruct.deserialize(stream);
+export function calculateChecksum(payload: Uint8Array): number;
+export function calculateChecksum(init: AdbPacketCore): AdbPacketInit;
+export function calculateChecksum(payload: Uint8Array | AdbPacketCore): number | AdbPacketInit {
+    if (payload instanceof Uint8Array) {
+        return payload.reduce((result, item) => result + item, 0);
+    } else {
+        (payload as AdbPacketInit).checksum = calculateChecksum(payload.payload);
+        return payload as AdbPacketInit;
     }
+}
 
-    export async function write(
-        init: AdbPacketInit,
-        calculateChecksum: boolean,
-        backend: AdbBackend
-    ): Promise<void> {
-        let checksum: number;
-        if (calculateChecksum && init.payload) {
-            const array = new Uint8Array(init.payload);
-            checksum = array.reduce((result, item) => result + item, 0);
-        } else {
-            checksum = 0;
-        }
+export class AdbPacketSerializeStream extends TransformStream<AdbPacketInit, Uint8Array>{
+    public constructor() {
+        super({
+            transform: async (init, controller) => {
+                // This syntax is ugly, but I don't want to create an new object.
+                (init as unknown as AdbPacketHeaderInit).magic = init.command ^ 0xFFFFFFFF;
+                (init as unknown as AdbPacketHeaderInit).payloadLength = init.payload.byteLength;
 
-        const packet = {
-            ...init,
-            checksum,
-            magic: init.command ^ 0xFFFFFFFF,
-            payloadLength: init.payload.byteLength,
-        };
+                controller.enqueue(
+                    AdbPacketHeader.serialize(
+                        init as unknown as AdbPacketHeaderInit
+                    )
+                );
 
-        // Write payload separately to avoid an extra copy
-        const header = AdbPacketHeader.serialize(packet);
-        await backend.write(header);
-        if (packet.payload.byteLength) {
-            await backend.write(packet.payload);
-        }
+                if (init.payload.byteLength) {
+                    // Enqueue payload separately to avoid copying
+                    controller.enqueue(init.payload);
+                }
+            },
+        });
     }
 }

@@ -1,6 +1,6 @@
-import Struct, { StructAsyncDeserializeStream, StructLike, StructValueType } from '@yume-chan/struct';
-import { AdbBufferedStream } from '../../stream';
-import { decodeUtf8 } from "../../utils";
+import Struct, { type StructAsyncDeserializeStream, type StructLike, type StructValueType } from '@yume-chan/struct';
+import type { AdbBufferedStream } from '../../stream/index.js';
+import { decodeUtf8 } from "../../utils/index.js";
 
 export enum AdbSyncResponseId {
     Entry = 'DENT',

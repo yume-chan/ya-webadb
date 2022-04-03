@@ -1,9 +1,8 @@
 import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, Selection, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
-import { FileIconType } from "@fluentui/react-file-type-icons";
-import { getFileTypeIconNameFromExtensionOrType } from '@fluentui/react-file-type-icons/lib-commonjs/getFileTypeIconProps';
-import { DEFAULT_BASE_URL as FILE_TYPE_ICONS_BASE_URL } from '@fluentui/react-file-type-icons/lib-commonjs/initializeFileTypeIcons';
+import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from "@fluentui/react-file-type-icons";
 import { useConst } from '@fluentui/react-hooks';
-import { AdbSyncEntryResponse, AdbSyncMaxPacketSize, LinuxFileType } from '@yume-chan/adb';
+import { getIcon } from '@fluentui/style-utilities';
+import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, LinuxFileType, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -11,15 +10,19 @@ import getConfig from "next/config";
 import Head from "next/head";
 import Router, { useRouter } from "next/router";
 import path from 'path';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { CommandBar, NoSsr } from '../components';
 import { globalState } from '../state';
-import { asyncEffect, chunkFile, formatSize, formatSpeed, Icons, pickFile, RouteStackProps } from '../utils';
+import { asyncEffect, formatSize, formatSpeed, Icons, pickFile, ProgressStream, RouteStackProps } from '../utils';
+
+initializeFileTypeIcons();
 
 let StreamSaver: typeof import('streamsaver');
 if (typeof window !== 'undefined') {
     const { publicRuntimeConfig } = getConfig();
-    StreamSaver = require('streamsaver');
+    // Can't use `import` here because ESM is read-only (can't set `mitm` field)
+    // Add `await` here because top-level await is on, so every import can be a `Promise`
+    StreamSaver = await require('streamsaver');
     StreamSaver.mitm = publicRuntimeConfig.basePath + '/StreamSaver/mitm.html';
 }
 
@@ -50,31 +53,6 @@ const renderDetailsHeader: IRenderFunction<IDetailsHeaderProps> = (props?, defau
         styles: concatStyleSets(props.styles, { root: { paddingTop: 0 } })
     });
 };
-
-function createReadableStreamFromBufferIterator(
-    iterator: AsyncIterator<ArrayBuffer>
-): ReadableStream<Uint8Array> {
-    return new ReadableStream<Uint8Array>({
-        async pull(controller) {
-            const { desiredSize } = controller;
-            if (!desiredSize || desiredSize < 0) {
-                return;
-            }
-
-            let written = 0;
-            while (written < desiredSize) {
-                const result = await iterator.next();
-                if (result.done) {
-                    controller.close();
-                    return;
-                }
-
-                controller.enqueue(new Uint8Array(result.value));
-                written += result.value.byteLength;
-            }
-        },
-    });
-}
 
 function compareCaseInsensitively(a: string, b: string) {
     let result = a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase());
@@ -168,13 +146,15 @@ class FileManagerState {
                             (async () => {
                                 const sync = await globalState.device!.sync();
                                 try {
-                                    const itemPath = path.resolve(this.path, this.selectedItems[0].name!);
-                                    const readableStream = createReadableStreamFromBufferIterator(sync.read(itemPath));
+                                    const item = this.selectedItems[0];
+                                    const itemPath = path.resolve(this.path, item.name);
+                                    const readable = sync.read(itemPath);
 
-                                    const writeableStream = StreamSaver!.createWriteStream(this.selectedItems[0].name!, {
-                                        size: this.selectedItems[0].size,
-                                    });
-                                    await readableStream.pipeTo(writeableStream);
+                                    const writeable: WritableStream<Uint8Array> = StreamSaver!.createWriteStream(
+                                        item.name,
+                                        { size: item.size }
+                                    ) as any;
+                                    await readable.pipeTo(writeable);
                                 } catch (e) {
                                     globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                                 } finally {
@@ -266,20 +246,22 @@ class FileManagerState {
 
                     switch (item.type) {
                         case LinuxFileType.Link:
-                            iconName = getFileTypeIconNameFromExtensionOrType(undefined, FileIconType.linkedFolder);
+                            ({ iconName } = getFileTypeIconProps({ type: FileIconType.linkedFolder }));
                             break;
                         case LinuxFileType.Directory:
-                            iconName = getFileTypeIconNameFromExtensionOrType(undefined, FileIconType.folder);
+                            ({ iconName } = getFileTypeIconProps({ type: FileIconType.folder }));
                             break;
                         case LinuxFileType.File:
-                            iconName = getFileTypeIconNameFromExtensionOrType(path.extname(item.name!), undefined);
+                            ({ iconName } = getFileTypeIconProps({ extension: path.extname(item.name!) }));
                             break;
                         default:
-                            iconName = getFileTypeIconNameFromExtensionOrType('txt', undefined);
+                            ({ iconName } = getFileTypeIconProps({ extension: 'txt' }));
                             break;
                     }
 
-                    return <Icon imageProps={{ crossOrigin: '', src: `${FILE_TYPE_ICONS_BASE_URL}${ICON_SIZE}/${iconName}.svg` }} style={{ width: ICON_SIZE, height: ICON_SIZE }} />;
+                    // `@fluentui/react-file-type-icons` doesn't export icon src.
+                    const iconSrc = (getIcon(iconName)!.code as unknown as JSX.Element).props.src;
+                    return <Icon imageProps={{ crossOrigin: 'anonymous', src: iconSrc }} style={{ width: ICON_SIZE, height: ICON_SIZE }} />;
                 }
             },
             {
@@ -473,15 +455,17 @@ class FileManagerState {
             }), 1000);
 
             try {
-                await sync.write(
-                    itemPath,
-                    chunkFile(file, AdbSyncMaxPacketSize),
-                    (LinuxFileType.File << 12) | 0o666,
-                    file.lastModified / 1000,
-                    action((uploaded) => {
+                await (file.stream() as unknown as ReadableStream<Uint8Array>)
+                    .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
+                    .pipeThrough(new ProgressStream(action((uploaded) => {
                         this.uploadedSize = uploaded;
-                    }),
-                );
+                    })))
+                    .pipeTo(sync.write(
+                        itemPath,
+                        (LinuxFileType.File << 12) | 0o666,
+                        file.lastModified / 1000,
+                    ));
+
                 runInAction(() => {
                     this.uploadSpeed = this.uploadedSize - this.debouncedUploadedSize;
                     this.debouncedUploadedSize = this.uploadedSize;
@@ -552,8 +536,9 @@ const FileManager: NextPage = (): JSX.Element | null => {
     const previewImage = useCallback(async (path: string) => {
         const sync = await globalState.device!.sync();
         try {
-            const readableStream = createReadableStreamFromBufferIterator(sync.read(path));
-            const response = new Response(readableStream);
+            const readable = sync.read(path);
+            // @ts-ignore ReadableStream definitions are slightly incompatible
+            const response = new Response(readable);
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             setPreviewUrl(url);

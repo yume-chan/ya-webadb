@@ -1,4 +1,4 @@
-import { getBigUint64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback';
+import { getBigUint64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback.js';
 
 const BigInt0 = BigInt(0);
 const BigInt1 = BigInt(1);
@@ -6,15 +6,15 @@ const BigInt2 = BigInt(2);
 const BigInt64 = BigInt(64);
 
 export function getBig(
-    buffer: ArrayBuffer,
+    array: Uint8Array,
     offset = 0,
-    length = buffer.byteLength - offset
+    length = array.byteLength - offset
 ): bigint {
-    const view = new DataView(buffer);
+    const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
 
     let result = BigInt0;
 
-    // Now `length` must be a multiplication of 8
+    // Currently `length` must be a multiplication of 8
     // Support for arbitrary length can be easily added
 
     for (let i = offset; i < offset + length; i += 8) {
@@ -40,8 +40,8 @@ export function setBig(buffer: ArrayBuffer, value: bigint, offset: number = 0) {
     }
 }
 
-export function setBigLE(buffer: ArrayBuffer, value: bigint, offset = 0) {
-    const view = new DataView(buffer);
+export function setBigLE(array: Uint8Array, value: bigint, offset = 0) {
+    const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
     while (value > BigInt0) {
         setBigUint64(view, offset, value, true);
         offset += 8;
@@ -75,7 +75,7 @@ const RsaPrivateKeyNLength = 2048 / 8;
 const RsaPrivateKeyDOffset = 303;
 const RsaPrivateKeyDLength = 2048 / 8;
 
-export function parsePrivateKey(key: ArrayBuffer): [n: bigint, d: bigint] {
+export function parsePrivateKey(key: Uint8Array): [n: bigint, d: bigint] {
     let n = getBig(key, RsaPrivateKeyNOffset, RsaPrivateKeyNLength);
     let d = getBig(key, RsaPrivateKeyDOffset, RsaPrivateKeyDLength);
 
@@ -114,18 +114,16 @@ export function calculatePublicKeyLength() {
 }
 
 export function calculatePublicKey(
-    privateKey: ArrayBuffer
-): ArrayBuffer;
+    privateKey: Uint8Array
+): Uint8Array;
 export function calculatePublicKey(
-    privateKey: ArrayBuffer,
-    output: ArrayBuffer,
-    outputOffset?: number
+    privateKey: Uint8Array,
+    output: Uint8Array,
 ): number;
 export function calculatePublicKey(
-    privateKey: ArrayBuffer,
-    output?: ArrayBuffer,
-    outputOffset: number = 0
-): ArrayBuffer | number {
+    privateKey: Uint8Array,
+    output?: Uint8Array,
+): Uint8Array | number {
     // Android has its own public key generation algorithm
     // See https://android.googlesource.com/platform/system/core.git/+/91784040db2b9273687f88d8b95f729d4a61ecc2/libcrypto_utils/android_pubkey.cpp#111
 
@@ -146,20 +144,21 @@ export function calculatePublicKey(
     // extract `n` from private key
     const [n] = parsePrivateKey(privateKey);
 
-    let outputType: 'ArrayBuffer' | 'number';
+    let outputType: 'Uint8Array' | 'number';
     const outputLength = calculatePublicKeyLength();
     if (!output) {
-        output = new ArrayBuffer(outputLength);
-        outputType = 'ArrayBuffer';
+        output = new Uint8Array(outputLength);
+        outputType = 'Uint8Array';
     } else {
-        if (output.byteLength - outputOffset < outputLength) {
+        if (output.byteLength < outputLength) {
             throw new Error('output buffer is too small');
         }
 
         outputType = 'number';
     }
 
-    const outputView = new DataView(output);
+    const outputView = new DataView(output.buffer, output.byteOffset, output.byteLength);
+    let outputOffset = 0;
 
     // modulusLengthInWords
     outputView.setUint32(outputOffset, 2048 / 8 / 4, true);
@@ -185,7 +184,7 @@ export function calculatePublicKey(
     outputView.setUint32(outputOffset, 65537, true);
     outputOffset += 4;
 
-    if (outputType === 'ArrayBuffer') {
+    if (outputType === 'Uint8Array') {
         return output;
     } else {
         return outputLength;
@@ -227,14 +226,14 @@ export const Asn1Null = 0x05;
 export const Asn1Oid = 0x06;
 
 // PKCS#1 SHA-1 hash digest info
-export const Sha1DigestInfo = [
+export const Sha1DigestInfo = new Uint8Array([
     Asn1Sequence, 0x0d + Sha1DigestLength,
     Asn1Sequence, 0x09,
     // SHA-1 (1 3 14 3 2 26)
     Asn1Oid, 0x05, 1 * 40 + 3, 14, 3, 2, 26,
     Asn1Null, 0x00,
     Asn1OctetString, Sha1DigestLength
-];
+]);
 
 // SubtleCrypto.sign() will hash the given data and sign the hash
 // But we don't need the hashing step
@@ -242,7 +241,7 @@ export const Sha1DigestInfo = [
 // encrypt the given data with its private key)
 // However SubtileCrypto.encrypt() doesn't accept 'RSASSA-PKCS1-v1_5' algorithm
 // So we need to implement the encryption by ourself
-export function sign(privateKey: ArrayBuffer, data: ArrayBuffer): ArrayBuffer {
+export function sign(privateKey: Uint8Array, data: Uint8Array): ArrayBuffer {
     const [n, d] = parsePrivateKey(privateKey);
 
     // PKCS#1 padding
@@ -255,7 +254,7 @@ export function sign(privateKey: ArrayBuffer, data: ArrayBuffer): ArrayBuffer {
     padded[index] = 1;
     index += 1;
 
-    const fillLength = padded.length - Sha1DigestInfo.length - data.byteLength - 1;
+    const fillLength = padded.length - Sha1DigestInfo.length - data.length - 1;
     while (index < fillLength) {
         padded[index] = 0xff;
         index += 1;
@@ -264,14 +263,14 @@ export function sign(privateKey: ArrayBuffer, data: ArrayBuffer): ArrayBuffer {
     padded[index] = 0;
     index += 1;
 
-    padded.set(new Uint8Array(Sha1DigestInfo), index);
+    padded.set(Sha1DigestInfo, index);
     index += Sha1DigestInfo.length;
 
-    padded.set(new Uint8Array(data), index);
+    padded.set(data, index);
 
     // Encryption
     // signature = padded ** d % n
-    let signature = powMod(getBig(padded.buffer), d, n);
+    let signature = powMod(getBig(padded), d, n);
 
     // Put into an ArrayBuffer
     const result = new ArrayBuffer(256);

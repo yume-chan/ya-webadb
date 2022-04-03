@@ -3,11 +3,11 @@
 // cspell: ignore keyevent
 // cspell: ignore longpress
 
-import { AdbCommandBase } from "./base";
+import { AdbCommandBase } from "./base.js";
 
 export class AdbPower extends AdbCommandBase {
     public reboot(name: string = '') {
-        return this.adb.createSocketAndReadAll(`reboot:${name}`);
+        return this.adb.createSocketAndWait(`reboot:${name}`);
     }
 
     public bootloader() {
@@ -36,11 +36,11 @@ export class AdbPower extends AdbCommandBase {
     }
 
     public powerOff() {
-        return this.adb.childProcess.spawnAndWaitLegacy(['reboot', '-p']);
+        return this.adb.subprocess.spawnAndWaitLegacy(['reboot', '-p']);
     }
 
     public powerButton(longPress: boolean = false) {
-        return this.adb.childProcess.spawnAndWaitLegacy(['input', 'keyevent', longPress ? '--longpress POWER' : 'POWER']);
+        return this.adb.subprocess.spawnAndWaitLegacy(['input', 'keyevent', longPress ? '--longpress POWER' : 'POWER']);
     }
 
     /**

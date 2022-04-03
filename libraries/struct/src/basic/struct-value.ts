@@ -1,7 +1,7 @@
-import type { StructFieldValue } from './field-value';
+import type { StructFieldValue } from "./field-value.js";
 
 /**
- * Manages the initialization process of a struct value
+ * A struct value is a map between keys in a struct and their field values.
  */
 export class StructValue {
     /** @internal */ readonly fieldValues: Record<PropertyKey, StructFieldValue> = {};

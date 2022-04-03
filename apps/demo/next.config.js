@@ -21,6 +21,7 @@ module.exports = withMDX({
     reactStrictMode: true,
     productionBrowserSourceMaps: true,
     experimental: {
+        // Workaround https://github.com/vercel/next.js/issues/33914
         esmExternals: 'loose',
     },
     publicRuntimeConfig: {
@@ -34,6 +35,8 @@ module.exports = withMDX({
                 filename: "static/chunks/[name].[hash][ext]",
             },
         });
+
+        config.experiments.topLevelAwait = true;
 
         return config;
     },

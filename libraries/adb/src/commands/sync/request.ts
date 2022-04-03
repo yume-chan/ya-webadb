@@ -1,6 +1,6 @@
 import Struct from '@yume-chan/struct';
-import type { AdbBufferedStream } from '../../stream';
-import { encodeUtf8 } from "../../utils";
+import type { WritableStreamDefaultWriter } from "../../stream/index.js";
+import { encodeUtf8 } from "../../utils/index.js";
 
 export enum AdbSyncRequestId {
     List = 'LIST',
@@ -21,14 +21,14 @@ export const AdbSyncNumberRequest =
 export const AdbSyncDataRequest =
     new Struct({ littleEndian: true })
         .fields(AdbSyncNumberRequest)
-        .arrayBuffer('data', { lengthField: 'arg' });
+        .uint8Array('data', { lengthField: 'arg' });
 
 export async function adbSyncWriteRequest(
-    stream: AdbBufferedStream,
+    writer: WritableStreamDefaultWriter<Uint8Array>,
     id: AdbSyncRequestId | string,
-    value: number | string | ArrayBuffer
+    value: number | string | Uint8Array
 ): Promise<void> {
-    let buffer: ArrayBuffer;
+    let buffer: Uint8Array;
     if (typeof value === 'number') {
         buffer = AdbSyncNumberRequest.serialize({
             id,
@@ -45,5 +45,5 @@ export async function adbSyncWriteRequest(
             data: value,
         });
     }
-    await stream.write(buffer);
+    await writer.write(buffer);
 }

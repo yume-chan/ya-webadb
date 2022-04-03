@@ -1,25 +1,28 @@
-import { Adb } from "@yume-chan/adb";
-import { action, makeAutoObservable } from 'mobx';
+import { Adb, AdbBackend, AdbPacketCore } from "@yume-chan/adb";
+import { action, makeAutoObservable, observable } from 'mobx';
 
 export class GlobalState {
+    backend: AdbBackend | undefined = undefined;
+
     device: Adb | undefined = undefined;
+
     errorDialogVisible = false;
     errorDialogMessage = '';
 
     logVisible = false;
+    logs: [string, AdbPacketCore][] = [];
 
     constructor() {
         makeAutoObservable(this, {
             hideErrorDialog: action.bound,
             toggleLog: action.bound,
+            logs: observable.shallow,
         });
     }
 
-    setDevice(device: Adb | undefined) {
+    setDevice(backend: AdbBackend | undefined, device: Adb | undefined) {
+        this.backend = backend;
         this.device = device;
-        device?.onDisconnected(() => {
-            this.setDevice(undefined);
-        });
     }
 
     showErrorDialog(message: string) {
@@ -33,6 +36,14 @@ export class GlobalState {
 
     toggleLog() {
         this.logVisible = !this.logVisible;
+    }
+
+    appendLog(direction: string, packet: AdbPacketCore) {
+        this.logs.push([direction, packet]);
+    }
+
+    clearLog() {
+        this.logs = [];
     }
 }
 

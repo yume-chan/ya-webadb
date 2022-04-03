@@ -1,7 +1,8 @@
 import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
+import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_22, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder } from "@yume-chan/scrcpy";
+import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_22, ScrcpyScreenOrientation, TinyH264Decoder, VideoStreamPacket, WebCodecsDecoder } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -10,12 +11,12 @@ import Head from "next/head";
 import React, { useEffect, useMemo, useState } from "react";
 import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { globalState } from "../state";
-import { CommonStackTokens, formatSpeed, Icons, RouteStackProps } from "../utils";
+import { CommonStackTokens, formatSpeed, Icons, ProgressStream, RouteStackProps } from "../utils";
 
 const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url).toString();
 
 class FetchWithProgress {
-    public readonly promise: Promise<ArrayBuffer>;
+    public readonly promise: Promise<Uint8Array>;
 
     private _downloaded = 0;
     public get downloaded() { return this._downloaded; }
@@ -54,7 +55,7 @@ class FetchWithProgress {
             result.set(chunk, position);
             position += chunk.byteLength;
         }
-        return result.buffer;
+        return result;
     }
 }
 
@@ -212,7 +213,7 @@ class ScrcpyPageState {
                 key: 'stop',
                 iconProps: { iconName: Icons.Stop },
                 text: 'Stop',
-                onClick: this.stop,
+                onClick: this.stop as VoidFunction,
             });
         }
 
@@ -385,7 +386,7 @@ class ScrcpyPageState {
                 this.debouncedServerDownloadedSize = this.serverDownloadedSize;
             }), 1000);
 
-            let serverBuffer: ArrayBuffer;
+            let serverBuffer: Uint8Array;
 
             try {
                 serverBuffer = await fetchServer(action(([downloaded, total]) => {
@@ -406,11 +407,18 @@ class ScrcpyPageState {
             }), 1000);
 
             try {
-                await pushServer(globalState.device, serverBuffer, {
-                    onProgress: action((progress) => {
+                await new ReadableStream<Uint8Array>({
+                    start(controller) {
+                        controller.enqueue(serverBuffer);
+                        controller.close();
+                    },
+                })
+                    .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
+                    .pipeThrough(new ProgressStream(action((progress) => {
                         this.serverUploadedSize = progress;
-                    }),
-                });
+                    })))
+                    .pipeTo(pushServer(globalState.device));
+
                 runInAction(() => {
                     this.serverUploadSpeed = this.serverUploadedSize - this.debouncedServerUploadedSize;
                     this.debouncedServerUploadedSize = this.serverUploadedSize;
@@ -441,36 +449,18 @@ class ScrcpyPageState {
 
             // Run scrcpy once will delete the server file
             // Re-push it
-            await pushServer(globalState.device, serverBuffer);
+            await new ReadableStream<Uint8Array>({
+                start(controller) {
+                    controller.enqueue(serverBuffer);
+                    controller.close();
+                },
+            })
+                .pipeTo(pushServer(globalState.device));
 
             const factory = this.selectedDecoder.factory;
             const decoder = new factory();
             runInAction(() => {
                 this.decoder = decoder;
-            });
-
-            const client = new ScrcpyClient(globalState.device);
-            runInAction(() => this.log = []);
-            client.onOutput(action(line => this.log.push(line)));
-            client.onClose(this.stop);
-
-            client.onEncodingChanged(action((encoding) => {
-                const { croppedWidth, croppedHeight, } = encoding;
-
-                this.log.push(`[client] Video size changed: ${croppedWidth}x${croppedHeight}`);
-
-                this.width = croppedWidth;
-                this.height = croppedHeight;
-
-                decoder.changeEncoding(encoding);
-            }));
-
-            client.onVideoData((data) => {
-                decoder.feedData(data);
-            });
-
-            client.onClipboardChange(content => {
-                window.navigator.clipboard.writeText(content);
             });
 
             const options = new ScrcpyOptions1_22({
@@ -489,15 +479,42 @@ class ScrcpyPageState {
             });
 
             runInAction(() => {
+                this.log = [];
                 this.log.push(`[client] Server version: ${SCRCPY_SERVER_VERSION}`);
                 this.log.push(`[client] Server arguments: ${options.formatServerArguments().join(' ')}`);
             });
 
-            await client.start(
+            const client = await ScrcpyClient.start(
+                globalState.device,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                options,
+                options
             );
+
+            client.stdout.pipeTo(new WritableStream<string>({
+                write: action((line) => {
+                    this.log.push(line);
+                }),
+            }));
+
+            client.videoStream
+                .pipeThrough(new InspectStream(action((packet: VideoStreamPacket) => {
+                    if (packet.type === 'configuration') {
+                        const { croppedWidth, croppedHeight, } = packet.data;
+                        this.log.push(`[client] Video size changed: ${croppedWidth}x${croppedHeight}`);
+
+                        this.width = croppedWidth;
+                        this.height = croppedHeight;
+                    }
+                })))
+                .pipeTo(decoder.writable)
+                .catch(() => { });
+
+            client.exit.then(() => this.stop());
+
+            client.onClipboardChange(content => {
+                window.navigator.clipboard.writeText(content);
+            });
 
             runInAction(() => {
                 this.client = client;
@@ -512,14 +529,18 @@ class ScrcpyPageState {
         }
     };
 
-    stop() {
+    async stop() {
+        // Request to close client first
+        await this.client?.close();
+
+        // Otherwise some packets may still arrive at decoder
         this.decoder?.dispose();
-        this.decoder = undefined;
 
-        this.client?.close();
-        this.client = undefined;
-
-        this.running = false;
+        runInAction(() => {
+            this.client = undefined;
+            this.decoder = undefined;
+            this.running = false;
+        });
     }
 
     handleDeviceViewRef(element: DeviceViewRef | null) {

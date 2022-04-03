@@ -1,12 +1,8 @@
-import { Adb, AdbBufferedStream, AdbLegacyShell, AdbShell, DataEventEmitter } from '@yume-chan/adb';
-import { PromiseResolver } from '@yume-chan/async';
+import { AdbBufferedStream, AdbNoneSubprocessProtocol, DecodeUtf8Stream, InspectStream, TransformStream, WritableStream, type Adb, type AdbSocket, type AdbSubprocessProtocol, type ReadableStream, type WritableStreamDefaultWriter } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import type { H264EncodingInfo } from "./decoder";
-import { type AndroidKeyEventAction, AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage } from './message';
-import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions } from "./options";
-import { pushServer, PushServerOptions } from "./push-server";
-import { decodeUtf8 } from "./utils";
+import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message.js';
+import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions, VideoStreamPacket } from "./options/index.js";
 
 function* splitLines(text: string): Generator<string, void, void> {
     let start = 0;
@@ -30,36 +26,12 @@ const ClipboardMessage =
         .string('content', { lengthField: 'length' });
 
 export class ScrcpyClient {
-    public static pushServer(
-        device: Adb,
-        file: ArrayBuffer,
-        options?: PushServerOptions
-    ) {
-        pushServer(device, file, options);
-    }
-
     public static async getEncoders(
-        device: Adb,
+        adb: Adb,
         path: string,
         version: string,
         options: ScrcpyOptions<any>
     ): Promise<string[]> {
-        const resolver = new PromiseResolver<string[]>();
-        const encoderNameRegex = options.getOutputEncoderNameRegex();
-        const encoders: string[] = [];
-
-        const client = new ScrcpyClient(device);
-        client.onOutput((line) => {
-            const match = line.match(encoderNameRegex);
-            if (match) {
-                encoders.push(match[1]!);
-            }
-        });
-
-        client.onClose(() => {
-            resolver.resolve(encoders);
-        });
-
         // Provide an invalid encoder name
         // So the server will return all available encoders
         options.value.encoderName = '_';
@@ -68,70 +40,35 @@ export class ScrcpyClient {
 
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
-        await client.start(
-            path,
-            version,
-            options
-        );
+        const client = await ScrcpyClient.start(adb, path, version, options);
 
-        return resolver.promise;
+        const encoderNameRegex = options.getOutputEncoderNameRegex();
+        const encoders: string[] = [];
+        await client.stdout.pipeTo(new WritableStream({
+            write(line) {
+                const match = line.match(encoderNameRegex);
+                if (match) {
+                    encoders.push(match[1]!);
+                }
+            },
+        }));
+
+        return encoders;
     }
 
-    private readonly device: Adb;
-
-    public get backend() { return this.device.backend; }
-
-    private process: AdbShell | undefined;
-
-    private videoStream: AdbBufferedStream | undefined;
-
-    private controlStream: AdbBufferedStream | undefined;
-
-    private readonly outputEvent = new EventEmitter<string>();
-    public get onOutput() { return this.outputEvent.event; }
-
-    private readonly closeEvent = new EventEmitter<void>();
-    public get onClose() { return this.closeEvent.event; }
-
-    private _running = false;
-    public get running() { return this._running; }
-
-    private _screenWidth: number | undefined;
-    public get screenWidth() { return this._screenWidth; }
-
-    private _screenHeight: number | undefined;
-    public get screenHeight() { return this._screenHeight; }
-
-    private readonly encodingChangedEvent = new EventEmitter<H264EncodingInfo>();
-    public get onEncodingChanged() { return this.encodingChangedEvent.event; }
-
-    private readonly videoDataEvent = new DataEventEmitter<ArrayBuffer>();
-    public get onVideoData() { return this.videoDataEvent.event; }
-
-    private readonly clipboardChangeEvent = new EventEmitter<string>();
-    public get onClipboardChange() { return this.clipboardChangeEvent.event; }
-
-    private options: ScrcpyOptions<any> | undefined;
-    private sendingTouchMessage = false;
-
-    public constructor(device: Adb) {
-        this.device = device;
-    }
-
-    public async start(
+    public static async start(
+        adb: Adb,
         path: string,
         version: string,
         options: ScrcpyOptions<any>
     ) {
-        this.options = options;
-
-        const connection = options.createConnection(this.device);
-        let process: AdbShell | undefined;
+        const connection = options.createConnection(adb);
+        let process: AdbSubprocessProtocol | undefined;
 
         try {
             await connection.initialize();
 
-            process = await this.device.childProcess.spawn(
+            process = await adb.subprocess.spawn(
                 [
                     // cspell: disable-next-line
                     `CLASSPATH=${path}`,
@@ -144,31 +81,21 @@ export class ScrcpyClient {
                 {
                     // Scrcpy server doesn't split stdout and stderr,
                     // so disable Shell Protocol to simplify processing
-                    shells: [AdbLegacyShell],
+                    protocols: [AdbNoneSubprocessProtocol],
                 }
             );
 
-            process.onStdout(this.handleProcessOutput, this);
-
-            const resolver = new PromiseResolver<never>();
-            const removeExitListener = process.onExit(() => {
-                resolver.reject(new Error('scrcpy server exited prematurely'));
-            });
-
-            const [videoStream, controlStream] = await Promise.race([
-                resolver.promise,
+            const result = await Promise.race([
+                process.exit,
                 connection.getStreams(),
             ]);
 
-            removeExitListener();
-            this.process = process;
-            this.process.onExit(this.handleProcessClosed, this);
-            this.videoStream = videoStream;
-            this.controlStream = controlStream;
+            if (typeof result === 'number') {
+                throw new Error('scrcpy server exited prematurely');
+            }
 
-            this._running = true;
-            this.receiveVideo();
-            this.receiveControl();
+            const [videoStream, controlStream] = result;
+            return new ScrcpyClient(adb, options, process, videoStream, controlStream);
         } catch (e) {
             await process?.kill();
             throw e;
@@ -177,80 +104,95 @@ export class ScrcpyClient {
         }
     }
 
-    private handleProcessOutput(data: ArrayBuffer) {
-        const text = decodeUtf8(data);
-        for (const line of splitLines(text)) {
-            if (line === '') {
-                continue;
-            }
-            this.outputEvent.fire(line);
-        }
-    }
+    private _adb: Adb;
+    public get adb() { return this._adb; }
 
-    private handleProcessClosed() {
-        this._running = false;
-        this.closeEvent.fire();
-    }
+    private options: ScrcpyOptions<any>;
+    private process: AdbSubprocessProtocol;
 
-    private async receiveVideo() {
-        if (!this.videoStream) {
-            throw new Error('receiveVideo started before initialization');
-        }
+    private _stdout: ReadableStream<string>;
+    public get stdout() { return this._stdout; }
 
-        try {
-            while (this._running) {
-                const { encodingInfo, videoData } = await this.options!.parseVideoStream(this.videoStream);
-                if (encodingInfo) {
-                    this._screenWidth = encodingInfo.croppedWidth;
-                    this._screenHeight = encodingInfo.croppedHeight;
-                    this.encodingChangedEvent.fire(encodingInfo);
+    public get exit() { return this.process.exit; }
+
+    private _screenWidth: number | undefined;
+    public get screenWidth() { return this._screenWidth; }
+
+    private _screenHeight: number | undefined;
+    public get screenHeight() { return this._screenHeight; }
+
+    private _videoStream: ReadableStream<VideoStreamPacket>;
+    public get videoStream() { return this._videoStream; }
+
+    private _controlStreamWriter: WritableStreamDefaultWriter<Uint8Array> | undefined;
+
+    private readonly clipboardChangeEvent = new EventEmitter<string>();
+    public get onClipboardChange() { return this.clipboardChangeEvent.event; }
+
+    private lastTouchMessage = 0;
+
+    public constructor(
+        adb: Adb,
+        options: ScrcpyOptions<any>,
+        process: AdbSubprocessProtocol,
+        videoStream: AdbBufferedStream,
+        controlStream: AdbSocket | undefined,
+    ) {
+        this._adb = adb;
+        this.options = options;
+        this.process = process;
+
+        this._stdout = process.stdout
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new TransformStream({
+                transform(chunk, controller) {
+                    for (const line of splitLines(chunk)) {
+                        if (line === '') {
+                            continue;
+                        }
+                        controller.enqueue(line);
+                    }
+                },
+            }));
+
+        this._videoStream = options
+            .parseVideoStream(videoStream)
+            .pipeThrough(new InspectStream(packet => {
+                if (packet.type === 'configuration') {
+                    this._screenWidth = packet.data.croppedWidth;
+                    this._screenHeight = packet.data.croppedHeight;
                 }
-                if (videoData) {
-                    this.videoDataEvent.fire(videoData);
-                }
-            }
-        } catch (e) {
-            if (!this._running) {
-                return;
-            }
-        }
-    }
+            }));
 
-    private async receiveControl() {
-        if (!this.controlStream) {
-            // control disabled
-            return;
-        }
-
-        try {
-            while (true) {
-                const type = await this.controlStream.read(1);
-                switch (new Uint8Array(type)[0]) {
-                    case 0:
-                        const { content } = await ClipboardMessage.deserialize(this.controlStream);
-                        this.clipboardChangeEvent.fire(content!);
-                        break;
-                    default:
-                        throw new Error('unknown control message type');
+        if (controlStream) {
+            const buffered = new AdbBufferedStream(controlStream);
+            this._controlStreamWriter = controlStream.writable.getWriter();
+            (async () => {
+                try {
+                    while (true) {
+                        const type = await buffered.read(1);
+                        switch (type[0]) {
+                            case 0:
+                                const { content } = await ClipboardMessage.deserialize(buffered);
+                                this.clipboardChangeEvent.fire(content!);
+                                break;
+                            default:
+                                throw new Error('unknown control message type');
+                        }
+                    }
+                } catch {
+                    // TODO: Scrcpy: handle error
                 }
-            }
-        } catch (e) {
-            if (!this._running) {
-                return;
-            }
+            })();
         }
     }
 
     private checkControlStream(caller: string) {
-        if (!this._running) {
-            throw new Error(`${caller} called before start`);
-        }
-
-        if (!this.controlStream) {
+        if (!this._controlStreamWriter) {
             throw new Error(`${caller} called with control disabled`);
         }
 
-        return this.controlStream;
+        return this._controlStreamWriter;
     }
 
     public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type'>) {
@@ -280,20 +222,22 @@ export class ScrcpyClient {
 
         // ADB streams are actually pretty low-bandwidth and laggy
         // Re-sample move events to avoid flooding the connection
-        if (this.sendingTouchMessage &&
-            (message.action === AndroidMotionEventAction.Move ||
-                message.action === AndroidMotionEventAction.HoverMove)) {
+
+        // TODO: Scrcpy: investigate how to throttle touch events
+        // because 60FPS may still be too high
+        const now = Date.now();
+        if (now - this.lastTouchMessage < 16 &&
+            [AndroidMotionEventAction.Move, AndroidMotionEventAction.HoverMove].includes(message.action)) {
             return;
         }
 
-        this.sendingTouchMessage = true;
+        this.lastTouchMessage = now;
         await controlStream.write(ScrcpyInjectTouchControlMessage.serialize({
             ...message,
             type: ScrcpyControlMessageType.InjectTouch,
             screenWidth: this.screenWidth,
             screenHeight: this.screenHeight,
         }));
-        this.sendingTouchMessage = false;
     }
 
     public async injectScroll(message: Omit<ScrcpyInjectScrollControlMessage1_22, 'type' | 'screenWidth' | 'screenHeight'>) {
@@ -325,18 +269,7 @@ export class ScrcpyClient {
     }
 
     public async close() {
-        if (!this._running) {
-            return;
-        }
-
-        this._running = false;
-
-        this.videoStream?.close();
-        this.videoStream = undefined;
-
-        this.controlStream?.close();
-        this.controlStream = undefined;
-
+        // No need to close streams. Kill the process will destroy them from the other side.
         await this.process?.kill();
     }
 }

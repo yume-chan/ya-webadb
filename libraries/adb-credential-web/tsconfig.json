@@ -8,7 +8,7 @@
     },
     "references": [
         {
-            "path": "../adb/tsconfig.json"
+            "path": "../adb/tsconfig.build.json"
         }
     ]
 }
