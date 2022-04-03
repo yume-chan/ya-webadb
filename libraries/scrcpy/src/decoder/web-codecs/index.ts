@@ -55,7 +55,8 @@ export class WebCodecsDecoder implements H264Decoder {
                         break;
                     case 'frame':
                         this.decoder.decode(new EncodedVideoChunk({
-                            type: 'key',
+                            // Treat `undefined` as `key`, otherwise won't decode.
+                            type: packet.keyframe === false ? 'delta' : 'key',
                             timestamp: 0,
                             data: packet.data,
                         }));

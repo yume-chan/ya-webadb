@@ -50,6 +50,7 @@ Scrcpy server has no backward compatibility on options input format. Currently t
 | 1.18~1.20 | `ScrcpyOptions1_18` |
 | 1.21      | `ScrcpyOptions1_21` |
 | 1.22      | `ScrcpyOptions1_22` |
+| 1.23      | `ScrcpyOptions1_23` |
 
 You must use the correct type according to the server version.
 

@@ -2,7 +2,7 @@ import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, I
 import { useId } from "@fluentui/react-hooks";
 import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_22, ScrcpyScreenOrientation, TinyH264Decoder, VideoStreamPacket, WebCodecsDecoder } from "@yume-chan/scrcpy";
+import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_23, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder, type VideoStreamPacket } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -433,12 +433,16 @@ class ScrcpyPageState {
                 globalState.device,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                new ScrcpyOptions1_22({
+                new ScrcpyOptions1_23({
                     logLevel: ScrcpyLogLevel.Debug,
                     bitRate: 4_000_000,
                     tunnelForward: this.tunnelForward,
                     sendDeviceMeta: false,
                     sendDummyByte: false,
+                    control: false,
+                    // Don't cleanup when getting encoders,
+                    // so doesn't need to push server binary again
+                    cleanup: false,
                 })
             );
             if (encoders.length === 0) {
@@ -449,23 +453,13 @@ class ScrcpyPageState {
                 this.encoders = encoders;
             });
 
-            // Run scrcpy once will delete the server file
-            // Re-push it
-            await new ReadableStream<Uint8Array>({
-                start(controller) {
-                    controller.enqueue(serverBuffer);
-                    controller.close();
-                },
-            })
-                .pipeTo(pushServer(globalState.device));
-
             const factory = this.selectedDecoder.factory;
             const decoder = new factory();
             runInAction(() => {
                 this.decoder = decoder;
             });
 
-            const options = new ScrcpyOptions1_22({
+            const options = new ScrcpyOptions1_23({
                 logLevel: ScrcpyLogLevel.Debug,
                 maxSize: this.resolution,
                 bitRate: this.bitRate,

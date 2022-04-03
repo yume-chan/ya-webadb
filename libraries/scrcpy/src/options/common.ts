@@ -1,4 +1,4 @@
-import type { Adb, AdbBufferedStream, ReadableStream } from "@yume-chan/adb";
+import type { Adb, TransformStream } from "@yume-chan/adb";
 import type { ScrcpyClientConnection } from "../connection.js";
 import type { H264Configuration } from "../decoder/index.js";
 import type { ScrcpyBackOrScreenOnEvent1_18 } from "./1_18.js";
@@ -35,6 +35,8 @@ export interface VideoStreamConfigurationPacket {
 
 export interface VideoStreamFramePacket {
     type: 'frame';
+    keyframe?: boolean | undefined;
+    pts?: bigint | undefined;
     data: Uint8Array;
 }
 
@@ -49,7 +51,7 @@ export interface ScrcpyOptions<T> {
 
     createConnection(adb: Adb): ScrcpyClientConnection;
 
-    parseVideoStream(stream: AdbBufferedStream): ReadableStream<VideoStreamPacket>;
+    createVideoStreamTransformer(): TransformStream<Uint8Array, VideoStreamPacket>;
 
     serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnEvent1_18,

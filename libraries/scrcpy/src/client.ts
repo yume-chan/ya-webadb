@@ -135,7 +135,7 @@ export class ScrcpyClient {
         adb: Adb,
         options: ScrcpyOptions<any>,
         process: AdbSubprocessProtocol,
-        videoStream: AdbBufferedStream,
+        videoStream: AdbSocket,
         controlStream: AdbSocket | undefined,
     ) {
         this._adb = adb;
@@ -155,8 +155,8 @@ export class ScrcpyClient {
                 },
             }));
 
-        this._videoStream = options
-            .parseVideoStream(videoStream)
+        this._videoStream = videoStream.readable
+            .pipeThrough(options.createVideoStreamTransformer())
             .pipeThrough(new InspectStream(packet => {
                 if (packet.type === 'configuration') {
                     this._screenWidth = packet.data.croppedWidth;

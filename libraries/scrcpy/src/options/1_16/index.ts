@@ -1,4 +1,4 @@
-import { BufferedStreamEndedError, ReadableStream, TransformStream, type Adb, type AdbBufferedStream } from "@yume-chan/adb";
+import { StructDeserializeStream, TransformStream, type Adb } from "@yume-chan/adb";
 import Struct, { placeholder } from "@yume-chan/struct";
 import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec.js";
 import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnectionOptions } from "../../connection.js";
@@ -112,11 +112,11 @@ export interface ScrcpyOptionsInit1_16 {
 
 export const VideoPacket =
     new Struct()
-        .int64('pts')
+        .uint64('pts')
         .uint32('size')
         .uint8Array('data', { lengthField: 'size' });
 
-export const NoPts = BigInt(-1);
+export const NO_PTS = BigInt(1) << BigInt(63);
 
 export const ScrcpyBackOrScreenOnEvent1_16 =
     new Struct()
@@ -211,29 +211,28 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
         return /\s+scrcpy --encoder-name '(.*?)'/;
     }
 
-    public parseVideoStream(stream: AdbBufferedStream): ReadableStream<VideoStreamPacket> {
+    public createVideoStreamTransformer(): TransformStream<Uint8Array, VideoStreamPacket> {
         // Optimized path for video frames only
         if (this.value.sendFrameMeta === false) {
-            return stream
-                .release()
-                .pipeThrough(new TransformStream<Uint8Array, VideoStreamPacket>({
-                    transform(chunk, controller) {
-                        controller.enqueue({
-                            type: 'frame',
-                            data: chunk,
-                        });
-                    },
-                }));
+            return new TransformStream({
+                transform(chunk, controller) {
+                    controller.enqueue({
+                        type: 'frame',
+                        data: chunk,
+                    });
+                },
+            });
         }
 
         let header: Uint8Array | undefined;
 
-        return new ReadableStream<VideoStreamPacket>({
-            async pull(controller) {
-                try {
-                    const { pts, data } = await VideoPacket.deserialize(stream);
-                    if (pts === NoPts) {
-                        const sequenceParameterSet = parse_sequence_parameter_set(data.slice().buffer);
+        let deserializeStream = new StructDeserializeStream(VideoPacket);
+        return {
+            writable: deserializeStream.writable,
+            readable: deserializeStream.readable.pipeThrough(new TransformStream({
+                transform(packet, controller) {
+                    if (packet.pts === NO_PTS) {
+                        const sequenceParameterSet = parse_sequence_parameter_set(packet.data.slice().buffer);
 
                         const {
                             profile_idc: profileIndex,
@@ -258,7 +257,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
                         const croppedWidth = encodedWidth - cropLeft - cropRight;
                         const croppedHeight = encodedHeight - cropTop - cropBottom;
 
-                        header = data;
+                        header = packet.data;
                         controller.enqueue({
                             type: 'configuration',
                             data: {
@@ -280,28 +279,22 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
 
                     let frameData: Uint8Array;
                     if (header) {
-                        frameData = new Uint8Array(header.byteLength + data.byteLength);
+                        frameData = new Uint8Array(header.byteLength + packet.data.byteLength);
                         frameData.set(header);
-                        frameData.set(data!, header.byteLength);
+                        frameData.set(packet.data, header.byteLength);
                         header = undefined;
                     } else {
-                        frameData = data;
+                        frameData = packet.data;
                     }
 
                     controller.enqueue({
                         type: 'frame',
+                        pts: packet.pts,
                         data: frameData,
                     });
-                } catch (e) {
-                    if (e instanceof BufferedStreamEndedError) {
-                        controller.close();
-                        return;
-                    }
-
-                    throw e;
                 }
-            }
-        });
+            }))
+        };
     }
 
     public serializeBackOrScreenOnControlMessage(
