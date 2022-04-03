@@ -73,7 +73,7 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketCor
 
 export class AdbWebUsbBackend implements AdbBackend {
     public static isSupported(): boolean {
-        return !!window.navigator?.usb;
+        return !!globalThis.navigator?.usb;
     }
 
     public static async getDevices(): Promise<AdbWebUsbBackend[]> {
