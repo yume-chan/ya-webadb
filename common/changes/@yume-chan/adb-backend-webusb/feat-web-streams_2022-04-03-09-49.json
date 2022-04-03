@@ -2,7 +2,7 @@
   "changes": [
     {
       "packageName": "@yume-chan/adb-backend-webusb",
-    "comment": "Update to use Web Streams API",
+      "comment": "Improve compatibility with Node.js 12 ESM format",
       "type": "none"
     }
   ],
