@@ -179,6 +179,7 @@ class ScrcpyPageState {
         factory: TinyH264Decoder,
     }];
     selectedDecoder: { name: string, factory: H264DecoderConstructor; } = this.decoders[0];
+    ignoreDecoderCodecArgs = false;
     decoder: H264Decoder | undefined = undefined;
 
     resolution = 1080;
@@ -306,6 +307,7 @@ class ScrcpyPageState {
             handleAppSwitchPointerUp: false,
             handleCurrentEncoderChange: action.bound,
             handleSelectedDecoderChange: action.bound,
+            handleIgnoreDecoderCodecArgsChange: action.bound,
             handleResolutionChange: action.bound,
             handleTunnelForwardChange: action.bound,
             handleBitRateChange: action.bound,
@@ -472,10 +474,12 @@ class ScrcpyPageState {
                 encoderName: this.selectedEncoder ?? encoders[0],
                 sendDeviceMeta: false,
                 sendDummyByte: false,
-                codecOptions: new CodecOptions({
-                    profile: decoder.maxProfile,
-                    level: decoder.maxLevel,
-                }),
+                codecOptions: !this.ignoreDecoderCodecArgs
+                    ? new CodecOptions({
+                        profile: decoder.maxProfile,
+                        level: decoder.maxLevel,
+                    })
+                    : undefined,
             });
 
             runInAction(() => {
@@ -613,6 +617,13 @@ class ScrcpyPageState {
         this.selectedDecoder = option.data;
     }
 
+    handleIgnoreDecoderCodecArgsChange(e?: any, checked?: boolean) {
+        if (checked === undefined) {
+            return;
+        }
+        this.ignoreDecoderCodecArgs = checked;
+    }
+
     handleResolutionChange(e: any, value?: string) {
         if (value === undefined) {
             return;
@@ -631,7 +642,6 @@ class ScrcpyPageState {
         if (checked === undefined) {
             return;
         }
-
         this.tunnelForward = checked;
     };
 
@@ -880,6 +890,19 @@ const Scrcpy: NextPage = () => {
                             onChange={state.handleSelectedDecoderChange}
                         />
                     )}
+
+                    <Toggle
+                        label={
+                            <>
+                                <span>Ignore decoder's codec arguments{' '}</span>
+                                <TooltipHost content="Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.">
+                                    <Icon iconName={Icons.Info} />
+                                </TooltipHost>
+                            </>
+                        }
+                        checked={state.ignoreDecoderCodecArgs}
+                        onChange={state.handleIgnoreDecoderCodecArgsChange}
+                    />
 
                     <SpinButton
                         label="Max Resolution (longer side, 0 = unlimited)"
