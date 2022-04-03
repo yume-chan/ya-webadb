@@ -409,7 +409,7 @@ export class Struct<
     ) {
         return this.bigint(
             name,
-            BigIntFieldType.Int64,
+            BigIntFieldType.Uint64,
             _typescriptType
         );
     }
