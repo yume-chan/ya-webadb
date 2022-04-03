@@ -3,7 +3,7 @@
     {
       "packageName": "@yume-chan/adb",
       "comment": "Improve compatibility with Node.js 12 ESM format",
-      "type": "none"
+    "type": "patch"
     }
   ],
   "packageName": "@yume-chan/adb"

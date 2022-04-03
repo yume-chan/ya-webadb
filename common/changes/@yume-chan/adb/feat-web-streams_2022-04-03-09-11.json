@@ -3,7 +3,7 @@
     {
       "packageName": "@yume-chan/adb",
     "comment": "Update to use Web Streams API",
-      "type": "none"
+    "type": "patch"
     }
   ],
   "packageName": "@yume-chan/adb"
