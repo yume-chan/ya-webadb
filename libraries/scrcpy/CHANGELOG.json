@@ -2,6 +2,38 @@
   "name": "@yume-chan/scrcpy",
   "entries": [
     {
+      "version": "0.0.11",
+      "tag": "@yume-chan/scrcpy_v0.0.11",
+      "date": "Sun, 03 Apr 2022 10:54:15 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add support for 1.22 new server options"
+          },
+          {
+            "comment": "Update to use Web Streams API"
+          },
+          {
+            "comment": "Improve compatibility with Node.js 12 ESM format"
+          },
+          {
+            "comment": "Workaround a issue with server crash on Samsung ROM (https://github.com/Genymobile/scrcpy/issues/2841)"
+          },
+          {
+            "comment": "Remove output parsing. It's output is for debugging only, not machine readable."
+          },
+          {
+            "comment": "Update license year"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@yume-chan/adb\" from `^0.0.10` to `^0.0.11`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.10",
       "tag": "@yume-chan/scrcpy_v0.0.10",
       "date": "Sun, 09 Jan 2022 15:52:20 GMT",

@@ -2,6 +2,29 @@
   "name": "@yume-chan/adb-backend-webusb",
   "entries": [
     {
+      "version": "0.0.11",
+      "tag": "@yume-chan/adb-backend-webusb_v0.0.11",
+      "date": "Sun, 03 Apr 2022 10:54:15 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Update to use Web Streams API"
+          },
+          {
+            "comment": "Improve compatibility with Node.js 12 ESM format"
+          },
+          {
+            "comment": "Update license year"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@yume-chan/adb\" from `^0.0.10` to `^0.0.11`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.10",
       "tag": "@yume-chan/adb-backend-webusb_v0.0.10",
       "date": "Sun, 09 Jan 2022 15:52:20 GMT",

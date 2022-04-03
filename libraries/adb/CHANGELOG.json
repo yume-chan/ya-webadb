@@ -2,6 +2,32 @@
   "name": "@yume-chan/adb",
   "entries": [
     {
+      "version": "0.0.11",
+      "tag": "@yume-chan/adb_v0.0.11",
+      "date": "Sun, 03 Apr 2022 10:54:15 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add power related API"
+          },
+          {
+            "comment": "Update compatibility matrix"
+          },
+          {
+            "comment": "Update license year"
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Update to use Web Streams API"
+          },
+          {
+            "comment": "Improve compatibility with Node.js 12 ESM format"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.10",
       "tag": "@yume-chan/adb_v0.0.10",
       "date": "Sun, 09 Jan 2022 15:52:20 GMT",

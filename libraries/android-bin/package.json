@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/android-bin",
-    "version": "0.0.10",
+    "version": "0.0.11",
     "description": "Wrappers for Android built-in executables.",
     "keywords": [
         "adb",
@@ -34,7 +34,7 @@
         "@yume-chan/ts-package-builder": "^1.0.0"
     },
     "dependencies": {
-        "@yume-chan/adb": "^0.0.10",
+        "@yume-chan/adb": "^0.0.11",
         "tslib": "^2.3.1"
     }
 }

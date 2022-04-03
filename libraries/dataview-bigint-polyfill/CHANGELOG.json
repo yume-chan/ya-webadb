@@ -1,0 +1,17 @@
+{
+  "name": "@yume-chan/dataview-bigint-polyfill",
+  "entries": [
+    {
+      "version": "0.0.10",
+      "tag": "@yume-chan/dataview-bigint-polyfill_v0.0.10",
+      "date": "Sun, 03 Apr 2022 10:54:15 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Improve compatibility with Node.js 12 ESM format"
+          }
+        ]
+      }
+    }
+  ]
+}
