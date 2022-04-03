@@ -2,7 +2,7 @@ import { WritableStream } from "@yume-chan/adb";
 import { PromiseResolver } from "@yume-chan/async";
 import { AndroidCodecLevel, AndroidCodecProfile } from "../../codec.js";
 import type { VideoStreamPacket } from "../../options/index.js";
-import { FpsCounter, H264Configuration, H264Decoder } from "../types.js";
+import type { H264Configuration, H264Decoder } from "../types.js";
 import { createTinyH264Wrapper, type TinyH264Wrapper } from "./wrapper.js";
 
 let cachedInitializePromise: Promise<{ YuvBuffer: typeof import('yuv-buffer'), YuvCanvas: typeof import('yuv-canvas').default; }> | undefined;
@@ -23,11 +23,11 @@ export class TinyH264Decoder implements H264Decoder {
 
     public readonly maxLevel = AndroidCodecLevel.Level4;
 
-    private _fpsCounter = new FpsCounter();
-    public get fpsCounter() { return this._fpsCounter; }
-
     private _renderer: HTMLCanvasElement;
     public get renderer() { return this._renderer; }
+
+    private _frameRendered = 0;
+    public get frameRendered() { return this._frameRendered; }
 
     private _writable: WritableStream<VideoStreamPacket>;
     public get writable() { return this._writable; }
@@ -94,7 +94,7 @@ export class TinyH264Decoder implements H264Decoder {
         const uPlaneOffset = encodedWidth * encodedHeight;
         const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
         wrapper.onPictureReady(({ data }) => {
-            this._fpsCounter.add();
+            this._frameRendered += 1;
             const array = new Uint8Array(data);
             const frame = YuvBuffer.frame(format,
                 YuvBuffer.lumaPlane(format, array, encodedWidth, 0),

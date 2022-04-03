@@ -1,6 +1,6 @@
 import { WritableStream } from '@yume-chan/adb';
 import type { VideoStreamPacket } from "../../options/index.js";
-import { FpsCounter, H264Configuration, H264Decoder } from "../types.js";
+import type { H264Configuration, H264Decoder } from "../types.js";
 
 function toHex(value: number) {
     return value.toString(16).padStart(2, '0').toUpperCase();
@@ -12,14 +12,14 @@ export class WebCodecsDecoder implements H264Decoder {
     public readonly maxProfile = undefined;
     public readonly maxLevel = undefined;
 
-    private _fpsCounter = new FpsCounter();
-    public get fpsCounter() { return this._fpsCounter; }
-
     private _writable: WritableStream<VideoStreamPacket>;
     public get writable() { return this._writable; }
 
     private _renderer: HTMLCanvasElement;
     public get renderer() { return this._renderer; }
+
+    private _frameRendered = 0;
+    public get frameRendered() { return this._frameRendered; }
 
     private context: CanvasRenderingContext2D;
     private decoder: VideoDecoder;
@@ -67,7 +67,7 @@ export class WebCodecsDecoder implements H264Decoder {
 
     private render = () => {
         if (this.lastFrame) {
-            this._fpsCounter.add();
+            this._frameRendered += 1;
             this.context.drawImage(this.lastFrame, 0, 0);
             this.lastFrame.close();
             this.lastFrame = undefined;

@@ -351,18 +351,6 @@ class ScrcpyPageState {
             }
         });
 
-        let fpsIntervalId: any;
-        autorun(() => {
-            if (this.decoder) {
-                const decoder = this.decoder;
-                fpsIntervalId = setInterval(action(() => {
-                    this.log.push(`[renderer] FPS: ${decoder.fpsCounter.value}`);
-                }), 1000);
-            } else {
-                clearInterval(fpsIntervalId);
-            }
-        });
-
         if (typeof window !== 'undefined' && typeof window.VideoDecoder === 'function') {
             setTimeout(action(() => {
                 this.decoders.unshift({
