@@ -5,7 +5,7 @@ Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/e
 - [Note](#note)
 - [`pickDevice`](#pickdevice)
 - [`fromDevice`](#fromdevice)
-- [`read`/`write`](#readwrite)
+- [`connect`](#connect)
 
 ## Note
 
@@ -36,6 +36,10 @@ static async fromDevice(device: USBDevice): Promise<AdbWebBackend>
 
 Create an `AdbWebBackend` instance from an exist `USBDevice` instance.
 
-## `read`/`write`
+## `connect`
 
-Read/write data from/to the underlying `USBDevice` instance.
+```ts
+async connect(): Promise<ReadableWritablePair<AdbPacketCore, AdbPacketInit>>
+```
+
+Connect to a device and create a pair of `AdbPacket` streams.

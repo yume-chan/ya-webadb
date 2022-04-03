@@ -10,14 +10,13 @@ TypeScript implementation of Android Debug Bridge (ADB) protocol.
 - [Connection](#connection)
   - [Backend](#backend)
     - [`connect`](#connect)
-    - [`read`](#read)
-    - [`write`](#write)
 - [Authentication](#authentication)
     - [AdbCredentialStore](#adbcredentialstore)
       - [`generateKey`](#generatekey)
       - [`iterateKeys`](#iteratekeys)
       - [Implementations](#implementations)
     - [AdbAuthenticator](#adbauthenticator)
+    - [`authenticate`](#authenticate)
 - [Stream multiplex](#stream-multiplex)
   - [Backend](#backend-1)
 - [Commands](#commands)
@@ -38,7 +37,7 @@ TypeScript implementation of Android Debug Bridge (ADB) protocol.
 
 ## Compatibility
 
-Here is a list of features, their used APIs, and their compatibilities. If you don't use an optional feature, you can ignore its requirement.
+Here is a list of features, their used APIs, and their compatibilities. If an optional feature is not actually used, its requirements can be ignored.
 
 Some features can be polyfilled to support older runtimes, but this library doesn't ship with any polyfills.
 
@@ -58,9 +57,9 @@ Each backend may have different requirements.
 
 ### Use without bundlers
 
-|                             | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js |
-| --------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------- |
-| Top-level await<sup>1</sup> | 89     | 89   | 89      | No                | 15     | 14.8    |
+|                 | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js |
+| --------------- | ------ | ---- | ------- | ----------------- | ------ | ------- |
+| Top-level await | 89     | 89   | 89      | No                | 15     | 14.8    |
 
 [MDN_Streams]: https://developer.mozilla.org/en-US/docs/Web/API/Streams_API
 
@@ -68,33 +67,19 @@ Each backend may have different requirements.
 
 This library doesn't tie to a specific transportation method.
 
-Instead, a `Backend` is responsible for transferring data in its own way (USB, WebSocket, etc).
+Instead, a `Backend` is responsible for transferring data in its own way (USB, WebSocket, TCP, etc).
 
 ### Backend
 
 #### `connect`
 
-Establishes a connection with the device.
-
-If a backend doesn't have extra steps to establish the connection, it can omit the `connect` method implementation.
-
-#### `read`
-
 ```ts
-read(length: number): ArrayBuffer | Promise<ArrayBuffer>
+connect(): ValueOrPromise<ReadableWritablePair<AdbPacketCore, AdbPacketInit>>
 ```
 
-Reads the specified amount of data from the underlying connection.
+Connect to a device and create a pair of `AdbPacket` streams.
 
-The returned `ArrayBuffer` may have more or less data than the `length` parameter specified, if there is some residual data in the connection buffer. The client will automatically call `read` again with the same `length`.
-
-#### `write`
-
-```ts
-write(buffer: ArrayBuffer): void | Promise<void>
-```
-
-Writes data to the underlying connection.
+The backend is responsible for serializing and deserializing the packets, because it's extreme slow for WebUSB backend (`@yume-chan/adb-backend-webusb`) to read packets with unknown size.
 
 ## Authentication
 
@@ -102,22 +87,19 @@ For how does ADB authentication work, see https://chensi.moe/blog/2020/09/30/web
 
 In this library, authentication comes in two parts:
 
-* `AdbCredentialStore`: because JavaScript has no unified method to generate, store and iterate crypto keys, an implementation of `AdbCredentialStore` is required for the two built-in authenticators.
-* `AdbAuthenticator`: can be used to implement custom authentication modes.
-
-Custom `AdbCredentialStore`s and `AdbAuthenticator`s can be specified in the `Adb#connect` method.
-
 #### AdbCredentialStore
+
+An interface to generate, store and iterate ADB private keys on each runtime. (Because Node.js and Browsers have different APIs to do this)
 
 ##### `generateKey`
 
 ```ts
-generateKey(): ArrayBuffer | Promise<ArrayBuffer>
+generateKey(): ValueOrPromise<Uint8Array>
 ```
 
 Generate and store a RSA private key with modulus length `2048` and public exponent `65537`.
 
-The returned `ArrayBuffer` is the private key in PKCS #8 format.
+The returned `Uint8Array` is the private key in PKCS #8 format.
 
 ##### `iterateKeys`
 
@@ -131,13 +113,27 @@ Each call to `iterateKeys` must return a different iterator that iterate through
 
 ##### Implementations
 
-The `@yume-chan/adb-backend-webusb` package contains a `AdbWebCredentialStore` implementation using Web Crypto API to generating keys and Web Storage API to storing keys.
+The `@yume-chan/adb-credential-web` package contains a `AdbWebCredentialStore` implementation using Web Crypto API for generating keys and Web Storage API for storing keys.
 
 #### AdbAuthenticator
 
 An `AdbAuthenticator` generates `AUTH` responses for each `AUTH` request from server.
 
 This package contains `AdbSignatureAuthenticator` and `AdbPublicKeyAuthenticator`, the two basic modes.
+
+#### `authenticate`
+
+```ts
+static async authenticate(
+    connection: ReadableWritablePair<AdbPacketCore, AdbPacketCore>,
+    credentialStore: AdbCredentialStore,
+    authenticators = AdbDefaultAuthenticators,
+): Promise<Adb>
+```
+
+Call this method to authenticate the connection and create an `Adb` instance.
+
+It's possible to call `authenticate` multiple times on a single connection, every time the device receives a `CNXN` packet, it resets its internal state, and starts a new authentication process.
 
 ## Stream multiplex
 
@@ -158,15 +154,17 @@ The `Backend` is responsible for reading and writing data from underlying source
 
 Spawns child process on server. ADB has two shell modes:
 
-|                             | Legacy mode      | Shell Protocol     |
-| --------------------------- | ---------------- | ------------------ |
-| Feature flag                | -                | `shell_v2`         |
-| Implementation              | `AdbLegacyShell` | `AdbShellProtocol` |
-| Splitting stdout and stderr | No               | Yes                |
-| Returning exit code         | No               | Yes                |
-| Resizing window             | No               | Yes                |
+|                             | Legacy mode                 | Shell Protocol               |
+| --------------------------- | --------------------------- | ---------------------------- |
+| Feature flag                | -                           | `shell_v2`                   |
+| Implementation              | `AdbNoneSubprocessProtocol` | `AdbShellSubprocessProtocol` |
+| Splitting stdout and stderr | No                          | Yes                          |
+| Returning exit code         | No                          | Yes                          |
+| Resizing window             | No                          | Yes                          |
 
 The `Adb#childProcess#shell` and `Adb#childProcess#spawn` methods accepts a list of implementations, and will use the first supported one.
+
+For simple command invocation, usually the `AdbNoneSubprocessProtocol` is enough.
 
 ### usb
 

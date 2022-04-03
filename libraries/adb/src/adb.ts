@@ -19,14 +19,14 @@ export const VERSION_OMIT_CHECKSUM = 0x01000001;
 export class Adb {
     /**
      * It's possible to call `authenticate` multiple times on a single connection,
-     * every time the device receives a `CNXN` packet it will reset its internal state,
-     * and begin authentication again.
+     * every time the device receives a `CNXN` packet, it resets its internal state,
+     * and starts a new authentication process.
      */
     public static async authenticate(
         connection: ReadableWritablePair<AdbPacketCore, AdbPacketCore>,
         credentialStore: AdbCredentialStore,
         authenticators = AdbDefaultAuthenticators,
-    ) {
+    ): Promise<Adb> {
         let version = 0x01000001;
         let maxPayloadSize = 0x100000;
 

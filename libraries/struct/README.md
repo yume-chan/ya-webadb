@@ -83,7 +83,7 @@ const buffer = MyStruct.serialize({
 
 ## Compatibility
 
-Here is a list of features, their used APIs, and their compatibilities. If you don't use an optional feature, you can ignore its requirement.
+Here is a list of features, their used APIs, and their compatibilities. If an optional feature is not actually used, its requirements can be ignored.
 
 Some features can be polyfilled to support older runtimes, but this library doesn't ship with any polyfills.
 
