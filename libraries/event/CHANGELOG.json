@@ -2,6 +2,27 @@
   "name": "@yume-chan/event",
   "entries": [
     {
+      "version": "0.0.12",
+      "tag": "@yume-chan/event_v0.0.12",
+      "date": "Sun, 03 Apr 2022 11:18:47 GMT",
+      "comments": {}
+    },
+    {
+      "version": "0.0.11",
+      "tag": "@yume-chan/event_v0.0.11",
+      "date": "Sun, 03 Apr 2022 11:18:11 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Improve compatibility with Node.js 12 ESM format"
+          },
+          {
+            "comment": "Update license year"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.10",
       "tag": "@yume-chan/event_v0.0.10",
       "date": "Sun, 09 Jan 2022 15:52:20 GMT",
