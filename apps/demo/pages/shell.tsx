@@ -80,7 +80,7 @@ const Shell: NextPage = (): JSX.Element | null => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Screen Capture - WebADB</title>
+                <title>Interactive Shell - WebADB</title>
             </Head>
 
             <StackItem>

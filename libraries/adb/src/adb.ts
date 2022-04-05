@@ -237,7 +237,7 @@ export class Adb {
         const gatherStream = new GatherStringStream();
         await socket.readable
             .pipeThrough(new DecodeUtf8Stream())
-            .pipeTo(gatherStream.writable);
+            .pipeTo(gatherStream);
         return gatherStream.result;
     }
 

@@ -2,29 +2,19 @@ import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, Detail
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from "@fluentui/react-file-type-icons";
 import { useConst } from '@fluentui/react-hooks';
 import { getIcon } from '@fluentui/style-utilities';
-import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, LinuxFileType, ReadableStream, WritableStream } from '@yume-chan/adb';
+import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, LinuxFileType, ReadableStream } from '@yume-chan/adb';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
-import getConfig from "next/config";
 import Head from "next/head";
 import Router, { useRouter } from "next/router";
 import path from 'path';
 import { useCallback, useEffect, useState } from 'react';
 import { CommandBar, NoSsr } from '../components';
 import { globalState } from '../state';
-import { asyncEffect, formatSize, formatSpeed, Icons, pickFile, ProgressStream, RouteStackProps } from '../utils';
+import { asyncEffect, formatSize, formatSpeed, Icons, pickFile, ProgressStream, RouteStackProps, saveFile } from '../utils';
 
 initializeFileTypeIcons();
-
-let StreamSaver: typeof import('streamsaver');
-if (typeof window !== 'undefined') {
-    const { publicRuntimeConfig } = getConfig();
-    // Can't use `import` here because ESM is read-only (can't set `mitm` field)
-    // Add `await` here because top-level await is on, so every import can be a `Promise`
-    StreamSaver = await require('streamsaver');
-    StreamSaver.mitm = publicRuntimeConfig.basePath + '/StreamSaver/mitm.html';
-}
 
 interface ListItem extends AdbSyncEntryResponse {
     key: string;
@@ -148,13 +138,8 @@ class FileManagerState {
                                 try {
                                     const item = this.selectedItems[0];
                                     const itemPath = path.resolve(this.path, item.name);
-                                    const readable = sync.read(itemPath);
-
-                                    const writeable: WritableStream<Uint8Array> = StreamSaver!.createWriteStream(
-                                        item.name,
-                                        { size: item.size }
-                                    ) as any;
-                                    await readable.pipeTo(writeable);
+                                    await sync.read(itemPath)
+                                        .pipeTo(saveFile(item.name, item.size));
                                 } catch (e) {
                                     globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                                 } finally {

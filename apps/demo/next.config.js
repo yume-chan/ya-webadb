@@ -18,7 +18,7 @@ const withMDX = require('@next/mdx')({
 module.exports = withMDX({
     basePath: process.env.BASE_PATH || '',
     pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
-    reactStrictMode: true,
+    reactStrictMode: false,
     productionBrowserSourceMaps: true,
     experimental: {
         // Workaround https://github.com/vercel/next.js/issues/33914

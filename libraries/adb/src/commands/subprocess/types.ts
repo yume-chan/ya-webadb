@@ -48,7 +48,9 @@ export interface AdbSubprocessProtocolConstructor {
     isSupported(adb: Adb): ValueOrPromise<boolean>;
 
     /** Creates a new `AdbShell` using the specified `Adb` and `command` */
-    spawn(adb: Adb, command: string): ValueOrPromise<AdbSubprocessProtocol>;
+    pty(adb: Adb, command: string): ValueOrPromise<AdbSubprocessProtocol>;
+
+    raw(adb: Adb, command: string): ValueOrPromise<AdbSubprocessProtocol>;
 
     /** Creates a new `AdbShell` by attaching to an exist `AdbSocket` */
     new(socket: AdbSocket): AdbSubprocessProtocol;

@@ -104,10 +104,13 @@ export class AdbShellSubprocessProtocol implements AdbSubprocessProtocol {
         return adb.features!.includes(AdbFeatures.ShellV2);
     }
 
-    public static async spawn(adb: Adb, command: string) {
-        // TODO: AdbShellSubprocessProtocol: Support raw mode
+    public static async pty(adb: Adb, command: string) {
         // TODO: AdbShellSubprocessProtocol: Support setting `XTERM` environment variable
         return new AdbShellSubprocessProtocol(await adb.createSocket(`shell,v2,pty:${command}`));
+    }
+
+    public static async raw(adb: Adb, command: string) {
+        return new AdbShellSubprocessProtocol(await adb.createSocket(`shell,v2,raw:${command}`));
     }
 
     private readonly _socket: AdbSocket;

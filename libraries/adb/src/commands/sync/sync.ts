@@ -90,13 +90,10 @@ export class AdbSync extends AutoDisposable {
      * @returns A `ReadableStream` that reads from the file.
      */
     public read(filename: string): ReadableStream<Uint8Array> {
-        return new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, undefined>({
+        return new WrapReadableStream({
             start: async () => {
                 await this.sendLock.wait();
-                return {
-                    readable: adbSyncPull(this.stream, this.writer, filename),
-                    state: undefined,
-                };
+                return adbSyncPull(this.stream, this.writer, filename);
             },
             close: async () => {
                 this.sendLock.notify();
@@ -120,16 +117,13 @@ export class AdbSync extends AutoDisposable {
         return new WrapWritableStream({
             start: async () => {
                 await this.sendLock.wait();
-                return {
-                    writable: adbSyncPush(
-                        this.stream,
-                        this.writer,
-                        filename,
-                        mode,
-                        mtime,
-                    ),
-                    state: undefined,
-                };
+                return adbSyncPush(
+                    this.stream,
+                    this.writer,
+                    filename,
+                    mode,
+                    mtime,
+                );
             },
             close: async () => {
                 this.sendLock.notify();

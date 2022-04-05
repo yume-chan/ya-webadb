@@ -1,6 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type Struct from "@yume-chan/struct";
-import type { StructValueType } from "@yume-chan/struct";
+import type { StructValueType, ValueOrPromise } from "@yume-chan/struct";
 import { decodeUtf8 } from "../utils/index.js";
 import { BufferedStream, BufferedStreamEndedError } from "./buffered.js";
 import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamDefaultController, type ReadableWritablePair, type UnderlyingSink, type UnderlyingSource } from "./detect.js";
@@ -55,15 +55,23 @@ export class DuplexStreamFactory<R, W> {
         }, strategy);
     };
 
-    public createWrapReadable(readable: ReadableStream<R>): WrapReadableStream<R, ReadableStream<R>, void> {
-        return new WrapReadableStream<R, ReadableStream<R>, void>({
+    public createWrapReadable(wrapper: ReadableStream<R> | WrapReadableStreamStart<R> | ReadableStreamWrapper<R>): WrapReadableStream<R> {
+        return new WrapReadableStream<R>({
             async start() {
-                return {
-                    readable,
-                    state: undefined,
-                };
+                if ('start' in wrapper) {
+                    return await wrapper.start();
+                } else if (typeof wrapper === 'function') {
+                    return await wrapper();
+                } else {
+                    // Can't use `wrapper instanceof ReadableStream`
+                    // Because we want to be compatible with any ReadableStream-like objects
+                    return wrapper;
+                }
             },
             close: async () => {
+                if ('close' in wrapper) {
+                    await wrapper.close?.();
+                }
                 this._closeRequestedByReadable = true;
                 await this.close();
             },
@@ -147,14 +155,14 @@ export class DecodeUtf8Stream extends TransformStream<Uint8Array, string>{
     }
 }
 
-export class GatherStringStream extends TransformStream<string, string>{
+export class GatherStringStream extends WritableStream<string>{
     // Optimization: rope (concat strings) is faster than `[].join('')`
     private _result = '';
     public get result() { return this._result; }
 
     public constructor() {
         super({
-            transform: (chunk) => {
+            write: (chunk) => {
                 this._result += chunk;
             },
         });
@@ -219,25 +227,37 @@ export class StructSerializeStream<T extends Struct<any, any, any, any>>
     }
 }
 
-export interface WritableStreamWrapper<T, W extends WritableStream<T>, S> {
-    start(): Promise<{ writable: W, state: S; }>;
-    close?(state: S): Promise<void>;
+export type WrapWritableStreamStart<T> = () => ValueOrPromise<WritableStream<T>>;
+
+export interface WritableStreamWrapper<T> {
+    start: WrapWritableStreamStart<T>;
+    close?(): Promise<void>;
 }
 
-export class WrapWritableStream<T, W extends WritableStream<T>, S> extends WritableStream<T>{
-    public writable!: W;
+export class WrapWritableStream<T> extends WritableStream<T> {
+    public writable!: WritableStream<T>;
 
     private writer!: WritableStreamDefaultWriter<T>;
 
-    private state!: S;
-
-    public constructor(wrapper: WritableStreamWrapper<T, W, S>) {
+    public constructor(wrapper: WritableStream<T> | WrapWritableStreamStart<T> | WritableStreamWrapper<T>) {
         super({
             start: async () => {
-                const { writable, state } = await wrapper.start();
-                this.writable = writable;
-                this.writer = writable.getWriter();
-                this.state = state;
+                // `start` is invoked before `WritableStream`'s constructor finish,
+                // so using `this` synchronously causes
+                // "Must call super constructor in derived class before accessing 'this' or returning from derived constructor".
+                // Queue a microtask to avoid this.
+                await Promise.resolve();
+
+                if ('start' in wrapper) {
+                    this.writable = await wrapper.start();
+                } else if (typeof wrapper === 'function') {
+                    this.writable = await wrapper();
+                } else {
+                    // Can't use `wrapper instanceof WritableStream`
+                    // Because we want to be compatible with any WritableStream-like objects
+                    this.writable = wrapper;
+                }
+                this.writer = this.writable.getWriter();
             },
             write: async (chunk) => {
                 // Maintain back pressure
@@ -245,45 +265,65 @@ export class WrapWritableStream<T, W extends WritableStream<T>, S> extends Writa
                 await this.writer.write(chunk);
             },
             abort: async (reason) => {
+                if ('close' in wrapper) {
+                    await wrapper.close?.();
+                }
                 await this.writer.abort(reason);
-                wrapper.close?.(this.state);
             },
             close: async () => {
+                if ('close' in wrapper) {
+                    await wrapper.close?.();
+                }
                 await this.writer.close();
-                await wrapper.close?.(this.state);
             },
         });
     }
 }
 
-export interface ReadableStreamWrapper<T, R extends ReadableStream<T>, S> {
-    start(): Promise<{ readable: R, state: S; }>;
-    close?(state: S): Promise<void>;
+export type WrapReadableStreamStart<T> = () => ValueOrPromise<ReadableStream<T>>;
+
+export interface ReadableStreamWrapper<T> {
+    start: WrapReadableStreamStart<T>;
+    close?(): Promise<void>;
 }
 
-export class WrapReadableStream<T, R extends ReadableStream<T>, S> extends ReadableStream<T>{
-    public readable!: R;
+export class WrapReadableStream<T> extends ReadableStream<T>{
+    public readable!: ReadableStream<T>;
 
     private reader!: ReadableStreamDefaultReader<T>;
 
-    private state!: S;
-
-    public constructor(wrapper: ReadableStreamWrapper<T, R, S>) {
+    public constructor(wrapper: ReadableStream<T> | WrapReadableStreamStart<T> | ReadableStreamWrapper<T>) {
         super({
             start: async () => {
-                const { readable, state } = await wrapper.start();
-                this.readable = readable;
-                this.reader = readable.getReader();
-                this.state = state;
+                // `start` is invoked before `ReadableStream`'s constructor finish,
+                // so using `this` synchronously causes
+                // "Must call super constructor in derived class before accessing 'this' or returning from derived constructor".
+                // Queue a microtask to avoid this.
+                await Promise.resolve();
+
+                if ('start' in wrapper) {
+                    this.readable = await wrapper.start();
+                } else if (typeof wrapper === 'function') {
+                    this.readable = await wrapper();
+                } else {
+                    // Can't use `wrapper instanceof ReadableStream`
+                    // Because we want to be compatible with any ReadableStream-like objects
+                    this.readable = wrapper;
+                }
+                this.reader = this.readable.getReader();
             },
             cancel: async (reason) => {
+                if ('close' in wrapper) {
+                    await wrapper.close?.();
+                }
                 await this.reader.cancel(reason);
-                wrapper.close?.(this.state);
             },
             pull: async (controller) => {
                 const result = await this.reader.read();
                 if (result.done) {
-                    wrapper.close?.(this.state);
+                    if ('close' in wrapper) {
+                        await wrapper.close?.();
+                    }
                     controller.close();
                 } else {
                     controller.enqueue(result.value);

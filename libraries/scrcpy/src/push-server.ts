@@ -1,4 +1,4 @@
-import { Adb, AdbSync, WrapWritableStream, WritableStream } from "@yume-chan/adb";
+import { WrapWritableStream, type Adb, type AdbSync } from "@yume-chan/adb";
 import { DEFAULT_SERVER_PATH } from "./options/index.js";
 
 export interface PushServerOptions {
@@ -11,15 +11,13 @@ export function pushServer(
 ) {
     const { path = DEFAULT_SERVER_PATH } = options;
 
-    return new WrapWritableStream<Uint8Array, WritableStream<Uint8Array>, AdbSync>({
+    let sync!: AdbSync;
+    return new WrapWritableStream<Uint8Array>({
         async start() {
-            const sync = await device.sync();
-            return {
-                writable: sync.write(path),
-                state: sync,
-            };
+            sync = await device.sync();
+            return sync.write(path);
         },
-        async close(sync) {
+        async close() {
             await sync.dispose();
         },
     });

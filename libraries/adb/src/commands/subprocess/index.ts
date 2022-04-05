@@ -41,7 +41,7 @@ export class AdbSubprocess {
         this.adb = adb;
     }
 
-    private async createProtocol(command: string, options?: Partial<AdbSubprocessOptions>): Promise<AdbSubprocessProtocol> {
+    private async createProtocol(mode: 'pty' | 'raw', command?: string | string[], options?: Partial<AdbSubprocessOptions>): Promise<AdbSubprocessProtocol> {
         let { protocols } = { ...DefaultOptions, ...options };
 
         let Constructor: AdbSubprocessProtocolConstructor | undefined;
@@ -56,7 +56,12 @@ export class AdbSubprocess {
             throw new Error('No specified protocol is supported by the device');
         }
 
-        return await Constructor.spawn(this.adb, command);
+        if (Array.isArray(command)) {
+            command = command.join(' ');
+        } else if (command === undefined) {
+            command = '';
+        }
+        return await Constructor[mode](this.adb, command);
     }
 
     /**
@@ -64,8 +69,8 @@ export class AdbSubprocess {
      * @param options The options for creating the `AdbShell`
      * @returns A new `AdbShell` instance connecting to the spawned shell process.
      */
-    public shell(options?: Partial<AdbSubprocessOptions>): Promise<AdbSubprocessProtocol> {
-        return this.createProtocol('', options);
+    public shell(command?: string | string[], options?: Partial<AdbSubprocessOptions>): Promise<AdbSubprocessProtocol> {
+        return this.createProtocol('pty', command, options);
     }
 
     /**
@@ -75,10 +80,7 @@ export class AdbSubprocess {
      * @returns A new `AdbShell` instance connecting to the spawned process.
      */
     public spawn(command: string | string[], options?: Partial<AdbSubprocessOptions>): Promise<AdbSubprocessProtocol> {
-        if (Array.isArray(command)) {
-            command = command.join(' ');
-        }
-        return this.createProtocol(command, options);
+        return this.createProtocol('raw', command, options);
     }
 
     /**
@@ -94,16 +96,17 @@ export class AdbSubprocess {
         const shell = await this.spawn(command, options);
 
         const stdout = new GatherStringStream();
-        shell.stdout
-            .pipeThrough(new DecodeUtf8Stream())
-            .pipeThrough(stdout);
-
         const stderr = new GatherStringStream();
-        shell.stderr
-            .pipeThrough(new DecodeUtf8Stream())
-            .pipeThrough(stderr);
 
-        const exitCode = await shell.exit;
+        const [, , exitCode] = await Promise.all([
+            shell.stdout
+                .pipeThrough(new DecodeUtf8Stream())
+                .pipeTo(stdout),
+            shell.stderr
+                .pipeThrough(new DecodeUtf8Stream())
+                .pipeTo(stderr),
+            shell.exit
+        ]);
 
         return {
             stdout: stdout.result,

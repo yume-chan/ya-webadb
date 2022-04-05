@@ -14,8 +14,12 @@ import type { AdbSubprocessProtocol } from "./types.js";
 export class AdbNoneSubprocessProtocol implements AdbSubprocessProtocol {
     public static isSupported() { return true; }
 
-    public static async spawn(adb: Adb, command: string) {
+    public static async pty(adb: Adb, command: string) {
         return new AdbNoneSubprocessProtocol(await adb.createSocket(`shell:${command}`));
+    }
+
+    public static async raw(adb: Adb, command: string) {
+        return new AdbNoneSubprocessProtocol(await adb.createSocket(`shell,raw:${command}`));
     }
 
     private readonly socket: AdbSocket;

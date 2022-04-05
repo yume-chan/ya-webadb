@@ -58,22 +58,12 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
 
         // Native streams can't `pipeTo()` or `pipeThrough()` polyfilled streams, so we need to wrap them
         return {
-            readable: new WrapReadableStream<Uint8Array, ReadableStream<Uint8Array>, void>({
-                async start() {
-                    return {
-                        readable,
-                        state: undefined,
-                    };
-                }
-            }).pipeThrough(new StructDeserializeStream(AdbPacket)),
-            writable: pipeFrom(new WrapWritableStream({
-                async start() {
-                    return {
-                        writable,
-                        state: undefined,
-                    };
-                }
-            }), new AdbPacketSerializeStream()),
+            readable: new WrapReadableStream(readable)
+                .pipeThrough(new StructDeserializeStream(AdbPacket)),
+            writable: pipeFrom(
+                new WrapWritableStream(writable),
+                new AdbPacketSerializeStream()
+            ),
         };
     }
 }

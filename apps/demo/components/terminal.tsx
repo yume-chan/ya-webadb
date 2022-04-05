@@ -36,14 +36,8 @@ export class AdbTerminal extends AutoDisposable {
 
             this._socketAbortController = new AbortController();
 
+            // pty mode only has one stream
             value.stdout.pipeTo(new WritableStream<Uint8Array>({
-                write: (chunk) => {
-                    this.terminal.write(chunk);
-                },
-            }), {
-                signal: this._socketAbortController.signal,
-            });
-            value.stderr.pipeTo(new WritableStream<Uint8Array>({
                 write: (chunk) => {
                     this.terminal.write(chunk);
                 },

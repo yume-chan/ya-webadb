@@ -1,3 +1,6 @@
+import getConfig from "next/config";
+import type { WritableStream } from '@yume-chan/adb';
+
 interface PickFileOptions {
     accept?: string;
 }
@@ -27,4 +30,20 @@ export function pickFile(options: { multiple?: boolean; } & PickFileOptions): Pr
 
         input.click();
     });
+}
+
+let StreamSaver: typeof import('streamsaver');
+if (typeof window !== 'undefined') {
+    const { publicRuntimeConfig } = getConfig();
+    // Can't use `import` here because ESM is read-only (can't set `mitm` field)
+    // Add `await` here because top-level await is on, so every import can be a `Promise`
+    StreamSaver = await require('streamsaver');
+    StreamSaver.mitm = publicRuntimeConfig.basePath + '/StreamSaver/mitm.html';
+}
+
+export function saveFile(fileName: string, size?: number | undefined) {
+    return StreamSaver!.createWriteStream(
+        fileName,
+        { size }
+    ) as unknown as WritableStream<Uint8Array>;
 }

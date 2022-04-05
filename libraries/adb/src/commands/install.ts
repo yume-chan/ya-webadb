@@ -8,18 +8,14 @@ export function install(
 ): WritableStream<Uint8Array> {
     const filename = `/data/local/tmp/${Math.random().toString().substring(2)}.apk`;
 
-    return new WrapWritableStream<Uint8Array, WritableStream<Uint8Array>, AdbSync>({
+    let sync!: AdbSync;
+    return new WrapWritableStream<Uint8Array>({
         async start() {
             // Upload apk file to tmp folder
-            const sync = await adb.sync();
-            const writable = sync.write(filename, undefined, undefined);
-
-            return {
-                writable,
-                state: sync,
-            };
+            sync = await adb.sync();
+            return sync.write(filename, undefined, undefined);
         },
-        async close(sync) {
+        async close() {
             sync.dispose();
 
             // Invoke `pm install` to install it

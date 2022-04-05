@@ -57,6 +57,11 @@ const ROUTES = [
         icon: Icons.Power,
         name: 'Power Menu',
     },
+    {
+        url: '/bug-report',
+        icon: Icons.Bug,
+        name: 'Bug Report',
+    },
 ];
 
 function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsProps<INavButtonProps>) {
