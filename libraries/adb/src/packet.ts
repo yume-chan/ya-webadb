@@ -10,7 +10,7 @@ export enum AdbCommand {
     Write = 0x45545257,   // 'WRTE'
 }
 
-const AdbPacketHeader =
+export const AdbPacketHeader =
     new Struct({ littleEndian: true })
         .uint32('command')
         .uint32('arg0')
@@ -18,6 +18,8 @@ const AdbPacketHeader =
         .uint32('payloadLength')
         .uint32('checksum')
         .int32('magic');
+
+export type AdbPacketHeader = typeof AdbPacketHeader['TDeserializeResult'];
 
 type AdbPacketHeaderInit = typeof AdbPacketHeader['TInit'];
 

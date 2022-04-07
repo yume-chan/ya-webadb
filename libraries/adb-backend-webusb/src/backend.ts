@@ -1,7 +1,7 @@
 import { AdbPacket, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, type AdbBackend, type AdbPacketCore, type AdbPacketInit, type ReadableWritablePair, type WritableStream } from '@yume-chan/adb';
 import type { StructAsyncDeserializeStream } from "@yume-chan/struct";
 
-export const WebUsbDeviceFilter: USBDeviceFilter = {
+export const ADB_DEVICE_FILTER: USBDeviceFilter = {
     classCode: 0xFF,
     subclassCode: 0x42,
     protocolCode: 1,
@@ -42,11 +42,12 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketCor
                 // (let each backend deserialize the packets in their own way)
                 const result = await device.transferIn(inEndpoint.endpointNumber, length);
 
-                // `USBTransferResult` has three states: "ok", "stall" and "babble",
-                // but ADBd on Android won't enter "stall" (halt) state,
-
-                // "ok" and "babble" both have received `data`,
-                // "babble" just means there is more data to be read.
+                // TODO: The WebUSB spec requires `transferIn` to return `status: babble` when
+                // the `length` argument is smaller than what the device actually returns.
+                // But Chrome's implementation on Windows never returns `babble` because WinUSB
+                // allows partial reads by default.
+                // When `Struct.deserialize` calls this `read`, the `length` is each fields' length,
+                // instead of packet length. So this only works on Windows.
 
                 // From spec, the `result.data` always covers the whole `buffer`.
                 return new Uint8Array(result.data!.buffer);
@@ -83,7 +84,7 @@ export class AdbWebUsbBackend implements AdbBackend {
 
     public static async requestDevice(): Promise<AdbWebUsbBackend | undefined> {
         try {
-            const device = await navigator.usb.requestDevice({ filters: [WebUsbDeviceFilter] });
+            const device = await navigator.usb.requestDevice({ filters: [ADB_DEVICE_FILTER] });
             return new AdbWebUsbBackend(device);
         } catch (e) {
             // User cancelled the device picker
@@ -113,10 +114,12 @@ export class AdbWebUsbBackend implements AdbBackend {
         for (const configuration of this._device.configurations) {
             for (const interface_ of configuration.interfaces) {
                 for (const alternate of interface_.alternates) {
-                    if (alternate.interfaceSubclass === WebUsbDeviceFilter.subclassCode &&
-                        alternate.interfaceClass === WebUsbDeviceFilter.classCode &&
-                        alternate.interfaceSubclass === WebUsbDeviceFilter.subclassCode) {
+                    if (alternate.interfaceSubclass === ADB_DEVICE_FILTER.subclassCode &&
+                        alternate.interfaceClass === ADB_DEVICE_FILTER.classCode &&
+                        alternate.interfaceSubclass === ADB_DEVICE_FILTER.subclassCode) {
                         if (this._device.configuration?.configurationValue !== configuration.configurationValue) {
+                            // Note: It's not possible to switch configuration on Windows,
+                            // but Android devices should always expose ADB function at the first (default) configuration.
                             await this._device.selectConfiguration(configuration.configurationValue);
                         }
 
