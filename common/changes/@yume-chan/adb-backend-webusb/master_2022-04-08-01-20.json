@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yume-chan/adb-backend-webusb",
+      "comment": "Fix an issue where `transferIn` too little bytes results in `babble` status on non-Windows platforms",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yume-chan/adb-backend-webusb"
+}
