@@ -96,7 +96,7 @@ Syncbird.config({
 const _then = (Syncbird.prototype as any)._then;
 Syncbird.prototype._then = function <T, TResult1 = T, TResult2 = never>(
     this: Syncbird<T>,
-    onfulfilled: ((value: T) => unknown) | undefined | null,
+    onfulfilled: ((value: T, internalData?: unknown) => unknown) | undefined | null,
     onrejected: ((reason: any) => unknown) | undefined | null,
     _: never,
     receiver: unknown,
@@ -110,7 +110,9 @@ Syncbird.prototype._then = function <T, TResult1 = T, TResult2 = never>(
             return Syncbird.resolve(
                 onfulfilled.call(
                     receiver,
-                    this.value()
+                    this.value(),
+                    // Some Bluebird internal methods (for example `reduce`) need this `internalData`
+                    internalData
                 )
             );
         }
