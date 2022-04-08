@@ -265,16 +265,20 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 await this.writer.write(chunk);
             },
             abort: async (reason) => {
+                await this.writer.abort(reason);
                 if ('close' in wrapper) {
                     await wrapper.close?.();
                 }
-                await this.writer.abort(reason);
             },
             close: async () => {
+                // Close the inner stream first.
+                // Usually the inner stream is a logical sub-stream over the outer stream,
+                // closing the outer stream first will make the inner stream incapable of
+                // sending data in its `close` handler.
+                await this.writer.close();
                 if ('close' in wrapper) {
                     await wrapper.close?.();
                 }
-                await this.writer.close();
             },
         });
     }
@@ -313,18 +317,18 @@ export class WrapReadableStream<T> extends ReadableStream<T>{
                 this.reader = this.readable.getReader();
             },
             cancel: async (reason) => {
+                await this.reader.cancel(reason);
                 if ('close' in wrapper) {
                     await wrapper.close?.();
                 }
-                await this.reader.cancel(reason);
             },
             pull: async (controller) => {
                 const result = await this.reader.read();
                 if (result.done) {
+                    controller.close();
                     if ('close' in wrapper) {
                         await wrapper.close?.();
                     }
-                    controller.close();
                 } else {
                     controller.enqueue(result.value);
                 }
@@ -434,7 +438,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 source({
                     abortSignal: canceled.signal,
                     async enqueue(chunk) {
-                        // Only when the stream in errored, `desiredSize` will be `null`.
+                        // Only when the stream is errored, `desiredSize` will be `null`.
                         // But since `null <= 0` is `true`
                         // (`null <= 0` is evaluated as `!(null > 0)` => `!false` => `true`),
                         // not handling it will cause a deadlock.

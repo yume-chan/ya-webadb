@@ -118,7 +118,7 @@ dependencies:
   tslib: 2.3.1
   unist-util-visit: 2.0.3
   url-loader: 4.1.1_file-loader@6.2.0
-  web-streams-polyfill: 3.2.0
+  web-streams-polyfill: 3.2.1
   xterm: 4.17.0
   xterm-addon-fit: 0.5.0_xterm@4.17.0
   xterm-addon-search: 0.8.2_xterm@4.17.0
@@ -1690,7 +1690,7 @@ packages:
       react-dom: 17.0.2_react@17.0.2
       react-helmet: 6.1.0_react@17.0.2
       react-loadable: /@docusaurus/react-loadable/5.5.2_react@17.0.2
-      react-loadable-ssr-addon-v5-slorber: 1.0.1_c96d427b3b579ede8bc5e2d1e654c155
+      react-loadable-ssr-addon-v5-slorber: 1.0.1_2fe975a374b1692da20decca10678ca8
       react-router: 5.2.1_react@17.0.2
       react-router-config: 5.1.1_react-router@5.2.1+react@17.0.2
       react-router-dom: 5.3.0_react@17.0.2
@@ -3020,6 +3020,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm]
     os: [android]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3028,6 +3029,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [android]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3036,6 +3038,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3044,6 +3047,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3052,6 +3056,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm]
     os: [linux]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3060,6 +3065,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3068,6 +3074,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3076,6 +3083,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3084,6 +3092,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3092,6 +3101,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3100,6 +3110,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [ia32]
     os: [win32]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3108,6 +3119,7 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -3756,7 +3768,7 @@ packages:
       '@types/yargs-parser': 20.2.1
     dev: false
 
-  /@typescript-eslint/parser/5.10.1_afe153b908dca2f5fbccd916c875a0f1:
+  /@typescript-eslint/parser/5.10.1_96f50458368e8c4a251d50bccc58ad40:
     resolution: {integrity: sha512-GReo3tjNBwR5RnRO0K2wDIDN31cM3MmDtgyQ85oAxAmC5K3j/g85IjP+cDfcqDsDDBf1HNKQAD0WqOYL8jXqUA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -3768,10 +3780,10 @@ packages:
     dependencies:
       '@typescript-eslint/scope-manager': 5.10.1
       '@typescript-eslint/types': 5.10.1
-      '@typescript-eslint/typescript-estree': 5.10.1_typescript@4.7.0-dev.20220401
+      '@typescript-eslint/typescript-estree': 5.10.1_typescript@4.7.0-dev.20220406
       debug: 4.3.3
       eslint: 8.8.0
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -3828,7 +3840,7 @@ packages:
       - supports-color
     dev: false
 
-  /@typescript-eslint/typescript-estree/5.10.1_typescript@4.7.0-dev.20220401:
+  /@typescript-eslint/typescript-estree/5.10.1_typescript@4.7.0-dev.20220406:
     resolution: {integrity: sha512-PwIGnH7jIueXv4opcwEbVGDATjGPO1dx9RkUl5LlHDSe+FXxPwFL5W/qYd5/NHr7f6lo/vvTrAzd0KlQtRusJQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -3843,8 +3855,8 @@ packages:
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.3.5
-      tsutils: 3.21.0_typescript@4.7.0-dev.20220401
-      typescript: 4.7.0-dev.20220401
+      tsutils: 3.21.0_typescript@4.7.0-dev.20220406
+      typescript: 4.7.0-dev.20220406
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -5919,7 +5931,7 @@ packages:
       source-map: 0.6.1
     dev: false
 
-  /eslint-config-next/12.1.3_c89561272e8295d8c5b50727d5829a82:
+  /eslint-config-next/12.1.3_d51c624641fd6e3da9cbb9d6b96bd072:
     resolution: {integrity: sha512-aLtr2VfdvkpbXnqH0Do9HJfMeDq0ZkKlZ8h8g2T88njbE8/5KfJIQSoNnp18M8PUXZYD8kqTOUa1MJ0QU9T1hQ==}
     peerDependencies:
       eslint: ^7.23.0 || ^8.0.0
@@ -5931,7 +5943,7 @@ packages:
     dependencies:
       '@next/eslint-plugin-next': 12.1.3
       '@rushstack/eslint-patch': 1.0.8
-      '@typescript-eslint/parser': 5.10.1_afe153b908dca2f5fbccd916c875a0f1
+      '@typescript-eslint/parser': 5.10.1_96f50458368e8c4a251d50bccc58ad40
       eslint: 8.8.0
       eslint-import-resolver-node: 0.3.4
       eslint-import-resolver-typescript: 2.4.0_6b08c5e5089e84a3b13f5233184673d0
@@ -5940,7 +5952,7 @@ packages:
       eslint-plugin-react: 7.29.1_eslint@8.8.0
       eslint-plugin-react-hooks: 4.3.0_eslint@8.8.0
       next: 12.1.3_react-dom@17.0.2+react@17.0.2
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -6675,6 +6687,7 @@ packages:
     resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+    requiresBuild: true
     dev: false
     optional: true
 
@@ -10191,7 +10204,7 @@ packages:
     resolution: {integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==}
     dev: false
 
-  /react-loadable-ssr-addon-v5-slorber/1.0.1_c96d427b3b579ede8bc5e2d1e654c155:
+  /react-loadable-ssr-addon-v5-slorber/1.0.1_2fe975a374b1692da20decca10678ca8:
     resolution: {integrity: sha512-lq3Lyw1lGku8zUEJPDxsNm1AfYHBrO9Y1+olAYwpUJ2IGFBskM0DMKok97A6LWUpHm+o7IvQBOWu9MLenp9Z+A==}
     engines: {node: '>=10.13.0'}
     peerDependencies:
@@ -11522,40 +11535,6 @@ packages:
     resolution: {integrity: sha512-rvuRbTarPXmMb79SmzEp8aqXNKcK+y0XaB298IXueQ8I2PsrATcPBCSPyK/dDNa2iWOhKlfNnOjdAOTBU/nkFA==}
     dev: false
 
-  /ts-jest/27.1.3_1766e319e8d052b5cf7cf33ad7bdf589:
-    resolution: {integrity: sha512-6Nlura7s6uM9BVUAoqLH7JHyMXjz8gluryjpPXxr3IxZdAXnU6FhjvVLHFtfd1vsE1p8zD1OJfskkc0jhTSnkA==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: ~0.14.0
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@types/jest': 27.4.1
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1
-      jest-util: 27.5.1
-      json5: 2.2.0
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.5
-      typescript: 4.7.0-dev.20220401
-      yargs-parser: 20.2.9
-    dev: false
-
   /ts-jest/27.1.3_@types+jest@27.4.1+jest@27.5.1:
     resolution: {integrity: sha512-6Nlura7s6uM9BVUAoqLH7JHyMXjz8gluryjpPXxr3IxZdAXnU6FhjvVLHFtfd1vsE1p8zD1OJfskkc0jhTSnkA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -11589,6 +11568,40 @@ packages:
       yargs-parser: 20.2.9
     dev: false
 
+  /ts-jest/27.1.3_eaeefa76dac584dea7490b9b0bdfc2e7:
+    resolution: {integrity: sha512-6Nlura7s6uM9BVUAoqLH7JHyMXjz8gluryjpPXxr3IxZdAXnU6FhjvVLHFtfd1vsE1p8zD1OJfskkc0jhTSnkA==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: ~0.14.0
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1
+      jest-util: 27.5.1
+      json5: 2.2.0
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.5
+      typescript: 4.7.0-dev.20220406
+      yargs-parser: 20.2.9
+    dev: false
+
   /tsconfig-paths/3.12.0:
     resolution: {integrity: sha512-e5adrnOYT6zqVnWqZu7i/BQ3BnhzvGbjEjejFXO20lKIKpwTaupkCPgEfv4GZK1IBciJUEhYs3J3p75FdaTFVg==}
     dependencies:
@@ -11619,14 +11632,14 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /tsutils/3.21.0_typescript@4.7.0-dev.20220401:
+  /tsutils/3.21.0_typescript@4.7.0-dev.20220406:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
     engines: {node: '>= 6'}
     peerDependencies:
       typescript: '>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta'
     dependencies:
       tslib: 1.14.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     dev: false
 
   /type-check/0.3.2:
@@ -11678,8 +11691,8 @@ packages:
     hasBin: true
     dev: false
 
-  /typescript/4.7.0-dev.20220401:
-    resolution: {integrity: sha512-L6AjCHEw3nD3npBU7nMqbRJnfhDlupn3/sR322Ng/6h4z7tInP5u+8l58CZ05s91M7M808y8PLJMXHKbSZHroQ==}
+  /typescript/4.7.0-dev.20220406:
+    resolution: {integrity: sha512-keoDBX5MLMgonG42c2pBNMCMwRgxsEs2U7xKHDP0PmU76BzNuVgqR3JmwWwwFtTQJAeEGl7VN5GPYLehOvAz9w==}
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: false
@@ -12074,8 +12087,8 @@ packages:
     resolution: {integrity: sha512-wYxSGajtmoP4WxfejAPIr4l0fVh+jeMXZb08wNc0tMg6xsfZXj3cECqIK0G7ZAqUq0PP8WlMDtaOGVBTAWztNw==}
     dev: false
 
-  /web-streams-polyfill/3.2.0:
-    resolution: {integrity: sha512-EqPmREeOzttaLRm5HS7io98goBgZ7IVz79aDvqjD0kYXLtFZTc0T/U6wHTPKyIjb+MdN7DFIIX6hgdBEpWmfPA==}
+  /web-streams-polyfill/3.2.1:
+    resolution: {integrity: sha512-e0MO3wdXWKrLbL0DgGnUV7WHVuw9OUvL4hjgnPkIeEvESk74gAITi5G606JtZPp39cd8HA9VQzCIvA49LpPN5Q==}
     engines: {node: '>= 8'}
     dev: false
 
@@ -12487,24 +12500,24 @@ packages:
     dev: false
 
   file:projects/adb-backend-direct-sockets.tgz:
-    resolution: {integrity: sha512-QNCHbT6Realp426ILqsIZ3AtYqvreJn/HHKhtIHONSFk5DP8BS8H0jwMTmoSxLXYlztJF8WnvGEb5231Qxp46Q==, tarball: file:projects/adb-backend-direct-sockets.tgz}
+    resolution: {integrity: sha512-jVHmeLBr1sziOwGueVDb8F83IdSarMFHe6HttArHG43aX0p1OrRhOPr8zQMVQ9Aco5Zt/w3MQqZg1auBT28xHQ==, tarball: file:projects/adb-backend-direct-sockets.tgz}
     name: '@rush-temp/adb-backend-direct-sockets'
     version: 0.0.0
     dependencies:
       '@types/jest': 27.4.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     dev: false
 
   file:projects/adb-backend-webusb.tgz:
-    resolution: {integrity: sha512-Ol5dAMCkF1Iyv3R4cnz0x7QLIr21uRGESxfLfQGiT0RJ3NfTJ1O+mG6L7P7a5WWvG4z7+ZjJqpd4meVR3znXqg==, tarball: file:projects/adb-backend-webusb.tgz}
+    resolution: {integrity: sha512-Acv+ciJuFg9RbaWHXuKrl48s3Gg7Lglt/3VTM4JjkLzG9ynEiD9l++zxKTbwQUtTzZflww20jtkn6FhVPCFBAw==, tarball: file:projects/adb-backend-webusb.tgz}
     name: '@rush-temp/adb-backend-webusb'
     version: 0.0.0
     dependencies:
       '@types/w3c-web-usb': 1.0.5
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -12515,13 +12528,13 @@ packages:
     dev: false
 
   file:projects/adb-backend-ws.tgz:
-    resolution: {integrity: sha512-Kpge3P4JKO6EPRn5kZL4DmyTXGh13s6lGYwnOGap9s6RBy2L+fAhW8ac7wWqIJVVAsfHiow4rsvy3Kk2/Hzndg==, tarball: file:projects/adb-backend-ws.tgz}
+    resolution: {integrity: sha512-PmBop6aaZlgIXdlGW4eoDxWcqWPDiqtrIUEzD1/W0wmUPrRWXKJlQHjRELYXj2995qyggtVgOY6/UWkov/FDww==, tarball: file:projects/adb-backend-ws.tgz}
     name: '@rush-temp/adb-backend-ws'
     version: 0.0.0
     dependencies:
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -12532,16 +12545,16 @@ packages:
     dev: false
 
   file:projects/adb-credential-web.tgz:
-    resolution: {integrity: sha512-0Dgj0EhxJLZb1ExO4oNxIIliQPoQXD+O5l2y/DJ05/T7bjUs6xsthElTt3XLzolpP9RfKeYljLCMPtWZqB9zIA==, tarball: file:projects/adb-credential-web.tgz}
+    resolution: {integrity: sha512-SGtHhfLbkTofjTjlgBljhTehmOlNpkQrGKfmyYv57nul6zYYVB+ejkzC+Qf2zko2cULMVr/OGw2M975UoxCz8A==, tarball: file:projects/adb-credential-web.tgz}
     name: '@rush-temp/adb-credential-web'
     version: 0.0.0
     dependencies:
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     dev: false
 
   file:projects/adb.tgz:
-    resolution: {integrity: sha512-KT5zgTSrLv1/5M5rA0QZC1qWXZZLM3XfbP69xSVD77ikVyvfMIwuZ+oG5iJEUaUDrfHONBvyraacaLQ8p5W8DA==, tarball: file:projects/adb.tgz}
+    resolution: {integrity: sha512-iLL6MQNc2NS6NzV7QrbxBlFwgdS7WjW4eN8WAP4LUR2oFRrtKCh/ZJ2XC/PwQGBQfZc8PmEonT2SVyvUOffZuA==, tarball: file:projects/adb.tgz}
     name: '@rush-temp/adb'
     version: 0.0.0
     dependencies:
@@ -12550,10 +12563,10 @@ packages:
       '@yume-chan/async': 2.1.4
       cross-env: 7.0.3
       jest: 27.5.1
-      ts-jest: 27.1.3_1766e319e8d052b5cf7cf33ad7bdf589
+      ts-jest: 27.1.3_eaeefa76dac584dea7490b9b0bdfc2e7
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
-      web-streams-polyfill: 3.2.0
+      typescript: 4.7.0-dev.20220406
+      web-streams-polyfill: 3.2.1
     transitivePeerDependencies:
       - '@babel/core'
       - babel-jest
@@ -12567,12 +12580,12 @@ packages:
     dev: false
 
   file:projects/android-bin.tgz:
-    resolution: {integrity: sha512-cKnCg4Xk/95Lve/m0/pqffXpMrkq3RkfHoEpQFUGxKrZBO5DHnh6qRGbOBc1I7Rb8bWQl6BWLpABkEvWXz18Lw==, tarball: file:projects/android-bin.tgz}
+    resolution: {integrity: sha512-NoNsSP1zgir6Uf80KtBa+rsUKiEJdAxpZbTwrm37YLCmeJ9lMavH9Qi07pBK/H4j24duTgsZ4OE/rMqiWmZ9rA==, tarball: file:projects/android-bin.tgz}
     name: '@rush-temp/android-bin'
     version: 0.0.0
     dependencies:
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     dev: false
 
   file:projects/dataview-bigint-polyfill.tgz:
@@ -12582,7 +12595,7 @@ packages:
     dependencies:
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -12593,7 +12606,7 @@ packages:
     dev: false
 
   file:projects/demo.tgz_@mdx-js+react@1.6.22:
-    resolution: {integrity: sha512-ClqjGhpge8N24GycjPKcGk2te3FjrTUUe1wH87DHsiDFhEbJK6zabMU6L9ny/7uQNkBB//wXFLm96sV7ztrZlw==, tarball: file:projects/demo.tgz}
+    resolution: {integrity: sha512-rE7q14ohNYy1E4x18TzUaJx3m41qM6gPwOCuzbdVA8d6nv77XuG0RkK1F4caBL3A1FVft/GAguuhBLOkSGVOQg==, tarball: file:projects/demo.tgz}
     id: file:projects/demo.tgz
     name: '@rush-temp/demo'
     version: 0.0.0
@@ -12609,14 +12622,14 @@ packages:
       '@types/react': 17.0.27
       '@yume-chan/async': 2.1.4
       eslint: 8.8.0
-      eslint-config-next: 12.1.3_c89561272e8295d8c5b50727d5829a82
+      eslint-config-next: 12.1.3_d51c624641fd6e3da9cbb9d6b96bd072
       mobx: 6.5.0
       mobx-react-lite: 3.3.0_3b110ddd052df537d55bc762cdd4d0b8
       next: 12.1.3_react-dom@17.0.2+react@17.0.2
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       streamsaver: 2.0.6
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
       xterm: 4.17.0
       xterm-addon-fit: 0.5.0_xterm@4.17.0
       xterm-addon-search: 0.8.2_xterm@4.17.0
@@ -12641,7 +12654,7 @@ packages:
       '@yume-chan/async': 2.1.4
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -12652,7 +12665,7 @@ packages:
     dev: false
 
   file:projects/scrcpy.tgz:
-    resolution: {integrity: sha512-oGDf66GEaO9sCi/NVb5aq2utvSTKN6ivT30lUpG4tOxwzJhLTzgz0Tv1BZqlUFJgx9dU0uj2BZ50Mk2TlA27Ag==, tarball: file:projects/scrcpy.tgz}
+    resolution: {integrity: sha512-MYYsw1YGzQQb1UYKvKTrfYwHYJC80G8vo1fxShYxHf7wX+BN1gLoCVzHSFJeH7oWPCstF0NraSrK2cnuQ7jtWg==, tarball: file:projects/scrcpy.tgz}
     name: '@rush-temp/scrcpy'
     version: 0.0.0
     dependencies:
@@ -12663,7 +12676,7 @@ packages:
       jest: 27.5.1
       tinyh264: 0.0.7
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
       yuv-buffer: 1.0.0
       yuv-canvas: 1.2.9
     transitivePeerDependencies:
@@ -12677,7 +12690,7 @@ packages:
     dev: false
 
   file:projects/struct.tgz:
-    resolution: {integrity: sha512-326meM1NxB4RSwU5zhODc4YBD+zv4NIzJ0fdigUkZ5ElT9plj6+DcsQKEuRAPRE2BhpygInyAkA5CaYFOy44yQ==, tarball: file:projects/struct.tgz}
+    resolution: {integrity: sha512-XCTQy/u5qV3BshVbmKdFI5gWSCKJeCidA81DWUju/+YDnR2Zmdi6WiepKyFrNS1QPiRS+ZkKe5gCfRu8U9XSPA==, tarball: file:projects/struct.tgz}
     name: '@rush-temp/struct'
     version: 0.0.0
     dependencies:
@@ -12686,7 +12699,7 @@ packages:
       bluebird: 3.7.2
       jest: 27.5.1
       tslib: 2.3.1
-      typescript: 4.7.0-dev.20220401
+      typescript: 4.7.0-dev.20220406
     transitivePeerDependencies:
       - bufferutil
       - canvas

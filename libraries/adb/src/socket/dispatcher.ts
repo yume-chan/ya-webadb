@@ -180,6 +180,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         const [localId, initializer] = this.initializers.add<number>();
         await this.sendPacket(AdbCommand.Open, localId, 0, serviceString);
 
+        // Fulfilled by `handleOk`
         const remoteId = await initializer;
         const socket = new AdbSocket({
             dispatcher: this,
