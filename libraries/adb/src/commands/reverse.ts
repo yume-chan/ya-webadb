@@ -2,13 +2,13 @@
 
 import { AutoDisposable } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import type { AdbPacketCore } from '../packet.js';
+import type { AdbPacketData } from '../packet.js';
 import type { AdbIncomingSocketEventArgs, AdbPacketDispatcher, AdbSocket } from '../socket/index.js';
 import { AdbBufferedStream } from '../stream/index.js';
 import { decodeUtf8 } from "../utils/index.js";
 
 export interface AdbReverseHandler {
-    onSocket(packet: AdbPacketCore, socket: AdbSocket): void;
+    onSocket(packet: AdbPacketData, socket: AdbSocket): void;
 }
 
 export interface AdbForwardListener {

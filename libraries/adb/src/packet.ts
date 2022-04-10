@@ -30,15 +30,24 @@ export const AdbPacket =
 
 export type AdbPacket = typeof AdbPacket['TDeserializeResult'];
 
-// All the useful fields
-export type AdbPacketCore = Omit<typeof AdbPacket['TInit'], 'checksum' | 'magic'>;
+/**
+ * `AdbPacketData` contains all the useful fields of `AdbPacket`.
+ *
+ * `AdbBackend#connect` will return a `ReadableStream<AdbPacketData>`,
+ * so each backend can encode `AdbPacket` in different ways.
+ *
+ * `AdbBackend#connect` will return a `WritableStream<AdbPacketInit>`,
+ * however, `AdbPacketDispatcher` will transform `AdbPacketData` to `AdbPacketInit` for you,
+ * so `AdbSocket#writable#write` only needs `AdbPacketData`.
+ */
+export type AdbPacketData = Omit<typeof AdbPacket['TInit'], 'checksum' | 'magic'>;
 
 // All fields except `magic`, which can be calculated in `AdbPacketSerializeStream`
 export type AdbPacketInit = Omit<typeof AdbPacket['TInit'], 'magic'>;
 
 export function calculateChecksum(payload: Uint8Array): number;
-export function calculateChecksum(init: AdbPacketCore): AdbPacketInit;
-export function calculateChecksum(payload: Uint8Array | AdbPacketCore): number | AdbPacketInit {
+export function calculateChecksum(init: AdbPacketData): AdbPacketInit;
+export function calculateChecksum(payload: Uint8Array | AdbPacketData): number | AdbPacketInit {
     if (payload instanceof Uint8Array) {
         return payload.reduce((result, item) => result + item, 0);
     } else {
@@ -51,7 +60,7 @@ export class AdbPacketSerializeStream extends TransformStream<AdbPacketInit, Uin
     public constructor() {
         super({
             transform: async (init, controller) => {
-                // This syntax is ugly, but I don't want to create an new object.
+                // This syntax is ugly, but I don't want to create a new object.
                 (init as unknown as AdbPacketHeaderInit).magic = init.command ^ 0xFFFFFFFF;
                 (init as unknown as AdbPacketHeaderInit).payloadLength = init.payload.byteLength;
 

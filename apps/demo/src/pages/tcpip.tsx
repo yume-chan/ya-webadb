@@ -141,7 +141,7 @@ const TcpIp: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>ADB over WiFi - WebADB</title>
+                <title>ADB over WiFi - Android Web Toolbox</title>
             </Head>
 
             <CommandBar items={state.commandBarItems} />
@@ -149,7 +149,7 @@ const TcpIp: NextPage = () => {
             <StackItem>
                 <MessageBar>
                     <Text>
-                        For WebADB to wirelessly connect to your phone,
+                        For Android Web Toolbox to wirelessly connect to your phone,
                         <ExternalLink href="https://github.com/yume-chan/ya-webadb/discussions/245#discussioncomment-384030" spaceBefore spaceAfter>extra software</ExternalLink>
                         is required.
                     </Text>

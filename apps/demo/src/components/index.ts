@@ -5,3 +5,4 @@ export * from './device-view';
 export * from './error-dialog';
 export * from './external-link';
 export * from './log-view';
+export * from './resize-observer';

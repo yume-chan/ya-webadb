@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async';
 import type { Disposable } from '@yume-chan/event';
 import type { ValueOrPromise } from '@yume-chan/struct';
 import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto.js';
-import { AdbCommand, AdbPacket, type AdbPacketCore } from './packet.js';
+import { AdbCommand, type AdbPacketData } from './packet.js';
 import { calculateBase64EncodedLength, encodeBase64 } from './utils/index.js';
 
 export type AdbKeyIterable = Iterable<Uint8Array> | AsyncIterable<Uint8Array>;
@@ -43,14 +43,14 @@ export interface AdbAuthenticator {
      */
     (
         credentialStore: AdbCredentialStore,
-        getNextRequest: () => Promise<AdbPacket>
-    ): AsyncIterable<AdbPacketCore>;
+        getNextRequest: () => Promise<AdbPacketData>
+    ): AsyncIterable<AdbPacketData>;
 }
 
 export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
     credentialStore: AdbCredentialStore,
-    getNextRequest: () => Promise<AdbPacket>,
-): AsyncIterable<AdbPacketCore> {
+    getNextRequest: () => Promise<AdbPacketData>,
+): AsyncIterable<AdbPacketData> {
     for await (const key of credentialStore.iterateKeys()) {
         const packet = await getNextRequest();
 
@@ -70,8 +70,8 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
 
 export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     credentialStore: AdbCredentialStore,
-    getNextRequest: () => Promise<AdbPacket>,
-): AsyncIterable<AdbPacketCore> {
+    getNextRequest: () => Promise<AdbPacketData>,
+): AsyncIterable<AdbPacketData> {
     const packet = await getNextRequest();
 
     if (packet.arg0 !== AdbAuthType.Token) {
@@ -110,19 +110,19 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     };
 };
 
-export const AdbDefaultAuthenticators: AdbAuthenticator[] = [
+export const ADB_DEFAULT_AUTHENTICATORS: AdbAuthenticator[] = [
     AdbSignatureAuthenticator,
     AdbPublicKeyAuthenticator,
 ];
 
-export class AdbAuthenticationHandler implements Disposable {
+export class AdbAuthenticationProcessor implements Disposable {
     public readonly authenticators: readonly AdbAuthenticator[];
 
     private readonly credentialStore: AdbCredentialStore;
 
-    private pendingRequest = new PromiseResolver<AdbPacket>();
+    private pendingRequest = new PromiseResolver<AdbPacketData>();
 
-    private iterator: AsyncIterator<AdbPacketCore> | undefined;
+    private iterator: AsyncIterator<AdbPacketData, void, void> | undefined;
 
     public constructor(
         authenticators: readonly AdbAuthenticator[],
@@ -132,16 +132,16 @@ export class AdbAuthenticationHandler implements Disposable {
         this.credentialStore = credentialStore;
     }
 
-    private getNextRequest = (): Promise<AdbPacket> => {
+    private getNextRequest = (): Promise<AdbPacketData> => {
         return this.pendingRequest.promise;
     };
 
-    private async* runAuthenticator(): AsyncGenerator<AdbPacketCore> {
+    private async* invokeAuthenticator(): AsyncGenerator<AdbPacketData, void, void> {
         for (const authenticator of this.authenticators) {
             for await (const packet of authenticator(this.credentialStore, this.getNextRequest)) {
                 // If the authenticator yielded a response
                 // Prepare `nextRequest` for next authentication request
-                this.pendingRequest = new PromiseResolver<AdbPacket>();
+                this.pendingRequest = new PromiseResolver();
 
                 // Yield the response to outer layer
                 yield packet;
@@ -150,17 +150,20 @@ export class AdbAuthenticationHandler implements Disposable {
             // If the authenticator returned,
             // Next authenticator will be given the same `pendingRequest`
         }
-
-        throw new Error('Cannot authenticate with device');
     }
 
-    public async handle(packet: AdbPacket): Promise<AdbPacketCore> {
+    public async process(packet: AdbPacketData): Promise<AdbPacketData> {
         if (!this.iterator) {
-            this.iterator = this.runAuthenticator();
+            this.iterator = this.invokeAuthenticator();
         }
 
         this.pendingRequest.resolve(packet);
+
         const result = await this.iterator.next();
+        if (result.done) {
+            throw new Error('Cannot authenticate with device');
+        }
+
         return result.value;
     }
 

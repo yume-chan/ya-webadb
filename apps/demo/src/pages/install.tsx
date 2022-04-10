@@ -98,7 +98,7 @@ const Install: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Install APK - WebADB</title>
+                <title>Install APK - Android Web Toolbox</title>
             </Head>
 
             <Stack horizontal>

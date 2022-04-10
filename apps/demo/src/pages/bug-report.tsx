@@ -95,7 +95,7 @@ const BugReportPage: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>BugReport - WebADB</title>
+                <title>BugReport - Android Web Toolbox</title>
             </Head>
 
             <MessageBar messageBarType={MessageBarType.info}>This is the `bugreport`/`bugreportz` tool in Android</MessageBar>

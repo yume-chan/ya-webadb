@@ -1,6 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
 import { AdbCommand } from '../packet.js';
-import { ChunkStream, DuplexStreamFactory, pipeFrom, ReadableStream, WritableStream, type PushReadableStreamController } from '../stream/index.js';
+import { ChunkStream, DuplexStreamFactory, pipeFrom, type PushReadableStreamController, type ReadableStream, type ReadableWritablePair, type WritableStream } from '../stream/index.js';
 import type { AdbPacketDispatcher } from './dispatcher.js';
 
 export interface AdbSocketInfo {
@@ -8,25 +8,16 @@ export interface AdbSocketInfo {
     remoteId: number;
 
     localCreated: boolean;
-
     serviceString: string;
 }
 
-export interface AdbSocketConstructionOptions {
+export interface AdbSocketConstructionOptions extends AdbSocketInfo {
     dispatcher: AdbPacketDispatcher;
-
-    localId: number;
-
-    remoteId: number;
-
-    localCreated: boolean;
-
-    serviceString: string;
 
     highWaterMark?: number | undefined;
 }
 
-export class AdbSocket implements AdbSocketInfo {
+export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<Uint8Array, Uint8Array> {
     private readonly dispatcher!: AdbPacketDispatcher;
 
     public readonly localId!: number;
@@ -45,6 +36,9 @@ export class AdbSocket implements AdbSocketInfo {
 
     private _closed = false;
     public get closed() { return this._closed; }
+
+    private _socket: AdbSocket;
+    public get socket() { return this._socket; }
 
     public constructor(options: AdbSocketConstructionOptions) {
         Object.assign(this, options);
@@ -80,20 +74,16 @@ export class AdbSocket implements AdbSocketInfo {
                     await this._writePromise.promise;
                 },
             }),
-            new ChunkStream(this.dispatcher.maxPayloadSize)
+            new ChunkStream(this.dispatcher.options.maxPayloadSize)
         );
+
+        this._socket = new AdbSocket(this);
     }
 
-    /**
-     * @internal
-     */
     public async enqueue(packet: Uint8Array) {
         await this._readableController.enqueue(packet);
     }
 
-    /**
-     * @internal
-     */
     public ack() {
         this._writePromise?.resolve();
     }
@@ -115,9 +105,6 @@ export class AdbSocket implements AdbSocketInfo {
         }
     }
 
-    /**
-     * @internal
-     */
     public dispose() {
         this._closed = true;
 
@@ -125,5 +112,25 @@ export class AdbSocket implements AdbSocketInfo {
 
         // Close `writable` side
         this.close();
+    }
+}
+
+export class AdbSocket implements AdbSocketInfo, ReadableWritablePair<Uint8Array, Uint8Array>{
+    private _controller: AdbSocketController;
+
+    public get localId(): number { return this._controller.localId; }
+    public get remoteId(): number { return this._controller.remoteId; }
+    public get localCreated(): boolean { return this._controller.localCreated; }
+    public get serviceString(): string { return this._controller.serviceString; }
+
+    public get readable(): ReadableStream<Uint8Array> { return this._controller.readable; }
+    public get writable(): WritableStream<Uint8Array> { return this._controller.writable; }
+
+    public constructor(controller: AdbSocketController) {
+        this._controller = controller;
+    }
+
+    public close() {
+        return this._controller.close();
     }
 }

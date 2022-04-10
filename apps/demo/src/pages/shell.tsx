@@ -5,8 +5,9 @@ import { NextPage } from "next";
 import Head from "next/head";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import 'xterm/css/xterm.css';
+import { ResizeObserver } from '../components';
 import { globalState } from "../state";
-import { Icons, ResizeObserver, RouteStackProps } from '../utils';
+import { Icons, RouteStackProps } from '../utils';
 
 let terminal: import('../components/terminal').AdbTerminal;
 if (typeof window !== 'undefined') {
@@ -80,7 +81,7 @@ const Shell: NextPage = (): JSX.Element | null => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Interactive Shell - WebADB</title>
+                <title>Interactive Shell - Android Web Toolbox</title>
             </Head>
 
             <StackItem>

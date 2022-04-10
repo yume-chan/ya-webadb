@@ -1,7 +1,7 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import { AdbCommandBase, AdbShellSubprocessProtocol, DecodeUtf8Stream, PushReadableStream, ReadableStream, SplitLineStream, WrapReadableStream, WritableStream } from "@yume-chan/adb";
+import { AdbCommandBase, AdbSubprocessShellProtocol, DecodeUtf8Stream, PushReadableStream, ReadableStream, SplitLineStream, WrapReadableStream, WritableStream } from "@yume-chan/adb";
 
 export interface BugReportZVersion {
     major: number;
@@ -29,7 +29,7 @@ export class BugReportZ extends AdbCommandBase {
      */
     public async version(): Promise<BugReportZVersion | undefined> {
         // bugreportz requires shell protocol
-        if (!AdbShellSubprocessProtocol.isSupported(this.adb)) {
+        if (!AdbSubprocessShellProtocol.isSupported(this.adb)) {
             return undefined;
         }
 
@@ -61,9 +61,10 @@ export class BugReportZ extends AdbCommandBase {
     /**
      * Create a zipped bugreport file.
      *
-     * Compare to `stream`, this method will write the output on device. You can pull it using sync protocol.
+     * Compare to `stream`, this method will write the output to a file on device.
+     * You can pull it later using sync protocol.
      *
-     * @param onProgress Progress callback. Only specify this if `supportsProgress()` returns `true`.
+     * @param onProgress Progress callback. Only specify this if `supportsProgress` is `true`.
      * @returns The path of the bugreport file.
      */
     public async generate(onProgress?: (progress: string, total: string) => void): Promise<string> {

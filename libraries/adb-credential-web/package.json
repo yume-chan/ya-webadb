@@ -29,7 +29,7 @@
         "prepublishOnly": "npm run build"
     },
     "devDependencies": {
-        "typescript": "next",
+        "typescript": "4.7.0-beta",
         "@yume-chan/ts-package-builder": "^1.0.0"
     },
     "dependencies": {

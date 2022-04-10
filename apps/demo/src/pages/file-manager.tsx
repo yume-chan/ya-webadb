@@ -587,7 +587,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>File Manager - WebADB</title>
+                <title>File Manager - Android Web Toolbox</title>
             </Head>
 
             <CommandBar items={state.menuItems} />

@@ -1,4 +1,4 @@
-import { AdbBufferedStream, AdbNoneSubprocessProtocol, DecodeUtf8Stream, InspectStream, TransformStream, WritableStream, type Adb, type AdbSocket, type AdbSubprocessProtocol, type ReadableStream, type WritableStreamDefaultWriter } from '@yume-chan/adb';
+import { AdbBufferedStream, AdbSubprocessNoneProtocol, DecodeUtf8Stream, InspectStream, TransformStream, WritableStream, type Adb, type AdbSocket, type AdbSubprocessProtocol, type ReadableStream, type WritableStreamDefaultWriter } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message.js';
@@ -81,7 +81,7 @@ export class ScrcpyClient {
                 {
                     // Scrcpy server doesn't split stdout and stderr,
                     // so disable Shell Protocol to simplify processing
-                    protocols: [AdbNoneSubprocessProtocol],
+                    protocols: [AdbSubprocessNoneProtocol],
                 }
             );
 

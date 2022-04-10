@@ -1,34 +1,30 @@
 import type { Adb } from '../../adb.js';
 import { DecodeUtf8Stream, GatherStringStream } from "../../stream/index.js";
-import { AdbNoneSubprocessProtocol } from './legacy.js';
-import { AdbShellSubprocessProtocol } from './protocol.js';
-import type { AdbSubprocessProtocol, AdbSubprocessProtocolConstructor } from './types.js';
+import { AdbSubprocessNoneProtocol, AdbSubprocessShellProtocol, type AdbSubprocessProtocol, type AdbSubprocessProtocolConstructor } from './protocols/index.js';
 
-export * from './legacy.js';
-export * from './protocol.js';
-export * from './types.js';
+export * from './protocols/index.js';
 export * from './utils.js';
 
 export interface AdbSubprocessOptions {
     /**
-     * A list of `AdbShellConstructor`s to be used.
+     * A list of `AdbSubprocessProtocolConstructor`s to be used.
      *
-     * Different `AdbShell` has different capabilities, thus requires specific adaptations.
-     * Check each `AdbShell`'s documentation for details.
+     * Different `AdbSubprocessProtocol` has different capabilities, thus requires specific adaptations.
+     * Check their documentations for details.
      *
-     * The first one whose `isSupported` returns `true` will be used.
-     * If no `AdbShell` is supported, an error will be thrown.
+     * The first protocol whose `isSupported` returns `true` will be used.
+     * If no `AdbSubprocessProtocol` is supported, an error will be thrown.
      *
-     * The default value is `[AdbShellProtocol, AdbLegacyShell]`.
+     * @default [AdbSubprocessShellProtocol, AdbSubprocessNoneProtocol]
      */
     protocols: AdbSubprocessProtocolConstructor[];
 }
 
-const DefaultOptions: AdbSubprocessOptions = {
-    protocols: [AdbShellSubprocessProtocol, AdbNoneSubprocessProtocol],
+const DEFAULT_OPTIONS: AdbSubprocessOptions = {
+    protocols: [AdbSubprocessShellProtocol, AdbSubprocessNoneProtocol],
 };
 
-export interface SubprocessResult {
+export interface AdbSubprocessWaitResult {
     stdout: string;
     stderr: string;
     exitCode: number;
@@ -41,11 +37,16 @@ export class AdbSubprocess {
         this.adb = adb;
     }
 
-    private async createProtocol(mode: 'pty' | 'raw', command?: string | string[], options?: Partial<AdbSubprocessOptions>): Promise<AdbSubprocessProtocol> {
-        let { protocols } = { ...DefaultOptions, ...options };
+    private async createProtocol(
+        mode: 'pty' | 'raw',
+        command?: string | string[],
+        options?: Partial<AdbSubprocessOptions>
+    ): Promise<AdbSubprocessProtocol> {
+        const { protocols } = { ...DEFAULT_OPTIONS, ...options };
 
         let Constructor: AdbSubprocessProtocolConstructor | undefined;
         for (const item of protocols) {
+            // It's async so can't use `Array#find`
             if (await item.isSupported(this.adb)) {
                 Constructor = item;
                 break;
@@ -59,40 +60,48 @@ export class AdbSubprocess {
         if (Array.isArray(command)) {
             command = command.join(' ');
         } else if (command === undefined) {
+            // spawn the default shell
             command = '';
         }
         return await Constructor[mode](this.adb, command);
     }
 
     /**
-     * Spawns the default shell in interactive mode.
-     * @param options The options for creating the `AdbShell`
-     * @returns A new `AdbShell` instance connecting to the spawned shell process.
+     * Spawns an executable in PTY (interactive) mode.
+     * @param command The command to run. If omitted, the default shell will be spawned.
+     * @param options The options for creating the `AdbSubprocessProtocol`
+     * @returns A new `AdbSubprocessProtocol` instance connecting to the spawned process.
      */
-    public shell(command?: string | string[], options?: Partial<AdbSubprocessOptions>): Promise<AdbSubprocessProtocol> {
+    public shell(
+        command?: string | string[],
+        options?: Partial<AdbSubprocessOptions>
+    ): Promise<AdbSubprocessProtocol> {
         return this.createProtocol('pty', command, options);
     }
 
     /**
-     * Spawns a new process using the given `command`.
+     * Spawns an executable and pipe the output.
      * @param command The command to run, or an array of strings containing both command and args.
-     * @param options The options for creating the `AdbShell`
-     * @returns A new `AdbShell` instance connecting to the spawned process.
+     * @param options The options for creating the `AdbSubprocessProtocol`
+     * @returns A new `AdbSubprocessProtocol` instance connecting to the spawned process.
      */
-    public spawn(command: string | string[], options?: Partial<AdbSubprocessOptions>): Promise<AdbSubprocessProtocol> {
+    public spawn(
+        command: string | string[],
+        options?: Partial<AdbSubprocessOptions>
+    ): Promise<AdbSubprocessProtocol> {
         return this.createProtocol('raw', command, options);
     }
 
     /**
      * Spawns a new process, waits until it exits, and returns the entire output.
      * @param command The command to run
-     * @param options The options for creating the `AdbShell`
+     * @param options The options for creating the `AdbSubprocessProtocol`
      * @returns The entire output of the command
      */
     public async spawnAndWait(
         command: string | string[],
         options?: Partial<AdbSubprocessOptions>
-    ): Promise<SubprocessResult> {
+    ): Promise<AdbSubprocessWaitResult> {
         const shell = await this.spawn(command, options);
 
         const stdout = new GatherStringStream();
@@ -121,7 +130,10 @@ export class AdbSubprocess {
      * @returns The entire output of the command
      */
     public async spawnAndWaitLegacy(command: string | string[]): Promise<string> {
-        const { stdout } = await this.spawnAndWait(command, { protocols: [AdbNoneSubprocessProtocol] });
+        const { stdout } = await this.spawnAndWait(
+            command,
+            { protocols: [AdbSubprocessNoneProtocol] }
+        );
         return stdout;
     }
 }

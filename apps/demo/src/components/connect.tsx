@@ -150,13 +150,13 @@ function _Connect(): JSX.Element | null {
                     const readable = streams.readable
                         .pipeThrough(
                             new InspectStream(packet => {
-                                globalState.appendLog('Incoming', packet);
+                                globalState.appendLog('in', packet);
                             })
                         );
                     const writable = pipeFrom(
                         streams.writable,
                         new InspectStream(packet => {
-                            globalState.appendLog('Outgoing', packet);
+                            globalState.appendLog('out', packet);
                         })
                     );
                     device = await Adb.authenticate({ readable, writable }, CredentialStore, undefined);

@@ -1,5 +1,16 @@
-import { Adb, AdbBackend, AdbPacketCore } from "@yume-chan/adb";
+import { Adb, AdbBackend, AdbPacketData } from "@yume-chan/adb";
 import { action, makeAutoObservable, observable } from 'mobx';
+
+export type PacketLogItemDirection = 'in' | 'out';
+
+export interface PacketLogItem extends AdbPacketData {
+    direction: PacketLogItemDirection;
+
+    commandString?: string;
+    arg0String?: string;
+    arg1String?: string;
+    payloadString?: string;
+}
 
 export class GlobalState {
     backend: AdbBackend | undefined = undefined;
@@ -9,13 +20,11 @@ export class GlobalState {
     errorDialogVisible = false;
     errorDialogMessage = '';
 
-    logVisible = false;
-    logs: [string, AdbPacketCore][] = [];
+    logs: PacketLogItem[] = [];
 
     constructor() {
         makeAutoObservable(this, {
             hideErrorDialog: action.bound,
-            toggleLog: action.bound,
             logs: observable.shallow,
         });
     }
@@ -34,12 +43,9 @@ export class GlobalState {
         this.errorDialogVisible = false;
     }
 
-    toggleLog() {
-        this.logVisible = !this.logVisible;
-    }
-
-    appendLog(direction: string, packet: AdbPacketCore) {
-        this.logs.push([direction, packet]);
+    appendLog(direction: PacketLogItemDirection, packet: AdbPacketData) {
+        (packet as PacketLogItem).direction = direction;
+        this.logs.push((packet as PacketLogItem));
     }
 
     clearLog() {

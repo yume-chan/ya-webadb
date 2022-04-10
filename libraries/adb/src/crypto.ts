@@ -5,48 +5,60 @@ const BigInt1 = BigInt(1);
 const BigInt2 = BigInt(2);
 const BigInt64 = BigInt(64);
 
-export function getBig(
-    array: Uint8Array,
-    offset = 0,
-    length = array.byteLength - offset
-): bigint {
-    const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
-
+/**
+ * Gets the `BigInt` value at the specified byte offset and length from the start of the view. There is
+ * no alignment constraint; multi-byte values may be fetched from any offset.
+ *
+ * Only supports Big-Endian, because that's what ADB uses.
+ * @param byteOffset The place in the buffer at which the value should be retrieved.
+ */
+export function getBigUint(dataView: DataView, byteOffset: number, length: number): bigint {
     let result = BigInt0;
 
     // Currently `length` must be a multiplication of 8
     // Support for arbitrary length can be easily added
 
-    for (let i = offset; i < offset + length; i += 8) {
+    for (let i = byteOffset; i < byteOffset + length; i += 8) {
         result <<= BigInt64;
-        const value = getBigUint64(view, i, false);
+        const value = getBigUint64(dataView, i, false);
         result += value;
     }
 
     return result;
 }
 
-export function setBig(buffer: ArrayBuffer, value: bigint, offset: number = 0) {
-    const uint64Array: bigint[] = [];
-    while (value > BigInt0) {
-        uint64Array.push(BigInt.asUintN(64, value));
-        value >>= BigInt64;
+/**
+ * Stores an arbitrary-precision positive `BigInt` value at the specified byte offset from the start of the view.
+ * @param byteOffset The place in the buffer at which the value should be set.
+ * @param value The value to set.
+ * @param littleEndian If `false` or `undefined`, a big-endian value should be written,
+ * otherwise a little-endian value should be written.
+ */
+export function setBigUint(dataView: DataView, byteOffset: number, value: bigint, littleEndian?: boolean) {
+    const start = byteOffset;
+
+    if (littleEndian) {
+        while (value > BigInt0) {
+            setBigUint64(dataView, byteOffset, value, true);
+            byteOffset += 8;
+            value >>= BigInt64;
+        }
+    } else {
+        // Because we don't know how long (in bits) the `value` is,
+        // Convert it to an array of `uint64` first.
+        const uint64Array: bigint[] = [];
+        while (value > BigInt0) {
+            uint64Array.push(BigInt.asUintN(64, value));
+            value >>= BigInt64;
+        }
+
+        for (let i = uint64Array.length - 1; i >= 0; i -= 1) {
+            setBigUint64(dataView, byteOffset, uint64Array[i]!, false);
+            byteOffset += 8;
+        }
     }
 
-    const view = new DataView(buffer);
-    for (let i = uint64Array.length - 1; i >= 0; i -= 1) {
-        setBigUint64(view, offset, uint64Array[i]!, false);
-        offset += 8;
-    }
-}
-
-export function setBigLE(array: Uint8Array, value: bigint, offset = 0) {
-    const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
-    while (value > BigInt0) {
-        setBigUint64(view, offset, value, true);
-        offset += 8;
-        value >>= BigInt64;
-    }
+    return byteOffset - start;
 }
 
 // These values are correct only if
@@ -76,9 +88,9 @@ const RsaPrivateKeyDOffset = 303;
 const RsaPrivateKeyDLength = 2048 / 8;
 
 export function parsePrivateKey(key: Uint8Array): [n: bigint, d: bigint] {
-    let n = getBig(key, RsaPrivateKeyNOffset, RsaPrivateKeyNLength);
-    let d = getBig(key, RsaPrivateKeyDOffset, RsaPrivateKeyDLength);
-
+    const view = new DataView(key.buffer, key.byteOffset, key.byteLength);
+    const n = getBigUint(view, RsaPrivateKeyNOffset, RsaPrivateKeyNLength);
+    const d = getBigUint(view, RsaPrivateKeyDOffset, RsaPrivateKeyDLength);
     return [n, d];
 }
 
@@ -132,7 +144,7 @@ export function calculatePublicKey(
     // [
     //   modulusLengthInWords, // 32-bit integer, a "word" is 32-bit so it must be 2048 / 8 / 4
     //                         // Actually the comment in Android source code was wrong
-    //   n0inv,                // 32-bit integer, the modular inverse of (lower 32 bits of) n
+    //   n0inv,                // 32-bit integer, the modular inverse of (low 32 bits of n)
     //   modulus,              // n
     //   rr,                   // Montgomery parameter R^2
     //   exponent,             // 32-bit integer, must be 65537
@@ -172,13 +184,12 @@ export function calculatePublicKey(
     outputOffset += 4;
 
     // Write n
-    setBigLE(output, n, outputOffset);
+    setBigUint(outputView, outputOffset, n, true);
     outputOffset += 256;
 
     // Calculate rr = (2^(rsa_size)) ^ 2 mod n
     let rr = BigInt(2) ** BigInt(4096) % n;
-    setBigLE(output, rr, outputOffset);
-    outputOffset += 256;
+    outputOffset += setBigUint(outputView, outputOffset, rr, true);
 
     // exponent
     outputView.setUint32(outputOffset, 65537, true);
@@ -218,21 +229,21 @@ export function powMod(base: bigint, exponent: bigint, modulus: bigint): bigint 
     return r;
 }
 
-export const Sha1DigestLength = 20;
+export const SHA1_DIGEST_LENGTH = 20;
 
-export const Asn1Sequence = 0x30;
-export const Asn1OctetString = 0x04;
-export const Asn1Null = 0x05;
-export const Asn1Oid = 0x06;
+export const ASN1_SEQUENCE = 0x30;
+export const ASN1_OCTET_STRING = 0x04;
+export const ASN1_NULL = 0x05;
+export const ASN1_OID = 0x06;
 
 // PKCS#1 SHA-1 hash digest info
-export const Sha1DigestInfo = new Uint8Array([
-    Asn1Sequence, 0x0d + Sha1DigestLength,
-    Asn1Sequence, 0x09,
+export const SHA1_DIGEST_INFO = new Uint8Array([
+    ASN1_SEQUENCE, 0x0d + SHA1_DIGEST_LENGTH,
+    ASN1_SEQUENCE, 0x09,
     // SHA-1 (1 3 14 3 2 26)
-    Asn1Oid, 0x05, 1 * 40 + 3, 14, 3, 2, 26,
-    Asn1Null, 0x00,
-    Asn1OctetString, Sha1DigestLength
+    ASN1_OID, 0x05, 1 * 40 + 3, 14, 3, 2, 26,
+    ASN1_NULL, 0x00,
+    ASN1_OCTET_STRING, SHA1_DIGEST_LENGTH
 ]);
 
 // SubtleCrypto.sign() will hash the given data and sign the hash
@@ -241,7 +252,7 @@ export const Sha1DigestInfo = new Uint8Array([
 // encrypt the given data with its private key)
 // However SubtileCrypto.encrypt() doesn't accept 'RSASSA-PKCS1-v1_5' algorithm
 // So we need to implement the encryption by ourself
-export function sign(privateKey: Uint8Array, data: Uint8Array): ArrayBuffer {
+export function sign(privateKey: Uint8Array, data: Uint8Array): Uint8Array {
     const [n, d] = parsePrivateKey(privateKey);
 
     // PKCS#1 padding
@@ -254,7 +265,7 @@ export function sign(privateKey: Uint8Array, data: Uint8Array): ArrayBuffer {
     padded[index] = 1;
     index += 1;
 
-    const fillLength = padded.length - Sha1DigestInfo.length - data.length - 1;
+    const fillLength = padded.length - SHA1_DIGEST_INFO.length - data.length - 1;
     while (index < fillLength) {
         padded[index] = 0xff;
         index += 1;
@@ -263,18 +274,23 @@ export function sign(privateKey: Uint8Array, data: Uint8Array): ArrayBuffer {
     padded[index] = 0;
     index += 1;
 
-    padded.set(Sha1DigestInfo, index);
-    index += Sha1DigestInfo.length;
+    padded.set(SHA1_DIGEST_INFO, index);
+    index += SHA1_DIGEST_INFO.length;
 
     padded.set(data, index);
 
     // Encryption
     // signature = padded ** d % n
-    let signature = powMod(getBig(padded), d, n);
+    const view = new DataView(padded.buffer);
+    const signature = powMod(
+        getBigUint(view, 0, view.byteLength),
+        d,
+        n
+    );
 
-    // Put into an ArrayBuffer
-    const result = new ArrayBuffer(256);
-    setBig(result, signature);
+    // `padded` is not used anymore,
+    // re-use the buffer to store the result
+    setBigUint(view, 0, signature, false);
 
-    return result;
+    return padded;
 }

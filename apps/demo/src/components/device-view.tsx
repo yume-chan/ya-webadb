@@ -1,6 +1,6 @@
-import { StackItem } from '@fluentui/react';
+import { mergeStyleSets, StackItem } from '@fluentui/react';
 import { ReactNode, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { ResizeObserver, Size } from '../utils/resize-observer';
+import { ResizeObserver, Size } from './resize-observer';
 import { forwardRef } from '../utils/with-display-name';
 
 export interface DeviceViewProps {
@@ -23,6 +23,21 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
     bottomElement,
     children,
 }: DeviceViewProps, ref) => {
+    const styles = mergeStyleSets({
+        outer: {
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'black',
+        },
+        inner: {
+            position: 'absolute',
+            transformOrigin: 'top left',
+        },
+        bottom: {
+            position: 'absolute',
+        },
+    });
+
     const [containerSize, setContainerSize] = useState<Size>({ width: 0, height: 0 });
     const [bottomSize, setBottomSize] = useState<Size>({ width: 0, height: 0 });
 
@@ -82,6 +97,7 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
     return (
         <StackItem grow>
             <ResizeObserver
+                className={styles.outer}
                 ref={containerRef}
                 style={{
                     position: 'relative',
@@ -92,22 +108,21 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
                 onResize={setContainerSize}
             >
                 <div
+                    className={styles.inner}
                     style={{
-                        position: 'absolute',
                         top: childrenStyle.top,
                         left: childrenStyle.left,
                         width,
                         height,
                         transform: `scale(${childrenStyle.scale})`,
-                        transformOrigin: 'top left',
                     }}
                 >
                     {children}
                 </div>
 
                 <ResizeObserver
+                    className={styles.bottom}
                     style={{
-                        position: 'absolute',
                         top: childrenStyle.top + childrenStyle.height,
                         left: childrenStyle.left,
                         width: childrenStyle.width,

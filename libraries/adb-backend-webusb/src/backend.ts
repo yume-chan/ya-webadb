@@ -1,4 +1,4 @@
-import { AdbPacketHeader, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, type AdbBackend, type AdbPacketCore, type AdbPacketInit, type ReadableWritablePair, type WritableStream } from '@yume-chan/adb';
+import { AdbPacketHeader, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, type AdbBackend, type AdbPacketData, type AdbPacketInit, type ReadableWritablePair, type WritableStream } from '@yume-chan/adb';
 import type { StructDeserializeStream } from "@yume-chan/struct";
 
 export const ADB_DEVICE_FILTER: USBDeviceFilter = {
@@ -24,21 +24,21 @@ class Uint8ArrayStructDeserializeStream implements StructDeserializeStream {
     }
 }
 
-export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketCore, AdbPacketInit>{
-    private _readable: ReadableStream<AdbPacketCore>;
+export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketData, AdbPacketInit>{
+    private _readable: ReadableStream<AdbPacketData>;
     public get readable() { return this._readable; }
 
     private _writable: WritableStream<AdbPacketInit>;
     public get writable() { return this._writable; }
 
     public constructor(device: USBDevice, inEndpoint: USBEndpoint, outEndpoint: USBEndpoint) {
-        const factory = new DuplexStreamFactory<AdbPacketCore, Uint8Array>({
+        const factory = new DuplexStreamFactory<AdbPacketData, Uint8Array>({
             close: async () => {
                 navigator.usb.removeEventListener('disconnect', handleUsbDisconnect);
                 try {
                     await device.close();
                 } catch {
-                    // device may already disconnected
+                    // device may have already disconnected
                 }
             },
         });
@@ -51,36 +51,43 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketCor
 
         navigator.usb.addEventListener('disconnect', handleUsbDisconnect);
 
-        this._readable = factory.createWrapReadable(new ReadableStream<AdbPacketCore>({
+        this._readable = factory.createWrapReadable(new ReadableStream<AdbPacketData>({
             async pull(controller) {
                 // The `length` argument in `transferIn` must not be smaller than what the device sent,
                 // otherwise it will return `babble` status without any data.
-                // But using `inEndpoint.packetSize` as `length` (ensures it can read packets in any size)
-                // leads to poor performance due to unnecessarily large allocations and corresponding GCs.
-                // So we read exactly 24 bytes (packet header) followed by exactly `payloadLength`.
+                // Here we read exactly 24 bytes (packet header) followed by exactly `payloadLength`.
                 const result = await device.transferIn(inEndpoint.endpointNumber, 24);
+
                 // TODO: webusb-backend: handle `babble` by discarding the data and receive again
+
                 // From spec, the `result.data` always covers the whole `buffer`.
                 const buffer = new Uint8Array(result.data!.buffer);
                 const stream = new Uint8ArrayStructDeserializeStream(buffer);
-                const packet = AdbPacketHeader.deserialize(stream);
+
+                // Add `payload` field to its type, because we will assign `payload` in next step.
+                const packet = AdbPacketHeader.deserialize(stream) as AdbPacketHeader & { payload: Uint8Array; };
                 if (packet.payloadLength !== 0) {
-                    const payload = await device.transferIn(inEndpoint.endpointNumber, packet.payloadLength!);
-                    // Use the cast to avoid allocate another object.
-                    (packet as unknown as AdbPacketCore).payload = new Uint8Array(payload.data!.buffer);
+                    const result = await device.transferIn(inEndpoint.endpointNumber, packet.payloadLength);
+                    packet.payload = new Uint8Array(result.data!.buffer);
+                } else {
+                    packet.payload = new Uint8Array(0);
                 }
-                controller.enqueue(packet as unknown as AdbPacketCore);
+
+                controller.enqueue(packet);
             },
         }));
 
-        this._writable = pipeFrom(factory.createWritable({
-            write: async (chunk) => {
-                await device.transferOut(outEndpoint.endpointNumber, chunk);
-            },
-        }, {
-            highWaterMark: 16 * 1024,
-            size(chunk) { return chunk.byteLength; },
-        }), new AdbPacketSerializeStream());
+        this._writable = pipeFrom(
+            factory.createWritable({
+                write: async (chunk) => {
+                    await device.transferOut(outEndpoint.endpointNumber, chunk);
+                },
+            }, {
+                highWaterMark: 16 * 1024,
+                size(chunk) { return chunk.byteLength; },
+            }),
+            new AdbPacketSerializeStream()
+        );
     }
 }
 
@@ -130,7 +137,7 @@ export class AdbWebUsbBackend implements AdbBackend {
                         alternate.interfaceClass === ADB_DEVICE_FILTER.classCode &&
                         alternate.interfaceSubclass === ADB_DEVICE_FILTER.subclassCode) {
                         if (this._device.configuration?.configurationValue !== configuration.configurationValue) {
-                            // Note: It's not possible to switch configuration on Windows,
+                            // Note: Switching configuration is not supported on Windows,
                             // but Android devices should always expose ADB function at the first (default) configuration.
                             await this._device.selectConfiguration(configuration.configurationValue);
                         }

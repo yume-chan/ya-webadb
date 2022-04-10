@@ -11,6 +11,12 @@ export interface DuplexStreamFactoryOptions {
     close?: (() => void | Promise<void>) | undefined;
 }
 
+/**
+ * A factory for creating a duplex stream.
+ *
+ * It can create multiple `ReadableStream`s and `WritableStream`s,
+ * when any of them is closed, all other streams will be closed as well.
+ */
 export class DuplexStreamFactory<R, W> {
     private readableControllers: ReadableStreamDefaultController<R>[] = [];
     private pushReadableControllers: PushReadableStreamController<R>[] = [];
@@ -42,6 +48,8 @@ export class DuplexStreamFactory<R, W> {
                     await controller.enqueue(chunk);
                 },
                 close: async () => {
+                    // The source signals stream ended,
+                    // usually means the other end closed the connection first.
                     controller.close();
                     this._closeRequestedByReadable = true;
                     await this.close();
@@ -58,15 +66,7 @@ export class DuplexStreamFactory<R, W> {
     public createWrapReadable(wrapper: ReadableStream<R> | WrapReadableStreamStart<R> | ReadableStreamWrapper<R>): WrapReadableStream<R> {
         return new WrapReadableStream<R>({
             async start() {
-                if ('start' in wrapper) {
-                    return await wrapper.start();
-                } else if (typeof wrapper === 'function') {
-                    return await wrapper();
-                } else {
-                    // Can't use `wrapper instanceof ReadableStream`
-                    // Because we want to be compatible with any ReadableStream-like objects
-                    return wrapper;
-                }
+                return getWrappedReadableStream(wrapper);
             },
             close: async () => {
                 if ('close' in wrapper) {
@@ -169,7 +169,7 @@ export class GatherStringStream extends WritableStream<string>{
     }
 }
 
-// TODO: Find other ways to implement `StructTransformStream`
+// TODO: StructTransformStream: Looking for better implementation
 export class StructDeserializeStream<T extends Struct<any, any, any, any>>
     implements ReadableWritablePair<Uint8Array, StructValueType<T>>{
     private _readable: ReadableStream<StructValueType<T>>;
@@ -234,6 +234,20 @@ export interface WritableStreamWrapper<T> {
     close?(): Promise<void>;
 }
 
+async function getWrappedWritableStream<T>(
+    wrapper: WritableStream<T> | WrapWritableStreamStart<T> | WritableStreamWrapper<T>
+) {
+    if ('start' in wrapper) {
+        return await wrapper.start();
+    } else if (typeof wrapper === 'function') {
+        return await wrapper();
+    } else {
+        // Can't use `wrapper instanceof WritableStream`
+        // Because we want to be compatible with any WritableStream-like objects
+        return wrapper;
+    }
+}
+
 export class WrapWritableStream<T> extends WritableStream<T> {
     public writable!: WritableStream<T>;
 
@@ -242,21 +256,13 @@ export class WrapWritableStream<T> extends WritableStream<T> {
     public constructor(wrapper: WritableStream<T> | WrapWritableStreamStart<T> | WritableStreamWrapper<T>) {
         super({
             start: async () => {
-                // `start` is invoked before `WritableStream`'s constructor finish,
+                // `start` is invoked before `ReadableStream`'s constructor finish,
                 // so using `this` synchronously causes
                 // "Must call super constructor in derived class before accessing 'this' or returning from derived constructor".
                 // Queue a microtask to avoid this.
                 await Promise.resolve();
 
-                if ('start' in wrapper) {
-                    this.writable = await wrapper.start();
-                } else if (typeof wrapper === 'function') {
-                    this.writable = await wrapper();
-                } else {
-                    // Can't use `wrapper instanceof WritableStream`
-                    // Because we want to be compatible with any WritableStream-like objects
-                    this.writable = wrapper;
-                }
+                this.writable = await getWrappedWritableStream(wrapper);
                 this.writer = this.writable.getWriter();
             },
             write: async (chunk) => {
@@ -291,6 +297,20 @@ export interface ReadableStreamWrapper<T> {
     close?(): Promise<void>;
 }
 
+function getWrappedReadableStream<T>(
+    wrapper: ReadableStream<T> | WrapReadableStreamStart<T> | ReadableStreamWrapper<T>
+) {
+    if ('start' in wrapper) {
+        return wrapper.start();
+    } else if (typeof wrapper === 'function') {
+        return wrapper();
+    } else {
+        // Can't use `wrapper instanceof ReadableStream`
+        // Because we want to be compatible with any ReadableStream-like objects
+        return wrapper;
+    }
+}
+
 export class WrapReadableStream<T> extends ReadableStream<T>{
     public readable!: ReadableStream<T>;
 
@@ -305,15 +325,7 @@ export class WrapReadableStream<T> extends ReadableStream<T>{
                 // Queue a microtask to avoid this.
                 await Promise.resolve();
 
-                if ('start' in wrapper) {
-                    this.readable = await wrapper.start();
-                } else if (typeof wrapper === 'function') {
-                    this.readable = await wrapper();
-                } else {
-                    // Can't use `wrapper instanceof ReadableStream`
-                    // Because we want to be compatible with any ReadableStream-like objects
-                    this.readable = wrapper;
-                }
+                this.readable = await getWrappedReadableStream(wrapper);
                 this.reader = this.readable.getReader();
             },
             cancel: async (reason) => {

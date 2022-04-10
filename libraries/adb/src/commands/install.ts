@@ -11,6 +11,8 @@ export function install(
     let sync!: AdbSync;
     return new WrapWritableStream<Uint8Array>({
         async start() {
+            // TODO: install: support other install apk methods (streaming, etc.)
+
             // Upload apk file to tmp folder
             sync = await adb.sync();
             return sync.write(filename, undefined, undefined);

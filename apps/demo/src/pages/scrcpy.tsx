@@ -824,7 +824,7 @@ const Scrcpy: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Scrcpy - WebADB</title>
+                <title>Scrcpy - Android Web Toolbox</title>
             </Head>
 
             <CommandBar items={state.commandBarItems} farItems={state.commandBarFarItems} />

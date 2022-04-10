@@ -1,6 +1,6 @@
 import { createMergedRef } from '@fluentui/react';
-import { CSSProperties, HTMLAttributes, PropsWithChildren, useCallback, useMemo, useRef } from 'react';
-import { forwardRef } from './with-display-name';
+import { CSSProperties, HTMLAttributes, PropsWithChildren, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { forwardRef, useCallbackRef } from '../utils';
 
 export interface Size {
     width: number;
@@ -10,17 +10,6 @@ export interface Size {
 
 export interface ResizeObserverProps extends HTMLAttributes<HTMLDivElement>, PropsWithChildren<{}> {
     onResize: (size: Size) => void;
-}
-
-export function useCallbackRef<TArgs extends any[], R>(callback: (...args: TArgs) => R): (...args: TArgs) => R {
-    const ref = useRef<(...args: TArgs) => R>(callback);
-    ref.current = callback;
-
-    const wrapper = useCallback((...args: TArgs) => {
-        return ref.current.apply(undefined, args);
-    }, []);
-
-    return wrapper;
 }
 
 const iframeStyle: CSSProperties = {
@@ -45,6 +34,10 @@ export const ResizeObserver = forwardRef<HTMLDivElement>('ResizeObserver')(({
         const { width, height } = containerRef.current!.getBoundingClientRect();
         onResize({ width, height });
     });
+
+    useLayoutEffect(() => {
+        handleResize();
+    }, []);
 
     const handleIframeRef = useCallback((element: HTMLIFrameElement | null) => {
         if (element) {

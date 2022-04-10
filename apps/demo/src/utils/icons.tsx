@@ -1,5 +1,5 @@
 import { registerIcons } from "@fluentui/react";
-import { AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, BugRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, PanelBottomRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WarningRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { FilterRegular, AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, BugRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, PanelBottomRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WarningRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
@@ -52,6 +52,7 @@ export function register() {
             SortUp: <ArrowSortUpRegular style={STYLE} />,
             SortDown: <ArrowSortDownRegular style={STYLE} />,
             Search: <SearchRegular style={STYLE} />,
+            Filter: <FilterRegular style={STYLE} />,
 
             // Required by file manager page
             Document20: <DocumentRegular style={{ fontSize: 20, verticalAlign: 'middle' }} />

@@ -25,6 +25,9 @@ export function adbSyncPush(
     return pipeFrom(
         new WritableStream<Uint8Array>({
             async start() {
+                // TODO: AdbSyncPush: support create directory using `mkdir`
+                // if device doesn't support `fixed_push_mkdir` feature.
+
                 const pathAndMode = `${filename},${mode.toString()}`;
                 await adbSyncWriteRequest(writer, AdbSyncRequestId.Send, pathAndMode);
             },

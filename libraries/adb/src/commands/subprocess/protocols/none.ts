@@ -1,6 +1,6 @@
-import type { Adb } from "../../adb.js";
-import type { AdbSocket } from "../../socket/index.js";
-import { DuplexStreamFactory, type ReadableStream } from "../../stream/index.js";
+import type { Adb } from "../../../adb.js";
+import type { AdbSocket } from "../../../socket/index.js";
+import { DuplexStreamFactory, type ReadableStream } from "../../../stream/index.js";
 import type { AdbSubprocessProtocol } from "./types.js";
 
 /**
@@ -11,15 +11,17 @@ import type { AdbSubprocessProtocol } from "./types.js";
  * * `exit` exit code: No
  * * `resize`: No
  */
-export class AdbNoneSubprocessProtocol implements AdbSubprocessProtocol {
+export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     public static isSupported() { return true; }
 
     public static async pty(adb: Adb, command: string) {
-        return new AdbNoneSubprocessProtocol(await adb.createSocket(`shell:${command}`));
+        return new AdbSubprocessNoneProtocol(await adb.createSocket(`shell:${command}`));
     }
 
     public static async raw(adb: Adb, command: string) {
-        return new AdbNoneSubprocessProtocol(await adb.createSocket(`shell,raw:${command}`));
+        // Native ADB client doesn't allow none protocol + raw mode,
+        // But ADB daemon supports it.
+        return new AdbSubprocessNoneProtocol(await adb.createSocket(`shell,raw:${command}`));
     }
 
     private readonly socket: AdbSocket;
@@ -28,11 +30,15 @@ export class AdbNoneSubprocessProtocol implements AdbSubprocessProtocol {
     public get stdin() { return this.socket.writable; }
 
     private _stdout: ReadableStream<Uint8Array>;
-    // Legacy shell doesn't support splitting output streams.
+    /**
+     * Legacy shell mixes stdout and stderr.
+     */
     public get stdout() { return this._stdout; }
 
-    // `stderr` of Legacy shell is always empty.
     private _stderr: ReadableStream<Uint8Array>;
+    /**
+     * `stderr` will always be empty.
+     */
     public get stderr() { return this._stderr; }
 
     private _exit: Promise<number>;

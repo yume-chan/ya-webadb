@@ -48,7 +48,7 @@
         "gh-release-fetch": "^2.0.4",
         "jest": "^27.5.1",
         "tinyh264": "^0.0.7",
-        "typescript": "next",
+        "typescript": "4.7.0-beta",
         "yuv-buffer": "^1.0.0",
         "yuv-canvas": "^1.2.7"
     },

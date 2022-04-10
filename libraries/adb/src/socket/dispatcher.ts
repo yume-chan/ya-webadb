@@ -1,14 +1,14 @@
 import { AsyncOperationManager, PromiseResolver } from '@yume-chan/async';
 import { AutoDisposable, EventEmitter } from '@yume-chan/event';
-import { AdbCommand, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from '../packet.js';
+import { AdbCommand, calculateChecksum, type AdbPacketData, type AdbPacketInit } from '../packet.js';
 import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '../stream/index.js';
 import { decodeUtf8, encodeUtf8 } from '../utils/index.js';
-import { AdbSocket } from './socket.js';
+import { AdbSocket, AdbSocketController } from './socket.js';
 
 export interface AdbIncomingSocketEventArgs {
     handled: boolean;
 
-    packet: AdbPacketCore;
+    packet: AdbPacketData;
 
     serviceString: string;
 
@@ -17,17 +17,27 @@ export interface AdbIncomingSocketEventArgs {
 
 const EmptyUint8Array = new Uint8Array(0);
 
+export interface AdbPacketDispatcherOptions {
+    calculateChecksum: boolean;
+    /**
+     * Before Android 9.0, ADB uses `char*` to parse service string,
+     * thus requires a null character to terminate.
+     *
+     * Usually it should have the same value as `calculateChecksum`.
+     */
+    appendNullToServiceString: boolean;
+    maxPayloadSize: number;
+}
+
 export class AdbPacketDispatcher extends AutoDisposable {
     // ADB socket id starts from 1
     // (0 means open failed)
     private readonly initializers = new AsyncOperationManager(1);
-    private readonly sockets = new Map<number, AdbSocket>();
+    private readonly sockets = new Map<number, AdbSocketController>();
 
     private _writer!: WritableStreamDefaultWriter<AdbPacketInit>;
 
-    public maxPayloadSize = 0;
-    public calculateChecksum = true;
-    public appendNullToServiceString = true;
+    public readonly options: AdbPacketDispatcherOptions;
 
     private _disconnected = new PromiseResolver<void>();
     public get disconnected() { return this._disconnected.promise; }
@@ -41,9 +51,12 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private _abortController = new AbortController();
 
     public constructor(
-        connection: ReadableWritablePair<AdbPacketCore, AdbPacketInit>,
+        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
+        options: AdbPacketDispatcherOptions
     ) {
         super();
+
+        this.options = options;
 
         connection.readable
             .pipeTo(new WritableStream({
@@ -91,7 +104,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this._writer = connection.writable.getWriter();
     }
 
-    private handleOk(packet: AdbPacketCore) {
+    private handleOk(packet: AdbPacketData) {
         if (this.initializers.resolve(packet.arg1, packet.arg0)) {
             // Device successfully created the socket
             return;
@@ -109,7 +122,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
     }
 
-    private async handleClose(packet: AdbPacketCore) {
+    private async handleClose(packet: AdbPacketData) {
         // From https://android.googlesource.com/platform/packages/modules/adb/+/65d18e2c1cc48b585811954892311b28a4c3d188/adb.cpp#459
         /* According to protocol.txt, p->msg.arg0 might be 0 to indicate
          * a failed OPEN only. However, due to a bug in previous ADB
@@ -139,7 +152,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         // Just ignore it
     }
 
-    private async handleOpen(packet: AdbPacketCore) {
+    private async handleOpen(packet: AdbPacketData) {
         // AsyncOperationManager doesn't support get and skip an ID
         // Use `add` + `resolve` to simulate this behavior
         const [localId] = this.initializers.add<number>();
@@ -148,7 +161,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         const remoteId = packet.arg0;
         const serviceString = decodeUtf8(packet.payload);
 
-        const socket = new AdbSocket({
+        const controller = new AdbSocketController({
             dispatcher: this,
             localId,
             remoteId,
@@ -160,12 +173,12 @@ export class AdbPacketDispatcher extends AutoDisposable {
             handled: false,
             packet,
             serviceString,
-            socket,
+            socket: controller.socket,
         };
         this.incomingSocketEvent.fire(args);
 
         if (args.handled) {
-            this.sockets.set(localId, socket);
+            this.sockets.set(localId, controller);
             await this.sendPacket(AdbCommand.OK, localId, remoteId);
         } else {
             await this.sendPacket(AdbCommand.Close, 0, remoteId);
@@ -173,25 +186,30 @@ export class AdbPacketDispatcher extends AutoDisposable {
     }
 
     public async createSocket(serviceString: string): Promise<AdbSocket> {
-        if (this.appendNullToServiceString) {
+        if (this.options.appendNullToServiceString) {
             serviceString += '\0';
         }
 
         const [localId, initializer] = this.initializers.add<number>();
-        await this.sendPacket(AdbCommand.Open, localId, 0, serviceString);
+        await this.sendPacket(
+            AdbCommand.Open,
+            localId,
+            0,
+            serviceString
+        );
 
         // Fulfilled by `handleOk`
         const remoteId = await initializer;
-        const socket = new AdbSocket({
+        const controller = new AdbSocketController({
             dispatcher: this,
             localId,
             remoteId,
             localCreated: true,
             serviceString,
         });
-        this.sockets.set(localId, socket);
+        this.sockets.set(localId, controller);
 
-        return socket;
+        return controller.socket;
     }
 
     public sendPacket(packet: AdbPacketInit): Promise<void>;
@@ -207,7 +225,7 @@ export class AdbPacketDispatcher extends AutoDisposable {
         arg1?: number,
         payload: string | Uint8Array = EmptyUint8Array,
     ): Promise<void> {
-        let init: AdbPacketCore;
+        let init: AdbPacketData;
         if (arg0 === undefined) {
             init = packetOrCommand as AdbPacketInit;
         } else {
@@ -224,11 +242,11 @@ export class AdbPacketDispatcher extends AutoDisposable {
         }
 
         if (init.payload &&
-            init.payload.byteLength > this.maxPayloadSize) {
+            init.payload.byteLength > this.options.maxPayloadSize) {
             throw new Error('payload too large');
         }
 
-        if (this.calculateChecksum) {
+        if (this.options.calculateChecksum) {
             calculateChecksum(init);
         } else {
             (init as AdbPacketInit).checksum = 0;

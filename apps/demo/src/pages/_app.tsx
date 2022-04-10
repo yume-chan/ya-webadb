@@ -3,8 +3,8 @@ import type { AppProps } from 'next/app';
 import Head from "next/head";
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useCallback, useEffect, useState } from "react";
-import { Connect, ErrorDialogProvider, LogView, NoSsr, ToggleLogView } from "../components";
+import { useCallback, useEffect, useState } from "react";
+import { Connect, ErrorDialogProvider } from "../components";
 import '../styles/globals.css';
 import { Icons } from "../utils";
 import { register as registerIcons } from '../utils/icons';
@@ -61,6 +61,11 @@ const ROUTES = [
         url: '/bug-report',
         icon: Icons.Bug,
         name: 'Bug Report',
+    },
+    {
+        url: '/packet-log',
+        icon: Icons.TextGrammarError,
+        name: 'Packet Log',
     },
 ];
 
@@ -123,7 +128,7 @@ function App({ Component, pageProps }: AppProps) {
                     />
 
                     <StackItem grow>
-                        <div className={classNames.title}>WebADB Demo</div>
+                        <div className={classNames.title}>Android Web Toolbox</div>
                     </StackItem>
 
                     <IconButton
@@ -133,8 +138,6 @@ function App({ Component, pageProps }: AppProps) {
                         href="https://github.com/yume-chan/ya-webadb/issues/new"
                         target="_blank"
                     />
-
-                    <ToggleLogView />
                 </Stack>
 
                 <Stack grow horizontal verticalFill disableShrink styles={{ root: { minHeight: 0, overflow: 'hidden', lineHeight: '1.5' } }}>
@@ -156,10 +159,6 @@ function App({ Component, pageProps }: AppProps) {
                     <StackItem grow styles={{ root: { width: 0 } }}>
                         <Component {...pageProps} />
                     </StackItem>
-
-                    <NoSsr>
-                        <LogView className={classNames['right-column']} />
-                    </NoSsr>
                 </Stack>
             </Stack>
         </ErrorDialogProvider >

@@ -1,9 +1,11 @@
+// cspell: ignore libusb
+
 import { PromiseResolver } from '@yume-chan/async';
-import { AdbAuthenticationHandler, AdbDefaultAuthenticators, type AdbCredentialStore } from './auth.js';
+import { AdbAuthenticationProcessor, ADB_DEFAULT_AUTHENTICATORS, type AdbCredentialStore } from './auth.js';
 import { AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install, type AdbFrameBuffer } from './commands/index.js';
 import { AdbFeatures } from './features.js';
-import { AdbCommand, AdbPacket, calculateChecksum, type AdbPacketCore, type AdbPacketInit } from './packet.js';
-import { AdbPacketDispatcher, AdbSocket } from './socket/index.js';
+import { AdbCommand, calculateChecksum, type AdbPacketData, type AdbPacketInit } from './packet.js';
+import { AdbPacketDispatcher, type AdbSocket } from './socket/index.js';
 import { AbortController, DecodeUtf8Stream, GatherStringStream, WritableStream, type ReadableWritablePair } from "./stream/index.js";
 import { decodeUtf8, encodeUtf8 } from "./utils/index.js";
 
@@ -23,39 +25,23 @@ export class Adb {
      * and starts a new authentication process.
      */
     public static async authenticate(
-        connection: ReadableWritablePair<AdbPacketCore, AdbPacketCore>,
+        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
         credentialStore: AdbCredentialStore,
-        authenticators = AdbDefaultAuthenticators,
+        authenticators = ADB_DEFAULT_AUTHENTICATORS,
     ): Promise<Adb> {
+        // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
         let maxPayloadSize = 0x100000;
 
-        const features = [
-            'shell_v2',
-            'cmd',
-            AdbFeatures.StatV2,
-            'ls_v2',
-            'fixed_push_mkdir',
-            'apex',
-            'abb',
-            'fixed_push_symlink_timestamp',
-            'abb_exec',
-            'remount_shell',
-            'track_app',
-            'sendrecv_v2',
-            'sendrecv_v2_brotli',
-            'sendrecv_v2_lz4',
-            'sendrecv_v2_zstd',
-            'sendrecv_v2_dry_run_send',
-        ].join(',');
-
         const resolver = new PromiseResolver<string>();
-        const authHandler = new AdbAuthenticationHandler(authenticators, credentialStore);
+        const authProcessor = new AdbAuthenticationProcessor(authenticators, credentialStore);
 
+        // Here is similar to `AdbPacketDispatcher`,
+        // But the received packet types and send packet processing are different.
         const abortController = new AbortController();
         const pipe = connection.readable
             .pipeTo(new WritableStream({
-                async write(packet: AdbPacket) {
+                async write(packet) {
                     switch (packet.command) {
                         case AdbCommand.Connect:
                             version = Math.min(version, packet.arg0);
@@ -63,48 +49,73 @@ export class Adb {
                             resolver.resolve(decodeUtf8(packet.payload));
                             break;
                         case AdbCommand.Auth:
-                            const response = await authHandler.handle(packet);
+                            const response = await authProcessor.process(packet);
                             await sendPacket(response);
                             break;
-                        case AdbCommand.Close:
-                            // Last connection was interrupted
-                            // Ignore this packet, device will recover
-                            break;
                         default:
-                            throw new Error('Device not in correct state. Reconnect your device and try again');
+                            // Maybe the previous ADB session exited without reading all packets,
+                            // so they are still waiting in OS internal buffer.
+                            // Just ignore them.
+                            // Because a `Connect` packet will reset the device,
+                            // Eventually there will be `Connect` and `Auth` response packets.
+                            break;
                     }
                 }
             }), {
                 preventCancel: true,
                 signal: abortController.signal,
             })
-            .catch((e) => { resolver.reject(e); });
+            .catch((e) => {
+                resolver.reject(e);
+            });
 
         const writer = connection.writable.getWriter();
-        async function sendPacket(init: AdbPacketCore) {
+        async function sendPacket(init: AdbPacketData) {
             // Always send checksum in auth steps
-            // Because we don't know if the device will ignore it yet.
+            // Because we don't know if the device needs it or not.
             await writer.write(calculateChecksum(init));
         }
 
-        await sendPacket({
-            command: AdbCommand.Connect,
-            arg0: version,
-            arg1: maxPayloadSize,
-            // The terminating `;` is required in formal definition
-            // But ADB daemon (all versions) can still work without it
-            payload: encodeUtf8(`host::features=${features};`),
-        });
-
         try {
+            // https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/transport.cpp#1252
+            // There are more feature constants, but some of them are only used by ADB server, not devices.
+            const features = [
+                'shell_v2',
+                'cmd',
+                AdbFeatures.StatV2,
+                'ls_v2',
+                'fixed_push_mkdir',
+                'apex',
+                'abb',
+                'fixed_push_symlink_timestamp',
+                'abb_exec',
+                'remount_shell',
+                'track_app',
+                'sendrecv_v2',
+                'sendrecv_v2_brotli',
+                'sendrecv_v2_lz4',
+                'sendrecv_v2_zstd',
+                'sendrecv_v2_dry_run_send',
+            ].join(',');
+
+            await sendPacket({
+                command: AdbCommand.Connect,
+                arg0: version,
+                arg1: maxPayloadSize,
+                // The terminating `;` is required in formal definition
+                // But ADB daemon (all versions) can still work without it
+                payload: encodeUtf8(`host::features=${features};`),
+            });
+
             const banner = await resolver.promise;
 
-            // Stop piping before creating Adb object
-            // Because AdbPacketDispatcher will try to lock the streams when initializing
+            // Stop piping before creating `Adb` object
+            // Because `AdbPacketDispatcher` will lock the streams when initializing
             abortController.abort();
-            await pipe;
-
             writer.releaseLock();
+
+            // Wait until pipe stops (`ReadableStream` lock released)
+            await pipe;
 
             return new Adb(
                 connection,
@@ -112,9 +123,10 @@ export class Adb {
                 maxPayloadSize,
                 banner,
             );
-        } finally {
+        } catch (e) {
             abortController.abort();
             writer.releaseLock();
+            throw e;
         }
     }
 
@@ -143,22 +155,33 @@ export class Adb {
     public readonly tcpip: AdbTcpIpCommand;
 
     public constructor(
-        connection: ReadableWritablePair<AdbPacketCore, AdbPacketInit>,
+        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
         version: number,
         maxPayloadSize: number,
         banner: string,
     ) {
         this.parseBanner(banner);
-        this.packetDispatcher = new AdbPacketDispatcher(connection);
+
+        let calculateChecksum: boolean;
+        let appendNullToServiceString: boolean;
+        if (version >= VERSION_OMIT_CHECKSUM) {
+            calculateChecksum = false;
+            appendNullToServiceString = false;
+        } else {
+            calculateChecksum = true;
+            appendNullToServiceString = true;
+        }
+
+        this.packetDispatcher = new AdbPacketDispatcher(
+            connection,
+            {
+                calculateChecksum,
+                appendNullToServiceString,
+                maxPayloadSize,
+            }
+        );
 
         this._protocolVersion = version;
-        if (version >= VERSION_OMIT_CHECKSUM) {
-            this.packetDispatcher.calculateChecksum = false;
-            // Android prior to 9.0.0 uses char* to parse service string
-            // thus requires an extra null character
-            this.packetDispatcher.appendNullToServiceString = false;
-        }
-        this.packetDispatcher.maxPayloadSize = maxPayloadSize;
 
         this.subprocess = new AdbSubprocess(this);
         this.power = new AdbPower(this);
@@ -201,6 +224,19 @@ export class Adb {
         }
     }
 
+    public async createSocket(service: string): Promise<AdbSocket> {
+        return this.packetDispatcher.createSocket(service);
+    }
+
+    public async createSocketAndWait(service: string): Promise<string> {
+        const socket = await this.createSocket(service);
+        const gatherStream = new GatherStringStream();
+        await socket.readable
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeTo(gatherStream);
+        return gatherStream.result;
+    }
+
     public async getProp(key: string): Promise<string> {
         const stdout = await this.subprocess.spawnAndWaitLegacy(
             ['getprop', key]
@@ -226,19 +262,6 @@ export class Adb {
 
     public async framebuffer(): Promise<AdbFrameBuffer> {
         return framebuffer(this);
-    }
-
-    public async createSocket(service: string): Promise<AdbSocket> {
-        return this.packetDispatcher.createSocket(service);
-    }
-
-    public async createSocketAndWait(service: string): Promise<string> {
-        const socket = await this.createSocket(service);
-        const gatherStream = new GatherStringStream();
-        await socket.readable
-            .pipeThrough(new DecodeUtf8Stream())
-            .pipeTo(gatherStream);
-        return gatherStream.result;
     }
 
     public async dispose(): Promise<void> {

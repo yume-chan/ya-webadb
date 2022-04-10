@@ -1,10 +1,10 @@
 import { PromiseResolver } from "@yume-chan/async";
 import Struct, { placeholder, type StructValueType } from "@yume-chan/struct";
-import type { Adb } from "../../adb.js";
-import { AdbFeatures } from "../../features.js";
-import type { AdbSocket } from "../../socket/index.js";
-import { PushReadableStream, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter, type PushReadableStreamController } from "../../stream/index.js";
-import { encodeUtf8 } from "../../utils/index.js";
+import type { Adb } from "../../../adb.js";
+import { AdbFeatures } from "../../../features.js";
+import type { AdbSocket } from "../../../socket/index.js";
+import { PushReadableStream, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter, type PushReadableStreamController } from "../../../stream/index.js";
+import { encodeUtf8 } from "../../../utils/index.js";
 import type { AdbSubprocessProtocol } from "./types.js";
 
 export enum AdbShellProtocolId {
@@ -17,10 +17,11 @@ export enum AdbShellProtocolId {
 }
 
 // This packet format is used in both direction.
-const AdbShellProtocolPacket = new Struct({ littleEndian: true })
-    .uint8('id', placeholder<AdbShellProtocolId>())
-    .uint32('length')
-    .uint8Array('data', { lengthField: 'length' });
+const AdbShellProtocolPacket =
+    new Struct({ littleEndian: true })
+        .uint8('id', placeholder<AdbShellProtocolId>())
+        .uint32('length')
+        .uint8Array('data', { lengthField: 'length' });
 
 type AdbShellProtocolPacketInit = typeof AdbShellProtocolPacket['TInit'];
 
@@ -99,18 +100,18 @@ class MultiplexStream<T>{
  * * `exit` exit code: Yes
  * * `resize`: Yes
  */
-export class AdbShellSubprocessProtocol implements AdbSubprocessProtocol {
+export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     public static isSupported(adb: Adb) {
         return adb.features!.includes(AdbFeatures.ShellV2);
     }
 
     public static async pty(adb: Adb, command: string) {
         // TODO: AdbShellSubprocessProtocol: Support setting `XTERM` environment variable
-        return new AdbShellSubprocessProtocol(await adb.createSocket(`shell,v2,pty:${command}`));
+        return new AdbSubprocessShellProtocol(await adb.createSocket(`shell,v2,pty:${command}`));
     }
 
     public static async raw(adb: Adb, command: string) {
-        return new AdbShellSubprocessProtocol(await adb.createSocket(`shell,v2,raw:${command}`));
+        return new AdbSubprocessShellProtocol(await adb.createSocket(`shell,v2,raw:${command}`));
     }
 
     private readonly _socket: AdbSocket;
