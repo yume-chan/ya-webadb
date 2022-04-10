@@ -149,7 +149,7 @@ const TcpIp: NextPage = () => {
             <StackItem>
                 <MessageBar>
                     <Text>
-                        For Android Web Toolbox to wirelessly connect to your phone,
+                        For WebADB to wirelessly connect to your device,
                         <ExternalLink href="https://github.com/yume-chan/ya-webadb/discussions/245#discussioncomment-384030" spaceBefore spaceAfter>extra software</ExternalLink>
                         is required.
                     </Text>

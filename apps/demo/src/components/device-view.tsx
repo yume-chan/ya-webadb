@@ -99,12 +99,6 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
             <ResizeObserver
                 className={styles.outer}
                 ref={containerRef}
-                style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: 'black',
-                }}
                 onResize={setContainerSize}
             >
                 <div
