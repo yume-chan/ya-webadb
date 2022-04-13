@@ -1,12 +1,12 @@
 // cspell: ignore addrs
 
-import { CommandBar, ICommandBarItemProps, MessageBar, Stack, StackItem, Text, TextField, Toggle } from "@fluentui/react";
+import { ICommandBarItemProps, MessageBar, Stack, StackItem, Text, TextField, Toggle } from "@fluentui/react";
 import { autorun, makeAutoObservable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import { useCallback, useEffect } from "react";
-import { ExternalLink } from "../components";
+import { CommandBar, ExternalLink } from "../components";
 import { globalState } from "../state";
 import { asyncEffect, Icons, RouteStackProps } from "../utils";
 

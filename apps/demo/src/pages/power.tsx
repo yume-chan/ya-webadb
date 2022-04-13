@@ -1,15 +1,15 @@
 // cspell: ignore bootloader
 // cspell: ignore fastboot
 
-import { DefaultButton, Icon, MessageBar, MessageBarType, TooltipHost } from "@fluentui/react";
+import { DefaultButton, Icon, MessageBar, MessageBarType, Stack, TooltipHost } from "@fluentui/react";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import { globalState } from "../state";
-import { Icons } from "../utils";
+import { Icons, RouteStackProps } from "../utils";
 
 const Power: NextPage = () => {
     return (
-        <div style={{ padding: 20 }}>
+        <Stack {...RouteStackProps}>
             <div>
                 <DefaultButton text="Reboot" disabled={!globalState.device} onClick={() => globalState.device!.power.reboot()} />
             </div>
@@ -62,7 +62,7 @@ const Power: NextPage = () => {
                     <Icon style={{ verticalAlign: 'middle', marginLeft: 4, fontSize: 18 }} iconName={Icons.Info} />
                 </TooltipHost>
             </div>
-        </div>
+        </Stack>
     );
 };
 

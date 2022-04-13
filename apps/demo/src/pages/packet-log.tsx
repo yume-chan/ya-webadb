@@ -1,15 +1,15 @@
-import { mergeStyleSets, Stack, StackItem } from "@fluentui/react";
+import { ICommandBarItemProps, mergeStyleSets, Stack, StackItem } from "@fluentui/react";
 import { useMergedRefs } from "@fluentui/react-hooks";
 import { AdbCommand, decodeUtf8 } from "@yume-chan/adb";
-import { toJS } from "mobx";
+import { makeAutoObservable, toJS } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import { Children, createElement, CSSProperties, forwardRef, isValidElement, memo, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GridChildComponentProps, VariableSizeGrid, VariableSizeGridProps } from 'react-window';
-import { ResizeObserver, Size } from "../components";
+import { CommandBar, ResizeObserver, Size } from "../components";
 import { globalState, PacketLogItem } from "../state";
-import { RouteStackProps, useCallbackRef } from "../utils";
+import { Icons, RouteStackProps } from "../utils";
 
 const ADB_COMMAND_NAME = {
     [AdbCommand.Auth]: 'AUTH',
@@ -30,277 +30,98 @@ interface Column<T> {
 
 const LINE_HEIGHT = 32;
 
-interface GridProps extends Omit<VariableSizeGridProps<void>, 'innerElementType'> {
-    padding?: number | number[] | undefined;
-
+interface GridProps extends Omit<VariableSizeGridProps<void>, 'width' | 'height'> {
     stickyRowCount?: number | undefined;
     // stickyColumnCount?: number | undefined;
-
-    innerElementType?: never;
 }
 
 const Grid = forwardRef<VariableSizeGrid, GridProps>(
     function Grid({
-        padding: _padding,
-        rowCount: _rowCount,
-        rowHeight: _rowHeight,
-        columnCount: _columnCount,
-        columnWidth: _columnWidth,
-        children: _children,
+        rowCount,
+        rowHeight,
+        columnCount,
+        columnWidth,
+        children,
         ...props
     }, ref) {
         const styles = mergeStyleSets({
+            container: {
+                display: 'flex',
+                flexDirection: 'column',
+            },
+            scroller: {
+                flex: 1,
+                height: 0,
+                overflow: 'auto',
+            },
             stickyRows: {
-                position: 'sticky',
-                top: 0,
+                flexShrink: 0,
             },
         });
 
         const gridRef = useRef<VariableSizeGrid<void> | null>(null);
         const combinedRef = useMergedRefs(ref, gridRef);
 
-        const padding = useMemo(() => {
-            if (typeof _padding === 'undefined') {
-                return {
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0,
-                };
-            } else if (typeof _padding === 'number') {
-                return {
-                    top: _padding,
-                    right: _padding,
-                    bottom: _padding,
-                    left: _padding,
-                };
-            } else {
-                switch (_padding.length) {
-                    case 1:
-                        return {
-                            top: _padding[0],
-                            right: _padding[0],
-                            bottom: _padding[0],
-                            left: _padding[0],
-                        };
-                    case 2:
-                        return {
-                            top: _padding[0],
-                            right: _padding[1],
-                            bottom: _padding[0],
-                            left: _padding[1],
-                        };
-                    case 3:
-                        return {
-                            top: _padding[0],
-                            right: _padding[1],
-                            bottom: _padding[2],
-                            left: _padding[1],
-                        };
-                    default:
-                        return {
-                            top: _padding[0],
-                            right: _padding[1],
-                            bottom: _padding[2],
-                            left: _padding[3],
-                        };
-                }
-            }
-        }, [_padding]);
-
-        const rowCount = useMemo(() => {
-            let rowCount = _rowCount;
-            if (padding.top) {
-                rowCount += 1;
-            }
-            if (padding.bottom) {
-                rowCount += 1;
-            }
-            return rowCount;
-        }, [padding, _rowCount]);
-
-        useEffect(() => {
-            gridRef.current?.resetAfterRowIndex(1);
-        }, [padding.top]);
+        const [containerSize, setContainerSize] = useState<Size>({ width: 0, height: 0 });
 
         useEffect(() => {
             gridRef.current?.resetAfterRowIndex(rowCount - 2);
-        }, [padding.bottom, rowCount]);
-
-        const rowHeight = useCallback((index: number) => {
-            if (padding.top) {
-                if (index === 0) {
-                    return padding.top;
-                }
-                index -= 1;
-            }
-            if (padding.bottom) {
-                if (index === _rowCount) {
-                    return padding.bottom;
-                }
-            }
-            return _rowHeight(index);
-        }, [padding, _rowCount, _rowHeight]);
-
-        const columnCount = useMemo(() => {
-            let columnCount = _columnCount;
-            if (padding.left) {
-                columnCount += 1;
-            }
-            if (padding.right) {
-                columnCount += 1;
-            }
-            return columnCount;
-        }, [padding, _columnCount]);
-
-        const columnWidth = useCallback((index: number) => {
-            if (padding.left) {
-                if (index === 0) {
-                    return padding.left;
-                }
-                index -= 1;
-            }
-            if (padding.right) {
-                if (index === _columnCount) {
-                    return padding.right;
-                }
-            }
-            return _columnWidth(index);
-        }, [padding, _columnCount, _columnWidth]);
-
-        const GridItem = useMemo(() => memo(
-            function GridItem({ rowIndex, columnIndex, ...props }: GridChildComponentProps<void>) {
-                if (padding.top) {
-                    if (rowIndex === 0) {
-                        return null;
-                    }
-                    rowIndex -= 1;
-                }
-                if (padding.bottom) {
-                    if (rowIndex === _rowCount) {
-                        return null;
-                    }
-                }
-
-                if (padding.left) {
-                    if (columnIndex === 0) {
-                        return null;
-                    }
-                    columnIndex -= 1;
-                }
-                if (padding.right) {
-                    if (columnIndex === _columnCount) {
-                        return null;
-                    }
-                }
-
-                return createElement(
-                    _children,
-                    {
-                        rowIndex,
-                        columnIndex,
-                        ...props,
-                    }
-                );
-            }),
-            [
-                padding,
-                _rowCount,
-                _columnCount,
-                _children
-            ]
-        );
+        }, [rowCount]);
 
         const stickyRowCount = props.stickyRowCount ?? 0;
         // const stickyColumnCount = props.stickyColumnCount ?? 0;
 
-        const InnerElement = useMemo(() => memo(
-            forwardRef<HTMLDivElement, React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>>(
-                function InnerElement({ style, children, ...props }, ref) {
-                    if (!gridRef.current) {
-                        return (
-                            <div ref={ref} style={style} {...props} />
-                        );
-                    }
+        const stickyRowItems: ReactNode[] = [];
 
-                    const stickyRowItems: ReactNode[] = [];
+        if (gridRef.current) {
+            let rowStartIndex = 0;
+            const rowStopIndex = rowStartIndex + stickyRowCount;
 
-                    let rowStartIndex = 0;
-                    if (padding.top) {
-                        rowStartIndex = 1;
-                    }
-                    const rowStopIndex = rowStartIndex + stickyRowCount;
+            let [
+                columnStartIndex,
+                columnStopIndex,
+                // @ts-expect-error
+            ] = gridRef.current._getHorizontalRangeToRender();
 
-                    let [
-                        columnStartIndex,
-                        columnStopIndex,
-                        // @ts-expect-error
-                    ] = gridRef.current._getHorizontalRangeToRender();
-                    if (padding.left && columnStartIndex === 0) {
-                        columnStartIndex = 1;
-                    }
-                    if (padding.right && columnStopIndex === _columnCount + 1) {
-                        columnStopIndex -= 1;
-                    }
-
-                    for (let rowIndex = rowStartIndex; rowIndex < rowStopIndex; rowIndex += 1) {
-                        for (let columnIndex = columnStartIndex; columnIndex <= columnStopIndex; columnIndex += 1) {
-                            stickyRowItems.push(
-                                createElement(GridItem, {
-                                    rowIndex,
-                                    columnIndex,
-                                    data: undefined,
-                                    key: `${rowIndex}-${columnIndex}`,
-                                    // @ts-expect-error
-                                    style: gridRef.current._getItemStyle(rowIndex, columnIndex),
-                                })
-                            );
-                        }
-                    }
-
-                    // const stickyColumnItems: ReactNode[] = [];
-                    const normalItems: ReactNode[] = [];
-
-                    for (const child of Children.toArray(children)) {
-                        if (!isValidElement(child)) {
-                            continue;
-                        }
-
-                        let rowIndex = child.props.rowIndex as number;
-                        if (padding.top) {
-                            rowIndex -= 1;
-                        }
-                        if (rowIndex < stickyRowCount) {
-                            continue;
-                        }
-
-                        normalItems.push(child);
-                    }
-
-                    return (
-                        <div ref={ref} {...props} style={style}>
-                            {normalItems}
-                            <div className={styles.stickyRows}>
-                                {stickyRowItems}
-                            </div>
-                        </div>
+            for (let rowIndex = rowStartIndex; rowIndex < rowStopIndex; rowIndex += 1) {
+                for (let columnIndex = columnStartIndex; columnIndex <= columnStopIndex; columnIndex += 1) {
+                    stickyRowItems.push(
+                        createElement(children, {
+                            rowIndex,
+                            columnIndex,
+                            data: undefined,
+                            key: `${rowIndex}-${columnIndex}`,
+                            // @ts-expect-error
+                            style: gridRef.current._getItemStyle(rowIndex, columnIndex),
+                        })
                     );
                 }
-            )
-        ), [padding, _columnCount]);
+            }
+        }
 
         return (
-            <VariableSizeGrid
-                {...props}
-                ref={combinedRef}
-                rowCount={rowCount}
-                rowHeight={rowHeight}
-                columnCount={columnCount}
-                columnWidth={columnWidth}
-                innerElementType={InnerElement}
-            >
-                {GridItem}
-            </VariableSizeGrid>
+            <div>
+                <div className={styles.stickyRows}>
+                    {stickyRowItems}
+                </div>
+                <ResizeObserver
+                    className={styles.scroller}
+                    onResize={setContainerSize}
+                >
+                    <VariableSizeGrid
+                        {...props}
+                        ref={combinedRef}
+                        width={containerSize.width}
+                        height={containerSize.height}
+                        rowCount={rowCount}
+                        rowHeight={rowHeight}
+                        columnCount={columnCount}
+                        columnWidth={columnWidth}
+                    >
+                        {children}
+                    </VariableSizeGrid>
+                </ResizeObserver>
+            </div>
         );
     }
 );
@@ -309,14 +130,12 @@ interface DataGridProps<T> {
     data: T[];
     columns: Column<T>[];
     rowHeight: number;
-    padding?: number | number[] | undefined;
 }
 
 const DataGrid = <T extends unknown>({
     data,
     columns,
     rowHeight,
-    padding: _padding
 }: DataGridProps<T>) => {
     const styles = mergeStyleSets({
         container: {
@@ -330,58 +149,9 @@ const DataGrid = <T extends unknown>({
         },
     });
 
-    const padding = useMemo(() => {
-        if (typeof _padding === 'undefined') {
-            return {
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-            };
-        } else if (typeof _padding === 'number') {
-            return {
-                top: _padding,
-                right: _padding,
-                bottom: _padding,
-                left: _padding,
-            };
-        } else {
-            switch (_padding.length) {
-                case 1:
-                    return {
-                        top: _padding[0],
-                        right: _padding[0],
-                        bottom: _padding[0],
-                        left: _padding[0],
-                    };
-                case 2:
-                    return {
-                        top: _padding[0],
-                        right: _padding[1],
-                        bottom: _padding[0],
-                        left: _padding[1],
-                    };
-                case 3:
-                    return {
-                        top: _padding[0],
-                        right: _padding[1],
-                        bottom: _padding[2],
-                        left: _padding[1],
-                    };
-                default:
-                    return {
-                        top: _padding[0],
-                        right: _padding[1],
-                        bottom: _padding[2],
-                        left: _padding[3],
-                    };
-            }
-        }
-    }, [_padding]);
-
     const [containerSize, setContainerSize] = useState<Size>({ width: 0, height: 0 });
     const columnWidths = useMemo(() => {
-        let distributableWidth = containerSize.width - padding.left - padding.right;
+        let distributableWidth = containerSize.width;
         let distributedSlices = 0;
         for (const column of columns) {
             if (column.width) {
@@ -399,7 +169,7 @@ const DataGrid = <T extends unknown>({
                 return widthPerSlice * (column.flexGrow ?? 1);
             }
         });
-    }, [containerSize.width, padding, columns]);
+    }, [containerSize.width, columns]);
     const columnWidth = useCallback(
         (index: number) => columnWidths[index],
         [columnWidths]
@@ -442,9 +212,6 @@ const DataGrid = <T extends unknown>({
             <Grid
                 ref={gridRef}
                 className={styles.grid}
-                width={containerSize.width}
-                height={containerSize.height}
-                padding={_padding}
                 rowCount={data.length + 1}
                 rowHeight={() => rowHeight}
                 estimatedRowHeight={rowHeight}
@@ -485,6 +252,24 @@ function toText(data: Uint8Array) {
     }
     return result;
 }
+
+const state = new class {
+    get commandBarItems(): ICommandBarItemProps[] {
+        return [
+            {
+                key: 'clear',
+                disabled: !globalState.device,
+                iconProps: { iconName: Icons.Delete },
+                text: 'Clear',
+                onClick: () => globalState.clearLog(),
+            }
+        ];
+    }
+
+    constructor() {
+        makeAutoObservable(this);
+    }
+};
 
 const PacketLog: NextPage = () => {
     const styles = mergeStyleSets({
@@ -604,12 +389,13 @@ const PacketLog: NextPage = () => {
                 <title>Packet Log - Android Web Toolbox</title>
             </Head>
 
+            <CommandBar items={state.commandBarItems} />
+
             <StackItem grow shrink>
                 <DataGrid
                     data={toJS(globalState.logs)}
                     columns={columns}
                     rowHeight={LINE_HEIGHT}
-                    padding={8}
                 />
             </StackItem>
         </Stack>
