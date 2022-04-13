@@ -37,13 +37,13 @@ export const ResizeObserver = forwardRef<HTMLDivElement>('ResizeObserver')(({
 
     useLayoutEffect(() => {
         handleResize();
-    }, []);
+    }, [handleResize]);
 
     const handleIframeRef = useCallback((element: HTMLIFrameElement | null) => {
         if (element) {
             element.contentWindow!.addEventListener('resize', handleResize);
         }
-    }, []);
+    }, [handleResize]);
 
     const containerStyle: CSSProperties = useMemo(() => {
         if (!style) {

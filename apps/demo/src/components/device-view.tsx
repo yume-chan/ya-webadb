@@ -1,14 +1,14 @@
 import { mergeStyleSets, StackItem } from '@fluentui/react';
-import { ReactNode, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import { ResizeObserver, Size } from './resize-observer';
+import { ComponentType, ReactNode, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { forwardRef } from '../utils/with-display-name';
+import { ResizeObserver, Size } from './resize-observer';
 
 export interface DeviceViewProps {
     width: number;
 
     height: number;
 
-    bottomElement?: ReactNode;
+    BottomElement?: ComponentType<{}>;
 
     children?: ReactNode;
 }
@@ -20,7 +20,7 @@ export interface DeviceViewRef {
 export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
     width,
     height,
-    bottomElement,
+    BottomElement,
     children,
 }: DeviceViewProps, ref) => {
     const styles = mergeStyleSets({
@@ -123,7 +123,7 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
                     }}
                     onResize={setBottomSize}
                 >
-                    {(!!width && !!bottomElement) && bottomElement}
+                    {(!!width && !!BottomElement) && <BottomElement />}
                 </ResizeObserver>
             </ResizeObserver>
         </StackItem>

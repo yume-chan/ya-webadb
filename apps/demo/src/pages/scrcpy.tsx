@@ -792,35 +792,38 @@ const ConnectionDialog = observer(() => {
     );
 });
 
-const Scrcpy: NextPage = () => {
-    const bottomElement = useMemo(() =>
-        state.navigationBarVisible && (
-            <Stack verticalFill horizontalAlign="center" style={{ height: '40px', background: '#999' }}>
-                <Stack verticalFill horizontal style={{ width: '100%', maxWidth: 300 }} horizontalAlign="space-evenly" verticalAlign="center">
-                    <IconButton
-                        iconProps={{ iconName: Icons.Play }}
-                        style={{ transform: 'rotate(180deg)', color: 'white' }}
-                        onPointerDown={state.handleBackPointerDown}
-                        onPointerUp={state.handleBackPointerUp}
-                    />
-                    <IconButton
-                        iconProps={{ iconName: Icons.Circle }}
-                        style={{ color: 'white' }}
-                        onPointerDown={state.handleHomePointerDown}
-                        onPointerUp={state.handleHomePointerUp}
-                    />
-                    <IconButton
-                        iconProps={{ iconName: Icons.Stop }}
-                        style={{ color: 'white' }}
-                        onPointerDown={state.handleAppSwitchPointerDown}
-                        onPointerUp={state.handleAppSwitchPointerUp}
-                    />
-                </Stack>
-            </Stack>
-        ),
-        [state.navigationBarVisible]
-    );
+const NavigationBar = observer(() => {
+    if (!state.navigationBarVisible) {
+        return null;
+    }
 
+    return (
+        <Stack verticalFill horizontalAlign="center" style={{ height: '40px', background: '#999' }}>
+            <Stack verticalFill horizontal style={{ width: '100%', maxWidth: 300 }} horizontalAlign="space-evenly" verticalAlign="center">
+                <IconButton
+                    iconProps={{ iconName: Icons.Play }}
+                    style={{ transform: 'rotate(180deg)', color: 'white' }}
+                    onPointerDown={state.handleBackPointerDown}
+                    onPointerUp={state.handleBackPointerUp}
+                />
+                <IconButton
+                    iconProps={{ iconName: Icons.Circle }}
+                    style={{ color: 'white' }}
+                    onPointerDown={state.handleHomePointerDown}
+                    onPointerUp={state.handleHomePointerUp}
+                />
+                <IconButton
+                    iconProps={{ iconName: Icons.Stop }}
+                    style={{ color: 'white' }}
+                    onPointerDown={state.handleAppSwitchPointerDown}
+                    onPointerUp={state.handleAppSwitchPointerUp}
+                />
+            </Stack>
+        </Stack>
+    );
+});
+
+const Scrcpy: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
@@ -834,7 +837,7 @@ const Scrcpy: NextPage = () => {
                     ref={state.handleDeviceViewRef}
                     width={state.width}
                     height={state.height}
-                    bottomElement={bottomElement}
+                    BottomElement={NavigationBar}
                 >
                     <div
                         ref={state.handleRendererContainerRef}
