@@ -40,7 +40,7 @@ export const ResizeObserver = withDisplayName('ResizeObserver')(({
             iframeRef.contentWindow!.addEventListener('resize', handleResize);
             handleResize();
         }
-    }, [iframeRef]);
+    }, [iframeRef, handleResize]);
 
     return (
         <iframe ref={setIframeRef} className={classes.observer} />

@@ -67,7 +67,7 @@ const GridCellWrapper = withDisplayName('GridCellWrapper')(({
         width: columnWidth,
         height: rowHeight,
         transform: `translateX(${columnOffset}px)`,
-    }), [rowIndex, rowHeight, columnWidth, columnOffset]);
+    }), [rowHeight, columnWidth, columnOffset]);
 
     return (
         <CellComponent

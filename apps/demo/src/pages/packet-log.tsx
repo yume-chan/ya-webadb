@@ -215,13 +215,14 @@ const PacketLog: NextPage = () => {
                 {columns[columnIndex].title}
             </div>
         );
-    }), []);
+    }), [classes.header, columns]);
 
     const Row = useMemo(() => withDisplayName('Row')(({
         className,
         rowIndex,
         ...rest
     }: GridRowProps) => {
+        /* eslint-disable-next-line */
         const handleClick = useCallbackRef(() => {
             setSelectedRowIndex(rowIndex);
         });
