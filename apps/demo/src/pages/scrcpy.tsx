@@ -8,7 +8,7 @@ import { action, autorun, makeAutoObservable, observable, runInAction } from "mo
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { CSSProperties, ReactNode, useEffect, useState } from "react";
 import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { globalState } from "../state";
 import { CommonStackTokens, formatSpeed, Icons, ProgressStream, RouteStackProps } from "../utils";
@@ -792,13 +792,22 @@ const ConnectionDialog = observer(() => {
     );
 });
 
-const NavigationBar = observer(() => {
+const NavigationBar = observer(({
+    className,
+    style,
+    children
+}: {
+    className: string;
+    style: CSSProperties;
+    children: ReactNode;
+}) => {
     if (!state.navigationBarVisible) {
         return null;
     }
 
     return (
-        <Stack verticalFill horizontalAlign="center" style={{ height: '40px', background: '#999' }}>
+        <Stack className={className} verticalFill horizontalAlign="center" style={{ height: '40px', background: '#999', ...style }}>
+            {children}
             <Stack verticalFill horizontal style={{ width: '100%', maxWidth: 300 }} horizontalAlign="space-evenly" verticalAlign="center">
                 <IconButton
                     iconProps={{ iconName: Icons.Play }}

@@ -1,6 +1,6 @@
-import { createMergedRef } from '@fluentui/react';
-import { CSSProperties, HTMLAttributes, PropsWithChildren, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
-import { forwardRef, useCallbackRef } from '../utils';
+import { makeStyles } from "@griffel/react";
+import { useLayoutEffect, useState } from 'react';
+import { useCallbackRef, withDisplayName } from '../utils';
 
 export interface Size {
     width: number;
@@ -8,59 +8,41 @@ export interface Size {
     height: number;
 }
 
-export interface ResizeObserverProps extends HTMLAttributes<HTMLDivElement>, PropsWithChildren<{}> {
+export interface ResizeObserverProps {
     onResize: (size: Size) => void;
 }
 
-const iframeStyle: CSSProperties = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '100%',
-    visibility: 'hidden',
-};
+const useClasses = makeStyles({
+    observer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        visibility: 'hidden',
+    }
+});
 
-export const ResizeObserver = forwardRef<HTMLDivElement>('ResizeObserver')(({
+export const ResizeObserver = withDisplayName('ResizeObserver')(({
     onResize,
-    style,
-    children,
-    ...rest
-}: ResizeObserverProps, ref): JSX.Element | null => {
-    const containerRef = useRef<HTMLDivElement | null>(null);
-    const mergedRef = createMergedRef<HTMLDivElement | null>()(ref, containerRef);
+}: ResizeObserverProps): JSX.Element | null => {
+    const classes = useClasses();
+
+    const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
 
     const handleResize = useCallbackRef(() => {
-        const { width, height } = containerRef.current!.getBoundingClientRect();
+        const { width, height } = iframeRef!.getBoundingClientRect();
         onResize({ width, height });
     });
 
     useLayoutEffect(() => {
-        handleResize();
-    }, [handleResize]);
-
-    const handleIframeRef = useCallback((element: HTMLIFrameElement | null) => {
-        if (element) {
-            element.contentWindow!.addEventListener('resize', handleResize);
+        if (iframeRef) {
+            iframeRef.contentWindow!.addEventListener('resize', handleResize);
+            handleResize();
         }
-    }, [handleResize]);
-
-    const containerStyle: CSSProperties = useMemo(() => {
-        if (!style) {
-            return { position: 'relative' };
-        }
-
-        if (!style.position) {
-            return { ...style, position: 'relative' };
-        }
-
-        return style;
-    }, [style]);
+    }, [iframeRef]);
 
     return (
-        <div ref={mergedRef} style={containerStyle} {...rest}>
-            <iframe ref={handleIframeRef} style={iframeStyle} />
-            {children}
-        </div>
+        <iframe ref={setIframeRef} className={classes.observer} />
     );
 });

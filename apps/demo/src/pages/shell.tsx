@@ -3,7 +3,7 @@ import { reaction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import 'xterm/css/xterm.css';
 import { ResizeObserver } from '../components';
 import { globalState } from "../state";
@@ -14,11 +14,6 @@ if (typeof window !== 'undefined') {
     const { AdbTerminal } = await import('../components/terminal');
     terminal = new AdbTerminal();
 }
-
-const ResizeObserverStyle: CSSProperties = {
-    width: '100%',
-    height: '100%',
-};
 
 const UpIconProps = { iconName: Icons.ChevronUp };
 const DownIconProps = { iconName: Icons.ChevronDown };
@@ -111,10 +106,9 @@ const Shell: NextPage = (): JSX.Element | null => {
                 </Stack>
             </StackItem>
 
-            <StackItem grow styles={{ root: { minHeight: 0 } }}>
-                <ResizeObserver style={ResizeObserverStyle} onResize={handleResize}>
-                    <div ref={handleContainerRef} style={{ height: '100%' }} />
-                </ResizeObserver>
+            <StackItem grow styles={{ root: { position: 'relative', minHeight: 0 } }}>
+                <ResizeObserver onResize={handleResize} />
+                <div ref={handleContainerRef} style={{ height: '100%' }} />
             </StackItem>
         </Stack>
     );

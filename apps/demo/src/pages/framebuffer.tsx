@@ -114,7 +114,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Screen Capture - WebADB</title>
+                <title>Screen Capture - Android Web Toolbox</title>
             </Head>
 
             <CommandBar items={commandBarItems.get()} farItems={commandBarFarItems.get()} />

@@ -4,12 +4,17 @@
 import { DefaultButton, Icon, MessageBar, MessageBarType, Stack, TooltipHost } from "@fluentui/react";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
+import Head from "next/head";
 import { globalState } from "../state";
 import { Icons, RouteStackProps } from "../utils";
 
 const Power: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
+            <Head>
+                <title>Power Menu - Android Web Toolbox</title>
+            </Head>
+
             <div>
                 <DefaultButton text="Reboot" disabled={!globalState.device} onClick={() => globalState.device!.power.reboot()} />
             </div>

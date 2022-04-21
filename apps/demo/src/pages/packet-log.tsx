@@ -1,15 +1,14 @@
-import { ICommandBarItemProps, mergeStyleSets, Stack, StackItem } from "@fluentui/react";
-import { useMergedRefs } from "@fluentui/react-hooks";
+import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
+import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
 import { AdbCommand, decodeUtf8 } from "@yume-chan/adb";
-import { makeAutoObservable, toJS } from "mobx";
+import { makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { Children, createElement, CSSProperties, forwardRef, isValidElement, memo, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GridChildComponentProps, VariableSizeGrid, VariableSizeGridProps } from 'react-window';
-import { CommandBar, ResizeObserver, Size } from "../components";
+import { useMemo, useState } from "react";
+import { CommandBar, Grid, GridCellProps, GridColumn, GridHeaderProps, GridRowProps } from "../components";
 import { globalState, PacketLogItem } from "../state";
-import { Icons, RouteStackProps } from "../utils";
+import { Icons, RouteStackProps, useCallbackRef, withDisplayName } from "../utils";
 
 const ADB_COMMAND_NAME = {
     [AdbCommand.Auth]: 'AUTH',
@@ -20,210 +19,11 @@ const ADB_COMMAND_NAME = {
     [AdbCommand.Write]: 'WRTE',
 };
 
-interface Column<T> {
-    key: string;
+interface Column<T> extends GridColumn {
     title: string;
-    width?: number;
-    flexGrow?: number;
-    render: (value: T, style: CSSProperties) => JSX.Element;
 }
 
 const LINE_HEIGHT = 32;
-
-interface GridProps extends Omit<VariableSizeGridProps<void>, 'width' | 'height'> {
-    stickyRowCount?: number | undefined;
-    // stickyColumnCount?: number | undefined;
-}
-
-const Grid = forwardRef<VariableSizeGrid, GridProps>(
-    function Grid({
-        rowCount,
-        rowHeight,
-        columnCount,
-        columnWidth,
-        children,
-        ...props
-    }, ref) {
-        const styles = mergeStyleSets({
-            container: {
-                display: 'flex',
-                flexDirection: 'column',
-            },
-            scroller: {
-                flex: 1,
-                height: 0,
-                overflow: 'auto',
-            },
-            stickyRows: {
-                flexShrink: 0,
-            },
-        });
-
-        const gridRef = useRef<VariableSizeGrid<void> | null>(null);
-        const combinedRef = useMergedRefs(ref, gridRef);
-
-        const [containerSize, setContainerSize] = useState<Size>({ width: 0, height: 0 });
-
-        useEffect(() => {
-            gridRef.current?.resetAfterRowIndex(rowCount - 2);
-        }, [rowCount]);
-
-        const stickyRowCount = props.stickyRowCount ?? 0;
-        // const stickyColumnCount = props.stickyColumnCount ?? 0;
-
-        const stickyRowItems: ReactNode[] = [];
-
-        if (gridRef.current) {
-            let rowStartIndex = 0;
-            const rowStopIndex = rowStartIndex + stickyRowCount;
-
-            let [
-                columnStartIndex,
-                columnStopIndex,
-                // @ts-expect-error
-            ] = gridRef.current._getHorizontalRangeToRender();
-
-            for (let rowIndex = rowStartIndex; rowIndex < rowStopIndex; rowIndex += 1) {
-                for (let columnIndex = columnStartIndex; columnIndex <= columnStopIndex; columnIndex += 1) {
-                    stickyRowItems.push(
-                        createElement(children, {
-                            rowIndex,
-                            columnIndex,
-                            data: undefined,
-                            key: `${rowIndex}-${columnIndex}`,
-                            // @ts-expect-error
-                            style: gridRef.current._getItemStyle(rowIndex, columnIndex),
-                        })
-                    );
-                }
-            }
-        }
-
-        return (
-            <div>
-                <div className={styles.stickyRows}>
-                    {stickyRowItems}
-                </div>
-                <ResizeObserver
-                    className={styles.scroller}
-                    onResize={setContainerSize}
-                >
-                    <VariableSizeGrid
-                        {...props}
-                        ref={combinedRef}
-                        width={containerSize.width}
-                        height={containerSize.height}
-                        rowCount={rowCount}
-                        rowHeight={rowHeight}
-                        columnCount={columnCount}
-                        columnWidth={columnWidth}
-                    >
-                        {children}
-                    </VariableSizeGrid>
-                </ResizeObserver>
-            </div>
-        );
-    }
-);
-
-interface DataGridProps<T> {
-    data: T[];
-    columns: Column<T>[];
-    rowHeight: number;
-}
-
-const DataGrid = <T extends unknown>({
-    data,
-    columns,
-    rowHeight,
-}: DataGridProps<T>) => {
-    const styles = mergeStyleSets({
-        container: {
-            width: '100%',
-            height: '100%',
-        },
-        grid: {
-            position: 'absolute !important',
-            top: 0,
-            left: 0,
-        },
-    });
-
-    const [containerSize, setContainerSize] = useState<Size>({ width: 0, height: 0 });
-    const columnWidths = useMemo(() => {
-        let distributableWidth = containerSize.width;
-        let distributedSlices = 0;
-        for (const column of columns) {
-            if (column.width) {
-                distributableWidth -= column.width;
-            } else {
-                distributedSlices += column.flexGrow ?? 1;
-            }
-        }
-        const widthPerSlice = distributableWidth / distributedSlices;
-
-        return columns.map(column => {
-            if (column.width) {
-                return column.width;
-            } else {
-                return widthPerSlice * (column.flexGrow ?? 1);
-            }
-        });
-    }, [containerSize.width, columns]);
-    const columnWidth = useCallback(
-        (index: number) => columnWidths[index],
-        [columnWidths]
-    );
-
-    const gridRef = useRef<VariableSizeGrid | null>(null);
-    useEffect(() => {
-        gridRef.current?.resetAfterColumnIndex(
-            columns.findIndex(column => !column.width),
-            true
-        );
-    }, [columns, columnWidths]);
-
-    const DataGridItem = useMemo(() => memo(
-        function DataGridItem({
-            rowIndex,
-            columnIndex,
-            style,
-        }: GridChildComponentProps<any>) {
-            if (rowIndex === 0) {
-                return (
-                    <div
-                        key={columns[columnIndex].key}
-                        style={style}
-                    >
-                        {columns[columnIndex].title}
-                    </div>
-                );
-            }
-            return columns[columnIndex].render(data[rowIndex - 1], style);
-        }),
-        [columns, data]
-    );
-
-    return (
-        <ResizeObserver
-            className={styles.container}
-            onResize={setContainerSize}
-        >
-            <Grid
-                ref={gridRef}
-                className={styles.grid}
-                rowCount={data.length + 1}
-                rowHeight={() => rowHeight}
-                estimatedRowHeight={rowHeight}
-                columnCount={columns.length}
-                columnWidth={columnWidth}
-                stickyRowCount={1}
-            >
-                {DataGridItem}
-            </Grid>
-        </ResizeObserver>
-    );
-};
 
 const PRINTABLE_CHARACTERS: [number, number][] = [
     [33, 126],
@@ -271,44 +71,60 @@ const state = new class {
     }
 };
 
-const PacketLog: NextPage = () => {
-    const styles = mergeStyleSets({
-        header: {
-            position: 'sticky',
-            textAlign: 'center',
-            fontWeight: 'bold',
-            lineHeight: LINE_HEIGHT + 'px',
+const useClasses = makeStyles({
+    grid: {
+        height: '100%',
+    },
+    header: {
+        textAlign: 'center',
+        lineHeight: `${LINE_HEIGHT}px`,
+    },
+    row: {
+        '&:hover': {
+            backgroundColor: '#f3f2f1',
         },
-        code: {
-            fontFamily: 'monospace',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            lineHeight: LINE_HEIGHT + 'px',
-        }
-    });
+    },
+    selected: {
+        backgroundColor: '#edebe9',
+    },
+    code: {
+        fontFamily: 'monospace',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        lineHeight: LINE_HEIGHT + 'px',
+        cursor: 'default',
+        ...shorthands.overflow('hidden'),
+    },
+});
+
+const PacketLog: NextPage = () => {
+    const classes = useClasses();
 
     const columns: Column<PacketLogItem>[] = useMemo(() => [
         {
             key: 'direction',
             title: 'Direction',
             width: 100,
-            render(item, style) {
+            CellComponent: withDisplayName('Direction')(({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = globalState.logs[rowIndex];
+
                 return (
                     <div
-                        className={styles.code}
-                        style={style}
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
                     >
                         {item.direction}
                     </div>
                 );
-            },
+            }),
         },
         {
             key: 'command',
             title: 'Command',
             width: 100,
-            render(item, style) {
+            CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = globalState.logs[rowIndex];
+
                 if (!item.commandString) {
                     item.commandString =
                         ADB_COMMAND_NAME[item.command as AdbCommand] ??
@@ -317,71 +133,111 @@ const PacketLog: NextPage = () => {
 
                 return (
                     <div
-                        className={styles.code}
-                        style={style}
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
                     >
                         {item.commandString}
                     </div>
                 );
-            }
+            }),
         },
         {
             key: 'arg0',
             title: 'Arg0',
             width: 100,
-            render(item, style) {
+            CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = globalState.logs[rowIndex];
+
                 if (!item.arg0String) {
                     item.arg0String = item.arg0.toString(16).padStart(8, '0');
                 }
 
                 return (
                     <div
-                        className={styles.code}
-                        style={style}
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
                     >
                         {item.arg0String}
                     </div>
                 );
-            }
+            }),
         },
         {
             key: 'arg1',
             title: 'Arg1',
             width: 100,
-            render(item, style) {
+            CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = globalState.logs[rowIndex];
+
                 if (!item.arg1String) {
-                    item.arg1String = item.arg1.toString(16).padStart(8, '0');
+                    item.arg1String = item.arg0.toString(16).padStart(8, '0');
                 }
 
                 return (
                     <div
-                        className={styles.code}
-                        style={style}
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
                     >
                         {item.arg1String}
                     </div>
                 );
-            }
+            }),
         },
         {
             key: 'payload',
             title: 'Payload',
-            render(item, style) {
+            width: 200,
+            flexGrow: 1,
+            CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = globalState.logs[rowIndex];
+
                 if (!item.payloadString) {
-                    item.payloadString = toText(item.payload);
+                    item.payloadString = toText(item.payload.subarray(0, 100));
                 }
 
                 return (
                     <div
-                        className={styles.code}
-                        style={style}
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
                     >
                         {item.payloadString}
                     </div>
                 );
-            }
-        }
-    ], [styles.code]);
+            }),
+        },
+    ], [classes.code]);
+
+    const [selectedRowIndex, setSelectedRowIndex] = useState(-1);
+
+    const Header = useMemo(() => withDisplayName('Header')(({ className, columnIndex, ...rest }: GridHeaderProps) => {
+        return (
+            <div className={mergeClasses(className, classes.header)} {...rest}>
+                {columns[columnIndex].title}
+            </div>
+        );
+    }), []);
+
+    const Row = useMemo(() => withDisplayName('Row')(({
+        className,
+        rowIndex,
+        ...rest
+    }: GridRowProps) => {
+        const handleClick = useCallbackRef(() => {
+            setSelectedRowIndex(rowIndex);
+        });
+
+        return (
+            <div
+                className={mergeClasses(
+                    className,
+                    classes.row,
+                    selectedRowIndex === rowIndex && classes.selected
+                )}
+                onClick={handleClick}
+                {...rest}
+            />
+        );
+    }), [classes, selectedRowIndex]);
 
     return (
         <Stack {...RouteStackProps} tokens={{}}>
@@ -391,12 +247,23 @@ const PacketLog: NextPage = () => {
 
             <CommandBar items={state.commandBarItems} />
 
-            <StackItem grow shrink>
-                <DataGrid
-                    data={toJS(globalState.logs)}
-                    columns={columns}
+            <StackItem basis={0} grow>
+                <Grid
+                    className={classes.grid}
+                    rowCount={globalState.logs.length}
                     rowHeight={LINE_HEIGHT}
+                    columns={columns}
+                    HeaderComponent={Header}
+                    RowComponent={Row}
                 />
+            </StackItem>
+
+            <StackItem grow>
+                {selectedRowIndex !== -1 && (
+                    <div>
+
+                    </div>
+                )}
             </StackItem>
         </Stack>
     );

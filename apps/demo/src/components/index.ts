@@ -4,5 +4,6 @@ export * from './demo-mode-panel';
 export * from './device-view';
 export * from './error-dialog';
 export * from './external-link';
+export * from './grid';
 export * from './log-view';
 export * from './resize-observer';

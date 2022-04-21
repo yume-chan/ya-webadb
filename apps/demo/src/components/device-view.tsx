@@ -1,5 +1,5 @@
 import { mergeStyleSets, StackItem } from '@fluentui/react';
-import { ComponentType, ReactNode, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { ComponentType, CSSProperties, ReactNode, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { forwardRef } from '../utils/with-display-name';
 import { ResizeObserver, Size } from './resize-observer';
 
@@ -8,7 +8,7 @@ export interface DeviceViewProps {
 
     height: number;
 
-    BottomElement?: ComponentType<{}>;
+    BottomElement?: ComponentType<{ className: string, style: CSSProperties, children: ReactNode; }>;
 
     children?: ReactNode;
 }
@@ -95,12 +95,10 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
     }), []);
 
     return (
-        <StackItem grow>
-            <ResizeObserver
-                className={styles.outer}
-                ref={containerRef}
-                onResize={setContainerSize}
-            >
+        <StackItem grow styles={{ root: { position: 'relative' } }}>
+            <div ref={containerRef} className={styles.outer}>
+                <ResizeObserver onResize={setContainerSize} />
+
                 <div
                     className={styles.inner}
                     style={{
@@ -114,18 +112,19 @@ export const DeviceView = forwardRef<DeviceViewRef>('DeviceView')(({
                     {children}
                 </div>
 
-                <ResizeObserver
-                    className={styles.bottom}
-                    style={{
-                        top: childrenStyle.top + childrenStyle.height,
-                        left: childrenStyle.left,
-                        width: childrenStyle.width,
-                    }}
-                    onResize={setBottomSize}
-                >
-                    {(!!width && !!BottomElement) && <BottomElement />}
-                </ResizeObserver>
-            </ResizeObserver>
-        </StackItem>
+                {(!!width && !!BottomElement) && (
+                    <BottomElement
+                        className={styles.bottom}
+                        style={{
+                            top: childrenStyle.top + childrenStyle.height,
+                            left: childrenStyle.left,
+                            width: childrenStyle.width,
+                        }}
+                    >
+                        <ResizeObserver onResize={setBottomSize} />
+                    </BottomElement>
+                )}
+            </div>
+        </StackItem >
     );
 });

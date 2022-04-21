@@ -592,16 +592,16 @@ const FileManager: NextPage = (): JSX.Element | null => {
 
             <CommandBar items={state.menuItems} />
 
+            <Breadcrumb items={state.breadcrumbItems} />
+
             <StackItem grow styles={{
                 root: {
                     margin: '-8px -16px -16px -16px',
                     padding: '8px 16px 16px 16px',
-                    minHeight: 0,
+                    overflowY: 'auto',
                 }
             }}>
                 <MarqueeSelection selection={selection}>
-                    <Breadcrumb items={state.breadcrumbItems} />
-
                     <ShimmeredDetailsList
                         items={state.sortedList}
                         columns={state.columns}
@@ -627,20 +627,20 @@ const FileManager: NextPage = (): JSX.Element | null => {
                         </Overlay>
                     </Layer>
                 )}
-
-                <NoSsr>
-                    <ContextualMenu
-                        items={state.menuItems}
-                        hidden={!state.contextMenuTarget}
-                        directionalHint={DirectionalHint.bottomLeftEdge}
-                        target={state.contextMenuTarget}
-                        onDismiss={hideContextMenu}
-                        contextualMenuItemAs={props => <ContextualMenuItem {...props} hasIcons={false} />}
-                    />
-                </NoSsr>
-
-                <UploadDialog />
             </StackItem>
+
+            <NoSsr>
+                <ContextualMenu
+                    items={state.menuItems}
+                    hidden={!state.contextMenuTarget}
+                    directionalHint={DirectionalHint.bottomLeftEdge}
+                    target={state.contextMenuTarget}
+                    onDismiss={hideContextMenu}
+                    contextualMenuItemAs={props => <ContextualMenuItem {...props} hasIcons={false} />}
+                />
+            </NoSsr>
+
+            <UploadDialog />
         </Stack>
     );
 };
