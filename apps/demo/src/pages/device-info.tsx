@@ -9,11 +9,11 @@ import { globalState } from '../state';
 import { Icons, RouteStackProps } from "../utils";
 
 const KNOWN_FEATURES: Record<string, string> = {
-    'shell_v2': `"shell" command now supports separating child process's stdout and stderr, and returning exit code`,
+    [AdbFeatures.ShellV2]: `"shell" command now supports separating child process's stdout and stderr, and returning exit code`,
     // 'cmd': '',
     [AdbFeatures.StatV2]: '"sync" command now supports "STA2" (returns more information of a file than old "STAT") and "LST2" (returns information of a directory) sub command',
-    'ls_v2': '"sync" command now supports "LST2" sub command which returns more information when listing a directory than old "LIST"',
-    // 'fixed_push_mkdir': '',
+    [AdbFeatures.ListV2]: '"sync" command now supports "LST2" sub command which returns more information when listing a directory than old "LIST"',
+    [AdbFeatures.FixedPushMkdir]: 'Android 9 (P) introduced a bug that pushing files to a non-existing directory would fail. This feature indicates it\'s fixed (Android 10)',
     // 'apex': '',
     // 'abb': '',
     // 'fixed_push_symlink_timestamp': '',

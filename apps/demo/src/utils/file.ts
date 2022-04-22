@@ -1,5 +1,5 @@
 import getConfig from "next/config";
-import type { WritableStream } from '@yume-chan/adb';
+import { WrapReadableStream, WritableStream, type ReadableStream } from '@yume-chan/adb';
 
 interface PickFileOptions {
     accept?: string;
@@ -46,4 +46,11 @@ export function saveFile(fileName: string, size?: number | undefined) {
         fileName,
         { size }
     ) as unknown as WritableStream<Uint8Array>;
+}
+
+export function createFileStream(file: File) {
+    // `@types/node` typing messed things up
+    // https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/58079
+    // TODO: demo: remove the wrapper after switching to native stream implementation.
+    return new WrapReadableStream<Uint8Array>(file.stream() as unknown as ReadableStream<Uint8Array>);
 }

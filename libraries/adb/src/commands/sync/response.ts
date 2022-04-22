@@ -4,6 +4,7 @@ import { decodeUtf8 } from "../../utils/index.js";
 
 export enum AdbSyncResponseId {
     Entry = 'DENT',
+    Entry2 = 'DNT2',
     Lstat = 'STAT',
     Stat = 'STA2',
     Lstat2 = 'LST2',
@@ -43,7 +44,12 @@ export const AdbSyncFailResponse =
 export async function adbSyncReadResponse<T extends Record<string, StructLike<any>>>(
     stream: AdbBufferedStream,
     types: T,
-): Promise<StructValueType<T[keyof T]>> {
+    // When `T` is a union type, `T[keyof T]` only includes their common keys.
+    // For example, let `type T = { a: string, b: string } | { a: string, c: string}`,
+    // `keyof T` is `'a'`, not `'a' | 'b' | 'c'`.
+    // However, `T extends unknown ? keyof T : never` will distribute `T`,
+    // so returns all keys.
+): Promise<StructValueType<T extends unknown ? T[keyof T] : never>> {
     const id = decodeUtf8(await stream.read(4));
 
     if (id === AdbSyncResponseId.Fail) {
@@ -54,5 +60,5 @@ export async function adbSyncReadResponse<T extends Record<string, StructLike<an
         return types[id]!.deserialize(stream);
     }
 
-    throw new Error('Unexpected response id');
+    throw new Error(`Expected '${Object.keys(types).join(', ')}', but got '${id}'`);
 }

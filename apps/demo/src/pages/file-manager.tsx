@@ -2,7 +2,7 @@ import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, Detail
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from "@fluentui/react-file-type-icons";
 import { useConst } from '@fluentui/react-hooks';
 import { getIcon } from '@fluentui/style-utilities';
-import { AdbSyncEntryResponse, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, LinuxFileType, ReadableStream } from '@yume-chan/adb';
+import { AdbFeatures, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, LinuxFileType, type AdbSyncEntry } from '@yume-chan/adb';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -12,15 +12,15 @@ import path from 'path';
 import { useCallback, useEffect, useState } from 'react';
 import { CommandBar, NoSsr } from '../components';
 import { globalState } from '../state';
-import { asyncEffect, formatSize, formatSpeed, Icons, pickFile, ProgressStream, RouteStackProps, saveFile } from '../utils';
+import { asyncEffect, createFileStream, formatSize, formatSpeed, Icons, pickFile, ProgressStream, RouteStackProps, saveFile } from '../utils';
 
 initializeFileTypeIcons();
 
-interface ListItem extends AdbSyncEntryResponse {
+interface ListItem extends AdbSyncEntry {
     key: string;
 }
 
-function toListItem(item: AdbSyncEntryResponse): ListItem {
+function toListItem(item: AdbSyncEntry): ListItem {
     return { ...item, key: item.name! };
 }
 
@@ -139,7 +139,7 @@ class FileManagerState {
                                     const item = this.selectedItems[0];
                                     const itemPath = path.resolve(this.path, item.name);
                                     await sync.read(itemPath)
-                                        .pipeTo(saveFile(item.name, item.size));
+                                        .pipeTo(saveFile(item.name, Number(item.size)));
                                 } catch (e) {
                                     globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
                                 } finally {
@@ -226,7 +226,7 @@ class FileManagerState {
                 minWidth: ICON_SIZE,
                 maxWidth: ICON_SIZE,
                 isCollapsible: true,
-                onRender(item: AdbSyncEntryResponse) {
+                onRender(item: AdbSyncEntry) {
                     let iconName: string;
 
                     switch (item.type) {
@@ -254,7 +254,7 @@ class FileManagerState {
                 name: 'Name',
                 minWidth: 0,
                 isRowHeader: true,
-                onRender(item: AdbSyncEntryResponse) {
+                onRender(item: AdbSyncEntry) {
                     return (
                         <span className={classNames.name} data-selection-invoke>
                             {item.name}
@@ -267,7 +267,7 @@ class FileManagerState {
                 name: 'Permission',
                 minWidth: 0,
                 isCollapsible: true,
-                onRender(item: AdbSyncEntryResponse) {
+                onRender(item: AdbSyncEntry) {
                     return `${(item.mode >> 6 & 0b100).toString(8)}${(item.mode >> 3 & 0b100).toString(8)}${(item.mode & 0b100).toString(8)}`;
                 }
             },
@@ -276,9 +276,9 @@ class FileManagerState {
                 name: 'Size',
                 minWidth: 0,
                 isCollapsible: true,
-                onRender(item: AdbSyncEntryResponse) {
+                onRender(item: AdbSyncEntry) {
                     if (item.type === LinuxFileType.File) {
-                        return formatSize(item.size);
+                        return formatSize(Number(item.size));
                     }
                     return '';
                 }
@@ -288,11 +288,34 @@ class FileManagerState {
                 name: 'Last Modified Time',
                 minWidth: 150,
                 isCollapsible: true,
-                onRender(item: AdbSyncEntryResponse) {
-                    return new Date(item.mtime * 1000).toLocaleString();
+                onRender(item: AdbSyncEntry) {
+                    return new Date(Number(item.mtime) * 1000).toLocaleString();
                 },
             }
         ];
+
+        if (globalState.device?.features?.includes(AdbFeatures.ListV2)) {
+            list.push(
+                {
+                    key: 'ctime',
+                    name: 'Creation Time',
+                    minWidth: 150,
+                    isCollapsible: true,
+                    onRender(item: AdbSyncEntry) {
+                        return new Date(Number(item.ctime!) * 1000).toLocaleString();
+                    },
+                },
+                {
+                    key: 'atime',
+                    name: 'Last Access Time',
+                    minWidth: 150,
+                    isCollapsible: true,
+                    onRender(item: AdbSyncEntry) {
+                        return new Date(Number(item.atime!) * 1000).toLocaleString();
+                    },
+                },
+            );
+        }
 
         for (const item of list) {
             item.onColumnClick = (e, column) => {
@@ -368,7 +391,7 @@ class FileManagerState {
         const sync = await globalState.device.sync();
 
         const items: ListItem[] = [];
-        const linkItems: AdbSyncEntryResponse[] = [];
+        const linkItems: AdbSyncEntry[] = [];
         const intervalId = setInterval(() => {
             if (signal.aborted) {
                 return;
@@ -401,7 +424,7 @@ class FileManagerState {
 
                 if (!await sync.isDirectory(path.resolve(currentPath, entry.name!))) {
                     entry.mode = (LinuxFileType.File << 12) | entry.permission;
-                    entry.size = 0;
+                    entry.size = 0n;
                 }
 
                 items.push(toListItem(entry));
@@ -440,7 +463,7 @@ class FileManagerState {
             }), 1000);
 
             try {
-                await (file.stream() as unknown as ReadableStream<Uint8Array>)
+                await createFileStream(file)
                     .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
                     .pipeThrough(new ProgressStream(action((uploaded) => {
                         this.uploadedSize = uploaded;
@@ -535,7 +558,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
         setPreviewUrl(undefined);
     }, []);
 
-    const handleItemInvoked = useCallback((item: AdbSyncEntryResponse) => {
+    const handleItemInvoked = useCallback((item: AdbSyncEntry) => {
         switch (item.type) {
             case LinuxFileType.Link:
             case LinuxFileType.Directory:
@@ -564,7 +587,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
     }));
 
     const showContextMenu = useCallback((
-        item?: AdbSyncEntryResponse,
+        item?: AdbSyncEntry,
         index?: number,
         e?: Event
     ) => {

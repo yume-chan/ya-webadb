@@ -4,10 +4,27 @@ import { AdbFeatures } from '../../features.js';
 import type { AdbSocket } from '../../socket/index.js';
 import { AdbBufferedStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '../../stream/index.js';
 import { AutoResetEvent } from '../../utils/index.js';
-import { AdbSyncEntryResponse, adbSyncOpenDir } from './list.js';
+import { escapeArg } from "../index.js";
+import { adbSyncOpenDir, type AdbSyncEntry } from './list.js';
 import { adbSyncPull } from './pull.js';
 import { adbSyncPush } from './push.js';
 import { adbSyncLstat, adbSyncStat } from './stat.js';
+
+/**
+ * A simplified `dirname` function that only handles absolute unix paths.
+ * @param path an absolute unix path
+ * @returns the directory name of the input path
+ */
+export function dirname(path: string): string {
+    const end = path.lastIndexOf('/');
+    if (end === -1) {
+        throw new Error(`Invalid path`);
+    }
+    if (end === 0) {
+        return '/';
+    }
+    return path.substring(0, end);
+}
 
 export class AdbSync extends AutoDisposable {
     protected adb: Adb;
@@ -20,6 +37,19 @@ export class AdbSync extends AutoDisposable {
 
     public get supportsStat(): boolean {
         return this.adb.features!.includes(AdbFeatures.StatV2);
+    }
+
+    public get supportsList2(): boolean {
+        return this.adb.features!.includes(AdbFeatures.ListV2);
+    }
+
+    public get fixedPushMkdir(): boolean {
+        return this.adb.features!.includes(AdbFeatures.FixedPushMkdir);
+    }
+
+    public get needPushMkdirWorkaround(): boolean {
+        // https://android.googlesource.com/platform/packages/modules/adb/+/91768a57b7138166e0a3d11f79cd55909dda7014/client/file_sync_client.cpp#1361
+        return this.adb.features!.includes(AdbFeatures.ShellV2) && !this.fixedPushMkdir;
     }
 
     public constructor(adb: Adb, socket: AdbSocket) {
@@ -65,18 +95,18 @@ export class AdbSync extends AutoDisposable {
 
     public async *opendir(
         path: string
-    ): AsyncGenerator<AdbSyncEntryResponse, void, void> {
+    ): AsyncGenerator<AdbSyncEntry, void, void> {
         await this.sendLock.wait();
 
         try {
-            yield* adbSyncOpenDir(this.stream, this.writer, path);
+            yield* adbSyncOpenDir(this.stream, this.writer, path, this.supportsList2);
         } finally {
             this.sendLock.notify();
         }
     }
 
     public async readdir(path: string) {
-        const results: AdbSyncEntryResponse[] = [];
+        const results: AdbSyncEntry[] = [];
         for await (const entry of this.opendir(path)) {
             results.push(entry);
         }
@@ -117,6 +147,18 @@ export class AdbSync extends AutoDisposable {
         return new WrapWritableStream({
             start: async () => {
                 await this.sendLock.wait();
+
+                if (this.needPushMkdirWorkaround) {
+                    // It may fail if the path is already existed.
+                    // Ignore the result.
+                    // TODO: test this
+                    await this.adb.subprocess.spawnAndWait([
+                        'mkdir',
+                        '-p',
+                        escapeArg(dirname(filename)),
+                    ]);
+                }
+
                 return adbSyncPush(
                     this.stream,
                     this.writer,

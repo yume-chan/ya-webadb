@@ -5,7 +5,7 @@ import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import { globalState } from "../state";
-import { pickFile, ProgressStream, RouteStackProps } from "../utils";
+import { createFileStream, pickFile, ProgressStream, RouteStackProps } from "../utils";
 
 enum Stage {
     Uploading,
@@ -56,7 +56,7 @@ class InstallPageState {
             };
         });
 
-        await (file.stream() as unknown as ReadableStream<Uint8Array>)
+        await createFileStream(file)
             .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
             .pipeThrough(new ProgressStream(action((uploaded) => {
                 if (uploaded !== file.size) {

@@ -78,12 +78,12 @@ export class Adb {
 
         try {
             // https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/transport.cpp#1252
-            // There are more feature constants, but some of them are only used by ADB server, not devices.
+            // There are some other feature constants, but some of them are only used by ADB server, not devices.
             const features = [
-                'shell_v2',
-                'cmd',
+                AdbFeatures.ShellV2,
+                AdbFeatures.Cmd,
                 AdbFeatures.StatV2,
-                'ls_v2',
+                AdbFeatures.ListV2,
                 'fixed_push_mkdir',
                 'apex',
                 'abb',

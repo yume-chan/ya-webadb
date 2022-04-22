@@ -10,6 +10,19 @@ export enum LinuxFileType {
     Link = 0o12,
 }
 
+export interface AdbSyncStat {
+    mode: number;
+    size: bigint;
+    mtime: bigint;
+    get type(): LinuxFileType;
+    get permission(): number;
+
+    uid?: number;
+    gid?: number;
+    atime?: bigint;
+    ctime?: bigint;
+}
+
 export const AdbSyncLstatResponse =
     new Struct({ littleEndian: true })
         .int32('mode')
@@ -32,6 +45,7 @@ export const AdbSyncLstatResponse =
 export type AdbSyncLstatResponse = typeof AdbSyncLstatResponse['TDeserializeResult'];
 
 export enum AdbSyncStatErrorCode {
+    SUCCESS = 0,
     EACCES = 13,
     EEXIST = 17,
     EFAULT = 14,
@@ -80,15 +94,15 @@ export const AdbSyncStatResponse =
 
 export type AdbSyncStatResponse = typeof AdbSyncStatResponse['TDeserializeResult'];
 
-const StatResponseType = {
+const STAT_RESPONSE_TYPES = {
     [AdbSyncResponseId.Stat]: AdbSyncStatResponse,
 };
 
-const LstatResponseType = {
+const LSTAT_RESPONSE_TYPES = {
     [AdbSyncResponseId.Lstat]: AdbSyncLstatResponse,
 };
 
-const Lstat2ResponseType = {
+const LSTAT_V2_RESPONSE_TYPES = {
     [AdbSyncResponseId.Lstat2]: AdbSyncStatResponse,
 };
 
@@ -97,20 +111,33 @@ export async function adbSyncLstat(
     writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
     v2: boolean,
-): Promise<AdbSyncLstatResponse | AdbSyncStatResponse> {
+): Promise<AdbSyncStat> {
     let requestId: AdbSyncRequestId.Lstat | AdbSyncRequestId.Lstat2;
-    let responseType: typeof LstatResponseType | typeof Lstat2ResponseType;
+    let responseType: typeof LSTAT_RESPONSE_TYPES | typeof LSTAT_V2_RESPONSE_TYPES;
 
     if (v2) {
         requestId = AdbSyncRequestId.Lstat2;
-        responseType = Lstat2ResponseType;
+        responseType = LSTAT_V2_RESPONSE_TYPES;
     } else {
         requestId = AdbSyncRequestId.Lstat;
-        responseType = LstatResponseType;
+        responseType = LSTAT_RESPONSE_TYPES;
     }
 
     await adbSyncWriteRequest(writer, requestId, path);
-    return adbSyncReadResponse(stream, responseType);
+    const response = await adbSyncReadResponse(stream, responseType);
+
+    switch (response.id) {
+        case AdbSyncResponseId.Lstat:
+            return {
+                mode: response.mode,
+                size: BigInt(response.size),
+                mtime: BigInt(response.mtime),
+                get type() { return response.type; },
+                get permission() { return response.permission; },
+            };
+        default:
+            return response;
+    }
 }
 
 export async function adbSyncStat(
@@ -119,5 +146,5 @@ export async function adbSyncStat(
     path: string,
 ): Promise<AdbSyncStatResponse> {
     await adbSyncWriteRequest(writer, AdbSyncRequestId.Stat, path);
-    return await adbSyncReadResponse(stream, StatResponseType);
+    return await adbSyncReadResponse(stream, STAT_RESPONSE_TYPES);
 }

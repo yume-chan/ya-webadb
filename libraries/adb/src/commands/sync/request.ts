@@ -4,6 +4,7 @@ import { encodeUtf8 } from "../../utils/index.js";
 
 export enum AdbSyncRequestId {
     List = 'LIST',
+    List2 = 'LIS2',
     Send = 'SEND',
     Lstat = 'STAT',
     Stat = 'STA2',
