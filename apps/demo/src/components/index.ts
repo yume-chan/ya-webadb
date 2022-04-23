@@ -5,5 +5,6 @@ export * from './device-view';
 export * from './error-dialog';
 export * from './external-link';
 export * from './grid';
+export * from './hex-viewer';
 export * from './log-view';
 export * from './resize-observer';

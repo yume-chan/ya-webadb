@@ -1,12 +1,12 @@
 import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
 import { AdbCommand, decodeUtf8 } from "@yume-chan/adb";
-import { makeAutoObservable } from "mobx";
+import { autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { useMemo, useState } from "react";
-import { CommandBar, Grid, GridCellProps, GridColumn, GridHeaderProps, GridRowProps } from "../components";
+import { useMemo } from "react";
+import { CommandBar, Grid, GridCellProps, GridColumn, GridHeaderProps, GridRowProps, HexViewer, toText } from "../components";
 import { globalState, PacketLogItem } from "../state";
 import { Icons, RouteStackProps, useCallbackRef, withDisplayName } from "../utils";
 
@@ -19,39 +19,11 @@ const ADB_COMMAND_NAME = {
     [AdbCommand.Write]: 'WRTE',
 };
 
-interface Column<T> extends GridColumn {
+interface Column extends GridColumn {
     title: string;
 }
 
 const LINE_HEIGHT = 32;
-
-const PRINTABLE_CHARACTERS: [number, number][] = [
-    [33, 126],
-    [161, 172],
-    [174, 255],
-];
-
-function isPrintableCharacter(code: number) {
-    return PRINTABLE_CHARACTERS.some(
-        ([start, end]) =>
-            code >= start &&
-            code <= end
-    );
-}
-
-function toCharacter(code: number) {
-    if (isPrintableCharacter(code))
-        return String.fromCharCode(code);
-    return '.';
-}
-
-function toText(data: Uint8Array) {
-    let result = '';
-    for (const code of data) {
-        result += toCharacter(code);
-    }
-    return result;
-}
 
 const state = new class {
     get commandBarItems(): ICommandBarItemProps[] {
@@ -66,12 +38,28 @@ const state = new class {
         ];
     }
 
+    selectedPacket: PacketLogItem | undefined = undefined;
+
     constructor() {
-        makeAutoObservable(this);
+        makeAutoObservable(
+            this,
+            {
+                selectedPacket: observable.ref,
+            }
+        );
+
+        autorun(() => {
+            if (globalState.logs.length === 0) {
+                this.selectedPacket = undefined;
+            }
+        });
     }
 };
 
 const useClasses = makeStyles({
+    grow: {
+        height: 0,
+    },
     grid: {
         height: '100%',
     },
@@ -95,12 +83,16 @@ const useClasses = makeStyles({
         cursor: 'default',
         ...shorthands.overflow('hidden'),
     },
+    hexViewer: {
+        ...shorthands.padding('12px'),
+        ...shorthands.borderTop('1px', 'solid', 'rgb(243, 242, 241)'),
+    },
 });
 
 const PacketLog: NextPage = () => {
     const classes = useClasses();
 
-    const columns: Column<PacketLogItem>[] = useMemo(() => [
+    const columns: Column[] = useMemo(() => [
         {
             key: 'direction',
             title: 'Direction',
@@ -207,38 +199,48 @@ const PacketLog: NextPage = () => {
         },
     ], [classes.code]);
 
-    const [selectedRowIndex, setSelectedRowIndex] = useState(-1);
+    const Header = useMemo(
+        () => withDisplayName('Header')(({
+            className,
+            columnIndex,
+            ...rest
+        }: GridHeaderProps) => {
+            return (
+                <div className={mergeClasses(className, classes.header)} {...rest}>
+                    {columns[columnIndex].title}
+                </div>
+            );
+        }),
+        [classes.header, columns]
+    );
 
-    const Header = useMemo(() => withDisplayName('Header')(({ className, columnIndex, ...rest }: GridHeaderProps) => {
-        return (
-            <div className={mergeClasses(className, classes.header)} {...rest}>
-                {columns[columnIndex].title}
-            </div>
-        );
-    }), [classes.header, columns]);
+    const Row = useMemo(
+        () => observer(function Row({
+            className,
+            rowIndex,
+            ...rest
+        }: GridRowProps) {
+            /* eslint-disable-next-line */
+            const handleClick = useCallbackRef(() => {
+                runInAction(() => {
+                    state.selectedPacket = globalState.logs[rowIndex];
+                });
+            });
 
-    const Row = useMemo(() => withDisplayName('Row')(({
-        className,
-        rowIndex,
-        ...rest
-    }: GridRowProps) => {
-        /* eslint-disable-next-line */
-        const handleClick = useCallbackRef(() => {
-            setSelectedRowIndex(rowIndex);
-        });
-
-        return (
-            <div
-                className={mergeClasses(
-                    className,
-                    classes.row,
-                    selectedRowIndex === rowIndex && classes.selected
-                )}
-                onClick={handleClick}
-                {...rest}
-            />
-        );
-    }), [classes, selectedRowIndex]);
+            return (
+                <div
+                    className={mergeClasses(
+                        className,
+                        classes.row,
+                        state.selectedPacket === globalState.logs[rowIndex] && classes.selected
+                    )}
+                    onClick={handleClick}
+                    {...rest}
+                />
+            );
+        }),
+        [classes]
+    );
 
     return (
         <Stack {...RouteStackProps} tokens={{}}>
@@ -248,7 +250,7 @@ const PacketLog: NextPage = () => {
 
             <CommandBar items={state.commandBarItems} />
 
-            <StackItem basis={0} grow>
+            <StackItem className={classes.grow} grow>
                 <Grid
                     className={classes.grid}
                     rowCount={globalState.logs.length}
@@ -259,13 +261,11 @@ const PacketLog: NextPage = () => {
                 />
             </StackItem>
 
-            <StackItem grow>
-                {selectedRowIndex !== -1 && (
-                    <div>
-
-                    </div>
-                )}
-            </StackItem>
+            {state.selectedPacket && state.selectedPacket.payload.length > 0 && (
+                <StackItem className={classes.grow} grow>
+                    <HexViewer className={classes.hexViewer} data={state.selectedPacket.payload} />
+                </StackItem>
+            )}
         </Stack>
     );
 };
