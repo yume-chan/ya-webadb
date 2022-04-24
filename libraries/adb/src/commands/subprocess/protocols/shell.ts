@@ -3,7 +3,7 @@ import Struct, { placeholder, type StructValueType } from "@yume-chan/struct";
 import type { Adb } from "../../../adb.js";
 import { AdbFeatures } from "../../../features.js";
 import type { AdbSocket } from "../../../socket/index.js";
-import { PushReadableStream, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter, type PushReadableStreamController } from "../../../stream/index.js";
+import { pipeFrom, PushReadableStream, ReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, WritableStreamDefaultWriter, type PushReadableStreamController } from "../../../stream/index.js";
 import { encodeUtf8 } from "../../../utils/index.js";
 import type { AdbSubprocessProtocol } from "./types.js";
 
@@ -144,7 +144,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                 transform: (chunk, controller) => {
                     if (chunk.id === AdbShellProtocolId.Exit) {
                         this._exit.resolve(new Uint8Array(chunk.data)[0]!);
-                        // We can let `StdoutTransformStream` to process `AdbShellProtocolId.Exit`,
+                        // We can let `StdoutDeserializeStream` to process `AdbShellProtocolId.Exit`,
                         // but since we need this `TransformStream` to capture the exit code anyway,
                         // terminating child streams here is killing two birds with one stone.
                         controller.terminate();
@@ -164,9 +164,10 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
             .pipeThrough(new StructSerializeStream(AdbShellProtocolPacket))
             .pipeTo(socket.writable);
 
-        const { readable, writable } = new StdinSerializeStream();
-        this._stdin = writable;
-        readable.pipeTo(multiplexer.createWriteable());
+        this._stdin = pipeFrom(
+            multiplexer.createWriteable(),
+            new StdinSerializeStream()
+        );
 
         this._socketWriter = multiplexer.createWriteable().getWriter();
     }

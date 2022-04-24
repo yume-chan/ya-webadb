@@ -35,6 +35,7 @@
     },
     "dependencies": {
         "@yume-chan/adb": "^0.0.12",
+        "@yume-chan/struct": "^0.0.12",
         "tslib": "^2.3.1"
     }
 }

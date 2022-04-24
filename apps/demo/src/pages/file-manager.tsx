@@ -140,8 +140,8 @@ class FileManagerState {
                                     const itemPath = path.resolve(this.path, item.name);
                                     await sync.read(itemPath)
                                         .pipeTo(saveFile(item.name, Number(item.size)));
-                                } catch (e) {
-                                    globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
+                                } catch (e: any) {
+                                    globalState.showErrorDialog(e);
                                 } finally {
                                     sync.dispose();
                                 }
@@ -169,8 +169,8 @@ class FileManagerState {
                                         return;
                                     }
                                 }
-                            } catch (e) {
-                                globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
+                            } catch (e: any) {
+                                globalState.showErrorDialog(e);
                             } finally {
                                 this.loadFiles();
                             }
@@ -481,8 +481,8 @@ class FileManagerState {
             } finally {
                 clearInterval(intervalId);
             }
-        } catch (e) {
-            globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
+        } catch (e: any) {
+            globalState.showErrorDialog(e);
         } finally {
             sync.dispose();
             this.loadFiles();

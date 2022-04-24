@@ -54,7 +54,7 @@ export function placeholder<T>(): T {
 
 // Node.js 8.3 ships `TextEncoder` and `TextDecoder` in `util` module.
 // But using top level await to load them requires Node.js 14.1.
-// So there is no point to do that. Let's just assume they exists in global.
+// So there is no point to do that. Let's just assume they exist in global.
 
 // @ts-expect-error
 const Utf8Encoder = new TextEncoder();
@@ -65,6 +65,6 @@ export function encodeUtf8(input: string): Uint8Array {
     return Utf8Encoder.encode(input);
 }
 
-export function decodeUtf8(buffer: Uint8Array): string {
+export function decodeUtf8(buffer: ArrayBufferView | ArrayBuffer): string {
     return Utf8Decoder.decode(buffer);
 }

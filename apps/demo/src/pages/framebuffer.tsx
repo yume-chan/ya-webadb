@@ -45,8 +45,8 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
         try {
             const framebuffer = await globalState.device.framebuffer();
             state.setImage(framebuffer);
-        } catch (e) {
-            globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
+        } catch (e: any) {
+            globalState.showErrorDialog(e);
         }
     }, []);
 

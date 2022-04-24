@@ -34,9 +34,13 @@ export class GlobalState {
         this.device = device;
     }
 
-    showErrorDialog(message: string) {
+    showErrorDialog(message: Error | string) {
         this.errorDialogVisible = true;
-        this.errorDialogMessage = message;
+        if (message instanceof Error) {
+            this.errorDialogMessage = message.stack!;
+        } else {
+            this.errorDialogMessage = message;
+        }
     }
 
     hideErrorDialog() {

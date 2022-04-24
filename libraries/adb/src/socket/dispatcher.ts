@@ -45,9 +45,6 @@ export class AdbPacketDispatcher extends AutoDisposable {
     private readonly incomingSocketEvent = this.addDisposable(new EventEmitter<AdbIncomingSocketEventArgs>());
     public get onIncomingSocket() { return this.incomingSocketEvent.event; }
 
-    private readonly errorEvent = this.addDisposable(new EventEmitter<Error>());
-    public get onError() { return this.errorEvent.event; }
-
     private _abortController = new AbortController();
 
     public constructor(
@@ -83,8 +80,6 @@ export class AdbPacketDispatcher extends AutoDisposable {
                                 return;
                         }
                     } catch (e) {
-                        this.errorEvent.fire(e as Error);
-
                         // Throw error here will stop the pipe
                         // But won't close `readable` because of `preventCancel: true`
                         throw e;
@@ -96,8 +91,8 @@ export class AdbPacketDispatcher extends AutoDisposable {
             })
             .then(() => {
                 this.dispose();
-            }, () => {
-                // TODO: AdbPacketDispatcher: reject `_disconnected` when pipe errored?
+            }, (e) => {
+                this._disconnected.reject(e);
                 this.dispose();
             });
 

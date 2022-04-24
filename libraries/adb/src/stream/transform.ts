@@ -475,8 +475,8 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 waterMarkLow?.resolve();
             },
             cancel: async (reason) => {
-                waterMarkLow?.reject(reason);
                 canceled.abort();
+                waterMarkLow?.reject(reason);
             },
         }, strategy);
     }

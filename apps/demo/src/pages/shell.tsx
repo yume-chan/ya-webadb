@@ -51,8 +51,8 @@ const Shell: NextPage = (): JSX.Element | null => {
                     connectingRef.current = true;
                     const socket = await globalState.device.subprocess.shell();
                     terminal.socket = socket;
-                } catch (e) {
-                    globalState.showErrorDialog(e instanceof Error ? e.message : `${e}`);
+                } catch (e: any) {
+                    globalState.showErrorDialog(e);
                 } finally {
                     connectingRef.current = false;
                 }

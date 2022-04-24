@@ -162,6 +162,9 @@ function _Connect(): JSX.Element | null {
                     device = await Adb.authenticate({ readable, writable }, CredentialStore, undefined);
                     device.disconnected.then(() => {
                         globalState.setDevice(undefined, undefined);
+                    }, (e) => {
+                        globalState.showErrorDialog(e);
+                        globalState.setDevice(undefined, undefined);
                     });
                     globalState.setDevice(selectedBackend, device);
                 } catch (e) {
@@ -170,7 +173,7 @@ function _Connect(): JSX.Element | null {
                 }
             }
         } catch (e: any) {
-            globalState.showErrorDialog(e.message);
+            globalState.showErrorDialog(e);
         } finally {
             setConnecting(false);
         }
@@ -180,7 +183,7 @@ function _Connect(): JSX.Element | null {
             await globalState.device!.dispose();
             globalState.setDevice(undefined, undefined);
         } catch (e: any) {
-            globalState.showErrorDialog(e.message);
+            globalState.showErrorDialog(e);
         }
     }, []);
 

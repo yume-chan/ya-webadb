@@ -151,7 +151,7 @@ export class AdbSync extends AutoDisposable {
                 if (this.needPushMkdirWorkaround) {
                     // It may fail if the path is already existed.
                     // Ignore the result.
-                    // TODO: test this
+                    // TODO: sync: test this
                     await this.adb.subprocess.spawnAndWait([
                         'mkdir',
                         '-p',

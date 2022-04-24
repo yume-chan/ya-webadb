@@ -519,7 +519,7 @@ class ScrcpyPageState {
                 this.running = true;
             });
         } catch (e: any) {
-            globalState.showErrorDialog(e.message);
+            globalState.showErrorDialog(e);
         } finally {
             runInAction(() => {
                 this.connecting = false;

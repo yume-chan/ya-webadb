@@ -18,9 +18,10 @@ TypeScript implementation of Android Debug Bridge (ADB) protocol.
     - [AdbAuthenticator](#adbauthenticator)
     - [`authenticate`](#authenticate)
 - [Stream multiplex](#stream-multiplex)
-  - [Backend](#backend-1)
 - [Commands](#commands)
-  - [childProcess](#childprocess)
+  - [subprocess](#subprocess)
+    - [raw mode](#raw-mode)
+    - [pty mode](#pty-mode)
   - [usb](#usb)
   - [tcpip](#tcpip)
   - [sync](#sync)
@@ -48,10 +49,9 @@ Each backend may have different requirements.
 |                                 | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js             |
 | ------------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------------------- |
 | `@yume-chan/struct`<sup>1</sup> | 67     | 79   | 68      | No                | 14     | 8.3<sup>2</sup>, 11 |
-| [Streams][MDN_Streams]          | 67     | 79   | No      | No                | 14.1   | 16.5                |
 | *Overall*                       | 67     | 79   | No      | No                | 14.1   | 16.5                |
 
-<sup>1</sup> `uint64` and `string` used.
+<sup>1</sup> `uint64` and `string` are used.
 
 <sup>2</sup> `TextEncoder` and `TextDecoder` are only available in `util` module. Need to be assigned to `globalThis`.
 
@@ -60,8 +60,6 @@ Each backend may have different requirements.
 |                 | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js |
 | --------------- | ------ | ---- | ------- | ----------------- | ------ | ------- |
 | Top-level await | 89     | 89   | 89      | No                | 15     | 14.8    |
-
-[MDN_Streams]: https://developer.mozilla.org/en-US/docs/Web/API/Streams_API
 
 ## Connection
 
@@ -79,7 +77,7 @@ connect(): ValueOrPromise<ReadableWritablePair<AdbPacketCore, AdbPacketInit>>
 
 Connect to a device and create a pair of `AdbPacket` streams.
 
-The backend is responsible for serializing and deserializing the packets, because it's extreme slow for WebUSB backend (`@yume-chan/adb-backend-webusb`) to read packets with unknown size.
+The backend, instead of the core library, is responsible for serializing and deserializing the packets. Because it's extreme slow for WebUSB backend (`@yume-chan/adb-backend-webusb`) to read packets with unknown size.
 
 ## Authentication
 
@@ -133,7 +131,7 @@ static async authenticate(
 
 Call this method to authenticate the connection and create an `Adb` instance.
 
-It's possible to call `authenticate` multiple times on a single connection, every time the device receives a `CNXN` packet, it resets its internal state, and starts a new authentication process.
+If an authentication process failed, it's possible to call `authenticate` again on the same connection (`AdbPacket` stream pair). Every time the device receives a `CNXN` packet, it resets all internal state, and starts a new authentication process.
 
 ## Stream multiplex
 
@@ -144,27 +142,36 @@ ADB commands are all based on streams. Multiple streams can send and receive at 
 3. Client and server read/write on the stream.
 4. Client/server sends a `CLSE` to close the stream.
 
-The `Backend` is responsible for reading and writing data from underlying source.
-
-### Backend
-
 ## Commands
 
-### childProcess
+### subprocess
 
-Spawns child process on server. ADB has two shell modes:
+ADB has two subprocess invocation modes and two data protocols (4 combinations).
 
-|                             | Legacy mode                 | Shell Protocol               |
+#### raw mode
+
+In raw mode, Shell protocol transfers `stdout` and `stderr` separately. It also supports returning exit code.
+
+|                             | Legacy protocol             | Shell Protocol               |
 | --------------------------- | --------------------------- | ---------------------------- |
 | Feature flag                | -                           | `shell_v2`                   |
 | Implementation              | `AdbNoneSubprocessProtocol` | `AdbShellSubprocessProtocol` |
 | Splitting stdout and stderr | No                          | Yes                          |
 | Returning exit code         | No                          | Yes                          |
+
+Use `spawn` method to create a subprocess in raw mode.
+
+#### pty mode
+
+In PTY mode, the subprocess has a pseudo-terminal, so it can send special control sequences like clear screen and set cursor position. The two protocols both send data in `stdout`, but Shell Protocol also supports resizing the terminal from client.
+
+|                             | Legacy protocol             | Shell Protocol               |
+| --------------------------- | --------------------------- | ---------------------------- |
+| Feature flag                | -                           | `shell_v2`                   |
+| Implementation              | `AdbNoneSubprocessProtocol` | `AdbShellSubprocessProtocol` |
 | Resizing window             | No                          | Yes                          |
 
-The `Adb#childProcess#shell` and `Adb#childProcess#spawn` methods accepts a list of implementations, and will use the first supported one.
-
-For simple command invocation, usually the `AdbNoneSubprocessProtocol` is enough.
+Use `shell` method to create a subprocess in PTY mode.
 
 ### usb
 

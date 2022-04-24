@@ -1,17 +1,6 @@
 // cspell: ignore RSASSA
 
-import { calculateBase64EncodedLength, calculatePublicKey, calculatePublicKeyLength, decodeBase64, encodeBase64, type AdbCredentialStore } from "@yume-chan/adb";
-
-const Utf8Encoder = new TextEncoder();
-const Utf8Decoder = new TextDecoder();
-
-export function encodeUtf8(input: string): Uint8Array {
-    return Utf8Encoder.encode(input);
-}
-
-export function decodeUtf8(array: Uint8Array): string {
-    return Utf8Decoder.decode(array);
-}
+import { calculateBase64EncodedLength, calculatePublicKey, calculatePublicKeyLength, decodeBase64, decodeUtf8, encodeBase64, type AdbCredentialStore } from "@yume-chan/adb";
 
 export default class AdbWebCredentialStore implements AdbCredentialStore {
     public readonly localStorageKey: string;
