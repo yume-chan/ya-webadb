@@ -1,14 +1,14 @@
 lockfileVersion: 5.3
 
 specifiers:
-  '@docusaurus/core': ^2.0.0-beta.0
-  '@docusaurus/preset-classic': ^2.0.0-beta.0
+  '@docusaurus/core': ^2.0.0-beta.18
+  '@docusaurus/preset-classic': ^2.0.0-beta.18
   '@fluentui/react': ^8.63.0
   '@fluentui/react-file-type-icons': ^8.6.6
   '@fluentui/react-hooks': ^8.5.3
-  '@fluentui/react-icons': ^2.0.164-rc.2
+  '@fluentui/react-icons': ^2.0.166-rc.3
   '@fluentui/style-utilities': ^8.6.5
-  '@griffel/react': ^1.0.2
+  '@griffel/react': ^1.0.3
   '@mdx-js/loader': ^1.6.22
   '@mdx-js/react': ^1.6.21
   '@next/mdx': ^11.1.2
@@ -25,7 +25,7 @@ specifiers:
   '@rush-temp/struct': file:./projects/struct.tgz
   '@rush-temp/ts-package-builder': file:./projects/ts-package-builder.tgz
   '@rush-temp/unofficial-adb-book': file:./projects/unofficial-adb-book.tgz
-  '@svgr/webpack': ^5.5.0
+  '@svgr/webpack': ^6.2.1
   '@types/bluebird': ^3.5.36
   '@types/dom-webcodecs': ^0.1.3
   '@types/jest': ^27.4.1
@@ -43,12 +43,12 @@ specifiers:
   gh-release-fetch: ^2.0.4
   jest: ^27.5.1
   json5: ^2.2.0
-  mini-svg-data-uri: ~1.3.3
+  mini-svg-data-uri: ^1.3.3
   mobx: ^6.5.0
   mobx-react-lite: ^3.3.0
   next: 12.1.3
-  node-fetch: ~2.6.1
-  plantuml-encoder: ~1.4.0
+  node-fetch: ^2.6.1
+  plantuml-encoder: ^1.4.0
   react: ^17.0.2
   react-dom: ^17.0.2
   streamsaver: ^2.0.5
@@ -70,7 +70,7 @@ dependencies:
   '@fluentui/react': 8.66.2_12a6012245369fd5be825566be975ff0
   '@fluentui/react-file-type-icons': 8.6.7_b094b78811fc8d2f00a90f13d0251fb6
   '@fluentui/react-hooks': 8.5.4_b094b78811fc8d2f00a90f13d0251fb6
-  '@fluentui/react-icons': 2.0.164-rc.2_7bdce834019acf24ac150899d223ca8e
+  '@fluentui/react-icons': 2.0.166-rc.3_7bdce834019acf24ac150899d223ca8e
   '@fluentui/style-utilities': 8.6.6_b094b78811fc8d2f00a90f13d0251fb6
   '@griffel/react': 1.0.3_react@17.0.2
   '@mdx-js/loader': 1.6.22_react@17.0.2
@@ -89,7 +89,7 @@ dependencies:
   '@rush-temp/struct': file:projects/struct.tgz
   '@rush-temp/ts-package-builder': file:projects/ts-package-builder.tgz
   '@rush-temp/unofficial-adb-book': file:projects/unofficial-adb-book.tgz_814045a8852c08eeea7e09b05a06dede
-  '@svgr/webpack': 5.5.0
+  '@svgr/webpack': 6.2.1
   '@types/bluebird': 3.5.36
   '@types/dom-webcodecs': 0.1.4
   '@types/jest': 27.4.1
@@ -2391,8 +2391,8 @@ packages:
       tslib: 2.3.1
     dev: false
 
-  /@fluentui/react-icons/2.0.164-rc.2_7bdce834019acf24ac150899d223ca8e:
-    resolution: {integrity: sha512-wLzk1IosvhtQBYPEcqheIxoiBCVRFanhSON1/HlS5aIPiyH5hKqSBWOpMLy5jFIgDZeAsfRm6PdhB9idtYTQSw==}
+  /@fluentui/react-icons/2.0.166-rc.3_7bdce834019acf24ac150899d223ca8e:
+    resolution: {integrity: sha512-mhTti5DcCvG/UxRD+/P5Qjdo/QDOE57eRcRBVooOpfO2N1Q+9sE44NYczOeOHpV2AufNqomX0QYf5iPYZ1lEtg==}
     peerDependencies:
       '@griffel/react': ^1.0.0
       react: '>=16.8.0 <18.0.0'
@@ -3014,11 +3014,6 @@ packages:
       webpack-sources: 1.4.3
     dev: false
 
-  /@svgr/babel-plugin-add-jsx-attribute/5.4.0:
-    resolution: {integrity: sha512-ZFf2gs/8/6B8PnSofI0inYXr2SDNTDScPXhN7k5EqD4aZ3gi6u+rbmZHVB8IM3wDyx8ntKACZbtXSm7oZGRqVg==}
-    engines: {node: '>=10'}
-    dev: false
-
   /@svgr/babel-plugin-add-jsx-attribute/6.0.0_@babel+core@7.17.9:
     resolution: {integrity: sha512-MdPdhdWLtQsjd29Wa4pABdhWbaRMACdM1h31BY+c6FghTZqNGT7pEYdBoaGeKtdTOBC/XNFQaKVj+r/Ei2ryWA==}
     engines: {node: '>=10'}
@@ -3026,11 +3021,6 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.9
-    dev: false
-
-  /@svgr/babel-plugin-remove-jsx-attribute/5.4.0:
-    resolution: {integrity: sha512-yaS4o2PgUtwLFGTKbsiAy6D0o3ugcUhWK0Z45umJ66EPWunAz9fuFw2gJuje6wqQvQWOTJvIahUwndOXb7QCPg==}
-    engines: {node: '>=10'}
     dev: false
 
   /@svgr/babel-plugin-remove-jsx-attribute/6.0.0_@babel+core@7.17.9:
@@ -3042,11 +3032,6 @@ packages:
       '@babel/core': 7.17.9
     dev: false
 
-  /@svgr/babel-plugin-remove-jsx-empty-expression/5.0.1:
-    resolution: {integrity: sha512-LA72+88A11ND/yFIMzyuLRSMJ+tRKeYKeQ+mR3DcAZ5I4h5CPWN9AHyUzJbWSYp/u2u0xhmgOe0+E41+GjEueA==}
-    engines: {node: '>=10'}
-    dev: false
-
   /@svgr/babel-plugin-remove-jsx-empty-expression/6.0.0_@babel+core@7.17.9:
     resolution: {integrity: sha512-Ccj42ApsePD451AZJJf1QzTD1B/BOU392URJTeXFxSK709i0KUsGtbwyiqsKu7vsYxpTM0IA5clAKDyf9RCZyA==}
     engines: {node: '>=10'}
@@ -3054,11 +3039,6 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.9
-    dev: false
-
-  /@svgr/babel-plugin-replace-jsx-attribute-value/5.0.1:
-    resolution: {integrity: sha512-PoiE6ZD2Eiy5mK+fjHqwGOS+IXX0wq/YDtNyIgOrc6ejFnxN4b13pRpiIPbtPwHEc+NT2KCjteAcq33/F1Y9KQ==}
-    engines: {node: '>=10'}
     dev: false
 
   /@svgr/babel-plugin-replace-jsx-attribute-value/6.0.0_@babel+core@7.17.9:
@@ -3070,11 +3050,6 @@ packages:
       '@babel/core': 7.17.9
     dev: false
 
-  /@svgr/babel-plugin-svg-dynamic-title/5.4.0:
-    resolution: {integrity: sha512-zSOZH8PdZOpuG1ZVx/cLVePB2ibo3WPpqo7gFIjLV9a0QsuQAzJiwwqmuEdTaW2pegyBE17Uu15mOgOcgabQZg==}
-    engines: {node: '>=10'}
-    dev: false
-
   /@svgr/babel-plugin-svg-dynamic-title/6.0.0_@babel+core@7.17.9:
     resolution: {integrity: sha512-F7YXNLfGze+xv0KMQxrl2vkNbI9kzT9oDK55/kUuymh1ACyXkMV+VZWX1zEhSTfEKh7VkHVZGmVtHg8eTZ6PRg==}
     engines: {node: '>=10'}
@@ -3082,11 +3057,6 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.9
-    dev: false
-
-  /@svgr/babel-plugin-svg-em-dimensions/5.4.0:
-    resolution: {integrity: sha512-cPzDbDA5oT/sPXDCUYoVXEmm3VIoAWAPT6mSPTJNbQaBNUuEKVKyGH93oDY4e42PYHRW67N5alJx/eEol20abw==}
-    engines: {node: '>=10'}
     dev: false
 
   /@svgr/babel-plugin-svg-em-dimensions/6.0.0_@babel+core@7.17.9:
@@ -3098,11 +3068,6 @@ packages:
       '@babel/core': 7.17.9
     dev: false
 
-  /@svgr/babel-plugin-transform-react-native-svg/5.4.0:
-    resolution: {integrity: sha512-3eYP/SaopZ41GHwXma7Rmxcv9uRslRDTY1estspeB1w1ueZWd/tPlMfEOoccYpEMZU3jD4OU7YitnXcF5hLW2Q==}
-    engines: {node: '>=10'}
-    dev: false
-
   /@svgr/babel-plugin-transform-react-native-svg/6.0.0_@babel+core@7.17.9:
     resolution: {integrity: sha512-VaphyHZ+xIKv5v0K0HCzyfAaLhPGJXSk2HkpYfXIOKb7DjLBv0soHDxNv6X0vr2titsxE7klb++u7iOf7TSrFQ==}
     engines: {node: '>=10'}
@@ -3112,11 +3077,6 @@ packages:
       '@babel/core': 7.17.9
     dev: false
 
-  /@svgr/babel-plugin-transform-svg-component/5.5.0:
-    resolution: {integrity: sha512-q4jSH1UUvbrsOtlo/tKcgSeiCHRSBdXoIoqX1pgcKK/aU3JD27wmMKwGtpB8qRYUYoyXvfGxUVKchLuR5pB3rQ==}
-    engines: {node: '>=10'}
-    dev: false
-
   /@svgr/babel-plugin-transform-svg-component/6.2.0_@babel+core@7.17.9:
     resolution: {integrity: sha512-bhYIpsORb++wpsp91fymbFkf09Z/YEKR0DnFjxvN+8JHeCUD2unnh18jIMKnDJTWtvpTaGYPXELVe4OOzFI0xg==}
     engines: {node: '>=12'}
@@ -3124,20 +3084,6 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.9
-    dev: false
-
-  /@svgr/babel-preset/5.5.0:
-    resolution: {integrity: sha512-4FiXBjvQ+z2j7yASeGPEi8VD/5rrGQk4Xrq3EdJmoZgz/tpqChpo5hgXDvmEauwtvOc52q8ghhZK4Oy7qph4ig==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@svgr/babel-plugin-add-jsx-attribute': 5.4.0
-      '@svgr/babel-plugin-remove-jsx-attribute': 5.4.0
-      '@svgr/babel-plugin-remove-jsx-empty-expression': 5.0.1
-      '@svgr/babel-plugin-replace-jsx-attribute-value': 5.0.1
-      '@svgr/babel-plugin-svg-dynamic-title': 5.4.0
-      '@svgr/babel-plugin-svg-em-dimensions': 5.4.0
-      '@svgr/babel-plugin-transform-react-native-svg': 5.4.0
-      '@svgr/babel-plugin-transform-svg-component': 5.5.0
     dev: false
 
   /@svgr/babel-preset/6.2.0_@babel+core@7.17.9:
@@ -3157,17 +3103,6 @@ packages:
       '@svgr/babel-plugin-transform-svg-component': 6.2.0_@babel+core@7.17.9
     dev: false
 
-  /@svgr/core/5.5.0:
-    resolution: {integrity: sha512-q52VOcsJPvV3jO1wkPtzTuKlvX7Y3xIcWRpCMtBF3MrteZJtBfQw/+u0B1BHy5ColpQc1/YVTrPEtSYIMNZlrQ==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@svgr/plugin-jsx': 5.5.0
-      camelcase: 6.3.0
-      cosmiconfig: 7.0.1
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
   /@svgr/core/6.2.1:
     resolution: {integrity: sha512-NWufjGI2WUyrg46mKuySfviEJ6IxHUOm/8a3Ph38VCWSp+83HBraCQrpEM3F3dB6LBs5x8OElS8h3C0oOJaJAA==}
     engines: {node: '>=10'}
@@ -3179,31 +3114,12 @@ packages:
       - supports-color
     dev: false
 
-  /@svgr/hast-util-to-babel-ast/5.5.0:
-    resolution: {integrity: sha512-cAaR/CAiZRB8GP32N+1jocovUtvlj0+e65TB50/6Lcime+EA49m/8l+P2ko+XPJ4dw3xaPS3jOL4F2X4KWxoeQ==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@babel/types': 7.17.0
-    dev: false
-
   /@svgr/hast-util-to-babel-ast/6.2.1:
     resolution: {integrity: sha512-pt7MMkQFDlWJVy9ULJ1h+hZBDGFfSCwlBNW1HkLnVi7jUhyEXUaGYWi1x6bM2IXuAR9l265khBT4Av4lPmaNLQ==}
     engines: {node: '>=10'}
     dependencies:
       '@babel/types': 7.17.0
       entities: 3.0.1
-    dev: false
-
-  /@svgr/plugin-jsx/5.5.0:
-    resolution: {integrity: sha512-V/wVh33j12hGh05IDg8GpIUXbjAPnTdPTKuP4VNLggnwaHMPNQNae2pRnyTAILWCQdz5GyMqtO488g7CKM8CBA==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@babel/core': 7.17.9
-      '@svgr/babel-preset': 5.5.0
-      '@svgr/hast-util-to-babel-ast': 5.5.0
-      svg-parser: 2.0.4
-    transitivePeerDependencies:
-      - supports-color
     dev: false
 
   /@svgr/plugin-jsx/6.2.1_@svgr+core@6.2.1:
@@ -3221,15 +3137,6 @@ packages:
       - supports-color
     dev: false
 
-  /@svgr/plugin-svgo/5.5.0:
-    resolution: {integrity: sha512-r5swKk46GuQl4RrVejVwpeeJaydoxkdwkM1mBKOgJLBUJPGaLci6ylg/IjhrRsREKDkr4kbMWdgOtbXEh0fyLQ==}
-    engines: {node: '>=10'}
-    dependencies:
-      cosmiconfig: 7.0.1
-      deepmerge: 4.2.2
-      svgo: 1.3.2
-    dev: false
-
   /@svgr/plugin-svgo/6.2.0_@svgr+core@6.2.1:
     resolution: {integrity: sha512-oDdMQONKOJEbuKwuy4Np6VdV6qoaLLvoY86hjvQEgU82Vx1MSWRyYms6Sl0f+NtqxLI/rDVufATbP/ev996k3Q==}
     engines: {node: '>=10'}
@@ -3240,22 +3147,6 @@ packages:
       cosmiconfig: 7.0.1
       deepmerge: 4.2.2
       svgo: 2.8.0
-    dev: false
-
-  /@svgr/webpack/5.5.0:
-    resolution: {integrity: sha512-DOBOK255wfQxguUta2INKkzPj6AIS6iafZYiYmHn6W3pHlycSRRlvWKCfLDG10fXfLWqE3DJHgRUOyJYmARa7g==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@babel/core': 7.17.9
-      '@babel/plugin-transform-react-constant-elements': 7.17.6_@babel+core@7.17.9
-      '@babel/preset-env': 7.16.11_@babel+core@7.17.9
-      '@babel/preset-react': 7.16.7_@babel+core@7.17.9
-      '@svgr/core': 5.5.0
-      '@svgr/plugin-jsx': 5.5.0
-      '@svgr/plugin-svgo': 5.5.0
-      loader-utils: 2.0.2
-    transitivePeerDependencies:
-      - supports-color
     dev: false
 
   /@svgr/webpack/6.2.1:
@@ -3501,10 +3392,6 @@ packages:
 
   /@types/prop-types/15.7.5:
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
-    dev: false
-
-  /@types/q/1.5.5:
-    resolution: {integrity: sha512-L28j2FcJfSZOnL1WBjDYp2vUHCeIFlyYI/53EwD/rKUBQ7MtUUfbQWiyKJGpcnv4/WgrhWsFKrcPstcAt/J0tQ==}
     dev: false
 
   /@types/qs/6.9.7:
@@ -4767,15 +4654,6 @@ packages:
     engines: {iojs: '>= 1.0.0', node: '>= 0.12.0'}
     dev: false
 
-  /coa/2.0.2:
-    resolution: {integrity: sha512-q5/jG+YQnSy4nRTV4F7lPepBJZ8qBNJJDBuJdoejDyLXgmL7IEo+Le2JDZudFTFt7mrCqIRaSjws4ygRCTCAXA==}
-    engines: {node: '>= 4.0'}
-    dependencies:
-      '@types/q': 1.5.5
-      chalk: 2.4.2
-      q: 1.5.1
-    dev: false
-
   /collapse-white-space/1.0.6:
     resolution: {integrity: sha512-jEovNnrhMuqyCcjfEJA56v0Xq8SkIoPKDyaHahwo3POf4qcSXqMYuwNcOTzp74vTsR9Tn08z4MxWqAhcekogkQ==}
     dev: false
@@ -5077,25 +4955,12 @@ packages:
       webpack: 5.72.0
     dev: false
 
-  /css-select-base-adapter/0.1.1:
-    resolution: {integrity: sha512-jQVeeRG70QI08vSTwf1jHxp74JoZsr2XSgETae8/xC8ovSnL2WF87GTLO86Sbwdt2lK4Umg4HnnwMO4YF3Ce7w==}
-    dev: false
-
   /css-select/1.2.0:
     resolution: {integrity: sha1-KzoRBTnFNV8c2NMUYj6HCxIeyFg=}
     dependencies:
       boolbase: 1.0.0
       css-what: 2.1.3
       domutils: 1.5.1
-      nth-check: 1.0.2
-    dev: false
-
-  /css-select/2.1.0:
-    resolution: {integrity: sha512-Dqk7LQKpwLoH3VovzZnkzegqNSuAziQyNZUcrdDM401iY+R5NkGBXGmtO05/yaXQziALuPogeG0b7UAgjnTJTQ==}
-    dependencies:
-      boolbase: 1.0.0
-      css-what: 3.4.2
-      domutils: 1.7.0
       nth-check: 1.0.2
     dev: false
 
@@ -5109,14 +4974,6 @@ packages:
       nth-check: 2.0.1
     dev: false
 
-  /css-tree/1.0.0-alpha.37:
-    resolution: {integrity: sha512-DMxWJg0rnz7UgxKT0Q1HU/L9BeJI0M6ksor0OgqOnF+aRCDWg/N2641HmVyU9KVIu0OVVWOb2IpC9A+BJRnejg==}
-    engines: {node: '>=8.0.0'}
-    dependencies:
-      mdn-data: 2.0.4
-      source-map: 0.6.1
-    dev: false
-
   /css-tree/1.1.3:
     resolution: {integrity: sha512-tRpdppF7TRazZrjJ6v3stzv93qxRcSsFmW6cX0Zm2NVKpxE1WV1HblnghVv9TreireHkqI/VDEsfolRF1p6y7Q==}
     engines: {node: '>=8.0.0'}
@@ -5127,11 +4984,6 @@ packages:
 
   /css-what/2.1.3:
     resolution: {integrity: sha512-a+EPoD+uZiNfh+5fxw2nO9QwFa6nJe2Or35fGY6Ipw1R3R4AGz1d1TEZrCegvw2YTmZ0jXirGYlzxxpYSHwpEg==}
-    dev: false
-
-  /css-what/3.4.2:
-    resolution: {integrity: sha512-ACUm3L0/jiZTqfzRM3Hi9Q8eZqd6IK37mMWPLz9PJxkLWllYeRf+EHUSHYEtFop2Eqytaq1FizFVh7XfBnXCDQ==}
-    engines: {node: '>= 6'}
     dev: false
 
   /css-what/6.1.0:
@@ -5550,7 +5402,7 @@ packages:
   /domutils/1.5.1:
     resolution: {integrity: sha1-3NhIiib1Y9YQeeSMn3t+Mjc2gs8=}
     dependencies:
-      dom-serializer: 0.1.1
+      dom-serializer: 0.2.2
       domelementtype: 1.3.1
     dev: false
 
@@ -8514,10 +8366,6 @@ packages:
     resolution: {integrity: sha512-dn6wd0uw5GsdswPFfsgMp5NSB0/aDe6fK94YJV/AJDYXL6HVLWBsxeq7js7Ad+mU2K9LAlwpk6kN2D5mwCPVow==}
     dev: false
 
-  /mdn-data/2.0.4:
-    resolution: {integrity: sha512-iV3XNKw06j5Q7mi6h+9vbx23Tv7JkjEVgKHW4pimwyDGWm0OIQntJJ+u1C6mg6mK1EaTv42XQ7w76yuzH7M2cA==}
-    dev: false
-
   /mdurl/1.0.1:
     resolution: {integrity: sha1-/oWy7HWlkDfyrf7BAP1sYBdhFS4=}
     dev: false
@@ -8892,15 +8740,6 @@ packages:
   /object.fromentries/2.0.5:
     resolution: {integrity: sha512-CAyG5mWQRRiBU57Re4FKoTBjXfDoNwdFVH2Y1tS9PqCsfUTymAohOkEMSG3aRNKmv4lV3O7p1et7c187q6bynw==}
     engines: {node: '>= 0.4'}
-    dependencies:
-      call-bind: 1.0.2
-      define-properties: 1.1.4
-      es-abstract: 1.19.5
-    dev: false
-
-  /object.getownpropertydescriptors/2.1.3:
-    resolution: {integrity: sha512-VdDoCwvJI4QdC6ndjpqFmoL3/+HxffFBbcJzKi5hwLLqqx3mdbedRpfZDdK0SrOSauj8X4GzBvnDZl4vTN7dOw==}
-    engines: {node: '>= 0.8'}
     dependencies:
       call-bind: 1.0.2
       define-properties: 1.1.4
@@ -9826,11 +9665,6 @@ packages:
 
   /pure-color/1.3.0:
     resolution: {integrity: sha1-H+Bk+wrIUfDeYTIKi/eWg2Qi8z4=}
-    dev: false
-
-  /q/1.5.1:
-    resolution: {integrity: sha1-fjL3W0E4EpHQRhHxvxQQmsAGUdc=}
-    engines: {node: '>=0.6.0', teleport: '>=0.2.0'}
     dev: false
 
   /qs/6.9.7:
@@ -11018,27 +10852,6 @@ packages:
     resolution: {integrity: sha512-e4hG1hRwoOdRb37cIMSgzNsxyzKfayW6VOflrwvR+/bzrkyxY/31WkbgnQpgtrNp1SdpJvpUAGTa/ZoiPNDuRQ==}
     dev: false
 
-  /svgo/1.3.2:
-    resolution: {integrity: sha512-yhy/sQYxR5BkC98CY7o31VGsg014AKLEPxdfhora76l36hD9Rdy5NZA/Ocn6yayNPgSamYdtX2rFJdcv07AYVw==}
-    engines: {node: '>=4.0.0'}
-    deprecated: This SVGO version is no longer supported. Upgrade to v2.x.x.
-    hasBin: true
-    dependencies:
-      chalk: 2.4.2
-      coa: 2.0.2
-      css-select: 2.1.0
-      css-select-base-adapter: 0.1.1
-      css-tree: 1.0.0-alpha.37
-      csso: 4.2.0
-      js-yaml: 3.14.1
-      mkdirp: 0.5.6
-      object.values: 1.1.5
-      sax: 1.2.4
-      stable: 0.1.8
-      unquote: 1.1.1
-      util.promisify: 1.0.1
-    dev: false
-
   /svgo/2.8.0:
     resolution: {integrity: sha512-+N/Q9kV1+F+UeWYoSiULYo4xYSDQlTgb+ayMobAXPwMnLvop7oxKMo9OzIrX5x3eS4L4f2UHhc9axXwY8DpChg==}
     engines: {node: '>=10.13.0'}
@@ -11548,10 +11361,6 @@ packages:
     engines: {node: '>= 0.8'}
     dev: false
 
-  /unquote/1.1.1:
-    resolution: {integrity: sha1-j97XMk7G6IoP+LkF58CYzcCG1UQ=}
-    dev: false
-
   /update-notifier/5.1.0:
     resolution: {integrity: sha512-ItnICHbeMh9GqUy31hFPrD1kcuZ3rpxDZbf4KUDavXwS0bW5m7SLbDQpGX3UYr072cbrF5hFUs3r5tUsPwjfHw==}
     engines: {node: '>=10'}
@@ -11660,15 +11469,6 @@ packages:
 
   /util-deprecate/1.0.2:
     resolution: {integrity: sha1-RQ1Nyfpw3nMnYvvS1KKJgUGaDM8=}
-    dev: false
-
-  /util.promisify/1.0.1:
-    resolution: {integrity: sha512-g9JpC/3He3bm38zsLupWryXHoEcS22YHthuPQSJdMy6KNrzIRzWqcsHzD/WUnqe45whVou4VIsPew37DoXWNrA==}
-    dependencies:
-      define-properties: 1.1.4
-      es-abstract: 1.19.5
-      has-symbols: 1.0.3
-      object.getownpropertydescriptors: 2.1.3
     dev: false
 
   /utila/0.4.0:
@@ -12291,7 +12091,7 @@ packages:
     dev: false
 
   file:projects/android-bin.tgz:
-    resolution: {integrity: sha512-AieJIR61hWYGWITs9fujXHjdcs1Zoxx71Xsm29VnDm1df9uLVlbd+F5/Azi4JsP/jT0uab5TVLZnAphejckYoA==, tarball: file:projects/android-bin.tgz}
+    resolution: {integrity: sha512-rd0lDJhjwhmi8eD8f9TY8ap6dmxCAf90jEwTEqel8tDRgJcAdZwkIUFpHIoDDRN+hDTKfIe62cuh5TSCYFwgMQ==, tarball: file:projects/android-bin.tgz}
     name: '@rush-temp/android-bin'
     version: 0.0.0
     dependencies:
@@ -12317,7 +12117,7 @@ packages:
     dev: false
 
   file:projects/demo.tgz_@mdx-js+react@1.6.22:
-    resolution: {integrity: sha512-yy1KpC2G4vGdrnUnadFNt07umBSyElmeeClOWhYvThZ4U3rAmXxJc23SXmnCyb2hnNvBL/quvkItVD19qRgU4A==, tarball: file:projects/demo.tgz}
+    resolution: {integrity: sha512-hshnRYgUziEMIpjyrQLQ68MOq56eJS7pkku8Gib4yhTipGT9l1NWBTtd4KhRLgnbPAsBsNOfZMJgkvnNuY/dHg==, tarball: file:projects/demo.tgz}
     id: file:projects/demo.tgz
     name: '@rush-temp/demo'
     version: 0.0.0
@@ -12325,7 +12125,7 @@ packages:
       '@fluentui/react': 8.66.2_12a6012245369fd5be825566be975ff0
       '@fluentui/react-file-type-icons': 8.6.7_b094b78811fc8d2f00a90f13d0251fb6
       '@fluentui/react-hooks': 8.5.4_b094b78811fc8d2f00a90f13d0251fb6
-      '@fluentui/react-icons': 2.0.164-rc.2_7bdce834019acf24ac150899d223ca8e
+      '@fluentui/react-icons': 2.0.166-rc.3_7bdce834019acf24ac150899d223ca8e
       '@fluentui/style-utilities': 8.6.6_b094b78811fc8d2f00a90f13d0251fb6
       '@griffel/react': 1.0.3_react@17.0.2
       '@mdx-js/loader': 1.6.22_react@17.0.2
@@ -12433,7 +12233,7 @@ packages:
     dev: false
 
   file:projects/unofficial-adb-book.tgz_814045a8852c08eeea7e09b05a06dede:
-    resolution: {integrity: sha512-6ZIavBs9yxoePoDCj4uMmww/1BWJPmujRlGMtg60GKbUeRDNs6rl6VG4L/82FQx3lBr9NNt18d4RSHXsA6BAug==, tarball: file:projects/unofficial-adb-book.tgz}
+    resolution: {integrity: sha512-KxFjH57nCOH21lZBatc21akM5sSk3A90UK9E0KujCavDKZo4uISJcTrCwjTZlOu6/jgnQCdlaXtgh1NM8t8rFA==, tarball: file:projects/unofficial-adb-book.tgz}
     id: file:projects/unofficial-adb-book.tgz
     name: '@rush-temp/unofficial-adb-book'
     version: 0.0.0
@@ -12441,7 +12241,7 @@ packages:
       '@docusaurus/core': 2.0.0-beta.18_e268b618e600e5a694fbb7b170032765
       '@docusaurus/preset-classic': 2.0.0-beta.18_d48c17cf67a4d89c33f523520a2c831e
       '@mdx-js/react': 1.6.22_react@17.0.2
-      '@svgr/webpack': 5.5.0
+      '@svgr/webpack': 6.2.1
       clsx: 1.1.1
       file-loader: 6.2.0
       mini-svg-data-uri: 1.3.3

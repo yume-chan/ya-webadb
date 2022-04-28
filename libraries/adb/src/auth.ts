@@ -161,7 +161,7 @@ export class AdbAuthenticationProcessor implements Disposable {
 
         const result = await this.iterator.next();
         if (result.done) {
-            throw new Error('Cannot authenticate with device');
+            throw new Error('No authenticator can handle the request');
         }
 
         return result.value;

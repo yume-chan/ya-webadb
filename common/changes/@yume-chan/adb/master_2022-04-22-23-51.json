@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb",
+            "comment": "Add workaround for the push_mkdir issue in Android 9",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb"
+}
