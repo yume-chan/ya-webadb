@@ -19,9 +19,9 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     }
 
     public static async raw(adb: Adb, command: string) {
-        // Native ADB client doesn't allow none protocol + raw mode,
-        // But ADB daemon supports it.
-        return new AdbSubprocessNoneProtocol(await adb.createSocket(`shell,raw:${command}`));
+        // `shell,raw:${command}` also triggers raw mode,
+        // But is not supported before Android 7.
+        return new AdbSubprocessNoneProtocol(await adb.createSocket(`exec:${command}`));
     }
 
     private readonly socket: AdbSocket;
