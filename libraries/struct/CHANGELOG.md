@@ -1,6 +1,14 @@
 # Change Log - @yume-chan/struct
 
-This log was last generated on Sun, 03 Apr 2022 11:18:47 GMT and should not be manually modified.
+This log was last generated on Thu, 28 Apr 2022 01:23:53 GMT and should not be manually modified.
+
+## 0.0.13
+Thu, 28 Apr 2022 01:23:53 GMT
+
+### Updates
+
+- Fix an issue that `uint64` still deserialize to negative numbers
+- Fix an issue where `Syncbird` can't synchronously invoke `then` on some Bluebird internal methods (for example `reduce`)
 
 ## 0.0.12
 Sun, 03 Apr 2022 11:18:47 GMT

@@ -1,6 +1,14 @@
 # Change Log - @yume-chan/android-bin
 
-This log was last generated on Sun, 03 Apr 2022 11:18:47 GMT and should not be manually modified.
+This log was last generated on Thu, 28 Apr 2022 01:23:53 GMT and should not be manually modified.
+
+## 0.0.13
+Thu, 28 Apr 2022 01:23:53 GMT
+
+### Updates
+
+- Add support for bugreport/bugreportz
+- Add basic support for logcat
 
 ## 0.0.12
 Sun, 03 Apr 2022 11:18:47 GMT

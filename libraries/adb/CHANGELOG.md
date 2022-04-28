@@ -1,6 +1,15 @@
 # Change Log - @yume-chan/adb
 
-This log was last generated on Sun, 03 Apr 2022 11:18:47 GMT and should not be manually modified.
+This log was last generated on Thu, 28 Apr 2022 01:23:53 GMT and should not be manually modified.
+
+## 0.0.13
+Thu, 28 Apr 2022 01:23:53 GMT
+
+### Updates
+
+- Add support for raw shell mode
+- Add support for LIS2 command in Sync protocol
+- Add workaround for the push_mkdir issue in Android 9
 
 ## 0.0.12
 Sun, 03 Apr 2022 11:18:47 GMT

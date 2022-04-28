@@ -1,6 +1,13 @@
 # Change Log - @yume-chan/adb-backend-webusb
 
-This log was last generated on Sun, 03 Apr 2022 11:18:47 GMT and should not be manually modified.
+This log was last generated on Thu, 28 Apr 2022 01:23:53 GMT and should not be manually modified.
+
+## 0.0.13
+Thu, 28 Apr 2022 01:23:53 GMT
+
+### Updates
+
+- Workaround an issue in Chrome where `transferIn` never returns `babble` on Windows
 
 ## 0.0.12
 Sun, 03 Apr 2022 11:18:47 GMT

@@ -2,6 +2,18 @@
   "name": "@yume-chan/scrcpy",
   "entries": [
     {
+      "version": "0.0.13",
+      "tag": "@yume-chan/scrcpy_v0.0.13",
+      "date": "Thu, 28 Apr 2022 01:23:53 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add support for 1.23"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.12",
       "tag": "@yume-chan/scrcpy_v0.0.12",
       "date": "Sun, 03 Apr 2022 11:18:47 GMT",
