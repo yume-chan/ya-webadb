@@ -1,14 +1,16 @@
 import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
-import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/adb';
-import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, H264Decoder, H264DecoderConstructor, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_23, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder, type VideoStreamPacket } from "@yume-chan/scrcpy";
-import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import React, { CSSProperties, ReactNode, useEffect, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useState } from "react";
+
+import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/adb';
+import { EventEmitter } from "@yume-chan/event";
+import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
+import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
+
 import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { globalState } from "../state";
 import { CommonStackTokens, formatSpeed, Icons, ProgressStream, RouteStackProps } from "../utils";
@@ -88,71 +90,108 @@ function clamp(value: number, min: number, max: number): number {
     return value;
 }
 
-class KeyRepeater {
-    key: AndroidKeyCode;
-    client: ScrcpyClient;
-
-    delay: number;
-    interval: number;
-
-    onRelease: VoidFunction | undefined;
-
-    constructor(key: AndroidKeyCode, client: ScrcpyClient, delay = 0, interval = 0) {
-        this.key = key;
-        this.client = client;
-
-        this.delay = delay;
-        this.interval = interval;
-    }
-
-    async press() {
-        await this.client.injectKeyCode({
-            action: AndroidKeyEventAction.Down,
-            keyCode: this.key,
-            repeat: 0,
-            metaState: 0,
-        });
-
-        if (this.delay === 0) {
-            return;
-        }
-
-        const timeoutId = setTimeout(async () => {
-            await this.client.injectKeyCode({
-                action: AndroidKeyEventAction.Down,
-                keyCode: this.key,
-                repeat: 1,
-                metaState: 0,
-            });
-
-            if (this.interval === 0) {
-                return;
-            }
-
-            const intervalId = setInterval(async () => {
-                await this.client.injectKeyCode({
-                    action: AndroidKeyEventAction.Down,
-                    keyCode: this.key,
-                    repeat: 1,
-                    metaState: 0,
-                });
-            }, this.interval);
-            this.onRelease = () => clearInterval(intervalId);
-        }, this.delay);
-        this.onRelease = () => clearTimeout(timeoutId);
-    }
-
-    async release() {
-        this.onRelease?.();
-
-        await this.client.injectKeyCode({
-            action: AndroidKeyEventAction.Up,
-            keyCode: this.key,
-            repeat: 0,
-            metaState: 0,
-        });
-    }
+interface DecoderDefinition {
+    key: string;
+    name: string;
+    Constructor: H264DecoderConstructor;
 }
+
+interface Settings {
+    maxSize: number;
+    bitRate: number;
+    tunnelForward?: boolean;
+    encoder?: string;
+    decoder?: string;
+    ignoreDecoderCodecArgs?: boolean;
+}
+
+interface SettingDefinitionBase {
+    key: keyof Settings;
+    type: string;
+    label: string;
+    description?: string;
+}
+
+interface DropdownSettingDefinition extends SettingDefinitionBase {
+    type: 'dropdown';
+    placeholder?: string;
+    options: IDropdownOption[];
+}
+
+interface ToggleSettingDefinition extends SettingDefinitionBase {
+    type: 'toggle',
+}
+
+interface NumberSettingDefinition extends SettingDefinitionBase {
+    type: 'number',
+    min?: number;
+    max?: number;
+    step?: number;
+}
+
+type SettingDefinition =
+    DropdownSettingDefinition |
+    ToggleSettingDefinition |
+    NumberSettingDefinition;
+
+interface SettingItemProps {
+    definition: SettingDefinition;
+    settings: any;
+    onChange: (key: keyof Settings, value: any) => void;
+}
+
+const SettingItem = observer(function SettingItem({
+    definition,
+    settings,
+    onChange,
+}: SettingItemProps) {
+    let label: string | JSX.Element;
+    if (definition.description) {
+        label = (
+            <>
+                <span>{definition.label}{' '}</span>
+                <TooltipHost content={definition.description}>
+                    <Icon iconName={Icons.Info} />
+                </TooltipHost>
+            </>
+        );
+    } else {
+        label = definition.label;
+    }
+
+    switch (definition.type) {
+        case 'dropdown':
+            return (
+                <Dropdown
+                    label={definition.label}
+                    options={definition.options}
+                    placeholder={definition.placeholder}
+                    selectedKey={settings[definition.key]}
+                    onChange={(e, option) => onChange(definition.key, option!.key)}
+                />
+            );
+        case 'toggle':
+            return (
+                <Toggle
+                    label={label}
+                    checked={settings[definition.key]}
+                    onChange={(e, checked) => onChange(definition.key, checked)}
+                />
+            );
+        case 'number':
+            return (
+                <SpinButton
+                    label={definition.label}
+                    labelPosition={Position.top}
+                    min={definition.min}
+                    max={definition.max}
+                    step={definition.step}
+                    value={settings[definition.key].toString()}
+                    onChange={(e, value) => onChange(definition.key, Number.parseInt(value!, 10))}
+                />
+            );
+    }
+});
 
 class ScrcpyPageState {
     running = false;
@@ -172,19 +211,13 @@ class ScrcpyPageState {
     client: ScrcpyClient | undefined = undefined;
 
     encoders: string[] = [];
-    selectedEncoder: string | undefined = undefined;
 
-    decoders: { name: string; factory: H264DecoderConstructor; }[] = [{
+    decoders: DecoderDefinition[] = [{
+        key: 'tinyh264',
         name: 'TinyH264 (Software)',
-        factory: TinyH264Decoder,
+        Constructor: TinyH264Decoder,
     }];
-    selectedDecoder: { name: string, factory: H264DecoderConstructor; } = this.decoders[0];
-    ignoreDecoderCodecArgs = false;
     decoder: H264Decoder | undefined = undefined;
-
-    resolution = 1080;
-    bitRate = 4_000_000;
-    tunnelForward = false;
 
     connecting = false;
     serverTotalSize = 0;
@@ -194,9 +227,6 @@ class ScrcpyPageState {
     serverUploadedSize = 0;
     debouncedServerUploadedSize = 0;
     serverUploadSpeed = 0;
-
-    homeKeyRepeater: KeyRepeater | undefined = undefined;
-    appSwitchKeyRepeater: KeyRepeater | undefined = undefined;
 
     get commandBarItems() {
         const result: ICommandBarItemProps[] = [];
@@ -291,10 +321,77 @@ class ScrcpyPageState {
         ];
     }
 
+    settings: Settings = {
+        maxSize: 1080,
+        bitRate: 4_000_000,
+    };
+
+    get settingDefinitions() {
+        const result: SettingDefinition[] = [];
+
+        result.push({
+            key: 'encoder',
+            type: 'dropdown',
+            label: 'Encoder',
+            placeholder: 'Connect once to retrieve encoder list',
+            options: this.encoders.map(item => ({
+                key: item,
+                text: item,
+            })),
+        });
+
+        if (this.decoders.length > 1) {
+            result.push({
+                key: 'decoder',
+                type: 'dropdown',
+                label: 'Decoder',
+                options: this.decoders.map(item => ({
+                    key: item.key,
+                    text: item.name,
+                    data: item,
+                })),
+            });
+        }
+
+        result.push({
+            key: 'ignoreDecoderCodecArgs',
+            type: 'toggle',
+            label: `Ignore decoder's codec arguments`,
+            description: `Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.`,
+        });
+
+        result.push({
+            key: 'maxSize',
+            type: 'number',
+            label: 'Max Resolution (longer side, 0 = unlimited)',
+            min: 0,
+            max: 2560,
+            step: 50,
+        });
+
+        result.push({
+            key: 'bitRate',
+            type: 'number',
+            label: 'Max Bit Rate',
+            min: 100,
+            max: 100_000_000,
+            step: 100,
+        });
+
+        result.push({
+            key: 'tunnelForward',
+            type: 'toggle',
+            label: 'Use forward connection',
+            description: 'Android before version 9 has a bug that prevents reverse tunneling when using ADB over WiFi.'
+        });
+
+        return result;
+    }
+
     constructor() {
         makeAutoObservable(this, {
             decoders: observable.shallow,
-            selectedDecoder: observable.ref,
+            settings: observable.deep,
             start: false,
             stop: action.bound,
             handleDeviceViewRef: action.bound,
@@ -305,12 +402,6 @@ class ScrcpyPageState {
             handleHomePointerUp: false,
             handleAppSwitchPointerDown: false,
             handleAppSwitchPointerUp: false,
-            handleCurrentEncoderChange: action.bound,
-            handleSelectedDecoderChange: action.bound,
-            handleIgnoreDecoderCodecArgsChange: action.bound,
-            handleResolutionChange: action.bound,
-            handleTunnelForwardChange: action.bound,
-            handleBitRateChange: action.bound,
             calculatePointerPosition: false,
             injectTouch: false,
             handlePointerDown: false,
@@ -319,15 +410,13 @@ class ScrcpyPageState {
             handleWheel: false,
             handleContextMenu: false,
             handleKeyDown: false,
-            homeKeyRepeater: false,
-            appSwitchKeyRepeater: false,
         });
 
         autorun(() => {
             if (globalState.device) {
                 runInAction(() => {
                     this.encoders = [];
-                    this.selectedEncoder = undefined;
+                    this.settings.encoder = undefined;
                 });
             } else {
                 this.stop();
@@ -344,22 +433,16 @@ class ScrcpyPageState {
         });
 
         autorun(() => {
-            if (this.client) {
-                this.homeKeyRepeater = new KeyRepeater(AndroidKeyCode.Home, this.client);
-                this.appSwitchKeyRepeater = new KeyRepeater(AndroidKeyCode.AppSwitch, this.client);
-            } else {
-                this.homeKeyRepeater = undefined;
-                this.appSwitchKeyRepeater = undefined;
-            }
+            this.settings.decoder = this.decoders[0].key;
         });
 
         if (typeof window !== 'undefined' && typeof window.VideoDecoder === 'function') {
             setTimeout(action(() => {
                 this.decoders.unshift({
+                    key: 'webcodecs',
                     name: 'WebCodecs',
-                    factory: WebCodecsDecoder,
+                    Constructor: WebCodecsDecoder,
                 });
-                this.selectedDecoder = this.decoders[0];
             }), 0);
         }
     }
@@ -370,7 +453,7 @@ class ScrcpyPageState {
         }
 
         try {
-            if (!state.selectedDecoder) {
+            if (!this.settings.decoder) {
                 throw new Error('No available decoder');
             }
 
@@ -433,10 +516,10 @@ class ScrcpyPageState {
                 globalState.device,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                new ScrcpyOptions1_23({
+                new ScrcpyOptions1_24({
                     logLevel: ScrcpyLogLevel.Debug,
                     bitRate: 4_000_000,
-                    tunnelForward: this.tunnelForward,
+                    tunnelForward: this.settings.tunnelForward,
                     sendDeviceMeta: false,
                     sendDummyByte: false,
                     control: false,
@@ -453,22 +536,20 @@ class ScrcpyPageState {
                 this.encoders = encoders;
             });
 
-            const factory = this.selectedDecoder.factory;
-            const decoder = new factory();
+            const decoderDefinition = this.decoders.find(x => x.key === this.settings.decoder) ?? this.decoders[0];
+            const decoder = new decoderDefinition.Constructor();
             runInAction(() => {
                 this.decoder = decoder;
             });
 
-            const options = new ScrcpyOptions1_23({
+            const options = new ScrcpyOptions1_24({
                 logLevel: ScrcpyLogLevel.Debug,
-                maxSize: this.resolution,
-                bitRate: this.bitRate,
+                ...this.settings,
                 lockVideoOrientation: ScrcpyScreenOrientation.Unlocked,
-                tunnelForward: this.tunnelForward,
-                encoderName: this.selectedEncoder ?? encoders[0],
+                encoderName: this.settings.encoder ?? encoders[0],
                 sendDeviceMeta: false,
                 sendDummyByte: false,
-                codecOptions: !this.ignoreDecoderCodecArgs
+                codecOptions: !this.settings.ignoreDecoderCodecArgs
                     ? new CodecOptions({
                         profile: decoder.maxProfile,
                         level: decoder.maxLevel,
@@ -551,92 +632,98 @@ class ScrcpyPageState {
     };
 
     handleBackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!this.client) {
+            return;
+        }
+
         if (e.button !== 0) {
             return;
         }
         e.currentTarget.setPointerCapture(e.pointerId);
-        this.client!.pressBackOrTurnOnScreen(AndroidKeyEventAction.Down);
+
+        this.client.pressBackOrTurnOnScreen(AndroidKeyEventAction.Down);
     };
 
     handleBackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!this.client) {
+            return;
+        }
+
         if (e.button !== 0) {
             return;
         }
-        this.client!.pressBackOrTurnOnScreen(AndroidKeyEventAction.Up);
+
+        this.client.pressBackOrTurnOnScreen(AndroidKeyEventAction.Up);
     };
 
-    handleHomePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (e.button !== 0) {
+    handleHomePointerDown = async (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!this.client) {
             return;
         }
-        e.currentTarget.setPointerCapture(e.pointerId);
-        this.homeKeyRepeater?.press();
-    };
 
-    handleHomePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (e.button !== 0) {
-            return;
-        }
-        this.homeKeyRepeater?.release();
-    };
-
-    handleAppSwitchPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (e.button !== 0) {
             return;
         }
         e.currentTarget.setPointerCapture(e.pointerId);
-        this.appSwitchKeyRepeater?.press();
+
+        await this.client.injectKeyCode({
+            action: AndroidKeyEventAction.Down,
+            keyCode: AndroidKeyCode.Home,
+            repeat: 0,
+            metaState: 0,
+        });
     };
 
-    handleAppSwitchPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    handleHomePointerUp = async (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!this.client) {
+            return;
+        }
+
         if (e.button !== 0) {
             return;
         }
-        this.appSwitchKeyRepeater?.release();
+
+        await this.client.injectKeyCode({
+            action: AndroidKeyEventAction.Up,
+            keyCode: AndroidKeyCode.Home,
+            repeat: 0,
+            metaState: 0,
+        });
     };
 
-    handleCurrentEncoderChange(e?: any, option?: IDropdownOption) {
-        if (!option) {
+    handleAppSwitchPointerDown = async (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!this.client) {
             return;
         }
 
-        this.selectedEncoder = option.text;
-    }
+        if (e.button !== 0) {
+            return;
+        }
+        e.currentTarget.setPointerCapture(e.pointerId);
 
-    handleSelectedDecoderChange(e?: any, option?: IDropdownOption) {
-        if (!option) {
+        await this.client.injectKeyCode({
+            action: AndroidKeyEventAction.Down,
+            keyCode: AndroidKeyCode.AppSwitch,
+            repeat: 0,
+            metaState: 0,
+        });
+    };
+
+    handleAppSwitchPointerUp = async (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!this.client) {
             return;
         }
 
-        this.selectedDecoder = option.data;
-    }
-
-    handleIgnoreDecoderCodecArgsChange(e?: any, checked?: boolean) {
-        if (checked === undefined) {
+        if (e.button !== 0) {
             return;
         }
-        this.ignoreDecoderCodecArgs = checked;
-    }
 
-    handleResolutionChange(e: any, value?: string) {
-        if (value === undefined) {
-            return;
-        }
-        this.resolution = +value;
-    }
-
-    handleBitRateChange(e: any, value?: string) {
-        if (value === undefined) {
-            return;
-        }
-        this.bitRate = +value;
-    }
-
-    handleTunnelForwardChange(event: React.MouseEvent<HTMLElement>, checked?: boolean) {
-        if (checked === undefined) {
-            return;
-        }
-        this.tunnelForward = checked;
+        await this.client.injectKeyCode({
+            action: AndroidKeyEventAction.Up,
+            keyCode: AndroidKeyCode.AppSwitch,
+            repeat: 0,
+            metaState: 0,
+        });
     };
 
     calculatePointerPosition(clientX: number, clientY: number) {
@@ -745,6 +832,7 @@ class ScrcpyPageState {
 }
 
 const state = new ScrcpyPageState();
+console.log(state);
 
 const ConnectionDialog = observer(() => {
     const layerHostId = useId('layerHost');
@@ -880,68 +968,14 @@ const Scrcpy: NextPage = () => {
                 <div style={{ padding: 12, overflow: 'hidden auto', display: state.settingsVisible ? 'block' : 'none', width: 300 }}>
                     <div>Changes will take effect on next connection</div>
 
-                    <Dropdown
-                        label="Encoder"
-                        options={state.encoders.map(item => ({ key: item, text: item }))}
-                        selectedKey={state.selectedEncoder}
-                        placeholder="Connect once to retrieve encoder list"
-                        onChange={state.handleCurrentEncoderChange}
-                    />
-
-                    {state.decoders.length > 1 && (
-                        <Dropdown
-                            label="Decoder"
-                            options={state.decoders.map(item => ({ key: item.name, text: item.name, data: item }))}
-                            selectedKey={state.selectedDecoder.name}
-                            onChange={state.handleSelectedDecoderChange}
+                    {state.settingDefinitions.map(definition => (
+                        <SettingItem
+                            key={definition.key}
+                            definition={definition}
+                            settings={state.settings}
+                            onChange={action((key, value) => (state.settings as any)[key] = value)}
                         />
-                    )}
-
-                    <Toggle
-                        label={
-                            <>
-                                <span>{`Ignore decoder's codec arguments `}</span>
-                                <TooltipHost content="Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.">
-                                    <Icon iconName={Icons.Info} />
-                                </TooltipHost>
-                            </>
-                        }
-                        checked={state.ignoreDecoderCodecArgs}
-                        onChange={state.handleIgnoreDecoderCodecArgsChange}
-                    />
-
-                    <SpinButton
-                        label="Max Resolution (longer side, 0 = unlimited)"
-                        labelPosition={Position.top}
-                        value={state.resolution.toString()}
-                        min={0}
-                        max={2560}
-                        step={100}
-                        onChange={state.handleResolutionChange}
-                    />
-
-                    <SpinButton
-                        label="Max Bit Rate"
-                        labelPosition={Position.top}
-                        value={state.bitRate.toString()}
-                        min={100}
-                        max={10_000_000}
-                        step={100}
-                        onChange={state.handleBitRateChange}
-                    />
-
-                    <Toggle
-                        label={
-                            <>
-                                <span>Use forward connection{' '}</span>
-                                <TooltipHost content="Old Android devices may not support reverse connection when using ADB over WiFi">
-                                    <Icon iconName={Icons.Info} />
-                                </TooltipHost>
-                            </>
-                        }
-                        checked={state.tunnelForward}
-                        onChange={state.handleTunnelForwardChange}
-                    />
+                    ))}
                 </div>
 
                 <DemoModePanel
