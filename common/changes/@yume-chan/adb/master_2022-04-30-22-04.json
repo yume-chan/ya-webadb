@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb",
+            "comment": "Add an `Adb#close()` method to gracefully shutdown a connection",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb"
+}
