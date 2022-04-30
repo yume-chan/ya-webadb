@@ -1,9 +1,9 @@
 import { IconButton, SearchBox, Stack, StackItem } from '@fluentui/react';
-import { reaction } from "mobx";
+import { action, autorun, makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import 'xterm/css/xterm.css';
 import { ResizeObserver } from '../components';
 import { globalState } from "../state";
@@ -15,52 +15,51 @@ if (typeof window !== 'undefined') {
     terminal = new AdbTerminal();
 }
 
+const state = makeAutoObservable({
+    visible: false,
+    setVisible(value: boolean) {
+        this.visible = value;
+    },
+
+    searchKeyword: '',
+    setSearchKeyword(value: string) {
+        this.searchKeyword = value;
+        terminal.searchAddon.findNext(value, { incremental: true });
+    },
+
+    searchPrevious() {
+        terminal.searchAddon.findPrevious(this.searchKeyword);
+    },
+    searchNext() {
+        terminal.searchAddon.findNext(this.searchKeyword);
+    }
+}, {
+    searchPrevious: action.bound,
+    searchNext: action.bound,
+});
+
+autorun(() => {
+    if (!globalState.device) {
+        terminal.socket = undefined;
+        return;
+    }
+
+    if (!terminal.socket && state.visible) {
+        globalState.device.subprocess.shell()
+            .then(action(shell => {
+                terminal.socket = shell;
+            }), (e) => {
+                globalState.showErrorDialog(e);
+            });
+    }
+});
+
 const UpIconProps = { iconName: Icons.ChevronUp };
 const DownIconProps = { iconName: Icons.ChevronDown };
 
 const Shell: NextPage = (): JSX.Element | null => {
-    const [searchKeyword, setSearchKeyword] = useState('');
-    const handleSearchKeywordChange = useCallback((e, newValue?: string) => {
-        setSearchKeyword(newValue ?? '');
-        if (newValue) {
-            terminal.searchAddon.findNext(newValue, { incremental: true });
-        }
-    }, []);
-    const findPrevious = useCallback(() => {
-        terminal.searchAddon.findPrevious(searchKeyword);
-    }, [searchKeyword]);
-    const findNext = useCallback(() => {
-        terminal.searchAddon.findNext(searchKeyword);
-    }, [searchKeyword]);
-
-    const connectingRef = useRef(false);
-    useEffect(() => {
-        return reaction(
-            () => globalState.device,
-            async () => {
-                if (!globalState.device) {
-                    terminal.socket = undefined;
-                    return;
-                }
-
-                if (!!terminal.socket || connectingRef.current) {
-                    return;
-                }
-
-                try {
-                    connectingRef.current = true;
-                    const socket = await globalState.device.subprocess.shell();
-                    terminal.socket = socket;
-                } catch (e: any) {
-                    globalState.showErrorDialog(e);
-                } finally {
-                    connectingRef.current = false;
-                }
-            },
-            {
-                fireImmediately: true,
-            }
-        );
+    const handleSearchKeywordChange = useCallback((e, value?: string) => {
+        state.setSearchKeyword(value ?? '');
     }, []);
 
     const handleResize = useCallback(() => {
@@ -71,6 +70,13 @@ const Shell: NextPage = (): JSX.Element | null => {
         if (container) {
             terminal.setContainer(container);
         }
+    }, []);
+
+    useEffect(() => {
+        state.setVisible(true);
+        return () => {
+            state.setVisible(false);
+        };
     }, []);
 
     return (
@@ -84,23 +90,23 @@ const Shell: NextPage = (): JSX.Element | null => {
                     <StackItem grow>
                         <SearchBox
                             placeholder="Find"
-                            value={searchKeyword}
+                            value={state.searchKeyword}
                             onChange={handleSearchKeywordChange}
-                            onSearch={findNext}
+                            onSearch={state.searchNext}
                         />
                     </StackItem>
                     <StackItem>
                         <IconButton
-                            disabled={!searchKeyword}
+                            disabled={!state.searchKeyword}
                             iconProps={UpIconProps}
-                            onClick={findPrevious}
+                            onClick={state.searchPrevious}
                         />
                     </StackItem>
                     <StackItem>
                         <IconButton
-                            disabled={!searchKeyword}
+                            disabled={!state.searchKeyword}
                             iconProps={DownIconProps}
-                            onClick={findNext}
+                            onClick={state.searchNext}
                         />
                     </StackItem>
                 </Stack>

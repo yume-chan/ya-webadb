@@ -1,6 +1,6 @@
 import type { Adb } from "../../../adb.js";
 import type { AdbSocket } from "../../../socket/index.js";
-import { DuplexStreamFactory, type ReadableStream } from "../../../stream/index.js";
+import { DuplexStreamFactory, ReadableStream } from "../../../stream/index.js";
 import type { AdbSubprocessProtocol } from "./types.js";
 
 /**
@@ -53,8 +53,8 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
             },
         });
 
-        this._stdout = factory.createWrapReadable(this.socket.readable);
-        this._stderr = factory.createReadable();
+        this._stdout = factory.wrapReadable(this.socket.readable);
+        this._stderr = factory.wrapReadable(new ReadableStream());
         this._exit = factory.closed.then(() => 0);
     }
 

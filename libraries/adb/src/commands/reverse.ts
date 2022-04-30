@@ -2,14 +2,10 @@
 
 import { AutoDisposable } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import type { AdbPacketData } from '../packet.js';
-import type { AdbIncomingSocketEventArgs, AdbPacketDispatcher, AdbSocket } from '../socket/index.js';
+import type { Adb } from "../adb.js";
+import type { AdbIncomingSocketHandler, AdbSocket } from '../socket/index.js';
 import { AdbBufferedStream } from '../stream/index.js';
 import { decodeUtf8 } from "../utils/index.js";
-
-export interface AdbReverseHandler {
-    onSocket(packet: AdbPacketData, socket: AdbSocket): void;
-}
 
 export interface AdbForwardListener {
     deviceSerial: string;
@@ -32,37 +28,30 @@ const AdbReverseErrorResponse =
         });
 
 export class AdbReverseCommand extends AutoDisposable {
-    protected localPortToHandler = new Map<number, AdbReverseHandler>();
+    protected localPortToHandler = new Map<number, AdbIncomingSocketHandler>();
 
     protected deviceAddressToLocalPort = new Map<string, number>();
 
-    protected dispatcher: AdbPacketDispatcher;
+    protected adb: Adb;
 
     protected listening = false;
 
-    public constructor(dispatcher: AdbPacketDispatcher) {
+    public constructor(adb: Adb) {
         super();
 
-        this.dispatcher = dispatcher;
-        this.addDisposable(this.dispatcher.onIncomingSocket(this.handleIncomingSocket, this));
+        this.adb = adb;
+        this.addDisposable(this.adb.addIncomingSocketHandler(this.handleIncomingSocket));
     }
 
-    protected handleIncomingSocket(e: AdbIncomingSocketEventArgs): void {
-        if (e.handled) {
-            return;
-        }
-
-        const address = decodeUtf8(e.packet.payload);
+    protected handleIncomingSocket = async (socket: AdbSocket) => {
+        const address = socket.serviceString;
         // Address format: `tcp:12345\0`
         const port = Number.parseInt(address.substring(4));
-        if (this.localPortToHandler.has(port)) {
-            this.localPortToHandler.get(port)!.onSocket(e.packet, e.socket);
-            e.handled = true;
-        }
-    }
+        return !!(await this.localPortToHandler.get(port)?.(socket));
+    };
 
     private async createBufferedStream(service: string) {
-        const socket = await this.dispatcher.createSocket(service);
+        const socket = await this.adb.createSocket(service);
         return new AdbBufferedStream(socket);
     }
 
@@ -96,7 +85,7 @@ export class AdbReverseCommand extends AutoDisposable {
     public async add(
         deviceAddress: string,
         localPort: number,
-        handler: AdbReverseHandler,
+        handler: AdbIncomingSocketHandler,
     ): Promise<string> {
         const stream = await this.sendRequest(`reverse:forward:${deviceAddress};tcp:${localPort}`);
 

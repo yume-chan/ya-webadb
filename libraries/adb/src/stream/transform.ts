@@ -3,12 +3,12 @@ import type Struct from "@yume-chan/struct";
 import type { StructValueType, ValueOrPromise } from "@yume-chan/struct";
 import { decodeUtf8 } from "../utils/index.js";
 import { BufferedStream, BufferedStreamEndedError } from "./buffered.js";
-import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamDefaultController, type ReadableWritablePair, type UnderlyingSink, type UnderlyingSource } from "./detect.js";
+import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamDefaultController, type ReadableWritablePair, type UnderlyingSink } from "./detect.js";
 
 export interface DuplexStreamFactoryOptions {
-    preventCloseReadableStreams?: boolean | undefined;
+    close?: (() => ValueOrPromise<boolean | void>) | undefined;
 
-    close?: (() => void | Promise<void>) | undefined;
+    dispose?: (() => void | Promise<void>) | undefined;
 }
 
 /**
@@ -19,83 +19,39 @@ export interface DuplexStreamFactoryOptions {
  */
 export class DuplexStreamFactory<R, W> {
     private readableControllers: ReadableStreamDefaultController<R>[] = [];
-    private pushReadableControllers: PushReadableStreamController<R>[] = [];
+
+    private _writableClosed = false;
+    public get writableClosed() { return this._writableClosed; }
 
     private _closed = new PromiseResolver<void>();
     public get closed() { return this._closed.promise; }
 
     private options: DuplexStreamFactoryOptions;
 
-    private _closeRequestedByReadable = false;
-    private _writableClosed = false;
-
     public constructor(options?: DuplexStreamFactoryOptions) {
         this.options = options ?? {};
     }
 
-    public createPushReadable(source: PushReadableStreamSource<R>, strategy?: QueuingStrategy<R>): PushReadableStream<R> {
-        return new PushReadableStream<R>(controller => {
-            this.pushReadableControllers.push(controller);
-
-            controller.abortSignal.addEventListener('abort', async () => {
-                this._closeRequestedByReadable = true;
-                await this.close();
-            });
-
-            source({
-                abortSignal: controller.abortSignal,
-                async enqueue(chunk) {
-                    await controller.enqueue(chunk);
-                },
-                close: async () => {
-                    // The source signals stream ended,
-                    // usually means the other end closed the connection first.
-                    controller.close();
-                    this._closeRequestedByReadable = true;
-                    await this.close();
-                },
-                error: async (e?: any) => {
-                    controller.error(e);
-                    this._closeRequestedByReadable = true;
-                    await this.close();
-                },
-            });
-        }, strategy);
-    };
-
-    public createWrapReadable(wrapper: ReadableStream<R> | WrapReadableStreamStart<R> | ReadableStreamWrapper<R>): WrapReadableStream<R> {
+    public wrapReadable(readable: ReadableStream<R>): WrapReadableStream<R> {
         return new WrapReadableStream<R>({
-            async start() {
-                return getWrappedReadableStream(wrapper);
+            start: (controller) => {
+                this.readableControllers.push(controller);
+                return readable;
+            },
+            cancel: async () => {
+                // cancel means the local peer closes the connection first.
+                await this.close();
             },
             close: async () => {
-                if ('close' in wrapper) {
-                    await wrapper.close?.();
-                }
-                this._closeRequestedByReadable = true;
-                await this.close();
+                // stream end means the remote peer closed the connection first.
+                await this.dispose();
             },
         });
     }
 
-    public createReadable(source?: UnderlyingSource<R>, strategy?: QueuingStrategy<R>): ReadableStream<R> {
-        return new ReadableStream<R>({
-            start: async (controller) => {
-                this.readableControllers.push(controller);
-                await source?.start?.(controller);
-            },
-            pull: (controller) => {
-                return source?.pull?.(controller);
-            },
-            cancel: async (reason) => {
-                await source?.cancel?.(reason);
-                this._closeRequestedByReadable = true;
-                await this.close();
-            },
-        }, strategy);
-    }
-
     public createWritable(sink: UnderlyingSink<W>, strategy?: QueuingStrategy<W>): WritableStream<W> {
+        // `WritableStream` has no way to tell if the remote peer has closed the connection.
+        // So it only triggers `close`.
         return new WritableStream<W>({
             start: async (controller) => {
                 await sink.start?.(controller);
@@ -107,41 +63,37 @@ export class DuplexStreamFactory<R, W> {
 
                 await sink.write?.(chunk, controller);
             },
-            close: async () => {
-                await sink.close?.();
-                this.close();
-            },
             abort: async (reason) => {
                 await sink.abort?.(reason);
+                await this.close();
+            },
+            close: async () => {
+                await sink.close?.();
                 await this.close();
             },
         }, strategy);
     }
 
-    public async closeReadableStreams() {
-        this._closed.resolve();
-        await this.options.close?.();
-
-        for (const controller of this.readableControllers) {
-            try {
-                controller.close();
-            } catch { }
+    public async close() {
+        if (this._writableClosed) {
+            return;
         }
-
-        for (const controller of this.pushReadableControllers) {
-            try {
-                controller.close();
-            } catch { }
+        this._writableClosed = true;
+        if (await this.options.close?.() !== false) {
+            // `close` can return `false` to disable automatic `dispose`.
+            await this.dispose();
         }
     }
 
-    public async close() {
+    public async dispose() {
         this._writableClosed = true;
+        this._closed.resolve();
 
-        if (this._closeRequestedByReadable ||
-            !this.options.preventCloseReadableStreams) {
-            await this.closeReadableStreams();
+        for (const controller of this.readableControllers) {
+            try { controller.close(); } catch { }
         }
+
+        await this.options.dispose?.();
     }
 }
 
@@ -290,20 +242,22 @@ export class WrapWritableStream<T> extends WritableStream<T> {
     }
 }
 
-export type WrapReadableStreamStart<T> = () => ValueOrPromise<ReadableStream<T>>;
+export type WrapReadableStreamStart<T> = (controller: ReadableStreamDefaultController<T>) => ValueOrPromise<ReadableStream<T>>;
 
 export interface ReadableStreamWrapper<T> {
     start: WrapReadableStreamStart<T>;
-    close?(): Promise<void>;
+    cancel?(reason?: any): ValueOrPromise<void>;
+    close?(): ValueOrPromise<void>;
 }
 
 function getWrappedReadableStream<T>(
-    wrapper: ReadableStream<T> | WrapReadableStreamStart<T> | ReadableStreamWrapper<T>
+    wrapper: ReadableStream<T> | WrapReadableStreamStart<T> | ReadableStreamWrapper<T>,
+    controller: ReadableStreamDefaultController<T>
 ) {
     if ('start' in wrapper) {
-        return wrapper.start();
+        return wrapper.start(controller);
     } else if (typeof wrapper === 'function') {
-        return wrapper();
+        return wrapper(controller);
     } else {
         // Can't use `wrapper instanceof ReadableStream`
         // Because we want to be compatible with any ReadableStream-like objects
@@ -311,6 +265,13 @@ function getWrappedReadableStream<T>(
     }
 }
 
+/**
+ * This class has multiple usages:
+ *
+ * 1. Get notified when the stream is cancelled or closed.
+ * 2. Synchronously create a `ReadableStream` by asynchronously return another `ReadableStream`.
+ * 3. Convert native `ReadableStream`s to polyfilled ones so they can `pipe` between.
+ */
 export class WrapReadableStream<T> extends ReadableStream<T>{
     public readable!: ReadableStream<T>;
 
@@ -318,20 +279,20 @@ export class WrapReadableStream<T> extends ReadableStream<T>{
 
     public constructor(wrapper: ReadableStream<T> | WrapReadableStreamStart<T> | ReadableStreamWrapper<T>) {
         super({
-            start: async () => {
+            start: async (controller) => {
                 // `start` is invoked before `ReadableStream`'s constructor finish,
                 // so using `this` synchronously causes
                 // "Must call super constructor in derived class before accessing 'this' or returning from derived constructor".
                 // Queue a microtask to avoid this.
                 await Promise.resolve();
 
-                this.readable = await getWrappedReadableStream(wrapper);
+                this.readable = await getWrappedReadableStream(wrapper, controller);
                 this.reader = this.readable.getReader();
             },
             cancel: async (reason) => {
                 await this.reader.cancel(reason);
-                if ('close' in wrapper) {
-                    await wrapper.close?.();
+                if ('cancel' in wrapper) {
+                    await wrapper.cancel?.(reason);
                 }
             },
             pull: async (controller) => {

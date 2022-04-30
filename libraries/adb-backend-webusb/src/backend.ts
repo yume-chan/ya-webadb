@@ -34,31 +34,30 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketDat
     public constructor(device: USBDevice, inEndpoint: USBEndpoint, outEndpoint: USBEndpoint) {
         const factory = new DuplexStreamFactory<AdbPacketData, Uint8Array>({
             close: async () => {
+                try { await device.close(); } catch { /* device may have already disconnected */ }
+            },
+            dispose: async () => {
                 navigator.usb.removeEventListener('disconnect', handleUsbDisconnect);
-                try {
-                    await device.close();
-                } catch {
-                    // device may have already disconnected
-                }
             },
         });
 
         function handleUsbDisconnect(e: USBConnectionEvent) {
             if (e.device === device) {
-                factory.close();
+                factory.dispose();
             }
         }
 
         navigator.usb.addEventListener('disconnect', handleUsbDisconnect);
 
-        this._readable = factory.createWrapReadable(new ReadableStream<AdbPacketData>({
+        this._readable = factory.wrapReadable(new ReadableStream<AdbPacketData>({
             async pull(controller) {
                 // The `length` argument in `transferIn` must not be smaller than what the device sent,
                 // otherwise it will return `babble` status without any data.
                 // Here we read exactly 24 bytes (packet header) followed by exactly `payloadLength`.
                 const result = await device.transferIn(inEndpoint.endpointNumber, 24);
 
-                // TODO: webusb-backend: handle `babble` by discarding the data and receive again
+                // TODO: webusb: handle `babble` by discarding the data and receive again
+                // TODO: webusb: on Windows, `transferIn` throws an NetworkError when device disconnected, check with other OSs.
 
                 // From spec, the `result.data` always covers the whole `buffer`.
                 const buffer = new Uint8Array(result.data!.buffer);

@@ -103,11 +103,14 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
         const queue = new TransformStream<AdbSocket>();
         this.streams = queue.readable.getReader();
         const writer = queue.writable.getWriter();
-        this.address = await this.device.reverse.add('localabstract:scrcpy', 27183, {
-            onSocket: (packet, stream) => {
-                writer.write(stream);
+        this.address = await this.device.reverse.add(
+            'localabstract:scrcpy',
+            27183,
+            socket => {
+                writer.write(socket);
+                return true;
             },
-        });
+        );
     }
 
     private async accept(): Promise<AdbSocket> {

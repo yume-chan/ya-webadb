@@ -37,7 +37,7 @@ export class GlobalState {
     showErrorDialog(message: Error | string) {
         this.errorDialogVisible = true;
         if (message instanceof Error) {
-            this.errorDialogMessage = message.stack!;
+            this.errorDialogMessage = message.stack || message.message;
         } else {
             this.errorDialogMessage = message;
         }

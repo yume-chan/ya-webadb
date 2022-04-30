@@ -1,5 +1,5 @@
 import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
-import { Adb, AdbBackend, InspectStream, pipeFrom } from '@yume-chan/adb';
+import { Adb, AdbBackend, AdbPacketData, AdbPacketInit, InspectStream, pipeFrom, ReadableStream, WritableStream } from '@yume-chan/adb';
 import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
 import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
@@ -138,49 +138,67 @@ function _Connect(): JSX.Element | null {
     }, [updateUsbBackendList]);
 
     const connect = useCallback(async () => {
+        if (!selectedBackend) {
+            return;
+        }
+
+        setConnecting(true);
+
+        let readable: ReadableStream<AdbPacketData>;
+        let writable: WritableStream<AdbPacketInit>;
         try {
-            if (selectedBackend) {
-                let device: Adb | undefined;
-                try {
-                    setConnecting(true);
+            const streams = await selectedBackend.connect();
 
-                    const streams = await selectedBackend.connect();
+            // Use `InspectStream`s to intercept and log packets
+            readable = streams.readable
+                .pipeThrough(
+                    new InspectStream(packet => {
+                        globalState.appendLog('in', packet);
+                    })
+                );
 
-                    // Use `TransformStream` to intercept packets and log them
-                    const readable = streams.readable
-                        .pipeThrough(
-                            new InspectStream(packet => {
-                                globalState.appendLog('in', packet);
-                            })
-                        );
-                    const writable = pipeFrom(
-                        streams.writable,
-                        new InspectStream(packet => {
-                            globalState.appendLog('out', packet);
-                        })
-                    );
-                    device = await Adb.authenticate({ readable, writable }, CredentialStore, undefined);
-                    device.disconnected.then(() => {
-                        globalState.setDevice(undefined, undefined);
-                    }, (e) => {
-                        globalState.showErrorDialog(e);
-                        globalState.setDevice(undefined, undefined);
-                    });
-                    globalState.setDevice(selectedBackend, device);
-                } catch (e) {
-                    device?.dispose();
-                    throw e;
-                }
-            }
+            writable = pipeFrom(
+                streams.writable,
+                new InspectStream((packet: AdbPacketInit) => {
+                    globalState.appendLog('out', packet);
+                })
+            );
         } catch (e: any) {
             globalState.showErrorDialog(e);
+            setConnecting(false);
+            return;
+        }
+
+        try {
+            const device = await Adb.authenticate(
+                { readable, writable },
+                CredentialStore,
+                undefined
+            );
+
+            device.disconnected.then(() => {
+                globalState.setDevice(undefined, undefined);
+            }, (e) => {
+                globalState.showErrorDialog(e);
+                globalState.setDevice(undefined, undefined);
+            });
+
+            globalState.setDevice(selectedBackend, device);
+        } catch (e: any) {
+            globalState.showErrorDialog(e);
+
+            // The streams are still open when Adb authentication failed,
+            // manually close them to release the device.
+            readable.cancel();
+            writable.close();
         } finally {
             setConnecting(false);
         }
     }, [selectedBackend]);
+
     const disconnect = useCallback(async () => {
         try {
-            await globalState.device!.dispose();
+            await globalState.device!.close();
             globalState.setDevice(undefined, undefined);
         } catch (e: any) {
             globalState.showErrorDialog(e);

@@ -5,7 +5,7 @@ import { AdbAuthenticationProcessor, ADB_DEFAULT_AUTHENTICATORS, type AdbCredent
 import { AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install, type AdbFrameBuffer } from './commands/index.js';
 import { AdbFeatures } from './features.js';
 import { AdbCommand, calculateChecksum, type AdbPacketData, type AdbPacketInit } from './packet.js';
-import { AdbPacketDispatcher, type AdbSocket } from './socket/index.js';
+import { AdbIncomingSocketHandler, AdbPacketDispatcher, type AdbSocket, type Closeable } from './socket/index.js';
 import { AbortController, DecodeUtf8Stream, GatherStringStream, WritableStream, type ReadableWritablePair } from "./stream/index.js";
 import { decodeUtf8, encodeUtf8 } from "./utils/index.js";
 
@@ -18,7 +18,7 @@ export enum AdbPropKey {
 
 export const VERSION_OMIT_CHECKSUM = 0x01000001;
 
-export class Adb {
+export class Adb implements Closeable {
     /**
      * It's possible to call `authenticate` multiple times on a single connection,
      * every time the device receives a `CNXN` packet, it resets its internal state,
@@ -53,7 +53,7 @@ export class Adb {
                             await sendPacket(response);
                             break;
                         default:
-                            // Maybe the previous ADB session exited without reading all packets,
+                            // Maybe the previous ADB client exited without reading all packets,
                             // so they are still waiting in OS internal buffer.
                             // Just ignore them.
                             // Because a `Connect` packet will reset the device,
@@ -78,15 +78,17 @@ export class Adb {
 
         try {
             // https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/transport.cpp#1252
-            // There are some other feature constants, but some of them are only used by ADB server, not devices.
+            // There are some other feature constants, but some of them are only used by ADB server, not devices (daemons).
             const features = [
                 AdbFeatures.ShellV2,
                 AdbFeatures.Cmd,
                 AdbFeatures.StatV2,
                 AdbFeatures.ListV2,
-                'fixed_push_mkdir',
+                AdbFeatures.FixedPushMkdir,
                 'apex',
                 'abb',
+                // only tells the client the symlink timestamp issue in `adb push --sync` has been fixed.
+                // No special handling required.
                 'fixed_push_symlink_timestamp',
                 'abb_exec',
                 'remount_shell',
@@ -130,9 +132,9 @@ export class Adb {
         }
     }
 
-    private readonly packetDispatcher: AdbPacketDispatcher;
+    private readonly dispatcher: AdbPacketDispatcher;
 
-    public get disconnected() { return this.packetDispatcher.disconnected; }
+    public get disconnected() { return this.dispatcher.disconnected; }
 
     private _protocolVersion: number | undefined;
     public get protocolVersion() { return this._protocolVersion; }
@@ -172,7 +174,7 @@ export class Adb {
             appendNullToServiceString = true;
         }
 
-        this.packetDispatcher = new AdbPacketDispatcher(
+        this.dispatcher = new AdbPacketDispatcher(
             connection,
             {
                 calculateChecksum,
@@ -185,7 +187,7 @@ export class Adb {
 
         this.subprocess = new AdbSubprocess(this);
         this.power = new AdbPower(this);
-        this.reverse = new AdbReverseCommand(this.packetDispatcher);
+        this.reverse = new AdbReverseCommand(this);
         this.tcpip = new AdbTcpIpCommand(this);
     }
 
@@ -224,8 +226,12 @@ export class Adb {
         }
     }
 
+    public addIncomingSocketHandler(handler: AdbIncomingSocketHandler) {
+        return this.dispatcher.addIncomingSocketHandler(handler);
+    }
+
     public async createSocket(service: string): Promise<AdbSocket> {
-        return this.packetDispatcher.createSocket(service);
+        return this.dispatcher.createSocket(service);
     }
 
     public async createSocketAndWait(service: string): Promise<string> {
@@ -264,7 +270,7 @@ export class Adb {
         return framebuffer(this);
     }
 
-    public async dispose(): Promise<void> {
-        this.packetDispatcher.dispose();
+    public async close(): Promise<void> {
+        await this.dispatcher.close();
     }
 }

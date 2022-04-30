@@ -1,7 +1,8 @@
 import { PromiseResolver } from "@yume-chan/async";
+import type { Disposable } from "@yume-chan/event";
 import { AdbCommand } from '../packet.js';
-import { ChunkStream, DuplexStreamFactory, pipeFrom, type PushReadableStreamController, type ReadableStream, type ReadableWritablePair, type WritableStream } from '../stream/index.js';
-import type { AdbPacketDispatcher } from './dispatcher.js';
+import { ChunkStream, DuplexStreamFactory, pipeFrom, PushReadableStream, type PushReadableStreamController, type ReadableStream, type ReadableWritablePair, type WritableStream } from '../stream/index.js';
+import type { AdbPacketDispatcher, Closeable } from './dispatcher.js';
 
 export interface AdbSocketInfo {
     localId: number;
@@ -17,7 +18,7 @@ export interface AdbSocketConstructionOptions extends AdbSocketInfo {
     highWaterMark?: number | undefined;
 }
 
-export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<Uint8Array, Uint8Array> {
+export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<Uint8Array, Uint8Array>, Closeable, Disposable {
     private readonly dispatcher!: AdbPacketDispatcher;
 
     public readonly localId!: number;
@@ -49,16 +50,31 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
 
         this._factory = new DuplexStreamFactory<Uint8Array, Uint8Array>({
             close: async () => {
-                await this.close();
+                await this.dispatcher.sendPacket(
+                    AdbCommand.Close,
+                    this.localId,
+                    this.remoteId
+                );
+
+                // Don't `dispose` here, we need to wait for `CLSE` response packet.
+                return false;
+            },
+            dispose: () => {
+                this._closed = true;
+
+                // Error out the pending writes
+                this._writePromise?.reject(new Error('Socket closed'));
             },
         });
 
-        this._readable = this._factory.createPushReadable(controller => {
-            this._readableController = controller;
-        }, {
-            highWaterMark: options.highWaterMark ?? 16 * 1024,
-            size(chunk) { return chunk.byteLength; }
-        });
+        this._readable = this._factory.wrapReadable(
+            new PushReadableStream(controller => {
+                this._readableController = controller;
+            }, {
+                highWaterMark: options.highWaterMark ?? 16 * 1024,
+                size(chunk) { return chunk.byteLength; }
+            })
+        );
 
         this.writable = pipeFrom(
             this._factory.createWritable({
@@ -89,32 +105,22 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
     }
 
     public async close(): Promise<void> {
-        // Error out the pending writes
-        this._writePromise?.reject(new Error('Socket closed'));
-
-        if (!this._closed) {
-            this._closed = true;
-
-            // Only send close packet when `close` is called before `dispose`
-            // (the client initiated the close)
-            await this.dispatcher.sendPacket(
-                AdbCommand.Close,
-                this.localId,
-                this.remoteId
-            );
-        }
+        this._factory.close();
     }
 
     public dispose() {
-        this._closed = true;
-
-        this._factory.close();
-
-        // Close `writable` side
-        this.close();
+        this._factory.dispose();
     }
 }
 
+/**
+ * AdbSocket is a duplex stream.
+ *
+ * To close it, call either `socket.close()`,
+ * `socket.readable.cancel()`, `socket.readable.getReader().cancel()`,
+ * `socket.writable.abort()`, `socket.writable.getWriter().abort()`,
+ * `socket.writable.close()` or `socket.writable.getWriter().close()`.
+ */
 export class AdbSocket implements AdbSocketInfo, ReadableWritablePair<Uint8Array, Uint8Array>{
     private _controller: AdbSocketController;
 
