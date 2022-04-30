@@ -2,6 +2,12 @@
   "name": "@yume-chan/dataview-bigint-polyfill",
   "entries": [
     {
+      "version": "0.0.14",
+      "tag": "@yume-chan/dataview-bigint-polyfill_v0.0.14",
+      "date": "Sat, 30 Apr 2022 14:05:48 GMT",
+      "comments": {}
+    },
+    {
       "version": "0.0.13",
       "tag": "@yume-chan/dataview-bigint-polyfill_v0.0.13",
       "date": "Thu, 28 Apr 2022 01:23:53 GMT",
