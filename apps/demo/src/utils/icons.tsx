@@ -1,5 +1,5 @@
 import { registerIcons } from "@fluentui/react";
-import { FilterRegular, AddCircleRegular, ArrowClockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, BugRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, PanelBottomRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WarningRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { AddCircleRegular, ArrowClockwiseRegular, ArrowRotateClockwiseRegular, ArrowRotateCounterclockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, BugRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FilterRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, OrientationRegular, PanelBottomRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WarningRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
@@ -26,6 +26,7 @@ export function register() {
             FullScreenMaximize: <FullScreenMaximizeRegular style={STYLE} />,
             Info: <InfoRegular style={STYLE} />,
             Navigation: <NavigationRegular style={STYLE} />,
+            Orientation: <OrientationRegular style={STYLE} />,
             PanelBottom: <PanelBottomRegular style={STYLE} />,
             PersonFeedback: <PersonFeedbackRegular style={STYLE} />,
             Phone: <PhoneRegular style={STYLE} />,
@@ -34,6 +35,8 @@ export function register() {
             PlugConnected: <PlugConnectedRegular style={STYLE} />,
             PlugDisconnected: <PlugDisconnectedRegular style={STYLE} />,
             Power: <PowerRegular style={STYLE} />,
+            RotateLeft: <ArrowRotateCounterclockwiseRegular style={STYLE} />,
+            RotateRight: <ArrowRotateClockwiseRegular style={STYLE} />,
             Save: <SaveRegular style={STYLE} />,
             Settings: <SettingsRegular style={STYLE} />,
             Stop: <StopRegular style={STYLE} />,
@@ -80,6 +83,7 @@ export default {
     FullScreenMaximize: 'FullScreenMaximize',
     Info: 'Info',
     Navigation: 'Navigation',
+    Orientation: 'Orientation',
     PanelBottom: 'PanelBottom',
     PersonFeedback: 'PersonFeedback',
     Phone: 'Phone',
@@ -88,6 +92,8 @@ export default {
     PlugConnected: 'PlugConnected',
     PlugDisconnected: 'PlugDisconnected',
     Power: 'Power',
+    RotateLeft: 'RotateLeft',
+    RotateRight: 'RotateRight',
     Save: 'Save',
     Settings: 'Settings',
     Stop: 'Stop',

@@ -1,5 +1,5 @@
 import Struct, { placeholder } from "@yume-chan/struct";
-import type { AndroidKeyEventAction } from "../message.js";
+import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../message.js";
 import { ScrcpyBackOrScreenOnEvent1_16, ScrcpyOptions1_16, type ScrcpyOptionsInit1_16 } from "./1_16/index.js";
 
 export interface ScrcpyOptionsInit1_18 extends ScrcpyOptionsInit1_16 {
@@ -31,6 +31,26 @@ export class ScrcpyOptions1_18<T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsIn
 
     public override getOutputEncoderNameRegex(): RegExp {
         return /\s+scrcpy --encoder '(.*?)'/;
+    }
+
+    public override getControlMessageTypes(): ScrcpyControlMessageType[] {
+        /**
+         *  0 InjectKeycode
+         *  1 InjectText
+         *  2 InjectTouch
+         *  3 InjectScroll
+         *  4 BackOrScreenOn
+         *  5 ExpandNotificationPanel
+         *  6 ExpandSettingsPanel
+         *  7 CollapseNotificationPanel
+         *  8 GetClipboard
+         *  9 SetClipboard
+         * 10 SetScreenPowerMode
+         * 11 RotateDevice
+         */
+        const types = super.getControlMessageTypes();
+        types.splice(6, 0, ScrcpyControlMessageType.ExpandSettingPanel);
+        return types;
     }
 
     public override serializeBackOrScreenOnControlMessage(

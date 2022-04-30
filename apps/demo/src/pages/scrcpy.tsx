@@ -1,5 +1,6 @@
 import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
+import { makeStyles } from "@griffel/react";
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -207,6 +208,10 @@ class ScrcpyPageState {
 
     width = 0;
     height = 0;
+    rotate = 0;
+
+    get rotatedWidth() { return state.rotate & 1 ? state.height : state.width; }
+    get rotatedHeight() { return state.rotate & 1 ? state.width : state.height; }
 
     client: ScrcpyClient | undefined = undefined;
 
@@ -252,8 +257,43 @@ class ScrcpyPageState {
             key: 'fullscreen',
             disabled: !this.running,
             iconProps: { iconName: Icons.FullScreenMaximize },
+            iconOnly: true,
             text: 'Fullscreen',
             onClick: () => { this.deviceView?.enterFullscreen(); },
+        });
+
+        result.push({
+            key: 'rotateDevice',
+            disabled: !this.running,
+            iconProps: { iconName: Icons.Orientation },
+            iconOnly: true,
+            text: 'Rotate Device',
+            onClick: () => { this.client!.rotateDevice(); },
+        });
+
+        result.push({
+            key: 'rotateVideoLeft',
+            disabled: !this.running,
+            iconProps: { iconName: Icons.RotateLeft },
+            iconOnly: true,
+            text: 'Rotate Video Left',
+            onClick: () => {
+                this.rotate -= 1;
+                if (this.rotate < 0) {
+                    this.rotate = 3;
+                }
+            }
+        });
+
+        result.push({
+            key: 'rotateVideoRight',
+            disabled: !this.running,
+            iconProps: { iconName: Icons.RotateRight },
+            iconOnly: true,
+            text: 'Rotate Video Right',
+            onClick: () => {
+                this.rotate = (this.rotate + 1) & 3;
+            },
         });
 
         return result;
@@ -266,6 +306,7 @@ class ScrcpyPageState {
                 iconProps: { iconName: Icons.PanelBottom },
                 checked: this.navigationBarVisible,
                 text: 'Navigation Bar',
+                iconOnly: true,
                 onClick: action(() => {
                     this.navigationBarVisible = !this.navigationBarVisible;
                 }),
@@ -275,6 +316,7 @@ class ScrcpyPageState {
                 iconProps: { iconName: Icons.TextGrammarError },
                 checked: this.logVisible,
                 text: 'Log',
+                iconOnly: true,
                 onClick: action(() => {
                     this.logVisible = !this.logVisible;
                 }),
@@ -284,6 +326,7 @@ class ScrcpyPageState {
                 iconProps: { iconName: Icons.Settings },
                 checked: this.settingsVisible,
                 text: 'Settings',
+                iconOnly: true,
                 onClick: action(() => {
                     this.settingsVisible = !this.settingsVisible;
                 }),
@@ -293,6 +336,7 @@ class ScrcpyPageState {
                 iconProps: { iconName: Icons.Wand },
                 checked: this.demoModeVisible,
                 text: 'Demo Mode',
+                iconOnly: true,
                 onClick: action(() => {
                     this.demoModeVisible = !this.demoModeVisible;
                 }),
@@ -727,15 +771,29 @@ class ScrcpyPageState {
     };
 
     calculatePointerPosition(clientX: number, clientY: number) {
-        const view = this.rendererContainer!.getBoundingClientRect();
-        const pointerViewX = clientX - view.x;
-        const pointerViewY = clientY - view.y;
-        const pointerScreenX = clamp(pointerViewX / view.width, 0, 1) * this.width;
-        const pointerScreenY = clamp(pointerViewY / view.height, 0, 1) * this.height;
+        const viewRect = this.rendererContainer!.getBoundingClientRect();
+        let pointerViewX = clamp((clientX - viewRect.x) / viewRect.width, 0, 1);
+        let pointerViewY = clamp((clientY - viewRect.y) / viewRect.height, 0, 1);
+
+        if (this.rotate & 1) {
+            ([pointerViewX, pointerViewY] = [pointerViewY, pointerViewX]);
+        }
+        switch (this.rotate) {
+            case 1:
+                pointerViewY = 1 - pointerViewY;
+                break;
+            case 2:
+                pointerViewX = 1 - pointerViewX;
+                pointerViewY = 1 - pointerViewY;
+                break;
+            case 3:
+                pointerViewX = 1 - pointerViewX;
+                break;
+        }
 
         return {
-            x: pointerScreenX,
-            y: pointerScreenY,
+            x: pointerViewX * this.width,
+            y: pointerViewY * this.height,
         };
     }
 
@@ -880,7 +938,7 @@ const ConnectionDialog = observer(() => {
     );
 });
 
-const NavigationBar = observer(({
+const NavigationBar = observer(function NavigationBar({
     className,
     style,
     children
@@ -888,7 +946,7 @@ const NavigationBar = observer(({
     className: string;
     style: CSSProperties;
     children: ReactNode;
-}) => {
+    }) {
     if (!state.navigationBarVisible) {
         return null;
     }
@@ -920,7 +978,15 @@ const NavigationBar = observer(({
     );
 });
 
+const useClasses = makeStyles({
+    video: {
+        transformOrigin: 'center center',
+    },
+});
+
 const Scrcpy: NextPage = () => {
+    const classes = useClasses();
+
     return (
         <Stack {...RouteStackProps}>
             <Head>
@@ -932,13 +998,19 @@ const Scrcpy: NextPage = () => {
             <Stack horizontal grow styles={{ root: { height: 0 } }}>
                 <DeviceView
                     ref={state.handleDeviceViewRef}
-                    width={state.width}
-                    height={state.height}
+                    width={state.rotatedWidth}
+                    height={state.rotatedHeight}
                     BottomElement={NavigationBar}
                 >
                     <div
                         ref={state.handleRendererContainerRef}
                         tabIndex={-1}
+                        className={classes.video}
+                        style={{
+                            width: state.width,
+                            height: state.height,
+                            transform: `translate(${(state.rotatedWidth - state.width) / 2}px, ${(state.rotatedHeight - state.height) / 2}px) rotate(${state.rotate * 90}deg)`
+                        }}
                         onPointerDown={state.handlePointerDown}
                         onPointerMove={state.handlePointerMove}
                         onPointerUp={state.handlePointerUp}

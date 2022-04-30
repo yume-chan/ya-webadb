@@ -1,5 +1,7 @@
 import Struct, { placeholder } from '@yume-chan/struct';
 
+// https://github.com/Genymobile/scrcpy/blob/fa5b2a29e983a46b49531def9cf3d80c40c3de37/app/src/control_msg.h#L23
+// For their message bodies, see https://github.com/Genymobile/scrcpy/blob/5c62f3419d252d10cd8c9cbb7c918b358b81f2d0/app/src/control_msg.c#L92
 export enum ScrcpyControlMessageType {
     InjectKeycode,
     InjectText,
@@ -7,6 +9,7 @@ export enum ScrcpyControlMessageType {
     InjectScroll,
     BackOrScreenOn,
     ExpandNotificationPanel,
+    ExpandSettingPanel,
     CollapseNotificationPanel,
     GetClipboard,
     SetClipboard,
@@ -31,9 +34,13 @@ export enum AndroidMotionEventAction {
     ButtonRelease,
 }
 
+export const ScrcpySimpleControlMessage =
+    new Struct()
+        .uint8('type');
+
 export const ScrcpyInjectTouchControlMessage =
     new Struct()
-        .uint8('type', ScrcpyControlMessageType.InjectTouch as const)
+        .fields(ScrcpySimpleControlMessage)
         .uint8('action', placeholder<AndroidMotionEventAction>())
         .uint64('pointerId')
         .uint32('pointerX')
@@ -47,7 +54,7 @@ export type ScrcpyInjectTouchControlMessage = typeof ScrcpyInjectTouchControlMes
 
 export const ScrcpyInjectTextControlMessage =
     new Struct()
-        .uint8('type', ScrcpyControlMessageType.InjectText as const)
+        .fields(ScrcpySimpleControlMessage)
         .uint32('length')
         .string('text', { lengthField: 'length' });
 
@@ -95,7 +102,7 @@ export enum AndroidKeyCode {
 
 export const ScrcpyInjectKeyCodeControlMessage =
     new Struct()
-        .uint8('type', ScrcpyControlMessageType.InjectKeycode as const)
+        .fields(ScrcpySimpleControlMessage)
         .uint8('action', placeholder<AndroidKeyEventAction>())
         .uint32('keyCode')
         .uint32('repeat')

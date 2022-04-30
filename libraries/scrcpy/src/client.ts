@@ -1,7 +1,7 @@
 import { AdbBufferedStream, AdbSubprocessNoneProtocol, DecodeUtf8Stream, InspectStream, TransformStream, WritableStream, type Adb, type AdbSocket, type AdbSubprocessProtocol, type ReadableStream, type WritableStreamDefaultWriter } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
-import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, type AndroidKeyEventAction } from './message.js';
+import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage, type AndroidKeyEventAction } from './message.js';
 import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions, VideoStreamPacket } from "./options/index.js";
 
 function* splitLines(text: string): Generator<string, void, void> {
@@ -195,12 +195,21 @@ export class ScrcpyClient {
         return this._controlStreamWriter;
     }
 
+    private getControlMessageTypeValue(type: ScrcpyControlMessageType) {
+        const list = this.options.getControlMessageTypes();
+        const index = list.indexOf(type);
+        if (index === -1) {
+            throw new Error('Not supported');
+        }
+        return index;
+    }
+
     public async injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, 'type'>) {
         const controlStream = this.checkControlStream('injectKeyCode');
 
         await controlStream.write(ScrcpyInjectKeyCodeControlMessage.serialize({
             ...message,
-            type: ScrcpyControlMessageType.InjectKeycode,
+            type: this.getControlMessageTypeValue(ScrcpyControlMessageType.InjectKeycode),
         }));
     }
 
@@ -208,7 +217,7 @@ export class ScrcpyClient {
         const controlStream = this.checkControlStream('injectText');
 
         await controlStream.write(ScrcpyInjectTextControlMessage.serialize({
-            type: ScrcpyControlMessageType.InjectText,
+            type: this.getControlMessageTypeValue(ScrcpyControlMessageType.InjectText),
             text,
         }));
     }
@@ -234,7 +243,7 @@ export class ScrcpyClient {
         this.lastTouchMessage = now;
         await controlStream.write(ScrcpyInjectTouchControlMessage.serialize({
             ...message,
-            type: ScrcpyControlMessageType.InjectTouch,
+            type: this.getControlMessageTypeValue(ScrcpyControlMessageType.InjectTouch),
             screenWidth: this.screenWidth,
             screenHeight: this.screenHeight,
         }));
@@ -249,7 +258,7 @@ export class ScrcpyClient {
 
         const buffer = this.options!.serializeInjectScrollControlMessage({
             ...message,
-            type: ScrcpyControlMessageType.InjectScroll,
+            type: this.getControlMessageTypeValue(ScrcpyControlMessageType.InjectScroll),
             screenWidth: this.screenWidth,
             screenHeight: this.screenHeight,
         });
@@ -260,12 +269,24 @@ export class ScrcpyClient {
         const controlStream = this.checkControlStream('pressBackOrTurnOnScreen');
 
         const buffer = this.options!.serializeBackOrScreenOnControlMessage({
-            type: ScrcpyControlMessageType.BackOrScreenOn,
+            type: this.getControlMessageTypeValue(ScrcpyControlMessageType.BackOrScreenOn),
             action,
         });
         if (buffer) {
             await controlStream.write(buffer);
         }
+    }
+
+    private async sendSimpleControlMessage(type: ScrcpyControlMessageType, name: string) {
+        const controlStream = this.checkControlStream(name);
+        const buffer = ScrcpySimpleControlMessage.serialize({
+            type: this.getControlMessageTypeValue(type),
+        });
+        await controlStream.write(buffer);
+    }
+
+    public async rotateDevice() {
+        await this.sendSimpleControlMessage(ScrcpyControlMessageType.RotateDevice, 'rotateDevice');
     }
 
     public async close() {

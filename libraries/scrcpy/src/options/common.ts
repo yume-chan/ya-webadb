@@ -1,6 +1,7 @@
 import type { Adb, TransformStream } from "@yume-chan/adb";
 import type { ScrcpyClientConnection } from "../connection.js";
 import type { H264Configuration } from "../decoder/index.js";
+import type { ScrcpyControlMessageType } from "../message.js";
 import type { ScrcpyBackOrScreenOnEvent1_18 } from "./1_18.js";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "./1_22.js";
 
@@ -52,6 +53,8 @@ export interface ScrcpyOptions<T> {
     createConnection(adb: Adb): ScrcpyClientConnection;
 
     createVideoStreamTransformer(): TransformStream<Uint8Array, VideoStreamPacket>;
+
+    getControlMessageTypes(): ScrcpyControlMessageType[];
 
     serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnEvent1_18,

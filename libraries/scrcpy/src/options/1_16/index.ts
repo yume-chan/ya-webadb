@@ -1,8 +1,8 @@
 import { StructDeserializeStream, TransformStream, type Adb } from "@yume-chan/adb";
-import Struct, { placeholder } from "@yume-chan/struct";
+import Struct from "@yume-chan/struct";
 import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec.js";
 import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnectionOptions } from "../../connection.js";
-import { AndroidKeyEventAction, ScrcpyControlMessageType } from "../../message.js";
+import { AndroidKeyEventAction, ScrcpyControlMessageType, ScrcpySimpleControlMessage } from "../../message.js";
 import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18.js";
 import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22.js";
 import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyOptionValue, type VideoStreamPacket } from "../common.js";
@@ -119,12 +119,11 @@ export const VideoPacket =
 export const NO_PTS = BigInt(1) << BigInt(63);
 
 export const ScrcpyBackOrScreenOnEvent1_16 =
-    new Struct()
-        .uint8('type', placeholder<ScrcpyControlMessageType.BackOrScreenOn>());
+    ScrcpySimpleControlMessage;
 
 export const ScrcpyInjectScrollControlMessage1_16 =
     new Struct()
-        .uint8('type', ScrcpyControlMessageType.InjectScroll as const)
+        .fields(ScrcpySimpleControlMessage)
         .uint32('pointerX')
         .uint32('pointerY')
         .uint16('screenWidth')
@@ -295,6 +294,22 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
                 }
             }))
         };
+    }
+
+    public getControlMessageTypes(): ScrcpyControlMessageType[] {
+        return [
+            /*  0 */ ScrcpyControlMessageType.InjectKeycode,
+            /*  1 */ ScrcpyControlMessageType.InjectText,
+            /*  2 */ ScrcpyControlMessageType.InjectTouch,
+            /*  3 */ ScrcpyControlMessageType.InjectScroll,
+            /*  4 */ ScrcpyControlMessageType.BackOrScreenOn,
+            /*  5 */ ScrcpyControlMessageType.ExpandNotificationPanel,
+            /*  6 */ ScrcpyControlMessageType.CollapseNotificationPanel,
+            /*  7 */ ScrcpyControlMessageType.GetClipboard,
+            /*  8 */ ScrcpyControlMessageType.SetClipboard,
+            /*  9 */ ScrcpyControlMessageType.SetScreenPowerMode,
+            /* 10 */ ScrcpyControlMessageType.RotateDevice,
+        ];
     }
 
     public serializeBackOrScreenOnControlMessage(
