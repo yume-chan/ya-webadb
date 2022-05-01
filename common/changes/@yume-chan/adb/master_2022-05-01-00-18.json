@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb",
+            "comment": "Add support for old protocol of `reverse:forward` command before Android 8",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb"
+}
