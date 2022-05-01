@@ -1,6 +1,6 @@
 import type { Adb } from "@yume-chan/adb";
 import Struct from "@yume-chan/struct";
-import { ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnection, type ScrcpyClientConnectionOptions } from "../connection.js";
+import { ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnection } from "../connection.js";
 import { ScrcpyInjectScrollControlMessage1_16 } from "./1_16/index.js";
 import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from "./1_21.js";
 
@@ -8,14 +8,14 @@ export interface ScrcpyOptionsInit1_22 extends ScrcpyOptionsInit1_21 {
     downsizeOnError: boolean;
 
     /**
-     * Send device name and size
+     * Send device name and size at start of video stream.
      *
      * @default true
      */
     sendDeviceMeta: boolean;
 
     /**
-     * Write a byte on start to detect connection issues
+     * Send a `0` byte on start of video stream to detect connection issues
      *
      * @default true
      */
@@ -59,11 +59,9 @@ export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsIn
     }
 
     public override createConnection(device: Adb): ScrcpyClientConnection {
-        const defaultValue = this.getDefaultValue();
-        const options: ScrcpyClientConnectionOptions = {
-            control: this.value.control ?? defaultValue.control,
-            sendDummyByte: this.value.sendDummyByte ?? defaultValue.sendDummyByte,
-            sendDeviceMeta: this.value.sendDeviceMeta ?? defaultValue.sendDeviceMeta,
+        const options = {
+            ...this.getDefaultValue(),
+            ...this.value,
         };
         if (this.value.tunnelForward) {
             return new ScrcpyClientForwardConnection(device, options);

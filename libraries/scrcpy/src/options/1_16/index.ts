@@ -16,7 +16,7 @@ export enum ScrcpyLogLevel {
     Error = 'error',
 }
 
-export enum ScrcpyScreenOrientation {
+export enum ScrcpyVideoOrientation {
     Initial = -2,
     Unlocked = -1,
     Portrait = 0,
@@ -75,7 +75,7 @@ export interface ScrcpyOptionsInit1_16 {
      * It will not keep the device screen in specific orientation,
      * only the captured video will in this orientation.
      */
-    lockVideoOrientation: ScrcpyScreenOrientation;
+    lockVideoOrientation: ScrcpyVideoOrientation;
 
     tunnelForward: boolean;
 
@@ -141,8 +141,8 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
         }
 
         if (new.target === ScrcpyOptions1_16 &&
-            value.lockVideoOrientation === ScrcpyScreenOrientation.Initial) {
-            value.lockVideoOrientation = ScrcpyScreenOrientation.Unlocked;
+            value.lockVideoOrientation === ScrcpyVideoOrientation.Initial) {
+            value.lockVideoOrientation = ScrcpyVideoOrientation.Unlocked;
         }
 
         this.value = value as Partial<T>;
@@ -173,7 +173,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
             maxSize: 0,
             bitRate: 8_000_000,
             maxFps: 0,
-            lockVideoOrientation: ScrcpyScreenOrientation.Unlocked,
+            lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
             tunnelForward: false,
             crop: '-',
             sendFrameMeta: true,

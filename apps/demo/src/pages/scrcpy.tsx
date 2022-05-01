@@ -9,7 +9,7 @@ import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
 import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyScreenOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
+import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 
 import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
@@ -101,15 +101,19 @@ interface Settings {
     maxSize: number;
     bitRate: number;
     tunnelForward?: boolean;
-    encoder?: string;
+    encoderName?: string;
     decoder?: string;
     ignoreDecoderCodecArgs?: boolean;
+    lockVideoOrientation?: ScrcpyVideoOrientation;
+    displayId?: number;
+    crop: string;
 }
 
 interface SettingDefinitionBase {
     key: keyof Settings;
     type: string;
     label: string;
+    labelExtra?: JSX.Element;
     description?: string;
 }
 
@@ -141,30 +145,39 @@ interface SettingItemProps {
     onChange: (key: keyof Settings, value: any) => void;
 }
 
+const useClasses = makeStyles({
+    labelRight: {
+        marginLeft: '4px',
+    },
+    video: {
+        transformOrigin: 'center center',
+    },
+});
+
 const SettingItem = observer(function SettingItem({
     definition,
     settings,
     onChange,
 }: SettingItemProps) {
-    let label: string | JSX.Element;
-    if (definition.description) {
-        label = (
-            <>
-                <span>{definition.label}{' '}</span>
+    const classes = useClasses();
+
+    let label: JSX.Element = (
+        <Stack horizontal verticalAlign="center">
+            <span>{definition.label}</span>
+            {!!definition.description && (
                 <TooltipHost content={definition.description}>
-                    <Icon iconName={Icons.Info} />
+                    <Icon className={classes.labelRight} iconName={Icons.Info} />
                 </TooltipHost>
-            </>
-        );
-    } else {
-        label = definition.label;
-    }
+            )}
+            {definition.labelExtra}
+        </Stack>
+    );
 
     switch (definition.type) {
         case 'dropdown':
             return (
                 <Dropdown
-                    label={definition.label}
+                    label={label as any}
                     options={definition.options}
                     placeholder={definition.placeholder}
                     selectedKey={settings[definition.key]}
@@ -215,7 +228,44 @@ class ScrcpyPageState {
 
     client: ScrcpyClient | undefined = undefined;
 
+    async pushServer() {
+        const serverBuffer = await fetchServer();
+
+        await new ReadableStream<Uint8Array>({
+            start(controller) {
+                controller.enqueue(serverBuffer);
+                controller.close();
+            },
+        })
+            .pipeTo(pushServer(globalState.device!));
+    }
+
     encoders: string[] = [];
+    updateEncoders = async () => {
+        try {
+            await this.pushServer();
+
+            const encoders = await ScrcpyClient.getEncoders(
+                globalState.device!,
+                DEFAULT_SERVER_PATH,
+                SCRCPY_SERVER_VERSION,
+                new ScrcpyOptions1_24({
+                    logLevel: ScrcpyLogLevel.Debug,
+                    tunnelForward: this.settings.tunnelForward,
+                })
+            );
+
+            runInAction(() => {
+                this.encoders = encoders;
+                if (!this.settings.encoderName ||
+                    !this.encoders.includes(this.settings.encoderName)) {
+                    this.settings.encoderName = this.encoders[0];
+                }
+            });
+        } catch (e: any) {
+            globalState.showErrorDialog(e);
+        }
+    };
 
     decoders: DecoderDefinition[] = [{
         key: 'tinyh264',
@@ -223,6 +273,33 @@ class ScrcpyPageState {
         Constructor: TinyH264Decoder,
     }];
     decoder: H264Decoder | undefined = undefined;
+
+    displays: number[] = [];
+    updateDisplays = async () => {
+        try {
+            await this.pushServer();
+
+            const displays = await ScrcpyClient.getDisplays(
+                globalState.device!,
+                DEFAULT_SERVER_PATH,
+                SCRCPY_SERVER_VERSION,
+                new ScrcpyOptions1_24({
+                    logLevel: ScrcpyLogLevel.Debug,
+                    tunnelForward: this.settings.tunnelForward,
+                })
+            );
+
+            runInAction(() => {
+                this.displays = displays;
+                if (!this.settings.displayId ||
+                    !this.displays.includes(this.settings.displayId)) {
+                    this.settings.displayId = this.displays[0];
+                }
+            });
+        } catch (e: any) {
+            globalState.showErrorDialog(e);
+        }
+    };
 
     connecting = false;
     serverTotalSize = 0;
@@ -368,16 +445,27 @@ class ScrcpyPageState {
     settings: Settings = {
         maxSize: 1080,
         bitRate: 4_000_000,
+        lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
+        displayId: 0,
+        crop: '',
     };
 
     get settingDefinitions() {
         const result: SettingDefinition[] = [];
 
         result.push({
-            key: 'encoder',
+            key: 'encoderName',
             type: 'dropdown',
             label: 'Encoder',
-            placeholder: 'Connect once to retrieve encoder list',
+            placeholder: 'Press refresh to update available encoders',
+            labelExtra: (
+                <IconButton
+                    iconProps={{ iconName: Icons.ArrowClockwise }}
+                    disabled={!globalState.device}
+                    text="Refresh"
+                    onClick={this.updateEncoders}
+                />
+            ),
             options: this.encoders.map(item => ({
                 key: item,
                 text: item,
@@ -429,6 +517,57 @@ class ScrcpyPageState {
             description: 'Android before version 9 has a bug that prevents reverse tunneling when using ADB over WiFi.'
         });
 
+        result.push({
+            key: 'lockVideoOrientation',
+            type: 'dropdown',
+            label: 'Lock Video Orientation',
+            options: [
+                {
+                    key: ScrcpyVideoOrientation.Unlocked,
+                    text: 'Unlocked',
+                },
+                {
+                    key: ScrcpyVideoOrientation.Initial,
+                    text: 'Current',
+                },
+                {
+                    key: ScrcpyVideoOrientation.Portrait,
+                    text: 'Portrait',
+                },
+                {
+                    key: ScrcpyVideoOrientation.Landscape,
+                    text: 'Landscape',
+                },
+                {
+                    key: ScrcpyVideoOrientation.PortraitFlipped,
+                    text: 'Portrait (Flipped)',
+                },
+                {
+                    key: ScrcpyVideoOrientation.LandscapeFlipped,
+                    text: 'Landscape (Flipped)',
+                },
+            ],
+        });
+
+        result.push({
+            key: 'displayId',
+            type: 'dropdown',
+            label: 'Display',
+            placeholder: 'Press refresh to update available displays',
+            labelExtra: (
+                <IconButton
+                    iconProps={{ iconName: Icons.ArrowClockwise }}
+                    disabled={!globalState.device}
+                    text="Refresh"
+                    onClick={this.updateDisplays}
+                />
+            ),
+            options: this.displays.map(item => ({
+                key: item,
+                text: item.toString(),
+            })),
+        });
+
         return result;
     }
 
@@ -438,6 +577,7 @@ class ScrcpyPageState {
             settings: observable.deep,
             start: false,
             stop: action.bound,
+            dispose: action.bound,
             handleDeviceViewRef: action.bound,
             handleRendererContainerRef: action.bound,
             handleBackPointerDown: false,
@@ -460,10 +600,13 @@ class ScrcpyPageState {
             if (globalState.device) {
                 runInAction(() => {
                     this.encoders = [];
-                    this.settings.encoder = undefined;
+                    this.settings.encoderName = undefined;
+
+                    this.displays = [];
+                    this.settings.displayId = undefined;
                 });
             } else {
-                this.stop();
+                this.dispose();
             }
         });
 
@@ -556,30 +699,6 @@ class ScrcpyPageState {
                 clearInterval(intervalId);
             }
 
-            const encoders = await ScrcpyClient.getEncoders(
-                globalState.device,
-                DEFAULT_SERVER_PATH,
-                SCRCPY_SERVER_VERSION,
-                new ScrcpyOptions1_24({
-                    logLevel: ScrcpyLogLevel.Debug,
-                    bitRate: 4_000_000,
-                    tunnelForward: this.settings.tunnelForward,
-                    sendDeviceMeta: false,
-                    sendDummyByte: false,
-                    control: false,
-                    // Don't cleanup when getting encoders,
-                    // so doesn't need to push server binary again
-                    cleanup: false,
-                })
-            );
-            if (encoders.length === 0) {
-                throw new Error('No available encoder found');
-            }
-
-            runInAction(() => {
-                this.encoders = encoders;
-            });
-
             const decoderDefinition = this.decoders.find(x => x.key === this.settings.decoder) ?? this.decoders[0];
             const decoder = new decoderDefinition.Constructor();
             runInAction(() => {
@@ -589,8 +708,6 @@ class ScrcpyPageState {
             const options = new ScrcpyOptions1_24({
                 logLevel: ScrcpyLogLevel.Debug,
                 ...this.settings,
-                lockVideoOrientation: ScrcpyScreenOrientation.Unlocked,
-                encoderName: this.settings.encoder ?? encoders[0],
                 sendDeviceMeta: false,
                 sendDummyByte: false,
                 codecOptions: !this.settings.ignoreDecoderCodecArgs
@@ -633,7 +750,7 @@ class ScrcpyPageState {
                 .pipeTo(decoder.writable)
                 .catch(() => { });
 
-            client.exit.then(() => this.stop());
+            client.exit.then(this.dispose);
 
             client.onClipboardChange(content => {
                 window.navigator.clipboard.writeText(content);
@@ -655,15 +772,16 @@ class ScrcpyPageState {
     async stop() {
         // Request to close client first
         await this.client?.close();
+        this.dispose();
+    }
 
+    dispose() {
         // Otherwise some packets may still arrive at decoder
         this.decoder?.dispose();
+        this.decoder = undefined;
 
-        runInAction(() => {
-            this.client = undefined;
-            this.decoder = undefined;
-            this.running = false;
-        });
+        this.client = undefined;
+        this.running = false;
     }
 
     handleDeviceViewRef(element: DeviceViewRef | null) {
@@ -948,7 +1066,9 @@ const NavigationBar = observer(function NavigationBar({
     children: ReactNode;
     }) {
     if (!state.navigationBarVisible) {
-        return null;
+        return (
+            <div className={className} style={style}>{children}</div>
+        );
     }
 
     return (
@@ -976,12 +1096,6 @@ const NavigationBar = observer(function NavigationBar({
             </Stack>
         </Stack>
     );
-});
-
-const useClasses = makeStyles({
-    video: {
-        transformOrigin: 'center center',
-    },
 });
 
 const Scrcpy: NextPage = () => {

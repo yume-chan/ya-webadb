@@ -1,4 +1,4 @@
-import { AdbBufferedStream, AdbSubprocessNoneProtocol, DecodeUtf8Stream, InspectStream, TransformStream, WritableStream, type Adb, type AdbSocket, type AdbSubprocessProtocol, type ReadableStream, type WritableStreamDefaultWriter } from '@yume-chan/adb';
+import { AbortController, AdbBufferedStream, AdbSubprocessNoneProtocol, DecodeUtf8Stream, InspectStream, ReadableStream, TransformStream, WritableStream, type Adb, type AdbSocket, type AdbSubprocessProtocol, type WritableStreamDefaultWriter } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage, type AndroidKeyEventAction } from './message.js';
@@ -20,12 +20,87 @@ function* splitLines(text: string): Generator<string, void, void> {
     }
 }
 
+class SplitLinesStream extends TransformStream<string, string>{
+    constructor() {
+        super({
+            transform(chunk, controller) {
+                for (const line of splitLines(chunk)) {
+                    if (line === '') {
+                        continue;
+                    }
+                    controller.enqueue(line);
+                }
+            },
+        });
+    }
+}
+
+class ArrayToStream<T> extends ReadableStream<T>{
+    private array!: T[];
+    private index = 0;
+
+    constructor(array: T[]) {
+        super({
+            start: async () => {
+                await Promise.resolve();
+                this.array = array;
+            },
+            pull: (controller) => {
+                if (this.index < this.array.length) {
+                    controller.enqueue(this.array[this.index]!);
+                    this.index += 1;
+                } else {
+                    controller.close();
+                }
+            },
+        });
+    }
+}
+
+class ConcatStream<T> extends ReadableStream<T>{
+    private streams!: ReadableStream<T>[];
+    private index = 0;
+    private reader!: ReadableStreamDefaultReader<T>;
+
+    constructor(...streams: ReadableStream<T>[]) {
+        super({
+            start: async (controller) => {
+                await Promise.resolve();
+
+                this.streams = streams;
+                this.advance(controller);
+            },
+            pull: async (controller) => {
+                const result = await this.reader.read();
+                if (!result.done) {
+                    controller.enqueue(result.value);
+                    return;
+                }
+                this.advance(controller);
+            }
+        });
+    }
+
+    private advance(controller: ReadableStreamDefaultController<T>) {
+        if (this.index < this.streams.length) {
+            this.reader = this.streams[this.index]!.getReader();
+            this.index += 1;
+        } else {
+            controller.close();
+        }
+    }
+}
+
 const ClipboardMessage =
     new Struct()
         .uint32('length')
         .string('content', { lengthField: 'length' });
 
 export class ScrcpyClient {
+    /**
+     * This method will modify the given `options`,
+     * so don't reuse it elsewhere.
+     */
     public static async getEncoders(
         adb: Adb,
         path: string,
@@ -37,6 +112,8 @@ export class ScrcpyClient {
         options.value.encoderName = '_';
         // Disable control for faster connection in 1.22+
         options.value.control = false;
+        options.value.sendDeviceMeta = false;
+        options.value.sendDummyByte = false;
 
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
@@ -54,6 +131,45 @@ export class ScrcpyClient {
         }));
 
         return encoders;
+    }
+
+    /**
+     * This method will modify the given `options`,
+     * so don't reuse it elsewhere.
+     */
+    public static async getDisplays(
+        adb: Adb,
+        path: string,
+        version: string,
+        options: ScrcpyOptions<any>
+    ): Promise<number[]> {
+        // Similar to `getEncoders`, pass an invalid option and parse the output
+        options.value.displayId = -1;
+
+        options.value.control = false;
+        options.value.sendDeviceMeta = false;
+        options.value.sendDummyByte = false;
+
+        try {
+            // Server will exit before opening connections when an invalid display id was given.
+            await ScrcpyClient.start(adb, path, version, options);
+        } catch (e) {
+            if (e instanceof Error) {
+                const output = (e as any).output as string[];
+
+                const displayIdRegex = /\s+scrcpy --display (\d+)/;
+                const displays: number[] = [];
+                for (const line of output) {
+                    const match = line.match(displayIdRegex);
+                    if (match) {
+                        displays.push(Number.parseInt(match[1]!, 10));
+                    }
+                }
+                return displays;
+            }
+        }
+
+        throw new Error('failed to get displays');
     }
 
     public static async start(
@@ -85,17 +201,50 @@ export class ScrcpyClient {
                 }
             );
 
+            const stdout = process.stdout
+                .pipeThrough(new DecodeUtf8Stream())
+                .pipeThrough(new SplitLinesStream());
+
+            // Read stdout, otherwise `process.exit` won't resolve.
+            const output: string[] = [];
+            const abortController = new AbortController();
+            const pipe = stdout
+                .pipeTo(new WritableStream({
+                    write(chunk) {
+                        output.push(chunk);
+                    }
+                }), {
+                    signal: abortController.signal,
+                    preventCancel: true,
+                })
+                .catch(() => { });
+
             const result = await Promise.race([
                 process.exit,
                 connection.getStreams(),
             ]);
 
             if (typeof result === 'number') {
-                throw new Error('scrcpy server exited prematurely');
+                const error = new Error('scrcpy server exited prematurely');
+                (error as any).output = output;
+                throw error;
             }
 
+            abortController.abort();
+            await pipe;
+
             const [videoStream, controlStream] = result;
-            return new ScrcpyClient(adb, options, process, videoStream, controlStream);
+            return new ScrcpyClient(
+                adb,
+                options,
+                process,
+                new ConcatStream(
+                    new ArrayToStream(output),
+                    stdout,
+                ),
+                videoStream,
+                controlStream
+            );
         } catch (e) {
             await process?.kill();
             throw e;
@@ -135,6 +284,7 @@ export class ScrcpyClient {
         adb: Adb,
         options: ScrcpyOptions<any>,
         process: AdbSubprocessProtocol,
+        stdout: ReadableStream<string>,
         videoStream: AdbSocket,
         controlStream: AdbSocket | undefined,
     ) {
@@ -142,18 +292,7 @@ export class ScrcpyClient {
         this.options = options;
         this.process = process;
 
-        this._stdout = process.stdout
-            .pipeThrough(new DecodeUtf8Stream())
-            .pipeThrough(new TransformStream({
-                transform(chunk, controller) {
-                    for (const line of splitLines(chunk)) {
-                        if (line === '') {
-                            continue;
-                        }
-                        controller.enqueue(line);
-                    }
-                },
-            }));
+        this._stdout = stdout;
 
         this._videoStream = videoStream.readable
             .pipeThrough(options.createVideoStreamTransformer())
