@@ -169,11 +169,11 @@ function _Connect(): JSX.Element | null {
             return;
         }
 
-        function dispose() {
+        async function dispose() {
             // Adb won't close the streams,
             // so manually close them.
             try { readable.cancel(); } catch { }
-            try { writable.close(); } catch { }
+            try { await writable.close(); } catch { }
             globalState.setDevice(undefined, undefined);
         }
 
@@ -184,17 +184,17 @@ function _Connect(): JSX.Element | null {
                 undefined
             );
 
-            device.disconnected.then(() => {
-                dispose();
-            }, (e) => {
+            device.disconnected.then(async () => {
+                await dispose();
+            }, async (e) => {
                 globalState.showErrorDialog(e);
-                dispose();
+                await dispose();
             });
 
             globalState.setDevice(selectedBackend, device);
         } catch (e: any) {
             globalState.showErrorDialog(e);
-            dispose();
+            await dispose();
         } finally {
             setConnecting(false);
         }
