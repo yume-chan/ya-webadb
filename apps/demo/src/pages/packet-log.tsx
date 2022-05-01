@@ -160,7 +160,7 @@ const columns: Column[] = [
             const item = globalState.logs[rowIndex];
 
             if (!item.arg1String) {
-                item.arg1String = item.arg0.toString(16).padStart(8, '0');
+                item.arg1String = item.arg1.toString(16).padStart(8, '0');
             }
 
             const classes = useClasses();

@@ -182,7 +182,7 @@ export const Grid = withDisplayName('Grid')(({
     }, [bodyRef]);
 
     const rowRange = useMemo(() => {
-        const start = Math.floor(scrollTop / rowHeight);
+        const start = Math.min(rowCount, Math.floor(scrollTop / rowHeight));
         const end = Math.min(rowCount, Math.ceil((scrollTop + bodySize.height) / rowHeight));
         return { start, end, offset: scrollTop - start * rowHeight };
     }, [scrollTop, bodySize.height, rowCount, rowHeight]);
@@ -302,15 +302,18 @@ export const Grid = withDisplayName('Grid')(({
             <div ref={setBodyRef} className={classes.body} onScroll={handleScroll}>
                 <ResizeObserver onResize={setBodySize} />
                 {placeholder}
-                {Array.from(Array(rowRange.end - rowRange.start), (_, rowIndex) => (
-                    <GridRowWrapper
-                        key={rowRange.start + rowIndex}
-                        RowComponent={RowComponent}
-                        rowIndex={rowRange.start + rowIndex}
-                        rowHeight={rowHeight}
-                        columns={columnMetadata.columns}
-                    />
-                ))}
+                {Array.from(
+                    { length: rowRange.end - rowRange.start },
+                    (_, rowIndex) => (
+                        <GridRowWrapper
+                            key={rowRange.start + rowIndex}
+                            RowComponent={RowComponent}
+                            rowIndex={rowRange.start + rowIndex}
+                            rowHeight={rowHeight}
+                            columns={columnMetadata.columns}
+                        />
+                    )
+                )}
             </div>
         </div>
     );
