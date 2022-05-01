@@ -175,7 +175,7 @@ export class AdbSync extends AutoDisposable {
 
     public override async dispose() {
         super.dispose();
-        this.stream.close();
+        await this.stream.close();
         await this.writer.close();
     }
 }

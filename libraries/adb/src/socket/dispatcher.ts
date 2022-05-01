@@ -47,6 +47,7 @@ export class AdbPacketDispatcher implements Closeable {
 
     public readonly options: AdbPacketDispatcherOptions;
 
+    private _closed = false;
     private _disconnected = new PromiseResolver<void>();
     public get disconnected() { return this._disconnected.promise; }
 
@@ -90,17 +91,22 @@ export class AdbPacketDispatcher implements Closeable {
                 },
             }), {
                 // There are multiple reasons for the pipe to stop,
-                // including device disconnection, protocol error, or user abort,
+                // (device disconnection, protocol error, or user abortion)
                 // if the underlying streams are still open,
                 // it's still possible to create another ADB connection.
                 // So don't close `readable` here.
-                preventCancel: false,
+                preventCancel: true,
                 signal: this._abortController.signal,
             })
             .then(() => {
                 this.dispose();
             }, (e) => {
-                this._disconnected.reject(e);
+                // https://github.com/MattiasBuelens/web-streams-polyfill/issues/115
+                // `e` is always `AbortError` (instead of what I give in `abortController.abort()`)
+                // so we can't check if `e` is a real error.
+                if (!this._closed) {
+                    this._disconnected.reject(e);
+                }
                 this.dispose();
             });
 
@@ -265,6 +271,7 @@ export class AdbPacketDispatcher implements Closeable {
             (init as AdbPacketInit).checksum = 0;
         }
 
+        await this._writer.ready;
         await this._writer.write(init as AdbPacketInit);
     }
 
@@ -280,21 +287,17 @@ export class AdbPacketDispatcher implements Closeable {
         // Stop receiving
         // It's possible that we haven't received all `CLSE` confirm packets,
         // but it doesn't matter, the next connection can cope with them.
-        try {
-            this._abortController.abort();
-        } catch { }
+        this._closed = true;
+        this._abortController.abort();
+        this._writer.releaseLock();
 
-        // Adb connection doesn't have a method to confirm closing,
-        // so call `dispose` immediately
-        this.dispose();
+        // `pipe().then()` will call `dispose`
     }
 
     private dispose() {
         for (const socket of this.sockets.values()) {
             socket.dispose();
         }
-
-        this._writer.releaseLock();
 
         this._disconnected.resolve();
     }

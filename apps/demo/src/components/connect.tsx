@@ -169,6 +169,14 @@ function _Connect(): JSX.Element | null {
             return;
         }
 
+        function dispose() {
+            // Adb won't close the streams,
+            // so manually close them.
+            try { readable.cancel(); } catch { }
+            try { writable.close(); } catch { }
+            globalState.setDevice(undefined, undefined);
+        }
+
         try {
             const device = await Adb.authenticate(
                 { readable, writable },
@@ -177,20 +185,16 @@ function _Connect(): JSX.Element | null {
             );
 
             device.disconnected.then(() => {
-                globalState.setDevice(undefined, undefined);
+                dispose();
             }, (e) => {
                 globalState.showErrorDialog(e);
-                globalState.setDevice(undefined, undefined);
+                dispose();
             });
 
             globalState.setDevice(selectedBackend, device);
         } catch (e: any) {
             globalState.showErrorDialog(e);
-
-            // The streams are still open when Adb authentication failed,
-            // manually close them to release the device.
-            readable.cancel();
-            writable.close();
+            dispose();
         } finally {
             setConnecting(false);
         }

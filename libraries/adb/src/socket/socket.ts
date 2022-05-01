@@ -1,7 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import { AdbCommand } from '../packet.js';
-import { ChunkStream, DuplexStreamFactory, pipeFrom, PushReadableStream, type PushReadableStreamController, type ReadableStream, type ReadableWritablePair, type WritableStream } from '../stream/index.js';
+import { ChunkStream, DuplexStreamFactory, pipeFrom, PushReadableStream, WritableStream, type PushReadableStreamController, type ReadableStream, type ReadableWritablePair } from '../stream/index.js';
 import type { AdbPacketDispatcher, Closeable } from './dispatcher.js';
 
 export interface AdbSocketInfo {
@@ -77,19 +77,21 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
         );
 
         this.writable = pipeFrom(
-            this._factory.createWritable({
-                write: async (chunk) => {
-                    // Wait for an ack packet
-                    this._writePromise = new PromiseResolver();
-                    await this.dispatcher.sendPacket(
-                        AdbCommand.Write,
-                        this.localId,
-                        this.remoteId,
-                        chunk
-                    );
-                    await this._writePromise.promise;
-                },
-            }),
+            this._factory.createWritable(
+                new WritableStream({
+                    write: async (chunk) => {
+                        // Wait for an ack packet
+                        this._writePromise = new PromiseResolver();
+                        await this.dispatcher.sendPacket(
+                            AdbCommand.Write,
+                            this.localId,
+                            this.remoteId,
+                            chunk
+                        );
+                        await this._writePromise.promise;
+                    }
+                }),
+            ),
             new ChunkStream(this.dispatcher.options.maxPayloadSize)
         );
 

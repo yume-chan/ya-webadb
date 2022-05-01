@@ -123,8 +123,8 @@ export class BufferedStream {
         }
     }
 
-    public close() {
-        this.reader.cancel();
+    public async close() {
+        await this.reader.cancel();
     }
 }
 

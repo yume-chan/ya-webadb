@@ -76,6 +76,7 @@ export class Adb implements Closeable {
             await writer.write(calculateChecksum(init));
         }
 
+        let banner: string;
         try {
             // https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/transport.cpp#1252
             // There are some other feature constants, but some of them are only used by ADB server, not devices (daemons).
@@ -109,27 +110,23 @@ export class Adb implements Closeable {
                 payload: encodeUtf8(`host::features=${features};`),
             });
 
-            const banner = await resolver.promise;
-
-            // Stop piping before creating `Adb` object
-            // Because `AdbPacketDispatcher` will lock the streams when initializing
+            banner = await resolver.promise;
+        } finally {
+            // When failed, release locks on `connection` so the caller can try again.
+            // When success, also release locks so `AdbPacketDispatcher` can use them.
             abortController.abort();
             writer.releaseLock();
 
             // Wait until pipe stops (`ReadableStream` lock released)
             await pipe;
-
-            return new Adb(
-                connection,
-                version,
-                maxPayloadSize,
-                banner,
-            );
-        } catch (e) {
-            abortController.abort();
-            writer.releaseLock();
-            throw e;
         }
+
+        return new Adb(
+            connection,
+            version,
+            maxPayloadSize,
+            banner,
+        );
     }
 
     private readonly dispatcher: AdbPacketDispatcher;

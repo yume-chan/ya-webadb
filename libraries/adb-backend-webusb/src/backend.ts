@@ -1,4 +1,4 @@
-import { AdbPacketHeader, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, type AdbBackend, type AdbPacketData, type AdbPacketInit, type ReadableWritablePair, type WritableStream } from '@yume-chan/adb';
+import { AdbPacketHeader, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, WritableStream, type AdbBackend, type AdbPacketData, type AdbPacketInit, type ReadableWritablePair } from '@yume-chan/adb';
 import type { StructDeserializeStream } from "@yume-chan/struct";
 
 export const ADB_DEVICE_FILTER: USBDeviceFilter = {
@@ -77,14 +77,14 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketDat
         }));
 
         this._writable = pipeFrom(
-            factory.createWritable({
+            factory.createWritable(new WritableStream({
                 write: async (chunk) => {
                     await device.transferOut(outEndpoint.endpointNumber, chunk);
                 },
             }, {
                 highWaterMark: 16 * 1024,
                 size(chunk) { return chunk.byteLength; },
-            }),
+            })),
             new AdbPacketSerializeStream()
         );
     }

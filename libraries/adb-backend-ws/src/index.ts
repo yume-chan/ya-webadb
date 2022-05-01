@@ -1,4 +1,4 @@
-import { AdbPacket, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, StructDeserializeStream, type AdbBackend } from '@yume-chan/adb';
+import { AdbPacket, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, StructDeserializeStream, WritableStream, type AdbBackend } from '@yume-chan/adb';
 
 export default class AdbWsBackend implements AdbBackend {
     public readonly serial: string;
@@ -42,14 +42,14 @@ export default class AdbWsBackend implements AdbBackend {
             size(chunk) { return chunk.byteLength; },
         }));
 
-        const writable = factory.createWritable({
+        const writable = factory.createWritable(new WritableStream({
             write: (chunk) => {
                 socket.send(chunk);
             },
         }, {
             highWaterMark: 16 * 1024,
             size(chunk) { return chunk.byteLength; },
-        });
+        }));
 
         return {
             readable: readable.pipeThrough(new StructDeserializeStream(AdbPacket)),

@@ -3,7 +3,7 @@ import type Struct from "@yume-chan/struct";
 import type { StructValueType, ValueOrPromise } from "@yume-chan/struct";
 import { decodeUtf8 } from "../utils/index.js";
 import { BufferedStream, BufferedStreamEndedError } from "./buffered.js";
-import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamDefaultController, type ReadableWritablePair, type UnderlyingSink } from "./detect.js";
+import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamDefaultController, type ReadableWritablePair } from "./detect.js";
 
 export interface DuplexStreamFactoryOptions {
     close?: (() => ValueOrPromise<boolean | void>) | undefined;
@@ -19,6 +19,7 @@ export interface DuplexStreamFactoryOptions {
  */
 export class DuplexStreamFactory<R, W> {
     private readableControllers: ReadableStreamDefaultController<R>[] = [];
+    private writers: WritableStreamDefaultWriter<W>[] = [];
 
     private _writableClosed = false;
     public get writableClosed() { return this._writableClosed; }
@@ -49,29 +50,26 @@ export class DuplexStreamFactory<R, W> {
         });
     }
 
-    public createWritable(sink: UnderlyingSink<W>, strategy?: QueuingStrategy<W>): WritableStream<W> {
+    public createWritable(stream: WritableStream<W>): WritableStream<W> {
+        const writer = stream.getWriter();
+        this.writers.push(writer);
+
         // `WritableStream` has no way to tell if the remote peer has closed the connection.
         // So it only triggers `close`.
         return new WritableStream<W>({
-            start: async (controller) => {
-                await sink.start?.(controller);
-            },
-            write: async (chunk, controller) => {
-                if (this._writableClosed) {
-                    throw new Error("stream is closed");
-                }
-
-                await sink.write?.(chunk, controller);
+            write: async (chunk) => {
+                await writer.ready;
+                await writer.write(chunk);
             },
             abort: async (reason) => {
-                await sink.abort?.(reason);
+                await writer.abort(reason);
                 await this.close();
             },
             close: async () => {
-                await sink.close?.();
+                try { await writer.close(); } catch { }
                 await this.close();
             },
-        }, strategy);
+        });
     }
 
     public async close() {
@@ -79,9 +77,14 @@ export class DuplexStreamFactory<R, W> {
             return;
         }
         this._writableClosed = true;
+
         if (await this.options.close?.() !== false) {
             // `close` can return `false` to disable automatic `dispose`.
             await this.dispose();
+        }
+
+        for (const writer of this.writers) {
+            try { await writer.close(); } catch { }
         }
     }
 
