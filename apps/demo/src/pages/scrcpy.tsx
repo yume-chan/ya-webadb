@@ -1,4 +1,4 @@
-import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, Toggle, TooltipHost } from "@fluentui/react";
+import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, TextField, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { makeStyles } from "@griffel/react";
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
@@ -117,6 +117,11 @@ interface SettingDefinitionBase {
     description?: string;
 }
 
+interface TextSettingDefinition extends SettingDefinitionBase {
+    type: 'text';
+    placeholder?: string;
+}
+
 interface DropdownSettingDefinition extends SettingDefinitionBase {
     type: 'dropdown';
     placeholder?: string;
@@ -135,6 +140,7 @@ interface NumberSettingDefinition extends SettingDefinitionBase {
 }
 
 type SettingDefinition =
+    TextSettingDefinition |
     DropdownSettingDefinition |
     ToggleSettingDefinition |
     NumberSettingDefinition;
@@ -174,6 +180,15 @@ const SettingItem = observer(function SettingItem({
     );
 
     switch (definition.type) {
+        case 'text':
+            return (
+                <TextField
+                    label={label as any}
+                    placeholder={definition.placeholder}
+                    value={settings[definition.key]}
+                    onChange={(e, value) => onChange(definition.key, value)}
+                />
+            );
         case 'dropdown':
             return (
                 <Dropdown
@@ -566,6 +581,13 @@ class ScrcpyPageState {
                 key: item,
                 text: item.toString(),
             })),
+        });
+
+        result.push({
+            key: 'crop',
+            type: 'text',
+            label: 'Crop',
+            placeholder: 'W:H:X:Y',
         });
 
         return result;
