@@ -4,7 +4,7 @@ import { AutoDisposable } from '@yume-chan/event';
 import Struct from '@yume-chan/struct';
 import type { Adb } from "../adb.js";
 import type { AdbIncomingSocketHandler, AdbSocket } from '../socket/index.js';
-import { AdbBufferedStream } from '../stream/index.js';
+import { AdbBufferedStream, BufferedStreamEndedError } from '../stream/index.js';
 import { decodeUtf8 } from "../utils/index.js";
 
 export interface AdbForwardListener {
@@ -90,10 +90,25 @@ export class AdbReverseCommand extends AutoDisposable {
         const stream = await this.sendRequest(`reverse:forward:${deviceAddress};tcp:${localPort}`);
 
         // `tcp:0` tells the device to pick an available port.
-        // However, device will response with the selected port for all `tcp:` requests.
+        // Begin with Android 8, device will respond with the selected port for all `tcp:` requests.
         if (deviceAddress.startsWith('tcp:')) {
-            const response = await AdbReverseStringResponse.deserialize(stream);
-            deviceAddress = `tcp:${Number.parseInt(response.content!, 10)}`;
+            let length: number | undefined;
+            try {
+                length = Number.parseInt(decodeUtf8(await stream.read(4)), 16);
+            } catch (e) {
+                if (!(e instanceof BufferedStreamEndedError)) {
+                    throw e;
+                }
+
+                // Device before Android 8 doesn't have this response.
+                // (the stream is closed now)
+                // Can be safely ignored.
+            }
+
+            if (length !== undefined) {
+                const port = decodeUtf8(await stream.read(length!));
+                deviceAddress = `tcp:${Number.parseInt(port, 10)}`;
+            }
         }
 
         this.localPortToHandler.set(localPort, handler);
