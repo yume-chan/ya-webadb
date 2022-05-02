@@ -9,7 +9,7 @@ import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import { CommandBar, Grid, GridColumn, GridHeaderProps, GridRowProps } from "../components";
-import { globalState } from "../state";
+import { GlobalState } from "../state";
 import { Icons, RouteStackProps, useCallbackRef } from "../utils";
 
 const LINE_HEIGHT = 32;
@@ -224,8 +224,8 @@ const state = makeAutoObservable({
 console.log(state);
 
 autorun(() => {
-    if (globalState.device) {
-        state.logcat = new Logcat(globalState.device);
+    if (GlobalState.device) {
+        state.logcat = new Logcat(GlobalState.device);
     } else {
         state.logcat = undefined;
         if (state.running) {

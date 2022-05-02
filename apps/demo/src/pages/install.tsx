@@ -4,7 +4,7 @@ import { action, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { globalState } from "../state";
+import { GlobalState } from "../state";
 import { createFileStream, pickFile, ProgressStream, RouteStackProps } from "../utils";
 
 enum Stage {
@@ -77,7 +77,7 @@ class InstallPageState {
                     };
                 }
             })))
-            .pipeTo(globalState.device!.install());
+            .pipeTo(GlobalState.device!.install());
 
         runInAction(() => {
             this.progress = {
@@ -103,7 +103,7 @@ const Install: NextPage = () => {
 
             <Stack horizontal>
                 <DefaultButton
-                    disabled={!globalState.device || state.installing}
+                    disabled={!GlobalState.device || state.installing}
                     text="Open"
                     onClick={state.install}
                 />

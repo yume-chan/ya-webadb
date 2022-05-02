@@ -6,7 +6,7 @@ import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import AdbWebCredentialStore from '@yume-chan/adb-credential-web';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { globalState } from '../state';
+import { GlobalState } from '../state';
 import { CommonStackTokens, Icons } from '../utils';
 
 const DropdownStyles = { dropdown: { width: '100%' } };
@@ -33,7 +33,7 @@ function _Connect(): JSX.Element | null {
             setSupported(supported);
 
             if (!supported) {
-                globalState.showErrorDialog('Your browser does not support WebUSB standard, which is required for this site to work.\n\nLatest version of Google Chrome, Microsoft Edge, or other Chromium-based browsers are required.');
+                GlobalState.showErrorDialog('Your browser does not support WebUSB standard, which is required for this site to work.\n\nLatest version of Google Chrome, Microsoft Edge, or other Chromium-based browsers are required.');
                 return;
             }
 
@@ -153,18 +153,18 @@ function _Connect(): JSX.Element | null {
             readable = streams.readable
                 .pipeThrough(
                     new InspectStream(packet => {
-                        globalState.appendLog('in', packet);
+                        GlobalState.appendLog('in', packet);
                     })
                 );
 
             writable = pipeFrom(
                 streams.writable,
                 new InspectStream((packet: AdbPacketInit) => {
-                    globalState.appendLog('out', packet);
+                    GlobalState.appendLog('out', packet);
                 })
             );
         } catch (e: any) {
-            globalState.showErrorDialog(e);
+            GlobalState.showErrorDialog(e);
             setConnecting(false);
             return;
         }
@@ -174,7 +174,7 @@ function _Connect(): JSX.Element | null {
             // so manually close them.
             try { readable.cancel(); } catch { }
             try { await writable.close(); } catch { }
-            globalState.setDevice(undefined, undefined);
+            GlobalState.setDevice(undefined, undefined);
         }
 
         try {
@@ -187,13 +187,13 @@ function _Connect(): JSX.Element | null {
             device.disconnected.then(async () => {
                 await dispose();
             }, async (e) => {
-                globalState.showErrorDialog(e);
+                GlobalState.showErrorDialog(e);
                 await dispose();
             });
 
-            globalState.setDevice(selectedBackend, device);
+            GlobalState.setDevice(selectedBackend, device);
         } catch (e: any) {
-            globalState.showErrorDialog(e);
+            GlobalState.showErrorDialog(e);
             await dispose();
         } finally {
             setConnecting(false);
@@ -202,10 +202,10 @@ function _Connect(): JSX.Element | null {
 
     const disconnect = useCallback(async () => {
         try {
-            await globalState.device!.close();
-            globalState.setDevice(undefined, undefined);
+            await GlobalState.device!.close();
+            GlobalState.setDevice(undefined, undefined);
         } catch (e: any) {
-            globalState.showErrorDialog(e);
+            GlobalState.showErrorDialog(e);
         }
     }, []);
 
@@ -268,7 +268,7 @@ function _Connect(): JSX.Element | null {
             tokens={{ childrenGap: 8, padding: '0 0 8px 8px' }}
         >
             <Dropdown
-                disabled={!!globalState.device || backendOptions.length === 0}
+                disabled={!!GlobalState.device || backendOptions.length === 0}
                 label="Available devices"
                 placeholder="No available devices"
                 options={backendOptions}
@@ -278,7 +278,7 @@ function _Connect(): JSX.Element | null {
                 onChange={handleSelectedBackendChange}
             />
 
-            {!globalState.device
+            {!GlobalState.device
                 ? (
                     <Stack horizontal tokens={CommonStackTokens}>
                         <StackItem grow shrink>

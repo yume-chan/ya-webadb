@@ -7,7 +7,7 @@ import { action, autorun, makeAutoObservable, observable, runInAction } from "mo
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { globalState } from "../state";
+import { GlobalState } from "../state";
 import { RouteStackProps, saveFile } from "../utils";
 
 class BugReportState {
@@ -32,10 +32,10 @@ class BugReportState {
         });
 
         autorun(() => {
-            if (globalState.device) {
+            if (GlobalState.device) {
                 runInAction(() => {
-                    this.bugReport = new BugReport(globalState.device!);
-                    this.bugReportZ = new BugReportZ(globalState.device!);
+                    this.bugReport = new BugReport(GlobalState.device!);
+                    this.bugReportZ = new BugReportZ(GlobalState.device!);
 
                     this.bugReportZ.version().then(action(version => {
                         this.bugReportZVersion = version;
@@ -75,7 +75,7 @@ class BugReportState {
                 : undefined
         );
 
-        const sync = await globalState.device!.sync();
+        const sync = await GlobalState.device!.sync();
         await sync.read(filename)
             .pipeTo(saveFile('bugreport.zip'));
 

@@ -13,7 +13,7 @@ import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecO
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 
 import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
-import { globalState } from "../state";
+import { GlobalState } from "../state";
 import { CommonStackTokens, formatSpeed, Icons, ProgressStream, RouteStackProps } from "../utils";
 
 const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url).toString();
@@ -252,7 +252,7 @@ class ScrcpyPageState {
                 controller.close();
             },
         })
-            .pipeTo(pushServer(globalState.device!));
+            .pipeTo(pushServer(GlobalState.device!));
     }
 
     encoders: string[] = [];
@@ -261,7 +261,7 @@ class ScrcpyPageState {
             await this.pushServer();
 
             const encoders = await ScrcpyClient.getEncoders(
-                globalState.device!,
+                GlobalState.device!,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 new ScrcpyOptions1_24({
@@ -278,7 +278,7 @@ class ScrcpyPageState {
                 }
             });
         } catch (e: any) {
-            globalState.showErrorDialog(e);
+            GlobalState.showErrorDialog(e);
         }
     };
 
@@ -295,7 +295,7 @@ class ScrcpyPageState {
             await this.pushServer();
 
             const displays = await ScrcpyClient.getDisplays(
-                globalState.device!,
+                GlobalState.device!,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 new ScrcpyOptions1_24({
@@ -312,7 +312,7 @@ class ScrcpyPageState {
                 }
             });
         } catch (e: any) {
-            globalState.showErrorDialog(e);
+            GlobalState.showErrorDialog(e);
         }
     };
 
@@ -331,7 +331,7 @@ class ScrcpyPageState {
         if (!this.running) {
             result.push({
                 key: 'start',
-                disabled: !globalState.device,
+                disabled: !GlobalState.device,
                 iconProps: { iconName: Icons.Play },
                 text: 'Start',
                 onClick: this.start as VoidFunction,
@@ -476,7 +476,7 @@ class ScrcpyPageState {
             labelExtra: (
                 <IconButton
                     iconProps={{ iconName: Icons.ArrowClockwise }}
-                    disabled={!globalState.device}
+                    disabled={!GlobalState.device}
                     text="Refresh"
                     onClick={this.updateEncoders}
                 />
@@ -572,7 +572,7 @@ class ScrcpyPageState {
             labelExtra: (
                 <IconButton
                     iconProps={{ iconName: Icons.ArrowClockwise }}
-                    disabled={!globalState.device}
+                    disabled={!GlobalState.device}
                     text="Refresh"
                     onClick={this.updateDisplays}
                 />
@@ -619,7 +619,7 @@ class ScrcpyPageState {
         });
 
         autorun(() => {
-            if (globalState.device) {
+            if (GlobalState.device) {
                 runInAction(() => {
                     this.encoders = [];
                     this.settings.encoderName = undefined;
@@ -657,7 +657,7 @@ class ScrcpyPageState {
     }
 
     start = async () => {
-        if (!globalState.device) {
+        if (!GlobalState.device) {
             return;
         }
 
@@ -711,7 +711,7 @@ class ScrcpyPageState {
                     .pipeThrough(new ProgressStream(action((progress) => {
                         this.serverUploadedSize = progress;
                     })))
-                    .pipeTo(pushServer(globalState.device));
+                    .pipeTo(pushServer(GlobalState.device));
 
                 runInAction(() => {
                     this.serverUploadSpeed = this.serverUploadedSize - this.debouncedServerUploadedSize;
@@ -747,7 +747,7 @@ class ScrcpyPageState {
             });
 
             const client = await ScrcpyClient.start(
-                globalState.device,
+                GlobalState.device,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 options
@@ -783,7 +783,7 @@ class ScrcpyPageState {
                 this.running = true;
             });
         } catch (e: any) {
-            globalState.showErrorDialog(e);
+            GlobalState.showErrorDialog(e);
         } finally {
             runInAction(() => {
                 this.connecting = false;

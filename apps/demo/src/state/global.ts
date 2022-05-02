@@ -12,9 +12,8 @@ export interface PacketLogItem extends AdbPacketData {
     payloadString?: string;
 }
 
-export class GlobalState {
+export class GlobalStateType {
     backend: AdbBackend | undefined = undefined;
-
     device: Adb | undefined = undefined;
 
     errorDialogVisible = false;
@@ -57,4 +56,4 @@ export class GlobalState {
     }
 }
 
-export const globalState = new GlobalState();
+export const GlobalState = new GlobalStateType();

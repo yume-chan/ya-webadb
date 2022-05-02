@@ -6,7 +6,7 @@ import { NextPage } from "next";
 import Head from "next/head";
 import { useCallback, useEffect, useRef } from 'react';
 import { CommandBar, DemoModePanel, DeviceView } from '../components';
-import { globalState } from "../state";
+import { GlobalState } from "../state";
 import { Icons, RouteStackProps } from "../utils";
 
 class FrameBufferState {
@@ -38,15 +38,15 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     const capture = useCallback(async () => {
-        if (!globalState.device) {
+        if (!GlobalState.device) {
             return;
         }
 
         try {
-            const framebuffer = await globalState.device.framebuffer();
+            const framebuffer = await GlobalState.device.framebuffer();
             state.setImage(framebuffer);
         } catch (e: any) {
-            globalState.showErrorDialog(e);
+            GlobalState.showErrorDialog(e);
         }
     }, []);
 
@@ -65,7 +65,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
     const commandBarItems = computed(() => [
         {
             key: 'start',
-            disabled: !globalState.device,
+            disabled: !GlobalState.device,
             iconProps: { iconName: Icons.Camera, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
             text: 'Capture',
             onClick: capture,
@@ -84,7 +84,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
                 const url = canvas.toDataURL();
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `Screenshot of ${globalState.backend!.name}.png`;
+                a.download = `Screenshot of ${GlobalState.backend!.name}.png`;
                 a.click();
             },
         },

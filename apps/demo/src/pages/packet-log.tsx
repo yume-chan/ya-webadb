@@ -6,7 +6,7 @@ import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import { CommandBar, Grid, GridCellProps, GridColumn, GridHeaderProps, GridRowProps, HexViewer, toText } from "../components";
-import { globalState, PacketLogItem } from "../state";
+import { GlobalState, PacketLogItem } from "../state";
 import { Icons, RouteStackProps, useCallbackRef, withDisplayName } from "../utils";
 
 const ADB_COMMAND_NAME = {
@@ -29,10 +29,10 @@ const state = new class {
         return [
             {
                 key: 'clear',
-                disabled: !globalState.device,
+                disabled: !GlobalState.device,
                 iconProps: { iconName: Icons.Delete },
                 text: 'Clear',
-                onClick: () => globalState.clearLog(),
+                onClick: () => GlobalState.clearLog(),
             }
         ];
     }
@@ -48,7 +48,7 @@ const state = new class {
         );
 
         autorun(() => {
-            if (globalState.logs.length === 0) {
+            if (GlobalState.logs.length === 0) {
                 this.selectedPacket = undefined;
             }
         });
@@ -93,7 +93,7 @@ const columns: Column[] = [
         title: 'Direction',
         width: 100,
         CellComponent: withDisplayName('Direction')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = globalState.logs[rowIndex];
+            const item = GlobalState.logs[rowIndex];
 
             const classes = useClasses();
 
@@ -111,7 +111,7 @@ const columns: Column[] = [
         title: 'Command',
         width: 100,
         CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = globalState.logs[rowIndex];
+            const item = GlobalState.logs[rowIndex];
 
             if (!item.commandString) {
                 item.commandString =
@@ -135,7 +135,7 @@ const columns: Column[] = [
         title: 'Arg0',
         width: 100,
         CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = globalState.logs[rowIndex];
+            const item = GlobalState.logs[rowIndex];
 
             if (!item.arg0String) {
                 item.arg0String = item.arg0.toString(16).padStart(8, '0');
@@ -157,7 +157,7 @@ const columns: Column[] = [
         title: 'Arg1',
         width: 100,
         CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = globalState.logs[rowIndex];
+            const item = GlobalState.logs[rowIndex];
 
             if (!item.arg1String) {
                 item.arg1String = item.arg1.toString(16).padStart(8, '0');
@@ -180,7 +180,7 @@ const columns: Column[] = [
         width: 200,
         flexGrow: 1,
         CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = globalState.logs[rowIndex];
+            const item = GlobalState.logs[rowIndex];
 
             if (!item.payloadString) {
                 item.payloadString = toText(item.payload.subarray(0, 100));
@@ -223,7 +223,7 @@ const Row = observer(function Row({
 
     const handleClick = useCallbackRef(() => {
         runInAction(() => {
-            state.selectedPacket = globalState.logs[rowIndex];
+            state.selectedPacket = GlobalState.logs[rowIndex];
         });
     });
 
@@ -232,7 +232,7 @@ const Row = observer(function Row({
             className={mergeClasses(
                 className,
                 classes.row,
-                state.selectedPacket === globalState.logs[rowIndex] && classes.selected
+                state.selectedPacket === GlobalState.logs[rowIndex] && classes.selected
             )}
             onClick={handleClick}
             {...rest}
@@ -254,7 +254,7 @@ const PacketLog: NextPage = () => {
             <StackItem className={classes.grow} grow>
                 <Grid
                     className={classes.grid}
-                    rowCount={globalState.logs.length}
+                    rowCount={GlobalState.logs.length}
                     rowHeight={LINE_HEIGHT}
                     columns={columns}
                     HeaderComponent={Header}

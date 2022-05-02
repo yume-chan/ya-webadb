@@ -5,7 +5,7 @@ import type { NextPage } from 'next';
 import Head from 'next/head';
 import React from "react";
 import { ExternalLink } from "../components";
-import { globalState } from '../state';
+import { GlobalState } from '../state';
 import { Icons, RouteStackProps } from "../utils";
 
 const KNOWN_FEATURES: Record<string, string> = {
@@ -52,7 +52,7 @@ const DeviceInfo: NextPage = () => {
             </MessageBar>
             <span>
                 <span>Protocol Version: </span>
-                <code>{globalState.device?.protocolVersion?.toString(16).padStart(8, '0')}</code>
+                <code>{GlobalState.device?.protocolVersion?.toString(16).padStart(8, '0')}</code>
             </span>
             <Separator />
 
@@ -60,21 +60,21 @@ const DeviceInfo: NextPage = () => {
                 <code>ro.product.name</code>
                 <span> field in Android Build Props</span>
             </MessageBar>
-            <span>Product Name: {globalState.device?.product}</span>
+            <span>Product Name: {GlobalState.device?.product}</span>
             <Separator />
 
             <MessageBar>
                 <code>ro.product.model</code>
                 <span> field in Android Build Props</span>
             </MessageBar>
-            <span>Model Name: {globalState.device?.model}</span>
+            <span>Model Name: {GlobalState.device?.model}</span>
             <Separator />
 
             <MessageBar>
                 <code>ro.product.device</code>
                 <span> field in Android Build Props</span>
             </MessageBar>
-            <span>Device Name: {globalState.device?.device}</span>
+            <span>Device Name: {GlobalState.device?.device}</span>
             <Separator />
 
             <MessageBar>
@@ -87,7 +87,7 @@ const DeviceInfo: NextPage = () => {
             </MessageBar>
             <span>
                 <span>Features: </span>
-                {globalState.device?.features?.map((feature, index) => (
+                {GlobalState.device?.features?.map((feature, index) => (
                     <span key={feature}>
                         {index !== 0 && (<span>, </span>)}
                         <span>{feature}</span>

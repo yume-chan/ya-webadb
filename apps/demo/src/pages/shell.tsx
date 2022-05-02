@@ -6,7 +6,7 @@ import Head from "next/head";
 import { useCallback, useEffect } from 'react';
 import 'xterm/css/xterm.css';
 import { ResizeObserver } from '../components';
-import { globalState } from "../state";
+import { GlobalState } from "../state";
 import { Icons, RouteStackProps } from '../utils';
 
 let terminal: import('../components/terminal').AdbTerminal;
@@ -39,17 +39,17 @@ const state = makeAutoObservable({
 });
 
 autorun(() => {
-    if (!globalState.device) {
+    if (!GlobalState.device) {
         terminal.socket = undefined;
         return;
     }
 
     if (!terminal.socket && state.visible) {
-        globalState.device.subprocess.shell()
+        GlobalState.device.subprocess.shell()
             .then(action(shell => {
                 terminal.socket = shell;
             }), (e) => {
-                globalState.showErrorDialog(e);
+                GlobalState.showErrorDialog(e);
             });
     }
 });

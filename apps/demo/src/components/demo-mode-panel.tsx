@@ -3,7 +3,7 @@ import { DemoMode, DemoModeMobileDataType, DemoModeMobileDataTypes, DemoModeSign
 import { autorun, makeAutoObservable, reaction, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { CSSProperties, useCallback } from 'react';
-import { globalState } from "../state";
+import { GlobalState } from "../state";
 
 const SignalStrengthOptions =
     Object.values(DemoModeSignalStrength)
@@ -70,7 +70,7 @@ class DemoModePanelState {
         makeAutoObservable(this);
 
         reaction(
-            () => globalState.device,
+            () => GlobalState.device,
             async (device) => {
                 if (device) {
                     runInAction(() => this.demoMode = new DemoMode(device));
@@ -329,7 +329,7 @@ export const DemoModePanel = observer(({
         <div style={{ padding: 12, overflow: 'hidden auto', ...style }}>
             <Toggle
                 label="Allowed"
-                disabled={!globalState.device}
+                disabled={!GlobalState.device}
                 checked={state.allowed}
                 onChange={handleAllowedChange}
             />
