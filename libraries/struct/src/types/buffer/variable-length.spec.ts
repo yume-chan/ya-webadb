@@ -183,7 +183,7 @@ describe("Types", () => {
                 expect(mockOriginalFieldValue.serialize).toBeCalledWith(dataView, offset);
             });
 
-            it("should stringify its length in specified base if `originalField` is a string", async () => {
+            it("should stringify its length in specified radix if `originalField` is a string", async () => {
                 const mockOriginalFieldValue = new MockOriginalFieldValue();
                 const mockArrayBufferFieldValue = new MockArrayBufferFieldValue();
                 const lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
@@ -191,8 +191,8 @@ describe("Types", () => {
                     mockArrayBufferFieldValue,
                 );
 
-                const base = 16;
-                mockArrayBufferFieldValue.definition.options.lengthFieldBase = base;
+                const radix = 16;
+                mockArrayBufferFieldValue.definition.options.lengthFieldRadix = radix;
 
                 let dataView = 0 as any;
                 let offset = 1 as any;
@@ -212,7 +212,7 @@ describe("Types", () => {
                 mockArrayBufferFieldValue.size = 100;
                 lengthFieldValue.serialize(dataView, offset);
                 expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toBeCalledWith((100).toString(base));
+                expect(mockOriginalFieldValue.set).toBeCalledWith((100).toString(radix));
                 expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
                 expect(mockOriginalFieldValue.serialize).toBeCalledWith(dataView, offset);
             });
@@ -529,17 +529,17 @@ describe("Types", () => {
                 expect(originalLengthFieldValue.get).toBeCalledTimes(1);
             });
 
-            it("should return value of its `lengthField` as number with specified base", async () => {
+            it("should return value of its `lengthField` as number with specified radix", async () => {
                 const struct = new StructValue();
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockOriginalFieldValue();
                 struct.set(lengthField, originalLengthFieldValue);
 
-                const base = 8;
+                const radix = 8;
                 const definition = new VariableLengthBufferLikeFieldDefinition(
                     Uint8ArrayBufferFieldSubType.Instance,
-                    { lengthField, lengthFieldBase: base },
+                    { lengthField, lengthFieldRadix: radix },
                 );
 
                 originalLengthFieldValue.value = "0";
@@ -548,7 +548,7 @@ describe("Types", () => {
 
                 originalLengthFieldValue.get.mockClear();
                 originalLengthFieldValue.value = "100";
-                expect(definition["getDeserializeSize"](struct)).toBe(Number.parseInt("100", base));
+                expect(definition["getDeserializeSize"](struct)).toBe(Number.parseInt("100", radix));
                 expect(originalLengthFieldValue.get).toBeCalledTimes(1);
             });
         });
