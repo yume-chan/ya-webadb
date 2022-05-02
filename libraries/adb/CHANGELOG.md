@@ -1,6 +1,16 @@
 # Change Log - @yume-chan/adb
 
-This log was last generated on Sat, 30 Apr 2022 14:05:48 GMT and should not be manually modified.
+This log was last generated on Mon, 02 May 2022 04:18:01 GMT and should not be manually modified.
+
+## 0.0.15
+Mon, 02 May 2022 04:18:01 GMT
+
+### Updates
+
+- Add support for old protocol of `reverse:forward` command before Android 8
+- Improve connection lifecycle handling
+- Update `reverse.add` to accept any string local address
+- Fix an issue where `reverse` commands doesn't parse error message correctly
 
 ## 0.0.14
 Sat, 30 Apr 2022 14:05:48 GMT

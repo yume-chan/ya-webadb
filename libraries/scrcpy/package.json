@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/scrcpy",
-    "version": "0.0.14",
+    "version": "0.0.15",
     "description": "TypeScript implementation of Scrcpy.",
     "keywords": [
         "adb",
@@ -35,10 +35,10 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/adb": "^0.0.14",
+        "@yume-chan/adb": "^0.0.15",
         "@yume-chan/async": "^2.1.4",
-        "@yume-chan/event": "^0.0.14",
-        "@yume-chan/struct": "^0.0.14",
+        "@yume-chan/event": "^0.0.15",
+        "@yume-chan/struct": "^0.0.15",
         "tslib": "^2.3.1"
     },
     "devDependencies": {

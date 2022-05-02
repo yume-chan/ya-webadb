@@ -34,8 +34,8 @@ reaction(() => GlobalState.device, async device => {
 const ReverseTesterPage: NextPage = () => {
     return (
         <div>
-            {state.log.map(line => (
-                <div>{line}</div>
+            {state.log.map((line, index) => (
+                <div key={index}>{line}</div>
             ))}
         </div>
     );

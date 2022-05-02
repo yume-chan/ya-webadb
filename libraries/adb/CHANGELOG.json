@@ -2,6 +2,27 @@
   "name": "@yume-chan/adb",
   "entries": [
     {
+      "version": "0.0.15",
+      "tag": "@yume-chan/adb_v0.0.15",
+      "date": "Mon, 02 May 2022 04:18:01 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add support for old protocol of `reverse:forward` command before Android 8"
+          },
+          {
+            "comment": "Improve connection lifecycle handling"
+          },
+          {
+            "comment": "Update `reverse.add` to accept any string local address"
+          },
+          {
+            "comment": "Fix an issue where `reverse` commands doesn't parse error message correctly"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.14",
       "tag": "@yume-chan/adb_v0.0.14",
       "date": "Sat, 30 Apr 2022 14:05:48 GMT",

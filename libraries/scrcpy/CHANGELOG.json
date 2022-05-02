@@ -2,6 +2,21 @@
   "name": "@yume-chan/scrcpy",
   "entries": [
     {
+      "version": "0.0.15",
+      "tag": "@yume-chan/scrcpy_v0.0.15",
+      "date": "Mon, 02 May 2022 04:18:01 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add support for `rotateDevice` control message"
+          },
+          {
+            "comment": "Add method to get screen list"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.14",
       "tag": "@yume-chan/scrcpy_v0.0.14",
       "date": "Sat, 30 Apr 2022 14:05:48 GMT",
