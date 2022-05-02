@@ -16,21 +16,21 @@ export interface AdbForwardListener {
 }
 
 const AdbReverseStringResponse =
-    new Struct({ littleEndian: true })
+    new Struct()
         .string('length', { length: 4 })
-        .string('content', { lengthField: 'length', lengthFieldBase: 16 });
+        .string('content', { lengthField: 'length', lengthFieldRadix: 16 });
 
 const AdbReverseErrorResponse =
-    new Struct({ littleEndian: true })
+    new Struct()
         .fields(AdbReverseStringResponse)
         .postDeserialize((value) => {
             throw new Error(value.content);
         });
 
 export class AdbReverseCommand extends AutoDisposable {
-    protected localPortToHandler = new Map<number, AdbIncomingSocketHandler>();
+    protected localAddressToHandler = new Map<string, AdbIncomingSocketHandler>();
 
-    protected deviceAddressToLocalPort = new Map<string, number>();
+    protected deviceAddressToLocalAddress = new Map<string, string>();
 
     protected adb: Adb;
 
@@ -44,10 +44,10 @@ export class AdbReverseCommand extends AutoDisposable {
     }
 
     protected handleIncomingSocket = async (socket: AdbSocket) => {
-        const address = socket.serviceString;
-        // Address format: `tcp:12345\0`
-        const port = Number.parseInt(address.substring(4));
-        return !!(await this.localPortToHandler.get(port)?.(socket));
+        let address = socket.serviceString;
+        // ADB daemon appends `\0` to the service string
+        address = address.replace(/\0/g, '');
+        return !!(await this.localAddressToHandler.get(address)?.(socket));
     };
 
     private async createBufferedStream(service: string) {
@@ -78,16 +78,16 @@ export class AdbReverseCommand extends AutoDisposable {
 
     /**
      * @param deviceAddress The address adbd on device is listening on. Can be `tcp:0` to let adbd choose an available TCP port by itself.
-     * @param localPort Native ADB will open a connection to localPort when reverse connection starts. In webadb, it's only used to uniquely identify a reverse registry, `handler` will be called on connection.
+     * @param localAddress Native ADB client will open a connection to this address when reverse connection received. In WebADB, it's only used to uniquely identify a reverse tunnel registry, `handler` will be called to handle the connection.
      * @param handler A callback to handle incoming connections
      * @returns If `deviceAddress` is `tcp:0`, return `tcp:{ACTUAL_LISTENING_PORT}`; otherwise, return `deviceAddress`.
      */
     public async add(
         deviceAddress: string,
-        localPort: number,
+        localAddress: string,
         handler: AdbIncomingSocketHandler,
     ): Promise<string> {
-        const stream = await this.sendRequest(`reverse:forward:${deviceAddress};tcp:${localPort}`);
+        const stream = await this.sendRequest(`reverse:forward:${deviceAddress};${localAddress}`);
 
         // `tcp:0` tells the device to pick an available port.
         // Begin with Android 8, device will respond with the selected port for all `tcp:` requests.
@@ -111,8 +111,8 @@ export class AdbReverseCommand extends AutoDisposable {
             }
         }
 
-        this.localPortToHandler.set(localPort, handler);
-        this.deviceAddressToLocalPort.set(deviceAddress, localPort);
+        this.localAddressToHandler.set(localAddress, handler);
+        this.deviceAddressToLocalAddress.set(deviceAddress, localAddress);
         return deviceAddress;
 
         // No need to close the stream, device will close it
@@ -121,9 +121,9 @@ export class AdbReverseCommand extends AutoDisposable {
     public async remove(deviceAddress: string): Promise<void> {
         await this.sendRequest(`reverse:killforward:${deviceAddress}`);
 
-        if (this.deviceAddressToLocalPort.has(deviceAddress)) {
-            this.localPortToHandler.delete(this.deviceAddressToLocalPort.get(deviceAddress)!);
-            this.deviceAddressToLocalPort.delete(deviceAddress);
+        if (this.deviceAddressToLocalAddress.has(deviceAddress)) {
+            this.localAddressToHandler.delete(this.deviceAddressToLocalAddress.get(deviceAddress)!);
+            this.deviceAddressToLocalAddress.delete(deviceAddress);
         }
 
         // No need to close the stream, device will close it
@@ -132,8 +132,8 @@ export class AdbReverseCommand extends AutoDisposable {
     public async removeAll(): Promise<void> {
         await this.sendRequest(`reverse:killforward-all`);
 
-        this.deviceAddressToLocalPort.clear();
-        this.localPortToHandler.clear();
+        this.deviceAddressToLocalAddress.clear();
+        this.localAddressToHandler.clear();
 
         // No need to close the stream, device will close it
     }

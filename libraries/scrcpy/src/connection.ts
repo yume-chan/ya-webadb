@@ -105,7 +105,7 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
         const writer = queue.writable.getWriter();
         this.address = await this.device.reverse.add(
             'localabstract:scrcpy',
-            27183,
+            'tcp:27183',
             socket => {
                 writer.write(socket);
                 return true;
