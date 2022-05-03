@@ -39,6 +39,10 @@ const state = makeAutoObservable({
 });
 
 autorun(() => {
+    if (!terminal) {
+        return;
+    }
+
     if (!GlobalState.device) {
         terminal.socket = undefined;
         return;

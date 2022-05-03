@@ -203,7 +203,6 @@ function _Connect(): JSX.Element | null {
     const disconnect = useCallback(async () => {
         try {
             await GlobalState.device!.close();
-            GlobalState.setDevice(undefined, undefined);
         } catch (e: any) {
             GlobalState.showErrorDialog(e);
         }

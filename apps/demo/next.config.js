@@ -45,11 +45,7 @@ module.exports = withMDX({
             // https://github.com/vercel/next.js/pull/7550#issuecomment-512861158
             // https://github.com/vercel/next.js/issues/12861
             exclude: [
-                /@next\/react-dev-overlay/,
-                /@next\/react-refresh-utils\/runtime.js$/,
-                /@next\/react-refresh-utils\/internal\/helpers.js$/,
-                /next\/dist\/build\/polyfills\/unfetch.js$/,
-                /next\/dist\/build\/polyfills\/unfetch.js$/,
+                /next/,
             ],
             use: ['source-map-loader'],
             enforce: 'pre',

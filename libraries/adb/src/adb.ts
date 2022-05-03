@@ -267,6 +267,13 @@ export class Adb implements Closeable {
         return framebuffer(this);
     }
 
+    /**
+     * Close the ADB connection.
+     *
+     * Note that it won't close the streams from backends.
+     * The streams are both physically and logically intact,
+     * and can be reused.
+     */
     public async close(): Promise<void> {
         await this.dispatcher.close();
     }
