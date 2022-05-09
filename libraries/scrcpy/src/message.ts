@@ -96,6 +96,7 @@ export enum AndroidKeyCode {
     Y,
     Z,
     Space = 62,
+    Enter = 66,
     Delete = 67,
     AppSwitch = 187,
 }
