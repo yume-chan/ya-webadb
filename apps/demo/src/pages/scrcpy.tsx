@@ -1000,7 +1000,7 @@ class ScrcpyPageState {
         if (!this.client) {
             return;
         }
-
+        
         const { key, code } = e;
         if (key.match(/^[!-`{-~]$/i)) {
             this.client!.injectText(key);
