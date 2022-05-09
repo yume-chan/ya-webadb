@@ -1002,7 +1002,7 @@ class ScrcpyPageState {
         }
 
         const { key, code } = e;
-        if (key.match(/^[a-z0-9]$/i)) {
+        if (key.match(/^[!-`{-~]$/i)) {
             this.client!.injectText(key);
             return;
         }
@@ -1010,6 +1010,7 @@ class ScrcpyPageState {
         const keyCode = ({
             Backspace: AndroidKeyCode.Delete,
             Space: AndroidKeyCode.Space,
+            Enter: AndroidKeyCode.Enter,
         } as Record<string, AndroidKeyCode | undefined>)[code];
 
         if (keyCode) {
