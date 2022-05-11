@@ -38,7 +38,8 @@ export abstract class BufferFieldSubType<TValue = unknown, TTypeScriptType = TVa
 }
 
 /** An `BufferFieldSubType` that's actually an `Uint8Array` */
-export class Uint8ArrayBufferFieldSubType extends BufferFieldSubType<Uint8Array> {
+export class Uint8ArrayBufferFieldSubType<TTypeScriptType = Uint8Array>
+    extends BufferFieldSubType<Uint8Array, TTypeScriptType> {
     public static readonly Instance = new Uint8ArrayBufferFieldSubType();
 
     protected constructor() {
@@ -85,9 +86,10 @@ export abstract class BufferLikeFieldDefinition<
     TType extends BufferFieldSubType<any, any> = BufferFieldSubType<unknown, unknown>,
     TOptions = void,
     TOmitInitKey extends PropertyKey = never,
+    TTypeScriptType = TType["TTypeScriptType"],
     > extends StructFieldDefinition<
     TOptions,
-    TType['TTypeScriptType'],
+    TTypeScriptType,
     TOmitInitKey
     >{
     public readonly type: TType;

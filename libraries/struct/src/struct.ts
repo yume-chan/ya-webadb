@@ -52,7 +52,7 @@ interface ArrayBufferLikeFieldCreator<
      * @param name Name of the field
      * @param type `Array.SubType.ArrayBuffer` or `Array.SubType.String`
      * @param options Fixed-length array options
-     * @param typescriptType Type of the field in TypeScript.
+     * @param typeScriptType Type of the field in TypeScript.
      * For example, if this field is a string, you can declare it as a string enum or literal union.
      */
     <
@@ -63,7 +63,7 @@ interface ArrayBufferLikeFieldCreator<
         name: TName,
         type: TType,
         options: FixedLengthBufferLikeFieldOptions,
-        typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
         TOmitInitKey,
@@ -88,7 +88,7 @@ interface ArrayBufferLikeFieldCreator<
         name: TName,
         type: TType,
         options: TOptions,
-        typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
         TOmitInitKey,
@@ -118,7 +118,7 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
         >(
         name: TName,
         options: FixedLengthBufferLikeFieldOptions,
-        typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
         TOmitInitKey,
@@ -127,7 +127,8 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
         TName,
         FixedLengthBufferLikeFieldDefinition<
             TType,
-            FixedLengthBufferLikeFieldOptions
+            FixedLengthBufferLikeFieldOptions,
+            TTypeScriptType
         >
     >;
 
@@ -139,7 +140,7 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
         >(
         name: TName,
         options: TOptions,
-        typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ): AddFieldDescriptor<
         TFields,
         TOmitInitKey,
@@ -148,7 +149,8 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
         TName,
         VariableLengthBufferLikeFieldDefinition<
             TType,
-            TOptions
+            TOptions,
+            TTypeScriptType
         >
     >;
 }
@@ -251,11 +253,11 @@ export class Struct<
     >(
         name: TName,
         type: TType,
-        _typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.field(
             name,
-            new NumberFieldDefinition(type, _typescriptType),
+            new NumberFieldDefinition(type, typeScriptType),
         );
     }
 
@@ -267,12 +269,12 @@ export class Struct<
         TTypeScriptType = (typeof NumberFieldType)['Uint8']['TTypeScriptType']
     >(
         name: TName,
-        _typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
             NumberFieldType.Int8,
-            _typescriptType
+            typeScriptType
         );
     }
 
@@ -284,12 +286,12 @@ export class Struct<
         TTypeScriptType = (typeof NumberFieldType)['Uint8']['TTypeScriptType']
     >(
         name: TName,
-        _typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
             NumberFieldType.Uint8,
-            _typescriptType
+            typeScriptType
         );
     }
 
@@ -301,12 +303,12 @@ export class Struct<
         TTypeScriptType = (typeof NumberFieldType)['Uint16']['TTypeScriptType']
     >(
         name: TName,
-        _typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
             NumberFieldType.Int16,
-            _typescriptType
+            typeScriptType
         );
     }
 
@@ -318,12 +320,12 @@ export class Struct<
         TTypeScriptType = (typeof NumberFieldType)['Uint16']['TTypeScriptType']
     >(
         name: TName,
-        _typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
             NumberFieldType.Uint16,
-            _typescriptType
+            typeScriptType
         );
     }
 
@@ -335,12 +337,12 @@ export class Struct<
         TTypeScriptType = (typeof NumberFieldType)['Int32']['TTypeScriptType']
     >(
         name: TName,
-        _typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
             NumberFieldType.Int32,
-            _typescriptType
+            typeScriptType
         );
     }
 
@@ -352,12 +354,12 @@ export class Struct<
         TTypeScriptType = (typeof NumberFieldType)['Uint32']['TTypeScriptType']
     >(
         name: TName,
-        typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.number(
             name,
             NumberFieldType.Uint32,
-            typescriptType
+            typeScriptType
         );
     }
 
@@ -368,11 +370,11 @@ export class Struct<
     >(
         name: TName,
         type: TType,
-        _typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.field(
             name,
-            new BigIntFieldDefinition(type, _typescriptType),
+            new BigIntFieldDefinition(type, typeScriptType),
         );
     }
 
@@ -386,12 +388,12 @@ export class Struct<
         TTypeScriptType = BigIntFieldType['TTypeScriptType']
     >(
         name: TName,
-        _typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.bigint(
             name,
             BigIntFieldType.Int64,
-            _typescriptType
+            typeScriptType
         );
     }
 
@@ -405,12 +407,12 @@ export class Struct<
         TTypeScriptType = BigIntFieldType['TTypeScriptType']
     >(
         name: TName,
-        _typescriptType?: TTypeScriptType,
+        typeScriptType?: TTypeScriptType,
     ) {
         return this.bigint(
             name,
             BigIntFieldType.Uint64,
-            _typescriptType
+            typeScriptType
         );
     }
 
@@ -445,9 +447,10 @@ export class Struct<
         Uint8ArrayBufferFieldSubType
     > = (
         name: PropertyKey,
-        options: any
+        options: any,
+        typeScriptType: any,
     ): any => {
-        return this.arrayBufferLike(name, Uint8ArrayBufferFieldSubType.Instance, options);
+        return this.arrayBufferLike(name, Uint8ArrayBufferFieldSubType.Instance, options, typeScriptType);
         };
 
     public string: BoundArrayBufferLikeFieldDefinitionCreator<
@@ -458,9 +461,10 @@ export class Struct<
         StringBufferFieldSubType
     > = (
         name: PropertyKey,
-        options: any
+        options: any,
+        typeScriptType: any,
     ): any => {
-        return this.arrayBufferLike(name, StringBufferFieldSubType.Instance, options);
+        return this.arrayBufferLike(name, StringBufferFieldSubType.Instance, options, typeScriptType);
         };
 
     /**

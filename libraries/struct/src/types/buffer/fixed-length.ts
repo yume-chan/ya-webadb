@@ -7,9 +7,12 @@ export interface FixedLengthBufferLikeFieldOptions {
 export class FixedLengthBufferLikeFieldDefinition<
     TType extends BufferFieldSubType = BufferFieldSubType,
     TOptions extends FixedLengthBufferLikeFieldOptions = FixedLengthBufferLikeFieldOptions,
+    TTypeScriptType = TType["TTypeScriptType"],
     > extends BufferLikeFieldDefinition<
     TType,
-    TOptions
+    TOptions,
+    never,
+    TTypeScriptType
     > {
     public getSize(): number {
         return this.options.length;

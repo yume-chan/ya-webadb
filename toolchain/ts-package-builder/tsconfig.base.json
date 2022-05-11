@@ -3,7 +3,7 @@
         "composite": true,
         /* Basic Options */
         "target": "ES2022", //                    /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017', 'ES2018', 'ES2019' or 'ESNEXT'. */
-        "module": "Node12", //                    /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
+        "module": "NodeNext", //                    /* Specify module code generation: 'none', 'commonjs', 'amd', 'system', 'umd', 'es2015', or 'ESNext'. */
         "lib": [ //                               /* Specify library files to be included in the compilation. */
             "ESNext"
         ],
@@ -34,7 +34,7 @@
         "noUncheckedIndexedAccess": true,
         "resolveJsonModule": true,
         /* Module Resolution Options */
-        "moduleResolution": "Node12", //          /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
+        "moduleResolution": "NodeNext", //          /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
         // "baseUrl": "./",                       /* Base directory to resolve non-absolute module names. */
         // "paths": {},                           /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
         // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */

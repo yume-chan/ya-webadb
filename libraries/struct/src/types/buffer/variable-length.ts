@@ -26,11 +26,13 @@ export interface VariableLengthBufferLikeFieldOptions<
 
 export class VariableLengthBufferLikeFieldDefinition<
     TType extends BufferFieldSubType = BufferFieldSubType,
-    TOptions extends VariableLengthBufferLikeFieldOptions = VariableLengthBufferLikeFieldOptions
+    TOptions extends VariableLengthBufferLikeFieldOptions = VariableLengthBufferLikeFieldOptions,
+    TTypeScriptType = TType["TTypeScriptType"],
     > extends BufferLikeFieldDefinition<
     TType,
     TOptions,
-    TOptions['lengthField']
+    TOptions['lengthField'],
+    TTypeScriptType
     > {
     public getSize(): number {
         return 0;
@@ -47,7 +49,7 @@ export class VariableLengthBufferLikeFieldDefinition<
     public override create(
         options: Readonly<StructOptions>,
         struct: StructValue,
-        value: TType['TTypeScriptType'],
+        value: TTypeScriptType,
         array?: Uint8Array
     ): VariableLengthBufferLikeStructFieldValue<this> {
         return new VariableLengthBufferLikeStructFieldValue(
