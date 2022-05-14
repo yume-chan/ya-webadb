@@ -80,7 +80,7 @@ export class StringBufferFieldSubType<TTypeScriptType = string>
     }
 }
 
-const EmptyBuffer = new Uint8Array(0);
+export const EMPTY_UINT8_ARRAY = new Uint8Array(0);
 
 export abstract class BufferLikeFieldDefinition<
     TType extends BufferFieldSubType<any, any> = BufferFieldSubType<unknown, unknown>,
@@ -133,7 +133,7 @@ export abstract class BufferLikeFieldDefinition<
         return Syncbird.try(() => {
             const size = this.getDeserializeSize(struct);
             if (size === 0) {
-                return EmptyBuffer;
+                return EMPTY_UINT8_ARRAY;
             } else {
                 return stream.read(size);
             }

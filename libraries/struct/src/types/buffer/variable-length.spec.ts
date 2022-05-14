@@ -1,5 +1,5 @@
 import { StructDefaultOptions, StructFieldValue, StructValue } from "../../basic/index.js";
-import { BufferFieldSubType, Uint8ArrayBufferFieldSubType } from "./base.js";
+import { BufferFieldSubType, EMPTY_UINT8_ARRAY, Uint8ArrayBufferFieldSubType } from "./base.js";
 import { VariableLengthBufferLikeFieldDefinition, VariableLengthBufferLikeFieldLengthValue, VariableLengthBufferLikeStructFieldValue } from "./variable-length.js";
 
 class MockOriginalFieldValue extends StructFieldValue {
@@ -233,7 +233,7 @@ describe("Types", () => {
                     { lengthField },
                 );
 
-                const value = new Uint8Array(0);
+                const value = EMPTY_UINT8_ARRAY;
 
                 const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,
@@ -292,7 +292,7 @@ describe("Types", () => {
                     { lengthField },
                 );
 
-                const value = new Uint8Array(0);
+                const value = EMPTY_UINT8_ARRAY;
 
                 const arrayBufferFieldValue = new VariableLengthBufferLikeStructFieldValue(
                     arrayBufferFieldDefinition,

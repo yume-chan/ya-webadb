@@ -1,8 +1,8 @@
 import { StructDefaultOptions, StructDeserializeStream, StructValue } from '../../basic/index.js';
-import { BufferFieldSubType, BufferLikeFieldDefinition, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType } from './base.js';
+import { BufferFieldSubType, BufferLikeFieldDefinition, EMPTY_UINT8_ARRAY, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType } from './base.js';
 
 class MockDeserializationStream implements StructDeserializeStream {
-    public array = new Uint8Array(0);
+    public array = EMPTY_UINT8_ARRAY;
 
     public read = jest.fn((length: number) => this.array);
 }

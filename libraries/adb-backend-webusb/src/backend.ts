@@ -1,5 +1,5 @@
 import { AdbPacketHeader, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, WritableStream, type AdbBackend, type AdbPacketData, type AdbPacketInit, type ReadableWritablePair } from '@yume-chan/adb';
-import type { StructDeserializeStream } from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY, StructDeserializeStream } from "@yume-chan/struct";
 
 export const ADB_DEVICE_FILTER: USBDeviceFilter = {
     classCode: 0xFF,
@@ -69,7 +69,7 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketDat
                     const result = await device.transferIn(inEndpoint.endpointNumber, packet.payloadLength);
                     packet.payload = new Uint8Array(result.data!.buffer);
                 } else {
-                    packet.payload = new Uint8Array(0);
+                    packet.payload = EMPTY_UINT8_ARRAY;
                 }
 
                 controller.enqueue(packet);

@@ -1,6 +1,6 @@
 import { makeStyles } from "@griffel/react";
-import { useLayoutEffect, useState } from 'react';
-import { useCallbackRef, withDisplayName } from '../utils';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { useStableCallback, withDisplayName } from '../utils';
 
 export interface Size {
     width: number;
@@ -28,21 +28,22 @@ export const ResizeObserver = withDisplayName('ResizeObserver')(({
 }: ResizeObserverProps): JSX.Element | null => {
     const classes = useClasses();
 
-    const [iframeRef, setIframeRef] = useState<HTMLIFrameElement | null>(null);
+    const [iframe, setIframe] = useState<HTMLIFrameElement | null>(null);
 
-    const handleResize = useCallbackRef(() => {
-        const { width, height } = iframeRef!.getBoundingClientRect();
+    const handleResize = useStableCallback(() => {
+        const { width, height } = iframe!.getBoundingClientRect();
         onResize({ width, height });
     });
 
-    useLayoutEffect(() => {
-        if (iframeRef) {
-            iframeRef.contentWindow!.addEventListener('resize', handleResize);
+    useEffect(() => {
+        if (iframe) {
+            void iframe.offsetLeft;
+            iframe.contentWindow!.addEventListener('resize', handleResize);
             handleResize();
         }
-    }, [iframeRef, handleResize]);
+    }, [iframe, handleResize]);
 
     return (
-        <iframe ref={setIframeRef} className={classes.observer} />
+        <iframe ref={setIframe} className={classes.observer} />
     );
 });

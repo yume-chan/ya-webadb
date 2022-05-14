@@ -1,6 +1,6 @@
 import { makeStyles, mergeClasses, shorthands } from '@griffel/react';
 import { ComponentType, CSSProperties, useLayoutEffect, useMemo, useState } from "react";
-import { useCallbackRef, withDisplayName } from "../utils";
+import { useStableCallback, withDisplayName } from "../utils";
 import { ResizeObserver, Size } from './resize-observer';
 
 const useClasses = makeStyles({
@@ -167,7 +167,7 @@ export const Grid = withDisplayName('Grid')(({
     const [bodyRef, setBodyRef] = useState<HTMLDivElement | null>(null);
     const [bodySize, setBodySize] = useState<Size>({ width: 0, height: 0 });
 
-    const handleScroll = useCallbackRef(() => {
+    const handleScroll = useStableCallback(() => {
         if (bodyRef) {
             setScrollLeft(bodyRef.scrollLeft);
             setScrollTop(bodyRef.scrollTop);

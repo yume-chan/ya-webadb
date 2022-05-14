@@ -7,7 +7,7 @@ import { NextPage } from "next";
 import Head from "next/head";
 import { CommandBar, Grid, GridCellProps, GridColumn, GridHeaderProps, GridRowProps, HexViewer, toText } from "../components";
 import { GlobalState, PacketLogItem } from "../state";
-import { Icons, RouteStackProps, useCallbackRef, withDisplayName } from "../utils";
+import { Icons, RouteStackProps, useStableCallback, withDisplayName } from "../utils";
 
 const ADB_COMMAND_NAME = {
     [AdbCommand.Auth]: 'AUTH',
@@ -221,7 +221,7 @@ const Row = observer(function Row({
 }: GridRowProps) {
     const classes = useClasses();
 
-    const handleClick = useCallbackRef(() => {
+    const handleClick = useStableCallback(() => {
         runInAction(() => {
             state.selectedPacket = GlobalState.logs[rowIndex];
         });

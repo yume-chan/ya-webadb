@@ -53,6 +53,11 @@ const ROUTES = [
         name: 'Install APK',
     },
     {
+        url: '/logcat',
+        icon: Icons.BookSearch,
+        name: 'Logcat',
+    },
+    {
         url: '/power',
         icon: Icons.Power,
         name: 'Power Menu',

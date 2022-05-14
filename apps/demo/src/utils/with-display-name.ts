@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useRef } from 'react';
 
 export function withDisplayName(name: string) {
     return <P extends object>(Component: React.FunctionComponent<P>) => {
@@ -13,13 +13,16 @@ export function forwardRef<T>(name: string) {
     };
 }
 
-export function useCallbackRef<TArgs extends any[], R>(callback: (...args: TArgs) => R): (...args: TArgs) => R {
+export function useStableCallback<TArgs extends any[], R>(callback: (...args: TArgs) => R): (...args: TArgs) => R {
     const ref = useRef<(...args: TArgs) => R>(callback);
-    ref.current = callback;
 
-    const wrapper = useCallback((...args: TArgs) => {
+    useEffect(() => {
+        ref.current = callback;
+    });
+
+    const wrapper = useRef((...args: TArgs) => {
         return ref.current.apply(undefined, args);
-    }, []);
+    });
 
-    return wrapper;
+    return wrapper.current;
 }

@@ -1,16 +1,15 @@
-// cspell: ignore logcat
-
 import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
 import { AbortController, decodeUtf8, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { Logcat, LogMessage, LogPriority } from '@yume-chan/android-bin';
-import { autorun, makeAutoObservable, observable, runInAction } from "mobx";
+import { autorun, makeAutoObservable, observable, runInAction, computed, action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
+
 import { CommandBar, Grid, GridColumn, GridHeaderProps, GridRowProps } from "../components";
 import { GlobalState } from "../state";
-import { Icons, RouteStackProps, useCallbackRef } from "../utils";
+import { Icons, RouteStackProps, useStableCallback } from "../utils";
 
 const LINE_HEIGHT = 32;
 
@@ -54,10 +53,13 @@ export interface LogRow extends LogMessage {
 const state = makeAutoObservable({
     logcat: undefined as Logcat | undefined,
     running: false,
+    buffer: [] as LogRow[],
     list: [] as LogRow[],
+    count: 0,
     stream: undefined as ReadableStream<LogMessage> | undefined,
     stopSignal: undefined as AbortController | undefined,
     selectedCount: 0,
+    animationFrameId: undefined as number | undefined,
     start() {
         if (this.running) {
             return;
@@ -70,14 +72,22 @@ const state = makeAutoObservable({
             .pipeTo(
                 new WritableStream({
                     write: (chunk) => {
-                        runInAction(() => {
-                            this.list.push(chunk);
-                        });
+                        this.buffer.push(chunk);
                     },
                 }),
                 { signal: this.stopSignal.signal }
             )
             .catch(() => { });
+        this.flush();
+    },
+    flush() {
+        if (this.buffer.length) {
+            this.list.push(...this.buffer);
+            this.buffer = [];
+        }
+        if (this.running) {
+            requestAnimationFrame(this.flush);
+        }
     },
     stop() {
         this.running = false;
@@ -218,19 +228,23 @@ const state = makeAutoObservable({
         ];
     },
 }, {
+    buffer: false,
     list: observable.shallow,
+    flush: action.bound,
 });
-
-console.log(state);
 
 autorun(() => {
     if (GlobalState.device) {
-        state.logcat = new Logcat(GlobalState.device);
+        runInAction(() => {
+            state.logcat = new Logcat(GlobalState.device!);
+        });
     } else {
-        state.logcat = undefined;
-        if (state.running) {
-            state.stop();
-        }
+        runInAction(() => {
+            state.logcat = undefined;
+            if (state.running) {
+                state.stop();
+            }
+        });
     }
 });
 
@@ -248,7 +262,7 @@ const Header = observer(function Header({
     );
 });
 
-const Row = observer(function Row({
+const Row = function Row({
     className,
     rowIndex,
     ...rest
@@ -256,7 +270,7 @@ const Row = observer(function Row({
     const item = state.list[rowIndex];
     const classes = useClasses();
 
-    const handleClick = useCallbackRef(() => {
+    const handleClick = useStableCallback(() => {
         runInAction(() => {
         });
     });
@@ -271,7 +285,7 @@ const Row = observer(function Row({
             {...rest}
         />
     );
-});
+};
 
 const LogcatPage: NextPage = () => {
     const classes = useClasses();

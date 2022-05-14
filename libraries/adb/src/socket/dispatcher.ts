@@ -1,13 +1,11 @@
 import { AsyncOperationManager, PromiseResolver } from '@yume-chan/async';
 import type { RemoveEventListener } from '@yume-chan/event';
-import type { ValueOrPromise } from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY, type ValueOrPromise } from "@yume-chan/struct";
 
 import { AdbCommand, calculateChecksum, type AdbPacketData, type AdbPacketInit } from '../packet.js';
 import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '../stream/index.js';
 import { decodeUtf8, encodeUtf8 } from '../utils/index.js';
 import { AdbSocket, AdbSocketController } from './socket.js';
-
-const EmptyUint8Array = new Uint8Array(0);
 
 export interface AdbPacketDispatcherOptions {
     calculateChecksum: boolean;
@@ -242,7 +240,7 @@ export class AdbPacketDispatcher implements Closeable {
         packetOrCommand: AdbPacketInit | AdbCommand,
         arg0?: number,
         arg1?: number,
-        payload: string | Uint8Array = EmptyUint8Array,
+        payload: string | Uint8Array = EMPTY_UINT8_ARRAY,
     ): Promise<void> {
         let init: AdbPacketData;
         if (arg0 === undefined) {
