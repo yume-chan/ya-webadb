@@ -1,28 +1,26 @@
-// cspell: ignore syncbird
-
-export class Syncbird<T> extends Promise<T> {
+export class SyncPromise<T> extends Promise<T> {
     private resolved: boolean;
     private rejected: boolean;
     private result: unknown;
 
-    public static override resolve(): Syncbird<void>;
-    public static override resolve<T>(value: T | PromiseLike<T>): Syncbird<T>;
-    public static override resolve<T>(value?: T | PromiseLike<T>): Syncbird<T> {
-        return new Syncbird((resolve, reject) => {
+    public static override resolve(): SyncPromise<void>;
+    public static override resolve<T>(value: T | PromiseLike<T>): SyncPromise<T>;
+    public static override resolve<T>(value?: T | PromiseLike<T>): SyncPromise<T> {
+        return new SyncPromise((resolve, reject) => {
             resolve(value!);
         });
     }
 
-    public static each<T>(array: T[], callback: (item: T, index: number) => Syncbird<void>): Syncbird<void> {
+    public static each<T>(array: T[], callback: (item: T, index: number) => SyncPromise<void>): SyncPromise<void> {
         return array.reduce((prev, item, index) => {
             return prev.then(() => {
                 return callback(item, index);
             });
-        }, Syncbird.resolve());
+        }, SyncPromise.resolve());
     }
 
-    public static try<T>(executor: () => T | PromiseLike<T>): Syncbird<T> {
-        return new Syncbird((resolve, reject) => {
+    public static try<T>(executor: () => T | PromiseLike<T>): SyncPromise<T> {
+        return new SyncPromise((resolve, reject) => {
             try {
                 resolve(executor());
             } catch (e) {
@@ -55,7 +53,20 @@ export class Syncbird<T> extends Promise<T> {
                     if (typeof value === 'object' &&
                         value !== null &&
                         'then' in value &&
-                        typeof value.then === 'function') {
+                        typeof value.then === 'function'
+                    ) {
+                        if (value instanceof SyncPromise) {
+                            if (value.resolved) {
+                                resolved = true;
+                                result = value.result;
+                                return;
+                            } else if (value.rejected) {
+                                rejected = true;
+                                result = value.result;
+                                return;
+                            }
+                        }
+
                         resolve(value);
                         return;
                     }
@@ -103,10 +114,10 @@ export class Syncbird<T> extends Promise<T> {
     public override then<TResult1 = T, TResult2 = never>(
         onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
         onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
-    ): Syncbird<TResult1 | TResult2> {
+    ): SyncPromise<TResult1 | TResult2> {
         if (this.resolved) {
             if (onfulfilled) {
-                return new Syncbird((resolve, reject) => {
+                return new SyncPromise((resolve, reject) => {
                     try {
                         resolve(onfulfilled(this.result as T));
                     } catch (e) {
@@ -114,23 +125,23 @@ export class Syncbird<T> extends Promise<T> {
                     }
                 });
             }
-            return this as unknown as Syncbird<TResult1 | TResult2>;
+            return this as unknown as SyncPromise<TResult1 | TResult2>;
         }
 
         if (this.rejected) {
             if (onrejected) {
-                return new Syncbird((resolve, reject) => {
+                return new SyncPromise((resolve, reject) => {
                     try {
-                        resolve(onrejected(this.result as any));
+                        resolve(onrejected(this.result));
                     } catch (e) {
                         reject(e);
                     }
                 });
             }
-            return this as unknown as Syncbird<TResult1 | TResult2>;
+            return this as unknown as SyncPromise<TResult1 | TResult2>;
         }
 
-        return Syncbird.resolve(super.then(onfulfilled, onrejected));
+        return super.then(onfulfilled, onrejected) as unknown as SyncPromise<TResult1 | TResult2>;
     }
 
     public override catch<TResult = never>(
@@ -145,7 +156,7 @@ export class Syncbird<T> extends Promise<T> {
         }
 
         if (this.rejected) {
-            return this.result as any;
+            throw this.result;
         }
 
         return this as Promise<T>;

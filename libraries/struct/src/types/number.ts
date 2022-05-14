@@ -1,7 +1,7 @@
 // cspell: ignore syncbird
 
 import { StructFieldDefinition, StructFieldValue, StructValue, type StructAsyncDeserializeStream, type StructDeserializeStream, type StructOptions } from '../basic/index.js';
-import { Syncbird } from "../syncbird.js";
+import { SyncPromise } from "../sync-promise.js";
 import type { ValueOrPromise } from "../utils.js";
 
 export type DataViewGetters =
@@ -83,7 +83,7 @@ export class NumberFieldDefinition<
         stream: StructDeserializeStream | StructAsyncDeserializeStream,
         struct: StructValue,
     ): ValueOrPromise<NumberFieldValue<this>> {
-        return Syncbird
+        return SyncPromise
             .try(() => {
                 return stream.read(this.getSize());
             })

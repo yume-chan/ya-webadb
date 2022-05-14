@@ -66,7 +66,9 @@ export async function deserializeLogMessage(stream: StructAsyncDeserializeStream
     await stream.read(entry.headerSize - LoggerEntry.size);
     const priority = (await stream.read(1))[0] as LogPriority;
     const payload = await stream.read(entry.payloadSize - 1);
-    return { ...entry, priority, payload };
+    (entry as any).priority = priority;
+    (entry as any).payload = payload;
+    return entry as LogMessage;
 }
 
 export interface LogSize {

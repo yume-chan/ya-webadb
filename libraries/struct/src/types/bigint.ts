@@ -2,7 +2,7 @@
 
 import { getBigInt64, getBigUint64, setBigInt64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback.js';
 import { StructFieldDefinition, StructFieldValue, StructValue, type StructAsyncDeserializeStream, type StructDeserializeStream, type StructOptions } from "../basic/index.js";
-import { Syncbird } from "../syncbird.js";
+import { SyncPromise } from "../sync-promise.js";
 import type { ValueOrPromise } from "../utils.js";
 
 type DataViewBigInt64Getter = (dataView: DataView, byteOffset: number, littleEndian: boolean | undefined) => bigint;
@@ -74,17 +74,20 @@ export class BigIntFieldDefinition<
         stream: StructDeserializeStream | StructAsyncDeserializeStream,
         struct: StructValue,
     ): ValueOrPromise<BigIntFieldValue<this>> {
-        return Syncbird.try(() => {
-            return stream.read(this.getSize());
-        }).then(array => {
-            const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
-            const value = this.type.getter(
-                view,
-                0,
-                options.littleEndian
-            );
-            return this.create(options, struct, value as any);
-        }).valueOrPromise();
+        return SyncPromise
+            .try(() => {
+                return stream.read(this.getSize());
+            })
+            .then(array => {
+                const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
+                const value = this.type.getter(
+                    view,
+                    0,
+                    options.littleEndian
+                );
+                return this.create(options, struct, value as any);
+            })
+            .valueOrPromise();
     }
 }
 

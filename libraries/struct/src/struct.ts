@@ -2,7 +2,7 @@
 
 import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic/index.js';
 import { StructDefaultOptions, StructValue } from './basic/index.js';
-import { Syncbird } from "./syncbird.js";
+import { SyncPromise } from "./sync-promise.js";
 import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, type FixedLengthBufferLikeFieldOptions, type LengthField, type VariableLengthBufferLikeFieldOptions } from './types/index.js';
 import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils.js";
 
@@ -545,13 +545,15 @@ export class Struct<
         const value = new StructValue();
         Object.defineProperties(value.value, this._extra);
 
-        return Syncbird
+        return SyncPromise
             .each(this._fields, ([name, definition]) => {
-                return Syncbird.resolve(
-                    definition.deserialize(this.options, stream as any, value)
-                ).then(fieldValue => {
-                    value.set(name, fieldValue);
-                });
+                return SyncPromise
+                    .try(() => {
+                        return definition.deserialize(this.options, stream as any, value);
+                    })
+                    .then(fieldValue => {
+                        value.set(name, fieldValue);
+                    });
             })
             .then(() => {
                 const object = value.value;

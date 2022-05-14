@@ -1,7 +1,7 @@
 // cspell: ignore syncbird
 
 import { StructFieldDefinition, StructFieldValue, StructValue, type StructAsyncDeserializeStream, type StructDeserializeStream, type StructOptions } from '../../basic/index.js';
-import { Syncbird } from "../../syncbird.js";
+import { SyncPromise } from "../../sync-promise.js";
 import { decodeUtf8, encodeUtf8, type ValueOrPromise } from "../../utils.js";
 
 /**
@@ -130,17 +130,20 @@ export abstract class BufferLikeFieldDefinition<
         stream: StructDeserializeStream | StructAsyncDeserializeStream,
         struct: StructValue,
     ): ValueOrPromise<BufferLikeFieldValue<this>> {
-        return Syncbird.try(() => {
-            const size = this.getDeserializeSize(struct);
-            if (size === 0) {
-                return EMPTY_UINT8_ARRAY;
-            } else {
-                return stream.read(size);
-            }
-        }).then(array => {
-            const value = this.type.toValue(array);
-            return this.create(options, struct, value, array);
-        }).valueOrPromise();
+        return SyncPromise
+            .try(() => {
+                const size = this.getDeserializeSize(struct);
+                if (size === 0) {
+                    return EMPTY_UINT8_ARRAY;
+                } else {
+                    return stream.read(size);
+                }
+            })
+            .then(array => {
+                const value = this.type.toValue(array);
+                return this.create(options, struct, value, array);
+            })
+            .valueOrPromise();
     }
 }
 
