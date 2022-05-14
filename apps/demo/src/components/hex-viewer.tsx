@@ -20,6 +20,7 @@ const useClasses = makeStyles({
     },
     hex: {
         marginLeft: '40px',
+        fontVariantLigatures: 'none',
     },
 });
 

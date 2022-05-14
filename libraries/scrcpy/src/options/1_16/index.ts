@@ -27,9 +27,21 @@ export enum ScrcpyVideoOrientation {
 
 export interface CodecOptionsInit {
     profile: AndroidCodecProfile;
-
     level: AndroidCodecLevel;
+
+    iFrameInterval: number;
+    repeatPreviousFrameAfter: number;
+    maxPtsGapToEncoder: number;
 }
+
+function toDashCase(input: string) {
+    return input.replace(/([A-Z])/g, '-$1').toLowerCase();
+}
+
+const CODEC_OPTION_TYPES: Partial<Record<keyof CodecOptionsInit, 'long' | 'float' | 'string'>> = {
+    repeatPreviousFrameAfter: 'long',
+    maxPtsGapToEncoder: 'long',
+};
 
 export class CodecOptions implements ScrcpyOptionValue {
     public value: Partial<CodecOptionsInit>;
@@ -47,7 +59,10 @@ export class CodecOptions implements ScrcpyOptionValue {
         }
 
         return entries
-            .map(([key, value]) => `${key}=${value}`)
+            .map(([key, value]) => {
+                const type = CODEC_OPTION_TYPES[key as keyof CodecOptionsInit];
+                return `${toDashCase(key)}${type ? `:${type}` : ''}=${value}`;
+            })
             .join(',');
     }
 }

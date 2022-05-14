@@ -288,6 +288,8 @@ class ScrcpyPageState {
         Constructor: TinyH264Decoder,
     }];
     decoder: H264Decoder | undefined = undefined;
+    fpsCounterIntervalId: any = undefined;
+    fps = 0;
 
     displays: number[] = [];
     updateDisplays = async () => {
@@ -387,6 +389,14 @@ class ScrcpyPageState {
                 this.rotate = (this.rotate + 1) & 3;
             },
         });
+
+        if (this.running) {
+            result.push({
+                key: 'fps',
+                text: `FPS: ${this.fps}`,
+                disabled: true,
+            });
+        }
 
         return result;
     }
@@ -723,8 +733,15 @@ class ScrcpyPageState {
 
             const decoderDefinition = this.decoders.find(x => x.key === this.settings.decoder) ?? this.decoders[0];
             const decoder = new decoderDefinition.Constructor();
+
             runInAction(() => {
                 this.decoder = decoder;
+
+                let lastFrameCount = 0;
+                this.fpsCounterIntervalId = setInterval(action(() => {
+                    this.fps = decoder.frameRendered - lastFrameCount;
+                    lastFrameCount = decoder.frameRendered;
+                }), 1000);
             });
 
             const options = new ScrcpyOptions1_24({
@@ -801,6 +818,9 @@ class ScrcpyPageState {
         // Otherwise some packets may still arrive at decoder
         this.decoder?.dispose();
         this.decoder = undefined;
+
+        this.fps = 0;
+        clearTimeout(this.fpsCounterIntervalId);
 
         this.client = undefined;
         this.running = false;
@@ -1000,7 +1020,7 @@ class ScrcpyPageState {
         if (!this.client) {
             return;
         }
-        
+
         const { key, code } = e;
         if (key.match(/^[!-`{-~]$/i)) {
             this.client!.injectText(key);
