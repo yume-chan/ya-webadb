@@ -271,12 +271,12 @@
          * your PR branch, and in this situation "rush change" will also automatically invoke "git fetch"
          * to retrieve the latest activity for the remote master branch.
          */
-        "url": "https://github.com/yume-chan/ya-webadb"
+        "url": "https://github.com/yume-chan/ya-webadb",
         /**
          * The default branch name. This tells "rush change" which remote branch to compare against.
          * The default value is "master"
          */
-        // "defaultBranch": "master",
+        "defaultBranch": "master"
         /**
          * The default remote. This tells "rush change" which remote to compare against if the remote URL is
          * not set or if a remote matching the provided remote URL is not found.
