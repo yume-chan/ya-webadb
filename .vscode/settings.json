@@ -11,6 +11,7 @@
         "CLSE",
         "CNXN",
         "Deserialization",
+        "DESERIALIZERS",
         "Embedder",
         "fluentui",
         "genymobile",

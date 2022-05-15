@@ -1,10 +1,11 @@
 {
+
     "references": [
         {
             "path": "../event/tsconfig.json"
         },
         {
-            "path": "../struct/tsconfig.json"
+            "path": "../struct/tsconfig.build.json"
         },
         {
             "path": "./tsconfig.test.json"

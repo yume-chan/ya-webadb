@@ -1,10 +1,12 @@
+import { describe, expect, it, jest } from '@jest/globals';
+
 import { StructAsyncDeserializeStream, StructDefaultOptions, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from './basic/index.js';
+import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, VariableLengthBufferLikeFieldDefinition } from "./index.js";
 import { Struct } from './struct.js';
-import { ArrayBufferFieldType, BigIntFieldDefinition, BigIntFieldType, FixedLengthArrayBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringFieldType, ArrayBufferViewFieldType, VariableLengthArrayBufferLikeFieldDefinition } from './types/index.js';
-import { ValueOrPromise } from './utils.js';
+import type { ValueOrPromise } from './utils.js';
 
 class MockDeserializationStream implements StructDeserializeStream {
-    public buffer = new ArrayBuffer(0);
+    public buffer = new Uint8Array(0);
 
     public read = jest.fn((length: number) => this.buffer);
 }
@@ -161,27 +163,16 @@ describe('Struct', () => {
             expect(definition.type).toBe(BigIntFieldType.Uint64);
         });
 
-        describe('#arrayBufferLike', () => {
-            describe('FixedLengthArrayBufferLikeFieldDefinition', () => {
-                it('`#arrayBuffer` with fixed length', () => {
+        describe('#uint8ArrayLike', () => {
+            describe('FixedLengthBufferLikeFieldDefinition', () => {
+                it('`#uint8Array` with fixed length', () => {
                     let struct = new Struct();
-                    struct.arrayBuffer('foo', { length: 10 });
+                    struct.uint8Array('foo', { length: 10 });
                     expect(struct).toHaveProperty('size', 10);
 
-                    const definition = struct['_fields'][0]![1] as FixedLengthArrayBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(FixedLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(ArrayBufferFieldType);
-                    expect(definition.options.length).toBe(10);
-                });
-
-                it('`#uint8ClampedArray` with fixed length', () => {
-                    let struct = new Struct();
-                    struct.uint8ClampedArray('foo', { length: 10 });
-                    expect(struct).toHaveProperty('size', 10);
-
-                    const definition = struct['_fields'][0]![1] as FixedLengthArrayBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(FixedLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(ArrayBufferViewFieldType);
+                    const definition = struct['_fields'][0]![1] as FixedLengthBufferLikeFieldDefinition;
+                    expect(definition).toBeInstanceOf(FixedLengthBufferLikeFieldDefinition);
+                    expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.length).toBe(10);
                 });
 
@@ -190,40 +181,26 @@ describe('Struct', () => {
                     struct.string('foo', { length: 10 });
                     expect(struct).toHaveProperty('size', 10);
 
-                    const definition = struct['_fields'][0]![1] as FixedLengthArrayBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(FixedLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(StringFieldType);
+                    const definition = struct['_fields'][0]![1] as FixedLengthBufferLikeFieldDefinition;
+                    expect(definition).toBeInstanceOf(FixedLengthBufferLikeFieldDefinition);
+                    expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.length).toBe(10);
                 });
             });
 
-            describe('VariableLengthArrayBufferLikeFieldDefinition', () => {
-                it('`#arrayBuffer` with variable length', () => {
+            describe('VariableLengthBufferLikeFieldDefinition', () => {
+                it('`#uint8Array` with variable length', () => {
                     const struct = new Struct().int8('barLength');
                     expect(struct).toHaveProperty('size', 1);
 
-                    struct.arrayBuffer('bar', { lengthField: 'barLength' });
+                    struct.uint8Array('bar', { lengthField: 'barLength' });
                     expect(struct).toHaveProperty('size', 1);
 
-                    const definition = struct['_fields'][1]![1] as VariableLengthArrayBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(VariableLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(ArrayBufferFieldType);
+                    const definition = struct['_fields'][1]![1] as VariableLengthBufferLikeFieldDefinition;
+                    expect(definition).toBeInstanceOf(VariableLengthBufferLikeFieldDefinition);
+                    expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.lengthField).toBe('barLength');
                 });
-
-                it('`#uint8ClampedArray` with variable length', () => {
-                    const struct = new Struct().int8('barLength');
-                    expect(struct).toHaveProperty('size', 1);
-
-                    struct.uint8ClampedArray('bar', { lengthField: 'barLength' });
-                    expect(struct).toHaveProperty('size', 1);
-
-                    const definition = struct['_fields'][1]![1] as VariableLengthArrayBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(VariableLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(ArrayBufferViewFieldType);
-                    expect(definition.options.lengthField).toBe('barLength');
-                });
-
 
                 it('`#string` with variable length', () => {
                     const struct = new Struct().int8('barLength');
@@ -232,9 +209,9 @@ describe('Struct', () => {
                     struct.string('bar', { lengthField: 'barLength' });
                     expect(struct).toHaveProperty('size', 1);
 
-                    const definition = struct['_fields'][1]![1] as VariableLengthArrayBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(VariableLengthArrayBufferLikeFieldDefinition);
-                    expect(definition.type).toBeInstanceOf(StringFieldType);
+                    const definition = struct['_fields'][1]![1] as VariableLengthBufferLikeFieldDefinition;
+                    expect(definition).toBeInstanceOf(VariableLengthBufferLikeFieldDefinition);
+                    expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.lengthField).toBe('barLength');
                 });
             });
@@ -277,8 +254,8 @@ describe('Struct', () => {
 
                 const stream = new MockDeserializationStream();
                 stream.read
-                    .mockReturnValueOnce(new Uint8Array([2]).buffer)
-                    .mockReturnValueOnce(new Uint8Array([0, 16]).buffer);
+                    .mockReturnValueOnce(new Uint8Array([2]))
+                    .mockReturnValueOnce(new Uint8Array([0, 16]));
 
                 const result = await struct.deserialize(stream);
                 expect(result).toEqual({ foo: 2, bar: 16 });
@@ -291,15 +268,15 @@ describe('Struct', () => {
             it('should deserialize with dynamic size fields', async () => {
                 const struct = new Struct()
                     .int8('fooLength')
-                    .uint8ClampedArray('foo', { lengthField: 'fooLength' });
+                    .uint8Array('foo', { lengthField: 'fooLength' });
 
                 const stream = new MockDeserializationStream();
                 stream.read
-                    .mockReturnValueOnce(new Uint8Array([2]).buffer)
-                    .mockReturnValueOnce(new Uint8Array([3, 4]).buffer);
+                    .mockReturnValueOnce(new Uint8Array([2]))
+                    .mockReturnValueOnce(new Uint8Array([3, 4]));
 
                 const result = await struct.deserialize(stream);
-                expect(result).toEqual({ fooLength: 2, foo: new Uint8ClampedArray([3, 4]) });
+                expect(result).toEqual({ fooLength: 2, foo: new Uint8Array([3, 4]) });
                 expect(stream.read).toBeCalledTimes(2);
                 expect(stream.read).nthCalledWith(1, 1);
                 expect(stream.read).nthCalledWith(2, 2);
@@ -339,40 +316,40 @@ describe('Struct', () => {
         });
 
         describe('#postDeserialize', () => {
-            it('can throw errors', async () => {
+            it('can throw errors', () => {
                 const struct = new Struct();
                 const callback = jest.fn(() => { throw new Error('mock'); });
                 struct.postDeserialize(callback);
 
                 const stream = new MockDeserializationStream();
-                expect(struct.deserialize(stream)).rejects.toThrowError('mock');
+                expect(() => struct.deserialize(stream)).toThrowError('mock');
                 expect(callback).toBeCalledTimes(1);
             });
 
-            it('can replace return value', async () => {
+            it('can replace return value', () => {
                 const struct = new Struct();
                 const callback = jest.fn(() => 'mock');
                 struct.postDeserialize(callback);
 
                 const stream = new MockDeserializationStream();
-                expect(struct.deserialize(stream)).resolves.toBe('mock');
+                expect(struct.deserialize(stream)).toBe('mock');
                 expect(callback).toBeCalledTimes(1);
                 expect(callback).toBeCalledWith({});
             });
 
-            it('can return nothing', async () => {
+            it('can return nothing', () => {
                 const struct = new Struct();
                 const callback = jest.fn();
                 struct.postDeserialize(callback);
 
                 const stream = new MockDeserializationStream();
-                const result = await struct.deserialize(stream);
+                const result = struct.deserialize(stream);
 
                 expect(callback).toBeCalledTimes(1);
                 expect(callback).toBeCalledWith(result);
             });
 
-            it('should overwrite callback', async () => {
+            it('should overwrite callback', () => {
                 const struct = new Struct();
 
                 const callback1 = jest.fn();
@@ -382,7 +359,7 @@ describe('Struct', () => {
                 struct.postDeserialize(callback2);
 
                 const stream = new MockDeserializationStream();
-                await struct.deserialize(stream);
+                struct.deserialize(stream);
 
                 expect(callback1).toBeCalledTimes(0);
                 expect(callback2).toBeCalledTimes(1);
@@ -404,9 +381,9 @@ describe('Struct', () => {
             it('should serialize with dynamic size fields', () => {
                 const struct = new Struct()
                     .int8('fooLength')
-                    .arrayBuffer('foo', { lengthField: 'fooLength' });
+                    .uint8Array('foo', { lengthField: 'fooLength' });
 
-                const result = new Uint8Array(struct.serialize({ foo: new Uint8Array([0x03, 0x04, 0x05]).buffer }));
+                const result = new Uint8Array(struct.serialize({ foo: new Uint8Array([0x03, 0x04, 0x05]) }));
 
                 expect(result).toEqual(new Uint8Array([0x03, 0x03, 0x04, 0x05]));
             });

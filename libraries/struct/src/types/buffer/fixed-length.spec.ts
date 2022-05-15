@@ -1,3 +1,5 @@
+import { describe, expect, it } from '@jest/globals';
+
 import { Uint8ArrayBufferFieldSubType } from "./base.js";
 import { FixedLengthBufferLikeFieldDefinition } from "./fixed-length.js";
 

@@ -13,7 +13,9 @@ export class BufferedStreamEndedError extends Error {
 }
 
 export class BufferedStream {
-    private buffer: Uint8Array | undefined;
+    private buffered: Uint8Array | undefined;
+    private bufferedOffset = 0;
+    private bufferedLength = 0;
 
     protected readonly stream: ReadableStream<Uint8Array>;
 
@@ -30,63 +32,74 @@ export class BufferedStream {
      * @returns
      */
     public async read(length: number): Promise<Uint8Array> {
-        let array: Uint8Array;
+        let result: Uint8Array;
         let index: number;
-        if (this.buffer) {
-            const buffer = this.buffer;
-            if (buffer.byteLength > length) {
-                this.buffer = buffer.subarray(length);
-                return buffer.subarray(0, length);
+
+        if (this.buffered) {
+            let array = this.buffered;
+            const offset = this.bufferedOffset;
+            if (this.bufferedLength > length) {
+                // PERF: `subarray` is slow
+                // don't use it until absolutely necessary
+                this.bufferedOffset += length;
+                this.bufferedLength -= length;
+                return array.subarray(offset, offset + length);
             }
 
-            array = new Uint8Array(length);
-            array.set(buffer);
-            index = buffer.byteLength;
-            this.buffer = undefined;
+            this.buffered = undefined;
+            array = array.subarray(offset);
+            result = new Uint8Array(length);
+            result.set(array);
+            index = this.bufferedLength;
+            length -= this.bufferedLength;
         } else {
-            const { done, value } = await this.reader.read();
+            const { done, value: array } = await this.reader.read();
             if (done) {
                 throw new BufferedStreamEndedError();
             }
 
-            if (value.byteLength === length) {
-                return value;
+            if (array.byteLength === length) {
+                return array;
             }
 
-            if (value.byteLength > length) {
-                this.buffer = value.subarray(length);
-                return value.subarray(0, length);
+            if (array.byteLength > length) {
+                this.buffered = array;
+                this.bufferedOffset = length;
+                this.bufferedLength = array.byteLength - length;
+                return array.subarray(0, length);
             }
 
-            array = new Uint8Array(length);
-            array.set(value);
-            index = value.byteLength;
+            result = new Uint8Array(length);
+            result.set(array);
+            index = array.byteLength;
+            length -= array.byteLength;
         }
 
-        while (index < length) {
-            const left = length - index;
-
-            const { done, value } = await this.reader.read();
+        while (length > 0) {
+            const { done, value: array } = await this.reader.read();
             if (done) {
                 throw new BufferedStreamEndedError();
             }
 
-            if (value.byteLength === left) {
-                array.set(value, index);
-                return array;
+            if (array.byteLength === length) {
+                result.set(array, index);
+                return result;
             }
 
-            if (value.byteLength > left) {
-                array.set(value.subarray(0, left), index);
-                this.buffer = value.subarray(left);
-                return array;
+            if (array.byteLength > length) {
+                this.buffered = array;
+                this.bufferedOffset = length;
+                this.bufferedLength = array.byteLength - length;
+                result.set(array.subarray(0, length), index);
+                return result;
             }
 
-            array.set(value, index);
-            index += value.byteLength;
+            result.set(array, index);
+            index += array.byteLength;
+            length -= array.byteLength;
         }
 
-        return array;
+        return result;
     }
 
     /**
@@ -95,10 +108,10 @@ export class BufferedStream {
      * @returns A `ReadableStream`
      */
     public release(): ReadableStream<Uint8Array> {
-        if (this.buffer) {
+        if (this.buffered) {
             return new PushReadableStream<Uint8Array>(async controller => {
                 // Put the remaining data back to the stream
-                await controller.enqueue(this.buffer!);
+                await controller.enqueue(this.buffered!);
 
                 // Manually pipe the stream
                 while (true) {

@@ -1,5 +1,3 @@
-// cspell: ignore syncbird
-
 import { getBigInt64, getBigUint64, setBigInt64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback.js';
 import { StructFieldDefinition, StructFieldValue, StructValue, type StructAsyncDeserializeStream, type StructDeserializeStream, type StructOptions } from "../basic/index.js";
 import { SyncPromise } from "../sync-promise.js";

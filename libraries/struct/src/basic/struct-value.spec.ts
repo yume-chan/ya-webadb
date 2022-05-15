@@ -1,3 +1,5 @@
+import { describe, expect, it, jest } from '@jest/globals';
+
 import { StructValue } from "./struct-value.js";
 
 describe('StructValue', () => {

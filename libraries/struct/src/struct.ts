@@ -1,6 +1,4 @@
-// cspell: ignore Syncbird
-
-import type { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions } from './basic/index.js';
+import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, STRUCT_VALUE_SYMBOL } from './basic/index.js';
 import { StructDefaultOptions, StructValue } from './basic/index.js';
 import { SyncPromise } from "./sync-promise.js";
 import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, type FixedLengthBufferLikeFieldOptions, type LengthField, type VariableLengthBufferLikeFieldOptions } from './types/index.js';
@@ -542,21 +540,25 @@ export class Struct<
     public deserialize(
         stream: StructDeserializeStream | StructAsyncDeserializeStream,
     ): ValueOrPromise<StructDeserializedResult<TFields, TExtra, TPostDeserialized>> {
-        const value = new StructValue();
-        Object.defineProperties(value.value, this._extra);
+        const structValue = new StructValue();
+        Object.defineProperties(structValue.value, this._extra);
 
         return SyncPromise
-            .each(this._fields, ([name, definition]) => {
-                return SyncPromise
-                    .try(() => {
-                        return definition.deserialize(this.options, stream as any, value);
-                    })
-                    .then(fieldValue => {
-                        value.set(name, fieldValue);
-                    });
+            .try(() => {
+                let result = SyncPromise.resolve();
+                for (const [name, definition] of this._fields) {
+                    result = result
+                        .then(() =>
+                            definition.deserialize(this.options, stream as any, structValue)
+                        )
+                        .then(fieldValue => {
+                            structValue.set(name, fieldValue);
+                        });
+                }
+                return result;
             })
             .then(() => {
-                const object = value.value;
+                const object = structValue.value;
 
                 // Run `postDeserialized`
                 if (this._postDeserialized) {
@@ -576,18 +578,32 @@ export class Struct<
     public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): Uint8Array;
     public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>, output: Uint8Array): number;
     public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>, output?: Uint8Array): Uint8Array | number {
-        const value = new StructValue();
-
-        for (const [name, definition] of this._fields) {
-            const fieldValue = definition.create(this.options, value, (init as any)[name]);
-            value.set(name, fieldValue);
+        let structValue: StructValue;
+        if (STRUCT_VALUE_SYMBOL in init) {
+            structValue = (init as any)[STRUCT_VALUE_SYMBOL];
+            for (const [key, value] of Object.entries(init)) {
+                const fieldValue = structValue.get(key);
+                if (fieldValue) {
+                    fieldValue.set(value);
+                }
+            }
+        } else {
+            structValue = new StructValue();
+            for (const [name, definition] of this._fields) {
+                const fieldValue = definition.create(
+                    this.options,
+                    structValue,
+                    (init as any)[name]
+                );
+                structValue.set(name, fieldValue);
+            }
         }
 
         let structSize = 0;
         const fieldsInfo: { fieldValue: StructFieldValue, size: number; }[] = [];
 
         for (const [name] of this._fields) {
-            const fieldValue = value.get(name);
+            const fieldValue = structValue.get(name);
             const size = fieldValue.getSize();
             fieldsInfo.push({ fieldValue, size });
             structSize += size;

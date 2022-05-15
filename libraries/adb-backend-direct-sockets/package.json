@@ -32,7 +32,6 @@
     },
     "devDependencies": {
         "typescript": "4.7.1-rc",
-        "@types/jest": "^27.4.1",
         "@yume-chan/ts-package-builder": "^1.0.0"
     },
     "dependencies": {

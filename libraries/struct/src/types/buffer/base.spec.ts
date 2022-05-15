@@ -1,3 +1,5 @@
+import { describe, expect, it, jest } from '@jest/globals';
+
 import { StructDefaultOptions, StructDeserializeStream, StructValue } from '../../basic/index.js';
 import { BufferFieldSubType, BufferLikeFieldDefinition, EMPTY_UINT8_ARRAY, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType } from './base.js';
 
@@ -25,8 +27,8 @@ describe('Types', () => {
             });
 
             it('`#getSize` should return the `byteLength` of the `Uint8Array`', () => {
-                const arrayBuffer = new Uint8Array(10);
-                expect(Uint8ArrayBufferFieldSubType.Instance.getSize(arrayBuffer)).toBe(10);
+                const array = new Uint8Array(10);
+                expect(Uint8ArrayBufferFieldSubType.Instance.getSize(array)).toBe(10);
             });
         });
 
@@ -72,7 +74,7 @@ describe('Types', () => {
                 const fieldValue = await definition.deserialize(StructDefaultOptions, context, struct);
                 expect(context.read).toBeCalledTimes(1);
                 expect(context.read).toBeCalledWith(size);
-                expect(fieldValue).toHaveProperty('arrayBuffer', array);
+                expect(fieldValue).toHaveProperty('array', array);
 
                 expect(fieldValue.get()).toBe(array);
             });
@@ -99,7 +101,7 @@ describe('Types', () => {
 
         describe('ArrayBufferLikeFieldValue', () => {
             describe('#set', () => {
-                it('should clear `arrayBuffer` field', async () => {
+                it('should clear `array` field', async () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(Uint8ArrayBufferFieldSubType.Instance, size);
 
@@ -113,12 +115,12 @@ describe('Types', () => {
                     const newValue = new Uint8Array(20);
                     fieldValue.set(newValue);
                     expect(fieldValue.get()).toBe(newValue);
-                    expect(fieldValue).toHaveProperty('arrayBuffer', undefined);
+                    expect(fieldValue).toHaveProperty('array', undefined);
                 });
             });
 
             describe('#serialize', () => {
-                it('should be able to serialize with cached `arrayBuffer`', async () => {
+                it('should be able to serialize with cached `array`', async () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(Uint8ArrayBufferFieldSubType.Instance, size);
 

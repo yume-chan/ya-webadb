@@ -1,5 +1,3 @@
-// cspell: ignore Syncbird
-
 import type { StructAsyncDeserializeStream, StructDeserializeStream } from "./stream.js";
 import type { StructFieldValue } from "./field-value.js";
 import type { StructValue } from "./struct-value.js";
@@ -47,7 +45,7 @@ export abstract class StructFieldDefinition<
      */
     public abstract create(
         options: Readonly<StructOptions>,
-        struct: StructValue,
+        structValue: StructValue,
         value: TValue,
     ): StructFieldValue<this>;
 
@@ -55,12 +53,12 @@ export abstract class StructFieldDefinition<
      * When implemented in derived classes,It must be synchronous (returns a value) or asynchronous (returns a `Promise`) depending
      * on the type of `stream`. reads and creates a `StructFieldValue` from `stream`.
      *
-     *  `Syncbird` can be used to make the implementation easier.
+     *  `SyncPromise` can be used to simplify implementation.
      */
     public abstract deserialize(
         options: Readonly<StructOptions>,
         stream: StructDeserializeStream,
-        struct: StructValue,
+        structValue: StructValue,
     ): StructFieldValue<this>;
     public abstract deserialize(
         options: Readonly<StructOptions>,

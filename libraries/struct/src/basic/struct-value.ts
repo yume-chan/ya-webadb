@@ -1,4 +1,6 @@
-import type { StructFieldValue } from "./field-value.js";
+import { StructFieldValue } from "./field-value.js";
+
+export const STRUCT_VALUE_SYMBOL = Symbol("struct-value");
 
 /**
  * A struct value is a map between keys in a struct and their field values.
@@ -11,29 +13,43 @@ export class StructValue {
      */
     public readonly value: Record<PropertyKey, unknown> = {};
 
+    public constructor() {
+        Object.defineProperty(
+            this.value,
+            STRUCT_VALUE_SYMBOL,
+            { enumerable: false, value: this }
+        );
+    }
+
     /**
      * Sets a `StructFieldValue` for `key`
      *
-     * @param key The field name
-     * @param value The associated `StructFieldValue`
+     * @param name The field name
+     * @param fieldValue The associated `StructFieldValue`
      */
-    public set(key: PropertyKey, value: StructFieldValue): void {
-        this.fieldValues[key] = value;
+    public set(name: PropertyKey, fieldValue: StructFieldValue): void {
+        this.fieldValues[name] = fieldValue;
 
-        Object.defineProperty(this.value, key, {
-            configurable: true,
-            enumerable: true,
-            get() { return value.get(); },
-            set(v) { value.set(v); },
-        });
+        // PERF: `Object.defineProperty` is slow
+        if (fieldValue.get !== StructFieldValue.prototype.get ||
+            fieldValue.set !== StructFieldValue.prototype.set) {
+            Object.defineProperty(this.value, name, {
+                configurable: true,
+                enumerable: true,
+                get() { return fieldValue.get(); },
+                set(v) { fieldValue.set(v); },
+            });
+        } else {
+            this.value[name] = fieldValue.get();
+        }
     }
 
     /**
      * Gets the `StructFieldValue` for `key`
      *
-     * @param key The field name
+     * @param name The field name
      */
-    public get(key: PropertyKey): StructFieldValue {
-        return this.fieldValues[key]!;
+    public get(name: PropertyKey): StructFieldValue {
+        return this.fieldValues[name]!;
     }
 }

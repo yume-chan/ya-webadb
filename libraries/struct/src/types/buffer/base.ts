@@ -1,5 +1,3 @@
-// cspell: ignore syncbird
-
 import { StructFieldDefinition, StructFieldValue, StructValue, type StructAsyncDeserializeStream, type StructDeserializeStream, type StructOptions } from '../../basic/index.js';
 import { SyncPromise } from "../../sync-promise.js";
 import { decodeUtf8, encodeUtf8, type ValueOrPromise } from "../../utils.js";

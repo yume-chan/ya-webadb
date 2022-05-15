@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import { StructDefaultOptions } from './options.js';
 
 describe('StructDefaultOptions', () => {

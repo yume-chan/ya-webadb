@@ -1,3 +1,5 @@
+import { describe, expect, it } from '@jest/globals';
+
 import type { ValueOrPromise } from "../utils.js";
 import { StructFieldDefinition } from "./definition.js";
 import { StructFieldValue } from "./field-value.js";
