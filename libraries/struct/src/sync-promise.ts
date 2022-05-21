@@ -1,11 +1,3 @@
-// PERF: Once a promise becomes async, it can't go back to sync again,
-// so bypass all checks in `SyncPromise`
-class AsyncPromise<T> extends Promise<T> {
-    public valueOrPromise(): T | PromiseLike<T> {
-        return this;
-    }
-}
-
 enum State {
     Pending,
     Fulfilled,
@@ -22,21 +14,21 @@ function fulfilledThen<T, TResult1 = T>(
     return this as unknown as SyncPromise<TResult1>;
 }
 
-function fulfilledValue<T>(
-    this: SyncPromise<T>,
-) {
-    return this.result as T;
-}
-
 function rejectedThen<T, TResult1 = T, TResult2 = never>(
     this: SyncPromise<T>,
     onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null
-) {
+): SyncPromise<TResult2> {
     if (onrejected) {
         return SyncPromise.try(() => onrejected(this.result));
     }
-    return this as unknown as SyncPromise<TResult1 | TResult2>;
+    return this as unknown as SyncPromise<TResult2>;
+}
+
+function fulfilledValue<T>(
+    this: SyncPromise<T>,
+) {
+    return this.result as T;
 }
 
 function rejectedValue<T>(
@@ -45,40 +37,25 @@ function rejectedValue<T>(
     throw this.result;
 }
 
-interface SyncPromiseThen<T> {
-    <TResult1 = T, TResult2 = never>(
-        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
-    ): SyncPromise<TResult1 | TResult2>;
-}
+const INTERNAL_CREATED = Symbol('internal-created') as any;
 
-export class SyncPromise<T> extends AsyncPromise<T> {
-    // Because `super.then` will only be called when `this` is asynchronously fulfilled,
-    // let it create `AsyncPromise` instead, so asynchronous path won't check for sync state anymore.
-    public static [Symbol.species] = AsyncPromise;
-
-    public static override reject<T = never>(reason?: any): SyncPromise<T> {
-        return new SyncPromise<T>(
-            (resolve, reject) => {
-                reject(reason);
-            }
-        );
+export class SyncPromise<T> implements PromiseLike<T> {
+    public static reject<T = never>(reason?: any): SyncPromise<T> {
+        const promise = new SyncPromise<T>(INTERNAL_CREATED);
+        promise.handleReject(reason);
+        return promise;
     }
 
-    public static override resolve(): SyncPromise<void>;
-    public static override resolve<T>(value: T | PromiseLike<T>): SyncPromise<T>;
-    public static override resolve<T>(value?: T | PromiseLike<T>): SyncPromise<T> {
-        // `Promise.resolve` asynchronously calls `resolve`
-        // So we need to write our own.
+    public static resolve(): SyncPromise<void>;
+    public static resolve<T>(value: T | PromiseLike<T>): SyncPromise<T>;
+    public static resolve<T>(value?: T | PromiseLike<T>): SyncPromise<T> {
         if (value instanceof SyncPromise) {
             return value;
         }
 
-        return new SyncPromise<T>(
-            (resolve) => {
-                resolve(value!);
-            }
-        );
+        const promise = new SyncPromise<T>(INTERNAL_CREATED);
+        promise.handleResolve(value!);
+        return promise;
     }
 
     public static try<T>(executor: () => T | PromiseLike<T>): SyncPromise<T> {
@@ -89,90 +66,120 @@ export class SyncPromise<T> extends AsyncPromise<T> {
         }
     }
 
-    public state: State;
+    public state: State = State.Pending;
     public result: unknown;
+    public promise: PromiseLike<T> | undefined;
 
     public constructor(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void) {
-        let state: State = State.Pending;
-        let result: unknown = undefined;
-        let handleThen: SyncPromise<T>['then'] = Promise.prototype.then as any;
-        let handleValueOrPromise: () => T | PromiseLike<T> = () => this;
+        if (executor === INTERNAL_CREATED) {
+            return;
+        }
 
-        const handleResolveCore = (value: T) => {
-            state = State.Fulfilled;
-            result = value;
-            handleThen = fulfilledThen;
-            handleValueOrPromise = fulfilledValue;
-        };
-
-        const handleRejectCore = (reason?: any) => {
-            state = State.Rejected;
-            result = reason;
-            handleThen = rejectedThen;
-            handleValueOrPromise = rejectedValue;
-        };
+        let promiseResolve: (value: T | PromiseLike<T>) => void;
+        let promiseReject: (reason?: any) => void;
 
         let settled = false;
         let sync = true;
 
-        super((resolve, reject) => {
-            const handleReject = (reason?: any) => {
-                if (settled) { return; }
-                settled = true;
+        const handleReject = (reason?: any) => {
+            if (settled) { return; }
+            settled = true;
 
-                if (!sync) {
-                    reject(reason);
-                    return;
-                }
+            if (!sync) {
+                promiseReject(reason);
+                return;
+            }
 
-                handleRejectCore(reason);
-            };
+            this.handleReject(reason);
+        };
 
-            try {
-                executor((value: T | PromiseLike<T>) => {
+        try {
+            executor(
+                (value: T | PromiseLike<T>) => {
                     if (settled) { return; }
                     settled = true;
 
                     if (!sync) {
-                        resolve(value);
+                        promiseResolve(value);
                         return;
                     }
 
-                    if (typeof value === 'object' && value !== null && typeof (value as any).then === 'function') {
-                        if (value instanceof SyncPromise) {
-                            switch (value.state) {
-                                case State.Fulfilled:
-                                    handleResolveCore(value.result as T);
-                                    return;
-                                case State.Rejected:
-                                    handleRejectCore(value.result);
-                                    return;
-                            }
-                        }
+                    this.handleResolve(value);
+                },
+                handleReject
+            );
+        } catch (e) {
+            handleReject(e);
+        }
 
-                        resolve(value);
-                    } else {
-                        handleResolveCore(value as T);
-                    }
-                }, handleReject);
-            } catch (e) {
-                handleReject(e);
-            }
-        });
-
-        this.state = state;
-        this.result = result;
-        this.then = handleThen;
-        this.valueOrPromise = handleValueOrPromise;
+        if (this.state === State.Pending && !this.promise) {
+            this.promise = new Promise<T>((resolve, reject) => {
+                promiseResolve = resolve;
+                promiseReject = reject;
+            });
+        }
 
         sync = false;
     }
 
-    public override then = Promise.prototype.then as SyncPromiseThen<T>;
+    private handleResolveValue(value: T) {
+        this.state = State.Fulfilled;
+        this.result = value;
+        this.then = fulfilledThen;
+        this.valueOrPromise = fulfilledValue;
+    };
 
-    public override catch<TResult = never>(
+    private handleResolve(value: T | PromiseLike<T>) {
+        if (typeof value === 'object' &&
+            value !== null &&
+            'then' in value &&
+            typeof value.then === 'function'
+        ) {
+            if (value instanceof SyncPromise) {
+                switch (value.state) {
+                    case State.Fulfilled:
+                        this.handleResolveValue(value.result as T);
+                        return;
+                    case State.Rejected:
+                        this.handleReject(value.result);
+                        return;
+                }
+            }
+
+            this.promise = value as PromiseLike<T>;
+        } else {
+            this.handleResolveValue(value as T);
+        }
+    }
+
+    private handleReject(reason?: any) {
+        this.state = State.Rejected;
+        this.result = reason;
+        this.then = rejectedThen;
+        this.valueOrPromise = rejectedValue;
+    };
+
+    public then<TResult1 = T, TResult2 = never>(
+        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
+        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
+    ): SyncPromise<TResult1 | TResult2> {
+        // The result promise isn't really a `SyncPromise`,
+        // but we attach a `valueOrPromise` to it,
+        // so it's compatible with `SyncPromise`.
+        // PERF: it's 230% faster than creating a real `SyncPromise` instance.
+        const promise =
+            this.promise!.then(onfulfilled, onrejected) as unknown as SyncPromise<TResult1 | TResult2>;
+        promise.valueOrPromise = this.valueOrPromise as unknown as () => TResult1 | TResult2 | PromiseLike<TResult1 | TResult2>;
+        return promise;
+    }
+
+    public catch<TResult = never>(
         onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null | undefined
     ): SyncPromise<T | TResult> {
         return this.then(undefined, onrejected);
+    }
+
+    public valueOrPromise(): T | PromiseLike<T> {
+        return this;
     }
 }
