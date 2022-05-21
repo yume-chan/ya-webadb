@@ -1,8 +1,8 @@
 name: Demo Bug
 description: File a bug in the official demo
 labels:
-  - bug
-  - demo
+  - "type:bug"
+  - "domain: website"
 body:
   - type: checkboxes
     attributes:
