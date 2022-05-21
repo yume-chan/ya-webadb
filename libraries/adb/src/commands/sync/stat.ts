@@ -34,7 +34,8 @@ export const AdbSyncLstatResponse =
             get permission() { return this.mode & 0b00001111_11111111; },
         })
         .postDeserialize((object) => {
-            if (object.mode === 0 &&
+            if (
+                object.mode === 0 &&
                 object.size === 0 &&
                 object.mtime === 0
             ) {

@@ -26,38 +26,25 @@ export class BufferedStream {
         this.reader = stream.getReader();
     }
 
-    /**
-     *
-     * @param length
-     * @returns
-     */
-    public async read(length: number): Promise<Uint8Array> {
+    private async readSource() {
+        const { done, value } = await this.reader.read();
+        if (done) {
+            throw new BufferedStreamEndedError();
+        }
+        return value;
+    }
+
+    private async readAsync(length: number, initial?: Uint8Array) {
         let result: Uint8Array;
         let index: number;
 
-        if (this.buffered) {
-            let array = this.buffered;
-            const offset = this.bufferedOffset;
-            if (this.bufferedLength > length) {
-                // PERF: `subarray` is slow
-                // don't use it until absolutely necessary
-                this.bufferedOffset += length;
-                this.bufferedLength -= length;
-                return array.subarray(offset, offset + length);
-            }
-
-            this.buffered = undefined;
-            array = array.subarray(offset);
+        if (initial) {
             result = new Uint8Array(length);
-            result.set(array);
-            index = this.bufferedLength;
-            length -= this.bufferedLength;
+            result.set(initial);
+            index = initial.byteLength;
+            length -= initial.byteLength;
         } else {
-            const { done, value: array } = await this.reader.read();
-            if (done) {
-                throw new BufferedStreamEndedError();
-            }
-
+            const array = await this.readSource();
             if (array.byteLength === length) {
                 return array;
             }
@@ -76,11 +63,7 @@ export class BufferedStream {
         }
 
         while (length > 0) {
-            const { done, value: array } = await this.reader.read();
-            if (done) {
-                throw new BufferedStreamEndedError();
-            }
-
+            const array = await this.readSource();
             if (array.byteLength === length) {
                 result.set(array, index);
                 return result;
@@ -100,6 +83,31 @@ export class BufferedStream {
         }
 
         return result;
+    }
+
+    /**
+     *
+     * @param length
+     * @returns
+     */
+    public read(length: number): Uint8Array | Promise<Uint8Array> {
+        // PERF: Add a synchronous path for reading from internal buffer
+        if (this.buffered) {
+            const array = this.buffered;
+            const offset = this.bufferedOffset;
+            if (this.bufferedLength > length) {
+                // PERF: `subarray` is slow
+                // don't use it until absolutely necessary
+                this.bufferedOffset += length;
+                this.bufferedLength -= length;
+                return array.subarray(offset, offset + length);
+            }
+
+            this.buffered = undefined;
+            return this.readAsync(length, array.subarray(offset));
+        }
+
+        return this.readAsync(length);
     }
 
     /**

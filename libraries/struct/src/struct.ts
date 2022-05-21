@@ -490,7 +490,10 @@ export class Struct<
         Overwrite<TExtra, T>,
         TPostDeserialized
     > {
-        Object.assign(this._extra, Object.getOwnPropertyDescriptors(value));
+        Object.defineProperties(
+            this._extra,
+            Object.getOwnPropertyDescriptors(value)
+        );
         return this as any;
     }
 
@@ -540,23 +543,21 @@ export class Struct<
     public deserialize(
         stream: StructDeserializeStream | StructAsyncDeserializeStream,
     ): ValueOrPromise<StructDeserializedResult<TFields, TExtra, TPostDeserialized>> {
-        const structValue = new StructValue();
-        Object.defineProperties(structValue.value, this._extra);
+        const structValue = new StructValue(this._extra);
 
-        return SyncPromise
-            .try(() => {
-                let result = SyncPromise.resolve();
-                for (const [name, definition] of this._fields) {
-                    result = result
-                        .then(() =>
-                            definition.deserialize(this.options, stream as any, structValue)
-                        )
-                        .then(fieldValue => {
-                            structValue.set(name, fieldValue);
-                        });
-                }
-                return result;
-            })
+        let promise = SyncPromise.resolve();
+
+        for (const [name, definition] of this._fields) {
+            promise = promise
+                .then(() =>
+                    definition.deserialize(this.options, stream as any, structValue)
+                )
+                .then(fieldValue => {
+                    structValue.set(name, fieldValue);
+                });
+        }
+
+        return promise
             .then(() => {
                 const object = structValue.value;
 
@@ -588,7 +589,7 @@ export class Struct<
                 }
             }
         } else {
-            structValue = new StructValue();
+            structValue = new StructValue({});
             for (const [name, definition] of this._fields) {
                 const fieldValue = definition.create(
                     this.options,

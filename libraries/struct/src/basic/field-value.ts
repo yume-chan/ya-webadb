@@ -20,6 +20,11 @@ export abstract class StructFieldValue<
     /** Gets the associated `Struct` instance */
     public readonly struct: StructValue;
 
+    public get hasCustomAccessors(): boolean {
+        return this.get !== StructFieldValue.prototype.get ||
+            this.set !== StructFieldValue.prototype.set;
+    }
+
     protected value: TDefinition['TValue'];
 
     public constructor(

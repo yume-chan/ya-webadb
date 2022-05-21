@@ -1,4 +1,4 @@
-import { StructFieldValue } from "./field-value.js";
+import type { StructFieldValue } from "./field-value.js";
 
 export const STRUCT_VALUE_SYMBOL = Symbol("struct-value");
 
@@ -11,9 +11,15 @@ export class StructValue {
     /**
      * Gets the result struct value object
      */
-    public readonly value: Record<PropertyKey, unknown> = {};
+    public readonly value: Record<PropertyKey, unknown>;
 
-    public constructor() {
+    public constructor(prototype: any) {
+        // PERF: `Object.create(extra)` is 50% faster
+        // than `Object.defineProperties(this.value, extra)`
+        this.value = Object.create(prototype);
+
+        // PERF: `Object.defineProperty` is slow
+        // but we need it to be non-enumerable
         Object.defineProperty(
             this.value,
             STRUCT_VALUE_SYMBOL,
@@ -31,8 +37,8 @@ export class StructValue {
         this.fieldValues[name] = fieldValue;
 
         // PERF: `Object.defineProperty` is slow
-        if (fieldValue.get !== StructFieldValue.prototype.get ||
-            fieldValue.set !== StructFieldValue.prototype.set) {
+        // use normal property when possible
+        if (fieldValue.hasCustomAccessors) {
             Object.defineProperty(this.value, name, {
                 configurable: true,
                 enumerable: true,

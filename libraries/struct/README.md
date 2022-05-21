@@ -645,13 +645,11 @@ struct.field(
 
 ### Relationship between types
 
-A `Struct` is a map between keys and `StructFieldDefinition`s.
-
-A `StructValue` is a map between keys and `StructFieldValue`s.
-
-A `Struct` can create (deserialize) multiple `StructValue`s with same field definitions.
-
-Each time a `Struct` deserialize, each `StructFieldDefinition` in it creates exactly one `StructFieldValue` to be put into the `StructValue`.
+* `StructFieldValue`: Contains value of a field, with optional metadata and accessor methods.
+* `StructFieldDefinition`: Definition of a field, can deserialize `StructFieldValue`s from a stream or create them from exist values.
+* `StructValue`: A map between field names and `StructFieldValue`s.
+* `Struct`: Definiton of a struct, a map between field names and `StructFieldDefintion`s. May contain extra metadata.
+* Result of `Struct#deserialize()`: A map between field names and results of `StructFieldValue#get()`.
 
 ### `StructFieldDefinition`
 

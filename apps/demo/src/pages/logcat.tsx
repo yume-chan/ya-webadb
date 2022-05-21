@@ -54,6 +54,7 @@ const state = makeAutoObservable({
     logcat: undefined as Logcat | undefined,
     running: false,
     buffer: [] as LogRow[],
+    flushRequested: false,
     list: [] as LogRow[],
     count: 0,
     stream: undefined as ReadableStream<LogMessage> | undefined,
@@ -73,21 +74,20 @@ const state = makeAutoObservable({
                 new WritableStream({
                     write: (chunk) => {
                         this.buffer.push(chunk);
+                        if (!this.flushRequested) {
+                            this.flushRequested = true;
+                            requestAnimationFrame(this.flush);
+                        }
                     },
                 }),
                 { signal: this.stopSignal.signal }
             )
             .catch(() => { });
-        this.flush();
     },
     flush() {
-        if (this.buffer.length) {
-            this.list.push(...this.buffer);
-            this.buffer = [];
-        }
-        if (this.running) {
-            requestAnimationFrame(this.flush);
-        }
+        this.list.push(...this.buffer);
+        this.buffer = [];
+        this.flushRequested = false;
     },
     stop() {
         this.running = false;
