@@ -185,7 +185,7 @@ export class Struct<
 
     private _fields: [name: PropertyKey, definition: StructFieldDefinition<any, any, any>][] = [];
 
-    private _extra: PropertyDescriptorMap = {};
+    private _extra: Record<PropertyKey, unknown> = {};
 
     private _postDeserialized?: StructPostDeserialized<any, any> | undefined;
 
@@ -240,7 +240,7 @@ export class Struct<
             this._fields.push(field);
         }
         this._size += other._size;
-        Object.assign(this._extra, other._extra);
+        Object.defineProperties(this._extra, Object.getOwnPropertyDescriptors(other._extra));
         return this as any;
     }
 
