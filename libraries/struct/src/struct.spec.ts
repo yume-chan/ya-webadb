@@ -291,7 +291,7 @@ describe('Struct', () => {
                 const stream = new MockDeserializationStream();
                 const result = await struct.deserialize(stream);
 
-                expect(Object.entries(Object.getOwnPropertyDescriptors(result))).toEqual([
+                expect(Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(result)))).toEqual([
                     ['foo', { configurable: true, enumerable: true, writable: true, value: 42 }],
                     ['bar', { configurable: true, enumerable: true, writable: true, value: true }],
                 ]);
@@ -308,7 +308,7 @@ describe('Struct', () => {
                 const stream = new MockDeserializationStream();
                 const result = await struct.deserialize(stream);
 
-                expect(Object.entries(Object.getOwnPropertyDescriptors(result))).toEqual([
+                expect(Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(result)))).toEqual([
                     ['foo', { configurable: true, enumerable: true, get: expect.any(Function) }],
                     ['bar', { configurable: true, enumerable: true, get: expect.any(Function), set: expect.any(Function) }],
                 ]);

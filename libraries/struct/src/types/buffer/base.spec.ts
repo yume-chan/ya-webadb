@@ -69,7 +69,7 @@ describe('Types', () => {
                 const context = new MockDeserializationStream();
                 const array = new Uint8Array(size);
                 context.array = array;
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const fieldValue = await definition.deserialize(StructDefaultOptions, context, struct);
                 expect(context.read).toBeCalledTimes(1);
@@ -86,7 +86,7 @@ describe('Types', () => {
                 const context = new MockDeserializationStream();
                 const buffer = new Uint8Array(size);
                 context.array = buffer;
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const fieldValue = await definition.deserialize(StructDefaultOptions, context, struct);
                 expect(context.read).toBeCalledTimes(0);
@@ -108,7 +108,7 @@ describe('Types', () => {
                     const context = new MockDeserializationStream();
                     const array = new Uint8Array(size);
                     context.array = array;
-                    const struct = new StructValue();
+                    const struct = new StructValue({});
 
                     const fieldValue = await definition.deserialize(StructDefaultOptions, context, struct);
 
@@ -128,7 +128,7 @@ describe('Types', () => {
                     const sourceArray = new Uint8Array(Array.from({ length: size }, (_, i) => i));
                     const array = sourceArray;
                     context.array = array;
-                    const struct = new StructValue();
+                    const struct = new StructValue({});
 
                     const fieldValue = await definition.deserialize(StructDefaultOptions, context, struct);
 
@@ -147,7 +147,7 @@ describe('Types', () => {
                     const sourceArray = new Uint8Array(Array.from({ length: size }, (_, i) => i));
                     const array = sourceArray;
                     context.array = array;
-                    const struct = new StructValue();
+                    const struct = new StructValue({});
 
                     const fieldValue = await definition.deserialize(StructDefaultOptions, context, struct);
 

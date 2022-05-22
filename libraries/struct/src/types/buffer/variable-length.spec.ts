@@ -224,7 +224,7 @@ describe("Types", () => {
     describe("VariableLengthArrayBufferLikeStructFieldValue", () => {
         describe(".constructor", () => {
             it("should forward parameters", () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -253,7 +253,7 @@ describe("Types", () => {
             });
 
             it("should forward parameters with `arrayBuffer`", () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -283,7 +283,7 @@ describe("Types", () => {
             });
 
             it("should replace `lengthField` on `struct`", () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -326,7 +326,7 @@ describe("Types", () => {
             }
 
             it("should return cached size if exist", async () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -355,7 +355,7 @@ describe("Types", () => {
             });
 
             it("should call `getSize` of its `type`", () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -386,7 +386,7 @@ describe("Types", () => {
             });
 
             it("should call `toArrayBuffer` of its `type` if it does not support `getSize`", () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -419,7 +419,7 @@ describe("Types", () => {
 
         describe("#set", () => {
             it("should call `ArrayBufferLikeFieldValue#set`", () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -447,7 +447,7 @@ describe("Types", () => {
             });
 
             it("should clear length", () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -488,7 +488,7 @@ describe("Types", () => {
 
         describe("#getDeserializeSize", () => {
             it("should return value of its `lengthField`", async () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -510,7 +510,7 @@ describe("Types", () => {
             });
 
             it("should return value of its `lengthField` as number", async () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -532,7 +532,7 @@ describe("Types", () => {
             });
 
             it("should return value of its `lengthField` as number with specified radix", async () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -557,7 +557,7 @@ describe("Types", () => {
 
         describe("#create", () => {
             it("should create a `VariableLengthArrayBufferLikeFieldValue`", () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();
@@ -584,7 +584,7 @@ describe("Types", () => {
             });
 
             it("should create a `VariableLengthArrayBufferLikeFieldValue` with `arrayBuffer`", () => {
-                const struct = new StructValue();
+                const struct = new StructValue({});
 
                 const lengthField = "foo";
                 const originalLengthFieldValue = new MockLengthFieldValue();

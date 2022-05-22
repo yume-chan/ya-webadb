@@ -152,7 +152,7 @@ describe("Types", () => {
                     const stream: StructDeserializeStream = { read };
 
                     const definition = new NumberFieldDefinition(NumberFieldType.Uint8);
-                    const struct = new StructValue();
+                    const struct = new StructValue({});
                     const value = definition.deserialize(
                         StructDefaultOptions,
                         stream,
@@ -169,7 +169,7 @@ describe("Types", () => {
                     const stream: StructDeserializeStream = { read };
 
                     const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
-                    const struct = new StructValue();
+                    const struct = new StructValue({});
                     const value = definition.deserialize(
                         StructDefaultOptions,
                         stream,
@@ -186,7 +186,7 @@ describe("Types", () => {
                     const stream: StructDeserializeStream = { read };
 
                     const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
-                    const struct = new StructValue();
+                    const struct = new StructValue({});
                     const value = definition.deserialize(
                         { ...StructDefaultOptions, littleEndian: true },
                         stream,
@@ -203,7 +203,7 @@ describe("Types", () => {
         describe("NumberFieldValue", () => {
             describe("#getSize", () => {
                 it("should return size of its definition", () => {
-                    const struct = new StructValue();
+                    const struct = new StructValue({});
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Int8)
@@ -270,7 +270,7 @@ describe("Types", () => {
             describe("#serialize", () => {
                 it("should serialize uint8", () => {
                     const definition = new NumberFieldDefinition(NumberFieldType.Int8);
-                    const struct = new StructValue();
+                    const struct = new StructValue({});
                     const value = definition.create(
                         StructDefaultOptions,
                         struct,

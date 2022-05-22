@@ -5,8 +5,8 @@ import { StructValue } from "./struct-value.js";
 describe('StructValue', () => {
     describe('.constructor', () => {
         it('should create `fieldValues` and `value`', () => {
-            const foo = new StructValue();
-            const bar = new StructValue();
+            const foo = new StructValue({});
+            const bar = new StructValue({});
 
             expect(foo).toHaveProperty('fieldValues', {});
             expect(foo).toHaveProperty('value', {});
@@ -19,14 +19,14 @@ describe('StructValue', () => {
 
     describe('#set', () => {
         it('should save the `StructFieldValue`', () => {
-            const object = new StructValue();
+            const object = new StructValue({});
 
             const foo = 'foo';
-            const fooValue = {} as any;
+            const fooValue = { get() { return 42; } } as any;
             object.set(foo, fooValue);
 
             const bar = 'bar';
-            const barValue = {} as any;
+            const barValue = { get() { return 'foo'; } } as any;
             object.set(bar, barValue);
 
             expect(object.fieldValues[foo]).toBe(fooValue);
@@ -34,7 +34,7 @@ describe('StructValue', () => {
         });
 
         it('should define a property for `key`', () => {
-            const object = new StructValue();
+            const object = new StructValue({});
 
             const foo = 'foo';
             const fooGetter = jest.fn(() => 42);
@@ -50,21 +50,20 @@ describe('StructValue', () => {
 
             expect(object.value).toHaveProperty(foo, 42);
             expect(fooGetter).toBeCalledTimes(1);
-            expect(barGetter).toBeCalledTimes(0);
+            expect(barGetter).toBeCalledTimes(1);
 
             object.value[foo] = 100;
-            expect(fooSetter).toBeCalledTimes(1);
-            expect(fooSetter).lastCalledWith(100);
+            expect(fooSetter).toBeCalledTimes(0);
             expect(barSetter).toBeCalledTimes(0);
         });
     });
 
     describe('#get', () => {
         it('should return previously set `StructFieldValue`', () => {
-            const object = new StructValue();
+            const object = new StructValue({});
 
             const foo = 'foo';
-            const fooValue = {} as any;
+            const fooValue = { get() { return 'foo'; } } as any;
             object.set(foo, fooValue);
 
             expect(object.get(foo)).toBe(fooValue);

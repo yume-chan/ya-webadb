@@ -26,6 +26,14 @@ export const SyncPromise: SyncPromiseStatic = {
             value !== null &&
             typeof (value as PromiseLike<T>).then === 'function'
         ) {
+            if (
+                value instanceof PendingSyncPromise ||
+                value instanceof ResolvedSyncPromise ||
+                value instanceof RejectedSyncPromise
+            ) {
+                return value;
+            }
+
             return new PendingSyncPromise(value as PromiseLike<T>);
         } else {
             return new ResolvedSyncPromise(value as T);
