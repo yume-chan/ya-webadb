@@ -168,7 +168,7 @@ export class Logcat extends AdbCommandBase {
                     ...(options?.pid ? ['--pid', options.pid.toString()] : []),
                     ...(options?.ids ? ['-b', Logcat.joinLogId(options.ids)] : [])
                 ], {
-                    // PERF: None protocol is 25% faster then Shell protocol
+                    // PERF: None protocol is 150% faster then Shell protocol
                     protocols: [AdbSubprocessNoneProtocol],
                 });
                 bufferedStream = new BufferedStream(stdout);

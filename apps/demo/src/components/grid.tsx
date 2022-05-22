@@ -1,5 +1,5 @@
 import { makeStyles, mergeClasses, shorthands } from '@griffel/react';
-import { ComponentType, CSSProperties, useLayoutEffect, useMemo, useState } from "react";
+import { ComponentType, CSSProperties, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useStableCallback, withDisplayName } from "../utils";
 import { ResizeObserver, Size } from './resize-observer';
 
@@ -167,8 +167,18 @@ export const Grid = withDisplayName('Grid')(({
     const [bodyRef, setBodyRef] = useState<HTMLDivElement | null>(null);
     const [bodySize, setBodySize] = useState<Size>({ width: 0, height: 0 });
 
+    const [autoScroll, setAutoScroll] = useState(true);
+
     const handleScroll = useStableCallback(() => {
         if (bodyRef) {
+            if (autoScroll) {
+                if (scrollTop < bodyRef.scrollHeight - bodyRef.clientHeight && bodyRef.scrollTop < scrollTop) {
+                    setAutoScroll(false);
+                }
+            } else if (bodyRef.scrollTop + bodyRef.offsetHeight >= bodyRef.scrollHeight - 50) {
+                setAutoScroll(true);
+            }
+
             setScrollLeft(bodyRef.scrollLeft);
             setScrollTop(bodyRef.scrollTop);
         }
@@ -266,6 +276,13 @@ export const Grid = withDisplayName('Grid')(({
             totalWidth: offset,
         };
     }, [columns, bodySize.width]);
+
+    useEffect(() => {
+        if (autoScroll && bodyRef) {
+            void bodyRef.offsetLeft;
+            bodyRef.scrollTop = bodyRef.scrollHeight;
+        }
+    });
 
     const headers = useMemo(() => (
         columnMetadata.columns.map((column, index) => (
