@@ -39,6 +39,9 @@ export class AdbPacketDispatcher implements Closeable {
     // ADB socket id starts from 1
     // (0 means open failed)
     private readonly initializers = new AsyncOperationManager(1);
+    /**
+     * Socket local ID to the socket controller.
+     */
     private readonly sockets = new Map<number, AdbSocketController>();
 
     private _writer!: WritableStreamDefaultWriter<AdbPacketInit>;
@@ -130,13 +133,6 @@ export class AdbPacketDispatcher implements Closeable {
     }
 
     private async handleClose(packet: AdbPacketData) {
-        // From https://android.googlesource.com/platform/packages/modules/adb/+/65d18e2c1cc48b585811954892311b28a4c3d188/adb.cpp#459
-        /* According to protocol.txt, p->msg.arg0 might be 0 to indicate
-         * a failed OPEN only. However, due to a bug in previous ADB
-         * versions, CLOSE(0, remote-id, "") was also used for normal
-         * CLOSE() operations.
-         */
-
         // If the socket is still pending
         if (packet.arg0 === 0 &&
             this.initializers.reject(packet.arg1, new Error('Socket open failed'))) {
@@ -147,6 +143,13 @@ export class AdbPacketDispatcher implements Closeable {
             // don't throw an error here.
             return;
         }
+
+        // From https://android.googlesource.com/platform/packages/modules/adb/+/65d18e2c1cc48b585811954892311b28a4c3d188/adb.cpp#459
+        /* According to protocol.txt, p->msg.arg0 might be 0 to indicate
+         * a failed OPEN only. However, due to a bug in previous ADB
+         * versions, CLOSE(0, remote-id, "") was also used for normal
+         * CLOSE() operations.
+         */
 
         // Ignore `arg0` and search for the socket
         const socket = this.sockets.get(packet.arg1);

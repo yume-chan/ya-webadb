@@ -1,5 +1,5 @@
 import { makeStyles } from "@griffel/react";
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStableCallback, withDisplayName } from '../utils';
 
 export interface Size {

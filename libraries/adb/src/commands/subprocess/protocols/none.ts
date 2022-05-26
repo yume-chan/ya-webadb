@@ -26,6 +26,8 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
 
     private readonly socket: AdbSocket;
 
+    private readonly duplex: DuplexStreamFactory<Uint8Array, Uint8Array>;
+
     // Legacy shell forwards all data to stdin.
     public get stdin() { return this.socket.writable; }
 
@@ -47,15 +49,15 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     public constructor(socket: AdbSocket) {
         this.socket = socket;
 
-        const factory = new DuplexStreamFactory<Uint8Array, Uint8Array>({
+        this.duplex = new DuplexStreamFactory<Uint8Array, Uint8Array>({
             close: async () => {
                 await this.socket.close();
             },
         });
 
-        this._stdout = factory.wrapReadable(this.socket.readable);
-        this._stderr = factory.wrapReadable(new ReadableStream());
-        this._exit = factory.closed.then(() => 0);
+        this._stdout = this.duplex.wrapReadable(this.socket.readable);
+        this._stderr = this.duplex.wrapReadable(new ReadableStream());
+        this._exit = this.duplex.closed.then(() => 0);
     }
 
     public resize() {
@@ -63,6 +65,6 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     }
 
     public kill() {
-        return this.socket.close();
+        return this.duplex.close();
     }
 }

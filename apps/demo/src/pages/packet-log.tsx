@@ -25,11 +25,15 @@ interface Column extends GridColumn {
 const LINE_HEIGHT = 32;
 
 const state = new class {
+    get empty() {
+        return !GlobalState.logs.length;
+    }
+
     get commandBarItems(): ICommandBarItemProps[] {
         return [
             {
                 key: 'clear',
-                disabled: !GlobalState.device,
+                disabled: this.empty,
                 iconProps: { iconName: Icons.Delete },
                 text: 'Clear',
                 onClick: () => GlobalState.clearLog(),

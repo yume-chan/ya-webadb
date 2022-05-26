@@ -36,7 +36,7 @@
         "@yume-chan/event": "^0.0.15",
         "@yume-chan/struct": "^0.0.15",
         "tslib": "^2.3.1",
-        "web-streams-polyfill": "^4.0.0-beta.2"
+        "web-streams-polyfill": "^4.0.0-beta.3"
     },
     "devDependencies": {
         "@jest/globals": "^28.1.0",
@@ -45,6 +45,6 @@
         "cross-env": "^7.0.3",
         "jest": "^28.1.0",
         "ts-jest": "^28.0.2",
-        "typescript": "4.7.1-rc"
+        "typescript": "4.7.2"
     }
 }

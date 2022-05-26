@@ -31,7 +31,7 @@
         "prepublishOnly": "npm run build"
     },
     "devDependencies": {
-        "typescript": "4.7.1-rc",
+        "typescript": "4.7.2",
         "@yume-chan/ts-package-builder": "^1.0.0"
     },
     "dependencies": {

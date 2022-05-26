@@ -6,8 +6,28 @@ import { BufferedStream, BufferedStreamEndedError } from "./buffered.js";
 import { AbortController, AbortSignal, ReadableStream, ReadableStreamDefaultReader, TransformStream, WritableStream, WritableStreamDefaultWriter, type QueuingStrategy, type ReadableStreamDefaultController, type ReadableWritablePair } from "./detect.js";
 
 export interface DuplexStreamFactoryOptions {
+    /**
+     * Callback when any `ReadableStream` is cancelled (the user doesn't need any more data),
+     * or `WritableStream` is ended (the user won't produce any more data),
+     * or `DuplexStreamFactory#close` is called.
+     *
+     * Usually you want to let the other peer know that the duplex stream should be clsoed.
+     *
+     * `dispose` will automatically be called after `close` completes,
+     * but if you want to wait another peer for a close confirmation and call
+     * `DuplexStreamFactory#dispose` yourself, you can return `false`
+     * (or a `Promise` that resolves to `false`) to disable the automatic call.
+     */
     close?: (() => ValueOrPromise<boolean | void>) | undefined;
 
+    /**
+     * Callback when any `ReadableStream` is closed (the other peer doesn't produce any more data),
+     * or `WritableStream` is aborted (the other peer can't receive any more data),
+     * or `DuplexStreamFactory#abort` is called.
+     *
+     * Usually indicates the other peer has closed the duplex stream. You can clean up
+     * any resources you have allocated now.
+     */
     dispose?: (() => void | Promise<void>) | undefined;
 }
 
@@ -78,6 +98,7 @@ export class DuplexStreamFactory<R, W> {
         }
         this._writableClosed = true;
 
+        // Call `close` first, so it can still write data to `WritableStream`s.
         if (await this.options.close?.() !== false) {
             // `close` can return `false` to disable automatic `dispose`.
             await this.dispose();
@@ -414,6 +435,12 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 source({
                     abortSignal: canceled.signal,
                     async enqueue(chunk) {
+                        if (canceled.signal.aborted) {
+                            // If the stream is already cancelled,
+                            // throw immediately.
+                            throw canceled.signal.reason ?? new Error('Aborted');
+                        }
+
                         // Only when the stream is errored, `desiredSize` will be `null`.
                         // But since `null <= 0` is `true`
                         // (`null <= 0` is evaluated as `!(null > 0)` => `!false` => `true`),
@@ -439,7 +466,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 waterMarkLow?.resolve();
             },
             cancel: async (reason) => {
-                canceled.abort();
+                canceled.abort(reason);
                 waterMarkLow?.reject(reason);
             },
         }, strategy);

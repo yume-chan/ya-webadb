@@ -66,6 +66,10 @@ const state = makeAutoObservable({
             return;
         }
 
+        // Logcat always starts from beginning,
+        // so don't append.
+        this.list = [];
+
         this.running = true;
         this.stream = this.logcat!.binary();
         this.stopSignal = new AbortController();
