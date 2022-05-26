@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/struct",
+            "comment": "Remove `SyncBird`, it's replaced by `SyncPromise`, which is based on native Promise and is 200% faster.",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/struct"
+}
