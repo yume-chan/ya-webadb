@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/dataview-bigint-polyfill",
-    "version": "0.0.15",
+    "version": "0.0.16",
     "description": "Polyfill for `DataView#getBigInt64`, `DataView#getBigUint64`, `DataView#setBigInt64` and `DataView#setBigUint64`",
     "keywords": [
         "polyfill",

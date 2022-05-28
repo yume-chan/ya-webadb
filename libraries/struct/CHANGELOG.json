@@ -2,6 +2,27 @@
   "name": "@yume-chan/struct",
   "entries": [
     {
+      "version": "0.0.16",
+      "tag": "@yume-chan/struct_v0.0.16",
+      "date": "Sat, 28 May 2022 03:56:37 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add support for custom TypeScript type for `uint8Array`"
+          },
+          {
+            "comment": "Upgrade TypeScript to 4.7.2 to enable Node.js ESM"
+          },
+          {
+            "comment": "Improve performance of `Struct#deserialize()` by up to 200%."
+          },
+          {
+            "comment": "Remove `SyncBird`, it's replaced by `SyncPromise`, which is based on native Promise and is 200% faster."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.15",
       "tag": "@yume-chan/struct_v0.0.15",
       "date": "Mon, 02 May 2022 04:18:01 GMT",

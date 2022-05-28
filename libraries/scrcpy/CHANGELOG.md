@@ -1,6 +1,15 @@
 # Change Log - @yume-chan/scrcpy
 
-This log was last generated on Mon, 02 May 2022 04:18:01 GMT and should not be manually modified.
+This log was last generated on Sat, 28 May 2022 03:56:37 GMT and should not be manually modified.
+
+## 0.0.16
+Sat, 28 May 2022 03:56:37 GMT
+
+### Updates
+
+- Upgrade TypeScript to 4.7.2 to enable Node.js ESM
+- Add support for more `CodecOptions` keys
+- Add support for `CodecOptions` value types other than `int`
 
 ## 0.0.15
 Mon, 02 May 2022 04:18:01 GMT

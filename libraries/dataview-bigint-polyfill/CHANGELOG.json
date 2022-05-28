@@ -2,6 +2,18 @@
   "name": "@yume-chan/dataview-bigint-polyfill",
   "entries": [
     {
+      "version": "0.0.16",
+      "tag": "@yume-chan/dataview-bigint-polyfill_v0.0.16",
+      "date": "Sat, 28 May 2022 03:56:37 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Upgrade TypeScript to 4.7.2 to enable Node.js ESM"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.15",
       "tag": "@yume-chan/dataview-bigint-polyfill_v0.0.15",
       "date": "Mon, 02 May 2022 04:18:01 GMT",
