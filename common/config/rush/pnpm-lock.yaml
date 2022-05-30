@@ -19,6 +19,7 @@ specifiers:
   '@rush-temp/adb-backend-ws': file:./projects/adb-backend-ws.tgz
   '@rush-temp/adb-credential-web': file:./projects/adb-credential-web.tgz
   '@rush-temp/android-bin': file:./projects/android-bin.tgz
+  '@rush-temp/b-tree': file:./projects/b-tree.tgz
   '@rush-temp/dataview-bigint-polyfill': file:./projects/dataview-bigint-polyfill.tgz
   '@rush-temp/demo': file:./projects/demo.tgz
   '@rush-temp/event': file:./projects/event.tgz
@@ -83,6 +84,7 @@ dependencies:
   '@rush-temp/adb-backend-ws': file:projects/adb-backend-ws.tgz_@types+node@17.0.33
   '@rush-temp/adb-credential-web': file:projects/adb-credential-web.tgz
   '@rush-temp/android-bin': file:projects/android-bin.tgz
+  '@rush-temp/b-tree': file:projects/b-tree.tgz_@types+node@17.0.33
   '@rush-temp/dataview-bigint-polyfill': file:projects/dataview-bigint-polyfill.tgz_@types+node@17.0.33
   '@rush-temp/demo': file:projects/demo.tgz_@mdx-js+react@1.6.22
   '@rush-temp/event': file:projects/event.tgz_@types+node@17.0.33
@@ -11659,7 +11661,7 @@ packages:
     dev: false
 
   file:projects/adb-backend-direct-sockets.tgz:
-    resolution: {integrity: sha512-QVANQ/bXhPA3YVUUCljwHlXEr8HvfokLfgVZBqu5yxUEvN+XSetGw7w3MRjyCt4d0v65tjAJFFyjhMWw3t7qzg==, tarball: file:projects/adb-backend-direct-sockets.tgz}
+    resolution: {integrity: sha512-XOvhUD4CUHvHlpl8NANkR+zY59tV0vsYJULDGf8YqJjCu0+L8jorV7iivio/b2+9p0HJBBe5vIi1Jz1IBajjHA==, tarball: file:projects/adb-backend-direct-sockets.tgz}
     name: '@rush-temp/adb-backend-direct-sockets'
     version: 0.0.0
     dependencies:
@@ -11668,7 +11670,7 @@ packages:
     dev: false
 
   file:projects/adb-backend-webusb.tgz_@types+node@17.0.33:
-    resolution: {integrity: sha512-u/fDxm2akgkH+h8r+q1FZCKsxImODheEZa3hByzgzWl0uDfG69ZK7NbgureckGbjxWP680G/S+eM/jzx2a7h8Q==, tarball: file:projects/adb-backend-webusb.tgz}
+    resolution: {integrity: sha512-FTp+Tyx3bPS2ftBPWs2Xey0kElmE0RUafgkuYQhuvFuVWplyQJ3Wpyd3CklEPy4n6FyET/BGWD8dELo34T0ELg==, tarball: file:projects/adb-backend-webusb.tgz}
     id: file:projects/adb-backend-webusb.tgz
     name: '@rush-temp/adb-backend-webusb'
     version: 0.0.0
@@ -11685,7 +11687,7 @@ packages:
     dev: false
 
   file:projects/adb-backend-ws.tgz_@types+node@17.0.33:
-    resolution: {integrity: sha512-VcIKgNFxdnKy3ijm/vB/Wfmpc2fecMroU5Qyd2sgE/R8S+dgIwugbyKl/O1tDIhU5qo97JJt6P+oB3+MSlJpuA==, tarball: file:projects/adb-backend-ws.tgz}
+    resolution: {integrity: sha512-NGkbKA2uIBoftvryv2DCWxvu/LoUZeIx3SMCN3vBO3Dg1myLQbT0YUvTPMVxuHCA5fjiTUMZo0DeW1s8+xxz2Q==, tarball: file:projects/adb-backend-ws.tgz}
     id: file:projects/adb-backend-ws.tgz
     name: '@rush-temp/adb-backend-ws'
     version: 0.0.0
@@ -11701,7 +11703,7 @@ packages:
     dev: false
 
   file:projects/adb-credential-web.tgz:
-    resolution: {integrity: sha512-RZrbr53ZevfKOPGI5xRtBYIvYXMHbrAEekvM/QsR5AKjYSS1TsRRbB6/sf68ObZbpAmT+kVna3OdkmVsFKupyw==, tarball: file:projects/adb-credential-web.tgz}
+    resolution: {integrity: sha512-5mIe1C/4LkbCwIbfAiJAEGAcc8ooekHAKf/KEQuh0IsYoRho6JPcOrpuZXwsc3BcNVjk0ctfnuBHEIII2/yVkw==, tarball: file:projects/adb-credential-web.tgz}
     name: '@rush-temp/adb-credential-web'
     version: 0.0.0
     dependencies:
@@ -11710,7 +11712,7 @@ packages:
     dev: false
 
   file:projects/adb.tgz:
-    resolution: {integrity: sha512-feQcFO5c6E9uENjxuZXSs1gRHK5Evzw/3YqN0lVDzzDdKO7sNysjTt1UljzwZKP+YoFbkgl0KCzVf3B8tcgSSA==, tarball: file:projects/adb.tgz}
+    resolution: {integrity: sha512-1gn5QIMQ4scQF49e1bN9uX5zsnW5SYPvmPRtERREKbXvum7zDTt8G96bMhcM+GTuxpL2Zw93zBbpqT8X152atQ==, tarball: file:projects/adb.tgz}
     name: '@rush-temp/adb'
     version: 0.0.0
     dependencies:
@@ -11734,12 +11736,35 @@ packages:
     dev: false
 
   file:projects/android-bin.tgz:
-    resolution: {integrity: sha512-Iuvgl94E7gcACGhkufwRcgy2pOOemsaUzZOJWYz6diaf9t/xr9OOX5BQtE461eYPIeFMGCeA4cKnYoyhZYyNaA==, tarball: file:projects/android-bin.tgz}
+    resolution: {integrity: sha512-Bq8fa7QefiEcLs2v6Iy4S+lDr4pnm27Si3LkOtEHkbGTmOfoK8OeHhbU+9Rke/J9BqJdIp1gs/hGP9kmCom7IA==, tarball: file:projects/android-bin.tgz}
     name: '@rush-temp/android-bin'
     version: 0.0.0
     dependencies:
       tslib: 2.4.0
       typescript: 4.7.2
+    dev: false
+
+  file:projects/b-tree.tgz_@types+node@17.0.33:
+    resolution: {integrity: sha512-t8yY3AlVa3pI16hX8JrMrCq26bERpA5wFAZEsrUESBwHgRPAlJrQMvGYskSW0ZyeguvZ4PW5nEgpEamGtrqwhA==, tarball: file:projects/b-tree.tgz}
+    id: file:projects/b-tree.tgz
+    name: '@rush-temp/b-tree'
+    version: 0.0.0
+    dependencies:
+      '@jest/globals': 28.1.0
+      cross-env: 7.0.3
+      jest: 28.1.0_@types+node@17.0.33
+      ts-jest: 28.0.2_jest@28.1.0+typescript@4.7.2
+      tslib: 2.4.0
+      typescript: 4.7.2
+    transitivePeerDependencies:
+      - '@babel/core'
+      - '@types/jest'
+      - '@types/node'
+      - babel-jest
+      - esbuild
+      - node-notifier
+      - supports-color
+      - ts-node
     dev: false
 
   file:projects/dataview-bigint-polyfill.tgz_@types+node@17.0.33:
@@ -11759,7 +11784,7 @@ packages:
     dev: false
 
   file:projects/demo.tgz_@mdx-js+react@1.6.22:
-    resolution: {integrity: sha512-2hhqqqc60CiKUNrzPp7IEAPNC5H/RLtEjTC7pnW1NDeXfKepBfKSi+jD44t4ysJL3BMIj8w45dzEk70gGwCd9A==, tarball: file:projects/demo.tgz}
+    resolution: {integrity: sha512-L7E5kSZb12r38EuntJ+rQjRmhduSBo0EANWMliv6GH6RQykgkVqHqscH1d4VvUM0KuVm5F0oeii1pJzymCdIrg==, tarball: file:projects/demo.tgz}
     id: file:projects/demo.tgz
     name: '@rush-temp/demo'
     version: 0.0.0
@@ -11819,7 +11844,7 @@ packages:
     dev: false
 
   file:projects/scrcpy.tgz_@types+node@17.0.33:
-    resolution: {integrity: sha512-j6Y5Y4eZF5/Z6suQ7RqRxmuEDXSW/1m98nZUW65nMgZYQ3BsEvLqYxgCOh4DQhrFnl7TfL8sAms/LkgiLTOc6w==, tarball: file:projects/scrcpy.tgz}
+    resolution: {integrity: sha512-jCMSIItmtChytyjlkM594BanuzULuZ/Z9rVcQZxwh84HNtjqGnERhTR8zTUQTO6s/1QYgXaIKmtbDMauwAQTTg==, tarball: file:projects/scrcpy.tgz}
     id: file:projects/scrcpy.tgz
     name: '@rush-temp/scrcpy'
     version: 0.0.0
@@ -11843,7 +11868,7 @@ packages:
     dev: false
 
   file:projects/struct.tgz_@types+node@17.0.33:
-    resolution: {integrity: sha512-hhOeXpS3dTWML8WQoCLs4a9bdgtgIW3NtymNSRxzSOA5ROYCL3eOmAm5xt5K5IIzshxRTLLxcDOkbcZEWhxAtQ==, tarball: file:projects/struct.tgz}
+    resolution: {integrity: sha512-N4tRna6p02qJC7klmbbeELeqARWvpb3GXHjZRRi5DzTumGngXNQyzYpG3VCNZnmZV9a4vgDVJX/CZOiOKbOKMQ==, tarball: file:projects/struct.tgz}
     id: file:projects/struct.tgz
     name: '@rush-temp/struct'
     version: 0.0.0

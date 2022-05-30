@@ -23,6 +23,7 @@
         "@yume-chan/adb-credential-web": "^0.0.16",
         "@yume-chan/android-bin": "^0.0.16",
         "@yume-chan/async": "^2.1.4",
+        "@yume-chan/b-tree": "^0.0.16",
         "@yume-chan/event": "^0.0.16",
         "@yume-chan/scrcpy": "^0.0.16",
         "@yume-chan/struct": "^0.0.16",

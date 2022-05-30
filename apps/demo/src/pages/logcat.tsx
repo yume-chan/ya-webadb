@@ -2,7 +2,7 @@ import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
 import { AbortController, decodeUtf8, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { Logcat, LogMessage, LogPriority } from '@yume-chan/android-bin';
-import { autorun, makeAutoObservable, observable, runInAction, computed, action } from "mobx";
+import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
