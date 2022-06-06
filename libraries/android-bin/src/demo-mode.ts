@@ -16,7 +16,7 @@ export enum DemoModeSignalStrength {
     Level4 = '4',
 }
 
-// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/policy/NetworkControllerImpl.java;l=1073
+// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/connectivity/NetworkControllerImpl.java;l=1362;drc=3b775bf7ad89902f94e03d191b0d8fbdebf2bdbf
 export const DemoModeMobileDataTypes = ['1x', '3g', '4g', '4g+', '5g', '5ge', '5g+',
     'e', 'g', 'h', 'h+', 'lte', 'lte+', 'dis', 'not', 'null'] as const;
 

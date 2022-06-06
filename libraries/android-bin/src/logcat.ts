@@ -1,7 +1,7 @@
 // cspell: ignore logcat
 
 import { AdbCommandBase, AdbSubprocessNoneProtocol, BufferedStream, BufferedStreamEndedError, DecodeUtf8Stream, ReadableStream, SplitLineStream, WritableStream } from "@yume-chan/adb";
-import Struct, { StructAsyncDeserializeStream } from "@yume-chan/struct";
+import Struct, { decodeUtf8, StructAsyncDeserializeStream } from "@yume-chan/struct";
 
 // `adb logcat` is an alias to `adb shell logcat`
 // so instead of adding to core library, it's implemented here
@@ -19,7 +19,8 @@ export enum LogId {
     Kernel,
 }
 
-export enum LogPriority {
+// https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/include/android/log.h;l=73;drc=82b5738732161dbaafb2e2f25cce19cd26b9157d
+export enum AndroidLogPriority {
     Unknown,
     Default,
     Verbose,
@@ -56,21 +57,45 @@ export const LoggerEntry =
 
 export type LoggerEntry = typeof LoggerEntry['TDeserializeResult'];
 
-export interface LogMessage extends LoggerEntry {
-    priority: LogPriority;
-    payload: Uint8Array;
+// https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;drc=bbe77d66e7bee8bd1f0bc7e5492b5376b0207ef6;bpv=0
+export interface AndroidLogEntry extends LoggerEntry {
+    priority: AndroidLogPriority;
+    tag: string;
+    message: string;
 }
 
-export async function deserializeLogMessage(stream: StructAsyncDeserializeStream): Promise<LogMessage> {
-    const entry = await LoggerEntry.deserialize(stream);
+function findTagEnd(payload: Uint8Array) {
+    for (const separator of [0, ' '.charCodeAt(0), ':'.charCodeAt(0)]) {
+        const index = payload.indexOf(separator);
+        if (index !== -1) {
+            return index;
+        }
+    }
+
+    const index = payload.findIndex(x => x >= 0x7f);
+    if (index !== -1) {
+        return index;
+    }
+
+    return payload.length;
+}
+
+export async function deserializeAndroidLogEntry(stream: StructAsyncDeserializeStream): Promise<AndroidLogEntry> {
+    const entry = await LoggerEntry.deserialize(stream) as unknown as AndroidLogEntry;
     if (entry.headerSize !== LoggerEntry.size) {
         await stream.read(entry.headerSize - LoggerEntry.size);
     }
-    const priority = (await stream.read(1))[0] as LogPriority;
-    const payload = await stream.read(entry.payloadSize - 1);
-    (entry as any).priority = priority;
-    (entry as any).payload = payload;
-    return entry as LogMessage;
+    let payload = await stream.read(entry.payloadSize);
+
+    // https://cs.android.com/android/platform/superproject/+/master:system/logging/logcat/logcat.cpp;l=193-194;drc=bbe77d66e7bee8bd1f0bc7e5492b5376b0207ef6
+    // TODO: payload for some log IDs are in binary format.
+    entry.priority = payload[0] as AndroidLogPriority;
+
+    payload = payload.subarray(1);
+    const tagEnd = findTagEnd(payload);
+    entry.tag = decodeUtf8(payload.subarray(0, tagEnd));
+    entry.message = tagEnd < payload.length - 1 ? decodeUtf8(payload.subarray(tagEnd + 1)) : '';
+    return entry;
 }
 
 export interface LogSize {
@@ -158,7 +183,7 @@ export class Logcat extends AdbCommandBase {
         ]);
     }
 
-    public binary(options?: LogcatOptions): ReadableStream<LogMessage> {
+    public binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {
         let bufferedStream: BufferedStream;
         return new ReadableStream({
             start: async () => {
@@ -175,7 +200,7 @@ export class Logcat extends AdbCommandBase {
             },
             async pull(controller) {
                 try {
-                    const entry = await deserializeLogMessage(bufferedStream);
+                    const entry = await deserializeAndroidLogEntry(bufferedStream);
                     controller.enqueue(entry);
                 } catch (e) {
                     if (e instanceof BufferedStreamEndedError) {

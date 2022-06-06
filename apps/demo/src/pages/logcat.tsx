@@ -1,7 +1,7 @@
 import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
-import { AbortController, decodeUtf8, ReadableStream, WritableStream } from '@yume-chan/adb';
-import { Logcat, LogMessage, LogPriority } from '@yume-chan/android-bin';
+import { AbortController, ReadableStream, WritableStream } from '@yume-chan/adb';
+import { AndroidLogEntry, AndroidLogPriority, Logcat } from '@yume-chan/android-bin';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -45,9 +45,8 @@ export interface Column extends GridColumn {
     title: string;
 }
 
-export interface LogRow extends LogMessage {
+export interface LogRow extends AndroidLogEntry {
     timeString?: string;
-    payloadString?: string;
 }
 
 const state = makeAutoObservable({
@@ -57,7 +56,7 @@ const state = makeAutoObservable({
     flushRequested: false,
     list: [] as LogRow[],
     count: 0,
-    stream: undefined as ReadableStream<LogMessage> | undefined,
+    stream: undefined as ReadableStream<AndroidLogEntry> | undefined,
     stopSignal: undefined as AbortController | undefined,
     selectedCount: 0,
     animationFrameId: undefined as number | undefined,
@@ -166,7 +165,7 @@ const state = makeAutoObservable({
                 }
             },
             {
-                width: 80,
+                width: 60,
                 title: 'PID',
                 CellComponent: ({ rowIndex, columnIndex, className, ...rest }) => {
                     const item = this.list[rowIndex];
@@ -181,7 +180,7 @@ const state = makeAutoObservable({
                 }
             },
             {
-                width: 80,
+                width: 60,
                 title: 'TID',
                 CellComponent: ({ rowIndex, columnIndex, className, ...rest }) => {
                     const item = this.list[rowIndex];
@@ -196,7 +195,7 @@ const state = makeAutoObservable({
                 }
             },
             {
-                width: 100,
+                width: 80,
                 title: 'Priority',
                 CellComponent: ({ rowIndex, columnIndex, className, ...rest }) => {
                     const item = this.list[rowIndex];
@@ -205,7 +204,22 @@ const state = makeAutoObservable({
 
                     return (
                         <div className={mergeClasses(classes.code, className)} {...rest}>
-                            {LogPriority[item.priority]}
+                            {AndroidLogPriority[item.priority]}
+                        </div>
+                    );
+                }
+            },
+            {
+                width: 300,
+                title: 'Tag',
+                CellComponent: ({ rowIndex, columnIndex, className, ...rest }) => {
+                    const item = this.list[rowIndex];
+
+                    const classes = useClasses();
+
+                    return (
+                        <div className={mergeClasses(classes.code, className)} {...rest}>
+                            {item.tag}
                         </div>
                     );
                 }
@@ -213,18 +227,14 @@ const state = makeAutoObservable({
             {
                 width: 300,
                 flexGrow: 1,
-                title: 'Payload',
+                title: 'Message',
                 CellComponent: ({ rowIndex, columnIndex, className, ...rest }) => {
                     const item = this.list[rowIndex];
-                    if (!item.payloadString) {
-                        item.payloadString = decodeUtf8(item.payload);
-                    }
-
                     const classes = useClasses();
 
                     return (
                         <div className={mergeClasses(classes.code, className)} {...rest}>
-                            {item.payloadString}
+                            {item.message}
                         </div>
                     );
                 }
