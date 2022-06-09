@@ -1,4 +1,4 @@
-import type { Adb, AdbSocket } from "@yume-chan/adb";
+import type { Adb, ReadableStream, ReadableWritablePair } from "@yume-chan/adb";
 import type { Disposable } from "@yume-chan/event";
 import type { ValueOrPromise } from "@yume-chan/struct";
 import { delay } from "./utils.js";
@@ -29,17 +29,17 @@ export abstract class ScrcpyClientConnection implements Disposable {
 
     public initialize(): ValueOrPromise<void> { }
 
-    public abstract getStreams(): ValueOrPromise<[videoSteam: AdbSocket, controlStream: AdbSocket | undefined]>;
+    public abstract getStreams(): ValueOrPromise<[videoSteam: ReadableStream<Uint8Array>, controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined]>;
 
     public dispose(): void { }
 }
 
 export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
-    private async connect(): Promise<AdbSocket> {
+    private async connect(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
         return await this.device.createSocket('localabstract:scrcpy');
     }
 
-    private async connectAndRetry(): Promise<AdbSocket> {
+    private async connectAndRetry(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
         for (let i = 0; i < 100; i++) {
             try {
                 return await this.connect();
@@ -50,10 +50,10 @@ export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
         throw new Error(`Can't connect to server after 100 retries`);
     }
 
-    private async connectVideoStream(): Promise<AdbSocket> {
-        const stream = await this.connectAndRetry();
+    private async connectVideoStream(): Promise<ReadableStream<Uint8Array>> {
+        const { readable: videoStream } = await this.connectAndRetry();
         if (this.options.sendDummyByte) {
-            const reader = stream.readable.getReader();
+            const reader = videoStream.getReader();
             const { done, value } = await reader.read();
             // server will write a `0` to signal connection success
             if (done || value.byteLength !== 1 || value[0] !== 0) {
@@ -61,20 +61,20 @@ export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
             }
             reader.releaseLock();
         }
-        return stream;
+        return videoStream;
     }
 
-    public async getStreams(): Promise<[videoSteam: AdbSocket, controlStream: AdbSocket | undefined]> {
+    public async getStreams(): Promise<[videoSteam: ReadableStream<Uint8Array>, controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined]> {
         const videoStream = await this.connectVideoStream();
 
-        let controlStream: AdbSocket | undefined;
+        let controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined;
         if (this.options.control) {
             controlStream = await this.connectAndRetry();
         }
 
         // Server only writes device meta after control socket is connected (if enabled)
         if (this.options.sendDeviceMeta) {
-            const reader = videoStream.readable.getReader();
+            const reader = videoStream.getReader();
             const { done, value } = await reader.read();
             // 64 bytes device name + 2 bytes video width + 2 bytes video height
             if (done || value.byteLength !== 64 + 2 + 2) {
@@ -88,7 +88,7 @@ export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
 }
 
 export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
-    private streams!: ReadableStreamDefaultReader<AdbSocket>;
+    private streams!: ReadableStreamDefaultReader<ReadableWritablePair<Uint8Array, Uint8Array>>;
 
     private address!: string;
 
@@ -100,7 +100,7 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
             // ignore error
         }
 
-        const queue = new TransformStream<AdbSocket>();
+        const queue = new TransformStream<ReadableWritablePair<Uint8Array, Uint8Array>>();
         this.streams = queue.readable.getReader();
         const writer = queue.writable.getWriter();
         this.address = await this.device.reverse.add(
@@ -113,21 +113,21 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
         );
     }
 
-    private async accept(): Promise<AdbSocket> {
+    private async accept(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
         return (await this.streams.read()).value!;
     }
 
-    public async getStreams(): Promise<[videoSteam: AdbSocket, controlStream: AdbSocket | undefined]> {
-        const videoStream = await this.accept();
+    public async getStreams(): Promise<[videoSteam: ReadableStream<Uint8Array>, controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined]> {
+        const { readable: videoStream } = await this.accept();
 
-        let controlStream: AdbSocket | undefined;
+        let controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined;
         if (this.options.control) {
             controlStream = await this.accept();
         }
 
         // Server only writes device meta after control socket is connected (if enabled)
         if (this.options.sendDeviceMeta) {
-            const reader = videoStream.readable.getReader();
+            const reader = videoStream.getReader();
             const { done, value } = await reader.read();
             // 64 bytes device name + 2 bytes video width + 2 bytes video height
             if (done || value.byteLength !== 64 + 2 + 2) {
