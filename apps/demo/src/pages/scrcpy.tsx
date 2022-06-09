@@ -9,7 +9,7 @@ import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
 import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, pushServer, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
+import { AdbScrcpyClient, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 
 import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
@@ -223,6 +223,8 @@ const SettingItem = observer(function SettingItem({
 });
 
 class ScrcpyPageState {
+    adbScrcpyClient: AdbScrcpyClient | null = null;
+
     running = false;
 
     deviceView: DeviceViewRef | null = null;
@@ -252,7 +254,7 @@ class ScrcpyPageState {
                 controller.close();
             },
         })
-            .pipeTo(pushServer(GlobalState.device!));
+            .pipeTo(this.adbScrcpyClient!.pushServer());
     }
 
     encoders: string[] = [];
@@ -260,8 +262,7 @@ class ScrcpyPageState {
         try {
             await this.pushServer();
 
-            const encoders = await ScrcpyClient.getEncoders(
-                GlobalState.device!,
+            const encoders = await this.adbScrcpyClient!.getEncoders(
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 new ScrcpyOptions1_24({
@@ -296,8 +297,7 @@ class ScrcpyPageState {
         try {
             await this.pushServer();
 
-            const displays = await ScrcpyClient.getDisplays(
-                GlobalState.device!,
+            const displays = await this.adbScrcpyClient!.getDisplays(
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 new ScrcpyOptions1_24({
@@ -631,6 +631,8 @@ class ScrcpyPageState {
         autorun(() => {
             if (GlobalState.device) {
                 runInAction(() => {
+                    this.adbScrcpyClient = new AdbScrcpyClient(GlobalState.device!);
+
                     this.encoders = [];
                     this.settings.encoderName = undefined;
 
@@ -721,7 +723,7 @@ class ScrcpyPageState {
                     .pipeThrough(new ProgressStream(action((progress) => {
                         this.serverUploadedSize = progress;
                     })))
-                    .pipeTo(pushServer(GlobalState.device));
+                    .pipeTo(this.adbScrcpyClient!.pushServer());
 
                 runInAction(() => {
                     this.serverUploadSpeed = this.serverUploadedSize - this.debouncedServerUploadedSize;
@@ -763,8 +765,7 @@ class ScrcpyPageState {
                 this.log.push(`[client] Server arguments: ${options.formatServerArguments().join(' ')}`);
             });
 
-            const client = await ScrcpyClient.start(
-                GlobalState.device,
+            const client = await this.adbScrcpyClient!.start(
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 options
