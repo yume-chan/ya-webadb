@@ -490,6 +490,11 @@
             "versionPolicyName": "adb"
         },
         {
+            "packageName": "@yume-chan/stream-extra",
+            "projectFolder": "libraries/stream-extra",
+            "versionPolicyName": "adb"
+        },
+        {
             "packageName": "demo",
             "projectFolder": "apps/demo"
         },

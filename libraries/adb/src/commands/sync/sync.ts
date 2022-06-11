@@ -1,10 +1,11 @@
 import { AutoDisposable } from '@yume-chan/event';
+import { BufferedStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
+
 import type { Adb } from '../../adb.js';
 import { AdbFeatures } from '../../features.js';
 import type { AdbSocket } from '../../socket/index.js';
-import { AdbBufferedStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '../../stream/index.js';
 import { AutoResetEvent } from '../../utils/index.js';
-import { escapeArg } from "../index.js";
+import { escapeArg } from '../subprocess/index.js';
 import { adbSyncOpenDir, type AdbSyncEntry } from './list.js';
 import { adbSyncPull } from './pull.js';
 import { adbSyncPush } from './push.js';
@@ -29,7 +30,7 @@ export function dirname(path: string): string {
 export class AdbSync extends AutoDisposable {
     protected adb: Adb;
 
-    protected stream: AdbBufferedStream;
+    protected stream: BufferedStream;
 
     protected writer: WritableStreamDefaultWriter<Uint8Array>;
 
@@ -56,7 +57,7 @@ export class AdbSync extends AutoDisposable {
         super();
 
         this.adb = adb;
-        this.stream = new AdbBufferedStream(socket);
+        this.stream = new BufferedStream(socket.readable);
         this.writer = socket.writable.getWriter();
     }
 

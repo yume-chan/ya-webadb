@@ -1,7 +1,8 @@
-import type { ValueOrPromise } from "@yume-chan/struct";
-import type { Adb } from "../../../adb.js";
-import type { AdbSocket } from "../../../socket/index.js";
-import type { ReadableStream, WritableStream } from "../../../stream/index.js";
+import type { ReadableStream, WritableStream } from '@yume-chan/stream-extra';
+import type { ValueOrPromise } from '@yume-chan/struct';
+
+import type { Adb } from '../../../adb.js';
+import type { AdbSocket } from '../../../socket/index.js';
 
 export interface AdbSubprocessProtocol {
     /**

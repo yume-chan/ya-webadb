@@ -1,6 +1,7 @@
+import type { BufferedStream } from '@yume-chan/stream-extra';
 import Struct, { type StructAsyncDeserializeStream, type StructLike, type StructValueType } from '@yume-chan/struct';
-import type { AdbBufferedStream } from '../../stream/index.js';
-import { decodeUtf8 } from "../../utils/index.js";
+
+import { decodeUtf8 } from '../../utils/index.js';
 
 export enum AdbSyncResponseId {
     Entry = 'DENT',
@@ -42,7 +43,7 @@ export const AdbSyncFailResponse =
         });
 
 export async function adbSyncReadResponse<T extends Record<string, StructLike<any>>>(
-    stream: AdbBufferedStream,
+    stream: BufferedStream,
     types: T,
     // When `T` is a union type, `T[keyof T]` only includes their common keys.
     // For example, let `type T = { a: string, b: string } | { a: string, c: string}`,

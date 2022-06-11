@@ -1,3 +1,5 @@
+import { describe, expect, it } from '@jest/globals';
+
 import { calculateBase64EncodedLength, decodeBase64, encodeBase64 } from './base64.js';
 
 describe('base64', () => {
@@ -117,7 +119,7 @@ describe('base64', () => {
                         let inputIndex = inputOffset + input.length - 1;
                         let outputIndex = outputOffset + correct.length - 1;
 
-                        const paddingLength = correct.filter(x => x === "=".charCodeAt(0)).length;
+                        const paddingLength = correct.filter(x => x === '='.charCodeAt(0)).length;
                         if (paddingLength !== 0) {
                             inputIndex -= (3 - paddingLength);
                             outputIndex -= 4;

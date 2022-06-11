@@ -67,5 +67,6 @@
             ],
             "url": "https://developer.microsoft.com/json-schemas/rush/v5/version-policies.schema.json"
         }
-    ]
+    ],
+    "typescript.preferences.quoteStyle": "single"
 }

@@ -1,11 +1,12 @@
 // cspell: ignore killforward
 
 import { AutoDisposable } from '@yume-chan/event';
+import { BufferedStream, BufferedStreamEndedError } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
-import type { Adb } from "../adb.js";
+
+import type { Adb } from '../adb.js';
 import type { AdbIncomingSocketHandler, AdbSocket } from '../socket/index.js';
-import { AdbBufferedStream, BufferedStreamEndedError } from '../stream/index.js';
-import { decodeUtf8 } from "../utils/index.js";
+import { decodeUtf8 } from '../utils/index.js';
 
 export interface AdbForwardListener {
     deviceSerial: string;
@@ -52,7 +53,7 @@ export class AdbReverseCommand extends AutoDisposable {
 
     private async createBufferedStream(service: string) {
         const socket = await this.adb.createSocket(service);
-        return new AdbBufferedStream(socket);
+        return new BufferedStream(socket.readable);
     }
 
     private async sendRequest(service: string) {

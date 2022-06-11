@@ -1,6 +1,7 @@
+import type { WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
-import type { WritableStreamDefaultWriter } from "../../stream/index.js";
-import { encodeUtf8 } from "../../utils/index.js";
+
+import { encodeUtf8 } from '../../utils/index.js';
 
 export enum AdbSyncRequestId {
     List = 'LIST',

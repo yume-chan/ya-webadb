@@ -1,7 +1,8 @@
-import type { Adb } from "../adb.js";
-import { WrapWritableStream, WritableStream } from "../stream/index.js";
-import { escapeArg } from "./subprocess/index.js";
-import type { AdbSync } from "./sync/index.js";
+import { WrapWritableStream, WritableStream } from '@yume-chan/stream-extra';
+
+import type { Adb } from '../adb.js';
+import { escapeArg } from './subprocess/index.js';
+import type { AdbSync } from './sync/index.js';
 
 export function install(
     adb: Adb,

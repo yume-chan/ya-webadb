@@ -36,6 +36,7 @@
     },
     "dependencies": {
         "@yume-chan/adb": "^0.0.16",
+        "@yume-chan/stream-extra": "^0.0.16",
         "tslib": "^2.3.1"
     }
 }

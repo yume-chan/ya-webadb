@@ -1,5 +1,6 @@
-import { ReadableStream } from "./detect.js";
-import { DuplexStreamFactory } from './transform.js';
+import { describe, it } from '@jest/globals';
+import { DuplexStreamFactory } from "./duplex.js";
+import { ReadableStream } from "./stream.js";
 
 describe('DuplexStreamFactory', () => {
     it('should close all readable', async () => {

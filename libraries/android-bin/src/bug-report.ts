@@ -1,7 +1,8 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import { AdbCommandBase, AdbSubprocessShellProtocol, DecodeUtf8Stream, PushReadableStream, ReadableStream, SplitLineStream, WrapReadableStream, WritableStream } from "@yume-chan/adb";
+import { AdbCommandBase, AdbSubprocessShellProtocol } from '@yume-chan/adb';
+import { DecodeUtf8Stream, PushReadableStream, ReadableStream, SplitStringStream, WrapReadableStream, WritableStream } from '@yume-chan/stream-extra';
 
 export interface BugReportZVersion {
     major: number;
@@ -78,7 +79,7 @@ export class BugReportZ extends AdbCommandBase {
 
         await process.stdout
             .pipeThrough(new DecodeUtf8Stream())
-            .pipeThrough(new SplitLineStream())
+            .pipeThrough(new SplitStringStream('\n'))
             .pipeTo(new WritableStream<string>({
                 write(line) {
                     // `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.

@@ -1,8 +1,9 @@
-import type { Adb } from "@yume-chan/adb";
-import Struct from "@yume-chan/struct";
-import { ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnection } from "../connection.js";
-import { ScrcpyInjectScrollControlMessage1_16 } from "./1_16/index.js";
-import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from "./1_21.js";
+import type { Adb } from '@yume-chan/adb';
+import Struct from '@yume-chan/struct';
+
+import { ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnection } from '../connection.js';
+import { ScrcpyInjectScrollControlMessage1_16 } from './1_16/index.js';
+import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from './1_21.js';
 
 export interface ScrcpyOptionsInit1_22 extends ScrcpyOptionsInit1_21 {
     downsizeOnError: boolean;
@@ -32,9 +33,9 @@ export interface ScrcpyOptionsInit1_22 extends ScrcpyOptionsInit1_21 {
 export const ScrcpyInjectScrollControlMessage1_22 =
     new Struct()
         .fields(ScrcpyInjectScrollControlMessage1_16)
-        .int32("buttons");
+        .int32('buttons');
 
-export type ScrcpyInjectScrollControlMessage1_22 = typeof ScrcpyInjectScrollControlMessage1_22["TInit"];
+export type ScrcpyInjectScrollControlMessage1_22 = typeof ScrcpyInjectScrollControlMessage1_22['TInit'];
 
 export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22> extends ScrcpyOptions1_21<T> {
     public constructor(init: Partial<ScrcpyOptionsInit1_22>) {
@@ -58,15 +59,15 @@ export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsIn
         };
     }
 
-    public override createConnection(device: Adb): ScrcpyClientConnection {
+    public override createConnection(adb: Adb): ScrcpyClientConnection {
         const options = {
             ...this.getDefaultValue(),
             ...this.value,
         };
         if (this.value.tunnelForward) {
-            return new ScrcpyClientForwardConnection(device, options);
+            return new ScrcpyClientForwardConnection(adb, options);
         } else {
-            return new ScrcpyClientReverseConnection(device, options);
+            return new ScrcpyClientReverseConnection(adb, options);
         }
     }
 

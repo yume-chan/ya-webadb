@@ -1,8 +1,9 @@
-import { AbortController, BufferedStream, InspectStream, ReadableStream, ReadableWritablePair, TransformStream, type WritableStreamDefaultWriter } from '@yume-chan/adb';
 import { EventEmitter } from '@yume-chan/event';
+import { AbortController, BufferedStream, InspectStream, ReadableStream, ReadableWritablePair, TransformStream, type WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
+
 import { AndroidMotionEventAction, ScrcpyControlMessageType, ScrcpyInjectKeyCodeControlMessage, ScrcpyInjectTextControlMessage, ScrcpyInjectTouchControlMessage, ScrcpySimpleControlMessage, type AndroidKeyEventAction } from './message.js';
-import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions, VideoStreamPacket } from "./options/index.js";
+import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions, VideoStreamPacket } from './options/index.js';
 
 const ClipboardMessage =
     new Struct()

@@ -34,6 +34,7 @@
         "@yume-chan/async": "^2.1.4",
         "@yume-chan/dataview-bigint-polyfill": "^0.0.16",
         "@yume-chan/event": "^0.0.16",
+        "@yume-chan/stream-extra": "^0.0.16",
         "@yume-chan/struct": "^0.0.16",
         "tslib": "^2.3.1",
         "web-streams-polyfill": "^4.0.0-beta.3"

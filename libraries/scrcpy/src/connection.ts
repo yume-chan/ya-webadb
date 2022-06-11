@@ -1,7 +1,9 @@
-import type { Adb, ReadableStream, ReadableWritablePair } from "@yume-chan/adb";
-import type { Disposable } from "@yume-chan/event";
-import type { ValueOrPromise } from "@yume-chan/struct";
-import { delay } from "./utils.js";
+import type { Adb } from '@yume-chan/adb';
+import type { Disposable } from '@yume-chan/event';
+import type { ReadableStream, ReadableWritablePair } from '@yume-chan/stream-extra';
+import type { ValueOrPromise } from '@yume-chan/struct';
+
+import { delay } from './utils.js';
 
 export interface ScrcpyClientConnectionOptions {
     control: boolean;

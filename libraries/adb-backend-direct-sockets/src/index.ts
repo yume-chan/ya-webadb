@@ -1,4 +1,5 @@
-import { AdbBackend, AdbPacket, AdbPacketSerializeStream, pipeFrom, ReadableStream, StructDeserializeStream, WrapReadableStream, WrapWritableStream, WritableStream } from '@yume-chan/adb';
+import { AdbBackend, AdbPacket, AdbPacketSerializeStream } from '@yume-chan/adb';
+import { pipeFrom, ReadableStream, StructDeserializeStream, WrapReadableStream, WrapWritableStream, WritableStream } from '@yume-chan/stream-extra';
 
 declare global {
     interface TCPSocket {

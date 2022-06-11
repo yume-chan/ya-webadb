@@ -1,7 +1,8 @@
 // cspell: ignore logcat
 
-import { AdbCommandBase, AdbSubprocessNoneProtocol, BufferedStream, BufferedStreamEndedError, DecodeUtf8Stream, ReadableStream, SplitLineStream, WritableStream } from "@yume-chan/adb";
-import Struct, { decodeUtf8, StructAsyncDeserializeStream } from "@yume-chan/struct";
+import { AdbCommandBase, AdbSubprocessNoneProtocol } from '@yume-chan/adb';
+import { BufferedStream, BufferedStreamEndedError, DecodeUtf8Stream, ReadableStream, SplitStringStream, WritableStream } from '@yume-chan/stream-extra';
+import Struct, { decodeUtf8, StructAsyncDeserializeStream } from '@yume-chan/struct';
 
 // `adb logcat` is an alias to `adb shell logcat`
 // so instead of adding to core library, it's implemented here
@@ -144,7 +145,7 @@ export class Logcat extends AdbCommandBase {
         const result: LogSize[] = [];
         await stdout
             .pipeThrough(new DecodeUtf8Stream())
-            .pipeThrough(new SplitLineStream())
+            .pipeThrough(new SplitStringStream('\n'))
             .pipeTo(new WritableStream({
                 write(chunk) {
                     let match = chunk.match(Logcat.LOG_SIZE_REGEX_11);

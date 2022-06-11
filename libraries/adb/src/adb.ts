@@ -1,13 +1,14 @@
 // cspell: ignore libusb
 
 import { PromiseResolver } from '@yume-chan/async';
+import { AbortController, DecodeUtf8Stream, GatherStringStream, WritableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
+
 import { AdbAuthenticationProcessor, ADB_DEFAULT_AUTHENTICATORS, type AdbCredentialStore } from './auth.js';
 import { AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install, type AdbFrameBuffer } from './commands/index.js';
 import { AdbFeatures } from './features.js';
 import { AdbCommand, calculateChecksum, type AdbPacketData, type AdbPacketInit } from './packet.js';
 import { AdbIncomingSocketHandler, AdbPacketDispatcher, type AdbSocket, type Closeable } from './socket/index.js';
-import { AbortController, DecodeUtf8Stream, GatherStringStream, WritableStream, type ReadableWritablePair } from "./stream/index.js";
-import { decodeUtf8, encodeUtf8 } from "./utils/index.js";
+import { decodeUtf8, encodeUtf8 } from './utils/index.js';
 
 export enum AdbPropKey {
     Product = 'ro.product.name',
