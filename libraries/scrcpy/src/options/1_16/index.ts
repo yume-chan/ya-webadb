@@ -1,12 +1,14 @@
-import { StructDeserializeStream, TransformStream, type Adb } from "@yume-chan/adb";
-import Struct from "@yume-chan/struct";
-import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec.js";
-import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnectionOptions } from "../../connection.js";
-import { AndroidKeyEventAction, ScrcpyControlMessageType, ScrcpySimpleControlMessage } from "../../message.js";
-import type { ScrcpyBackOrScreenOnEvent1_18 } from "../1_18.js";
-import type { ScrcpyInjectScrollControlMessage1_22 } from "../1_22.js";
-import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyOptionValue, type VideoStreamPacket } from "../common.js";
-import { parse_sequence_parameter_set } from "./sps.js";
+import type { Adb } from '@yume-chan/adb';
+import { StructDeserializeStream, TransformStream } from '@yume-chan/stream-extra';
+import Struct from '@yume-chan/struct';
+
+import type { AndroidCodecLevel, AndroidCodecProfile } from '../../codec.js';
+import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnectionOptions } from '../../connection.js';
+import { AndroidKeyEventAction, ScrcpyControlMessageType, ScrcpySimpleControlMessage } from '../../message.js';
+import type { ScrcpyBackOrScreenOnEvent1_18 } from '../1_18.js';
+import type { ScrcpyInjectScrollControlMessage1_22 } from '../1_22.js';
+import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyOptionValue, type VideoStreamPacket } from '../common.js';
+import { parse_sequence_parameter_set } from './sps.js';
 
 export enum ScrcpyLogLevel {
     Verbose = 'verbose',
@@ -209,7 +211,8 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
 
     public createConnection(adb: Adb): ScrcpyClientConnection {
         const options: ScrcpyClientConnectionOptions = {
-            // Old scrcpy connection always have control stream no matter what the option is
+            // Old versions always have control stream no matter what the option is
+            // Pass `control: false` to `Connection` will disable the control stream
             control: true,
             sendDummyByte: true,
             sendDeviceMeta: true,

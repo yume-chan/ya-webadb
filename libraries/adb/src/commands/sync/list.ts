@@ -1,5 +1,6 @@
+import type { BufferedStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
-import type { AdbBufferedStream, WritableStreamDefaultWriter } from '../../stream/index.js';
+
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request.js';
 import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './response.js';
 import { AdbSyncLstatResponse, AdbSyncStatResponse, type AdbSyncStat } from './stat.js';
@@ -37,7 +38,7 @@ const LIST_V2_RESPONSE_TYPES = {
 };
 
 export async function* adbSyncOpenDir(
-    stream: AdbBufferedStream,
+    stream: BufferedStream,
     writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
     v2: boolean,

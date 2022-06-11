@@ -1,7 +1,8 @@
-import type { Adb } from "../../../adb.js";
-import type { AdbSocket } from "../../../socket/index.js";
-import { DuplexStreamFactory, ReadableStream } from "../../../stream/index.js";
-import type { AdbSubprocessProtocol } from "./types.js";
+import { DuplexStreamFactory, ReadableStream } from '@yume-chan/stream-extra';
+
+import type { Adb } from '../../../adb.js';
+import type { AdbSocket } from '../../../socket/index.js';
+import type { AdbSubprocessProtocol } from './types.js';
 
 /**
  * The legacy shell

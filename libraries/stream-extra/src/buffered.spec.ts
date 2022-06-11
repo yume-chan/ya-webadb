@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { BufferedStream } from "./buffered.js";
-import { ReadableStream } from "./detect.js";
+import { ReadableStream } from "./stream.js";
 
 function randomUint8Array(length: number) {
     const array = new Uint8Array(length);
@@ -120,6 +120,5 @@ describe('BufferedStream', () => {
         it('input 3 small buffers 2', () => {
             return runTest([3, 3, 3], [7, 2]);
         });
-
     });
 });

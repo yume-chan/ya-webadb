@@ -1,37 +1,8 @@
-import { AdbCommandBase, AdbSubprocessNoneProtocol, AdbSubprocessProtocol, AdbSync, DecodeUtf8Stream, ReadableStream, TransformStream, WrapWritableStream, WritableStream } from "@yume-chan/adb";
-import { ScrcpyClient } from "./client.js";
-import { DEFAULT_SERVER_PATH, type ScrcpyOptions } from "./options/index.js";
+import { AdbCommandBase, AdbSubprocessNoneProtocol, AdbSubprocessProtocol, AdbSync } from '@yume-chan/adb';
+import { DecodeUtf8Stream, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream } from '@yume-chan/stream-extra';
 
-function* splitLines(text: string): Generator<string, void, void> {
-    let start = 0;
-
-    while (true) {
-        const index = text.indexOf('\n', start);
-        if (index === -1) {
-            return;
-        }
-
-        const line = text.substring(start, index);
-        yield line;
-
-        start = index + 1;
-    }
-}
-
-class SplitLinesStream extends TransformStream<string, string>{
-    constructor() {
-        super({
-            transform(chunk, controller) {
-                for (const line of splitLines(chunk)) {
-                    if (line === '') {
-                        continue;
-                    }
-                    controller.enqueue(line);
-                }
-            },
-        });
-    }
-}
+import { ScrcpyClient } from './client.js';
+import { DEFAULT_SERVER_PATH, type ScrcpyOptions } from './options/index.js';
 
 class ArrayToStream<T> extends ReadableStream<T>{
     private array!: T[];
@@ -135,7 +106,7 @@ export class AdbScrcpyClient extends AdbCommandBase {
 
             const stdout = process.stdout
                 .pipeThrough(new DecodeUtf8Stream())
-                .pipeThrough(new SplitLinesStream());
+                .pipeThrough(new SplitStringStream('\n'));
 
             // Read stdout, otherwise `process.exit` won't resolve.
             const output: string[] = [];

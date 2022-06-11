@@ -1,6 +1,7 @@
-import { WritableStream } from '@yume-chan/adb';
-import type { VideoStreamPacket } from "../../options/index.js";
-import type { H264Configuration, H264Decoder } from "../types.js";
+import { WritableStream } from '@yume-chan/stream-extra';
+
+import type { VideoStreamPacket } from '../../options/index.js';
+import type { H264Configuration, H264Decoder } from '../types.js';
 
 function toHex(value: number) {
     return value.toString(16).padStart(2, '0').toUpperCase();

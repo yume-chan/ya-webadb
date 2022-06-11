@@ -1,5 +1,6 @@
+import { BufferedStream, ChunkStream, pipeFrom, WritableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
-import { AdbBufferedStream, ChunkStream, pipeFrom, WritableStream, WritableStreamDefaultWriter } from '../../stream/index.js';
+
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request.js';
 import { adbSyncReadResponse, AdbSyncResponseId } from './response.js';
 import { LinuxFileType } from './stat.js';
@@ -15,7 +16,7 @@ const ResponseTypes = {
 export const ADB_SYNC_MAX_PACKET_SIZE = 64 * 1024;
 
 export function adbSyncPush(
-    stream: AdbBufferedStream,
+    stream: BufferedStream,
     writer: WritableStreamDefaultWriter<Uint8Array>,
     filename: string,
     mode: number = (LinuxFileType.File << 12) | 0o666,

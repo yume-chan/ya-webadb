@@ -7,5 +7,4 @@ export * from './crypto.js';
 export * from './features.js';
 export * from './packet.js';
 export * from './socket/index.js';
-export * from './stream/index.js';
 export * from './utils/index.js';

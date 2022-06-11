@@ -1,7 +1,5 @@
-import type { StructAsyncDeserializeStream } from '@yume-chan/struct';
-import type { AdbSocket, AdbSocketInfo } from '../socket/index.js';
-import type { ReadableStream, ReadableStreamDefaultReader } from './detect.js';
-import { PushReadableStream } from "./transform.js";
+import { PushReadableStream } from "./push-readable.js";
+import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
 
 export class BufferedStreamEndedError extends Error {
     public constructor() {
@@ -146,23 +144,5 @@ export class BufferedStream {
 
     public async close() {
         await this.reader.cancel();
-    }
-}
-
-export class AdbBufferedStream
-    extends BufferedStream
-    implements AdbSocketInfo, StructAsyncDeserializeStream {
-    protected readonly socket: AdbSocket;
-
-    public get localId() { return this.socket.localId; }
-    public get remoteId() { return this.socket.remoteId; }
-    public get localCreated() { return this.socket.localCreated; }
-    public get serviceString() { return this.socket.serviceString; }
-
-    public get writable() { return this.socket.writable; }
-
-    public constructor(socket: AdbSocket) {
-        super(socket.readable);
-        this.socket = socket;
     }
 }

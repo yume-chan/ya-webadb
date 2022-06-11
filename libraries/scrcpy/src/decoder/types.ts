@@ -1,7 +1,8 @@
-import type { WritableStream } from '@yume-chan/adb';
-import type { Disposable } from "@yume-chan/event";
-import type { AndroidCodecLevel, AndroidCodecProfile } from "../codec.js";
-import type { VideoStreamPacket } from "../options/index.js";
+import type { Disposable } from '@yume-chan/event';
+import type { WritableStream } from '@yume-chan/stream-extra';
+
+import type { AndroidCodecLevel, AndroidCodecProfile } from '../codec.js';
+import type { VideoStreamPacket } from '../options/index.js';
 
 export interface H264Configuration {
     profileIndex: number;

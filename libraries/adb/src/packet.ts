@@ -1,5 +1,5 @@
+import { TransformStream } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
-import { TransformStream } from "./stream/index.js";
 
 export enum AdbCommand {
     Auth = 0x48545541,    // 'AUTH'

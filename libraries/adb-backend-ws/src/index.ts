@@ -1,4 +1,5 @@
-import { AdbPacket, AdbPacketSerializeStream, DuplexStreamFactory, pipeFrom, ReadableStream, StructDeserializeStream, WritableStream, type AdbBackend } from '@yume-chan/adb';
+import { AdbPacket, AdbPacketSerializeStream, type AdbBackend } from '@yume-chan/adb';
+import { DuplexStreamFactory, pipeFrom, ReadableStream, StructDeserializeStream, WritableStream } from '@yume-chan/stream-extra';
 
 export default class AdbWsBackend implements AdbBackend {
     public readonly serial: string;
@@ -12,7 +13,7 @@ export default class AdbWsBackend implements AdbBackend {
 
     public async connect() {
         const socket = new WebSocket(this.serial);
-        socket.binaryType = "arraybuffer";
+        socket.binaryType = 'arraybuffer';
 
         await new Promise((resolve, reject) => {
             socket.onopen = resolve;

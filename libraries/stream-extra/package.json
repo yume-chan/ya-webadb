@@ -1,0 +1,47 @@
+{
+    "name": "@yume-chan/stream-extra",
+    "version": "0.0.16",
+    "description": "Extensions to Web Streams API",
+    "keywords": [
+        "stream",
+        "web-streams-api"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/master/packages/stream-extra#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "packages/stream-extra"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "scripts": {
+        "build": "tsc -b tsconfig.build.json",
+        "build:watch": "tsc -b tsconfig.build.json",
+        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@yume-chan/async": "^2.1.4",
+        "@yume-chan/struct": "^0.0.16",
+        "tslib": "^2.3.1",
+        "web-streams-polyfill": "^4.0.0-beta.3"
+    },
+    "devDependencies": {
+        "@jest/globals": "^28.1.0",
+        "@yume-chan/ts-package-builder": "^1.0.0",
+        "cross-env": "^7.0.3",
+        "jest": "^28.1.0",
+        "ts-jest": "^28.0.2",
+        "typescript": "4.7.2"
+    }
+}

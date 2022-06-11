@@ -1,9 +1,9 @@
 import { AsyncOperationManager, PromiseResolver } from '@yume-chan/async';
 import type { RemoveEventListener } from '@yume-chan/event';
-import { EMPTY_UINT8_ARRAY, type ValueOrPromise } from "@yume-chan/struct";
+import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '@yume-chan/stream-extra';
+import { EMPTY_UINT8_ARRAY, type ValueOrPromise } from '@yume-chan/struct';
 
 import { AdbCommand, calculateChecksum, type AdbPacketData, type AdbPacketInit } from '../packet.js';
-import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '../stream/index.js';
 import { decodeUtf8, encodeUtf8 } from '../utils/index.js';
 import { AdbSocket, AdbSocketController } from './socket.js';
 
