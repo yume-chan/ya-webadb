@@ -1,4 +1,4 @@
-declare module 'streamsaver' {
+declare module '@yume-chan/stream-saver' {
     type OriginalWriteableStream = typeof WritableStream;
 
     namespace StreamSaver {
