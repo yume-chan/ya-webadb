@@ -4,12 +4,13 @@ export interface ScrcpyOptionsInit1_24 extends ScrcpyOptionsInit1_23 {
     powerOn: boolean;
 }
 
-export class ScrcpyOptions1_24<T extends ScrcpyOptionsInit1_24 = ScrcpyOptionsInit1_24> extends ScrcpyOptions1_23<T> {
+export class ScrcpyOptions1_24<T extends ScrcpyOptionsInit1_24 = ScrcpyOptionsInit1_24>
+    extends ScrcpyOptions1_23<T> {
     public constructor(init: Partial<ScrcpyOptionsInit1_24>) {
         super(init);
     }
 
-    protected override getDefaultValue(): T {
+    public override getDefaultValue(): T {
         return {
             ...super.getDefaultValue(),
             powerOn: true,

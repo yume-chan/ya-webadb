@@ -8,7 +8,7 @@ function delay(timeout: number) {
 
 describe('SyncPromise', () => {
     describe('.resolve', () => {
-        it('should resolve with undefiend', () => {
+        it('should resolve with undefined', () => {
             const promise = SyncPromise.resolve();
             expect(promise.valueOrPromise()).toBe(undefined);
         });

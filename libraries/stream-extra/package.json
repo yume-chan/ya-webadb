@@ -31,9 +31,9 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/async": "^2.1.4",
+        "@yume-chan/async": "^2.2.0",
         "@yume-chan/struct": "^0.0.16",
-        "tslib": "^2.3.1",
+        "tslib": "^2.4.0",
         "web-streams-polyfill": "^4.0.0-beta.3"
     },
     "devDependencies": {
@@ -42,6 +42,6 @@
         "cross-env": "^7.0.3",
         "jest": "^28.1.0",
         "ts-jest": "^28.0.2",
-        "typescript": "4.7.2"
+        "typescript": "^4.7.3"
     }
 }

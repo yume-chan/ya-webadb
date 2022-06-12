@@ -170,7 +170,7 @@ export const Grid = withDisplayName('Grid')(({
     const [autoScroll, setAutoScroll] = useState(true);
 
     const handleScroll = useStableCallback(() => {
-        if (bodyRef) {
+        if (bodyRef && bodyRef.scrollTop !== scrollTop) {
             if (autoScroll) {
                 if (scrollTop < bodyRef.scrollHeight - bodyRef.clientHeight && bodyRef.scrollTop < scrollTop) {
                     setAutoScroll(false);

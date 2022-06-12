@@ -1,5 +1,6 @@
 import { DefaultButton, ProgressIndicator, Stack } from "@fluentui/react";
-import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, ReadableStream } from "@yume-chan/adb";
+import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
+import { ChunkStream } from '@yume-chan/stream-extra';
 import { action, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";

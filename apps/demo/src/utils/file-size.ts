@@ -1,5 +1,5 @@
 import { useSetInterval } from '@fluentui/react-hooks';
-import { InspectStream } from "@yume-chan/adb";
+import { InspectStream } from "@yume-chan/stream-extra";
 import { useEffect, useRef, useState } from 'react';
 
 const units = [' B', ' KB', ' MB', ' GB'];

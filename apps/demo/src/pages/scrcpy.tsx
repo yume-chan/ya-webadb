@@ -7,16 +7,17 @@ import { NextPage } from "next";
 import Head from "next/head";
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
-import { ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/adb';
+import { ADB_SYNC_MAX_PACKET_SIZE } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AdbScrcpyClient, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyClient, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
+import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
+import { ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
 
 import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
 import { GlobalState } from "../state";
 import { CommonStackTokens, formatSpeed, Icons, ProgressStream, RouteStackProps } from "../utils";
 
-const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url).toString();
+const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url);
 
 class FetchWithProgress {
     public readonly promise: Promise<Uint8Array>;
@@ -30,11 +31,11 @@ class FetchWithProgress {
     private progressEvent = new EventEmitter<[download: number, total: number]>();
     public get onProgress() { return this.progressEvent.event; }
 
-    public constructor(url: string) {
+    public constructor(url: string | URL) {
         this.promise = this.fetch(url);
     }
 
-    private async fetch(url: string) {
+    private async fetch(url: string | URL) {
         const response = await window.fetch(url);
         this._total = Number.parseInt(response.headers.get('Content-Length') ?? '0', 10);
         this.progressEvent.fire([this._downloaded, this._total]);
@@ -223,8 +224,6 @@ const SettingItem = observer(function SettingItem({
 });
 
 class ScrcpyPageState {
-    adbScrcpyClient: AdbScrcpyClient | null = null;
-
     running = false;
 
     deviceView: DeviceViewRef | null = null;
@@ -243,7 +242,7 @@ class ScrcpyPageState {
     get rotatedWidth() { return state.rotate & 1 ? state.height : state.width; }
     get rotatedHeight() { return state.rotate & 1 ? state.width : state.height; }
 
-    client: ScrcpyClient | undefined = undefined;
+    client: AdbScrcpyClient | undefined = undefined;
 
     async pushServer() {
         const serverBuffer = await fetchServer();
@@ -254,7 +253,7 @@ class ScrcpyPageState {
                 controller.close();
             },
         })
-            .pipeTo(this.adbScrcpyClient!.pushServer());
+            .pipeTo(AdbScrcpyClient.pushServer(GlobalState.device!));
     }
 
     encoders: string[] = [];
@@ -262,13 +261,14 @@ class ScrcpyPageState {
         try {
             await this.pushServer();
 
-            const encoders = await this.adbScrcpyClient!.getEncoders(
+            const encoders = await AdbScrcpyClient.getEncoders(
+                GlobalState.device!,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                new ScrcpyOptions1_24({
+                new AdbScrcpyOptions1_22(new ScrcpyOptions1_24({
                     logLevel: ScrcpyLogLevel.Debug,
                     tunnelForward: this.settings.tunnelForward,
-                })
+                }))
             );
 
             runInAction(() => {
@@ -297,13 +297,14 @@ class ScrcpyPageState {
         try {
             await this.pushServer();
 
-            const displays = await this.adbScrcpyClient!.getDisplays(
+            const displays = await AdbScrcpyClient.getDisplays(
+                GlobalState.device!,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                new ScrcpyOptions1_24({
+                new AdbScrcpyOptions1_22(new ScrcpyOptions1_24({
                     logLevel: ScrcpyLogLevel.Debug,
                     tunnelForward: this.settings.tunnelForward,
-                })
+                }))
             );
 
             runInAction(() => {
@@ -362,7 +363,7 @@ class ScrcpyPageState {
             iconProps: { iconName: Icons.Orientation },
             iconOnly: true,
             text: 'Rotate Device',
-            onClick: () => { this.client!.rotateDevice(); },
+            onClick: () => { this.client!.control!.rotateDevice(); },
         });
 
         result.push({
@@ -631,8 +632,6 @@ class ScrcpyPageState {
         autorun(() => {
             if (GlobalState.device) {
                 runInAction(() => {
-                    this.adbScrcpyClient = new AdbScrcpyClient(GlobalState.device!);
-
                     this.encoders = [];
                     this.settings.encoderName = undefined;
 
@@ -723,7 +722,7 @@ class ScrcpyPageState {
                     .pipeThrough(new ProgressStream(action((progress) => {
                         this.serverUploadedSize = progress;
                     })))
-                    .pipeTo(this.adbScrcpyClient!.pushServer());
+                    .pipeTo(AdbScrcpyClient.pushServer(GlobalState.device!));
 
                 runInAction(() => {
                     this.serverUploadSpeed = this.serverUploadedSize - this.debouncedServerUploadedSize;
@@ -746,7 +745,7 @@ class ScrcpyPageState {
                 }), 1000);
             });
 
-            const options = new ScrcpyOptions1_24({
+            const options = new AdbScrcpyOptions1_22(new ScrcpyOptions1_24({
                 logLevel: ScrcpyLogLevel.Debug,
                 ...this.settings,
                 sendDeviceMeta: false,
@@ -757,7 +756,7 @@ class ScrcpyPageState {
                         level: decoder.maxLevel,
                     })
                     : undefined,
-            });
+            }));
 
             runInAction(() => {
                 this.log = [];
@@ -765,7 +764,8 @@ class ScrcpyPageState {
                 this.log.push(`[client] Server arguments: ${options.formatServerArguments().join(' ')}`);
             });
 
-            const client = await this.adbScrcpyClient!.start(
+            const client = await AdbScrcpyClient.start(
+                GlobalState.device!,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 options
@@ -792,7 +792,7 @@ class ScrcpyPageState {
 
             client.exit.then(this.dispose);
 
-            client.onClipboardChange(content => {
+            client.control!.onClipboardChange(content => {
                 window.navigator.clipboard.writeText(content);
             });
 
@@ -846,7 +846,7 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        this.client.pressBackOrTurnOnScreen(AndroidKeyEventAction.Down);
+        this.client.control!.pressBackOrTurnOnScreen(AndroidKeyEventAction.Down);
     };
 
     handleBackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -858,7 +858,7 @@ class ScrcpyPageState {
             return;
         }
 
-        this.client.pressBackOrTurnOnScreen(AndroidKeyEventAction.Up);
+        this.client.control!.pressBackOrTurnOnScreen(AndroidKeyEventAction.Up);
     };
 
     handleHomePointerDown = async (e: React.PointerEvent<HTMLDivElement>) => {
@@ -871,7 +871,7 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        await this.client.injectKeyCode({
+        await this.client.control!.injectKeyCode({
             action: AndroidKeyEventAction.Down,
             keyCode: AndroidKeyCode.Home,
             repeat: 0,
@@ -888,7 +888,7 @@ class ScrcpyPageState {
             return;
         }
 
-        await this.client.injectKeyCode({
+        await this.client.control!.injectKeyCode({
             action: AndroidKeyEventAction.Up,
             keyCode: AndroidKeyCode.Home,
             repeat: 0,
@@ -906,7 +906,7 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        await this.client.injectKeyCode({
+        await this.client.control!.injectKeyCode({
             action: AndroidKeyEventAction.Down,
             keyCode: AndroidKeyCode.AppSwitch,
             repeat: 0,
@@ -923,7 +923,7 @@ class ScrcpyPageState {
             return;
         }
 
-        await this.client.injectKeyCode({
+        await this.client.control!.injectKeyCode({
             action: AndroidKeyEventAction.Up,
             keyCode: AndroidKeyCode.AppSwitch,
             repeat: 0,
@@ -967,9 +967,11 @@ class ScrcpyPageState {
         }
 
         const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
-        this.client.injectTouch({
+        this.client.control!.injectTouch({
             action,
             pointerId: e.pointerType === "mouse" ? BigInt(-1) : BigInt(e.pointerId),
+            screenWidth: this.client!.screenWidth!,
+            screenHeight: this.client!.screenHeight!,
             pointerX: x,
             pointerY: y,
             pressure: e.pressure * 65535,
@@ -1004,7 +1006,9 @@ class ScrcpyPageState {
         e.stopPropagation();
 
         const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
-        this.client.injectScroll({
+        this.client.control!.injectScroll({
+            screenWidth: this.client!.screenWidth!,
+            screenHeight: this.client!.screenHeight!,
             pointerX: x,
             pointerY: y,
             scrollX: -Math.sign(e.deltaX),
@@ -1024,7 +1028,7 @@ class ScrcpyPageState {
 
         const { key, code } = e;
         if (key.match(/^[!-`{-~]$/i)) {
-            this.client!.injectText(key);
+            this.client.control!.injectText(key);
             return;
         }
 
@@ -1035,13 +1039,13 @@ class ScrcpyPageState {
         } as Record<string, AndroidKeyCode | undefined>)[code];
 
         if (keyCode) {
-            await this.client.injectKeyCode({
+            await this.client.control!.injectKeyCode({
                 action: AndroidKeyEventAction.Down,
                 keyCode,
                 metaState: 0,
                 repeat: 0,
             });
-            await this.client.injectKeyCode({
+            await this.client.control!.injectKeyCode({
                 action: AndroidKeyEventAction.Up,
                 keyCode,
                 metaState: 0,

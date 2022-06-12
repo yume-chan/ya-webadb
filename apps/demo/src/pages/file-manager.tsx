@@ -2,7 +2,8 @@ import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, Detail
 import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from "@fluentui/react-file-type-icons";
 import { useConst } from '@fluentui/react-hooks';
 import { getIcon } from '@fluentui/style-utilities';
-import { AdbFeatures, ADB_SYNC_MAX_PACKET_SIZE, ChunkStream, LinuxFileType, type AdbSyncEntry } from '@yume-chan/adb';
+import { AdbFeatures, ADB_SYNC_MAX_PACKET_SIZE, LinuxFileType, type AdbSyncEntry } from '@yume-chan/adb';
+import { ChunkStream } from '@yume-chan/stream-extra';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";

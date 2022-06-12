@@ -1,13 +1,11 @@
-import type { Adb } from '@yume-chan/adb';
 import { StructDeserializeStream, TransformStream } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
 
 import type { AndroidCodecLevel, AndroidCodecProfile } from '../../codec.js';
-import { ScrcpyClientConnection, ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnectionOptions } from '../../connection.js';
-import { AndroidKeyEventAction, ScrcpyControlMessageType, ScrcpySimpleControlMessage } from '../../message.js';
+import { AndroidKeyEventAction, ScrcpyControlMessageType, ScrcpySimpleControlMessage } from '../../control/index.js';
 import type { ScrcpyBackOrScreenOnEvent1_18 } from '../1_18.js';
 import type { ScrcpyInjectScrollControlMessage1_22 } from '../1_22.js';
-import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyOptionValue, type VideoStreamPacket } from '../common.js';
+import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyOptionValue, type VideoStreamPacket } from '../types.js';
 import { parse_sequence_parameter_set } from './sps.js';
 
 export enum ScrcpyLogLevel {
@@ -148,7 +146,8 @@ export const ScrcpyInjectScrollControlMessage1_16 =
         .int32('scrollX')
         .int32('scrollY');
 
-export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16> implements ScrcpyOptions<T> {
+export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16>
+    implements ScrcpyOptions<T> {
     public value: Partial<T>;
 
     public constructor(value: Partial<ScrcpyOptionsInit1_16>) {
@@ -184,7 +183,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
         ];
     }
 
-    protected getDefaultValue(): T {
+    public getDefaultValue(): T {
         return {
             logLevel: ScrcpyLogLevel.Debug,
             maxSize: 0,
@@ -206,22 +205,10 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
     public formatServerArguments(): string[] {
         const defaults = this.getDefaultValue();
         return this.getArgumentOrder()
-            .map(key => toScrcpyOptionValue(this.value[key] || defaults[key], '-'));
-    }
-
-    public createConnection(adb: Adb): ScrcpyClientConnection {
-        const options: ScrcpyClientConnectionOptions = {
-            // Old versions always have control stream no matter what the option is
-            // Pass `control: false` to `Connection` will disable the control stream
-            control: true,
-            sendDummyByte: true,
-            sendDeviceMeta: true,
-        };
-        if (this.value.tunnelForward) {
-            return new ScrcpyClientForwardConnection(adb, options);
-        } else {
-            return new ScrcpyClientReverseConnection(adb, options);
-        }
+            .map(
+                key =>
+                    toScrcpyOptionValue(this.value[key] || defaults[key], '-')
+            );
     }
 
     public getOutputEncoderNameRegex(): RegExp {

@@ -1,8 +1,9 @@
-import { AdbCommandBase, AdbSubprocessNoneProtocol, AdbSubprocessProtocol, AdbSync } from '@yume-chan/adb';
-import { DecodeUtf8Stream, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream } from '@yume-chan/stream-extra';
+import { Adb, AdbSubprocessNoneProtocol, AdbSubprocessProtocol, AdbSync } from '@yume-chan/adb';
+import { DecodeUtf8Stream, InspectStream, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
 
-import { ScrcpyClient } from './client.js';
-import { DEFAULT_SERVER_PATH, type ScrcpyOptions } from './options/index.js';
+import { ScrcpyControlClient } from '../control/index.js';
+import { DEFAULT_SERVER_PATH, VideoStreamPacket } from '../options/index.js';
+import type { AdbScrcpyOptions } from './options/index.js';
 
 class ArrayToStream<T> extends ReadableStream<T>{
     private array!: T[];
@@ -60,14 +61,15 @@ class ConcatStream<T> extends ReadableStream<T>{
     }
 }
 
-export class AdbScrcpyClient extends AdbCommandBase {
-    pushServer(
+export class AdbScrcpyClient {
+    public static pushServer(
+        adb: Adb,
         path = DEFAULT_SERVER_PATH,
     ) {
         let sync!: AdbSync;
         return new WrapWritableStream<Uint8Array>({
             start: async () => {
-                sync = await this.adb.sync();
+                sync = await adb.sync();
                 return sync.write(path);
             },
             async close() {
@@ -76,18 +78,19 @@ export class AdbScrcpyClient extends AdbCommandBase {
         });
     }
 
-    async start(
+    public static async start(
+        adb: Adb,
         path: string,
         version: string,
-        options: ScrcpyOptions<any>
+        options: AdbScrcpyOptions<any>
     ) {
-        const connection = options.createConnection(this.adb);
+        const connection = options.createConnection(adb);
         let process: AdbSubprocessProtocol | undefined;
 
         try {
             await connection.initialize();
 
-            process = await this.adb.subprocess.spawn(
+            process = await adb.subprocess.spawn(
                 [
                     // cspell: disable-next-line
                     `CLASSPATH=${path}`,
@@ -137,8 +140,9 @@ export class AdbScrcpyClient extends AdbCommandBase {
             await pipe;
 
             const [videoStream, controlStream] = result;
-            return new ScrcpyClient(
+            return new AdbScrcpyClient(
                 options,
+                process,
                 new ConcatStream(
                     new ArrayToStream(output),
                     stdout,
@@ -158,10 +162,11 @@ export class AdbScrcpyClient extends AdbCommandBase {
      * This method will modify the given `options`,
      * so don't reuse it elsewhere.
      */
-    public async getEncoders(
+    public static async getEncoders(
+        adb: Adb,
         path: string,
         version: string,
-        options: ScrcpyOptions<any>
+        options: AdbScrcpyOptions<any>
     ): Promise<string[]> {
         // Provide an invalid encoder name
         // So the server will return all available encoders
@@ -173,7 +178,12 @@ export class AdbScrcpyClient extends AdbCommandBase {
 
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
-        const client = await this.start(path, version, options);
+        const client = await AdbScrcpyClient.start(
+            adb,
+            path,
+            version,
+            options
+        );
 
         const encoderNameRegex = options.getOutputEncoderNameRegex();
         const encoders: string[] = [];
@@ -193,10 +203,11 @@ export class AdbScrcpyClient extends AdbCommandBase {
      * This method will modify the given `options`,
      * so don't reuse it elsewhere.
      */
-    async getDisplays(
+    public static async getDisplays(
+        adb: Adb,
         path: string,
         version: string,
-        options: ScrcpyOptions<any>
+        options: AdbScrcpyOptions<any>
     ): Promise<number[]> {
         // Similar to `getEncoders`, pass an invalid option and parse the output
         options.value.displayId = -1;
@@ -207,7 +218,7 @@ export class AdbScrcpyClient extends AdbCommandBase {
 
         try {
             // Server will exit before opening connections when an invalid display id was given.
-            await this.start(path, version, options);
+            await AdbScrcpyClient.start(adb, path, version, options);
         } catch (e) {
             if (e instanceof Error) {
                 const output = (e as any).output as string[];
@@ -227,4 +238,50 @@ export class AdbScrcpyClient extends AdbCommandBase {
         throw new Error('failed to get displays');
     }
 
+    private process: AdbSubprocessProtocol;
+
+    private _stdout: ReadableStream<string>;
+    public get stdout() { return this._stdout; }
+
+    public get exit() { return this.process.exit; }
+
+    private _screenWidth: number | undefined;
+    public get screenWidth() { return this._screenWidth; }
+
+    private _screenHeight: number | undefined;
+    public get screenHeight() { return this._screenHeight; }
+
+    private _videoStream: ReadableStream<VideoStreamPacket>;
+    public get videoStream() { return this._videoStream; }
+
+    private _control: ScrcpyControlClient | undefined;
+    public get control() { return this._control; }
+
+    public constructor(
+        options: AdbScrcpyOptions<any>,
+        process: AdbSubprocessProtocol,
+        stdout: ReadableStream<string>,
+        videoStream: ReadableStream<Uint8Array>,
+        controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined,
+    ) {
+        this.process = process;
+        this._stdout = stdout;
+
+        this._videoStream = videoStream
+            .pipeThrough(options.createVideoStreamTransformer())
+            .pipeThrough(new InspectStream(packet => {
+                if (packet.type === 'configuration') {
+                    this._screenWidth = packet.data.croppedWidth;
+                    this._screenHeight = packet.data.croppedHeight;
+                }
+            }));
+
+        if (controlStream) {
+            this._control = new ScrcpyControlClient(options, controlStream);
+        }
+    }
+
+    public async close() {
+        await this.process.kill();
+    }
 }

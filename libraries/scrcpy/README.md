@@ -106,7 +106,7 @@ const buffer: ArrayBuffer = await fetch(SCRCPY_SERVER_URL).then(res => res.array
 Requires configuring Asset Modules (https://webpack.js.org/guides/asset-modules/)
 
 ```ts
-import SCRCPY_SERVER_URL from '@yume-chan/scrcpy/bin/scrcpy-server'; // Or your own server binary path
+const SCRCPY_SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server', import.meta.url); // Or your own server binary path
 const buffer: ArrayBuffer = await fetch(SCRCPY_SERVER_URL).then(res => res.arrayBuffer());
 ```
 
