@@ -17,6 +17,9 @@
             "path": "../event/tsconfig.json"
         },
         {
+            "path": "../stream-extra/tsconfig.build.json"
+        },
+        {
             "path": "../struct/tsconfig.build.json"
         }
     ]

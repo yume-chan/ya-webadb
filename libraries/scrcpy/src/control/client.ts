@@ -1,5 +1,5 @@
 import { EventEmitter } from '@yume-chan/event';
-import { BufferedStream, ReadableWritablePair, type WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
+import { BufferedReadableStream, ReadableWritablePair, type WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 
 import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions } from '../options/index.js';
 import { ClipboardMessage } from './clipboard.js';
@@ -25,7 +25,7 @@ export class ScrcpyControlClient {
     ) {
         this.options = options;
 
-        const buffered = new BufferedStream(stream.readable);
+        const buffered = new BufferedReadableStream(stream.readable);
         this.writer = stream.writable.getWriter();
         (async () => {
             try {

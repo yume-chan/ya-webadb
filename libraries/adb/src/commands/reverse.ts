@@ -1,7 +1,7 @@
 // cspell: ignore killforward
 
 import { AutoDisposable } from '@yume-chan/event';
-import { BufferedStream, BufferedStreamEndedError } from '@yume-chan/stream-extra';
+import { BufferedReadableStream, BufferedReadableStreamEndedError } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
 
 import type { Adb } from '../adb.js';
@@ -53,7 +53,7 @@ export class AdbReverseCommand extends AutoDisposable {
 
     private async createBufferedStream(service: string) {
         const socket = await this.adb.createSocket(service);
-        return new BufferedStream(socket.readable);
+        return new BufferedReadableStream(socket.readable);
     }
 
     private async sendRequest(service: string) {
@@ -97,7 +97,7 @@ export class AdbReverseCommand extends AutoDisposable {
             try {
                 length = Number.parseInt(decodeUtf8(await stream.read(4)), 16);
             } catch (e) {
-                if (!(e instanceof BufferedStreamEndedError)) {
+                if (!(e instanceof BufferedReadableStreamEndedError)) {
                     throw e;
                 }
 

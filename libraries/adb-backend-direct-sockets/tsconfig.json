@@ -9,6 +9,9 @@
     "references": [
         {
             "path": "../adb/tsconfig.build.json"
+        },
+        {
+            "path": "../stream-extra/tsconfig.build.json"
         }
     ]
 }

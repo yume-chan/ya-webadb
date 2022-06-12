@@ -51,7 +51,7 @@ module.exports = withMDX({
             enforce: 'pre',
         });
 
-        config.experiments.topLevelAwait = true;
+        // config.experiments.topLevelAwait = true;
 
         return config;
     },

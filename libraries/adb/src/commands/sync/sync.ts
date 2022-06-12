@@ -1,5 +1,5 @@
 import { AutoDisposable } from '@yume-chan/event';
-import { BufferedStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
+import { BufferedReadableStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 
 import type { Adb } from '../../adb.js';
 import { AdbFeatures } from '../../features.js';
@@ -30,7 +30,7 @@ export function dirname(path: string): string {
 export class AdbSync extends AutoDisposable {
     protected adb: Adb;
 
-    protected stream: BufferedStream;
+    protected stream: BufferedReadableStream;
 
     protected writer: WritableStreamDefaultWriter<Uint8Array>;
 
@@ -57,7 +57,7 @@ export class AdbSync extends AutoDisposable {
         super();
 
         this.adb = adb;
-        this.stream = new BufferedStream(socket.readable);
+        this.stream = new BufferedReadableStream(socket.readable);
         this.writer = socket.writable.getWriter();
     }
 
