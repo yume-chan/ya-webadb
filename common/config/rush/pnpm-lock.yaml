@@ -34,6 +34,7 @@ specifiers:
   '@types/react': 17.0.27
   '@types/w3c-web-usb': ^1.0.4
   '@yume-chan/async': ^2.2.0
+  '@yume-chan/stream-saver': ^2.0.6
   clsx: ^1.1.1
   cross-env: ^7.0.3
   eslint: 8.8.0
@@ -50,7 +51,6 @@ specifiers:
   react: ^17.0.2
   react-dom: ^17.0.2
   source-map-loader: ^3.0.1
-  streamsaver: ^2.0.5
   ts-jest: ^28.0.2
   tslib: ^2.4.0
   typescript: ^4.7.3
@@ -96,6 +96,7 @@ dependencies:
   '@types/react': 17.0.27
   '@types/w3c-web-usb': 1.0.6
   '@yume-chan/async': 2.2.0
+  '@yume-chan/stream-saver': 2.0.6
   clsx: 1.1.1
   cross-env: 7.0.3
   eslint: 8.8.0
@@ -112,7 +113,6 @@ dependencies:
   react: 17.0.2
   react-dom: 17.0.2_react@17.0.2
   source-map-loader: 3.0.1
-  streamsaver: 2.0.6
   ts-jest: 28.0.2_jest@28.1.0+typescript@4.7.3
   tslib: 2.4.0
   typescript: 4.7.3
@@ -3714,6 +3714,10 @@ packages:
     resolution: {integrity: sha512-jatCtX1/3DsR9Vt3EB8CGFy0MNrXP5f+eNiRGHLH+LkYz7MPLzpqL/DnvXSip+Z0EKBCDnzuNuELjsKEEzcdQA==}
     dependencies:
       tslib: 2.4.0
+    dev: false
+
+  /@yume-chan/stream-saver/2.0.6:
+    resolution: {integrity: sha512-DzRADjLoHcz18ocgGHvLIanapxygX3o9dlWwE32EUZqhyAsopfdvZ79ttR9+7pqAXIQamP9M4mbDy8hHgFKOIA==}
     dev: false
 
   /abab/2.0.6:
@@ -11626,7 +11630,7 @@ packages:
     dev: false
 
   /yauzl/2.10.0:
-    resolution: {integrity: sha1-x+sXyT4RLLEIb6bY5R+wZnt5pfk=}
+    resolution: {integrity: sha512-p4a9I6X6nu6IhoGmBqAcbJy1mlC4j27vEPZX9F4L4/vZT3Lyq1VkFHw/V/PUcB9Buo+DG3iHkT0x3Qya58zc3g==}
     dependencies:
       buffer-crc32: 0.2.13
       fd-slicer: 1.1.0
@@ -11638,7 +11642,7 @@ packages:
     dev: false
 
   /yuv-buffer/1.0.0:
-    resolution: {integrity: sha1-CaRUhY103yvDHNWI7dcP/Lhr/Jo=}
+    resolution: {integrity: sha512-5r5u7g7Dbdrwao/z8c4harQIpZwaNuzXjQXtgdFxTjr5Pm2eMmxIuckkKOONEM7fkiMNkeffXs6EPNESvAVzVg==}
     dev: false
 
   /yuv-canvas/1.2.11:
@@ -11773,7 +11777,7 @@ packages:
     dev: false
 
   file:projects/demo.tgz_@mdx-js+react@1.6.22:
-    resolution: {integrity: sha512-zgB2e4Rm+X2QP17UAobmYDdnwia1nplNwILfyeE2kSWGpm7o7JgGdcB/CZZXqwz1D96ajC/Tii/cywRfdw/wFA==, tarball: file:projects/demo.tgz}
+    resolution: {integrity: sha512-ka03075sagGgXY4P/nVu//O48M8jNZaP5dMUPGAxda9jePXuNLn/yJ2VksYKs+5FX4wBwHOJGsV6W1BHZ9OdjA==, tarball: file:projects/demo.tgz}
     id: file:projects/demo.tgz
     name: '@rush-temp/demo'
     version: 0.0.0
@@ -11788,6 +11792,7 @@ packages:
       '@next/mdx': 11.1.4_f56c41adb6190c4680be4a1c0222355d
       '@types/react': 17.0.27
       '@yume-chan/async': 2.2.0
+      '@yume-chan/stream-saver': 2.0.6
       eslint: 8.8.0
       eslint-config-next: 12.1.6_eb41e2b74cbdc8b36435b8542a7e399f
       mobx: 6.5.0

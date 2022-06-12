@@ -1,5 +1,4 @@
-import { StructAsyncDeserializeStream, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, STRUCT_VALUE_SYMBOL } from './basic/index.js';
-import { StructDefaultOptions, StructValue } from './basic/index.js';
+import { StructAsyncDeserializeStream, StructDefaultOptions, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue, STRUCT_VALUE_SYMBOL } from './basic/index.js';
 import { SyncPromise } from "./sync-promise.js";
 import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, StringBufferFieldSubType, Uint8ArrayBufferFieldSubType, VariableLengthBufferLikeFieldDefinition, type FixedLengthBufferLikeFieldOptions, type LengthField, type VariableLengthBufferLikeFieldOptions } from './types/index.js';
 import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils.js";
@@ -566,7 +565,7 @@ export class Struct<
                     const override = this._postDeserialized.call(object, object);
                     // If it returns a new value, use that as result
                     // Otherwise it only inspects/mutates the object in place.
-                    if (override) {
+                    if (override !== undefined) {
                         return override;
                     }
                 }

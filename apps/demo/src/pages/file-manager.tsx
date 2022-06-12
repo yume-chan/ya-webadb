@@ -22,7 +22,8 @@ interface ListItem extends AdbSyncEntry {
 }
 
 function toListItem(item: AdbSyncEntry): ListItem {
-    return { ...item, key: item.name! };
+    (item as ListItem).key = item.name;
+    return item as ListItem;
 }
 
 const classNames = mergeStyleSets({
@@ -580,9 +581,8 @@ const FileManager: NextPage = (): JSX.Element | null => {
 
     const selection = useConst(() => new Selection({
         onSelectionChanged() {
-            const selectedItems = selection.getSelection() as ListItem[];
             runInAction(() => {
-                state.selectedItems = selectedItems;
+                state.selectedItems = selection.getSelection() as ListItem[];
             });
         },
     }));
