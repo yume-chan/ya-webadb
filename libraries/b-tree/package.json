@@ -33,7 +33,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "tslib": "^2.3.1"
+        "tslib": "^2.4.0"
     },
     "devDependencies": {
         "@jest/globals": "^28.1.0",
@@ -41,6 +41,6 @@
         "cross-env": "^7.0.3",
         "jest": "^28.1.0",
         "ts-jest": "^28.0.2",
-        "typescript": "4.7.2"
+        "typescript": "^4.7.3"
     }
 }

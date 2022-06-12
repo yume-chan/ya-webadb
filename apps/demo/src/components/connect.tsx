@@ -1,9 +1,10 @@
 import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
-import { Adb, AdbBackend, AdbPacketData, AdbPacketInit, InspectStream, pipeFrom, ReadableStream, WritableStream } from '@yume-chan/adb';
+import { Adb, AdbBackend, AdbPacketData, AdbPacketInit } from '@yume-chan/adb';
 import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
 import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import AdbWebCredentialStore from '@yume-chan/adb-credential-web';
+import { InspectStream, pipeFrom, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GlobalState } from '../state';

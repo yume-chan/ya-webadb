@@ -1,7 +1,7 @@
 import { TransformStream } from '@yume-chan/stream-extra';
 
 import { ScrcpyOptions1_22, type ScrcpyOptionsInit1_22 } from './1_22.js';
-import type { VideoStreamPacket } from './common.js';
+import type { VideoStreamPacket } from './types.js';
 
 export interface ScrcpyOptionsInit1_23 extends ScrcpyOptionsInit1_22 {
     cleanup: boolean;
@@ -9,12 +9,13 @@ export interface ScrcpyOptionsInit1_23 extends ScrcpyOptionsInit1_22 {
 
 const KEYFRAME_PTS = BigInt(1) << BigInt(62);
 
-export class ScrcpyOptions1_23<T extends ScrcpyOptionsInit1_23 = ScrcpyOptionsInit1_23> extends ScrcpyOptions1_22<T> {
+export class ScrcpyOptions1_23<T extends ScrcpyOptionsInit1_23 = ScrcpyOptionsInit1_23>
+    extends ScrcpyOptions1_22<T> {
     public constructor(init: Partial<ScrcpyOptionsInit1_23>) {
         super(init);
     }
 
-    protected override getDefaultValue(): T {
+    public override getDefaultValue(): T {
         return {
             ...super.getDefaultValue(),
             cleanup: true,

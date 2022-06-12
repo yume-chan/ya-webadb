@@ -1,11 +1,10 @@
 import type { Adb } from '@yume-chan/adb';
+import { delay } from '@yume-chan/async';
 import type { Disposable } from '@yume-chan/event';
 import type { ReadableStream, ReadableWritablePair } from '@yume-chan/stream-extra';
 import type { ValueOrPromise } from '@yume-chan/struct';
 
-import { delay } from './utils.js';
-
-export interface ScrcpyClientConnectionOptions {
+export interface AdbScrcpyConnectionOptions {
     control: boolean;
 
     /**
@@ -19,13 +18,13 @@ export interface ScrcpyClientConnectionOptions {
     sendDeviceMeta: boolean;
 }
 
-export abstract class ScrcpyClientConnection implements Disposable {
-    protected device: Adb;
+export abstract class AdbScrcpyConnection implements Disposable {
+    protected adb: Adb;
 
-    protected options: ScrcpyClientConnectionOptions;
+    protected options: AdbScrcpyConnectionOptions;
 
-    public constructor(device: Adb, options: ScrcpyClientConnectionOptions) {
-        this.device = device;
+    public constructor(adb: Adb, options: AdbScrcpyConnectionOptions) {
+        this.adb = adb;
         this.options = options;
     }
 
@@ -36,9 +35,9 @@ export abstract class ScrcpyClientConnection implements Disposable {
     public dispose(): void { }
 }
 
-export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
+export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     private async connect(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
-        return await this.device.createSocket('localabstract:scrcpy');
+        return await this.adb.createSocket('localabstract:scrcpy');
     }
 
     private async connectAndRetry(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
@@ -89,7 +88,7 @@ export class ScrcpyClientForwardConnection extends ScrcpyClientConnection {
     }
 }
 
-export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
+export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     private streams!: ReadableStreamDefaultReader<ReadableWritablePair<Uint8Array, Uint8Array>>;
 
     private address!: string;
@@ -97,7 +96,7 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
     public override async initialize(): Promise<void> {
         try {
             // try to unbind first
-            await this.device.reverse.remove('localabstract:scrcpy');
+            await this.adb.reverse.remove('localabstract:scrcpy');
         } catch {
             // ignore error
         }
@@ -105,7 +104,7 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
         const queue = new TransformStream<ReadableWritablePair<Uint8Array, Uint8Array>>();
         this.streams = queue.readable.getReader();
         const writer = queue.writable.getWriter();
-        this.address = await this.device.reverse.add(
+        this.address = await this.adb.reverse.add(
             'localabstract:scrcpy',
             'tcp:27183',
             socket => {
@@ -145,6 +144,6 @@ export class ScrcpyClientReverseConnection extends ScrcpyClientConnection {
         // Don't await this!
         // `reverse.remove`'s response will never arrive
         // before we read all pending data from `videoStream`
-        this.device.reverse.remove(this.address);
+        this.adb.reverse.remove(this.address);
     }
 }

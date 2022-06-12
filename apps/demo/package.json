@@ -22,10 +22,11 @@
         "@yume-chan/adb-backend-ws": "^0.0.9",
         "@yume-chan/adb-credential-web": "^0.0.16",
         "@yume-chan/android-bin": "^0.0.16",
-        "@yume-chan/async": "^2.1.4",
+        "@yume-chan/async": "^2.2.0",
         "@yume-chan/b-tree": "^0.0.16",
         "@yume-chan/event": "^0.0.16",
         "@yume-chan/scrcpy": "^0.0.16",
+        "@yume-chan/stream-extra": "^0.0.16",
         "@yume-chan/struct": "^0.0.16",
         "mobx": "^6.5.0",
         "mobx-react-lite": "^3.4.0",
@@ -45,6 +46,6 @@
         "eslint": "8.8.0",
         "eslint-config-next": "12.1.6",
         "source-map-loader": "^3.0.1",
-        "typescript": "4.7.2"
+        "typescript": "^4.7.3"
     }
 }

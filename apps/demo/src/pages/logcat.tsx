@@ -1,7 +1,7 @@
 import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
-import { AbortController, ReadableStream, WritableStream } from '@yume-chan/adb';
 import { AndroidLogEntry, AndroidLogPriority, Logcat } from '@yume-chan/android-bin';
+import { AbortController, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";

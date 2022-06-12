@@ -1,9 +1,7 @@
-import type { Adb } from '@yume-chan/adb';
 import type { TransformStream } from '@yume-chan/stream-extra';
 
-import type { ScrcpyClientConnection } from '../connection.js';
+import type { ScrcpyControlMessageType } from '../control/index.js';
 import type { H264Configuration } from '../decoder/index.js';
-import type { ScrcpyControlMessageType } from '../message.js';
 import type { ScrcpyBackOrScreenOnEvent1_18 } from './1_18.js';
 import type { ScrcpyInjectScrollControlMessage1_22 } from './1_22.js';
 
@@ -48,11 +46,11 @@ export type VideoStreamPacket = VideoStreamConfigurationPacket | VideoStreamFram
 export interface ScrcpyOptions<T> {
     value: Partial<T>;
 
+    getDefaultValue(): T;
+
     formatServerArguments(): string[];
 
     getOutputEncoderNameRegex(): RegExp;
-
-    createConnection(adb: Adb): ScrcpyClientConnection;
 
     createVideoStreamTransformer(): TransformStream<Uint8Array, VideoStreamPacket>;
 

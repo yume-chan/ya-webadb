@@ -1,7 +1,8 @@
 // cspell: ignore scrollback
 
-import { AbortController, AdbSubprocessProtocol, encodeUtf8, WritableStream } from "@yume-chan/adb";
+import { AdbSubprocessProtocol, encodeUtf8 } from "@yume-chan/adb";
 import { AutoDisposable } from "@yume-chan/event";
+import { AbortController, WritableStream } from '@yume-chan/stream-extra';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { SearchAddon } from 'xterm-addon-search';

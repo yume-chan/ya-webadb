@@ -1,4 +1,5 @@
-import { decodeUtf8, WritableStream } from "@yume-chan/adb";
+import { decodeUtf8 } from "@yume-chan/adb";
+import { WritableStream } from '@yume-chan/stream-extra';
 import { makeAutoObservable, reaction, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";

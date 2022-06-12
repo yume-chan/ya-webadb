@@ -1,7 +1,5 @@
-import type { Adb } from '@yume-chan/adb';
 import Struct from '@yume-chan/struct';
 
-import { ScrcpyClientForwardConnection, ScrcpyClientReverseConnection, type ScrcpyClientConnection } from '../connection.js';
 import { ScrcpyInjectScrollControlMessage1_16 } from './1_16/index.js';
 import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from './1_21.js';
 
@@ -35,9 +33,11 @@ export const ScrcpyInjectScrollControlMessage1_22 =
         .fields(ScrcpyInjectScrollControlMessage1_16)
         .int32('buttons');
 
-export type ScrcpyInjectScrollControlMessage1_22 = typeof ScrcpyInjectScrollControlMessage1_22['TInit'];
+export type ScrcpyInjectScrollControlMessage1_22 =
+    typeof ScrcpyInjectScrollControlMessage1_22['TInit'];
 
-export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22> extends ScrcpyOptions1_21<T> {
+export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22>
+    extends ScrcpyOptions1_21<T> {
     public constructor(init: Partial<ScrcpyOptionsInit1_22>) {
         if (init.rawVideoStream) {
             // Set implied options for client-side processing
@@ -49,7 +49,7 @@ export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsIn
         super(init);
     }
 
-    protected override getDefaultValue(): T {
+    public override getDefaultValue(): T {
         return {
             ...super.getDefaultValue(),
             downsizeOnError: true,
@@ -57,18 +57,6 @@ export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsIn
             sendDummyByte: true,
             rawVideoStream: false,
         };
-    }
-
-    public override createConnection(adb: Adb): ScrcpyClientConnection {
-        const options = {
-            ...this.getDefaultValue(),
-            ...this.value,
-        };
-        if (this.value.tunnelForward) {
-            return new ScrcpyClientForwardConnection(adb, options);
-        } else {
-            return new ScrcpyClientReverseConnection(adb, options);
-        }
     }
 
     public override serializeInjectScrollControlMessage(

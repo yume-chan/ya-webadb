@@ -11,7 +11,7 @@ import { Icons, RouteStackProps } from '../utils';
 
 let terminal: import('../components/terminal').AdbTerminal;
 if (typeof window !== 'undefined') {
-    const { AdbTerminal } = await import('../components/terminal');
+    const { AdbTerminal } = require('../components/terminal');
     terminal = new AdbTerminal();
 }
 
