@@ -1,4 +1,4 @@
-import { BufferedStream } from '@yume-chan/stream-extra';
+import { BufferedReadableStream } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
 
 import type { Adb } from '../adb.js';
@@ -61,7 +61,7 @@ export type AdbFrameBuffer = AdbFrameBufferV1 | AdbFrameBufferV2;
 
 export async function framebuffer(adb: Adb): Promise<AdbFrameBuffer> {
     const socket = await adb.createSocket('framebuffer:');
-    const stream = new BufferedStream(socket.readable);
+    const stream = new BufferedReadableStream(socket.readable);
     const { version } = await Version.deserialize(stream);
     switch (version) {
         case 1:

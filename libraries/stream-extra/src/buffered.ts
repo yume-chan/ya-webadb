@@ -1,7 +1,7 @@
 import { PushReadableStream } from "./push-readable.js";
 import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
 
-export class BufferedStreamEndedError extends Error {
+export class BufferedReadableStreamEndedError extends Error {
     public constructor() {
         super('Stream ended');
 
@@ -10,7 +10,7 @@ export class BufferedStreamEndedError extends Error {
     }
 }
 
-export class BufferedStream {
+export class BufferedReadableStream {
     private buffered: Uint8Array | undefined;
     private bufferedOffset = 0;
     private bufferedLength = 0;
@@ -27,7 +27,7 @@ export class BufferedStream {
     private async readSource() {
         const { done, value } = await this.reader.read();
         if (done) {
-            throw new BufferedStreamEndedError();
+            throw new BufferedReadableStreamEndedError();
         }
         return value;
     }

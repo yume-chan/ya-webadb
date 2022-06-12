@@ -1,4 +1,4 @@
-import type { BufferedStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
+import type { BufferedReadableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 import Struct, { placeholder } from '@yume-chan/struct';
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request.js';
@@ -109,7 +109,7 @@ const LSTAT_V2_RESPONSE_TYPES = {
 };
 
 export async function adbSyncLstat(
-    stream: BufferedStream,
+    stream: BufferedReadableStream,
     writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
     v2: boolean,
@@ -143,7 +143,7 @@ export async function adbSyncLstat(
 }
 
 export async function adbSyncStat(
-    stream: BufferedStream,
+    stream: BufferedReadableStream,
     writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
 ): Promise<AdbSyncStatResponse> {

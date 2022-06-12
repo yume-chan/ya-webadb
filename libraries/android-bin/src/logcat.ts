@@ -1,7 +1,7 @@
 // cspell: ignore logcat
 
 import { AdbCommandBase, AdbSubprocessNoneProtocol } from '@yume-chan/adb';
-import { BufferedStream, BufferedStreamEndedError, DecodeUtf8Stream, ReadableStream, SplitStringStream, WritableStream } from '@yume-chan/stream-extra';
+import { BufferedReadableStream, BufferedReadableStreamEndedError, DecodeUtf8Stream, ReadableStream, SplitStringStream, WritableStream } from '@yume-chan/stream-extra';
 import Struct, { decodeUtf8, StructAsyncDeserializeStream } from '@yume-chan/struct';
 
 // `adb logcat` is an alias to `adb shell logcat`
@@ -185,7 +185,7 @@ export class Logcat extends AdbCommandBase {
     }
 
     public binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {
-        let bufferedStream: BufferedStream;
+        let bufferedStream: BufferedReadableStream;
         return new ReadableStream({
             start: async () => {
                 const { stdout } = await this.adb.subprocess.spawn([
@@ -197,14 +197,14 @@ export class Logcat extends AdbCommandBase {
                     // PERF: None protocol is 150% faster then Shell protocol
                     protocols: [AdbSubprocessNoneProtocol],
                 });
-                bufferedStream = new BufferedStream(stdout);
+                bufferedStream = new BufferedReadableStream(stdout);
             },
             async pull(controller) {
                 try {
                     const entry = await deserializeAndroidLogEntry(bufferedStream);
                     controller.enqueue(entry);
                 } catch (e) {
-                    if (e instanceof BufferedStreamEndedError) {
+                    if (e instanceof BufferedReadableStreamEndedError) {
                         controller.close();
                         return;
                     }

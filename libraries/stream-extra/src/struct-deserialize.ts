@@ -1,6 +1,6 @@
 import type Struct from "@yume-chan/struct";
 import type { StructValueType } from "@yume-chan/struct";
-import { BufferedStream, BufferedStreamEndedError } from "./buffered.js";
+import { BufferedReadableStream, BufferedReadableStreamEndedError } from "./buffered.js";
 import { PushReadableStream, PushReadableStreamController } from "./push-readable.js";
 import { ReadableStream, WritableStream, type ReadableWritablePair } from "./stream.js";
 
@@ -16,7 +16,7 @@ export class StructDeserializeStream<T extends Struct<any, any, any, any>>
     public constructor(struct: T) {
         // Convert incoming chunks to a `BufferedStream`
         let incomingStreamController!: PushReadableStreamController<Uint8Array>;
-        const incomingStream = new BufferedStream(
+        const incomingStream = new BufferedReadableStream(
             new PushReadableStream<Uint8Array>(
                 controller => incomingStreamController = controller,
             )
@@ -28,7 +28,7 @@ export class StructDeserializeStream<T extends Struct<any, any, any, any>>
                     const value = await struct.deserialize(incomingStream);
                     controller.enqueue(value);
                 } catch (e) {
-                    if (e instanceof BufferedStreamEndedError) {
+                    if (e instanceof BufferedReadableStreamEndedError) {
                         controller.close();
                         return;
                     }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { BufferedStream } from "./buffered.js";
+import { BufferedReadableStream } from "./buffered.js";
 import { ReadableStream } from "./stream.js";
 
 function randomUint8Array(length: number) {
@@ -38,7 +38,7 @@ async function runTest(inputSizes: number[], readSizes: number[]) {
     }
 
     const stream = new MockReadableStream(buffers);
-    const buffered = new BufferedStream(stream);
+    const buffered = new BufferedReadableStream(stream);
 
     index = 0;
     for (const size of readSizes) {
@@ -52,14 +52,14 @@ describe('BufferedStream', () => {
     describe('read 1 time', () => {
         it('read 0 buffer', async () => {
             const source = new MockReadableStream([]);
-            const buffered = new BufferedStream(source);
+            const buffered = new BufferedReadableStream(source);
             await expect(buffered.read(10)).rejects.toThrow();
         });
 
         it('input 1 exact buffer', async () => {
             const input = randomUint8Array(10);
             const source = new MockReadableStream([input]);
-            const buffered = new BufferedStream(source);
+            const buffered = new BufferedReadableStream(source);
             await expect(buffered.read(10)).resolves.toBe(input);
         });
 
@@ -69,7 +69,7 @@ describe('BufferedStream', () => {
 
         it('read 1 small buffer', async () => {
             const source = new MockReadableStream([randomUint8Array(5)]);
-            const buffered = new BufferedStream(source);
+            const buffered = new BufferedReadableStream(source);
             await expect(buffered.read(10)).rejects.toThrow();
         });
 
@@ -79,7 +79,7 @@ describe('BufferedStream', () => {
 
         it('read 2 small buffers', async () => {
             const source = new MockReadableStream([randomUint8Array(5), randomUint8Array(5)]);
-            const buffered = new BufferedStream(source);
+            const buffered = new BufferedReadableStream(source);
             await expect(buffered.read(20)).rejects.toThrow();
         });
 

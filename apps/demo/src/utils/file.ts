@@ -37,7 +37,7 @@ if (typeof window !== 'undefined') {
     const { publicRuntimeConfig } = getConfig();
     // Can't use `import` here because ESM is read-only (can't set `mitm` field)
     // Add `await` here because top-level await is on, so every import can be a `Promise`
-    StreamSaver = await require('streamsaver');
+    StreamSaver = require('streamsaver');
     StreamSaver.mitm = publicRuntimeConfig.basePath + '/StreamSaver/mitm.html';
 }
 

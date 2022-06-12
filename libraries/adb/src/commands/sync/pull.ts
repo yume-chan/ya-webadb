@@ -1,4 +1,4 @@
-import { BufferedStream, ReadableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
+import { BufferedReadableStream, ReadableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 import Struct from '@yume-chan/struct';
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request.js';
@@ -16,7 +16,7 @@ const RESPONSE_TYPES = {
 };
 
 export function adbSyncPull(
-    stream: BufferedStream,
+    stream: BufferedReadableStream,
     writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
 ): ReadableStream<Uint8Array> {
