@@ -1,7 +1,7 @@
 import { Adb, AdbSubprocessNoneProtocol, AdbSubprocessProtocol, AdbSync } from '@yume-chan/adb';
-import { DecodeUtf8Stream, InspectStream, pipeFrom, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
+import { DecodeUtf8Stream, InspectStream, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
 
-import { ScrcpyControlMessageSerializeStream, type ScrcpyControlMessage } from '../control/index.js';
+import { ScrcpyControlMessageSerializer } from '../control/index.js';
 import { ScrcpyDeviceMessageDeserializeStream, type ScrcpyDeviceMessage } from '../device-message/index.js';
 import { DEFAULT_SERVER_PATH, type VideoStreamPacket } from '../options/index.js';
 import type { AdbScrcpyOptions } from './options/index.js';
@@ -255,8 +255,8 @@ export class AdbScrcpyClient {
     private _videoStream: ReadableStream<VideoStreamPacket>;
     public get videoStream() { return this._videoStream; }
 
-    private _controlMessageStream: WritableStream<ScrcpyControlMessage> | undefined;
-    public get controlMessageStream() { return this._controlMessageStream; }
+    private _controlMessageSerializer: ScrcpyControlMessageSerializer | undefined;
+    public get controlMessageSerializer() { return this._controlMessageSerializer; }
 
     private _deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined;
     public get deviceMessageStream() { return this._deviceMessageStream; }
@@ -281,7 +281,7 @@ export class AdbScrcpyClient {
             }));
 
         if (controlStream) {
-            this._controlMessageStream = pipeFrom(controlStream.writable, new ScrcpyControlMessageSerializeStream(options));
+            this._controlMessageSerializer = new ScrcpyControlMessageSerializer(controlStream.writable, options);
             this._deviceMessageStream = controlStream.readable.pipeThrough(new ScrcpyDeviceMessageDeserializeStream());
         }
     }

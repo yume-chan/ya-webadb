@@ -1,5 +1,5 @@
 import { PromiseResolver } from '@yume-chan/async';
-import { AutoDisposable, EventEmitter } from '@yume-chan/event';
+import { AutoDisposable, Disposable, EventEmitter } from '@yume-chan/event';
 
 let worker: Worker | undefined;
 let workerReady = false;
@@ -16,7 +16,17 @@ export interface PictureReadyEventArgs {
     data: ArrayBuffer;
 }
 
-const pictureReadyEvent = new EventEmitter<PictureReadyEventArgs>();
+const PICTURE_READY_SUBSCRIPTIONS = new Map<number, (e: PictureReadyEventArgs) => void>();
+
+function subscribePictureReady(streamId: number, handler: (e: PictureReadyEventArgs) => void): Disposable {
+    PICTURE_READY_SUBSCRIPTIONS.set(streamId, handler);
+
+    return {
+        dispose() {
+            PICTURE_READY_SUBSCRIPTIONS.delete(streamId);
+        }
+    };
+}
 
 export class TinyH264Wrapper extends AutoDisposable {
     public readonly streamId: number;
@@ -28,14 +38,12 @@ export class TinyH264Wrapper extends AutoDisposable {
         super();
 
         this.streamId = streamId;
-        this.addDisposable(pictureReadyEvent.event(this.handlePictureReady, this));
+        this.addDisposable(subscribePictureReady(streamId, this.handlePictureReady));
     }
 
-    private handlePictureReady(e: PictureReadyEventArgs) {
-        if (e.renderStateId === this.streamId) {
-            this.pictureReadyEvent.fire(e);
-        }
-    }
+    private handlePictureReady = (e: PictureReadyEventArgs) => {
+        this.pictureReadyEvent.fire(e);
+    };
 
     public feed(data: ArrayBuffer) {
         worker!.postMessage({
@@ -71,7 +79,7 @@ export function createTinyH264Wrapper(): Promise<TinyH264Wrapper> {
                     pendingResolvers.length = 0;
                     break;
                 case 'pictureReady':
-                    pictureReadyEvent.fire(data);
+                    PICTURE_READY_SUBSCRIPTIONS.get(data.renderStateId)?.(data);
                     break;
             }
         });

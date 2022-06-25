@@ -9,7 +9,7 @@ import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
 import { ADB_SYNC_MAX_PACKET_SIZE } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyControlMessage, ScrcpyControlMessageType, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
+import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyDeviceMessageType, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
 
@@ -243,7 +243,6 @@ class ScrcpyPageState {
     get rotatedHeight() { return state.rotate & 1 ? state.width : state.height; }
 
     client: AdbScrcpyClient | undefined = undefined;
-    controlMessageWriter: WritableStreamDefaultWriter<ScrcpyControlMessage> | undefined = undefined;
 
     async pushServer() {
         const serverBuffer = await fetchServer();
@@ -364,7 +363,7 @@ class ScrcpyPageState {
             iconProps: { iconName: Icons.Orientation },
             iconOnly: true,
             text: 'Rotate Device',
-            onClick: () => { this.controlMessageWriter!.write({ type: ScrcpyControlMessageType.RotateDevice }); },
+            onClick: () => { this.client!.controlMessageSerializer!.rotateDevice(); },
         });
 
         result.push({
@@ -795,13 +794,16 @@ class ScrcpyPageState {
 
             client.deviceMessageStream!.pipeTo(new WritableStream({
                 write(message) {
-                    window.navigator.clipboard.writeText(message.content);
+                    switch (message.type) {
+                        case ScrcpyDeviceMessageType.Clipboard:
+                            window.navigator.clipboard.writeText(message.content);
+                            break;
+                    }
                 }
             })).catch(() => { });
 
             runInAction(() => {
                 this.client = client;
-                this.controlMessageWriter = client.controlMessageStream!.getWriter();
                 this.running = true;
             });
         } catch (e: any) {
@@ -850,10 +852,7 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        this.controlMessageWriter!.write({
-            type: ScrcpyControlMessageType.BackOrScreenOn,
-            action: AndroidKeyEventAction.Down,
-        });
+        this.client!.controlMessageSerializer!.backOrScreenOn(AndroidKeyEventAction.Down);
     };
 
     handleBackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -865,10 +864,7 @@ class ScrcpyPageState {
             return;
         }
 
-        this.controlMessageWriter!.write({
-            type: ScrcpyControlMessageType.BackOrScreenOn,
-            action: AndroidKeyEventAction.Up,
-        });
+        this.client!.controlMessageSerializer!.backOrScreenOn(AndroidKeyEventAction.Up);
     };
 
     handleHomePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -881,8 +877,7 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        this.controlMessageWriter!.write({
-            type: ScrcpyControlMessageType.InjectKeyCode,
+        this.client!.controlMessageSerializer!.injectKeyCode({
             action: AndroidKeyEventAction.Down,
             keyCode: AndroidKeyCode.Home,
             repeat: 0,
@@ -899,8 +894,7 @@ class ScrcpyPageState {
             return;
         }
 
-        this.controlMessageWriter!.write({
-            type: ScrcpyControlMessageType.InjectKeyCode,
+        this.client!.controlMessageSerializer!.injectKeyCode({
             action: AndroidKeyEventAction.Up,
             keyCode: AndroidKeyCode.Home,
             repeat: 0,
@@ -918,8 +912,7 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        this.controlMessageWriter!.write({
-            type: ScrcpyControlMessageType.InjectKeyCode,
+        this.client!.controlMessageSerializer!.injectKeyCode({
             action: AndroidKeyEventAction.Down,
             keyCode: AndroidKeyCode.AppSwitch,
             repeat: 0,
@@ -936,8 +929,7 @@ class ScrcpyPageState {
             return;
         }
 
-        this.controlMessageWriter!.write({
-            type: ScrcpyControlMessageType.InjectKeyCode,
+        this.client!.controlMessageSerializer!.injectKeyCode({
             action: AndroidKeyEventAction.Up,
             keyCode: AndroidKeyCode.AppSwitch,
             repeat: 0,
@@ -981,8 +973,7 @@ class ScrcpyPageState {
         }
 
         const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
-        this.controlMessageWriter!.write({
-            type: ScrcpyControlMessageType.InjectTouch,
+        this.client!.controlMessageSerializer!.injectTouch({
             action,
             pointerId: e.pointerType === "mouse" ? BigInt(-1) : BigInt(e.pointerId),
             screenWidth: this.client!.screenWidth!,
@@ -1021,8 +1012,7 @@ class ScrcpyPageState {
         e.stopPropagation();
 
         const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
-        this.controlMessageWriter!.write({
-            type: ScrcpyControlMessageType.InjectScroll,
+        this.client!.controlMessageSerializer!.injectScroll({
             screenWidth: this.client!.screenWidth!,
             screenHeight: this.client!.screenHeight!,
             pointerX: x,
@@ -1044,10 +1034,7 @@ class ScrcpyPageState {
 
         const { key, code } = e;
         if (key.match(/^[!-`{-~]$/i)) {
-            this.controlMessageWriter!.write({
-                type: ScrcpyControlMessageType.InjectText,
-                text: key,
-            });
+            this.client!.controlMessageSerializer!.injectText(key);
             return;
         }
 
@@ -1058,15 +1045,13 @@ class ScrcpyPageState {
         } as Record<string, AndroidKeyCode | undefined>)[code];
 
         if (keyCode) {
-            this.controlMessageWriter!.write({
-                type: ScrcpyControlMessageType.InjectKeyCode,
+            this.client!.controlMessageSerializer!.injectKeyCode({
                 action: AndroidKeyEventAction.Down,
                 keyCode,
                 metaState: 0,
                 repeat: 0,
             });
-            this.controlMessageWriter!.write({
-                type: ScrcpyControlMessageType.InjectKeyCode,
+            this.client!.controlMessageSerializer!.injectKeyCode({
                 action: AndroidKeyEventAction.Up,
                 keyCode,
                 metaState: 0,
