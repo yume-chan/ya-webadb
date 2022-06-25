@@ -29,19 +29,21 @@ export function toScrcpyOptionValue<T>(value: any, empty: T): string | T {
     return `${value}`;
 }
 
-export interface VideoStreamConfigurationPacket {
+export interface ScrcpyVideoStreamConfigurationPacket {
     type: 'configuration';
     data: H264Configuration;
 }
 
-export interface VideoStreamFramePacket {
+export interface ScrcpyVideoStreamFramePacket {
     type: 'frame';
     keyframe?: boolean | undefined;
     pts?: bigint | undefined;
     data: Uint8Array;
 }
 
-export type VideoStreamPacket = VideoStreamConfigurationPacket | VideoStreamFramePacket;
+export type ScrcpyVideoStreamPacket =
+    | ScrcpyVideoStreamConfigurationPacket
+    | ScrcpyVideoStreamFramePacket;
 
 export interface ScrcpyOptions<T> {
     value: Partial<T>;
@@ -52,7 +54,7 @@ export interface ScrcpyOptions<T> {
 
     getOutputEncoderNameRegex(): RegExp;
 
-    createVideoStreamTransformer(): TransformStream<Uint8Array, VideoStreamPacket>;
+    createVideoStreamTransformer(): TransformStream<Uint8Array, ScrcpyVideoStreamPacket>;
 
     getControlMessageTypes(): ScrcpyControlMessageType[];
 

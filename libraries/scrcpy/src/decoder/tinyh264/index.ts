@@ -2,7 +2,7 @@ import { PromiseResolver } from '@yume-chan/async';
 import { WritableStream } from '@yume-chan/stream-extra';
 
 import { AndroidCodecLevel, AndroidCodecProfile } from '../../codec.js';
-import type { VideoStreamPacket } from '../../options/index.js';
+import type { ScrcpyVideoStreamPacket } from '../../options/index.js';
 import type { H264Configuration, H264Decoder } from '../types.js';
 import { createTinyH264Wrapper, type TinyH264Wrapper } from './wrapper.js';
 
@@ -30,7 +30,7 @@ export class TinyH264Decoder implements H264Decoder {
     private _frameRendered = 0;
     public get frameRendered() { return this._frameRendered; }
 
-    private _writable: WritableStream<VideoStreamPacket>;
+    private _writable: WritableStream<ScrcpyVideoStreamPacket>;
     public get writable() { return this._writable; }
 
     private _yuvCanvas: import('yuv-canvas').default | undefined;
@@ -41,7 +41,7 @@ export class TinyH264Decoder implements H264Decoder {
 
         this._renderer = document.createElement('canvas');
 
-        this._writable = new WritableStream<VideoStreamPacket>({
+        this._writable = new WritableStream<ScrcpyVideoStreamPacket>({
             write: async (packet) => {
                 switch (packet.type) {
                     case 'configuration':
