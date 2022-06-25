@@ -2,7 +2,7 @@ import type { Adb } from '@yume-chan/adb';
 import type { TransformStream } from '@yume-chan/stream-extra';
 
 import type { ScrcpyControlMessageType } from '../../control/index.js';
-import type { ScrcpyBackOrScreenOnEvent1_18, ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions, VideoStreamPacket } from '../../options/index.js';
+import type { ScrcpyBackOrScreenOnControlMessage1_18, ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions, VideoStreamPacket } from '../../options/index.js';
 import type { AdbScrcpyConnection } from '../connection.js';
 
 export interface AdbScrcpyOptions<T> extends ScrcpyOptions<T> {
@@ -40,7 +40,7 @@ export abstract class AdbScrcpyOptionsBase<T> implements ScrcpyOptions<T> {
     }
 
     public serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnEvent1_18,
+        message: ScrcpyBackOrScreenOnControlMessage1_18,
     ): Uint8Array | undefined {
         return this.raw.serializeBackOrScreenOnControlMessage(message);
     }

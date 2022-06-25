@@ -2,7 +2,7 @@
 // For their message bodies, see https://github.com/Genymobile/scrcpy/blob/5c62f3419d252d10cd8c9cbb7c918b358b81f2d0/app/src/control_msg.c#L92
 // Their IDs change between versions, so always use `options.getControlMessageTypes()`
 export enum ScrcpyControlMessageType {
-    InjectKeycode,
+    InjectKeyCode,
     InjectText,
     InjectTouch,
     InjectScroll,

@@ -14,12 +14,11 @@ export class BufferedTransformStream<T> implements ReadableWritablePair<T, Uint8
     constructor(transform: (stream: BufferedReadableStream) => ValueOrPromise<T>) {
         // Convert incoming chunks to a `BufferedReadableStream`
         let sourceStreamController!: PushReadableStreamController<Uint8Array>;
-        const sourceStream = new PushReadableStream<Uint8Array>(
+
+        const buffered = new BufferedReadableStream(new PushReadableStream<Uint8Array>(
             controller =>
                 sourceStreamController = controller,
-        )
-
-        const buffered = new BufferedReadableStream(sourceStream);
+        ));
 
         this._readable = new ReadableStream<T>({
             async pull(controller) {
@@ -40,7 +39,7 @@ export class BufferedTransformStream<T> implements ReadableWritablePair<T, Uint8
             cancel: (reason) => {
                 // Propagate cancel to the source stream
                 // So future writes will be rejected
-                sourceStream.cancel(reason);
+                buffered.cancel(reason);
             }
         });
 

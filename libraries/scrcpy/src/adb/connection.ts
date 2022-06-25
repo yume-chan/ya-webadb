@@ -36,8 +36,8 @@ export abstract class AdbScrcpyConnection implements Disposable {
 }
 
 export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
-    private async connect(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
-        return await this.adb.createSocket('localabstract:scrcpy');
+    private connect(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
+        return this.adb.createSocket('localabstract:scrcpy');
     }
 
     private async connectAndRetry(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
@@ -94,12 +94,8 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     private address!: string;
 
     public override async initialize(): Promise<void> {
-        try {
-            // try to unbind first
-            await this.adb.reverse.remove('localabstract:scrcpy');
-        } catch {
-            // ignore error
-        }
+        // try to unbind first, ignore errors
+        await this.adb.reverse.remove('localabstract:scrcpy').catch(() => { });
 
         const queue = new TransformStream<ReadableWritablePair<Uint8Array, Uint8Array>>();
         this.streams = queue.readable.getReader();

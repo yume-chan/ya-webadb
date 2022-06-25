@@ -2,7 +2,7 @@ import type { TransformStream } from '@yume-chan/stream-extra';
 
 import type { ScrcpyControlMessageType } from '../control/index.js';
 import type { H264Configuration } from '../decoder/index.js';
-import type { ScrcpyBackOrScreenOnEvent1_18 } from './1_18.js';
+import type { ScrcpyBackOrScreenOnControlMessage1_18 } from './1_18.js';
 import type { ScrcpyInjectScrollControlMessage1_22 } from './1_22.js';
 
 export const DEFAULT_SERVER_PATH = '/data/local/tmp/scrcpy-server.jar';
@@ -57,7 +57,7 @@ export interface ScrcpyOptions<T> {
     getControlMessageTypes(): ScrcpyControlMessageType[];
 
     serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnEvent1_18,
+        message: ScrcpyBackOrScreenOnControlMessage1_18,
     ): Uint8Array | undefined;
 
     serializeInjectScrollControlMessage(

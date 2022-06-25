@@ -1,5 +1,5 @@
 import Struct, { placeholder } from '@yume-chan/struct';
-import { ScrcpySimpleControlMessage } from './simple.js';
+import { ScrcpyControlMessageType } from './type.js';
 
 // https://developer.android.com/reference/android/view/MotionEvent#constants_1
 export enum AndroidMotionEventAction {
@@ -20,7 +20,7 @@ export enum AndroidMotionEventAction {
 
 export const ScrcpyInjectTouchControlMessage =
     new Struct()
-        .fields(ScrcpySimpleControlMessage)
+        .uint8('type', ScrcpyControlMessageType.InjectTouch as const)
         .uint8('action', placeholder<AndroidMotionEventAction>())
         .uint64('pointerId')
         .uint32('pointerX')
@@ -30,4 +30,5 @@ export const ScrcpyInjectTouchControlMessage =
         .uint16('pressure')
         .uint32('buttons');
 
-export type ScrcpyInjectTouchControlMessage = typeof ScrcpyInjectTouchControlMessage['TInit'];
+export type ScrcpyInjectTouchControlMessage =
+    typeof ScrcpyInjectTouchControlMessage['TInit'];
