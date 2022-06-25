@@ -3,7 +3,7 @@ import { DecodeUtf8Stream, InspectStream, ReadableStream, SplitStringStream, Wra
 
 import { ScrcpyControlMessageSerializer } from '../control/index.js';
 import { ScrcpyDeviceMessageDeserializeStream, type ScrcpyDeviceMessage } from '../device-message/index.js';
-import { DEFAULT_SERVER_PATH, type VideoStreamPacket } from '../options/index.js';
+import { DEFAULT_SERVER_PATH, type ScrcpyVideoStreamPacket } from '../options/index.js';
 import type { AdbScrcpyOptions } from './options/index.js';
 
 class ArrayToStream<T> extends ReadableStream<T>{
@@ -252,7 +252,7 @@ export class AdbScrcpyClient {
     private _screenHeight: number | undefined;
     public get screenHeight() { return this._screenHeight; }
 
-    private _videoStream: ReadableStream<VideoStreamPacket>;
+    private _videoStream: ReadableStream<ScrcpyVideoStreamPacket>;
     public get videoStream() { return this._videoStream; }
 
     private _controlMessageSerializer: ScrcpyControlMessageSerializer | undefined;

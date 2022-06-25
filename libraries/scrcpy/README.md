@@ -14,10 +14,15 @@ It's compatible with the official Scrcpy server binaries.
     - [Node.js ES module](#nodejs-es-module)
     - [Webpack 4](#webpack-4)
     - [Webpack 5](#webpack-5)
-- [Push and start server on device](#push-and-start-server-on-device)
-  - [Using `@yume-chan/adb`](#using-yume-chanadb)
-  - [Using other transportation](#using-other-transportation)
+  - [Read the server version](#read-the-server-version)
 - [Option versions](#option-versions)
+- [Use with `@yume-chan/adb`](#use-with-yume-chanadb)
+  - [Push server binary](#push-server-binary)
+  - [Start server on device](#start-server-on-device)
+- [Using other transportation](#using-other-transportation)
+  - [Parsing video packets](#parsing-video-packets)
+  - [Sending control messages](#sending-control-messages)
+  - [Reading device messages](#reading-device-messages)
 - [Consume the streams](#consume-the-streams)
 - [Video stream](#video-stream)
 - [Web Decoders](#web-decoders)
@@ -26,21 +31,21 @@ It's compatible with the official Scrcpy server binaries.
 
 ## Transport agnostic
 
-Although it was initially written to use with `@yume-chan/adb`, the `ScrcpyClient` class can be used with any transportation. More details later.
+It was initially designed to be used with `@yume-chan/adb`, but now it can also to used with any other transportation.
 
 ## Prepare server binary
 
 Scrcpy needs a server binary running on the device in order to work. This package doesn't ship with one.
 
-You can download the server binary from official releases (https://github.com/Genymobile/scrcpy/releases) yourself, or use the built-in `fetch-scrcpy-server` script to automate the process.
+You can download the server binary from official releases (https://github.com/Genymobile/scrcpy/releases), or use the built-in `fetch-scrcpy-server` script to automate the process.
 
 The server binary is subject to [Apache License 2.0](https://github.com/Genymobile/scrcpy/blob/master/LICENSE).
 
 ### `fetch-scrcpy-server`
 
-To use the script, first add `gh-release-fetch@3` to your `devDependencies`. It's not automatically installed to minimize download size.
+To use the script, first add `gh-release-fetch@3` to `devDependencies` of your `package.json`. It's an optional peer dependency fpr minimized download size.
 
-Then you can execute it from terminal:
+Then you can invoke it in a terminal:
 
 ```
 $ npx fetch-scrcpy-server <version>
@@ -52,7 +57,7 @@ For example:
 $ npx fetch-scrcpy-server 1.24
 ```
 
-Or adding it to the `postinstall` script in `package.json`, so running `npm install` will automatically invoke the script.
+You can also add it to the `postinstall` script in your `package.json`. After that, running `npm install` will automatically invoke the script.
 
 ```json
 "scripts": {
@@ -60,11 +65,11 @@ Or adding it to the `postinstall` script in `package.json`, so running `npm inst
 },
 ```
 
-The server binary will be named `bin/scrcpy-server`.
+The server binary will be named `bin/scrcpy-server` in this package's installation directory (usually in `node_modules`).
 
 ### Use the server binary
 
-The server binary file needs to be embedded in your application, the exact method depends on your runtime.
+The server binary file needs to be embedded into your application, the exact method depends on the runtime.
 
 To name a few:
 
@@ -78,7 +83,7 @@ const buffer: Buffer = fs.readFileSync(path);
 
 #### Node.js ES module
 
-```js
+```ts
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 
@@ -86,7 +91,9 @@ const path: string = createRequire(import.meta.url).resolve('@yume-chan/scrcpy/b
 const buffer: Buffer = await fs.readFile(path);
 ```
 
-In future it should be possible to use `import.meta.resolve` (https://nodejs.org/api/esm.html#importmetaresolvespecifier-parent) instead.
+Currently, ES Module doesn't have a `resolve` function like `require.resolve` in CommonJS, so `createRequire` is used to create a CommonJS resolver.
+
+`import.meta.resolve` (https://github.com/whatwg/html/pull/5572) is a proposal that fills this gap. Node.js already has experimental support for it behind a flag. See https://nodejs.org/api/esm.html#importmetaresolvespecifier-parent for more information.
 
 ```ts
 const path: string = import.meta.resolve('@yume-chan/scrcpy/bin/scrcpy-server');
@@ -110,56 +117,9 @@ const SCRCPY_SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server', import.
 const buffer: ArrayBuffer = await fetch(SCRCPY_SERVER_URL).then(res => res.arrayBuffer());
 ```
 
-## Push and start server on device
+### Read the server version
 
-The the server binary needs to be copied to the device and run on it.
-
-### Using `@yume-chan/adb`
-
-The `Adb#sync()#write()` method can be used to push files to the device. Read more at `@yume-chan/adb`'s documentation (https://github.com/yume-chan/ya-webadb/tree/master/libraries/adb#readme).
-
-This package also provides the `pushServer()` method as a shortcut for `Adb#sync().write()`, plus automatically close the `AdbSync` object when complete.
-
-Example using `write()`:
-
-```ts
-import { AdbScrcpyClient } from '@yume-chan/scrcpy';
-
-const adbScrcpy = new AdbScrcpyClient(adb);
-const stream: WritableStream<Uint8Array> = adbScrcpy.pushServer();
-const writer = stream.getWriter();
-await writer.write(new Uint8Array(buffer));
-await writer.close();
-```
-
-Example using `pipeTo()`:
-
-```ts
-import { WrapReadableStream } from '@yume-chan/adb';
-import { AdbScrcpyClient } from '@yume-chan/scrcpy';
-
-const adbScrcpy = new AdbScrcpyClient(adb);
-await fetch(SCRCPY_SERVER_URL)
-    .then(response => new WrapReadableStream(response.body))
-    .then(stream => stream.pipeTo(adbScrcpy.pushServer()))
-```
-
-The `WrapReadableStream` is required because native `ReadableStream`s can't `pipeTo()` non-native `WritableStream`s (`@yume-chan/adb` is using ponyfill from `web-streams-polyfill`)
-
-To start the server, use the `start()` method:
-
-```js
-import { AdbScrcpyClient, DEFAULT_SERVER_PATH } from '@yume-chan/scrcpy';
-
-const adbScrcpy = new AdbScrcpyClient(adb);
-const client: ScrcpyClient = await adbScrcpy.start(DEFAULT_SERVER_PATH, "1.24", new ScrcpyOptions1_24({
-    // options
-}));
-```
-
-The third argument is the server version. The server will refuse to start if it mismatches.
-
-When using `fetch-scrcpy-server` to download server binary, the version string is saved to `bin/version.js`.
+The correct version number is required to launch the server, so `fetch-scrcpy-server` also writes the version number to `bin/version.js`.
 
 ```js
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version.js';
@@ -167,42 +127,9 @@ import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version.js';
 console.log(SCRCPY_SERVER_VERSION); // "1.24"
 ```
 
-### Using other transportation
-
-You need to push and start the server yourself. After that, create the client using its constructor:
-
-```ts
-import { ScrcpyClient } from '@yume-chan/scrcpy';
-
-const stdout: ReadableStream<string>; // get the stream yourself
-const videoStream: ReadableStream<Uint8Array>; // get the stream yourself
-const controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined // get the stream yourself
-
-const client = new ScrcpyClient(new ScrcpyOptions1_24({
-    // options
-}), stdout, videoSteam, controlStream);
-```
-
-Constrains:
-
-1. The `stdout` stream will end when the server is closed.
-2. `cancel` the `stdout` will kill the server.
-3. `videoStream` will read from server's video socket, preserving packet boundaries.
-4. `controlStream.readable` will read from server's control socket.
-5. `controlStream.writable` will write to server's control socket.
-
-The `controlStream` is optional if control is not enabled or handled elsewhere.
-
-When the client is directly created, only the following methods in `options` will be used:
-
-* `createVideoStreamTransformer()`
-* `getControlMessageTypes()`
-* `serializeInjectScrollControlMessage()`
-* `serializeBackOrScreenOnControlMessage()`
-
 ## Option versions
 
-Scrcpy server has many breaking changes between versions, so there is one option class for each version (range).
+Scrcpy server options changes over time, and some of them are not backwards compatible. This package provides option types for each version (or range). Using wrong option version usually results in errors.
 
 The latest one may continue to work for future server versions, but there is no guarantee.
 
@@ -215,48 +142,174 @@ The latest one may continue to work for future server versions, but there is no 
 | 1.23      | `ScrcpyOptions1_23` |
 | 1.24      | `ScrcpyOptions1_24` |
 
-## Consume the streams
+When using `AdbScrcpyClient`, there is another `AdbScrcpyOptions` contains `@yume-chan/adb` related logics:
 
-Both `stdout` and `videoStream` must be continuously read, otherwise the connection will stall.
+| Version   | Type                   |
+| --------- | ---------------------- |
+| 1.16~1.21 | `AdbScrcpyOptions1_16` |
+| 1.22~1.24 | `AdbScrcpyOptions1_22` |
+
+## Use with `@yume-chan/adb`
+
+The the server binary needs to be copied to the device and run on it.
+
+### Push server binary
+
+The `Adb#sync()#write()` method can be used to push files to the device. Read more at `@yume-chan/adb`'s documentation (https://github.com/yume-chan/ya-webadb/tree/master/libraries/adb#readme).
+
+This package also provides the `AdbScrcpyClient.pushServer()` static method as a shortcut, plus it will automatically close the `AdbSync` object on completion.
+
+Example using `write()`:
 
 ```ts
-const abortController = new AbortController();
+import { AdbScrcpyClient } from '@yume-chan/scrcpy';
 
-client.stdout
+const stream: WritableStream<Uint8Array> = AdbScrcpyClient.pushServer(adb);
+const writer = stream.getWriter();
+await writer.write(new Uint8Array(buffer));
+await writer.close();
+```
+
+Example using `pipeTo()`:
+
+```ts
+import { WrapReadableStream } from '@yume-chan/adb';
+import { AdbScrcpyClient } from '@yume-chan/scrcpy';
+
+await fetch(SCRCPY_SERVER_URL)
+    // `WrapReadableStream` is required because native `ReadableStream` (from `fetch`)
+    // doesn't support `pipeTo()` non-native `WritableStream`s
+    // (`@yume-chan/adb` is using `web-streams-polyfill`)
+    .then(response => new WrapReadableStream(response.body))
+    .then(stream => stream.pipeTo(AdbScrcpyClient.pushServer(adb)));
+```
+
+### Start server on device
+
+To start the server, use the `AdbScrcpyClient.start()` method. It automatically sets up port forwarding, launches the server, and connects to it.
+
+```js
+import { AdbScrcpyClient, AdbScrcpyOptions1_22, DEFAULT_SERVER_PATH, ScrcpyOptions1_24 } from '@yume-chan/scrcpy';
+import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version.js';
+
+const client: AdbScrcpyClient = await AdbScrcpyClient.start(
+    adb,
+    DEFAULT_SERVER_PATH,
+    SCRCPY_SERVER_VERSION, // Or provide your own version number
+    new AdbScrcpyOptions1_22(ScrcpyOptions1_24({
+        // options
+    }))
+);
+
+const stdout: ReadableStream<string> = client.stdout;
+const videoPacketStream: ReadableStream<ScrcpyVideoStreamPacket> = client.videoStream;
+const controlMessageSerializer: ScrcpyControlMessageSerializer | undefined = client.controlMessageSerializer;
+const deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined = client.deviceMessageStream;
+
+// to stop the server
+client.close();
+```
+
+## Using other transportation
+
+If you push, start and connect to the server yourself, you can still use this package to serialize/deserialize packets.
+
+### Parsing video packets
+
+Requires a `ReadableStream<Uint8Array>` that reads from the video socket, preserving packet boundaries.
+
+```ts
+import { ScrcpyOptions1_24, ScrcpyVideoStreamPacket } from '@yume-chan/scrcpy';
+
+const videoStream: ReadableStream<Uint8Array>; // get the stream yourself
+
+const options = new ScrcpyOptions1_24({
+    // use the same version and options
+});
+
+const videoPacketStream: ReadableStream<ScrcpyVideoStreamPacket> = videoStream.pipeThrough(options.createVideoStreamTransformer());
+// Read from `videoPacketStream`
+```
+
+### Sending control messages
+
+Requires a `WritableStream<Uint8Array>` that writes to the control socket.
+
+Control socket is optional if control is not enabled. Video socket and control socket can run completely separately.
+
+```ts
+import { ScrcpyControlMessageSerializer, ScrcpyOptions1_24 } from '@yume-chan/scrcpy';
+
+const controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined // get the stream yourself
+
+const options = new ScrcpyOptions1_24({
+    // use the same version and options
+});
+
+const controlMessageSerializer = new ScrcpyControlMessageSerializer(controlStream.writable, options);
+// Call methods on `controlMessageSerializer`
+controlMessageSerializer.injectText("Hello World!");
+```
+
+### Reading device messages
+
+Requires a `ReadableStream<Uint8Array>` that reads from the control socket.
+
+```ts
+import { ScrcpyDeviceMessageDeserializeStream, ScrcpyOptions1_24 } from '@yume-chan/scrcpy';
+
+const controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined // get the stream yourself
+
+const deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> = controlStream.readable.pipeThrough(new ScrcpyDeviceMessageDeserializeStream());
+```
+
+## Consume the streams
+
+Any `ReadableStream` (`stdout` when using `AdbScrcpyClient`, `videoPacketStream` and `deviceMessageStream` when control is enabled) must be continuously read (even if you don't care about the data), otherwise the whole connection will stall.
+
+```ts
+// when using `AdbScrcpyClient`
+stdout
     .pipeTo(
         new WritableStream<string>({
             write: (line) => {
                 // Handle the stdout line
             },
         }),
-        { signal: abortController.signal }
     )
     .catch(() => {})
     .then(() => {
         // Handle server exit
     });
 
-client.videoStream.pipeTo(new WritableStream<VideoStreamPacket>({
-    write: (packet) => {
-        // Handle the video packet
-    },
-}));
+videoPacketStream
+    .pipeTo(new WritableStream<ScrcpyVideoStreamPacket>({
+        write: (packet) => {
+            // Handle the video packet
+        },
+    }))
+    .catch(() => {});
 
-// to stop the server
-abortController.abort();
+deviceMessageStream
+    .pipeTo(new WritableStream<ScrcpyDeviceMessage>({
+        write: (message) => {
+            // Handle the device message
+        },
+    }))
+    .catch(() => {});
 ```
 
 ## Video stream
 
-The data from `videoStream` has two types: `configuration` and `frame`. How much parsed data is available depends on the server options.
+The data from `videoPacketStream` has two types: `configuration` and `frame`. Some fields may not be populated depending on the server version and options.
 
 ```ts
-export interface VideoStreamConfigurationPacket {
+export interface ScrcpyVideoStreamConfigurationPacket {
     type: 'configuration';
     data: H264Configuration;
 }
 
-export interface VideoStreamFramePacket {
+export interface ScrcpyVideoStreamFramePacket {
     type: 'frame';
     keyframe?: boolean | undefined;
     pts?: bigint | undefined;
@@ -264,7 +317,7 @@ export interface VideoStreamFramePacket {
 }
 ```
 
-When `sendFrameMeta: false` is set, `videoStream` only contains `frame` packets, and only the `data` field is available. It's commonly used when feeding into decoders like FFmpeg that can parse the H.264 stream itself, or saving to disk directly.
+When `sendFrameMeta: false` is set, `videoPacketStream` only contains `frame` packets, and only the `data` field in it is available. It's commonly used when feeding into decoders like FFmpeg that can parse the H.264 stream itself, or saving to disk directly.
 
 Otherwise, both `configuration` and `frame` packets are available.
 
@@ -283,10 +336,10 @@ There are two built-in decoders for using in Web Browsers:
 General usage:
 
 ```ts
-const decoder = new H264Decoder(); // `WebCodecsDecoder` or `TinyH264Decoder`
-document.body.appendChild(decoder.element);
+const decoder = new WebCodecsDecoder(); // `TinyH264Decoder`
+document.body.appendChild(decoder.element); // It draws frames onto `decoder.element`
 
-client.videoStream
+videoPacketStream
     .pipeTo(decoder.writable)
     .catch(() => { });
 ```

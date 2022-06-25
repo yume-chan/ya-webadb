@@ -1,7 +1,7 @@
 import { TransformStream } from '@yume-chan/stream-extra';
 
 import { ScrcpyOptions1_22, type ScrcpyOptionsInit1_22 } from './1_22.js';
-import type { VideoStreamPacket } from './types.js';
+import type { ScrcpyVideoStreamPacket } from './types.js';
 
 export interface ScrcpyOptionsInit1_23 extends ScrcpyOptionsInit1_22 {
     cleanup: boolean;
@@ -22,7 +22,7 @@ export class ScrcpyOptions1_23<T extends ScrcpyOptionsInit1_23 = ScrcpyOptionsIn
         };
     }
 
-    public override createVideoStreamTransformer(): TransformStream<Uint8Array, VideoStreamPacket> {
+    public override createVideoStreamTransformer(): TransformStream<Uint8Array, ScrcpyVideoStreamPacket> {
         const superStream = super.createVideoStreamTransformer();
         return {
             writable: superStream.writable,

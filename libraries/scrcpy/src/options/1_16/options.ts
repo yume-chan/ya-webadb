@@ -4,7 +4,7 @@ import Struct from '@yume-chan/struct';
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from '../../control/index.js';
 import type { ScrcpyBackOrScreenOnControlMessage1_18 } from '../1_18.js';
 import type { ScrcpyInjectScrollControlMessage1_22 } from '../1_22.js';
-import { toScrcpyOptionValue, type ScrcpyOptions, type VideoStreamPacket } from '../types.js';
+import { toScrcpyOptionValue, type ScrcpyOptions, type ScrcpyVideoStreamPacket } from '../types.js';
 import { CodecOptions } from './codec-options.js';
 import { parse_sequence_parameter_set } from './sps.js';
 
@@ -93,7 +93,7 @@ export const NO_PTS = BigInt(1) << BigInt(63);
 
 export const ScrcpyBackOrScreenOnControlMessage1_16 =
     new Struct()
-        .uint8('type', ScrcpyControlMessageType.BackOrScreenOn as const)
+        .uint8('type', ScrcpyControlMessageType.BackOrScreenOn as const);
 
 export const ScrcpyInjectScrollControlMessage1_16 =
     new Struct()
@@ -174,7 +174,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
         return /\s+scrcpy --encoder-name '(.*?)'/;
     }
 
-    public createVideoStreamTransformer(): TransformStream<Uint8Array, VideoStreamPacket> {
+    public createVideoStreamTransformer(): TransformStream<Uint8Array, ScrcpyVideoStreamPacket> {
         // Optimized path for video frames only
         if (this.value.sendFrameMeta === false) {
             return new TransformStream({

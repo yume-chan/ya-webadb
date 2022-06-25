@@ -1,6 +1,6 @@
 import { WritableStream } from '@yume-chan/stream-extra';
 
-import type { VideoStreamPacket } from '../../options/index.js';
+import type { ScrcpyVideoStreamPacket } from '../../options/index.js';
 import type { H264Configuration, H264Decoder } from '../types.js';
 
 function toHex(value: number) {
@@ -13,7 +13,7 @@ export class WebCodecsDecoder implements H264Decoder {
     public readonly maxProfile = undefined;
     public readonly maxLevel = undefined;
 
-    private _writable: WritableStream<VideoStreamPacket>;
+    private _writable: WritableStream<ScrcpyVideoStreamPacket>;
     public get writable() { return this._writable; }
 
     private _renderer: HTMLCanvasElement;
@@ -48,7 +48,7 @@ export class WebCodecsDecoder implements H264Decoder {
             error() { },
         });
 
-        this._writable = new WritableStream<VideoStreamPacket>({
+        this._writable = new WritableStream<ScrcpyVideoStreamPacket>({
             write: async (packet) => {
                 switch (packet.type) {
                     case 'configuration':
