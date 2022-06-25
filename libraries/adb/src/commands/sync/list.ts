@@ -44,20 +44,20 @@ export async function* adbSyncOpenDir(
     v2: boolean,
 ): AsyncGenerator<AdbSyncEntry, void, void> {
     let requestId: AdbSyncRequestId.List | AdbSyncRequestId.List2;
-    let responseType: typeof LIST_V1_RESPONSE_TYPES | typeof LIST_V2_RESPONSE_TYPES;
+    let responseTypes: typeof LIST_V1_RESPONSE_TYPES | typeof LIST_V2_RESPONSE_TYPES;
 
     if (v2) {
         requestId = AdbSyncRequestId.List2;
-        responseType = LIST_V2_RESPONSE_TYPES;
+        responseTypes = LIST_V2_RESPONSE_TYPES;
     } else {
         requestId = AdbSyncRequestId.List;
-        responseType = LIST_V1_RESPONSE_TYPES;
+        responseTypes = LIST_V1_RESPONSE_TYPES;
     }
 
     await adbSyncWriteRequest(writer, requestId, path);
 
     while (true) {
-        const response = await adbSyncReadResponse(stream, responseType);
+        const response = await adbSyncReadResponse(stream, responseTypes);
         switch (response.id) {
             case AdbSyncResponseId.Entry:
                 yield {

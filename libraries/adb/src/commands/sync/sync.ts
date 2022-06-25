@@ -31,9 +31,10 @@ export class AdbSync extends AutoDisposable {
     protected adb: Adb;
 
     protected stream: BufferedReadableStream;
-
+    // Getting another writer on a locked WritableStream will throw.
+    // We don't want this behavior on higher-level APIs.
+    // So we acquire the writer early and use a blocking lock to guard it.
     protected writer: WritableStreamDefaultWriter<Uint8Array>;
-
     protected sendLock = this.addDisposable(new AutoResetEvent());
 
     public get supportsStat(): boolean {
@@ -152,7 +153,7 @@ export class AdbSync extends AutoDisposable {
                 if (this.needPushMkdirWorkaround) {
                     // It may fail if the path is already existed.
                     // Ignore the result.
-                    // TODO: sync: test this
+                    // TODO: sync: test push mkdir workaround (need an Android 8 device)
                     await this.adb.subprocess.spawnAndWait([
                         'mkdir',
                         '-p',

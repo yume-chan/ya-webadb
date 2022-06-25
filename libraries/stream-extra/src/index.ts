@@ -1,3 +1,4 @@
+export * from './buffered-transform.js';
 export * from './buffered.js';
 export * from './chunk.js';
 export * from './decode-utf8.js';

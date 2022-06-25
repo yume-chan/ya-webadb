@@ -1,7 +1,7 @@
 // cspell: ignore logcat
 
 import { AdbCommandBase, AdbSubprocessNoneProtocol } from '@yume-chan/adb';
-import { BufferedReadableStream, BufferedReadableStreamEndedError, DecodeUtf8Stream, ReadableStream, SplitStringStream, WritableStream } from '@yume-chan/stream-extra';
+import { BufferedTransformStream, DecodeUtf8Stream, SplitStringStream, WrapReadableStream, WritableStream, type ReadableStream } from '@yume-chan/stream-extra';
 import Struct, { decodeUtf8, StructAsyncDeserializeStream } from '@yume-chan/struct';
 
 // `adb logcat` is an alias to `adb shell logcat`
@@ -185,36 +185,21 @@ export class Logcat extends AdbCommandBase {
     }
 
     public binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {
-        let bufferedStream: BufferedReadableStream;
-        return new ReadableStream({
-            start: async () => {
-                const { stdout } = await this.adb.subprocess.spawn([
-                    'logcat',
-                    '-B',
-                    ...(options?.pid ? ['--pid', options.pid.toString()] : []),
-                    ...(options?.ids ? ['-b', Logcat.joinLogId(options.ids)] : [])
-                ], {
-                    // PERF: None protocol is 150% faster then Shell protocol
-                    protocols: [AdbSubprocessNoneProtocol],
-                });
-                bufferedStream = new BufferedReadableStream(stdout);
-            },
-            async pull(controller) {
-                try {
-                    const entry = await deserializeAndroidLogEntry(bufferedStream);
-                    controller.enqueue(entry);
-                } catch (e) {
-                    if (e instanceof BufferedReadableStreamEndedError) {
-                        controller.close();
-                        return;
-                    }
-
-                    throw e;
-                }
-            },
-            cancel() {
-                bufferedStream.close();
-            },
-        });
+        return new WrapReadableStream(async () => {
+            // TODO: make `spawn` return synchronously with streams pending
+            // so it's easier to chain them.
+            const { stdout } = await this.adb.subprocess.spawn([
+                'logcat',
+                '-B',
+                ...(options?.pid ? ['--pid', options.pid.toString()] : []),
+                ...(options?.ids ? ['-b', Logcat.joinLogId(options.ids)] : [])
+            ], {
+                // PERF: None protocol is 150% faster then Shell protocol
+                protocols: [AdbSubprocessNoneProtocol],
+            });
+            return stdout;
+        }).pipeThrough(new BufferedTransformStream(stream => {
+            return deserializeAndroidLogEntry(stream);
+        }))
     }
 }

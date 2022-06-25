@@ -115,23 +115,24 @@ export async function adbSyncLstat(
     v2: boolean,
 ): Promise<AdbSyncStat> {
     let requestId: AdbSyncRequestId.Lstat | AdbSyncRequestId.Lstat2;
-    let responseType: typeof LSTAT_RESPONSE_TYPES | typeof LSTAT_V2_RESPONSE_TYPES;
+    let responseTypes: typeof LSTAT_RESPONSE_TYPES | typeof LSTAT_V2_RESPONSE_TYPES;
 
     if (v2) {
         requestId = AdbSyncRequestId.Lstat2;
-        responseType = LSTAT_V2_RESPONSE_TYPES;
+        responseTypes = LSTAT_V2_RESPONSE_TYPES;
     } else {
         requestId = AdbSyncRequestId.Lstat;
-        responseType = LSTAT_RESPONSE_TYPES;
+        responseTypes = LSTAT_RESPONSE_TYPES;
     }
 
     await adbSyncWriteRequest(writer, requestId, path);
-    const response = await adbSyncReadResponse(stream, responseType);
+    const response = await adbSyncReadResponse(stream, responseTypes);
 
     switch (response.id) {
         case AdbSyncResponseId.Lstat:
             return {
                 mode: response.mode,
+                // Convert to `BigInt` to make it compatible with `AdbSyncStatResponse`
                 size: BigInt(response.size),
                 mtime: BigInt(response.mtime),
                 get type() { return response.type; },
