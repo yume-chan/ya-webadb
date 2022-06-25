@@ -9,7 +9,7 @@ import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
 import { ADB_SYNC_MAX_PACKET_SIZE } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
+import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyControlMessage, ScrcpyControlMessageType, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type VideoStreamPacket } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
 
@@ -243,6 +243,7 @@ class ScrcpyPageState {
     get rotatedHeight() { return state.rotate & 1 ? state.width : state.height; }
 
     client: AdbScrcpyClient | undefined = undefined;
+    controlMessageWriter: WritableStreamDefaultWriter<ScrcpyControlMessage> | undefined = undefined;
 
     async pushServer() {
         const serverBuffer = await fetchServer();
@@ -363,7 +364,7 @@ class ScrcpyPageState {
             iconProps: { iconName: Icons.Orientation },
             iconOnly: true,
             text: 'Rotate Device',
-            onClick: () => { this.client!.control!.rotateDevice(); },
+            onClick: () => { this.controlMessageWriter!.write({ type: ScrcpyControlMessageType.RotateDevice }); },
         });
 
         result.push({
@@ -792,12 +793,15 @@ class ScrcpyPageState {
 
             client.exit.then(this.dispose);
 
-            client.control!.onClipboardChange(content => {
-                window.navigator.clipboard.writeText(content);
-            });
+            client.deviceMessageStream!.pipeTo(new WritableStream({
+                write(message) {
+                    window.navigator.clipboard.writeText(message.content);
+                }
+            })).catch(() => { });
 
             runInAction(() => {
                 this.client = client;
+                this.controlMessageWriter = client.controlMessageStream!.getWriter();
                 this.running = true;
             });
         } catch (e: any) {
@@ -846,7 +850,10 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        this.client.control!.pressBackOrTurnOnScreen(AndroidKeyEventAction.Down);
+        this.controlMessageWriter!.write({
+            type: ScrcpyControlMessageType.BackOrScreenOn,
+            action: AndroidKeyEventAction.Down,
+        });
     };
 
     handleBackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -858,10 +865,13 @@ class ScrcpyPageState {
             return;
         }
 
-        this.client.control!.pressBackOrTurnOnScreen(AndroidKeyEventAction.Up);
+        this.controlMessageWriter!.write({
+            type: ScrcpyControlMessageType.BackOrScreenOn,
+            action: AndroidKeyEventAction.Up,
+        });
     };
 
-    handleHomePointerDown = async (e: React.PointerEvent<HTMLDivElement>) => {
+    handleHomePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!this.client) {
             return;
         }
@@ -871,7 +881,8 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        await this.client.control!.injectKeyCode({
+        this.controlMessageWriter!.write({
+            type: ScrcpyControlMessageType.InjectKeyCode,
             action: AndroidKeyEventAction.Down,
             keyCode: AndroidKeyCode.Home,
             repeat: 0,
@@ -879,7 +890,7 @@ class ScrcpyPageState {
         });
     };
 
-    handleHomePointerUp = async (e: React.PointerEvent<HTMLDivElement>) => {
+    handleHomePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!this.client) {
             return;
         }
@@ -888,7 +899,8 @@ class ScrcpyPageState {
             return;
         }
 
-        await this.client.control!.injectKeyCode({
+        this.controlMessageWriter!.write({
+            type: ScrcpyControlMessageType.InjectKeyCode,
             action: AndroidKeyEventAction.Up,
             keyCode: AndroidKeyCode.Home,
             repeat: 0,
@@ -906,7 +918,8 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        await this.client.control!.injectKeyCode({
+        this.controlMessageWriter!.write({
+            type: ScrcpyControlMessageType.InjectKeyCode,
             action: AndroidKeyEventAction.Down,
             keyCode: AndroidKeyCode.AppSwitch,
             repeat: 0,
@@ -923,7 +936,8 @@ class ScrcpyPageState {
             return;
         }
 
-        await this.client.control!.injectKeyCode({
+        this.controlMessageWriter!.write({
+            type: ScrcpyControlMessageType.InjectKeyCode,
             action: AndroidKeyEventAction.Up,
             keyCode: AndroidKeyCode.AppSwitch,
             repeat: 0,
@@ -967,7 +981,8 @@ class ScrcpyPageState {
         }
 
         const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
-        this.client.control!.injectTouch({
+        this.controlMessageWriter!.write({
+            type: ScrcpyControlMessageType.InjectTouch,
             action,
             pointerId: e.pointerType === "mouse" ? BigInt(-1) : BigInt(e.pointerId),
             screenWidth: this.client!.screenWidth!,
@@ -1006,7 +1021,8 @@ class ScrcpyPageState {
         e.stopPropagation();
 
         const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
-        this.client.control!.injectScroll({
+        this.controlMessageWriter!.write({
+            type: ScrcpyControlMessageType.InjectScroll,
             screenWidth: this.client!.screenWidth!,
             screenHeight: this.client!.screenHeight!,
             pointerX: x,
@@ -1028,7 +1044,10 @@ class ScrcpyPageState {
 
         const { key, code } = e;
         if (key.match(/^[!-`{-~]$/i)) {
-            this.client.control!.injectText(key);
+            this.controlMessageWriter!.write({
+                type: ScrcpyControlMessageType.InjectText,
+                text: key,
+            });
             return;
         }
 
@@ -1039,13 +1058,15 @@ class ScrcpyPageState {
         } as Record<string, AndroidKeyCode | undefined>)[code];
 
         if (keyCode) {
-            await this.client.control!.injectKeyCode({
+            this.controlMessageWriter!.write({
+                type: ScrcpyControlMessageType.InjectKeyCode,
                 action: AndroidKeyEventAction.Down,
                 keyCode,
                 metaState: 0,
                 repeat: 0,
             });
-            await this.client.control!.injectKeyCode({
+            this.controlMessageWriter!.write({
+                type: ScrcpyControlMessageType.InjectKeyCode,
                 action: AndroidKeyEventAction.Up,
                 keyCode,
                 metaState: 0,

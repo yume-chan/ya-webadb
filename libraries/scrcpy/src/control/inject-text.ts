@@ -1,10 +1,10 @@
 import Struct from '@yume-chan/struct';
 
-import { ScrcpySimpleControlMessage } from './simple.js';
+import { ScrcpyControlMessageType } from './type.js';
 
 export const ScrcpyInjectTextControlMessage =
     new Struct()
-        .fields(ScrcpySimpleControlMessage)
+        .uint8('type', ScrcpyControlMessageType.InjectText as const)
         .uint32('length')
         .string('text', { lengthField: 'length' });
 

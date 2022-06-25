@@ -1,18 +1,18 @@
 import Struct, { placeholder } from '@yume-chan/struct';
 
 import { AndroidKeyEventAction, ScrcpyControlMessageType } from '../control/index.js';
-import { ScrcpyBackOrScreenOnEvent1_16, ScrcpyOptions1_16, type ScrcpyOptionsInit1_16 } from './1_16/index.js';
+import { ScrcpyBackOrScreenOnControlMessage1_16, ScrcpyOptions1_16, type ScrcpyOptionsInit1_16 } from './1_16/options.js';
 
 export interface ScrcpyOptionsInit1_18 extends ScrcpyOptionsInit1_16 {
     powerOffOnClose: boolean;
 }
 
-export const ScrcpyBackOrScreenOnEvent1_18 =
+export const ScrcpyBackOrScreenOnControlMessage1_18 =
     new Struct()
-        .fields(ScrcpyBackOrScreenOnEvent1_16)
+        .fields(ScrcpyBackOrScreenOnControlMessage1_16)
         .uint8('action', placeholder<AndroidKeyEventAction>());
 
-export type ScrcpyBackOrScreenOnEvent1_18 = typeof ScrcpyBackOrScreenOnEvent1_18['TInit'];
+export type ScrcpyBackOrScreenOnControlMessage1_18 = typeof ScrcpyBackOrScreenOnControlMessage1_18['TInit'];
 
 export class ScrcpyOptions1_18<T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsInit1_18>
     extends ScrcpyOptions1_16<T> {
@@ -56,8 +56,8 @@ export class ScrcpyOptions1_18<T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsIn
     }
 
     public override serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnEvent1_18,
+        message: ScrcpyBackOrScreenOnControlMessage1_18,
     ) {
-        return ScrcpyBackOrScreenOnEvent1_18.serialize(message);
+        return ScrcpyBackOrScreenOnControlMessage1_18.serialize(message);
     }
 }

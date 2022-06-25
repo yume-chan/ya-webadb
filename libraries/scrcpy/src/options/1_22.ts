@@ -1,6 +1,6 @@
 import Struct from '@yume-chan/struct';
 
-import { ScrcpyInjectScrollControlMessage1_16 } from './1_16/index.js';
+import { ScrcpyInjectScrollControlMessage1_16 } from './1_16/options.js';
 import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from './1_21.js';
 
 export interface ScrcpyOptionsInit1_22 extends ScrcpyOptionsInit1_21 {

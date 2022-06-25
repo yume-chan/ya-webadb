@@ -142,7 +142,7 @@ export class BufferedReadableStream {
         }
     }
 
-    public async close() {
-        await this.reader.cancel();
+    public cancel(reason?: any) {
+        return this.reader.cancel(reason);
     }
 }

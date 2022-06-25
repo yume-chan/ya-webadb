@@ -1,8 +1,9 @@
 import { Adb, AdbSubprocessNoneProtocol, AdbSubprocessProtocol, AdbSync } from '@yume-chan/adb';
-import { DecodeUtf8Stream, InspectStream, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
+import { DecodeUtf8Stream, InspectStream, pipeFrom, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
 
-import { ScrcpyControlClient } from '../control/index.js';
-import { DEFAULT_SERVER_PATH, VideoStreamPacket } from '../options/index.js';
+import { ScrcpyControlMessageSerializeStream, type ScrcpyControlMessage } from '../control/index.js';
+import { ScrcpyDeviceMessageDeserializeStream, type ScrcpyDeviceMessage } from '../device-message/index.js';
+import { DEFAULT_SERVER_PATH, type VideoStreamPacket } from '../options/index.js';
 import type { AdbScrcpyOptions } from './options/index.js';
 
 class ArrayToStream<T> extends ReadableStream<T>{
@@ -68,7 +69,7 @@ export class AdbScrcpyClient {
     ) {
         let sync!: AdbSync;
         return new WrapWritableStream<Uint8Array>({
-            start: async () => {
+            async start() {
                 sync = await adb.sync();
                 return sync.write(path);
             },
@@ -101,7 +102,7 @@ export class AdbScrcpyClient {
                     ...options.formatServerArguments(),
                 ],
                 {
-                    // Scrcpy server doesn't split stdout and stderr,
+                    // Scrcpy server doesn't use stderr,
                     // so disable Shell Protocol to simplify processing
                     protocols: [AdbSubprocessNoneProtocol],
                 }
@@ -254,8 +255,11 @@ export class AdbScrcpyClient {
     private _videoStream: ReadableStream<VideoStreamPacket>;
     public get videoStream() { return this._videoStream; }
 
-    private _control: ScrcpyControlClient | undefined;
-    public get control() { return this._control; }
+    private _controlMessageStream: WritableStream<ScrcpyControlMessage> | undefined;
+    public get controlMessageStream() { return this._controlMessageStream; }
+
+    private _deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined;
+    public get deviceMessageStream() { return this._deviceMessageStream; }
 
     public constructor(
         options: AdbScrcpyOptions<any>,
@@ -277,7 +281,8 @@ export class AdbScrcpyClient {
             }));
 
         if (controlStream) {
-            this._control = new ScrcpyControlClient(options, controlStream);
+            this._controlMessageStream = pipeFrom(controlStream.writable, new ScrcpyControlMessageSerializeStream(options));
+            this._deviceMessageStream = controlStream.readable.pipeThrough(new ScrcpyDeviceMessageDeserializeStream());
         }
     }
 

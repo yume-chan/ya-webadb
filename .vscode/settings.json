@@ -68,5 +68,7 @@
             "url": "https://developer.microsoft.com/json-schemas/rush/v5/version-policies.schema.json"
         }
     ],
-    "typescript.preferences.quoteStyle": "single"
+    "typescript.preferences.quoteStyle": "single",
+    "typescript.format.semicolons": "insert",
+    "editor.formatOnSave": true
 }
