@@ -27,8 +27,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - run: node common/scripts/install-run-rush.js change -v
       - run: node common/scripts/install-run-rush.js install
+      - run: node common/scripts/install-run-rush.js change -v
 
       - run: node common/scripts/install-run-rush.js build --verbose
       - run: npx next export
