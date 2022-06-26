@@ -9,7 +9,7 @@ import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
 import { ADB_SYNC_MAX_PACKET_SIZE } from '@yume-chan/adb';
 import { EventEmitter } from "@yume-chan/event";
-import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyDeviceMessageType, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
+import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, AndroidScreenPowerMode, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyDeviceMessageType, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyOptionsInit1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
 
@@ -98,17 +98,14 @@ interface DecoderDefinition {
     Constructor: H264DecoderConstructor;
 }
 
-interface Settings {
-    maxSize: number;
-    bitRate: number;
-    tunnelForward?: boolean;
-    encoderName?: string;
+type RequiredScrcpyOptions = Pick<ScrcpyOptionsInit1_24, 'crop' | 'maxSize' | 'bitRate' | 'powerOn'>;
+type OptionalScrcpyOptions = Partial<Pick<ScrcpyOptionsInit1_24, 'displayId' | 'lockVideoOrientation' | 'encoderName' | 'tunnelForward' | 'stayAwake' | 'powerOffOnClose'>>;
+
+interface Settings extends RequiredScrcpyOptions, OptionalScrcpyOptions {
+    turnScreenOff?: boolean;
     decoder?: string;
     ignoreDecoderCodecArgs?: boolean;
-    lockVideoOrientation?: ScrcpyVideoOrientation;
-    displayId?: number;
-    crop: string;
-}
+};
 
 interface SettingDefinitionBase {
     key: keyof Settings;
@@ -364,9 +361,7 @@ class ScrcpyPageState {
             iconOnly: true,
             text: 'Rotate Device',
             onClick: () => { this.client!.controlMessageSerializer!.rotateDevice(); },
-        });
-
-        result.push({
+        }, {
             key: 'rotateVideoLeft',
             disabled: !this.running,
             iconProps: { iconName: Icons.RotateLeft },
@@ -378,9 +373,7 @@ class ScrcpyPageState {
                     this.rotate = 3;
                 }
             }
-        });
-
-        result.push({
+        }, {
             key: 'rotateVideoRight',
             disabled: !this.running,
             iconProps: { iconName: Icons.RotateRight },
@@ -388,6 +381,26 @@ class ScrcpyPageState {
             text: 'Rotate Video Right',
             onClick: () => {
                 this.rotate = (this.rotate + 1) & 3;
+            },
+        });
+
+        result.push({
+            key: 'turnScreenOff',
+            disabled: !this.running,
+            iconProps: { iconName: Icons.Lightbulb },
+            iconOnly: true,
+            text: 'Turn Screen Off',
+            onClick: () => {
+                this.client!.controlMessageSerializer!.setScreenPowerMode(AndroidScreenPowerMode.Off);
+            },
+        }, {
+            key: 'turnScreenOn',
+            disabled: !this.running,
+            iconProps: { iconName: Icons.LightbulbFilament },
+            iconOnly: true,
+            text: 'Turn Screen On',
+            onClick: () => {
+                this.client!.controlMessageSerializer!.setScreenPowerMode(AndroidScreenPowerMode.Normal);
             },
         });
 
@@ -474,10 +487,105 @@ class ScrcpyPageState {
         lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
         displayId: 0,
         crop: '',
+        powerOn: true,
     };
 
     get settingDefinitions() {
         const result: SettingDefinition[] = [];
+
+        result.push({
+            key: 'powerOn',
+            type: 'toggle',
+            label: 'Turn device on when starting',
+        }, {
+            key: 'turnScreenOff',
+            type: 'toggle',
+            label: 'Turn screen off when starting',
+        }, {
+            key: 'stayAwake',
+            type: 'toggle',
+            label: 'Stay awake (if plugged in)',
+        }, {
+            key: 'powerOffOnClose',
+            type: 'toggle',
+            label: 'Turn device off when exiting',
+        });
+
+        result.push({
+            key: 'displayId',
+            type: 'dropdown',
+            label: 'Display',
+            placeholder: 'Press refresh to update available displays',
+            labelExtra: (
+                <IconButton
+                    iconProps={{ iconName: Icons.ArrowClockwise }}
+                    disabled={!GlobalState.device}
+                    text="Refresh"
+                    onClick={this.updateDisplays}
+                />
+            ),
+            options: this.displays.map(item => ({
+                key: item,
+                text: item.toString(),
+            })),
+        });
+
+        result.push({
+            key: 'crop',
+            type: 'text',
+            label: 'Crop',
+            placeholder: 'W:H:X:Y',
+        });
+
+        result.push({
+            key: 'maxSize',
+            type: 'number',
+            label: 'Max Resolution (longer side, 0 = unlimited)',
+            min: 0,
+            max: 2560,
+            step: 50,
+        });
+
+        result.push({
+            key: 'bitRate',
+            type: 'number',
+            label: 'Max Bit Rate',
+            min: 100,
+            max: 100_000_000,
+            step: 100,
+        });
+
+        result.push({
+            key: 'lockVideoOrientation',
+            type: 'dropdown',
+            label: 'Lock Video Orientation',
+            options: [
+                {
+                    key: ScrcpyVideoOrientation.Unlocked,
+                    text: 'Unlocked',
+                },
+                {
+                    key: ScrcpyVideoOrientation.Initial,
+                    text: 'Current',
+                },
+                {
+                    key: ScrcpyVideoOrientation.Portrait,
+                    text: 'Portrait',
+                },
+                {
+                    key: ScrcpyVideoOrientation.Landscape,
+                    text: 'Landscape',
+                },
+                {
+                    key: ScrcpyVideoOrientation.PortraitFlipped,
+                    text: 'Portrait (Flipped)',
+                },
+                {
+                    key: ScrcpyVideoOrientation.LandscapeFlipped,
+                    text: 'Landscape (Flipped)',
+                },
+            ],
+        });
 
         result.push({
             key: 'encoderName',
@@ -519,86 +627,10 @@ class ScrcpyPageState {
         });
 
         result.push({
-            key: 'maxSize',
-            type: 'number',
-            label: 'Max Resolution (longer side, 0 = unlimited)',
-            min: 0,
-            max: 2560,
-            step: 50,
-        });
-
-        result.push({
-            key: 'bitRate',
-            type: 'number',
-            label: 'Max Bit Rate',
-            min: 100,
-            max: 100_000_000,
-            step: 100,
-        });
-
-        result.push({
             key: 'tunnelForward',
             type: 'toggle',
             label: 'Use forward connection',
             description: 'Android before version 9 has a bug that prevents reverse tunneling when using ADB over WiFi.'
-        });
-
-        result.push({
-            key: 'lockVideoOrientation',
-            type: 'dropdown',
-            label: 'Lock Video Orientation',
-            options: [
-                {
-                    key: ScrcpyVideoOrientation.Unlocked,
-                    text: 'Unlocked',
-                },
-                {
-                    key: ScrcpyVideoOrientation.Initial,
-                    text: 'Current',
-                },
-                {
-                    key: ScrcpyVideoOrientation.Portrait,
-                    text: 'Portrait',
-                },
-                {
-                    key: ScrcpyVideoOrientation.Landscape,
-                    text: 'Landscape',
-                },
-                {
-                    key: ScrcpyVideoOrientation.PortraitFlipped,
-                    text: 'Portrait (Flipped)',
-                },
-                {
-                    key: ScrcpyVideoOrientation.LandscapeFlipped,
-                    text: 'Landscape (Flipped)',
-                },
-            ],
-        });
-
-        result.push({
-            key: 'displayId',
-            type: 'dropdown',
-            label: 'Display',
-            placeholder: 'Press refresh to update available displays',
-            labelExtra: (
-                <IconButton
-                    iconProps={{ iconName: Icons.ArrowClockwise }}
-                    disabled={!GlobalState.device}
-                    text="Refresh"
-                    onClick={this.updateDisplays}
-                />
-            ),
-            options: this.displays.map(item => ({
-                key: item,
-                text: item.toString(),
-            })),
-        });
-
-        result.push({
-            key: 'crop',
-            type: 'text',
-            label: 'Crop',
-            placeholder: 'W:H:X:Y',
         });
 
         return result;
@@ -801,6 +833,10 @@ class ScrcpyPageState {
                     }
                 }
             })).catch(() => { });
+
+            if (this.settings.turnScreenOff) {
+                await client.controlMessageSerializer!.setScreenPowerMode(AndroidScreenPowerMode.Off);
+            }
 
             runInAction(() => {
                 this.client = client;

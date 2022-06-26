@@ -1,5 +1,5 @@
 import { registerIcons } from "@fluentui/react";
-import { BookSearchRegular, AddCircleRegular, ArrowClockwiseRegular, ArrowRotateClockwiseRegular, ArrowRotateCounterclockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BoxRegular, BugRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FilterRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, MoreHorizontalRegular, NavigationRegular, OrientationRegular, PanelBottomRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WarningRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { AddCircleRegular, ArrowClockwiseRegular, ArrowRotateClockwiseRegular, ArrowRotateCounterclockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BookSearchRegular, BoxRegular, BugRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FilterRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, LightbulbFilamentRegular, LightbulbRegular, MoreHorizontalRegular, NavigationRegular, OrientationRegular, PanelBottomRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WarningRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
@@ -26,6 +26,8 @@ export function register() {
             Folder: <FolderRegular style={STYLE} />,
             FullScreenMaximize: <FullScreenMaximizeRegular style={STYLE} />,
             Info: <InfoRegular style={STYLE} />,
+            Lightbulb: <LightbulbRegular style={STYLE} />,
+            LightbulbFilament: <LightbulbFilamentRegular style={STYLE} />,
             Navigation: <NavigationRegular style={STYLE} />,
             Orientation: <OrientationRegular style={STYLE} />,
             PanelBottom: <PanelBottomRegular style={STYLE} />,
@@ -64,7 +66,7 @@ export function register() {
     });
 }
 
-export default {
+const Icons = {
     AddCircle: 'AddCircle',
     ArrowClockwise: 'ArrowClockwise',
     Bookmark: 'Bookmark',
@@ -83,6 +85,8 @@ export default {
     Document: 'Document',
     Folder: 'Folder',
     FullScreenMaximize: 'FullScreenMaximize',
+    Lightbulb: 'Lightbulb',
+    LightbulbFilament: 'LightbulbFilament',
     Info: 'Info',
     Navigation: 'Navigation',
     Orientation: 'Orientation',
@@ -106,3 +110,5 @@ export default {
     WindowConsole: 'WindowConsole',
     Document20: 'Document20'
 };
+
+export default Icons;

@@ -5,6 +5,7 @@ import { AndroidKeyEventAction, ScrcpyInjectKeyCodeControlMessage } from './inje
 import { ScrcpyInjectTextControlMessage } from './inject-text.js';
 import { ScrcpyInjectTouchControlMessage } from './inject-touch.js';
 import { ScrcpyRotateDeviceControlMessage } from './rotate-device.js';
+import { AndroidScreenPowerMode, ScrcpySetScreenPowerModeControlMessage } from './set-screen-power-mode.js';
 import { ScrcpyControlMessageType } from './type.js';
 
 export class ScrcpyControlMessageSerializer {
@@ -64,6 +65,13 @@ export class ScrcpyControlMessageSerializer {
         if (buffer) {
             return await this.writer.write(buffer);
         }
+    }
+
+    public setScreenPowerMode(mode: AndroidScreenPowerMode) {
+        return this.writer.write(ScrcpySetScreenPowerModeControlMessage.serialize({
+            mode,
+            type: this.getTypeValue(ScrcpyControlMessageType.SetScreenPowerMode),
+        }));
     }
 
     public rotateDevice() {
