@@ -29,23 +29,23 @@
         "@yume-chan/stream-extra": "^0.0.16",
         "@yume-chan/stream-saver": "^2.0.6",
         "@yume-chan/struct": "^0.0.16",
-        "mobx": "^6.5.0",
+        "mobx": "^6.6.1",
         "mobx-react-lite": "^3.4.0",
-        "next": "12.1.6",
+        "next": "12.2.0",
         "react": "^17.0.2",
         "react-dom": "^17.0.2",
-        "xterm": "^4.18.0",
+        "xterm": "^4.19.0",
         "xterm-addon-fit": "^0.5.0",
-        "xterm-addon-search": "^0.8.2",
-        "xterm-addon-webgl": "^0.11.4"
+        "xterm-addon-search": "^0.9.0",
+        "xterm-addon-webgl": "^0.12.0"
     },
     "devDependencies": {
-        "@mdx-js/loader": "^1.6.22",
-        "@next/mdx": "^11.1.2",
+        "@mdx-js/loader": "^2.1.2",
+        "@next/mdx": "^12.2.0",
         "@types/react": "17.0.27",
-        "eslint": "8.8.0",
-        "eslint-config-next": "12.1.6",
-        "source-map-loader": "^3.0.1",
-        "typescript": "^4.7.3"
+        "eslint": "8.19.0",
+        "eslint-config-next": "12.2.0",
+        "source-map-loader": "^4.0.0",
+        "typescript": "^4.7.4"
     }
 }

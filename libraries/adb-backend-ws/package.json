@@ -30,8 +30,8 @@
         "build:watch": "build-ts-package --incremental"
     },
     "devDependencies": {
-        "jest": "^28.1.0",
-        "typescript": "^4.7.3",
+        "jest": "^28.1.2",
+        "typescript": "^4.7.4",
         "@yume-chan/ts-package-builder": "^1.0.0"
     },
     "dependencies": {
