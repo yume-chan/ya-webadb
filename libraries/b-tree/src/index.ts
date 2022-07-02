@@ -39,43 +39,43 @@ export class BTreeNode {
 
     protected split(value: number, index: number, child?: BTreeNode): BTreeInsertionResult {
         let parentKey: number;
-        const sibilingKeys = new Int32Array(this.order - 1);
-        let sibilingChildren: BTreeNode[];
+        const siblingKeys = new Int32Array(this.order - 1);
+        let siblingsChildren: BTreeNode[];
 
         if (index < this.mid) {
             parentKey = this.keys[this.mid - 1]!;
-            sibilingKeys.set(this.keys.subarray(this.mid), 0);
+            siblingKeys.set(this.keys.subarray(this.mid), 0);
 
             insert(this.keys, this.mid - 1, value, index);
 
             if (child) {
                 // internal node
-                sibilingChildren = this.children.splice(this.mid, this.order - this.mid);
+                siblingsChildren = this.children.splice(this.mid, this.order - this.mid);
                 // TODO: this may cause the underlying array to grow (re-alloc and copy)
                 // investigate if this is a problem.
                 this.children.splice(index + 1, 0, child);
             } else {
                 // leaf node
-                sibilingChildren = new Array(this.order);
+                siblingsChildren = new Array(this.order);
             }
         } else {
             if (index === this.mid) {
                 parentKey = value;
-                sibilingKeys.set(this.keys.subarray(this.mid), 0);
+                siblingKeys.set(this.keys.subarray(this.mid), 0);
             } else {
                 parentKey = this.keys[this.mid]!;
                 if (index !== this.mid + 1) {
-                    sibilingKeys.set(this.keys.subarray(this.mid + 1, index), 0);
+                    siblingKeys.set(this.keys.subarray(this.mid + 1, index), 0);
                 }
-                sibilingKeys[index - this.mid - 1] = value;
-                sibilingKeys.set(this.keys.subarray(index), index - this.mid);
+                siblingKeys[index - this.mid - 1] = value;
+                siblingKeys.set(this.keys.subarray(index), index - this.mid);
             }
 
             if (child) {
-                sibilingChildren = this.children.splice(this.mid + 1, this.order - this.mid - 1);
-                sibilingChildren.splice(index - this.mid, 0, child);
+                siblingsChildren = this.children.splice(this.mid + 1, this.order - this.mid - 1);
+                siblingsChildren.splice(index - this.mid, 0, child);
             } else {
-                sibilingChildren = new Array(this.order);
+                siblingsChildren = new Array(this.order);
             }
         }
 
@@ -84,10 +84,10 @@ export class BTreeNode {
             key: parentKey,
             child: new BTreeNode(
                 this.order,
-                sibilingKeys,
+                siblingKeys,
                 this.order - 1 - this.mid,
                 this.height,
-                sibilingChildren
+                siblingsChildren
             ),
         };
     }
