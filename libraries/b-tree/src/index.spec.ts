@@ -1,55 +1,90 @@
 import { describe, expect, it } from '@jest/globals';
-import { BTree } from "./index.js";
+import { BTree, BTreeNode } from "./index.js";
+
+const LENGTH = 128;
+
+function shuffle<T>(array: T[]) {
+    for (let i = array.length - 1; i > 0; i -= 1) {
+        const j = (Math.random() * (i + 1)) | 0;
+        [array[i], array[j]] = [array[j]!, array[i]!];
+    }
+}
 
 describe('BTree', () => {
-    describe('insert', () => {
-        function validate(log: any[], min = -Infinity) {
-            for (const item of log) {
-                if (Array.isArray(item)) {
-                    min = validate(item, min);
-                } else if (typeof item === 'number') {
-                    if (item < min) {
-                        throw new Error();
-                    }
-                    min = item;
+    for (let order = 3; order < 10; order += 1) {
+        // Math.ceil(order / 2) - 1
+        const MIN_KEY_COUNT = ((order + 1) >> 1) - 1;
+
+        function validateNode(node: BTreeNode, root: boolean, min = -Infinity) {
+            if (node.height === 0) {
+                expect(node.keyCount).toBeGreaterThan(0);
+                expect(node.keyCount).toBeLessThan(order);
+                for (let i = 0; i < node.keyCount; i += 1) {
+                    expect(node.keys[i]).toBeGreaterThan(min);
+                    min = node.keys[i]!;
                 }
+                return min;
             }
+
+            if (!root) {
+                expect(node.keyCount).toBeGreaterThanOrEqual(MIN_KEY_COUNT);
+            }
+            expect(node.keyCount).toBeLessThan(order);
+
+            for (let i = 0; i < node.keyCount; i += 1) {
+                min = validateNode(node.children[i]!, false, min);
+                expect(node.keys[i]).toBeGreaterThan(min);
+                min = node.keys[i]!;
+            }
+            min = validateNode(node.children[node.keyCount]!, false, min);
             return min;
         }
 
-        it('should work with incremental values', () => {
-            const tree = new BTree(6);
-            const values = Array.from({ length: 1024 }, (_, i) => i);
-
-            for (let i = 0; i < values.length; i += 1) {
-                tree.insert(values[i]!);
-                expect(() => validate(tree.root.log())).not.toThrow();
+        function validateTree(tree: BTree) {
+            if (tree.size === 0) {
+                expect(tree.root.keyCount).toBe(0);
+                return;
             }
+
+            validateNode(tree.root, true);
+        }
+
+        describe(`order ${order}`, () => {
+            it('should generate valid tree with incremental values', () => {
+                const tree = new BTree(order);
+
+                const values = Array.from({ length: LENGTH }, (_, i) => i - LENGTH / 2);
+                for (let value of values) {
+                    tree.insert(value);
+                    validateTree(tree);
+                    expect(tree.has(value)).toBe(true);
+                }
+
+                for (let value of values) {
+                    tree.remove(value);
+                    validateTree(tree);
+                    expect(tree.has(value)).toBe(false);
+                }
+            });
+
+            it('should generate valid tree with random values', () => {
+                const tree = new BTree(order);
+
+                const values = Array.from({ length: LENGTH }, (_, i) => i - LENGTH / 2);
+                shuffle(values);
+                for (const value of values) {
+                    tree.insert(value);
+                    validateTree(tree);
+                    expect(tree.has(value)).toBe(true);
+                }
+
+                shuffle(values);
+                for (const value of values) {
+                    tree.remove(value);
+                    validateTree(tree);
+                    expect(tree.has(value)).toBe(false);
+                }
+            });
         });
-
-        it('should work with random data', () => {
-            const tree = new BTree(6);
-            const values = Array.from({ length: 1024 }, () => Math.random() * 1024 | 0);
-            // const values = Array.from({ length: 1024 }, (_, i) => 1024 - i);
-            // const values = Array.from({ length: 1024 }, (_, i) => i);
-
-            for (let i = 0; i < values.length; i += 1) {
-                tree.insert(values[i]!);
-                expect(() => validate(tree.root.log())).not.toThrow();
-            }
-        });
-    });
-
-    describe('has', () => {
-        it('should return true for inserted values', () => {
-            const tree = new BTree(6);
-            const values = Array.from({ length: 1024 }, () => Math.random() * 512 + 512 | 0);
-            for (const value of values) {
-                tree.insert(value);
-            }
-            for (let i = -1024; i < 2048; i++) {
-                expect(tree.has(i)).toBe(values.includes(i));
-            }
-        });
-    });
+    }
 });
