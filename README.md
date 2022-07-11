@@ -1,6 +1,6 @@
 # 📱 Android Debug Bridge (ADB) for Web Browsers
 
-[![GitHub license](https://img.shields.io/github/license/yume-chan/ya-webadb)](https://github.com/yume-chan/ya-webadb/blob/master/LICENSE)
+[![GitHub license](https://img.shields.io/github/license/yume-chan/ya-webadb)](https://github.com/yume-chan/ya-webadb/blob/main/LICENSE)
 
 Manipulate Android devices from any (supported) web browsers, even from another Android device.
 

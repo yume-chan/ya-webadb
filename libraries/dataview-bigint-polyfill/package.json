@@ -16,7 +16,7 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/master/libraries/dataview-bigint-polyfill#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/dataview-bigint-polyfill#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",

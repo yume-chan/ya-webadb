@@ -155,7 +155,7 @@ The the server binary needs to be copied to the device and run on it.
 
 ### Push server binary
 
-The `Adb#sync()#write()` method can be used to push files to the device. Read more at `@yume-chan/adb`'s documentation (https://github.com/yume-chan/ya-webadb/tree/master/libraries/adb#readme).
+The `Adb#sync()#write()` method can be used to push files to the device. Read more at `@yume-chan/adb`'s documentation (https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb#readme).
 
 This package also provides the `AdbScrcpyClient.pushServer()` static method as a shortcut, plus it will automatically close the `AdbSync` object on completion.
 
