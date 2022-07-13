@@ -101,9 +101,9 @@ export class AdbWebUsbBackend implements AdbBackend {
         return devices.map(device => new AdbWebUsbBackend(device));
     }
 
-    public static async requestDevice(): Promise<AdbWebUsbBackend | undefined> {
+    public static async requestDevice(filters: USBDeviceFilter[]): Promise<AdbWebUsbBackend | undefined> {
         try {
-            const device = await navigator.usb.requestDevice({ filters: [ADB_DEVICE_FILTER] });
+            const device = await navigator.usb.requestDevice({ filters: filters });
             return new AdbWebUsbBackend(device);
         } catch (e) {
             // User cancelled the device picker

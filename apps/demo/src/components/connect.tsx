@@ -1,7 +1,7 @@
 import { DefaultButton, Dialog, Dropdown, IDropdownOption, PrimaryButton, ProgressIndicator, Stack, StackItem } from '@fluentui/react';
 import { Adb, AdbBackend, AdbPacketData, AdbPacketInit } from '@yume-chan/adb';
 import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
-import AdbWebUsbBackend, { AdbWebUsbBackendWatcher } from '@yume-chan/adb-backend-webusb';
+import AdbWebUsbBackend, { AdbWebUsbBackendWatcher, ADB_DEVICE_FILTER } from '@yume-chan/adb-backend-webusb';
 import AdbWsBackend from '@yume-chan/adb-backend-ws';
 import AdbWebCredentialStore from '@yume-chan/adb-credential-web';
 import { InspectStream, pipeFrom, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
@@ -133,7 +133,7 @@ function _Connect(): JSX.Element | null {
     };
 
     const addUsbBackend = useCallback(async () => {
-        const backend = await AdbWebUsbBackend.requestDevice();
+        const backend = await AdbWebUsbBackend.requestDevice([ADB_DEVICE_FILTER]);
         setSelectedBackend(backend);
         await updateUsbBackendList();
     }, [updateUsbBackendList]);
