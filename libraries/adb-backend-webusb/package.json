@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-backend-webusb",
-    "version": "0.0.17",
+    "version": "0.0.16",
     "description": "Backend for `@yume-chan/adb` using WebUSB API.",
     "keywords": [
         "webusb",
