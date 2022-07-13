@@ -8,6 +8,10 @@ export const ADB_DEVICE_FILTER: USBDeviceFilter = {
     protocolCode: 1,
 };
 
+export interface AdbBackendExtended extends AdbBackend {
+    _deviceFilters: USBDeviceFilter[];
+}
+
 class Uint8ArrayStructDeserializeStream implements StructDeserializeStream {
     private buffer: Uint8Array;
 
@@ -91,7 +95,10 @@ export class AdbWebUsbBackendStream implements ReadableWritablePair<AdbPacketDat
     }
 }
 
-export class AdbWebUsbBackend implements AdbBackend {
+export class AdbWebUsbBackend implements AdbBackendExtended {
+    _deviceFilters: USBDeviceFilter[] = [];
+    public get deviceFilters() { return this._deviceFilters; }
+
     public static isSupported(): boolean {
         return !!globalThis.navigator?.usb;
     }
@@ -101,9 +108,11 @@ export class AdbWebUsbBackend implements AdbBackend {
         return devices.map(device => new AdbWebUsbBackend(device));
     }
 
-    public static async requestDevice(filters: USBDeviceFilter[] = [ADB_DEVICE_FILTER]): Promise<AdbWebUsbBackend | undefined> {
+    public async requestDevice(filters: USBDeviceFilter[] = [ADB_DEVICE_FILTER]): Promise<AdbWebUsbBackend | undefined> {
+        this._deviceFilters = filters;
+
         try {
-            const device = await navigator.usb.requestDevice({ filters });
+            const device = await navigator.usb.requestDevice({ filters: this.deviceFilters });
             return new AdbWebUsbBackend(device);
         } catch (e) {
             // User cancelled the device picker
@@ -133,40 +142,41 @@ export class AdbWebUsbBackend implements AdbBackend {
         for (const configuration of this._device.configurations) {
             for (const interface_ of configuration.interfaces) {
                 for (const alternate of interface_.alternates) {
-                    if (alternate.interfaceSubclass === ADB_DEVICE_FILTER.subclassCode &&
-                        alternate.interfaceClass === ADB_DEVICE_FILTER.classCode &&
-                        alternate.interfaceSubclass === ADB_DEVICE_FILTER.subclassCode) {
-                        if (this._device.configuration?.configurationValue !== configuration.configurationValue) {
-                            // Note: Switching configuration is not supported on Windows,
-                            // but Android devices should always expose ADB function at the first (default) configuration.
-                            await this._device.selectConfiguration(configuration.configurationValue);
-                        }
+                    for(const deviceFilter of this.deviceFilters) {
+                        if (alternate.interfaceSubclass === deviceFilter.subclassCode &&
+                            alternate.interfaceClass === deviceFilter.classCode) {
+                            if (this._device.configuration?.configurationValue !== configuration.configurationValue) {
+                                // Note: Switching configuration is not supported on Windows,
+                                // but Android devices should always expose ADB function at the first (default) configuration.
+                                await this._device.selectConfiguration(configuration.configurationValue);
+                            }
 
-                        if (!interface_.claimed) {
-                            await this._device.claimInterface(interface_.interfaceNumber);
-                        }
+                            if (!interface_.claimed) {
+                                await this._device.claimInterface(interface_.interfaceNumber);
+                            }
 
-                        if (interface_.alternate.alternateSetting !== alternate.alternateSetting) {
-                            await this._device.selectAlternateInterface(interface_.interfaceNumber, alternate.alternateSetting);
-                        }
+                            if (interface_.alternate.alternateSetting !== alternate.alternateSetting) {
+                                await this._device.selectAlternateInterface(interface_.interfaceNumber, alternate.alternateSetting);
+                            }
 
-                        let inEndpoint: USBEndpoint | undefined;
-                        let outEndpoint: USBEndpoint | undefined;
+                            let inEndpoint: USBEndpoint | undefined;
+                            let outEndpoint: USBEndpoint | undefined;
 
-                        for (const endpoint of alternate.endpoints) {
-                            switch (endpoint.direction) {
-                                case 'in':
-                                    inEndpoint = endpoint;
-                                    if (outEndpoint) {
-                                        return new AdbWebUsbBackendStream(this._device, inEndpoint, outEndpoint);
-                                    }
-                                    break;
-                                case 'out':
-                                    outEndpoint = endpoint;
-                                    if (inEndpoint) {
-                                        return new AdbWebUsbBackendStream(this._device, inEndpoint, outEndpoint);
-                                    }
-                                    break;
+                            for (const endpoint of alternate.endpoints) {
+                                switch (endpoint.direction) {
+                                    case 'in':
+                                        inEndpoint = endpoint;
+                                        if (outEndpoint) {
+                                            return new AdbWebUsbBackendStream(this._device, inEndpoint, outEndpoint);
+                                        }
+                                        break;
+                                    case 'out':
+                                        outEndpoint = endpoint;
+                                        if (inEndpoint) {
+                                            return new AdbWebUsbBackendStream(this._device, inEndpoint, outEndpoint);
+                                        }
+                                        break;
+                                }
                             }
                         }
                     }
