@@ -25,11 +25,47 @@ export enum AndroidLogPriority {
     Unknown,
     Default,
     Verbose,
+    Debug,
     Info,
     Warn,
     Error,
     Fatal,
     Silent,
+}
+
+// https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;l=140;drc=8dbf3b2bb6b6d1652d9797e477b9abd03278bb79
+export const AndroidLogPriorityToCharacter: Record<AndroidLogPriority, string> = {
+    [AndroidLogPriority.Unknown]: '?',
+    [AndroidLogPriority.Default]: '?',
+    [AndroidLogPriority.Verbose]: 'V',
+    [AndroidLogPriority.Debug]: 'D',
+    [AndroidLogPriority.Info]: 'I',
+    [AndroidLogPriority.Warn]: 'W',
+    [AndroidLogPriority.Error]: 'E',
+    [AndroidLogPriority.Fatal]: 'F',
+    [AndroidLogPriority.Silent]: 'S',
+};
+
+export enum LogcatFormat {
+    Brief,
+    Process,
+    Tag,
+    Thread,
+    Raw,
+    Time,
+    ThreadTime,
+    Long
+}
+
+export interface LogcatFormatModifiers {
+    usec?: boolean;
+    printable?: boolean;
+    year?: boolean;
+    zone?: boolean;
+    epoch?: boolean;
+    monotonic?: boolean;
+    uid?: boolean;
+    descriptive?: boolean;
 }
 
 export interface LogcatOptions {
@@ -63,6 +99,21 @@ export interface AndroidLogEntry extends LoggerEntry {
     priority: AndroidLogPriority;
     tag: string;
     message: string;
+}
+
+// https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;l=1415;drc=8dbf3b2bb6b6d1652d9797e477b9abd03278bb79
+export function formatAndroidLogEntry(
+    entry: AndroidLogEntry,
+    format: LogcatFormat = LogcatFormat.Brief,
+    modifier?: LogcatFormatModifiers
+) {
+    const uid = modifier?.uid ? `${entry.uid.toString().padStart(5)}:` : '';
+
+    switch (format) {
+        // TODO: implement other formats
+        default:
+            return `${AndroidLogPriorityToCharacter[entry.priority]}/${entry.tag.padEnd(8)}(${uid}${entry.pid.toString().padStart(5)}): ${entry.message}`;
+    }
 }
 
 function findTagEnd(payload: Uint8Array) {
@@ -200,6 +251,6 @@ export class Logcat extends AdbCommandBase {
             return stdout;
         }).pipeThrough(new BufferedTransformStream(stream => {
             return deserializeAndroidLogEntry(stream);
-        }))
+        }));
     }
 }

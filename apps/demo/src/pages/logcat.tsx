@@ -1,11 +1,13 @@
-import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
+import { Checkbox, ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
-import { AndroidLogEntry, AndroidLogPriority, Logcat } from '@yume-chan/android-bin';
+import { AndroidLogEntry, AndroidLogPriority, formatAndroidLogEntry, Logcat, LogcatFormat } from '@yume-chan/android-bin';
+import { BTree } from '@yume-chan/b-tree';
 import { AbortController, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
+import { FormEvent, useEffect, useState } from 'react';
 
 import { CommandBar, Grid, GridColumn, GridHeaderProps, GridRowProps } from "../components";
 import { GlobalState } from "../state";
@@ -55,6 +57,7 @@ const state = makeAutoObservable({
     buffer: [] as LogRow[],
     flushRequested: false,
     list: [] as LogRow[],
+    selection: new BTree(6),
     count: 0,
     stream: undefined as ReadableStream<AndroidLogEntry> | undefined,
     stopSignal: undefined as AbortController | undefined,
@@ -98,6 +101,7 @@ const state = makeAutoObservable({
     },
     clear() {
         this.list = [];
+        this.selection.clear();
         this.selectedCount = 0;
     },
     get empty() {
@@ -130,7 +134,16 @@ const state = makeAutoObservable({
                 disabled: this.selectedCount === 0,
                 iconProps: { iconName: Icons.Copy },
                 onClick: () => {
-
+                    let text = '';
+                    for (const index of this.selection) {
+                        text += formatAndroidLogEntry(
+                            this.list[index],
+                            LogcatFormat.Brief
+                        ) + '\n';
+                    }
+                    // Chrome on Windows can't copy null characters
+                    text = text.replace(/\u0000/g, '');
+                    navigator.clipboard.writeText(text);
                 }
             },
             {
@@ -139,13 +152,52 @@ const state = makeAutoObservable({
                 disabled: this.selectedCount === 0,
                 iconProps: { iconName: Icons.Copy },
                 onClick: () => {
-
+                    let text = '';
+                    for (const index of this.selection) {
+                        text += this.list[index].message + '\n';
+                    }
+                    // Chrome on Windows can't copy null characters
+                    text = text.replace(/\u0000/g, '');
+                    navigator.clipboard.writeText(text);
                 }
             }
         ];
     },
     get columns(): Column[] {
         return [
+            {
+                width: 40,
+                title: '',
+                CellComponent: ({ rowIndex, columnIndex, className, ...rest }) => {
+                    const [checked, setChecked] = useState(false);
+                    useEffect(() => {
+                        setChecked(this.selection.has(rowIndex));
+                    }, [rowIndex]);
+
+                    const handleChange = useStableCallback((e?: FormEvent<EventTarget>, checked?: boolean) => {
+                        if (checked === undefined) {
+                            return;
+                        }
+                        if (checked) {
+                            this.selection.add(rowIndex);
+                            setChecked(true);
+                        } else {
+                            this.selection.delete(rowIndex);
+                            setChecked(false);
+                        }
+                        runInAction(() => {
+                            // Trigger mobx
+                            this.selectedCount = this.selection.size;
+                        });
+                    });
+
+                    return (
+                        <Stack className={className} verticalAlign='center' horizontalAlign='center' {...rest}>
+                            <Checkbox checked={checked} onChange={handleChange} />
+                        </Stack>
+                    );
+                }
+            },
             {
                 width: 200,
                 title: 'Time',

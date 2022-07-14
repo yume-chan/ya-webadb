@@ -175,7 +175,7 @@ export const Grid = withDisplayName('Grid')(({
                 if (scrollTop < bodyRef.scrollHeight - bodyRef.clientHeight && bodyRef.scrollTop < scrollTop) {
                     setAutoScroll(false);
                 }
-            } else if (bodyRef.scrollTop + bodyRef.offsetHeight >= bodyRef.scrollHeight - 50) {
+            } else if (bodyRef.scrollTop + bodyRef.offsetHeight >= bodyRef.scrollHeight - 10) {
                 setAutoScroll(true);
             }
 

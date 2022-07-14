@@ -55,13 +55,13 @@ describe('BTree', () => {
 
                 const values = Array.from({ length: LENGTH }, (_, i) => i - LENGTH / 2);
                 for (let value of values) {
-                    tree.insert(value);
+                    tree.add(value);
                     validateTree(tree);
                     expect(tree.has(value)).toBe(true);
                 }
 
                 for (let value of values) {
-                    tree.remove(value);
+                    tree.delete(value);
                     validateTree(tree);
                     expect(tree.has(value)).toBe(false);
                 }
@@ -73,14 +73,14 @@ describe('BTree', () => {
                 const values = Array.from({ length: LENGTH }, (_, i) => i - LENGTH / 2);
                 shuffle(values);
                 for (const value of values) {
-                    tree.insert(value);
+                    tree.add(value);
                     validateTree(tree);
                     expect(tree.has(value)).toBe(true);
                 }
 
                 shuffle(values);
                 for (const value of values) {
-                    tree.remove(value);
+                    tree.delete(value);
                     validateTree(tree);
                     expect(tree.has(value)).toBe(false);
                 }

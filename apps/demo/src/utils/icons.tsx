@@ -50,6 +50,7 @@ export function register() {
             WindowConsole: <WindowConsoleRegular style={STYLE} />,
 
             // Required by @fluentui/react
+            Checkmark: <CheckmarkRegular style={STYLE} />,
             StatusCircleCheckmark: <CheckmarkRegular style={STYLE} />,
             ChevronUpSmall: <ChevronUpRegular style={STYLE} />,
             ChevronDownSmall: <ChevronDownRegular style={STYLE} />,
