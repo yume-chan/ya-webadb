@@ -1,13 +1,11 @@
+import type { H264Configuration, ScrcpyVideoStreamPacket } from '@yume-chan/scrcpy';
 import { WritableStream } from '@yume-chan/stream-extra';
-
-import type { ScrcpyVideoStreamPacket } from '../../options/index.js';
-import type { H264Configuration, H264Decoder } from '../types.js';
 
 function toHex(value: number) {
     return value.toString(16).padStart(2, '0').toUpperCase();
 }
 
-export class WebCodecsDecoder implements H264Decoder {
+export class WebCodecsDecoder {
     // Usually, browsers can decode most configurations,
     // So let device choose best profile and level for itself.
     public readonly maxProfile = undefined;

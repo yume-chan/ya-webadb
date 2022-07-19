@@ -32,16 +32,16 @@
     },
     "dependencies": {
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/dataview-bigint-polyfill": "^0.0.16",
-        "@yume-chan/event": "^0.0.16",
-        "@yume-chan/stream-extra": "^0.0.16",
-        "@yume-chan/struct": "^0.0.16",
+        "@yume-chan/dataview-bigint-polyfill": "workspace:^0.0.16",
+        "@yume-chan/event": "workspace:^0.0.16",
+        "@yume-chan/stream-extra": "workspace:^0.0.16",
+        "@yume-chan/struct": "workspace:^0.0.16",
         "tslib": "^2.4.0"
     },
     "devDependencies": {
         "@jest/globals": "^28.1.2",
         "@types/node": "^17.0.17",
-        "@yume-chan/ts-package-builder": "^1.0.0",
+        "@yume-chan/ts-package-builder": "workspace:^1.0.0",
         "cross-env": "^7.0.3",
         "jest": "^28.1.2",
         "ts-jest": "^28.0.5",

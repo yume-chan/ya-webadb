@@ -1,12 +1,11 @@
 {
-    "name": "@yume-chan/b-tree",
+    "name": "@yume-chan/scrcpy-decoder-webcodecs",
     "version": "0.0.16",
-    "description": "A B-tree implementation in TypeScript",
+    "description": "TypeScript implementation of Scrcpy.",
     "keywords": [
-        "data-structure",
-        "tree",
-        "b-tree",
-        "typescript"
+        "adb",
+        "android-phone",
+        "scrcpy-decoder-webcodecs"
     ],
     "license": "MIT",
     "author": {
@@ -14,11 +13,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/b-tree#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/scrcpy-decoder-webcodecs#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/b-tree"
+        "directory": "packages/scrcpy-decoder-webcodecs"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
@@ -33,6 +32,9 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
+        "@types/dom-webcodecs": "^0.1.3",
+        "@yume-chan/stream-extra": "workspace:^0.0.16",
+        "@yume-chan/scrcpy": "workspace:^0.0.16",
         "tslib": "^2.4.0"
     },
     "devDependencies": {

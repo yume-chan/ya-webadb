@@ -1,5 +1,5 @@
 import { Adb, AdbSubprocessNoneProtocol, AdbSubprocessProtocol, AdbSync } from '@yume-chan/adb';
-import { DecodeUtf8Stream, InspectStream, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
+import { AbortController, DecodeUtf8Stream, InspectStream, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream, type ReadableStreamDefaultController, type ReadableStreamDefaultReader, type ReadableWritablePair } from '@yume-chan/stream-extra';
 
 import { ScrcpyControlMessageSerializer } from '../control/index.js';
 import { ScrcpyDeviceMessageDeserializeStream, type ScrcpyDeviceMessage } from '../device-message/index.js';

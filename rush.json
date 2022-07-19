@@ -24,7 +24,7 @@
      * Specify one of: "pnpmVersion", "npmVersion", or "yarnVersion".  See the Rush documentation
      * for details about these alternatives.
      */
-    "pnpmVersion": "6.32.24",
+    "pnpmVersion": "7.5.2",
     // "npmVersion": "4.5.0",
     // "yarnVersion": "1.9.4",
     /**
@@ -46,7 +46,7 @@
          *
          * The default value is "local".
          */
-        // "pnpmStore": "local",
+        "pnpmStore": "global",
         /**
          * If true, then Rush will add the "--strict-peer-dependencies" option when invoking PNPM.
          * This causes "rush install" to fail if there are unsatisfied peer dependencies, which is
@@ -87,7 +87,7 @@
          *
          * The default value is false.
          */
-        "preventManualShrinkwrapChanges": true
+        "preventManualShrinkwrapChanges": true,
         /**
          * If true, then `rush install` will use the PNPM workspaces feature to perform the
          * install.
@@ -102,7 +102,7 @@
          *
          * This option is experimental. The default value is false.
          */
-        // "useWorkspaces": true
+        "useWorkspaces": true
     },
     /**
      * Older releases of the Node.js engine may be missing features required by your system.
@@ -487,6 +487,16 @@
         {
             "packageName": "@yume-chan/scrcpy",
             "projectFolder": "libraries/scrcpy",
+            "versionPolicyName": "adb"
+        },
+        {
+            "packageName": "@yume-chan/scrcpy-decoder-tinyh264",
+            "projectFolder": "libraries/scrcpy-decoder-tinyh264",
+            "versionPolicyName": "adb"
+        },
+        {
+            "packageName": "@yume-chan/scrcpy-decoder-webcodecs",
+            "projectFolder": "libraries/scrcpy-decoder-webcodecs",
             "versionPolicyName": "adb"
         },
         {

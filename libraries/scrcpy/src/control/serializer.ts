@@ -1,4 +1,4 @@
-import type { WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
+import type { WritableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 
 import type { ScrcpyInjectScrollControlMessage1_22, ScrcpyOptions } from '../options/index.js';
 import { AndroidKeyEventAction, ScrcpyInjectKeyCodeControlMessage } from './inject-keycode.js';

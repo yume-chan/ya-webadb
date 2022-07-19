@@ -1,6 +1,10 @@
 import type { AndroidCodecLevel, AndroidCodecProfile } from '../../codec.js';
 import type { ScrcpyOptionValue } from '../types.js';
 
+/**
+ * If the option you need is not in this type,
+ * please file an issue on GitHub.
+ */
 export interface CodecOptionsInit {
     profile: AndroidCodecProfile;
     level: AndroidCodecLevel;

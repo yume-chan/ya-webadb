@@ -25,9 +25,7 @@ It's compatible with the official Scrcpy server binaries.
   - [Reading device messages](#reading-device-messages)
 - [Consume the streams](#consume-the-streams)
 - [Video stream](#video-stream)
-- [Web Decoders](#web-decoders)
-  - [WebCodecs decoder](#webcodecs-decoder)
-  - [TinyH264 decoder](#tinyh264-decoder)
+- [Decode video stream](#decode-video-stream)
 
 ## Transport agnostic
 
@@ -324,38 +322,6 @@ Otherwise, both `configuration` and `frame` packets are available.
 * `configuration` packets contain the parsed SPS data, and can be used to initialize a video decoder.
 * `pts` (and `keyframe` field from server version 1.23) fields in `frame` packets are available to help decode the video.
 
-## Web Decoders
+## Decode video stream
 
-There are two built-in decoders for using in Web Browsers:
-
-| Name              | Chrome | Firefox | Safari | Performance                     | Supported H.264 profile/level |
-| ----------------- | ------ | ------- | ------ | ------------------------------- | ----------------------------- |
-| WebCodecs decoder | 94     | No      | No     | High with Hardware acceleration | High level 5                  |
-| TinyH264 decoder  | 57     | 52      | 11     | Poor                            | Baseline level 4              |
-
-General usage:
-
-```ts
-const decoder = new WebCodecsDecoder(); // `TinyH264Decoder`
-document.body.appendChild(decoder.element); // It draws frames onto `decoder.element`
-
-videoPacketStream
-    .pipeTo(decoder.writable)
-    .catch(() => { });
-```
-
-### WebCodecs decoder
-
-Using the [WebCodecs API](https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API). The video stream will be decoded into `VideoFrame`s and drawn onto a 2D canvas.
-
-It has no dependencies and high compatibility/performance, but are only available on recent versions of Chrome.
-
-### TinyH264 decoder
-
-It's the old Android H.264 software decoder (now deprecated and removed), compiled into WebAssembly, and wrapped in Web Worker to prevent blocking the main thread.
-
-The video stream will be decoded into YUV frames, then converted to RGB using a WebGL shader.
-
-It depends on `tinyh264`, `yuv-buffer` and `yuv-canvas` packages, which are not automatically installed.
-
-The bundler you use must also support the `new Worker(new URL('./worker.js', import.meta.url))` syntax. It's known to work with Webpack 5.
+`@yume-chan/scrcpy-decoder-tinyh264` and `@yume-chan/scrcpy-decoder-webcodecs` can be used to decode and render the video stream in Browser environments. Refer to their README files for compatibility and usage information.

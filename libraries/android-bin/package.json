@@ -31,12 +31,12 @@
     },
     "devDependencies": {
         "typescript": "^4.7.4",
-        "@yume-chan/ts-package-builder": "^1.0.0"
+        "@yume-chan/ts-package-builder": "workspace:^1.0.0"
     },
     "dependencies": {
-        "@yume-chan/adb": "^0.0.16",
-        "@yume-chan/stream-extra": "^0.0.16",
-        "@yume-chan/struct": "^0.0.16",
+        "@yume-chan/adb": "workspace:^0.0.16",
+        "@yume-chan/stream-extra": "workspace:^0.0.16",
+        "@yume-chan/struct": "workspace:^0.0.16",
         "tslib": "^2.4.0"
     }
 }

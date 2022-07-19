@@ -1,7 +1,7 @@
 import type { Adb } from '@yume-chan/adb';
 import { delay } from '@yume-chan/async';
 import type { Disposable } from '@yume-chan/event';
-import type { ReadableStream, ReadableWritablePair } from '@yume-chan/stream-extra';
+import { TransformStream, type ReadableStream, type ReadableStreamDefaultReader, type ReadableWritablePair } from '@yume-chan/stream-extra';
 import type { ValueOrPromise } from '@yume-chan/struct';
 
 export interface AdbScrcpyConnectionOptions {

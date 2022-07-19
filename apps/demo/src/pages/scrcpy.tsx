@@ -8,8 +8,10 @@ import Head from "next/head";
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
 import { ADB_SYNC_MAX_PACKET_SIZE } from '@yume-chan/adb';
-import { EventEmitter } from "@yume-chan/event";
-import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, AndroidScreenPowerMode, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyDeviceMessageType, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyOptionsInit1_24, ScrcpyVideoOrientation, TinyH264Decoder, WebCodecsDecoder, type H264Decoder, type H264DecoderConstructor, type ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
+import { Disposable, EventEmitter } from "@yume-chan/event";
+import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, AndroidScreenPowerMode, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyDeviceMessageType, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyOptionsInit1_24, ScrcpyVideoOrientation, type ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
+import { TinyH264Decoder } from '@yume-chan/scrcpy-decoder-tinyh264';
+import { WebCodecsDecoder } from '@yume-chan/scrcpy-decoder-webcodecs';
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
 import { ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
 
@@ -90,6 +92,19 @@ function clamp(value: number, min: number, max: number): number {
     }
 
     return value;
+}
+
+export interface H264Decoder extends Disposable {
+    readonly maxProfile: AndroidCodecProfile | undefined;
+    readonly maxLevel: AndroidCodecLevel | undefined;
+
+    readonly renderer: HTMLElement;
+    readonly frameRendered: number;
+    readonly writable: WritableStream<ScrcpyVideoStreamPacket>;
+}
+
+export interface H264DecoderConstructor {
+    new(): H264Decoder;
 }
 
 interface DecoderDefinition {

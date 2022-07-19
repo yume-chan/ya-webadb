@@ -1,7 +1,6 @@
 import type { TransformStream } from '@yume-chan/stream-extra';
 
 import type { ScrcpyControlMessageType } from '../control/index.js';
-import type { H264Configuration } from '../decoder/index.js';
 import type { ScrcpyBackOrScreenOnControlMessage1_18 } from './1_18.js';
 import type { ScrcpyInjectScrollControlMessage1_22 } from './1_22.js';
 
@@ -27,6 +26,24 @@ export function toScrcpyOptionValue<T>(value: any, empty: T): string | T {
     }
 
     return `${value}`;
+}
+
+export interface H264Configuration {
+    profileIndex: number;
+    constraintSet: number;
+    levelIndex: number;
+
+    encodedWidth: number;
+    encodedHeight: number;
+
+    cropLeft: number;
+    cropRight: number;
+
+    cropTop: number;
+    cropBottom: number;
+
+    croppedWidth: number;
+    croppedHeight: number;
 }
 
 export interface ScrcpyVideoStreamConfigurationPacket {

@@ -9,6 +9,7 @@ coverage
 jest.config.js
 
 tsconfig.json
+tsconfig.test.json
 
 # Logs
 *.log
