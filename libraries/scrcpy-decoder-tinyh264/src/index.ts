@@ -1,5 +1,5 @@
 import { PromiseResolver } from '@yume-chan/async';
-import { AndroidCodecLevel, AndroidCodecProfile, H264Decoder, type H264Configuration, type ScrcpyVideoStreamPacket } from '@yume-chan/scrcpy';
+import { AndroidCodecLevel, AndroidCodecProfile, type H264Configuration, type ScrcpyVideoStreamPacket } from '@yume-chan/scrcpy';
 import { WritableStream } from '@yume-chan/stream-extra';
 
 import { createTinyH264Wrapper, type TinyH264Wrapper } from './wrapper.js';
@@ -17,7 +17,7 @@ function initialize() {
     return cachedInitializePromise;
 }
 
-export class TinyH264Decoder implements H264Decoder {
+export class TinyH264Decoder {
     public readonly maxProfile = AndroidCodecProfile.Baseline;
 
     public readonly maxLevel = AndroidCodecLevel.Level4;
