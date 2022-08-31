@@ -1,4 +1,3 @@
-
 ## Development
 
 The repository uses [Rush](https://rushjs.io/) for monorepo management.
@@ -7,6 +6,15 @@ The repository uses [Rush](https://rushjs.io/) for monorepo management.
 
 ```sh
 $ npm i -g @microsoft/rush
+```
+
+### Get code
+
+The build script only works inside of a Git repository, so, always use `git` to clone this repository. "Download ZIP" option in GitHub code menu or source code tarball in GitHub releases will NOT work.
+
+```sh
+git clone https://github.com/yume-chan/ya-webadb.git
+cd ya-webadb
 ```
 
 ### Install dependencies
@@ -23,7 +31,7 @@ $ rush update
     $ rush build
     ```
 
-2. Watch and rebuild all libraries:
+2. Watch changes and rebuild in all libraries:
 
     ```sh
     $ rush build:watch
