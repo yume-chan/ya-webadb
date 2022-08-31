@@ -25,26 +25,26 @@ $ rush update
 
 ### Everyday commands
 
-1. Build all packages:
+* Build all packages:
 
     ```sh
     $ rush build
     ```
 
-2. Watch changes and rebuild in all libraries:
+* Watch changes and rebuild in all libraries:
 
     ```sh
     $ rush build:watch
     ```
 
-3. Start demo dev-server:
+* Start demo's dev-server:
 
     ```sh
     $ cd apps/demo
     $ npm run dev
     ```
 
-Usually you need two terminals to run both 2 and 3.
+Usually you need two terminals to run both 2 and 3 for testing your changes.
 
 ## FAQ
 
