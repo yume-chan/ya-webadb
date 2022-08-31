@@ -10,7 +10,7 @@ $ npm i -g @microsoft/rush
 
 ### Get code
 
-The build script only works inside of a Git repository, so, always use `git` to clone this repository. "Download ZIP" option in GitHub code menu or source code tarball in GitHub releases will NOT work.
+The build script only works inside Git repositories, so, always use `git` to clone this repository. "Download ZIP" option in GitHub code menu or source code tarball in GitHub releases will NOT work.
 
 ```sh
 git clone https://github.com/yume-chan/ya-webadb.git
