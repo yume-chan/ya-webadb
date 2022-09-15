@@ -46,6 +46,21 @@ $ rush update
 
 Usually you need two terminals to run both 2 and 3 for testing your changes.
 
+## Deploy Demo
+
+The demo is built with [Next.js](https://nextjs.org/), which is a full-stack React framework, usually requires a Node.js environment to run.
+
+However, since the demo doesn't have any server-side code, the most simple deployment method is to use the [Static HTML Export](https://nextjs.org/docs/advanced-features/static-html-export) feature of Next.js, which generates pre-rendered, fully static HTML files, that can be deployed to any static website hosting services (e.g. GitHub Pages).
+
+To export static deployable HTML files, after running `rush build` command, run:
+
+```sh
+cd apps/demo
+npx next export
+```
+
+This creates an `out` folder, which contains the exported HTML files and all the resources.
+
 ## FAQ
 
 ### 1. WebUSB and File downloading doesn't when developing/self-host?
