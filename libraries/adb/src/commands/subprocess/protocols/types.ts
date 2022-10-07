@@ -6,17 +6,17 @@ import type { AdbSocket } from '../../../socket/index.js';
 
 export interface AdbSubprocessProtocol {
     /**
-     * A WritableStream that writes to the `stdin` pipe.
+     * A WritableStream that writes to the `stdin` stream.
      */
     readonly stdin: WritableStream<Uint8Array>;
 
     /**
-     * The `stdout` pipe of the process.
+     * The `stdout` stream of the process.
      */
     readonly stdout: ReadableStream<Uint8Array>;
 
     /**
-     * The `stderr` pipe of the process.
+     * The `stderr` stream of the process.
      *
      * Note: Some `AdbSubprocessProtocol` doesn't separate `stdout` and `stderr`,
      * All output will be sent to `stdout`.

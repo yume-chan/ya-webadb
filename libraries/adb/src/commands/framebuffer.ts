@@ -7,19 +7,6 @@ const Version =
     new Struct({ littleEndian: true })
         .uint32('version');
 
-/*
- * ADB uses 8 int32 fields to describe bit depths
- * The only combination I have seen is RGBA8888, which is
- *   red_offset:   0
- *   red_length:   8
- *   blue_offset:  16
- *   blue_length:  8
- *   green_offset: 8
- *   green_length: 8
- *   alpha_offset: 24
- *   alpha_length: 8
- */
-
 export const AdbFrameBufferV1 =
     new Struct({ littleEndian: true })
         .uint32('bpp')
@@ -57,6 +44,22 @@ export const AdbFrameBufferV2 =
 
 export type AdbFrameBufferV2 = typeof AdbFrameBufferV2['TDeserializeResult'];
 
+/**
+ * ADB uses 8 int32 fields to describe bit depths
+ *
+ * The only combination I have seen is RGBA8888, which is
+ *
+ *   red_offset:   0
+ *   red_length:   8
+ *   blue_offset:  16
+ *   blue_length:  8
+ *   green_offset: 8
+ *   green_length: 8
+ *   alpha_offset: 24
+ *   alpha_length: 8
+ *
+ * But it doesn't mean that other combinations are not possible.
+ */
 export type AdbFrameBuffer = AdbFrameBufferV1 | AdbFrameBufferV2;
 
 export async function framebuffer(adb: Adb): Promise<AdbFrameBuffer> {
@@ -65,6 +68,7 @@ export async function framebuffer(adb: Adb): Promise<AdbFrameBuffer> {
     const { version } = await Version.deserialize(stream);
     switch (version) {
         case 1:
+            // TODO: AdbFrameBuffer: does all v1 responses uses the same color space? Add it so the command returns same format for all versions.
             return AdbFrameBufferV1.deserialize(stream);
         case 2:
             return AdbFrameBufferV2.deserialize(stream);

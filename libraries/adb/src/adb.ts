@@ -63,6 +63,7 @@ export class Adb implements Closeable {
                     }
                 }
             }), {
+                // Don't cancel the source ReadableStream on AbortSignal abort.
                 preventCancel: true,
                 signal: abortController.signal,
             })
@@ -146,7 +147,7 @@ export class Adb implements Closeable {
     private _device: string | undefined;
     public get device() { return this._device; }
 
-    private _features: AdbFeatures[] | undefined;
+    private _features: AdbFeatures[] = [];
     public get features() { return this._features; }
 
     public readonly subprocess: AdbSubprocess;
@@ -190,8 +191,6 @@ export class Adb implements Closeable {
     }
 
     private parseBanner(banner: string): void {
-        this._features = [];
-
         const pieces = banner.split('::');
         if (pieces.length > 1) {
             const props = pieces[1]!;
@@ -224,8 +223,13 @@ export class Adb implements Closeable {
         }
     }
 
-    public addIncomingSocketHandler(handler: AdbIncomingSocketHandler) {
-        return this.dispatcher.addIncomingSocketHandler(handler);
+    /**
+     * Add a handler for incoming socket.
+     * @param handler A function to call with new incoming sockets. It must return `true` if it accepts the socket.
+     * @returns A function to remove the handler.
+     */
+    public onIncomingSocket(handler: AdbIncomingSocketHandler) {
+        return this.dispatcher.onIncomingSocket(handler);
     }
 
     public async createSocket(service: string): Promise<AdbSocket> {

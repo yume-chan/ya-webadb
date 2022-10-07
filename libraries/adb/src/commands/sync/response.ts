@@ -1,5 +1,5 @@
 import type { BufferedReadableStream } from '@yume-chan/stream-extra';
-import Struct, { type StructAsyncDeserializeStream, type StructLike, type StructValueType } from '@yume-chan/struct';
+import Struct, { StructValueType, type StructLike } from '@yume-chan/struct';
 
 import { decodeUtf8 } from '../../utils/index.js';
 
@@ -15,25 +15,6 @@ export enum AdbSyncResponseId {
     Fail = 'FAIL',
 }
 
-// DONE responses' size are always same as the request's normal response.
-// For example DONE responses for LIST requests are 16 bytes (same as DENT responses),
-// but DONE responses for STAT requests are 12 bytes (same as STAT responses)
-// So we need to know responses' size in advance.
-export class AdbSyncDoneResponse implements StructLike<AdbSyncDoneResponse> {
-    private length: number;
-
-    public readonly id = AdbSyncResponseId.Done;
-
-    public constructor(length: number) {
-        this.length = length;
-    }
-
-    public async deserialize(stream: StructAsyncDeserializeStream): Promise<this> {
-        await stream.read(this.length);
-        return this;
-    }
-}
-
 export const AdbSyncFailResponse =
     new Struct({ littleEndian: true })
         .uint32('messageLength')
@@ -42,24 +23,46 @@ export const AdbSyncFailResponse =
             throw new Error(object.message);
         });
 
-export async function adbSyncReadResponse<T extends Record<string, StructLike<any>>>(
+export async function adbSyncReadResponse<T>(
     stream: BufferedReadableStream,
-    types: T,
-    // When `T` is a union type, `T[keyof T]` only includes their common keys.
-    // For example, let `type T = { a: string, b: string } | { a: string, c: string}`,
-    // `keyof T` is `'a'`, not `'a' | 'b' | 'c'`.
-    // However, `T extends unknown ? keyof T : never` will distribute `T`,
-    // so returns all keys.
-): Promise<StructValueType<T extends unknown ? T[keyof T] : never>> {
-    const id = decodeUtf8(await stream.read(4));
-
-    if (id === AdbSyncResponseId.Fail) {
-        await AdbSyncFailResponse.deserialize(stream);
+    id: AdbSyncResponseId,
+    type: StructLike<T>,
+): Promise<T> {
+    const actualId = decodeUtf8(await stream.read(4));
+    switch (actualId) {
+        case AdbSyncResponseId.Fail:
+            await AdbSyncFailResponse.deserialize(stream);
+            throw new Error('Unreachable');
+        case id:
+            return await type.deserialize(stream);
+        default:
+            throw new Error(`Expected '${id}', but got '${actualId}'`);
     }
+}
 
-    if (types[id]) {
-        return types[id]!.deserialize(stream);
+export async function* adbSyncReadResponses<T extends Struct<any, any, any, any>>(
+    stream: BufferedReadableStream,
+    id: AdbSyncResponseId,
+    type: T,
+): AsyncGenerator<StructValueType<T>, void, void> {
+    while (true) {
+        const actualId = decodeUtf8(await stream.read(4));
+        switch (actualId) {
+            case AdbSyncResponseId.Fail:
+                await AdbSyncFailResponse.deserialize(stream);
+                throw new Error('Unreachable');
+            case AdbSyncResponseId.Done:
+                // `DONE` responses' size are always same as the request's normal response.
+                //
+                // For example, `DONE` responses for `LIST` requests are 16 bytes (same as `DENT` responses),
+                // but `DONE` responses for `STAT` requests are 12 bytes (same as `STAT` responses).
+                await stream.read(type.size);
+                return;
+            case id:
+                yield await type.deserialize(stream);
+                break;
+            default:
+                throw new Error(`Expected '${id}' or '${AdbSyncResponseId.Done}', but got '${actualId}'`);
+        }
     }
-
-    throw new Error(`Expected '${Object.keys(types).join(', ')}', but got '${id}'`);
 }

@@ -19,15 +19,38 @@ addRange('0', '9');
 addRange('+', '+');
 addRange('/', '/');
 
+/**
+ * Calculate the required length of the output buffer for the given input length.
+ *
+ * @param inputLength Length of the input in bytes
+ * @returns Length of the output in bytes
+ */
 export function calculateBase64EncodedLength(inputLength: number): [outputLength: number, paddingLength: number] {
     const remainder = inputLength % 3;
     const paddingLength = remainder !== 0 ? 3 - remainder : 0;
     return [(inputLength + paddingLength) / 3 * 4, paddingLength];
 }
 
+/**
+ * Encode the given input buffer into base64.
+ *
+ * @param input The input buffer
+ * @returns The encoded output buffer
+ */
 export function encodeBase64(
     input: Uint8Array,
 ): Uint8Array;
+/**
+ * Encode the given input into base64 and write it to the output buffer.
+ *
+ * The output buffer must be at least as long as the value returned by `calculateBase64EncodedLength`.
+ * It can points to the same buffer as the input, as long as `output.offset <= input.offset - input.length / 3`,
+ * or `output.offset >= input.offset - 1`
+ *
+ * @param input The input buffer
+ * @param output The output buffer
+ * @returns The number of bytes written to the output buffer
+ */
 export function encodeBase64(
     input: Uint8Array,
     output: Uint8Array,

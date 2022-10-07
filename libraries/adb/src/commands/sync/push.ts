@@ -9,10 +9,6 @@ export const AdbSyncOkResponse =
     new Struct({ littleEndian: true })
         .uint32('unused');
 
-const ResponseTypes = {
-    [AdbSyncResponseId.Ok]: AdbSyncOkResponse,
-};
-
 export const ADB_SYNC_MAX_PACKET_SIZE = 64 * 1024;
 
 export function adbSyncPush(
@@ -34,7 +30,7 @@ export function adbSyncPush(
             },
             async close() {
                 await adbSyncWriteRequest(writer, AdbSyncRequestId.Done, mtime);
-                await adbSyncReadResponse(stream, ResponseTypes);
+                await adbSyncReadResponse(stream, AdbSyncResponseId.Ok, AdbSyncOkResponse);
             },
         }),
         new ChunkStream(packetSize)

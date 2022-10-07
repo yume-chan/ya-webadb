@@ -168,7 +168,12 @@ export class AdbPacketDispatcher implements Closeable {
         // the device may also respond with two `CLSE` packets.
     }
 
-    public addIncomingSocketHandler(handler: AdbIncomingSocketHandler): RemoveEventListener {
+    /**
+     * Add a handler for incoming socket.
+     * @param handler A function to call with new incoming sockets. It must return `true` if it accepts the socket.
+     * @returns A function to remove the handler.
+     */
+    public onIncomingSocket(handler: AdbIncomingSocketHandler): RemoveEventListener {
         this._incomingSocketHandlers.add(handler);
         const remove = () => {
             this._incomingSocketHandlers.delete(handler);
@@ -178,7 +183,7 @@ export class AdbPacketDispatcher implements Closeable {
     }
 
     private async handleOpen(packet: AdbPacketData) {
-        // AsyncOperationManager doesn't support get and skip an ID
+        // `AsyncOperationManager` doesn't support skipping IDs
         // Use `add` + `resolve` to simulate this behavior
         const [localId] = this.initializers.add<number>();
         this.initializers.resolve(localId, undefined);

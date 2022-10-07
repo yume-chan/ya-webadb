@@ -13,6 +13,7 @@ export function install(
     return new WrapWritableStream<Uint8Array>({
         async start() {
             // TODO: install: support other install apk methods (streaming, etc.)
+            // TODO: install: support split apk formats (`adb install-multiple`)
 
             // Upload apk file to tmp folder
             sync = await adb.sync();

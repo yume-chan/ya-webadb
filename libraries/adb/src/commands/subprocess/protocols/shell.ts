@@ -1,5 +1,5 @@
 import { PromiseResolver } from '@yume-chan/async';
-import { pipeFrom, PushReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, type WritableStreamDefaultWriter, type PushReadableStreamController, type ReadableStream } from '@yume-chan/stream-extra';
+import { pipeFrom, PushReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, type PushReadableStreamController, type ReadableStream, type WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
 import Struct, { placeholder, type StructValueType } from '@yume-chan/struct';
 
 import type { Adb } from '../../../adb.js';
@@ -103,7 +103,7 @@ class MultiplexStream<T>{
  */
 export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     public static isSupported(adb: Adb) {
-        return adb.features!.includes(AdbFeatures.ShellV2);
+        return adb.features.includes(AdbFeatures.ShellV2);
     }
 
     public static async pty(adb: Adb, command: string) {
@@ -179,7 +179,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
             data: encodeUtf8(
                 // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
                 // However, according to https://linux.die.net/man/4/tty_ioctl
-                // `x_pixels` and `y_pixels` are not used, so always passing `0` is fine.
+                // `x_pixels` and `y_pixels` are unused, so always sending `0` should be fine.
                 `${rows}x${cols},0x0\0`
             ),
         });

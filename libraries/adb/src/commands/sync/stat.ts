@@ -96,50 +96,26 @@ export const AdbSyncStatResponse =
 
 export type AdbSyncStatResponse = typeof AdbSyncStatResponse['TDeserializeResult'];
 
-const STAT_RESPONSE_TYPES = {
-    [AdbSyncResponseId.Stat]: AdbSyncStatResponse,
-};
-
-const LSTAT_RESPONSE_TYPES = {
-    [AdbSyncResponseId.Lstat]: AdbSyncLstatResponse,
-};
-
-const LSTAT_V2_RESPONSE_TYPES = {
-    [AdbSyncResponseId.Lstat2]: AdbSyncStatResponse,
-};
-
 export async function adbSyncLstat(
     stream: BufferedReadableStream,
     writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
     v2: boolean,
 ): Promise<AdbSyncStat> {
-    let requestId: AdbSyncRequestId.Lstat | AdbSyncRequestId.Lstat2;
-    let responseTypes: typeof LSTAT_RESPONSE_TYPES | typeof LSTAT_V2_RESPONSE_TYPES;
-
     if (v2) {
-        requestId = AdbSyncRequestId.Lstat2;
-        responseTypes = LSTAT_V2_RESPONSE_TYPES;
+        await adbSyncWriteRequest(writer, AdbSyncRequestId.Lstat2, path);
+        return await adbSyncReadResponse(stream, AdbSyncResponseId.Lstat2, AdbSyncStatResponse);
     } else {
-        requestId = AdbSyncRequestId.Lstat;
-        responseTypes = LSTAT_RESPONSE_TYPES;
-    }
-
-    await adbSyncWriteRequest(writer, requestId, path);
-    const response = await adbSyncReadResponse(stream, responseTypes);
-
-    switch (response.id) {
-        case AdbSyncResponseId.Lstat:
-            return {
-                mode: response.mode,
-                // Convert to `BigInt` to make it compatible with `AdbSyncStatResponse`
-                size: BigInt(response.size),
-                mtime: BigInt(response.mtime),
-                get type() { return response.type; },
-                get permission() { return response.permission; },
-            };
-        default:
-            return response;
+        await adbSyncWriteRequest(writer, AdbSyncRequestId.Lstat, path);
+        const response = await adbSyncReadResponse(stream, AdbSyncResponseId.Lstat, AdbSyncLstatResponse);
+        return {
+            mode: response.mode,
+            // Convert to `BigInt` to make it compatible with `AdbSyncStatResponse`
+            size: BigInt(response.size),
+            mtime: BigInt(response.mtime),
+            get type() { return response.type; },
+            get permission() { return response.permission; },
+        };
     }
 }
 
@@ -149,5 +125,5 @@ export async function adbSyncStat(
     path: string,
 ): Promise<AdbSyncStatResponse> {
     await adbSyncWriteRequest(writer, AdbSyncRequestId.Stat, path);
-    return await adbSyncReadResponse(stream, STAT_RESPONSE_TYPES);
+    return await adbSyncReadResponse(stream, AdbSyncResponseId.Stat, AdbSyncStatResponse);
 }

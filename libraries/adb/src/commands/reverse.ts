@@ -41,7 +41,7 @@ export class AdbReverseCommand extends AutoDisposable {
         super();
 
         this.adb = adb;
-        this.addDisposable(this.adb.addIncomingSocketHandler(this.handleIncomingSocket));
+        this.addDisposable(this.adb.onIncomingSocket(this.handleIncomingSocket));
     }
 
     protected handleIncomingSocket = async (socket: AdbSocket) => {
@@ -80,8 +80,8 @@ export class AdbReverseCommand extends AutoDisposable {
     /**
      * @param deviceAddress The address adbd on device is listening on. Can be `tcp:0` to let adbd choose an available TCP port by itself.
      * @param localAddress Native ADB client will open a connection to this address when reverse connection received. In WebADB, it's only used to uniquely identify a reverse tunnel registry, `handler` will be called to handle the connection.
-     * @param handler A callback to handle incoming connections
-     * @returns If `deviceAddress` is `tcp:0`, return `tcp:{ACTUAL_LISTENING_PORT}`; otherwise, return `deviceAddress`.
+     * @param handler A callback to handle incoming connections. It must return `true` if it accepts the connection.
+     * @returns `tcp:{ACTUAL_LISTENING_PORT}`, If `deviceAddress` is `tcp:0`; otherwise, `deviceAddress`.
      */
     public async add(
         deviceAddress: string,
@@ -91,7 +91,7 @@ export class AdbReverseCommand extends AutoDisposable {
         const stream = await this.sendRequest(`reverse:forward:${deviceAddress};${localAddress}`);
 
         // `tcp:0` tells the device to pick an available port.
-        // Begin with Android 8, device will respond with the selected port for all `tcp:` requests.
+        // On Android >=8, device will respond with the selected port for all `tcp:` requests.
         if (deviceAddress.startsWith('tcp:')) {
             let length: number | undefined;
             try {
@@ -101,7 +101,7 @@ export class AdbReverseCommand extends AutoDisposable {
                     throw e;
                 }
 
-                // Device before Android 8 doesn't have this response.
+                // Android <8 doesn't have this response.
                 // (the stream is closed now)
                 // Can be safely ignored.
             }

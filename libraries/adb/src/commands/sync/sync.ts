@@ -38,20 +38,20 @@ export class AdbSync extends AutoDisposable {
     protected sendLock = this.addDisposable(new AutoResetEvent());
 
     public get supportsStat(): boolean {
-        return this.adb.features!.includes(AdbFeatures.StatV2);
+        return this.adb.features.includes(AdbFeatures.StatV2);
     }
 
     public get supportsList2(): boolean {
-        return this.adb.features!.includes(AdbFeatures.ListV2);
+        return this.adb.features.includes(AdbFeatures.ListV2);
     }
 
     public get fixedPushMkdir(): boolean {
-        return this.adb.features!.includes(AdbFeatures.FixedPushMkdir);
+        return this.adb.features.includes(AdbFeatures.FixedPushMkdir);
     }
 
     public get needPushMkdirWorkaround(): boolean {
         // https://android.googlesource.com/platform/packages/modules/adb/+/91768a57b7138166e0a3d11f79cd55909dda7014/client/file_sync_client.cpp#1361
-        return this.adb.features!.includes(AdbFeatures.ShellV2) && !this.fixedPushMkdir;
+        return this.adb.features.includes(AdbFeatures.ShellV2) && !this.fixedPushMkdir;
     }
 
     public constructor(adb: Adb, socket: AdbSocket) {

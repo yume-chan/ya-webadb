@@ -96,7 +96,7 @@ export function parsePrivateKey(key: Uint8Array): [n: bigint, d: bigint] {
 
 // Taken from https://stackoverflow.com/a/51562038
 // I can't understand, but it does work
-// Only used with numbers less than 2^32 so doesn't need BigInt
+// Only used with numbers smaller than 2^32 so doesn't need BigInt
 export function modInverse(a: number, m: number) {
     a = (a % m + m) % m;
     if (!a || m < 2) {

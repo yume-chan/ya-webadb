@@ -2,7 +2,7 @@ import type { BufferedReadableStream, WritableStreamDefaultWriter } from '@yume-
 import Struct from '@yume-chan/struct';
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from './request.js';
-import { AdbSyncDoneResponse, adbSyncReadResponse, AdbSyncResponseId } from './response.js';
+import { adbSyncReadResponses, AdbSyncResponseId } from './response.js';
 import { AdbSyncLstatResponse, AdbSyncStatResponse, type AdbSyncStat } from './stat.js';
 
 export interface AdbSyncEntry extends AdbSyncStat {
@@ -27,61 +27,28 @@ export const AdbSyncEntry2Response =
 
 export type AdbSyncEntry2Response = typeof AdbSyncEntry2Response['TDeserializeResult'];
 
-const LIST_V1_RESPONSE_TYPES = {
-    [AdbSyncResponseId.Entry]: AdbSyncEntryResponse,
-    [AdbSyncResponseId.Done]: new AdbSyncDoneResponse(AdbSyncEntryResponse.size),
-};
-
-const LIST_V2_RESPONSE_TYPES = {
-    [AdbSyncResponseId.Entry2]: AdbSyncEntry2Response,
-    [AdbSyncResponseId.Done]: new AdbSyncDoneResponse(AdbSyncEntry2Response.size),
-};
-
 export async function* adbSyncOpenDir(
     stream: BufferedReadableStream,
     writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
     v2: boolean,
 ): AsyncGenerator<AdbSyncEntry, void, void> {
-    let requestId: AdbSyncRequestId.List | AdbSyncRequestId.List2;
-    let responseTypes: typeof LIST_V1_RESPONSE_TYPES | typeof LIST_V2_RESPONSE_TYPES;
-
     if (v2) {
-        requestId = AdbSyncRequestId.List2;
-        responseTypes = LIST_V2_RESPONSE_TYPES;
+        await adbSyncWriteRequest(writer, AdbSyncRequestId.List2, path);
+        yield* adbSyncReadResponses(stream, AdbSyncResponseId.Entry2, AdbSyncEntry2Response);
     } else {
-        requestId = AdbSyncRequestId.List;
-        responseTypes = LIST_V1_RESPONSE_TYPES;
-    }
-
-    await adbSyncWriteRequest(writer, requestId, path);
-
-    while (true) {
-        const response = await adbSyncReadResponse(stream, responseTypes);
-        switch (response.id) {
-            case AdbSyncResponseId.Entry:
-                yield {
-                    mode: response.mode,
-                    size: BigInt(response.size),
-                    mtime: BigInt(response.mtime),
-                    get type() { return response.type; },
-                    get permission() { return response.permission; },
-                    name: response.name,
-                };
-                break;
-            case AdbSyncResponseId.Entry2:
-                // `LST2` can return error codes for failed `lstat` calls.
-                // `LIST` just ignores them.
-                // But they only contain `name` so still pretty useless.
-                if (response.error !== 0) {
-                    continue;
-                }
-                yield response;
-                break;
-            case AdbSyncResponseId.Done:
-                return;
-            default:
-                throw new Error('Unexpected response id');
+        await adbSyncWriteRequest(writer, AdbSyncRequestId.List, path);
+        for await (const item of adbSyncReadResponses(stream, AdbSyncResponseId.Entry, AdbSyncEntryResponse)) {
+            // Convert to same format as `AdbSyncEntry2Response` for easier consumption.
+            // However it will add some overhead.
+            yield {
+                mode: item.mode,
+                size: BigInt(item.size),
+                mtime: BigInt(item.mtime),
+                get type() { return item.type; },
+                get permission() { return item.permission; },
+                name: item.name,
+            };
         }
     }
 }

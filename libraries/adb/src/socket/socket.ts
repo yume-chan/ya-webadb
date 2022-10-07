@@ -128,7 +128,7 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
 }
 
 /**
- * AdbSocket is a duplex stream.
+ * A duplex stream representing a socket to ADB daemon.
  *
  * To close it, call either `socket.close()`,
  * `socket.readable.cancel()`, `socket.readable.getReader().cancel()`,

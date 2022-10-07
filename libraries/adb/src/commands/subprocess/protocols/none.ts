@@ -21,7 +21,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
 
     public static async raw(adb: Adb, command: string) {
         // `shell,raw:${command}` also triggers raw mode,
-        // But is not supported before Android 7.
+        // But is not supported on Android version <7.
         return new AdbSubprocessNoneProtocol(await adb.createSocket(`exec:${command}`));
     }
 
@@ -50,6 +50,8 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     public constructor(socket: AdbSocket) {
         this.socket = socket;
 
+        // Link `stdout`, `stderr` and `stdin` together,
+        // so closing any of them will close the others.
         this.duplex = new DuplexStreamFactory<Uint8Array, Uint8Array>({
             close: async () => {
                 await this.socket.close();
@@ -62,7 +64,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     }
 
     public resize() {
-        // Not supported
+        // Not supported, but don't throw.
     }
 
     public kill() {
