@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/scrcpy-decoder-webcodecs",
-    "version": "0.0.16",
+    "version": "0.0.17",
     "description": "TypeScript implementation of Scrcpy.",
     "keywords": [
         "adb",
@@ -33,8 +33,8 @@
     },
     "dependencies": {
         "@types/dom-webcodecs": "^0.1.3",
-        "@yume-chan/stream-extra": "workspace:^0.0.16",
-        "@yume-chan/scrcpy": "workspace:^0.0.16",
+        "@yume-chan/stream-extra": "workspace:^0.0.17",
+        "@yume-chan/scrcpy": "workspace:^0.0.17",
         "tslib": "^2.4.0"
     },
     "devDependencies": {

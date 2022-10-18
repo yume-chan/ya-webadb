@@ -1,6 +1,14 @@
 # Change Log - @yume-chan/scrcpy
 
-This log was last generated on Sat, 28 May 2022 03:56:37 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Oct 2022 09:32:30 GMT and should not be manually modified.
+
+## 0.0.17
+Tue, 18 Oct 2022 09:32:30 GMT
+
+### Updates
+
+- Add standalone types for serializing/deserializing Scrcpy packets
+- Separate decoders to own packages so they don't need optional peer dependencies.
 
 ## 0.0.16
 Sat, 28 May 2022 03:56:37 GMT

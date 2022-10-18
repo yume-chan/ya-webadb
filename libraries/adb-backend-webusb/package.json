@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-backend-webusb",
-    "version": "0.0.16",
+    "version": "0.0.17",
     "description": "Backend for `@yume-chan/adb` using WebUSB API.",
     "keywords": [
         "webusb",
@@ -32,9 +32,9 @@
     },
     "dependencies": {
         "@types/w3c-web-usb": "^1.0.6",
-        "@yume-chan/adb": "workspace:^0.0.16",
-        "@yume-chan/stream-extra": "workspace:^0.0.16",
-        "@yume-chan/struct": "workspace:^0.0.16",
+        "@yume-chan/adb": "workspace:^0.0.17",
+        "@yume-chan/stream-extra": "workspace:^0.0.17",
+        "@yume-chan/struct": "workspace:^0.0.17",
         "tslib": "^2.4.0"
     },
     "devDependencies": {

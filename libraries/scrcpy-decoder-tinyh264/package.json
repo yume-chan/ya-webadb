@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/scrcpy-decoder-tinyh264",
-    "version": "0.0.16",
+    "version": "0.0.17",
     "description": "TypeScript implementation of Scrcpy.",
     "keywords": [
         "adb",
@@ -33,9 +33,9 @@
     },
     "dependencies": {
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/event": "workspace:^0.0.16",
-        "@yume-chan/stream-extra": "workspace:^0.0.16",
-        "@yume-chan/scrcpy": "workspace:^0.0.16",
+        "@yume-chan/event": "workspace:^0.0.17",
+        "@yume-chan/stream-extra": "workspace:^0.0.17",
+        "@yume-chan/scrcpy": "workspace:^0.0.17",
         "tinyh264": "^0.0.7",
         "tslib": "^2.4.0",
         "yuv-buffer": "^1.0.0",

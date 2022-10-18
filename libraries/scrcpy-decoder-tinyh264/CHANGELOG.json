@@ -1,0 +1,17 @@
+{
+  "name": "@yume-chan/scrcpy-decoder-tinyh264",
+  "entries": [
+    {
+      "version": "0.0.17",
+      "tag": "@yume-chan/scrcpy-decoder-tinyh264_v0.0.17",
+      "date": "Tue, 18 Oct 2022 09:32:30 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Separated from `@yume-chan/scrcpy` for simpler dependency management."
+          }
+        ]
+      }
+    }
+  ]
+}
