@@ -6,7 +6,7 @@ It's compatible with the official Scrcpy server binaries.
 
 **WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
 
-- [Transport agnostic](#transport-agnostic)
+- [Basic information](#basic-information)
 - [Prepare server binary](#prepare-server-binary)
   - [`fetch-scrcpy-server`](#fetch-scrcpy-server)
   - [Use the server binary](#use-the-server-binary)
@@ -27,13 +27,21 @@ It's compatible with the official Scrcpy server binaries.
 - [Video stream](#video-stream)
 - [Decode video stream](#decode-video-stream)
 
-## Transport agnostic
+## Basic information
 
-It was initially designed to be used with `@yume-chan/adb`, but now it can also to used with any other transportation.
+Although Scrcpy doesn't install any App on the device, it does have a server binary executable to be run on the device.
+
+With the official Scrcpy client and server, the client uses ADB to transfer the server binary file to the device, run it, and communicate with it via ADB tunnel (the bootstrap process).
+
+The package provides types that can serialize and deserialize Scrcpy protocol messages, but it generally requires you to do the bootstrapping and provide the data stream to the server.
+
+If you are also using `@yume-chan/adb`, this package has a helper class that can complete the bootstrap process using it, doing what the official client does.
+
+**NOTE:** `@yume-chan/adb` is a peer dependency, you need to install it yourself. Types that named begin with `Adb` requires `@yume-chan/adb`, and types that named begin with `Scrcpy` doesn't.
 
 ## Prepare server binary
 
-Scrcpy needs a server binary running on the device in order to work. This package doesn't ship with one.
+This package doesn't include the server binary. It's compatible with many versions of the official server binary, but may not work with future versions due to protocol changes.
 
 You can download the server binary from official releases (https://github.com/Genymobile/scrcpy/releases), or use the built-in `fetch-scrcpy-server` script to automate the process.
 
@@ -41,7 +49,9 @@ The server binary is subject to [Apache License 2.0](https://github.com/Genymobi
 
 ### `fetch-scrcpy-server`
 
-To use the script, first add `gh-release-fetch@3` to `devDependencies` of your `package.json`. It's an optional peer dependency fpr minimized download size.
+This package also has a script that can download the server binary from official releases for you.
+
+To use it, first you need to install the `gh-release-fetch@3` NPM into your project, as it's a peer dependency.
 
 Then you can invoke it in a terminal:
 
@@ -55,7 +65,7 @@ For example:
 $ npx fetch-scrcpy-server 1.24
 ```
 
-You can also add it to the `postinstall` script in your `package.json`. After that, running `npm install` will automatically invoke the script.
+It can also be added to the `postinstall` script in your `package.json`, so running `npm install` will automatically invoke the script.
 
 ```json
 "scripts": {
@@ -127,7 +137,7 @@ console.log(SCRCPY_SERVER_VERSION); // "1.24"
 
 ## Option versions
 
-Scrcpy server options changes over time, and some of them are not backwards compatible. This package provides option types for each version (or range). Using wrong option version usually results in errors.
+Scrcpy server options change over time, and some of them are not backwards compatible. This package provides option types for each version (or range). Using wrong option version usually results in errors.
 
 The latest one may continue to work for future server versions, but there is no guarantee.
 
@@ -140,7 +150,7 @@ The latest one may continue to work for future server versions, but there is no 
 | 1.23      | `ScrcpyOptions1_23` |
 | 1.24      | `ScrcpyOptions1_24` |
 
-When using `AdbScrcpyClient`, there is another `AdbScrcpyOptions` contains `@yume-chan/adb` related logics:
+When using `AdbScrcpyClient`, there are `AdbScrcpyOptions` containing `@yume-chan/adb` related options:
 
 | Version   | Type                   |
 | --------- | ---------------------- |
@@ -149,7 +159,7 @@ When using `AdbScrcpyClient`, there is another `AdbScrcpyOptions` contains `@yum
 
 ## Use with `@yume-chan/adb`
 
-The the server binary needs to be copied to the device and run on it.
+`@yume-chan/adb` is a TypeScript ADB implementation that can run on Web browser. It can be used to bootstrap the server on a device.
 
 ### Push server binary
 
