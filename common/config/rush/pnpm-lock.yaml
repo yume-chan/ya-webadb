@@ -47,21 +47,21 @@ importers:
       '@mdx-js/loader': ^2.1.2
       '@next/mdx': ^12.2.0
       '@types/react': 17.0.27
-      '@yume-chan/adb': workspace:^0.0.16
+      '@yume-chan/adb': workspace:^0.0.17
       '@yume-chan/adb-backend-direct-sockets': workspace:^0.0.9
-      '@yume-chan/adb-backend-webusb': workspace:^0.0.16
+      '@yume-chan/adb-backend-webusb': workspace:^0.0.17
       '@yume-chan/adb-backend-ws': workspace:^0.0.9
-      '@yume-chan/adb-credential-web': workspace:^0.0.16
-      '@yume-chan/android-bin': workspace:^0.0.16
+      '@yume-chan/adb-credential-web': workspace:^0.0.17
+      '@yume-chan/android-bin': workspace:^0.0.17
       '@yume-chan/async': ^2.2.0
       '@yume-chan/b-tree': workspace:^0.0.16
-      '@yume-chan/event': workspace:^0.0.16
-      '@yume-chan/scrcpy': workspace:^0.0.16
-      '@yume-chan/scrcpy-decoder-tinyh264': workspace:^0.0.16
-      '@yume-chan/scrcpy-decoder-webcodecs': workspace:^0.0.16
-      '@yume-chan/stream-extra': workspace:^0.0.16
+      '@yume-chan/event': workspace:^0.0.17
+      '@yume-chan/scrcpy': workspace:^0.0.17
+      '@yume-chan/scrcpy-decoder-tinyh264': workspace:^0.0.17
+      '@yume-chan/scrcpy-decoder-webcodecs': workspace:^0.0.17
+      '@yume-chan/stream-extra': workspace:^0.0.17
       '@yume-chan/stream-saver': ^2.0.6
-      '@yume-chan/struct': workspace:^0.0.16
+      '@yume-chan/struct': workspace:^0.0.17
       eslint: 8.19.0
       eslint-config-next: 12.2.0
       mobx: ^6.6.1
@@ -120,10 +120,10 @@ importers:
       '@jest/globals': ^28.1.2
       '@types/node': ^17.0.17
       '@yume-chan/async': ^2.2.0
-      '@yume-chan/dataview-bigint-polyfill': workspace:^0.0.16
-      '@yume-chan/event': workspace:^0.0.16
-      '@yume-chan/stream-extra': workspace:^0.0.16
-      '@yume-chan/struct': workspace:^0.0.16
+      '@yume-chan/dataview-bigint-polyfill': workspace:^0.0.17
+      '@yume-chan/event': workspace:^0.0.17
+      '@yume-chan/stream-extra': workspace:^0.0.17
+      '@yume-chan/struct': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       cross-env: ^7.0.3
       jest: ^28.1.2
@@ -148,8 +148,8 @@ importers:
 
   ../../libraries/adb-backend-direct-sockets:
     specifiers:
-      '@yume-chan/adb': workspace:^0.0.16
-      '@yume-chan/stream-extra': workspace:^0.0.16
+      '@yume-chan/adb': workspace:^0.0.17
+      '@yume-chan/stream-extra': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       tslib: ^2.4.0
       typescript: ^4.7.4
@@ -164,9 +164,9 @@ importers:
   ../../libraries/adb-backend-webusb:
     specifiers:
       '@types/w3c-web-usb': ^1.0.6
-      '@yume-chan/adb': workspace:^0.0.16
-      '@yume-chan/stream-extra': workspace:^0.0.16
-      '@yume-chan/struct': workspace:^0.0.16
+      '@yume-chan/adb': workspace:^0.0.17
+      '@yume-chan/stream-extra': workspace:^0.0.17
+      '@yume-chan/struct': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       jest: ^28.1.2
       tslib: ^2.4.0
@@ -184,8 +184,8 @@ importers:
 
   ../../libraries/adb-backend-ws:
     specifiers:
-      '@yume-chan/adb': workspace:^0.0.16
-      '@yume-chan/stream-extra': workspace:^0.0.16
+      '@yume-chan/adb': workspace:^0.0.17
+      '@yume-chan/stream-extra': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       jest: ^28.1.2
       tslib: ^2.4.0
@@ -201,7 +201,7 @@ importers:
 
   ../../libraries/adb-credential-web:
     specifiers:
-      '@yume-chan/adb': workspace:^0.0.16
+      '@yume-chan/adb': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       tslib: ^2.4.0
       typescript: ^4.7.4
@@ -214,9 +214,9 @@ importers:
 
   ../../libraries/android-bin:
     specifiers:
-      '@yume-chan/adb': workspace:^0.0.16
-      '@yume-chan/stream-extra': workspace:^0.0.16
-      '@yume-chan/struct': workspace:^0.0.16
+      '@yume-chan/adb': workspace:^0.0.17
+      '@yume-chan/stream-extra': workspace:^0.0.17
+      '@yume-chan/struct': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       tslib: ^2.4.0
       typescript: ^4.7.4
@@ -279,11 +279,11 @@ importers:
   ../../libraries/scrcpy:
     specifiers:
       '@jest/globals': ^28.1.2
-      '@yume-chan/adb': workspace:^0.0.16
+      '@yume-chan/adb': workspace:^0.0.17
       '@yume-chan/async': ^2.2.0
-      '@yume-chan/event': workspace:^0.0.16
-      '@yume-chan/stream-extra': workspace:^0.0.16
-      '@yume-chan/struct': workspace:^0.0.16
+      '@yume-chan/event': workspace:^0.0.17
+      '@yume-chan/stream-extra': workspace:^0.0.17
+      '@yume-chan/struct': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       cross-env: ^7.0.3
       gh-release-fetch: ^3.0.2
@@ -292,7 +292,6 @@ importers:
       tslib: ^2.4.0
       typescript: ^4.7.4
     dependencies:
-      '@yume-chan/adb': link:../adb
       '@yume-chan/async': 2.2.0
       '@yume-chan/event': link:../event
       '@yume-chan/stream-extra': link:../stream-extra
@@ -300,6 +299,7 @@ importers:
       tslib: 2.4.0
     devDependencies:
       '@jest/globals': 28.1.3
+      '@yume-chan/adb': link:../adb
       '@yume-chan/ts-package-builder': link:../../toolchain/ts-package-builder
       cross-env: 7.0.3
       gh-release-fetch: 3.0.2
@@ -311,9 +311,9 @@ importers:
     specifiers:
       '@jest/globals': ^28.1.2
       '@yume-chan/async': ^2.2.0
-      '@yume-chan/event': workspace:^0.0.16
-      '@yume-chan/scrcpy': workspace:^0.0.16
-      '@yume-chan/stream-extra': workspace:^0.0.16
+      '@yume-chan/event': workspace:^0.0.17
+      '@yume-chan/scrcpy': workspace:^0.0.17
+      '@yume-chan/stream-extra': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       cross-env: ^7.0.3
       jest: ^28.1.2
@@ -344,8 +344,8 @@ importers:
     specifiers:
       '@jest/globals': ^28.1.2
       '@types/dom-webcodecs': ^0.1.3
-      '@yume-chan/scrcpy': workspace:^0.0.16
-      '@yume-chan/stream-extra': workspace:^0.0.16
+      '@yume-chan/scrcpy': workspace:^0.0.17
+      '@yume-chan/stream-extra': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       cross-env: ^7.0.3
       jest: ^28.1.2
@@ -369,7 +369,7 @@ importers:
     specifiers:
       '@jest/globals': ^28.1.2
       '@yume-chan/async': ^2.2.0
-      '@yume-chan/struct': workspace:^0.0.16
+      '@yume-chan/struct': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       cross-env: ^7.0.3
       jest: ^28.1.2
@@ -393,7 +393,7 @@ importers:
   ../../libraries/struct:
     specifiers:
       '@jest/globals': ^28.1.2
-      '@yume-chan/dataview-bigint-polyfill': workspace:^0.0.16
+      '@yume-chan/dataview-bigint-polyfill': workspace:^0.0.17
       '@yume-chan/ts-package-builder': workspace:^1.0.0
       cross-env: ^7.0.3
       jest: ^28.1.2
