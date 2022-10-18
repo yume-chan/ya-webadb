@@ -23,7 +23,7 @@ It's compatible with the official Scrcpy server binaries.
   - [Parsing video packets](#parsing-video-packets)
   - [Sending control messages](#sending-control-messages)
   - [Reading device messages](#reading-device-messages)
-- [Consume the streams](#consume-the-streams)
+- [Always read the streams](#always-read-the-streams)
 - [Video stream](#video-stream)
 - [Decode video stream](#decode-video-stream)
 
@@ -226,6 +226,8 @@ If you push, start and connect to the server yourself, you can still use this pa
 
 Requires a `ReadableStream<Uint8Array>` that reads from the video socket, preserving packet boundaries.
 
+**NOTE:** Because this package uses `web-streams-polyfill` NPM package's Web Streams API implementation, the provided `ReadableStream` must also be from `web-streams-polyfill` (or another polyfill that doesn't check object prototype when piping).
+
 ```ts
 import { ScrcpyOptions1_24, ScrcpyVideoStreamPacket } from '@yume-chan/scrcpy';
 
@@ -263,6 +265,8 @@ controlMessageSerializer.injectText("Hello World!");
 
 Requires a `ReadableStream<Uint8Array>` that reads from the control socket.
 
+**NOTE:** Because this package uses `web-streams-polyfill` NPM package's Web Streams API implementation, the provided `ReadableStream` must also be from `web-streams-polyfill` (or another polyfill that doesn't check object prototype when piping).
+
 ```ts
 import { ScrcpyDeviceMessageDeserializeStream, ScrcpyOptions1_24 } from '@yume-chan/scrcpy';
 
@@ -271,9 +275,11 @@ const controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined //
 const deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> = controlStream.readable.pipeThrough(new ScrcpyDeviceMessageDeserializeStream());
 ```
 
-## Consume the streams
+## Always read the streams
 
-Any `ReadableStream` (`stdout` when using `AdbScrcpyClient`, `videoPacketStream` and `deviceMessageStream` when control is enabled) must be continuously read (even if you don't care about the data), otherwise the whole connection will stall.
+In Web Streams API, `ReadableStream` will block its upstream when too many chunks are kept not read. If multiple streams are from the same upstream source, block one stream means blocking all of them.
+
+For Scrcpy, usually all streams are originated from the same ADB connection (either USB or TCP), so it's important to always read from all streams, even if you don't care about their data.
 
 ```ts
 // when using `AdbScrcpyClient`
@@ -281,7 +287,7 @@ stdout
     .pipeTo(
         new WritableStream<string>({
             write: (line) => {
-                // Handle the stdout line
+                // Handle or ignore the stdout line
             },
         }),
     )
@@ -293,7 +299,7 @@ stdout
 videoPacketStream
     .pipeTo(new WritableStream<ScrcpyVideoStreamPacket>({
         write: (packet) => {
-            // Handle the video packet
+            // Handle or ignore the video packet
         },
     }))
     .catch(() => {});
@@ -301,7 +307,7 @@ videoPacketStream
 deviceMessageStream
     .pipeTo(new WritableStream<ScrcpyDeviceMessage>({
         write: (message) => {
-            // Handle the device message
+            // Handle or ignore the device message
         },
     }))
     .catch(() => {});
