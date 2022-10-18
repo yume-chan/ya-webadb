@@ -33,7 +33,7 @@ Although Scrcpy doesn't install any App on the device, it does have a server bin
 
 With the official Scrcpy client and server, the client uses ADB to transfer the server binary file to the device, run it, and communicate with it via ADB tunnel (the bootstrap process).
 
-The package provides types that can serialize and deserialize Scrcpy protocol messages, but it generally requires you to do the bootstrapping and provide the data stream to the server.
+This package provides types that can serialize and deserialize Scrcpy protocol messages, but it generally requires you to do the bootstrapping and provide the data stream to the server.
 
 If you are also using `@yume-chan/adb`, this package has a helper class that can complete the bootstrap process using it, doing what the official client does.
 
