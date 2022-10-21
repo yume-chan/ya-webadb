@@ -102,9 +102,6 @@ export class AdbPacketDispatcher implements Closeable {
             .then(() => {
                 this.dispose();
             }, (e) => {
-                // https://github.com/MattiasBuelens/web-streams-polyfill/issues/115
-                // `e` is always `AbortError` (instead of what I give in `abortController.abort()`)
-                // so we can't check if `e` is a real error.
                 if (!this._closed) {
                     this._disconnected.reject(e);
                 }

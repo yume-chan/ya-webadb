@@ -1,8 +1,8 @@
-# @yume-chan/scrcpy
+# @yume-chan/scrcpy-decoder-tinyh264
 
-Decode and render video stream using TinyH264, the old Android H.264 software decoder (now deprecated and removed), compiled into WebAssembly, and wrapped in Web Worker to prevent blocking the main thread.
+Decode and render H.264 streams using TinyH264, the old Android H.264 software decoder (now deprecated and removed), compiled into WebAssembly, and wrapped in Web Worker to prevent blocking the main thread.
 
-The video stream will be decoded into YUV frames, and converted to RGB using a WebGL shader, all on CPU. So it's slow and inefficient, but it works on most browsers.
+The video stream will be decoded into YUV frames on CPU, then converted to RGB using a WebGL shader (using GPU). It's slow, but works on most browsers.
 
 **WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
 
@@ -14,9 +14,11 @@ The video stream will be decoded into YUV frames, and converted to RGB using a W
 
 ## Usage
 
-The bundler you use must also support the `new Worker(new URL('./worker.js', import.meta.url))` syntax. It's known to work with Webpack 5.
+The bundler you use must support the `new Worker(new URL('./worker.js', import.meta.url))` syntax. It's known that Webpack 5 works.
 
-It only supports Baseline level 4 codec, but many newer devices default to higher profile/levels. You can limit it by the `codecOptions` option.
+### Limit profile/level
+
+Because it only supports Baseline level 4 codec, but many newer devices default to higher profiles/levels, you can limit it by using the `codecOptions` option:
 
 ```ts
 new ScrcpyOptions1_24({
@@ -27,11 +29,15 @@ new ScrcpyOptions1_24({
 })
 ```
 
-However, it will fail on some very old devices that doesn't support Baseline level 4 codec. You can retry without the `codecOptions` option.
+However, it can fail on some very old devices that doesn't support even Baseline level 4 codec. You can retry without the `codecOptions` option if that happens.
+
+### Render the video
+
+It draws frames onto `decoder.element` (a `<canvas>` element), you can insert it anywhere you want to display the video.
 
 ```ts
 const decoder = new TinyH264Decoder();
-document.body.appendChild(decoder.element); // It draws frames onto `decoder.element`
+document.body.appendChild(decoder.element);
 
 videoPacketStream // from `@yume-chan/scrcpy`
     .pipeTo(decoder.writable)

@@ -1,5 +1,5 @@
 import { AdbPacketHeader, AdbPacketSerializeStream, type AdbBackend, type AdbPacketData, type AdbPacketInit } from '@yume-chan/adb';
-import { DuplexStreamFactory, pipeFrom, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
+import { DuplexStreamFactory, pipeFrom, ReadableStream, WritableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
 import { EMPTY_UINT8_ARRAY, StructDeserializeStream } from '@yume-chan/struct';
 
 export const ADB_DEVICE_FILTER: USBDeviceFilter = {
