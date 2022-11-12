@@ -35,7 +35,15 @@ export async function* adbSyncOpenDir(
 ): AsyncGenerator<AdbSyncEntry, void, void> {
     if (v2) {
         await adbSyncWriteRequest(writer, AdbSyncRequestId.List2, path);
-        yield* adbSyncReadResponses(stream, AdbSyncResponseId.Entry2, AdbSyncEntry2Response);
+        for await (const item of adbSyncReadResponses(stream, AdbSyncResponseId.Entry2, AdbSyncEntry2Response)) {
+            // `LST2` can return error codes for failed `lstat` calls.
+            // `LIST` just ignores them.
+            // But they only contain `name` so still pretty useless.
+            if (item.error !== 0) {
+                continue;
+            }
+            yield item;
+        }
     } else {
         await adbSyncWriteRequest(writer, AdbSyncRequestId.List, path);
         for await (const item of adbSyncReadResponses(stream, AdbSyncResponseId.Entry, AdbSyncEntryResponse)) {
