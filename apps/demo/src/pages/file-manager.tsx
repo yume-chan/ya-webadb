@@ -233,7 +233,10 @@ class FileManagerState {
 
                     switch (item.type) {
                         case LinuxFileType.Link:
-                            ({ iconName } = getFileTypeIconProps({ type: FileIconType.linkedFolder }));
+                            // larger sizes of `linkedFolder` icon now have a person symbol on it,
+                            // We want to use it for symbolic links, so use the 16px version
+                            // cspell:disable-next-line
+                            iconName = "linkedfolder16_svg";
                             break;
                         case LinuxFileType.Directory:
                             ({ iconName } = getFileTypeIconProps({ type: FileIconType.folder }));
@@ -242,7 +245,7 @@ class FileManagerState {
                             ({ iconName } = getFileTypeIconProps({ extension: path.extname(item.name!) }));
                             break;
                         default:
-                            ({ iconName } = getFileTypeIconProps({ extension: 'txt' }));
+                            ({ iconName } = getFileTypeIconProps({ type: FileIconType.genericFile }));
                             break;
                     }
 

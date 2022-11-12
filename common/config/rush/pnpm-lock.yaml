@@ -3359,7 +3359,7 @@ packages:
       '@docusaurus/react-loadable': 5.5.2_react@18.2.0
       '@docusaurus/types': 2.2.0_biqbaboplfbrettd7655fr4n2y
       '@types/history': 4.7.11
-      '@types/react': 17.0.27
+      '@types/react': 18.0.25
       '@types/react-router-config': 5.0.6
       '@types/react-router-dom': 5.3.3
       react: 18.2.0
@@ -3658,7 +3658,7 @@ packages:
     peerDependencies:
       react: '*'
     dependencies:
-      '@types/react': 17.0.27
+      '@types/react': 18.0.25
       prop-types: 15.8.1
       react: 18.2.0
     dev: false
@@ -3727,7 +3727,7 @@ packages:
       '@docusaurus/plugin-content-pages': 2.2.0_biqbaboplfbrettd7655fr4n2y
       '@docusaurus/utils': 2.2.0_@docusaurus+types@2.2.0
       '@types/history': 4.7.11
-      '@types/react': 17.0.27
+      '@types/react': 18.0.25
       '@types/react-router-config': 5.0.6
       clsx: 1.2.1
       parse-numeric-range: 1.3.0
@@ -3812,7 +3812,7 @@ packages:
       react-dom: ^16.8.4 || ^17.0.0
     dependencies:
       '@types/history': 4.7.11
-      '@types/react': 17.0.27
+      '@types/react': 18.0.25
       commander: 5.1.0
       joi: 17.6.0
       react: 18.2.0
@@ -4585,7 +4585,7 @@ packages:
       react: '>=16'
     dependencies:
       '@types/mdx': 2.0.2
-      '@types/react': 17.0.27
+      '@types/react': 18.0.25
       react: 18.2.0
     dev: false
 
@@ -5228,7 +5228,7 @@ packages:
     resolution: {integrity: sha512-db1mx37a1EJDf1XeX8jJN7R3PZABmJQXR8r28yUjVMFSjkmnQo6X6pOEEmNl+Tp2gYQOGPdYbFIipBtdElZ3Yg==}
     dependencies:
       '@types/history': 4.7.11
-      '@types/react': 17.0.27
+      '@types/react': 18.0.25
       '@types/react-router': 5.1.18
     dev: false
 
@@ -5236,7 +5236,7 @@ packages:
     resolution: {integrity: sha512-kpqnYK4wcdm5UaWI3fLcELopqLrHgLqNsdpHauzlQktfkHL3npOSwtj1Uz9oKBAzs7lFtVkV8j83voAz2D8fhw==}
     dependencies:
       '@types/history': 4.7.11
-      '@types/react': 17.0.27
+      '@types/react': 18.0.25
       '@types/react-router': 5.1.18
     dev: false
 
@@ -5244,15 +5244,7 @@ packages:
     resolution: {integrity: sha512-YYknwy0D0iOwKQgz9v8nOzt2J6l4gouBmDnWqUUznltOTaon+r8US8ky8HvN0tXvc38U9m6z/t2RsVsnd1zM0g==}
     dependencies:
       '@types/history': 4.7.11
-      '@types/react': 17.0.27
-    dev: false
-
-  /@types/react/17.0.27:
-    resolution: {integrity: sha512-zgiJwtsggVGtr53MndV7jfiUESTqrbxOcBvwfe6KS/9bzaVPCTDieTWnFNecVNx6EAaapg5xsLLWFfHHR437AA==}
-    dependencies:
-      '@types/prop-types': 15.7.5
-      '@types/scheduler': 0.16.2
-      csstype: 3.1.0
+      '@types/react': 18.0.25
     dev: false
 
   /@types/react/18.0.25:
