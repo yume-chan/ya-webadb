@@ -1,5 +1,5 @@
 import { registerIcons } from "@fluentui/react";
-import { AddCircleRegular, ArrowClockwiseRegular, ArrowRotateClockwiseRegular, ArrowRotateCounterclockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BookSearchRegular, BoxRegular, BugRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FilterRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, LightbulbFilamentRegular, LightbulbRegular, MoreHorizontalRegular, NavigationRegular, OrientationRegular, PanelBottomRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WarningRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
+import { AddCircleRegular, ArrowClockwiseRegular, ArrowRotateClockwiseRegular, ArrowRotateCounterclockwiseRegular, ArrowSortDownRegular, ArrowSortUpRegular, BookmarkRegular, BookSearchRegular, BoxRegular, BugRegular, CameraRegular, CheckmarkRegular, ChevronDownRegular, ChevronRightRegular, ChevronUpRegular, CircleRegular, CloudArrowDownRegular, CloudArrowUpRegular, CopyRegular, DeleteRegular, DocumentRegular, FilterRegular, FolderRegular, FullScreenMaximizeRegular, InfoRegular, LightbulbFilamentRegular, LightbulbRegular, MoreHorizontalRegular, NavigationRegular, OrientationRegular, PanelBottomRegular, PersonFeedbackRegular, PhoneLaptopRegular, PhoneRegular, PlayRegular, PlugConnectedRegular, PlugDisconnectedRegular, PowerRegular, SaveRegular, SearchRegular, SettingsRegular, Speaker1Regular, Speaker2Regular, SpeakerOffRegular, StopRegular, TextGrammarErrorRegular, WandRegular, WarningRegular, WifiSettingsRegular, WindowConsoleRegular } from '@fluentui/react-icons';
 
 const STYLE = {};
 
@@ -42,6 +42,9 @@ export function register() {
             RotateRight: <ArrowRotateClockwiseRegular style={STYLE} />,
             Save: <SaveRegular style={STYLE} />,
             Settings: <SettingsRegular style={STYLE} />,
+            Speaker1: <Speaker1Regular style={STYLE} />,
+            Speaker2: <Speaker2Regular style={STYLE} />,
+            SpeakerOff: <SpeakerOffRegular style={STYLE} />,
             Stop: <StopRegular style={STYLE} />,
             TextGrammarError: <TextGrammarErrorRegular style={STYLE} />,
             Wand: <WandRegular style={STYLE} />,
@@ -103,6 +106,9 @@ const Icons = {
     RotateRight: 'RotateRight',
     Save: 'Save',
     Settings: 'Settings',
+    Speaker1: 'Speaker1',
+    Speaker2: 'Speaker2',
+    SpeakerOff: 'SpeakerOff',
     Stop: 'Stop',
     TextGrammarError: 'TextGrammarError',
     Wand: 'Wand',

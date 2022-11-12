@@ -1,4 +1,4 @@
-import { CommandBar, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, TextField, Toggle, TooltipHost } from "@fluentui/react";
+import { CommandBar, ContextualMenuItemType, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, TextField, Toggle, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { makeStyles } from "@griffel/react";
 import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
@@ -370,6 +370,69 @@ class ScrcpyPageState {
         });
 
         result.push({
+            key: 'volumeUp',
+            disabled: !this.running,
+            iconProps: { iconName: Icons.Speaker2 },
+            iconOnly: true,
+            text: 'Volume Up',
+            onClick: (async () => {
+                // TODO: Auto repeat when holding
+                await this.client?.controlMessageSerializer!.injectKeyCode({
+                    action: AndroidKeyEventAction.Down,
+                    keyCode: AndroidKeyCode.VolumeUp,
+                    repeat: 0,
+                    metaState: 0,
+                });
+                await this.client?.controlMessageSerializer!.injectKeyCode({
+                    action: AndroidKeyEventAction.Up,
+                    keyCode: AndroidKeyCode.VolumeUp,
+                    repeat: 0,
+                    metaState: 0,
+                });
+            }) as (() => void),
+        }, {
+            key: 'volumeDown',
+            disabled: !this.running,
+            iconProps: { iconName: Icons.Speaker1 },
+            iconOnly: true,
+            text: 'Volume Down',
+            onClick: (async () => {
+                await this.client?.controlMessageSerializer!.injectKeyCode({
+                    action: AndroidKeyEventAction.Down,
+                    keyCode: AndroidKeyCode.VolumeDown,
+                    repeat: 0,
+                    metaState: 0,
+                });
+                await this.client?.controlMessageSerializer!.injectKeyCode({
+                    action: AndroidKeyEventAction.Up,
+                    keyCode: AndroidKeyCode.VolumeDown,
+                    repeat: 0,
+                    metaState: 0,
+                });
+            }) as (() => void),
+        }, {
+            key: 'volumeMute',
+            disabled: !this.running,
+            iconProps: { iconName: Icons.SpeakerOff },
+            iconOnly: true,
+            text: 'Toggle Mute',
+            onClick: (async () => {
+                await this.client?.controlMessageSerializer!.injectKeyCode({
+                    action: AndroidKeyEventAction.Down,
+                    keyCode: AndroidKeyCode.VolumeMute,
+                    repeat: 0,
+                    metaState: 0,
+                });
+                await this.client?.controlMessageSerializer!.injectKeyCode({
+                    action: AndroidKeyEventAction.Up,
+                    keyCode: AndroidKeyCode.VolumeMute,
+                    repeat: 0,
+                    metaState: 0,
+                });
+            }) as (() => void),
+        });
+
+        result.push({
             key: 'rotateDevice',
             disabled: !this.running,
             iconProps: { iconName: Icons.Orientation },
@@ -382,21 +445,21 @@ class ScrcpyPageState {
             iconProps: { iconName: Icons.RotateLeft },
             iconOnly: true,
             text: 'Rotate Video Left',
-            onClick: () => {
+            onClick: action(() => {
                 this.rotate -= 1;
                 if (this.rotate < 0) {
                     this.rotate = 3;
                 }
-            }
+            }),
         }, {
             key: 'rotateVideoRight',
             disabled: !this.running,
             iconProps: { iconName: Icons.RotateRight },
             iconOnly: true,
             text: 'Rotate Video Right',
-            onClick: () => {
+            onClick: action(() => {
                 this.rotate = (this.rotate + 1) & 3;
-            },
+            }),
         });
 
         result.push({
