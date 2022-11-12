@@ -1,5 +1,4 @@
 {
-    "$schema": "https://json.schemastore.org/web-manifest-combined.json",
     "background_color": "#ffffff",
     "categories": [
         "utilities"

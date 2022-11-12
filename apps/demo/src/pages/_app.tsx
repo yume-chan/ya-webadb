@@ -80,7 +80,7 @@ function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsP
     }
 
     return (
-        <Link href={link.url} passHref>
+        <Link href={link.url} legacyBehavior passHref>
             <DefaultRender {...props} />
         </Link>
     );
@@ -120,7 +120,7 @@ function App({ Component, pageProps }: AppProps) {
     return (
         <ErrorDialogProvider>
             <Head>
-                <link rel="manifest" href="/manifest.json" />
+                <link rel="manifest" href="/manifest.webmanifest" />
             </Head>
 
             <Stack verticalFill>
@@ -166,7 +166,7 @@ function App({ Component, pageProps }: AppProps) {
                     </StackItem>
                 </Stack>
             </Stack>
-        </ErrorDialogProvider >
+        </ErrorDialogProvider>
     );
 }
 

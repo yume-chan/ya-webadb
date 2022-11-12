@@ -66,6 +66,7 @@ export class AdbTerminal extends AutoDisposable {
         this.terminal.options.fontFamily = '"Cascadia Code", Consolas, monospace, "Source Han Sans SC", "Microsoft YaHei"';
         this.terminal.options.letterSpacing = 1;
         this.terminal.options.cursorStyle = 'bar';
+        this.terminal.options.allowProposedApi = true;
         this.terminal.loadAddon(this.searchAddon);
         this.terminal.loadAddon(this.fitAddon);
     }

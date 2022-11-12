@@ -10,12 +10,12 @@
         "lint": "next lint"
     },
     "dependencies": {
-        "@fluentui/react": "^8.67.2",
-        "@fluentui/react-file-type-icons": "^8.6.6",
-        "@fluentui/react-hooks": "^8.5.4",
-        "@fluentui/react-icons": "^2.0.166-rc.3",
-        "@fluentui/style-utilities": "^8.6.5",
-        "@griffel/react": "^1.0.4",
+        "@fluentui/react": "^8.101.0",
+        "@fluentui/react-file-type-icons": "^8.8.1",
+        "@fluentui/react-hooks": "^8.6.13",
+        "@fluentui/react-icons": "^2.0.187",
+        "@fluentui/style-utilities": "^8.8.2",
+        "@griffel/react": "^1.4.2",
         "@yume-chan/adb": "workspace:^0.0.17",
         "@yume-chan/adb-backend-direct-sockets": "workspace:^0.0.9",
         "@yume-chan/adb-backend-webusb": "workspace:^0.0.17",
@@ -31,23 +31,23 @@
         "@yume-chan/stream-extra": "workspace:^0.0.17",
         "@yume-chan/stream-saver": "^2.0.6",
         "@yume-chan/struct": "workspace:^0.0.17",
-        "mobx": "^6.6.1",
+        "mobx": "^6.6.2",
         "mobx-react-lite": "^3.4.0",
-        "next": "12.2.0",
-        "react": "^17.0.2",
-        "react-dom": "^17.0.2",
-        "xterm": "^4.19.0",
-        "xterm-addon-fit": "^0.5.0",
-        "xterm-addon-search": "^0.9.0",
-        "xterm-addon-webgl": "^0.12.0"
+        "next": "13.0.3",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "xterm": "^5.0.0",
+        "xterm-addon-fit": "^0.6.0",
+        "xterm-addon-search": "^0.10.0",
+        "xterm-addon-webgl": "^0.13.0"
     },
     "devDependencies": {
-        "@mdx-js/loader": "^2.1.2",
-        "@next/mdx": "^12.2.0",
-        "@types/react": "17.0.27",
-        "eslint": "8.19.0",
-        "eslint-config-next": "12.2.0",
-        "source-map-loader": "^4.0.0",
-        "typescript": "^4.7.4"
+        "@mdx-js/loader": "^2.1.5",
+        "@next/mdx": "^13.0.3",
+        "@types/react": "18.0.25",
+        "eslint": "8.27.0",
+        "eslint-config-next": "13.0.3",
+        "source-map-loader": "^4.0.1",
+        "typescript": "^4.8.4"
     }
 }

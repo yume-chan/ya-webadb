@@ -1,0 +1,7 @@
+{
+    "$schema": "https://raw.githubusercontent.com/microsoft/rushstack/main/libraries/rush-lib/src/schemas/pnpm-config.schema.json",
+    "pnpmStore": "global",
+    "strictPeerDependencies": false,
+    "useWorkspaces": true,
+    "preventManualShrinkwrapChanges": true
+}
