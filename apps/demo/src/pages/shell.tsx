@@ -25,12 +25,10 @@ if (typeof window !== 'undefined') {
 
 const SEARCH_OPTIONS: ISearchOptions = {
     decorations: {
-        matchBackground: '#232422',
-        matchBorder: '#555753',
-        matchOverviewRuler: '#555753',
-        activeMatchBackground: '#ef2929',
-        activeMatchBorder: '#ffffff',
-        activeMatchColorOverviewRuler: '#ef2929'
+        matchBackground: '#42557b',
+        matchOverviewRuler: '#d18616',
+        activeMatchBackground: '#6199ff2f',
+        activeMatchColorOverviewRuler: '#d186167e'
     }
 };
 

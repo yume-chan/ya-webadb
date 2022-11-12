@@ -12,7 +12,15 @@ export class AdbTerminal extends AutoDisposable {
     private element = document.createElement('div');
 
     public terminal: Terminal = new Terminal({
+        allowProposedApi: true,
+        allowTransparency: true,
+        cursorStyle: 'bar',
+        cursorBlink: true,
+        fontFamily: '"Cascadia Code", Consolas, monospace, "Source Han Sans SC", "Microsoft YaHei"',
+        letterSpacing: 1,
         scrollback: 9000,
+        smoothScrollDuration: 50,
+        overviewRulerWidth: 20,
     });
 
     public searchAddon = new SearchAddon();
@@ -63,10 +71,6 @@ export class AdbTerminal extends AutoDisposable {
         this.element.style.height = '100%';
         this.element.style.overflow = 'hidden';
 
-        this.terminal.options.fontFamily = '"Cascadia Code", Consolas, monospace, "Source Han Sans SC", "Microsoft YaHei"';
-        this.terminal.options.letterSpacing = 1;
-        this.terminal.options.cursorStyle = 'bar';
-        this.terminal.options.allowProposedApi = true;
         this.terminal.loadAddon(this.searchAddon);
         this.terminal.loadAddon(this.fitAddon);
     }
@@ -76,6 +80,7 @@ export class AdbTerminal extends AutoDisposable {
         if (!this.terminal.element) {
             void this.element.offsetWidth;
             this.terminal.open(this.element);
+            // WebGL addon requires terminal to be attached to DOM
             this.terminal.loadAddon(new WebglAddon());
             // WebGL renderer ignores `cursorBlink` set before it initialized
             this.terminal.options.cursorBlink = true;
