@@ -245,7 +245,7 @@ const FEATURES: FeatureDefinition[][] = [
 ];
 
 const FeatureBase = ({ feature }: { feature: FeatureDefinition; }) => {
-    const handleChange = useCallback((e, value: unknown) => {
+    const handleChange = useCallback((e: unknown, value: unknown) => {
         switch (feature.type) {
             case 'select':
                 value = (value as IDropdownOption).key;
@@ -312,7 +312,7 @@ export interface DemoModePanelProps {
 export const DemoModePanel = observer(({
     style,
 }: DemoModePanelProps) => {
-    const handleAllowedChange = useCallback(async (e, value?: boolean) => {
+    const handleAllowedChange = useCallback(async (e: unknown, value?: boolean) => {
         await state.demoMode!.setAllowed(value!);
         runInAction(() => {
             state.allowed = value!;
@@ -320,7 +320,7 @@ export const DemoModePanel = observer(({
         });
     }, []);
 
-    const handleEnabledChange = useCallback(async (e, value?: boolean) => {
+    const handleEnabledChange = useCallback(async (e: unknown, value?: boolean) => {
         await state.demoMode!.setEnabled(value!);
         runInAction(() => state.enabled = value!);
     }, []);

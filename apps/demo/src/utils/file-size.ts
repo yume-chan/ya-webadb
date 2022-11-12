@@ -40,7 +40,7 @@ export function useSpeed(completed: number, total: number): [completed: number, 
         return () => {
             clearInterval(intervalIdRef.current!);
         };
-    }, [total]);
+    }, [clearInterval, setInterval, total]);
 
     useEffect(() => {
         if (total !== 0 && completed === total) {
@@ -50,7 +50,7 @@ export function useSpeed(completed: number, total: number): [completed: number, 
             });
             clearInterval(intervalIdRef.current!);
         }
-    }, [completed, total]);
+    }, [clearInterval, completed, total]);
 
     return [debouncedCompleted, speed];
 }

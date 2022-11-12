@@ -102,7 +102,7 @@ const DownIconProps = { iconName: Icons.ChevronDown };
 const Shell: NextPage = (): JSX.Element | null => {
     const classes = useClasses();
 
-    const handleSearchKeywordChange = useCallback((e, value?: string) => {
+    const handleSearchKeywordChange = useCallback((e: unknown, value?: string) => {
         state.setSearchKeyword(value ?? '');
     }, []);
 

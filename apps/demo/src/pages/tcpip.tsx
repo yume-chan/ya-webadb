@@ -127,11 +127,11 @@ const TcpIp: NextPage = () => {
         };
     });
 
-    const handleServicePortEnabledChange = useCallback((e, value?: boolean) => {
+    const handleServicePortEnabledChange = useCallback((e: unknown, value?: boolean) => {
         runInAction(() => { state.servicePortEnabled = !!value; });
     }, []);
 
-    const handleServicePortChange = useCallback((e, value?: string) => {
+    const handleServicePortChange = useCallback((e: unknown, value?: string) => {
         if (value === undefined) {
             return;
         }
