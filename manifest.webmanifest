@@ -1,0 +1,18 @@
+{
+    "background_color": "#ffffff",
+    "categories": [
+        "utilities"
+    ],
+    "description": "ADB in your browser",
+    "display": "standalone",
+    "icons": [
+        {
+            "src": "favicon.ico"
+        }
+    ],
+    "isolated_storage": true,
+    "name": "WebADB Demo",
+    "short_name": "WebADB",
+    "start_url": "/",
+    "scope": "/"
+}
