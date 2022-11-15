@@ -64,7 +64,7 @@ importers:
       '@yume-chan/struct': workspace:^0.0.17
       eslint: 8.27.0
       eslint-config-next: 13.0.3
-      mobx: ^6.6.2
+      mobx: ^6.7.0
       mobx-react-lite: ^3.4.0
       next: 13.0.3
       react: ^18.2.0
@@ -97,8 +97,8 @@ importers:
       '@yume-chan/stream-extra': link:../../libraries/stream-extra
       '@yume-chan/stream-saver': 2.0.6
       '@yume-chan/struct': link:../../libraries/struct
-      mobx: 6.6.2
-      mobx-react-lite: 3.4.0_qrr2ojv4n7h7ey2xj7njerqqr4
+      mobx: 6.7.0
+      mobx-react-lite: 3.4.0_jofyzmwkboewm6mjrhi25mngky
       next: 13.0.3_biqbaboplfbrettd7655fr4n2y
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
@@ -10510,7 +10510,7 @@ packages:
   /minimist/1.2.6:
     resolution: {integrity: sha512-Jsjnk4bw3YJqYzbdyBiNsPWHPfO++UGG749Cxs6peCu5Xg4nrena6OVxOYxrQTqww0Jmwt+Ref8rggumkTLz9Q==}
 
-  /mobx-react-lite/3.4.0_qrr2ojv4n7h7ey2xj7njerqqr4:
+  /mobx-react-lite/3.4.0_jofyzmwkboewm6mjrhi25mngky:
     resolution: {integrity: sha512-bRuZp3C0itgLKHu/VNxi66DN/XVkQG7xtoBVWxpvC5FhAqbOCP21+nPhULjnzEqd7xBMybp6KwytdUpZKEgpIQ==}
     peerDependencies:
       mobx: ^6.1.0
@@ -10523,13 +10523,13 @@ packages:
       react-native:
         optional: true
     dependencies:
-      mobx: 6.6.2
+      mobx: 6.7.0
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
     dev: false
 
-  /mobx/6.6.2:
-    resolution: {integrity: sha512-IOpS0bf3+hXIhDIy+CmlNMBfFpAbHS0aVHcNC+xH/TFYEKIIVDKNYRh9eKlXuVfJ1iRKAp0cRVmO145CyJAMVQ==}
+  /mobx/6.7.0:
+    resolution: {integrity: sha512-1kBLBdSNG2bA522HQdbsTvwAwYf9hq9FWxmlhX7wTsJUAI54907J+ozfGW+LoYUo06vjit748g6QH1AAGLNebw==}
     dev: false
 
   /mri/1.2.0:
