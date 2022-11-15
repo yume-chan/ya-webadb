@@ -2,7 +2,7 @@
 
     "references": [
         {
-            "path": "../event/tsconfig.json"
+            "path": "../event/tsconfig.build.json"
         },
         {
             "path": "../stream-extra/tsconfig.build.json"

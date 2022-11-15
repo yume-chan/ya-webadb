@@ -26,8 +26,8 @@
     "main": "esm/index.js",
     "types": "esm/index.d.ts",
     "scripts": {
-        "build": "build-ts-package",
-        "build:watch": "build-ts-package --incremental",
+        "build": "tsc -b tsconfig.build.json",
+        "build:watch": "tsc -b tsconfig.build.json",
         "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
         "prepublishOnly": "npm run build"
     },
