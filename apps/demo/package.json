@@ -10,11 +10,11 @@
         "lint": "next lint"
     },
     "dependencies": {
-        "@fluentui/react": "^8.101.0",
-        "@fluentui/react-file-type-icons": "^8.8.1",
-        "@fluentui/react-hooks": "^8.6.13",
+        "@fluentui/react": "^8.101.1",
+        "@fluentui/react-file-type-icons": "^8.8.2",
+        "@fluentui/react-hooks": "^8.6.14",
         "@fluentui/react-icons": "^2.0.187",
-        "@fluentui/style-utilities": "^8.8.2",
+        "@fluentui/style-utilities": "^8.8.3",
         "@griffel/react": "^1.4.2",
         "@yume-chan/adb": "workspace:^0.0.17",
         "@yume-chan/adb-backend-direct-sockets": "workspace:^0.0.9",

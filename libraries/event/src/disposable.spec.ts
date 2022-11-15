@@ -1,8 +1,10 @@
-import { AutoDisposable, Disposable } from './disposable.js';
+import { describe, expect, it, jest } from "@jest/globals";
 
-describe('Event', () => {
-    describe('AutoDisposable', () => {
-        it('should dispose its dependencies', () => {
+import { AutoDisposable, Disposable } from "./disposable.js";
+
+describe("Event", () => {
+    describe("AutoDisposable", () => {
+        it("should dispose its dependencies", () => {
             const myDisposable = {
                 dispose: jest.fn(),
             };

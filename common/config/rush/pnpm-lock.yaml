@@ -263,17 +263,23 @@ importers:
 
   ../../libraries/event:
     specifiers:
+      '@jest/globals': ^29.3.1
       '@yume-chan/async': ^2.2.0
       '@yume-chan/ts-package-builder': workspace:^1.0.0
+      cross-env: ^7.0.3
       jest: ^29.3.1
+      ts-jest: ^29.0.3
       tslib: ^2.4.1
       typescript: ^4.8.4
     dependencies:
       '@yume-chan/async': 2.2.0
       tslib: 2.4.1
     devDependencies:
+      '@jest/globals': 29.3.1
       '@yume-chan/ts-package-builder': link:../../toolchain/ts-package-builder
+      cross-env: 7.0.3
       jest: 29.3.1
+      ts-jest: 29.0.3_r24ewcothphvclnu77pxb4u4se
       typescript: 4.8.4
 
   ../../libraries/scrcpy:

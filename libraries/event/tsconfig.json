@@ -1,3 +1,10 @@
 {
-    "extends": "./node_modules/@yume-chan/ts-package-builder/tsconfig.base.json",
+    "references": [
+        {
+            "path": "./tsconfig.test.json"
+        },
+        {
+            "path": "./tsconfig.build.json"
+        },
+    ]
 }
