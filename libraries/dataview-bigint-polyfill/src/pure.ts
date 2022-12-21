@@ -1,21 +1,32 @@
 const BigInt32 = BigInt(32);
 
-export function getBigInt64(dataView: DataView, byteOffset: number, littleEndian: boolean | undefined): bigint {
+export function getBigInt64(
+    dataView: DataView,
+    byteOffset: number,
+    littleEndian: boolean | undefined
+): bigint {
     const littleEndianMask = Number(!!littleEndian);
     const bigEndianMask = Number(!littleEndian);
 
     return (
-        BigInt(
+        (BigInt(
             dataView.getInt32(byteOffset, littleEndian) * bigEndianMask +
-            dataView.getInt32(byteOffset + 4, littleEndian) * littleEndianMask
-        ) << BigInt32) |
+                dataView.getInt32(byteOffset + 4, littleEndian) *
+                    littleEndianMask
+        ) <<
+            BigInt32) |
         BigInt(
             dataView.getUint32(byteOffset, littleEndian) * littleEndianMask +
-            dataView.getUint32(byteOffset + 4, littleEndian) * bigEndianMask
-        );
+                dataView.getUint32(byteOffset + 4, littleEndian) * bigEndianMask
+        )
+    );
 }
 
-export function getBigUint64(dataView: DataView, byteOffset: number, littleEndian: boolean | undefined): bigint {
+export function getBigUint64(
+    dataView: DataView,
+    byteOffset: number,
+    littleEndian: boolean | undefined
+): bigint {
     const a = dataView.getUint32(byteOffset, littleEndian);
     const b = dataView.getUint32(byteOffset + 4, littleEndian);
 
@@ -25,13 +36,20 @@ export function getBigUint64(dataView: DataView, byteOffset: number, littleEndia
     // This branch-less optimization is 77x faster than normal ternary operator.
     // and only 3% slower than native implementation
     // https://jsbench.me/p8kyhg1eqv/1
-    return (BigInt(a * bigEndianMask + b * littleEndianMask) << BigInt32) |
-        BigInt(a * littleEndianMask + b * bigEndianMask);
-};
+    return (
+        (BigInt(a * bigEndianMask + b * littleEndianMask) << BigInt32) |
+        BigInt(a * littleEndianMask + b * bigEndianMask)
+    );
+}
 
-export function setBigInt64(dataView: DataView, byteOffset: number, value: bigint, littleEndian: boolean | undefined) {
+export function setBigInt64(
+    dataView: DataView,
+    byteOffset: number,
+    value: bigint,
+    littleEndian: boolean | undefined
+) {
     const hi = Number(value >> BigInt32);
-    const lo = Number(value & BigInt(0xFFFFFFFF));
+    const lo = Number(value & BigInt(0xffffffff));
 
     if (littleEndian) {
         dataView.setInt32(byteOffset + 4, hi, littleEndian);
@@ -42,9 +60,14 @@ export function setBigInt64(dataView: DataView, byteOffset: number, value: bigin
     }
 }
 
-export function setBigUint64(dataView: DataView, byteOffset: number, value: bigint, littleEndian: boolean | undefined) {
+export function setBigUint64(
+    dataView: DataView,
+    byteOffset: number,
+    value: bigint,
+    littleEndian: boolean | undefined
+) {
     const hi = Number(value >> BigInt32);
-    const lo = Number(value & BigInt(0xFFFFFFFF));
+    const lo = Number(value & BigInt(0xffffffff));
 
     if (littleEndian) {
         dataView.setUint32(byteOffset + 4, hi, littleEndian);
@@ -53,4 +76,4 @@ export function setBigUint64(dataView: DataView, byteOffset: number, value: bigi
         dataView.setUint32(byteOffset, hi, littleEndian);
         dataView.setUint32(byteOffset + 4, lo, littleEndian);
     }
-};
+}

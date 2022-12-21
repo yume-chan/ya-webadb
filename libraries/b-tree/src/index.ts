@@ -3,7 +3,12 @@ interface BTreeInsertionResult {
     child: BTreeNode;
 }
 
-function insert(array: Int32Array, length: number, value: number, index: number) {
+function insert(
+    array: Int32Array,
+    length: number,
+    value: number,
+    index: number
+) {
     if (index !== length) {
         array.set(array.subarray(index, length), index + 1);
     }
@@ -54,7 +59,11 @@ export class BTreeNode {
      * @returns The new key and child need to be inserted to its parent.
      * The new key is the middle key of the current node, and the child contains the right half of the current node.
      */
-    protected split(value: number, index: number, child?: BTreeNode): BTreeInsertionResult {
+    protected split(
+        value: number,
+        index: number,
+        child?: BTreeNode
+    ): BTreeInsertionResult {
         let middleKey: number;
         const rightKeys = new Int32Array(this.order - 1);
         let rightChildren: BTreeNode[];
@@ -67,13 +76,16 @@ export class BTreeNode {
 
             if (child) {
                 // internal node
-                rightChildren = this.children.splice(this.mid, this.order - this.mid);
+                rightChildren = this.children.splice(
+                    this.mid,
+                    this.order - this.mid
+                );
                 // TODO: this may cause the underlying array to grow (re-alloc and copy)
                 // investigate if this hurts performance.
                 this.children.splice(index + 1, 0, child);
             } else {
                 // leaf node, doesn't have children, create am empty array for it.
-                rightChildren = new Array(this.order);
+                rightChildren = new Array<BTreeNode>(this.order);
             }
         } else {
             if (index === this.mid) {
@@ -89,10 +101,13 @@ export class BTreeNode {
             }
 
             if (child) {
-                rightChildren = this.children.splice(this.mid + 1, this.order - this.mid - 1);
+                rightChildren = this.children.splice(
+                    this.mid + 1,
+                    this.order - this.mid - 1
+                );
                 rightChildren.splice(index - this.mid, 0, child);
             } else {
-                rightChildren = new Array(this.order);
+                rightChildren = new Array<BTreeNode>(this.order);
             }
         }
 
@@ -156,7 +171,7 @@ export class BTreeNode {
         }
 
         const split = this.children[index]!.add(value);
-        if (typeof split === 'object') {
+        if (typeof split === "object") {
             if (this.keyCount === this.order - 1) {
                 return this.split(split.key, index, split.child);
             }
@@ -221,9 +236,12 @@ export class BTreeNode {
             // merge with left
             left.keys[left.keyCount] = this.keys[index - 1]!;
             left.keyCount += 1;
-            left.keys.set(child.keys.subarray(0, child.keyCount), left.keyCount);
+            left.keys.set(
+                child.keys.subarray(0, child.keyCount),
+                left.keyCount
+            );
             if (this.height > 1) {
-                for (let i = 0; i <= child.keyCount; i++) {
+                for (let i = 0; i <= child.keyCount; i += 1) {
                     left.children[left.keyCount + i] = child.children[i]!;
                 }
             }
@@ -239,7 +257,10 @@ export class BTreeNode {
             // rotate left
             child.keys[child.keyCount] = this.keys[index]!;
             if (this.height > 1) {
-                child.children[child.keyCount + 1] = right.children.splice(0, 1)[0]!;
+                child.children[child.keyCount + 1] = right.children.splice(
+                    0,
+                    1
+                )[0]!;
             }
             child.keyCount += 1;
 
@@ -255,7 +276,7 @@ export class BTreeNode {
         child.keyCount += 1;
         child.keys.set(right.keys.subarray(0, right.keyCount), child.keyCount);
         if (this.height > 1) {
-            for (let i = 0; i <= right.keyCount; i++) {
+            for (let i = 0; i <= right.keyCount; i += 1) {
                 child.children[child.keyCount + i] = right.children[i]!;
             }
         }
@@ -308,7 +329,7 @@ export class BTree {
     order: number;
     root: BTreeNode;
 
-    size: number = 0;
+    size = 0;
 
     public constructor(order: number) {
         this.order = order;
@@ -317,7 +338,7 @@ export class BTree {
             new Int32Array(order - 1),
             0,
             0,
-            new Array(order)
+            new Array<BTreeNode>(order)
         );
     }
 
@@ -339,11 +360,11 @@ export class BTree {
 
     public add(value: number) {
         const split = this.root.add(value);
-        if (typeof split === 'object') {
+        if (typeof split === "object") {
             const keys = new Int32Array(this.order - 1);
             keys[0] = split.key;
 
-            const children = new Array(this.order);
+            const children = new Array<BTreeNode>(this.order);
             children[0] = this.root;
             children[1] = split.child;
 
@@ -376,7 +397,7 @@ export class BTree {
         this.root.keyCount = 0;
         this.root.height = 0;
         // immediately release all references
-        this.root.children = new Array(this.order);
+        this.root.children = new Array<BTreeNode>(this.order);
         this.size = 0;
     }
 

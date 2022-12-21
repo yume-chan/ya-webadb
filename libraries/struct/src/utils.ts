@@ -25,19 +25,24 @@ export type Evaluate<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
 /**
  * Overwrite fields in `TBase` with fields in `TNew`
  */
-export type Overwrite<TBase extends object, TNew extends object> =
-    Evaluate<Omit<TBase, keyof TNew> & TNew>;
+export type Overwrite<TBase extends object, TNew extends object> = Evaluate<
+    Omit<TBase, keyof TNew> & TNew
+>;
 
 /**
  * Remove fields with `never` type
  */
-export type OmitNever<T> = Pick<T, { [K in keyof T]: [T[K]] extends [never] ? never : K }[keyof T]>;
+export type OmitNever<T> = Pick<
+    T,
+    { [K in keyof T]: [T[K]] extends [never] ? never : K }[keyof T]
+>;
 
 /**
  * Extract keys of fields in `T` that has type `TValue`
  */
-export type KeysOfType<T, TValue> =
-    { [TKey in keyof T]: T[TKey] extends TValue ? TKey : never }[keyof T];
+export type KeysOfType<T, TValue> = {
+    [TKey in keyof T]: T[TKey] extends TValue ? TKey : never;
+}[keyof T];
 
 export type ValueOrPromise<T> = T | PromiseLike<T>;
 
@@ -56,9 +61,9 @@ export function placeholder<T>(): T {
 // But using top level await to load them requires Node.js 14.1.
 // So there is no point to do that. Let's just assume they exist in global.
 
-// @ts-expect-error
+// @ts-expect-error See reason above
 const Utf8Encoder = new TextEncoder();
-// @ts-expect-error
+// @ts-expect-error See reason above
 const Utf8Decoder = new TextDecoder();
 
 export function encodeUtf8(input: string): Uint8Array {

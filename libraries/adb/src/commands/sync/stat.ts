@@ -1,8 +1,11 @@
-import type { BufferedReadableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
-import Struct, { placeholder } from '@yume-chan/struct';
+import {
+    type BufferedReadableStream,
+    type WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
+import Struct, { placeholder } from "@yume-chan/struct";
 
-import { AdbSyncRequestId, adbSyncWriteRequest } from './request.js';
-import { adbSyncReadResponse, AdbSyncResponseId } from './response.js';
+import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
+import { AdbSyncResponseId, adbSyncReadResponse } from "./response.js";
 
 // https://github.com/python/cpython/blob/4e581d64b8aff3e2eda99b12f080c877bb78dfca/Lib/stat.py#L36
 export enum LinuxFileType {
@@ -24,27 +27,27 @@ export interface AdbSyncStat {
     ctime?: bigint;
 }
 
-export const AdbSyncLstatResponse =
-    new Struct({ littleEndian: true })
-        .int32('mode')
-        .int32('size')
-        .int32('mtime')
-        .extra({
-            id: AdbSyncResponseId.Lstat as const,
-            get type() { return this.mode >> 12 as LinuxFileType; },
-            get permission() { return this.mode & 0b00001111_11111111; },
-        })
-        .postDeserialize((object) => {
-            if (
-                object.mode === 0 &&
-                object.size === 0 &&
-                object.mtime === 0
-            ) {
-                throw new Error('lstat failed');
-            }
-        });
+export const AdbSyncLstatResponse = new Struct({ littleEndian: true })
+    .int32("mode")
+    .int32("size")
+    .int32("mtime")
+    .extra({
+        id: AdbSyncResponseId.Lstat as const,
+        get type() {
+            return (this.mode >> 12) as LinuxFileType;
+        },
+        get permission() {
+            return this.mode & 0b00001111_11111111;
+        },
+    })
+    .postDeserialize((object) => {
+        if (object.mode === 0 && object.size === 0 && object.mtime === 0) {
+            throw new Error("lstat error");
+        }
+    });
 
-export type AdbSyncLstatResponse = typeof AdbSyncLstatResponse['TDeserializeResult'];
+export type AdbSyncLstatResponse =
+    typeof AdbSyncLstatResponse["TDeserializeResult"];
 
 export enum AdbSyncStatErrorCode {
     SUCCESS = 0,
@@ -70,51 +73,67 @@ export enum AdbSyncStatErrorCode {
     ETXTBSY = 26,
 }
 
-export const AdbSyncStatResponse =
-    new Struct({ littleEndian: true })
-        .uint32('error', placeholder<AdbSyncStatErrorCode>())
-        .uint64('dev')
-        .uint64('ino')
-        .uint32('mode')
-        .uint32('nlink')
-        .uint32('uid')
-        .uint32('gid')
-        .uint64('size')
-        .uint64('atime')
-        .uint64('mtime')
-        .uint64('ctime')
-        .extra({
-            id: AdbSyncResponseId.Stat as const,
-            get type() { return this.mode >> 12 as LinuxFileType; },
-            get permission() { return this.mode & 0b00001111_11111111; },
-        })
-        .postDeserialize((object) => {
-            if (object.error) {
-                throw new Error(AdbSyncStatErrorCode[object.error]);
-            }
-        });
+export const AdbSyncStatResponse = new Struct({ littleEndian: true })
+    .uint32("error", placeholder<AdbSyncStatErrorCode>())
+    .uint64("dev")
+    .uint64("ino")
+    .uint32("mode")
+    .uint32("nlink")
+    .uint32("uid")
+    .uint32("gid")
+    .uint64("size")
+    .uint64("atime")
+    .uint64("mtime")
+    .uint64("ctime")
+    .extra({
+        id: AdbSyncResponseId.Stat as const,
+        get type() {
+            return (this.mode >> 12) as LinuxFileType;
+        },
+        get permission() {
+            return this.mode & 0b00001111_11111111;
+        },
+    })
+    .postDeserialize((object) => {
+        if (object.error) {
+            throw new Error(AdbSyncStatErrorCode[object.error]);
+        }
+    });
 
-export type AdbSyncStatResponse = typeof AdbSyncStatResponse['TDeserializeResult'];
+export type AdbSyncStatResponse =
+    typeof AdbSyncStatResponse["TDeserializeResult"];
 
 export async function adbSyncLstat(
     stream: BufferedReadableStream,
     writer: WritableStreamDefaultWriter<Uint8Array>,
     path: string,
-    v2: boolean,
+    v2: boolean
 ): Promise<AdbSyncStat> {
     if (v2) {
         await adbSyncWriteRequest(writer, AdbSyncRequestId.Lstat2, path);
-        return await adbSyncReadResponse(stream, AdbSyncResponseId.Lstat2, AdbSyncStatResponse);
+        return await adbSyncReadResponse(
+            stream,
+            AdbSyncResponseId.Lstat2,
+            AdbSyncStatResponse
+        );
     } else {
         await adbSyncWriteRequest(writer, AdbSyncRequestId.Lstat, path);
-        const response = await adbSyncReadResponse(stream, AdbSyncResponseId.Lstat, AdbSyncLstatResponse);
+        const response = await adbSyncReadResponse(
+            stream,
+            AdbSyncResponseId.Lstat,
+            AdbSyncLstatResponse
+        );
         return {
             mode: response.mode,
             // Convert to `BigInt` to make it compatible with `AdbSyncStatResponse`
             size: BigInt(response.size),
             mtime: BigInt(response.mtime),
-            get type() { return response.type; },
-            get permission() { return response.permission; },
+            get type() {
+                return response.type;
+            },
+            get permission() {
+                return response.permission;
+            },
         };
     }
 }
@@ -122,8 +141,12 @@ export async function adbSyncLstat(
 export async function adbSyncStat(
     stream: BufferedReadableStream,
     writer: WritableStreamDefaultWriter<Uint8Array>,
-    path: string,
+    path: string
 ): Promise<AdbSyncStatResponse> {
     await adbSyncWriteRequest(writer, AdbSyncRequestId.Stat, path);
-    return await adbSyncReadResponse(stream, AdbSyncResponseId.Stat, AdbSyncStatResponse);
+    return await adbSyncReadResponse(
+        stream,
+        AdbSyncResponseId.Stat,
+        AdbSyncStatResponse
+    );
 }

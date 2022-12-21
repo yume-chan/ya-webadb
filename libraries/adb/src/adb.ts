@@ -1,20 +1,50 @@
 // cspell: ignore libusb
 
-import { PromiseResolver } from '@yume-chan/async';
-import { AbortController, DecodeUtf8Stream, GatherStringStream, WritableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
+import { PromiseResolver } from "@yume-chan/async";
+import {
+    AbortController,
+    DecodeUtf8Stream,
+    GatherStringStream,
+    WritableStream,
+    type ReadableWritablePair,
+} from "@yume-chan/stream-extra";
 
-import { AdbAuthenticationProcessor, ADB_DEFAULT_AUTHENTICATORS, type AdbCredentialStore } from './auth.js';
-import { AdbPower, AdbReverseCommand, AdbSubprocess, AdbSync, AdbTcpIpCommand, escapeArg, framebuffer, install, type AdbFrameBuffer } from './commands/index.js';
-import { AdbFeatures } from './features.js';
-import { AdbCommand, calculateChecksum, type AdbPacketData, type AdbPacketInit } from './packet.js';
-import { AdbIncomingSocketHandler, AdbPacketDispatcher, type AdbSocket, type Closeable } from './socket/index.js';
-import { decodeUtf8, encodeUtf8 } from './utils/index.js';
+import {
+    ADB_DEFAULT_AUTHENTICATORS,
+    AdbAuthenticationProcessor,
+    type AdbCredentialStore,
+} from "./auth.js";
+import {
+    AdbPower,
+    AdbReverseCommand,
+    AdbSubprocess,
+    AdbSync,
+    AdbTcpIpCommand,
+    escapeArg,
+    framebuffer,
+    install,
+    type AdbFrameBuffer,
+} from "./commands/index.js";
+import { AdbFeatures } from "./features.js";
+import {
+    AdbCommand,
+    calculateChecksum,
+    type AdbPacketData,
+    type AdbPacketInit,
+} from "./packet.js";
+import {
+    AdbPacketDispatcher,
+    type AdbIncomingSocketHandler,
+    type AdbSocket,
+    type Closeable,
+} from "./socket/index.js";
+import { decodeUtf8, encodeUtf8 } from "./utils/index.js";
 
 export enum AdbPropKey {
-    Product = 'ro.product.name',
-    Model = 'ro.product.model',
-    Device = 'ro.product.device',
-    Features = 'features',
+    Product = "ro.product.name",
+    Model = "ro.product.model",
+    Device = "ro.product.device",
+    Features = "features",
 }
 
 export const VERSION_OMIT_CHECKSUM = 0x01000001;
@@ -28,45 +58,57 @@ export class Adb implements Closeable {
     public static async authenticate(
         connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
         credentialStore: AdbCredentialStore,
-        authenticators = ADB_DEFAULT_AUTHENTICATORS,
+        authenticators = ADB_DEFAULT_AUTHENTICATORS
     ): Promise<Adb> {
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
         let maxPayloadSize = 0x100000;
 
         const resolver = new PromiseResolver<string>();
-        const authProcessor = new AdbAuthenticationProcessor(authenticators, credentialStore);
+        const authProcessor = new AdbAuthenticationProcessor(
+            authenticators,
+            credentialStore
+        );
 
         // Here is similar to `AdbPacketDispatcher`,
         // But the received packet types and send packet processing are different.
         const abortController = new AbortController();
         const pipe = connection.readable
-            .pipeTo(new WritableStream({
-                async write(packet) {
-                    switch (packet.command) {
-                        case AdbCommand.Connect:
-                            version = Math.min(version, packet.arg0);
-                            maxPayloadSize = Math.min(maxPayloadSize, packet.arg1);
-                            resolver.resolve(decodeUtf8(packet.payload));
-                            break;
-                        case AdbCommand.Auth:
-                            const response = await authProcessor.process(packet);
-                            await sendPacket(response);
-                            break;
-                        default:
-                            // Maybe the previous ADB client exited without reading all packets,
-                            // so they are still waiting in OS internal buffer.
-                            // Just ignore them.
-                            // Because a `Connect` packet will reset the device,
-                            // Eventually there will be `Connect` and `Auth` response packets.
-                            break;
-                    }
+            .pipeTo(
+                new WritableStream({
+                    async write(packet) {
+                        switch (packet.command) {
+                            case AdbCommand.Connect:
+                                version = Math.min(version, packet.arg0);
+                                maxPayloadSize = Math.min(
+                                    maxPayloadSize,
+                                    packet.arg1
+                                );
+                                resolver.resolve(decodeUtf8(packet.payload));
+                                break;
+                            case AdbCommand.Auth: {
+                                const response = await authProcessor.process(
+                                    packet
+                                );
+                                await sendPacket(response);
+                                break;
+                            }
+                            default:
+                                // Maybe the previous ADB client exited without reading all packets,
+                                // so they are still waiting in OS internal buffer.
+                                // Just ignore them.
+                                // Because a `Connect` packet will reset the device,
+                                // Eventually there will be `Connect` and `Auth` response packets.
+                                break;
+                        }
+                    },
+                }),
+                {
+                    // Don't cancel the source ReadableStream on AbortSignal abort.
+                    preventCancel: true,
+                    signal: abortController.signal,
                 }
-            }), {
-                // Don't cancel the source ReadableStream on AbortSignal abort.
-                preventCancel: true,
-                signal: abortController.signal,
-            })
+            )
             .catch((e) => {
                 resolver.reject(e);
             });
@@ -88,20 +130,20 @@ export class Adb implements Closeable {
                 AdbFeatures.StatV2,
                 AdbFeatures.ListV2,
                 AdbFeatures.FixedPushMkdir,
-                'apex',
-                'abb',
+                "apex",
+                "abb",
                 // only tells the client the symlink timestamp issue in `adb push --sync` has been fixed.
                 // No special handling required.
-                'fixed_push_symlink_timestamp',
-                'abb_exec',
-                'remount_shell',
-                'track_app',
-                'sendrecv_v2',
-                'sendrecv_v2_brotli',
-                'sendrecv_v2_lz4',
-                'sendrecv_v2_zstd',
-                'sendrecv_v2_dry_run_send',
-            ].join(',');
+                "fixed_push_symlink_timestamp",
+                "abb_exec",
+                "remount_shell",
+                "track_app",
+                "sendrecv_v2",
+                "sendrecv_v2_brotli",
+                "sendrecv_v2_lz4",
+                "sendrecv_v2_zstd",
+                "sendrecv_v2_dry_run_send",
+            ].join(",");
 
             await sendPacket({
                 command: AdbCommand.Connect,
@@ -123,32 +165,39 @@ export class Adb implements Closeable {
             await pipe;
         }
 
-        return new Adb(
-            connection,
-            version,
-            maxPayloadSize,
-            banner,
-        );
+        return new Adb(connection, version, maxPayloadSize, banner);
     }
 
     private readonly dispatcher: AdbPacketDispatcher;
 
-    public get disconnected() { return this.dispatcher.disconnected; }
+    public get disconnected() {
+        return this.dispatcher.disconnected;
+    }
 
     private _protocolVersion: number | undefined;
-    public get protocolVersion() { return this._protocolVersion; }
+    public get protocolVersion() {
+        return this._protocolVersion;
+    }
 
     private _product: string | undefined;
-    public get product() { return this._product; }
+    public get product() {
+        return this._product;
+    }
 
     private _model: string | undefined;
-    public get model() { return this._model; }
+    public get model() {
+        return this._model;
+    }
 
     private _device: string | undefined;
-    public get device() { return this._device; }
+    public get device() {
+        return this._device;
+    }
 
     private _features: AdbFeatures[] = [];
-    public get features() { return this._features; }
+    public get features() {
+        return this._features;
+    }
 
     public readonly subprocess: AdbSubprocess;
     public readonly power: AdbPower;
@@ -159,7 +208,7 @@ export class Adb implements Closeable {
         connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
         version: number,
         maxPayloadSize: number,
-        banner: string,
+        banner: string
     ) {
         this.parseBanner(banner);
 
@@ -173,14 +222,11 @@ export class Adb implements Closeable {
             appendNullToServiceString = true;
         }
 
-        this.dispatcher = new AdbPacketDispatcher(
-            connection,
-            {
-                calculateChecksum,
-                appendNullToServiceString,
-                maxPayloadSize,
-            }
-        );
+        this.dispatcher = new AdbPacketDispatcher(connection, {
+            calculateChecksum,
+            appendNullToServiceString,
+            maxPayloadSize,
+        });
 
         this._protocolVersion = version;
 
@@ -191,15 +237,15 @@ export class Adb implements Closeable {
     }
 
     private parseBanner(banner: string): void {
-        const pieces = banner.split('::');
+        const pieces = banner.split("::");
         if (pieces.length > 1) {
             const props = pieces[1]!;
-            for (const prop of props.split(';')) {
+            for (const prop of props.split(";")) {
                 if (!prop) {
                     continue;
                 }
 
-                const keyValue = prop.split('=');
+                const keyValue = prop.split("=");
                 if (keyValue.length !== 2) {
                     continue;
                 }
@@ -216,7 +262,7 @@ export class Adb implements Closeable {
                         this._device = value;
                         break;
                     case AdbPropKey.Features:
-                        this._features = value!.split(',') as AdbFeatures[];
+                        this._features = value!.split(",") as AdbFeatures[];
                         break;
                 }
             }
@@ -246,16 +292,19 @@ export class Adb implements Closeable {
     }
 
     public async getProp(key: string): Promise<string> {
-        const stdout = await this.subprocess.spawnAndWaitLegacy(
-            ['getprop', key]
-        );
+        const stdout = await this.subprocess.spawnAndWaitLegacy([
+            "getprop",
+            key,
+        ]);
         return stdout.trim();
     }
 
     public async rm(...filenames: string[]): Promise<string> {
-        const stdout = await this.subprocess.spawnAndWaitLegacy(
-            ['rm', '-rf', ...filenames.map(arg => escapeArg(arg))],
-        );
+        const stdout = await this.subprocess.spawnAndWaitLegacy([
+            "rm",
+            "-rf",
+            ...filenames.map((arg) => escapeArg(arg)),
+        ]);
         return stdout;
     }
 
@@ -264,7 +313,7 @@ export class Adb implements Closeable {
     }
 
     public async sync(): Promise<AdbSync> {
-        const socket = await this.createSocket('sync:');
+        const socket = await this.createSocket("sync:");
         return new AdbSync(this, socket);
     }
 

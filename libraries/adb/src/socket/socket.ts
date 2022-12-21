@@ -1,9 +1,19 @@
-import { PromiseResolver } from '@yume-chan/async';
-import type { Disposable } from '@yume-chan/event';
-import { ChunkStream, DuplexStreamFactory, pipeFrom, PushReadableStream, WritableStream, type PushReadableStreamController, type ReadableStream, type ReadableWritablePair } from '@yume-chan/stream-extra';
+import { PromiseResolver } from "@yume-chan/async";
+import { type Disposable } from "@yume-chan/event";
+import {
+    ChunkStream,
+    DuplexStreamFactory,
+    PushReadableStream,
+    WritableStream,
+    pipeFrom,
+    type PushReadableStreamController,
+    type ReadableStream,
+    type ReadableWritablePair,
+} from "@yume-chan/stream-extra";
 
-import { AdbCommand } from '../packet.js';
-import type { AdbPacketDispatcher, Closeable } from './dispatcher.js';
+import { AdbCommand } from "../packet.js";
+
+import { type AdbPacketDispatcher, type Closeable } from "./dispatcher.js";
 
 export interface AdbSocketInfo {
     localId: number;
@@ -19,7 +29,13 @@ export interface AdbSocketConstructionOptions extends AdbSocketInfo {
     highWaterMark?: number | undefined;
 }
 
-export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<Uint8Array, Uint8Array>, Closeable, Disposable {
+export class AdbSocketController
+    implements
+        AdbSocketInfo,
+        ReadableWritablePair<Uint8Array, Uint8Array>,
+        Closeable,
+        Disposable
+{
     private readonly dispatcher!: AdbPacketDispatcher;
 
     public readonly localId!: number;
@@ -31,7 +47,9 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
 
     private _readable: ReadableStream<Uint8Array>;
     private _readableController!: PushReadableStreamController<Uint8Array>;
-    public get readable() { return this._readable; }
+    public get readable() {
+        return this._readable;
+    }
 
     private _writePromise: PromiseResolver<void> | undefined;
     public readonly writable: WritableStream<Uint8Array>;
@@ -42,10 +60,14 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
      *
      * It's only used by dispatcher to avoid sending another `CLSE` packet to remote.
      */
-    public get closed() { return this._closed; }
+    public get closed() {
+        return this._closed;
+    }
 
     private _socket: AdbSocket;
-    public get socket() { return this._socket; }
+    public get socket() {
+        return this._socket;
+    }
 
     public constructor(options: AdbSocketConstructionOptions) {
         Object.assign(this, options);
@@ -69,17 +91,22 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
             },
             dispose: () => {
                 // Error out the pending writes
-                this._writePromise?.reject(new Error('Socket closed'));
+                this._writePromise?.reject(new Error("Socket closed"));
             },
         });
 
         this._readable = this._duplex.wrapReadable(
-            new PushReadableStream(controller => {
-                this._readableController = controller;
-            }, {
-                highWaterMark: options.highWaterMark ?? 16 * 1024,
-                size(chunk) { return chunk.byteLength; }
-            })
+            new PushReadableStream(
+                (controller) => {
+                    this._readableController = controller;
+                },
+                {
+                    highWaterMark: options.highWaterMark ?? 16 * 1024,
+                    size(chunk) {
+                        return chunk.byteLength;
+                    },
+                }
+            )
         );
 
         this.writable = pipeFrom(
@@ -95,8 +122,8 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
                             chunk
                         );
                         await this._writePromise.promise;
-                    }
-                }),
+                    },
+                })
             ),
             new ChunkStream(this.dispatcher.options.maxPayloadSize)
         );
@@ -123,7 +150,7 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
     }
 
     public dispose() {
-        this._duplex.dispose();
+        return this._duplex.dispose();
     }
 }
 
@@ -135,16 +162,30 @@ export class AdbSocketController implements AdbSocketInfo, ReadableWritablePair<
  * `socket.writable.abort()`, `socket.writable.getWriter().abort()`,
  * `socket.writable.close()` or `socket.writable.getWriter().close()`.
  */
-export class AdbSocket implements AdbSocketInfo, ReadableWritablePair<Uint8Array, Uint8Array>{
+export class AdbSocket
+    implements AdbSocketInfo, ReadableWritablePair<Uint8Array, Uint8Array>
+{
     private _controller: AdbSocketController;
 
-    public get localId(): number { return this._controller.localId; }
-    public get remoteId(): number { return this._controller.remoteId; }
-    public get localCreated(): boolean { return this._controller.localCreated; }
-    public get serviceString(): string { return this._controller.serviceString; }
+    public get localId(): number {
+        return this._controller.localId;
+    }
+    public get remoteId(): number {
+        return this._controller.remoteId;
+    }
+    public get localCreated(): boolean {
+        return this._controller.localCreated;
+    }
+    public get serviceString(): string {
+        return this._controller.serviceString;
+    }
 
-    public get readable(): ReadableStream<Uint8Array> { return this._controller.readable; }
-    public get writable(): WritableStream<Uint8Array> { return this._controller.writable; }
+    public get readable(): ReadableStream<Uint8Array> {
+        return this._controller.readable;
+    }
+    public get writable(): WritableStream<Uint8Array> {
+        return this._controller.writable;
+    }
 
     public constructor(controller: AdbSocketController) {
         this._controller = controller;

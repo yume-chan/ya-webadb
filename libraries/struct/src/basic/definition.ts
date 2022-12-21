@@ -1,7 +1,10 @@
-import type { StructAsyncDeserializeStream, StructDeserializeStream } from "./stream.js";
-import type { StructFieldValue } from "./field-value.js";
-import type { StructValue } from "./struct-value.js";
-import type { StructOptions } from "./options.js";
+import { type StructFieldValue } from "./field-value.js";
+import { type StructOptions } from "./options.js";
+import {
+    type StructAsyncDeserializeStream,
+    type StructDeserializeStream,
+} from "./stream.js";
+import { type StructValue } from "./struct-value.js";
 
 /**
  * A field definition defines how to deserialize a field.
@@ -13,8 +16,8 @@ import type { StructOptions } from "./options.js";
 export abstract class StructFieldDefinition<
     TOptions = void,
     TValue = unknown,
-    TOmitInitKey extends PropertyKey = never,
-    > {
+    TOmitInitKey extends PropertyKey = never
+> {
     /**
      * When `T` is a type initiated `StructFieldDefinition`,
      * use `T['TValue']` to retrieve its `TValue` type parameter.
@@ -46,7 +49,7 @@ export abstract class StructFieldDefinition<
     public abstract create(
         options: Readonly<StructOptions>,
         structValue: StructValue,
-        value: TValue,
+        value: TValue
     ): StructFieldValue<this>;
 
     /**
@@ -58,11 +61,11 @@ export abstract class StructFieldDefinition<
     public abstract deserialize(
         options: Readonly<StructOptions>,
         stream: StructDeserializeStream,
-        structValue: StructValue,
+        structValue: StructValue
     ): StructFieldValue<this>;
     public abstract deserialize(
         options: Readonly<StructOptions>,
         stream: StructAsyncDeserializeStream,
-        struct: StructValue,
+        struct: StructValue
     ): Promise<StructFieldValue<this>>;
 }

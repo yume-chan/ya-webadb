@@ -1,0 +1,12 @@
+{
+    "extends": "./node_modules/@yume-chan/tsconfig/tsconfig.base.json",
+    "compilerOptions": {
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
+        "types": [
+            "w3c-web-usb",
+        ]
+    },
+}

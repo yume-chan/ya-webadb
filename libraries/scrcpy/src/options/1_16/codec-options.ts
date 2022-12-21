@@ -1,5 +1,8 @@
-import type { AndroidCodecLevel, AndroidCodecProfile } from '../../codec.js';
-import type { ScrcpyOptionValue } from '../types.js';
+import {
+    type AndroidCodecLevel,
+    type AndroidCodecProfile,
+} from "../../codec.js";
+import { type ScrcpyOptionValue } from "../types.js";
 
 /**
  * If the option you need is not in this type,
@@ -15,12 +18,14 @@ export interface CodecOptionsInit {
 }
 
 function toDashCase(input: string) {
-    return input.replace(/([A-Z])/g, '-$1').toLowerCase();
+    return input.replace(/([A-Z])/g, "-$1").toLowerCase();
 }
 
-const CODEC_OPTION_TYPES: Partial<Record<keyof CodecOptionsInit, 'long' | 'float' | 'string'>> = {
-    repeatPreviousFrameAfter: 'long',
-    maxPtsGapToEncoder: 'long',
+const CODEC_OPTION_TYPES: Partial<
+    Record<keyof CodecOptionsInit, "long" | "float" | "string">
+> = {
+    repeatPreviousFrameAfter: "long",
+    maxPtsGapToEncoder: "long",
 };
 
 export class CodecOptions implements ScrcpyOptionValue {
@@ -31,8 +36,9 @@ export class CodecOptions implements ScrcpyOptionValue {
     }
 
     public toOptionValue(): string | undefined {
-        const entries = Object.entries(this.value)
-            .filter(([key, value]) => value !== undefined);
+        const entries = Object.entries(this.value).filter(
+            ([, value]) => value !== undefined
+        );
 
         if (entries.length === 0) {
             return undefined;
@@ -41,8 +47,8 @@ export class CodecOptions implements ScrcpyOptionValue {
         return entries
             .map(([key, value]) => {
                 const type = CODEC_OPTION_TYPES[key as keyof CodecOptionsInit];
-                return `${toDashCase(key)}${type ? `:${type}` : ''}=${value}`;
+                return `${toDashCase(key)}${type ? `:${type}` : ""}=${value}`;
             })
-            .join(',');
+            .join(",");
     }
 }

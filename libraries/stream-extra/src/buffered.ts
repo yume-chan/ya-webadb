@@ -1,9 +1,12 @@
 import { PushReadableStream } from "./push-readable.js";
-import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
+import {
+    type ReadableStream,
+    type ReadableStreamDefaultReader,
+} from "./stream.js";
 
 export class BufferedReadableStreamEndedError extends Error {
     public constructor() {
-        super('Stream ended');
+        super("Stream ended");
 
         // Fix Error's prototype chain when compiling to ES5
         Object.setPrototypeOf(this, new.target.prototype);
@@ -115,23 +118,17 @@ export class BufferedReadableStream {
      */
     public release(): ReadableStream<Uint8Array> {
         if (this.buffered) {
-            return new PushReadableStream<Uint8Array>(async controller => {
+            return new PushReadableStream<Uint8Array>(async (controller) => {
                 // Put the remaining data back to the stream
                 await controller.enqueue(this.buffered!);
 
                 // Manually pipe the stream
                 while (true) {
-                    try {
-                        const { done, value } = await this.reader.read();
-                        if (done) {
-                            controller.close();
-                            break;
-                        } else {
-                            await controller.enqueue(value);
-                        }
-                    } catch (e) {
-                        controller.error(e);
-                        break;
+                    const { done, value } = await this.reader.read();
+                    if (done) {
+                        return;
+                    } else {
+                        await controller.enqueue(value);
                     }
                 }
             });
@@ -142,7 +139,7 @@ export class BufferedReadableStream {
         }
     }
 
-    public cancel(reason?: any) {
+    public cancel(reason?: unknown) {
         return this.reader.cancel(reason);
     }
 }

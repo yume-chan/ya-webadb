@@ -1,11 +1,22 @@
-import { AsyncOperationManager, PromiseResolver } from '@yume-chan/async';
-import type { RemoveEventListener } from '@yume-chan/event';
-import { AbortController, WritableStream, WritableStreamDefaultWriter, type ReadableWritablePair } from '@yume-chan/stream-extra';
-import { EMPTY_UINT8_ARRAY, type ValueOrPromise } from '@yume-chan/struct';
+import { AsyncOperationManager, PromiseResolver } from "@yume-chan/async";
+import { type RemoveEventListener } from "@yume-chan/event";
+import {
+    AbortController,
+    WritableStream,
+    type ReadableWritablePair,
+    type WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
+import { EMPTY_UINT8_ARRAY, type ValueOrPromise } from "@yume-chan/struct";
 
-import { AdbCommand, calculateChecksum, type AdbPacketData, type AdbPacketInit } from '../packet.js';
-import { decodeUtf8, encodeUtf8 } from '../utils/index.js';
-import { AdbSocket, AdbSocketController } from './socket.js';
+import {
+    AdbCommand,
+    calculateChecksum,
+    type AdbPacketData,
+    type AdbPacketInit,
+} from "../packet.js";
+import { decodeUtf8, encodeUtf8 } from "../utils/index.js";
+
+import { AdbSocketController, type AdbSocket } from "./socket.js";
 
 export interface AdbPacketDispatcherOptions {
     calculateChecksum: boolean;
@@ -19,7 +30,9 @@ export interface AdbPacketDispatcherOptions {
     maxPayloadSize: number;
 }
 
-export type AdbIncomingSocketHandler = (socket: AdbSocket) => ValueOrPromise<boolean>;
+export type AdbIncomingSocketHandler = (
+    socket: AdbSocket
+) => ValueOrPromise<boolean>;
 
 export interface Closeable {
     close(): ValueOrPromise<void>;
@@ -50,7 +63,9 @@ export class AdbPacketDispatcher implements Closeable {
 
     private _closed = false;
     private _disconnected = new PromiseResolver<void>();
-    public get disconnected() { return this._disconnected.promise; }
+    public get disconnected() {
+        return this._disconnected.promise;
+    }
 
     private _incomingSocketHandlers: Set<AdbIncomingSocketHandler> = new Set();
 
@@ -63,50 +78,68 @@ export class AdbPacketDispatcher implements Closeable {
         this.options = options;
 
         connection.readable
-            .pipeTo(new WritableStream({
-                write: async (packet) => {
-                    switch (packet.command) {
-                        case AdbCommand.OK:
-                            this.handleOk(packet);
-                            break;
-                        case AdbCommand.Close:
-                            await this.handleClose(packet);
-                            break;
-                        case AdbCommand.Write:
-                            if (this.sockets.has(packet.arg1)) {
-                                await this.sockets.get(packet.arg1)!.enqueue(packet.payload);
-                                await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
+            .pipeTo(
+                new WritableStream({
+                    write: async (packet) => {
+                        switch (packet.command) {
+                            case AdbCommand.OK:
+                                this.handleOk(packet);
                                 break;
-                            }
-                            throw new Error(`Unknown local socket id: ${packet.arg1}`);
-                        case AdbCommand.Open:
-                            await this.handleOpen(packet);
-                            break;
-                        default:
-                            // Junk data may only appear in the authentication phase,
-                            // since the dispatcher only works after authentication,
-                            // all packets should have a valid command.
-                            // (although it's possible that Adb added new commands in the future)
-                            throw new Error(`Unknown command: ${packet.command.toString(16)}`);
-                    }
-                },
-            }), {
-                // There are multiple reasons for the pipe to stop,
-                // (device disconnection, protocol error, or user abortion)
-                // if the underlying streams are still open,
-                // it's still possible to create another ADB connection.
-                // So don't close `readable` here.
-                preventCancel: true,
-                signal: this._abortController.signal,
-            })
-            .then(() => {
-                this.dispose();
-            }, (e) => {
-                if (!this._closed) {
-                    this._disconnected.reject(e);
+                            case AdbCommand.Close:
+                                await this.handleClose(packet);
+                                break;
+                            case AdbCommand.Write:
+                                if (this.sockets.has(packet.arg1)) {
+                                    await this.sockets
+                                        .get(packet.arg1)!
+                                        .enqueue(packet.payload);
+                                    await this.sendPacket(
+                                        AdbCommand.OK,
+                                        packet.arg1,
+                                        packet.arg0
+                                    );
+                                    break;
+                                }
+                                throw new Error(
+                                    `Unknown local socket id: ${packet.arg1}`
+                                );
+                            case AdbCommand.Open:
+                                await this.handleOpen(packet);
+                                break;
+                            default:
+                                // Junk data may only appear in the authentication phase,
+                                // since the dispatcher only works after authentication,
+                                // all packets should have a valid command.
+                                // (although it's possible that Adb added new commands in the future)
+                                throw new Error(
+                                    `Unknown command: ${packet.command.toString(
+                                        16
+                                    )}`
+                                );
+                        }
+                    },
+                }),
+                {
+                    // There are multiple reasons for the pipe to stop,
+                    // (device disconnection, protocol error, or user abortion)
+                    // if the underlying streams are still open,
+                    // it's still possible to create another ADB connection.
+                    // So don't close `readable` here.
+                    preventCancel: true,
+                    signal: this._abortController.signal,
                 }
-                this.dispose();
-            });
+            )
+            .then(
+                () => {
+                    this.dispose();
+                },
+                (e) => {
+                    if (!this._closed) {
+                        this._disconnected.reject(e);
+                    }
+                    this.dispose();
+                }
+            );
 
         this._writer = connection.writable.getWriter();
     }
@@ -126,13 +159,18 @@ export class AdbPacketDispatcher implements Closeable {
 
         // Maybe the device is responding to a packet of last connection
         // Tell the device to close the socket
-        this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
+        void this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
     }
 
     private async handleClose(packet: AdbPacketData) {
         // If the socket is still pending
-        if (packet.arg0 === 0 &&
-            this.initializers.reject(packet.arg1, new Error('Socket open failed'))) {
+        if (
+            packet.arg0 === 0 &&
+            this.initializers.reject(
+                packet.arg1,
+                new Error("Socket open failed")
+            )
+        ) {
             // Device failed to create the socket
             // (unknown service string, failed to execute command, etc.)
             // it doesn't break the connection,
@@ -153,9 +191,13 @@ export class AdbPacketDispatcher implements Closeable {
         if (socket) {
             // The device want to close the socket
             if (!socket.closed) {
-                await this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
+                await this.sendPacket(
+                    AdbCommand.Close,
+                    packet.arg1,
+                    packet.arg0
+                );
             }
-            socket.dispose();
+            await socket.dispose();
             this.sockets.delete(packet.arg1);
             return;
         }
@@ -170,7 +212,9 @@ export class AdbPacketDispatcher implements Closeable {
      * @param handler A function to call with new incoming sockets. It must return `true` if it accepts the socket.
      * @returns A function to remove the handler.
      */
-    public onIncomingSocket(handler: AdbIncomingSocketHandler): RemoveEventListener {
+    public onIncomingSocket(
+        handler: AdbIncomingSocketHandler
+    ): RemoveEventListener {
         this._incomingSocketHandlers.add(handler);
         const remove = () => {
             this._incomingSocketHandlers.delete(handler);
@@ -209,16 +253,11 @@ export class AdbPacketDispatcher implements Closeable {
 
     public async createSocket(serviceString: string): Promise<AdbSocket> {
         if (this.options.appendNullToServiceString) {
-            serviceString += '\0';
+            serviceString += "\0";
         }
 
         const [localId, initializer] = this.initializers.add<number>();
-        await this.sendPacket(
-            AdbCommand.Open,
-            localId,
-            0,
-            serviceString
-        );
+        await this.sendPacket(AdbCommand.Open, localId, 0, serviceString);
 
         // Fulfilled by `handleOk`
         const remoteId = await initializer;
@@ -245,27 +284,29 @@ export class AdbPacketDispatcher implements Closeable {
         packetOrCommand: AdbPacketInit | AdbCommand,
         arg0?: number,
         arg1?: number,
-        payload: string | Uint8Array = EMPTY_UINT8_ARRAY,
+        payload: string | Uint8Array = EMPTY_UINT8_ARRAY
     ): Promise<void> {
         let init: AdbPacketData;
         if (arg0 === undefined) {
             init = packetOrCommand as AdbPacketInit;
         } else {
-            if (typeof payload === 'string') {
+            if (typeof payload === "string") {
                 payload = encodeUtf8(payload);
             }
 
             init = {
                 command: packetOrCommand as AdbCommand,
-                arg0: arg0 as number,
+                arg0: arg0,
                 arg1: arg1 as number,
                 payload,
             };
         }
 
-        if (init.payload &&
-            init.payload.byteLength > this.options.maxPayloadSize) {
-            throw new Error('payload too large');
+        if (
+            init.payload &&
+            init.payload.byteLength > this.options.maxPayloadSize
+        ) {
+            throw new Error("payload too large");
         }
 
         if (this.options.calculateChecksum) {
@@ -281,10 +322,7 @@ export class AdbPacketDispatcher implements Closeable {
     public async close() {
         // Send `CLSE` packets for all sockets
         await Promise.all(
-            Array.from(
-                this.sockets.values(),
-                socket => socket.close(),
-            )
+            Array.from(this.sockets.values(), (socket) => socket.close())
         );
 
         // Stop receiving
@@ -299,7 +337,9 @@ export class AdbPacketDispatcher implements Closeable {
 
     private dispose() {
         for (const socket of this.sockets.values()) {
-            socket.dispose();
+            socket.dispose().catch((e) => {
+                void e;
+            });
         }
 
         this._disconnected.resolve();

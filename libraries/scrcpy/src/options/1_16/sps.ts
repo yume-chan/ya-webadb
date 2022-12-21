@@ -21,7 +21,8 @@ class BitReader {
     }
 
     public next(): number {
-        const value = (this.buffer[this.bytePosition]! >> (7 - this.bitPosition)) & 1;
+        const value =
+            (this.buffer[this.bytePosition]! >> (7 - this.bitPosition)) & 1;
         this.bitPosition += 1;
         if (this.bitPosition === 8) {
             this.bytePosition += 1;
@@ -38,7 +39,7 @@ class BitReader {
         if (length === 0) {
             return 0;
         }
-        return (1 << length | this.read(length)) - 1;
+        return ((1 << length) | this.read(length)) - 1;
     }
 }
 
@@ -59,7 +60,7 @@ function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
         if (inEmulation) {
             if (byte > 0x03) {
                 // `0x00000304` or larger are invalid
-                throw new Error('Invalid data');
+                throw new Error("Invalid data");
             }
 
             inEmulation = false;
@@ -86,7 +87,7 @@ function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
             }
 
             // Not begin with start code
-            throw new Error('Invalid data');
+            throw new Error("Invalid data");
         }
 
         if (lastZeroCount < 2) {
@@ -107,13 +108,13 @@ function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
 
         if (lastZeroCount > 2) {
             // Too much `0x00`s
-            throw new Error('Invalid data');
+            throw new Error("Invalid data");
         }
 
         switch (byte) {
             case 0x02:
                 // Didn't find why, but 7.4.1 NAL unit semantics forbids `0x000002` appearing in NAL units
-                throw new Error('Invalid data');
+                throw new Error("Invalid data");
             case 0x03:
                 // `0x000003` is the "emulation_prevention_three_byte"
                 // `0x00000300`, `0x00000301`, `0x00000302` and `0x00000303` represent
@@ -131,7 +132,7 @@ function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
     }
 
     if (inEmulation || zeroCount !== 0) {
-        throw new Error('Invalid data');
+        throw new Error("Invalid data");
     }
 
     yield buffer.subarray(start, writeIndex);
@@ -142,7 +143,7 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
     for (const nalu of iterateNalu(new Uint8Array(buffer))) {
         const reader = new BitReader(nalu);
         if (reader.next() !== 0) {
-            throw new Error('Invalid data');
+            throw new Error("Invalid data");
         }
 
         const nal_ref_idc = reader.read(2);
@@ -153,13 +154,15 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
         }
 
         if (nal_ref_idc === 0) {
-            throw new Error('Invalid data');
+            throw new Error("Invalid data");
         }
 
         const profile_idc = reader.read(8);
         const constraint_set = reader.read(8);
 
-        const constraint_set_reader = new BitReader(new Uint8Array([constraint_set]));
+        const constraint_set_reader = new BitReader(
+            new Uint8Array([constraint_set])
+        );
         const constraint_set0_flag = !!constraint_set_reader.next();
         const constraint_set1_flag = !!constraint_set_reader.next();
         const constraint_set2_flag = !!constraint_set_reader.next();
@@ -169,17 +172,26 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
 
         // reserved_zero_2bits
         if (constraint_set_reader.read(2) !== 0) {
-            throw new Error('Invalid data');
+            throw new Error("Invalid data");
         }
 
         const level_idc = reader.read(8);
         const seq_parameter_set_id = reader.decodeExponentialGolombNumber();
 
-        if (profile_idc === 100 || profile_idc === 110 ||
-            profile_idc === 122 || profile_idc === 244 || profile_idc === 44 ||
-            profile_idc === 83 || profile_idc === 86 || profile_idc === 118 ||
-            profile_idc === 128 || profile_idc === 138 || profile_idc === 139 ||
-            profile_idc === 134) {
+        if (
+            profile_idc === 100 ||
+            profile_idc === 110 ||
+            profile_idc === 122 ||
+            profile_idc === 244 ||
+            profile_idc === 44 ||
+            profile_idc === 83 ||
+            profile_idc === 86 ||
+            profile_idc === 118 ||
+            profile_idc === 128 ||
+            profile_idc === 138 ||
+            profile_idc === 139 ||
+            profile_idc === 134
+        ) {
             const chroma_format_idc = reader.decodeExponentialGolombNumber();
             if (chroma_format_idc === 3) {
                 // separate_colour_plane_flag
@@ -197,7 +209,11 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
             const seq_scaling_matrix_present_flag = !!reader.next();
             if (seq_scaling_matrix_present_flag) {
                 const seq_scaling_list_present_flag: boolean[] = [];
-                for (let i = 0; i < ((chroma_format_idc !== 3) ? 8 : 12); i++) {
+                for (
+                    let i = 0;
+                    i < (chroma_format_idc !== 3 ? 8 : 12);
+                    i += 1
+                ) {
                     seq_scaling_list_present_flag[i] = !!reader.next();
                     if (seq_scaling_list_present_flag[i])
                         if (i < 6) {
@@ -226,10 +242,12 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
             reader.decodeExponentialGolombNumber();
             // offset_for_top_to_bottom_field
             reader.decodeExponentialGolombNumber();
-            const num_ref_frames_in_pic_order_cnt_cycle = reader.decodeExponentialGolombNumber();
+            const num_ref_frames_in_pic_order_cnt_cycle =
+                reader.decodeExponentialGolombNumber();
             const offset_for_ref_frame: number[] = [];
-            for (let i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i++) {
-                offset_for_ref_frame[i] = reader.decodeExponentialGolombNumber();
+            for (let i = 0; i < num_ref_frames_in_pic_order_cnt_cycle; i += 1) {
+                offset_for_ref_frame[i] =
+                    reader.decodeExponentialGolombNumber();
             }
         }
 
@@ -238,7 +256,8 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
         // gaps_in_frame_num_value_allowed_flag
         reader.next();
         const pic_width_in_mbs_minus1 = reader.decodeExponentialGolombNumber();
-        const pic_height_in_map_units_minus1 = reader.decodeExponentialGolombNumber();
+        const pic_height_in_map_units_minus1 =
+            reader.decodeExponentialGolombNumber();
 
         const frame_mbs_only_flag = reader.next();
         if (!frame_mbs_only_flag) {
@@ -294,7 +313,9 @@ export function parse_sequence_parameter_set(buffer: ArrayBuffer) {
         };
     }
 
-    throw new Error('Invalid data');
+    throw new Error("Invalid data");
 }
 
-export type SequenceParameterSet = ReturnType<typeof parse_sequence_parameter_set>;
+export type SequenceParameterSet = ReturnType<
+    typeof parse_sequence_parameter_set
+>;

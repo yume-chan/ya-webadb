@@ -1,13 +1,23 @@
-import { StructFieldValue, type StructFieldDefinition, type StructOptions, type StructValue } from '../../basic/index.js';
-import type { KeysOfType } from '../../utils.js';
-import { BufferLikeFieldDefinition, BufferLikeFieldValue, type BufferFieldSubType } from './base.js';
+import {
+    StructFieldValue,
+    type StructFieldDefinition,
+    type StructOptions,
+    type StructValue,
+} from "../../basic/index.js";
+import { type KeysOfType } from "../../utils.js";
+
+import {
+    BufferLikeFieldDefinition,
+    BufferLikeFieldValue,
+    type BufferFieldSubType,
+} from "./base.js";
 
 export type LengthField<TFields> = KeysOfType<TFields, number | string>;
 
 export interface VariableLengthBufferLikeFieldOptions<
     TFields = object,
-    TLengthField extends LengthField<TFields> = any,
-    > {
+    TLengthField extends LengthField<TFields> = any
+> {
     /**
      * The name of the field that contains the length of the buffer.
      *
@@ -27,20 +37,20 @@ export interface VariableLengthBufferLikeFieldOptions<
 export class VariableLengthBufferLikeFieldDefinition<
     TType extends BufferFieldSubType = BufferFieldSubType,
     TOptions extends VariableLengthBufferLikeFieldOptions = VariableLengthBufferLikeFieldOptions,
-    TTypeScriptType = TType["TTypeScriptType"],
-    > extends BufferLikeFieldDefinition<
+    TTypeScriptType = TType["TTypeScriptType"]
+> extends BufferLikeFieldDefinition<
     TType,
     TOptions,
-    TOptions['lengthField'],
+    TOptions["lengthField"],
     TTypeScriptType
-    > {
+> {
     public getSize(): number {
         return 0;
     }
 
     protected override getDeserializeSize(struct: StructValue) {
         let value = struct.value[this.options.lengthField] as number | string;
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
             value = Number.parseInt(value, this.options.lengthFieldRadix ?? 10);
         }
         return value;
@@ -57,14 +67,14 @@ export class VariableLengthBufferLikeFieldDefinition<
             options,
             struct,
             value,
-            array,
+            array
         );
     }
 }
 
 export class VariableLengthBufferLikeStructFieldValue<
-    TDefinition extends VariableLengthBufferLikeFieldDefinition = VariableLengthBufferLikeFieldDefinition,
-    > extends BufferLikeFieldValue<TDefinition> {
+    TDefinition extends VariableLengthBufferLikeFieldDefinition = VariableLengthBufferLikeFieldDefinition
+> extends BufferLikeFieldValue<TDefinition> {
     protected length: number | undefined;
 
     protected lengthFieldValue: VariableLengthBufferLikeFieldLengthValue;
@@ -73,8 +83,8 @@ export class VariableLengthBufferLikeStructFieldValue<
         definition: TDefinition,
         options: Readonly<StructOptions>,
         struct: StructValue,
-        value: TDefinition['TValue'],
-        array?: Uint8Array,
+        value: TDefinition["TValue"],
+        array?: Uint8Array
     ) {
         super(definition, options, struct, value, array);
 
@@ -88,7 +98,7 @@ export class VariableLengthBufferLikeStructFieldValue<
         const originalValue = struct.get(lengthField);
         this.lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
             originalValue,
-            this,
+            this
         );
         struct.set(lengthField, this.lengthFieldValue);
     }
@@ -113,20 +123,25 @@ export class VariableLengthBufferLikeStructFieldValue<
 }
 
 // Not using `VariableLengthBufferLikeStructFieldValue` directly makes writing tests much easier...
-type VariableLengthBufferLikeFieldValueLike =
-    StructFieldValue<StructFieldDefinition<VariableLengthBufferLikeFieldOptions, any, any>>;
+type VariableLengthBufferLikeFieldValueLike = StructFieldValue<
+    StructFieldDefinition<VariableLengthBufferLikeFieldOptions, any, any>
+>;
 
-export class VariableLengthBufferLikeFieldLengthValue
-    extends StructFieldValue {
+export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue {
     protected originalField: StructFieldValue;
 
     protected bufferField: VariableLengthBufferLikeFieldValueLike;
 
     public constructor(
         originalField: StructFieldValue,
-        arrayBufferField: VariableLengthBufferLikeFieldValueLike,
+        arrayBufferField: VariableLengthBufferLikeFieldValueLike
     ) {
-        super(originalField.definition, originalField.options, originalField.struct, 0);
+        super(
+            originalField.definition,
+            originalField.options,
+            originalField.struct,
+            0
+        );
         this.originalField = originalField;
         this.bufferField = arrayBufferField;
     }
@@ -139,8 +154,10 @@ export class VariableLengthBufferLikeFieldLengthValue
         let value: string | number = this.bufferField.getSize();
 
         const originalValue = this.originalField.get();
-        if (typeof originalValue === 'string') {
-            value = value.toString(this.bufferField.definition.options.lengthFieldRadix ?? 10);
+        if (typeof originalValue === "string") {
+            value = value.toString(
+                this.bufferField.definition.options.lengthFieldRadix ?? 10
+            );
         }
 
         return value;

@@ -462,8 +462,12 @@
             "projectFolder": "apps/book"
         },
         {
-            "packageName": "@yume-chan/ts-package-builder",
-            "projectFolder": "toolchain/ts-package-builder"
+            "packageName": "@yume-chan/tsconfig",
+            "projectFolder": "toolchain/tsconfig"
+        },
+        {
+            "packageName": "@yume-chan/eslint-config",
+            "projectFolder": "toolchain/eslint-config"
         }
     ]
 }

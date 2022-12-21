@@ -1,5 +1,5 @@
-import { PromiseResolver } from '@yume-chan/async';
-import type { Disposable } from '@yume-chan/event';
+import { PromiseResolver } from "@yume-chan/async";
+import { type Disposable } from "@yume-chan/event";
 
 export class AutoResetEvent implements Disposable {
     private readonly list: PromiseResolver<void>[] = [];
@@ -34,7 +34,7 @@ export class AutoResetEvent implements Disposable {
 
     public dispose() {
         for (const item of this.list) {
-            item.reject(new Error('The AutoResetEvent has been disposed'));
+            item.reject(new Error("The AutoResetEvent has been disposed"));
         }
         this.list.length = 0;
     }

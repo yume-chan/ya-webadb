@@ -1,13 +1,17 @@
-import { WrapWritableStream, WritableStream } from '@yume-chan/stream-extra';
+import {
+    WrapWritableStream,
+    type WritableStream,
+} from "@yume-chan/stream-extra";
 
-import type { Adb } from '../adb.js';
-import { escapeArg } from './subprocess/index.js';
-import type { AdbSync } from './sync/index.js';
+import { type Adb } from "../adb.js";
 
-export function install(
-    adb: Adb,
-): WritableStream<Uint8Array> {
-    const filename = `/data/local/tmp/${Math.random().toString().substring(2)}.apk`;
+import { escapeArg } from "./subprocess/index.js";
+import { type AdbSync } from "./sync/index.js";
+
+export function install(adb: Adb): WritableStream<Uint8Array> {
+    const filename = `/data/local/tmp/${Math.random()
+        .toString()
+        .substring(2)}.apk`;
 
     let sync!: AdbSync;
     return new WrapWritableStream<Uint8Array>({
@@ -20,13 +24,17 @@ export function install(
             return sync.write(filename, undefined, undefined);
         },
         async close() {
-            sync.dispose();
+            await sync.dispose();
 
             // Invoke `pm install` to install it
-            await adb.subprocess.spawnAndWaitLegacy(['pm', 'install', escapeArg(filename)]);
+            await adb.subprocess.spawnAndWaitLegacy([
+                "pm",
+                "install",
+                escapeArg(filename),
+            ]);
 
             // Remove the temp file
             await adb.rm(filename);
-        }
+        },
     });
 }

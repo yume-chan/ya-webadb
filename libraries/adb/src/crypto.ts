@@ -1,4 +1,7 @@
-import { getBigUint64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback.js';
+import {
+    getBigUint64,
+    setBigUint64,
+} from "@yume-chan/dataview-bigint-polyfill/esm/fallback.js";
 
 const BigInt0 = BigInt(0);
 const BigInt1 = BigInt(1);
@@ -12,7 +15,11 @@ const BigInt64 = BigInt(64);
  * Only supports Big-Endian, because that's what ADB uses.
  * @param byteOffset The place in the buffer at which the value should be retrieved.
  */
-export function getBigUint(dataView: DataView, byteOffset: number, length: number): bigint {
+export function getBigUint(
+    dataView: DataView,
+    byteOffset: number,
+    length: number
+): bigint {
     let result = BigInt0;
 
     // Currently `length` must be a multiplication of 8
@@ -34,7 +41,12 @@ export function getBigUint(dataView: DataView, byteOffset: number, length: numbe
  * @param littleEndian If `false` or `undefined`, a big-endian value should be written,
  * otherwise a little-endian value should be written.
  */
-export function setBigUint(dataView: DataView, byteOffset: number, value: bigint, littleEndian?: boolean) {
+export function setBigUint(
+    dataView: DataView,
+    byteOffset: number,
+    value: bigint,
+    littleEndian?: boolean
+) {
     const start = byteOffset;
 
     if (littleEndian) {
@@ -98,7 +110,7 @@ export function parsePrivateKey(key: Uint8Array): [n: bigint, d: bigint] {
 // I can't understand, but it does work
 // Only used with numbers smaller than 2^32 so doesn't need BigInt
 export function modInverse(a: number, m: number) {
-    a = (a % m + m) % m;
+    a = ((a % m) + m) % m;
     if (!a || m < 2) {
         return NaN; // invalid input
     }
@@ -115,26 +127,24 @@ export function modInverse(a: number, m: number) {
     // find the inverse
     let x = 1;
     let y = 0;
-    for (let i = s.length - 2; i >= 0; --i) {
+    for (let i = s.length - 2; i >= 0; i -= 1) {
         [x, y] = [y, x - y * Math.floor(s[i]!.a / s[i]!.b)];
     }
-    return (y % m + m) % m;
+    return ((y % m) + m) % m;
 }
 
 export function calculatePublicKeyLength() {
     return 4 + 4 + 2048 / 8 + 2048 / 8 + 4;
 }
 
-export function calculatePublicKey(
-    privateKey: Uint8Array
-): Uint8Array;
+export function calculatePublicKey(privateKey: Uint8Array): Uint8Array;
 export function calculatePublicKey(
     privateKey: Uint8Array,
-    output: Uint8Array,
+    output: Uint8Array
 ): number;
 export function calculatePublicKey(
     privateKey: Uint8Array,
-    output?: Uint8Array,
+    output?: Uint8Array
 ): Uint8Array | number {
     // Android has its own public key generation algorithm
     // See https://android.googlesource.com/platform/system/core.git/+/91784040db2b9273687f88d8b95f729d4a61ecc2/libcrypto_utils/android_pubkey.cpp#111
@@ -156,20 +166,24 @@ export function calculatePublicKey(
     // extract `n` from private key
     const [n] = parsePrivateKey(privateKey);
 
-    let outputType: 'Uint8Array' | 'number';
+    let outputType: "Uint8Array" | "number";
     const outputLength = calculatePublicKeyLength();
     if (!output) {
         output = new Uint8Array(outputLength);
-        outputType = 'Uint8Array';
+        outputType = "Uint8Array";
     } else {
         if (output.byteLength < outputLength) {
-            throw new Error('output buffer is too small');
+            throw new Error("output buffer is too small");
         }
 
-        outputType = 'number';
+        outputType = "number";
     }
 
-    const outputView = new DataView(output.buffer, output.byteOffset, output.byteLength);
+    const outputView = new DataView(
+        output.buffer,
+        output.byteOffset,
+        output.byteLength
+    );
     let outputOffset = 0;
 
     // modulusLengthInWords
@@ -179,7 +193,10 @@ export function calculatePublicKey(
     // Calculate `n0inv`
     // Don't know why need to multiple -1
     // Didn't exist in Android codebase
-    const n0inv = modInverse(Number(BigInt.asUintN(32, n) * BigInt(-1)), 2 ** 32);
+    const n0inv = modInverse(
+        Number(BigInt.asUintN(32, n) * BigInt(-1)),
+        2 ** 32
+    );
     outputView.setUint32(outputOffset, n0inv, true);
     outputOffset += 4;
 
@@ -188,14 +205,14 @@ export function calculatePublicKey(
     outputOffset += 256;
 
     // Calculate rr = (2^(rsa_size)) ^ 2 mod n
-    let rr = BigInt(2) ** BigInt(4096) % n;
+    const rr = BigInt(2) ** BigInt(4096) % n;
     outputOffset += setBigUint(outputView, outputOffset, rr, true);
 
     // exponent
     outputView.setUint32(outputOffset, 65537, true);
     outputOffset += 4;
 
-    if (outputType === 'Uint8Array') {
+    if (outputType === "Uint8Array") {
         return output;
     } else {
         return outputLength;
@@ -209,7 +226,11 @@ export function calculatePublicKey(
  *
  * See https://en.wikipedia.org/wiki/Modular_exponentiation#Implementation_in_Lua
  */
-export function powMod(base: bigint, exponent: bigint, modulus: bigint): bigint {
+export function powMod(
+    base: bigint,
+    exponent: bigint,
+    modulus: bigint
+): bigint {
     if (modulus === BigInt1) {
         return BigInt0;
     }
@@ -219,7 +240,7 @@ export function powMod(base: bigint, exponent: bigint, modulus: bigint): bigint 
 
     while (exponent > BigInt0) {
         if (BigInt.asUintN(1, exponent) === BigInt1) {
-            r = r * base % modulus;
+            r = (r * base) % modulus;
         }
 
         exponent >>= BigInt1;
@@ -238,12 +259,22 @@ export const ASN1_OID = 0x06;
 
 // PKCS#1 SHA-1 hash digest info
 export const SHA1_DIGEST_INFO = new Uint8Array([
-    ASN1_SEQUENCE, 0x0d + SHA1_DIGEST_LENGTH,
-    ASN1_SEQUENCE, 0x09,
+    ASN1_SEQUENCE,
+    0x0d + SHA1_DIGEST_LENGTH,
+    ASN1_SEQUENCE,
+    0x09,
     // SHA-1 (1 3 14 3 2 26)
-    ASN1_OID, 0x05, 1 * 40 + 3, 14, 3, 2, 26,
-    ASN1_NULL, 0x00,
-    ASN1_OCTET_STRING, SHA1_DIGEST_LENGTH
+    ASN1_OID,
+    0x05,
+    1 * 40 + 3,
+    14,
+    3,
+    2,
+    26,
+    ASN1_NULL,
+    0x00,
+    ASN1_OCTET_STRING,
+    SHA1_DIGEST_LENGTH,
 ]);
 
 // SubtleCrypto.sign() will hash the given data and sign the hash
@@ -265,7 +296,8 @@ export function sign(privateKey: Uint8Array, data: Uint8Array): Uint8Array {
     padded[index] = 1;
     index += 1;
 
-    const fillLength = padded.length - SHA1_DIGEST_INFO.length - data.length - 1;
+    const fillLength =
+        padded.length - SHA1_DIGEST_INFO.length - data.length - 1;
     while (index < fillLength) {
         padded[index] = 0xff;
         index += 1;
@@ -282,11 +314,7 @@ export function sign(privateKey: Uint8Array, data: Uint8Array): Uint8Array {
     // Encryption
     // signature = padded ** d % n
     const view = new DataView(padded.buffer);
-    const signature = powMod(
-        getBigUint(view, 0, view.byteLength),
-        d,
-        n
-    );
+    const signature = powMod(getBigUint(view, 0, view.byteLength), d, n);
 
     // `padded` is not used anymore,
     // re-use the buffer to store the result

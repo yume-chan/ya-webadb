@@ -4,7 +4,7 @@
 import { AdbCommandBase } from "@yume-chan/adb";
 
 export interface AdbBackupOptions {
-    apps: string[] | 'all' | 'all-including-system';
+    apps: string[] | "all" | "all-including-system";
     apks: boolean;
     obbs: boolean;
     shared: boolean;
@@ -14,9 +14,13 @@ export interface AdbBackupOptions {
 }
 
 export class AdbBackup extends AdbCommandBase {
-    async backup(options: AdbBackupOptions): Promise<void> {
+    backup(options: AdbBackupOptions): Promise<void> {
+        void options;
+        throw new Error("Not implemented");
     }
 
-    async restore(options: AdbBackupOptions): Promise<void> {
+    restore(options: AdbBackupOptions): Promise<void> {
+        void options;
+        throw new Error("Not implemented");
     }
 }

@@ -1,8 +1,15 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import { AdbCommandBase, AdbSubprocessShellProtocol } from '@yume-chan/adb';
-import { DecodeUtf8Stream, PushReadableStream, ReadableStream, SplitStringStream, WrapReadableStream, WritableStream } from '@yume-chan/stream-extra';
+import { AdbCommandBase, AdbSubprocessShellProtocol } from "@yume-chan/adb";
+import {
+    DecodeUtf8Stream,
+    PushReadableStream,
+    SplitStringStream,
+    WrapReadableStream,
+    WritableStream,
+    type ReadableStream,
+} from "@yume-chan/stream-extra";
 
 export interface BugReportZVersion {
     major: number;
@@ -34,8 +41,11 @@ export class BugReportZ extends AdbCommandBase {
             return undefined;
         }
 
-        const { stderr, exitCode } = await this.adb.subprocess.spawnAndWait(['bugreportz', '-v']);
-        if (exitCode !== 0 || stderr === '') {
+        const { stderr, exitCode } = await this.adb.subprocess.spawnAndWait([
+            "bugreportz",
+            "-v",
+        ]);
+        if (exitCode !== 0 || stderr === "") {
             return undefined;
         }
 
@@ -68,10 +78,12 @@ export class BugReportZ extends AdbCommandBase {
      * @param onProgress Progress callback. Only specify this if `supportsProgress` is `true`.
      * @returns The path of the bugreport file.
      */
-    public async generate(onProgress?: (progress: string, total: string) => void): Promise<string> {
+    public async generate(
+        onProgress?: (progress: string, total: string) => void
+    ): Promise<string> {
         const process = await this.adb.subprocess.spawn([
-            'bugreportz',
-            ...(onProgress ? ['-p'] : []),
+            "bugreportz",
+            ...(onProgress ? ["-p"] : []),
         ]);
 
         let filename: string | undefined;
@@ -79,40 +91,42 @@ export class BugReportZ extends AdbCommandBase {
 
         await process.stdout
             .pipeThrough(new DecodeUtf8Stream())
-            .pipeThrough(new SplitStringStream('\n'))
-            .pipeTo(new WritableStream<string>({
-                write(line) {
-                    // `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
-                    let match = line.match(BugReportZ.PROGRESS_REGEX);
-                    if (match) {
-                        onProgress?.(match[1]!, match[2]!);
-                    }
+            .pipeThrough(new SplitStringStream("\n"))
+            .pipeTo(
+                new WritableStream<string>({
+                    write(line) {
+                        // `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
+                        let match = line.match(BugReportZ.PROGRESS_REGEX);
+                        if (match) {
+                            onProgress?.(match[1]!, match[2]!);
+                        }
 
-                    match = line.match(BugReportZ.BEGIN_REGEX);
-                    if (match) {
-                        filename = match[1]!;
-                    }
+                        match = line.match(BugReportZ.BEGIN_REGEX);
+                        if (match) {
+                            filename = match[1]!;
+                        }
 
-                    match = line.match(BugReportZ.OK_REGEX);
-                    if (match) {
-                        filename = match[1];
-                    }
+                        match = line.match(BugReportZ.OK_REGEX);
+                        if (match) {
+                            filename = match[1];
+                        }
 
-                    match = line.match(BugReportZ.FAIL_REGEX);
-                    if (match) {
-                        // Don't report error now
-                        // We want to gather all output.
-                        error = match[1];
-                    }
-                }
-            }));
+                        match = line.match(BugReportZ.FAIL_REGEX);
+                        if (match) {
+                            // Don't report error now
+                            // We want to gather all output.
+                            error = match[1];
+                        }
+                    },
+                })
+            );
 
         if (error) {
             throw new Error(error);
         }
 
         if (!filename) {
-            throw new Error('bugreportz did not return file name');
+            throw new Error("bugreportz did not return file name");
         }
 
         // Design choice: we don't automatically pull the file to avoid more dependency on `@yume-chan/adb`
@@ -125,22 +139,34 @@ export class BugReportZ extends AdbCommandBase {
 
     public stream(): ReadableStream<Uint8Array> {
         return new PushReadableStream(async (controller) => {
-            const process = await this.adb.subprocess.spawn(['bugreportz', '-s']);
+            const process = await this.adb.subprocess.spawn([
+                "bugreportz",
+                "-s",
+            ]);
             process.stdout
-                .pipeTo(new WritableStream({
-                    async write(chunk) {
-                        await controller.enqueue(chunk);
-                    },
-                }));
+                .pipeTo(
+                    new WritableStream({
+                        async write(chunk) {
+                            await controller.enqueue(chunk);
+                        },
+                    })
+                )
+                .catch((e) => {
+                    void e;
+                });
             process.stderr
                 .pipeThrough(new DecodeUtf8Stream())
-                .pipeTo(new WritableStream({
-                    async write(chunk) {
-                        controller.error(new Error(chunk));
-                    }
-                }));
+                .pipeTo(
+                    new WritableStream({
+                        write(chunk) {
+                            controller.error(new Error(chunk));
+                        },
+                    })
+                )
+                .catch((e) => {
+                    void e;
+                });
             await process.exit;
-            controller.close();
         });
     }
 }
@@ -149,7 +175,7 @@ export class BugReportZ extends AdbCommandBase {
 export class BugReport extends AdbCommandBase {
     public generate(): ReadableStream<Uint8Array> {
         return new WrapReadableStream(async () => {
-            const process = await this.adb.subprocess.spawn(['bugreport']);
+            const process = await this.adb.subprocess.spawn(["bugreport"]);
             return process.stdout;
         });
     }

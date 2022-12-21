@@ -3,27 +3,27 @@
 // cspell: ignore keyevent
 // cspell: ignore longpress
 
-import { AdbCommandBase } from './base.js';
+import { AdbCommandBase } from "./base.js";
 
 export class AdbPower extends AdbCommandBase {
-    public reboot(name: string = '') {
+    public reboot(name = "") {
         return this.adb.createSocketAndWait(`reboot:${name}`);
     }
 
     public bootloader() {
-        return this.reboot('bootloader');
+        return this.reboot("bootloader");
     }
 
     public fastboot() {
-        return this.reboot('fastboot');
+        return this.reboot("fastboot");
     }
 
     public recovery() {
-        return this.reboot('recovery');
+        return this.reboot("recovery");
     }
 
     public sideload() {
-        return this.reboot('sideload');
+        return this.reboot("sideload");
     }
 
     /**
@@ -32,15 +32,19 @@ export class AdbPower extends AdbCommandBase {
      * Only works on some Qualcomm devices.
      */
     public qualcommEdlMode() {
-        return this.reboot('edl');
+        return this.reboot("edl");
     }
 
     public powerOff() {
-        return this.adb.subprocess.spawnAndWaitLegacy(['reboot', '-p']);
+        return this.adb.subprocess.spawnAndWaitLegacy(["reboot", "-p"]);
     }
 
-    public powerButton(longPress: boolean = false) {
-        return this.adb.subprocess.spawnAndWaitLegacy(['input', 'keyevent', longPress ? '--longpress POWER' : 'POWER']);
+    public powerButton(longPress = false) {
+        return this.adb.subprocess.spawnAndWaitLegacy([
+            "input",
+            "keyevent",
+            longPress ? "--longpress POWER" : "POWER",
+        ]);
     }
 
     /**
@@ -49,6 +53,6 @@ export class AdbPower extends AdbCommandBase {
      * Only works on Samsung devices.
      */
     public samsungOdin() {
-        return this.reboot('download');
+        return this.reboot("download");
     }
 }

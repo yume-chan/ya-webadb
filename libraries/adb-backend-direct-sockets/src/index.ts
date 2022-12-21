@@ -1,5 +1,16 @@
-import { AdbBackend, AdbPacket, AdbPacketSerializeStream } from '@yume-chan/adb';
-import { pipeFrom, ReadableStream, StructDeserializeStream, WrapReadableStream, WrapWritableStream, WritableStream } from '@yume-chan/stream-extra';
+import {
+    AdbPacket,
+    AdbPacketSerializeStream,
+    type AdbBackend,
+} from "@yume-chan/adb";
+import {
+    StructDeserializeStream,
+    WrapReadableStream,
+    WrapWritableStream,
+    pipeFrom,
+    type ReadableStream,
+    type WritableStream,
+} from "@yume-chan/stream-extra";
 
 declare global {
     interface TCPSocket {
@@ -32,7 +43,9 @@ declare global {
 
 export default class AdbDirectSocketsBackend implements AdbBackend {
     public static isSupported(): boolean {
-        return typeof window !== 'undefined' && !!window.navigator?.openTCPSocket;
+        return (
+            typeof window !== "undefined" && !!window.navigator?.openTCPSocket
+        );
     }
 
     public readonly serial: string;
@@ -43,7 +56,7 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
 
     public name: string | undefined;
 
-    public constructor(host: string, port: number = 5555, name?: string) {
+    public constructor(host: string, port = 5555, name?: string) {
         this.host = host;
         this.port = port;
         this.serial = `${host}:${port}`;
@@ -59,8 +72,9 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
 
         // Native streams can't `pipeTo()` or `pipeThrough()` polyfilled streams, so we need to wrap them
         return {
-            readable: new WrapReadableStream(readable)
-                .pipeThrough(new StructDeserializeStream(AdbPacket)),
+            readable: new WrapReadableStream(readable).pipeThrough(
+                new StructDeserializeStream(AdbPacket)
+            ),
             writable: pipeFrom(
                 new WrapWritableStream(writable),
                 new AdbPacketSerializeStream()

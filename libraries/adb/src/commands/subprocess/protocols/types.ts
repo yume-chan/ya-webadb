@@ -1,8 +1,11 @@
-import type { ReadableStream, WritableStream } from '@yume-chan/stream-extra';
-import type { ValueOrPromise } from '@yume-chan/struct';
+import {
+    type ReadableStream,
+    type WritableStream,
+} from "@yume-chan/stream-extra";
+import { type ValueOrPromise } from "@yume-chan/struct";
 
-import type { Adb } from '../../../adb.js';
-import type { AdbSocket } from '../../../socket/index.js';
+import { type Adb } from "../../../adb.js";
+import { type AdbSocket } from "../../../socket/index.js";
 
 export interface AdbSubprocessProtocol {
     /**
@@ -56,5 +59,5 @@ export interface AdbSubprocessProtocolConstructor {
     raw(adb: Adb, command: string): ValueOrPromise<AdbSubprocessProtocol>;
 
     /** Creates a new `AdbShell` by attaching to an exist `AdbSocket` */
-    new(socket: AdbSocket): AdbSubprocessProtocol;
+    new (socket: AdbSocket): AdbSubprocessProtocol;
 }

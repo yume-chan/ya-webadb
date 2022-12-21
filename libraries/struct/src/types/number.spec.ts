@@ -1,32 +1,60 @@
-import { describe, expect, it, jest, test } from '@jest/globals';
+import { describe, expect, it, jest, test } from "@jest/globals";
 
-import { StructDefaultOptions, StructDeserializeStream, StructValue } from "../basic/index.js";
+import {
+    StructDefaultOptions,
+    StructValue,
+    type StructDeserializeStream,
+} from "../basic/index.js";
+
 import { NumberFieldDefinition, NumberFieldType } from "./number.js";
 
-function testEndian(type: NumberFieldType, min: number, max: number, littleEndian: boolean) {
-    test('min', () => {
+function testEndian(
+    type: NumberFieldType,
+    min: number,
+    max: number,
+    littleEndian: boolean
+) {
+    test("min", () => {
         const buffer = new ArrayBuffer(type.size);
         const view = new DataView(buffer);
-        (view[`set${type.signed ? 'I' : 'Ui'}nt${type.size * 8}` as keyof DataView] as any)(0, min, littleEndian);
+        (
+            view[
+                `set${type.signed ? "I" : "Ui"}nt${
+                    type.size * 8
+                }` as keyof DataView
+            ] as any
+        )(0, min, littleEndian);
         let output = type.deserializer(new Uint8Array(buffer), littleEndian);
         output = type.convertSign(output);
         expect(output).toBe(min);
     });
 
-    test('1', () => {
+    test("1", () => {
         const buffer = new ArrayBuffer(type.size);
         const view = new DataView(buffer);
         const input = 1;
-        (view[`set${type.signed ? 'I' : 'Ui'}nt${type.size * 8}` as keyof DataView] as any)(0, input, littleEndian);
+        (
+            view[
+                `set${type.signed ? "I" : "Ui"}nt${
+                    type.size * 8
+                }` as keyof DataView
+            ] as any
+        )(0, input, littleEndian);
         let output = type.deserializer(new Uint8Array(buffer), littleEndian);
         output = type.convertSign(output);
         expect(output).toBe(input);
     });
 
-    test('max', () => {
+    test("max", () => {
         const buffer = new ArrayBuffer(type.size);
         const view = new DataView(buffer);
-        (view[`set${type.signed ? 'I' : 'Ui'}nt${type.size * 8}` as keyof DataView] as any)(0, max, littleEndian);
+        (
+            view[
+                `set${type.signed ? "I" : "Ui"}nt${
+                    type.size * 8
+                }` as keyof DataView
+            ] as any
+        )(0, max, littleEndian);
         let output = type.deserializer(new Uint8Array(buffer), littleEndian);
         output = type.convertSign(output);
         expect(output).toBe(max);
@@ -36,25 +64,40 @@ function testEndian(type: NumberFieldType, min: number, max: number, littleEndia
 function testDeserialize(type: NumberFieldType) {
     if (type.size === 1) {
         if (type.signed) {
-            testEndian(type, 2 ** (type.size * 8) / -2, 2 ** (type.size * 8) / 2 - 1, false);
+            testEndian(
+                type,
+                2 ** (type.size * 8) / -2,
+                2 ** (type.size * 8) / 2 - 1,
+                false
+            );
         } else {
             testEndian(type, 0, 2 ** (type.size * 8) - 1, false);
         }
     } else {
         if (type.signed) {
-            describe('big endian', () => {
-                testEndian(type, 2 ** (type.size * 8) / -2, 2 ** (type.size * 8) / 2 - 1, false);
+            describe("big endian", () => {
+                testEndian(
+                    type,
+                    2 ** (type.size * 8) / -2,
+                    2 ** (type.size * 8) / 2 - 1,
+                    false
+                );
             });
 
-            describe('little endian', () => {
-                testEndian(type, 2 ** (type.size * 8) / -2, 2 ** (type.size * 8) / 2 - 1, true);
+            describe("little endian", () => {
+                testEndian(
+                    type,
+                    2 ** (type.size * 8) / -2,
+                    2 ** (type.size * 8) / 2 - 1,
+                    true
+                );
             });
         } else {
-            describe('big endian', () => {
+            describe("big endian", () => {
                 testEndian(type, 0, 2 ** (type.size * 8) - 1, false);
             });
 
-            describe('little endian', () => {
+            describe("little endian", () => {
                 testEndian(type, 0, 2 ** (type.size * 8) - 1, true);
             });
         }
@@ -64,99 +107,140 @@ function testDeserialize(type: NumberFieldType) {
 describe("Types", () => {
     describe("Number", () => {
         describe("NumberFieldType", () => {
-            describe('Int8', () => {
+            describe("Int8", () => {
                 const key = "Int8";
 
-                test('basic', () => {
+                test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 1);
-                    expect(NumberFieldType[key]).toHaveProperty("dataViewSetter", "set" + key);
+                    expect(NumberFieldType[key]).toHaveProperty(
+                        "dataViewSetter",
+                        "set" + key
+                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
             });
 
-            describe('Uint8', () => {
+            describe("Uint8", () => {
                 const key = "Uint8";
 
-                test('basic', () => {
+                test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 1);
-                    expect(NumberFieldType[key]).toHaveProperty("dataViewSetter", "set" + key);
+                    expect(NumberFieldType[key]).toHaveProperty(
+                        "dataViewSetter",
+                        "set" + key
+                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
             });
 
-            describe('Int16', () => {
+            describe("Int16", () => {
                 const key = "Int16";
 
-                test('basic', () => {
+                test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 2);
-                    expect(NumberFieldType[key]).toHaveProperty("dataViewSetter", "set" + key);
+                    expect(NumberFieldType[key]).toHaveProperty(
+                        "dataViewSetter",
+                        "set" + key
+                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
             });
 
-            describe('Uint16', () => {
+            describe("Uint16", () => {
                 const key = "Uint16";
 
-                test('basic', () => {
+                test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 2);
-                    expect(NumberFieldType[key]).toHaveProperty("dataViewSetter", "set" + key);
+                    expect(NumberFieldType[key]).toHaveProperty(
+                        "dataViewSetter",
+                        "set" + key
+                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
             });
 
-
-            describe('Int32', () => {
+            describe("Int32", () => {
                 const key = "Int32";
 
-                test('basic', () => {
+                test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 4);
-                    expect(NumberFieldType[key]).toHaveProperty("dataViewSetter", "set" + key);
+                    expect(NumberFieldType[key]).toHaveProperty(
+                        "dataViewSetter",
+                        "set" + key
+                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
             });
 
-            describe('Uint32', () => {
+            describe("Uint32", () => {
                 const key = "Uint32";
 
-                test('basic', () => {
+                test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 4);
-                    expect(NumberFieldType[key]).toHaveProperty("dataViewSetter", "set" + key);
+                    expect(NumberFieldType[key]).toHaveProperty(
+                        "dataViewSetter",
+                        "set" + key
+                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
             });
-
-
         });
 
         describe("NumberFieldDefinition", () => {
             describe("#getSize", () => {
                 it("should return size of its type", () => {
-                    expect(new NumberFieldDefinition(NumberFieldType.Int8).getSize()).toBe(1);
-                    expect(new NumberFieldDefinition(NumberFieldType.Uint8).getSize()).toBe(1);
-                    expect(new NumberFieldDefinition(NumberFieldType.Int16).getSize()).toBe(2);
-                    expect(new NumberFieldDefinition(NumberFieldType.Uint16).getSize()).toBe(2);
-                    expect(new NumberFieldDefinition(NumberFieldType.Int32).getSize()).toBe(4);
-                    expect(new NumberFieldDefinition(NumberFieldType.Uint32).getSize()).toBe(4);
+                    expect(
+                        new NumberFieldDefinition(
+                            NumberFieldType.Int8
+                        ).getSize()
+                    ).toBe(1);
+                    expect(
+                        new NumberFieldDefinition(
+                            NumberFieldType.Uint8
+                        ).getSize()
+                    ).toBe(1);
+                    expect(
+                        new NumberFieldDefinition(
+                            NumberFieldType.Int16
+                        ).getSize()
+                    ).toBe(2);
+                    expect(
+                        new NumberFieldDefinition(
+                            NumberFieldType.Uint16
+                        ).getSize()
+                    ).toBe(2);
+                    expect(
+                        new NumberFieldDefinition(
+                            NumberFieldType.Int32
+                        ).getSize()
+                    ).toBe(4);
+                    expect(
+                        new NumberFieldDefinition(
+                            NumberFieldType.Uint32
+                        ).getSize()
+                    ).toBe(4);
                 });
             });
 
             describe("#deserialize", () => {
                 it("should deserialize Uint8", () => {
-                    const read = jest.fn((length: number) => new Uint8Array([1, 2, 3, 4]));
+                    const read = jest.fn(() => new Uint8Array([1, 2, 3, 4]));
                     const stream: StructDeserializeStream = { read };
 
-                    const definition = new NumberFieldDefinition(NumberFieldType.Uint8);
+                    const definition = new NumberFieldDefinition(
+                        NumberFieldType.Uint8
+                    );
                     const struct = new StructValue({});
                     const value = definition.deserialize(
                         StructDefaultOptions,
                         stream,
-                        struct,
+                        struct
                     );
 
                     expect(value.get()).toBe(1);
@@ -165,15 +249,17 @@ describe("Types", () => {
                 });
 
                 it("should deserialize Uint16", () => {
-                    const read = jest.fn((length: number) => new Uint8Array([1, 2, 3, 4]));
+                    const read = jest.fn(() => new Uint8Array([1, 2, 3, 4]));
                     const stream: StructDeserializeStream = { read };
 
-                    const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
+                    const definition = new NumberFieldDefinition(
+                        NumberFieldType.Uint16
+                    );
                     const struct = new StructValue({});
                     const value = definition.deserialize(
                         StructDefaultOptions,
                         stream,
-                        struct,
+                        struct
                     );
 
                     expect(value.get()).toBe((1 << 8) | 2);
@@ -182,15 +268,17 @@ describe("Types", () => {
                 });
 
                 it("should deserialize Uint16LE", () => {
-                    const read = jest.fn((length: number) => new Uint8Array([1, 2, 3, 4]));
+                    const read = jest.fn(() => new Uint8Array([1, 2, 3, 4]));
                     const stream: StructDeserializeStream = { read };
 
-                    const definition = new NumberFieldDefinition(NumberFieldType.Uint16);
+                    const definition = new NumberFieldDefinition(
+                        NumberFieldType.Uint16
+                    );
                     const struct = new StructValue({});
                     const value = definition.deserialize(
                         { ...StructDefaultOptions, littleEndian: true },
                         stream,
-                        struct,
+                        struct
                     );
 
                     expect(value.get()).toBe((2 << 8) | 1);
@@ -207,61 +295,37 @@ describe("Types", () => {
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Int8)
-                            .create(
-                                StructDefaultOptions,
-                                struct,
-                                42,
-                            )
+                            .create(StructDefaultOptions, struct, 42)
                             .getSize()
                     ).toBe(1);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Uint8)
-                            .create(
-                                StructDefaultOptions,
-                                struct,
-                                42,
-                            )
+                            .create(StructDefaultOptions, struct, 42)
                             .getSize()
                     ).toBe(1);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Int16)
-                            .create(
-                                StructDefaultOptions,
-                                struct,
-                                42,
-                            )
+                            .create(StructDefaultOptions, struct, 42)
                             .getSize()
                     ).toBe(2);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Uint16)
-                            .create(
-                                StructDefaultOptions,
-                                struct,
-                                42,
-                            )
+                            .create(StructDefaultOptions, struct, 42)
                             .getSize()
                     ).toBe(2);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Int32)
-                            .create(
-                                StructDefaultOptions,
-                                struct,
-                                42,
-                            )
+                            .create(StructDefaultOptions, struct, 42)
                             .getSize()
                     ).toBe(4);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Uint32)
-                            .create(
-                                StructDefaultOptions,
-                                struct,
-                                42,
-                            )
+                            .create(StructDefaultOptions, struct, 42)
                             .getSize()
                     ).toBe(4);
                 });
@@ -269,19 +333,23 @@ describe("Types", () => {
 
             describe("#serialize", () => {
                 it("should serialize uint8", () => {
-                    const definition = new NumberFieldDefinition(NumberFieldType.Int8);
+                    const definition = new NumberFieldDefinition(
+                        NumberFieldType.Int8
+                    );
                     const struct = new StructValue({});
                     const value = definition.create(
                         StructDefaultOptions,
                         struct,
-                        42,
+                        42
                     );
 
                     const array = new Uint8Array(10);
                     const dataView = new DataView(array.buffer);
                     value.serialize(dataView, 2);
 
-                    expect(Array.from(array)).toEqual([0, 0, 42, 0, 0, 0, 0, 0, 0, 0]);
+                    expect(Array.from(array)).toEqual([
+                        0, 0, 42, 0, 0, 0, 0, 0, 0, 0,
+                    ]);
                 });
             });
         });

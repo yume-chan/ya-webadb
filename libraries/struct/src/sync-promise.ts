@@ -1,7 +1,13 @@
 export interface SyncPromise<T> {
     then<TResult1 = T, TResult2 = never>(
-        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
+        onfulfilled?:
+            | ((value: T) => TResult1 | PromiseLike<TResult1>)
+            | null
+            | undefined,
+        onrejected?:
+            | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+            | null
+            | undefined
     ): SyncPromise<TResult1 | TResult2>;
 
     valueOrPromise(): T | PromiseLike<T>;
@@ -22,9 +28,9 @@ export const SyncPromise: SyncPromiseStatic = {
     },
     resolve<T>(value?: T | PromiseLike<T>): SyncPromise<T> {
         if (
-            typeof value === 'object' &&
+            typeof value === "object" &&
             value !== null &&
-            typeof (value as PromiseLike<T>).then === 'function'
+            typeof (value as PromiseLike<T>).then === "function"
         ) {
             if (
                 value instanceof PendingSyncPromise ||
@@ -45,7 +51,7 @@ export const SyncPromise: SyncPromiseStatic = {
         } catch (e) {
             return SyncPromise.reject(e);
         }
-    }
+    },
 };
 
 class PendingSyncPromise<T> implements SyncPromise<T> {
@@ -56,8 +62,14 @@ class PendingSyncPromise<T> implements SyncPromise<T> {
     }
 
     public then<TResult1 = T, TResult2 = never>(
-        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
+        onfulfilled?:
+            | ((value: T) => TResult1 | PromiseLike<TResult1>)
+            | null
+            | undefined,
+        onrejected?:
+            | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+            | null
+            | undefined
     ) {
         return new PendingSyncPromise<TResult1 | TResult2>(
             this.promise.then(onfulfilled, onrejected)
@@ -76,9 +88,11 @@ class ResolvedSyncPromise<T> implements SyncPromise<T> {
         this.value = value;
     }
 
-    public then<TResult1 = T, TResult2 = never>(
-        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
+    public then<TResult1 = T>(
+        onfulfilled?:
+            | ((value: T) => TResult1 | PromiseLike<TResult1>)
+            | null
+            | undefined
     ) {
         if (!onfulfilled) {
             return this as any;
@@ -99,8 +113,14 @@ class RejectedSyncPromise<T> implements SyncPromise<T> {
     }
 
     public then<TResult1 = T, TResult2 = never>(
-        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-        onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
+        onfulfilled?:
+            | ((value: T) => TResult1 | PromiseLike<TResult1>)
+            | null
+            | undefined,
+        onrejected?:
+            | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+            | null
+            | undefined
     ) {
         if (!onrejected) {
             return this as any;

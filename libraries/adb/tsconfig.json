@@ -1,5 +1,4 @@
 {
-
     "references": [
         {
             "path": "../event/tsconfig.build.json"

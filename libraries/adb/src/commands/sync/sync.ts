@@ -1,15 +1,23 @@
-import { AutoDisposable } from '@yume-chan/event';
-import { BufferedReadableStream, ReadableStream, WrapReadableStream, WrapWritableStream, WritableStream, WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
+import { AutoDisposable } from "@yume-chan/event";
+import {
+    BufferedReadableStream,
+    WrapReadableStream,
+    WrapWritableStream,
+    type ReadableStream,
+    type WritableStream,
+    type WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 
-import type { Adb } from '../../adb.js';
-import { AdbFeatures } from '../../features.js';
-import type { AdbSocket } from '../../socket/index.js';
-import { AutoResetEvent } from '../../utils/index.js';
-import { escapeArg } from '../subprocess/index.js';
-import { adbSyncOpenDir, type AdbSyncEntry } from './list.js';
-import { adbSyncPull } from './pull.js';
-import { adbSyncPush } from './push.js';
-import { adbSyncLstat, adbSyncStat } from './stat.js';
+import { type Adb } from "../../adb.js";
+import { AdbFeatures } from "../../features.js";
+import { type AdbSocket } from "../../socket/index.js";
+import { AutoResetEvent } from "../../utils/index.js";
+import { escapeArg } from "../subprocess/index.js";
+
+import { adbSyncOpenDir, type AdbSyncEntry } from "./list.js";
+import { adbSyncPull } from "./pull.js";
+import { adbSyncPush } from "./push.js";
+import { adbSyncLstat, adbSyncStat } from "./stat.js";
 
 /**
  * A simplified `dirname` function that only handles absolute unix paths.
@@ -17,12 +25,12 @@ import { adbSyncLstat, adbSyncStat } from './stat.js';
  * @returns the directory name of the input path
  */
 export function dirname(path: string): string {
-    const end = path.lastIndexOf('/');
+    const end = path.lastIndexOf("/");
     if (end === -1) {
         throw new Error(`Invalid path`);
     }
     if (end === 0) {
-        return '/';
+        return "/";
     }
     return path.substring(0, end);
 }
@@ -51,7 +59,10 @@ export class AdbSync extends AutoDisposable {
 
     public get needPushMkdirWorkaround(): boolean {
         // https://android.googlesource.com/platform/packages/modules/adb/+/91768a57b7138166e0a3d11f79cd55909dda7014/client/file_sync_client.cpp#1361
-        return this.adb.features.includes(AdbFeatures.ShellV2) && !this.fixedPushMkdir;
+        return (
+            this.adb.features.includes(AdbFeatures.ShellV2) &&
+            !this.fixedPushMkdir
+        );
     }
 
     public constructor(adb: Adb, socket: AdbSocket) {
@@ -66,7 +77,12 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            return adbSyncLstat(this.stream, this.writer, path, this.supportsStat);
+            return adbSyncLstat(
+                this.stream,
+                this.writer,
+                path,
+                this.supportsStat
+            );
         } finally {
             this.sendLock.notify();
         }
@@ -74,7 +90,7 @@ export class AdbSync extends AutoDisposable {
 
     public async stat(path: string) {
         if (!this.supportsStat) {
-            throw new Error('Not supported');
+            throw new Error("Not supported");
         }
 
         await this.sendLock.wait();
@@ -88,7 +104,7 @@ export class AdbSync extends AutoDisposable {
 
     public async isDirectory(path: string): Promise<boolean> {
         try {
-            await this.lstat(path + '/');
+            await this.lstat(path + "/");
             return true;
         } catch (e) {
             return false;
@@ -101,7 +117,12 @@ export class AdbSync extends AutoDisposable {
         await this.sendLock.wait();
 
         try {
-            yield* adbSyncOpenDir(this.stream, this.writer, path, this.supportsList2);
+            yield* adbSyncOpenDir(
+                this.stream,
+                this.writer,
+                path,
+                this.supportsList2
+            );
         } finally {
             this.sendLock.notify();
         }
@@ -127,7 +148,7 @@ export class AdbSync extends AutoDisposable {
                 await this.sendLock.wait();
                 return adbSyncPull(this.stream, this.writer, filename);
             },
-            close: async () => {
+            close: () => {
                 this.sendLock.notify();
             },
         });
@@ -144,7 +165,7 @@ export class AdbSync extends AutoDisposable {
     public write(
         filename: string,
         mode?: number,
-        mtime?: number,
+        mtime?: number
     ): WritableStream<Uint8Array> {
         return new WrapWritableStream({
             start: async () => {
@@ -155,8 +176,8 @@ export class AdbSync extends AutoDisposable {
                     // Ignore the result.
                     // TODO: sync: test push mkdir workaround (need an Android 8 device)
                     await this.adb.subprocess.spawnAndWait([
-                        'mkdir',
-                        '-p',
+                        "mkdir",
+                        "-p",
                         escapeArg(dirname(filename)),
                     ]);
                 }
@@ -166,12 +187,12 @@ export class AdbSync extends AutoDisposable {
                     this.writer,
                     filename,
                     mode,
-                    mtime,
+                    mtime
                 );
             },
-            close: async () => {
+            close: () => {
                 this.sendLock.notify();
-            }
+            },
         });
     }
 

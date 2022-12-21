@@ -1,10 +1,14 @@
-import { PromiseResolver } from '@yume-chan/async';
-import type { Disposable } from '@yume-chan/event';
-import type { ValueOrPromise } from '@yume-chan/struct';
+import { PromiseResolver } from "@yume-chan/async";
+import { type Disposable } from "@yume-chan/event";
+import { type ValueOrPromise } from "@yume-chan/struct";
 
-import { calculatePublicKey, calculatePublicKeyLength, sign } from './crypto.js';
-import { AdbCommand, type AdbPacketData } from './packet.js';
-import { calculateBase64EncodedLength, encodeBase64 } from './utils/index.js';
+import {
+    calculatePublicKey,
+    calculatePublicKeyLength,
+    sign,
+} from "./crypto.js";
+import { AdbCommand, type AdbPacketData } from "./packet.js";
+import { calculateBase64EncodedLength, encodeBase64 } from "./utils/index.js";
 
 export type AdbKeyIterable = Iterable<Uint8Array> | AsyncIterable<Uint8Array>;
 
@@ -50,7 +54,7 @@ export interface AdbAuthenticator {
 
 export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
     credentialStore: AdbCredentialStore,
-    getNextRequest: () => Promise<AdbPacketData>,
+    getNextRequest: () => Promise<AdbPacketData>
 ): AsyncIterable<AdbPacketData> {
     for await (const key of credentialStore.iterateKeys()) {
         const packet = await getNextRequest();
@@ -71,7 +75,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
 
 export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     credentialStore: AdbCredentialStore,
-    getNextRequest: () => Promise<AdbPacketData>,
+    getNextRequest: () => Promise<AdbPacketData>
 ): AsyncIterable<AdbPacketData> {
     const packet = await getNextRequest();
 
@@ -85,23 +89,20 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
         break;
     }
 
-
     if (!privateKey) {
         privateKey = await credentialStore.generateKey();
     }
 
     const publicKeyLength = calculatePublicKeyLength();
-    const [publicKeyBase64Length] = calculateBase64EncodedLength(publicKeyLength);
+    const [publicKeyBase64Length] =
+        calculateBase64EncodedLength(publicKeyLength);
 
     // The public key is null terminated,
     // So we allocate the buffer with one extra byte.
     const publicKeyBuffer = new Uint8Array(publicKeyBase64Length + 1);
 
     calculatePublicKey(privateKey, publicKeyBuffer);
-    encodeBase64(
-        publicKeyBuffer.subarray(0, publicKeyLength),
-        publicKeyBuffer
-    );
+    encodeBase64(publicKeyBuffer.subarray(0, publicKeyLength), publicKeyBuffer);
 
     yield {
         command: AdbCommand.Auth,
@@ -137,9 +138,16 @@ export class AdbAuthenticationProcessor implements Disposable {
         return this.pendingRequest.promise;
     };
 
-    private async* invokeAuthenticator(): AsyncGenerator<AdbPacketData, void, void> {
+    private async *invokeAuthenticator(): AsyncGenerator<
+        AdbPacketData,
+        void,
+        void
+    > {
         for (const authenticator of this.authenticators) {
-            for await (const packet of authenticator(this.credentialStore, this.getNextRequest)) {
+            for await (const packet of authenticator(
+                this.credentialStore,
+                this.getNextRequest
+            )) {
                 // If the authenticator yielded a response
                 // Prepare `nextRequest` for next authentication request
                 this.pendingRequest = new PromiseResolver();
@@ -162,13 +170,13 @@ export class AdbAuthenticationProcessor implements Disposable {
 
         const result = await this.iterator.next();
         if (result.done) {
-            throw new Error('No authenticator can handle the request');
+            throw new Error("No authenticator can handle the request");
         }
 
         return result.value;
     }
 
     public dispose() {
-        this.iterator?.return?.();
+        void this.iterator?.return?.();
     }
 }

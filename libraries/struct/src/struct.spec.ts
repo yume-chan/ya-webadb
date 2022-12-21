@@ -1,27 +1,45 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { describe, expect, it, jest } from "@jest/globals";
 
-import { StructAsyncDeserializeStream, StructDefaultOptions, StructDeserializeStream, StructFieldDefinition, StructFieldValue, StructOptions, StructValue } from './basic/index.js';
-import { BigIntFieldDefinition, BigIntFieldType, BufferFieldSubType, FixedLengthBufferLikeFieldDefinition, NumberFieldDefinition, NumberFieldType, VariableLengthBufferLikeFieldDefinition } from "./index.js";
-import { Struct } from './struct.js';
-import type { ValueOrPromise } from './utils.js';
+import {
+    StructDefaultOptions,
+    StructFieldDefinition,
+    type StructAsyncDeserializeStream,
+    type StructDeserializeStream,
+    type StructFieldValue,
+    type StructOptions,
+    type StructValue,
+} from "./basic/index.js";
+
+import {
+    BigIntFieldDefinition,
+    BigIntFieldType,
+    BufferFieldSubType,
+    FixedLengthBufferLikeFieldDefinition,
+    NumberFieldDefinition,
+    NumberFieldType,
+    VariableLengthBufferLikeFieldDefinition,
+} from "./index.js";
+
+import { Struct } from "./struct.js";
+import { type ValueOrPromise } from "./utils.js";
 
 class MockDeserializationStream implements StructDeserializeStream {
     public buffer = new Uint8Array(0);
 
-    public read = jest.fn((length: number) => this.buffer);
+    public read = jest.fn(() => this.buffer);
 }
 
-describe('Struct', () => {
-    describe('.constructor', () => {
-        it('should initialize fields', () => {
+describe("Struct", () => {
+    describe(".constructor", () => {
+        it("should initialize fields", () => {
             const struct = new Struct();
-            expect(struct).toHaveProperty('options', StructDefaultOptions);
-            expect(struct).toHaveProperty('size', 0);
+            expect(struct).toHaveProperty("options", StructDefaultOptions);
+            expect(struct).toHaveProperty("size", 0);
         });
     });
 
-    describe('#field', () => {
-        class MockFieldDefinition extends StructFieldDefinition<number>{
+    describe("#field", () => {
+        class MockFieldDefinition extends StructFieldDefinition<number> {
             public constructor(size: number) {
                 super(size);
             }
@@ -30,234 +48,274 @@ describe('Struct', () => {
                 return this.options;
             });
 
-            public create(options: Readonly<StructOptions>, struct: StructValue, value: unknown): StructFieldValue<this> {
-                throw new Error('Method not implemented.');
+            public create(
+                options: Readonly<StructOptions>,
+                struct: StructValue,
+                value: unknown
+            ): StructFieldValue<this> {
+                void options;
+                void struct;
+                void value;
+                throw new Error("Method not implemented.");
             }
             public override deserialize(
                 options: Readonly<StructOptions>,
                 stream: StructDeserializeStream,
-                struct: StructValue,
+                struct: StructValue
             ): StructFieldValue<this>;
             public override deserialize(
                 options: Readonly<StructOptions>,
                 stream: StructAsyncDeserializeStream,
-                struct: StructValue,
+                struct: StructValue
             ): Promise<StructFieldValue<this>>;
             public override deserialize(
                 options: Readonly<StructOptions>,
                 stream: StructDeserializeStream | StructAsyncDeserializeStream,
                 struct: StructValue
             ): ValueOrPromise<StructFieldValue<this>> {
-                throw new Error('Method not implemented.');
+                void options;
+                void stream;
+                void struct;
+                throw new Error("Method not implemented.");
             }
         }
 
-        it('should push a field and update size', () => {
+        it("should push a field and update size", () => {
             const struct = new Struct();
 
-            const field1 = 'foo';
+            const field1 = "foo";
             const fieldDefinition1 = new MockFieldDefinition(4);
 
             struct.field(field1, fieldDefinition1);
-            expect(struct).toHaveProperty('size', 4);
+            expect(struct).toHaveProperty("size", 4);
             expect(fieldDefinition1.getSize).toBeCalledTimes(1);
-            expect(struct['_fields']).toEqual([[field1, fieldDefinition1]]);
+            expect(struct["_fields"]).toEqual([[field1, fieldDefinition1]]);
 
-            const field2 = 'bar';
+            const field2 = "bar";
             const fieldDefinition2 = new MockFieldDefinition(8);
             struct.field(field2, fieldDefinition2);
-            expect(struct).toHaveProperty('size', 12);
+            expect(struct).toHaveProperty("size", 12);
             expect(fieldDefinition2.getSize).toBeCalledTimes(1);
-            expect(struct['_fields']).toEqual([
+            expect(struct["_fields"]).toEqual([
                 [field1, fieldDefinition1],
                 [field2, fieldDefinition2],
             ]);
         });
 
-        it('should throw an error if field name already exists', () => {
+        it("should throw an error if field name already exists", () => {
             const struct = new Struct();
-            const fieldName = 'foo';
+            const fieldName = "foo";
             struct.field(fieldName, new MockFieldDefinition(4));
-            expect(() => struct.field(fieldName, new MockFieldDefinition(4))).toThrowError();
+            expect(() =>
+                struct.field(fieldName, new MockFieldDefinition(4))
+            ).toThrowError();
         });
     });
 
-    describe('#number', () => {
-        it('`int8` should append an `int8` field', () => {
+    describe("#number", () => {
+        it("`int8` should append an `int8` field", () => {
             const struct = new Struct();
-            struct.int8('foo');
-            expect(struct).toHaveProperty('size', 1);
+            struct.int8("foo");
+            expect(struct).toHaveProperty("size", 1);
 
-            const definition = struct['_fields'][0]![1] as NumberFieldDefinition;
+            const definition = struct[
+                "_fields"
+            ][0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
             expect(definition.type).toBe(NumberFieldType.Int8);
         });
 
-        it('`uint8` should append an `uint8` field', () => {
+        it("`uint8` should append an `uint8` field", () => {
             const struct = new Struct();
-            struct.uint8('foo');
-            expect(struct).toHaveProperty('size', 1);
+            struct.uint8("foo");
+            expect(struct).toHaveProperty("size", 1);
 
-            const definition = struct['_fields'][0]![1] as NumberFieldDefinition;
+            const definition = struct[
+                "_fields"
+            ][0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
             expect(definition.type).toBe(NumberFieldType.Uint8);
         });
 
-        it('`int16` should append an `int16` field', () => {
+        it("`int16` should append an `int16` field", () => {
             const struct = new Struct();
-            struct.int16('foo');
-            expect(struct).toHaveProperty('size', 2);
+            struct.int16("foo");
+            expect(struct).toHaveProperty("size", 2);
 
-            const definition = struct['_fields'][0]![1] as NumberFieldDefinition;
+            const definition = struct[
+                "_fields"
+            ][0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
             expect(definition.type).toBe(NumberFieldType.Int16);
         });
 
-        it('`uint16` should append an `uint16` field', () => {
+        it("`uint16` should append an `uint16` field", () => {
             const struct = new Struct();
-            struct.uint16('foo');
-            expect(struct).toHaveProperty('size', 2);
+            struct.uint16("foo");
+            expect(struct).toHaveProperty("size", 2);
 
-            const definition = struct['_fields'][0]![1] as NumberFieldDefinition;
+            const definition = struct[
+                "_fields"
+            ][0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
             expect(definition.type).toBe(NumberFieldType.Uint16);
         });
 
-        it('`int32` should append an `int32` field', () => {
+        it("`int32` should append an `int32` field", () => {
             const struct = new Struct();
-            struct.int32('foo');
-            expect(struct).toHaveProperty('size', 4);
+            struct.int32("foo");
+            expect(struct).toHaveProperty("size", 4);
 
-            const definition = struct['_fields'][0]![1] as NumberFieldDefinition;
+            const definition = struct[
+                "_fields"
+            ][0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
             expect(definition.type).toBe(NumberFieldType.Int32);
         });
 
-        it('`uint32` should append an `uint32` field', () => {
+        it("`uint32` should append an `uint32` field", () => {
             const struct = new Struct();
-            struct.uint32('foo');
-            expect(struct).toHaveProperty('size', 4);
+            struct.uint32("foo");
+            expect(struct).toHaveProperty("size", 4);
 
-            const definition = struct['_fields'][0]![1] as NumberFieldDefinition;
+            const definition = struct[
+                "_fields"
+            ][0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
             expect(definition.type).toBe(NumberFieldType.Uint32);
         });
 
-        it('`int64` should append an `int64` field', () => {
+        it("`int64` should append an `int64` field", () => {
             const struct = new Struct();
-            struct.int64('foo');
-            expect(struct).toHaveProperty('size', 8);
+            struct.int64("foo");
+            expect(struct).toHaveProperty("size", 8);
 
-            const definition = struct['_fields'][0]![1] as BigIntFieldDefinition;
+            const definition = struct[
+                "_fields"
+            ][0]![1] as BigIntFieldDefinition;
             expect(definition).toBeInstanceOf(BigIntFieldDefinition);
             expect(definition.type).toBe(BigIntFieldType.Int64);
         });
 
-        it('`uint64` should append an `uint64` field', () => {
+        it("`uint64` should append an `uint64` field", () => {
             const struct = new Struct();
-            struct.uint64('foo');
-            expect(struct).toHaveProperty('size', 8);
+            struct.uint64("foo");
+            expect(struct).toHaveProperty("size", 8);
 
-            const definition = struct['_fields'][0]![1] as BigIntFieldDefinition;
+            const definition = struct[
+                "_fields"
+            ][0]![1] as BigIntFieldDefinition;
             expect(definition).toBeInstanceOf(BigIntFieldDefinition);
             expect(definition.type).toBe(BigIntFieldType.Uint64);
         });
 
-        describe('#uint8ArrayLike', () => {
-            describe('FixedLengthBufferLikeFieldDefinition', () => {
-                it('`#uint8Array` with fixed length', () => {
-                    let struct = new Struct();
-                    struct.uint8Array('foo', { length: 10 });
-                    expect(struct).toHaveProperty('size', 10);
+        describe("#uint8ArrayLike", () => {
+            describe("FixedLengthBufferLikeFieldDefinition", () => {
+                it("`#uint8Array` with fixed length", () => {
+                    const struct = new Struct();
+                    struct.uint8Array("foo", { length: 10 });
+                    expect(struct).toHaveProperty("size", 10);
 
-                    const definition = struct['_fields'][0]![1] as FixedLengthBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(FixedLengthBufferLikeFieldDefinition);
+                    const definition = struct[
+                        "_fields"
+                    ][0]![1] as FixedLengthBufferLikeFieldDefinition;
+                    expect(definition).toBeInstanceOf(
+                        FixedLengthBufferLikeFieldDefinition
+                    );
                     expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.length).toBe(10);
                 });
 
-                it('`#string` with fixed length', () => {
-                    let struct = new Struct();
-                    struct.string('foo', { length: 10 });
-                    expect(struct).toHaveProperty('size', 10);
+                it("`#string` with fixed length", () => {
+                    const struct = new Struct();
+                    struct.string("foo", { length: 10 });
+                    expect(struct).toHaveProperty("size", 10);
 
-                    const definition = struct['_fields'][0]![1] as FixedLengthBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(FixedLengthBufferLikeFieldDefinition);
+                    const definition = struct[
+                        "_fields"
+                    ][0]![1] as FixedLengthBufferLikeFieldDefinition;
+                    expect(definition).toBeInstanceOf(
+                        FixedLengthBufferLikeFieldDefinition
+                    );
                     expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.length).toBe(10);
                 });
             });
 
-            describe('VariableLengthBufferLikeFieldDefinition', () => {
-                it('`#uint8Array` with variable length', () => {
-                    const struct = new Struct().int8('barLength');
-                    expect(struct).toHaveProperty('size', 1);
+            describe("VariableLengthBufferLikeFieldDefinition", () => {
+                it("`#uint8Array` with variable length", () => {
+                    const struct = new Struct().int8("barLength");
+                    expect(struct).toHaveProperty("size", 1);
 
-                    struct.uint8Array('bar', { lengthField: 'barLength' });
-                    expect(struct).toHaveProperty('size', 1);
+                    struct.uint8Array("bar", { lengthField: "barLength" });
+                    expect(struct).toHaveProperty("size", 1);
 
-                    const definition = struct['_fields'][1]![1] as VariableLengthBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(VariableLengthBufferLikeFieldDefinition);
+                    const definition = struct[
+                        "_fields"
+                    ][1]![1] as VariableLengthBufferLikeFieldDefinition;
+                    expect(definition).toBeInstanceOf(
+                        VariableLengthBufferLikeFieldDefinition
+                    );
                     expect(definition.type).toBeInstanceOf(BufferFieldSubType);
-                    expect(definition.options.lengthField).toBe('barLength');
+                    expect(definition.options.lengthField).toBe("barLength");
                 });
 
-                it('`#string` with variable length', () => {
-                    const struct = new Struct().int8('barLength');
-                    expect(struct).toHaveProperty('size', 1);
+                it("`#string` with variable length", () => {
+                    const struct = new Struct().int8("barLength");
+                    expect(struct).toHaveProperty("size", 1);
 
-                    struct.string('bar', { lengthField: 'barLength' });
-                    expect(struct).toHaveProperty('size', 1);
+                    struct.string("bar", { lengthField: "barLength" });
+                    expect(struct).toHaveProperty("size", 1);
 
-                    const definition = struct['_fields'][1]![1] as VariableLengthBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(VariableLengthBufferLikeFieldDefinition);
+                    const definition = struct[
+                        "_fields"
+                    ][1]![1] as VariableLengthBufferLikeFieldDefinition;
+                    expect(definition).toBeInstanceOf(
+                        VariableLengthBufferLikeFieldDefinition
+                    );
                     expect(definition.type).toBeInstanceOf(BufferFieldSubType);
-                    expect(definition.options.lengthField).toBe('barLength');
+                    expect(definition.options.lengthField).toBe("barLength");
                 });
             });
         });
 
-        describe('#fields', () => {
-            it('should append all fields from other struct', async () => {
-                const sub = new Struct()
-                    .int16('int16')
-                    .int32('int32');
+        describe("#fields", () => {
+            it("should append all fields from other struct", () => {
+                const sub = new Struct().int16("int16").int32("int32");
 
                 const struct = new Struct()
-                    .int8('int8')
+                    .int8("int8")
                     .fields(sub)
-                    .int64('int64');
+                    .int64("int64");
 
-                const field0 = struct['_fields'][0]!;
-                expect(field0).toHaveProperty('0', 'int8');
-                expect(field0[1]).toHaveProperty('type', NumberFieldType.Int8);
+                const field0 = struct["_fields"][0]!;
+                expect(field0).toHaveProperty("0", "int8");
+                expect(field0[1]).toHaveProperty("type", NumberFieldType.Int8);
 
-                const field1 = struct['_fields'][1]!;
-                expect(field1).toHaveProperty('0', 'int16');
-                expect(field1[1]).toHaveProperty('type', NumberFieldType.Int16);
+                const field1 = struct["_fields"][1]!;
+                expect(field1).toHaveProperty("0", "int16");
+                expect(field1[1]).toHaveProperty("type", NumberFieldType.Int16);
 
-                const field2 = struct['_fields'][2]!;
-                expect(field2).toHaveProperty('0', 'int32');
-                expect(field2[1]).toHaveProperty('type', NumberFieldType.Int32);
+                const field2 = struct["_fields"][2]!;
+                expect(field2).toHaveProperty("0", "int32");
+                expect(field2[1]).toHaveProperty("type", NumberFieldType.Int32);
 
-                const field3 = struct['_fields'][3]!;
-                expect(field3).toHaveProperty('0', 'int64');
-                expect(field3[1]).toHaveProperty('type', BigIntFieldType.Int64);
+                const field3 = struct["_fields"][3]!;
+                expect(field3).toHaveProperty("0", "int64");
+                expect(field3[1]).toHaveProperty("type", BigIntFieldType.Int64);
             });
         });
 
-        describe('deserialize', () => {
-            it('should deserialize without dynamic size fields', async () => {
-                const struct = new Struct()
-                    .int8('foo')
-                    .int16('bar');
+        describe("deserialize", () => {
+            it("should deserialize without dynamic size fields", () => {
+                const struct = new Struct().int8("foo").int16("bar");
 
                 const stream = new MockDeserializationStream();
                 stream.read
                     .mockReturnValueOnce(new Uint8Array([2]))
                     .mockReturnValueOnce(new Uint8Array([0, 16]));
 
-                const result = await struct.deserialize(stream);
+                const result = struct.deserialize(stream);
                 expect(result).toEqual({ foo: 2, bar: 16 });
 
                 expect(stream.read).toBeCalledTimes(2);
@@ -265,79 +323,131 @@ describe('Struct', () => {
                 expect(stream.read).nthCalledWith(2, 2);
             });
 
-            it('should deserialize with dynamic size fields', async () => {
+            it("should deserialize with dynamic size fields", () => {
                 const struct = new Struct()
-                    .int8('fooLength')
-                    .uint8Array('foo', { lengthField: 'fooLength' });
+                    .int8("fooLength")
+                    .uint8Array("foo", { lengthField: "fooLength" });
 
                 const stream = new MockDeserializationStream();
                 stream.read
                     .mockReturnValueOnce(new Uint8Array([2]))
                     .mockReturnValueOnce(new Uint8Array([3, 4]));
 
-                const result = await struct.deserialize(stream);
-                expect(result).toEqual({ fooLength: 2, foo: new Uint8Array([3, 4]) });
+                const result = struct.deserialize(stream);
+                expect(result).toEqual({
+                    fooLength: 2,
+                    foo: new Uint8Array([3, 4]),
+                });
                 expect(stream.read).toBeCalledTimes(2);
                 expect(stream.read).nthCalledWith(1, 1);
                 expect(stream.read).nthCalledWith(2, 2);
             });
         });
 
-        describe('#extra', () => {
-            it('should accept plain field', async () => {
-                const struct = new Struct()
-                    .extra({ foo: 42, bar: true });
+        describe("#extra", () => {
+            it("should accept plain field", () => {
+                const struct = new Struct().extra({ foo: 42, bar: true });
 
                 const stream = new MockDeserializationStream();
-                const result = await struct.deserialize(stream);
+                const result = struct.deserialize(stream);
 
-                expect(Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(result)))).toEqual([
-                    ['foo', { configurable: true, enumerable: true, writable: true, value: 42 }],
-                    ['bar', { configurable: true, enumerable: true, writable: true, value: true }],
+                expect(
+                    Object.entries(
+                        Object.getOwnPropertyDescriptors(
+                            Object.getPrototypeOf(result)
+                        )
+                    )
+                ).toEqual([
+                    [
+                        "foo",
+                        {
+                            configurable: true,
+                            enumerable: true,
+                            writable: true,
+                            value: 42,
+                        },
+                    ],
+                    [
+                        "bar",
+                        {
+                            configurable: true,
+                            enumerable: true,
+                            writable: true,
+                            value: true,
+                        },
+                    ],
                 ]);
             });
 
-            it('should accept accessors', async () => {
-                const struct = new Struct()
-                    .extra({
-                        get foo() { return 42; },
-                        get bar() { return true; },
-                        set bar(value) { },
-                    });
+            it("should accept accessors", () => {
+                const struct = new Struct().extra({
+                    get foo() {
+                        return 42;
+                    },
+                    get bar() {
+                        return true;
+                    },
+                    set bar(value) {
+                        void value;
+                    },
+                });
 
                 const stream = new MockDeserializationStream();
-                const result = await struct.deserialize(stream);
+                const result = struct.deserialize(stream);
 
-                expect(Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(result)))).toEqual([
-                    ['foo', { configurable: true, enumerable: true, get: expect.any(Function) }],
-                    ['bar', { configurable: true, enumerable: true, get: expect.any(Function), set: expect.any(Function) }],
+                expect(
+                    Object.entries(
+                        Object.getOwnPropertyDescriptors(
+                            Object.getPrototypeOf(result)
+                        )
+                    )
+                ).toEqual([
+                    [
+                        "foo",
+                        {
+                            configurable: true,
+                            enumerable: true,
+                            get: expect.any(Function),
+                        },
+                    ],
+                    [
+                        "bar",
+                        {
+                            configurable: true,
+                            enumerable: true,
+                            get: expect.any(Function),
+                            set: expect.any(Function),
+                        },
+                    ],
                 ]);
             });
         });
 
-        describe('#postDeserialize', () => {
-            it('can throw errors', () => {
+        describe("#postDeserialize", () => {
+            it("can throw errors", () => {
                 const struct = new Struct();
-                const callback = jest.fn(() => { throw new Error('mock'); });
+                const callback = jest.fn(() => {
+                    throw new Error("mock");
+                });
                 struct.postDeserialize(callback);
 
                 const stream = new MockDeserializationStream();
-                expect(() => struct.deserialize(stream)).toThrowError('mock');
+                expect(() => struct.deserialize(stream)).toThrowError("mock");
                 expect(callback).toBeCalledTimes(1);
             });
 
-            it('can replace return value', () => {
+            it("can replace return value", () => {
                 const struct = new Struct();
-                const callback = jest.fn(() => 'mock');
+                const callback = jest.fn(() => "mock");
                 struct.postDeserialize(callback);
 
                 const stream = new MockDeserializationStream();
-                expect(struct.deserialize(stream)).toBe('mock');
+                expect(struct.deserialize(stream)).toBe("mock");
                 expect(callback).toBeCalledTimes(1);
                 expect(callback).toBeCalledWith({});
             });
 
-            it('can return nothing', () => {
+            it("can return nothing", () => {
                 const struct = new Struct();
                 const callback = jest.fn();
                 struct.postDeserialize(callback);
@@ -349,7 +459,7 @@ describe('Struct', () => {
                 expect(callback).toBeCalledWith(result);
             });
 
-            it('should overwrite callback', () => {
+            it("should overwrite callback", () => {
                 const struct = new Struct();
 
                 const callback1 = jest.fn();
@@ -367,25 +477,31 @@ describe('Struct', () => {
             });
         });
 
-        describe('#serialize', () => {
-            it('should serialize without dynamic size fields', () => {
-                const struct = new Struct()
-                    .int8('foo')
-                    .int16('bar');
+        describe("#serialize", () => {
+            it("should serialize without dynamic size fields", () => {
+                const struct = new Struct().int8("foo").int16("bar");
 
-                const result = new Uint8Array(struct.serialize({ foo: 0x42, bar: 0x1024 }));
+                const result = new Uint8Array(
+                    struct.serialize({ foo: 0x42, bar: 0x1024 })
+                );
 
                 expect(result).toEqual(new Uint8Array([0x42, 0x10, 0x24]));
             });
 
-            it('should serialize with dynamic size fields', () => {
+            it("should serialize with dynamic size fields", () => {
                 const struct = new Struct()
-                    .int8('fooLength')
-                    .uint8Array('foo', { lengthField: 'fooLength' });
+                    .int8("fooLength")
+                    .uint8Array("foo", { lengthField: "fooLength" });
 
-                const result = new Uint8Array(struct.serialize({ foo: new Uint8Array([0x03, 0x04, 0x05]) }));
+                const result = new Uint8Array(
+                    struct.serialize({
+                        foo: new Uint8Array([0x03, 0x04, 0x05]),
+                    })
+                );
 
-                expect(result).toEqual(new Uint8Array([0x03, 0x03, 0x04, 0x05]));
+                expect(result).toEqual(
+                    new Uint8Array([0x03, 0x03, 0x04, 0x05])
+                );
             });
         });
     });

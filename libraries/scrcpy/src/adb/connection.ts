@@ -1,8 +1,13 @@
-import type { Adb } from '@yume-chan/adb';
-import { delay } from '@yume-chan/async';
-import type { Disposable } from '@yume-chan/event';
-import { TransformStream, type ReadableStream, type ReadableStreamDefaultReader, type ReadableWritablePair } from '@yume-chan/stream-extra';
-import type { ValueOrPromise } from '@yume-chan/struct';
+import { type Adb } from "@yume-chan/adb";
+import { delay } from "@yume-chan/async";
+import { type Disposable } from "@yume-chan/event";
+import {
+    TransformStream,
+    type ReadableStream,
+    type ReadableStreamDefaultReader,
+    type ReadableWritablePair,
+} from "@yume-chan/stream-extra";
+import { type ValueOrPromise } from "@yume-chan/struct";
 
 export interface AdbScrcpyConnectionOptions {
     control: boolean;
@@ -28,20 +33,33 @@ export abstract class AdbScrcpyConnection implements Disposable {
         this.options = options;
     }
 
-    public initialize(): ValueOrPromise<void> { }
+    public initialize(): ValueOrPromise<void> {
+        // do nothing
+    }
 
-    public abstract getStreams(): ValueOrPromise<[videoSteam: ReadableStream<Uint8Array>, controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined]>;
+    public abstract getStreams(): ValueOrPromise<
+        [
+            videoSteam: ReadableStream<Uint8Array>,
+            controlStream:
+                | ReadableWritablePair<Uint8Array, Uint8Array>
+                | undefined
+        ]
+    >;
 
-    public dispose(): void { }
+    public dispose(): void {
+        // do nothing
+    }
 }
 
 export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     private connect(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
-        return this.adb.createSocket('localabstract:scrcpy');
+        return this.adb.createSocket("localabstract:scrcpy");
     }
 
-    private async connectAndRetry(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
-        for (let i = 0; i < 100; i++) {
+    private async connectAndRetry(): Promise<
+        ReadableWritablePair<Uint8Array, Uint8Array>
+    > {
+        for (let i = 0; i < 100; i += 1) {
             try {
                 return await this.connect();
             } catch (e) {
@@ -58,17 +76,26 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
             const { done, value } = await reader.read();
             // server will write a `0` to signal connection success
             if (done || value.byteLength !== 1 || value[0] !== 0) {
-                throw new Error('Unexpected response from server');
+                throw new Error("Unexpected response from server");
             }
             reader.releaseLock();
         }
         return videoStream;
     }
 
-    public async getStreams(): Promise<[videoSteam: ReadableStream<Uint8Array>, controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined]> {
+    public async getStreams(): Promise<
+        [
+            videoSteam: ReadableStream<Uint8Array>,
+            controlStream:
+                | ReadableWritablePair<Uint8Array, Uint8Array>
+                | undefined
+        ]
+    > {
         const videoStream = await this.connectVideoStream();
 
-        let controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined;
+        let controlStream:
+            | ReadableWritablePair<Uint8Array, Uint8Array>
+            | undefined;
         if (this.options.control) {
             controlStream = await this.connectAndRetry();
         }
@@ -79,7 +106,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
             const { done, value } = await reader.read();
             // 64 bytes device name + 2 bytes video width + 2 bytes video height
             if (done || value.byteLength !== 64 + 2 + 2) {
-                throw new Error('Unexpected response from server');
+                throw new Error("Unexpected response from server");
             }
             reader.releaseLock();
         }
@@ -89,35 +116,53 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
 }
 
 export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
-    private streams!: ReadableStreamDefaultReader<ReadableWritablePair<Uint8Array, Uint8Array>>;
+    private streams!: ReadableStreamDefaultReader<
+        ReadableWritablePair<Uint8Array, Uint8Array>
+    >;
 
     private address!: string;
 
     public override async initialize(): Promise<void> {
         // try to unbind first, ignore errors
-        await this.adb.reverse.remove('localabstract:scrcpy').catch(() => { });
+        await this.adb.reverse.remove("localabstract:scrcpy").catch((e) => {
+            void e;
+        });
 
-        const queue = new TransformStream<ReadableWritablePair<Uint8Array, Uint8Array>>();
+        const queue = new TransformStream<
+            ReadableWritablePair<Uint8Array, Uint8Array>,
+            ReadableWritablePair<Uint8Array, Uint8Array>
+        >();
         this.streams = queue.readable.getReader();
         const writer = queue.writable.getWriter();
         this.address = await this.adb.reverse.add(
-            'localabstract:scrcpy',
-            'tcp:27183',
-            socket => {
-                writer.write(socket);
+            "localabstract:scrcpy",
+            "tcp:27183",
+            (socket) => {
+                void writer.write(socket);
                 return true;
-            },
+            }
         );
     }
 
-    private async accept(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
+    private async accept(): Promise<
+        ReadableWritablePair<Uint8Array, Uint8Array>
+    > {
         return (await this.streams.read()).value!;
     }
 
-    public async getStreams(): Promise<[videoSteam: ReadableStream<Uint8Array>, controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined]> {
+    public async getStreams(): Promise<
+        [
+            videoSteam: ReadableStream<Uint8Array>,
+            controlStream:
+                | ReadableWritablePair<Uint8Array, Uint8Array>
+                | undefined
+        ]
+    > {
         const { readable: videoStream } = await this.accept();
 
-        let controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined;
+        let controlStream:
+            | ReadableWritablePair<Uint8Array, Uint8Array>
+            | undefined;
         if (this.options.control) {
             controlStream = await this.accept();
         }
@@ -128,7 +173,7 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
             const { done, value } = await reader.read();
             // 64 bytes device name + 2 bytes video width + 2 bytes video height
             if (done || value.byteLength !== 64 + 2 + 2) {
-                throw new Error('Unexpected response from server');
+                throw new Error("Unexpected response from server");
             }
             reader.releaseLock();
         }
@@ -140,6 +185,8 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
         // Don't await this!
         // `reverse.remove`'s response will never arrive
         // before we read all pending data from `videoStream`
-        this.adb.reverse.remove(this.address);
+        this.adb.reverse.remove(this.address).catch((e) => {
+            void e;
+        });
     }
 }

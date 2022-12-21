@@ -1,24 +1,44 @@
-import type { ValueOrPromise } from '@yume-chan/struct';
-import { BufferedReadableStream, BufferedReadableStreamEndedError } from './buffered.js';
-import { PushReadableStream, PushReadableStreamController } from './push-readable.js';
-import { ReadableStream, ReadableWritablePair, WritableStream } from './stream.js';
+import { type ValueOrPromise } from "@yume-chan/struct";
+
+import {
+    BufferedReadableStream,
+    BufferedReadableStreamEndedError,
+} from "./buffered.js";
+import {
+    PushReadableStream,
+    type PushReadableStreamController,
+} from "./push-readable.js";
+import {
+    ReadableStream,
+    WritableStream,
+    type ReadableWritablePair,
+} from "./stream.js";
 
 // TODO: BufferedTransformStream: find better implementation
-export class BufferedTransformStream<T> implements ReadableWritablePair<T, Uint8Array> {
+export class BufferedTransformStream<T>
+    implements ReadableWritablePair<T, Uint8Array>
+{
     private _readable: ReadableStream<T>;
-    public get readable() { return this._readable; }
+    public get readable() {
+        return this._readable;
+    }
 
     private _writable: WritableStream<Uint8Array>;
-    public get writable() { return this._writable; }
+    public get writable() {
+        return this._writable;
+    }
 
-    constructor(transform: (stream: BufferedReadableStream) => ValueOrPromise<T>) {
+    constructor(
+        transform: (stream: BufferedReadableStream) => ValueOrPromise<T>
+    ) {
         // Convert incoming chunks to a `BufferedReadableStream`
         let sourceStreamController!: PushReadableStreamController<Uint8Array>;
 
-        const buffered = new BufferedReadableStream(new PushReadableStream<Uint8Array>(
-            controller =>
-                sourceStreamController = controller,
-        ));
+        const buffered = new BufferedReadableStream(
+            new PushReadableStream<Uint8Array>((controller) => {
+                sourceStreamController = controller;
+            })
+        );
 
         this._readable = new ReadableStream<T>({
             async pull(controller) {
@@ -39,8 +59,8 @@ export class BufferedTransformStream<T> implements ReadableWritablePair<T, Uint8
             cancel: (reason) => {
                 // Propagate cancel to the source stream
                 // So future writes will be rejected
-                buffered.cancel(reason);
-            }
+                return buffered.cancel(reason);
+            },
         });
 
         this._writable = new WritableStream({

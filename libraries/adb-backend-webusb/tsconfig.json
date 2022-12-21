@@ -1,14 +1,4 @@
 {
-    "extends": "./node_modules/@yume-chan/ts-package-builder/tsconfig.base.json",
-    "compilerOptions": {
-        "lib": [
-            "ESNext",
-            "DOM"
-        ],
-        "types": [
-            "w3c-web-usb",
-        ]
-    },
     "references": [
         {
             "path": "../adb/tsconfig.build.json"
@@ -18,6 +8,9 @@
         },
         {
             "path": "../struct/tsconfig.build.json"
-        }
+        },
+        {
+            "path": "./tsconfig.build.json"
+        },
     ]
 }

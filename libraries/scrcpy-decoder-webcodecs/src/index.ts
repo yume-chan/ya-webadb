@@ -1,8 +1,11 @@
-import type { H264Configuration, ScrcpyVideoStreamPacket } from '@yume-chan/scrcpy';
-import { WritableStream } from '@yume-chan/stream-extra';
+import {
+    type H264Configuration,
+    type ScrcpyVideoStreamPacket,
+} from "@yume-chan/scrcpy";
+import { WritableStream } from "@yume-chan/stream-extra";
 
 function toHex(value: number) {
-    return value.toString(16).padStart(2, '0').toUpperCase();
+    return value.toString(16).padStart(2, "0").toUpperCase();
 }
 
 export class WebCodecsDecoder {
@@ -12,25 +15,31 @@ export class WebCodecsDecoder {
     public readonly maxLevel = undefined;
 
     private _writable: WritableStream<ScrcpyVideoStreamPacket>;
-    public get writable() { return this._writable; }
+    public get writable() {
+        return this._writable;
+    }
 
     private _renderer: HTMLCanvasElement;
-    public get renderer() { return this._renderer; }
+    public get renderer() {
+        return this._renderer;
+    }
 
     private _frameRendered = 0;
-    public get frameRendered() { return this._frameRendered; }
+    public get frameRendered() {
+        return this._frameRendered;
+    }
 
     private context: CanvasRenderingContext2D;
     private decoder: VideoDecoder;
 
     // Limit FPS to system refresh rate
     private lastFrame: VideoFrame | undefined;
-    private animationFrame: number = 0;
+    private animationFrame = 0;
 
     public constructor() {
-        this._renderer = document.createElement('canvas');
+        this._renderer = document.createElement("canvas");
 
-        this.context = this._renderer.getContext('2d')!;
+        this.context = this._renderer.getContext("2d")!;
         this.decoder = new VideoDecoder({
             output: (frame) => {
                 if (this.lastFrame) {
@@ -43,25 +52,30 @@ export class WebCodecsDecoder {
                     this.render();
                 }
             },
-            error() { },
+            error(e) {
+                void e;
+            },
         });
 
         this._writable = new WritableStream<ScrcpyVideoStreamPacket>({
-            write: async (packet) => {
+            write: (packet) => {
                 switch (packet.type) {
-                    case 'configuration':
+                    case "configuration":
                         this.configure(packet.data);
                         break;
-                    case 'frame':
-                        this.decoder.decode(new EncodedVideoChunk({
-                            // Treat `undefined` as `key`, otherwise won't decode.
-                            type: packet.keyframe === false ? 'delta' : 'key',
-                            timestamp: 0,
-                            data: packet.data,
-                        }));
+                    case "frame":
+                        this.decoder.decode(
+                            new EncodedVideoChunk({
+                                // Treat `undefined` as `key`, otherwise won't decode.
+                                type:
+                                    packet.keyframe === false ? "delta" : "key",
+                                timestamp: 0,
+                                data: packet.data,
+                            })
+                        );
                         break;
                 }
-            }
+            },
         });
     }
 
@@ -84,7 +98,9 @@ export class WebCodecsDecoder {
 
         // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
         // ISO Base Media File Format Name Space
-        const codec = `avc1.${[profileIndex, constraintSet, levelIndex].map(toHex).join('')}`;
+        const codec = `avc1.${[profileIndex, constraintSet, levelIndex]
+            .map(toHex)
+            .join("")}`;
         this.decoder.configure({
             codec: codec,
             optimizeForLatency: true,

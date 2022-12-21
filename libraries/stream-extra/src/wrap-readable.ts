@@ -1,21 +1,31 @@
-import type { ValueOrPromise } from "@yume-chan/struct";
-import { ReadableStream, ReadableStreamDefaultController, ReadableStreamDefaultReader } from "./stream.js";
+import { type ValueOrPromise } from "@yume-chan/struct";
 
-export type WrapReadableStreamStart<T> = (controller: ReadableStreamDefaultController<T>) => ValueOrPromise<ReadableStream<T>>;
+import {
+    ReadableStream,
+    type ReadableStreamDefaultController,
+    type ReadableStreamDefaultReader,
+} from "./stream.js";
+
+export type WrapReadableStreamStart<T> = (
+    controller: ReadableStreamDefaultController<T>
+) => ValueOrPromise<ReadableStream<T>>;
 
 export interface ReadableStreamWrapper<T> {
     start: WrapReadableStreamStart<T>;
-    cancel?(reason?: any): ValueOrPromise<void>;
+    cancel?(reason?: unknown): ValueOrPromise<void>;
     close?(): ValueOrPromise<void>;
 }
 
 function getWrappedReadableStream<T>(
-    wrapper: ReadableStream<T> | WrapReadableStreamStart<T> | ReadableStreamWrapper<T>,
+    wrapper:
+        | ReadableStream<T>
+        | WrapReadableStreamStart<T>
+        | ReadableStreamWrapper<T>,
     controller: ReadableStreamDefaultController<T>
 ) {
-    if ('start' in wrapper) {
+    if ("start" in wrapper) {
         return wrapper.start(controller);
-    } else if (typeof wrapper === 'function') {
+    } else if (typeof wrapper === "function") {
         return wrapper(controller);
     } else {
         // Can't use `wrapper instanceof ReadableStream`
@@ -31,12 +41,17 @@ function getWrappedReadableStream<T>(
  * 2. Synchronously create a `ReadableStream` by asynchronously return another `ReadableStream`.
  * 3. Convert native `ReadableStream`s to polyfilled ones so they can `pipe` between.
  */
-export class WrapReadableStream<T> extends ReadableStream<T>{
+export class WrapReadableStream<T> extends ReadableStream<T> {
     public readable!: ReadableStream<T>;
 
     private reader!: ReadableStreamDefaultReader<T>;
 
-    public constructor(wrapper: ReadableStream<T> | WrapReadableStreamStart<T> | ReadableStreamWrapper<T>) {
+    public constructor(
+        wrapper:
+            | ReadableStream<T>
+            | WrapReadableStreamStart<T>
+            | ReadableStreamWrapper<T>
+    ) {
         super({
             start: async (controller) => {
                 // `start` is invoked before `ReadableStream`'s constructor finish,
@@ -45,12 +60,15 @@ export class WrapReadableStream<T> extends ReadableStream<T>{
                 // Queue a microtask to avoid this.
                 await Promise.resolve();
 
-                this.readable = await getWrappedReadableStream(wrapper, controller);
+                this.readable = await getWrappedReadableStream(
+                    wrapper,
+                    controller
+                );
                 this.reader = this.readable.getReader();
             },
             cancel: async (reason) => {
                 await this.reader.cancel(reason);
-                if ('cancel' in wrapper) {
+                if ("cancel" in wrapper) {
                     await wrapper.cancel?.(reason);
                 }
             },
@@ -58,13 +76,13 @@ export class WrapReadableStream<T> extends ReadableStream<T>{
                 const result = await this.reader.read();
                 if (result.done) {
                     controller.close();
-                    if ('close' in wrapper) {
+                    if ("close" in wrapper) {
                         await wrapper.close?.();
                     }
                 } else {
                     controller.enqueue(result.value);
                 }
-            }
+            },
         });
     }
 }

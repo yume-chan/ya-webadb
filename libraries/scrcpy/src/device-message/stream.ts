@@ -1,8 +1,8 @@
-import { BufferedTransformStream } from '@yume-chan/stream-extra';
-import { ScrcpyClipboardDeviceMessage } from './clipboard.js';
+import { BufferedTransformStream } from "@yume-chan/stream-extra";
 
-export type ScrcpyDeviceMessage =
-    | ScrcpyClipboardDeviceMessage;
+import { ScrcpyClipboardDeviceMessage } from "./clipboard.js";
+
+export type ScrcpyDeviceMessage = ScrcpyClipboardDeviceMessage;
 
 export class ScrcpyDeviceMessageDeserializeStream extends BufferedTransformStream<ScrcpyDeviceMessage> {
     constructor() {
@@ -10,10 +10,12 @@ export class ScrcpyDeviceMessageDeserializeStream extends BufferedTransformStrea
             const type = await stream.read(1);
             switch (type[0]) {
                 case 0:
-                    return await ScrcpyClipboardDeviceMessage.deserialize(stream);
+                    return await ScrcpyClipboardDeviceMessage.deserialize(
+                        stream
+                    );
                 default:
-                    throw new Error('unknown control message type');
+                    throw new Error("unknown control message type");
             }
-        })
+        });
     }
 }

@@ -1,5 +1,15 @@
-import { AdbPacket, AdbPacketSerializeStream, type AdbBackend } from '@yume-chan/adb';
-import { DuplexStreamFactory, pipeFrom, ReadableStream, StructDeserializeStream, WritableStream } from '@yume-chan/stream-extra';
+import {
+    AdbPacket,
+    AdbPacketSerializeStream,
+    type AdbBackend,
+} from "@yume-chan/adb";
+import {
+    DuplexStreamFactory,
+    ReadableStream,
+    StructDeserializeStream,
+    WritableStream,
+    pipeFrom,
+} from "@yume-chan/stream-extra";
 
 export default class AdbWsBackend implements AdbBackend {
     public readonly serial: string;
@@ -13,12 +23,12 @@ export default class AdbWsBackend implements AdbBackend {
 
     public async connect() {
         const socket = new WebSocket(this.serial);
-        socket.binaryType = 'arraybuffer';
+        socket.binaryType = "arraybuffer";
 
         await new Promise((resolve, reject) => {
             socket.onopen = resolve;
             socket.onerror = () => {
-                reject(new Error('WebSocket connect failed'));
+                reject(new Error("WebSocket connect failed"));
             };
         });
 
@@ -29,31 +39,53 @@ export default class AdbWsBackend implements AdbBackend {
         });
 
         socket.onclose = () => {
-            factory.dispose();
+            factory.dispose().catch((e) => {
+                void e;
+            });
         };
 
-        const readable = factory.wrapReadable(new ReadableStream({
-            start: (controller) => {
-                socket.onmessage = ({ data }: { data: ArrayBuffer; }) => {
-                    controller.enqueue(new Uint8Array(data));
-                };
-            }
-        }, {
-            highWaterMark: 16 * 1024,
-            size(chunk) { return chunk.byteLength; },
-        }));
+        const readable = factory.wrapReadable(
+            new ReadableStream(
+                {
+                    start: (controller) => {
+                        socket.onmessage = ({
+                            data,
+                        }: {
+                            data: ArrayBuffer;
+                        }) => {
+                            controller.enqueue(new Uint8Array(data));
+                        };
+                    },
+                },
+                {
+                    highWaterMark: 16 * 1024,
+                    size(chunk) {
+                        return chunk.byteLength;
+                    },
+                }
+            )
+        );
 
-        const writable = factory.createWritable(new WritableStream({
-            write: (chunk) => {
-                socket.send(chunk);
-            },
-        }, {
-            highWaterMark: 16 * 1024,
-            size(chunk) { return chunk.byteLength; },
-        }));
+        const writable = factory.createWritable(
+            new WritableStream(
+                {
+                    write: (chunk) => {
+                        socket.send(chunk);
+                    },
+                },
+                {
+                    highWaterMark: 16 * 1024,
+                    size(chunk) {
+                        return chunk.byteLength;
+                    },
+                }
+            )
+        );
 
         return {
-            readable: readable.pipeThrough(new StructDeserializeStream(AdbPacket)),
+            readable: readable.pipeThrough(
+                new StructDeserializeStream(AdbPacket)
+            ),
             writable: pipeFrom(writable, new AdbPacketSerializeStream()),
         };
     }

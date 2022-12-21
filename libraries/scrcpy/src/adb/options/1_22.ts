@@ -1,11 +1,17 @@
-import type { Adb } from '@yume-chan/adb';
+import { type Adb } from "@yume-chan/adb";
 
-import type { ScrcpyOptionsInit1_22 } from '../../options/index.js';
-import { AdbScrcpyConnection, AdbScrcpyForwardConnection, AdbScrcpyReverseConnection } from '../connection.js';
-import { AdbScrcpyOptions1_16 } from './1_16.js';
+import { type ScrcpyOptionsInit1_22 } from "../../options/index.js";
+import {
+    type AdbScrcpyConnection,
+    AdbScrcpyForwardConnection,
+    AdbScrcpyReverseConnection,
+} from "../connection.js";
 
-export class AdbScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22>
-    extends AdbScrcpyOptions1_16<T> {
+import { AdbScrcpyOptions1_16 } from "./1_16.js";
+
+export class AdbScrcpyOptions1_22<
+    T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22
+> extends AdbScrcpyOptions1_16<T> {
     public override createConnection(adb: Adb): AdbScrcpyConnection {
         const options = {
             ...this.getDefaultValue(),

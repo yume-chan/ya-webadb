@@ -1,6 +1,6 @@
-import type { StructFieldDefinition } from "./definition.js";
-import type { StructOptions } from "./options.js";
-import type { StructValue } from "./struct-value.js";
+import { type StructFieldDefinition } from "./definition.js";
+import { type StructOptions } from "./options.js";
+import { type StructValue } from "./struct-value.js";
 
 /**
  * A field value defines how to serialize a field.
@@ -9,8 +9,12 @@ import type { StructValue } from "./struct-value.js";
  * helpful for the serialization process.
  */
 export abstract class StructFieldValue<
-    TDefinition extends StructFieldDefinition<any, any, any> = StructFieldDefinition<any, any, any>
-    > {
+    TDefinition extends StructFieldDefinition<
+        any,
+        any,
+        any
+    > = StructFieldDefinition<any, any, any>
+> {
     /** Gets the definition associated with this runtime value */
     public readonly definition: TDefinition;
 
@@ -21,17 +25,19 @@ export abstract class StructFieldValue<
     public readonly struct: StructValue;
 
     public get hasCustomAccessors(): boolean {
-        return this.get !== StructFieldValue.prototype.get ||
-            this.set !== StructFieldValue.prototype.set;
+        return (
+            this.get !== StructFieldValue.prototype.get ||
+            this.set !== StructFieldValue.prototype.set
+        );
     }
 
-    protected value: TDefinition['TValue'];
+    protected value: TDefinition["TValue"];
 
     public constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
         struct: StructValue,
-        value: TDefinition['TValue'],
+        value: TDefinition["TValue"]
     ) {
         this.definition = definition;
         this.options = options;
@@ -51,22 +57,19 @@ export abstract class StructFieldValue<
     /**
      * When implemented in derived classes, reads current field's value.
      */
-    public get(): TDefinition['TValue'] {
+    public get(): TDefinition["TValue"] {
         return this.value;
     }
 
     /**
      * When implemented in derived classes, updates current field's value.
      */
-    public set(value: TDefinition['TValue']): void {
+    public set(value: TDefinition["TValue"]): void {
         this.value = value;
     }
 
     /**
      * When implemented in derived classes, serializes this field into `dataView` at `offset`
      */
-    public abstract serialize(
-        dataView: DataView,
-        offset: number,
-    ): void;
+    public abstract serialize(dataView: DataView, offset: number): void;
 }

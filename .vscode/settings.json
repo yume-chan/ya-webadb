@@ -52,6 +52,10 @@
         "zstd"
     ],
     "editor.tabSize": 4,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": true,
+        "source.fixAll": true,
+    },
     "jest.rootPath": "packages/struct",
     "jest.showCoverageOnLoad": true,
     "markdown.extension.toc.levels": "2..6",
@@ -70,5 +74,11 @@
     ],
     "typescript.preferences.quoteStyle": "single",
     "typescript.format.semicolons": "insert",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "eslint.workingDirectories": [
+        "libraries/*",
+    ],
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }

@@ -1,27 +1,36 @@
-import Struct, { placeholder } from '@yume-chan/struct';
+import Struct, { placeholder } from "@yume-chan/struct";
 
-import { AndroidKeyEventAction, ScrcpyControlMessageType } from '../control/index.js';
-import { ScrcpyBackOrScreenOnControlMessage1_16, ScrcpyOptions1_16, type ScrcpyOptionsInit1_16 } from './1_16/options.js';
+import {
+    type AndroidKeyEventAction,
+    ScrcpyControlMessageType,
+} from "../control/index.js";
+
+import {
+    ScrcpyBackOrScreenOnControlMessage1_16,
+    ScrcpyOptions1_16,
+    type ScrcpyOptionsInit1_16,
+} from "./1_16/options.js";
 
 export interface ScrcpyOptionsInit1_18 extends ScrcpyOptionsInit1_16 {
     powerOffOnClose: boolean;
 }
 
-export const ScrcpyBackOrScreenOnControlMessage1_18 =
-    new Struct()
-        .fields(ScrcpyBackOrScreenOnControlMessage1_16)
-        .uint8('action', placeholder<AndroidKeyEventAction>());
+export const ScrcpyBackOrScreenOnControlMessage1_18 = new Struct()
+    .fields(ScrcpyBackOrScreenOnControlMessage1_16)
+    .uint8("action", placeholder<AndroidKeyEventAction>());
 
-export type ScrcpyBackOrScreenOnControlMessage1_18 = typeof ScrcpyBackOrScreenOnControlMessage1_18['TInit'];
+export type ScrcpyBackOrScreenOnControlMessage1_18 =
+    typeof ScrcpyBackOrScreenOnControlMessage1_18["TInit"];
 
-export class ScrcpyOptions1_18<T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsInit1_18>
-    extends ScrcpyOptions1_16<T> {
+export class ScrcpyOptions1_18<
+    T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsInit1_18
+> extends ScrcpyOptions1_16<T> {
     constructor(value: Partial<ScrcpyOptionsInit1_18>) {
         super(value);
     }
 
     protected override getArgumentOrder(): (keyof T)[] {
-        return super.getArgumentOrder().concat(['powerOffOnClose']);
+        return super.getArgumentOrder().concat(["powerOffOnClose"]);
     }
 
     public override getDefaultValue(): T {
@@ -56,7 +65,7 @@ export class ScrcpyOptions1_18<T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsIn
     }
 
     public override serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage1_18,
+        message: ScrcpyBackOrScreenOnControlMessage1_18
     ) {
         return ScrcpyBackOrScreenOnControlMessage1_18.serialize(message);
     }

@@ -1,8 +1,8 @@
-declare module 'tinyh264' {
+declare module "tinyh264" {
     export function init(): void;
 }
 
-declare module 'yuv-buffer' {
+declare module "yuv-buffer" {
     /**
      * Validate and fill out a YUVFormat object structure.
      *
@@ -27,7 +27,12 @@ declare module 'yuv-buffer' {
      * @param {number} offset - offset into source array to extract; optional (will start at 0 if missing)
      * @returns {YUVPlane} - freshly allocated planar buffer
      */
-    export function lumaPlane(format: YUVFormat, source: Uint8Array, stride: number, offset: number): YUVPlane;
+    export function lumaPlane(
+        format: YUVFormat,
+        source: Uint8Array,
+        stride: number,
+        offset: number
+    ): YUVPlane;
 
     /**
      * Allocate a new YUVPlane object big enough for a chroma plane in the given format,
@@ -39,7 +44,12 @@ declare module 'yuv-buffer' {
      * @param {number} offset - offset into source array to extract; optional (will start at 0 if missing)
      * @returns {YUVPlane} - freshly allocated planar buffer
      */
-    export function chromaPlane(format: YUVFormat, source: Uint8Array, stride: number, offset: number): YUVPlane;
+    export function chromaPlane(
+        format: YUVFormat,
+        source: Uint8Array,
+        stride: number,
+        offset: number
+    ): YUVPlane;
 
     /**
      * Allocate a new YUVFrame object big enough for the given format
@@ -49,7 +59,12 @@ declare module 'yuv-buffer' {
      * @param {YUVPlane} v - optional V plane; if missing, fresh one will be allocated
      * @returns {YUVFrame} - freshly allocated frame buffer
      */
-    export function frame(format: YUVFormat, y: YUVPlane, u: YUVPlane, v: YUVPlane): YUVFrame;
+    export function frame(
+        format: YUVFormat,
+        y: YUVPlane,
+        u: YUVPlane,
+        v: YUVPlane
+    ): YUVFrame;
 
     /**
      * Duplicate a frame using new buffer memory.
@@ -64,8 +79,9 @@ declare module 'yuv-buffer' {
      * @param {YUVFrame} frame - input frame
      * @returns {Array} - list of transferable objects
      */
-    export function transferables(frame: YUVFrame): (ArrayBuffer | SharedArrayBuffer)[];
-
+    export function transferables(
+        frame: YUVFrame
+    ): (ArrayBuffer | SharedArrayBuffer)[];
 
     /**
      * Represents metadata about a YUV frame format.
@@ -126,8 +142,8 @@ declare module 'yuv-buffer' {
     }
 }
 
-declare module 'yuv-canvas' {
-    import { YUVFrame } from 'yuv-buffer';
+declare module "yuv-canvas" {
+    import { type YUVFrame } from "yuv-buffer";
 
     export default class YUVCanvas {
         public static attach(canvas: HTMLCanvasElement): YUVCanvas;

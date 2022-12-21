@@ -1,16 +1,27 @@
-import { PromiseResolver } from '@yume-chan/async';
-import { AndroidCodecLevel, AndroidCodecProfile, type H264Configuration, type ScrcpyVideoStreamPacket } from '@yume-chan/scrcpy';
-import { WritableStream } from '@yume-chan/stream-extra';
+import { PromiseResolver } from "@yume-chan/async";
+import {
+    AndroidCodecLevel,
+    AndroidCodecProfile,
+    type H264Configuration,
+    type ScrcpyVideoStreamPacket,
+} from "@yume-chan/scrcpy";
+import { WritableStream } from "@yume-chan/stream-extra";
+import { type default as YuvBuffer } from "yuv-buffer";
+import { type default as YuvCanvas } from "yuv-canvas";
 
-import { createTinyH264Wrapper, type TinyH264Wrapper } from './wrapper.js';
+import { createTinyH264Wrapper, type TinyH264Wrapper } from "./wrapper.js";
 
-let cachedInitializePromise: Promise<{ YuvBuffer: typeof import('yuv-buffer'), YuvCanvas: typeof import('yuv-canvas').default; }> | undefined;
+let cachedInitializePromise:
+    | Promise<{ YuvBuffer: typeof YuvBuffer; YuvCanvas: typeof YuvCanvas }>
+    | undefined;
 function initialize() {
     if (!cachedInitializePromise) {
-        cachedInitializePromise = Promise.all(
-            [import('yuv-buffer'), import('yuv-canvas')]
-        ).then(([YuvBuffer, { default: YuvCanvas }]) => ({
-            YuvBuffer, YuvCanvas
+        cachedInitializePromise = Promise.all([
+            import("yuv-buffer"),
+            import("yuv-canvas"),
+        ]).then(([YuvBuffer, { default: YuvCanvas }]) => ({
+            YuvBuffer,
+            YuvCanvas,
         }));
     }
 
@@ -23,38 +34,45 @@ export class TinyH264Decoder {
     public readonly maxLevel = AndroidCodecLevel.Level4;
 
     private _renderer: HTMLCanvasElement;
-    public get renderer() { return this._renderer; }
+    public get renderer() {
+        return this._renderer;
+    }
 
     private _frameRendered = 0;
-    public get frameRendered() { return this._frameRendered; }
+    public get frameRendered() {
+        return this._frameRendered;
+    }
 
     private _writable: WritableStream<ScrcpyVideoStreamPacket>;
-    public get writable() { return this._writable; }
+    public get writable() {
+        return this._writable;
+    }
 
-    private _yuvCanvas: import('yuv-canvas').default | undefined;
+    private _yuvCanvas: YuvCanvas | undefined;
     private _initializer: PromiseResolver<TinyH264Wrapper> | undefined;
 
     public constructor() {
-        initialize();
+        void initialize();
 
-        this._renderer = document.createElement('canvas');
+        this._renderer = document.createElement("canvas");
 
         this._writable = new WritableStream<ScrcpyVideoStreamPacket>({
             write: async (packet) => {
                 switch (packet.type) {
-                    case 'configuration':
-                        this.configure(packet.data);
+                    case "configuration":
+                        void this.configure(packet.data);
                         break;
-                    case 'frame':
+                    case "frame": {
                         if (!this._initializer) {
-                            throw new Error('Decoder not initialized');
+                            throw new Error("Decoder not configured");
                         }
 
                         const wrapper = await this._initializer.promise;
                         wrapper.feed(packet.data.slice().buffer);
                         break;
+                    }
                 }
-            }
+            },
         });
     }
 
@@ -65,7 +83,7 @@ export class TinyH264Decoder {
         const { YuvBuffer, YuvCanvas } = await initialize();
 
         if (!this._yuvCanvas) {
-            this._yuvCanvas = YuvCanvas.attach(this._renderer);;
+            this._yuvCanvas = YuvCanvas.attach(this._renderer);
         }
 
         const { encodedWidth, encodedHeight } = config;
@@ -95,7 +113,8 @@ export class TinyH264Decoder {
         wrapper.onPictureReady(({ data }) => {
             this._frameRendered += 1;
             const array = new Uint8Array(data);
-            const frame = YuvBuffer.frame(format,
+            const frame = YuvBuffer.frame(
+                format,
                 YuvBuffer.lumaPlane(format, array, encodedWidth, 0),
                 YuvBuffer.chromaPlane(format, array, chromaWidth, uPlaneOffset),
                 YuvBuffer.chromaPlane(format, array, chromaWidth, vPlaneOffset)
@@ -105,7 +124,11 @@ export class TinyH264Decoder {
     }
 
     public dispose(): void {
-        this._initializer?.promise.then(wrapper => wrapper.dispose());
+        this._initializer?.promise
+            .then((wrapper) => wrapper.dispose())
+            .catch((e) => {
+                void e;
+            });
         this._initializer = undefined;
     }
 }

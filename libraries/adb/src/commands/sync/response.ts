@@ -1,38 +1,40 @@
-import type { BufferedReadableStream } from '@yume-chan/stream-extra';
-import Struct, { StructValueType, type StructLike } from '@yume-chan/struct';
+import { type BufferedReadableStream } from "@yume-chan/stream-extra";
+import Struct, {
+    type StructLike,
+    type StructValueType,
+} from "@yume-chan/struct";
 
-import { decodeUtf8 } from '../../utils/index.js';
+import { decodeUtf8 } from "../../utils/index.js";
 
 export enum AdbSyncResponseId {
-    Entry = 'DENT',
-    Entry2 = 'DNT2',
-    Lstat = 'STAT',
-    Stat = 'STA2',
-    Lstat2 = 'LST2',
-    Done = 'DONE',
-    Data = 'DATA',
-    Ok = 'OKAY',
-    Fail = 'FAIL',
+    Entry = "DENT",
+    Entry2 = "DNT2",
+    Lstat = "STAT",
+    Stat = "STA2",
+    Lstat2 = "LST2",
+    Done = "DONE",
+    Data = "DATA",
+    Ok = "OKAY",
+    Fail = "FAIL",
 }
 
-export const AdbSyncFailResponse =
-    new Struct({ littleEndian: true })
-        .uint32('messageLength')
-        .string('message', { lengthField: 'messageLength' })
-        .postDeserialize(object => {
-            throw new Error(object.message);
-        });
+export const AdbSyncFailResponse = new Struct({ littleEndian: true })
+    .uint32("messageLength")
+    .string("message", { lengthField: "messageLength" })
+    .postDeserialize((object) => {
+        throw new Error(object.message);
+    });
 
 export async function adbSyncReadResponse<T>(
     stream: BufferedReadableStream,
     id: AdbSyncResponseId,
-    type: StructLike<T>,
+    type: StructLike<T>
 ): Promise<T> {
     const actualId = decodeUtf8(await stream.read(4));
     switch (actualId) {
         case AdbSyncResponseId.Fail:
             await AdbSyncFailResponse.deserialize(stream);
-            throw new Error('Unreachable');
+            throw new Error("Unreachable");
         case id:
             return await type.deserialize(stream);
         default:
@@ -40,17 +42,19 @@ export async function adbSyncReadResponse<T>(
     }
 }
 
-export async function* adbSyncReadResponses<T extends Struct<any, any, any, any>>(
+export async function* adbSyncReadResponses<
+    T extends Struct<object, PropertyKey, object, any>
+>(
     stream: BufferedReadableStream,
     id: AdbSyncResponseId,
-    type: T,
+    type: T
 ): AsyncGenerator<StructValueType<T>, void, void> {
     while (true) {
         const actualId = decodeUtf8(await stream.read(4));
         switch (actualId) {
             case AdbSyncResponseId.Fail:
                 await AdbSyncFailResponse.deserialize(stream);
-                throw new Error('Unreachable');
+                throw new Error("Unreachable");
             case AdbSyncResponseId.Done:
                 // `DONE` responses' size are always same as the request's normal response.
                 //
@@ -62,7 +66,9 @@ export async function* adbSyncReadResponses<T extends Struct<any, any, any, any>
                 yield await type.deserialize(stream);
                 break;
             default:
-                throw new Error(`Expected '${id}' or '${AdbSyncResponseId.Done}', but got '${actualId}'`);
+                throw new Error(
+                    `Expected '${id}' or '${AdbSyncResponseId.Done}', but got '${actualId}'`
+                );
         }
     }
 }

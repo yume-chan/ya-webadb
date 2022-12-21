@@ -1,12 +1,23 @@
 import { PromiseResolver } from '@yume-chan/async';
-import { pipeFrom, PushReadableStream, StructDeserializeStream, StructSerializeStream, TransformStream, WritableStream, type PushReadableStreamController, type ReadableStream, type WritableStreamDefaultWriter } from '@yume-chan/stream-extra';
+import {
+    PushReadableStream,
+    StructDeserializeStream,
+    StructSerializeStream,
+    TransformStream,
+    WritableStream,
+    pipeFrom,
+    type PushReadableStreamController,
+    type ReadableStream,
+    type WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 import Struct, { placeholder, type StructValueType } from '@yume-chan/struct';
 
-import type { Adb } from '../../../adb.js';
+import { type Adb } from "../../../adb.js";
 import { AdbFeatures } from '../../../features.js';
-import type { AdbSocket } from '../../../socket/index.js';
+import { type AdbSocket } from "../../../socket/index.js";
 import { encodeUtf8 } from '../../../utils/index.js';
-import type { AdbSubprocessProtocol } from './types.js';
+
+import { type AdbSubprocessProtocol } from "./types.js";
 
 export enum AdbShellProtocolId {
     Stdin,
@@ -56,15 +67,17 @@ class StdoutDeserializeStream extends TransformStream<AdbShellProtocolPacket, Ui
     }
 }
 
-class MultiplexStream<T>{
+class MultiplexStream<T> {
     private _readable: PushReadableStream<T>;
     private _readableController!: PushReadableStreamController<T>;
-    public get readable() { return this._readable; }
+    public get readable() {
+        return this._readable;
+    }
 
     private _activeCount = 0;
 
     constructor() {
-        this._readable = new PushReadableStream(controller => {
+        this._readable = new PushReadableStream((controller) => {
             this._readableController = controller;
         });
     }
@@ -77,13 +90,13 @@ class MultiplexStream<T>{
             write: async (chunk) => {
                 await this._readableController.enqueue(chunk);
             },
-            abort: async (e) => {
+            abort: () => {
                 this._activeCount -= 1;
                 if (this._activeCount === 0) {
                     this._readableController.close();
                 }
             },
-            close: async () => {
+            close: () => {
                 this._activeCount -= 1;
                 if (this._activeCount === 0) {
                     this._readableController.close();
@@ -108,27 +121,39 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
 
     public static async pty(adb: Adb, command: string) {
         // TODO: AdbShellSubprocessProtocol: Support setting `XTERM` environment variable
-        return new AdbSubprocessShellProtocol(await adb.createSocket(`shell,v2,pty:${command}`));
+        return new AdbSubprocessShellProtocol(
+            await adb.createSocket(`shell,v2,pty:${command}`)
+        );
     }
 
     public static async raw(adb: Adb, command: string) {
-        return new AdbSubprocessShellProtocol(await adb.createSocket(`shell,v2,raw:${command}`));
+        return new AdbSubprocessShellProtocol(
+            await adb.createSocket(`shell,v2,raw:${command}`)
+        );
     }
 
     private readonly _socket: AdbSocket;
     private _socketWriter: WritableStreamDefaultWriter<AdbShellProtocolPacketInit>;
 
     private _stdin: WritableStream<Uint8Array>;
-    public get stdin() { return this._stdin; }
+    public get stdin() {
+        return this._stdin;
+    }
 
     private _stdout: ReadableStream<Uint8Array>;
-    public get stdout() { return this._stdout; }
+    public get stdout() {
+        return this._stdout;
+    }
 
     private _stderr: ReadableStream<Uint8Array>;
-    public get stderr() { return this._stderr; }
+    public get stderr() {
+        return this._stderr;
+    }
 
     private readonly _exit = new PromiseResolver<number>();
-    public get exit() { return this._exit.promise; }
+    public get exit() {
+        return this._exit.promise;
+    }
 
     public constructor(socket: AdbSocket) {
         this._socket = socket;
@@ -141,27 +166,34 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
 
         const [stdout, stderr] = socket.readable
             .pipeThrough(new StructDeserializeStream(AdbShellProtocolPacket))
-            .pipeThrough(new TransformStream<AdbShellProtocolPacket, AdbShellProtocolPacket>({
-                transform: (chunk, controller) => {
-                    if (chunk.id === AdbShellProtocolId.Exit) {
-                        this._exit.resolve(new Uint8Array(chunk.data)[0]!);
-                        // We can let `StdoutDeserializeStream` to process `AdbShellProtocolId.Exit`,
-                        // but since we need this `TransformStream` to capture the exit code anyway,
-                        // terminating child streams here is killing two birds with one stone.
-                        controller.terminate();
-                        return;
-                    }
-                    controller.enqueue(chunk);
-                }
-            }))
+            .pipeThrough(
+                new TransformStream<
+                    AdbShellProtocolPacket,
+                    AdbShellProtocolPacket
+                >({
+                    transform: (chunk, controller) => {
+                        if (chunk.id === AdbShellProtocolId.Exit) {
+                            this._exit.resolve(new Uint8Array(chunk.data)[0]!);
+                            // We can let `StdoutDeserializeStream` to process `AdbShellProtocolId.Exit`,
+                            // but since we need this `TransformStream` to capture the exit code anyway,
+                            // terminating child streams here is killing two birds with one stone.
+                            controller.terminate();
+                            return;
+                        }
+                        controller.enqueue(chunk);
+                    },
+                })
+            )
             .tee();
-        this._stdout = stdout
-            .pipeThrough(new StdoutDeserializeStream(AdbShellProtocolId.Stdout));
-        this._stderr = stderr
-            .pipeThrough(new StdoutDeserializeStream(AdbShellProtocolId.Stderr));
+        this._stdout = stdout.pipeThrough(
+            new StdoutDeserializeStream(AdbShellProtocolId.Stdout)
+        );
+        this._stderr = stderr.pipeThrough(
+            new StdoutDeserializeStream(AdbShellProtocolId.Stderr)
+        );
 
         const multiplexer = new MultiplexStream<AdbShellProtocolPacketInit>();
-        multiplexer.readable
+        void multiplexer.readable
             .pipeThrough(new StructSerializeStream(AdbShellProtocolPacket))
             .pipeTo(socket.writable);
 

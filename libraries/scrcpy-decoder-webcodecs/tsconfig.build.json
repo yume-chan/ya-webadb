@@ -1,5 +1,5 @@
 {
-    "extends": "./node_modules/@yume-chan/ts-package-builder/tsconfig.base.json",
+    "extends": "./node_modules/@yume-chan/tsconfig/tsconfig.base.json",
     "compilerOptions": {
         "lib": [
             "ESNext",

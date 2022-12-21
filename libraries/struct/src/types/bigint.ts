@@ -1,11 +1,33 @@
-import { getBigInt64, getBigUint64, setBigInt64, setBigUint64 } from '@yume-chan/dataview-bigint-polyfill/esm/fallback.js';
-import { StructFieldDefinition, StructFieldValue, StructValue, type StructAsyncDeserializeStream, type StructDeserializeStream, type StructOptions } from "../basic/index.js";
+import {
+    getBigInt64,
+    getBigUint64,
+    setBigInt64,
+    setBigUint64,
+} from "@yume-chan/dataview-bigint-polyfill/esm/fallback.js";
+
+import {
+    StructFieldDefinition,
+    StructFieldValue,
+    type StructAsyncDeserializeStream,
+    type StructDeserializeStream,
+    type StructOptions,
+    type StructValue,
+} from "../basic/index.js";
 import { SyncPromise } from "../sync-promise.js";
-import type { ValueOrPromise } from "../utils.js";
+import { type ValueOrPromise } from "../utils.js";
 
-type DataViewBigInt64Getter = (dataView: DataView, byteOffset: number, littleEndian: boolean | undefined) => bigint;
+type DataViewBigInt64Getter = (
+    dataView: DataView,
+    byteOffset: number,
+    littleEndian: boolean | undefined
+) => bigint;
 
-type DataViewBigInt64Setter = (dataView: DataView, byteOffset: number, value: bigint, littleEndian: boolean | undefined) => void;
+type DataViewBigInt64Setter = (
+    dataView: DataView,
+    byteOffset: number,
+    value: bigint,
+    littleEndian: boolean | undefined
+) => void;
 
 export class BigIntFieldType {
     public readonly TTypeScriptType!: bigint;
@@ -19,28 +41,34 @@ export class BigIntFieldType {
     public constructor(
         size: number,
         getter: DataViewBigInt64Getter,
-        setter: DataViewBigInt64Setter,
+        setter: DataViewBigInt64Setter
     ) {
         this.size = size;
         this.getter = getter;
         this.setter = setter;
     }
 
-    public static readonly Int64 = new BigIntFieldType(8, getBigInt64, setBigInt64);
+    public static readonly Int64 = new BigIntFieldType(
+        8,
+        getBigInt64,
+        setBigInt64
+    );
 
-    public static readonly Uint64 = new BigIntFieldType(8, getBigUint64, setBigUint64);
+    public static readonly Uint64 = new BigIntFieldType(
+        8,
+        getBigUint64,
+        setBigUint64
+    );
 }
 
 export class BigIntFieldDefinition<
     TType extends BigIntFieldType = BigIntFieldType,
-    TTypeScriptType = TType["TTypeScriptType"],
-    > extends StructFieldDefinition<
-    void,
-    TTypeScriptType
-    > {
+    TTypeScriptType = TType["TTypeScriptType"]
+> extends StructFieldDefinition<void, TTypeScriptType> {
     public readonly type: TType;
 
-    public constructor(type: TType, _typescriptType?: TTypeScriptType) {
+    public constructor(type: TType, typescriptType?: TTypeScriptType) {
+        void typescriptType;
         super();
         this.type = type;
     }
@@ -52,7 +80,7 @@ export class BigIntFieldDefinition<
     public create(
         options: Readonly<StructOptions>,
         struct: StructValue,
-        value: TTypeScriptType,
+        value: TTypeScriptType
     ): BigIntFieldValue<this> {
         return new BigIntFieldValue(this, options, struct, value);
     }
@@ -60,29 +88,28 @@ export class BigIntFieldDefinition<
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: StructDeserializeStream,
-        struct: StructValue,
+        struct: StructValue
     ): BigIntFieldValue<this>;
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: StructAsyncDeserializeStream,
-        struct: StructValue,
+        struct: StructValue
     ): Promise<BigIntFieldValue<this>>;
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: StructDeserializeStream | StructAsyncDeserializeStream,
-        struct: StructValue,
+        struct: StructValue
     ): ValueOrPromise<BigIntFieldValue<this>> {
-        return SyncPromise
-            .try(() => {
-                return stream.read(this.getSize());
-            })
-            .then(array => {
-                const view = new DataView(array.buffer, array.byteOffset, array.byteLength);
-                const value = this.type.getter(
-                    view,
-                    0,
-                    options.littleEndian
+        return SyncPromise.try(() => {
+            return stream.read(this.getSize());
+        })
+            .then((array) => {
+                const view = new DataView(
+                    array.buffer,
+                    array.byteOffset,
+                    array.byteLength
                 );
+                const value = this.type.getter(view, 0, options.littleEndian);
                 return this.create(options, struct, value as any);
             })
             .valueOrPromise();
@@ -90,13 +117,13 @@ export class BigIntFieldDefinition<
 }
 
 export class BigIntFieldValue<
-    TDefinition extends BigIntFieldDefinition<BigIntFieldType, any>,
-    > extends StructFieldValue<TDefinition> {
+    TDefinition extends BigIntFieldDefinition<BigIntFieldType, any>
+> extends StructFieldValue<TDefinition> {
     public serialize(dataView: DataView, offset: number): void {
         this.definition.type.setter(
             dataView,
             offset,
-            this.value!,
+            this.value,
             this.options.littleEndian
         );
     }

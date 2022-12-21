@@ -1,12 +1,35 @@
-import { Adb, AdbSubprocessNoneProtocol, AdbSubprocessProtocol, AdbSync } from '@yume-chan/adb';
-import { AbortController, DecodeUtf8Stream, InspectStream, ReadableStream, SplitStringStream, WrapWritableStream, WritableStream, type ReadableStreamDefaultController, type ReadableStreamDefaultReader, type ReadableWritablePair } from '@yume-chan/stream-extra';
+import {
+    AdbSubprocessNoneProtocol,
+    type Adb,
+    type AdbSubprocessProtocol,
+    type AdbSync,
+} from "@yume-chan/adb";
+import {
+    AbortController,
+    DecodeUtf8Stream,
+    InspectStream,
+    ReadableStream,
+    SplitStringStream,
+    WrapWritableStream,
+    WritableStream,
+    type ReadableStreamDefaultController,
+    type ReadableStreamDefaultReader,
+    type ReadableWritablePair,
+} from "@yume-chan/stream-extra";
 
-import { ScrcpyControlMessageSerializer } from '../control/index.js';
-import { ScrcpyDeviceMessageDeserializeStream, type ScrcpyDeviceMessage } from '../device-message/index.js';
-import { DEFAULT_SERVER_PATH, type ScrcpyVideoStreamPacket } from '../options/index.js';
-import type { AdbScrcpyOptions } from './options/index.js';
+import { ScrcpyControlMessageSerializer } from "../control/index.js";
+import {
+    ScrcpyDeviceMessageDeserializeStream,
+    type ScrcpyDeviceMessage,
+} from "../device-message/index.js";
+import {
+    DEFAULT_SERVER_PATH,
+    type ScrcpyVideoStreamPacket,
+} from "../options/index.js";
 
-class ArrayToStream<T> extends ReadableStream<T>{
+import { type AdbScrcpyOptions } from "./options/index.js";
+
+class ArrayToStream<T> extends ReadableStream<T> {
     private array!: T[];
     private index = 0;
 
@@ -28,7 +51,7 @@ class ArrayToStream<T> extends ReadableStream<T>{
     }
 }
 
-class ConcatStream<T> extends ReadableStream<T>{
+class ConcatStream<T> extends ReadableStream<T> {
     private streams!: ReadableStream<T>[];
     private index = 0;
     private reader!: ReadableStreamDefaultReader<T>;
@@ -48,7 +71,7 @@ class ConcatStream<T> extends ReadableStream<T>{
                     return;
                 }
                 this.advance(controller);
-            }
+            },
         });
     }
 
@@ -62,11 +85,17 @@ class ConcatStream<T> extends ReadableStream<T>{
     }
 }
 
+export class ScrcpyExitedError extends Error {
+    public output: string[];
+
+    public constructor(output: string[]) {
+        super("scrcpy server exited prematurely");
+        this.output = output;
+    }
+}
+
 export class AdbScrcpyClient {
-    public static pushServer(
-        adb: Adb,
-        path = DEFAULT_SERVER_PATH,
-    ) {
+    public static pushServer(adb: Adb, path = DEFAULT_SERVER_PATH) {
         let sync!: AdbSync;
         return new WrapWritableStream<Uint8Array>({
             async start() {
@@ -83,7 +112,7 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<any>
+        options: AdbScrcpyOptions<object>
     ) {
         const connection = options.createConnection(adb);
         let process: AdbSubprocessProtocol | undefined;
@@ -95,9 +124,9 @@ export class AdbScrcpyClient {
                 [
                     // cspell: disable-next-line
                     `CLASSPATH=${path}`,
-                    'app_process',
-                    /* unused */ '/',
-                    'com.genymobile.scrcpy.Server',
+                    "app_process",
+                    /* unused */ "/",
+                    "com.genymobile.scrcpy.Server",
                     version,
                     ...options.formatServerArguments(),
                 ],
@@ -110,31 +139,34 @@ export class AdbScrcpyClient {
 
             const stdout = process.stdout
                 .pipeThrough(new DecodeUtf8Stream())
-                .pipeThrough(new SplitStringStream('\n'));
+                .pipeThrough(new SplitStringStream("\n"));
 
             // Read stdout, otherwise `process.exit` won't resolve.
             const output: string[] = [];
             const abortController = new AbortController();
             const pipe = stdout
-                .pipeTo(new WritableStream({
-                    write(chunk) {
-                        output.push(chunk);
+                .pipeTo(
+                    new WritableStream({
+                        write(chunk) {
+                            output.push(chunk);
+                        },
+                    }),
+                    {
+                        signal: abortController.signal,
+                        preventCancel: true,
                     }
-                }), {
-                    signal: abortController.signal,
-                    preventCancel: true,
-                })
-                .catch(() => { });
+                )
+                .catch((e) => {
+                    void e;
+                });
 
             const result = await Promise.race([
                 process.exit,
                 connection.getStreams(),
             ]);
 
-            if (typeof result === 'number') {
-                const error = new Error('scrcpy server exited prematurely');
-                (error as any).output = output;
-                throw error;
+            if (typeof result === "number") {
+                throw new ScrcpyExitedError(output);
             }
 
             abortController.abort();
@@ -144,10 +176,7 @@ export class AdbScrcpyClient {
             return new AdbScrcpyClient(
                 options,
                 process,
-                new ConcatStream(
-                    new ArrayToStream(output),
-                    stdout,
-                ),
+                new ConcatStream(new ArrayToStream(output), stdout),
                 videoStream,
                 controlStream
             );
@@ -167,35 +196,34 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<any>
+        options: AdbScrcpyOptions<object>
     ): Promise<string[]> {
-        // Provide an invalid encoder name
-        // So the server will return all available encoders
-        options.value.encoderName = '_';
-        // Disable control for faster connection in 1.22+
-        options.value.control = false;
-        options.value.sendDeviceMeta = false;
-        options.value.sendDummyByte = false;
+        Object.assign(options.value, {
+            // Provide an invalid encoder name
+            // So the server will return all available encoders
+            encoderName: "_",
+            // Disable control for faster connection in 1.22+
+            control: false,
+            sendDeviceMeta: false,
+            sendDummyByte: false,
+        });
 
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
-        const client = await AdbScrcpyClient.start(
-            adb,
-            path,
-            version,
-            options
-        );
+        const client = await AdbScrcpyClient.start(adb, path, version, options);
 
         const encoderNameRegex = options.getOutputEncoderNameRegex();
         const encoders: string[] = [];
-        await client.stdout.pipeTo(new WritableStream({
-            write(line) {
-                const match = line.match(encoderNameRegex);
-                if (match) {
-                    encoders.push(match[1]!);
-                }
-            },
-        }));
+        await client.stdout.pipeTo(
+            new WritableStream({
+                write(line) {
+                    const match = line.match(encoderNameRegex);
+                    if (match) {
+                        encoders.push(match[1]!);
+                    }
+                },
+            })
+        );
 
         return encoders;
     }
@@ -208,25 +236,25 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<any>
+        options: AdbScrcpyOptions<object>
     ): Promise<number[]> {
-        // Similar to `getEncoders`, pass an invalid option and parse the output
-        options.value.displayId = -1;
-
-        options.value.control = false;
-        options.value.sendDeviceMeta = false;
-        options.value.sendDummyByte = false;
+        Object.assign(options.value, {
+            // Similar to `getEncoders`, pass an invalid option and parse the output
+            displayId: -1,
+            // Disable control for faster connection in 1.22+
+            control: false,
+            sendDeviceMeta: false,
+            sendDummyByte: false,
+        });
 
         try {
             // Server will exit before opening connections when an invalid display id was given.
             await AdbScrcpyClient.start(adb, path, version, options);
         } catch (e) {
-            if (e instanceof Error) {
-                const output = (e as any).output as string[];
-
+            if (e instanceof ScrcpyExitedError) {
                 const displayIdRegex = /\s+scrcpy --display (\d+)/;
                 const displays: number[] = [];
-                for (const line of output) {
+                for (const line of e.output) {
                     const match = line.match(displayIdRegex);
                     if (match) {
                         displays.push(Number.parseInt(match[1]!, 10));
@@ -236,53 +264,78 @@ export class AdbScrcpyClient {
             }
         }
 
-        throw new Error('failed to get displays');
+        throw new Error("failed to get displays");
     }
 
     private process: AdbSubprocessProtocol;
 
     private _stdout: ReadableStream<string>;
-    public get stdout() { return this._stdout; }
+    public get stdout() {
+        return this._stdout;
+    }
 
-    public get exit() { return this.process.exit; }
+    public get exit() {
+        return this.process.exit;
+    }
 
     private _screenWidth: number | undefined;
-    public get screenWidth() { return this._screenWidth; }
+    public get screenWidth() {
+        return this._screenWidth;
+    }
 
     private _screenHeight: number | undefined;
-    public get screenHeight() { return this._screenHeight; }
+    public get screenHeight() {
+        return this._screenHeight;
+    }
 
     private _videoStream: ReadableStream<ScrcpyVideoStreamPacket>;
-    public get videoStream() { return this._videoStream; }
+    public get videoStream() {
+        return this._videoStream;
+    }
 
-    private _controlMessageSerializer: ScrcpyControlMessageSerializer | undefined;
-    public get controlMessageSerializer() { return this._controlMessageSerializer; }
+    private _controlMessageSerializer:
+        | ScrcpyControlMessageSerializer
+        | undefined;
+    public get controlMessageSerializer() {
+        return this._controlMessageSerializer;
+    }
 
-    private _deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined;
-    public get deviceMessageStream() { return this._deviceMessageStream; }
+    private _deviceMessageStream:
+        | ReadableStream<ScrcpyDeviceMessage>
+        | undefined;
+    public get deviceMessageStream() {
+        return this._deviceMessageStream;
+    }
 
     public constructor(
-        options: AdbScrcpyOptions<any>,
+        options: AdbScrcpyOptions<object>,
         process: AdbSubprocessProtocol,
         stdout: ReadableStream<string>,
         videoStream: ReadableStream<Uint8Array>,
-        controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined,
+        controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined
     ) {
         this.process = process;
         this._stdout = stdout;
 
         this._videoStream = videoStream
             .pipeThrough(options.createVideoStreamTransformer())
-            .pipeThrough(new InspectStream(packet => {
-                if (packet.type === 'configuration') {
-                    this._screenWidth = packet.data.croppedWidth;
-                    this._screenHeight = packet.data.croppedHeight;
-                }
-            }));
+            .pipeThrough(
+                new InspectStream((packet) => {
+                    if (packet.type === "configuration") {
+                        this._screenWidth = packet.data.croppedWidth;
+                        this._screenHeight = packet.data.croppedHeight;
+                    }
+                })
+            );
 
         if (controlStream) {
-            this._controlMessageSerializer = new ScrcpyControlMessageSerializer(controlStream.writable, options);
-            this._deviceMessageStream = controlStream.readable.pipeThrough(new ScrcpyDeviceMessageDeserializeStream());
+            this._controlMessageSerializer = new ScrcpyControlMessageSerializer(
+                controlStream.writable,
+                options
+            );
+            this._deviceMessageStream = controlStream.readable.pipeThrough(
+                new ScrcpyDeviceMessageDeserializeStream()
+            );
         }
     }
 

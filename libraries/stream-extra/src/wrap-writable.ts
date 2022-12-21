@@ -1,19 +1,25 @@
-import type { ValueOrPromise } from "@yume-chan/struct";
-import { WritableStream, WritableStreamDefaultWriter } from "./stream.js";
+import { type ValueOrPromise } from "@yume-chan/struct";
 
-export type WrapWritableStreamStart<T> = () => ValueOrPromise<WritableStream<T>>;
+import { WritableStream, type WritableStreamDefaultWriter } from "./stream.js";
+
+export type WrapWritableStreamStart<T> = () => ValueOrPromise<
+    WritableStream<T>
+>;
 
 export interface WritableStreamWrapper<T> {
     start: WrapWritableStreamStart<T>;
-    close?(): Promise<void>;
+    close?(): void | Promise<void>;
 }
 
 async function getWrappedWritableStream<T>(
-    wrapper: WritableStream<T> | WrapWritableStreamStart<T> | WritableStreamWrapper<T>
+    wrapper:
+        | WritableStream<T>
+        | WrapWritableStreamStart<T>
+        | WritableStreamWrapper<T>
 ) {
-    if ('start' in wrapper) {
+    if ("start" in wrapper) {
         return await wrapper.start();
-    } else if (typeof wrapper === 'function') {
+    } else if (typeof wrapper === "function") {
         return await wrapper();
     } else {
         // Can't use `wrapper instanceof WritableStream`
@@ -27,7 +33,12 @@ export class WrapWritableStream<T> extends WritableStream<T> {
 
     private writer!: WritableStreamDefaultWriter<T>;
 
-    public constructor(wrapper: WritableStream<T> | WrapWritableStreamStart<T> | WritableStreamWrapper<T>) {
+    public constructor(
+        wrapper:
+            | WritableStream<T>
+            | WrapWritableStreamStart<T>
+            | WritableStreamWrapper<T>
+    ) {
         super({
             start: async () => {
                 // `start` is invoked before `ReadableStream`'s constructor finish,
@@ -46,7 +57,7 @@ export class WrapWritableStream<T> extends WritableStream<T> {
             },
             abort: async (reason) => {
                 await this.writer.abort(reason);
-                if ('close' in wrapper) {
+                if ("close" in wrapper) {
                     await wrapper.close?.();
                 }
             },
@@ -56,7 +67,7 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 // closing the outer stream first will make the inner stream incapable of
                 // sending data in its `close` handler.
                 await this.writer.close();
-                if ('close' in wrapper) {
+                if ("close" in wrapper) {
                     await wrapper.close?.();
                 }
             },
