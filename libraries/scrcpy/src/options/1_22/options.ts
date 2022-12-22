@@ -1,7 +1,7 @@
-import Struct from '@yume-chan/struct';
+import { type ScrcpyScrollController } from "../1_16/index.js";
+import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from "../1_21.js";
 
-import { ScrcpyInjectScrollControlMessage1_16 } from './1_16/options.js';
-import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from './1_21.js';
+import { ScrcpyScrollController1_22 } from "./scroll.js";
 
 export interface ScrcpyOptionsInit1_22 extends ScrcpyOptionsInit1_21 {
     downsizeOnError: boolean;
@@ -28,16 +28,9 @@ export interface ScrcpyOptionsInit1_22 extends ScrcpyOptionsInit1_21 {
     rawVideoStream: boolean;
 }
 
-export const ScrcpyInjectScrollControlMessage1_22 =
-    new Struct()
-        .fields(ScrcpyInjectScrollControlMessage1_16)
-        .int32('buttons');
-
-export type ScrcpyInjectScrollControlMessage1_22 =
-    typeof ScrcpyInjectScrollControlMessage1_22['TInit'];
-
-export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22>
-    extends ScrcpyOptions1_21<T> {
+export class ScrcpyOptions1_22<
+    T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22
+> extends ScrcpyOptions1_21<T> {
     public constructor(init: Partial<ScrcpyOptionsInit1_22>) {
         if (init.rawVideoStream) {
             // Set implied options for client-side processing
@@ -59,9 +52,7 @@ export class ScrcpyOptions1_22<T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsIn
         };
     }
 
-    public override serializeInjectScrollControlMessage(
-        message: ScrcpyInjectScrollControlMessage1_22,
-    ): Uint8Array {
-        return ScrcpyInjectScrollControlMessage1_22.serialize(message);
+    public override getScrollController(): ScrcpyScrollController {
+        return new ScrcpyScrollController1_22();
     }
 }

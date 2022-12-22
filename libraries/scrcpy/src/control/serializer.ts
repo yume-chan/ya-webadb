@@ -4,14 +4,15 @@ import {
 } from "@yume-chan/stream-extra";
 
 import {
-    type ScrcpyInjectScrollControlMessage1_22,
     type ScrcpyOptions,
+    type ScrcpyScrollController,
 } from "../options/index.js";
 
 import {
     ScrcpyInjectKeyCodeControlMessage,
     type AndroidKeyEventAction,
 } from "./inject-keycode.js";
+import { type ScrcpyInjectScrollControlMessage } from "./inject-scroll.js";
 import { ScrcpyInjectTextControlMessage } from "./inject-text.js";
 import { ScrcpyInjectTouchControlMessage } from "./inject-touch.js";
 import { ScrcpyRotateDeviceControlMessage } from "./rotate-device.js";
@@ -26,14 +27,17 @@ export class ScrcpyControlMessageSerializer {
     /** Control message type values for current version of server */
     private types: ScrcpyControlMessageType[];
     private writer: WritableStreamDefaultWriter<Uint8Array>;
+    private scrollController: ScrcpyScrollController;
 
     public constructor(
         stream: WritableStream<Uint8Array>,
         options: ScrcpyOptions<object>
     ) {
+        this.writer = stream.getWriter();
+
         this.options = options;
         this.types = options.getControlMessageTypes();
-        this.writer = stream.getWriter();
+        this.scrollController = options.getScrollController();
     }
 
     public getTypeValue(type: ScrcpyControlMessageType): number {
@@ -64,6 +68,9 @@ export class ScrcpyControlMessageSerializer {
         );
     }
 
+    /**
+     * `pressure` is a float value between 0 and 1.
+     */
     public injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
         return this.writer.write(
             ScrcpyInjectTouchControlMessage.serialize({
@@ -73,15 +80,24 @@ export class ScrcpyControlMessageSerializer {
         );
     }
 
+    /**
+     * `scrollX` and `scrollY` are float values between 0 and 1.
+     */
     public injectScroll(
-        message: Omit<ScrcpyInjectScrollControlMessage1_22, "type">
+        message: Omit<ScrcpyInjectScrollControlMessage, "type">
     ) {
-        return this.writer.write(
-            this.options.serializeInjectScrollControlMessage({
-                ...message,
-                type: this.getTypeValue(ScrcpyControlMessageType.InjectScroll),
-            })
+        (message as ScrcpyInjectScrollControlMessage).type = this.getTypeValue(
+            ScrcpyControlMessageType.InjectScroll
         );
+
+        const data = this.scrollController.serializeScrollMessage(
+            message as ScrcpyInjectScrollControlMessage
+        );
+        if (!data) {
+            return;
+        }
+
+        return this.writer.write(data);
     }
 
     public async backOrScreenOn(action: AndroidKeyEventAction) {

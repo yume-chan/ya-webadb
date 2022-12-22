@@ -1,80 +1,92 @@
-import { IComponentAsProps, IconButton, INavButtonProps, mergeStyles, mergeStyleSets, Nav, Stack, StackItem } from "@fluentui/react";
-import type { AppProps } from 'next/app';
+import {
+    IComponentAsProps,
+    INavButtonProps,
+    IconButton,
+    Nav,
+    Stack,
+    StackItem,
+} from "@fluentui/react";
+import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
+import type { AppProps } from "next/app";
 import Head from "next/head";
-import Link from 'next/link';
-import { useRouter } from 'next/router';
+import Link from "next/link";
+import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { Connect, ErrorDialogProvider } from "../components";
-import '../styles/globals.css';
+import "../styles/globals.css";
 import { Icons } from "../utils";
-import { register as registerIcons } from '../utils/icons';
+import { register as registerIcons } from "../utils/icons";
 
 registerIcons();
 
 const ROUTES = [
     {
-        url: '/',
+        url: "/",
         icon: Icons.Bookmark,
-        name: 'README',
+        name: "README",
     },
     {
-        url: '/device-info',
+        url: "/device-info",
         icon: Icons.Phone,
-        name: 'Device Info',
+        name: "Device Info",
     },
     {
-        url: '/file-manager',
+        url: "/file-manager",
         icon: Icons.Folder,
-        name: 'File Manager',
+        name: "File Manager",
     },
     {
-        url: '/framebuffer',
+        url: "/framebuffer",
         icon: Icons.Camera,
-        name: 'Screen Capture',
+        name: "Screen Capture",
     },
     {
-        url: '/shell',
+        url: "/shell",
         icon: Icons.WindowConsole,
-        name: 'Interactive Shell',
+        name: "Interactive Shell",
     },
     {
-        url: '/scrcpy',
+        url: "/scrcpy",
         icon: Icons.PhoneLaptop,
-        name: 'Scrcpy',
+        name: "Scrcpy",
     },
     {
-        url: '/tcpip',
+        url: "/tcpip",
         icon: Icons.WifiSettings,
-        name: 'ADB over WiFi',
+        name: "ADB over WiFi",
     },
     {
-        url: '/install',
+        url: "/install",
         icon: Icons.Box,
-        name: 'Install APK',
+        name: "Install APK",
     },
     {
-        url: '/logcat',
+        url: "/logcat",
         icon: Icons.BookSearch,
-        name: 'Logcat',
+        name: "Logcat",
     },
     {
-        url: '/power',
+        url: "/power",
         icon: Icons.Power,
-        name: 'Power Menu',
+        name: "Power Menu",
     },
     {
-        url: '/bug-report',
+        url: "/bug-report",
         icon: Icons.Bug,
-        name: 'Bug Report',
+        name: "Bug Report",
     },
     {
-        url: '/packet-log',
+        url: "/packet-log",
         icon: Icons.TextGrammarError,
-        name: 'Packet Log',
+        name: "Packet Log",
     },
 ];
 
-function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsProps<INavButtonProps>) {
+function NavLink({
+    link,
+    defaultRender: DefaultRender,
+    ...props
+}: IComponentAsProps<INavButtonProps>) {
     if (!link) {
         return null;
     }
@@ -86,30 +98,32 @@ function NavLink({ link, defaultRender: DefaultRender, ...props }: IComponentAsP
     );
 }
 
+const useClasses = makeStyles({
+    titleContainer: {
+        ...shorthands.borderBottom("1px", "solid", "rgb(243, 242, 241)"),
+    },
+    hidden: {
+        display: "none",
+    },
+    title: {
+        ...shorthands.padding("4px", "0"),
+        fontSize: "20px",
+        textAlign: "center",
+    },
+    leftColumn: {
+        width: "270px",
+        paddingRight: "8px",
+        ...shorthands.borderRight("1px", "solid", "rgb(243, 242, 241)"),
+        overflowY: "auto",
+    },
+});
+
 function App({ Component, pageProps }: AppProps) {
-    const classNames = mergeStyleSets({
-        'title-container': {
-            borderBottom: '1px solid rgb(243, 242, 241)',
-        },
-        title: {
-            padding: '4px 0',
-            fontSize: 20,
-            textAlign: 'center',
-        },
-        'left-column': {
-            width: 270,
-            paddingRight: 8,
-            borderRight: '1px solid rgb(243, 242, 241)',
-            overflow: 'auto',
-        },
-        'right-column': {
-            borderLeft: '1px solid rgb(243, 242, 241)',
-        }
-    });
+    const classes = useClasses();
 
     const [leftPanelVisible, setLeftPanelVisible] = useState(false);
     const toggleLeftPanel = useCallback(() => {
-        setLeftPanelVisible(value => !value);
+        setLeftPanelVisible((value) => !value);
     }, []);
     useEffect(() => {
         setLeftPanelVisible(innerWidth > 650);
@@ -124,7 +138,11 @@ function App({ Component, pageProps }: AppProps) {
             </Head>
 
             <Stack verticalFill>
-                <Stack className={classNames['title-container']} horizontal verticalAlign="center">
+                <Stack
+                    className={classes.titleContainer}
+                    horizontal
+                    verticalAlign="center"
+                >
                     <IconButton
                         checked={leftPanelVisible}
                         title="Toggle Menu"
@@ -133,11 +151,11 @@ function App({ Component, pageProps }: AppProps) {
                     />
 
                     <StackItem grow>
-                        <div className={classNames.title}>Android Web Toolbox</div>
+                        <div className={classes.title}>Android Web Toolbox</div>
                     </StackItem>
 
                     <IconButton
-                        iconProps={{ iconName: 'PersonFeedback' }}
+                        iconProps={{ iconName: "PersonFeedback" }}
                         title="Feedback"
                         as="a"
                         href="https://github.com/yume-chan/ya-webadb/issues/new"
@@ -145,17 +163,36 @@ function App({ Component, pageProps }: AppProps) {
                     />
                 </Stack>
 
-                <Stack grow horizontal verticalFill disableShrink styles={{ root: { minHeight: 0, overflow: 'hidden', lineHeight: '1.5' } }}>
-                    <StackItem className={mergeStyles(classNames['left-column'], !leftPanelVisible && { display: 'none' })}>
+                <Stack
+                    grow
+                    horizontal
+                    verticalFill
+                    disableShrink
+                    styles={{
+                        root: {
+                            minHeight: 0,
+                            overflow: "hidden",
+                            lineHeight: "1.5",
+                        },
+                    }}
+                >
+                    <StackItem
+                        className={mergeClasses(
+                            classes.leftColumn,
+                            !leftPanelVisible && classes.hidden
+                        )}
+                    >
                         <Connect />
 
                         <Nav
-                            groups={[{
-                                links: ROUTES.map(route => ({
-                                    ...route,
-                                    key: route.url,
-                                })),
-                            }]}
+                            groups={[
+                                {
+                                    links: ROUTES.map((route) => ({
+                                        ...route,
+                                        key: route.url,
+                                    })),
+                                },
+                            ]}
                             linkAs={NavLink}
                             selectedKey={router.pathname}
                         />

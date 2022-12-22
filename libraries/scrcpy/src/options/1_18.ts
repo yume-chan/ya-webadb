@@ -1,8 +1,9 @@
 import Struct, { placeholder } from "@yume-chan/struct";
 
 import {
-    type AndroidKeyEventAction,
     ScrcpyControlMessageType,
+    type AndroidKeyEventAction,
+    type ScrcpyBackOrScreenOnControlMessage,
 } from "../control/index.js";
 
 import {
@@ -65,7 +66,7 @@ export class ScrcpyOptions1_18<
     }
 
     public override serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage1_18
+        message: ScrcpyBackOrScreenOnControlMessage
     ) {
         return ScrcpyBackOrScreenOnControlMessage1_18.serialize(message);
     }

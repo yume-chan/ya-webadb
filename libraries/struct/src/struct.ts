@@ -301,7 +301,7 @@ export class Struct<
     private number<
         TName extends PropertyKey,
         TType extends NumberFieldType = NumberFieldType,
-        TTypeScriptType = TType["TTypeScriptType"]
+        TTypeScriptType = number
     >(name: TName, type: TType, typeScriptType?: TTypeScriptType) {
         return this.field(
             name,
@@ -312,60 +312,60 @@ export class Struct<
     /**
      * Appends an `int8` field to the `Struct`
      */
-    public int8<
-        TName extends PropertyKey,
-        TTypeScriptType = typeof NumberFieldType["Uint8"]["TTypeScriptType"]
-    >(name: TName, typeScriptType?: TTypeScriptType) {
+    public int8<TName extends PropertyKey, TTypeScriptType = number>(
+        name: TName,
+        typeScriptType?: TTypeScriptType
+    ) {
         return this.number(name, NumberFieldType.Int8, typeScriptType);
     }
 
     /**
      * Appends an `uint8` field to the `Struct`
      */
-    public uint8<
-        TName extends PropertyKey,
-        TTypeScriptType = typeof NumberFieldType["Uint8"]["TTypeScriptType"]
-    >(name: TName, typeScriptType?: TTypeScriptType) {
+    public uint8<TName extends PropertyKey, TTypeScriptType = number>(
+        name: TName,
+        typeScriptType?: TTypeScriptType
+    ) {
         return this.number(name, NumberFieldType.Uint8, typeScriptType);
     }
 
     /**
      * Appends an `int16` field to the `Struct`
      */
-    public int16<
-        TName extends PropertyKey,
-        TTypeScriptType = typeof NumberFieldType["Uint16"]["TTypeScriptType"]
-    >(name: TName, typeScriptType?: TTypeScriptType) {
+    public int16<TName extends PropertyKey, TTypeScriptType = number>(
+        name: TName,
+        typeScriptType?: TTypeScriptType
+    ) {
         return this.number(name, NumberFieldType.Int16, typeScriptType);
     }
 
     /**
      * Appends an `uint16` field to the `Struct`
      */
-    public uint16<
-        TName extends PropertyKey,
-        TTypeScriptType = typeof NumberFieldType["Uint16"]["TTypeScriptType"]
-    >(name: TName, typeScriptType?: TTypeScriptType) {
+    public uint16<TName extends PropertyKey, TTypeScriptType = number>(
+        name: TName,
+        typeScriptType?: TTypeScriptType
+    ) {
         return this.number(name, NumberFieldType.Uint16, typeScriptType);
     }
 
     /**
      * Appends an `int32` field to the `Struct`
      */
-    public int32<
-        TName extends PropertyKey,
-        TTypeScriptType = typeof NumberFieldType["Int32"]["TTypeScriptType"]
-    >(name: TName, typeScriptType?: TTypeScriptType) {
+    public int32<TName extends PropertyKey, TTypeScriptType = number>(
+        name: TName,
+        typeScriptType?: TTypeScriptType
+    ) {
         return this.number(name, NumberFieldType.Int32, typeScriptType);
     }
 
     /**
      * Appends an `uint32` field to the `Struct`
      */
-    public uint32<
-        TName extends PropertyKey,
-        TTypeScriptType = typeof NumberFieldType["Uint32"]["TTypeScriptType"]
-    >(name: TName, typeScriptType?: TTypeScriptType) {
+    public uint32<TName extends PropertyKey, TTypeScriptType = number>(
+        name: TName,
+        typeScriptType?: TTypeScriptType
+    ) {
         return this.number(name, NumberFieldType.Uint32, typeScriptType);
     }
 

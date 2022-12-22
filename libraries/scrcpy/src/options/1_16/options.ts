@@ -7,9 +7,8 @@ import Struct from "@yume-chan/struct";
 import {
     AndroidKeyEventAction,
     ScrcpyControlMessageType,
+    type ScrcpyBackOrScreenOnControlMessage,
 } from "../../control/index.js";
-import { type ScrcpyBackOrScreenOnControlMessage1_18 } from "../1_18.js";
-import { type ScrcpyInjectScrollControlMessage1_22 } from "../1_22.js";
 import {
     toScrcpyOptionValue,
     type ScrcpyOptions,
@@ -17,6 +16,10 @@ import {
 } from "../types.js";
 
 import { CodecOptions } from "./codec-options.js";
+import {
+    ScrcpyScrollController1_16,
+    type ScrcpyScrollController,
+} from "./scroll.js";
 import { parse_sequence_parameter_set } from "./sps.js";
 
 export enum ScrcpyLogLevel {
@@ -106,18 +109,8 @@ export const ScrcpyBackOrScreenOnControlMessage1_16 = new Struct().uint8(
     ScrcpyControlMessageType.BackOrScreenOn as const
 );
 
-export const ScrcpyInjectScrollControlMessage1_16 = new Struct()
-    .uint8("type", ScrcpyControlMessageType.InjectScroll as const)
-    .uint32("pointerX")
-    .uint32("pointerY")
-    .uint16("screenWidth")
-    .uint16("screenHeight")
-    .int32("scrollX")
-    .int32("scrollY");
-
-export class ScrcpyOptions1_16<
-    T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
-> implements ScrcpyOptions<T>
+export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16>
+    implements ScrcpyOptions<T>
 {
     public value: Partial<T>;
 
@@ -307,7 +300,7 @@ export class ScrcpyOptions1_16<
     }
 
     public serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage1_18
+        message: ScrcpyBackOrScreenOnControlMessage
     ) {
         if (message.action === AndroidKeyEventAction.Down) {
             return ScrcpyBackOrScreenOnControlMessage1_16.serialize(message);
@@ -316,9 +309,7 @@ export class ScrcpyOptions1_16<
         return undefined;
     }
 
-    public serializeInjectScrollControlMessage(
-        message: ScrcpyInjectScrollControlMessage1_22
-    ): Uint8Array {
-        return ScrcpyInjectScrollControlMessage1_16.serialize(message);
+    public getScrollController(): ScrcpyScrollController {
+        return new ScrcpyScrollController1_16();
     }
 }

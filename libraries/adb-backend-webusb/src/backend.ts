@@ -7,9 +7,9 @@ import {
 } from "@yume-chan/adb";
 import {
     DuplexStreamFactory,
-    pipeFrom,
     ReadableStream,
     WritableStream,
+    pipeFrom,
     type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import {
@@ -58,9 +58,12 @@ export class AdbWebUsbBackendStream
         inEndpoint: USBEndpoint,
         outEndpoint: USBEndpoint
     ) {
+        let closed = false;
+
         const factory = new DuplexStreamFactory<AdbPacketData, Uint8Array>({
             close: async () => {
                 try {
+                    closed = true;
                     await device.close();
                 } catch {
                     /* device may have already disconnected */
@@ -128,10 +131,17 @@ export class AdbWebUsbBackendStream
                 new WritableStream(
                     {
                         write: async (chunk) => {
-                            await device.transferOut(
-                                outEndpoint.endpointNumber,
-                                chunk
-                            );
+                            try {
+                                await device.transferOut(
+                                    outEndpoint.endpointNumber,
+                                    chunk
+                                );
+                            } catch (e) {
+                                if (closed) {
+                                    return;
+                                }
+                                throw e;
+                            }
                         },
                     },
                     {

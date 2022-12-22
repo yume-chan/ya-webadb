@@ -1,6 +1,6 @@
-import Struct, { placeholder } from '@yume-chan/struct';
+import Struct, { placeholder } from "@yume-chan/struct";
 
-import { ScrcpyControlMessageType } from './type.js';
+import { ScrcpyControlMessageType } from "./type.js";
 
 export enum AndroidKeyEventAction {
     Down = 0,
@@ -11,8 +11,15 @@ export enum AndroidKeyEventAction {
 export enum AndroidKeyCode {
     Home = 3,
     Back = 4,
+
+    DPadUp = 19,
+    DPadDown,
+    DPadLeft,
+    DPadRight,
+
     VolumeUp = 24,
     VolumeDown,
+
     A = 29,
     B,
     C,
@@ -39,21 +46,27 @@ export enum AndroidKeyCode {
     X,
     Y,
     Z,
+
     Tab = 61,
     Space,
     Enter = 66,
     Delete,
+    Escape = 111,
+    ForwardDelete,
+
+    MoveHome = 122,
+    MoveEnd = 123,
+
     VolumeMute = 164,
     AppSwitch = 187,
 }
 
-export const ScrcpyInjectKeyCodeControlMessage =
-    new Struct()
-        .uint8('type', ScrcpyControlMessageType.InjectKeyCode as const)
-        .uint8('action', placeholder<AndroidKeyEventAction>())
-        .uint32('keyCode')
-        .uint32('repeat')
-        .uint32('metaState');
+export const ScrcpyInjectKeyCodeControlMessage = new Struct()
+    .uint8("type", ScrcpyControlMessageType.InjectKeyCode as const)
+    .uint8("action", placeholder<AndroidKeyEventAction>())
+    .uint32("keyCode")
+    .uint32("repeat")
+    .uint32("metaState");
 
 export type ScrcpyInjectKeyCodeControlMessage =
-    typeof ScrcpyInjectKeyCodeControlMessage['TInit'];
+    typeof ScrcpyInjectKeyCodeControlMessage["TInit"];

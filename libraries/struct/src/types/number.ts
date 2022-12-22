@@ -9,104 +9,107 @@ import {
 import { SyncPromise } from "../sync-promise.js";
 import { type ValueOrPromise } from "../utils.js";
 
-type NumberTypeDeserializer = (
-    array: Uint8Array,
-    littleEndian: boolean
-) => number;
+export interface NumberFieldType {
+    signed: boolean;
+    size: number;
+    deserialize(array: Uint8Array, littleEndian: boolean): number;
+    serialize(
+        dataView: DataView,
+        offset: number,
+        value: number,
+        littleEndian: boolean
+    ): void;
+}
 
-const DESERIALIZERS: Record<number, NumberTypeDeserializer> = {
-    1: (array) => array[0]!,
-    2: (array, littleEndian) =>
-        (((array[1]! << 8) | array[0]!) * (littleEndian as any)) |
-        (((array[0]! << 8) | array[1]!) * (!littleEndian as any)),
-    4: (array, littleEndian) =>
-        (((array[3]! << 24) |
-            (array[2]! << 16) |
-            (array[1]! << 8) |
-            array[0]!) *
-            (littleEndian as any)) |
-        (((array[0]! << 24) |
-            (array[1]! << 16) |
-            (array[2]! << 8) |
-            array[3]!) *
-            (!littleEndian as any)),
-};
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace NumberFieldType {
+    export const Uint8: NumberFieldType = {
+        signed: false,
+        size: 1,
+        deserialize(array) {
+            return array[0]!;
+        },
+        serialize(dataView, offset, value) {
+            dataView.setUint8(offset, value);
+        },
+    };
 
-export type DataViewSetters = {
-    [TKey in keyof DataView]: TKey extends `set${string}` ? TKey : never;
-}[keyof DataView];
+    export const Int8: NumberFieldType = {
+        signed: true,
+        size: 1,
+        deserialize(array) {
+            const value = Uint8.deserialize(array, false);
+            return (value << 24) >> 24;
+        },
+        serialize(dataView, offset, value) {
+            dataView.setInt8(offset, value);
+        },
+    };
 
-export class NumberFieldType {
-    public readonly TTypeScriptType!: number;
+    export const Uint16: NumberFieldType = {
+        signed: false,
+        size: 2,
+        deserialize(array, littleEndian) {
+            return (
+                (((array[1]! << 8) | array[0]!) * (littleEndian as any)) |
+                (((array[0]! << 8) | array[1]!) * (!littleEndian as any))
+            );
+        },
+        serialize(dataView, offset, value, littleEndian) {
+            dataView.setUint16(offset, value, littleEndian);
+        },
+    };
 
-    public readonly signed: boolean;
+    export const Int16: NumberFieldType = {
+        signed: true,
+        size: 2,
+        deserialize(array, littleEndian) {
+            const value = Uint16.deserialize(array, littleEndian);
+            return (value << 16) >> 16;
+        },
+        serialize(dataView, offset, value, littleEndian) {
+            dataView.setInt16(offset, value, littleEndian);
+        },
+    };
 
-    public readonly size: number;
+    export const Uint32: NumberFieldType = {
+        signed: false,
+        size: 4,
+        deserialize(array, littleEndian) {
+            return (
+                (((array[3]! << 24) |
+                    (array[2]! << 16) |
+                    (array[1]! << 8) |
+                    array[0]!) *
+                    (littleEndian as any)) |
+                (((array[0]! << 24) |
+                    (array[1]! << 16) |
+                    (array[2]! << 8) |
+                    array[3]!) *
+                    (!littleEndian as any))
+            );
+        },
+        serialize(dataView, offset, value, littleEndian) {
+            dataView.setUint32(offset, value, littleEndian);
+        },
+    };
 
-    public readonly deserializer: NumberTypeDeserializer;
-    public readonly convertSign: (value: number) => number;
-
-    public readonly dataViewSetter: DataViewSetters;
-
-    public constructor(
-        size: number,
-        signed: boolean,
-        convertSign: (value: number) => number,
-        dataViewSetter: DataViewSetters
-    ) {
-        this.size = size;
-        this.signed = signed;
-        this.deserializer = DESERIALIZERS[size]!;
-        this.convertSign = convertSign;
-        this.dataViewSetter = dataViewSetter;
-    }
-
-    public static readonly Int8 = new NumberFieldType(
-        1,
-        true,
-        (value) => (value << 24) >> 24,
-        "setInt8"
-    );
-
-    public static readonly Uint8 = new NumberFieldType(
-        1,
-        false,
-        (value) => value,
-        "setUint8"
-    );
-
-    public static readonly Int16 = new NumberFieldType(
-        2,
-        true,
-        (value) => (value << 16) >> 16,
-        "setInt16"
-    );
-
-    public static readonly Uint16 = new NumberFieldType(
-        2,
-        false,
-        (value) => value,
-        "setUint16"
-    );
-
-    public static readonly Int32 = new NumberFieldType(
-        4,
-        true,
-        (value) => value,
-        "setInt32"
-    );
-
-    public static readonly Uint32 = new NumberFieldType(
-        4,
-        false,
-        (value) => value >>> 0,
-        "setUint32"
-    );
+    export const Int32: NumberFieldType = {
+        signed: true,
+        size: 4,
+        deserialize(array, littleEndian) {
+            const value = Uint32.deserialize(array, littleEndian);
+            return value >>> 0;
+        },
+        serialize(dataView, offset, value, littleEndian) {
+            dataView.setInt32(offset, value, littleEndian);
+        },
+    };
 }
 
 export class NumberFieldDefinition<
     TType extends NumberFieldType = NumberFieldType,
-    TTypeScriptType = TType["TTypeScriptType"]
+    TTypeScriptType = number
 > extends StructFieldDefinition<void, TTypeScriptType> {
     public readonly type: TType;
 
@@ -147,9 +150,10 @@ export class NumberFieldDefinition<
             return stream.read(this.getSize());
         })
             .then((array) => {
-                let value: number;
-                value = this.type.deserializer(array, options.littleEndian);
-                value = this.type.convertSign(value);
+                const value = this.type.deserialize(
+                    array,
+                    options.littleEndian
+                );
                 return this.create(options, struct, value as any);
             })
             .valueOrPromise();
@@ -160,12 +164,10 @@ export class NumberFieldValue<
     TDefinition extends NumberFieldDefinition<NumberFieldType, any>
 > extends StructFieldValue<TDefinition> {
     public serialize(dataView: DataView, offset: number): void {
-        // `setBigInt64` requires a `bigint` while others require `number`
-        // So `dataView[DataViewSetters]` requires `bigint & number`
-        // and that is, `never`
-        dataView[this.definition.type.dataViewSetter](
+        this.definition.type.serialize(
+            dataView,
             offset,
-            this.value as never,
+            this.value,
             this.options.littleEndian
         );
     }

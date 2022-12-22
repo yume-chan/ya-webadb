@@ -1,10 +1,11 @@
 import { type Adb } from "@yume-chan/adb";
 import { type TransformStream } from "@yume-chan/stream-extra";
 
-import { type ScrcpyControlMessageType } from "../../control/index.js";
 import {
-    type ScrcpyBackOrScreenOnControlMessage1_18,
-    type ScrcpyInjectScrollControlMessage1_22,
+    type ScrcpyBackOrScreenOnControlMessage,
+    type ScrcpyControlMessageType,
+} from "../../control/index.js";
+import {
     type ScrcpyOptions,
     type ScrcpyVideoStreamPacket,
 } from "../../options/index.js";
@@ -54,15 +55,13 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
     }
 
     public serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage1_18
+        message: ScrcpyBackOrScreenOnControlMessage
     ): Uint8Array | undefined {
         return this.raw.serializeBackOrScreenOnControlMessage(message);
     }
 
-    public serializeInjectScrollControlMessage(
-        message: ScrcpyInjectScrollControlMessage1_22
-    ): Uint8Array {
-        return this.raw.serializeInjectScrollControlMessage(message);
+    public getScrollController() {
+        return this.raw.getScrollController();
     }
 
     public abstract createConnection(adb: Adb): AdbScrcpyConnection;

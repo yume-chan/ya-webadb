@@ -3,14 +3,14 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "postinstall": "fetch-scrcpy-server 1.24",
+        "postinstall": "fetch-scrcpy-server 1.25",
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
         "lint": "next lint"
     },
     "dependencies": {
-        "@fluentui/react": "^8.103.10",
+        "@fluentui/react": "^8.104.0",
         "@fluentui/react-file-type-icons": "^8.8.4",
         "@fluentui/react-hooks": "^8.6.14",
         "@fluentui/react-icons": "^2.0.190",
@@ -33,20 +33,20 @@
         "@yume-chan/struct": "workspace:^0.0.17",
         "mobx": "^6.7.0",
         "mobx-react-lite": "^3.4.0",
-        "next": "13.0.7",
+        "next": "13.1.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "xterm": "^5.1.0",
-        "xterm-addon-fit": "^0.6.0",
-        "xterm-addon-search": "^0.10.0",
+        "xterm-addon-fit": "^0.7.0",
+        "xterm-addon-search": "^0.11.0",
         "xterm-addon-webgl": "^0.14.0"
     },
     "devDependencies": {
         "@mdx-js/loader": "^2.2.1",
-        "@next/mdx": "^13.0.7",
+        "@next/mdx": "^13.1.0",
         "@types/react": "18.0.26",
         "eslint": "^8.30.0",
-        "eslint-config-next": "13.0.7",
+        "eslint-config-next": "13.1.0",
         "source-map-loader": "^4.0.1",
         "typescript": "^4.9.4"
     }

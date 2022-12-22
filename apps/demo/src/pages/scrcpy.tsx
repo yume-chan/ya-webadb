@@ -1,37 +1,104 @@
-import { CommandBar, ContextualMenuItemType, Dialog, Dropdown, ICommandBarItemProps, Icon, IconButton, IDropdownOption, LayerHost, Position, ProgressIndicator, SpinButton, Stack, TextField, Toggle, TooltipHost } from "@fluentui/react";
+import {
+    CommandBar,
+    Dialog,
+    Dropdown,
+    ICommandBarItemProps,
+    Icon,
+    IconButton,
+    IDropdownOption,
+    LayerHost,
+    Position,
+    ProgressIndicator,
+    SpinButton,
+    Stack,
+    TextField,
+    Toggle,
+    TooltipHost,
+} from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { makeStyles } from "@griffel/react";
-import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
+import {
+    action,
+    autorun,
+    makeAutoObservable,
+    observable,
+    runInAction,
+} from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import { CSSProperties, ReactNode, useEffect, useState } from "react";
 
-import { ADB_SYNC_MAX_PACKET_SIZE } from '@yume-chan/adb';
+import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import { Disposable, EventEmitter } from "@yume-chan/event";
-import { AdbScrcpyClient, AdbScrcpyOptions1_22, AndroidCodecLevel, AndroidCodecProfile, AndroidKeyCode, AndroidKeyEventAction, AndroidMotionEventAction, AndroidScreenPowerMode, CodecOptions, DEFAULT_SERVER_PATH, ScrcpyDeviceMessageType, ScrcpyLogLevel, ScrcpyOptions1_24, ScrcpyOptionsInit1_24, ScrcpyVideoOrientation, type ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
-import { TinyH264Decoder } from '@yume-chan/scrcpy-decoder-tinyh264';
-import { WebCodecsDecoder } from '@yume-chan/scrcpy-decoder-webcodecs';
-import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version';
-import { ChunkStream, InspectStream, ReadableStream, WritableStream } from '@yume-chan/stream-extra';
+import {
+    AdbScrcpyClient,
+    AdbScrcpyOptions1_22,
+    AndroidCodecLevel,
+    AndroidCodecProfile,
+    AndroidKeyCode,
+    AndroidKeyEventAction,
+    AndroidMotionEventAction,
+    AndroidScreenPowerMode,
+    CodecOptions,
+    DEFAULT_SERVER_PATH,
+    ScrcpyDeviceMessageType,
+    ScrcpyLogLevel,
+    ScrcpyOptions1_25,
+    ScrcpyOptionsInit1_24,
+    ScrcpyPointerId,
+    ScrcpyVideoOrientation,
+    type ScrcpyVideoStreamPacket,
+} from "@yume-chan/scrcpy";
+import { TinyH264Decoder } from "@yume-chan/scrcpy-decoder-tinyh264";
+import { WebCodecsDecoder } from "@yume-chan/scrcpy-decoder-webcodecs";
+import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
+import {
+    ChunkStream,
+    InspectStream,
+    ReadableStream,
+    WritableStream,
+} from "@yume-chan/stream-extra";
 
-import { DemoModePanel, DeviceView, DeviceViewRef, ExternalLink } from "../components";
+import {
+    DemoModePanel,
+    DeviceView,
+    DeviceViewRef,
+    ExternalLink,
+} from "../components";
 import { GlobalState } from "../state";
-import { CommonStackTokens, formatSpeed, Icons, ProgressStream, RouteStackProps } from "../utils";
+import {
+    CommonStackTokens,
+    formatSpeed,
+    Icons,
+    ProgressStream,
+    RouteStackProps,
+} from "../utils";
 
-const SERVER_URL = new URL('@yume-chan/scrcpy/bin/scrcpy-server?url', import.meta.url);
+const SERVER_URL = new URL(
+    "@yume-chan/scrcpy/bin/scrcpy-server?url",
+    import.meta.url
+);
 
 class FetchWithProgress {
     public readonly promise: Promise<Uint8Array>;
 
     private _downloaded = 0;
-    public get downloaded() { return this._downloaded; }
+    public get downloaded() {
+        return this._downloaded;
+    }
 
     private _total = 0;
-    public get total() { return this._total; }
+    public get total() {
+        return this._total;
+    }
 
-    private progressEvent = new EventEmitter<[download: number, total: number]>();
-    public get onProgress() { return this.progressEvent.event; }
+    private progressEvent = new EventEmitter<
+        [download: number, total: number]
+    >();
+    public get onProgress() {
+        return this.progressEvent.event;
+    }
 
     public constructor(url: string | URL) {
         this.promise = this.fetch(url);
@@ -39,7 +106,10 @@ class FetchWithProgress {
 
     private async fetch(url: string | URL) {
         const response = await window.fetch(url);
-        this._total = Number.parseInt(response.headers.get('Content-Length') ?? '0', 10);
+        this._total = Number.parseInt(
+            response.headers.get("Content-Length") ?? "0",
+            10
+        );
         this.progressEvent.fire([this._downloaded, this._total]);
 
         const reader = response.body!.getReader();
@@ -54,7 +124,10 @@ class FetchWithProgress {
             this.progressEvent.fire([this._downloaded, this._total]);
         }
 
-        this._total = chunks.reduce((result, item) => result + item.byteLength, 0);
+        this._total = chunks.reduce(
+            (result, item) => result + item.byteLength,
+            0
+        );
         const result = new Uint8Array(this._total);
         let position = 0;
         for (const chunk of chunks) {
@@ -66,7 +139,9 @@ class FetchWithProgress {
 }
 
 let cachedValue: FetchWithProgress | undefined;
-function fetchServer(onProgress?: (e: [downloaded: number, total: number]) => void) {
+function fetchServer(
+    onProgress?: (e: [downloaded: number, total: number]) => void
+) {
     if (!cachedValue) {
         cachedValue = new FetchWithProgress(SERVER_URL);
         cachedValue.promise.catch((e) => {
@@ -104,7 +179,7 @@ export interface H264Decoder extends Disposable {
 }
 
 export interface H264DecoderConstructor {
-    new(): H264Decoder;
+    new (): H264Decoder;
 }
 
 interface DecoderDefinition {
@@ -113,14 +188,27 @@ interface DecoderDefinition {
     Constructor: H264DecoderConstructor;
 }
 
-type RequiredScrcpyOptions = Pick<ScrcpyOptionsInit1_24, 'crop' | 'maxSize' | 'bitRate' | 'powerOn'>;
-type OptionalScrcpyOptions = Partial<Pick<ScrcpyOptionsInit1_24, 'displayId' | 'lockVideoOrientation' | 'encoderName' | 'tunnelForward' | 'stayAwake' | 'powerOffOnClose'>>;
+type RequiredScrcpyOptions = Pick<
+    ScrcpyOptionsInit1_24,
+    "crop" | "maxSize" | "bitRate" | "powerOn"
+>;
+type OptionalScrcpyOptions = Partial<
+    Pick<
+        ScrcpyOptionsInit1_24,
+        | "displayId"
+        | "lockVideoOrientation"
+        | "encoderName"
+        | "tunnelForward"
+        | "stayAwake"
+        | "powerOffOnClose"
+    >
+>;
 
 interface Settings extends RequiredScrcpyOptions, OptionalScrcpyOptions {
     turnScreenOff?: boolean;
     decoder?: string;
     ignoreDecoderCodecArgs?: boolean;
-};
+}
 
 interface SettingDefinitionBase {
     key: keyof Settings;
@@ -131,32 +219,32 @@ interface SettingDefinitionBase {
 }
 
 interface TextSettingDefinition extends SettingDefinitionBase {
-    type: 'text';
+    type: "text";
     placeholder?: string;
 }
 
 interface DropdownSettingDefinition extends SettingDefinitionBase {
-    type: 'dropdown';
+    type: "dropdown";
     placeholder?: string;
     options: IDropdownOption[];
 }
 
 interface ToggleSettingDefinition extends SettingDefinitionBase {
-    type: 'toggle',
+    type: "toggle";
 }
 
 interface NumberSettingDefinition extends SettingDefinitionBase {
-    type: 'number',
+    type: "number";
     min?: number;
     max?: number;
     step?: number;
 }
 
 type SettingDefinition =
-    TextSettingDefinition |
-    DropdownSettingDefinition |
-    ToggleSettingDefinition |
-    NumberSettingDefinition;
+    | TextSettingDefinition
+    | DropdownSettingDefinition
+    | ToggleSettingDefinition
+    | NumberSettingDefinition;
 
 interface SettingItemProps {
     definition: SettingDefinition;
@@ -166,10 +254,10 @@ interface SettingItemProps {
 
 const useClasses = makeStyles({
     labelRight: {
-        marginLeft: '4px',
+        marginLeft: "4px",
     },
     video: {
-        transformOrigin: 'center center',
+        transformOrigin: "center center",
     },
 });
 
@@ -185,7 +273,10 @@ const SettingItem = observer(function SettingItem({
             <span>{definition.label}</span>
             {!!definition.description && (
                 <TooltipHost content={definition.description}>
-                    <Icon className={classes.labelRight} iconName={Icons.Info} />
+                    <Icon
+                        className={classes.labelRight}
+                        iconName={Icons.Info}
+                    />
                 </TooltipHost>
             )}
             {definition.labelExtra}
@@ -193,7 +284,7 @@ const SettingItem = observer(function SettingItem({
     );
 
     switch (definition.type) {
-        case 'text':
+        case "text":
             return (
                 <TextField
                     label={label as any}
@@ -202,17 +293,19 @@ const SettingItem = observer(function SettingItem({
                     onChange={(e, value) => onChange(definition.key, value)}
                 />
             );
-        case 'dropdown':
+        case "dropdown":
             return (
                 <Dropdown
                     label={label as any}
                     options={definition.options}
                     placeholder={definition.placeholder}
                     selectedKey={settings[definition.key]}
-                    onChange={(e, option) => onChange(definition.key, option!.key)}
+                    onChange={(e, option) =>
+                        onChange(definition.key, option!.key)
+                    }
                 />
             );
-        case 'toggle':
+        case "toggle":
             return (
                 <Toggle
                     label={label}
@@ -220,7 +313,7 @@ const SettingItem = observer(function SettingItem({
                     onChange={(e, checked) => onChange(definition.key, checked)}
                 />
             );
-        case 'number':
+        case "number":
             return (
                 <SpinButton
                     label={definition.label}
@@ -229,11 +322,28 @@ const SettingItem = observer(function SettingItem({
                     max={definition.max}
                     step={definition.step}
                     value={settings[definition.key].toString()}
-                    onChange={(e, value) => onChange(definition.key, Number.parseInt(value!, 10))}
+                    onChange={(e, value) =>
+                        onChange(definition.key, Number.parseInt(value!, 10))
+                    }
                 />
             );
     }
 });
+
+const KEY_MAP = {
+    Enter: AndroidKeyCode.Enter,
+    Escape: AndroidKeyCode.Escape,
+    Backspace: AndroidKeyCode.Delete,
+    Tab: AndroidKeyCode.Tab,
+    Delete: AndroidKeyCode.ForwardDelete,
+    Home: AndroidKeyCode.MoveHome,
+    End: AndroidKeyCode.MoveEnd,
+    Space: AndroidKeyCode.Space,
+    ArrowUp: AndroidKeyCode.DPadUp,
+    ArrowDown: AndroidKeyCode.DPadDown,
+    ArrowLeft: AndroidKeyCode.DPadLeft,
+    ArrowRight: AndroidKeyCode.DPadRight,
+} as Record<string, AndroidKeyCode | undefined>;
 
 class ScrcpyPageState {
     running = false;
@@ -251,8 +361,12 @@ class ScrcpyPageState {
     height = 0;
     rotate = 0;
 
-    get rotatedWidth() { return state.rotate & 1 ? state.height : state.width; }
-    get rotatedHeight() { return state.rotate & 1 ? state.width : state.height; }
+    get rotatedWidth() {
+        return state.rotate & 1 ? state.height : state.width;
+    }
+    get rotatedHeight() {
+        return state.rotate & 1 ? state.width : state.height;
+    }
 
     client: AdbScrcpyClient | undefined = undefined;
 
@@ -264,8 +378,7 @@ class ScrcpyPageState {
                 controller.enqueue(serverBuffer);
                 controller.close();
             },
-        })
-            .pipeTo(AdbScrcpyClient.pushServer(GlobalState.device!));
+        }).pipeTo(AdbScrcpyClient.pushServer(GlobalState.device!));
     }
 
     encoders: string[] = [];
@@ -277,16 +390,20 @@ class ScrcpyPageState {
                 GlobalState.device!,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                new AdbScrcpyOptions1_22(new ScrcpyOptions1_24({
-                    logLevel: ScrcpyLogLevel.Debug,
-                    tunnelForward: this.settings.tunnelForward,
-                }))
+                new AdbScrcpyOptions1_22(
+                    new ScrcpyOptions1_25({
+                        logLevel: ScrcpyLogLevel.Debug,
+                        tunnelForward: this.settings.tunnelForward,
+                    })
+                )
             );
 
             runInAction(() => {
                 this.encoders = encoders;
-                if (!this.settings.encoderName ||
-                    !this.encoders.includes(this.settings.encoderName)) {
+                if (
+                    !this.settings.encoderName ||
+                    !this.encoders.includes(this.settings.encoderName)
+                ) {
                     this.settings.encoderName = this.encoders[0];
                 }
             });
@@ -295,11 +412,13 @@ class ScrcpyPageState {
         }
     };
 
-    decoders: DecoderDefinition[] = [{
-        key: 'tinyh264',
-        name: 'TinyH264 (Software)',
-        Constructor: TinyH264Decoder,
-    }];
+    decoders: DecoderDefinition[] = [
+        {
+            key: "tinyh264",
+            name: "TinyH264 (Software)",
+            Constructor: TinyH264Decoder,
+        },
+    ];
     decoder: H264Decoder | undefined = undefined;
     fpsCounterIntervalId: any = undefined;
     fps = 0;
@@ -313,16 +432,20 @@ class ScrcpyPageState {
                 GlobalState.device!,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
-                new AdbScrcpyOptions1_22(new ScrcpyOptions1_24({
-                    logLevel: ScrcpyLogLevel.Debug,
-                    tunnelForward: this.settings.tunnelForward,
-                }))
+                new AdbScrcpyOptions1_22(
+                    new ScrcpyOptions1_25({
+                        logLevel: ScrcpyLogLevel.Debug,
+                        tunnelForward: this.settings.tunnelForward,
+                    })
+                )
             );
 
             runInAction(() => {
                 this.displays = displays;
-                if (!this.settings.displayId ||
-                    !this.displays.includes(this.settings.displayId)) {
+                if (
+                    !this.settings.displayId ||
+                    !this.displays.includes(this.settings.displayId)
+                ) {
                     this.settings.displayId = this.displays[0];
                 }
             });
@@ -345,146 +468,165 @@ class ScrcpyPageState {
 
         if (!this.running) {
             result.push({
-                key: 'start',
+                key: "start",
                 disabled: !GlobalState.device,
                 iconProps: { iconName: Icons.Play },
-                text: 'Start',
+                text: "Start",
                 onClick: this.start as VoidFunction,
             });
         } else {
             result.push({
-                key: 'stop',
+                key: "stop",
                 iconProps: { iconName: Icons.Stop },
-                text: 'Stop',
+                text: "Stop",
                 onClick: this.stop as VoidFunction,
             });
         }
 
         result.push({
-            key: 'fullscreen',
+            key: "fullscreen",
             disabled: !this.running,
             iconProps: { iconName: Icons.FullScreenMaximize },
             iconOnly: true,
-            text: 'Fullscreen',
-            onClick: () => { this.deviceView?.enterFullscreen(); },
-        });
-
-        result.push({
-            key: 'volumeUp',
-            disabled: !this.running,
-            iconProps: { iconName: Icons.Speaker2 },
-            iconOnly: true,
-            text: 'Volume Up',
-            onClick: (async () => {
-                // TODO: Auto repeat when holding
-                await this.client?.controlMessageSerializer!.injectKeyCode({
-                    action: AndroidKeyEventAction.Down,
-                    keyCode: AndroidKeyCode.VolumeUp,
-                    repeat: 0,
-                    metaState: 0,
-                });
-                await this.client?.controlMessageSerializer!.injectKeyCode({
-                    action: AndroidKeyEventAction.Up,
-                    keyCode: AndroidKeyCode.VolumeUp,
-                    repeat: 0,
-                    metaState: 0,
-                });
-            }) as (() => void),
-        }, {
-            key: 'volumeDown',
-            disabled: !this.running,
-            iconProps: { iconName: Icons.Speaker1 },
-            iconOnly: true,
-            text: 'Volume Down',
-            onClick: (async () => {
-                await this.client?.controlMessageSerializer!.injectKeyCode({
-                    action: AndroidKeyEventAction.Down,
-                    keyCode: AndroidKeyCode.VolumeDown,
-                    repeat: 0,
-                    metaState: 0,
-                });
-                await this.client?.controlMessageSerializer!.injectKeyCode({
-                    action: AndroidKeyEventAction.Up,
-                    keyCode: AndroidKeyCode.VolumeDown,
-                    repeat: 0,
-                    metaState: 0,
-                });
-            }) as (() => void),
-        }, {
-            key: 'volumeMute',
-            disabled: !this.running,
-            iconProps: { iconName: Icons.SpeakerOff },
-            iconOnly: true,
-            text: 'Toggle Mute',
-            onClick: (async () => {
-                await this.client?.controlMessageSerializer!.injectKeyCode({
-                    action: AndroidKeyEventAction.Down,
-                    keyCode: AndroidKeyCode.VolumeMute,
-                    repeat: 0,
-                    metaState: 0,
-                });
-                await this.client?.controlMessageSerializer!.injectKeyCode({
-                    action: AndroidKeyEventAction.Up,
-                    keyCode: AndroidKeyCode.VolumeMute,
-                    repeat: 0,
-                    metaState: 0,
-                });
-            }) as (() => void),
-        });
-
-        result.push({
-            key: 'rotateDevice',
-            disabled: !this.running,
-            iconProps: { iconName: Icons.Orientation },
-            iconOnly: true,
-            text: 'Rotate Device',
-            onClick: () => { this.client!.controlMessageSerializer!.rotateDevice(); },
-        }, {
-            key: 'rotateVideoLeft',
-            disabled: !this.running,
-            iconProps: { iconName: Icons.RotateLeft },
-            iconOnly: true,
-            text: 'Rotate Video Left',
-            onClick: action(() => {
-                this.rotate -= 1;
-                if (this.rotate < 0) {
-                    this.rotate = 3;
-                }
-            }),
-        }, {
-            key: 'rotateVideoRight',
-            disabled: !this.running,
-            iconProps: { iconName: Icons.RotateRight },
-            iconOnly: true,
-            text: 'Rotate Video Right',
-            onClick: action(() => {
-                this.rotate = (this.rotate + 1) & 3;
-            }),
-        });
-
-        result.push({
-            key: 'turnScreenOff',
-            disabled: !this.running,
-            iconProps: { iconName: Icons.Lightbulb },
-            iconOnly: true,
-            text: 'Turn Screen Off',
+            text: "Fullscreen",
             onClick: () => {
-                this.client!.controlMessageSerializer!.setScreenPowerMode(AndroidScreenPowerMode.Off);
-            },
-        }, {
-            key: 'turnScreenOn',
-            disabled: !this.running,
-            iconProps: { iconName: Icons.LightbulbFilament },
-            iconOnly: true,
-            text: 'Turn Screen On',
-            onClick: () => {
-                this.client!.controlMessageSerializer!.setScreenPowerMode(AndroidScreenPowerMode.Normal);
+                this.deviceView?.enterFullscreen();
             },
         });
+
+        result.push(
+            {
+                key: "volumeUp",
+                disabled: !this.running,
+                iconProps: { iconName: Icons.Speaker2 },
+                iconOnly: true,
+                text: "Volume Up",
+                onClick: (async () => {
+                    // TODO: Auto repeat when holding
+                    await this.client?.controlMessageSerializer!.injectKeyCode({
+                        action: AndroidKeyEventAction.Down,
+                        keyCode: AndroidKeyCode.VolumeUp,
+                        repeat: 0,
+                        metaState: 0,
+                    });
+                    await this.client?.controlMessageSerializer!.injectKeyCode({
+                        action: AndroidKeyEventAction.Up,
+                        keyCode: AndroidKeyCode.VolumeUp,
+                        repeat: 0,
+                        metaState: 0,
+                    });
+                }) as () => void,
+            },
+            {
+                key: "volumeDown",
+                disabled: !this.running,
+                iconProps: { iconName: Icons.Speaker1 },
+                iconOnly: true,
+                text: "Volume Down",
+                onClick: (async () => {
+                    await this.client?.controlMessageSerializer!.injectKeyCode({
+                        action: AndroidKeyEventAction.Down,
+                        keyCode: AndroidKeyCode.VolumeDown,
+                        repeat: 0,
+                        metaState: 0,
+                    });
+                    await this.client?.controlMessageSerializer!.injectKeyCode({
+                        action: AndroidKeyEventAction.Up,
+                        keyCode: AndroidKeyCode.VolumeDown,
+                        repeat: 0,
+                        metaState: 0,
+                    });
+                }) as () => void,
+            },
+            {
+                key: "volumeMute",
+                disabled: !this.running,
+                iconProps: { iconName: Icons.SpeakerOff },
+                iconOnly: true,
+                text: "Toggle Mute",
+                onClick: (async () => {
+                    await this.client?.controlMessageSerializer!.injectKeyCode({
+                        action: AndroidKeyEventAction.Down,
+                        keyCode: AndroidKeyCode.VolumeMute,
+                        repeat: 0,
+                        metaState: 0,
+                    });
+                    await this.client?.controlMessageSerializer!.injectKeyCode({
+                        action: AndroidKeyEventAction.Up,
+                        keyCode: AndroidKeyCode.VolumeMute,
+                        repeat: 0,
+                        metaState: 0,
+                    });
+                }) as () => void,
+            }
+        );
+
+        result.push(
+            {
+                key: "rotateDevice",
+                disabled: !this.running,
+                iconProps: { iconName: Icons.Orientation },
+                iconOnly: true,
+                text: "Rotate Device",
+                onClick: () => {
+                    this.client!.controlMessageSerializer!.rotateDevice();
+                },
+            },
+            {
+                key: "rotateVideoLeft",
+                disabled: !this.running,
+                iconProps: { iconName: Icons.RotateLeft },
+                iconOnly: true,
+                text: "Rotate Video Left",
+                onClick: action(() => {
+                    this.rotate -= 1;
+                    if (this.rotate < 0) {
+                        this.rotate = 3;
+                    }
+                }),
+            },
+            {
+                key: "rotateVideoRight",
+                disabled: !this.running,
+                iconProps: { iconName: Icons.RotateRight },
+                iconOnly: true,
+                text: "Rotate Video Right",
+                onClick: action(() => {
+                    this.rotate = (this.rotate + 1) & 3;
+                }),
+            }
+        );
+
+        result.push(
+            {
+                key: "turnScreenOff",
+                disabled: !this.running,
+                iconProps: { iconName: Icons.Lightbulb },
+                iconOnly: true,
+                text: "Turn Screen Off",
+                onClick: () => {
+                    this.client!.controlMessageSerializer!.setScreenPowerMode(
+                        AndroidScreenPowerMode.Off
+                    );
+                },
+            },
+            {
+                key: "turnScreenOn",
+                disabled: !this.running,
+                iconProps: { iconName: Icons.LightbulbFilament },
+                iconOnly: true,
+                text: "Turn Screen On",
+                onClick: () => {
+                    this.client!.controlMessageSerializer!.setScreenPowerMode(
+                        AndroidScreenPowerMode.Normal
+                    );
+                },
+            }
+        );
 
         if (this.running) {
             result.push({
-                key: 'fps',
+                key: "fps",
                 text: `FPS: ${this.fps}`,
                 disabled: true,
             });
@@ -496,66 +638,75 @@ class ScrcpyPageState {
     get commandBarFarItems(): ICommandBarItemProps[] {
         return [
             {
-                key: 'NavigationBar',
+                key: "NavigationBar",
                 iconProps: { iconName: Icons.PanelBottom },
                 checked: this.navigationBarVisible,
-                text: 'Navigation Bar',
+                text: "Navigation Bar",
                 iconOnly: true,
                 onClick: action(() => {
                     this.navigationBarVisible = !this.navigationBarVisible;
                 }),
             },
             {
-                key: 'Log',
+                key: "Log",
                 iconProps: { iconName: Icons.TextGrammarError },
                 checked: this.logVisible,
-                text: 'Log',
+                text: "Log",
                 iconOnly: true,
                 onClick: action(() => {
                     this.logVisible = !this.logVisible;
                 }),
             },
             {
-                key: 'Settings',
+                key: "Settings",
                 iconProps: { iconName: Icons.Settings },
                 checked: this.settingsVisible,
-                text: 'Settings',
+                text: "Settings",
                 iconOnly: true,
                 onClick: action(() => {
                     this.settingsVisible = !this.settingsVisible;
                 }),
             },
             {
-                key: 'DemoMode',
+                key: "DemoMode",
                 iconProps: { iconName: Icons.Wand },
                 checked: this.demoModeVisible,
-                text: 'Demo Mode',
+                text: "Demo Mode",
                 iconOnly: true,
                 onClick: action(() => {
                     this.demoModeVisible = !this.demoModeVisible;
                 }),
             },
             {
-                key: 'info',
+                key: "info",
                 iconProps: { iconName: Icons.Info },
                 iconOnly: true,
                 tooltipHostProps: {
                     content: (
                         <>
                             <p>
-                                <ExternalLink href="https://github.com/Genymobile/scrcpy" spaceAfter>Scrcpy</ExternalLink>
-                                developed by Genymobile can display the screen with low latency (1~2 frames) and control the device, all without root access.
+                                <ExternalLink
+                                    href="https://github.com/Genymobile/scrcpy"
+                                    spaceAfter
+                                >
+                                    Scrcpy
+                                </ExternalLink>
+                                developed by Genymobile can display the screen
+                                with low latency (1~2 frames) and control the
+                                device, all without root access.
                             </p>
                             <p>
-                                This is a TypeScript implementation of the client part. Paired with official pre-built server binary.
+                                This is a TypeScript implementation of the
+                                client part. Paired with official pre-built
+                                server binary.
                             </p>
                         </>
                     ),
                     calloutProps: {
                         calloutMaxWidth: 300,
-                    }
+                    },
                 },
-            }
+            },
         ];
     }
 
@@ -564,36 +715,41 @@ class ScrcpyPageState {
         bitRate: 4_000_000,
         lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
         displayId: 0,
-        crop: '',
+        crop: "",
         powerOn: true,
     };
 
     get settingDefinitions() {
         const result: SettingDefinition[] = [];
 
-        result.push({
-            key: 'powerOn',
-            type: 'toggle',
-            label: 'Turn device on when starting',
-        }, {
-            key: 'turnScreenOff',
-            type: 'toggle',
-            label: 'Turn screen off when starting',
-        }, {
-            key: 'stayAwake',
-            type: 'toggle',
-            label: 'Stay awake (if plugged in)',
-        }, {
-            key: 'powerOffOnClose',
-            type: 'toggle',
-            label: 'Turn device off when exiting',
-        });
+        result.push(
+            {
+                key: "powerOn",
+                type: "toggle",
+                label: "Turn device on when starting",
+            },
+            {
+                key: "turnScreenOff",
+                type: "toggle",
+                label: "Turn screen off when starting",
+            },
+            {
+                key: "stayAwake",
+                type: "toggle",
+                label: "Stay awake (if plugged in)",
+            },
+            {
+                key: "powerOffOnClose",
+                type: "toggle",
+                label: "Turn device off when exiting",
+            }
+        );
 
         result.push({
-            key: 'displayId',
-            type: 'dropdown',
-            label: 'Display',
-            placeholder: 'Press refresh to update available displays',
+            key: "displayId",
+            type: "dropdown",
+            label: "Display",
+            placeholder: "Press refresh to update available displays",
             labelExtra: (
                 <IconButton
                     iconProps={{ iconName: Icons.ArrowClockwise }}
@@ -602,74 +758,74 @@ class ScrcpyPageState {
                     onClick={this.updateDisplays}
                 />
             ),
-            options: this.displays.map(item => ({
+            options: this.displays.map((item) => ({
                 key: item,
                 text: item.toString(),
             })),
         });
 
         result.push({
-            key: 'crop',
-            type: 'text',
-            label: 'Crop',
-            placeholder: 'W:H:X:Y',
+            key: "crop",
+            type: "text",
+            label: "Crop",
+            placeholder: "W:H:X:Y",
         });
 
         result.push({
-            key: 'maxSize',
-            type: 'number',
-            label: 'Max Resolution (longer side, 0 = unlimited)',
+            key: "maxSize",
+            type: "number",
+            label: "Max Resolution (longer side, 0 = unlimited)",
             min: 0,
             max: 2560,
             step: 50,
         });
 
         result.push({
-            key: 'bitRate',
-            type: 'number',
-            label: 'Max Bit Rate',
+            key: "bitRate",
+            type: "number",
+            label: "Max Bit Rate",
             min: 100,
             max: 100_000_000,
             step: 100,
         });
 
         result.push({
-            key: 'lockVideoOrientation',
-            type: 'dropdown',
-            label: 'Lock Video Orientation',
+            key: "lockVideoOrientation",
+            type: "dropdown",
+            label: "Lock Video Orientation",
             options: [
                 {
                     key: ScrcpyVideoOrientation.Unlocked,
-                    text: 'Unlocked',
+                    text: "Unlocked",
                 },
                 {
                     key: ScrcpyVideoOrientation.Initial,
-                    text: 'Current',
+                    text: "Current",
                 },
                 {
                     key: ScrcpyVideoOrientation.Portrait,
-                    text: 'Portrait',
+                    text: "Portrait",
                 },
                 {
                     key: ScrcpyVideoOrientation.Landscape,
-                    text: 'Landscape',
+                    text: "Landscape",
                 },
                 {
                     key: ScrcpyVideoOrientation.PortraitFlipped,
-                    text: 'Portrait (Flipped)',
+                    text: "Portrait (Flipped)",
                 },
                 {
                     key: ScrcpyVideoOrientation.LandscapeFlipped,
-                    text: 'Landscape (Flipped)',
+                    text: "Landscape (Flipped)",
                 },
             ],
         });
 
         result.push({
-            key: 'encoderName',
-            type: 'dropdown',
-            label: 'Encoder',
-            placeholder: 'Press refresh to update available encoders',
+            key: "encoderName",
+            type: "dropdown",
+            label: "Encoder",
+            placeholder: "Press refresh to update available encoders",
             labelExtra: (
                 <IconButton
                     iconProps={{ iconName: Icons.ArrowClockwise }}
@@ -678,7 +834,7 @@ class ScrcpyPageState {
                     onClick={this.updateEncoders}
                 />
             ),
-            options: this.encoders.map(item => ({
+            options: this.encoders.map((item) => ({
                 key: item,
                 text: item,
             })),
@@ -686,10 +842,10 @@ class ScrcpyPageState {
 
         if (this.decoders.length > 1) {
             result.push({
-                key: 'decoder',
-                type: 'dropdown',
-                label: 'Decoder',
-                options: this.decoders.map(item => ({
+                key: "decoder",
+                type: "dropdown",
+                label: "Decoder",
+                options: this.decoders.map((item) => ({
                     key: item.key,
                     text: item.name,
                     data: item,
@@ -698,17 +854,18 @@ class ScrcpyPageState {
         }
 
         result.push({
-            key: 'ignoreDecoderCodecArgs',
-            type: 'toggle',
+            key: "ignoreDecoderCodecArgs",
+            type: "toggle",
             label: `Ignore decoder's codec arguments`,
             description: `Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.`,
         });
 
         result.push({
-            key: 'tunnelForward',
-            type: 'toggle',
-            label: 'Use forward connection',
-            description: 'Android before version 9 has a bug that prevents reverse tunneling when using ADB over WiFi.'
+            key: "tunnelForward",
+            type: "toggle",
+            label: "Use forward connection",
+            description:
+                "Android before version 9 has a bug that prevents reverse tunneling when using ADB over WiFi.",
         });
 
         return result;
@@ -765,16 +922,6 @@ class ScrcpyPageState {
         autorun(() => {
             this.settings.decoder = this.decoders[0].key;
         });
-
-        if (typeof window !== 'undefined' && typeof window.VideoDecoder === 'function') {
-            setTimeout(action(() => {
-                this.decoders.unshift({
-                    key: 'webcodecs',
-                    name: 'WebCodecs',
-                    Constructor: WebCodecsDecoder,
-                });
-            }), 0);
-        }
     }
 
     start = async () => {
@@ -784,7 +931,7 @@ class ScrcpyPageState {
 
         try {
             if (!this.settings.decoder) {
-                throw new Error('No available decoder');
+                throw new Error("No available decoder");
             }
 
             runInAction(() => {
@@ -796,30 +943,46 @@ class ScrcpyPageState {
                 this.connecting = true;
             });
 
-            let intervalId = setInterval(action(() => {
-                this.serverDownloadSpeed = this.serverDownloadedSize - this.debouncedServerDownloadedSize;
-                this.debouncedServerDownloadedSize = this.serverDownloadedSize;
-            }), 1000);
+            let intervalId = setInterval(
+                action(() => {
+                    this.serverDownloadSpeed =
+                        this.serverDownloadedSize -
+                        this.debouncedServerDownloadedSize;
+                    this.debouncedServerDownloadedSize =
+                        this.serverDownloadedSize;
+                }),
+                1000
+            );
 
             let serverBuffer: Uint8Array;
 
             try {
-                serverBuffer = await fetchServer(action(([downloaded, total]) => {
-                    this.serverDownloadedSize = downloaded;
-                    this.serverTotalSize = total;
-                }));
+                serverBuffer = await fetchServer(
+                    action(([downloaded, total]) => {
+                        this.serverDownloadedSize = downloaded;
+                        this.serverTotalSize = total;
+                    })
+                );
                 runInAction(() => {
-                    this.serverDownloadSpeed = this.serverDownloadedSize - this.debouncedServerDownloadedSize;
-                    this.debouncedServerDownloadedSize = this.serverDownloadedSize;
+                    this.serverDownloadSpeed =
+                        this.serverDownloadedSize -
+                        this.debouncedServerDownloadedSize;
+                    this.debouncedServerDownloadedSize =
+                        this.serverDownloadedSize;
                 });
             } finally {
                 clearInterval(intervalId);
             }
 
-            intervalId = setInterval(action(() => {
-                this.serverUploadSpeed = this.serverUploadedSize - this.debouncedServerUploadedSize;
-                this.debouncedServerUploadedSize = this.serverUploadedSize;
-            }), 1000);
+            intervalId = setInterval(
+                action(() => {
+                    this.serverUploadSpeed =
+                        this.serverUploadedSize -
+                        this.debouncedServerUploadedSize;
+                    this.debouncedServerUploadedSize = this.serverUploadedSize;
+                }),
+                1000
+            );
 
             try {
                 await new ReadableStream<Uint8Array>({
@@ -829,49 +992,68 @@ class ScrcpyPageState {
                     },
                 })
                     .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
-                    .pipeThrough(new ProgressStream(action((progress) => {
-                        this.serverUploadedSize = progress;
-                    })))
+                    .pipeThrough(
+                        new ProgressStream(
+                            action((progress) => {
+                                this.serverUploadedSize = progress;
+                            })
+                        )
+                    )
                     .pipeTo(AdbScrcpyClient.pushServer(GlobalState.device!));
 
                 runInAction(() => {
-                    this.serverUploadSpeed = this.serverUploadedSize - this.debouncedServerUploadedSize;
+                    this.serverUploadSpeed =
+                        this.serverUploadedSize -
+                        this.debouncedServerUploadedSize;
                     this.debouncedServerUploadedSize = this.serverUploadedSize;
                 });
             } finally {
                 clearInterval(intervalId);
             }
 
-            const decoderDefinition = this.decoders.find(x => x.key === this.settings.decoder) ?? this.decoders[0];
+            const decoderDefinition =
+                this.decoders.find((x) => x.key === this.settings.decoder) ??
+                this.decoders[0];
             const decoder = new decoderDefinition.Constructor();
 
             runInAction(() => {
                 this.decoder = decoder;
 
                 let lastFrameCount = 0;
-                this.fpsCounterIntervalId = setInterval(action(() => {
-                    this.fps = decoder.frameRendered - lastFrameCount;
-                    lastFrameCount = decoder.frameRendered;
-                }), 1000);
+                this.fpsCounterIntervalId = setInterval(
+                    action(() => {
+                        this.fps = decoder.frameRendered - lastFrameCount;
+                        lastFrameCount = decoder.frameRendered;
+                    }),
+                    1000
+                );
             });
 
-            const options = new AdbScrcpyOptions1_22(new ScrcpyOptions1_24({
-                logLevel: ScrcpyLogLevel.Debug,
-                ...this.settings,
-                sendDeviceMeta: false,
-                sendDummyByte: false,
-                codecOptions: !this.settings.ignoreDecoderCodecArgs
-                    ? new CodecOptions({
-                        profile: decoder.maxProfile,
-                        level: decoder.maxLevel,
-                    })
-                    : undefined,
-            }));
+            const options = new AdbScrcpyOptions1_22(
+                new ScrcpyOptions1_25({
+                    logLevel: ScrcpyLogLevel.Debug,
+                    ...this.settings,
+                    sendDeviceMeta: false,
+                    sendDummyByte: false,
+                    codecOptions: !this.settings.ignoreDecoderCodecArgs
+                        ? new CodecOptions({
+                              profile: decoder.maxProfile,
+                              level: decoder.maxLevel,
+                          })
+                        : undefined,
+                })
+            );
 
             runInAction(() => {
                 this.log = [];
-                this.log.push(`[client] Server version: ${SCRCPY_SERVER_VERSION}`);
-                this.log.push(`[client] Server arguments: ${options.formatServerArguments().join(' ')}`);
+                this.log.push(
+                    `[client] Server version: ${SCRCPY_SERVER_VERSION}`
+                );
+                this.log.push(
+                    `[client] Server arguments: ${options
+                        .formatServerArguments()
+                        .join(" ")}`
+                );
             });
 
             const client = await AdbScrcpyClient.start(
@@ -881,39 +1063,56 @@ class ScrcpyPageState {
                 options
             );
 
-            client.stdout.pipeTo(new WritableStream<string>({
-                write: action((line) => {
-                    this.log.push(line);
-                }),
-            }));
+            client.stdout.pipeTo(
+                new WritableStream<string>({
+                    write: action((line) => {
+                        this.log.push(line);
+                    }),
+                })
+            );
 
             client.videoStream
-                .pipeThrough(new InspectStream(action((packet: ScrcpyVideoStreamPacket) => {
-                    if (packet.type === 'configuration') {
-                        const { croppedWidth, croppedHeight, } = packet.data;
-                        this.log.push(`[client] Video size changed: ${croppedWidth}x${croppedHeight}`);
+                .pipeThrough(
+                    new InspectStream(
+                        action((packet: ScrcpyVideoStreamPacket) => {
+                            if (packet.type === "configuration") {
+                                const { croppedWidth, croppedHeight } =
+                                    packet.data;
+                                this.log.push(
+                                    `[client] Video size changed: ${croppedWidth}x${croppedHeight}`
+                                );
 
-                        this.width = croppedWidth;
-                        this.height = croppedHeight;
-                    }
-                })))
+                                this.width = croppedWidth;
+                                this.height = croppedHeight;
+                            }
+                        })
+                    )
+                )
                 .pipeTo(decoder.writable)
-                .catch(() => { });
+                .catch(() => {});
 
             client.exit.then(this.dispose);
 
-            client.deviceMessageStream!.pipeTo(new WritableStream({
-                write(message) {
-                    switch (message.type) {
-                        case ScrcpyDeviceMessageType.Clipboard:
-                            window.navigator.clipboard.writeText(message.content);
-                            break;
-                    }
-                }
-            })).catch(() => { });
+            client
+                .deviceMessageStream!.pipeTo(
+                    new WritableStream({
+                        write(message) {
+                            switch (message.type) {
+                                case ScrcpyDeviceMessageType.Clipboard:
+                                    window.navigator.clipboard.writeText(
+                                        message.content
+                                    );
+                                    break;
+                            }
+                        },
+                    })
+                )
+                .catch(() => {});
 
             if (this.settings.turnScreenOff) {
-                await client.controlMessageSerializer!.setScreenPowerMode(AndroidScreenPowerMode.Off);
+                await client.controlMessageSerializer!.setScreenPowerMode(
+                    AndroidScreenPowerMode.Off
+                );
             }
 
             runInAction(() => {
@@ -953,8 +1152,10 @@ class ScrcpyPageState {
 
     handleRendererContainerRef(element: HTMLDivElement | null) {
         this.rendererContainer = element;
-        this.rendererContainer?.addEventListener('wheel', this.handleWheel, { passive: false });
-    };
+        this.rendererContainer?.addEventListener("wheel", this.handleWheel, {
+            passive: false,
+        });
+    }
 
     handleBackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!this.client) {
@@ -966,7 +1167,9 @@ class ScrcpyPageState {
         }
         e.currentTarget.setPointerCapture(e.pointerId);
 
-        this.client!.controlMessageSerializer!.backOrScreenOn(AndroidKeyEventAction.Down);
+        this.client!.controlMessageSerializer!.backOrScreenOn(
+            AndroidKeyEventAction.Down
+        );
     };
 
     handleBackPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -978,7 +1181,9 @@ class ScrcpyPageState {
             return;
         }
 
-        this.client!.controlMessageSerializer!.backOrScreenOn(AndroidKeyEventAction.Up);
+        this.client!.controlMessageSerializer!.backOrScreenOn(
+            AndroidKeyEventAction.Up
+        );
     };
 
     handleHomePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -1016,7 +1221,9 @@ class ScrcpyPageState {
         });
     };
 
-    handleAppSwitchPointerDown = async (e: React.PointerEvent<HTMLDivElement>) => {
+    handleAppSwitchPointerDown = async (
+        e: React.PointerEvent<HTMLDivElement>
+    ) => {
         if (!this.client) {
             return;
         }
@@ -1034,7 +1241,9 @@ class ScrcpyPageState {
         });
     };
 
-    handleAppSwitchPointerUp = async (e: React.PointerEvent<HTMLDivElement>) => {
+    handleAppSwitchPointerUp = async (
+        e: React.PointerEvent<HTMLDivElement>
+    ) => {
         if (!this.client) {
             return;
         }
@@ -1054,10 +1263,14 @@ class ScrcpyPageState {
     calculatePointerPosition(clientX: number, clientY: number) {
         const viewRect = this.rendererContainer!.getBoundingClientRect();
         let pointerViewX = clamp((clientX - viewRect.x) / viewRect.width, 0, 1);
-        let pointerViewY = clamp((clientY - viewRect.y) / viewRect.height, 0, 1);
+        let pointerViewY = clamp(
+            (clientY - viewRect.y) / viewRect.height,
+            0,
+            1
+        );
 
         if (this.rotate & 1) {
-            ([pointerViewX, pointerViewY] = [pointerViewY, pointerViewX]);
+            [pointerViewX, pointerViewY] = [pointerViewY, pointerViewX];
         }
         switch (this.rotate) {
             case 1:
@@ -1086,15 +1299,27 @@ class ScrcpyPageState {
             return;
         }
 
+        const { pointerType } = e;
+        let pointerId: bigint;
+        let { pressure } = e;
+        if (pointerType === "mouse") {
+            // ScrcpyPointerId.Mouse doesn't work with Chrome browser
+            // https://github.com/Genymobile/scrcpy/issues/3635
+            pointerId = ScrcpyPointerId.Finger;
+            pressure = pressure === 0 ? 0 : 1;
+        } else {
+            pointerId = BigInt(e.pointerId);
+        }
+
         const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
         this.client!.controlMessageSerializer!.injectTouch({
             action,
-            pointerId: e.pointerType === "mouse" ? BigInt(-1) : BigInt(e.pointerId),
+            pointerId,
             screenWidth: this.client!.screenWidth!,
             screenHeight: this.client!.screenHeight!,
             pointerX: x,
             pointerY: y,
-            pressure: e.pressure * 65535,
+            pressure,
             buttons: e.buttons,
         });
     };
@@ -1108,7 +1333,9 @@ class ScrcpyPageState {
 
     handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
         this.injectTouch(
-            e.buttons === 0 ? AndroidMotionEventAction.HoverMove : AndroidMotionEventAction.Move,
+            e.buttons === 0
+                ? AndroidMotionEventAction.HoverMove
+                : AndroidMotionEventAction.Move,
             e
         );
     };
@@ -1131,8 +1358,8 @@ class ScrcpyPageState {
             screenHeight: this.client!.screenHeight!,
             pointerX: x,
             pointerY: y,
-            scrollX: -Math.sign(e.deltaX),
-            scrollY: -Math.sign(e.deltaY),
+            scrollX: e.deltaX / 100,
+            scrollY: e.deltaY / 100,
             buttons: 0,
         });
     };
@@ -1152,13 +1379,13 @@ class ScrcpyPageState {
             return;
         }
 
-        const keyCode = ({
-            Backspace: AndroidKeyCode.Delete,
-            Space: AndroidKeyCode.Space,
-            Enter: AndroidKeyCode.Enter,
-        } as Record<string, AndroidKeyCode | undefined>)[code];
+        const keyCode = KEY_MAP[code];
 
         if (keyCode) {
+            // Intercept keys like "Tab"
+            e.preventDefault();
+            e.stopPropagation();
+
             this.client!.controlMessageSerializer!.injectKeyCode({
                 action: AndroidKeyEventAction.Down,
                 keyCode,
@@ -1178,7 +1405,7 @@ class ScrcpyPageState {
 const state = new ScrcpyPageState();
 
 const ConnectionDialog = observer(() => {
-    const layerHostId = useId('layerHost');
+    const layerHostId = useId("layerHost");
 
     const [isClient, setIsClient] = useState(false);
 
@@ -1192,30 +1419,62 @@ const ConnectionDialog = observer(() => {
 
     return (
         <>
-            <LayerHost id={layerHostId} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, margin: 0, pointerEvents: 'none' }} />
+            <LayerHost
+                id={layerHostId}
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    margin: 0,
+                    pointerEvents: "none",
+                }}
+            />
 
             <Dialog
                 hidden={!state.connecting}
                 modalProps={{ layerProps: { hostId: layerHostId } }}
-                dialogContentProps={{ title: 'Connecting...' }}
+                dialogContentProps={{ title: "Connecting..." }}
             >
                 <Stack tokens={CommonStackTokens}>
                     <ProgressIndicator
                         label="1. Downloading scrcpy server..."
-                        percentComplete={state.serverTotalSize ? state.serverDownloadedSize / state.serverTotalSize : undefined}
-                        description={formatSpeed(state.debouncedServerDownloadedSize, state.serverTotalSize, state.serverDownloadSpeed)}
+                        percentComplete={
+                            state.serverTotalSize
+                                ? state.serverDownloadedSize /
+                                  state.serverTotalSize
+                                : undefined
+                        }
+                        description={formatSpeed(
+                            state.debouncedServerDownloadedSize,
+                            state.serverTotalSize,
+                            state.serverDownloadSpeed
+                        )}
                     />
 
                     <ProgressIndicator
                         label="2. Pushing scrcpy server to device..."
-                        progressHidden={state.serverTotalSize === 0 || state.serverDownloadedSize !== state.serverTotalSize}
-                        percentComplete={state.serverUploadedSize / state.serverTotalSize}
-                        description={formatSpeed(state.debouncedServerUploadedSize, state.serverTotalSize, state.serverUploadSpeed)}
+                        progressHidden={
+                            state.serverTotalSize === 0 ||
+                            state.serverDownloadedSize !== state.serverTotalSize
+                        }
+                        percentComplete={
+                            state.serverUploadedSize / state.serverTotalSize
+                        }
+                        description={formatSpeed(
+                            state.debouncedServerUploadedSize,
+                            state.serverTotalSize,
+                            state.serverUploadSpeed
+                        )}
                     />
 
                     <ProgressIndicator
                         label="3. Starting scrcpy server on device..."
-                        progressHidden={state.serverTotalSize === 0 || state.serverUploadedSize !== state.serverTotalSize}
+                        progressHidden={
+                            state.serverTotalSize === 0 ||
+                            state.serverUploadedSize !== state.serverTotalSize
+                        }
                     />
                 </Stack>
             </Dialog>
@@ -1226,37 +1485,50 @@ const ConnectionDialog = observer(() => {
 const NavigationBar = observer(function NavigationBar({
     className,
     style,
-    children
+    children,
 }: {
     className: string;
     style: CSSProperties;
     children: ReactNode;
-    }) {
+}) {
     if (!state.navigationBarVisible) {
         return (
-            <div className={className} style={style}>{children}</div>
+            <div className={className} style={style}>
+                {children}
+            </div>
         );
     }
 
     return (
-        <Stack className={className} verticalFill horizontalAlign="center" style={{ height: '40px', background: '#999', ...style }}>
+        <Stack
+            className={className}
+            verticalFill
+            horizontalAlign="center"
+            style={{ height: "40px", background: "#999", ...style }}
+        >
             {children}
-            <Stack verticalFill horizontal style={{ width: '100%', maxWidth: 300 }} horizontalAlign="space-evenly" verticalAlign="center">
+            <Stack
+                verticalFill
+                horizontal
+                style={{ width: "100%", maxWidth: 300 }}
+                horizontalAlign="space-evenly"
+                verticalAlign="center"
+            >
                 <IconButton
                     iconProps={{ iconName: Icons.Play }}
-                    style={{ transform: 'rotate(180deg)', color: 'white' }}
+                    style={{ transform: "rotate(180deg)", color: "white" }}
                     onPointerDown={state.handleBackPointerDown}
                     onPointerUp={state.handleBackPointerUp}
                 />
                 <IconButton
                     iconProps={{ iconName: Icons.Circle }}
-                    style={{ color: 'white' }}
+                    style={{ color: "white" }}
                     onPointerDown={state.handleHomePointerDown}
                     onPointerUp={state.handleHomePointerUp}
                 />
                 <IconButton
                     iconProps={{ iconName: Icons.Stop }}
-                    style={{ color: 'white' }}
+                    style={{ color: "white" }}
                     onPointerDown={state.handleAppSwitchPointerDown}
                     onPointerUp={state.handleAppSwitchPointerUp}
                 />
@@ -1268,13 +1540,32 @@ const NavigationBar = observer(function NavigationBar({
 const Scrcpy: NextPage = () => {
     const classes = useClasses();
 
+    useEffect(() => {
+        // Detect WebCodecs support at client side
+        if (
+            state.decoders.length === 1 &&
+            typeof window.VideoDecoder === "function"
+        ) {
+            runInAction(() => {
+                state.decoders.unshift({
+                    key: "webcodecs",
+                    name: "WebCodecs",
+                    Constructor: WebCodecsDecoder,
+                });
+            });
+        }
+    }, []);
+
     return (
         <Stack {...RouteStackProps}>
             <Head>
                 <title>Scrcpy - Android Web Toolbox</title>
             </Head>
 
-            <CommandBar items={state.commandBarItems} farItems={state.commandBarFarItems} />
+            <CommandBar
+                items={state.commandBarItems}
+                farItems={state.commandBarFarItems}
+            />
 
             <Stack horizontal grow styles={{ root: { height: 0 } }}>
                 <DeviceView
@@ -1290,7 +1581,11 @@ const Scrcpy: NextPage = () => {
                         style={{
                             width: state.width,
                             height: state.height,
-                            transform: `translate(${(state.rotatedWidth - state.width) / 2}px, ${(state.rotatedHeight - state.height) / 2}px) rotate(${state.rotate * 90}deg)`
+                            transform: `translate(${
+                                (state.rotatedWidth - state.width) / 2
+                            }px, ${
+                                (state.rotatedHeight - state.height) / 2
+                            }px) rotate(${state.rotate * 90}deg)`,
                         }}
                         onPointerDown={state.handlePointerDown}
                         onPointerMove={state.handlePointerMove}
@@ -1301,38 +1596,50 @@ const Scrcpy: NextPage = () => {
                     />
                 </DeviceView>
 
-                <div style={{
-                    padding: 12,
-                    overflow: 'hidden auto',
-                    display: state.logVisible ? 'block' : 'none',
-                    width: 500,
-                    fontFamily: 'monospace',
-                    overflowY: 'auto',
-                    whiteSpace: 'pre-wrap',
-                    wordWrap: 'break-word',
-                }}>
+                <div
+                    style={{
+                        padding: 12,
+                        overflow: "hidden auto",
+                        display: state.logVisible ? "block" : "none",
+                        width: 500,
+                        fontFamily: "monospace",
+                        overflowY: "auto",
+                        whiteSpace: "pre-wrap",
+                        wordWrap: "break-word",
+                    }}
+                >
                     {state.log.map((line, index) => (
-                        <div key={index}>
-                            {line}
-                        </div>
+                        <div key={index}>{line}</div>
                     ))}
                 </div>
 
-                <div style={{ padding: 12, overflow: 'hidden auto', display: state.settingsVisible ? 'block' : 'none', width: 300 }}>
+                <div
+                    style={{
+                        padding: 12,
+                        overflow: "hidden auto",
+                        display: state.settingsVisible ? "block" : "none",
+                        width: 300,
+                    }}
+                >
                     <div>Changes will take effect on next connection</div>
 
-                    {state.settingDefinitions.map(definition => (
+                    {state.settingDefinitions.map((definition) => (
                         <SettingItem
                             key={definition.key}
                             definition={definition}
                             settings={state.settings}
-                            onChange={action((key, value) => (state.settings as any)[key] = value)}
+                            onChange={action(
+                                (key, value) =>
+                                    ((state.settings as any)[key] = value)
+                            )}
                         />
                     ))}
                 </div>
 
                 <DemoModePanel
-                    style={{ display: state.demoModeVisible ? 'block' : 'none' }}
+                    style={{
+                        display: state.demoModeVisible ? "block" : "none",
+                    }}
                 />
 
                 <ConnectionDialog />

@@ -1,19 +1,67 @@
-import { Breadcrumb, concatStyleSets, ContextualMenu, ContextualMenuItem, DetailsListLayoutMode, Dialog, DirectionalHint, IBreadcrumbItem, IColumn, Icon, IContextualMenuItem, IDetailsHeaderProps, IRenderFunction, Layer, MarqueeSelection, mergeStyleSets, Overlay, ProgressIndicator, Selection, ShimmeredDetailsList, Stack, StackItem } from '@fluentui/react';
-import { FileIconType, getFileTypeIconProps, initializeFileTypeIcons } from "@fluentui/react-file-type-icons";
-import { useConst } from '@fluentui/react-hooks';
-import { getIcon } from '@fluentui/style-utilities';
-import { AdbFeatures, ADB_SYNC_MAX_PACKET_SIZE, LinuxFileType, type AdbSyncEntry } from '@yume-chan/adb';
-import { ChunkStream } from '@yume-chan/stream-extra';
-import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
+import {
+    Breadcrumb,
+    ContextualMenu,
+    ContextualMenuItem,
+    DetailsListLayoutMode,
+    Dialog,
+    DirectionalHint,
+    IBreadcrumbItem,
+    IColumn,
+    IContextualMenuItem,
+    IDetailsHeaderProps,
+    IRenderFunction,
+    Icon,
+    Layer,
+    MarqueeSelection,
+    Overlay,
+    ProgressIndicator,
+    Selection,
+    ShimmeredDetailsList,
+    Stack,
+    StackItem,
+    concatStyleSets,
+    mergeStyleSets,
+} from "@fluentui/react";
+import {
+    FileIconType,
+    getFileTypeIconProps,
+    initializeFileTypeIcons,
+} from "@fluentui/react-file-type-icons";
+import { useConst } from "@fluentui/react-hooks";
+import { getIcon } from "@fluentui/style-utilities";
+import {
+    ADB_SYNC_MAX_PACKET_SIZE,
+    AdbFeatures,
+    LinuxFileType,
+    type AdbSyncEntry,
+} from "@yume-chan/adb";
+import { ChunkStream } from "@yume-chan/stream-extra";
+import {
+    action,
+    autorun,
+    makeAutoObservable,
+    observable,
+    runInAction,
+} from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import Router, { useRouter } from "next/router";
-import path from 'path';
-import { useCallback, useEffect, useState } from 'react';
-import { CommandBar, NoSsr } from '../components';
-import { GlobalState } from '../state';
-import { asyncEffect, createFileStream, formatSize, formatSpeed, Icons, pickFile, ProgressStream, RouteStackProps, saveFile } from '../utils';
+import path from "path";
+import { useCallback, useEffect, useState } from "react";
+import { CommandBar, NoSsr } from "../components";
+import { GlobalState } from "../state";
+import {
+    Icons,
+    ProgressStream,
+    RouteStackProps,
+    asyncEffect,
+    createFileStream,
+    formatSize,
+    formatSpeed,
+    pickFile,
+    saveFile,
+} from "../utils";
 
 initializeFileTypeIcons();
 
@@ -28,21 +76,24 @@ function toListItem(item: AdbSyncEntry): ListItem {
 
 const classNames = mergeStyleSets({
     name: {
-        cursor: 'pointer',
-        '&:hover': {
-            textDecoration: 'underline',
+        cursor: "pointer",
+        "&:hover": {
+            textDecoration: "underline",
         },
     },
 });
 
-const renderDetailsHeader: IRenderFunction<IDetailsHeaderProps> = (props?, defaultRender?) => {
+const renderDetailsHeader: IRenderFunction<IDetailsHeaderProps> = (
+    props?,
+    defaultRender?
+) => {
     if (!props || !defaultRender) {
         return null;
     }
 
     return defaultRender({
         ...props,
-        styles: concatStyleSets(props.styles, { root: { paddingTop: 0 } })
+        styles: concatStyleSets(props.styles, { root: { paddingTop: 0 } }),
     });
 };
 
@@ -58,10 +109,10 @@ function compareCaseInsensitively(a: string, b: string) {
 class FileManagerState {
     initial = true;
     visible = false;
-    path = '/';
+    path = "/";
     loading = false;
     items: ListItem[] = [];
-    sortKey: keyof ListItem = 'name';
+    sortKey: keyof ListItem = "name";
     sortDescending = false;
 
     uploading = false;
@@ -75,24 +126,27 @@ class FileManagerState {
     contextMenuTarget: MouseEvent | undefined = undefined;
 
     get breadcrumbItems(): IBreadcrumbItem[] {
-        let part = '';
-        const list: IBreadcrumbItem[] = this.path.split('/').filter(Boolean).map(segment => {
-            part += '/' + segment;
-            return {
-                key: part,
-                text: segment,
-                onClick: (e, item) => {
-                    if (!item) {
-                        return;
-                    }
-                    this.pushPathQuery(item.key);
-                },
-            };
-        });
+        let part = "";
+        const list: IBreadcrumbItem[] = this.path
+            .split("/")
+            .filter(Boolean)
+            .map((segment) => {
+                part += "/" + segment;
+                return {
+                    key: part,
+                    text: segment,
+                    onClick: (e, item) => {
+                        if (!item) {
+                            return;
+                        }
+                        this.pushPathQuery(item.key);
+                    },
+                };
+            });
         list.unshift({
-            key: '/',
-            text: 'Device',
-            onClick: () => this.pushPathQuery('/'),
+            key: "/",
+            text: "Device",
+            onClick: () => this.pushPathQuery("/"),
         });
         list[list.length - 1].isCurrentItem = true;
         delete list[list.length - 1].onClick;
@@ -105,11 +159,11 @@ class FileManagerState {
         switch (this.selectedItems.length) {
             case 0:
                 result.push({
-                    key: 'upload',
-                    text: 'Upload',
+                    key: "upload",
+                    text: "Upload",
                     iconProps: {
                         iconName: Icons.CloudArrowUp,
-                        style: { height: 20, fontSize: 20, lineHeight: 1.5 }
+                        style: { height: 20, fontSize: 20, lineHeight: 1.5 },
                     },
                     disabled: !GlobalState.device,
                     onClick: () => {
@@ -122,26 +176,39 @@ class FileManagerState {
                         })();
 
                         return false;
-                    }
+                    },
                 });
                 break;
             case 1:
                 if (this.selectedItems[0].type === LinuxFileType.File) {
                     result.push({
-                        key: 'download',
-                        text: 'Download',
+                        key: "download",
+                        text: "Download",
                         iconProps: {
                             iconName: Icons.CloudArrowDown,
-                            style: { height: 20, fontSize: 20, lineHeight: 1.5 }
+                            style: {
+                                height: 20,
+                                fontSize: 20,
+                                lineHeight: 1.5,
+                            },
                         },
                         onClick: () => {
                             (async () => {
                                 const sync = await GlobalState.device!.sync();
                                 try {
                                     const item = this.selectedItems[0];
-                                    const itemPath = path.resolve(this.path, item.name);
-                                    await sync.read(itemPath)
-                                        .pipeTo(saveFile(item.name, Number(item.size)));
+                                    const itemPath = path.resolve(
+                                        this.path,
+                                        item.name
+                                    );
+                                    await sync
+                                        .read(itemPath)
+                                        .pipeTo(
+                                            saveFile(
+                                                item.name,
+                                                Number(item.size)
+                                            )
+                                        );
                                 } catch (e: any) {
                                     GlobalState.showErrorDialog(e);
                                 } finally {
@@ -155,17 +222,19 @@ class FileManagerState {
             // fall through
             default:
                 result.push({
-                    key: 'delete',
-                    text: 'Delete',
+                    key: "delete",
+                    text: "Delete",
                     iconProps: {
                         iconName: Icons.Delete,
-                        style: { height: 20, fontSize: 20, lineHeight: 1.5 }
+                        style: { height: 20, fontSize: 20, lineHeight: 1.5 },
                     },
                     onClick: () => {
                         (async () => {
                             try {
                                 for (const item of this.selectedItems) {
-                                    const output = await GlobalState.device!.rm(path.resolve(this.path, item.name!));
+                                    const output = await GlobalState.device!.rm(
+                                        path.resolve(this.path, item.name!)
+                                    );
                                     if (output) {
                                         GlobalState.showErrorDialog(output);
                                         return;
@@ -178,7 +247,7 @@ class FileManagerState {
                             }
                         })();
                         return false;
-                    }
+                    },
                 });
                 break;
         }
@@ -201,8 +270,11 @@ class FileManagerState {
 
                 if (aSortKey === bSortKey) {
                     result = compareCaseInsensitively(a.name!, b.name!);
-                } else if (typeof aSortKey === 'string') {
-                    result = compareCaseInsensitively(aSortKey, bSortKey as string);
+                } else if (typeof aSortKey === "string") {
+                    result = compareCaseInsensitively(
+                        aSortKey,
+                        bSortKey as string
+                    );
                 } else {
                     result = aSortKey < bSortKey ? -1 : 1;
                 }
@@ -221,8 +293,8 @@ class FileManagerState {
 
         const list: IColumn[] = [
             {
-                key: 'type',
-                name: 'File Type',
+                key: "type",
+                name: "File Type",
                 iconName: Icons.Document20,
                 isIconOnly: true,
                 minWidth: ICON_SIZE,
@@ -239,24 +311,40 @@ class FileManagerState {
                             iconName = "linkedfolder16_svg";
                             break;
                         case LinuxFileType.Directory:
-                            ({ iconName } = getFileTypeIconProps({ type: FileIconType.folder }));
+                            ({ iconName } = getFileTypeIconProps({
+                                type: FileIconType.folder,
+                            }));
                             break;
                         case LinuxFileType.File:
-                            ({ iconName } = getFileTypeIconProps({ extension: path.extname(item.name!) }));
+                            ({ iconName } = getFileTypeIconProps({
+                                extension: path.extname(item.name!),
+                            }));
                             break;
                         default:
-                            ({ iconName } = getFileTypeIconProps({ type: FileIconType.genericFile }));
+                            ({ iconName } = getFileTypeIconProps({
+                                type: FileIconType.genericFile,
+                            }));
                             break;
                     }
 
                     // `@fluentui/react-file-type-icons` doesn't export icon src.
-                    const iconSrc = (getIcon(iconName)!.code as unknown as JSX.Element).props.src;
-                    return <Icon imageProps={{ crossOrigin: 'anonymous', src: iconSrc }} style={{ width: ICON_SIZE, height: ICON_SIZE }} />;
-                }
+                    const iconSrc = (
+                        getIcon(iconName)!.code as unknown as JSX.Element
+                    ).props.src;
+                    return (
+                        <Icon
+                            imageProps={{
+                                crossOrigin: "anonymous",
+                                src: iconSrc,
+                            }}
+                            style={{ width: ICON_SIZE, height: ICON_SIZE }}
+                        />
+                    );
+                },
             },
             {
-                key: 'name',
-                name: 'Name',
+                key: "name",
+                name: "Name",
                 minWidth: 0,
                 isRowHeader: true,
                 onRender(item: AdbSyncEntry) {
@@ -265,67 +353,76 @@ class FileManagerState {
                             {item.name}
                         </span>
                     );
-                }
+                },
             },
             {
-                key: 'permission',
-                name: 'Permission',
+                key: "permission",
+                name: "Permission",
                 minWidth: 0,
                 isCollapsible: true,
                 onRender(item: AdbSyncEntry) {
-                    return `${(item.mode >> 6 & 0b100).toString(8)}${(item.mode >> 3 & 0b100).toString(8)}${(item.mode & 0b100).toString(8)}`;
-                }
+                    return `${((item.mode >> 6) & 0b100).toString(8)}${(
+                        (item.mode >> 3) &
+                        0b100
+                    ).toString(8)}${(item.mode & 0b100).toString(8)}`;
+                },
             },
             {
-                key: 'size',
-                name: 'Size',
+                key: "size",
+                name: "Size",
                 minWidth: 0,
                 isCollapsible: true,
                 onRender(item: AdbSyncEntry) {
                     if (item.type === LinuxFileType.File) {
                         return formatSize(Number(item.size));
                     }
-                    return '';
-                }
+                    return "";
+                },
             },
             {
-                key: 'mtime',
-                name: 'Last Modified Time',
+                key: "mtime",
+                name: "Last Modified Time",
                 minWidth: 150,
                 isCollapsible: true,
                 onRender(item: AdbSyncEntry) {
                     return new Date(Number(item.mtime) * 1000).toLocaleString();
                 },
-            }
+            },
         ];
 
         if (GlobalState.device?.features?.includes(AdbFeatures.ListV2)) {
             list.push(
                 {
-                    key: 'ctime',
-                    name: 'Creation Time',
+                    key: "ctime",
+                    name: "Creation Time",
                     minWidth: 150,
                     isCollapsible: true,
                     onRender(item: AdbSyncEntry) {
-                        return new Date(Number(item.ctime!) * 1000).toLocaleString();
+                        return new Date(
+                            Number(item.ctime!) * 1000
+                        ).toLocaleString();
                     },
                 },
                 {
-                    key: 'atime',
-                    name: 'Last Access Time',
+                    key: "atime",
+                    name: "Last Access Time",
                     minWidth: 150,
                     isCollapsible: true,
                     onRender(item: AdbSyncEntry) {
-                        return new Date(Number(item.atime!) * 1000).toLocaleString();
+                        return new Date(
+                            Number(item.atime!) * 1000
+                        ).toLocaleString();
                     },
-                },
+                }
             );
         }
 
         for (const item of list) {
             item.onColumnClick = (e, column) => {
                 if (this.sortKey === column.key) {
-                    runInAction(() => this.sortDescending = !this.sortDescending);
+                    runInAction(
+                        () => (this.sortDescending = !this.sortDescending)
+                    );
                 } else {
                     runInAction(() => {
                         this.sortKey = column.key as keyof ListItem;
@@ -385,13 +482,13 @@ class FileManagerState {
     loadFiles = asyncEffect(async (signal) => {
         const currentPath = this.path;
 
-        runInAction(() => this.items = []);
+        runInAction(() => (this.items = []));
 
         if (!GlobalState.device) {
             return;
         }
 
-        runInAction(() => this.loading = true);
+        runInAction(() => (this.loading = true));
 
         const sync = await GlobalState.device.sync();
 
@@ -402,7 +499,7 @@ class FileManagerState {
                 return;
             }
 
-            runInAction(() => this.items = items.slice());
+            runInAction(() => (this.items = items.slice()));
         }, 1000);
 
         try {
@@ -411,7 +508,7 @@ class FileManagerState {
                     return;
                 }
 
-                if (entry.name === '.' || entry.name === '..') {
+                if (entry.name === "." || entry.name === "..") {
                     continue;
                 }
 
@@ -427,7 +524,11 @@ class FileManagerState {
                     return;
                 }
 
-                if (!await sync.isDirectory(path.resolve(currentPath, entry.name!))) {
+                if (
+                    !(await sync.isDirectory(
+                        path.resolve(currentPath, entry.name!)
+                    ))
+                ) {
                     entry.mode = (LinuxFileType.File << 12) | entry.permission;
                     entry.size = 0n;
                 }
@@ -439,10 +540,10 @@ class FileManagerState {
                 return;
             }
 
-            runInAction(() => this.items = items);
+            runInAction(() => (this.items = items));
         } finally {
             if (!signal.aborted) {
-                runInAction(() => this.loading = false);
+                runInAction(() => (this.loading = false));
             }
             clearInterval(intervalId);
             sync.dispose();
@@ -462,25 +563,36 @@ class FileManagerState {
                 this.uploadSpeed = 0;
             });
 
-            const intervalId = setInterval(action(() => {
-                this.uploadSpeed = this.uploadedSize - this.debouncedUploadedSize;
-                this.debouncedUploadedSize = this.uploadedSize;
-            }), 1000);
+            const intervalId = setInterval(
+                action(() => {
+                    this.uploadSpeed =
+                        this.uploadedSize - this.debouncedUploadedSize;
+                    this.debouncedUploadedSize = this.uploadedSize;
+                }),
+                1000
+            );
 
             try {
                 await createFileStream(file)
                     .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
-                    .pipeThrough(new ProgressStream(action((uploaded) => {
-                        this.uploadedSize = uploaded;
-                    })))
-                    .pipeTo(sync.write(
-                        itemPath,
-                        (LinuxFileType.File << 12) | 0o666,
-                        file.lastModified / 1000,
-                    ));
+                    .pipeThrough(
+                        new ProgressStream(
+                            action((uploaded) => {
+                                this.uploadedSize = uploaded;
+                            })
+                        )
+                    )
+                    .pipeTo(
+                        sync.write(
+                            itemPath,
+                            (LinuxFileType.File << 12) | 0o666,
+                            file.lastModified / 1000
+                        )
+                    );
 
                 runInAction(() => {
-                    this.uploadSpeed = this.uploadedSize - this.debouncedUploadedSize;
+                    this.uploadSpeed =
+                        this.uploadedSize - this.debouncedUploadedSize;
                     this.debouncedUploadedSize = this.uploadedSize;
                 });
             } finally {
@@ -505,12 +617,16 @@ const UploadDialog = observer(() => {
         <Dialog
             hidden={!state.uploading}
             dialogContentProps={{
-                title: 'Uploading...',
-                subText: state.uploadPath
+                title: "Uploading...",
+                subText: state.uploadPath,
             }}
         >
             <ProgressIndicator
-                description={formatSpeed(state.debouncedUploadedSize, state.uploadTotalSize, state.uploadSpeed)}
+                description={formatSpeed(
+                    state.debouncedUploadedSize,
+                    state.uploadTotalSize,
+                    state.uploadSpeed
+                )}
                 percentComplete={state.uploadedSize / state.uploadTotalSize}
             />
         </Dialog>
@@ -563,52 +679,58 @@ const FileManager: NextPage = (): JSX.Element | null => {
         setPreviewUrl(undefined);
     }, []);
 
-    const handleItemInvoked = useCallback((item: AdbSyncEntry) => {
-        switch (item.type) {
-            case LinuxFileType.Link:
-            case LinuxFileType.Directory:
-                state.pushPathQuery(path.resolve(state.path!, item.name!));
-                break;
-            case LinuxFileType.File:
-                switch (path.extname(item.name!)) {
-                    case '.jpg':
-                    case '.png':
-                    case '.svg':
-                    case '.gif':
-                        previewImage(path.resolve(state.path!, item.name!));
-                        break;
-                }
-                break;
-        }
-    }, [previewImage]);
-
-    const selection = useConst(() => new Selection({
-        onSelectionChanged() {
-            runInAction(() => {
-                state.selectedItems = selection.getSelection() as ListItem[];
-            });
+    const handleItemInvoked = useCallback(
+        (item: AdbSyncEntry) => {
+            switch (item.type) {
+                case LinuxFileType.Link:
+                case LinuxFileType.Directory:
+                    state.pushPathQuery(path.resolve(state.path!, item.name!));
+                    break;
+                case LinuxFileType.File:
+                    switch (path.extname(item.name!)) {
+                        case ".jpg":
+                        case ".png":
+                        case ".svg":
+                        case ".gif":
+                            previewImage(path.resolve(state.path!, item.name!));
+                            break;
+                    }
+                    break;
+            }
         },
-    }));
+        [previewImage]
+    );
 
-    const showContextMenu = useCallback((
-        item?: AdbSyncEntry,
-        index?: number,
-        e?: Event
-    ) => {
-        if (!e) {
+    const selection = useConst(
+        () =>
+            new Selection({
+                onSelectionChanged() {
+                    runInAction(() => {
+                        state.selectedItems =
+                            selection.getSelection() as ListItem[];
+                    });
+                },
+            })
+    );
+
+    const showContextMenu = useCallback(
+        (item?: AdbSyncEntry, index?: number, e?: Event) => {
+            if (!e) {
+                return false;
+            }
+
+            if (state.menuItems.length) {
+                runInAction(() => {
+                    state.contextMenuTarget = e as MouseEvent;
+                });
+            }
+
             return false;
-        }
-
-        if (state.menuItems.length) {
-            runInAction(() => {
-                state.contextMenuTarget = e as MouseEvent;
-            });
-        }
-
-        return false;
-    }, []);
+        },
+        []
+    );
     const hideContextMenu = useCallback(() => {
-        runInAction(() => state.contextMenuTarget = undefined);
+        runInAction(() => (state.contextMenuTarget = undefined));
     }, []);
 
     return (
@@ -621,13 +743,16 @@ const FileManager: NextPage = (): JSX.Element | null => {
 
             <Breadcrumb items={state.breadcrumbItems} />
 
-            <StackItem grow styles={{
-                root: {
-                    margin: '-8px -16px -16px -16px',
-                    padding: '8px 16px 16px 16px',
-                    overflowY: 'auto',
-                }
-            }}>
+            <StackItem
+                grow
+                styles={{
+                    root: {
+                        margin: "-8px -16px -16px -16px",
+                        padding: "8px 16px 16px 16px",
+                        overflowY: "auto",
+                    },
+                }}
+            >
                 <MarqueeSelection selection={selection}>
                     <ShimmeredDetailsList
                         items={state.sortedList}
@@ -635,7 +760,9 @@ const FileManager: NextPage = (): JSX.Element | null => {
                         setKey={state.path}
                         selection={selection}
                         layoutMode={DetailsListLayoutMode.justified}
-                        enableShimmer={state.loading && state.items.length === 0}
+                        enableShimmer={
+                            state.loading && state.items.length === 0
+                        }
                         onItemInvoked={handleItemInvoked}
                         onItemContextMenu={showContextMenu}
                         onRenderDetailsHeader={renderDetailsHeader}
@@ -647,9 +774,24 @@ const FileManager: NextPage = (): JSX.Element | null => {
                 {previewUrl && (
                     <Layer>
                         <Overlay onClick={hidePreview}>
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div
+                                style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                }}
+                            >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={previewUrl} alt="" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                                <img
+                                    src={previewUrl}
+                                    alt=""
+                                    style={{
+                                        maxWidth: "100%",
+                                        maxHeight: "100%",
+                                    }}
+                                />
                             </div>
                         </Overlay>
                     </Layer>
@@ -663,7 +805,9 @@ const FileManager: NextPage = (): JSX.Element | null => {
                     directionalHint={DirectionalHint.bottomLeftEdge}
                     target={state.contextMenuTarget}
                     onDismiss={hideContextMenu}
-                    contextualMenuItemAs={props => <ContextualMenuItem {...props} hasIcons={false} />}
+                    contextualMenuItemAs={(props) => (
+                        <ContextualMenuItem {...props} hasIcons={false} />
+                    )}
                 />
             </NoSsr>
 

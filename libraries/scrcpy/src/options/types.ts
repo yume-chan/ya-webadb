@@ -1,9 +1,11 @@
 import { type TransformStream } from "@yume-chan/stream-extra";
 
-import { type ScrcpyControlMessageType } from "../control/index.js";
+import {
+    type ScrcpyBackOrScreenOnControlMessage,
+    type ScrcpyControlMessageType,
+} from "../control/index.js";
 
-import { type ScrcpyBackOrScreenOnControlMessage1_18 } from "./1_18.js";
-import { type ScrcpyInjectScrollControlMessage1_22 } from "./1_22.js";
+import { type ScrcpyScrollController } from "./1_16/scroll.js";
 
 export const DEFAULT_SERVER_PATH = "/data/local/tmp/scrcpy-server.jar";
 
@@ -23,12 +25,13 @@ export function isScrcpyOptionValue(
 }
 
 export function toScrcpyOptionValue<T>(value: unknown, empty: T): string | T {
-    if (value === undefined) {
-        return empty;
-    }
-
     if (isScrcpyOptionValue(value)) {
         value = value.toOptionValue();
+    }
+
+    // `value` may become `undefined` after `toOptionValue`
+    if (value === undefined) {
+        return empty;
     }
 
     return String(value);
@@ -85,10 +88,8 @@ export interface ScrcpyOptions<T extends object> {
     getControlMessageTypes(): ScrcpyControlMessageType[];
 
     serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage1_18
+        message: ScrcpyBackOrScreenOnControlMessage
     ): Uint8Array | undefined;
 
-    serializeInjectScrollControlMessage(
-        message: ScrcpyInjectScrollControlMessage1_22
-    ): Uint8Array;
+    getScrollController(): ScrcpyScrollController;
 }
