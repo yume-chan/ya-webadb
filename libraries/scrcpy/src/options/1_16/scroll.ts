@@ -40,18 +40,18 @@ export class ScrcpyScrollController1_16 implements ScrcpyScrollController {
         let scrollY = 0;
         if (this.accumulatedX >= 1) {
             scrollX = 1;
-            this.accumulatedX -= 1;
+            this.accumulatedX = 0;
         } else if (this.accumulatedX <= -1) {
             scrollX = -1;
-            this.accumulatedX += 1;
+            this.accumulatedX = 0;
         }
 
         if (this.accumulatedY >= 1) {
             scrollY = 1;
-            this.accumulatedY -= 1;
+            this.accumulatedY = 0;
         } else if (this.accumulatedY <= -1) {
             scrollY = -1;
-            this.accumulatedY += 1;
+            this.accumulatedY = 0;
         }
 
         if (scrollX === 0 && scrollY === 0) {

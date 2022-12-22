@@ -4,6 +4,7 @@ import Struct, {
 } from "@yume-chan/struct";
 
 import {
+    clamp,
     ScrcpyControlMessageType,
     type ScrcpyInjectScrollControlMessage,
 } from "../../control/index.js";
@@ -19,7 +20,7 @@ const ScrcpyFloatToInt16NumberType: NumberFieldType = {
         return value / Int16Max;
     },
     serialize(dataView, offset, value, littleEndian) {
-        value = value * Int16Max;
+        value = clamp(value, -1, 1) * Int16Max;
         NumberFieldType.Int16.serialize(dataView, offset, value, littleEndian);
     },
 };

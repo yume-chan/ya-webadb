@@ -31,6 +31,18 @@ export namespace ScrcpyPointerId {
     export const VirtualFinger = BigInt(-4);
 }
 
+export function clamp(value: number, min: number, max: number): number {
+    if (value < min) {
+        return min;
+    }
+
+    if (value > max) {
+        return max;
+    }
+
+    return value;
+}
+
 const Uint16Max = (1 << 16) - 1;
 
 const ScrcpyFloatToUint16NumberType: NumberFieldType = {
@@ -41,7 +53,7 @@ const ScrcpyFloatToUint16NumberType: NumberFieldType = {
         return value / Uint16Max;
     },
     serialize(dataView, offset, value, littleEndian) {
-        value = value * Uint16Max;
+        value = clamp(value, 0, 1) * Uint16Max;
         NumberFieldType.Uint16.serialize(dataView, offset, value, littleEndian);
     },
 };

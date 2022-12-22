@@ -40,9 +40,11 @@ import {
     AndroidKeyEventAction,
     AndroidMotionEventAction,
     AndroidScreenPowerMode,
+    clamp,
     CodecOptions,
     DEFAULT_SERVER_PATH,
     ScrcpyDeviceMessageType,
+    ScrcpyHoverHelper,
     ScrcpyLogLevel,
     ScrcpyOptions1_25,
     ScrcpyOptionsInit1_24,
@@ -157,18 +159,6 @@ function fetchServer(
     return cachedValue.promise;
 }
 
-function clamp(value: number, min: number, max: number): number {
-    if (value < min) {
-        return min;
-    }
-
-    if (value > max) {
-        return max;
-    }
-
-    return value;
-}
-
 export interface H264Decoder extends Disposable {
     readonly maxProfile: AndroidCodecProfile | undefined;
     readonly maxLevel: AndroidCodecLevel | undefined;
@@ -258,6 +248,7 @@ const useClasses = makeStyles({
     },
     video: {
         transformOrigin: "center center",
+        touchAction: "none",
     },
 });
 
@@ -369,6 +360,7 @@ class ScrcpyPageState {
     }
 
     client: AdbScrcpyClient | undefined = undefined;
+    hoverHelper: ScrcpyHoverHelper | undefined = undefined;
 
     async pushServer() {
         const serverBuffer = await fetchServer();
@@ -891,6 +883,7 @@ class ScrcpyPageState {
             handlePointerDown: false,
             handlePointerMove: false,
             handlePointerUp: false,
+            handlePointerLeave: false,
             handleWheel: false,
             handleContextMenu: false,
             handleKeyDown: false,
@@ -1117,6 +1110,7 @@ class ScrcpyPageState {
 
             runInAction(() => {
                 this.client = client;
+                this.hoverHelper = new ScrcpyHoverHelper();
                 this.running = true;
             });
         } catch (e: any) {
@@ -1301,37 +1295,46 @@ class ScrcpyPageState {
 
         const { pointerType } = e;
         let pointerId: bigint;
-        let { pressure } = e;
         if (pointerType === "mouse") {
             // ScrcpyPointerId.Mouse doesn't work with Chrome browser
             // https://github.com/Genymobile/scrcpy/issues/3635
             pointerId = ScrcpyPointerId.Finger;
-            pressure = pressure === 0 ? 0 : 1;
         } else {
             pointerId = BigInt(e.pointerId);
         }
 
         const { x, y } = this.calculatePointerPosition(e.clientX, e.clientY);
-        this.client!.controlMessageSerializer!.injectTouch({
+
+        const messages = this.hoverHelper!.process({
             action,
             pointerId,
-            screenWidth: this.client!.screenWidth!,
-            screenHeight: this.client!.screenHeight!,
+            screenWidth: this.client.screenWidth!,
+            screenHeight: this.client.screenHeight!,
             pointerX: x,
             pointerY: y,
-            pressure,
+            pressure: e.pressure,
             buttons: e.buttons,
         });
+        for (const message of messages) {
+            this.client.controlMessageSerializer!.injectTouch(message);
+        }
     };
 
     handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         this.rendererContainer!.focus();
         e.preventDefault();
+        e.stopPropagation();
         e.currentTarget.setPointerCapture(e.pointerId);
         this.injectTouch(AndroidMotionEventAction.Down, e);
     };
 
     handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (!this.client) {
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
         this.injectTouch(
             e.buttons === 0
                 ? AndroidMotionEventAction.HoverMove
@@ -1341,6 +1344,16 @@ class ScrcpyPageState {
     };
 
     handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.injectTouch(AndroidMotionEventAction.Up, e);
+    };
+
+    handlePointerLeave = (e: React.PointerEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Prevent hover state on device from "stucking" at the last position
+        this.injectTouch(AndroidMotionEventAction.HoverExit, e);
         this.injectTouch(AndroidMotionEventAction.Up, e);
     };
 
@@ -1358,8 +1371,8 @@ class ScrcpyPageState {
             screenHeight: this.client!.screenHeight!,
             pointerX: x,
             pointerY: y,
-            scrollX: e.deltaX / 100,
-            scrollY: e.deltaY / 100,
+            scrollX: -e.deltaX / 100,
+            scrollY: -e.deltaY / 100,
             buttons: 0,
         });
     };
@@ -1591,6 +1604,7 @@ const Scrcpy: NextPage = () => {
                         onPointerMove={state.handlePointerMove}
                         onPointerUp={state.handlePointerUp}
                         onPointerCancel={state.handlePointerUp}
+                        onPointerLeave={state.handlePointerLeave}
                         onKeyDown={state.handleKeyDown}
                         onContextMenu={state.handleContextMenu}
                     />
