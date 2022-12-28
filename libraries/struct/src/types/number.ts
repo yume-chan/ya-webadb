@@ -76,6 +76,18 @@ export namespace NumberFieldType {
         signed: false,
         size: 4,
         deserialize(array, littleEndian) {
+            const value = Int32.deserialize(array, littleEndian);
+            return value >>> 0;
+        },
+        serialize(dataView, offset, value, littleEndian) {
+            dataView.setUint32(offset, value, littleEndian);
+        },
+    };
+
+    export const Int32: NumberFieldType = {
+        signed: true,
+        size: 4,
+        deserialize(array, littleEndian) {
             return (
                 (((array[3]! << 24) |
                     (array[2]! << 16) |
@@ -88,18 +100,6 @@ export namespace NumberFieldType {
                     array[3]!) *
                     (!littleEndian as any))
             );
-        },
-        serialize(dataView, offset, value, littleEndian) {
-            dataView.setUint32(offset, value, littleEndian);
-        },
-    };
-
-    export const Int32: NumberFieldType = {
-        signed: true,
-        size: 4,
-        deserialize(array, littleEndian) {
-            const value = Uint32.deserialize(array, littleEndian);
-            return value >>> 0;
         },
         serialize(dataView, offset, value, littleEndian) {
             dataView.setInt32(offset, value, littleEndian);

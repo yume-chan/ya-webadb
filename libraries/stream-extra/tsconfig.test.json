@@ -1,8 +1,7 @@
 {
     "extends": "./tsconfig.build.json",
     "compilerOptions": {
-        "types": [
-        ],
+        "types": [],
     },
     "exclude": []
 }

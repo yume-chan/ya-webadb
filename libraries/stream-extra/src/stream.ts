@@ -19,10 +19,10 @@ interface AbortControllerConstructor {
     new (): AbortController;
 }
 
-declare global {
-    // eslint-disable-next-line no-var
-    var AbortController: AbortControllerConstructor;
+interface GlobalExtension {
+    AbortController: AbortControllerConstructor;
 }
 
-export const AbortController: AbortControllerConstructor =
-    globalThis.AbortController;
+export const AbortController: AbortControllerConstructor = (
+    globalThis as unknown as GlobalExtension
+).AbortController;

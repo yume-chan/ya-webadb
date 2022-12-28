@@ -24,8 +24,7 @@ function testEndian(
                 }` as keyof DataView
             ] as any
         )(0, min, littleEndian);
-        let output = type.deserializer(new Uint8Array(buffer), littleEndian);
-        output = type.convertSign(output);
+        const output = type.deserialize(new Uint8Array(buffer), littleEndian);
         expect(output).toBe(min);
     });
 
@@ -40,8 +39,7 @@ function testEndian(
                 }` as keyof DataView
             ] as any
         )(0, input, littleEndian);
-        let output = type.deserializer(new Uint8Array(buffer), littleEndian);
-        output = type.convertSign(output);
+        const output = type.deserialize(new Uint8Array(buffer), littleEndian);
         expect(output).toBe(input);
     });
 
@@ -55,8 +53,7 @@ function testEndian(
                 }` as keyof DataView
             ] as any
         )(0, max, littleEndian);
-        let output = type.deserializer(new Uint8Array(buffer), littleEndian);
-        output = type.convertSign(output);
+        const output = type.deserialize(new Uint8Array(buffer), littleEndian);
         expect(output).toBe(max);
     });
 }
@@ -112,10 +109,6 @@ describe("Types", () => {
 
                 test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 1);
-                    expect(NumberFieldType[key]).toHaveProperty(
-                        "dataViewSetter",
-                        "set" + key
-                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
@@ -126,10 +119,6 @@ describe("Types", () => {
 
                 test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 1);
-                    expect(NumberFieldType[key]).toHaveProperty(
-                        "dataViewSetter",
-                        "set" + key
-                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
@@ -140,10 +129,6 @@ describe("Types", () => {
 
                 test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 2);
-                    expect(NumberFieldType[key]).toHaveProperty(
-                        "dataViewSetter",
-                        "set" + key
-                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
@@ -154,10 +139,6 @@ describe("Types", () => {
 
                 test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 2);
-                    expect(NumberFieldType[key]).toHaveProperty(
-                        "dataViewSetter",
-                        "set" + key
-                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
@@ -168,10 +149,6 @@ describe("Types", () => {
 
                 test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 4);
-                    expect(NumberFieldType[key]).toHaveProperty(
-                        "dataViewSetter",
-                        "set" + key
-                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);
@@ -182,10 +159,6 @@ describe("Types", () => {
 
                 test("basic", () => {
                     expect(NumberFieldType[key]).toHaveProperty("size", 4);
-                    expect(NumberFieldType[key]).toHaveProperty(
-                        "dataViewSetter",
-                        "set" + key
-                    );
                 });
 
                 testDeserialize(NumberFieldType[key]);

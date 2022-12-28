@@ -181,7 +181,8 @@
             "ignoreMissingScript": true,
             "allowWarningsInSuccessfulBuild": true,
             "enableParallelism": true,
-            "incremental": true
+            "incremental": true,
+            "safeForSimultaneousRushProcesses": true
         },
         {
             "commandKind": "bulk",
