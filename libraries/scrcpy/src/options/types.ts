@@ -57,6 +57,8 @@ export interface H264Configuration {
 
 export interface ScrcpyVideoStreamConfigurationPacket {
     type: "configuration";
+    sequenceParameterSet: Uint8Array;
+    pictureParameterSet: Uint8Array;
     data: H264Configuration;
 }
 

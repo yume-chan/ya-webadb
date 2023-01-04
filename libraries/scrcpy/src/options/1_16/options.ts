@@ -17,10 +17,13 @@ import {
 
 import { CodecOptions } from "./codec-options.js";
 import {
+    parseH264Configuration,
+    parseSequenceParameterSet,
+} from "./h264-configuration.js";
+import {
     ScrcpyScrollController1_16,
     type ScrcpyScrollController,
 } from "./scroll.js";
-import { parse_sequence_parameter_set } from "./sps.js";
 
 export enum ScrcpyLogLevel {
     Verbose = "verbose",
@@ -109,8 +112,9 @@ export const ScrcpyBackOrScreenOnControlMessage1_16 = new Struct().uint8(
     ScrcpyControlMessageType.BackOrScreenOn as const
 );
 
-export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16>
-    implements ScrcpyOptions<T>
+export class ScrcpyOptions1_16<
+    T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
+> implements ScrcpyOptions<T>
 {
     public value: Partial<T>;
 
@@ -206,10 +210,10 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
                 new TransformStream({
                     transform(packet, controller) {
                         if (packet.pts === NO_PTS) {
-                            const sequenceParameterSet =
-                                parse_sequence_parameter_set(
-                                    packet.data.slice().buffer
-                                );
+                            const {
+                                sequenceParameterSet,
+                                pictureParameterSet,
+                            } = parseH264Configuration(packet.data.slice());
 
                             const {
                                 profile_idc: profileIndex,
@@ -222,7 +226,7 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
                                 frame_crop_right_offset,
                                 frame_crop_top_offset,
                                 frame_crop_bottom_offset,
-                            } = sequenceParameterSet;
+                            } = parseSequenceParameterSet(sequenceParameterSet);
 
                             const encodedWidth =
                                 (pic_width_in_mbs_minus1 + 1) * 16;
@@ -243,6 +247,8 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
                             header = packet.data;
                             controller.enqueue({
                                 type: "configuration",
+                                pictureParameterSet,
+                                sequenceParameterSet,
                                 data: {
                                     profileIndex,
                                     constraintSet,
