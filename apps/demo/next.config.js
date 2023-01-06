@@ -1,4 +1,4 @@
-const withMDX = require('@next/mdx')({
+const withMDX = require("@next/mdx")({
     extension: /\.mdx?$/,
     options: {
         // Disable MDX createElement hack
@@ -9,16 +9,16 @@ const withMDX = require('@next/mdx')({
 
 /** @type {import('next').NextConfig} */
 module.exports = withMDX({
-    basePath: process.env.BASE_PATH || '',
-    pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+    basePath: process.env.BASE_PATH || "",
+    pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
     reactStrictMode: false,
     productionBrowserSourceMaps: true,
     experimental: {
         // Workaround https://github.com/vercel/next.js/issues/33914
-        esmExternals: 'loose',
+        esmExternals: "loose",
     },
     publicRuntimeConfig: {
-        basePath: process.env.BASE_PATH || '',
+        basePath: process.env.BASE_PATH || "",
     },
     webpack(config, options) {
         config.module.rules.push({
@@ -37,11 +37,9 @@ module.exports = withMDX({
             // because Next.js doesn't allow it
             // https://github.com/vercel/next.js/pull/7550#issuecomment-512861158
             // https://github.com/vercel/next.js/issues/12861
-            exclude: [
-                /next/,
-            ],
-            use: ['source-map-loader'],
-            enforce: 'pre',
+            exclude: [/next/],
+            use: ["source-map-loader"],
+            enforce: "pre",
         });
 
         // config.experiments.topLevelAwait = true;
@@ -51,18 +49,18 @@ module.exports = withMDX({
     async headers() {
         return [
             {
-                source: '/:path*',
+                source: "/:path*",
                 headers: [
                     {
-                        key: 'Cross-Origin-Opener-Policy',
-                        value: 'same-origin',
+                        key: "Cross-Origin-Opener-Policy",
+                        value: "same-origin",
                     },
                     {
-                        key: 'Cross-Origin-Embedder-Policy',
-                        value: 'require-corp',
-                    }
-                ]
-            }
-        ]
-    }
+                        key: "Cross-Origin-Embedder-Policy",
+                        value: "require-corp",
+                    },
+                ],
+            },
+        ];
+    },
 });

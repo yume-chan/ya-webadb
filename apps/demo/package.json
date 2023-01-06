@@ -43,6 +43,7 @@
     },
     "devDependencies": {
         "@mdx-js/loader": "^2.2.1",
+        "@mdx-js/react": "^2.2.1",
         "@next/mdx": "^13.1.1",
         "@types/react": "18.0.26",
         "eslint": "^8.31.0",

@@ -20,7 +20,7 @@ cd ya-webadb
 ### Install dependencies
 
 ```sh
-$ rush update
+$ rush install
 ```
 
 ### Everyday commands

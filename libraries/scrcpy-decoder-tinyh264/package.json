@@ -5,7 +5,8 @@
     "keywords": [
         "adb",
         "android-phone",
-        "scrcpy-decoder-tinyh264"
+        "scrcpy",
+        "scrcpy-decoder"
     ],
     "license": "MIT",
     "author": {

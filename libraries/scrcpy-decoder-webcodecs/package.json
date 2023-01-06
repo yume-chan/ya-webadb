@@ -5,7 +5,8 @@
     "keywords": [
         "adb",
         "android-phone",
-        "scrcpy-decoder-webcodecs"
+        "scrcpy",
+        "scrcpy-decoder"
     ],
     "license": "MIT",
     "author": {

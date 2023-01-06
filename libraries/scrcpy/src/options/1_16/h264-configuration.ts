@@ -1,5 +1,6 @@
 // cspell: ignore golomb
 // cspell: ignore qpprime
+// cspell: ignore colour
 
 // H.264 has two standards: ITU-T H.264 and ISO/IEC 14496-10
 // they have the same content, and refer themselves as "H.264".
@@ -52,6 +53,9 @@ class BitReader {
 
 /**
  * Parse NAL units from H.264 Annex B formatted data.
+ *
+ * It will overwrite the input to decode the encoding.
+ * If the input is still needed, make a copy before calling this method.
  */
 function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
     // -1 means we haven't found the first start code
