@@ -1,4 +1,8 @@
-import { ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
+import {
+    ScrcpyVideoStreamFramePacket,
+    ScrcpyVideoStreamPacket,
+    splitH264Stream,
+} from "@yume-chan/scrcpy";
 import { InspectStream } from "@yume-chan/stream-extra";
 import WebMMuxer from "webm-muxer";
 
@@ -28,103 +32,13 @@ function h264ConfigurationToAvcDecoderConfigurationRecord(
     return buffer;
 }
 
-function h264NaluToAvcSample(buffer: Uint8Array) {
+function h264StreamToAvcSample(buffer: Uint8Array) {
     const nalUnits: Uint8Array[] = [];
     let totalLength = 0;
 
-    // -1 means we haven't found the first start code
-    let start = -1;
-    let writeIndex = 0;
-
-    // How many `0x00`s in a row we have counted
-    let zeroCount = 0;
-
-    let inEmulation = false;
-
-    for (const byte of buffer) {
-        buffer[writeIndex] = byte;
-        writeIndex += 1;
-
-        if (inEmulation) {
-            if (byte > 0x03) {
-                // `0x00000304` or larger are invalid
-                throw new Error("Invalid data");
-            }
-
-            inEmulation = false;
-            continue;
-        }
-
-        if (byte == 0x00) {
-            zeroCount += 1;
-            continue;
-        }
-
-        const lastZeroCount = zeroCount;
-        zeroCount = 0;
-
-        if (start === -1) {
-            // 0x000001 is the start code
-            // But it can be preceded by any number of zeros
-            // So 2 is the minimal
-            if (lastZeroCount >= 2 && byte === 0x01) {
-                // Found start of first NAL unit
-                writeIndex = 0;
-                start = 0;
-                continue;
-            }
-
-            // Not begin with start code
-            throw new Error("Invalid data");
-        }
-
-        if (lastZeroCount < 2) {
-            // zero or one `0x00`s are acceptable
-            continue;
-        }
-
-        if (byte === 0x01) {
-            // Remove all leading `0x00`s and this `0x01`
-            writeIndex -= lastZeroCount + 1;
-
-            // Found another NAL unit
-            nalUnits.push(buffer.subarray(start, writeIndex));
-            totalLength += 4 + writeIndex - start;
-
-            start = writeIndex;
-            continue;
-        }
-
-        if (lastZeroCount > 2) {
-            // Too much `0x00`s
-            throw new Error("Invalid data");
-        }
-
-        switch (byte) {
-            case 0x02:
-                // Didn't find why, but 7.4.1 NAL unit semantics forbids `0x000002` appearing in NAL units
-                throw new Error("Invalid data");
-            case 0x03:
-                // `0x000003` is the "emulation_prevention_three_byte"
-                // `0x00000300`, `0x00000301`, `0x00000302` and `0x00000303` represent
-                // `0x000000`, `0x000001`, `0x000002` and `0x000003` respectively
-
-                // Remove current byte
-                writeIndex -= 1;
-
-                inEmulation = true;
-                break;
-            default:
-                // `0x000004` or larger are as-is
-                break;
-        }
-
-        if (inEmulation) {
-            throw new Error("Invalid data");
-        }
-
-        nalUnits.push(buffer.subarray(start, writeIndex));
-        totalLength += 4 + writeIndex - start;
+    for (const unit of splitH264Stream(buffer)) {
+        nalUnits.push(unit);
+        totalLength += unit.byteLength + 4;
     }
 
     const sample = new Uint8Array(totalLength);
@@ -149,7 +63,42 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
     private firstTimestamp = -1;
     private avcConfiguration: Uint8Array | undefined;
     private configurationWritten = false;
-    private keyframeWritten = false;
+    private framesFromKeyframe: ScrcpyVideoStreamFramePacket[] = [];
+
+    private appendFrame(frame: ScrcpyVideoStreamFramePacket) {
+        let timestamp = Number(frame.pts);
+        if (this.firstTimestamp === -1) {
+            this.firstTimestamp = timestamp;
+            timestamp = 0;
+        } else {
+            timestamp -= this.firstTimestamp;
+        }
+
+        const sample = h264StreamToAvcSample(frame.data);
+        this.muxer!.addVideoChunk(
+            {
+                byteLength: sample.byteLength,
+                timestamp,
+                type: frame.keyframe ? "key" : "delta",
+                // Not used
+                duration: null,
+                copyTo: (destination) => {
+                    // destination is a Uint8Array
+                    (destination as Uint8Array).set(sample);
+                },
+            },
+            {
+                decoderConfig: this.configurationWritten
+                    ? undefined
+                    : {
+                          // Not used
+                          codec: "",
+                          description: this.avcConfiguration,
+                      },
+            }
+        );
+        this.configurationWritten = true;
+    }
 
     constructor() {
         super((packet) => {
@@ -165,47 +114,18 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
                 return;
             }
 
+            // To ensure the first frame is a keyframe
+            // save the last keyframe and the following frames
+            if (packet.keyframe === true) {
+                this.framesFromKeyframe.length = 0;
+            }
+            this.framesFromKeyframe.push(packet);
+
             if (!this.muxer) {
                 return;
             }
 
-            // if (!this.keyframeWritten && packet.keyframe !== true) {
-            //     return;
-            // }
-            // this.keyframeWritten = true;
-
-            let timestamp = Number(packet.pts);
-            if (this.firstTimestamp === -1) {
-                this.firstTimestamp = timestamp;
-                timestamp = 0;
-            } else {
-                timestamp -= this.firstTimestamp;
-            }
-
-            const sample = h264NaluToAvcSample(packet.data.slice());
-            this.muxer.addVideoChunk(
-                {
-                    byteLength: sample.byteLength,
-                    timestamp,
-                    type: packet.keyframe ? "key" : "delta",
-                    // Not used
-                    duration: null,
-                    copyTo: (destination) => {
-                        // destination is a Uint8Array
-                        (destination as Uint8Array).set(sample);
-                    },
-                },
-                {
-                    decoderConfig: this.configurationWritten
-                        ? undefined
-                        : {
-                              // Not used
-                              codec: "",
-                              description: this.avcConfiguration,
-                          },
-                }
-            );
-            this.configurationWritten = true;
+            this.appendFrame(packet);
         });
     }
 
@@ -221,9 +141,15 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
             },
         });
 
+        if (this.framesFromKeyframe.length > 0) {
+            for (const frame of this.framesFromKeyframe) {
+                this.appendFrame(frame);
+            }
+        }
+
         setTimeout(() => {
             this.stop();
-        }, 5000);
+        }, 10000);
     }
 
     stop() {

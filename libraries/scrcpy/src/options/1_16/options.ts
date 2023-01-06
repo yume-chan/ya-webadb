@@ -19,6 +19,7 @@ import { CodecOptions } from "./codec-options.js";
 import {
     parseH264Configuration,
     parseSequenceParameterSet,
+    removeH264Emulation,
 } from "./h264-configuration.js";
 import {
     ScrcpyScrollController1_16,
@@ -213,7 +214,7 @@ export class ScrcpyOptions1_16<
                             const {
                                 sequenceParameterSet,
                                 pictureParameterSet,
-                            } = parseH264Configuration(packet.data.slice());
+                            } = parseH264Configuration(packet.data);
 
                             const {
                                 profile_idc: profileIndex,
@@ -226,7 +227,9 @@ export class ScrcpyOptions1_16<
                                 frame_crop_right_offset,
                                 frame_crop_top_offset,
                                 frame_crop_bottom_offset,
-                            } = parseSequenceParameterSet(sequenceParameterSet);
+                            } = parseSequenceParameterSet(
+                                removeH264Emulation(sequenceParameterSet)
+                            );
 
                             const encodedWidth =
                                 (pic_width_in_mbs_minus1 + 1) * 16;

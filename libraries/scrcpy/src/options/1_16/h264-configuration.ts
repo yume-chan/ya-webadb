@@ -52,24 +52,24 @@ class BitReader {
 }
 
 /**
- * Parse NAL units from H.264 Annex B formatted data.
+ * Split NAL units from a H.264 Annex B stream.
  *
- * It will overwrite the input to decode the encoding.
- * If the input is still needed, make a copy before calling this method.
+ * The input is not modified.
+ * The returned NAL units are views of the input (no memory allocation and copy),
+ * but still contains emulation prevention bytes.
+ *
+ * This methods returns a generator, so it can be stopped immediately
+ * after the interested NAL unit is found.
  */
-export function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
+export function* splitH264Stream(buffer: Uint8Array): Generator<Uint8Array> {
     // -1 means we haven't found the first start code
     let start = -1;
-    let writeIndex = 0;
-
     // How many `0x00`s in a row we have counted
     let zeroCount = 0;
-
     let inEmulation = false;
 
-    for (const byte of buffer) {
-        buffer[writeIndex] = byte;
-        writeIndex += 1;
+    for (let i = 0; i < buffer.length; i += 1) {
+        const byte = buffer[i]!;
 
         if (inEmulation) {
             if (byte > 0x03) {
@@ -81,22 +81,21 @@ export function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
             continue;
         }
 
-        if (byte == 0x00) {
+        if (byte === 0x00) {
             zeroCount += 1;
             continue;
         }
 
-        const lastZeroCount = zeroCount;
+        const prevZeroCount = zeroCount;
         zeroCount = 0;
 
         if (start === -1) {
             // 0x000001 is the start code
             // But it can be preceded by any number of zeros
             // So 2 is the minimal
-            if (lastZeroCount >= 2 && byte === 0x01) {
+            if (prevZeroCount >= 2 && byte === 0x01) {
                 // Found start of first NAL unit
-                writeIndex = 0;
-                start = 0;
+                start = i + 1;
                 continue;
             }
 
@@ -104,23 +103,20 @@ export function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
             throw new Error("Invalid data");
         }
 
-        if (lastZeroCount < 2) {
+        if (prevZeroCount < 2) {
             // zero or one `0x00`s are acceptable
             continue;
         }
 
         if (byte === 0x01) {
-            // Remove all leading `0x00`s and this `0x01`
-            writeIndex -= lastZeroCount + 1;
-
             // Found another NAL unit
-            yield buffer.subarray(start, writeIndex);
+            yield buffer.subarray(start, i - prevZeroCount);
 
-            start = writeIndex;
+            start = i + 1;
             continue;
         }
 
-        if (lastZeroCount > 2) {
+        if (prevZeroCount > 2) {
             // Too much `0x00`s
             throw new Error("Invalid data");
         }
@@ -133,10 +129,6 @@ export function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
                 // `0x000003` is the "emulation_prevention_three_byte"
                 // `0x00000300`, `0x00000301`, `0x00000302` and `0x00000303` represent
                 // `0x000000`, `0x000001`, `0x000002` and `0x000003` respectively
-
-                // Remove current byte
-                writeIndex -= 1;
-
                 inEmulation = true;
                 break;
             default:
@@ -149,7 +141,93 @@ export function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
         throw new Error("Invalid data");
     }
 
-    yield buffer.subarray(start, writeIndex);
+    yield buffer.subarray(start, buffer.length);
+}
+
+/**
+ * Remove emulation prevention bytes from a H.264 NAL Unit.
+ *
+ * The input is not modified.
+ * If the input doesn't contain any emulation prevention bytes,
+ * the input is returned as-is.
+ * Otherwise, a new `Uint8Array` is created and returned.
+ */
+export function removeH264Emulation(buffer: Uint8Array) {
+    // output will be created when first emulation prevention byte is found
+    let output: Uint8Array | undefined;
+    let outputOffset = 0;
+
+    let zeroCount = 0;
+    let inEmulation = false;
+
+    for (let i = 0; i < buffer.length; i += 1) {
+        const byte = buffer[i]!;
+
+        if (output) {
+            output[outputOffset] = byte;
+            outputOffset += 1;
+        }
+
+        if (inEmulation) {
+            if (byte > 0x03) {
+                // `0x00000304` or larger are invalid
+                throw new Error("Invalid data");
+            }
+
+            inEmulation = false;
+            continue;
+        }
+
+        if (byte === 0x00) {
+            zeroCount += 1;
+            continue;
+        }
+
+        const prevZeroCount = zeroCount;
+        zeroCount = 0;
+
+        if (prevZeroCount < 2) {
+            // zero or one `0x00`s are acceptable
+            continue;
+        }
+
+        if (byte === 0x01) {
+            // Unexpected start code
+            throw new Error("Invalid data");
+        }
+
+        if (prevZeroCount > 2) {
+            // Too much `0x00`s
+            throw new Error("Invalid data");
+        }
+
+        switch (byte) {
+            case 0x02:
+                // Didn't find why, but 7.4.1 NAL unit semantics forbids `0x000002` appearing in NAL units
+                throw new Error("Invalid data");
+            case 0x03:
+                // `0x000003` is the "emulation_prevention_three_byte"
+                // `0x00000300`, `0x00000301`, `0x00000302` and `0x00000303` represent
+                // `0x000000`, `0x000001`, `0x000002` and `0x000003` respectively
+                inEmulation = true;
+
+                if (!output) {
+                    // Create output and copy the data before the emulation prevention byte
+                    output = new Uint8Array(buffer.length - 1);
+                    output.set(buffer.subarray(0, i - prevZeroCount));
+                    outputOffset = i - prevZeroCount + 1;
+                } else {
+                    // Remove the emulation prevention byte
+                    outputOffset -= 1;
+                }
+                break;
+            default:
+                // `0x000004` or larger are as-is
+                break;
+        }
+    }
+
+    return output?.subarray(0, outputOffset) ?? buffer;
 }
 
 // 7.3.2.1.1 Sequence parameter set data syntax
@@ -330,7 +408,7 @@ export function parseH264Configuration(buffer: Uint8Array) {
     let sequenceParameterSet: Uint8Array | undefined;
     let pictureParameterSet: Uint8Array | undefined;
 
-    for (const nalu of iterateNalu(buffer)) {
+    for (const nalu of splitH264Stream(buffer)) {
         const naluType = nalu[0]! & 0x1f;
         switch (naluType) {
             case 7: // Sequence parameter set
