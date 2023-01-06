@@ -57,7 +57,7 @@ class BitReader {
  * It will overwrite the input to decode the encoding.
  * If the input is still needed, make a copy before calling this method.
  */
-function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
+export function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
     // -1 means we haven't found the first start code
     let start = -1;
     let writeIndex = 0;
@@ -145,7 +145,7 @@ function* iterateNalu(buffer: Uint8Array): Generator<Uint8Array> {
         }
     }
 
-    if (inEmulation || zeroCount !== 0) {
+    if (inEmulation) {
         throw new Error("Invalid data");
     }
 
