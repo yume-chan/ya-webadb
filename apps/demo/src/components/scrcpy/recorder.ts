@@ -4,7 +4,9 @@ import {
     splitH264Stream,
 } from "@yume-chan/scrcpy";
 import { InspectStream } from "@yume-chan/stream-extra";
+import { action, makeAutoObservable, reaction } from "mobx";
 import WebMMuxer from "webm-muxer";
+import { saveFile } from "../../utils";
 
 // https://ffmpeg.org/doxygen/0.11/avc_8c-source.html#l00106
 function h264ConfigurationToAvcDecoderConfigurationRecord(
@@ -75,57 +77,53 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
         }
 
         const sample = h264StreamToAvcSample(frame.data);
-        this.muxer!.addVideoChunk(
-            {
-                byteLength: sample.byteLength,
-                timestamp,
-                type: frame.keyframe ? "key" : "delta",
-                // Not used
-                duration: null,
-                copyTo: (destination) => {
-                    // destination is a Uint8Array
-                    (destination as Uint8Array).set(sample);
-                },
-            },
-            {
-                decoderConfig: this.configurationWritten
-                    ? undefined
-                    : {
+        this.muxer!.addVideoChunkRaw(
+            sample,
+            frame.keyframe ? "key" : "delta",
+            timestamp,
+            this.configurationWritten
+                ? undefined
+                : {
+                      decoderConfig: {
                           // Not used
                           codec: "",
                           description: this.avcConfiguration,
                       },
-            }
+                  }
         );
         this.configurationWritten = true;
     }
 
     constructor() {
         super((packet) => {
-            if (packet.type === "configuration") {
-                this.width = packet.data.croppedWidth;
-                this.height = packet.data.croppedHeight;
-                this.avcConfiguration =
-                    h264ConfigurationToAvcDecoderConfigurationRecord(
-                        packet.sequenceParameterSet,
-                        packet.pictureParameterSet
-                    );
-                this.configurationWritten = false;
-                return;
-            }
+            try {
+                if (packet.type === "configuration") {
+                    this.width = packet.data.croppedWidth;
+                    this.height = packet.data.croppedHeight;
+                    this.avcConfiguration =
+                        h264ConfigurationToAvcDecoderConfigurationRecord(
+                            packet.sequenceParameterSet,
+                            packet.pictureParameterSet
+                        );
+                    this.configurationWritten = false;
+                    return;
+                }
 
-            // To ensure the first frame is a keyframe
-            // save the last keyframe and the following frames
-            if (packet.keyframe === true) {
-                this.framesFromKeyframe.length = 0;
-            }
-            this.framesFromKeyframe.push(packet);
+                // To ensure the first frame is a keyframe
+                // save the last keyframe and the following frames
+                if (packet.keyframe === true) {
+                    this.framesFromKeyframe.length = 0;
+                }
+                this.framesFromKeyframe.push(packet);
 
-            if (!this.muxer) {
-                return;
-            }
+                if (!this.muxer) {
+                    return;
+                }
 
-            this.appendFrame(packet);
+                this.appendFrame(packet);
+            } catch (e) {
+                console.error(e);
+            }
         });
     }
 
@@ -146,10 +144,6 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
                 this.appendFrame(frame);
             }
         }
-
-        setTimeout(() => {
-            this.stop();
-        }, 10000);
     }
 
     stop() {
@@ -158,12 +152,26 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
         }
 
         const buffer = this.muxer.finalize()!;
-        const blob = new Blob([buffer], { type: "video/webm" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "scrcpy.webm";
-        a.click();
+        const now = new Date();
+        const stream = saveFile(
+            // prettier-ignore
+            `Recording ${
+                now.getFullYear()
+            }-${
+                (now.getMonth() + 1).toString().padStart(2, '0')
+            }-${
+                now.getDate().toString().padStart(2, '0')
+            } ${
+                now.getHours().toString().padStart(2, '0')
+            }-${
+                now.getMinutes().toString().padStart(2, '0')
+            }-${
+                now.getSeconds().toString().padStart(2, '0')
+            }.webm`
+        );
+        const writer = stream.getWriter();
+        writer.write(new Uint8Array(buffer));
+        writer.close();
 
         this.muxer = undefined;
         this.configurationWritten = false;
@@ -171,3 +179,40 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
         this.firstTimestamp = -1;
     }
 }
+
+export const RECORD_STATE = makeAutoObservable({
+    recorder: new MuxerStream(),
+    recording: false,
+    intervalId: -1,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+});
+
+reaction(
+    () => RECORD_STATE.recording,
+    (recording) => {
+        if (recording) {
+            RECORD_STATE.intervalId = window.setInterval(
+                action(() => {
+                    RECORD_STATE.seconds += 1;
+                    if (RECORD_STATE.seconds >= 60) {
+                        RECORD_STATE.seconds = 0;
+                        RECORD_STATE.minutes += 1;
+                    }
+                    if (RECORD_STATE.minutes >= 60) {
+                        RECORD_STATE.minutes = 0;
+                        RECORD_STATE.hours += 1;
+                    }
+                }),
+                1000
+            );
+        } else {
+            window.clearInterval(RECORD_STATE.intervalId);
+            RECORD_STATE.intervalId = -1;
+            RECORD_STATE.hours = 0;
+            RECORD_STATE.minutes = 0;
+            RECORD_STATE.seconds = 0;
+        }
+    }
+);

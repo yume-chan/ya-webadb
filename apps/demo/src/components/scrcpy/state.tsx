@@ -37,7 +37,7 @@ import { GlobalState } from "../../state";
 import { Icons, ProgressStream } from "../../utils";
 import { DeviceViewRef } from "../device-view";
 import { fetchServer } from "./fetch-server";
-import { MuxerStream } from "./recorder";
+import { MuxerStream, RECORD_STATE } from "./recorder";
 import { SettingDefinition, Settings } from "./settings";
 
 export interface H264Decoder extends Disposable {
@@ -58,8 +58,6 @@ interface DecoderDefinition {
     name: string;
     Constructor: H264DecoderConstructor;
 }
-
-export const Recorder = new MuxerStream();
 
 export class ScrcpyPageState {
     running = false;
@@ -529,6 +527,7 @@ export class ScrcpyPageState {
                 })
             );
 
+            RECORD_STATE.recorder = new MuxerStream();
             client.videoStream
                 .pipeThrough(
                     new InspectStream(
@@ -547,10 +546,7 @@ export class ScrcpyPageState {
                         })
                     )
                 )
-                .pipeThrough(Recorder, {
-                    preventAbort: true,
-                    preventClose: true,
-                })
+                .pipeThrough(RECORD_STATE.recorder)
                 .pipeTo(decoder.writable)
                 .catch(() => {});
 
@@ -602,6 +598,11 @@ export class ScrcpyPageState {
         // Otherwise some packets may still arrive at decoder
         this.decoder?.dispose();
         this.decoder = undefined;
+
+        if (RECORD_STATE.recording) {
+            RECORD_STATE.recorder.stop();
+            RECORD_STATE.recording = false;
+        }
 
         this.fps = 0;
         clearTimeout(this.fpsCounterIntervalId);

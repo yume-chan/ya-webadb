@@ -14,7 +14,8 @@ import { GlobalState } from "../../state";
 import { Icons } from "../../utils";
 import { ExternalLink } from "../external-link";
 import { CommandBarSpacerItem } from "./command-bar-spacer-item";
-import { Recorder, STATE } from "./state";
+import { RECORD_STATE } from "./recorder";
+import { STATE } from "./state";
 
 const ITEMS = computed(() => {
     const result: ICommandBarItemProps[] = [];
@@ -36,13 +37,38 @@ const ITEMS = computed(() => {
         });
     }
 
-    result.push({
-        key: "Record",
-        disabled: !STATE.running,
-        iconProps: { iconName: Icons.Record },
-        text: "Record",
-        onClick: () => Recorder.start(),
-    });
+    result.push(
+        RECORD_STATE.recording
+            ? {
+                  key: "Record",
+                  iconProps: {
+                      iconName: Icons.Record,
+                      style: { color: "red" },
+                  },
+                  // prettier-ignore
+                  text: `${
+                      RECORD_STATE.hours ? `${RECORD_STATE.hours}:` : ""
+                  }${
+                      RECORD_STATE.minutes.toString().padStart(2, "0")
+                  }:${
+                      RECORD_STATE.seconds.toString().padStart(2, "0")
+                  }`,
+                  onClick: action(() => {
+                      RECORD_STATE.recorder.stop();
+                      RECORD_STATE.recording = false;
+                  }),
+              }
+            : {
+                  key: "Record",
+                  disabled: !STATE.running,
+                  iconProps: { iconName: Icons.Record },
+                  text: "Record",
+                  onClick: action(() => {
+                      RECORD_STATE.recorder.start();
+                      RECORD_STATE.recording = true;
+                  }),
+              }
+    );
 
     result.push({
         key: "fullscreen",
