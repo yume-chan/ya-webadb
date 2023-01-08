@@ -5,17 +5,31 @@ import { autorun, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { CommandBar, Grid, GridCellProps, GridColumn, GridHeaderProps, GridRowProps, HexViewer, toText } from "../components";
-import { GlobalState, PacketLogItem } from "../state";
-import { Icons, RouteStackProps, useStableCallback, withDisplayName } from "../utils";
+import {
+    CommandBar,
+    Grid,
+    GridCellProps,
+    GridColumn,
+    GridHeaderProps,
+    GridRowProps,
+    HexViewer,
+    toText,
+} from "../components";
+import { GLOBAL_STATE, PacketLogItem } from "../state";
+import {
+    Icons,
+    RouteStackProps,
+    useStableCallback,
+    withDisplayName,
+} from "../utils";
 
 const ADB_COMMAND_NAME = {
-    [AdbCommand.Auth]: 'AUTH',
-    [AdbCommand.Close]: 'CLSE',
-    [AdbCommand.Connect]: 'CNXN',
-    [AdbCommand.OK]: 'OKAY',
-    [AdbCommand.Open]: 'OPEN',
-    [AdbCommand.Write]: 'WRTE',
+    [AdbCommand.Auth]: "AUTH",
+    [AdbCommand.Close]: "CLSE",
+    [AdbCommand.Connect]: "CNXN",
+    [AdbCommand.OK]: "OKAY",
+    [AdbCommand.Open]: "OPEN",
+    [AdbCommand.Write]: "WRTE",
 };
 
 interface Column extends GridColumn {
@@ -24,199 +38,204 @@ interface Column extends GridColumn {
 
 const LINE_HEIGHT = 32;
 
-const state = new class {
+const state = new (class {
     get empty() {
-        return !GlobalState.logs.length;
+        return !GLOBAL_STATE.logs.length;
     }
 
     get commandBarItems(): ICommandBarItemProps[] {
         return [
             {
-                key: 'clear',
+                key: "clear",
                 disabled: this.empty,
                 iconProps: { iconName: Icons.Delete },
-                text: 'Clear',
-                onClick: () => GlobalState.clearLog(),
-            }
+                text: "Clear",
+                onClick: () => GLOBAL_STATE.clearLog(),
+            },
         ];
     }
 
     selectedPacket: PacketLogItem | undefined = undefined;
 
     constructor() {
-        makeAutoObservable(
-            this,
-            {
-                selectedPacket: observable.ref,
-            }
-        );
+        makeAutoObservable(this, {
+            selectedPacket: observable.ref,
+        });
 
         autorun(() => {
-            if (GlobalState.logs.length === 0) {
+            if (GLOBAL_STATE.logs.length === 0) {
                 this.selectedPacket = undefined;
             }
         });
     }
-};
+})();
 
 const useClasses = makeStyles({
     grow: {
         height: 0,
     },
     grid: {
-        height: '100%',
+        height: "100%",
     },
     header: {
-        textAlign: 'center',
+        textAlign: "center",
         lineHeight: `${LINE_HEIGHT}px`,
     },
     row: {
-        '&:hover': {
-            backgroundColor: '#f3f2f1',
+        "&:hover": {
+            backgroundColor: "#f3f2f1",
         },
     },
     selected: {
-        backgroundColor: '#edebe9',
+        backgroundColor: "#edebe9",
     },
     code: {
-        fontFamily: 'monospace',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        lineHeight: LINE_HEIGHT + 'px',
-        cursor: 'default',
-        ...shorthands.overflow('hidden'),
+        fontFamily: "monospace",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+        lineHeight: LINE_HEIGHT + "px",
+        cursor: "default",
+        ...shorthands.overflow("hidden"),
     },
     hexViewer: {
-        ...shorthands.padding('12px'),
-        ...shorthands.borderTop('1px', 'solid', 'rgb(243, 242, 241)'),
+        ...shorthands.padding("12px"),
+        ...shorthands.borderTop("1px", "solid", "rgb(243, 242, 241)"),
     },
 });
 
 const columns: Column[] = [
     {
-        title: 'Direction',
+        title: "Direction",
         width: 100,
-        CellComponent: withDisplayName('Direction')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = GlobalState.logs[rowIndex];
+        CellComponent: withDisplayName("Direction")(
+            ({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = GLOBAL_STATE.logs[rowIndex];
 
-            const classes = useClasses();
+                const classes = useClasses();
 
-            return (
-                <div
-                    className={mergeClasses(className, classes.code)}
-                    {...rest}
-                >
-                    {item.direction}
-                </div>
-            );
-        }),
-    },
-    {
-        title: 'Command',
-        width: 100,
-        CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = GlobalState.logs[rowIndex];
-
-            if (!item.commandString) {
-                item.commandString =
-                    ADB_COMMAND_NAME[item.command as AdbCommand] ??
-                    decodeUtf8(new Uint32Array([item.command]));
+                return (
+                    <div
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
+                    >
+                        {item.direction}
+                    </div>
+                );
             }
-
-            const classes = useClasses();
-
-            return (
-                <div
-                    className={mergeClasses(className, classes.code)}
-                    {...rest}
-                >
-                    {item.commandString}
-                </div>
-            );
-        }),
+        ),
     },
     {
-        title: 'Arg0',
+        title: "Command",
         width: 100,
-        CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = GlobalState.logs[rowIndex];
+        CellComponent: withDisplayName("Command")(
+            ({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = GLOBAL_STATE.logs[rowIndex];
 
-            if (!item.arg0String) {
-                item.arg0String = item.arg0.toString(16).padStart(8, '0');
+                if (!item.commandString) {
+                    item.commandString =
+                        ADB_COMMAND_NAME[item.command as AdbCommand] ??
+                        decodeUtf8(new Uint32Array([item.command]));
+                }
+
+                const classes = useClasses();
+
+                return (
+                    <div
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
+                    >
+                        {item.commandString}
+                    </div>
+                );
             }
-
-            const classes = useClasses();
-
-            return (
-                <div
-                    className={mergeClasses(className, classes.code)}
-                    {...rest}
-                >
-                    {item.arg0String}
-                </div>
-            );
-        }),
+        ),
     },
     {
-        title: 'Arg1',
+        title: "Arg0",
         width: 100,
-        CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = GlobalState.logs[rowIndex];
+        CellComponent: withDisplayName("Command")(
+            ({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = GLOBAL_STATE.logs[rowIndex];
 
-            if (!item.arg1String) {
-                item.arg1String = item.arg1.toString(16).padStart(8, '0');
+                if (!item.arg0String) {
+                    item.arg0String = item.arg0.toString(16).padStart(8, "0");
+                }
+
+                const classes = useClasses();
+
+                return (
+                    <div
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
+                    >
+                        {item.arg0String}
+                    </div>
+                );
             }
-
-            const classes = useClasses();
-
-            return (
-                <div
-                    className={mergeClasses(className, classes.code)}
-                    {...rest}
-                >
-                    {item.arg1String}
-                </div>
-            );
-        }),
+        ),
     },
     {
-        title: 'Payload',
+        title: "Arg1",
+        width: 100,
+        CellComponent: withDisplayName("Command")(
+            ({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = GLOBAL_STATE.logs[rowIndex];
+
+                if (!item.arg1String) {
+                    item.arg1String = item.arg1.toString(16).padStart(8, "0");
+                }
+
+                const classes = useClasses();
+
+                return (
+                    <div
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
+                    >
+                        {item.arg1String}
+                    </div>
+                );
+            }
+        ),
+    },
+    {
+        title: "Payload",
         width: 200,
         flexGrow: 1,
-        CellComponent: withDisplayName('Command')(({ className, rowIndex, ...rest }: GridCellProps) => {
-            const item = GlobalState.logs[rowIndex];
+        CellComponent: withDisplayName("Command")(
+            ({ className, rowIndex, ...rest }: GridCellProps) => {
+                const item = GLOBAL_STATE.logs[rowIndex];
 
-            if (!item.payloadString) {
-                item.payloadString = toText(item.payload.subarray(0, 100));
+                if (!item.payloadString) {
+                    item.payloadString = toText(item.payload.subarray(0, 100));
+                }
+
+                const classes = useClasses();
+
+                return (
+                    <div
+                        className={mergeClasses(className, classes.code)}
+                        {...rest}
+                    >
+                        {item.payloadString}
+                    </div>
+                );
             }
-
-            const classes = useClasses();
-
-            return (
-                <div
-                    className={mergeClasses(className, classes.code)}
-                    {...rest}
-                >
-                    {item.payloadString}
-                </div>
-            );
-        }),
+        ),
     },
 ];
 
-const Header = withDisplayName('Header')(({
-    className,
-    columnIndex,
-    ...rest
-}: GridHeaderProps) => {
-    const classes = useClasses();
+const Header = withDisplayName("Header")(
+    ({ className, columnIndex, ...rest }: GridHeaderProps) => {
+        const classes = useClasses();
 
-    return (
-        <div className={mergeClasses(className, classes.header)} {...rest}>
-            {columns[columnIndex].title}
-        </div>
-    );
-});
+        return (
+            <div className={mergeClasses(className, classes.header)} {...rest}>
+                {columns[columnIndex].title}
+            </div>
+        );
+    }
+);
 
 const Row = observer(function Row({
     className,
@@ -227,7 +246,7 @@ const Row = observer(function Row({
 
     const handleClick = useStableCallback(() => {
         runInAction(() => {
-            state.selectedPacket = GlobalState.logs[rowIndex];
+            state.selectedPacket = GLOBAL_STATE.logs[rowIndex];
         });
     });
 
@@ -236,7 +255,8 @@ const Row = observer(function Row({
             className={mergeClasses(
                 className,
                 classes.row,
-                state.selectedPacket === GlobalState.logs[rowIndex] && classes.selected
+                state.selectedPacket === GLOBAL_STATE.logs[rowIndex] &&
+                    classes.selected
             )}
             onClick={handleClick}
             {...rest}
@@ -258,7 +278,7 @@ const PacketLog: NextPage = () => {
             <StackItem className={classes.grow} grow>
                 <Grid
                     className={classes.grid}
-                    rowCount={GlobalState.logs.length}
+                    rowCount={GLOBAL_STATE.logs.length}
                     rowHeight={LINE_HEIGHT}
                     columns={columns}
                     HeaderComponent={Header}
@@ -266,11 +286,15 @@ const PacketLog: NextPage = () => {
                 />
             </StackItem>
 
-            {state.selectedPacket && state.selectedPacket.payload.length > 0 && (
-                <StackItem className={classes.grow} grow>
-                    <HexViewer className={classes.hexViewer} data={state.selectedPacket.payload} />
-                </StackItem>
-            )}
+            {state.selectedPacket &&
+                state.selectedPacket.payload.length > 0 && (
+                    <StackItem className={classes.grow} grow>
+                        <HexViewer
+                            className={classes.hexViewer}
+                            data={state.selectedPacket.payload}
+                        />
+                    </StackItem>
+                )}
         </Stack>
     );
 };

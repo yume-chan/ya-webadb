@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { DemoModePanel, DeviceView } from "../components";
 import {
     NavigationBar,
+    SETTING_DEFINITIONS,
+    SETTING_STATE,
     STATE,
     ScrcpyCommandBar,
     SettingItem,
@@ -98,11 +100,11 @@ const Scrcpy: NextPage = () => {
     useEffect(() => {
         // Detect WebCodecs support at client side
         if (
-            STATE.decoders.length === 1 &&
+            SETTING_STATE.decoders.length === 1 &&
             typeof window.VideoDecoder === "function"
         ) {
             runInAction(() => {
-                STATE.decoders.unshift({
+                SETTING_STATE.decoders.unshift({
                     key: "webcodecs",
                     name: "WebCodecs",
                     Constructor: WebCodecsDecoder,
@@ -150,20 +152,23 @@ const Scrcpy: NextPage = () => {
                     style={{
                         padding: 12,
                         overflow: "hidden auto",
-                        display: STATE.settingsVisible ? "block" : "none",
+                        display: SETTING_STATE.settingsVisible
+                            ? "block"
+                            : "none",
                         width: 300,
                     }}
                 >
                     <div>Changes will take effect on next connection</div>
 
-                    {STATE.settingDefinitions.map((definition) => (
+                    {SETTING_DEFINITIONS.get().map((definition) => (
                         <SettingItem
                             key={definition.key}
                             definition={definition}
-                            settings={STATE.settings}
+                            settings={SETTING_STATE.settings}
                             onChange={action(
                                 (key, value) =>
-                                    ((STATE.settings as any)[key] = value)
+                                    ((SETTING_STATE.settings as any)[key] =
+                                        value)
                             )}
                         />
                     ))}

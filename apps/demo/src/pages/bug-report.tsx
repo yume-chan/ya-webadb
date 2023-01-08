@@ -1,13 +1,29 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import { MessageBar, MessageBarType, PrimaryButton, Stack, StackItem } from "@fluentui/react";
-import { BugReport, BugReportZ, BugReportZVersion } from "@yume-chan/android-bin";
-import { action, autorun, makeAutoObservable, observable, runInAction } from "mobx";
+import {
+    MessageBar,
+    MessageBarType,
+    PrimaryButton,
+    Stack,
+    StackItem,
+} from "@fluentui/react";
+import {
+    BugReport,
+    BugReportZ,
+    BugReportZVersion,
+} from "@yume-chan/android-bin";
+import {
+    action,
+    autorun,
+    makeAutoObservable,
+    observable,
+    runInAction,
+} from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { GlobalState } from "../state";
+import { GLOBAL_STATE } from "../state";
 import { RouteStackProps, saveFile } from "../utils";
 
 class BugReportState {
@@ -32,14 +48,16 @@ class BugReportState {
         });
 
         autorun(() => {
-            if (GlobalState.device) {
+            if (GLOBAL_STATE.device) {
                 runInAction(() => {
-                    this.bugReport = new BugReport(GlobalState.device!);
-                    this.bugReportZ = new BugReportZ(GlobalState.device!);
+                    this.bugReport = new BugReport(GLOBAL_STATE.device!);
+                    this.bugReportZ = new BugReportZ(GLOBAL_STATE.device!);
 
-                    this.bugReportZ.version().then(action(version => {
-                        this.bugReportZVersion = version;
-                    }));
+                    this.bugReportZ.version().then(
+                        action((version) => {
+                            this.bugReportZVersion = version;
+                        })
+                    );
                 });
             } else {
                 runInAction(() => {
@@ -52,13 +70,11 @@ class BugReportState {
     }
 
     async generateBugReport() {
-        await this.bugReport!.generate()
-            .pipeTo(saveFile('bugreport.txt'));
+        await this.bugReport!.generate().pipeTo(saveFile("bugreport.txt"));
     }
 
     async generateBugReportZStream() {
-        await this.bugReportZ!.stream()
-            .pipeTo(saveFile('bugreport.zip'));
+        await this.bugReportZ!.stream().pipeTo(saveFile("bugreport.zip"));
     }
 
     async generateBugReportZ() {
@@ -69,15 +85,14 @@ class BugReportState {
         const filename = await this.bugReportZ!.generate(
             this.bugReportZVersion!.supportProgress
                 ? action((progress, total) => {
-                    this.bugReportZProgress = progress;
-                    this.bugReportZTotalSize = total;
-                })
+                      this.bugReportZProgress = progress;
+                      this.bugReportZTotalSize = total;
+                  })
                 : undefined
         );
 
-        const sync = await GlobalState.device!.sync();
-        await sync.read(filename)
-            .pipeTo(saveFile('bugreport.zip'));
+        const sync = await GLOBAL_STATE.device!.sync();
+        await sync.read(filename).pipeTo(saveFile("bugreport.zip"));
 
         sync.dispose();
 
@@ -98,7 +113,9 @@ const BugReportPage: NextPage = () => {
                 <title>BugReport - Android Web Toolbox</title>
             </Head>
 
-            <MessageBar messageBarType={MessageBarType.info}>This is the `bugreport`/`bugreportz` tool in Android</MessageBar>
+            <MessageBar messageBarType={MessageBarType.info}>
+                This is the `bugreport`/`bugreportz` tool in Android
+            </MessageBar>
 
             <StackItem>
                 <PrimaryButton
@@ -117,10 +134,17 @@ const BugReportPage: NextPage = () => {
             </StackItem>
 
             <StackItem>
-                <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
+                <Stack
+                    horizontal
+                    verticalAlign="center"
+                    tokens={{ childrenGap: 8 }}
+                >
                     <StackItem>
                         <PrimaryButton
-                            disabled={!state.bugReportZVersion || state.bugReportZInProgress}
+                            disabled={
+                                !state.bugReportZVersion ||
+                                state.bugReportZInProgress
+                            }
                             text="Generate Zipped BugReport"
                             onClick={state.generateBugReportZ}
                         />
@@ -130,12 +154,15 @@ const BugReportPage: NextPage = () => {
                         <StackItem>
                             {state.bugReportZTotalSize ? (
                                 <span>
-                                    Progress: {state.bugReportZProgress} / {state.bugReportZTotalSize}
+                                    Progress: {state.bugReportZProgress} /{" "}
+                                    {state.bugReportZTotalSize}
                                 </span>
                             ) : (
                                 <span>
                                     Generating... Please wait
-                                    {!state.bugReportZVersion!.supportProgress && ' (this device does not support progress)'}
+                                    {!state.bugReportZVersion!
+                                        .supportProgress &&
+                                        " (this device does not support progress)"}
                                 </span>
                             )}
                         </StackItem>

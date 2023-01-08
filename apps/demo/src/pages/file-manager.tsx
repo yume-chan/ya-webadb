@@ -50,7 +50,7 @@ import Router, { useRouter } from "next/router";
 import path from "path";
 import { useCallback, useEffect, useState } from "react";
 import { CommandBar, NoSsr } from "../components";
-import { GlobalState } from "../state";
+import { GLOBAL_STATE } from "../state";
 import {
     Icons,
     ProgressStream,
@@ -165,7 +165,7 @@ class FileManagerState {
                         iconName: Icons.CloudArrowUp,
                         style: { height: 20, fontSize: 20, lineHeight: 1.5 },
                     },
-                    disabled: !GlobalState.device,
+                    disabled: !GLOBAL_STATE.device,
                     onClick: () => {
                         (async () => {
                             const files = await pickFile({ multiple: true });
@@ -194,7 +194,7 @@ class FileManagerState {
                         },
                         onClick: () => {
                             (async () => {
-                                const sync = await GlobalState.device!.sync();
+                                const sync = await GLOBAL_STATE.device!.sync();
                                 try {
                                     const item = this.selectedItems[0];
                                     const itemPath = path.resolve(
@@ -210,7 +210,7 @@ class FileManagerState {
                                             )
                                         );
                                 } catch (e: any) {
-                                    GlobalState.showErrorDialog(e);
+                                    GLOBAL_STATE.showErrorDialog(e);
                                 } finally {
                                     sync.dispose();
                                 }
@@ -232,16 +232,17 @@ class FileManagerState {
                         (async () => {
                             try {
                                 for (const item of this.selectedItems) {
-                                    const output = await GlobalState.device!.rm(
-                                        path.resolve(this.path, item.name!)
-                                    );
+                                    const output =
+                                        await GLOBAL_STATE.device!.rm(
+                                            path.resolve(this.path, item.name!)
+                                        );
                                     if (output) {
-                                        GlobalState.showErrorDialog(output);
+                                        GLOBAL_STATE.showErrorDialog(output);
                                         return;
                                     }
                                 }
                             } catch (e: any) {
-                                GlobalState.showErrorDialog(e);
+                                GLOBAL_STATE.showErrorDialog(e);
                             } finally {
                                 this.loadFiles();
                             }
@@ -390,7 +391,7 @@ class FileManagerState {
             },
         ];
 
-        if (GlobalState.device?.features?.includes(AdbFeatures.ListV2)) {
+        if (GLOBAL_STATE.device?.features?.includes(AdbFeatures.ListV2)) {
             list.push(
                 {
                     key: "ctime",
@@ -450,7 +451,7 @@ class FileManagerState {
         });
 
         autorun(() => {
-            if (GlobalState.device) {
+            if (GLOBAL_STATE.device) {
                 if (this.initial && this.visible) {
                     this.initial = false;
                     this.loadFiles();
@@ -472,7 +473,7 @@ class FileManagerState {
 
         this.path = path;
 
-        if (!GlobalState.device) {
+        if (!GLOBAL_STATE.device) {
             return;
         }
 
@@ -484,13 +485,13 @@ class FileManagerState {
 
         runInAction(() => (this.items = []));
 
-        if (!GlobalState.device) {
+        if (!GLOBAL_STATE.device) {
             return;
         }
 
         runInAction(() => (this.loading = true));
 
-        const sync = await GlobalState.device.sync();
+        const sync = await GLOBAL_STATE.device.sync();
 
         const items: ListItem[] = [];
         const linkItems: AdbSyncEntry[] = [];
@@ -551,7 +552,7 @@ class FileManagerState {
     });
 
     upload = async (file: File) => {
-        const sync = await GlobalState.device!.sync();
+        const sync = await GLOBAL_STATE.device!.sync();
         try {
             const itemPath = path.resolve(this.path!, file.name);
             runInAction(() => {
@@ -599,7 +600,7 @@ class FileManagerState {
                 clearInterval(intervalId);
             }
         } catch (e: any) {
-            GlobalState.showErrorDialog(e);
+            GLOBAL_STATE.showErrorDialog(e);
         } finally {
             sync.dispose();
             this.loadFiles();
@@ -663,7 +664,7 @@ const FileManager: NextPage = (): JSX.Element | null => {
 
     const [previewUrl, setPreviewUrl] = useState<string | undefined>();
     const previewImage = useCallback(async (path: string) => {
-        const sync = await GlobalState.device!.sync();
+        const sync = await GLOBAL_STATE.device!.sync();
         try {
             const readable = sync.read(path);
             // @ts-ignore ReadableStream definitions are slightly incompatible

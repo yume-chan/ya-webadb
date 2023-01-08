@@ -1,12 +1,17 @@
 import { DefaultButton, ProgressIndicator, Stack } from "@fluentui/react";
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
-import { ChunkStream } from '@yume-chan/stream-extra';
+import { ChunkStream } from "@yume-chan/stream-extra";
 import { action, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { GlobalState } from "../state";
-import { createFileStream, pickFile, ProgressStream, RouteStackProps } from "../utils";
+import { GLOBAL_STATE } from "../state";
+import {
+    ProgressStream,
+    RouteStackProps,
+    createFileStream,
+    pickFile,
+} from "../utils";
 
 enum Stage {
     Uploading,
@@ -41,7 +46,7 @@ class InstallPageState {
     }
 
     install = async () => {
-        const file = await pickFile({ accept: '.apk' });
+        const file = await pickFile({ accept: ".apk" });
         if (!file) {
             return;
         }
@@ -59,26 +64,30 @@ class InstallPageState {
 
         await createFileStream(file)
             .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
-            .pipeThrough(new ProgressStream(action((uploaded) => {
-                if (uploaded !== file.size) {
-                    this.progress = {
-                        filename: file.name,
-                        stage: Stage.Uploading,
-                        uploadedSize: uploaded,
-                        totalSize: file.size,
-                        value: uploaded / file.size * 0.8,
-                    };
-                } else {
-                    this.progress = {
-                        filename: file.name,
-                        stage: Stage.Installing,
-                        uploadedSize: uploaded,
-                        totalSize: file.size,
-                        value: 0.8,
-                    };
-                }
-            })))
-            .pipeTo(GlobalState.device!.install());
+            .pipeThrough(
+                new ProgressStream(
+                    action((uploaded) => {
+                        if (uploaded !== file.size) {
+                            this.progress = {
+                                filename: file.name,
+                                stage: Stage.Uploading,
+                                uploadedSize: uploaded,
+                                totalSize: file.size,
+                                value: (uploaded / file.size) * 0.8,
+                            };
+                        } else {
+                            this.progress = {
+                                filename: file.name,
+                                stage: Stage.Installing,
+                                uploadedSize: uploaded,
+                                totalSize: file.size,
+                                value: 0.8,
+                            };
+                        }
+                    })
+                )
+            )
+            .pipeTo(GLOBAL_STATE.device!.install());
 
         runInAction(() => {
             this.progress = {
@@ -104,7 +113,7 @@ const Install: NextPage = () => {
 
             <Stack horizontal>
                 <DefaultButton
-                    disabled={!GlobalState.device || state.installing}
+                    disabled={!GLOBAL_STATE.device || state.installing}
                     text="Open"
                     onClick={state.install}
                 />

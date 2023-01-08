@@ -1,12 +1,12 @@
-import { ICommandBarItemProps, Stack } from '@fluentui/react';
+import { ICommandBarItemProps, Stack } from "@fluentui/react";
 import { AdbFrameBuffer } from "@yume-chan/adb";
 import { action, autorun, computed, makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { useCallback, useEffect, useRef } from 'react';
-import { CommandBar, DemoModePanel, DeviceView } from '../components';
-import { GlobalState } from "../state";
+import { useCallback, useEffect, useRef } from "react";
+import { CommandBar, DemoModePanel, DeviceView } from "../components";
+import { GLOBAL_STATE } from "../state";
 import { Icons, RouteStackProps } from "../utils";
 
 class FrameBufferState {
@@ -24,7 +24,11 @@ class FrameBufferState {
     setImage(image: AdbFrameBuffer) {
         this.width = image.width;
         this.height = image.height;
-        this.imageData = new ImageData(new Uint8ClampedArray(image.data), image.width, image.height);
+        this.imageData = new ImageData(
+            new Uint8ClampedArray(image.data),
+            image.width,
+            image.height
+        );
     }
 
     toggleDemoModeVisible() {
@@ -38,15 +42,15 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     const capture = useCallback(async () => {
-        if (!GlobalState.device) {
+        if (!GLOBAL_STATE.device) {
             return;
         }
 
         try {
-            const framebuffer = await GlobalState.device.framebuffer();
+            const framebuffer = await GLOBAL_STATE.device.framebuffer();
             state.setImage(framebuffer);
         } catch (e: any) {
-            GlobalState.showErrorDialog(e);
+            GLOBAL_STATE.showErrorDialog(e);
         }
     }, []);
 
@@ -64,17 +68,23 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
 
     const commandBarItems = computed(() => [
         {
-            key: 'start',
-            disabled: !GlobalState.device,
-            iconProps: { iconName: Icons.Camera, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
-            text: 'Capture',
+            key: "start",
+            disabled: !GLOBAL_STATE.device,
+            iconProps: {
+                iconName: Icons.Camera,
+                style: { height: 20, fontSize: 20, lineHeight: 1.5 },
+            },
+            text: "Capture",
             onClick: capture,
         },
         {
-            key: 'Save',
+            key: "Save",
             disabled: !state.imageData,
-            iconProps: { iconName: Icons.Save, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
-            text: 'Save',
+            iconProps: {
+                iconName: Icons.Save,
+                style: { height: 20, fontSize: 20, lineHeight: 1.5 },
+            },
+            text: "Save",
             onClick: () => {
                 const canvas = canvasRef.current;
                 if (!canvas) {
@@ -82,9 +92,9 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
                 }
 
                 const url = canvas.toDataURL();
-                const a = document.createElement('a');
+                const a = document.createElement("a");
                 a.href = url;
-                a.download = `Screenshot of ${GlobalState.backend!.name}.png`;
+                a.download = `Screenshot of ${GLOBAL_STATE.backend!.name}.png`;
                 a.click();
             },
         },
@@ -92,23 +102,30 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
 
     const commandBarFarItems = computed((): ICommandBarItemProps[] => [
         {
-            key: 'DemoMode',
-            iconProps: { iconName: Icons.Wand, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
+            key: "DemoMode",
+            iconProps: {
+                iconName: Icons.Wand,
+                style: { height: 20, fontSize: 20, lineHeight: 1.5 },
+            },
             checked: state.demoModeVisible,
-            text: 'Demo Mode',
+            text: "Demo Mode",
             onClick: state.toggleDemoModeVisible,
         },
         {
-            key: 'info',
-            iconProps: { iconName: Icons.Info, style: { height: 20, fontSize: 20, lineHeight: 1.5 } },
+            key: "info",
+            iconProps: {
+                iconName: Icons.Info,
+                style: { height: 20, fontSize: 20, lineHeight: 1.5 },
+            },
             iconOnly: true,
             tooltipHostProps: {
-                content: 'Use ADB FrameBuffer command to capture a full-size, high-resolution screenshot.',
+                content:
+                    "Use ADB FrameBuffer command to capture a full-size, high-resolution screenshot.",
                 calloutProps: {
                     calloutMaxWidth: 250,
-                }
+                },
             },
-        }
+        },
     ]);
 
     return (
@@ -117,13 +134,20 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
                 <title>Screen Capture - Android Web Toolbox</title>
             </Head>
 
-            <CommandBar items={commandBarItems.get()} farItems={commandBarFarItems.get()} />
+            <CommandBar
+                items={commandBarItems.get()}
+                farItems={commandBarFarItems.get()}
+            />
             <Stack horizontal grow styles={{ root: { height: 0 } }}>
                 <DeviceView width={state.width} height={state.height}>
-                    <canvas ref={canvasRef} style={{ display: 'block' }} />
+                    <canvas ref={canvasRef} style={{ display: "block" }} />
                 </DeviceView>
 
-                <DemoModePanel style={{ display: state.demoModeVisible ? 'block' : 'none' }} />
+                <DemoModePanel
+                    style={{
+                        display: state.demoModeVisible ? "block" : "none",
+                    }}
+                />
             </Stack>
         </Stack>
     );

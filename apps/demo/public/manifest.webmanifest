@@ -11,7 +11,7 @@
         }
     ],
     "isolated_storage": true,
-    "name": "WebADB Demo",
+    "name": "Android Web Toolbox",
     "short_name": "WebADB",
     "start_url": "/",
     "scope": "/"

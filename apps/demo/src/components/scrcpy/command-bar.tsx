@@ -10,12 +10,13 @@ import {
 } from "@yume-chan/scrcpy";
 import { action, computed } from "mobx";
 import { observer } from "mobx-react-lite";
-import { GlobalState } from "../../state";
+import { GLOBAL_STATE } from "../../state";
 import { Icons } from "../../utils";
 import { ExternalLink } from "../external-link";
 import { CommandBarSpacerItem } from "./command-bar-spacer-item";
 import { RECORD_STATE } from "./recorder";
 import { STATE } from "./state";
+import { SETTING_STATE } from "./settings";
 
 const ITEMS = computed(() => {
     const result: ICommandBarItemProps[] = [];
@@ -23,7 +24,7 @@ const ITEMS = computed(() => {
     if (!STATE.running) {
         result.push({
             key: "start",
-            disabled: !GlobalState.device,
+            disabled: !GLOBAL_STATE.device,
             iconProps: { iconName: Icons.Play },
             text: "Start",
             onClick: STATE.start as VoidFunction,
@@ -262,11 +263,11 @@ const ITEMS = computed(() => {
             key: "Settings",
             iconProps: { iconName: Icons.Settings },
             canCheck: true,
-            checked: STATE.settingsVisible,
+            checked: SETTING_STATE.settingsVisible,
             text: "Settings",
             iconOnly: true,
             onClick: action(() => {
-                STATE.settingsVisible = !STATE.settingsVisible;
+                SETTING_STATE.settingsVisible = !SETTING_STATE.settingsVisible;
             }),
         },
         {

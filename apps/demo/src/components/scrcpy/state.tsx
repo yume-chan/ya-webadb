@@ -1,11 +1,7 @@
-import { IconButton } from "@fluentui/react";
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
-import { Disposable } from "@yume-chan/event";
 import {
     AdbScrcpyClient,
     AdbScrcpyOptions1_22,
-    AndroidCodecLevel,
-    AndroidCodecProfile,
     AndroidScreenPowerMode,
     CodecOptions,
     DEFAULT_SERVER_PATH,
@@ -13,12 +9,10 @@ import {
     ScrcpyHoverHelper,
     ScrcpyLogLevel,
     ScrcpyOptions1_25,
-    ScrcpyVideoOrientation,
     ScrcpyVideoStreamConfigurationPacket,
     ScrcpyVideoStreamPacket,
     clamp,
 } from "@yume-chan/scrcpy";
-import { TinyH264Decoder } from "@yume-chan/scrcpy-decoder-tinyh264";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
 import {
     ChunkStream,
@@ -26,38 +20,13 @@ import {
     ReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import {
-    action,
-    autorun,
-    makeAutoObservable,
-    observable,
-    runInAction,
-} from "mobx";
-import { GlobalState } from "../../state";
-import { Icons, ProgressStream } from "../../utils";
+import { action, autorun, makeAutoObservable, runInAction } from "mobx";
+import { GLOBAL_STATE } from "../../state";
+import { ProgressStream } from "../../utils";
 import { DeviceViewRef } from "../device-view";
 import { fetchServer } from "./fetch-server";
 import { MuxerStream, RECORD_STATE } from "./recorder";
-import { SettingDefinition, Settings } from "./settings";
-
-export interface H264Decoder extends Disposable {
-    readonly maxProfile: AndroidCodecProfile | undefined;
-    readonly maxLevel: AndroidCodecLevel | undefined;
-
-    readonly renderer: HTMLElement;
-    readonly frameRendered: number;
-    readonly writable: WritableStream<ScrcpyVideoStreamPacket>;
-}
-
-export interface H264DecoderConstructor {
-    new (): H264Decoder;
-}
-
-interface DecoderDefinition {
-    key: string;
-    name: string;
-    Constructor: H264DecoderConstructor;
-}
+import { H264Decoder, SETTING_STATE } from "./settings";
 
 export class ScrcpyPageState {
     running = false;
@@ -67,7 +36,6 @@ export class ScrcpyPageState {
 
     logVisible = false;
     log: string[] = [];
-    settingsVisible = false;
     demoModeVisible = false;
     navigationBarVisible = true;
 
@@ -93,82 +61,13 @@ export class ScrcpyPageState {
                 controller.enqueue(serverBuffer);
                 controller.close();
             },
-        }).pipeTo(AdbScrcpyClient.pushServer(GlobalState.device!));
+        }).pipeTo(AdbScrcpyClient.pushServer(GLOBAL_STATE.device!));
     }
 
-    encoders: string[] = [];
-    updateEncoders = async () => {
-        try {
-            await this.pushServer();
-
-            const encoders = await AdbScrcpyClient.getEncoders(
-                GlobalState.device!,
-                DEFAULT_SERVER_PATH,
-                SCRCPY_SERVER_VERSION,
-                new AdbScrcpyOptions1_22(
-                    new ScrcpyOptions1_25({
-                        logLevel: ScrcpyLogLevel.Debug,
-                        tunnelForward: this.settings.tunnelForward,
-                    })
-                )
-            );
-
-            runInAction(() => {
-                this.encoders = encoders;
-                if (
-                    !this.settings.encoderName ||
-                    !this.encoders.includes(this.settings.encoderName)
-                ) {
-                    this.settings.encoderName = this.encoders[0];
-                }
-            });
-        } catch (e: any) {
-            GlobalState.showErrorDialog(e);
-        }
-    };
-
-    decoders: DecoderDefinition[] = [
-        {
-            key: "tinyh264",
-            name: "TinyH264 (Software)",
-            Constructor: TinyH264Decoder,
-        },
-    ];
     decoder: H264Decoder | undefined = undefined;
     configuration: ScrcpyVideoStreamConfigurationPacket | undefined = undefined;
     fpsCounterIntervalId: any = undefined;
     fps = 0;
-
-    displays: number[] = [];
-    updateDisplays = async () => {
-        try {
-            await this.pushServer();
-
-            const displays = await AdbScrcpyClient.getDisplays(
-                GlobalState.device!,
-                DEFAULT_SERVER_PATH,
-                SCRCPY_SERVER_VERSION,
-                new AdbScrcpyOptions1_22(
-                    new ScrcpyOptions1_25({
-                        logLevel: ScrcpyLogLevel.Debug,
-                        tunnelForward: this.settings.tunnelForward,
-                    })
-                )
-            );
-
-            runInAction(() => {
-                this.displays = displays;
-                if (
-                    !this.settings.displayId ||
-                    !this.displays.includes(this.settings.displayId)
-                ) {
-                    this.settings.displayId = this.displays[0];
-                }
-            });
-        } catch (e: any) {
-            GlobalState.showErrorDialog(e);
-        }
-    };
 
     connecting = false;
     serverTotalSize = 0;
@@ -179,171 +78,8 @@ export class ScrcpyPageState {
     debouncedServerUploadedSize = 0;
     serverUploadSpeed = 0;
 
-    settings: Settings = {
-        maxSize: 1080,
-        bitRate: 4_000_000,
-        lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
-        displayId: 0,
-        crop: "",
-        powerOn: true,
-    };
-
-    get settingDefinitions() {
-        const result: SettingDefinition[] = [];
-
-        result.push(
-            {
-                key: "powerOn",
-                type: "toggle",
-                label: "Turn device on when starting",
-            },
-            {
-                key: "turnScreenOff",
-                type: "toggle",
-                label: "Turn screen off when starting",
-            },
-            {
-                key: "stayAwake",
-                type: "toggle",
-                label: "Stay awake (if plugged in)",
-            },
-            {
-                key: "powerOffOnClose",
-                type: "toggle",
-                label: "Turn device off when exiting",
-            }
-        );
-
-        result.push({
-            key: "displayId",
-            type: "dropdown",
-            label: "Display",
-            placeholder: "Press refresh to update available displays",
-            labelExtra: (
-                <IconButton
-                    iconProps={{ iconName: Icons.ArrowClockwise }}
-                    disabled={!GlobalState.device}
-                    text="Refresh"
-                    onClick={this.updateDisplays}
-                />
-            ),
-            options: this.displays.map((item) => ({
-                key: item,
-                text: item.toString(),
-            })),
-        });
-
-        result.push({
-            key: "crop",
-            type: "text",
-            label: "Crop",
-            placeholder: "W:H:X:Y",
-        });
-
-        result.push({
-            key: "maxSize",
-            type: "number",
-            label: "Max Resolution (longer side, 0 = unlimited)",
-            min: 0,
-            max: 2560,
-            step: 50,
-        });
-
-        result.push({
-            key: "bitRate",
-            type: "number",
-            label: "Max Bit Rate",
-            min: 100,
-            max: 100_000_000,
-            step: 100,
-        });
-
-        result.push({
-            key: "lockVideoOrientation",
-            type: "dropdown",
-            label: "Lock Video Orientation",
-            options: [
-                {
-                    key: ScrcpyVideoOrientation.Unlocked,
-                    text: "Unlocked",
-                },
-                {
-                    key: ScrcpyVideoOrientation.Initial,
-                    text: "Current",
-                },
-                {
-                    key: ScrcpyVideoOrientation.Portrait,
-                    text: "Portrait",
-                },
-                {
-                    key: ScrcpyVideoOrientation.Landscape,
-                    text: "Landscape",
-                },
-                {
-                    key: ScrcpyVideoOrientation.PortraitFlipped,
-                    text: "Portrait (Flipped)",
-                },
-                {
-                    key: ScrcpyVideoOrientation.LandscapeFlipped,
-                    text: "Landscape (Flipped)",
-                },
-            ],
-        });
-
-        result.push({
-            key: "encoderName",
-            type: "dropdown",
-            label: "Encoder",
-            placeholder: "Press refresh to update available encoders",
-            labelExtra: (
-                <IconButton
-                    iconProps={{ iconName: Icons.ArrowClockwise }}
-                    disabled={!GlobalState.device}
-                    text="Refresh"
-                    onClick={this.updateEncoders}
-                />
-            ),
-            options: this.encoders.map((item) => ({
-                key: item,
-                text: item,
-            })),
-        });
-
-        if (this.decoders.length > 1) {
-            result.push({
-                key: "decoder",
-                type: "dropdown",
-                label: "Decoder",
-                options: this.decoders.map((item) => ({
-                    key: item.key,
-                    text: item.name,
-                    data: item,
-                })),
-            });
-        }
-
-        result.push({
-            key: "ignoreDecoderCodecArgs",
-            type: "toggle",
-            label: `Ignore decoder's codec arguments`,
-            description: `Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.`,
-        });
-
-        result.push({
-            key: "tunnelForward",
-            type: "toggle",
-            label: "Use forward connection",
-            description:
-                "Android before version 9 has a bug that prevents reverse tunneling when using ADB over WiFi.",
-        });
-
-        return result;
-    }
-
     constructor() {
         makeAutoObservable(this, {
-            decoders: observable.shallow,
-            settings: observable.deep,
             start: false,
             stop: action.bound,
             dispose: action.bound,
@@ -353,15 +89,7 @@ export class ScrcpyPageState {
         });
 
         autorun(() => {
-            if (GlobalState.device) {
-                runInAction(() => {
-                    this.encoders = [];
-                    this.settings.encoderName = undefined;
-
-                    this.displays = [];
-                    this.settings.displayId = undefined;
-                });
-            } else {
+            if (!GLOBAL_STATE.device) {
                 this.dispose();
             }
         });
@@ -374,19 +102,15 @@ export class ScrcpyPageState {
                 this.rendererContainer.appendChild(this.decoder.renderer);
             }
         });
-
-        autorun(() => {
-            this.settings.decoder = this.decoders[0].key;
-        });
     }
 
     start = async () => {
-        if (!GlobalState.device) {
+        if (!GLOBAL_STATE.device) {
             return;
         }
 
         try {
-            if (!this.settings.decoder) {
+            if (!SETTING_STATE.settings.decoder) {
                 throw new Error("No available decoder");
             }
 
@@ -411,7 +135,6 @@ export class ScrcpyPageState {
             );
 
             let serverBuffer: Uint8Array;
-
             try {
                 serverBuffer = await fetchServer(
                     action(([downloaded, total]) => {
@@ -455,7 +178,7 @@ export class ScrcpyPageState {
                             })
                         )
                     )
-                    .pipeTo(AdbScrcpyClient.pushServer(GlobalState.device!));
+                    .pipeTo(AdbScrcpyClient.pushServer(GLOBAL_STATE.device!));
 
                 runInAction(() => {
                     this.serverUploadSpeed =
@@ -468,8 +191,9 @@ export class ScrcpyPageState {
             }
 
             const decoderDefinition =
-                this.decoders.find((x) => x.key === this.settings.decoder) ??
-                this.decoders[0];
+                SETTING_STATE.decoders.find(
+                    (x) => x.key === SETTING_STATE.settings.decoder
+                ) ?? SETTING_STATE.decoders[0];
             const decoder = new decoderDefinition.Constructor();
 
             runInAction(() => {
@@ -488,10 +212,10 @@ export class ScrcpyPageState {
             const options = new AdbScrcpyOptions1_22(
                 new ScrcpyOptions1_25({
                     logLevel: ScrcpyLogLevel.Debug,
-                    ...this.settings,
+                    ...SETTING_STATE.settings,
                     sendDeviceMeta: false,
                     sendDummyByte: false,
-                    codecOptions: !this.settings.ignoreDecoderCodecArgs
+                    codecOptions: !SETTING_STATE.settings.ignoreDecoderCodecArgs
                         ? new CodecOptions({
                               profile: decoder.maxProfile,
                               level: decoder.maxLevel,
@@ -513,7 +237,7 @@ export class ScrcpyPageState {
             });
 
             const client = await AdbScrcpyClient.start(
-                GlobalState.device!,
+                GLOBAL_STATE.device!,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 options
@@ -568,7 +292,7 @@ export class ScrcpyPageState {
                 )
                 .catch(() => {});
 
-            if (this.settings.turnScreenOff) {
+            if (SETTING_STATE.settings.turnScreenOff) {
                 await client.controlMessageSerializer!.setScreenPowerMode(
                     AndroidScreenPowerMode.Off
                 );
@@ -580,7 +304,7 @@ export class ScrcpyPageState {
                 this.running = true;
             });
         } catch (e: any) {
-            GlobalState.showErrorDialog(e);
+            GLOBAL_STATE.showErrorDialog(e);
         } finally {
             runInAction(() => {
                 this.connecting = false;

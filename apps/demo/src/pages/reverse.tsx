@@ -1,36 +1,46 @@
 import { decodeUtf8 } from "@yume-chan/adb";
-import { WritableStream } from '@yume-chan/stream-extra';
+import { WritableStream } from "@yume-chan/stream-extra";
 import { makeAutoObservable, reaction, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
-import { GlobalState } from "../state";
+import { GLOBAL_STATE } from "../state";
 
 const state = makeAutoObservable({
     log: [] as string[],
 });
 
-reaction(() => GlobalState.device, async device => {
-    if (!device) {
-        return;
-    }
+reaction(
+    () => GLOBAL_STATE.device,
+    async (device) => {
+        if (!device) {
+            return;
+        }
 
-    await device.reverse.remove('tcp:3000').catch(() => { });
-    await device.reverse.add('tcp:3000', 'tcp:1234', socket => {
-        runInAction(() => {
-            state.log.push(`received stream ${socket.localId}`);
+        await device.reverse.remove("tcp:3000").catch(() => {});
+        await device.reverse.add("tcp:3000", "tcp:1234", (socket) => {
+            runInAction(() => {
+                state.log.push(`received stream ${socket.localId}`);
+            });
+            socket.readable.pipeTo(
+                new WritableStream({
+                    write: (chunk) => {
+                        runInAction(() => {
+                            state.log.push(
+                                `data from ${socket.localId}: ${decodeUtf8(
+                                    chunk
+                                )}`
+                            );
+                        });
+                    },
+                })
+            );
+
+            // Return true to accept the connection.
+            return true;
         });
-        socket.readable.pipeTo(new WritableStream({
-            write: chunk => {
-                runInAction(() => {
-                    state.log.push(`data from ${socket.localId}: ${decodeUtf8(chunk)}`);
-                });
-            }
-        }));
-
-        // Return true to accept the connection.
-        return true;
-    });
-}, { fireImmediately: true });
+    },
+    { fireImmediately: true }
+);
 
 const ReverseTesterPage: NextPage = () => {
     return (

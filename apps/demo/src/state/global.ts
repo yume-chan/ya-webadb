@@ -1,7 +1,7 @@
 import { Adb, AdbBackend, AdbPacketData } from "@yume-chan/adb";
-import { action, makeAutoObservable, observable } from 'mobx';
+import { action, makeAutoObservable, observable } from "mobx";
 
-export type PacketLogItemDirection = 'in' | 'out';
+export type PacketLogItemDirection = "in" | "out";
 
 export interface PacketLogItem extends AdbPacketData {
     direction: PacketLogItemDirection;
@@ -12,12 +12,12 @@ export interface PacketLogItem extends AdbPacketData {
     payloadString?: string;
 }
 
-export class GlobalStateType {
+export class GlobalState {
     backend: AdbBackend | undefined = undefined;
     device: Adb | undefined = undefined;
 
     errorDialogVisible = false;
-    errorDialogMessage = '';
+    errorDialogMessage = "";
 
     logs: PacketLogItem[] = [];
 
@@ -48,7 +48,7 @@ export class GlobalStateType {
 
     appendLog(direction: PacketLogItemDirection, packet: AdbPacketData) {
         (packet as PacketLogItem).direction = direction;
-        this.logs.push((packet as PacketLogItem));
+        this.logs.push(packet as PacketLogItem);
     }
 
     clearLog() {
@@ -56,4 +56,4 @@ export class GlobalStateType {
     }
 }
 
-export const GlobalState = new GlobalStateType();
+export const GLOBAL_STATE = new GlobalState();

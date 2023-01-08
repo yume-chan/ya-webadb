@@ -1,7 +1,12 @@
-import { Dialog, DialogFooter, DialogType, PrimaryButton } from '@fluentui/react';
+import {
+    Dialog,
+    DialogFooter,
+    DialogType,
+    PrimaryButton,
+} from "@fluentui/react";
 import { observer } from "mobx-react-lite";
-import { PropsWithChildren } from 'react';
-import { GlobalState } from '../state';
+import { PropsWithChildren } from "react";
+import { GLOBAL_STATE } from "../state";
 
 export const ErrorDialogProvider = observer((props: PropsWithChildren<{}>) => {
     return (
@@ -9,15 +14,18 @@ export const ErrorDialogProvider = observer((props: PropsWithChildren<{}>) => {
             {props.children}
 
             <Dialog
-                hidden={!GlobalState.errorDialogVisible}
+                hidden={!GLOBAL_STATE.errorDialogVisible}
                 dialogContentProps={{
                     type: DialogType.normal,
-                    title: 'Error',
-                    subText: GlobalState.errorDialogMessage,
+                    title: "Error",
+                    subText: GLOBAL_STATE.errorDialogMessage,
                 }}
             >
                 <DialogFooter>
-                    <PrimaryButton text="OK" onClick={GlobalState.hideErrorDialog} />
+                    <PrimaryButton
+                        text="OK"
+                        onClick={GLOBAL_STATE.hideErrorDialog}
+                    />
                 </DialogFooter>
             </Dialog>
         </>
