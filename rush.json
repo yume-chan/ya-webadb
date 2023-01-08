@@ -456,10 +456,6 @@
             "projectFolder": "apps/demo"
         },
         {
-            "packageName": "unofficial-adb-book",
-            "projectFolder": "apps/book"
-        },
-        {
             "packageName": "@yume-chan/tsconfig",
             "projectFolder": "toolchain/tsconfig"
         },
