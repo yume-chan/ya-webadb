@@ -27,7 +27,13 @@ import {
 import { TinyH264Decoder } from "@yume-chan/scrcpy-decoder-tinyh264";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
 import { WritableStream } from "@yume-chan/stream-extra";
-import { autorun, computed, makeAutoObservable, runInAction } from "mobx";
+import {
+    autorun,
+    computed,
+    makeAutoObservable,
+    observable,
+    runInAction,
+} from "mobx";
 import { observer } from "mobx-react-lite";
 import { GLOBAL_STATE } from "../../state";
 import { Icons } from "../../utils";
@@ -191,28 +197,34 @@ export interface DecoderDefinition {
     Constructor: H264DecoderConstructor;
 }
 
-export const SETTING_STATE = makeAutoObservable({
-    settingsVisible: false,
+export const SETTING_STATE = makeAutoObservable(
+    {
+        settingsVisible: false,
 
-    displays: [] as number[],
-    encoders: [] as string[],
-    decoders: [
-        {
-            key: "tinyh264",
-            name: "TinyH264 (Software)",
-            Constructor: TinyH264Decoder,
-        },
-    ] as DecoderDefinition[],
+        displays: [] as number[],
+        encoders: [] as string[],
+        decoders: [
+            {
+                key: "tinyh264",
+                name: "TinyH264 (Software)",
+                Constructor: TinyH264Decoder,
+            },
+        ] as DecoderDefinition[],
 
-    settings: {
-        maxSize: 1080,
-        bitRate: 4_000_000,
-        lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
-        displayId: 0,
-        crop: "",
-        powerOn: true,
-    } as Settings,
-});
+        settings: {
+            maxSize: 1080,
+            bitRate: 4_000_000,
+            lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
+            displayId: 0,
+            crop: "",
+            powerOn: true,
+        } as Settings,
+    },
+    {
+        decoders: observable.shallow,
+        settings: observable.deep,
+    }
+);
 
 autorun(() => {
     if (GLOBAL_STATE.device) {
