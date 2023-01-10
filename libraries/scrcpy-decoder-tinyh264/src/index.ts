@@ -43,6 +43,11 @@ export class TinyH264Decoder {
         return this._frameRendered;
     }
 
+    private _frameSkipped = 0;
+    public get frameSkipped() {
+        return this._frameSkipped;
+    }
+
     private _writable: WritableStream<ScrcpyVideoStreamPacket>;
     public get writable() {
         return this._writable;

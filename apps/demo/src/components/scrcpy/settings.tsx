@@ -184,6 +184,7 @@ export interface H264Decoder extends Disposable {
 
     readonly renderer: HTMLElement;
     readonly frameRendered: number;
+    readonly frameSkipped: number;
     readonly writable: WritableStream<ScrcpyVideoStreamPacket>;
 }
 

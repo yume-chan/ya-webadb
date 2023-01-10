@@ -29,6 +29,11 @@ export class WebCodecsDecoder {
         return this._frameRendered;
     }
 
+    private _frameSkipped = 0;
+    public get frameSkipped() {
+        return this._frameSkipped;
+    }
+
     private context: CanvasRenderingContext2D;
     private decoder: VideoDecoder;
 
@@ -43,6 +48,7 @@ export class WebCodecsDecoder {
         this.decoder = new VideoDecoder({
             output: (frame) => {
                 if (this.lastFrame) {
+                    this._frameSkipped += 1;
                     this.lastFrame.close();
                 }
                 this.lastFrame = frame;

@@ -13,6 +13,7 @@ export interface CodecOptionsInit {
     level: AndroidCodecLevel;
 
     iFrameInterval: number;
+    maxBframes: number;
     repeatPreviousFrameAfter: number;
     maxPtsGapToEncoder: number;
 }

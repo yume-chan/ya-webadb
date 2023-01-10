@@ -67,7 +67,7 @@ export class ScrcpyPageState {
     decoder: H264Decoder | undefined = undefined;
     configuration: ScrcpyVideoStreamConfigurationPacket | undefined = undefined;
     fpsCounterIntervalId: any = undefined;
-    fps = 0;
+    fps = "0";
 
     connecting = false;
     serverTotalSize = 0;
@@ -199,11 +199,22 @@ export class ScrcpyPageState {
             runInAction(() => {
                 this.decoder = decoder;
 
-                let lastFrameCount = 0;
+                let lastFrameRendered = 0;
+                let lastFrameSkipped = 0;
                 this.fpsCounterIntervalId = setInterval(
                     action(() => {
-                        this.fps = decoder.frameRendered - lastFrameCount;
-                        lastFrameCount = decoder.frameRendered;
+                        const deltaRendered =
+                            decoder.frameRendered - lastFrameRendered;
+                        const deltaSkipped =
+                            decoder.frameSkipped - lastFrameSkipped;
+                        // prettier-ignore
+                        this.fps = `${
+                            deltaRendered
+                        }${
+                            deltaSkipped ? `+${deltaSkipped} skipped` : ""
+                        }`;
+                        lastFrameRendered = decoder.frameRendered;
+                        lastFrameSkipped = decoder.frameSkipped;
                     }),
                     1000
                 );
@@ -328,7 +339,7 @@ export class ScrcpyPageState {
             RECORD_STATE.recording = false;
         }
 
-        this.fps = 0;
+        this.fps = "0";
         clearTimeout(this.fpsCounterIntervalId);
 
         this.client = undefined;
