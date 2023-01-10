@@ -1,4 +1,9 @@
-import { type AbortSignal } from "web-streams-polyfill";
+import {
+    ReadableStream as ReadableStreamPolyfill,
+    TransformStream as TransformStreamPolyfill,
+    WritableStream as WritableStreamPolyfill,
+    type AbortSignal,
+} from "web-streams-polyfill";
 export * from "web-streams-polyfill";
 
 /** A controller object that allows you to abort one or more DOM requests as and when desired. */
@@ -21,8 +26,39 @@ interface AbortControllerConstructor {
 
 interface GlobalExtension {
     AbortController: AbortControllerConstructor;
+    ReadableStream: typeof ReadableStreamPolyfill;
+    WritableStream: typeof WritableStreamPolyfill;
+    TransformStream: typeof TransformStreamPolyfill;
 }
 
-export const AbortController: AbortControllerConstructor = (
-    globalThis as unknown as GlobalExtension
-).AbortController;
+const GLOBAL = globalThis as unknown as GlobalExtension;
+
+export const AbortController = GLOBAL.AbortController;
+
+export type ReadableStream<R = any> = ReadableStreamPolyfill<R>;
+export let ReadableStream = ReadableStreamPolyfill;
+
+export type WritableStream<W = any> = WritableStreamPolyfill<W>;
+export let WritableStream = WritableStreamPolyfill;
+
+export type TransformStream<I = any, O = any> = TransformStreamPolyfill<I, O>;
+export let TransformStream = TransformStreamPolyfill;
+
+if (GLOBAL.ReadableStream && GLOBAL.WritableStream && GLOBAL.TransformStream) {
+    // Use browser native implementation
+    ReadableStream = GLOBAL.ReadableStream;
+    WritableStream = GLOBAL.WritableStream;
+    TransformStream = GLOBAL.TransformStream;
+} else {
+    // TODO: enable loading Node.js stream implementation when bundler supports Top Level Await
+    // try {
+    //     // Use Node.js native implementation
+    //     const MODULE_NAME = "node:stream/web";
+    //     const StreamWeb = (await import(MODULE_NAME)) as GlobalExtension;
+    //     ReadableStream = StreamWeb.ReadableStream;
+    //     WritableStream = StreamWeb.WritableStream;
+    //     TransformStream = StreamWeb.TransformStream;
+    // } catch {
+    //     // ignore
+    // }
+}
