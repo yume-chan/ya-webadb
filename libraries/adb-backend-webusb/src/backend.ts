@@ -17,11 +17,88 @@ import {
     type StructDeserializeStream,
 } from "@yume-chan/struct";
 
-export const ADB_DEVICE_FILTER: USBDeviceFilter = {
+/**
+ * `classCode`, `subclassCode` and `protocolCode` are required
+ * for selecting correct USB configuration and interface.
+ */
+export type AdbDeviceFilter = USBDeviceFilter &
+    Required<
+        Pick<USBDeviceFilter, "classCode" | "subclassCode" | "protocolCode">
+    >;
+
+export const ADB_DEFAULT_DEVICE_FILTER = {
     classCode: 0xff,
     subclassCode: 0x42,
     protocolCode: 1,
-};
+} as const satisfies AdbDeviceFilter;
+
+function alternateMatchesFilter(
+    alternate: USBAlternateInterface,
+    filters: AdbDeviceFilter[]
+) {
+    return filters.some(
+        (filter) =>
+            alternate.interfaceClass === filter.classCode &&
+            alternate.interfaceSubclass === filter.subclassCode &&
+            alternate.interfaceProtocol === filter.protocolCode
+    );
+}
+
+function findUsbAlternateInterface(
+    device: USBDevice,
+    filters: AdbDeviceFilter[]
+) {
+    for (const configuration of device.configurations) {
+        for (const interface_ of configuration.interfaces) {
+            for (const alternate of interface_.alternates) {
+                if (alternateMatchesFilter(alternate, filters)) {
+                    return { configuration, interface_, alternate };
+                }
+            }
+        }
+    }
+
+    throw new Error("No matched alternate interface found");
+}
+
+/**
+ * Find the first pair of input and output endpoints from an alternate interface.
+ *
+ * ADB interface only has two endpoints, one for input and one for output.
+ */
+function findUsbEndpoints(endpoints: USBEndpoint[]) {
+    if (endpoints.length === 0) {
+        throw new Error("No endpoints given");
+    }
+
+    let inEndpoint: USBEndpoint | undefined;
+    let outEndpoint: USBEndpoint | undefined;
+
+    for (const endpoint of endpoints) {
+        switch (endpoint.direction) {
+            case "in":
+                inEndpoint = endpoint;
+                if (outEndpoint) {
+                    return { inEndpoint, outEndpoint };
+                }
+                break;
+            case "out":
+                outEndpoint = endpoint;
+                if (inEndpoint) {
+                    return { inEndpoint, outEndpoint };
+                }
+                break;
+        }
+    }
+
+    if (!inEndpoint) {
+        throw new Error("No input endpoint found.");
+    }
+    if (!outEndpoint) {
+        throw new Error("No output endpoint found.");
+    }
+    throw new Error("unreachable");
+}
 
 class Uint8ArrayStructDeserializeStream implements StructDeserializeStream {
     private buffer: Uint8Array;
@@ -162,17 +239,21 @@ export class AdbWebUsbBackend implements AdbBackend {
         return !!globalThis.navigator?.usb;
     }
 
-    public static async getDevices(): Promise<AdbWebUsbBackend[]> {
+    public static async getDevices(
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+    ): Promise<AdbWebUsbBackend[]> {
         const devices = await window.navigator.usb.getDevices();
-        return devices.map((device) => new AdbWebUsbBackend(device));
+        return devices.map((device) => new AdbWebUsbBackend(filters, device));
     }
 
-    public static async requestDevice(): Promise<AdbWebUsbBackend | undefined> {
+    public static async requestDevice(
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+    ): Promise<AdbWebUsbBackend | undefined> {
         try {
             const device = await navigator.usb.requestDevice({
-                filters: [ADB_DEVICE_FILTER],
+                filters,
             });
-            return new AdbWebUsbBackend(device);
+            return new AdbWebUsbBackend(filters, device);
         } catch (e) {
             // User cancelled the device picker
             if (e instanceof DOMException && e.name === "NotFoundError") {
@@ -183,7 +264,11 @@ export class AdbWebUsbBackend implements AdbBackend {
         }
     }
 
+    private _filters: AdbDeviceFilter[];
     private _device: USBDevice;
+    public get device() {
+        return this._device;
+    }
 
     public get serial(): string {
         return this._device.serialNumber!;
@@ -193,7 +278,8 @@ export class AdbWebUsbBackend implements AdbBackend {
         return this._device.productName!;
     }
 
-    public constructor(device: USBDevice) {
+    public constructor(filters: AdbDeviceFilter[], device: USBDevice) {
+        this._filters = filters;
         this._device = device;
     }
 
@@ -202,76 +288,40 @@ export class AdbWebUsbBackend implements AdbBackend {
             await this._device.open();
         }
 
-        for (const configuration of this._device.configurations) {
-            for (const interface_ of configuration.interfaces) {
-                for (const alternate of interface_.alternates) {
-                    if (
-                        alternate.interfaceSubclass ===
-                            ADB_DEVICE_FILTER.subclassCode &&
-                        alternate.interfaceClass ===
-                            ADB_DEVICE_FILTER.classCode &&
-                        alternate.interfaceSubclass ===
-                            ADB_DEVICE_FILTER.subclassCode
-                    ) {
-                        if (
-                            this._device.configuration?.configurationValue !==
-                            configuration.configurationValue
-                        ) {
-                            // Note: Switching configuration is not supported on Windows,
-                            // but Android devices should always expose ADB function at the first (default) configuration.
-                            await this._device.selectConfiguration(
-                                configuration.configurationValue
-                            );
-                        }
+        const { configuration, interface_, alternate } =
+            findUsbAlternateInterface(this._device, this._filters);
 
-                        if (!interface_.claimed) {
-                            await this._device.claimInterface(
-                                interface_.interfaceNumber
-                            );
-                        }
-
-                        if (
-                            interface_.alternate.alternateSetting !==
-                            alternate.alternateSetting
-                        ) {
-                            await this._device.selectAlternateInterface(
-                                interface_.interfaceNumber,
-                                alternate.alternateSetting
-                            );
-                        }
-
-                        let inEndpoint: USBEndpoint | undefined;
-                        let outEndpoint: USBEndpoint | undefined;
-
-                        for (const endpoint of alternate.endpoints) {
-                            switch (endpoint.direction) {
-                                case "in":
-                                    inEndpoint = endpoint;
-                                    if (outEndpoint) {
-                                        return new AdbWebUsbBackendStream(
-                                            this._device,
-                                            inEndpoint,
-                                            outEndpoint
-                                        );
-                                    }
-                                    break;
-                                case "out":
-                                    outEndpoint = endpoint;
-                                    if (inEndpoint) {
-                                        return new AdbWebUsbBackendStream(
-                                            this._device,
-                                            inEndpoint,
-                                            outEndpoint
-                                        );
-                                    }
-                                    break;
-                            }
-                        }
-                    }
-                }
-            }
+        if (
+            this._device.configuration?.configurationValue !==
+            configuration.configurationValue
+        ) {
+            // Note: Switching configuration is not supported on Windows,
+            // but Android devices should always expose ADB function at the first (default) configuration.
+            await this._device.selectConfiguration(
+                configuration.configurationValue
+            );
         }
 
-        throw new Error("Can not find ADB interface");
+        if (!interface_.claimed) {
+            await this._device.claimInterface(interface_.interfaceNumber);
+        }
+
+        if (
+            interface_.alternate.alternateSetting !== alternate.alternateSetting
+        ) {
+            await this._device.selectAlternateInterface(
+                interface_.interfaceNumber,
+                alternate.alternateSetting
+            );
+        }
+
+        const { inEndpoint, outEndpoint } = findUsbEndpoints(
+            alternate.endpoints
+        );
+        return new AdbWebUsbBackendStream(
+            this._device,
+            inEndpoint,
+            outEndpoint
+        );
     }
 }
