@@ -6,7 +6,7 @@ module.exports = {
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
     ],
-    plugins: ["@typescript-eslint", "@yume-chan/eslint-plugin-import"],
+    plugins: ["@typescript-eslint", "import"],
     rules: {
         "no-constant-condition": ["error", { checkLoops: false }],
         "no-plusplus": "error",
@@ -19,13 +19,10 @@ module.exports = {
             },
         ],
 
-        "@yume-chan/import/consistent-type-specifier-style": [
-            "error",
-            "prefer-inline",
-        ],
-        "@yume-chan/import/no-cycle": "error",
-        "@yume-chan/import/no-duplicates": "error",
-        "@yume-chan/import/order": [
+        "import/consistent-type-specifier-style": ["error", "prefer-inline"],
+        "import/no-cycle": "error",
+        "import/no-duplicates": "error",
+        "import/order": [
             "error",
             {
                 groups: [
