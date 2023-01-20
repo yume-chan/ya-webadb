@@ -14,7 +14,7 @@ function testEndian(
     max: number,
     littleEndian: boolean
 ) {
-    test("min", () => {
+    test(`min = ${min}`, () => {
         const buffer = new ArrayBuffer(type.size);
         const view = new DataView(buffer);
         (
@@ -43,7 +43,7 @@ function testEndian(
         expect(output).toBe(input);
     });
 
-    test("max", () => {
+    test(`max = ${max}`, () => {
         const buffer = new ArrayBuffer(type.size);
         const view = new DataView(buffer);
         (
@@ -61,41 +61,30 @@ function testEndian(
 function testDeserialize(type: NumberFieldType) {
     if (type.size === 1) {
         if (type.signed) {
-            testEndian(
-                type,
-                2 ** (type.size * 8) / -2,
-                2 ** (type.size * 8) / 2 - 1,
-                false
-            );
+            const MIN = -(2 ** (type.size * 8 - 1));
+            const MAX = -MIN - 1;
+            testEndian(type, MIN, MAX, false);
         } else {
-            testEndian(type, 0, 2 ** (type.size * 8) - 1, false);
+            const MAX = 2 ** (type.size * 8) - 1;
+            testEndian(type, 0, MAX, false);
         }
     } else {
         if (type.signed) {
+            const MIN = -(2 ** (type.size * 8 - 1));
+            const MAX = -MIN - 1;
             describe("big endian", () => {
-                testEndian(
-                    type,
-                    2 ** (type.size * 8) / -2,
-                    2 ** (type.size * 8) / 2 - 1,
-                    false
-                );
+                testEndian(type, MIN, MAX, false);
             });
-
             describe("little endian", () => {
-                testEndian(
-                    type,
-                    2 ** (type.size * 8) / -2,
-                    2 ** (type.size * 8) / 2 - 1,
-                    true
-                );
+                testEndian(type, MIN, MAX, true);
             });
         } else {
+            const MAX = 2 ** (type.size * 8) - 1;
             describe("big endian", () => {
-                testEndian(type, 0, 2 ** (type.size * 8) - 1, false);
+                testEndian(type, 0, MAX, false);
             });
-
             describe("little endian", () => {
-                testEndian(type, 0, 2 ** (type.size * 8) - 1, true);
+                testEndian(type, 0, MAX, true);
             });
         }
     }

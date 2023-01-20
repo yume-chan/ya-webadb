@@ -55,8 +55,8 @@ class BitReader {
  * Split NAL units from a H.264 Annex B stream.
  *
  * The input is not modified.
- * The returned NAL units are views of the input (no memory allocation and copy),
- * but still contains emulation prevention bytes.
+ * The returned NAL units are views of the input (no memory allocation nor copy),
+ * and still contains emulation prevention bytes.
  *
  * This methods returns a generator, so it can be stopped immediately
  * after the interested NAL unit is found.
@@ -160,13 +160,66 @@ export function removeH264Emulation(buffer: Uint8Array) {
     let zeroCount = 0;
     let inEmulation = false;
 
-    for (let i = 0; i < buffer.length; i += 1) {
+    let i = 0;
+    scan: for (; i < buffer.length; i += 1) {
         const byte = buffer[i]!;
 
-        if (output) {
-            output[outputOffset] = byte;
-            outputOffset += 1;
+        if (byte === 0x00) {
+            zeroCount += 1;
+            continue;
         }
+
+        // Current byte is not zero
+        const prevZeroCount = zeroCount;
+        zeroCount = 0;
+
+        if (prevZeroCount < 2) {
+            // zero or one `0x00`s are acceptable
+            continue;
+        }
+
+        if (byte === 0x01) {
+            // Unexpected start code
+            throw new Error("Invalid data");
+        }
+
+        if (prevZeroCount > 2) {
+            // Too much `0x00`s
+            throw new Error("Invalid data");
+        }
+
+        switch (byte) {
+            case 0x02:
+                // Didn't find why, but 7.4.1 NAL unit semantics forbids `0x000002` appearing in NAL units
+                throw new Error("Invalid data");
+            case 0x03:
+                // `0x000003` is the "emulation_prevention_three_byte"
+                // `0x00000300`, `0x00000301`, `0x00000302` and `0x00000303` represent
+                // `0x000000`, `0x000001`, `0x000002` and `0x000003` respectively
+                inEmulation = true;
+
+                // Create output and copy the data before the emulation prevention byte
+                // Output size is unknown, so we use the input size as an upper bound
+                output = new Uint8Array(buffer.length - 1);
+                output.set(buffer.subarray(0, i - prevZeroCount));
+                outputOffset = i - prevZeroCount + 1;
+                break scan;
+            default:
+                // `0x000004` or larger are as-is
+                break;
+        }
+    }
+
+    if (!output) {
+        return buffer;
+    }
+
+    // Continue at the byte after the emulation prevention byte
+    for (; i < buffer.length; i += 1) {
+        const byte = buffer[i]!;
+
+        output[outputOffset] = byte;
+        outputOffset += 1;
 
         if (inEmulation) {
             if (byte > 0x03) {
@@ -211,15 +264,8 @@ export function removeH264Emulation(buffer: Uint8Array) {
                 // `0x000000`, `0x000001`, `0x000002` and `0x000003` respectively
                 inEmulation = true;
 
-                if (!output) {
-                    // Create output and copy the data before the emulation prevention byte
-                    output = new Uint8Array(buffer.length - 1);
-                    output.set(buffer.subarray(0, i - prevZeroCount));
-                    outputOffset = i - prevZeroCount + 1;
-                } else {
-                    // Remove the emulation prevention byte
-                    outputOffset -= 1;
-                }
+                // Remove the emulation prevention byte
+                outputOffset -= 1;
                 break;
             default:
                 // `0x000004` or larger are as-is
@@ -227,7 +273,7 @@ export function removeH264Emulation(buffer: Uint8Array) {
         }
     }
 
-    return output?.subarray(0, outputOffset) ?? buffer;
+    return output.subarray(0, outputOffset);
 }
 
 // 7.3.2.1.1 Sequence parameter set data syntax

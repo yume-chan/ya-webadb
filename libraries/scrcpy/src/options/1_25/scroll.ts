@@ -10,17 +10,18 @@ import {
 } from "../../control/index.js";
 import { type ScrcpyScrollController } from "../1_16/index.js";
 
-const Int16Max = (1 << 15) - 1;
-
-const ScrcpyFloatToInt16NumberType: NumberFieldType = {
+export const ScrcpyFloatToInt16NumberType: NumberFieldType = {
     size: 2,
     signed: true,
     deserialize(array, littleEndian) {
         const value = NumberFieldType.Int16.deserialize(array, littleEndian);
-        return value / Int16Max;
+        // https://github.com/Genymobile/scrcpy/blob/1f138aef41de651668043b32c4effc2d4adbfc44/server/src/main/java/com/genymobile/scrcpy/Binary.java#L34
+        return value === 0x7fff ? 1 : value / 0x8000;
     },
     serialize(dataView, offset, value, littleEndian) {
-        value = clamp(value, -1, 1) * Int16Max;
+        // https://github.com/Genymobile/scrcpy/blob/1f138aef41de651668043b32c4effc2d4adbfc44/app/src/util/binary.h#L65
+        value = clamp(value, -1, 1);
+        value = value === 1 ? 0x7fff : value * 0x8000;
         NumberFieldType.Int16.serialize(dataView, offset, value, littleEndian);
     },
 };

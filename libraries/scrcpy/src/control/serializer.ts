@@ -40,7 +40,7 @@ export class ScrcpyControlMessageSerializer {
         this.scrollController = options.getScrollController();
     }
 
-    public getTypeValue(type: ScrcpyControlMessageType): number {
+    public getActualMessageType(type: ScrcpyControlMessageType): number {
         const value = this.types.indexOf(type);
         if (value === -1) {
             throw new Error("Not supported");
@@ -48,14 +48,24 @@ export class ScrcpyControlMessageSerializer {
         return value;
     }
 
+    public addMessageType<T extends { type: ScrcpyControlMessageType }>(
+        message: Omit<T, "type">,
+        type: T["type"]
+    ): T {
+        (message as T).type = this.getActualMessageType(type);
+        return message as T;
+    }
+
     public injectKeyCode(
         message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">
     ) {
         return this.writer.write(
-            ScrcpyInjectKeyCodeControlMessage.serialize({
-                ...message,
-                type: this.getTypeValue(ScrcpyControlMessageType.InjectKeyCode),
-            })
+            ScrcpyInjectKeyCodeControlMessage.serialize(
+                this.addMessageType(
+                    message,
+                    ScrcpyControlMessageType.InjectKeyCode
+                )
+            )
         );
     }
 
@@ -63,7 +73,9 @@ export class ScrcpyControlMessageSerializer {
         return this.writer.write(
             ScrcpyInjectTextControlMessage.serialize({
                 text,
-                type: this.getTypeValue(ScrcpyControlMessageType.InjectText),
+                type: this.getActualMessageType(
+                    ScrcpyControlMessageType.InjectText
+                ),
             })
         );
     }
@@ -73,10 +85,12 @@ export class ScrcpyControlMessageSerializer {
      */
     public injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
         return this.writer.write(
-            ScrcpyInjectTouchControlMessage.serialize({
-                ...message,
-                type: this.getTypeValue(ScrcpyControlMessageType.InjectTouch),
-            })
+            ScrcpyInjectTouchControlMessage.serialize(
+                this.addMessageType(
+                    message,
+                    ScrcpyControlMessageType.InjectTouch
+                )
+            )
         );
     }
 
@@ -86,13 +100,10 @@ export class ScrcpyControlMessageSerializer {
     public injectScroll(
         message: Omit<ScrcpyInjectScrollControlMessage, "type">
     ) {
-        (message as ScrcpyInjectScrollControlMessage).type = this.getTypeValue(
-            ScrcpyControlMessageType.InjectScroll
+        const data = this.scrollController.serializeScrollMessage(
+            this.addMessageType(message, ScrcpyControlMessageType.InjectScroll)
         );
 
-        const data = this.scrollController.serializeScrollMessage(
-            message as ScrcpyInjectScrollControlMessage
-        );
         if (!data) {
             return;
         }
@@ -103,7 +114,9 @@ export class ScrcpyControlMessageSerializer {
     public async backOrScreenOn(action: AndroidKeyEventAction) {
         const buffer = this.options.serializeBackOrScreenOnControlMessage({
             action,
-            type: this.getTypeValue(ScrcpyControlMessageType.BackOrScreenOn),
+            type: this.getActualMessageType(
+                ScrcpyControlMessageType.BackOrScreenOn
+            ),
         });
 
         if (buffer) {
@@ -115,7 +128,7 @@ export class ScrcpyControlMessageSerializer {
         return this.writer.write(
             ScrcpySetScreenPowerModeControlMessage.serialize({
                 mode,
-                type: this.getTypeValue(
+                type: this.getActualMessageType(
                     ScrcpyControlMessageType.SetScreenPowerMode
                 ),
             })
@@ -125,7 +138,9 @@ export class ScrcpyControlMessageSerializer {
     public rotateDevice() {
         return this.writer.write(
             ScrcpyRotateDeviceControlMessage.serialize({
-                type: this.getTypeValue(ScrcpyControlMessageType.RotateDevice),
+                type: this.getActualMessageType(
+                    ScrcpyControlMessageType.RotateDevice
+                ),
             })
         );
     }
