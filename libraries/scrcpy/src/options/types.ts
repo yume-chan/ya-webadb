@@ -3,6 +3,7 @@ import { type TransformStream } from "@yume-chan/stream-extra";
 import {
     type ScrcpyBackOrScreenOnControlMessage,
     type ScrcpyControlMessageType,
+    type ScrcpySetClipboardControlMessage,
 } from "../control/index.js";
 
 import { type ScrcpyScrollController } from "./1_16/scroll.js";
@@ -92,6 +93,10 @@ export interface ScrcpyOptions<T extends object> {
     serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnControlMessage
     ): Uint8Array | undefined;
+
+    serializeSetClipboardControlMessage(
+        message: ScrcpySetClipboardControlMessage
+    ): Uint8Array;
 
     getScrollController(): ScrcpyScrollController;
 }

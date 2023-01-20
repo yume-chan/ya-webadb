@@ -8,6 +8,7 @@ import {
     AndroidKeyEventAction,
     ScrcpyControlMessageType,
     type ScrcpyBackOrScreenOnControlMessage,
+    type ScrcpySetClipboardControlMessage,
 } from "../../control/index.js";
 import {
     toScrcpyOptionValue,
@@ -112,6 +113,14 @@ export const ScrcpyBackOrScreenOnControlMessage1_16 = new Struct().uint8(
     "type",
     ScrcpyControlMessageType.BackOrScreenOn as const
 );
+
+export const ScrcpySetClipboardControlMessage1_15 = new Struct()
+    .uint8("type", ScrcpyControlMessageType.SetClipboard as const)
+    .uint32("length")
+    .string("content", { lengthField: "length" });
+
+export type ScrcpySetClipboardControlMessage1_15 =
+    typeof ScrcpySetClipboardControlMessage1_15["TInit"];
 
 export class ScrcpyOptions1_16<
     T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
@@ -316,6 +325,12 @@ export class ScrcpyOptions1_16<
         }
 
         return undefined;
+    }
+
+    public serializeSetClipboardControlMessage(
+        message: ScrcpySetClipboardControlMessage
+    ): Uint8Array {
+        return ScrcpySetClipboardControlMessage1_15.serialize(message);
     }
 
     public getScrollController(): ScrcpyScrollController {
