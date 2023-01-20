@@ -4,6 +4,7 @@ import { type TransformStream } from "@yume-chan/stream-extra";
 import {
     type ScrcpyBackOrScreenOnControlMessage,
     type ScrcpyControlMessageType,
+    type ScrcpySetClipboardControlMessage,
 } from "../../control/index.js";
 import {
     type ScrcpyOptions,
@@ -58,6 +59,12 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
         message: ScrcpyBackOrScreenOnControlMessage
     ): Uint8Array | undefined {
         return this.raw.serializeBackOrScreenOnControlMessage(message);
+    }
+
+    public serializeSetClipboardControlMessage(
+        message: ScrcpySetClipboardControlMessage
+    ): Uint8Array {
+        return this.raw.serializeSetClipboardControlMessage(message);
     }
 
     public getScrollController() {
