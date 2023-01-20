@@ -46,9 +46,9 @@ export class BufferedTransformStream<T>
                     const value = await transform(buffered);
                     controller.enqueue(value);
                 } catch (e) {
-                    // TODO: BufferedTransformStream: The semantic of stream ending is not clear
-                    // If the `transform` started but did not finish, it should really be an error?
-                    // But we can't detect that, unless there is a `peek` method on buffered stream.
+                    // Treat `BufferedReadableStreamEndedError` as a normal end.
+                    // If the `transform` method doesn't have enough data to return a value,
+                    // it should throw another error to indicate that.
                     if (e instanceof BufferedReadableStreamEndedError) {
                         controller.close();
                         return;

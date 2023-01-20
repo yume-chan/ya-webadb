@@ -6,8 +6,8 @@ It has no dependencies and high performance, but is only available on recent ver
 
 **WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
 
-- [Compatibility](#compatibility)
-- [Usage](#usage)
+-   [Compatibility](#compatibility)
+-   [Usage](#usage)
 
 ## Compatibility
 
@@ -17,13 +17,13 @@ It has no dependencies and high performance, but is only available on recent ver
 
 ## Usage
 
-It draws frames onto `decoder.element` (a `<canvas>` element), you can insert it anywhere you want to display the video.
+It draws frames onto `decoder.renderer` (a `<canvas>` element), you can insert it anywhere you want to display the video.
 
 ```ts
 const decoder = new WebCodecsDecoder();
-document.body.appendChild(decoder.element);
+document.body.appendChild(decoder.renderer);
 
 videoPacketStream // from `@yume-chan/scrcpy`
     .pipeTo(decoder.writable)
-    .catch(() => { });
+    .catch(() => {});
 ```

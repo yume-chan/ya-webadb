@@ -1,7 +1,7 @@
 {
     "name": "@yume-chan/scrcpy-decoder-tinyh264",
     "version": "0.0.17",
-    "description": "TypeScript implementation of Scrcpy.",
+    "description": "Raw H.264 stream decoder and renderer wrapping TinyH264 and YUVCanvas packages (software decoding).",
     "keywords": [
         "adb",
         "android-phone",

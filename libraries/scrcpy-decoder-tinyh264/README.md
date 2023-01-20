@@ -25,21 +25,21 @@ new ScrcpyOptions1_24({
     codecOptions: new CodecOptions({
         profile: TinyH264Decoder.maxProfile,
         level: TinyH264Decoder.maxLevel,
-    })
-})
+    }),
+});
 ```
 
 However, it can fail on some very old devices that doesn't support even Baseline level 4 codec. You can retry without the `codecOptions` option if that happens.
 
 ### Render the video
 
-It draws frames onto `decoder.element` (a `<canvas>` element), you can insert it anywhere you want to display the video.
+It draws frames onto `decoder.renderer` (a `<canvas>` element), you can insert it anywhere you want to display the video.
 
 ```ts
 const decoder = new TinyH264Decoder();
-document.body.appendChild(decoder.element);
+document.body.appendChild(decoder.renderer);
 
 videoPacketStream // from `@yume-chan/scrcpy`
     .pipeTo(decoder.writable)
-    .catch(() => { });
+    .catch(() => {});
 ```

@@ -50,6 +50,11 @@ export namespace NumberFieldType {
         signed: false,
         size: 2,
         deserialize(array, littleEndian) {
+            // PERF: Chrome's `DataView#getUint16` uses inefficient operations,
+            // including branching, bit extending and 32-bit bit swapping.
+            // The best way should use 16-bit bit rotation and conditional move,
+            // like LLVM does for code similar to the below one.
+            // This code is much faster on V8, but the actual generated assembly is unknown.
             return (
                 (((array[1]! << 8) | array[0]!) * (littleEndian as any)) |
                 (((array[0]! << 8) | array[1]!) * (!littleEndian as any))
