@@ -37,9 +37,8 @@ export class WebCodecsDecoder {
     private context: CanvasRenderingContext2D;
     private decoder: VideoDecoder;
 
-    // Limit FPS to system refresh rate
-    private lastFrame: VideoFrame | undefined;
-    private animationFrame = 0;
+    private currentFrameRendered = false;
+    private animationFrameId = 0;
 
     public constructor() {
         this._renderer = document.createElement("canvas");
@@ -47,16 +46,21 @@ export class WebCodecsDecoder {
         this.context = this._renderer.getContext("2d")!;
         this.decoder = new VideoDecoder({
             output: (frame) => {
-                if (this.lastFrame) {
+                if (this.currentFrameRendered) {
                     this._frameSkipped += 1;
-                    this.lastFrame.close();
+                } else {
+                    this.currentFrameRendered = true;
+                    this._frameRendered += 1;
                 }
-                this.lastFrame = frame;
 
-                if (!this.animationFrame) {
-                    // Start render loop on first frame
-                    this.render();
-                }
+                // PERF: H.264 renderer may draw multiple frames in one vertical sync interval to minimize latency.
+                // When multiple frames are drawn in one vertical sync interval,
+                // only the last one is visible to users.
+                // But this ensures users can always see the most up-to-date screen.
+                // This is also the behavior of official Scrcpy client.
+                // https://github.com/Genymobile/scrcpy/issues/3679
+                this.context.drawImage(frame, 0, 0);
+                frame.close();
             },
             error(e) {
                 void e;
@@ -83,17 +87,13 @@ export class WebCodecsDecoder {
                 }
             },
         });
+
+        this.onFramePresented();
     }
 
-    private render = () => {
-        if (this.lastFrame) {
-            this._frameRendered += 1;
-            this.context.drawImage(this.lastFrame, 0, 0);
-            this.lastFrame.close();
-            this.lastFrame = undefined;
-        }
-
-        this.animationFrame = requestAnimationFrame(this.render);
+    private onFramePresented = () => {
+        this.currentFrameRendered = false;
+        this.animationFrameId = requestAnimationFrame(this.onFramePresented);
     };
 
     private configure(config: H264Configuration) {
@@ -114,7 +114,7 @@ export class WebCodecsDecoder {
     }
 
     public dispose() {
-        cancelAnimationFrame(this.animationFrame);
+        cancelAnimationFrame(this.animationFrameId);
         this.decoder.close();
     }
 }
