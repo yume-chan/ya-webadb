@@ -101,6 +101,8 @@ export class AdbReverseCommand extends AutoDisposable {
         localAddress: string,
         handler: AdbIncomingSocketHandler
     ): Promise<string> {
+        // TODO(reverse): handle ADB bug
+        // https://issuetracker.google.com/issues/37066218
         const stream = await this.sendRequest(
             `reverse:forward:${deviceAddress};${localAddress}`
         );
