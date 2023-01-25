@@ -10,11 +10,13 @@ body:
       options:
         - label: I'm using the official demo at https://yume-chan.github.io/ya-webadb
           required: true
+        - label: For Scrcpy related issues, I have searched in [Genymobile/scrcpy](https://github.com/Genymobile/scrcpy/issues) repository.
+          required: true
   - type: input
     attributes:
       label: Runtime
       description: Operating system, runtime name and version
-      placeholder: e.g. macOS 12.1, Chrome 99
+      placeholder: e.g. macOS 13.0, Chrome 105
     validations:
       required: true
   - type: input
