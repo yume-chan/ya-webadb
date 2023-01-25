@@ -56,7 +56,7 @@
       "comments": {
         "none": [
           {
-            "comment": "Add support for new option of 1.24"
+            "comment": "Add support for Scrcpy server version 1.24"
           }
         ]
       }
@@ -68,7 +68,7 @@
       "comments": {
         "none": [
           {
-            "comment": "Add support for 1.23"
+            "comment": "Add support for Scrcpy server version 1.23"
           }
         ]
       }
@@ -86,7 +86,7 @@
       "comments": {
         "none": [
           {
-            "comment": "Add support for 1.22 new server options"
+            "comment": "Add support for Scrcpy server version 1.22"
           },
           {
             "comment": "Update to use Web Streams API"

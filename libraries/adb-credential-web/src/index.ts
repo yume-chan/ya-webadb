@@ -13,17 +13,22 @@ import {
 export default class AdbWebCredentialStore implements AdbCredentialStore {
     public readonly localStorageKey: string;
 
+    /**
+     * Create a new instance of `AdbWebCredentialStore`.
+     *
+     * @param localStorageKey Specifies the key to use when reading and writing the private key in LocalStorage.
+     */
     public constructor(localStorageKey = "private-key") {
         this.localStorageKey = localStorageKey;
     }
 
-    public *iterateKeys(): Generator<Uint8Array, void, void> {
-        const privateKey = window.localStorage.getItem(this.localStorageKey);
-        if (privateKey) {
-            yield decodeBase64(privateKey);
-        }
-    }
-
+    /**
+     * Generate a RSA private key and store it into LocalStorage.
+     *
+     * Calling this method multiple times will overwrite the previous key.
+     *
+     * @returns The private key in PKCS #8 format.
+     */
     public async generateKey(): Promise<Uint8Array> {
         const { privateKey: cryptoKey } = await crypto.subtle.generateKey(
             {
@@ -64,5 +69,17 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
         );
 
         return privateKey;
+    }
+
+    /**
+     * Yield the stored RSA private key. `AdbWebCredentialStore` only stores one key, so only one value will be yielded.
+     *
+     * This method returns a generator, so `for...of...` loop should be used to read the key.
+     */
+    public *iterateKeys(): Generator<Uint8Array, void, void> {
+        const privateKey = window.localStorage.getItem(this.localStorageKey);
+        if (privateKey) {
+            yield decodeBase64(privateKey);
+        }
     }
 }

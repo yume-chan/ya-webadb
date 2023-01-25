@@ -32,14 +32,14 @@ Sat, 30 Apr 2022 14:05:48 GMT
 
 ### Updates
 
-- Add support for new option of 1.24
+- Add support for Scrcpy server version 1.24
 
 ## 0.0.13
 Thu, 28 Apr 2022 01:23:53 GMT
 
 ### Updates
 
-- Add support for 1.23
+- Add support for Scrcpy server version 1.23
 
 ## 0.0.12
 Sun, 03 Apr 2022 11:18:47 GMT
@@ -51,7 +51,7 @@ Sun, 03 Apr 2022 10:54:15 GMT
 
 ### Updates
 
-- Add support for 1.22 new server options
+- Add support for Scrcpy server version 1.22
 - Update to use Web Streams API
 - Improve compatibility with Node.js 12 ESM format
 - Workaround a issue with server crash on Samsung ROM (https://github.com/Genymobile/scrcpy/issues/2841)
@@ -62,4 +62,3 @@ Sun, 03 Apr 2022 10:54:15 GMT
 Sun, 09 Jan 2022 15:52:20 GMT
 
 _Initial release_
-

@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/stream-extra",
-            "comment": "Add the ability to load native Web Streams API implementation from `globalThis`",
+            "comment": "Change to load native Web Streams API implementation from `globalThis` if available",
             "type": "none"
         }
     ],

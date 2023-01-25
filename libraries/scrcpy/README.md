@@ -15,7 +15,7 @@ It's compatible with the official Scrcpy server binaries.
     - [Webpack 4](#webpack-4)
     - [Webpack 5](#webpack-5)
   - [Read the server version](#read-the-server-version)
-- [Option versions](#option-versions)
+- [Server versions](#server-versions)
 - [Use with `@yume-chan/adb`](#use-with-yume-chanadb)
   - [Push server binary](#push-server-binary)
   - [Start server on device](#start-server-on-device)
@@ -37,7 +37,7 @@ This package provides types that can serialize and deserialize Scrcpy protocol m
 
 If you are also using `@yume-chan/adb`, this package has a helper class that can complete the bootstrap process using it, doing what the official client does.
 
-**NOTE:** `@yume-chan/adb` is a peer dependency, you need to install it yourself. Types that named begin with `Adb` requires `@yume-chan/adb`, and types that named begin with `Scrcpy` doesn't.
+**NOTE:** `@yume-chan/adb` is a peer dependency, you need to install it yourself. Only those types whose names begin with `Adb` requires `@yume-chan/adb`.
 
 ## Prepare server binary
 
@@ -49,11 +49,11 @@ The server binary is subject to [Apache License 2.0](https://github.com/Genymobi
 
 ### `fetch-scrcpy-server`
 
-This package also has a script that can download the server binary from official releases for you.
+This package includes a script that downloads the server binary from official releases for you.
 
-To use it, first you need to install the `gh-release-fetch@3` NPM into your project, as it's a peer dependency.
+The `gh-release-fetch@3` package is a peer dependency for this script, thus requires separated installation.
 
-Then you can invoke it in a terminal:
+Usage:
 
 ```
 $ npx fetch-scrcpy-server <version>
@@ -62,14 +62,14 @@ $ npx fetch-scrcpy-server <version>
 For example:
 
 ```
-$ npx fetch-scrcpy-server 1.24
+$ npx fetch-scrcpy-server 1.25
 ```
 
-It can also be added to the `postinstall` script in your `package.json`, so running `npm install` will automatically invoke the script.
+It can also be added to the `postinstall` script in `package.json`, so running `npm install` will automatically invoke the script:
 
 ```json
 "scripts": {
-    "postinstall": "fetch-scrcpy-server 1.24",
+    "postinstall": "fetch-scrcpy-server 1.25",
 },
 ```
 
@@ -77,7 +77,7 @@ The server binary will be named `bin/scrcpy-server` in this package's installati
 
 ### Use the server binary
 
-The server binary file needs to be embedded into your application, the exact method depends on the runtime.
+The server binary file needs to be embedded into your application, the exact method depends on the bundler and runtime.
 
 To name a few:
 
@@ -132,12 +132,12 @@ The correct version number is required to launch the server, so `fetch-scrcpy-se
 ```js
 import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version.js';
 
-console.log(SCRCPY_SERVER_VERSION); // "1.24"
+console.log(SCRCPY_SERVER_VERSION); // "1.25"
 ```
 
-## Option versions
+## Server versions
 
-Scrcpy server options change over time, and some of them are not backwards compatible. This package provides option types for each version (or range). Using wrong option version usually results in errors.
+Scrcpy protocol change over time, and are usually not backwards compatible. This package supports multiple server versions (or ranges), and uses different option types to choose different behaviors. Using incorrect option version usually results in errors.
 
 The latest one may continue to work for future server versions, but there is no guarantee.
 
@@ -149,13 +149,14 @@ The latest one may continue to work for future server versions, but there is no 
 | 1.22      | `ScrcpyOptions1_22` |
 | 1.23      | `ScrcpyOptions1_23` |
 | 1.24      | `ScrcpyOptions1_24` |
+| 1.25      | `ScrcpyOptions1_25` |
 
-When using `AdbScrcpyClient`, there are `AdbScrcpyOptions` containing `@yume-chan/adb` related options:
+When using `AdbScrcpyClient`, there are `AdbScrcpyOptions` containing `@yume-chan/adb` specific options:
 
 | Version   | Type                   |
 | --------- | ---------------------- |
 | 1.16~1.21 | `AdbScrcpyOptions1_16` |
-| 1.22~1.24 | `AdbScrcpyOptions1_22` |
+| 1.22~1.25 | `AdbScrcpyOptions1_22` |
 
 ## Use with `@yume-chan/adb`
 
@@ -203,7 +204,7 @@ import SCRCPY_SERVER_VERSION from '@yume-chan/scrcpy/bin/version.js';
 const client: AdbScrcpyClient = await AdbScrcpyClient.start(
     adb,
     DEFAULT_SERVER_PATH,
-    SCRCPY_SERVER_VERSION, // Or provide your own version number
+    SCRCPY_SERVER_VERSION, // If server binary was downloaded manually, must provide the correct version
     new AdbScrcpyOptions1_22(ScrcpyOptions1_24({
         // options
     }))

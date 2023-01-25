@@ -1,6 +1,10 @@
 # @yume-chan/b-tree
 
-**WIP**: A B-Tree implmentation in TypeScript.
+A simple B-Tree set implementation in TypeScript.
 
-- [x] insert
-- [ ] remove
+- [x] custom order
+- [x] add
+- [x] delete
+- [x] has
+- [x] clear
+- [x] iterate

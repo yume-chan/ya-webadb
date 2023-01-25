@@ -235,17 +235,28 @@ export class AdbWebUsbBackendStream
 }
 
 export class AdbWebUsbBackend implements AdbBackend {
+    /**
+     * Check if WebUSB API is supported by the browser.
+     *
+     * @returns `true` if WebUSB is supported by the current browser.
+     */
     public static isSupported(): boolean {
         return !!globalThis.navigator?.usb;
     }
 
-    public static async getDevices(
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-    ): Promise<AdbWebUsbBackend[]> {
-        const devices = await window.navigator.usb.getDevices();
-        return devices.map((device) => new AdbWebUsbBackend(filters, device));
-    }
-
+    /**
+     * Request access to a connected device from browser.
+     * The browser will display a list of devices to the user and let them choose one.
+     *
+     * Only available in browsers that support WebUSB API (When `isSupported()` returns `true`).
+     *
+     * @param filters
+     * The filters to apply to the device list.
+     *
+     * It must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface,
+     * but can also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
+     * @returns The `AdbWebUsbBackend` instance if the user selected a device, or `undefined` if the user cancelled the device picker.
+     */
     public static async requestDevice(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
     ): Promise<AdbWebUsbBackend | undefined> {
@@ -253,7 +264,7 @@ export class AdbWebUsbBackend implements AdbBackend {
             const device = await navigator.usb.requestDevice({
                 filters,
             });
-            return new AdbWebUsbBackend(filters, device);
+            return new AdbWebUsbBackend(device, filters);
         } catch (e) {
             // User cancelled the device picker
             if (e instanceof DOMException && e.name === "NotFoundError") {
@@ -262,6 +273,13 @@ export class AdbWebUsbBackend implements AdbBackend {
 
             throw e;
         }
+    }
+
+    public static async getDevices(
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+    ): Promise<AdbWebUsbBackend[]> {
+        const devices = await window.navigator.usb.getDevices();
+        return devices.map((device) => new AdbWebUsbBackend(device, filters));
     }
 
     private _filters: AdbDeviceFilter[];
@@ -278,12 +296,27 @@ export class AdbWebUsbBackend implements AdbBackend {
         return this._device.productName!;
     }
 
-    public constructor(filters: AdbDeviceFilter[], device: USBDevice) {
-        this._filters = filters;
+    /**
+     * Create a new instance of `AdbWebBackend` using a `USBDevice` instance you already have.
+     *
+     * @param device The `USBDevice` instance you already have.
+     * @param filters The filters to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
+     */
+    public constructor(
+        device: USBDevice,
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+    ) {
         this._device = device;
+        this._filters = filters;
     }
 
-    public async connect() {
+    /**
+     * Claim the device and create a pair of `AdbPacket` streams to the ADB interface.
+     * @returns The pair of `AdbPacket` streams.
+     */
+    public async connect(): Promise<
+        ReadableWritablePair<AdbPacketData, AdbPacketInit>
+    > {
         if (!this._device.opened) {
             await this._device.open();
         }
