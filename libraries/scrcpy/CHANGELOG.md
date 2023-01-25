@@ -1,6 +1,15 @@
 # Change Log - @yume-chan/scrcpy
 
-This log was last generated on Tue, 18 Oct 2022 09:32:30 GMT and should not be manually modified.
+This log was last generated on Wed, 25 Jan 2023 21:33:49 GMT and should not be manually modified.
+
+## 0.0.18
+Wed, 25 Jan 2023 21:33:49 GMT
+
+### Updates
+
+- Move `@yume-chan/adb` to `peerDependencies`
+- Add support for Scrcpy server version 1.25
+- Add support for `SetClipboard` control message and `AckClipboard` device message
 
 ## 0.0.17
 Tue, 18 Oct 2022 09:32:30 GMT
@@ -62,3 +71,4 @@ Sun, 03 Apr 2022 10:54:15 GMT
 Sun, 09 Jan 2022 15:52:20 GMT
 
 _Initial release_
+

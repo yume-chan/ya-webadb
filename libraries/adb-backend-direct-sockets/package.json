@@ -38,8 +38,8 @@
         "typescript": "^4.9.4"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.17",
-        "@yume-chan/stream-extra": "workspace:^0.0.17",
+        "@yume-chan/adb": "workspace:^0.0.18",
+        "@yume-chan/stream-extra": "workspace:^0.0.18",
         "tslib": "^2.4.1"
     }
 }

@@ -2,6 +2,18 @@
   "name": "@yume-chan/scrcpy-decoder-tinyh264",
   "entries": [
     {
+      "version": "0.0.18",
+      "tag": "@yume-chan/scrcpy-decoder-tinyh264_v0.0.18",
+      "date": "Wed, 25 Jan 2023 21:33:49 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Fix usage in README"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.17",
       "tag": "@yume-chan/scrcpy-decoder-tinyh264_v0.0.17",
       "date": "Tue, 18 Oct 2022 09:32:30 GMT",

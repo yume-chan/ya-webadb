@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/struct",
-    "version": "0.0.17",
+    "version": "0.0.18",
     "description": "C-style structure serializer and deserializer.",
     "keywords": [
         "structure",
@@ -34,7 +34,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/dataview-bigint-polyfill": "workspace:^0.0.17",
+        "@yume-chan/dataview-bigint-polyfill": "workspace:^0.0.18",
         "tslib": "^2.4.1"
     },
     "devDependencies": {

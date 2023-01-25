@@ -2,6 +2,24 @@
   "name": "@yume-chan/scrcpy",
   "entries": [
     {
+      "version": "0.0.18",
+      "tag": "@yume-chan/scrcpy_v0.0.18",
+      "date": "Wed, 25 Jan 2023 21:33:49 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Move `@yume-chan/adb` to `peerDependencies`"
+          },
+          {
+            "comment": "Add support for Scrcpy server version 1.25"
+          },
+          {
+            "comment": "Add support for `SetClipboard` control message and `AckClipboard` device message"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.17",
       "tag": "@yume-chan/scrcpy_v0.0.17",
       "date": "Tue, 18 Oct 2022 09:32:30 GMT",

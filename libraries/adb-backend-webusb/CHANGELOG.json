@@ -2,6 +2,18 @@
   "name": "@yume-chan/adb-backend-webusb",
   "entries": [
     {
+      "version": "0.0.18",
+      "tag": "@yume-chan/adb-backend-webusb_v0.0.18",
+      "date": "Wed, 25 Jan 2023 21:33:49 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add an option to specify USB filters"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.17",
       "tag": "@yume-chan/adb-backend-webusb_v0.0.17",
       "date": "Tue, 18 Oct 2022 09:32:30 GMT",
