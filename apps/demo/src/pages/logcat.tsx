@@ -1,9 +1,4 @@
-import {
-    Checkbox,
-    ICommandBarItemProps,
-    Stack,
-    StackItem,
-} from "@fluentui/react";
+import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
 import {
     AndroidLogEntry,
@@ -12,7 +7,6 @@ import {
     LogcatFormat,
     formatAndroidLogEntry,
 } from "@yume-chan/android-bin";
-import { BTree } from "@yume-chan/b-tree";
 import {
     AbortController,
     ReadableStream,
@@ -28,7 +22,7 @@ import {
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { FormEvent, useEffect, useState } from "react";
+import { PointerEvent } from "react";
 
 import {
     CommandBar,
@@ -39,6 +33,7 @@ import {
 } from "../components";
 import { GLOBAL_STATE } from "../state";
 import { Icons, RouteStackProps, useStableCallback } from "../utils";
+import { ObservableListSelection } from "./packet-log";
 
 const LINE_HEIGHT = 32;
 
@@ -85,11 +80,10 @@ const state = makeAutoObservable(
         buffer: [] as LogRow[],
         flushRequested: false,
         list: [] as LogRow[],
-        selection: new BTree(6),
+        selection: new ObservableListSelection(),
         count: 0,
         stream: undefined as ReadableStream<AndroidLogEntry> | undefined,
         stopSignal: undefined as AbortController | undefined,
-        selectedCount: 0,
         animationFrameId: undefined as number | undefined,
         start() {
             if (this.running) {
@@ -131,7 +125,6 @@ const state = makeAutoObservable(
         clear() {
             this.list = [];
             this.selection.clear();
-            this.selectedCount = 0;
         },
         get empty() {
             return this.list.length === 0;
@@ -162,7 +155,7 @@ const state = makeAutoObservable(
                 {
                     key: "copyAll",
                     text: "Copy Rows",
-                    disabled: this.selectedCount === 0,
+                    disabled: this.selection.size === 0,
                     iconProps: { iconName: Icons.Copy },
                     onClick: () => {
                         let text = "";
@@ -181,7 +174,7 @@ const state = makeAutoObservable(
                 {
                     key: "copyText",
                     text: "Copy Messages",
-                    disabled: this.selectedCount === 0,
+                    disabled: this.selection.size === 0,
                     iconProps: { iconName: Icons.Copy },
                     onClick: () => {
                         let text = "";
@@ -197,54 +190,6 @@ const state = makeAutoObservable(
         },
         get columns(): Column[] {
             return [
-                {
-                    width: 40,
-                    title: "",
-                    CellComponent: ({
-                        rowIndex,
-                        columnIndex,
-                        className,
-                        ...rest
-                    }) => {
-                        const [checked, setChecked] = useState(false);
-                        useEffect(() => {
-                            setChecked(this.selection.has(rowIndex));
-                        }, [rowIndex]);
-
-                        const handleChange = useStableCallback(
-                            (e?: FormEvent<EventTarget>, checked?: boolean) => {
-                                if (checked === undefined) {
-                                    return;
-                                }
-                                if (checked) {
-                                    this.selection.add(rowIndex);
-                                    setChecked(true);
-                                } else {
-                                    this.selection.delete(rowIndex);
-                                    setChecked(false);
-                                }
-                                runInAction(() => {
-                                    // Trigger mobx
-                                    this.selectedCount = this.selection.size;
-                                });
-                            }
-                        );
-
-                        return (
-                            <Stack
-                                className={className}
-                                verticalAlign="center"
-                                horizontalAlign="center"
-                                {...rest}
-                            >
-                                <Checkbox
-                                    checked={checked}
-                                    onChange={handleChange}
-                                />
-                            </Stack>
-                        );
-                    },
-                },
                 {
                     width: 200,
                     title: "Time",
@@ -445,22 +390,35 @@ const Header = observer(function Header({
     );
 });
 
-const Row = function Row({ className, rowIndex, ...rest }: GridRowProps) {
-    const item = state.list[rowIndex];
+const Row = observer(function Row({
+    className,
+    rowIndex,
+    ...rest
+}: GridRowProps) {
     const classes = useClasses();
 
-    const handleClick = useStableCallback(() => {
-        runInAction(() => {});
-    });
+    const handlePointerDown = useStableCallback(
+        (e: PointerEvent<HTMLDivElement>) => {
+            runInAction(() => {
+                e.preventDefault();
+                e.stopPropagation();
+                state.selection.select(rowIndex, e.ctrlKey, e.shiftKey);
+            });
+        }
+    );
 
     return (
         <div
-            className={mergeClasses(className, classes.row)}
-            onClick={handleClick}
+            className={mergeClasses(
+                className,
+                classes.row,
+                state.selection.has(rowIndex) && classes.selected
+            )}
+            onPointerDown={handlePointerDown}
             {...rest}
         />
     );
-};
+});
 
 const LogcatPage: NextPage = () => {
     const classes = useClasses();

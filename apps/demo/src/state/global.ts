@@ -6,6 +6,7 @@ export type PacketLogItemDirection = "in" | "out";
 export interface PacketLogItem extends AdbPacketData {
     direction: PacketLogItemDirection;
 
+    timestamp?: Date;
     commandString?: string;
     arg0String?: string;
     arg1String?: string;
@@ -48,11 +49,12 @@ export class GlobalState {
 
     appendLog(direction: PacketLogItemDirection, packet: AdbPacketData) {
         (packet as PacketLogItem).direction = direction;
+        (packet as PacketLogItem).timestamp = new Date();
         this.logs.push(packet as PacketLogItem);
     }
 
     clearLog() {
-        this.logs = [];
+        this.logs.length = 0;
     }
 }
 

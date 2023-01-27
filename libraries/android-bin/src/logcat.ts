@@ -1,4 +1,5 @@
 // cspell: ignore logcat
+// cspell: ignore usec
 
 import { AdbCommandBase, AdbSubprocessNoneProtocol } from "@yume-chan/adb";
 import {
@@ -124,12 +125,21 @@ export function formatAndroidLogEntry(
 
     switch (format) {
         // TODO: implement other formats
-        default:
-            return `${
+        default: {
+            // prettier-ignore
+            const text=`${
                 AndroidLogPriorityToCharacter[entry.priority]
-            }/${entry.tag.padEnd(8)}(${uid}${entry.pid
-                .toString()
-                .padStart(5)}): ${entry.message}`;
+            }/${
+                entry.tag.padEnd(8)
+            }(${
+                uid
+            }${
+                entry.pid.toString().padStart(5)
+            }): ${
+                entry.message
+            }`;
+            return text;
+        }
     }
 }
 
