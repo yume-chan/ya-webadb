@@ -290,8 +290,6 @@ export const SETTING_DEFINITIONS = computed(() => {
                             new AdbScrcpyOptions1_22(
                                 new ScrcpyOptions1_25({
                                     logLevel: ScrcpyLogLevel.Debug,
-                                    tunnelForward:
-                                        SETTING_STATE.settings.tunnelForward,
                                 })
                             )
                         );
@@ -398,8 +396,6 @@ export const SETTING_DEFINITIONS = computed(() => {
                             new AdbScrcpyOptions1_22(
                                 new ScrcpyOptions1_25({
                                     logLevel: ScrcpyLogLevel.Debug,
-                                    tunnelForward:
-                                        SETTING_STATE.settings.tunnelForward,
                                 })
                             )
                         );
@@ -446,14 +442,6 @@ export const SETTING_DEFINITIONS = computed(() => {
         type: "toggle",
         label: `Ignore decoder's codec arguments`,
         description: `Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.`,
-    });
-
-    result.push({
-        key: "tunnelForward",
-        type: "toggle",
-        label: "Use forward connection",
-        description:
-            "Android before version 9 has a bug that prevents reverse tunneling when using ADB over WiFi.",
     });
 
     return result;
