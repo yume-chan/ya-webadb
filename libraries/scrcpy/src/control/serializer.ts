@@ -5,6 +5,7 @@ import {
 
 import {
     type ScrcpyOptions,
+    type ScrcpyOptionsInit1_16,
     type ScrcpyScrollController,
 } from "../options/index.js";
 
@@ -23,7 +24,7 @@ import {
 import { ScrcpyControlMessageType } from "./type.js";
 
 export class ScrcpyControlMessageSerializer {
-    private options: ScrcpyOptions<object>;
+    private options: ScrcpyOptions<ScrcpyOptionsInit1_16>;
     /** Control message type values for current version of server */
     private types: ScrcpyControlMessageType[];
     private writer: WritableStreamDefaultWriter<Uint8Array>;
@@ -31,7 +32,7 @@ export class ScrcpyControlMessageSerializer {
 
     public constructor(
         stream: WritableStream<Uint8Array>,
-        options: ScrcpyOptions<object>
+        options: ScrcpyOptions<ScrcpyOptionsInit1_16>
     ) {
         this.writer = stream.getWriter();
 

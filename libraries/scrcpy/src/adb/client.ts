@@ -1,4 +1,5 @@
 import {
+    AdbReverseNotSupportedError,
     AdbSubprocessNoneProtocol,
     type Adb,
     type AdbSubprocessProtocol,
@@ -24,9 +25,11 @@ import {
 } from "../device-message/index.js";
 import {
     DEFAULT_SERVER_PATH,
+    type ScrcpyOptionsInit1_16,
     type ScrcpyVideoStreamPacket,
 } from "../options/index.js";
 
+import { type AdbScrcpyConnection } from "./connection.js";
 import { type AdbScrcpyOptions } from "./options/index.js";
 
 class ArrayToStream<T> extends ReadableStream<T> {
@@ -112,13 +115,26 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>
+        options: AdbScrcpyOptions<ScrcpyOptionsInit1_16>
     ) {
-        const connection = options.createConnection(adb);
+        let connection: AdbScrcpyConnection | undefined;
         let process: AdbSubprocessProtocol | undefined;
 
         try {
-            await connection.initialize();
+            try {
+                connection = options.createConnection(adb);
+                await connection.initialize();
+            } catch (e) {
+                if (e instanceof AdbReverseNotSupportedError) {
+                    // When reverse tunnel is not supported, try forward tunnel.
+                    options.value.tunnelForward = true;
+                    connection = options.createConnection(adb);
+                    await connection.initialize();
+                } else {
+                    connection = undefined;
+                    throw e;
+                }
+            }
 
             process = await adb.subprocess.spawn(
                 [
@@ -184,7 +200,7 @@ export class AdbScrcpyClient {
             await process?.kill();
             throw e;
         } finally {
-            connection.dispose();
+            connection?.dispose();
         }
     }
 
@@ -196,7 +212,7 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>
+        options: AdbScrcpyOptions<ScrcpyOptionsInit1_16>
     ): Promise<string[]> {
         Object.assign(options.value, {
             // Provide an invalid encoder name
@@ -236,7 +252,7 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>
+        options: AdbScrcpyOptions<ScrcpyOptionsInit1_16>
     ): Promise<number[]> {
         Object.assign(options.value, {
             // Similar to `getEncoders`, pass an invalid option and parse the output
@@ -308,7 +324,7 @@ export class AdbScrcpyClient {
     }
 
     public constructor(
-        options: AdbScrcpyOptions<object>,
+        options: AdbScrcpyOptions<ScrcpyOptionsInit1_16>,
         process: AdbSubprocessProtocol,
         stdout: ReadableStream<string>,
         videoStream: ReadableStream<Uint8Array>,

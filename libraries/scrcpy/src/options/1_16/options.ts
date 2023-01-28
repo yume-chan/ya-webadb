@@ -69,6 +69,14 @@ export interface ScrcpyOptionsInit1_16 {
      */
     lockVideoOrientation: ScrcpyVideoOrientation;
 
+    /**
+     * Use ADB forward tunnel instead of reverse tunnel.
+     *
+     * This option is mainly used for working around the bug that on Android <9,
+     * ADB daemon can't create reverse tunnels if connected wirelessly (ADB over WiFi).
+     *
+     * When using `AdbScrcpyClient`, it can detect this situation and enable this option automatically.
+     */
     tunnelForward: boolean;
 
     crop: string;

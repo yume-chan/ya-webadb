@@ -1,4 +1,4 @@
-import { type Adb } from "@yume-chan/adb";
+import { AdbReverseNotSupportedError, type Adb } from "@yume-chan/adb";
 import { delay } from "@yume-chan/async";
 import { type Disposable } from "@yume-chan/event";
 import {
@@ -52,6 +52,8 @@ export abstract class AdbScrcpyConnection implements Disposable {
 }
 
 export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
+    private _disposed = false;
+
     private connect(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
         return this.adb.createSocket("localabstract:scrcpy");
     }
@@ -59,7 +61,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     private async connectAndRetry(): Promise<
         ReadableWritablePair<Uint8Array, Uint8Array>
     > {
-        for (let i = 0; i < 100; i += 1) {
+        for (let i = 0; !this._disposed && i < 100; i += 1) {
             try {
                 return await this.connect();
             } catch (e) {
@@ -83,7 +85,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
         return videoStream;
     }
 
-    public async getStreams(): Promise<
+    public override async getStreams(): Promise<
         [
             videoSteam: ReadableStream<Uint8Array>,
             controlStream:
@@ -113,6 +115,11 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
 
         return [videoStream, controlStream];
     }
+
+    public override dispose(): void {
+        super.dispose();
+        this._disposed = true;
+    }
 }
 
 export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
@@ -123,10 +130,16 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     private address!: string;
 
     public override async initialize(): Promise<void> {
-        // try to unbind first, ignore errors
-        await this.adb.reverse.remove("localabstract:scrcpy").catch((e) => {
-            void e;
-        });
+        try {
+            // try to unbind first
+            await this.adb.reverse.remove("localabstract:scrcpy");
+        } catch (e) {
+            if (e instanceof AdbReverseNotSupportedError) {
+                throw e;
+            }
+
+            // Ignore other errors when unbinding
+        }
 
         const queue = new TransformStream<
             ReadableWritablePair<Uint8Array, Uint8Array>,
