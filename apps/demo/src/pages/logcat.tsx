@@ -30,10 +30,11 @@ import {
     GridColumn,
     GridHeaderProps,
     GridRowProps,
+    ObservableListSelection,
+    isModKey,
 } from "../components";
 import { GLOBAL_STATE } from "../state";
 import { Icons, RouteStackProps, useStableCallback } from "../utils";
-import { ObservableListSelection } from "./packet-log";
 
 const LINE_HEIGHT = 32;
 
@@ -402,7 +403,7 @@ const Row = observer(function Row({
             runInAction(() => {
                 e.preventDefault();
                 e.stopPropagation();
-                state.selection.select(rowIndex, e.ctrlKey, e.shiftKey);
+                state.selection.select(rowIndex, isModKey(e), e.shiftKey);
             });
         }
     );

@@ -6,5 +6,6 @@ export * from './error-dialog';
 export * from './external-link';
 export * from './grid';
 export * from './hex-viewer';
+export * from "./list-selection";
 export * from './log-view';
 export * from './resize-observer';
