@@ -14,5 +14,14 @@
     "name": "Android Web Toolbox",
     "short_name": "WebADB",
     "start_url": "/",
-    "scope": "/"
+    "scope": "/",
+    "content_security_policy": "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src https:",
+    "permission_policy": {
+        "direct-sockets": [
+            "self"
+        ],
+        "usb": [
+            "self"
+        ]
+    }
 }
