@@ -220,18 +220,24 @@ export class ScrcpyPageState {
                 );
             });
 
+            const codecOptions = new CodecOptions();
+            if (!SETTING_STATE.settings.ignoreDecoderCodecArgs) {
+                codecOptions.value.profile = decoder.maxProfile;
+                codecOptions.value.level = decoder.maxLevel;
+            }
+
+            // Less recording delay
+            codecOptions.value.iFrameInterval = 1;
+            // Less latency
+            codecOptions.value.intraRefreshPeriod = 10000;
+
             const options = new AdbScrcpyOptions1_22(
                 new ScrcpyOptions1_25({
                     logLevel: ScrcpyLogLevel.Debug,
                     ...SETTING_STATE.settings,
                     sendDeviceMeta: false,
                     sendDummyByte: false,
-                    codecOptions: !SETTING_STATE.settings.ignoreDecoderCodecArgs
-                        ? new CodecOptions({
-                              profile: decoder.maxProfile,
-                              level: decoder.maxLevel,
-                          })
-                        : undefined,
+                    codecOptions,
                 })
             );
 
@@ -263,6 +269,7 @@ export class ScrcpyPageState {
             );
 
             RECORD_STATE.recorder = new MuxerStream();
+            let lastKeyframe = 0;
             client.videoStream
                 .pipeThrough(
                     new InspectStream(
@@ -277,6 +284,18 @@ export class ScrcpyPageState {
                                 this.configuration = packet;
                                 this.width = croppedWidth;
                                 this.height = croppedHeight;
+                            } else if (packet.keyframe) {
+                                if (lastKeyframe) {
+                                    this.log.push(
+                                        `[client] Keyframe interval: ${
+                                            ((Number(packet.pts) -
+                                                lastKeyframe) /
+                                                1000) |
+                                            0
+                                        }ms`
+                                    );
+                                }
+                                lastKeyframe = Number(packet.pts);
                             }
                         })
                     )

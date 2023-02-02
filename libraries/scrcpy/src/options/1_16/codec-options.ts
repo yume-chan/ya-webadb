@@ -16,6 +16,7 @@ export interface CodecOptionsInit {
     maxBframes: number;
     repeatPreviousFrameAfter: number;
     maxPtsGapToEncoder: number;
+    intraRefreshPeriod: number;
 }
 
 function toDashCase(input: string) {
@@ -32,7 +33,7 @@ const CODEC_OPTION_TYPES: Partial<
 export class CodecOptions implements ScrcpyOptionValue {
     public value: Partial<CodecOptionsInit>;
 
-    public constructor(value: Partial<CodecOptionsInit>) {
+    public constructor(value: Partial<CodecOptionsInit> = {}) {
         this.value = value;
     }
 
