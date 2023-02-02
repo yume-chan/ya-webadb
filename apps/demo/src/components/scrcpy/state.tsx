@@ -226,10 +226,11 @@ export class ScrcpyPageState {
                 codecOptions.value.level = decoder.maxLevel;
             }
 
+            // Disabled due to https://github.com/Genymobile/scrcpy/issues/2841
             // Less recording delay
-            codecOptions.value.iFrameInterval = 1;
+            // codecOptions.value.iFrameInterval = 1;
             // Less latency
-            codecOptions.value.intraRefreshPeriod = 10000;
+            // codecOptions.value.intraRefreshPeriod = 10000;
 
             const options = new AdbScrcpyOptions1_22(
                 new ScrcpyOptions1_25({
