@@ -1,3 +1,4 @@
+import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
     PushReadableStreamController,
@@ -13,7 +14,6 @@ import {
 } from "@yume-chan/stream-extra";
 
 import { AdbCommand } from "../packet.js";
-import { ConditionalVariable } from "../utils/index.js";
 
 import type { AdbPacketDispatcher, Closeable } from "./dispatcher.js";
 
@@ -51,7 +51,7 @@ export class AdbSocketController
         return this._readable;
     }
 
-    private _writeLock = new ConditionalVariable();
+    private _availableWriteBytesChanged: PromiseResolver<void> | undefined;
     private _availableWriteBytes = 0;
     /**
      * Gets the number of bytes that can be written to the socket without blocking.
@@ -98,7 +98,9 @@ export class AdbSocketController
             },
             dispose: () => {
                 // Error out the pending writes
-                this._writeLock.dispose();
+                this._availableWriteBytesChanged?.reject(
+                    new Error("Can not write to closed socket")
+                );
             },
         });
 
@@ -112,17 +114,16 @@ export class AdbSocketController
             this._duplex.createWritable(
                 new WritableStream({
                     write: async (chunk) => {
+                        // Only one lock is used because `write` is not reentrant.
+                        while (this._availableWriteBytes < chunk.byteLength) {
+                            this._availableWriteBytesChanged =
+                                new PromiseResolver();
+                            await this._availableWriteBytesChanged.promise;
+                        }
+
                         if (this._availableWriteBytes === Infinity) {
-                            await this._writeLock.wait(() => true);
-                            this._availableWriteBytes = 0;
-                        } else if (
-                            this._availableWriteBytes < chunk.byteLength
-                        ) {
-                            await this._writeLock.wait(
-                                () =>
-                                    this._availableWriteBytes >=
-                                    chunk.byteLength
-                            );
+                            this._availableWriteBytes = -1;
+                        } else {
                             this._availableWriteBytes -= chunk.byteLength;
                         }
 
@@ -132,10 +133,6 @@ export class AdbSocketController
                             this.remoteId,
                             chunk
                         );
-
-                        if (this._availableWriteBytes > 0) {
-                            this._writeLock.notifyOne();
-                        }
                     },
                 })
             ),
@@ -157,7 +154,7 @@ export class AdbSocketController
 
     public ack(bytes: number) {
         this._availableWriteBytes += bytes;
-        this._writeLock.notifyOne();
+        this._availableWriteBytesChanged?.resolve();
     }
 
     public async close(): Promise<void> {
