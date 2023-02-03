@@ -2,9 +2,9 @@ import { type Adb } from "@yume-chan/adb";
 
 import { type ScrcpyOptionsInit1_22 } from "../../options/index.js";
 import {
-    type AdbScrcpyConnection,
     AdbScrcpyForwardConnection,
     AdbScrcpyReverseConnection,
+    type AdbScrcpyConnection,
 } from "../connection.js";
 
 import { AdbScrcpyOptions1_16 } from "./1_16.js";

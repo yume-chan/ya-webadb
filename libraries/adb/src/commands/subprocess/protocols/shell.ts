@@ -13,9 +13,9 @@ import {
 import Struct, { placeholder, type StructValueType } from '@yume-chan/struct';
 
 import { type Adb } from "../../../adb.js";
-import { AdbFeatures } from '../../../features.js';
+import { AdbFeatures } from "../../../features.js";
 import { type AdbSocket } from "../../../socket/index.js";
-import { encodeUtf8 } from '../../../utils/index.js';
+import { encodeUtf8 } from "../../../utils/index.js";
 
 import { type AdbSubprocessProtocol } from "./types.js";
 
@@ -29,17 +29,19 @@ export enum AdbShellProtocolId {
 }
 
 // This packet format is used in both direction.
-const AdbShellProtocolPacket =
-    new Struct({ littleEndian: true })
-        .uint8('id', placeholder<AdbShellProtocolId>())
-        .uint32('length')
-        .uint8Array('data', { lengthField: 'length' });
+const AdbShellProtocolPacket = new Struct({ littleEndian: true })
+    .uint8("id", placeholder<AdbShellProtocolId>())
+    .uint32("length")
+    .uint8Array("data", { lengthField: "length" });
 
-type AdbShellProtocolPacketInit = typeof AdbShellProtocolPacket['TInit'];
+type AdbShellProtocolPacketInit = typeof AdbShellProtocolPacket["TInit"];
 
 type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
 
-class StdinSerializeStream extends TransformStream<Uint8Array, AdbShellProtocolPacketInit>{
+class StdinSerializeStream extends TransformStream<
+    Uint8Array,
+    AdbShellProtocolPacketInit
+> {
     constructor() {
         super({
             transform(chunk, controller) {
@@ -50,12 +52,15 @@ class StdinSerializeStream extends TransformStream<Uint8Array, AdbShellProtocolP
             },
             flush() {
                 // TODO: AdbShellSubprocessProtocol: support closing stdin
-            }
+            },
         });
     }
 }
 
-class StdoutDeserializeStream extends TransformStream<AdbShellProtocolPacket, Uint8Array>{
+class StdoutDeserializeStream extends TransformStream<
+    AdbShellProtocolPacket,
+    Uint8Array
+> {
     constructor(type: AdbShellProtocolId.Stdout | AdbShellProtocolId.Stderr) {
         super({
             transform(chunk, controller) {
@@ -116,7 +121,7 @@ class MultiplexStream<T> {
  */
 export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     public static isSupported(adb: Adb) {
-        return adb.features.includes(AdbFeatures.ShellV2);
+        return adb.supportsFeature(AdbFeatures.ShellV2);
     }
 
     public static async pty(adb: Adb, command: string) {

@@ -4,7 +4,7 @@
 // cspell: ignore systemui
 // cspell: ignore sysui
 
-import { type Adb, AdbCommandBase } from "@yume-chan/adb";
+import { AdbCommandBase, type Adb } from "@yume-chan/adb";
 
 import { Settings } from "./settings.js";
 

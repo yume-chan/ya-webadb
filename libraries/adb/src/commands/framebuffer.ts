@@ -69,6 +69,6 @@ export async function framebuffer(adb: Adb): Promise<AdbFrameBuffer> {
         case 2:
             return AdbFrameBufferV2.deserialize(stream);
         default:
-            throw new Error("Unknown FrameBuffer version");
+            throw new Error("Unsupported FrameBuffer version");
     }
 }

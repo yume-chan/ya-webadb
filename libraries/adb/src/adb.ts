@@ -1,5 +1,3 @@
-// cspell: ignore libusb
-
 import { PromiseResolver } from "@yume-chan/async";
 import {
     AbortController,
@@ -267,6 +265,10 @@ export class Adb implements Closeable {
                 }
             }
         }
+    }
+
+    public supportsFeature(feature: AdbFeatures): boolean {
+        return this._features.includes(feature);
     }
 
     /**

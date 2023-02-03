@@ -14,16 +14,22 @@ import { type AdbSubprocessProtocol } from "./types.js";
  * * `resize`: No
  */
 export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
-    public static isSupported() { return true; }
+    public static isSupported() {
+        return true;
+    }
 
     public static async pty(adb: Adb, command: string) {
-        return new AdbSubprocessNoneProtocol(await adb.createSocket(`shell:${command}`));
+        return new AdbSubprocessNoneProtocol(
+            await adb.createSocket(`shell:${command}`)
+        );
     }
 
     public static async raw(adb: Adb, command: string) {
         // `shell,raw:${command}` also triggers raw mode,
         // But is not supported on Android version <7.
-        return new AdbSubprocessNoneProtocol(await adb.createSocket(`exec:${command}`));
+        return new AdbSubprocessNoneProtocol(
+            await adb.createSocket(`exec:${command}`)
+        );
     }
 
     private readonly socket: AdbSocket;
@@ -31,22 +37,30 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     private readonly duplex: DuplexStreamFactory<Uint8Array, Uint8Array>;
 
     // Legacy shell forwards all data to stdin.
-    public get stdin() { return this.socket.writable; }
+    public get stdin() {
+        return this.socket.writable;
+    }
 
     private _stdout: ReadableStream<Uint8Array>;
     /**
      * Legacy shell mixes stdout and stderr.
      */
-    public get stdout() { return this._stdout; }
+    public get stdout() {
+        return this._stdout;
+    }
 
     private _stderr: ReadableStream<Uint8Array>;
     /**
      * `stderr` will always be empty.
      */
-    public get stderr() { return this._stderr; }
+    public get stderr() {
+        return this._stderr;
+    }
 
     private _exit: Promise<number>;
-    public get exit() { return this._exit; }
+    public get exit() {
+        return this._exit;
+    }
 
     public constructor(socket: AdbSocket) {
         this.socket = socket;

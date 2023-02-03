@@ -18,8 +18,12 @@ export class BufferedReadableStream {
     private bufferedOffset = 0;
     private bufferedLength = 0;
 
-    protected readonly stream: ReadableStream<Uint8Array>;
+    private _position = 0;
+    public get position() {
+        return this._position;
+    }
 
+    protected readonly stream: ReadableStream<Uint8Array>;
     protected readonly reader: ReadableStreamDefaultReader<Uint8Array>;
 
     public constructor(stream: ReadableStream<Uint8Array>) {
@@ -32,6 +36,7 @@ export class BufferedReadableStream {
         if (done) {
             throw new BufferedReadableStreamEndedError();
         }
+        this._position += value.byteLength;
         return value;
     }
 
