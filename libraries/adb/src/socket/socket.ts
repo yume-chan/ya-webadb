@@ -1,4 +1,3 @@
-import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
     PushReadableStreamController,
@@ -14,6 +13,7 @@ import {
 } from "@yume-chan/stream-extra";
 
 import { AdbCommand } from "../packet.js";
+import { ConditionalVariable } from "../utils/index.js";
 
 import type { AdbPacketDispatcher, Closeable } from "./dispatcher.js";
 
@@ -27,8 +27,6 @@ export interface AdbSocketInfo {
 
 export interface AdbSocketConstructionOptions extends AdbSocketInfo {
     dispatcher: AdbPacketDispatcher;
-
-    highWaterMark?: number | undefined;
 }
 
 export class AdbSocketController
@@ -53,7 +51,14 @@ export class AdbSocketController
         return this._readable;
     }
 
-    private _writePromise: PromiseResolver<void> | undefined;
+    private _writeLock = new ConditionalVariable();
+    private _availableWriteBytes = 0;
+    /**
+     * Gets the number of bytes that can be written to the socket without blocking.
+     */
+    public get availableWriteBytes() {
+        return this._availableWriteBytes;
+    }
     public readonly writable: WritableStream<Uint8Array>;
 
     private _closed = false;
@@ -93,37 +98,44 @@ export class AdbSocketController
             },
             dispose: () => {
                 // Error out the pending writes
-                this._writePromise?.reject(new Error("Socket closed"));
+                this._writeLock.dispose();
             },
         });
 
         this._readable = this._duplex.wrapReadable(
-            new PushReadableStream(
-                (controller) => {
-                    this._readableController = controller;
-                },
-                {
-                    highWaterMark: options.highWaterMark ?? 16 * 1024,
-                    size(chunk) {
-                        return chunk.byteLength;
-                    },
-                }
-            )
+            new PushReadableStream((controller) => {
+                this._readableController = controller;
+            })
         );
 
         this.writable = pipeFrom(
             this._duplex.createWritable(
                 new WritableStream({
                     write: async (chunk) => {
-                        // Wait for an ack packet
-                        this._writePromise = new PromiseResolver();
+                        if (this._availableWriteBytes === Infinity) {
+                            await this._writeLock.wait(() => true);
+                            this._availableWriteBytes = 0;
+                        } else if (
+                            this._availableWriteBytes < chunk.byteLength
+                        ) {
+                            await this._writeLock.wait(
+                                () =>
+                                    this._availableWriteBytes >=
+                                    chunk.byteLength
+                            );
+                            this._availableWriteBytes -= chunk.byteLength;
+                        }
+
                         await this.dispatcher.sendPacket(
                             AdbCommand.Write,
                             this.localId,
                             this.remoteId,
                             chunk
                         );
-                        await this._writePromise.promise;
+
+                        if (this._availableWriteBytes > 0) {
+                            this._writeLock.notifyOne();
+                        }
                     },
                 })
             ),
@@ -143,8 +155,9 @@ export class AdbSocketController
         await this._readableController.enqueue(packet);
     }
 
-    public ack() {
-        this._writePromise?.resolve();
+    public ack(bytes: number) {
+        this._availableWriteBytes += bytes;
+        this._writeLock.notifyOne();
     }
 
     public async close(): Promise<void> {

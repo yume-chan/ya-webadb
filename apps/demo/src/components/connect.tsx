@@ -217,11 +217,10 @@ function _Connect(): JSX.Element | null {
         }
 
         try {
-            const device = await Adb.authenticate(
-                { readable, writable },
-                CredentialStore,
-                undefined
-            );
+            const device = await Adb.authenticate({
+                connection: { readable, writable },
+                credentialStore: CredentialStore,
+            });
 
             device.disconnected.then(
                 async () => {

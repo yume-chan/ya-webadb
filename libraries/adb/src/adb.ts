@@ -7,7 +7,7 @@ import {
     WritableStream,
 } from "@yume-chan/stream-extra";
 
-import type { AdbCredentialStore } from "./auth.js";
+import type { AdbAuthenticator, AdbCredentialStore } from "./auth.js";
 import {
     ADB_DEFAULT_AUTHENTICATORS,
     AdbAuthenticationProcessor,
@@ -41,7 +41,23 @@ export enum AdbPropKey {
     Features = "features",
 }
 
-export const VERSION_OMIT_CHECKSUM = 0x01000001;
+export const ADB_VERSION_OMIT_CHECKSUM = 0x01000001;
+export const ADB_DEFAULT_INITIAL_PAYLOAD_SIZE = 32 * 1024 * 1024;
+
+export interface AdbClientAuthenticateOptions {
+    connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>;
+    credentialStore: AdbCredentialStore;
+    authenticators?: AdbAuthenticator[];
+    initialDelayedAckBytes?: number;
+}
+
+export interface AdbClientOptions {
+    connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>;
+    version: number;
+    maxPayloadSize: number;
+    banner: string;
+    initialDelayedAckBytes?: number;
+}
 
 export class Adb implements Closeable {
     /**
@@ -49,11 +65,18 @@ export class Adb implements Closeable {
      * every time the device receives a `CNXN` packet, it resets its internal state,
      * and starts a new authentication process.
      */
-    public static async authenticate(
-        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
-        credentialStore: AdbCredentialStore,
-        authenticators = ADB_DEFAULT_AUTHENTICATORS
-    ): Promise<Adb> {
+    public static async authenticate({
+        connection,
+        credentialStore,
+        authenticators = ADB_DEFAULT_AUTHENTICATORS,
+        initialDelayedAckBytes = ADB_DEFAULT_INITIAL_PAYLOAD_SIZE,
+    }: AdbClientAuthenticateOptions): Promise<Adb> {
+        if (initialDelayedAckBytes < 0) {
+            throw new Error(
+                "`initialDelayedAckBytes` must be greater than or equal to 0."
+            );
+        }
+
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
         let maxPayloadSize = 0x100000;
@@ -137,7 +160,11 @@ export class Adb implements Closeable {
                 "sendrecv_v2_lz4",
                 "sendrecv_v2_zstd",
                 "sendrecv_v2_dry_run_send",
-            ].join(",");
+            ];
+
+            if (initialDelayedAckBytes > 0) {
+                features.push(AdbFeatures.DelayedAck);
+            }
 
             await sendPacket({
                 command: AdbCommand.Connect,
@@ -145,7 +172,7 @@ export class Adb implements Closeable {
                 arg1: maxPayloadSize,
                 // The terminating `;` is required in formal definition
                 // But ADB daemon (all versions) can still work without it
-                payload: encodeUtf8(`host::features=${features};`),
+                payload: encodeUtf8(`host::features=${features.join(",")};`),
             });
 
             banner = await resolver.promise;
@@ -159,7 +186,13 @@ export class Adb implements Closeable {
             await pipe;
         }
 
-        return new Adb(connection, version, maxPayloadSize, banner);
+        return new Adb({
+            connection,
+            version,
+            maxPayloadSize,
+            banner,
+            initialDelayedAckBytes,
+        });
     }
 
     private readonly dispatcher: AdbPacketDispatcher;
@@ -198,17 +231,33 @@ export class Adb implements Closeable {
     public readonly reverse: AdbReverseCommand;
     public readonly tcpip: AdbTcpIpCommand;
 
-    public constructor(
-        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
-        version: number,
-        maxPayloadSize: number,
-        banner: string
-    ) {
+    public constructor({
+        connection,
+        version,
+        maxPayloadSize,
+        banner,
+        initialDelayedAckBytes = ADB_DEFAULT_INITIAL_PAYLOAD_SIZE,
+    }: AdbClientOptions) {
         this.parseBanner(banner);
+
+        if (initialDelayedAckBytes < 0) {
+            throw new Error(
+                "`initialDelayedAckBytes` must be greater than or equal to 0."
+            );
+        }
+
+        if (
+            this.supportsFeature(AdbFeatures.DelayedAck) &&
+            initialDelayedAckBytes === 0
+        ) {
+            throw new Error(
+                "`initialDelayedAckBytes` must be greater than 0 when DelayedAck feature is enabled."
+            );
+        }
 
         let calculateChecksum: boolean;
         let appendNullToServiceString: boolean;
-        if (version >= VERSION_OMIT_CHECKSUM) {
+        if (version >= ADB_VERSION_OMIT_CHECKSUM) {
             calculateChecksum = false;
             appendNullToServiceString = false;
         } else {
@@ -220,6 +269,9 @@ export class Adb implements Closeable {
             calculateChecksum,
             appendNullToServiceString,
             maxPayloadSize,
+            initialDelayedAckBytes: this.supportsFeature(AdbFeatures.DelayedAck)
+                ? initialDelayedAckBytes
+                : 0,
         });
 
         this._protocolVersion = version;

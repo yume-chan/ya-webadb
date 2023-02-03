@@ -6,7 +6,7 @@ import type {
 } from "@yume-chan/stream-extra";
 import { AbortController, WritableStream } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
-import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY, NumberFieldType } from "@yume-chan/struct";
 
 import type { AdbPacketData, AdbPacketInit } from "../packet.js";
 import { AdbCommand, calculateChecksum } from "../packet.js";
@@ -25,6 +25,14 @@ export interface AdbPacketDispatcherOptions {
      */
     appendNullToServiceString: boolean;
     maxPayloadSize: number;
+
+    /**
+     * The maximum number of bytes
+     * that allows the device to write to each socket
+     * without acknowledging.
+     * or `0` if delayed ack is not supported.
+     */
+    initialDelayedAckBytes: number;
 }
 
 export type AdbIncomingSocketHandler = (
@@ -33,6 +41,11 @@ export type AdbIncomingSocketHandler = (
 
 export interface Closeable {
     close(): ValueOrPromise<void>;
+}
+
+interface SocketOpenResult {
+    remoteId: number;
+    availableWriteBytes: number;
 }
 
 /**
@@ -90,10 +103,10 @@ export class AdbPacketDispatcher implements Closeable {
                                     await this.sockets
                                         .get(packet.arg1)!
                                         .enqueue(packet.payload);
-                                    await this.sendPacket(
-                                        AdbCommand.OK,
+                                    await this.sendOk(
                                         packet.arg1,
-                                        packet.arg0
+                                        packet.arg0,
+                                        packet.payload.length
                                     );
                                     break;
                                 }
@@ -142,15 +155,36 @@ export class AdbPacketDispatcher implements Closeable {
     }
 
     private handleOk(packet: AdbPacketData) {
-        if (this.initializers.resolve(packet.arg1, packet.arg0)) {
+        let ackBytes: number;
+        if (this.options.initialDelayedAckBytes !== 0) {
+            if (packet.payload.byteLength !== 4) {
+                throw new Error(
+                    "Invalid OKAY packet. Payload size should be 4"
+                );
+            }
+            ackBytes = NumberFieldType.Uint32.deserialize(packet.payload, true);
+        } else {
+            if (packet.payload.byteLength !== 0) {
+                throw new Error(
+                    "Invalid OKAY packet. Payload size should be 0"
+                );
+            }
+            ackBytes = Infinity;
+        }
+
+        if (
+            this.initializers.resolve(packet.arg1, {
+                remoteId: packet.arg0,
+                availableWriteBytes: ackBytes,
+            } satisfies SocketOpenResult)
+        ) {
             // Device successfully created the socket
             return;
         }
 
         const socket = this.sockets.get(packet.arg1);
         if (socket) {
-            // Device has received last `WRTE` to the socket
-            socket.ack();
+            socket.ack(ackBytes);
             return;
         }
 
@@ -227,7 +261,21 @@ export class AdbPacketDispatcher implements Closeable {
         this.initializers.resolve(localId, undefined);
 
         const remoteId = packet.arg0;
+        let initialDelayedAckBytes = packet.arg1 >>> 0;
         const serviceString = decodeUtf8(packet.payload);
+
+        if (this.options.initialDelayedAckBytes === 0) {
+            if (initialDelayedAckBytes !== 0) {
+                throw new Error("Invalid OPEN packet. arg1 should be 0");
+            }
+            initialDelayedAckBytes = Infinity;
+        } else {
+            if (initialDelayedAckBytes === 0) {
+                throw new Error(
+                    "Invalid OPEN packet. arg1 should be greater than 0"
+                );
+            }
+        }
 
         const controller = new AdbSocketController({
             dispatcher: this,
@@ -236,11 +284,16 @@ export class AdbPacketDispatcher implements Closeable {
             localCreated: false,
             serviceString,
         });
+        controller.ack(initialDelayedAckBytes);
 
         for (const handler of this._incomingSocketHandlers) {
             if (await handler(controller.socket)) {
                 this.sockets.set(localId, controller);
-                await this.sendPacket(AdbCommand.OK, localId, remoteId);
+                await this.sendOk(
+                    localId,
+                    remoteId,
+                    this.options.initialDelayedAckBytes
+                );
                 return;
             }
         }
@@ -253,11 +306,17 @@ export class AdbPacketDispatcher implements Closeable {
             serviceString += "\0";
         }
 
-        const [localId, initializer] = this.initializers.add<number>();
-        await this.sendPacket(AdbCommand.Open, localId, 0, serviceString);
+        const [localId, initializer] =
+            this.initializers.add<SocketOpenResult>();
+        await this.sendPacket(
+            AdbCommand.Open,
+            localId,
+            this.options.initialDelayedAckBytes,
+            serviceString
+        );
 
         // Fulfilled by `handleOk`
-        const remoteId = await initializer;
+        const { remoteId, availableWriteBytes } = await initializer;
         const controller = new AdbSocketController({
             dispatcher: this,
             localId,
@@ -265,6 +324,7 @@ export class AdbPacketDispatcher implements Closeable {
             localCreated: true,
             serviceString,
         });
+        controller.ack(availableWriteBytes);
         this.sockets.set(localId, controller);
 
         return controller.socket;
@@ -314,6 +374,18 @@ export class AdbPacketDispatcher implements Closeable {
 
         await this._writer.ready;
         await this._writer.write(init as AdbPacketInit);
+    }
+
+    private sendOk(localId: number, remoteId: number, ackBytes: number) {
+        let payload: Uint8Array;
+        if (this.options.initialDelayedAckBytes !== 0) {
+            payload = new Uint8Array(4);
+            new DataView(payload.buffer).setUint32(0, ackBytes, true);
+        } else {
+            payload = new Uint8Array(0);
+        }
+
+        return this.sendPacket(AdbCommand.OK, localId, remoteId, payload);
     }
 
     public async close() {
