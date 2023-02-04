@@ -61,9 +61,7 @@ function injectTouch(
     const { pointerType } = e;
     let pointerId: bigint;
     if (pointerType === "mouse") {
-        // ScrcpyPointerId.Mouse doesn't work with Chrome browser
-        // https://github.com/Genymobile/scrcpy/issues/3635
-        pointerId = ScrcpyPointerId.Finger;
+        pointerId = ScrcpyPointerId.Mouse;
     } else {
         pointerId = BigInt(e.pointerId);
     }
@@ -79,7 +77,7 @@ function injectTouch(
         pointerY: y,
         pressure: e.pressure,
         actionButton: MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON[e.button],
-        // `MouseEvent`'s `buttons` has the same order as Android `MotionEvent`
+        // `MouseEvent.buttons` has the same order as Android `MotionEvent`
         buttons: e.buttons,
     });
     for (const message of messages) {
