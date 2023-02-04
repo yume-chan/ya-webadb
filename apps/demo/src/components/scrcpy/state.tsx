@@ -1,14 +1,14 @@
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import {
     AdbScrcpyClient,
-    AdbScrcpyOptions1_22,
+    AdbScrcpyOptions1_26,
     AndroidScreenPowerMode,
     CodecOptions,
     DEFAULT_SERVER_PATH,
     ScrcpyDeviceMessageType,
     ScrcpyHoverHelper,
     ScrcpyLogLevel,
-    ScrcpyOptions1_25,
+    ScrcpyOptions1_26,
     ScrcpyVideoStreamConfigurationPacket,
     ScrcpyVideoStreamPacket,
     clamp,
@@ -232,8 +232,8 @@ export class ScrcpyPageState {
             // Less latency
             // codecOptions.value.intraRefreshPeriod = 10000;
 
-            const options = new AdbScrcpyOptions1_22(
-                new ScrcpyOptions1_25({
+            const options = new AdbScrcpyOptions1_26(
+                new ScrcpyOptions1_26({
                     logLevel: ScrcpyLogLevel.Debug,
                     ...SETTING_STATE.settings,
                     sendDeviceMeta: false,
@@ -249,7 +249,7 @@ export class ScrcpyPageState {
                 );
                 this.log.push(
                     `[client] Server arguments: ${options
-                        .formatServerArguments()
+                        .serializeServerArguments()
                         .join(" ")}`
                 );
             });

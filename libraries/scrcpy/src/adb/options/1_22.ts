@@ -1,26 +1,18 @@
-import { type Adb } from "@yume-chan/adb";
-
 import { type ScrcpyOptionsInit1_22 } from "../../options/index.js";
-import {
-    AdbScrcpyForwardConnection,
-    AdbScrcpyReverseConnection,
-    type AdbScrcpyConnection,
-} from "../connection.js";
+import { type AdbScrcpyConnectionOptions } from "../connection.js";
 
 import { AdbScrcpyOptions1_16 } from "./1_16.js";
 
 export class AdbScrcpyOptions1_22<
     T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22
 > extends AdbScrcpyOptions1_16<T> {
-    public override createConnection(adb: Adb): AdbScrcpyConnection {
-        const options = {
-            ...this.getDefaultValue(),
-            ...this.value,
-        };
-        if (this.value.tunnelForward) {
-            return new AdbScrcpyForwardConnection(adb, options);
-        } else {
-            return new AdbScrcpyReverseConnection(adb, options);
-        }
+    protected override getConnectionOptions(): AdbScrcpyConnectionOptions {
+        const defaults = this.getDefaultValue();
+        return Object.assign(super.getConnectionOptions(), {
+            control: this.value.control ?? defaults.control,
+            sendDummyByte: this.value.sendDummyByte ?? defaults.sendDummyByte,
+            sendDeviceMeta:
+                this.value.sendDeviceMeta ?? defaults.sendDeviceMeta,
+        });
     }
 }

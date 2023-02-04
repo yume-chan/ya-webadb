@@ -35,10 +35,9 @@ export class ScrcpyOptions1_18<
     }
 
     public override getDefaultValue(): T {
-        return {
-            ...super.getDefaultValue(),
+        return Object.assign(super.getDefaultValue(), {
             powerOffOnClose: false,
-        };
+        } satisfies Omit<ScrcpyOptionsInit1_18, keyof ScrcpyOptionsInit1_16>);
     }
 
     public override getOutputEncoderNameRegex(): RegExp {

@@ -43,13 +43,12 @@ export class ScrcpyOptions1_22<
     }
 
     public override getDefaultValue(): T {
-        return {
-            ...super.getDefaultValue(),
+        return Object.assign(super.getDefaultValue(), {
             downsizeOnError: true,
             sendDeviceMeta: true,
             sendDummyByte: true,
             rawVideoStream: false,
-        };
+        } satisfies Omit<ScrcpyOptionsInit1_22, keyof ScrcpyOptionsInit1_21>);
     }
 
     public override getScrollController(): ScrcpyScrollController {

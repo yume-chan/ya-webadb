@@ -4,6 +4,7 @@ import { type TransformStream } from "@yume-chan/stream-extra";
 import {
     type ScrcpyBackOrScreenOnControlMessage,
     type ScrcpyControlMessageType,
+    type ScrcpyInjectTouchControlMessage,
     type ScrcpySetClipboardControlMessage,
 } from "../../control/index.js";
 import {
@@ -36,8 +37,8 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
         return this.raw.getDefaultValue();
     }
 
-    public formatServerArguments(): string[] {
-        return this.raw.formatServerArguments();
+    public serializeServerArguments(): string[] {
+        return this.raw.serializeServerArguments();
     }
 
     public getOutputEncoderNameRegex(): RegExp {
@@ -53,6 +54,12 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
 
     public getControlMessageTypes(): ScrcpyControlMessageType[] {
         return this.raw.getControlMessageTypes();
+    }
+
+    public serializeInjectTouchControlMessage(
+        message: ScrcpyInjectTouchControlMessage
+    ): Uint8Array {
+        return this.raw.serializeInjectTouchControlMessage(message);
     }
 
     public serializeBackOrScreenOnControlMessage(

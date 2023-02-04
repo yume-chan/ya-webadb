@@ -13,14 +13,19 @@ import { AdbScrcpyOptionsBase } from "./types.js";
 export class AdbScrcpyOptions1_16<
     T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
 > extends AdbScrcpyOptionsBase<T> {
-    public override createConnection(adb: Adb): AdbScrcpyConnection {
-        const options: AdbScrcpyConnectionOptions = {
+    protected getConnectionOptions(): AdbScrcpyConnectionOptions {
+        return {
+            uid: -1,
             // Old versions always have control stream no matter what the option is
             // Pass `control: false` to `Connection` will disable the control stream
             control: true,
             sendDummyByte: true,
             sendDeviceMeta: true,
         };
+    }
+
+    public override createConnection(adb: Adb): AdbScrcpyConnection {
+        const options = this.getConnectionOptions();
         if (this.value.tunnelForward) {
             return new AdbScrcpyForwardConnection(adb, options);
         } else {

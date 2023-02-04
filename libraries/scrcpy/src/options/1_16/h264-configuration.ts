@@ -450,7 +450,7 @@ export function parseSequenceParameterSet(buffer: Uint8Array) {
  * Find Sequence Parameter Set (SPS) and Picture Parameter Set (PPS)
  * from H.264 Annex B formatted data.
  */
-export function parseH264Configuration(buffer: Uint8Array) {
+export function findH264Configuration(buffer: Uint8Array) {
     let sequenceParameterSet: Uint8Array | undefined;
     let pictureParameterSet: Uint8Array | undefined;
 

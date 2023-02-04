@@ -3,6 +3,7 @@ import { type TransformStream } from "@yume-chan/stream-extra";
 import {
     type ScrcpyBackOrScreenOnControlMessage,
     type ScrcpyControlMessageType,
+    type ScrcpyInjectTouchControlMessage,
     type ScrcpySetClipboardControlMessage,
 } from "../control/index.js";
 
@@ -79,7 +80,7 @@ export interface ScrcpyOptions<T extends object> {
 
     getDefaultValue(): T;
 
-    formatServerArguments(): string[];
+    serializeServerArguments(): string[];
 
     getOutputEncoderNameRegex(): RegExp;
 
@@ -89,6 +90,10 @@ export interface ScrcpyOptions<T extends object> {
     >;
 
     getControlMessageTypes(): ScrcpyControlMessageType[];
+
+    serializeInjectTouchControlMessage(
+        message: ScrcpyInjectTouchControlMessage
+    ): Uint8Array;
 
     serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnControlMessage

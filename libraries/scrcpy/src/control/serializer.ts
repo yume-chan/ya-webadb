@@ -15,7 +15,7 @@ import {
 } from "./inject-keycode.js";
 import { type ScrcpyInjectScrollControlMessage } from "./inject-scroll.js";
 import { ScrcpyInjectTextControlMessage } from "./inject-text.js";
-import { ScrcpyInjectTouchControlMessage } from "./inject-touch.js";
+import { type ScrcpyInjectTouchControlMessage } from "./inject-touch.js";
 import { ScrcpyRotateDeviceControlMessage } from "./rotate-device.js";
 import {
     ScrcpySetScreenPowerModeControlMessage,
@@ -86,7 +86,7 @@ export class ScrcpyControlMessageSerializer {
      */
     public injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
         return this.writer.write(
-            ScrcpyInjectTouchControlMessage.serialize(
+            this.options.serializeInjectTouchControlMessage(
                 this.addMessageType(
                     message,
                     ScrcpyControlMessageType.InjectTouch

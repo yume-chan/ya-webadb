@@ -3,7 +3,7 @@ import { describe, expect, it } from "@jest/globals";
 import { CodecOptions } from "./codec-options.js";
 
 describe("CodecOptions", () => {
-    it("ignore empty options", () => {
+    it("should detect empty value", () => {
         expect(new CodecOptions({}).toOptionValue()).toBeUndefined();
     });
 });

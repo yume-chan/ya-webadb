@@ -2,12 +2,15 @@ import {
     StructDeserializeStream,
     TransformStream,
 } from "@yume-chan/stream-extra";
-import Struct from "@yume-chan/struct";
+import Struct, { placeholder } from "@yume-chan/struct";
 
 import {
     AndroidKeyEventAction,
+    BasicControlMessage,
     ScrcpyControlMessageType,
+    type AndroidMotionEventAction,
     type ScrcpyBackOrScreenOnControlMessage,
+    type ScrcpyInjectTouchControlMessage,
     type ScrcpySetClipboardControlMessage,
 } from "../../control/index.js";
 import {
@@ -17,8 +20,9 @@ import {
 } from "../types.js";
 
 import { CodecOptions } from "./codec-options.js";
+import { ScrcpyFloatToUint16FieldDefinition } from "./float-to-uint16.js";
 import {
-    parseH264Configuration,
+    findH264Configuration,
     parseSequenceParameterSet,
     removeH264Emulation,
 } from "./h264-configuration.js";
@@ -117,22 +121,32 @@ export const VideoPacket = new Struct()
 
 export const NO_PTS = BigInt(1) << BigInt(63);
 
-export const ScrcpyBackOrScreenOnControlMessage1_16 = new Struct().uint8(
-    "type",
-    ScrcpyControlMessageType.BackOrScreenOn as const
-);
+export const ScrcpyBackOrScreenOnControlMessage1_16 = BasicControlMessage;
 
 export const ScrcpySetClipboardControlMessage1_15 = new Struct()
-    .uint8("type", ScrcpyControlMessageType.SetClipboard as const)
+    .uint8("type")
     .uint32("length")
     .string("content", { lengthField: "length" });
 
 export type ScrcpySetClipboardControlMessage1_15 =
     typeof ScrcpySetClipboardControlMessage1_15["TInit"];
 
-export class ScrcpyOptions1_16<
-    T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
-> implements ScrcpyOptions<T>
+export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
+    .uint8("type")
+    .uint8("action", placeholder<AndroidMotionEventAction>())
+    .uint64("pointerId")
+    .uint32("pointerX")
+    .uint32("pointerY")
+    .uint16("screenWidth")
+    .uint16("screenHeight")
+    .field("pressure", ScrcpyFloatToUint16FieldDefinition)
+    .uint32("buttons");
+
+export type ScrcpyInjectTouchControlMessage1_16 =
+    typeof ScrcpyInjectTouchControlMessage1_16["TInit"];
+
+export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16>
+    implements ScrcpyOptions<T>
 {
     public value: Partial<T>;
 
@@ -187,12 +201,12 @@ export class ScrcpyOptions1_16<
             displayId: 0,
             showTouches: false,
             stayAwake: false,
-            codecOptions: new CodecOptions({}),
+            codecOptions: new CodecOptions(),
             encoderName: "-",
         } as T;
     }
 
-    public formatServerArguments(): string[] {
+    public serializeServerArguments(): string[] {
         const defaults = this.getDefaultValue();
         return this.getArgumentOrder().map((key) =>
             toScrcpyOptionValue(this.value[key] || defaults[key], "-")
@@ -231,7 +245,7 @@ export class ScrcpyOptions1_16<
                             const {
                                 sequenceParameterSet,
                                 pictureParameterSet,
-                            } = parseH264Configuration(packet.data);
+                            } = findH264Configuration(packet.data);
 
                             const {
                                 profile_idc: profileIndex,
@@ -323,6 +337,12 @@ export class ScrcpyOptions1_16<
             /*  9 */ ScrcpyControlMessageType.SetScreenPowerMode,
             /* 10 */ ScrcpyControlMessageType.RotateDevice,
         ];
+    }
+
+    serializeInjectTouchControlMessage(
+        message: ScrcpyInjectTouchControlMessage
+    ): Uint8Array {
+        return ScrcpyInjectTouchControlMessage1_16.serialize(message);
     }
 
     public serializeBackOrScreenOnControlMessage(

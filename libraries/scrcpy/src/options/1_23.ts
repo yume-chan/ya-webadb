@@ -20,10 +20,9 @@ export class ScrcpyOptions1_23<
     }
 
     public override getDefaultValue(): T {
-        return {
-            ...super.getDefaultValue(),
+        return Object.assign(super.getDefaultValue(), {
             cleanup: true,
-        };
+        } satisfies Omit<ScrcpyOptionsInit1_23, keyof ScrcpyOptionsInit1_22>);
     }
 
     public override createVideoStreamTransformer(): TransformStream<

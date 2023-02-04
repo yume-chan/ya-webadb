@@ -144,7 +144,7 @@ export class AdbScrcpyClient {
                     /* unused */ "/",
                     "com.genymobile.scrcpy.Server",
                     version,
-                    ...options.formatServerArguments(),
+                    ...options.serializeServerArguments(),
                 ],
                 {
                     // Scrcpy server doesn't use stderr,

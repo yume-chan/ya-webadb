@@ -1,11 +1,8 @@
 // cspell: ignore autosync
 
-import Struct from "@yume-chan/struct";
+import Struct, { placeholder } from "@yume-chan/struct";
 
-import {
-    ScrcpyControlMessageType,
-    type ScrcpySetClipboardControlMessage,
-} from "../control/index.js";
+import { type ScrcpySetClipboardControlMessage } from "../control/index.js";
 
 import { ScrcpyOptions1_18, type ScrcpyOptionsInit1_18 } from "./1_18.js";
 import { toScrcpyOptionValue } from "./types.js";
@@ -19,9 +16,9 @@ function toSnakeCase(input: string): string {
 }
 
 export const ScrcpySetClipboardControlMessage1_21 = new Struct()
-    .uint8("type", ScrcpyControlMessageType.SetClipboard as const)
+    .uint8("type")
     .uint64("sequence")
-    .int8("paste")
+    .int8("paste", placeholder<boolean>())
     .uint32("length")
     .string("content", { lengthField: "length" });
 
@@ -36,21 +33,29 @@ export class ScrcpyOptions1_21<
     }
 
     public override getDefaultValue(): T {
-        return {
-            ...super.getDefaultValue(),
+        return Object.assign(super.getDefaultValue(), {
             clipboardAutosync: true,
-        };
+        } satisfies Omit<ScrcpyOptionsInit1_21, keyof ScrcpyOptionsInit1_18>);
     }
 
-    public override formatServerArguments(): string[] {
+    public override serializeServerArguments(): string[] {
         // 1.21 changed the format of arguments
-        // So `getArgumentOrder()` is no longer needed
+        // `getArgumentOrder()` is no longer used
+        const defaults = this.getDefaultValue();
         return Object.entries(this.value)
             .map(
                 ([key, value]) =>
                     [key, toScrcpyOptionValue(value, undefined)] as const
             )
-            .filter((pair): pair is [string, string] => pair[1] !== undefined)
+            .filter(
+                (pair): pair is [string, string] =>
+                    pair[1] !== undefined &&
+                    pair[1] !==
+                        toScrcpyOptionValue(
+                            defaults[pair[0] as keyof T],
+                            undefined
+                        )
+            )
             .map(([key, value]) => `${toSnakeCase(key)}=${value}`);
     }
 

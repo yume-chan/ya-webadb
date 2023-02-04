@@ -3,6 +3,7 @@ import {
     AndroidKeyCode,
     AndroidKeyEventAction,
     AndroidMotionEventAction,
+    AndroidMotionEventButton,
     ScrcpyPointerId,
 } from "@yume-chan/scrcpy";
 import {
@@ -41,6 +42,14 @@ function handleWheel(e: WheelEvent) {
     });
 }
 
+const MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON = [
+    AndroidMotionEventButton.Primary,
+    AndroidMotionEventButton.Tertiary,
+    AndroidMotionEventButton.Secondary,
+    AndroidMotionEventButton.Back,
+    AndroidMotionEventButton.Forward,
+];
+
 function injectTouch(
     action: AndroidMotionEventAction,
     e: PointerEvent<HTMLDivElement>
@@ -69,6 +78,8 @@ function injectTouch(
         pointerX: x,
         pointerY: y,
         pressure: e.pressure,
+        actionButton: MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON[e.button],
+        // `MouseEvent`'s `buttons` has the same order as Android `MotionEvent`
         buttons: e.buttons,
     });
     for (const message of messages) {

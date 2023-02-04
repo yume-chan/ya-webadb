@@ -10,31 +10,49 @@ import {
 import { type ValueOrPromise } from "@yume-chan/struct";
 
 export interface AdbScrcpyConnectionOptions {
+    uid: number;
+
+    /**
+     * Whether to create a control stream
+     */
     control: boolean;
 
     /**
-     * Write a byte on start to detect connection issues
+     * In forward tunnel mode, read a byte from video socket on start to detect connection issues
      */
     sendDummyByte: boolean;
 
     /**
-     * Send device name and size
+     * Read device name and size from video socket on start
      */
     sendDeviceMeta: boolean;
 }
+
+export const SCRCPY_SOCKET_NAME_PREFIX = "scrcpy";
 
 export abstract class AdbScrcpyConnection implements Disposable {
     protected adb: Adb;
 
     protected options: AdbScrcpyConnectionOptions;
 
+    protected socketName: string;
+
     public constructor(adb: Adb, options: AdbScrcpyConnectionOptions) {
         this.adb = adb;
         this.options = options;
+        this.socketName = this.getSocketName();
     }
 
     public initialize(): ValueOrPromise<void> {
         // do nothing
+    }
+
+    protected getSocketName(): string {
+        let socketName = "localabstract:" + SCRCPY_SOCKET_NAME_PREFIX;
+        if (this.options.uid !== undefined && this.options.uid >= 0) {
+            socketName += "_" + this.options.uid.toString(16).padStart(8, "0");
+        }
+        return socketName;
     }
 
     public abstract getStreams(): ValueOrPromise<
@@ -46,6 +64,19 @@ export abstract class AdbScrcpyConnection implements Disposable {
         ]
     >;
 
+    protected async skipDeviceMeta(videoStream: ReadableStream<Uint8Array>) {
+        // Server only writes device meta after control socket is connected (if enabled)
+        if (this.options.sendDeviceMeta) {
+            const reader = videoStream.getReader();
+            const { done, value } = await reader.read();
+            // 64 bytes device name + 2 bytes video width + 2 bytes video height
+            if (done || value.byteLength !== 64 + 2 + 2) {
+                throw new Error("Unexpected response from server");
+            }
+            reader.releaseLock();
+        }
+    }
+
     public dispose(): void {
         // do nothing
     }
@@ -55,7 +86,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     private _disposed = false;
 
     private connect(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
-        return this.adb.createSocket("localabstract:scrcpy");
+        return this.adb.createSocket(this.socketName);
     }
 
     private async connectAndRetry(): Promise<
@@ -102,16 +133,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
             controlStream = await this.connectAndRetry();
         }
 
-        // Server only writes device meta after control socket is connected (if enabled)
-        if (this.options.sendDeviceMeta) {
-            const reader = videoStream.getReader();
-            const { done, value } = await reader.read();
-            // 64 bytes device name + 2 bytes video width + 2 bytes video height
-            if (done || value.byteLength !== 64 + 2 + 2) {
-                throw new Error("Unexpected response from server");
-            }
-            reader.releaseLock();
-        }
+        await this.skipDeviceMeta(videoStream);
 
         return [videoStream, controlStream];
     }
@@ -132,7 +154,7 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     public override async initialize(): Promise<void> {
         try {
             // try to unbind first
-            await this.adb.reverse.remove("localabstract:scrcpy");
+            await this.adb.reverse.remove(this.socketName);
         } catch (e) {
             if (e instanceof AdbReverseNotSupportedError) {
                 throw e;
@@ -148,7 +170,7 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
         this.streams = queue.readable.getReader();
         const writer = queue.writable.getWriter();
         this.address = await this.adb.reverse.add(
-            "localabstract:scrcpy",
+            this.socketName,
             "tcp:27183",
             (socket) => {
                 void writer.write(socket);
@@ -180,16 +202,7 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
             controlStream = await this.accept();
         }
 
-        // Server only writes device meta after control socket is connected (if enabled)
-        if (this.options.sendDeviceMeta) {
-            const reader = videoStream.getReader();
-            const { done, value } = await reader.read();
-            // 64 bytes device name + 2 bytes video width + 2 bytes video height
-            if (done || value.byteLength !== 64 + 2 + 2) {
-                throw new Error("Unexpected response from server");
-            }
-            reader.releaseLock();
-        }
+        await this.skipDeviceMeta(videoStream);
 
         return [videoStream, controlStream];
     }
