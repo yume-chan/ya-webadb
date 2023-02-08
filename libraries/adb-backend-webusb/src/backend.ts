@@ -26,6 +26,9 @@ export type AdbDeviceFilter = USBDeviceFilter &
         Pick<USBDeviceFilter, "classCode" | "subclassCode" | "protocolCode">
     >;
 
+/**
+ * The default filter for ADB devices, as defined by Google.
+ */
 export const ADB_DEFAULT_DEVICE_FILTER = {
     classCode: 0xff,
     subclassCode: 0x42,
@@ -133,7 +136,8 @@ export class AdbWebUsbBackendStream
     public constructor(
         device: USBDevice,
         inEndpoint: USBEndpoint,
-        outEndpoint: USBEndpoint
+        outEndpoint: USBEndpoint,
+        usbManager = window.navigator.usb
     ) {
         let closed = false;
 
@@ -147,7 +151,7 @@ export class AdbWebUsbBackendStream
                 }
             },
             dispose: () => {
-                navigator.usb.removeEventListener(
+                usbManager.removeEventListener(
                     "disconnect",
                     handleUsbDisconnect
                 );
@@ -162,7 +166,7 @@ export class AdbWebUsbBackendStream
             }
         }
 
-        navigator.usb.addEventListener("disconnect", handleUsbDisconnect);
+        usbManager.addEventListener("disconnect", handleUsbDisconnect);
 
         this._readable = factory.wrapReadable(
             new ReadableStream<AdbPacketData>({
@@ -245,26 +249,32 @@ export class AdbWebUsbBackend implements AdbBackend {
     }
 
     /**
-     * Request access to a connected device from browser.
-     * The browser will display a list of devices to the user and let them choose one.
-     *
-     * Only available in browsers that support WebUSB API (When `isSupported()` returns `true`).
-     *
+     * Request access to a connected device.
+     * This is a convince method for `usb.requestDevice()`.
      * @param filters
      * The filters to apply to the device list.
      *
      * It must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface,
-     * but can also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
-     * @returns The `AdbWebUsbBackend` instance if the user selected a device, or `undefined` if the user cancelled the device picker.
+     * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
+     *
+     * Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
+     * @param usbManager
+     * A WebUSB compatible interface.
+     * For example, `usb` NPM package for Node.js has a `webusb` object that can be used here.
+     *
+     * Defaults to `window.navigator.usb` (will throw an error if not exist).
+     * @returns The `AdbWebUsbBackend` instance if the user selected a device,
+     * or `undefined` if the user cancelled the device picker.
      */
     public static async requestDevice(
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
+        usbManager = window.navigator.usb
     ): Promise<AdbWebUsbBackend | undefined> {
         try {
-            const device = await navigator.usb.requestDevice({
+            const device = await usbManager.requestDevice({
                 filters,
             });
-            return new AdbWebUsbBackend(device, filters);
+            return new AdbWebUsbBackend(device, filters, usbManager);
         } catch (e) {
             // User cancelled the device picker
             if (e instanceof DOMException && e.name === "NotFoundError") {
@@ -275,14 +285,34 @@ export class AdbWebUsbBackend implements AdbBackend {
         }
     }
 
+    /**
+     * Get all connected and authenticated devices.
+     * This is a convince method for `usb.getDevices()`.
+     * @param filters
+     * The filters to apply to the device list.
+     *
+     * It must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface,
+     * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
+     *
+     * Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
+     * @param usbManager
+     * A WebUSB compatible interface.
+     * For example, `usb` NPM package for Node.js has a `webusb` object that can be used here.
+     *
+     * Defaults to `window.navigator.usb` (will throw an error if not exist).
+     * @returns An array of `AdbWebUsbBackend` instances for all connected and authenticated devices.
+     */
     public static async getDevices(
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
+        usbManager = window.navigator.usb
     ): Promise<AdbWebUsbBackend[]> {
-        const devices = await window.navigator.usb.getDevices();
+        const devices = await usbManager.getDevices();
         return devices.map((device) => new AdbWebUsbBackend(device, filters));
     }
 
     private _filters: AdbDeviceFilter[];
+    private _usbManager: USB;
+
     private _device: USBDevice;
     public get device() {
         return this._device;
@@ -300,14 +330,16 @@ export class AdbWebUsbBackend implements AdbBackend {
      * Create a new instance of `AdbWebBackend` using a `USBDevice` instance you already have.
      *
      * @param device The `USBDevice` instance you already have.
-     * @param filters The filters to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
+     * @param filters The filters to use when searching for ADB interface. Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
      */
     public constructor(
         device: USBDevice,
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
+        usbManager = window.navigator.usb
     ) {
         this._device = device;
         this._filters = filters;
+        this._usbManager = usbManager;
     }
 
     /**
@@ -354,7 +386,8 @@ export class AdbWebUsbBackend implements AdbBackend {
         return new AdbWebUsbBackendStream(
             this._device,
             inEndpoint,
-            outEndpoint
+            outEndpoint,
+            this._usbManager
         );
     }
 }

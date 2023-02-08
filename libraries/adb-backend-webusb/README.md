@@ -2,13 +2,13 @@
 
 Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB), [Spec](https://wicg.github.io/webusb)) API.
 
-- [Note](#note)
-- [Use in Node.js](#use-in-nodejs)
-- [API](#api)
-  - [Constructor](#constructor)
-  - [`isSupported()`](#issupported)
-  - [`requestDevice`](#requestdevice)
-  - [`connect`](#connect)
+-   [Note](#note)
+-   [Use in Node.js](#use-in-nodejs)
+-   [API](#api)
+    -   [Constructor](#constructor)
+    -   [`isSupported()`](#issupported)
+    -   [`requestDevice`](#requestdevice)
+    -   [`connect`](#connect)
 
 ## Note
 
@@ -23,9 +23,9 @@ Chrome will treat `localhost` as secure, but if you want to access a dev server 
 
 ## Use in Node.js
 
-Node.js doesn't support WebUSB API, but you might be able to use this package with the [`usb`](https://www.npmjs.com/package/usb) package (I didn't test this. If you have any results, please open a discussion to share with us).
+Node.js doesn't have native support for WebUSB API. However, all methods in this package have a `usbManager` parameter, which can be used to provide a WebUSB compatible implementation.
 
-All static methods will not work, but the constructor only requires an object that's structurally compatible with `USBDevice` interface. The `WebUSBDevice` class in `usb` package should satisfy this requirement.
+For example, the [`usb`](https://www.npmjs.com/package/usb) NPM package has a `webusb` export that can be used here.
 
 ## API
 
@@ -35,6 +35,7 @@ All static methods will not work, but the constructor only requires an object th
 public constructor(
     device: USBDevice,
     filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+    usbManager: USB = window.navigator.usb
 );
 ```
 
@@ -42,7 +43,7 @@ Create a new instance of `AdbWebBackend` using a `USBDevice` instance you alread
 
 `USBDevice` type is from WebUSB API.
 
-The `filters` parameter specifies the `classCode`, `subclassCode` and `protocolCode`  to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
+The `filters` parameter specifies the `classCode`, `subclassCode` and `protocolCode` to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
 
 ### `isSupported()`
 
@@ -56,7 +57,8 @@ Check if WebUSB API is supported by the browser.
 
 ```ts
 public static async requestDevice(
-    filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+    filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
+    usbManager: USB = window.navigator.usb
 ): Promise<AdbWebUsbBackend | undefined>
 ```
 
