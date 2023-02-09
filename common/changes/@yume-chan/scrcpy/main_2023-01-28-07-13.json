@@ -1,10 +1,10 @@
 {
-  "changes": [
-    {
-      "packageName": "@yume-chan/scrcpy",
-      "comment": "Change `AdbScrcpyClient` to use forward tunnel automatically if reverse tunnel is not supported by device",
-      "type": "none"
-    }
-  ],
-  "packageName": "@yume-chan/scrcpy"
+    "changes": [
+        {
+            "packageName": "@yume-chan/scrcpy",
+            "comment": "Add `AdbReverseNotSupportedError` handling and automatically switch to forward tunnel in `AdbScrcpyClient`.",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/scrcpy"
 }

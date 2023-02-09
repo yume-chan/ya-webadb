@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb-backend-webusb",
+            "comment": "Add `usbManager` parameter to all methods to allow using `usb` NPM package for Node.js",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb-backend-webusb"
+}

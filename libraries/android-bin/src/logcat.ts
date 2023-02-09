@@ -127,7 +127,7 @@ export function formatAndroidLogEntry(
         // TODO: implement other formats
         default: {
             // prettier-ignore
-            const text=`${
+            const text = `${
                 AndroidLogPriorityToCharacter[entry.priority]
             }/${
                 entry.tag.padEnd(8)
