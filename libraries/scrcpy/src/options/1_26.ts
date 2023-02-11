@@ -42,18 +42,26 @@ export class ScrcpyUid implements ScrcpyOptionValue {
 
 export interface ScrcpyOptionsInit1_26 extends ScrcpyOptionsInit1_24 {
     uid: ScrcpyUid;
+    codec: "h264" | "h265" | "av1";
+    sendCodecId: boolean;
 }
 
 export class ScrcpyOptions1_26<
     T extends ScrcpyOptionsInit1_26 = ScrcpyOptionsInit1_26
 > extends ScrcpyOptions1_25<T> {
     public constructor(init: Partial<ScrcpyOptionsInit1_26>) {
+        if (!init.rawVideoStream) {
+            init.sendCodecId = false;
+        }
+
         super(init);
     }
 
     public override getDefaultValue(): T {
         return Object.assign(super.getDefaultValue(), {
             uid: new ScrcpyUid(-1),
+            codec: "h264",
+            sendCodecId: true,
         } satisfies Omit<ScrcpyOptionsInit1_26, keyof ScrcpyOptionsInit1_24>);
     }
 
