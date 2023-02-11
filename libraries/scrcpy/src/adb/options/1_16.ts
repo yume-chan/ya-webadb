@@ -20,7 +20,6 @@ export class AdbScrcpyOptions1_16<
             // Pass `control: false` to `Connection` will disable the control stream
             control: true,
             sendDummyByte: true,
-            sendDeviceMeta: true,
         };
     }
 

@@ -1,8 +1,10 @@
 import {
+    BufferedReadableStream,
     StructDeserializeStream,
     TransformStream,
+    type ReadableStream,
 } from "@yume-chan/stream-extra";
-import Struct, { placeholder } from "@yume-chan/struct";
+import Struct, { placeholder, type ValueOrPromise } from "@yume-chan/struct";
 
 import {
     AndroidKeyEventAction,
@@ -16,6 +18,7 @@ import {
 import {
     toScrcpyOptionValue,
     type ScrcpyOptions,
+    type ScrcpyVideoStreamMetadata,
     type ScrcpyVideoStreamPacket,
 } from "../types.js";
 
@@ -89,10 +92,10 @@ export interface ScrcpyOptionsInit1_16 {
      * Send PTS so that the client may record properly
      *
      * Note: When `sendFrameMeta: false` is specified,
-     * `onChangeEncoding` event won't fire and `onVideoData` event doesn't
-     * merge sps/pps frame and first video frame. Which means you can't use
-     * the shipped decoders to render the video
-     * (You can still record the stream into a file).
+     * the video stream will not contain `configuration` typed packets,
+     * which means it can't be decoded by the companion decoders.
+     * It's still possible to record the stream into a file,
+     * or to decode it with a more tolerant decoder like FFMpeg.
      *
      * @default true
      */
@@ -114,7 +117,7 @@ export interface ScrcpyOptionsInit1_16 {
     encoderName: string;
 }
 
-export const VideoPacket = new Struct()
+export const ScrcpyVideoPacket = new Struct()
     .uint64("pts")
     .uint32("size")
     .uint8Array("data", { lengthField: "size" });
@@ -145,8 +148,14 @@ export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
 export type ScrcpyInjectTouchControlMessage1_16 =
     typeof ScrcpyInjectTouchControlMessage1_16["TInit"];
 
-export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16>
-    implements ScrcpyOptions<T>
+export const ScrcpyVideoStreamMetadata1_16 = new Struct()
+    .string("deviceName", { length: 64 })
+    .uint16("width")
+    .uint16("height");
+
+export class ScrcpyOptions1_16<
+    T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
+> implements ScrcpyOptions<T>
 {
     public value: Partial<T>;
 
@@ -217,6 +226,22 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
         return /\s+scrcpy --encoder-name '(.*?)'/;
     }
 
+    public parseVideoStreamMetadata(
+        stream: ReadableStream<Uint8Array>
+    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
+        return (async () => {
+            const buffered = new BufferedReadableStream(stream);
+            const data = await ScrcpyVideoStreamMetadata1_16.deserialize(
+                buffered
+            );
+            data.deviceName = data.deviceName.substring(
+                0,
+                data.deviceName.indexOf("\0")
+            );
+            return [buffered.release(), data];
+        })();
+    }
+
     public createVideoStreamTransformer(): TransformStream<
         Uint8Array,
         ScrcpyVideoStreamPacket
@@ -235,7 +260,9 @@ export class ScrcpyOptions1_16<T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsIn
 
         let header: Uint8Array | undefined;
 
-        const deserializeStream = new StructDeserializeStream(VideoPacket);
+        const deserializeStream = new StructDeserializeStream(
+            ScrcpyVideoPacket
+        );
         return {
             writable: deserializeStream.writable,
             readable: deserializeStream.readable.pipeThrough(

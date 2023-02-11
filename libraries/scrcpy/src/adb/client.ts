@@ -177,18 +177,21 @@ export class AdbScrcpyClient {
                 });
 
             const result = await Promise.race([
-                process.exit,
+                process.exit.then(() => {
+                    throw new ScrcpyExitedError(output);
+                }),
                 connection.getStreams(),
             ]);
-
-            if (typeof result === "number") {
-                throw new ScrcpyExitedError(output);
-            }
 
             abortController.abort();
             await pipe;
 
-            const [videoStream, controlStream] = result;
+            let videoStream = result[0];
+            // TODO: expose the parsed metadata
+            [videoStream] = await options.parseVideoStreamMetadata(videoStream);
+
+            const controlStream = result[1];
+
             return new AdbScrcpyClient(
                 options,
                 process,

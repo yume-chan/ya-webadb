@@ -10,6 +10,6 @@ export class AdbScrcpyOptions1_26<
         const defaults = this.getDefaultValue();
         return Object.assign(super.getConnectionOptions(), {
             uid: this.value.uid?.value ?? defaults.uid.value,
-        });
+        } satisfies Partial<AdbScrcpyConnectionOptions>);
     }
 }

@@ -11,8 +11,6 @@ export class AdbScrcpyOptions1_22<
         return Object.assign(super.getConnectionOptions(), {
             control: this.value.control ?? defaults.control,
             sendDummyByte: this.value.sendDummyByte ?? defaults.sendDummyByte,
-            sendDeviceMeta:
-                this.value.sendDeviceMeta ?? defaults.sendDeviceMeta,
-        });
+        } satisfies Partial<AdbScrcpyConnectionOptions>);
     }
 }

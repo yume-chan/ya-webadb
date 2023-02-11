@@ -1,4 +1,8 @@
-import { type TransformStream } from "@yume-chan/stream-extra";
+import {
+    type ReadableStream,
+    type TransformStream,
+} from "@yume-chan/stream-extra";
+import { type ValueOrPromise } from "@yume-chan/struct";
 
 import {
     type ScrcpyBackOrScreenOnControlMessage,
@@ -57,6 +61,19 @@ export interface H264Configuration {
     croppedHeight: number;
 }
 
+export enum ScrcpyVideoCodecId {
+    H264 = 0x68_32_36_34,
+    H265 = 0x68_32_36_35,
+    AV1 = 0x00_61_76_31,
+}
+
+export interface ScrcpyVideoStreamMetadata {
+    deviceName?: string;
+    width?: number;
+    height?: number;
+    codec?: ScrcpyVideoCodecId;
+}
+
 export interface ScrcpyVideoStreamConfigurationPacket {
     type: "configuration";
     sequenceParameterSet: Uint8Array;
@@ -83,6 +100,10 @@ export interface ScrcpyOptions<T extends object> {
     serializeServerArguments(): string[];
 
     getOutputEncoderNameRegex(): RegExp;
+
+    parseVideoStreamMetadata(
+        stream: ReadableStream<Uint8Array>
+    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]>;
 
     createVideoStreamTransformer(): TransformStream<
         Uint8Array,

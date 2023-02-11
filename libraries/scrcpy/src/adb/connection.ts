@@ -2,6 +2,7 @@ import { AdbReverseNotSupportedError, type Adb } from "@yume-chan/adb";
 import { delay } from "@yume-chan/async";
 import { type Disposable } from "@yume-chan/event";
 import {
+    BufferedReadableStream,
     TransformStream,
     type ReadableStream,
     type ReadableStreamDefaultReader,
@@ -21,11 +22,6 @@ export interface AdbScrcpyConnectionOptions {
      * In forward tunnel mode, read a byte from video socket on start to detect connection issues
      */
     sendDummyByte: boolean;
-
-    /**
-     * Read device name and size from video socket on start
-     */
-    sendDeviceMeta: boolean;
 }
 
 export const SCRCPY_SOCKET_NAME_PREFIX = "scrcpy";
@@ -64,19 +60,6 @@ export abstract class AdbScrcpyConnection implements Disposable {
         ]
     >;
 
-    protected async skipDeviceMeta(videoStream: ReadableStream<Uint8Array>) {
-        // Server only writes device meta after control socket is connected (if enabled)
-        if (this.options.sendDeviceMeta) {
-            const reader = videoStream.getReader();
-            const { done, value } = await reader.read();
-            // 64 bytes device name + 2 bytes video width + 2 bytes video height
-            if (done || value.byteLength !== 64 + 2 + 2) {
-                throw new Error("Unexpected response from server");
-            }
-            reader.releaseLock();
-        }
-    }
-
     public dispose(): void {
         // do nothing
     }
@@ -105,13 +88,11 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     private async connectVideoStream(): Promise<ReadableStream<Uint8Array>> {
         const { readable: videoStream } = await this.connectAndRetry();
         if (this.options.sendDummyByte) {
-            const reader = videoStream.getReader();
-            const { done, value } = await reader.read();
-            // server will write a `0` to signal connection success
-            if (done || value.byteLength !== 1 || value[0] !== 0) {
-                throw new Error("Unexpected response from server");
-            }
-            reader.releaseLock();
+            // Can't guarantee the stream will preserve message boundary
+            // so buffer the stream
+            const buffered = new BufferedReadableStream(videoStream);
+            await buffered.readExactly(1);
+            return buffered.release();
         }
         return videoStream;
     }
@@ -132,8 +113,6 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
         if (this.options.control) {
             controlStream = await this.connectAndRetry();
         }
-
-        await this.skipDeviceMeta(videoStream);
 
         return [videoStream, controlStream];
     }
@@ -201,8 +180,6 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
         if (this.options.control) {
             controlStream = await this.accept();
         }
-
-        await this.skipDeviceMeta(videoStream);
 
         return [videoStream, controlStream];
     }

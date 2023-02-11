@@ -1,5 +1,9 @@
+import { type ReadableStream } from "@yume-chan/stream-extra";
+import { type ValueOrPromise } from "@yume-chan/struct";
+
 import { type ScrcpyScrollController } from "../1_16/index.js";
 import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from "../1_21.js";
+import { type ScrcpyVideoStreamMetadata } from "../types.js";
 
 import { ScrcpyScrollController1_22 } from "./scroll.js";
 
@@ -49,6 +53,18 @@ export class ScrcpyOptions1_22<
             sendDummyByte: true,
             rawVideoStream: false,
         } satisfies Omit<ScrcpyOptionsInit1_22, keyof ScrcpyOptionsInit1_21>);
+    }
+
+    public override parseVideoStreamMetadata(
+        stream: ReadableStream<Uint8Array>
+    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
+        const sendDeviceMeta =
+            this.value.sendDeviceMeta ?? this.getDefaultValue().sendDeviceMeta;
+        if (!sendDeviceMeta) {
+            return [stream, {}];
+        } else {
+            return super.parseVideoStreamMetadata(stream);
+        }
     }
 
     public override getScrollController(): ScrcpyScrollController {
