@@ -1,5 +1,9 @@
 import { type Adb } from "@yume-chan/adb";
-import { type TransformStream } from "@yume-chan/stream-extra";
+import {
+    type ReadableStream,
+    type TransformStream,
+} from "@yume-chan/stream-extra";
+import { type ValueOrPromise } from "@yume-chan/struct";
 
 import {
     type ScrcpyBackOrScreenOnControlMessage,
@@ -9,6 +13,7 @@ import {
 } from "../../control/index.js";
 import {
     type ScrcpyOptions,
+    type ScrcpyVideoStreamMetadata,
     type ScrcpyVideoStreamPacket,
 } from "../../options/index.js";
 import { type AdbScrcpyConnection } from "../connection.js";
@@ -43,6 +48,12 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
 
     public getOutputEncoderNameRegex(): RegExp {
         return this.raw.getOutputEncoderNameRegex();
+    }
+
+    parseVideoStreamMetadata(
+        stream: ReadableStream<Uint8Array>
+    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
+        return this.raw.parseVideoStreamMetadata(stream);
     }
 
     public createVideoStreamTransformer(): TransformStream<

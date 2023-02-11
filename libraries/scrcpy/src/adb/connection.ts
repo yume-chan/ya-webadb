@@ -1,3 +1,5 @@
+// cspell:ignore scid
+
 import { AdbReverseNotSupportedError, type Adb } from "@yume-chan/adb";
 import { delay } from "@yume-chan/async";
 import { type Disposable } from "@yume-chan/event";
@@ -11,7 +13,7 @@ import {
 import { type ValueOrPromise } from "@yume-chan/struct";
 
 export interface AdbScrcpyConnectionOptions {
-    uid: number;
+    scid: number;
 
     /**
      * Whether to create a control stream
@@ -45,8 +47,8 @@ export abstract class AdbScrcpyConnection implements Disposable {
 
     protected getSocketName(): string {
         let socketName = "localabstract:" + SCRCPY_SOCKET_NAME_PREFIX;
-        if (this.options.uid !== undefined && this.options.uid >= 0) {
-            socketName += "_" + this.options.uid.toString(16).padStart(8, "0");
+        if (this.options.scid !== undefined && this.options.scid >= 0) {
+            socketName += "_" + this.options.scid.toString(16).padStart(8, "0");
         }
         return socketName;
     }

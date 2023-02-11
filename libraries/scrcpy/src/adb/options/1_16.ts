@@ -1,3 +1,5 @@
+// cspell:ignore scid
+
 import { type Adb } from "@yume-chan/adb";
 
 import { type ScrcpyOptionsInit1_16 } from "../../options/index.js";
@@ -15,7 +17,7 @@ export class AdbScrcpyOptions1_16<
 > extends AdbScrcpyOptionsBase<T> {
     protected getConnectionOptions(): AdbScrcpyConnectionOptions {
         return {
-            uid: -1,
+            scid: -1,
             // Old versions always have control stream no matter what the option is
             // Pass `control: false` to `Connection` will disable the control stream
             control: true,

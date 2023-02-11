@@ -1,3 +1,5 @@
+// cspell:ignore scid
+
 import { type ScrcpyOptionsInit1_26 } from "../../options/index.js";
 import { type AdbScrcpyConnectionOptions } from "../connection.js";
 
@@ -9,7 +11,7 @@ export class AdbScrcpyOptions1_26<
     protected override getConnectionOptions(): AdbScrcpyConnectionOptions {
         const defaults = this.getDefaultValue();
         return Object.assign(super.getConnectionOptions(), {
-            uid: this.value.uid?.value ?? defaults.uid.value,
+            scid: this.value.scid?.value ?? defaults.scid.value,
         } satisfies Partial<AdbScrcpyConnectionOptions>);
     }
 }

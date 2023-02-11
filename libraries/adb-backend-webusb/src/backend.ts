@@ -12,10 +12,7 @@ import {
     pipeFrom,
     type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
-import {
-    EMPTY_UINT8_ARRAY,
-    type StructDeserializeStream,
-} from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY, type ExactReadable } from "@yume-chan/struct";
 
 /**
  * `classCode`, `subclassCode` and `protocolCode` are required
@@ -100,19 +97,25 @@ function findUsbEndpoints(endpoints: USBEndpoint[]) {
     throw new Error("unreachable");
 }
 
-class Uint8ArrayStructDeserializeStream implements StructDeserializeStream {
-    private buffer: Uint8Array;
+class Uint8ArrayExactReadable implements ExactReadable {
+    private _data: Uint8Array;
+    private _position: number;
 
-    private offset: number;
-
-    public constructor(buffer: Uint8Array) {
-        this.buffer = buffer;
-        this.offset = 0;
+    public get position() {
+        return this._position;
     }
 
-    public read(length: number): Uint8Array {
-        const result = this.buffer.subarray(this.offset, this.offset + length);
-        this.offset += length;
+    public constructor(data: Uint8Array) {
+        this._data = data;
+        this._position = 0;
+    }
+
+    public readExactly(length: number): Uint8Array {
+        const result = this._data.subarray(
+            this._position,
+            this._position + length
+        );
+        this._position += length;
         return result;
     }
 }
@@ -180,9 +183,7 @@ export class AdbWebUsbBackendStream
 
                     // From spec, the `result.data` always covers the whole `buffer`.
                     const buffer = new Uint8Array(result.data!.buffer);
-                    const stream = new Uint8ArrayStructDeserializeStream(
-                        buffer
-                    );
+                    const stream = new Uint8ArrayExactReadable(buffer);
 
                     // Add `payload` field to its type, because we will assign `payload` in next step.
                     const packet = AdbPacketHeader.deserialize(

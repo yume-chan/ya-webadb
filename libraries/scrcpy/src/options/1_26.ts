@@ -1,3 +1,5 @@
+// cspell:ignore scid
+
 import {
     BufferedReadableStream,
     type ReadableStream,
@@ -36,7 +38,7 @@ export const ScrcpyInjectTouchControlMessage1_26 = new Struct()
 export type ScrcpyInjectTouchControlMessage1_26 =
     typeof ScrcpyInjectTouchControlMessage1_26["TInit"];
 
-export class ScrcpyUid implements ScrcpyOptionValue {
+export class ScrcpyInstanceId implements ScrcpyOptionValue {
     public value: number;
 
     public constructor(value: number) {
@@ -52,7 +54,7 @@ export class ScrcpyUid implements ScrcpyOptionValue {
 }
 
 export interface ScrcpyOptionsInit1_26 extends ScrcpyOptionsInit1_24 {
-    uid: ScrcpyUid;
+    scid: ScrcpyInstanceId;
     codec: "h264" | "h265" | "av1";
     sendCodecId: boolean;
 }
@@ -70,7 +72,7 @@ export class ScrcpyOptions1_26<
 
     public override getDefaultValue(): T {
         return Object.assign(super.getDefaultValue(), {
-            uid: new ScrcpyUid(-1),
+            scid: new ScrcpyInstanceId(-1),
             codec: "h264",
             sendCodecId: true,
         } satisfies Omit<ScrcpyOptionsInit1_26, keyof ScrcpyOptionsInit1_24>);
