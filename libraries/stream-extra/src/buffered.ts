@@ -1,19 +1,15 @@
+import {
+    ExactReadableEndedError,
+    type AsyncExactReadable,
+} from "@yume-chan/struct";
+
 import { PushReadableStream } from "./push-readable.js";
 import {
     type ReadableStream,
     type ReadableStreamDefaultReader,
 } from "./stream.js";
 
-export class BufferedReadableStreamEndedError extends Error {
-    public constructor() {
-        super("Stream ended");
-
-        // Fix Error's prototype chain when compiling to ES5
-        Object.setPrototypeOf(this, new.target.prototype);
-    }
-}
-
-export class BufferedReadableStream {
+export class BufferedReadableStream implements AsyncExactReadable {
     private buffered: Uint8Array | undefined;
     private bufferedOffset = 0;
     private bufferedLength = 0;
@@ -34,7 +30,7 @@ export class BufferedReadableStream {
     private async readSource() {
         const { done, value } = await this.reader.read();
         if (done) {
-            throw new BufferedReadableStreamEndedError();
+            throw new ExactReadableEndedError();
         }
         this._position += value.byteLength;
         return value;
@@ -96,7 +92,7 @@ export class BufferedReadableStream {
      * @param length
      * @returns
      */
-    public read(length: number): Uint8Array | Promise<Uint8Array> {
+    public readExactly(length: number): Uint8Array | Promise<Uint8Array> {
         // PERF: Add a synchronous path for reading from internal buffer
         if (this.buffered) {
             const array = this.buffered;

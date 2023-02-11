@@ -1,8 +1,8 @@
 import {
     StructFieldDefinition,
     StructFieldValue,
-    type StructAsyncDeserializeStream,
-    type StructDeserializeStream,
+    type AsyncExactReadable,
+    type ExactReadable,
     type StructOptions,
     type StructValue,
 } from "../../basic/index.js";
@@ -127,17 +127,17 @@ export abstract class BufferLikeFieldDefinition<
 
     public override deserialize(
         options: Readonly<StructOptions>,
-        stream: StructDeserializeStream,
+        stream: ExactReadable,
         struct: StructValue
     ): BufferLikeFieldValue<this>;
     public override deserialize(
         options: Readonly<StructOptions>,
-        stream: StructAsyncDeserializeStream,
+        stream: AsyncExactReadable,
         struct: StructValue
     ): Promise<BufferLikeFieldValue<this>>;
     public override deserialize(
         options: Readonly<StructOptions>,
-        stream: StructDeserializeStream | StructAsyncDeserializeStream,
+        stream: ExactReadable | AsyncExactReadable,
         struct: StructValue
     ): ValueOrPromise<BufferLikeFieldValue<this>> {
         return SyncPromise.try(() => {
@@ -145,7 +145,7 @@ export abstract class BufferLikeFieldDefinition<
             if (size === 0) {
                 return EMPTY_UINT8_ARRAY;
             } else {
-                return stream.read(size);
+                return stream.readExactly(size);
             }
         })
             .then((array) => {

@@ -11,7 +11,7 @@ export type ScrcpyDeviceMessage =
 export class ScrcpyDeviceMessageDeserializeStream extends BufferedTransformStream<ScrcpyDeviceMessage> {
     constructor() {
         super(async (stream) => {
-            const type = await stream.read(1);
+            const type = await stream.readExactly(1);
             switch (type[0]) {
                 case ScrcpyDeviceMessageType.Clipboard:
                     return await ScrcpyClipboardDeviceMessage.deserialize(
@@ -22,7 +22,7 @@ export class ScrcpyDeviceMessageDeserializeStream extends BufferedTransformStrea
                         stream
                     );
                 default:
-                    throw new Error("unknown control message type");
+                    throw new Error("Unsupported control message type");
             }
         });
     }

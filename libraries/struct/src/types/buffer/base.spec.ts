@@ -3,7 +3,7 @@ import { describe, expect, it, jest } from "@jest/globals";
 import {
     StructDefaultOptions,
     StructValue,
-    type StructDeserializeStream,
+    type ExactReadable,
 } from "../../basic/index.js";
 
 import {
@@ -14,10 +14,12 @@ import {
     type BufferFieldSubType,
 } from "./base.js";
 
-class MockDeserializationStream implements StructDeserializeStream {
+class MockDeserializationStream implements ExactReadable {
     public array = EMPTY_UINT8_ARRAY;
 
-    public read = jest.fn(() => this.array);
+    public position = 0;
+
+    public readExactly = jest.fn(() => this.array);
 }
 
 describe("Types", () => {
@@ -105,8 +107,8 @@ describe("Types", () => {
                     context,
                     struct
                 );
-                expect(context.read).toBeCalledTimes(1);
-                expect(context.read).toBeCalledWith(size);
+                expect(context.readExactly).toBeCalledTimes(1);
+                expect(context.readExactly).toBeCalledWith(size);
                 expect(fieldValue).toHaveProperty("array", array);
 
                 expect(fieldValue.get()).toBe(array);
@@ -129,7 +131,7 @@ describe("Types", () => {
                     context,
                     struct
                 );
-                expect(context.read).toBeCalledTimes(0);
+                expect(context.readExactly).toBeCalledTimes(0);
                 expect(fieldValue["array"]).toBeInstanceOf(Uint8Array);
                 expect(fieldValue["array"]).toHaveProperty("byteLength", 0);
 
