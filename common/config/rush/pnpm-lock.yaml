@@ -367,6 +367,7 @@ importers:
       '@types/dom-webcodecs': ^0.1.5
       '@yume-chan/eslint-config': workspace:^1.0.0
       '@yume-chan/scrcpy': workspace:^0.0.18
+      '@yume-chan/scrcpy-decoder-tinyh264': workspace:^0.0.18
       '@yume-chan/stream-extra': workspace:^0.0.18
       '@yume-chan/tsconfig': workspace:^1.0.0
       cross-env: ^7.0.3
@@ -378,6 +379,7 @@ importers:
     dependencies:
       '@types/dom-webcodecs': 0.1.5
       '@yume-chan/scrcpy': link:../scrcpy
+      '@yume-chan/scrcpy-decoder-tinyh264': link:../scrcpy-decoder-tinyh264
       '@yume-chan/stream-extra': link:../stream-extra
       tslib: 2.5.0
     devDependencies:

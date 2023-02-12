@@ -11,7 +11,6 @@ import {
     TooltipHost,
 } from "@fluentui/react";
 import { makeStyles } from "@griffel/react";
-import { Disposable } from "@yume-chan/event";
 import {
     AdbScrcpyClient,
     AdbScrcpyOptions1_22,
@@ -20,11 +19,12 @@ import {
     ScrcpyOptions1_25,
     ScrcpyOptionsInit1_24,
     ScrcpyVideoOrientation,
-    ScrcpyVideoStreamPacket,
 } from "@yume-chan/scrcpy";
-import { TinyH264Decoder } from "@yume-chan/scrcpy-decoder-tinyh264";
+import {
+    ScrcpyVideoDecoderConstructor,
+    TinyH264Decoder,
+} from "@yume-chan/scrcpy-decoder-tinyh264";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
-import { WritableStream } from "@yume-chan/stream-extra";
 import {
     autorun,
     computed,
@@ -176,28 +176,10 @@ export const SettingItem = observer(function SettingItem({
     }
 });
 
-export interface CodecCapability {
-    maxProfile?: number;
-    maxLevel?: number;
-}
-
-export interface H264Decoder extends Disposable {
-    readonly capabilities: Record<string, CodecCapability>;
-
-    readonly renderer: HTMLElement;
-    readonly frameRendered: number;
-    readonly frameSkipped: number;
-    readonly writable: WritableStream<ScrcpyVideoStreamPacket>;
-}
-
-export interface H264DecoderConstructor {
-    new (): H264Decoder;
-}
-
 export interface DecoderDefinition {
     key: string;
     name: string;
-    Constructor: H264DecoderConstructor;
+    Constructor: ScrcpyVideoDecoderConstructor;
 }
 
 export const SETTING_STATE = makeAutoObservable(

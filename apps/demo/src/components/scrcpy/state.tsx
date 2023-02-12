@@ -16,6 +16,7 @@ import {
     ScrcpyVideoStreamPacket,
     clamp,
 } from "@yume-chan/scrcpy";
+import { ScrcpyVideoDecoder } from "@yume-chan/scrcpy-decoder-tinyh264";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
 import {
     ChunkStream,
@@ -29,7 +30,7 @@ import { ProgressStream } from "../../utils";
 import { DeviceViewRef } from "../device-view";
 import { fetchServer } from "./fetch-server";
 import { MuxerStream, RECORD_STATE } from "./recorder";
-import { H264Decoder, SETTING_STATE } from "./settings";
+import { SETTING_STATE } from "./settings";
 
 export class ScrcpyPageState {
     running = false;
@@ -67,7 +68,7 @@ export class ScrcpyPageState {
         }).pipeTo(AdbScrcpyClient.pushServer(GLOBAL_STATE.device!));
     }
 
-    decoder: H264Decoder | undefined = undefined;
+    decoder: ScrcpyVideoDecoder | undefined = undefined;
     configuration: ScrcpyVideoStreamConfigurationPacket | undefined = undefined;
     fpsCounterIntervalId: any = undefined;
     fps = "0";

@@ -2,21 +2,21 @@ import {
     type H264Configuration,
     type ScrcpyVideoStreamPacket,
 } from "@yume-chan/scrcpy";
+import {
+    type ScrcpyVideoDecoder,
+    type ScrcpyVideoDecoderCapability,
+} from "@yume-chan/scrcpy-decoder-tinyh264";
 import { WritableStream } from "@yume-chan/stream-extra";
 
 function toHex(value: number) {
     return value.toString(16).padStart(2, "0").toUpperCase();
 }
 
-export interface CodecCapability {
-    maxProfile?: number;
-    maxLevel?: number;
-}
-
-export class WebCodecsDecoder {
-    public readonly capabilities: Record<string, CodecCapability> = {
-        h264: {},
-    };
+export class WebCodecsDecoder implements ScrcpyVideoDecoder {
+    public readonly capabilities: Record<string, ScrcpyVideoDecoderCapability> =
+        {
+            h264: {},
+        };
 
     private _writable: WritableStream<ScrcpyVideoStreamPacket>;
     public get writable() {

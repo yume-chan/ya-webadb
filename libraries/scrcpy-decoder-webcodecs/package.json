@@ -36,6 +36,7 @@
     "dependencies": {
         "@types/dom-webcodecs": "^0.1.5",
         "@yume-chan/scrcpy": "workspace:^0.0.18",
+        "@yume-chan/scrcpy-decoder-tinyh264": "workspace:^0.0.18",
         "@yume-chan/stream-extra": "workspace:^0.0.18",
         "tslib": "^2.4.1"
     },
