@@ -32,6 +32,10 @@ import {
 import { type AdbScrcpyConnection } from "./connection.js";
 import { type AdbScrcpyOptions } from "./options/index.js";
 
+const NOOP = () => {
+    /* empty */
+};
+
 class ArrayToStream<T> extends ReadableStream<T> {
     private array!: T[];
     private index = 0;
@@ -172,9 +176,7 @@ export class AdbScrcpyClient {
                         preventCancel: true,
                     }
                 )
-                .catch((e) => {
-                    void e;
-                });
+                .catch(NOOP);
 
             const result = await Promise.race([
                 process.exit.then(() => {

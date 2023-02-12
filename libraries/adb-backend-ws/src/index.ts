@@ -11,6 +11,10 @@ import {
     pipeFrom,
 } from "@yume-chan/stream-extra";
 
+const NOOP = () => {
+    /* empty */
+};
+
 export default class AdbWsBackend implements AdbBackend {
     public readonly serial: string;
 
@@ -39,9 +43,7 @@ export default class AdbWsBackend implements AdbBackend {
         });
 
         socket.onclose = () => {
-            factory.dispose().catch((e) => {
-                void e;
-            });
+            factory.dispose().catch(NOOP);
         };
 
         const readable = factory.wrapReadable(

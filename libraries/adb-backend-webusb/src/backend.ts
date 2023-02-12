@@ -14,6 +14,10 @@ import {
 } from "@yume-chan/stream-extra";
 import { EMPTY_UINT8_ARRAY, type ExactReadable } from "@yume-chan/struct";
 
+const NOOP = () => {
+    /* empty */
+};
+
 /**
  * `classCode`, `subclassCode` and `protocolCode` are required
  * for selecting correct USB configuration and interface.
@@ -159,9 +163,7 @@ export class AdbWebUsbBackendStream
 
         function handleUsbDisconnect(e: USBConnectionEvent) {
             if (e.device === device) {
-                factory.dispose().catch((e) => {
-                    void e;
-                });
+                factory.dispose().catch(NOOP);
             }
         }
 

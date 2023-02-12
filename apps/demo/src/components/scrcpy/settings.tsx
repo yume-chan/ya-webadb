@@ -15,8 +15,6 @@ import { Disposable } from "@yume-chan/event";
 import {
     AdbScrcpyClient,
     AdbScrcpyOptions1_22,
-    AndroidCodecLevel,
-    AndroidCodecProfile,
     DEFAULT_SERVER_PATH,
     ScrcpyLogLevel,
     ScrcpyOptions1_25,
@@ -178,9 +176,14 @@ export const SettingItem = observer(function SettingItem({
     }
 });
 
+export interface CodecCapability {
+    codec: string;
+    maxProfile?: number;
+    maxLevel?: number;
+}
+
 export interface H264Decoder extends Disposable {
-    readonly maxProfile: AndroidCodecProfile | undefined;
-    readonly maxLevel: AndroidCodecLevel | undefined;
+    readonly capabilities: CodecCapability[];
 
     readonly renderer: HTMLElement;
     readonly frameRendered: number;

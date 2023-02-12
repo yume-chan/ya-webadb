@@ -8,6 +8,10 @@ import Struct from "@yume-chan/struct";
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponses } from "./response.js";
 
+export const NOOP = () => {
+    /* empty */
+};
+
 export const AdbSyncDataResponse = new Struct({ littleEndian: true })
     .uint32("dataLength")
     .uint8Array("data", { lengthField: "dataLength" })
@@ -46,9 +50,7 @@ export function adbSyncPull(
                 controller.enqueue(value.data);
             },
             cancel() {
-                generator.return().catch((e) => {
-                    void e;
-                });
+                generator.return().catch(NOOP);
                 throw new Error(`Sync commands can't be canceled.`);
             },
         },

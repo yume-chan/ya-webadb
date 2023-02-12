@@ -1,7 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 import {
-    AndroidCodecLevel,
-    AndroidCodecProfile,
+    AndroidAvcLevel,
+    AndroidAvcProfile,
     type H264Configuration,
     type ScrcpyVideoStreamPacket,
 } from "@yume-chan/scrcpy";
@@ -10,6 +10,10 @@ import { type default as YuvBuffer } from "yuv-buffer";
 import { type default as YuvCanvas } from "yuv-canvas";
 
 import { createTinyH264Wrapper, type TinyH264Wrapper } from "./wrapper.js";
+
+const NOOP = () => {
+    /* empty */
+};
 
 let cachedInitializePromise:
     | Promise<{ YuvBuffer: typeof YuvBuffer; YuvCanvas: typeof YuvCanvas }>
@@ -28,10 +32,20 @@ function initialize() {
     return cachedInitializePromise;
 }
 
-export class TinyH264Decoder {
-    public readonly maxProfile = AndroidCodecProfile.Baseline;
+export interface CodecCapability {
+    codec: string;
+    maxProfile?: number;
+    maxLevel?: number;
+}
 
-    public readonly maxLevel = AndroidCodecLevel.Level4;
+export class TinyH264Decoder {
+    public readonly capabilities: CodecCapability[] = [
+        {
+            codec: "h264",
+            maxProfile: AndroidAvcProfile.Main,
+            maxLevel: AndroidAvcLevel.Level4,
+        },
+    ];
 
     private _renderer: HTMLCanvasElement;
     public get renderer() {
@@ -131,9 +145,7 @@ export class TinyH264Decoder {
     public dispose(): void {
         this._initializer?.promise
             .then((wrapper) => wrapper.dispose())
-            .catch((e) => {
-                void e;
-            });
+            .catch(NOOP);
         this._initializer = undefined;
     }
 }

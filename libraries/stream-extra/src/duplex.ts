@@ -9,6 +9,10 @@ import {
 } from "./stream.js";
 import { WrapReadableStream } from "./wrap-readable.js";
 
+const NOOP = () => {
+    /* empty */
+};
+
 export interface DuplexStreamFactoryOptions {
     /**
      * Callback when any `ReadableStream` is cancelled (the user doesn't need any more data),
@@ -94,9 +98,7 @@ export class DuplexStreamFactory<R, W> {
                 await this.close();
             },
             close: async () => {
-                await writer.close().catch((e) => {
-                    void e;
-                });
+                await writer.close().catch(NOOP);
                 await this.close();
             },
         });
@@ -114,11 +116,9 @@ export class DuplexStreamFactory<R, W> {
             await this.dispose();
         }
 
-        for (const writer of this.writers) {
-            await writer.close().catch((e) => {
-                void e;
-            });
-        }
+        await Promise.all(
+            this.writers.map((writer) => writer.close().catch(NOOP))
+        );
     }
 
     public async dispose() {

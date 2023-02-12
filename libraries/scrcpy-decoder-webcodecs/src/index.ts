@@ -8,11 +8,18 @@ function toHex(value: number) {
     return value.toString(16).padStart(2, "0").toUpperCase();
 }
 
+export interface CodecCapability {
+    codec: string;
+    maxProfile?: number;
+    maxLevel?: number;
+}
+
 export class WebCodecsDecoder {
-    // Usually, browsers can decode most configurations,
-    // So let device choose best profile and level for itself.
-    public readonly maxProfile = undefined;
-    public readonly maxLevel = undefined;
+    public readonly capabilities: CodecCapability[] = [
+        {
+            codec: "h264",
+        },
+    ];
 
     private _writable: WritableStream<ScrcpyVideoStreamPacket>;
     public get writable() {

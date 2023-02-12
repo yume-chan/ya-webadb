@@ -222,8 +222,12 @@ export class ScrcpyPageState {
 
             const codecOptions = new CodecOptions();
             if (!SETTING_STATE.settings.ignoreDecoderCodecArgs) {
-                codecOptions.value.profile = decoder.maxProfile;
-                codecOptions.value.level = decoder.maxLevel;
+                for (const capability of decoder.capabilities) {
+                    if (capability.codec === "h264") {
+                        codecOptions.value.profile = capability.maxProfile;
+                        codecOptions.value.level = capability.maxLevel;
+                    }
+                }
             }
 
             // Disabled due to https://github.com/Genymobile/scrcpy/issues/2841

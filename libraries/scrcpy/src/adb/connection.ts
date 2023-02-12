@@ -12,6 +12,10 @@ import {
 } from "@yume-chan/stream-extra";
 import { type ValueOrPromise } from "@yume-chan/struct";
 
+export const NOOP = () => {
+    /* empty */
+};
+
 export interface AdbScrcpyConnectionOptions {
     scid: number;
 
@@ -190,8 +194,6 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
         // Don't await this!
         // `reverse.remove`'s response will never arrive
         // before we read all pending data from `videoStream`
-        this.adb.reverse.remove(this.address).catch((e) => {
-            void e;
-        });
+        this.adb.reverse.remove(this.address).catch(NOOP);
     }
 }
