@@ -2,15 +2,18 @@
 
 Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB), [Spec](https://wicg.github.io/webusb)) API.
 
--   [Note](#note)
+-   [Requirements](#requirements)
 -   [Use in Node.js](#use-in-nodejs)
--   [API](#api)
-    -   [Constructor](#constructor)
-    -   [`isSupported()`](#issupported)
-    -   [`requestDevice`](#requestdevice)
+-   [`AdbWebUsbBackend`](#adbwebusbbackend)
+    -   [constructor](#constructor)
     -   [`connect`](#connect)
+-   [`AdbWebUsbBackendManager`](#adbwebusbbackendmanager)
+    -   [`BROWSER`](#browser)
+    -   [constructor](#constructor-1)
+    -   [`requestDevice`](#requestdevice)
+    -   [`getDevices`](#getdevices)
 
-## Note
+## Requirements
 
 WebUSB API requires [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS).
 
@@ -23,19 +26,19 @@ Chrome will treat `localhost` as secure, but if you want to access a dev server 
 
 ## Use in Node.js
 
-Node.js doesn't have native support for WebUSB API. However, all methods in this package have a `usbManager` parameter, which can be used to provide a WebUSB compatible implementation.
+Node.js doesn't have native support for WebUSB API, but the [`usb`](https://www.npmjs.com/package/usb) NPM package has a `webusb` export that provides a WebUSB compatible API.
 
-For example, the [`usb`](https://www.npmjs.com/package/usb) NPM package has a `webusb` export that can be used here.
+The constructors of `AdbWebUsbBackend`, `AdbWebUsbBackendManager` and `AdbWebUsbBackendWatcher` all have a `usb` parameter that can be used to specify the WebUSB API implementation.
 
-## API
+## `AdbWebUsbBackend`
 
-### Constructor
+### constructor
 
 ```ts
 public constructor(
     device: USBDevice,
     filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-    usbManager: USB = window.navigator.usb
+    usb: USB
 );
 ```
 
@@ -44,31 +47,6 @@ Create a new instance of `AdbWebBackend` using a `USBDevice` instance you alread
 `USBDevice` type is from WebUSB API.
 
 The `filters` parameter specifies the `classCode`, `subclassCode` and `protocolCode` to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
-
-### `isSupported()`
-
-```ts
-public static isSupported(): boolean;
-```
-
-Check if WebUSB API is supported by the browser.
-
-### `requestDevice`
-
-```ts
-public static async requestDevice(
-    filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
-    usbManager: USB = window.navigator.usb
-): Promise<AdbWebUsbBackend | undefined>
-```
-
-Request access to a connected device from browser. The browser will display a list of devices to the user and let them choose one.
-
-Only available in browsers that support WebUSB API (When `isSupported()` returns `true`).
-
-The `filters` parameter must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface. It can also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
-
-Returns an `AdbWebUsbBackend` instance, or `undefined` if the user cancelled the picker.
 
 ### `connect`
 
@@ -79,3 +57,51 @@ public async connect(): Promise<
 ```
 
 Claim the device and create a pair of `AdbPacket` streams to the ADB interface.
+
+## `AdbWebUsbBackendManager`
+
+A helper class that wraps the WebUSB API.
+
+### `BROWSER`
+
+```ts
+public static readonly BROWSER: AdbWebUsbBackendManager | undefined;
+```
+
+Gets the instance of AdbWebUsbBackendManager using browser WebUSB implementation.
+
+May be `undefined` if the browser does not support WebUSB.
+
+### constructor
+
+```ts
+public constructor(usb: USB);
+```
+
+Create a new instance of `AdbWebUsbBackendManager` using the specified WebUSB API implementation.
+
+### `requestDevice`
+
+```ts
+public async requestDevice(
+    filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+): Promise<AdbWebUsbBackend | undefined>
+```
+
+Request access to a connected device.
+This is a convince method for `usb.requestDevice()`.
+
+The `filters` parameter must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface. It can also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
+
+Returns an `AdbWebUsbBackend` instance, or `undefined` if the user cancelled the picker.
+
+### `getDevices`
+
+```ts
+public async getDevices(
+    filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+): Promise<AdbWebUsbBackend[]>
+```
+
+Get all connected and authenticated devices.
+This is a convince method for `usb.getDevices()`.
