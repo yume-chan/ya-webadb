@@ -11,8 +11,8 @@ export class ScrcpyOptions1_24<
         super(init);
     }
 
-    public override getDefaultValue(): T {
-        return Object.assign(super.getDefaultValue(), {
+    public override getDefaultValues(): T {
+        return Object.assign(super.getDefaultValues(), {
             powerOn: true,
         } satisfies Omit<ScrcpyOptionsInit1_24, keyof ScrcpyOptionsInit1_23>);
     }

@@ -95,12 +95,20 @@ export type ScrcpyVideoStreamPacket =
 export interface ScrcpyOptions<T extends object> {
     value: Partial<T>;
 
-    getDefaultValue(): T;
+    getDefaultValues(): T;
 
     serializeServerArguments(): string[];
 
     getOutputEncoderNameRegex(): RegExp;
 
+    /**
+     * Parse the device metadata from video stream according to the current version and options.
+     * @param stream The video stream.
+     * @returns
+     * A tuple of the video stream and the metadata.
+     *
+     * The returned video stream may be different from the input stream, and should be used for further processing.
+     */
     parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>
     ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]>;

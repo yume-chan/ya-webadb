@@ -38,8 +38,8 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
         this.raw = raw;
     }
 
-    public getDefaultValue(): T {
-        return this.raw.getDefaultValue();
+    public getDefaultValues(): T {
+        return this.raw.getDefaultValues();
     }
 
     public serializeServerArguments(): string[] {

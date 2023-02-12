@@ -32,8 +32,8 @@ export class ScrcpyOptions1_21<
         super(init);
     }
 
-    public override getDefaultValue(): T {
-        return Object.assign(super.getDefaultValue(), {
+    public override getDefaultValues(): T {
+        return Object.assign(super.getDefaultValues(), {
             clipboardAutosync: true,
         } satisfies Omit<ScrcpyOptionsInit1_21, keyof ScrcpyOptionsInit1_18>);
     }
@@ -41,7 +41,7 @@ export class ScrcpyOptions1_21<
     public override serializeServerArguments(): string[] {
         // 1.21 changed the format of arguments
         // `getArgumentOrder()` is no longer used
-        const defaults = this.getDefaultValue();
+        const defaults = this.getDefaultValues();
         return Object.entries(this.value)
             .map(
                 ([key, value]) =>

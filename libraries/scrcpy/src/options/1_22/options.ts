@@ -46,8 +46,8 @@ export class ScrcpyOptions1_22<
         super(init);
     }
 
-    public override getDefaultValue(): T {
-        return Object.assign(super.getDefaultValue(), {
+    public override getDefaultValues(): T {
+        return Object.assign(super.getDefaultValues(), {
             downsizeOnError: true,
             sendDeviceMeta: true,
             sendDummyByte: true,
@@ -59,7 +59,7 @@ export class ScrcpyOptions1_22<
         stream: ReadableStream<Uint8Array>
     ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
         const sendDeviceMeta =
-            this.value.sendDeviceMeta ?? this.getDefaultValue().sendDeviceMeta;
+            this.value.sendDeviceMeta ?? this.getDefaultValues().sendDeviceMeta;
         if (!sendDeviceMeta) {
             return [stream, {}];
         } else {

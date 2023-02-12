@@ -77,8 +77,8 @@ export class ScrcpyOptions1_26<
         super(init);
     }
 
-    public override getDefaultValue(): T {
-        return Object.assign(super.getDefaultValue(), {
+    public override getDefaultValues(): T {
+        return Object.assign(super.getDefaultValues(), {
             scid: ScrcpyInstanceId.NONE,
             codec: "h264",
             sendCodecId: true,
@@ -89,7 +89,7 @@ export class ScrcpyOptions1_26<
         stream: ReadableStream<Uint8Array>
     ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
         const sendCodecId =
-            this.value.sendCodecId ?? this.getDefaultValue().sendCodecId;
+            this.value.sendCodecId ?? this.getDefaultValues().sendCodecId;
         if (!sendCodecId) {
             return super.parseVideoStreamMetadata(stream);
         } else {

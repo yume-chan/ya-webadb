@@ -34,8 +34,8 @@ export class ScrcpyOptions1_18<
         return super.getArgumentOrder().concat(["powerOffOnClose"]);
     }
 
-    public override getDefaultValue(): T {
-        return Object.assign(super.getDefaultValue(), {
+    public override getDefaultValues(): T {
+        return Object.assign(super.getDefaultValues(), {
             powerOffOnClose: false,
         } satisfies Omit<ScrcpyOptionsInit1_18, keyof ScrcpyOptionsInit1_16>);
     }

@@ -196,7 +196,7 @@ export class ScrcpyOptions1_16<
         ];
     }
 
-    public getDefaultValue(): T {
+    public getDefaultValues(): T {
         return {
             logLevel: ScrcpyLogLevel.Debug,
             maxSize: 0,
@@ -216,7 +216,7 @@ export class ScrcpyOptions1_16<
     }
 
     public serializeServerArguments(): string[] {
-        const defaults = this.getDefaultValue();
+        const defaults = this.getDefaultValues();
         return this.getArgumentOrder().map((key) =>
             toScrcpyOptionValue(this.value[key] || defaults[key], "-")
         );
