@@ -39,6 +39,13 @@ export type ScrcpyInjectTouchControlMessage1_26 =
     typeof ScrcpyInjectTouchControlMessage1_26["TInit"];
 
 export class ScrcpyInstanceId implements ScrcpyOptionValue {
+    public static readonly NONE = new ScrcpyInstanceId(-1);
+
+    public static random(): ScrcpyInstanceId {
+        // A random 31-bit unsigned integer
+        return new ScrcpyInstanceId((Math.random() * 0x80000000) | 0);
+    }
+
     public value: number;
 
     public constructor(value: number) {
@@ -72,7 +79,7 @@ export class ScrcpyOptions1_26<
 
     public override getDefaultValue(): T {
         return Object.assign(super.getDefaultValue(), {
-            scid: new ScrcpyInstanceId(-1),
+            scid: ScrcpyInstanceId.NONE,
             codec: "h264",
             sendCodecId: true,
         } satisfies Omit<ScrcpyOptionsInit1_26, keyof ScrcpyOptionsInit1_24>);

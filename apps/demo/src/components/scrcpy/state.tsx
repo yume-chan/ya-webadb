@@ -1,3 +1,5 @@
+// cspell:ignore scid
+
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import {
     AdbScrcpyClient,
@@ -7,6 +9,7 @@ import {
     DEFAULT_SERVER_PATH,
     ScrcpyDeviceMessageType,
     ScrcpyHoverHelper,
+    ScrcpyInstanceId,
     ScrcpyLogLevel,
     ScrcpyOptions1_26,
     ScrcpyVideoStreamConfigurationPacket,
@@ -237,8 +240,9 @@ export class ScrcpyPageState {
 
             const options = new AdbScrcpyOptions1_26(
                 new ScrcpyOptions1_26({
-                    logLevel: ScrcpyLogLevel.Debug,
                     ...SETTING_STATE.settings,
+                    logLevel: ScrcpyLogLevel.Debug,
+                    scid: ScrcpyInstanceId.random(),
                     sendDeviceMeta: false,
                     sendDummyByte: false,
                     codecOptions,

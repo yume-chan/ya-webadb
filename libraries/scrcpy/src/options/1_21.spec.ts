@@ -13,10 +13,17 @@ describe("ScrcpyOptions1_21", () => {
             expect(options.serializeServerArguments()).toEqual([]);
         });
 
-        it("should omit default values", () => {
+        it("should omit primitive values same as default value", () => {
             const options = new ScrcpyOptions1_21({
                 // Default value
                 sendFrameMeta: true,
+            });
+            expect(options.serializeServerArguments()).toEqual([]);
+        });
+
+        it("should omit `ScrcpyOptionValue`s same as default value", () => {
+            const options = new ScrcpyOptions1_21({
+                codecOptions: new CodecOptions(),
             });
             expect(options.serializeServerArguments()).toEqual([]);
         });
