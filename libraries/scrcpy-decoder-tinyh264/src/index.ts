@@ -33,19 +33,17 @@ function initialize() {
 }
 
 export interface CodecCapability {
-    codec: string;
     maxProfile?: number;
     maxLevel?: number;
 }
 
 export class TinyH264Decoder {
-    public readonly capabilities: CodecCapability[] = [
-        {
-            codec: "h264",
+    public readonly capabilities: Record<string, CodecCapability> = {
+        h264: {
             maxProfile: AndroidAvcProfile.Main,
             maxLevel: AndroidAvcLevel.Level4,
         },
-    ];
+    };
 
     private _renderer: HTMLCanvasElement;
     public get renderer() {

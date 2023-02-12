@@ -177,13 +177,12 @@ export const SettingItem = observer(function SettingItem({
 });
 
 export interface CodecCapability {
-    codec: string;
     maxProfile?: number;
     maxLevel?: number;
 }
 
 export interface H264Decoder extends Disposable {
-    readonly capabilities: CodecCapability[];
+    readonly capabilities: Record<string, CodecCapability>;
 
     readonly renderer: HTMLElement;
     readonly frameRendered: number;

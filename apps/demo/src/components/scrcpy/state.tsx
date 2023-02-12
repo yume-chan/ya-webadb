@@ -222,11 +222,10 @@ export class ScrcpyPageState {
 
             const codecOptions = new CodecOptions();
             if (!SETTING_STATE.settings.ignoreDecoderCodecArgs) {
-                for (const capability of decoder.capabilities) {
-                    if (capability.codec === "h264") {
-                        codecOptions.value.profile = capability.maxProfile;
-                        codecOptions.value.level = capability.maxLevel;
-                    }
+                const capability = decoder.capabilities["h264"];
+                if (capability) {
+                    codecOptions.value.profile = capability.maxProfile;
+                    codecOptions.value.level = capability.maxLevel;
                 }
             }
 

@@ -9,17 +9,14 @@ function toHex(value: number) {
 }
 
 export interface CodecCapability {
-    codec: string;
     maxProfile?: number;
     maxLevel?: number;
 }
 
 export class WebCodecsDecoder {
-    public readonly capabilities: CodecCapability[] = [
-        {
-            codec: "h264",
-        },
-    ];
+    public readonly capabilities: Record<string, CodecCapability> = {
+        h264: {},
+    };
 
     private _writable: WritableStream<ScrcpyVideoStreamPacket>;
     public get writable() {
