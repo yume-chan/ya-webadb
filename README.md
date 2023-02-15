@@ -28,10 +28,10 @@ A library and application for browsers to interact with Android devices via ADB.
     -   ⬇ Download
     -   🗑 Delete
 -   📷 Screen Capture
--   📜 Interactiv Shell
+-   📜 Interactive Shell
 -   ⚙ Enable ADB over WiFi
 -   📦 Install APK
--   🎥 [Scrcpy](https://github.com/Genymobile/scrcpy) compatible client (screen mirroring and controling device)
+-   🎥 [Scrcpy](https://github.com/Genymobile/scrcpy) compatible client (screen mirroring and controlling device)
 -   🔌 Power and reboot to different modes
 
 [📋 Project Roadmap](https://github.com/yume-chan/ya-webadb/issues/348)
