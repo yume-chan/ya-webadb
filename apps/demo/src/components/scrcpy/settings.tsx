@@ -39,30 +39,21 @@ import { GLOBAL_STATE } from "../../state";
 import { Icons } from "../../utils";
 import { STATE } from "./state";
 
-type RequiredScrcpyOptions = Pick<
-    ScrcpyOptionsInit1_24,
-    "crop" | "maxSize" | "bitRate" | "powerOn"
->;
-type OptionalScrcpyOptions = Partial<
-    Pick<
-        ScrcpyOptionsInit1_24,
-        | "displayId"
-        | "lockVideoOrientation"
-        | "encoderName"
-        | "tunnelForward"
-        | "stayAwake"
-        | "powerOffOnClose"
-    >
->;
+export type Settings = Partial<ScrcpyOptionsInit1_24>;
 
-export interface Settings extends RequiredScrcpyOptions, OptionalScrcpyOptions {
+export interface ClientSettings {
     turnScreenOff?: boolean;
     decoder?: string;
     ignoreDecoderCodecArgs?: boolean;
+    hidMouse?: boolean;
+    hidKeyboard?: boolean;
 }
 
+export type SettingKeys = keyof (Settings & ClientSettings);
+
 export interface SettingDefinitionBase {
-    key: keyof Settings;
+    group: "settings" | "clientSettings";
+    key: SettingKeys;
     type: string;
     label: string;
     labelExtra?: JSX.Element;
@@ -82,6 +73,7 @@ export interface DropdownSettingDefinition extends SettingDefinitionBase {
 
 export interface ToggleSettingDefinition extends SettingDefinitionBase {
     type: "toggle";
+    disabled?: boolean;
 }
 
 export interface NumberSettingDefinition extends SettingDefinitionBase {
@@ -99,8 +91,8 @@ export type SettingDefinition =
 
 interface SettingItemProps {
     definition: SettingDefinition;
-    settings: any;
-    onChange: (key: keyof Settings, value: any) => void;
+    value: any;
+    onChange: (definition: SettingDefinition, value: any) => void;
 }
 
 const useClasses = makeStyles({
@@ -111,7 +103,7 @@ const useClasses = makeStyles({
 
 export const SettingItem = observer(function SettingItem({
     definition,
-    settings,
+    value,
     onChange,
 }: SettingItemProps) {
     const classes = useClasses();
@@ -137,8 +129,8 @@ export const SettingItem = observer(function SettingItem({
                 <TextField
                     label={label as any}
                     placeholder={definition.placeholder}
-                    value={settings[definition.key]}
-                    onChange={(e, value) => onChange(definition.key, value)}
+                    value={value}
+                    onChange={(e, value) => onChange(definition, value)}
                 />
             );
         case "dropdown":
@@ -147,18 +139,17 @@ export const SettingItem = observer(function SettingItem({
                     label={label as any}
                     options={definition.options}
                     placeholder={definition.placeholder}
-                    selectedKey={settings[definition.key]}
-                    onChange={(e, option) =>
-                        onChange(definition.key, option!.key)
-                    }
+                    selectedKey={value}
+                    onChange={(e, option) => onChange(definition, option!.key)}
                 />
             );
         case "toggle":
             return (
                 <Toggle
                     label={label}
-                    checked={settings[definition.key]}
-                    onChange={(e, checked) => onChange(definition.key, checked)}
+                    checked={value}
+                    disabled={definition.disabled}
+                    onChange={(e, checked) => onChange(definition, checked)}
                 />
             );
         case "number":
@@ -169,9 +160,9 @@ export const SettingItem = observer(function SettingItem({
                     min={definition.min}
                     max={definition.max}
                     step={definition.step}
-                    value={settings[definition.key].toString()}
+                    value={value.toString()}
                     onChange={(e, value) =>
-                        onChange(definition.key, Number.parseInt(value!, 10))
+                        onChange(definition, Number.parseInt(value!, 10))
                     }
                 />
             );
@@ -220,10 +211,13 @@ export const SETTING_STATE = makeAutoObservable(
             crop: "",
             powerOn: true,
         } as Settings,
+
+        clientSettings: {} as ClientSettings,
     },
     {
         decoders: observable.shallow,
         settings: observable.deep,
+        clientSettings: observable.deep,
     }
 );
 
@@ -240,7 +234,7 @@ autorun(() => {
 });
 
 autorun(() => {
-    SETTING_STATE.settings.decoder = SETTING_STATE.decoders[0].key;
+    SETTING_STATE.clientSettings.decoder = SETTING_STATE.decoders[0].key;
 });
 
 export const SETTING_DEFINITIONS = computed(() => {
@@ -248,21 +242,25 @@ export const SETTING_DEFINITIONS = computed(() => {
 
     result.push(
         {
+            group: "settings",
             key: "powerOn",
             type: "toggle",
             label: "Turn device on when starting",
         },
         {
+            group: "clientSettings",
             key: "turnScreenOff",
             type: "toggle",
             label: "Turn screen off when starting",
         },
         {
+            group: "settings",
             key: "stayAwake",
             type: "toggle",
             label: "Stay awake (if plugged in)",
         },
         {
+            group: "settings",
             key: "powerOffOnClose",
             type: "toggle",
             label: "Turn device off when exiting",
@@ -270,6 +268,7 @@ export const SETTING_DEFINITIONS = computed(() => {
     );
 
     result.push({
+        group: "settings",
         key: "displayId",
         type: "dropdown",
         label: "Display",
@@ -319,6 +318,7 @@ export const SETTING_DEFINITIONS = computed(() => {
     });
 
     result.push({
+        group: "settings",
         key: "crop",
         type: "text",
         label: "Crop",
@@ -326,6 +326,7 @@ export const SETTING_DEFINITIONS = computed(() => {
     });
 
     result.push({
+        group: "settings",
         key: "maxSize",
         type: "number",
         label: "Max Resolution (longer side, 0 = unlimited)",
@@ -335,6 +336,7 @@ export const SETTING_DEFINITIONS = computed(() => {
     });
 
     result.push({
+        group: "settings",
         key: "bitRate",
         type: "number",
         label: "Max Bit Rate",
@@ -344,6 +346,7 @@ export const SETTING_DEFINITIONS = computed(() => {
     });
 
     result.push({
+        group: "settings",
         key: "lockVideoOrientation",
         type: "dropdown",
         label: "Lock Video Orientation",
@@ -376,6 +379,7 @@ export const SETTING_DEFINITIONS = computed(() => {
     });
 
     result.push({
+        group: "settings",
         key: "encoderName",
         type: "dropdown",
         label: "Encoder",
@@ -426,6 +430,7 @@ export const SETTING_DEFINITIONS = computed(() => {
 
     if (SETTING_STATE.decoders.length > 1) {
         result.push({
+            group: "clientSettings",
             key: "decoder",
             type: "dropdown",
             label: "Decoder",
@@ -438,11 +443,13 @@ export const SETTING_DEFINITIONS = computed(() => {
     }
 
     result.push({
+        group: "clientSettings",
         key: "ignoreDecoderCodecArgs",
         type: "toggle",
         label: `Ignore decoder's codec arguments`,
         description: `Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.`,
     });
+
 
     return result;
 });

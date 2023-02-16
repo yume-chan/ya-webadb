@@ -114,7 +114,7 @@ export class ScrcpyPageState {
         }
 
         try {
-            if (!SETTING_STATE.settings.decoder) {
+            if (!SETTING_STATE.clientSettings.decoder) {
                 throw new Error("No available decoder");
             }
 
@@ -196,7 +196,7 @@ export class ScrcpyPageState {
 
             const decoderDefinition =
                 SETTING_STATE.decoders.find(
-                    (x) => x.key === SETTING_STATE.settings.decoder
+                    (x) => x.key === SETTING_STATE.clientSettings.decoder
                 ) ?? SETTING_STATE.decoders[0];
             const decoder = new decoderDefinition.Constructor();
 
@@ -225,7 +225,7 @@ export class ScrcpyPageState {
             });
 
             const codecOptions = new CodecOptions();
-            if (!SETTING_STATE.settings.ignoreDecoderCodecArgs) {
+            if (!SETTING_STATE.clientSettings.ignoreDecoderCodecArgs) {
                 codecOptions.value.profile = decoder.maxProfile;
                 codecOptions.value.level = decoder.maxLevel;
             }
@@ -327,11 +327,12 @@ export class ScrcpyPageState {
                 )
                 .catch(() => {});
 
-            if (SETTING_STATE.settings.turnScreenOff) {
+            if (SETTING_STATE.clientSettings.turnScreenOff) {
                 await client.controlMessageSerializer!.setScreenPowerMode(
                     AndroidScreenPowerMode.Off
                 );
             }
+
 
             runInAction(() => {
                 this.client = client;

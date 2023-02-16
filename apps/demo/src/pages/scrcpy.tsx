@@ -164,11 +164,16 @@ const Scrcpy: NextPage = () => {
                         <SettingItem
                             key={definition.key}
                             definition={definition}
-                            settings={SETTING_STATE.settings}
+                            value={
+                                (SETTING_STATE[definition.group] as any)[
+                                    definition.key
+                                ]
+                            }
                             onChange={action(
-                                (key, value) =>
-                                    ((SETTING_STATE.settings as any)[key] =
-                                        value)
+                                (definition, value) =>
+                                    ((SETTING_STATE[definition.group] as any)[
+                                        definition.key
+                                    ] = value)
                             )}
                         />
                     ))}
