@@ -368,6 +368,10 @@ export class ScrcpyPageState {
         clearTimeout(this.fpsCounterIntervalId);
 
         document.exitFullscreen().catch(NOOP);
+        if ("keyboard" in navigator) {
+            // @ts-expect-error
+            navigator.keyboard.unlock();
+        }
 
         this.client = undefined;
         this.running = false;
