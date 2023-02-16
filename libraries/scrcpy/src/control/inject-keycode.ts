@@ -7,58 +7,191 @@ export enum AndroidKeyEventAction {
     Up = 1,
 }
 
-// https://github.com/Genymobile/scrcpy/blob/cabb102a04153f9c237b18257d3269a058558c63/app/src/android/keycodes.h#L26
+export enum AndroidKeyEventMeta {
+    AltOn = 0x02,
+    CtrlOn = 0x1000,
+    ShiftOn = 0x01,
+    MetaOn = 0x10000,
+}
+
+// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/view/KeyEvent.java;l=97;drc=95c1165bb895dd844e1793460710f7163dd330a3
+// Most name follows Web API `KeyboardEvent.code`,
+// Android-only (not exist in HID keyboard standard) keys are prefixed by `Android`.
 export enum AndroidKeyCode {
-    Home = 3,
-    Back = 4,
+    AndroidHome = 3,
+    AndroidBack = 4,
+    AndroidCall,
+    AndroidEndCall,
 
-    DPadUp = 19,
-    DPadDown,
-    DPadLeft,
-    DPadRight,
+    Digit0,
+    Digit1,
+    Digit2,
+    Digit3,
+    Digit4,
+    Digit5,
+    Digit6,
+    Digit7,
+    Digit8,
+    Digit9,
+    /**
+     * '*' key.
+     */
+    Star, // Name not verified
+    /**
+     * '#' key.
+     */
+    Pound, // Name not verified
 
-    VolumeUp = 24,
-    VolumeDown,
+    /**
+     * Directional Pad Up key.
+     */
+    ArrowUp,
+    /**
+     * Directional Pad Down key.
+     */
+    ArrowDown,
+    /**
+     * Directional Pad Left key.
+     */
+    ArrowLeft,
+    /**
+     * Directional Pad Right key.
+     */
+    ArrowRight,
+    /**
+     * Directional Pad Center key.
+     */
+    AndroidDPadCenter,
 
-    A = 29,
-    B,
-    C,
-    D,
-    E,
-    F,
-    G,
-    H,
-    I,
-    J,
-    K,
-    L,
-    M,
-    N,
-    O,
-    P,
-    Q,
-    R,
-    S,
-    T,
-    U,
-    V,
-    W,
-    X,
-    Y,
-    Z,
+    VolumeUp, // Name not verified
+    VolumeDown, // Name not verified
+    Power, // Name not verified
+    AndroidCamera,
+    Clear, // Name not verified
 
-    Tab = 61,
+    KeyA,
+    KeyB,
+    KeyC,
+    KeyD,
+    KeyE,
+    KeyF,
+    KeyG,
+    KeyH,
+    KeyI,
+    KeyJ,
+    KeyK,
+    KeyL,
+    KeyM,
+    KeyN,
+    KeyO,
+    KeyP,
+    KeyQ,
+    KeyR,
+    KeyS,
+    KeyT,
+    KeyU,
+    KeyV,
+    KeyW,
+    KeyX,
+    KeyY,
+    KeyZ,
+    Comma,
+    Period,
+    AltLeft,
+    AltRight,
+    ShiftLeft,
+    ShiftRight,
+    Tab,
     Space,
-    Enter = 66,
-    Delete,
+    AndroidSymbol,
+    AndroidExplorer,
+    AndroidEnvelope,
+    Enter,
+    Backspace,
+    Backquote,
+    Minus,
+    Equal,
+    BracketLeft,
+    BracketRight,
+    Backslash,
+    Semicolon,
+    Quote,
+    Slash,
+    At, // Name not verified
+
+    AndroidNum,
+    AndroidHeadsetHook,
+    /**
+     * Camera Focus key。
+     */
+    AndroidFocus,
+
+    Plus, // Name not verified
+    Menu, // Name not verified
+    AndroidNotification,
+    AndroidSearch,
+
+    PageUp = 92,
+    PageDown,
+
     Escape = 111,
-    ForwardDelete,
+    Delete,
+    ControlLeft,
+    ControlRight,
+    CapsLock,
+    ScrollLock,
+    MetaLeft,
+    MetaRight,
+    AndroidFunction,
+    PrintScreen,
+    Pause,
 
-    MoveHome = 122,
-    MoveEnd = 123,
+    Home,
+    End,
+    Insert,
+    AndroidForward,
 
-    VolumeMute = 164,
-    AppSwitch = 187,
+    F1 = 131,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12,
+
+    NumLock,
+    Numpad0,
+    Numpad1,
+    Numpad2,
+    Numpad3,
+    Numpad4,
+    Numpad5,
+    Numpad6,
+    Numpad7,
+    Numpad8,
+    Numpad9,
+    NumpadDivide,
+    NumpadMultiply,
+    NumpadSubtract,
+    NumpadAdd,
+    NumpadDecimal,
+    NumpadComma, // Name not verified
+    NumpadEnter,
+    NumpadEquals, // Name not verified
+    NumpadLeftParen, // Name not verified
+    NumpadRightParen, // Name not verified
+
+    VolumeMute = 164, // Name not verified
+    AndroidAppSwitch = 187,
+
+    AndroidCut = 277,
+    AndroidCopy,
+    AndroidPaste,
 }
 
 export const ScrcpyInjectKeyCodeControlMessage = new Struct()

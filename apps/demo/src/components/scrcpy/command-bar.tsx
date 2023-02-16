@@ -15,8 +15,8 @@ import { Icons } from "../../utils";
 import { ExternalLink } from "../external-link";
 import { CommandBarSpacerItem } from "./command-bar-spacer-item";
 import { RECORD_STATE } from "./recorder";
-import { STATE } from "./state";
 import { SETTING_STATE } from "./settings";
+import { STATE } from "./state";
 
 const ITEMS = computed(() => {
     const result: ICommandBarItemProps[] = [];

@@ -2,6 +2,7 @@ import { makeStyles } from "@griffel/react";
 import {
     AndroidKeyCode,
     AndroidKeyEventAction,
+    AndroidKeyEventMeta,
     AndroidMotionEventAction,
     ScrcpyPointerId,
 } from "@yume-chan/scrcpy";
@@ -117,49 +118,30 @@ function handleContextMenu(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
 }
 
-const KEY_MAP = {
-    Enter: AndroidKeyCode.Enter,
-    Escape: AndroidKeyCode.Escape,
-    Backspace: AndroidKeyCode.Delete,
-    Tab: AndroidKeyCode.Tab,
-    Delete: AndroidKeyCode.ForwardDelete,
-    Home: AndroidKeyCode.MoveHome,
-    End: AndroidKeyCode.MoveEnd,
-    Space: AndroidKeyCode.Space,
-    ArrowUp: AndroidKeyCode.DPadUp,
-    ArrowDown: AndroidKeyCode.DPadDown,
-    ArrowLeft: AndroidKeyCode.DPadLeft,
-    ArrowRight: AndroidKeyCode.DPadRight,
-} as Record<string, AndroidKeyCode | undefined>;
-
-async function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+async function handleKeyEvent(e: KeyboardEvent<HTMLDivElement>) {
     if (!STATE.client) {
         return;
     }
 
-    const { key, code } = e;
-    if (key.match(/^[!-`{-~]$/i)) {
-        STATE.client!.controlMessageSerializer!.injectText(key);
-        return;
-    }
+    const { type, key, code } = e;
 
-    const keyCode = KEY_MAP[code];
-
+    const keyCode = AndroidKeyCode[code as keyof typeof AndroidKeyCode];
     if (keyCode) {
         // Intercept keys like "Tab"
         e.preventDefault();
         e.stopPropagation();
 
         STATE.client!.controlMessageSerializer!.injectKeyCode({
-            action: AndroidKeyEventAction.Down,
+            action:
+                type === "keydown"
+                    ? AndroidKeyEventAction.Down
+                    : AndroidKeyEventAction.Up,
             keyCode,
-            metaState: 0,
-            repeat: 0,
-        });
-        STATE.client!.controlMessageSerializer!.injectKeyCode({
-            action: AndroidKeyEventAction.Up,
-            keyCode,
-            metaState: 0,
+            metaState:
+                (e.ctrlKey ? AndroidKeyEventMeta.CtrlOn : 0) |
+                (e.shiftKey ? AndroidKeyEventMeta.ShiftOn : 0) |
+                (e.altKey ? AndroidKeyEventMeta.AltOn : 0) |
+                (e.metaKey ? AndroidKeyEventMeta.MetaOn : 0),
             repeat: 0,
         });
     }
@@ -205,7 +187,8 @@ export function VideoContainer() {
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onPointerLeave={handlePointerLeave}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleKeyEvent}
+            onKeyUp={handleKeyEvent}
             onContextMenu={handleContextMenu}
         />
     );

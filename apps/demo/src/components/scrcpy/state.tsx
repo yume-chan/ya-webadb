@@ -28,6 +28,10 @@ import { fetchServer } from "./fetch-server";
 import { MuxerStream, RECORD_STATE } from "./recorder";
 import { H264Decoder, SETTING_STATE } from "./settings";
 
+const NOOP = () => {
+    /* empty */
+};
+
 export class ScrcpyPageState {
     running = false;
 
@@ -361,6 +365,8 @@ export class ScrcpyPageState {
 
         this.fps = "0";
         clearTimeout(this.fpsCounterIntervalId);
+
+        document.exitFullscreen().catch(NOOP);
 
         this.client = undefined;
         this.running = false;
