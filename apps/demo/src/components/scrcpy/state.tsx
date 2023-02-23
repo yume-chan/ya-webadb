@@ -24,7 +24,6 @@ import {
 import { action, autorun, makeAutoObservable, runInAction } from "mobx";
 import { GLOBAL_STATE } from "../../state";
 import { ProgressStream } from "../../utils";
-import { DeviceViewRef } from "../device-view";
 import { fetchServer } from "./fetch-server";
 import { MuxerStream, RECORD_STATE } from "./recorder";
 import { H264Decoder, SETTING_STATE } from "./settings";
@@ -36,8 +35,10 @@ const NOOP = () => {
 export class ScrcpyPageState {
     running = false;
 
-    deviceView: DeviceViewRef | null = null;
+    fullScreenContainer: HTMLDivElement | null = null;
     rendererContainer: HTMLDivElement | null = null;
+
+    isFullScreen = false;
 
     logVisible = false;
     log: string[] = [];
@@ -89,8 +90,8 @@ export class ScrcpyPageState {
             start: false,
             stop: action.bound,
             dispose: action.bound,
-            handleDeviceViewRef: action.bound,
-            handleRendererContainerRef: action.bound,
+            setFullScreenContainer: action.bound,
+            setRendererContainer: action.bound,
             clientPositionToDevicePosition: false,
         });
 
@@ -99,6 +100,16 @@ export class ScrcpyPageState {
                 this.dispose();
             }
         });
+
+        if (typeof document === "object") {
+            document.addEventListener("fullscreenchange", () => {
+                if (!document.fullscreenElement) {
+                    runInAction(() => {
+                        this.isFullScreen = false;
+                    });
+                }
+            });
+        }
 
         autorun(() => {
             if (this.rendererContainer && this.decoder) {
@@ -370,21 +381,20 @@ export class ScrcpyPageState {
         this.fps = "0";
         clearTimeout(this.fpsCounterIntervalId);
 
-        document.exitFullscreen().catch(NOOP);
-        if ("keyboard" in navigator) {
-            // @ts-expect-error
-            navigator.keyboard.unlock();
+        if (this.isFullScreen) {
+            document.exitFullscreen().catch(NOOP);
+            this.isFullScreen = false;
         }
 
         this.client = undefined;
         this.running = false;
     }
 
-    handleDeviceViewRef(element: DeviceViewRef | null) {
-        this.deviceView = element;
+    setFullScreenContainer(element: HTMLDivElement | null) {
+        this.fullScreenContainer = element;
     }
 
-    handleRendererContainerRef(element: HTMLDivElement | null) {
+    setRendererContainer(element: HTMLDivElement | null) {
         this.rendererContainer = element;
     }
 
