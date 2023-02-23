@@ -1,12 +1,17 @@
 import { Dialog, LayerHost, ProgressIndicator, Stack } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { makeStyles, shorthands } from "@griffel/react";
+import {
+    AndroidKeyCode,
+    AndroidKeyEventAction,
+    AndroidKeyEventMeta,
+} from "@yume-chan/scrcpy";
 import { WebCodecsDecoder } from "@yume-chan/scrcpy-decoder-webcodecs";
 import { action, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { KeyboardEvent, useEffect, useState } from "react";
 import { DemoModePanel, DeviceView } from "../components";
 import {
     NavigationBar,
@@ -35,6 +40,9 @@ const useClasses = makeStyles({
         display: "flex",
         flexDirection: "column",
         backgroundColor: "black",
+        ":focus-visible": {
+            ...shorthands.outline("0"),
+        },
     },
     fullScreenStatusBar: {
         display: "flex",
@@ -115,6 +123,59 @@ const ConnectionDialog = observer(() => {
     );
 });
 
+async function handleKeyEvent(e: KeyboardEvent<HTMLDivElement>) {
+    if (!STATE.client) {
+        return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { type, code } = e;
+    const keyCode = AndroidKeyCode[code as keyof typeof AndroidKeyCode];
+    if (keyCode) {
+        if (type === "keydown") {
+            STATE.pressedKeys.add(keyCode);
+        } else {
+            STATE.pressedKeys.delete(keyCode);
+        }
+
+        // TODO: workaround the missing keyup event on macOS https://crbug.com/1393524
+        STATE.client!.controlMessageSerializer!.injectKeyCode({
+            action:
+                type === "keydown"
+                    ? AndroidKeyEventAction.Down
+                    : AndroidKeyEventAction.Up,
+            keyCode,
+            metaState:
+                (e.ctrlKey ? AndroidKeyEventMeta.CtrlOn : 0) |
+                (e.shiftKey ? AndroidKeyEventMeta.ShiftOn : 0) |
+                (e.altKey ? AndroidKeyEventMeta.AltOn : 0) |
+                (e.metaKey ? AndroidKeyEventMeta.MetaOn : 0),
+            repeat: 0,
+        });
+    }
+}
+
+function handleBlur() {
+    if (!STATE.client) {
+        return;
+    }
+
+    // Release all pressed keys on window blur,
+    // Because there will not be any keyup events when window is not focused.
+    for (const key of STATE.pressedKeys) {
+        STATE.client.controlMessageSerializer!.injectKeyCode({
+            action: AndroidKeyEventAction.Up,
+            keyCode: key,
+            metaState: 0,
+            repeat: 0,
+        });
+    }
+
+    STATE.pressedKeys.clear();
+}
+
 const Scrcpy: NextPage = () => {
     const classes = useClasses();
 
@@ -153,6 +214,14 @@ const Scrcpy: NextPage = () => {
         };
     }, []);
 
+    useEffect(() => {
+        window.addEventListener("blur", handleBlur);
+
+        return () => {
+            window.removeEventListener("blur", handleBlur);
+        };
+    }, []);
+
     return (
         <Stack {...RouteStackProps}>
             <Head>
@@ -165,6 +234,9 @@ const Scrcpy: NextPage = () => {
                 <div
                     ref={STATE.setFullScreenContainer}
                     className={classes.fullScreenContainer}
+                    tabIndex={0}
+                    onKeyDown={handleKeyEvent}
+                    onKeyUp={handleKeyEvent}
                 >
                     {keyboardLockEnabled && STATE.isFullScreen && (
                         <div className={classes.fullScreenStatusBar}>

@@ -55,6 +55,8 @@ const ITEMS = computed(() => {
                       RECORD_STATE.seconds.toString().padStart(2, "0")
                   }`,
                   onClick: action(() => {
+                      STATE.fullScreenContainer!.focus();
+
                       RECORD_STATE.recorder.stop();
                       RECORD_STATE.recording = false;
                   }),
@@ -65,6 +67,8 @@ const ITEMS = computed(() => {
                   iconProps: { iconName: Icons.Record },
                   text: "Record",
                   onClick: action(() => {
+                      STATE.fullScreenContainer!.focus();
+
                       RECORD_STATE.recorder.start();
                       RECORD_STATE.recording = true;
                   }),
@@ -78,7 +82,9 @@ const ITEMS = computed(() => {
         iconOnly: true,
         text: "Fullscreen",
         onClick: action(() => {
-            STATE.fullScreenContainer?.requestFullscreen();
+            STATE.fullScreenContainer!.focus();
+
+            STATE.fullScreenContainer!.requestFullscreen();
             STATE.isFullScreen = true;
         }),
     });
@@ -91,6 +97,8 @@ const ITEMS = computed(() => {
             iconOnly: true,
             text: "Volume Up",
             onClick: (async () => {
+                STATE.fullScreenContainer!.focus();
+
                 // TODO: Auto repeat when holding
                 await STATE.client?.controlMessageSerializer!.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
@@ -113,6 +121,8 @@ const ITEMS = computed(() => {
             iconOnly: true,
             text: "Volume Down",
             onClick: (async () => {
+                STATE.fullScreenContainer!.focus();
+
                 await STATE.client?.controlMessageSerializer!.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
                     keyCode: AndroidKeyCode.VolumeDown,
@@ -134,6 +144,8 @@ const ITEMS = computed(() => {
             iconOnly: true,
             text: "Toggle Mute",
             onClick: (async () => {
+                STATE.fullScreenContainer!.focus();
+
                 await STATE.client?.controlMessageSerializer!.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
                     keyCode: AndroidKeyCode.VolumeMute,
@@ -158,6 +170,8 @@ const ITEMS = computed(() => {
             iconOnly: true,
             text: "Rotate Device",
             onClick: () => {
+                STATE.fullScreenContainer!.focus();
+
                 STATE.client!.controlMessageSerializer!.rotateDevice();
             },
         },
@@ -168,6 +182,8 @@ const ITEMS = computed(() => {
             iconOnly: true,
             text: "Rotate Video Left",
             onClick: action(() => {
+                STATE.fullScreenContainer!.focus();
+
                 STATE.rotation -= 1;
                 if (STATE.rotation < 0) {
                     STATE.rotation = 3;
@@ -181,6 +197,8 @@ const ITEMS = computed(() => {
             iconOnly: true,
             text: "Rotate Video Right",
             onClick: action(() => {
+                STATE.fullScreenContainer!.focus();
+
                 STATE.rotation = (STATE.rotation + 1) & 3;
             }),
         }
@@ -194,6 +212,8 @@ const ITEMS = computed(() => {
             iconOnly: true,
             text: "Turn Screen Off",
             onClick: () => {
+                STATE.fullScreenContainer!.focus();
+
                 STATE.client!.controlMessageSerializer!.setScreenPowerMode(
                     AndroidScreenPowerMode.Off
                 );
@@ -206,6 +226,8 @@ const ITEMS = computed(() => {
             iconOnly: true,
             text: "Turn Screen On",
             onClick: () => {
+                STATE.fullScreenContainer!.focus();
+
                 STATE.client!.controlMessageSerializer!.setScreenPowerMode(
                     AndroidScreenPowerMode.Normal
                 );
