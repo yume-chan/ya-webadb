@@ -1,16 +1,13 @@
-import {
-    StructFieldValue,
-    type StructFieldDefinition,
-    type StructOptions,
-    type StructValue,
+import type {
+    StructFieldDefinition,
+    StructOptions,
+    StructValue,
 } from "../../basic/index.js";
-import { type KeysOfType } from "../../utils.js";
+import { StructFieldValue } from "../../basic/index.js";
+import type { KeysOfType } from "../../utils.js";
 
-import {
-    BufferLikeFieldDefinition,
-    BufferLikeFieldValue,
-    type BufferFieldSubType,
-} from "./base.js";
+import type { BufferFieldSubType } from "./base.js";
+import { BufferLikeFieldDefinition, BufferLikeFieldValue } from "./base.js";
 
 export type LengthField<TFields> = KeysOfType<TFields, number | string>;
 

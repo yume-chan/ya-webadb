@@ -1,7 +1,7 @@
-import { type ReadableWritablePair } from "@yume-chan/stream-extra";
-import { type ValueOrPromise } from "@yume-chan/struct";
+import type { ReadableWritablePair } from "@yume-chan/stream-extra";
+import type { ValueOrPromise } from "@yume-chan/struct";
 
-import { type AdbPacketData, type AdbPacketInit } from "./packet.js";
+import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 
 export interface AdbBackend {
     readonly serial: string;

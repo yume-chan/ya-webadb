@@ -1,17 +1,18 @@
 import { PromiseResolver } from "@yume-chan/async";
+import type { ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
     AbortController,
     DecodeUtf8Stream,
     GatherStringStream,
     WritableStream,
-    type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 
+import type { AdbCredentialStore } from "./auth.js";
 import {
     ADB_DEFAULT_AUTHENTICATORS,
     AdbAuthenticationProcessor,
-    type AdbCredentialStore,
 } from "./auth.js";
+import type { AdbFrameBuffer } from "./commands/index.js";
 import {
     AdbPower,
     AdbReverseCommand,
@@ -21,21 +22,16 @@ import {
     escapeArg,
     framebuffer,
     install,
-    type AdbFrameBuffer,
 } from "./commands/index.js";
 import { AdbFeatures } from "./features.js";
-import {
-    AdbCommand,
-    calculateChecksum,
-    type AdbPacketData,
-    type AdbPacketInit,
-} from "./packet.js";
-import {
-    AdbPacketDispatcher,
-    type AdbIncomingSocketHandler,
-    type AdbSocket,
-    type Closeable,
+import type { AdbPacketData, AdbPacketInit } from "./packet.js";
+import { AdbCommand, calculateChecksum } from "./packet.js";
+import type {
+    AdbIncomingSocketHandler,
+    AdbSocket,
+    Closeable,
 } from "./socket/index.js";
+import { AdbPacketDispatcher } from "./socket/index.js";
 import { decodeUtf8, encodeUtf8 } from "./utils/index.js";
 
 export enum AdbPropKey {

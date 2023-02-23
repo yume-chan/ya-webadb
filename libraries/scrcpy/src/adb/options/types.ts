@@ -1,16 +1,16 @@
-import { type Adb } from "@yume-chan/adb";
-import { type TransformStream } from "@yume-chan/stream-extra";
+import type { Adb } from "@yume-chan/adb";
+import type { TransformStream } from "@yume-chan/stream-extra";
 
-import {
-    type ScrcpyBackOrScreenOnControlMessage,
-    type ScrcpyControlMessageType,
-    type ScrcpySetClipboardControlMessage,
+import type {
+    ScrcpyBackOrScreenOnControlMessage,
+    ScrcpyControlMessageType,
+    ScrcpySetClipboardControlMessage,
 } from "../../control/index.js";
-import {
-    type ScrcpyOptions,
-    type ScrcpyVideoStreamPacket,
+import type {
+    ScrcpyOptions,
+    ScrcpyVideoStreamPacket,
 } from "../../options/index.js";
-import { type AdbScrcpyConnection } from "../connection.js";
+import type { AdbScrcpyConnection } from "../connection.js";
 
 export interface AdbScrcpyOptions<T extends object> extends ScrcpyOptions<T> {
     createConnection(adb: Adb): AdbScrcpyConnection;

@@ -1,12 +1,12 @@
-import { type TransformStream } from "@yume-chan/stream-extra";
+import type { TransformStream } from "@yume-chan/stream-extra";
 
-import {
-    type ScrcpyBackOrScreenOnControlMessage,
-    type ScrcpyControlMessageType,
-    type ScrcpySetClipboardControlMessage,
+import type {
+    ScrcpyBackOrScreenOnControlMessage,
+    ScrcpyControlMessageType,
+    ScrcpySetClipboardControlMessage,
 } from "../control/index.js";
 
-import { type ScrcpyScrollController } from "./1_16/scroll.js";
+import type { ScrcpyScrollController } from "./1_16/scroll.js";
 
 export const DEFAULT_SERVER_PATH = "/data/local/tmp/scrcpy-server.jar";
 

@@ -1,6 +1,7 @@
-import { type ValueOrPromise } from "@yume-chan/struct";
+import type { ValueOrPromise } from "@yume-chan/struct";
 
-import { WritableStream, type WritableStreamDefaultWriter } from "./stream.js";
+import type { WritableStreamDefaultWriter } from "./stream.js";
+import { WritableStream } from "./stream.js";
 
 export type WrapWritableStreamStart<T> = () => ValueOrPromise<
     WritableStream<T>

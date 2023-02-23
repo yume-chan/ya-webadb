@@ -1,13 +1,14 @@
-import { AdbReverseNotSupportedError, type Adb } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
+import { AdbReverseNotSupportedError } from "@yume-chan/adb";
 import { delay } from "@yume-chan/async";
-import { type Disposable } from "@yume-chan/event";
-import {
-    TransformStream,
-    type ReadableStream,
-    type ReadableStreamDefaultReader,
-    type ReadableWritablePair,
+import type { Disposable } from "@yume-chan/event";
+import type {
+    ReadableStream,
+    ReadableStreamDefaultReader,
+    ReadableWritablePair,
 } from "@yume-chan/stream-extra";
-import { type ValueOrPromise } from "@yume-chan/struct";
+import { TransformStream } from "@yume-chan/stream-extra";
+import type { ValueOrPromise } from "@yume-chan/struct";
 
 export interface AdbScrcpyConnectionOptions {
     control: boolean;

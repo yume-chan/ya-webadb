@@ -1,8 +1,6 @@
-import { type BufferedReadableStream } from "@yume-chan/stream-extra";
-import Struct, {
-    type StructLike,
-    type StructValueType,
-} from "@yume-chan/struct";
+import type { BufferedReadableStream } from "@yume-chan/stream-extra";
+import type { StructLike, StructValueType } from "@yume-chan/struct";
+import Struct from "@yume-chan/struct";
 
 import { decodeUtf8 } from "../../utils/index.js";
 

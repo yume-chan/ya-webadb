@@ -1,7 +1,7 @@
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
-import { type Adb } from "../adb.js";
+import type { Adb } from "../adb.js";
 
 const Version = new Struct({ littleEndian: true }).uint32("version");
 

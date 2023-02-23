@@ -1,6 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { BTree, type BTreeNode } from "./index.js";
+import type { BTreeNode } from "./index.js";
+import { BTree } from "./index.js";
 
 const LENGTH = 128;
 

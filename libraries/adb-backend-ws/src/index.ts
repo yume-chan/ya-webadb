@@ -1,8 +1,5 @@
-import {
-    AdbPacket,
-    AdbPacketSerializeStream,
-    type AdbBackend,
-} from "@yume-chan/adb";
+import type { AdbBackend } from "@yume-chan/adb";
+import { AdbPacket, AdbPacketSerializeStream } from "@yume-chan/adb";
 import {
     DuplexStreamFactory,
     ReadableStream,

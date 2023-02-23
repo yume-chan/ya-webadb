@@ -1,8 +1,8 @@
+import type { AbortSignal } from "web-streams-polyfill";
 import {
     ReadableStream as ReadableStreamPolyfill,
     TransformStream as TransformStreamPolyfill,
     WritableStream as WritableStreamPolyfill,
-    type AbortSignal,
 } from "web-streams-polyfill";
 export * from "web-streams-polyfill";
 

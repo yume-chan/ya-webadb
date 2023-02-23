@@ -7,11 +7,8 @@ import {
 } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
-import { type Adb } from "../adb.js";
-import {
-    type AdbIncomingSocketHandler,
-    type AdbSocket,
-} from "../socket/index.js";
+import type { Adb } from "../adb.js";
+import type { AdbIncomingSocketHandler, AdbSocket } from "../socket/index.js";
 import { decodeUtf8 } from "../utils/index.js";
 
 export interface AdbForwardListener {

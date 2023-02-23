@@ -1,9 +1,7 @@
 import Struct from "@yume-chan/struct";
 
-import {
-    ScrcpyControlMessageType,
-    type ScrcpyInjectScrollControlMessage,
-} from "../../control/index.js";
+import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
+import { ScrcpyControlMessageType } from "../../control/index.js";
 
 export interface ScrcpyScrollController {
     serializeScrollMessage(

@@ -1,4 +1,4 @@
-import { type ValueOrPromise } from "../utils.js";
+import type { ValueOrPromise } from "../utils.js";
 
 // TODO: allow over reading (returning a `Uint8Array`, an `offset` and a `length`) to avoid copying
 

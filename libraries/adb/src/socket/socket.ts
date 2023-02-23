@@ -1,19 +1,21 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { type Disposable } from "@yume-chan/event";
+import type { Disposable } from "@yume-chan/event";
+import type {
+    PushReadableStreamController,
+    ReadableStream,
+    ReadableWritablePair,
+} from "@yume-chan/stream-extra";
 import {
     ChunkStream,
     DuplexStreamFactory,
     PushReadableStream,
     WritableStream,
     pipeFrom,
-    type PushReadableStreamController,
-    type ReadableStream,
-    type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 
 import { AdbCommand } from "../packet.js";
 
-import { type AdbPacketDispatcher, type Closeable } from "./dispatcher.js";
+import type { AdbPacketDispatcher, Closeable } from "./dispatcher.js";
 
 export interface AdbSocketInfo {
     localId: number;

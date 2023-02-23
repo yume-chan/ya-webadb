@@ -1,26 +1,22 @@
-import {
-    type WritableStream,
-    type WritableStreamDefaultWriter,
+import type {
+    WritableStream,
+    WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 
-import {
-    type ScrcpyOptions,
-    type ScrcpyOptionsInit1_16,
-    type ScrcpyScrollController,
+import type {
+    ScrcpyOptions,
+    ScrcpyOptionsInit1_16,
+    ScrcpyScrollController,
 } from "../options/index.js";
 
-import {
-    ScrcpyInjectKeyCodeControlMessage,
-    type AndroidKeyEventAction,
-} from "./inject-keycode.js";
-import { type ScrcpyInjectScrollControlMessage } from "./inject-scroll.js";
+import type { AndroidKeyEventAction } from "./inject-keycode.js";
+import { ScrcpyInjectKeyCodeControlMessage } from "./inject-keycode.js";
+import type { ScrcpyInjectScrollControlMessage } from "./inject-scroll.js";
 import { ScrcpyInjectTextControlMessage } from "./inject-text.js";
 import { ScrcpyInjectTouchControlMessage } from "./inject-touch.js";
 import { ScrcpyRotateDeviceControlMessage } from "./rotate-device.js";
-import {
-    ScrcpySetScreenPowerModeControlMessage,
-    type AndroidScreenPowerMode,
-} from "./set-screen-power-mode.js";
+import type { AndroidScreenPowerMode } from "./set-screen-power-mode.js";
+import { ScrcpySetScreenPowerModeControlMessage } from "./set-screen-power-mode.js";
 import { ScrcpyControlMessageType } from "./type.js";
 
 export class ScrcpyControlMessageSerializer {

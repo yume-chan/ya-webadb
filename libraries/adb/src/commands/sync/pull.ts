@@ -1,8 +1,8 @@
-import {
-    ReadableStream,
-    type BufferedReadableStream,
-    type WritableStreamDefaultWriter,
+import type {
+    BufferedReadableStream,
+    WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
+import { ReadableStream } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";

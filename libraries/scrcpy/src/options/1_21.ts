@@ -2,12 +2,11 @@
 
 import Struct from "@yume-chan/struct";
 
-import {
-    ScrcpyControlMessageType,
-    type ScrcpySetClipboardControlMessage,
-} from "../control/index.js";
+import type { ScrcpySetClipboardControlMessage } from "../control/index.js";
+import { ScrcpyControlMessageType } from "../control/index.js";
 
-import { ScrcpyOptions1_18, type ScrcpyOptionsInit1_18 } from "./1_18.js";
+import type { ScrcpyOptionsInit1_18 } from "./1_18.js";
+import { ScrcpyOptions1_18 } from "./1_18.js";
 import { toScrcpyOptionValue } from "./types.js";
 
 export interface ScrcpyOptionsInit1_21 extends ScrcpyOptionsInit1_18 {

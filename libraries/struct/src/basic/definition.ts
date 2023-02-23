@@ -1,10 +1,10 @@
-import { type StructFieldValue } from "./field-value.js";
-import { type StructOptions } from "./options.js";
-import {
-    type StructAsyncDeserializeStream,
-    type StructDeserializeStream,
+import type { StructFieldValue } from "./field-value.js";
+import type { StructOptions } from "./options.js";
+import type {
+    StructAsyncDeserializeStream,
+    StructDeserializeStream,
 } from "./stream.js";
-import { type StructValue } from "./struct-value.js";
+import type { StructValue } from "./struct-value.js";
 
 /**
  * A field definition defines how to deserialize a field.

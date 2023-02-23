@@ -2,18 +2,16 @@
 // cspell: ignore usec
 
 import { AdbCommandBase, AdbSubprocessNoneProtocol } from "@yume-chan/adb";
+import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     BufferedTransformStream,
     DecodeUtf8Stream,
     SplitStringStream,
     WrapReadableStream,
     WritableStream,
-    type ReadableStream,
 } from "@yume-chan/stream-extra";
-import Struct, {
-    decodeUtf8,
-    type StructAsyncDeserializeStream,
-} from "@yume-chan/struct";
+import type { StructAsyncDeserializeStream } from "@yume-chan/struct";
+import Struct, { decodeUtf8 } from "@yume-chan/struct";
 
 // `adb logcat` is an alias to `adb shell logcat`
 // so instead of adding to core library, it's implemented here

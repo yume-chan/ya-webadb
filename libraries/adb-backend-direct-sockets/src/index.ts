@@ -1,15 +1,11 @@
-import {
-    AdbPacket,
-    AdbPacketSerializeStream,
-    type AdbBackend,
-} from "@yume-chan/adb";
+import type { AdbBackend } from "@yume-chan/adb";
+import { AdbPacket, AdbPacketSerializeStream } from "@yume-chan/adb";
+import type { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 import {
     StructDeserializeStream,
     WrapReadableStream,
     WrapWritableStream,
     pipeFrom,
-    type ReadableStream,
-    type WritableStream,
 } from "@yume-chan/stream-extra";
 
 declare global {

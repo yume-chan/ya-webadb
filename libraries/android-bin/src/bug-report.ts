@@ -2,13 +2,13 @@
 // cspell: ignore bugreportz
 
 import { AdbCommandBase, AdbSubprocessShellProtocol } from "@yume-chan/adb";
+import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     DecodeUtf8Stream,
     PushReadableStream,
     SplitStringStream,
     WrapReadableStream,
     WritableStream,
-    type ReadableStream,
 } from "@yume-chan/stream-extra";
 
 export interface BugReportZVersion {

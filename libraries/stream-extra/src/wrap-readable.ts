@@ -1,10 +1,10 @@
-import { type ValueOrPromise } from "@yume-chan/struct";
+import type { ValueOrPromise } from "@yume-chan/struct";
 
-import {
-    ReadableStream,
-    type ReadableStreamDefaultController,
-    type ReadableStreamDefaultReader,
+import type {
+    ReadableStreamDefaultController,
+    ReadableStreamDefaultReader,
 } from "./stream.js";
+import { ReadableStream } from "./stream.js";
 
 export type WrapReadableStreamStart<T> = (
     controller: ReadableStreamDefaultController<T>

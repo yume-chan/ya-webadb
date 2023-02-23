@@ -1,20 +1,23 @@
 import { AutoDisposable } from "@yume-chan/event";
+import type {
+    ReadableStream,
+    WritableStream,
+    WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
     WrapReadableStream,
     WrapWritableStream,
-    type ReadableStream,
-    type WritableStream,
-    type WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 
-import { type Adb } from "../../adb.js";
+import type { Adb } from "../../adb.js";
 import { AdbFeatures } from "../../features.js";
-import { type AdbSocket } from "../../socket/index.js";
+import type { AdbSocket } from "../../socket/index.js";
 import { AutoResetEvent } from "../../utils/index.js";
 import { escapeArg } from "../subprocess/index.js";
 
-import { adbSyncOpenDir, type AdbSyncEntry } from "./list.js";
+import type { AdbSyncEntry } from "./list.js";
+import { adbSyncOpenDir } from "./list.js";
 import { adbSyncPull } from "./pull.js";
 import { adbSyncPush } from "./push.js";
 import { adbSyncLstat, adbSyncStat } from "./stat.js";

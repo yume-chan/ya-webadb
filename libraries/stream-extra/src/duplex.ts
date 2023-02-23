@@ -1,12 +1,12 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { type ValueOrPromise } from "@yume-chan/struct";
+import type { ValueOrPromise } from "@yume-chan/struct";
 
-import {
-    WritableStream,
-    type ReadableStream,
-    type ReadableStreamDefaultController,
-    type WritableStreamDefaultWriter,
+import type {
+    ReadableStream,
+    ReadableStreamDefaultController,
+    WritableStreamDefaultWriter,
 } from "./stream.js";
+import { WritableStream } from "./stream.js";
 import { WrapReadableStream } from "./wrap-readable.js";
 
 export interface DuplexStreamFactoryOptions {

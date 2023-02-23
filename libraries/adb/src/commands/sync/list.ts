@@ -1,16 +1,13 @@
-import {
-    type BufferedReadableStream,
-    type WritableStreamDefaultWriter,
+import type {
+    BufferedReadableStream,
+    WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponses } from "./response.js";
-import {
-    AdbSyncLstatResponse,
-    AdbSyncStatResponse,
-    type AdbSyncStat,
-} from "./stat.js";
+import type { AdbSyncStat } from "./stat.js";
+import { AdbSyncLstatResponse, AdbSyncStatResponse } from "./stat.js";
 
 export interface AdbSyncEntry extends AdbSyncStat {
     name: string;

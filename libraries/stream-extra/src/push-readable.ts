@@ -1,11 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 
-import {
-    AbortController,
-    ReadableStream,
-    type AbortSignal,
-    type QueuingStrategy,
-} from "./stream.js";
+import type { AbortSignal, QueuingStrategy } from "./stream.js";
+import { AbortController, ReadableStream } from "./stream.js";
 
 export interface PushReadableStreamController<T> {
     abortSignal: AbortSignal;

@@ -1,13 +1,13 @@
-import {
-    StructFieldDefinition,
-    StructFieldValue,
-    type StructAsyncDeserializeStream,
-    type StructDeserializeStream,
-    type StructOptions,
-    type StructValue,
+import type {
+    StructAsyncDeserializeStream,
+    StructDeserializeStream,
+    StructOptions,
+    StructValue,
 } from "../../basic/index.js";
+import { StructFieldDefinition, StructFieldValue } from "../../basic/index.js";
 import { SyncPromise } from "../../sync-promise.js";
-import { decodeUtf8, encodeUtf8, type ValueOrPromise } from "../../utils.js";
+import type { ValueOrPromise } from "../../utils.js";
+import { decodeUtf8, encodeUtf8 } from "../../utils.js";
 
 /**
  * Base class for all types that

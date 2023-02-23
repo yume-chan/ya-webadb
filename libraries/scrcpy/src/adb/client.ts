@@ -1,10 +1,13 @@
+import type { Adb, AdbSubprocessProtocol, AdbSync } from "@yume-chan/adb";
 import {
     AdbReverseNotSupportedError,
     AdbSubprocessNoneProtocol,
-    type Adb,
-    type AdbSubprocessProtocol,
-    type AdbSync,
 } from "@yume-chan/adb";
+import type {
+    ReadableStreamDefaultController,
+    ReadableStreamDefaultReader,
+    ReadableWritablePair,
+} from "@yume-chan/stream-extra";
 import {
     AbortController,
     DecodeUtf8Stream,
@@ -13,24 +16,19 @@ import {
     SplitStringStream,
     WrapWritableStream,
     WritableStream,
-    type ReadableStreamDefaultController,
-    type ReadableStreamDefaultReader,
-    type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 
 import { ScrcpyControlMessageSerializer } from "../control/index.js";
-import {
-    ScrcpyDeviceMessageDeserializeStream,
-    type ScrcpyDeviceMessage,
-} from "../device-message/index.js";
-import {
-    DEFAULT_SERVER_PATH,
-    type ScrcpyOptionsInit1_16,
-    type ScrcpyVideoStreamPacket,
+import type { ScrcpyDeviceMessage } from "../device-message/index.js";
+import { ScrcpyDeviceMessageDeserializeStream } from "../device-message/index.js";
+import type {
+    ScrcpyOptionsInit1_16,
+    ScrcpyVideoStreamPacket,
 } from "../options/index.js";
+import { DEFAULT_SERVER_PATH } from "../options/index.js";
 
-import { type AdbScrcpyConnection } from "./connection.js";
-import { type AdbScrcpyOptions } from "./options/index.js";
+import type { AdbScrcpyConnection } from "./connection.js";
+import type { AdbScrcpyOptions } from "./options/index.js";
 
 class ArrayToStream<T> extends ReadableStream<T> {
     private array!: T[];

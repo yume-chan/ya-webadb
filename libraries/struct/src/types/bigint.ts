@@ -5,16 +5,15 @@ import {
     setBigUint64,
 } from "@yume-chan/dataview-bigint-polyfill/esm/fallback.js";
 
-import {
-    StructFieldDefinition,
-    StructFieldValue,
-    type StructAsyncDeserializeStream,
-    type StructDeserializeStream,
-    type StructOptions,
-    type StructValue,
+import type {
+    StructAsyncDeserializeStream,
+    StructDeserializeStream,
+    StructOptions,
+    StructValue,
 } from "../basic/index.js";
+import { StructFieldDefinition, StructFieldValue } from "../basic/index.js";
 import { SyncPromise } from "../sync-promise.js";
-import { type ValueOrPromise } from "../utils.js";
+import type { ValueOrPromise } from "../utils.js";
 
 type DataViewBigInt64Getter = (
     dataView: DataView,

@@ -1,5 +1,6 @@
 // cspell: ignore RSASSA
 
+import type { AdbCredentialStore } from "@yume-chan/adb";
 import {
     calculateBase64EncodedLength,
     calculatePublicKey,
@@ -7,7 +8,6 @@ import {
     decodeBase64,
     decodeUtf8,
     encodeBase64,
-    type AdbCredentialStore,
 } from "@yume-chan/adb";
 
 export default class AdbWebCredentialStore implements AdbCredentialStore {

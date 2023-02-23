@@ -1,6 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
 
-import { type Event } from "./event.js";
+import type { Event } from "./event.js";
 
 export async function once<T>(event: Event<T, unknown>): Promise<T> {
     const resolver = new PromiseResolver<T>();

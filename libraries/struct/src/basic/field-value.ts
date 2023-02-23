@@ -1,6 +1,6 @@
-import { type StructFieldDefinition } from "./definition.js";
-import { type StructOptions } from "./options.js";
-import { type StructValue } from "./struct-value.js";
+import type { StructFieldDefinition } from "./definition.js";
+import type { StructOptions } from "./options.js";
+import type { StructValue } from "./struct-value.js";
 
 /**
  * A field value defines how to serialize a field.

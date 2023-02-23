@@ -4,17 +4,16 @@ import {
 } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
+import type {
+    ScrcpyBackOrScreenOnControlMessage,
+    ScrcpySetClipboardControlMessage,
+} from "../../control/index.js";
 import {
     AndroidKeyEventAction,
     ScrcpyControlMessageType,
-    type ScrcpyBackOrScreenOnControlMessage,
-    type ScrcpySetClipboardControlMessage,
 } from "../../control/index.js";
-import {
-    toScrcpyOptionValue,
-    type ScrcpyOptions,
-    type ScrcpyVideoStreamPacket,
-} from "../types.js";
+import type { ScrcpyOptions, ScrcpyVideoStreamPacket } from "../types.js";
+import { toScrcpyOptionValue } from "../types.js";
 
 import { CodecOptions } from "./codec-options.js";
 import {
@@ -22,10 +21,8 @@ import {
     parseSequenceParameterSet,
     removeH264Emulation,
 } from "./h264-configuration.js";
-import {
-    ScrcpyScrollController1_16,
-    type ScrcpyScrollController,
-} from "./scroll.js";
+import type { ScrcpyScrollController } from "./scroll.js";
+import { ScrcpyScrollController1_16 } from "./scroll.js";
 
 export enum ScrcpyLogLevel {
     Verbose = "verbose",

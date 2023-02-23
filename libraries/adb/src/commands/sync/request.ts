@@ -1,4 +1,4 @@
-import { type WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
+import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
 import { encodeUtf8 } from "../../utils/index.js";

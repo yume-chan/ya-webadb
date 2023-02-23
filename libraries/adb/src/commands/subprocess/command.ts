@@ -2,11 +2,13 @@ import { DecodeUtf8Stream, GatherStringStream } from "@yume-chan/stream-extra";
 
 import { AdbCommandBase } from "../base.js";
 
+import type {
+    AdbSubprocessProtocol,
+    AdbSubprocessProtocolConstructor,
+} from "./protocols/index.js";
 import {
     AdbSubprocessNoneProtocol,
     AdbSubprocessShellProtocol,
-    type AdbSubprocessProtocol,
-    type AdbSubprocessProtocolConstructor,
 } from "./protocols/index.js";
 
 export interface AdbSubprocessOptions {

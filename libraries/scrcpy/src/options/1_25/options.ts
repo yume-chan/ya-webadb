@@ -1,5 +1,6 @@
-import { type ScrcpyScrollController } from "../1_16/index.js";
-import { ScrcpyOptions1_24, type ScrcpyOptionsInit1_24 } from "../1_24.js";
+import type { ScrcpyScrollController } from "../1_16/index.js";
+import type { ScrcpyOptionsInit1_24 } from "../1_24.js";
+import { ScrcpyOptions1_24 } from "../1_24.js";
 
 import { ScrcpyScrollController1_25 } from "./scroll.js";
 

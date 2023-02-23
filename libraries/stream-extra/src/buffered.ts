@@ -1,8 +1,5 @@
 import { PushReadableStream } from "./push-readable.js";
-import {
-    type ReadableStream,
-    type ReadableStreamDefaultReader,
-} from "./stream.js";
+import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
 
 export class BufferedReadableStreamEndedError extends Error {
     public constructor() {

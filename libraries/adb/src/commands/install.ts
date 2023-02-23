@@ -1,12 +1,10 @@
-import {
-    WrapWritableStream,
-    type WritableStream,
-} from "@yume-chan/stream-extra";
+import type { WritableStream } from "@yume-chan/stream-extra";
+import { WrapWritableStream } from "@yume-chan/stream-extra";
 
-import { type Adb } from "../adb.js";
+import type { Adb } from "../adb.js";
 
 import { escapeArg } from "./subprocess/index.js";
-import { type AdbSync } from "./sync/index.js";
+import type { AdbSync } from "./sync/index.js";
 
 export function install(adb: Adb): WritableStream<Uint8Array> {
     const filename = `/data/local/tmp/${Math.random()

@@ -1,21 +1,14 @@
-import {
-    AdbPacketHeader,
-    AdbPacketSerializeStream,
-    type AdbBackend,
-    type AdbPacketData,
-    type AdbPacketInit,
-} from "@yume-chan/adb";
+import type { AdbBackend, AdbPacketData, AdbPacketInit } from "@yume-chan/adb";
+import { AdbPacketHeader, AdbPacketSerializeStream } from "@yume-chan/adb";
+import type { ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
     DuplexStreamFactory,
     ReadableStream,
     WritableStream,
     pipeFrom,
-    type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
-import {
-    EMPTY_UINT8_ARRAY,
-    type StructDeserializeStream,
-} from "@yume-chan/struct";
+import type { StructDeserializeStream } from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
 /**
  * `classCode`, `subclassCode` and `protocolCode` are required

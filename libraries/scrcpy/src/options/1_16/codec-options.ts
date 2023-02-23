@@ -1,8 +1,5 @@
-import {
-    type AndroidCodecLevel,
-    type AndroidCodecProfile,
-} from "../../codec.js";
-import { type ScrcpyOptionValue } from "../types.js";
+import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec.js";
+import type { ScrcpyOptionValue } from "../types.js";
 
 /**
  * If the option you need is not in this type,
