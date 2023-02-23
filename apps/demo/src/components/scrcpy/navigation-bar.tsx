@@ -32,6 +32,7 @@ function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         return false;
     }
 
+    STATE.fullScreenContainer!.focus();
     e.currentTarget.setPointerCapture(e.pointerId);
     e.preventDefault();
     e.stopPropagation();
