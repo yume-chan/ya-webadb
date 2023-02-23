@@ -3,6 +3,7 @@ import { makeStyles } from "@griffel/react";
 import {
     CSSProperties,
     ComponentType,
+    HTMLAttributes,
     ReactNode,
     useImperativeHandle,
     useMemo,
@@ -12,7 +13,7 @@ import {
 import { forwardRef } from "../utils/with-display-name";
 import { ResizeObserver, Size } from "./resize-observer";
 
-export interface DeviceViewProps {
+export interface DeviceViewProps extends HTMLAttributes<HTMLDivElement> {
     width: number;
 
     height: number;
@@ -46,7 +47,10 @@ const useClasses = makeStyles({
 });
 
 export const DeviceView = forwardRef<DeviceViewRef>("DeviceView")(
-    ({ width, height, BottomElement, children }: DeviceViewProps, ref) => {
+    (
+        { width, height, BottomElement, children, ...props }: DeviceViewProps,
+        ref
+    ) => {
         const classes = useClasses();
 
         const [containerSize, setContainerSize] = useState<Size>({
@@ -122,7 +126,7 @@ export const DeviceView = forwardRef<DeviceViewRef>("DeviceView")(
 
         return (
             <StackItem grow styles={{ root: { position: "relative" } }}>
-                <div ref={containerRef} className={classes.outer}>
+                <div ref={containerRef} className={classes.outer} {...props}>
                     <ResizeObserver onResize={setContainerSize} />
 
                     <div

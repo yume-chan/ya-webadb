@@ -78,9 +78,14 @@ function injectTouch(
 }
 
 function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
+    if (!STATE.client) {
+        return;
+    }
+
     STATE.rendererContainer!.focus();
     e.preventDefault();
     e.stopPropagation();
+
     e.currentTarget.setPointerCapture(e.pointerId);
     injectTouch(AndroidMotionEventAction.Down, e);
 }
@@ -101,15 +106,24 @@ function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
 }
 
 function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
+    if (!STATE.client) {
+        return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
     injectTouch(AndroidMotionEventAction.Up, e);
 }
 
 function handlePointerLeave(e: PointerEvent<HTMLDivElement>) {
+    if (!STATE.client) {
+        return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
-    // Prevent hover state on device from "stuck" at the last position
+    // Because pointer capture on pointer down, this event only happens for hovering mouse and pen.
+    // Release the injected pointer, otherwise it will stuck at the last position.
     injectTouch(AndroidMotionEventAction.HoverExit, e);
     injectTouch(AndroidMotionEventAction.Up, e);
 }
@@ -123,14 +137,23 @@ async function handleKeyEvent(e: KeyboardEvent<HTMLDivElement>) {
         return;
     }
 
-    const { type, key, code } = e;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const { repeat, type, code } = e;
+    if (repeat) {
+        return;
+    }
 
     const keyCode = AndroidKeyCode[code as keyof typeof AndroidKeyCode];
     if (keyCode) {
-        // Intercept keys like "Tab"
-        e.preventDefault();
-        e.stopPropagation();
+        if (type === "keydown") {
+            STATE.pressedKeys.add(keyCode);
+        } else {
+            STATE.pressedKeys.delete(keyCode);
+        }
 
+        // TODO: workaround the missing keyup event on macOS https://crbug.com/1393524
         STATE.client!.controlMessageSerializer!.injectKeyCode({
             action:
                 type === "keydown"
@@ -145,6 +168,25 @@ async function handleKeyEvent(e: KeyboardEvent<HTMLDivElement>) {
             repeat: 0,
         });
     }
+}
+
+function handleBlur() {
+    if (!STATE.client) {
+        return;
+    }
+
+    // Release all pressed keys on window blur,
+    // Because there will not be any keyup events when window is not focused.
+    for (const key of STATE.pressedKeys) {
+        STATE.client.controlMessageSerializer!.injectKeyCode({
+            action: AndroidKeyEventAction.Up,
+            keyCode: key,
+            metaState: 0,
+            repeat: 0,
+        });
+    }
+
+    STATE.pressedKeys.clear();
 }
 
 export function VideoContainer() {
@@ -163,8 +205,11 @@ export function VideoContainer() {
             passive: false,
         });
 
+        window.addEventListener("blur", handleBlur);
+
         return () => {
             container.removeEventListener("wheel", handleWheel);
+            window.removeEventListener("blur", handleBlur);
         };
     }, [container]);
 
