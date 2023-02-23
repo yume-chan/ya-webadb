@@ -2,6 +2,7 @@ import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import {
     AdbScrcpyClient,
     AdbScrcpyOptions1_22,
+    AndroidKeyCode,
     AndroidScreenPowerMode,
     CodecOptions,
     DEFAULT_SERVER_PATH,
@@ -56,6 +57,7 @@ export class ScrcpyPageState {
 
     client: AdbScrcpyClient | undefined = undefined;
     hoverHelper: ScrcpyHoverHelper | undefined = undefined;
+    pressedKeys: Set<AndroidKeyCode> = new Set();
 
     async pushServer() {
         const serverBuffer = await fetchServer();
@@ -333,7 +335,6 @@ export class ScrcpyPageState {
                 );
             }
 
-
             runInAction(() => {
                 this.client = client;
                 this.hoverHelper = new ScrcpyHoverHelper();
@@ -363,6 +364,8 @@ export class ScrcpyPageState {
             RECORD_STATE.recorder.stop();
             RECORD_STATE.recording = false;
         }
+
+        this.pressedKeys.clear();
 
         this.fps = "0";
         clearTimeout(this.fpsCounterIntervalId);
