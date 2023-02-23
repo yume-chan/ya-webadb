@@ -84,7 +84,6 @@ function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.fullScreenContainer!.focus();
     e.preventDefault();
     e.stopPropagation();
     injectTouch(
@@ -100,7 +99,6 @@ function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.fullScreenContainer!.focus();
     e.preventDefault();
     e.stopPropagation();
     injectTouch(AndroidMotionEventAction.Up, e);
@@ -111,7 +109,6 @@ function handlePointerLeave(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.fullScreenContainer!.focus();
     e.preventDefault();
     e.stopPropagation();
 
