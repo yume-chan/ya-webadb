@@ -1,12 +1,7 @@
 import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
 import { AdbCommand, decodeUtf8 } from "@yume-chan/adb";
-import {
-    action,
-    autorun,
-    makeAutoObservable,
-    runInAction
-} from "mobx";
+import { action, autorun, makeAutoObservable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
