@@ -4,13 +4,19 @@ export class AdbWebUsbBackendWatcher {
     public constructor(callback: (newDeviceSerial?: string) => void) {
         this.callback = callback;
 
-        window.navigator.usb.addEventListener('connect', this.handleConnect);
-        window.navigator.usb.addEventListener('disconnect', this.handleDisconnect);
+        window.navigator.usb.addEventListener("connect", this.handleConnect);
+        window.navigator.usb.addEventListener(
+            "disconnect",
+            this.handleDisconnect
+        );
     }
 
     public dispose(): void {
-        window.navigator.usb.removeEventListener('connect', this.handleConnect);
-        window.navigator.usb.removeEventListener('disconnect', this.handleDisconnect);
+        window.navigator.usb.removeEventListener("connect", this.handleConnect);
+        window.navigator.usb.removeEventListener(
+            "disconnect",
+            this.handleDisconnect
+        );
     }
 
     private handleConnect = (e: USBConnectionEvent) => {

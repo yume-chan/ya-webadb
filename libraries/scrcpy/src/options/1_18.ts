@@ -21,7 +21,7 @@ export const ScrcpyBackOrScreenOnControlMessage1_18 = new Struct()
     .uint8("action", placeholder<AndroidKeyEventAction>());
 
 export type ScrcpyBackOrScreenOnControlMessage1_18 =
-    typeof ScrcpyBackOrScreenOnControlMessage1_18["TInit"];
+    (typeof ScrcpyBackOrScreenOnControlMessage1_18)["TInit"];
 
 export class ScrcpyOptions1_18<
     T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsInit1_18

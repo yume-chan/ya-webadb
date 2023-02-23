@@ -20,7 +20,7 @@ export const AdbFrameBufferV1 = new Struct({ littleEndian: true })
     .uint32("alpha_length")
     .uint8Array("data", { lengthField: "size" });
 
-export type AdbFrameBufferV1 = typeof AdbFrameBufferV1["TDeserializeResult"];
+export type AdbFrameBufferV1 = (typeof AdbFrameBufferV1)["TDeserializeResult"];
 
 export const AdbFrameBufferV2 = new Struct({ littleEndian: true })
     .uint32("bpp")
@@ -38,7 +38,7 @@ export const AdbFrameBufferV2 = new Struct({ littleEndian: true })
     .uint32("alpha_length")
     .uint8Array("data", { lengthField: "size" });
 
-export type AdbFrameBufferV2 = typeof AdbFrameBufferV2["TDeserializeResult"];
+export type AdbFrameBufferV2 = (typeof AdbFrameBufferV2)["TDeserializeResult"];
 
 /**
  * ADB uses 8 int32 fields to describe bit depths

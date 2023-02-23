@@ -37,6 +37,7 @@ importers:
       mobx: ^6.7.0
       mobx-react-lite: ^3.4.0
       next: 13.1.5
+      prettier: ^2.8.4
       react: ^18.2.0
       react-dom: ^18.2.0
       source-map-loader: ^4.0.1
@@ -85,6 +86,7 @@ importers:
       '@types/react': 18.0.27
       eslint: 8.32.0
       eslint-config-next: 13.1.5_7uibuqfxkfaozanbtbziikiqje
+      prettier: 2.8.4
       source-map-loader: 4.0.1
       typescript: 4.9.4
 
@@ -102,6 +104,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ^8.31.0
       jest: ^29.3.1
+      prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
       typescript: ^4.9.4
@@ -120,6 +123,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.32.0
       jest: 29.4.1_@types+node@18.11.18
+      prettier: 2.8.4
       ts-jest: 29.0.5_xnqx6kewz4og5i3pgc6ahzwloy
       typescript: 4.9.4
 
@@ -130,6 +134,7 @@ importers:
       '@yume-chan/stream-extra': workspace:^0.0.18
       '@yume-chan/tsconfig': workspace:^1.0.0
       eslint: ^8.31.0
+      prettier: ^2.8.4
       tslib: ^2.4.1
       typescript: ^4.9.4
     dependencies:
@@ -140,6 +145,7 @@ importers:
       '@yume-chan/eslint-config': link:../../toolchain/eslint-config
       '@yume-chan/tsconfig': link:../../toolchain/tsconfig
       eslint: 8.32.0
+      prettier: 2.8.4
       typescript: 4.9.4
 
   ../../libraries/adb-backend-webusb:
@@ -151,6 +157,7 @@ importers:
       '@yume-chan/struct': workspace:^0.0.18
       '@yume-chan/tsconfig': workspace:^1.0.0
       eslint: ^8.31.0
+      prettier: ^2.8.4
       tslib: ^2.4.1
       typescript: ^4.9.4
     dependencies:
@@ -163,6 +170,7 @@ importers:
       '@yume-chan/eslint-config': link:../../toolchain/eslint-config
       '@yume-chan/tsconfig': link:../../toolchain/tsconfig
       eslint: 8.32.0
+      prettier: 2.8.4
       typescript: 4.9.4
 
   ../../libraries/adb-backend-ws:
@@ -173,6 +181,7 @@ importers:
       '@yume-chan/tsconfig': workspace:^1.0.0
       eslint: ^8.31.0
       jest: ^29.3.1
+      prettier: ^2.8.4
       tslib: ^2.4.1
       typescript: ^4.9.4
     dependencies:
@@ -184,6 +193,7 @@ importers:
       '@yume-chan/tsconfig': link:../../toolchain/tsconfig
       eslint: 8.32.0
       jest: 29.4.1
+      prettier: 2.8.4
       typescript: 4.9.4
 
   ../../libraries/adb-credential-web:
@@ -192,6 +202,7 @@ importers:
       '@yume-chan/eslint-config': workspace:^1.0.0
       '@yume-chan/tsconfig': workspace:^1.0.0
       eslint: ^8.31.0
+      prettier: ^2.8.4
       tslib: ^2.4.1
       typescript: ^4.9.4
     dependencies:
@@ -201,6 +212,7 @@ importers:
       '@yume-chan/eslint-config': link:../../toolchain/eslint-config
       '@yume-chan/tsconfig': link:../../toolchain/tsconfig
       eslint: 8.32.0
+      prettier: 2.8.4
       typescript: 4.9.4
 
   ../../libraries/android-bin:
@@ -211,6 +223,7 @@ importers:
       '@yume-chan/struct': workspace:^0.0.18
       '@yume-chan/tsconfig': workspace:^1.0.0
       eslint: ^8.31.0
+      prettier: ^2.8.4
       tslib: ^2.4.1
       typescript: ^4.9.4
     dependencies:
@@ -222,6 +235,7 @@ importers:
       '@yume-chan/eslint-config': link:../../toolchain/eslint-config
       '@yume-chan/tsconfig': link:../../toolchain/tsconfig
       eslint: 8.32.0
+      prettier: 2.8.4
       typescript: 4.9.4
 
   ../../libraries/b-tree:
@@ -232,6 +246,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ^8.31.0
       jest: ^29.3.1
+      prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
       typescript: ^4.9.4
@@ -244,6 +259,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.32.0
       jest: 29.4.1
+      prettier: 2.8.4
       ts-jest: 29.0.5_xnqx6kewz4og5i3pgc6ahzwloy
       typescript: 4.9.4
 
@@ -253,6 +269,7 @@ importers:
       '@yume-chan/tsconfig': workspace:^1.0.0
       eslint: ^8.31.0
       jest: ^29.3.1
+      prettier: ^2.8.4
       tslib: ^2.4.1
       typescript: ^4.9.4
     dependencies:
@@ -262,6 +279,7 @@ importers:
       '@yume-chan/tsconfig': link:../../toolchain/tsconfig
       eslint: 8.32.0
       jest: 29.4.1
+      prettier: 2.8.4
       typescript: 4.9.4
 
   ../../libraries/event:
@@ -273,6 +291,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ^8.31.0
       jest: ^29.3.1
+      prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
       typescript: ^4.9.4
@@ -286,6 +305,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.32.0
       jest: 29.4.1
+      prettier: 2.8.4
       ts-jest: 29.0.5_xnqx6kewz4og5i3pgc6ahzwloy
       typescript: 4.9.4
 
@@ -303,6 +323,7 @@ importers:
       eslint: ^8.31.0
       gh-release-fetch: ^3.0.2
       jest: ^29.3.1
+      prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
       typescript: ^4.9.4
@@ -321,6 +342,7 @@ importers:
       eslint: 8.32.0
       gh-release-fetch: 3.0.2
       jest: 29.4.1
+      prettier: 2.8.4
       ts-jest: 29.0.5_xnqx6kewz4og5i3pgc6ahzwloy
       typescript: 4.9.4
 
@@ -336,6 +358,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ^8.31.0
       jest: ^29.3.1
+      prettier: ^2.8.4
       tinyh264: ^0.0.7
       ts-jest: ^29.0.4
       tslib: ^2.4.1
@@ -358,6 +381,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.32.0
       jest: 29.4.1
+      prettier: 2.8.4
       ts-jest: 29.0.5_xnqx6kewz4og5i3pgc6ahzwloy
       typescript: 4.9.4
 
@@ -372,6 +396,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ^8.31.0
       jest: ^29.3.1
+      prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
       typescript: ^4.9.4
@@ -387,6 +412,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.32.0
       jest: 29.4.1
+      prettier: 2.8.4
       ts-jest: 29.0.5_xnqx6kewz4og5i3pgc6ahzwloy
       typescript: 4.9.4
 
@@ -400,6 +426,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ^8.31.0
       jest: ^29.3.1
+      prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
       typescript: ^4.9.4
@@ -416,6 +443,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.32.0
       jest: 29.4.1
+      prettier: 2.8.4
       ts-jest: 29.0.5_xnqx6kewz4og5i3pgc6ahzwloy
       typescript: 4.9.4
 
@@ -428,6 +456,7 @@ importers:
       cross-env: ^7.0.3
       eslint: ^8.31.0
       jest: ^29.3.1
+      prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
       typescript: ^4.9.4
@@ -441,6 +470,7 @@ importers:
       cross-env: 7.0.3
       eslint: 8.32.0
       jest: 29.4.1
+      prettier: 2.8.4
       ts-jest: 29.0.5_xnqx6kewz4og5i3pgc6ahzwloy
       typescript: 4.9.4
 
@@ -451,6 +481,7 @@ importers:
       '@typescript-eslint/parser': ^5.48.1
       eslint: ^8.31.0
       eslint-plugin-import: ^2.27.4
+      prettier: ^2.8.4
       typescript: ^4.9.4
     dependencies:
       '@rushstack/eslint-patch': 1.2.0
@@ -459,9 +490,14 @@ importers:
       eslint: 8.32.0
       eslint-plugin-import: 2.27.5_eslint@8.32.0
       typescript: 4.9.4
+    devDependencies:
+      prettier: 2.8.4
 
   ../../toolchain/tsconfig:
-    specifiers: {}
+    specifiers:
+      prettier: ^2.8.4
+    devDependencies:
+      prettier: 2.8.4
 
 packages:
 
@@ -5390,6 +5426,12 @@ packages:
   /prepend-http/2.0.0:
     resolution: {integrity: sha512-ravE6m9Atw9Z/jjttRUZ+clIXogdghyZAuWJ3qEzjT+jI/dL1ifAqhZeC5VHzQp1MSt1+jxKkFNemj/iO7tVUA==}
     engines: {node: '>=4'}
+    dev: true
+
+  /prettier/2.8.4:
+    resolution: {integrity: sha512-vIS4Rlc2FNh0BySk3Wkd6xmwxB0FpOndW5fisM5H8hsZSxU2VWVB5CWIkIjWvrHjIhxk2g3bfMKM87zNTrZddw==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
     dev: true
 
   /pretty-format/29.4.1:

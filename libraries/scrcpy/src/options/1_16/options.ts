@@ -125,7 +125,7 @@ export const ScrcpySetClipboardControlMessage1_15 = new Struct()
     .string("content", { lengthField: "length" });
 
 export type ScrcpySetClipboardControlMessage1_15 =
-    typeof ScrcpySetClipboardControlMessage1_15["TInit"];
+    (typeof ScrcpySetClipboardControlMessage1_15)["TInit"];
 
 export class ScrcpyOptions1_16<
     T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16

@@ -20,7 +20,7 @@ export const AdbSyncEntryResponse = new Struct({ littleEndian: true })
     .extra({ id: AdbSyncResponseId.Entry as const });
 
 export type AdbSyncEntryResponse =
-    typeof AdbSyncEntryResponse["TDeserializeResult"];
+    (typeof AdbSyncEntryResponse)["TDeserializeResult"];
 
 export const AdbSyncEntry2Response = new Struct({ littleEndian: true })
     .fields(AdbSyncStatResponse)
@@ -29,7 +29,7 @@ export const AdbSyncEntry2Response = new Struct({ littleEndian: true })
     .extra({ id: AdbSyncResponseId.Entry2 as const });
 
 export type AdbSyncEntry2Response =
-    typeof AdbSyncEntry2Response["TDeserializeResult"];
+    (typeof AdbSyncEntry2Response)["TDeserializeResult"];
 
 export async function* adbSyncOpenDir(
     stream: BufferedReadableStream,

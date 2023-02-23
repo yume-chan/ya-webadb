@@ -10,7 +10,7 @@ export const ScrcpyInjectScrollControlMessage1_22 = new Struct()
     .int32("buttons");
 
 export type ScrcpyInjectScrollControlMessage1_22 =
-    typeof ScrcpyInjectScrollControlMessage1_22["TInit"];
+    (typeof ScrcpyInjectScrollControlMessage1_22)["TInit"];
 
 export class ScrcpyScrollController1_22 extends ScrcpyScrollController1_16 {
     public override serializeScrollMessage(

@@ -47,7 +47,7 @@ export const AdbSyncLstatResponse = new Struct({ littleEndian: true })
     });
 
 export type AdbSyncLstatResponse =
-    typeof AdbSyncLstatResponse["TDeserializeResult"];
+    (typeof AdbSyncLstatResponse)["TDeserializeResult"];
 
 export enum AdbSyncStatErrorCode {
     SUCCESS = 0,
@@ -101,7 +101,7 @@ export const AdbSyncStatResponse = new Struct({ littleEndian: true })
     });
 
 export type AdbSyncStatResponse =
-    typeof AdbSyncStatResponse["TDeserializeResult"];
+    (typeof AdbSyncStatResponse)["TDeserializeResult"];
 
 export async function adbSyncLstat(
     stream: BufferedReadableStream,

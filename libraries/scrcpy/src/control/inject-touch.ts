@@ -75,4 +75,4 @@ export const ScrcpyInjectTouchControlMessage = new Struct()
     .uint32("buttons");
 
 export type ScrcpyInjectTouchControlMessage =
-    typeof ScrcpyInjectTouchControlMessage["TInit"];
+    (typeof ScrcpyInjectTouchControlMessage)["TInit"];

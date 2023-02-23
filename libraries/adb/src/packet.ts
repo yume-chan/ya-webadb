@@ -18,15 +18,15 @@ export const AdbPacketHeader = new Struct({ littleEndian: true })
     .uint32("checksum")
     .int32("magic");
 
-export type AdbPacketHeader = typeof AdbPacketHeader["TDeserializeResult"];
+export type AdbPacketHeader = (typeof AdbPacketHeader)["TDeserializeResult"];
 
-type AdbPacketHeaderInit = typeof AdbPacketHeader["TInit"];
+type AdbPacketHeaderInit = (typeof AdbPacketHeader)["TInit"];
 
 export const AdbPacket = new Struct({ littleEndian: true })
     .fields(AdbPacketHeader)
     .uint8Array("payload", { lengthField: "payloadLength" });
 
-export type AdbPacket = typeof AdbPacket["TDeserializeResult"];
+export type AdbPacket = (typeof AdbPacket)["TDeserializeResult"];
 
 /**
  * `AdbPacketData` contains all the useful fields of `AdbPacket`.
@@ -39,12 +39,12 @@ export type AdbPacket = typeof AdbPacket["TDeserializeResult"];
  * so `AdbSocket#writable#write` only needs `AdbPacketData`.
  */
 export type AdbPacketData = Omit<
-    typeof AdbPacket["TInit"],
+    (typeof AdbPacket)["TInit"],
     "checksum" | "magic"
 >;
 
 // All fields except `magic`, which can be calculated in `AdbPacketSerializeStream`
-export type AdbPacketInit = Omit<typeof AdbPacket["TInit"], "magic">;
+export type AdbPacketInit = Omit<(typeof AdbPacket)["TInit"], "magic">;
 
 export function calculateChecksum(payload: Uint8Array): number;
 export function calculateChecksum(init: AdbPacketData): AdbPacketInit;

@@ -6,7 +6,7 @@ export class InspectStream<T> extends TransformStream<T, T> {
             transform(chunk, controller) {
                 callback(chunk);
                 controller.enqueue(chunk);
-            }
+            },
         });
     }
 }

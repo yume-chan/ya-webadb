@@ -1,6 +1,6 @@
-import {
-    type H264Configuration,
-    type ScrcpyVideoStreamPacket,
+import type {
+    H264Configuration,
+    ScrcpyVideoStreamPacket,
 } from "@yume-chan/scrcpy";
 import { WritableStream } from "@yume-chan/stream-extra";
 

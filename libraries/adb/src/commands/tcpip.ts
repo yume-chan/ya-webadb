@@ -1,4 +1,4 @@
-import { AdbCommandBase } from './base.js';
+import { AdbCommandBase } from "./base.js";
 
 export class AdbTcpIpCommand extends AdbCommandBase {
     public async setPort(port: number): Promise<void> {
@@ -8,14 +8,14 @@ export class AdbTcpIpCommand extends AdbCommandBase {
 
         const output = await this.adb.createSocketAndWait(`tcpip:${port}`);
         if (output !== `restarting in TCP mode port: ${port}\n`) {
-            throw new Error('Invalid response');
+            throw new Error("Invalid response");
         }
     }
 
     public async disable(): Promise<void> {
-        const output = await this.adb.createSocketAndWait('usb:');
-        if (output !== 'restarting in USB mode\n') {
-            throw new Error('Invalid response');
+        const output = await this.adb.createSocketAndWait("usb:");
+        if (output !== "restarting in USB mode\n") {
+            throw new Error("Invalid response");
         }
     }
 }

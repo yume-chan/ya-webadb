@@ -202,4 +202,4 @@ export const ScrcpyInjectKeyCodeControlMessage = new Struct()
     .uint32("metaState");
 
 export type ScrcpyInjectKeyCodeControlMessage =
-    typeof ScrcpyInjectKeyCodeControlMessage["TInit"];
+    (typeof ScrcpyInjectKeyCodeControlMessage)["TInit"];

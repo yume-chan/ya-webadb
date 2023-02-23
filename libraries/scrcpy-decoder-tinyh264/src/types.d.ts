@@ -143,7 +143,7 @@ declare module "yuv-buffer" {
 }
 
 declare module "yuv-canvas" {
-    import { type YUVFrame } from "yuv-buffer";
+    import type { YUVFrame } from "yuv-buffer";
 
     export default class YUVCanvas {
         public static attach(canvas: HTMLCanvasElement): YUVCanvas;

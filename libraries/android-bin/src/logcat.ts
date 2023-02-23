@@ -104,7 +104,7 @@ export const LoggerEntry = new Struct({ littleEndian: true })
         },
     });
 
-export type LoggerEntry = typeof LoggerEntry["TDeserializeResult"];
+export type LoggerEntry = (typeof LoggerEntry)["TDeserializeResult"];
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;drc=bbe77d66e7bee8bd1f0bc7e5492b5376b0207ef6;bpv=0
 export interface AndroidLogEntry extends LoggerEntry {

@@ -14,7 +14,7 @@ export const AdbSyncDataResponse = new Struct({ littleEndian: true })
     .extra({ id: AdbSyncResponseId.Data as const });
 
 export type AdbSyncDataResponse =
-    typeof AdbSyncDataResponse["TDeserializeResult"];
+    (typeof AdbSyncDataResponse)["TDeserializeResult"];
 
 export function adbSyncPull(
     stream: BufferedReadableStream,

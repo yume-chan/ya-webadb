@@ -37,7 +37,7 @@ const AdbShellProtocolPacket = new Struct({ littleEndian: true })
     .uint32("length")
     .uint8Array("data", { lengthField: "length" });
 
-type AdbShellProtocolPacketInit = typeof AdbShellProtocolPacket["TInit"];
+type AdbShellProtocolPacketInit = (typeof AdbShellProtocolPacket)["TInit"];
 
 type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
 
