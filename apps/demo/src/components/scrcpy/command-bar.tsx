@@ -77,13 +77,10 @@ const ITEMS = computed(() => {
         iconProps: { iconName: Icons.FullScreenMaximize },
         iconOnly: true,
         text: "Fullscreen",
-        onClick: (async () => {
-            STATE.deviceView?.enterFullscreen();
-            if ("keyboard" in navigator) {
-                // @ts-expect-error
-                await navigator.keyboard.lock();
-            }
-        }) as () => void,
+        onClick: action(() => {
+            STATE.fullScreenContainer?.requestFullscreen();
+            STATE.isFullScreen = true;
+        }),
     });
 
     result.push(

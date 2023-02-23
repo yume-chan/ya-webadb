@@ -192,10 +192,18 @@ function handleBlur() {
 export function VideoContainer() {
     const classes = useClasses();
 
+    useEffect(() => {
+        window.addEventListener("blur", handleBlur);
+
+        return () => {
+            window.removeEventListener("blur", handleBlur);
+        };
+    }, []);
+
     const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        STATE.handleRendererContainerRef(container);
+        STATE.setRendererContainer(container);
 
         if (!container) {
             return;
@@ -205,11 +213,8 @@ export function VideoContainer() {
             passive: false,
         });
 
-        window.addEventListener("blur", handleBlur);
-
         return () => {
             container.removeEventListener("wheel", handleWheel);
-            window.removeEventListener("blur", handleBlur);
         };
     }, [container]);
 

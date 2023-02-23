@@ -1,5 +1,6 @@
 import { Dialog, LayerHost, ProgressIndicator, Stack } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
+import { makeStyles, shorthands } from "@griffel/react";
 import { WebCodecsDecoder } from "@yume-chan/scrcpy-decoder-webcodecs";
 import { action, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -16,9 +17,38 @@ import {
     SettingItem,
     VideoContainer,
 } from "../components/scrcpy";
+import { GLOBAL_STATE } from "../state";
 import { CommonStackTokens, RouteStackProps, formatSpeed } from "../utils";
 
+const useClasses = makeStyles({
+    layerHost: {
+        position: "absolute",
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        pointerEvents: "none",
+        ...shorthands.margin(0),
+    },
+    fullScreenContainer: {
+        flexGrow: 1,
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "black",
+    },
+    fullScreenStatusBar: {
+        display: "flex",
+        color: "white",
+        columnGap: "12px",
+        ...shorthands.padding("8px", "20px"),
+    },
+    spacer: {
+        flexGrow: 1,
+    },
+});
+
 const ConnectionDialog = observer(() => {
+    const classes = useClasses();
     const layerHostId = useId("layerHost");
 
     const [isClient, setIsClient] = useState(false);
@@ -33,18 +63,7 @@ const ConnectionDialog = observer(() => {
 
     return (
         <>
-            <LayerHost
-                id={layerHostId}
-                style={{
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    margin: 0,
-                    pointerEvents: "none",
-                }}
-            />
+            <LayerHost id={layerHostId} className={classes.layerHost} />
 
             <Dialog
                 hidden={!STATE.connecting}
@@ -97,6 +116,8 @@ const ConnectionDialog = observer(() => {
 });
 
 const Scrcpy: NextPage = () => {
+    const classes = useClasses();
+
     useEffect(() => {
         // Detect WebCodecs support at client side
         if (
@@ -113,6 +134,25 @@ const Scrcpy: NextPage = () => {
         }
     }, []);
 
+    const [keyboardLockEnabled, setKeyboardLockEnabled] = useState(false);
+    useEffect(() => {
+        if (!("keyboard" in navigator)) {
+            return;
+        }
+
+        // Keyboard Lock is only effective in fullscreen mode,
+        // but the `lock` method can be called at any time.
+
+        // @ts-expect-error
+        navigator.keyboard.lock();
+        setKeyboardLockEnabled(true);
+
+        return () => {
+            // @ts-expect-error
+            navigator.keyboard.unlock();
+        };
+    }, []);
+
     return (
         <Stack {...RouteStackProps}>
             <Head>
@@ -122,14 +162,28 @@ const Scrcpy: NextPage = () => {
             <ScrcpyCommandBar />
 
             <Stack horizontal grow styles={{ root: { height: 0 } }}>
-                <DeviceView
-                    ref={STATE.handleDeviceViewRef}
-                    width={STATE.rotatedWidth}
-                    height={STATE.rotatedHeight}
-                    BottomElement={NavigationBar}
+                <div
+                    ref={STATE.setFullScreenContainer}
+                    className={classes.fullScreenContainer}
                 >
-                    <VideoContainer />
-                </DeviceView>
+                    {keyboardLockEnabled && STATE.isFullScreen && (
+                        <div className={classes.fullScreenStatusBar}>
+                            <div>{GLOBAL_STATE.backend?.serial}</div>
+                            <div>FPS: {STATE.fps}</div>
+
+                            <div className={classes.spacer} />
+
+                            <div>Press and hold ESC to exit full screen</div>
+                        </div>
+                    )}
+                    <DeviceView
+                        width={STATE.rotatedWidth}
+                        height={STATE.rotatedHeight}
+                        BottomElement={NavigationBar}
+                    >
+                        <VideoContainer />
+                    </DeviceView>
+                </div>
 
                 <div
                     style={{
