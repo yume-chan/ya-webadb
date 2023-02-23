@@ -36,10 +36,6 @@ function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
     e.preventDefault();
     e.stopPropagation();
 
-    // Don't focus virtual navigation buttons
-    // make sure all keyboard events are sent to the renderer
-    STATE.rendererContainer!.focus();
-
     return true;
 }
 

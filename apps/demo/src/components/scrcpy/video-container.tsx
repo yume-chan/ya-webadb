@@ -1,18 +1,6 @@
 import { makeStyles } from "@griffel/react";
-import {
-    AndroidKeyCode,
-    AndroidKeyEventAction,
-    AndroidKeyEventMeta,
-    AndroidMotionEventAction,
-    ScrcpyPointerId,
-} from "@yume-chan/scrcpy";
-import {
-    KeyboardEvent,
-    MouseEvent,
-    PointerEvent,
-    useEffect,
-    useState,
-} from "react";
+import { AndroidMotionEventAction, ScrcpyPointerId } from "@yume-chan/scrcpy";
+import { MouseEvent, PointerEvent, useEffect, useState } from "react";
 import { STATE } from "./state";
 
 const useClasses = makeStyles({
@@ -82,7 +70,6 @@ function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.rendererContainer!.focus();
     e.preventDefault();
     e.stopPropagation();
 
@@ -132,73 +119,8 @@ function handleContextMenu(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
 }
 
-async function handleKeyEvent(e: KeyboardEvent<HTMLDivElement>) {
-    if (!STATE.client) {
-        return;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const { repeat, type, code } = e;
-    if (repeat) {
-        return;
-    }
-
-    const keyCode = AndroidKeyCode[code as keyof typeof AndroidKeyCode];
-    if (keyCode) {
-        if (type === "keydown") {
-            STATE.pressedKeys.add(keyCode);
-        } else {
-            STATE.pressedKeys.delete(keyCode);
-        }
-
-        // TODO: workaround the missing keyup event on macOS https://crbug.com/1393524
-        STATE.client!.controlMessageSerializer!.injectKeyCode({
-            action:
-                type === "keydown"
-                    ? AndroidKeyEventAction.Down
-                    : AndroidKeyEventAction.Up,
-            keyCode,
-            metaState:
-                (e.ctrlKey ? AndroidKeyEventMeta.CtrlOn : 0) |
-                (e.shiftKey ? AndroidKeyEventMeta.ShiftOn : 0) |
-                (e.altKey ? AndroidKeyEventMeta.AltOn : 0) |
-                (e.metaKey ? AndroidKeyEventMeta.MetaOn : 0),
-            repeat: 0,
-        });
-    }
-}
-
-function handleBlur() {
-    if (!STATE.client) {
-        return;
-    }
-
-    // Release all pressed keys on window blur,
-    // Because there will not be any keyup events when window is not focused.
-    for (const key of STATE.pressedKeys) {
-        STATE.client.controlMessageSerializer!.injectKeyCode({
-            action: AndroidKeyEventAction.Up,
-            keyCode: key,
-            metaState: 0,
-            repeat: 0,
-        });
-    }
-
-    STATE.pressedKeys.clear();
-}
-
 export function VideoContainer() {
     const classes = useClasses();
-
-    useEffect(() => {
-        window.addEventListener("blur", handleBlur);
-
-        return () => {
-            window.removeEventListener("blur", handleBlur);
-        };
-    }, []);
 
     const [container, setContainer] = useState<HTMLDivElement | null>(null);
 
@@ -221,7 +143,6 @@ export function VideoContainer() {
     return (
         <div
             ref={setContainer}
-            tabIndex={-1}
             className={classes.video}
             style={{
                 width: STATE.width,
@@ -237,8 +158,6 @@ export function VideoContainer() {
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onPointerLeave={handlePointerLeave}
-            onKeyDown={handleKeyEvent}
-            onKeyUp={handleKeyEvent}
             onContextMenu={handleContextMenu}
         />
     );
