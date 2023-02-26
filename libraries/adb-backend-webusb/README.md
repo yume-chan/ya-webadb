@@ -12,21 +12,15 @@ Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/e
     -   [constructor](#constructor-1)
     -   [`requestDevice`](#requestdevice)
     -   [`getDevices`](#getdevices)
+-   [Note on secure context](#note-on-secure-context)
 
 ## Use in browser
 
-| Chrome | Edge | Firefox | Internet Explorer | Safari |
-| ------ | ---- | ------- | ----------------- | ------ |
-| 61     | 79   | No      | No                | No     |
+| Chrome         | Edge           | Firefox | Internet Explorer | Safari |
+| -------------- | -------------- | ------- | ----------------- | ------ |
+| 61<sup>1</sup> | 79<sup>1</sup> | No      | No                | No     |
 
-WebUSB API requires [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS).
-
-Chrome will treat `localhost` as secure, but if you want to access a dev server running on another machine, follow the steps to add the domain name to allowlist:
-
-1. Open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`
-2. Add the protocol and domain part of your url (e.g. `http://192.168.0.100:9000`) to the input box
-3. Choose `Enable` from the dropdown menu
-4. Restart browser
+<sup>1</sup>: Chrome for Android is supported, Chrome for iOS is NOT supported.
 
 ## Use in Node.js
 
@@ -114,3 +108,14 @@ public async getDevices(
 Get all connected and authenticated devices.
 
 This is a convince method for `usb.getDevices()`.
+
+## Note on secure context
+
+WebUSB requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS).
+
+`localhost` is considered secure, so local development works. But to access a self-hosted server running on another machine, either add a certificate, or add the domain name to the allowlist on each client machine:
+
+1. Open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`
+2. Add the protocol and domain part of your url (e.g. `http://192.168.0.100:9000`) to the input box
+3. Choose `Enable` from the dropdown menu
+4. Restart browser
