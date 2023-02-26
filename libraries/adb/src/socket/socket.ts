@@ -52,6 +52,14 @@ export class AdbSocketController
     }
 
     private _availableWriteBytesChanged: PromiseResolver<void> | undefined;
+    /**
+     * When delayed ack is disabled, can be `Infinity` if the socket is ready to write.
+     * Exactly one packet can be written no matter how large it is. Or `-1` if the socket
+     * is waiting for ack.
+     *
+     * When delayed ack is enabled, a non-negative finite number indicates the number of
+     * bytes that can be written to the socket without receiving an ack.
+     */
     private _availableWriteBytes = 0;
     /**
      * Gets the number of bytes that can be written to the socket without blocking.
@@ -114,8 +122,9 @@ export class AdbSocketController
             this._duplex.createWritable(
                 new WritableStream({
                     write: async (chunk) => {
-                        // Only one lock is used because `write` is not reentrant.
                         while (this._availableWriteBytes < chunk.byteLength) {
+                            // Only one lock is required because Web Streams API guarantees
+                            // that `write` is not reentrant.
                             this._availableWriteBytesChanged =
                                 new PromiseResolver();
                             await this._availableWriteBytesChanged.promise;

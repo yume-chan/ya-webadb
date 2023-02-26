@@ -27,10 +27,10 @@ export interface AdbPacketDispatcherOptions {
     maxPayloadSize: number;
 
     /**
-     * The maximum number of bytes
-     * that allows the device to write to each socket
-     * without acknowledging.
-     * or `0` if delayed ack is not supported.
+     * The number of bytes the device can send before receiving an ack packet.
+
+     * Set to 0 or any negative value to disable delayed ack.
+     * Otherwise the value must be in the range of unsigned 32-bit integer.
      */
     initialDelayedAckBytes: number;
 }
@@ -86,6 +86,10 @@ export class AdbPacketDispatcher implements Closeable {
         options: AdbPacketDispatcherOptions
     ) {
         this.options = options;
+        // Don't allow negative values in dispatcher
+        if (this.options.initialDelayedAckBytes < 0) {
+            this.options.initialDelayedAckBytes = 0;
+        }
 
         connection.readable
             .pipeTo(
@@ -261,7 +265,7 @@ export class AdbPacketDispatcher implements Closeable {
         this.initializers.resolve(localId, undefined);
 
         const remoteId = packet.arg0;
-        let initialDelayedAckBytes = packet.arg1 >>> 0;
+        let initialDelayedAckBytes = packet.arg1;
         const serviceString = decodeUtf8(packet.payload);
 
         if (this.options.initialDelayedAckBytes === 0) {
@@ -382,7 +386,7 @@ export class AdbPacketDispatcher implements Closeable {
             payload = new Uint8Array(4);
             new DataView(payload.buffer).setUint32(0, ackBytes, true);
         } else {
-            payload = new Uint8Array(0);
+            payload = EMPTY_UINT8_ARRAY;
         }
 
         return this.sendPacket(AdbCommand.OK, localId, remoteId, payload);

@@ -48,6 +48,14 @@ export interface AdbClientAuthenticateOptions {
     connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>;
     credentialStore: AdbCredentialStore;
     authenticators?: AdbAuthenticator[];
+    /**
+     * The number of bytes the device can send before receiving an ack packet.
+     *
+     * Set to 0 or any negative value to disable delayed ack in handshake.
+     * Otherwise the value must be in the range of unsigned 32-bit integer.
+     *
+     * Delayed ack requires Android 14, this option is ignored on older versions.
+     */
     initialDelayedAckBytes?: number;
 }
 
@@ -56,6 +64,15 @@ export interface AdbClientOptions {
     version: number;
     maxPayloadSize: number;
     banner: string;
+    /**
+     * The number of bytes the device can send before receiving an ack packet.
+     *
+     * Must be greater than 0 (and in the range of unsigned 32-bit integer)
+     * if this feature was supported by device and enabled in handshake,
+     * otherwise the device won't create any stream because it can't send anything.
+     *
+     * Delayed ack requires Android 14, this option is ignored on older versions.
+     */
     initialDelayedAckBytes?: number;
 }
 
@@ -71,12 +88,6 @@ export class Adb implements Closeable {
         authenticators = ADB_DEFAULT_AUTHENTICATORS,
         initialDelayedAckBytes = ADB_DEFAULT_INITIAL_PAYLOAD_SIZE,
     }: AdbClientAuthenticateOptions): Promise<Adb> {
-        if (initialDelayedAckBytes < 0) {
-            throw new Error(
-                "`initialDelayedAckBytes` must be greater than or equal to 0."
-            );
-        }
-
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
         let maxPayloadSize = 0x100000;
@@ -139,7 +150,7 @@ export class Adb implements Closeable {
 
         let banner: string;
         try {
-            // https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/transport.cpp#1252
+            // https://cs.android.com/android/platform/superproject/+/master:packages/modules/adb/transport.cpp;l=77;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
             // There are some other feature constants, but some of them are only used by ADB server, not devices (daemons).
             const features = [
                 AdbFeatures.ShellV2,
@@ -240,19 +251,14 @@ export class Adb implements Closeable {
     }: AdbClientOptions) {
         this.parseBanner(banner);
 
-        if (initialDelayedAckBytes < 0) {
-            throw new Error(
-                "`initialDelayedAckBytes` must be greater than or equal to 0."
-            );
-        }
-
-        if (
-            this.supportsFeature(AdbFeatures.DelayedAck) &&
-            initialDelayedAckBytes === 0
-        ) {
-            throw new Error(
-                "`initialDelayedAckBytes` must be greater than 0 when DelayedAck feature is enabled."
-            );
+        if (this.supportsFeature(AdbFeatures.DelayedAck)) {
+            if (initialDelayedAckBytes <= 0) {
+                throw new Error(
+                    "`initialDelayedAckBytes` must be greater than 0 when DelayedAck feature is enabled."
+                );
+            }
+        } else {
+            initialDelayedAckBytes = 0;
         }
 
         let calculateChecksum: boolean;
@@ -269,9 +275,7 @@ export class Adb implements Closeable {
             calculateChecksum,
             appendNullToServiceString,
             maxPayloadSize,
-            initialDelayedAckBytes: this.supportsFeature(AdbFeatures.DelayedAck)
-                ? initialDelayedAckBytes
-                : 0,
+            initialDelayedAckBytes,
         });
 
         this._protocolVersion = version;
