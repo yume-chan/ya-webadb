@@ -96,10 +96,6 @@ export interface PackageManagerInstallOptions {
      */
     forceNonStaged: boolean;
     /**
-     * `--multi-package`
-     */
-    multiPackage: boolean;
-    /**
      * `--staged`
      */
     staged: boolean;
@@ -195,9 +191,6 @@ export class PackageManager extends AdbCommandBase {
         }
         if (options.forceNonStaged) {
             args.push("--force-non-staged");
-        }
-        if (options.multiPackage) {
-            args.push("--multi-package");
         }
         if (options.staged) {
             args.push("--staged");
