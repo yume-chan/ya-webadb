@@ -2,7 +2,7 @@
 
 Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB), [Spec](https://wicg.github.io/webusb)) API.
 
--   [Requirements](#requirements)
+-   [Use in browser](#use-in-browser)
 -   [Use in Node.js](#use-in-nodejs)
 -   [`AdbWebUsbBackend`](#adbwebusbbackend)
     -   [constructor](#constructor)
@@ -13,7 +13,11 @@ Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/e
     -   [`requestDevice`](#requestdevice)
     -   [`getDevices`](#getdevices)
 
-## Requirements
+## Use in browser
+
+| Chrome | Edge | Firefox | Internet Explorer | Safari |
+| ------ | ---- | ------- | ----------------- | ------ |
+| 61     | 79   | No      | No                | No     |
 
 WebUSB API requires [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS).
 
@@ -26,9 +30,13 @@ Chrome will treat `localhost` as secure, but if you want to access a dev server 
 
 ## Use in Node.js
 
-Node.js doesn't have native support for WebUSB API, but the [`usb`](https://www.npmjs.com/package/usb) NPM package has a `webusb` export that provides a WebUSB compatible API.
+| Node.js | `usb` NPM Package |
+| ------- | ----------------- |
+| 10.5    | 2.9.0             |
 
-The constructors of `AdbWebUsbBackend`, `AdbWebUsbBackendManager` and `AdbWebUsbBackendWatcher` all have a `usb` parameter that can be used to specify the WebUSB API implementation.
+Node.js doesn't have native support for WebUSB API, but the [`usb`](https://www.npmjs.com/package/usb) NPM package provides a WebUSB compatible API.
+
+To use a custom WebUSB API implementation, pass it to the constructor of `AdbWebUsbBackend`, `AdbWebUsbBackendManager` and `AdbWebUsbBackendWatcher` via the `usb` parameter.
 
 ## `AdbWebUsbBackend`
 
@@ -42,9 +50,9 @@ public constructor(
 );
 ```
 
-Create a new instance of `AdbWebBackend` using a `USBDevice` instance you already have.
+Create a new instance of `AdbWebBackend` using a specified `USBDevice` instance.
 
-`USBDevice` type is from WebUSB API.
+`USBDevice` and `USB` types are from WebUSB API.
 
 The `filters` parameter specifies the `classCode`, `subclassCode` and `protocolCode` to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
 
@@ -68,7 +76,7 @@ A helper class that wraps the WebUSB API.
 public static readonly BROWSER: AdbWebUsbBackendManager | undefined;
 ```
 
-Gets the instance of AdbWebUsbBackendManager using browser WebUSB implementation.
+Gets the instance of `AdbWebUsbBackendManager` using browser WebUSB implementation.
 
 May be `undefined` if the browser does not support WebUSB.
 
@@ -104,4 +112,5 @@ public async getDevices(
 ```
 
 Get all connected and authenticated devices.
+
 This is a convince method for `usb.getDevices()`.

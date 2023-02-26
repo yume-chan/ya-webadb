@@ -49,11 +49,14 @@ export class AdbWebUsbBackendManager {
             });
             return new AdbWebUsbBackend(device, filters, this._usb);
         } catch (e) {
-            // User cancelled the device picker
-            // TODO: investigate what error the `usb` NPM package will throw
+            // No device selected
+            // This check is compatible with both Browser implementation
+            // and `usb` NPM package from version 2.9.0
+            // https://github.com/node-usb/node-usb/issues/573
             if (
-                typeof DOMException !== "undefined" &&
-                e instanceof DOMException &&
+                typeof e === "object" &&
+                e !== null &&
+                "name" in e &&
                 e.name === "NotFoundError"
             ) {
                 return undefined;
@@ -62,6 +65,7 @@ export class AdbWebUsbBackendManager {
             throw e;
         }
     }
+
     /**
      * Get all connected and authenticated devices.
      * This is a convince method for `usb.getDevices()`.

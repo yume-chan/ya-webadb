@@ -249,9 +249,9 @@ export class AdbWebUsbBackend implements AdbBackend {
     }
 
     /**
-     * Create a new instance of `AdbWebBackend` using a `USBDevice` instance you already have.
+     * Create a new instance of `AdbWebBackend` using a specified `USBDevice` instance
      *
-     * @param device The `USBDevice` instance you already have.
+     * @param device The `USBDevice` instance obtained elsewhere.
      * @param filters The filters to use when searching for ADB interface. Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
      */
     public constructor(
