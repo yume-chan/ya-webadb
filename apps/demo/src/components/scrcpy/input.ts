@@ -1,11 +1,204 @@
-import { AoaHidDevice, HidKeyCode, HidKeyboard } from "@yume-chan/aoa";
+import {
+    AoaHidDevice,
+    HidKeyCode,
+    HidKeyboard,
+    HidMouse,
+} from "@yume-chan/aoa";
 import { Disposable } from "@yume-chan/event";
 import {
     AdbScrcpyClient,
     AndroidKeyCode,
     AndroidKeyEventAction,
     AndroidKeyEventMeta,
+    AndroidMotionEventAction,
+    AndroidMotionEventButton,
+    ScrcpyHoverHelper,
+    ScrcpyPointerId,
 } from "@yume-chan/scrcpy";
+
+const MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON = [
+    AndroidMotionEventButton.Primary,
+    AndroidMotionEventButton.Tertiary,
+    AndroidMotionEventButton.Secondary,
+    AndroidMotionEventButton.Back,
+    AndroidMotionEventButton.Forward,
+];
+
+export interface MouseInjector extends Disposable {
+    down(button: AndroidMotionEventButton): Promise<void>;
+    move(
+        x: number,
+        y: number,
+        movementX: number,
+        movementY: number
+    ): Promise<void>;
+    up(button: AndroidMotionEventButton): Promise<void>;
+    scroll(x: number, y: number): Promise<void>;
+}
+
+export class ScrcpyMouseInjector implements MouseInjector {
+    private readonly client: AdbScrcpyClient;
+    private readonly hoverHelper: ScrcpyHoverHelper;
+
+    private lastX = 0;
+    private lastY = 0;
+    private lastButtons = 0;
+
+    public constructor(
+        client: AdbScrcpyClient,
+        hoverHelper: ScrcpyHoverHelper
+    ) {
+        this.client = client;
+        this.hoverHelper = hoverHelper;
+    }
+
+    private async injectTouch(action: AndroidMotionEventAction) {
+        for (const message of this.hoverHelper.process({
+            action,
+            screenWidth: this.client.screenWidth!,
+            screenHeight: this.client.screenHeight!,
+            // ScrcpyPointerId.Mouse doesn't work with Chrome browser
+            // https://github.com/Genymobile/scrcpy/issues/3635
+            pointerId: ScrcpyPointerId.Finger,
+            pointerX: this.lastX,
+            pointerY: this.lastY,
+            pressure: this.lastButtons === 0 ? 0 : 1,
+            buttons: this.lastButtons,
+        })) {
+            await this.client.controlMessageSerializer?.injectTouch(message);
+        }
+    }
+
+    public async down(button: number): Promise<void> {
+        const androidButton = MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON[button];
+        this.lastButtons |= androidButton;
+        await this.injectTouch(AndroidMotionEventAction.Down);
+    }
+
+    public async move(x: number, y: number): Promise<void> {
+        this.lastX = x;
+        this.lastY = y;
+        await this.injectTouch(
+            this.lastButtons === 0
+                ? AndroidMotionEventAction.HoverMove
+                : AndroidMotionEventAction.Move
+        );
+    }
+
+    public async up(button: number): Promise<void> {
+        const androidButton = MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON[button];
+        if ((this.lastButtons & androidButton) == 0) {
+            return;
+        }
+
+        this.lastButtons &= ~androidButton;
+        await this.injectTouch(AndroidMotionEventAction.Up);
+    }
+
+    public async scroll(x: number, y: number): Promise<void> {
+        await this.client.controlMessageSerializer?.injectScroll({
+            screenWidth: this.client.screenWidth!,
+            screenHeight: this.client.screenHeight!,
+            pointerX: this.lastX,
+            pointerY: this.lastY,
+            buttons: this.lastButtons,
+            scrollX: x,
+            scrollY: y,
+        });
+    }
+
+    public dispose(): void {
+        // do nothing
+    }
+}
+
+export class AoaMouseInjector implements MouseInjector {
+    public static async register(
+        device: USBDevice,
+        element: HTMLElement
+    ): Promise<AoaMouseInjector> {
+        const mouse = await AoaHidDevice.register(
+            device,
+            0,
+            HidMouse.descriptor
+        );
+        return new AoaMouseInjector(mouse, element);
+    }
+
+    private readonly aoaMouse: AoaHidDevice;
+    private readonly element: HTMLElement;
+
+    private lastButtons = 0;
+
+    public constructor(aoaMouse: AoaHidDevice, container: HTMLElement) {
+        this.aoaMouse = aoaMouse;
+        this.element = container;
+    }
+
+    async down(button: number): Promise<void> {
+        if (!document.pointerLockElement) {
+            this.element.requestPointerLock();
+            return;
+        }
+
+        const androidButton = MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON[button];
+        this.lastButtons |= androidButton;
+        await this.aoaMouse.sendInputReport(
+            HidMouse.serializeInputReport(0, 0, this.lastButtons, 0, 0)
+        );
+    }
+
+    async move(
+        x: number,
+        y: number,
+        movementX: number,
+        movementY: number
+    ): Promise<void> {
+        if (!document.pointerLockElement) {
+            return;
+        }
+
+        await this.aoaMouse.sendInputReport(
+            HidMouse.serializeInputReport(
+                movementX,
+                movementY,
+                this.lastButtons,
+                0,
+                0
+            )
+        );
+    }
+
+    async up(button: number): Promise<void> {
+        if (!document.pointerLockElement) {
+            return;
+        }
+
+        const androidButton = MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON[button];
+        if ((this.lastButtons & androidButton) == 0) {
+            return;
+        }
+
+        this.lastButtons &= ~androidButton;
+        await this.aoaMouse.sendInputReport(
+            HidMouse.serializeInputReport(0, 0, this.lastButtons, 0, 0)
+        );
+    }
+
+    async scroll(x: number, y: number): Promise<void> {
+        if (!document.pointerLockElement) {
+            return;
+        }
+
+        await this.aoaMouse.sendInputReport(
+            HidMouse.serializeInputReport(0, 0, this.lastButtons, x, y)
+        );
+    }
+
+    async dispose(): Promise<void> {
+        await this.aoaMouse.unregister();
+    }
+}
 
 export interface KeyboardInjector extends Disposable {
     down(key: string): Promise<void>;

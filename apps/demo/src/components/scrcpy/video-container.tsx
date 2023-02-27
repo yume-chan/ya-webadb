@@ -1,5 +1,5 @@
 import { makeStyles } from "@griffel/react";
-import { AndroidMotionEventAction, ScrcpyPointerId } from "@yume-chan/scrcpy";
+import { AndroidMotionEventAction } from "@yume-chan/scrcpy";
 import { MouseEvent, PointerEvent, useEffect, useState } from "react";
 import { STATE } from "./state";
 
@@ -19,16 +19,7 @@ function handleWheel(e: WheelEvent) {
     e.preventDefault();
     e.stopPropagation();
 
-    const { x, y } = STATE.clientPositionToDevicePosition(e.clientX, e.clientY);
-    STATE.client!.controlMessageSerializer!.injectScroll({
-        screenWidth: STATE.client!.screenWidth!,
-        screenHeight: STATE.client!.screenHeight!,
-        pointerX: x,
-        pointerY: y,
-        scrollX: -e.deltaX / 100,
-        scrollY: -e.deltaY / 100,
-        buttons: 0,
-    });
+    STATE.mouse!.scroll(-e.deltaX / 100, -e.deltaY / 100);
 }
 
 function injectTouch(
@@ -39,21 +30,11 @@ function injectTouch(
         return;
     }
 
-    const { pointerType } = e;
-    let pointerId: bigint;
-    if (pointerType === "mouse") {
-        // ScrcpyPointerId.Mouse doesn't work with Chrome browser
-        // https://github.com/Genymobile/scrcpy/issues/3635
-        pointerId = ScrcpyPointerId.Finger;
-    } else {
-        pointerId = BigInt(e.pointerId);
-    }
-
     const { x, y } = STATE.clientPositionToDevicePosition(e.clientX, e.clientY);
 
     const messages = STATE.hoverHelper!.process({
         action,
-        pointerId,
+        pointerId: BigInt(e.pointerId),
         screenWidth: STATE.client.screenWidth!,
         screenHeight: STATE.client.screenHeight!,
         pointerX: x,
@@ -71,12 +52,17 @@ function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.fullScreenContainer!.focus();
+    STATE.rendererContainer!.focus();
     e.preventDefault();
     e.stopPropagation();
 
     e.currentTarget.setPointerCapture(e.pointerId);
-    injectTouch(AndroidMotionEventAction.Down, e);
+
+    if (e.pointerType === "mouse") {
+        STATE.mouse!.down(e.button);
+    } else {
+        injectTouch(AndroidMotionEventAction.Down, e);
+    }
 }
 
 function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
@@ -86,12 +72,16 @@ function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
 
     e.preventDefault();
     e.stopPropagation();
-    injectTouch(
-        e.buttons === 0
-            ? AndroidMotionEventAction.HoverMove
-            : AndroidMotionEventAction.Move,
-        e
-    );
+
+    if (e.pointerType === "mouse") {
+        const { x, y } = STATE.clientPositionToDevicePosition(
+            e.clientX,
+            e.clientY
+        );
+        STATE.mouse!.move(x, y, e.movementX, e.movementY);
+    } else {
+        injectTouch(AndroidMotionEventAction.Move, e);
+    }
 }
 
 function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
@@ -101,7 +91,11 @@ function handlePointerUp(e: PointerEvent<HTMLDivElement>) {
 
     e.preventDefault();
     e.stopPropagation();
-    injectTouch(AndroidMotionEventAction.Up, e);
+    if (e.pointerType === "mouse") {
+        STATE.mouse!.up(e.button);
+    } else {
+        injectTouch(AndroidMotionEventAction.Up, e);
+    }
 }
 
 function handlePointerLeave(e: PointerEvent<HTMLDivElement>) {

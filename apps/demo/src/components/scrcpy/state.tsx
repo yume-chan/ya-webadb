@@ -28,7 +28,9 @@ import { fetchServer } from "./fetch-server";
 import {
     AoaKeyboardInjector,
     KeyboardInjector,
+    MouseInjector,
     ScrcpyKeyboardInjector,
+    ScrcpyMouseInjector,
 } from "./input";
 import { MuxerStream, RECORD_STATE } from "./recorder";
 import { H264Decoder, SETTING_STATE } from "./settings";
@@ -63,6 +65,7 @@ export class ScrcpyPageState {
 
     client: AdbScrcpyClient | undefined = undefined;
     hoverHelper: ScrcpyHoverHelper | undefined = undefined;
+    mouse: MouseInjector | undefined = undefined;
     keyboard: KeyboardInjector | undefined = undefined;
 
     async pushServer() {
@@ -357,6 +360,8 @@ export class ScrcpyPageState {
                 this.running = true;
             });
 
+            this.mouse = new ScrcpyMouseInjector(client, this.hoverHelper!);
+
             if (GLOBAL_STATE.backend instanceof AdbWebUsbBackend) {
                 this.keyboard = await AoaKeyboardInjector.register(
                     GLOBAL_STATE.backend.device
@@ -388,6 +393,9 @@ export class ScrcpyPageState {
             RECORD_STATE.recorder.stop();
             RECORD_STATE.recording = false;
         }
+
+        this.mouse?.dispose();
+        this.mouse = undefined;
 
         this.keyboard?.dispose();
         this.keyboard = undefined;

@@ -6,6 +6,16 @@ import Struct, {
 
 import { ScrcpyControlMessageType } from "./type.js";
 
+export enum AndroidMotionEventButton {
+    Primary = 0x01,
+    Secondary = 0x02,
+    Tertiary = 0x04,
+    Back = 0x08,
+    Forward = 0x10,
+    StylusPrimary = 0x20,
+    StylusSecondary = 0x40,
+}
+
 // https://developer.android.com/reference/android/view/MotionEvent#constants_1
 export enum AndroidMotionEventAction {
     Down,
