@@ -1,11 +1,6 @@
 import { Dialog, LayerHost, ProgressIndicator, Stack } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { makeStyles, shorthands } from "@griffel/react";
-import {
-    AndroidKeyCode,
-    AndroidKeyEventAction,
-    AndroidKeyEventMeta,
-} from "@yume-chan/scrcpy";
 import { WebCodecsDecoder } from "@yume-chan/scrcpy-decoder-webcodecs";
 import { action, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -132,29 +127,7 @@ async function handleKeyEvent(e: KeyboardEvent<HTMLDivElement>) {
     e.stopPropagation();
 
     const { type, code } = e;
-    const keyCode = AndroidKeyCode[code as keyof typeof AndroidKeyCode];
-    if (keyCode) {
-        if (type === "keydown") {
-            STATE.pressedKeys.add(keyCode);
-        } else {
-            STATE.pressedKeys.delete(keyCode);
-        }
-
-        // TODO: workaround the missing keyup event on macOS https://crbug.com/1393524
-        STATE.client!.controlMessageSerializer!.injectKeyCode({
-            action:
-                type === "keydown"
-                    ? AndroidKeyEventAction.Down
-                    : AndroidKeyEventAction.Up,
-            keyCode,
-            metaState:
-                (e.ctrlKey ? AndroidKeyEventMeta.CtrlOn : 0) |
-                (e.shiftKey ? AndroidKeyEventMeta.ShiftOn : 0) |
-                (e.altKey ? AndroidKeyEventMeta.AltOn : 0) |
-                (e.metaKey ? AndroidKeyEventMeta.MetaOn : 0),
-            repeat: 0,
-        });
-    }
+    STATE.keyboard![type === "keydown" ? "down" : "up"](code);
 }
 
 function handleBlur() {
@@ -162,18 +135,7 @@ function handleBlur() {
         return;
     }
 
-    // Release all pressed keys on window blur,
-    // Because there will not be any keyup events when window is not focused.
-    for (const key of STATE.pressedKeys) {
-        STATE.client.controlMessageSerializer!.injectKeyCode({
-            action: AndroidKeyEventAction.Up,
-            keyCode: key,
-            metaState: 0,
-            repeat: 0,
-        });
-    }
-
-    STATE.pressedKeys.clear();
+    STATE.keyboard?.reset();
 }
 
 const Scrcpy: NextPage = () => {

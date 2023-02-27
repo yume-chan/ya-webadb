@@ -111,7 +111,6 @@ function handlePointerLeave(e: PointerEvent<HTMLDivElement>) {
 
     e.preventDefault();
     e.stopPropagation();
-
     // Because pointer capture on pointer down, this event only happens for hovering mouse and pen.
     // Release the injected pointer, otherwise it will stuck at the last position.
     injectTouch(AndroidMotionEventAction.HoverExit, e);

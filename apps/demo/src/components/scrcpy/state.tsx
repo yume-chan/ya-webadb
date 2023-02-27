@@ -1,8 +1,8 @@
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
+import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
 import {
     AdbScrcpyClient,
     AdbScrcpyOptions1_22,
-    AndroidKeyCode,
     AndroidScreenPowerMode,
     CodecOptions,
     DEFAULT_SERVER_PATH,
@@ -25,6 +25,11 @@ import { action, autorun, makeAutoObservable, runInAction } from "mobx";
 import { GLOBAL_STATE } from "../../state";
 import { ProgressStream } from "../../utils";
 import { fetchServer } from "./fetch-server";
+import {
+    AoaKeyboardInjector,
+    KeyboardInjector,
+    ScrcpyKeyboardInjector,
+} from "./input";
 import { MuxerStream, RECORD_STATE } from "./recorder";
 import { H264Decoder, SETTING_STATE } from "./settings";
 
@@ -58,7 +63,7 @@ export class ScrcpyPageState {
 
     client: AdbScrcpyClient | undefined = undefined;
     hoverHelper: ScrcpyHoverHelper | undefined = undefined;
-    pressedKeys: Set<AndroidKeyCode> = new Set();
+    keyboard: KeyboardInjector | undefined = undefined;
 
     async pushServer() {
         const serverBuffer = await fetchServer();
@@ -351,6 +356,14 @@ export class ScrcpyPageState {
                 this.hoverHelper = new ScrcpyHoverHelper();
                 this.running = true;
             });
+
+            if (GLOBAL_STATE.backend instanceof AdbWebUsbBackend) {
+                this.keyboard = await AoaKeyboardInjector.register(
+                    GLOBAL_STATE.backend.device
+                );
+            } else {
+                this.keyboard = new ScrcpyKeyboardInjector(client);
+            }
         } catch (e: any) {
             GLOBAL_STATE.showErrorDialog(e);
         } finally {
@@ -376,7 +389,8 @@ export class ScrcpyPageState {
             RECORD_STATE.recording = false;
         }
 
-        this.pressedKeys.clear();
+        this.keyboard?.dispose();
+        this.keyboard = undefined;
 
         this.fps = "0";
         clearTimeout(this.fpsCounterIntervalId);
