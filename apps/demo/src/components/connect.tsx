@@ -10,7 +10,8 @@ import {
 } from "@fluentui/react";
 import { Adb, AdbBackend, AdbPacketData, AdbPacketInit } from "@yume-chan/adb";
 import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
-import AdbWebUsbBackend, {
+import {
+    AdbWebUsbBackendManager,
     AdbWebUsbBackendWatcher,
 } from "@yume-chan/adb-backend-webusb";
 import AdbWsBackend from "@yume-chan/adb-backend-ws";
@@ -40,7 +41,8 @@ function _Connect(): JSX.Element | null {
 
     const [usbBackendList, setUsbBackendList] = useState<AdbBackend[]>([]);
     const updateUsbBackendList = useCallback(async () => {
-        const backendList: AdbBackend[] = await AdbWebUsbBackend.getDevices();
+        const backendList: AdbBackend[] =
+            await AdbWebUsbBackendManager.BROWSER!.getDevices();
         setUsbBackendList(backendList);
         return backendList;
     }, []);
@@ -48,7 +50,7 @@ function _Connect(): JSX.Element | null {
     useEffect(
         () => {
             // Only run on client
-            const supported = AdbWebUsbBackend.isSupported();
+            const supported = !!AdbWebUsbBackendManager.BROWSER;
             setSupported(supported);
 
             if (!supported) {
@@ -70,7 +72,8 @@ function _Connect(): JSX.Element | null {
                         );
                         return;
                     }
-                }
+                },
+                window.navigator.usb
             );
 
             return () => watcher.dispose();
@@ -165,7 +168,7 @@ function _Connect(): JSX.Element | null {
     };
 
     const addUsbBackend = useCallback(async () => {
-        const backend = await AdbWebUsbBackend.requestDevice();
+        const backend = await AdbWebUsbBackendManager.BROWSER!.requestDevice();
         setSelectedBackend(backend);
         await updateUsbBackendList();
     }, [updateUsbBackendList]);

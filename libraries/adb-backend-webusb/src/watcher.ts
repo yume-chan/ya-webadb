@@ -1,29 +1,25 @@
 export class AdbWebUsbBackendWatcher {
-    private callback: (newDeviceSerial?: string) => void;
+    private _callback: (newDeviceSerial?: string) => void;
+    private _usb: USB;
 
-    public constructor(callback: (newDeviceSerial?: string) => void) {
-        this.callback = callback;
+    public constructor(callback: (newDeviceSerial?: string) => void, usb: USB) {
+        this._callback = callback;
+        this._usb = usb;
 
-        window.navigator.usb.addEventListener("connect", this.handleConnect);
-        window.navigator.usb.addEventListener(
-            "disconnect",
-            this.handleDisconnect
-        );
+        this._usb.addEventListener("connect", this.handleConnect);
+        this._usb.addEventListener("disconnect", this.handleDisconnect);
     }
 
     public dispose(): void {
-        window.navigator.usb.removeEventListener("connect", this.handleConnect);
-        window.navigator.usb.removeEventListener(
-            "disconnect",
-            this.handleDisconnect
-        );
+        this._usb.removeEventListener("connect", this.handleConnect);
+        this._usb.removeEventListener("disconnect", this.handleDisconnect);
     }
 
     private handleConnect = (e: USBConnectionEvent) => {
-        this.callback(e.device.serialNumber);
+        this._callback(e.device.serialNumber);
     };
 
     private handleDisconnect = () => {
-        this.callback();
+        this._callback();
     };
 }
