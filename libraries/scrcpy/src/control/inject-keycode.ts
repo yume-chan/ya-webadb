@@ -7,15 +7,27 @@ export enum AndroidKeyEventAction {
     Up = 1,
 }
 
+// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/view/KeyEvent.java;l=993;drc=95c1165bb895dd844e1793460710f7163dd330a3
 export enum AndroidKeyEventMeta {
     AltOn = 0x02,
-    CtrlOn = 0x1000,
+    AltLeftOn = 0x10,
+    AltRightOn = 0x20,
     ShiftOn = 0x01,
+    ShiftLeftOn = 0x40,
+    ShiftRightOn = 0x80,
+    CtrlOn = 0x1000,
+    CtrlLeftOn = 0x2000,
+    CtrlRightOn = 0x4000,
     MetaOn = 0x10000,
+    MetaLeftOn = 0x20000,
+    MetaRightOn = 0x40000,
+    CapsLockOn = 0x100000,
+    NumLockOn = 0x200000,
+    ScrollLockOn = 0x400000,
 }
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/view/KeyEvent.java;l=97;drc=95c1165bb895dd844e1793460710f7163dd330a3
-// Most name follows Web API `KeyboardEvent.code`,
+// Most names follow Web API `KeyboardEvent.code`,
 // Android-only (not exist in HID keyboard standard) keys are prefixed by `Android`.
 export enum AndroidKeyCode {
     AndroidHome = 3,
@@ -127,7 +139,7 @@ export enum AndroidKeyCode {
     AndroidFocus,
 
     Plus, // Name not verified
-    Menu, // Name not verified
+    ContextMenu,
     AndroidNotification,
     AndroidSearch,
 
