@@ -26,7 +26,7 @@ Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/e
 
 | Node.js | `usb` NPM Package |
 | ------- | ----------------- |
-| 10.5    | 2.9.0             |
+| 10.5    | 2.8.1             |
 
 Node.js doesn't have native support for WebUSB API, but the [`usb`](https://www.npmjs.com/package/usb) NPM package provides a WebUSB compatible API.
 

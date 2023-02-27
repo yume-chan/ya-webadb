@@ -51,7 +51,7 @@ export class AdbWebUsbBackendManager {
         } catch (e) {
             // No device selected
             // This check is compatible with both Browser implementation
-            // and `usb` NPM package from version 2.9.0
+            // and `usb` NPM package from version 2.8.1
             // https://github.com/node-usb/node-usb/issues/573
             if (
                 typeof e === "object" &&
