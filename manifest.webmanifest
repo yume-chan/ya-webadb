@@ -13,7 +13,7 @@
     "name": "Android Web Toolbox",
     "short_name": "WebADB",
     "start_url": "/ya-webadb",
-    "scope": "/",
+    "scope": "/ya-webadb",
     "isolated_storage": true,
     "content_security_policy": "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src https:",
     "permissions_policy": {
