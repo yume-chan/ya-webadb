@@ -29,13 +29,7 @@ import {
 } from "@fluentui/react-file-type-icons";
 import { useConst } from "@fluentui/react-hooks";
 import { getIcon } from "@fluentui/style-utilities";
-import {
-    ADB_SYNC_MAX_PACKET_SIZE,
-    AdbFeatures,
-    LinuxFileType,
-    type AdbSyncEntry,
-} from "@yume-chan/adb";
-import { ChunkStream } from "@yume-chan/stream-extra";
+import { AdbFeature, LinuxFileType, type AdbSyncEntry } from "@yume-chan/adb";
 import {
     action,
     autorun,
@@ -270,6 +264,7 @@ class FileManagerState {
                 const bSortKey = b[this.sortKey]!;
 
                 if (aSortKey === bSortKey) {
+                    // use name as tie breaker
                     result = compareCaseInsensitively(a.name!, b.name!);
                 } else if (typeof aSortKey === "string") {
                     result = compareCaseInsensitively(
@@ -277,7 +272,8 @@ class FileManagerState {
                         bSortKey as string
                     );
                 } else {
-                    result = aSortKey < bSortKey ? -1 : 1;
+                    result =
+                        (aSortKey as number) < (bSortKey as number) ? -1 : 1;
                 }
             }
 
@@ -391,7 +387,7 @@ class FileManagerState {
             },
         ];
 
-        if (GLOBAL_STATE.device?.features?.includes(AdbFeatures.ListV2)) {
+        if (GLOBAL_STATE.device?.supportsFeature(AdbFeature.ListV2)) {
             list.push(
                 {
                     key: "ctime",
@@ -574,22 +570,18 @@ class FileManagerState {
             );
 
             try {
-                await createFileStream(file)
-                    .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
-                    .pipeThrough(
+                await sync.write(
+                    itemPath,
+                    createFileStream(file).pipeThrough(
                         new ProgressStream(
                             action((uploaded) => {
                                 this.uploadedSize = uploaded;
                             })
                         )
-                    )
-                    .pipeTo(
-                        sync.write(
-                            itemPath,
-                            (LinuxFileType.File << 12) | 0o666,
-                            file.lastModified / 1000
-                        )
-                    );
+                    ),
+                    (LinuxFileType.File << 12) | 0o666,
+                    file.lastModified / 1000
+                );
 
                 runInAction(() => {
                     this.uploadSpeed =

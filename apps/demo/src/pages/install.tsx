@@ -1,6 +1,14 @@
-import { DefaultButton, ProgressIndicator, Stack } from "@fluentui/react";
-import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
-import { ChunkStream } from "@yume-chan/stream-extra";
+import {
+    Checkbox,
+    PrimaryButton,
+    ProgressIndicator,
+    Stack,
+} from "@fluentui/react";
+import {
+    PackageManager,
+    PackageManagerInstallOptions,
+} from "@yume-chan/android-bin";
+import { WritableStream } from "@yume-chan/stream-extra";
 import { action, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -38,10 +46,17 @@ class InstallPageState {
 
     progress: Progress | undefined = undefined;
 
+    log: string = "";
+
+    options: Partial<PackageManagerInstallOptions> = {
+        bypassLowTargetSdkBlock: false,
+    };
+
     constructor() {
         makeAutoObservable(this, {
             progress: observable.ref,
             install: false,
+            options: observable.deep,
         });
     }
 
@@ -60,11 +75,14 @@ class InstallPageState {
                 totalSize: file.size,
                 value: 0,
             };
+            this.log = "";
         });
 
-        await createFileStream(file)
-            .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
-            .pipeThrough(
+        const pm = new PackageManager(GLOBAL_STATE.device!);
+        const start = Date.now();
+        const log = await pm.installStream(
+            file.size,
+            createFileStream(file).pipeThrough(
                 new ProgressStream(
                     action((uploaded) => {
                         if (uploaded !== file.size) {
@@ -87,7 +105,24 @@ class InstallPageState {
                     })
                 )
             )
-            .pipeTo(GLOBAL_STATE.device!.install());
+        );
+
+        const elapsed = Date.now() - start;
+        await log.pipeTo(
+            new WritableStream({
+                write: action((chunk) => {
+                    this.log += chunk;
+                }),
+            })
+        );
+
+        const transferRate = (
+            file.size /
+            (elapsed / 1000) /
+            1024 /
+            1024
+        ).toFixed(2);
+        this.log += `Install finished in ${elapsed}ms at ${transferRate}MB/s`;
 
         runInAction(() => {
             this.progress = {
@@ -112,9 +147,24 @@ const Install: NextPage = () => {
             </Head>
 
             <Stack horizontal>
-                <DefaultButton
+                <Checkbox
+                    label="--bypass-low-target-sdk-block (Android 14)"
+                    checked={state.options.bypassLowTargetSdkBlock}
+                    onChange={(_, checked) => {
+                        if (checked === undefined) {
+                            return;
+                        }
+                        runInAction(() => {
+                            state.options.bypassLowTargetSdkBlock = checked;
+                        });
+                    }}
+                />
+            </Stack>
+
+            <Stack horizontal>
+                <PrimaryButton
                     disabled={!GLOBAL_STATE.device || state.installing}
-                    text="Open"
+                    text="Browse APK"
                     onClick={state.install}
                 />
             </Stack>
@@ -127,6 +177,8 @@ const Install: NextPage = () => {
                     description={Stage[state.progress.stage]}
                 />
             )}
+
+            {state.log && <pre>{state.log}</pre>}
         </Stack>
     );
 };

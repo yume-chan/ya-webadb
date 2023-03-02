@@ -1,4 +1,4 @@
-import type { Adb, AdbSubprocessProtocol, AdbSync } from "@yume-chan/adb";
+import type { Adb, AdbSubprocessProtocol } from "@yume-chan/adb";
 import {
     AdbReverseNotSupportedError,
     AdbSubprocessNoneProtocol,
@@ -14,7 +14,6 @@ import {
     InspectStream,
     ReadableStream,
     SplitStringStream,
-    WrapWritableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
 
@@ -96,17 +95,17 @@ export class ScrcpyExitedError extends Error {
 }
 
 export class AdbScrcpyClient {
-    public static pushServer(adb: Adb, path = DEFAULT_SERVER_PATH) {
-        let sync!: AdbSync;
-        return new WrapWritableStream<Uint8Array>({
-            async start() {
-                sync = await adb.sync();
-                return sync.write(path);
-            },
-            async close() {
-                await sync.dispose();
-            },
-        });
+    public static async pushServer(
+        adb: Adb,
+        file: ReadableStream<Uint8Array>,
+        path = DEFAULT_SERVER_PATH
+    ) {
+        const sync = await adb.sync();
+        try {
+            await sync.write(path, file);
+        } finally {
+            await sync.dispose();
+        }
     }
 
     public static async start(

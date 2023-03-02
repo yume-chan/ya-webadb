@@ -1,17 +1,15 @@
 import { AutoDisposable } from "@yume-chan/event";
 import type {
     ReadableStream,
-    WritableStream,
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
     WrapReadableStream,
-    WrapWritableStream,
 } from "@yume-chan/stream-extra";
 
 import type { Adb } from "../../adb.js";
-import { AdbFeatures } from "../../features.js";
+import { AdbFeature } from "../../features.js";
 import type { AdbSocket } from "../../socket/index.js";
 import { AutoResetEvent } from "../../utils/index.js";
 import { escapeArg } from "../subprocess/index.js";
@@ -49,22 +47,21 @@ export class AdbSync extends AutoDisposable {
     protected sendLock = this.addDisposable(new AutoResetEvent());
 
     public get supportsStat(): boolean {
-        return this.adb.supportsFeature(AdbFeatures.StatV2);
+        return this.adb.supportsFeature(AdbFeature.StatV2);
     }
 
     public get supportsList2(): boolean {
-        return this.adb.supportsFeature(AdbFeatures.ListV2);
+        return this.adb.supportsFeature(AdbFeature.ListV2);
     }
 
     public get fixedPushMkdir(): boolean {
-        return this.adb.supportsFeature(AdbFeatures.FixedPushMkdir);
+        return this.adb.supportsFeature(AdbFeature.FixedPushMkdir);
     }
 
     public get needPushMkdirWorkaround(): boolean {
         // https://android.googlesource.com/platform/packages/modules/adb/+/91768a57b7138166e0a3d11f79cd55909dda7014/client/file_sync_client.cpp#1361
         return (
-            this.adb.supportsFeature(AdbFeatures.ShellV2) &&
-            !this.fixedPushMkdir
+            this.adb.supportsFeature(AdbFeature.ShellV2) && !this.fixedPushMkdir
         );
     }
 
@@ -161,42 +158,42 @@ export class AdbSync extends AutoDisposable {
      * Write (or overwrite) a file on device.
      *
      * @param filename The full path of the file on device to write.
+     * @param file The content to write.
      * @param mode The unix permissions of the file.
      * @param mtime The modified time of the file.
      * @returns A `WritableStream` that writes to the file.
      */
-    public write(
+    public async write(
         filename: string,
+        file: ReadableStream<Uint8Array>,
         mode?: number,
         mtime?: number
-    ): WritableStream<Uint8Array> {
-        return new WrapWritableStream({
-            start: async () => {
-                await this.sendLock.wait();
+    ) {
+        await this.sendLock.wait();
 
-                if (this.needPushMkdirWorkaround) {
-                    // It may fail if the path is already existed.
-                    // Ignore the result.
-                    // TODO: sync: test push mkdir workaround (need an Android 8 device)
-                    await this.adb.subprocess.spawnAndWait([
-                        "mkdir",
-                        "-p",
-                        escapeArg(dirname(filename)),
-                    ]);
-                }
+        try {
+            if (this.needPushMkdirWorkaround) {
+                // It may fail if the path is already existed.
+                // Ignore the result.
+                // TODO: sync: test push mkdir workaround (need an Android 8 device)
+                await this.adb.subprocess.spawnAndWait([
+                    "mkdir",
+                    "-p",
+                    escapeArg(dirname(filename)),
+                ]);
+            }
 
-                return adbSyncPush(
-                    this.stream,
-                    this.writer,
-                    filename,
-                    mode,
-                    mtime
-                );
-            },
-            close: () => {
-                this.sendLock.notifyOne();
-            },
-        });
+            await adbSyncPush(
+                this.stream,
+                this.writer,
+                filename,
+                file,
+                mode,
+                mtime
+            );
+        } finally {
+            this.sendLock.notifyOne();
+        }
     }
 
     public override async dispose() {
