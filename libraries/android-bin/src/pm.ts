@@ -239,6 +239,7 @@ export class PackageManager extends AdbCommandBase {
         }
 
         const args = this.buildInstallArgs(options);
+        args.push(filePath);
         const process = await AdbSubprocessNoneProtocol.raw(
             this.adb,
             args.map(escapeArg).join(" ")
