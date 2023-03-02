@@ -67,13 +67,15 @@ export class ScrcpyPageState {
 
     async pushServer() {
         const serverBuffer = await fetchServer();
-
-        await new ReadableStream<Uint8Array>({
-            start(controller) {
-                controller.enqueue(serverBuffer);
-                controller.close();
-            },
-        }).pipeTo(AdbScrcpyClient.pushServer(GLOBAL_STATE.device!));
+        await AdbScrcpyClient.pushServer(
+            GLOBAL_STATE.device!,
+            new ReadableStream<Uint8Array>({
+                start(controller) {
+                    controller.enqueue(serverBuffer);
+                    controller.close();
+                },
+            })
+        );
     }
 
     decoder: H264Decoder | undefined = undefined;
@@ -186,21 +188,25 @@ export class ScrcpyPageState {
             );
 
             try {
-                await new ReadableStream<Uint8Array>({
-                    start(controller) {
-                        controller.enqueue(serverBuffer);
-                        controller.close();
-                    },
-                })
-                    .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
-                    .pipeThrough(
-                        new ProgressStream(
-                            action((progress) => {
-                                this.serverUploadedSize = progress;
-                            })
+                await AdbScrcpyClient.pushServer(
+                    GLOBAL_STATE.device!,
+                    new ReadableStream<Uint8Array>({
+                        start(controller) {
+                            controller.enqueue(serverBuffer);
+                            controller.close();
+                        },
+                    })
+                        // In fact `pushServer` will pipe the stream through a ChunkStream,
+                        // but without this pipeThrough, the progress will not be updated.
+                        .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
+                        .pipeThrough(
+                            new ProgressStream(
+                                action((progress) => {
+                                    this.serverUploadedSize = progress;
+                                })
+                            )
                         )
-                    )
-                    .pipeTo(AdbScrcpyClient.pushServer(GLOBAL_STATE.device!));
+                );
 
                 runInAction(() => {
                     this.serverUploadSpeed =

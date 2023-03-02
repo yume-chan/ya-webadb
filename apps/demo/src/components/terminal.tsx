@@ -2,21 +2,22 @@
 
 import { AdbSubprocessProtocol, encodeUtf8 } from "@yume-chan/adb";
 import { AutoDisposable } from "@yume-chan/event";
-import { AbortController, WritableStream } from '@yume-chan/stream-extra';
-import { Terminal } from 'xterm';
-import { FitAddon } from 'xterm-addon-fit';
-import { SearchAddon } from 'xterm-addon-search';
-import { WebglAddon } from 'xterm-addon-webgl';
+import { AbortController, WritableStream } from "@yume-chan/stream-extra";
+import { Terminal } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import { SearchAddon } from "xterm-addon-search";
+import { WebglAddon } from "xterm-addon-webgl";
 
 export class AdbTerminal extends AutoDisposable {
-    private element = document.createElement('div');
+    private element = document.createElement("div");
 
     public terminal: Terminal = new Terminal({
         allowProposedApi: true,
         allowTransparency: true,
-        cursorStyle: 'bar',
+        cursorStyle: "bar",
         cursorBlink: true,
-        fontFamily: '"Cascadia Code", Consolas, monospace, "Source Han Sans SC", "Microsoft YaHei"',
+        fontFamily:
+            '"Cascadia Code", Consolas, monospace, "Source Han Sans SC", "Microsoft YaHei"',
         letterSpacing: 1,
         scrollback: 9000,
         smoothScrollDuration: 50,
@@ -29,7 +30,9 @@ export class AdbTerminal extends AutoDisposable {
 
     private _socket: AdbSubprocessProtocol | undefined;
     private _socketAbortController: AbortController | undefined;
-    public get socket() { return this._socket; }
+    public get socket() {
+        return this._socket;
+    }
     public set socket(value) {
         if (this._socket) {
             // Remove event listeners
@@ -46,19 +49,26 @@ export class AdbTerminal extends AutoDisposable {
             this._socketAbortController = new AbortController();
 
             // pty mode only has one stream
-            value.stdout.pipeTo(new WritableStream<Uint8Array>({
-                write: (chunk) => {
-                    this.terminal.write(chunk);
-                },
-            }), {
-                signal: this._socketAbortController.signal,
-            });
+            value.stdout
+                .pipeTo(
+                    new WritableStream<Uint8Array>({
+                        write: (chunk) => {
+                            this.terminal.write(chunk);
+                        },
+                    }),
+                    {
+                        signal: this._socketAbortController.signal,
+                    }
+                )
+                .catch(() => {});
 
             const _writer = value.stdin.getWriter();
-            this.addDisposable(this.terminal.onData(data => {
-                const buffer = encodeUtf8(data);
-                _writer.write(buffer);
-            }));
+            this.addDisposable(
+                this.terminal.onData((data) => {
+                    const buffer = encodeUtf8(data);
+                    _writer.write(buffer);
+                })
+            );
 
             this.fit();
         }
@@ -67,9 +77,9 @@ export class AdbTerminal extends AutoDisposable {
     public constructor() {
         super();
 
-        this.element.style.width = '100%';
-        this.element.style.height = '100%';
-        this.element.style.overflow = 'hidden';
+        this.element.style.width = "100%";
+        this.element.style.height = "100%";
+        this.element.style.overflow = "hidden";
 
         this.terminal.loadAddon(this.searchAddon);
         this.terminal.loadAddon(this.fitAddon);

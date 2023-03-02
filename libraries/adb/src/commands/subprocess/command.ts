@@ -67,7 +67,10 @@ export class AdbSubprocess extends AdbCommandBase {
     }
 
     /**
-     * Spawns an executable in PTY (interactive) mode.
+     * Spawns an executable in PTY mode.
+     *
+     * Redirection mode is enough for most simple commands, but PTY mode is required for
+     * commands that manipulate the terminal, such as `vi` and `less`.
      * @param command The command to run. If omitted, the default shell will be spawned.
      * @param options The options for creating the `AdbSubprocessProtocol`
      * @returns A new `AdbSubprocessProtocol` instance connecting to the spawned process.
@@ -80,7 +83,10 @@ export class AdbSubprocess extends AdbCommandBase {
     }
 
     /**
-     * Spawns an executable and pipe the output.
+     * Spawns an executable and redirect the standard input/output stream.
+     *
+     * Redirection mode is enough for most simple commands, but PTY mode is required for
+     * commands that manipulate the terminal, such as `vi` and `less`.
      * @param command The command to run, or an array of strings containing both command and args.
      * @param options The options for creating the `AdbSubprocessProtocol`
      * @returns A new `AdbSubprocessProtocol` instance connecting to the spawned process.

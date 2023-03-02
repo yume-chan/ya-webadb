@@ -16,7 +16,7 @@ import type { StructValueType } from "@yume-chan/struct";
 import Struct, { placeholder } from "@yume-chan/struct";
 
 import type { Adb } from "../../../adb.js";
-import { AdbFeatures } from "../../../features.js";
+import { AdbFeature } from "../../../features.js";
 import type { AdbSocket } from "../../../socket/index.js";
 import { encodeUtf8 } from "../../../utils/index.js";
 
@@ -124,7 +124,7 @@ class MultiplexStream<T> {
  */
 export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     public static isSupported(adb: Adb) {
-        return adb.supportsFeature(AdbFeatures.ShellV2);
+        return adb.supportsFeature(AdbFeature.ShellV2);
     }
 
     public static async pty(adb: Adb, command: string) {
