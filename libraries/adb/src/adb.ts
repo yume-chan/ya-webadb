@@ -56,7 +56,7 @@ export class Adb implements Closeable {
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
         // Android 4: 4K, Android 7: 256K, Android 9: 1M
-        let maxPayloadSize = 0x100000;
+        let maxPayloadSize = 1024 * 1024;
 
         const resolver = new PromiseResolver<string>();
         const authProcessor = new AdbAuthenticationProcessor(

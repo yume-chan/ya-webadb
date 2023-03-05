@@ -108,7 +108,7 @@ export async function adbSyncLstat(
     const locked = await socket.lock();
     try {
         if (v2) {
-            await adbSyncWriteRequest(locked, AdbSyncRequestId.Lstat2, path);
+            await adbSyncWriteRequest(locked, AdbSyncRequestId.LstatV2, path);
             return await adbSyncReadResponse(
                 locked,
                 AdbSyncResponseId.Lstat2,

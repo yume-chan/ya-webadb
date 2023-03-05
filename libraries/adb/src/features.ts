@@ -5,7 +5,8 @@ export enum AdbFeature {
     Cmd = "cmd",
     StatV2 = "stat_v2",
     ListV2 = "ls_v2",
+    FixedPushMkdir = "fixed_push_mkdir",
     Abb = "abb",
     AbbExec = "abb_exec",
-    FixedPushMkdir = "fixed_push_mkdir",
+    SendReceiveV2 = "sendrecv_v2",
 }
