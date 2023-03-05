@@ -25,8 +25,12 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
         this._lock = lock;
     }
 
-    public async flush() {
+    public async flush(hard: boolean) {
         if (this._bufferedLength === 0) {
+            return;
+        }
+
+        if (!hard && this._bufferedLength < this._bufferSize) {
             return;
         }
 
@@ -37,28 +41,50 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
             return;
         }
 
-        const data = new Uint8Array(this._bufferedLength);
-        let offset = 0;
-        for (const chunk of this._buffered) {
-            data.set(chunk, offset);
-            offset += chunk.byteLength;
+        if (hard) {
+            const data = new Uint8Array(this._bufferedLength);
+            let offset = 0;
+            for (const chunk of this._buffered) {
+                data.set(chunk, offset);
+                offset += chunk.byteLength;
+            }
+            this._buffered.length = 0;
+            this._bufferedLength = 0;
+            // Let AdbSocket chunk the data for us
+            await this._writer.write(data);
+        } else {
+            while (this._bufferedLength >= this._bufferSize) {
+                const data = new Uint8Array(this._bufferSize);
+                let offset = 0;
+                let available = this._bufferSize;
+                while (offset < this._bufferSize) {
+                    const chunk = this._buffered[0]!;
+                    if (chunk.byteLength <= available) {
+                        data.set(chunk, offset);
+                        offset += chunk.byteLength;
+                        available -= chunk.byteLength;
+                        this._buffered.shift();
+                        this._bufferedLength -= chunk.byteLength;
+                    } else {
+                        data.set(chunk.subarray(0, available), offset);
+                        this._buffered[0] = chunk.subarray(available);
+                        this._bufferedLength -= available;
+                        break;
+                    }
+                }
+                await this._writer.write(data);
+            }
         }
-        this._buffered.length = 0;
-        this._bufferedLength = 0;
-        // Let AdbSocket chunk the data for us
-        await this._writer.write(data);
     }
 
     public async write(data: Uint8Array) {
         this._buffered.push(data);
         this._bufferedLength += data.byteLength;
-        if (this._bufferedLength >= this._bufferSize) {
-            await this.flush();
-        }
+        await this.flush(false);
     }
 
     public async read(length: number) {
-        await this.flush();
+        await this.flush(true);
         return await this._readable.read(length);
     }
 

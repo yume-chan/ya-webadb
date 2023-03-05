@@ -34,7 +34,7 @@ export async function* adbSyncOpenDirV2(
 ): AsyncGenerator<AdbSyncEntry2Response, void, void> {
     const locked = await socket.lock();
     try {
-        await adbSyncWriteRequest(locked, AdbSyncRequestId.List2, path);
+        await adbSyncWriteRequest(locked, AdbSyncRequestId.ListV2, path);
         for await (const item of adbSyncReadResponses(
             locked,
             AdbSyncResponseId.Entry2,
