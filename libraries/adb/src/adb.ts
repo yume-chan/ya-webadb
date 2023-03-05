@@ -55,6 +55,7 @@ export class Adb implements Closeable {
     ): Promise<Adb> {
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
+        // Android 4: 4K, Android 7: 256K, Android 9: 1M
         let maxPayloadSize = 0x100000;
 
         const resolver = new PromiseResolver<string>();
@@ -167,9 +168,14 @@ export class Adb implements Closeable {
         return this.dispatcher.disconnected;
     }
 
-    private _protocolVersion: number | undefined;
+    private _protocolVersion: number;
     public get protocolVersion() {
         return this._protocolVersion;
+    }
+
+    private _maxPayloadSize: number;
+    public get maxPayloadSize() {
+        return this._maxPayloadSize;
     }
 
     private _product: string | undefined;
@@ -222,6 +228,7 @@ export class Adb implements Closeable {
         });
 
         this._protocolVersion = version;
+        this._maxPayloadSize = maxPayloadSize;
 
         this.subprocess = new AdbSubprocess(this);
         this.power = new AdbPower(this);
