@@ -47,6 +47,11 @@ export class ChunkStream extends TransformStream<Uint8Array, Uint8Array> {
                     remaining -= size;
                 }
             },
+            flush(controller) {
+                if (buffered && bufferedOffset > 0) {
+                    controller.enqueue(buffered.subarray(0, bufferedOffset));
+                }
+            },
         });
     }
 }
