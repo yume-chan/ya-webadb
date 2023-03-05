@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yume-chan/adb",
+      "comment": "Add buffering in sync module to improve transfer speed",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yume-chan/adb"
+}
