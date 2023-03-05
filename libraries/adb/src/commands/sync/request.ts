@@ -1,4 +1,3 @@
-import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
 import { encodeUtf8 } from "../../utils/index.js";
@@ -23,27 +22,32 @@ export const AdbSyncDataRequest = new Struct({ littleEndian: true })
     .fields(AdbSyncNumberRequest)
     .uint8Array("data", { lengthField: "arg" });
 
+export interface AdbSyncWritable {
+    write(buffer: Uint8Array): Promise<void>;
+}
+
 export async function adbSyncWriteRequest(
-    writer: WritableStreamDefaultWriter<Uint8Array>,
+    writable: AdbSyncWritable,
     id: AdbSyncRequestId | string,
     value: number | string | Uint8Array
 ): Promise<void> {
-    let buffer: Uint8Array;
     if (typeof value === "number") {
-        buffer = AdbSyncNumberRequest.serialize({
+        const buffer = AdbSyncNumberRequest.serialize({
             id,
             arg: value,
         });
+        await writable.write(buffer);
     } else if (typeof value === "string") {
-        buffer = AdbSyncDataRequest.serialize({
-            id,
-            data: encodeUtf8(value),
-        });
+        // Let `writable` buffer writes
+        const buffer = encodeUtf8(value);
+        await writable.write(
+            AdbSyncNumberRequest.serialize({ id, arg: buffer.byteLength })
+        );
+        await writable.write(buffer);
     } else {
-        buffer = AdbSyncDataRequest.serialize({
-            id,
-            data: value,
-        });
+        await writable.write(
+            AdbSyncNumberRequest.serialize({ id, arg: value.byteLength })
+        );
+        await writable.write(value);
     }
-    await writer.write(buffer);
 }
