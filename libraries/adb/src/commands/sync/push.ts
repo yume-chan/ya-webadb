@@ -18,28 +18,18 @@ export interface AdbSyncPushV1Options {
     packetSize?: number;
 }
 
-export const AdbSyncPushV1DefaultOptions: {
-    [K in keyof AdbSyncPushV1Options as Pick<
-        AdbSyncPushV1Options,
-        K
-    > extends Required<Pick<AdbSyncPushV1Options, K>>
-        ? never
-        : K]-?: Exclude<AdbSyncPushV1Options[K], undefined>;
-} = {
-    mode: (LinuxFileType.File << 12) | 0o666,
-    mtime: (Date.now() / 1000) | 0,
-    packetSize: ADB_SYNC_MAX_PACKET_SIZE,
-};
-
 export const AdbSyncOkResponse = new Struct({ littleEndian: true }).uint32(
     "unused"
 );
 
-export async function adbSyncPushV1(options: AdbSyncPushV1Options) {
-    const { socket, filename, file, mode, mtime, packetSize } = {
-        ...AdbSyncPushV1DefaultOptions,
-        ...options,
-    };
+export async function adbSyncPushV1({
+    socket,
+    filename,
+    file,
+    mode = (LinuxFileType.File << 12) | 0o666,
+    mtime = (Date.now() / 1000) | 0,
+    packetSize = ADB_SYNC_MAX_PACKET_SIZE,
+}: AdbSyncPushV1Options) {
     const locked = await socket.lock();
     try {
         const pathAndMode = `${filename},${mode.toString()}`;
@@ -89,28 +79,20 @@ export interface AdbSyncPushV2Options extends AdbSyncPushV1Options {
     dryRun?: boolean;
 }
 
-export const AdbSyncPushV2DefaultOptions: {
-    [K in keyof AdbSyncPushV2Options as Pick<
-        AdbSyncPushV2Options,
-        K
-    > extends Required<Pick<AdbSyncPushV2Options, K>>
-        ? never
-        : K]-?: Exclude<AdbSyncPushV2Options[K], undefined>;
-} = {
-    ...AdbSyncPushV1DefaultOptions,
-    dryRun: false,
-};
-
 export const AdbSyncSendV2Request = new Struct({ littleEndian: true })
     .uint32("id", placeholder<AdbSyncRequestId>())
     .uint32("mode")
     .uint32("flags", placeholder<AdbSyncSendV2Flags>());
 
-export async function adbSyncPushV2(options: AdbSyncPushV2Options) {
-    const { socket, filename, file, mode, mtime, packetSize, dryRun } = {
-        ...AdbSyncPushV2DefaultOptions,
-        ...options,
-    };
+export async function adbSyncPushV2({
+    socket,
+    filename,
+    file,
+    mode = (LinuxFileType.File << 12) | 0o666,
+    mtime = (Date.now() / 1000) | 0,
+    packetSize = ADB_SYNC_MAX_PACKET_SIZE,
+    dryRun = false,
+}: AdbSyncPushV2Options) {
     const locked = await socket.lock();
     try {
         await adbSyncWriteRequest(locked, AdbSyncRequestId.SendV2, filename);
