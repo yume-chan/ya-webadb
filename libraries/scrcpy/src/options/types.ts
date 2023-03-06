@@ -65,8 +65,8 @@ export interface ScrcpyVideoStreamConfigurationPacket {
 
 export interface ScrcpyVideoStreamFramePacket {
     type: "frame";
-    keyframe?: boolean | undefined;
-    pts?: bigint | undefined;
+    keyframe?: boolean;
+    pts?: bigint;
     data: Uint8Array;
 }
 

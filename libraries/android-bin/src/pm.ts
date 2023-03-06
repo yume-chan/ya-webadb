@@ -233,7 +233,10 @@ export class PackageManager extends AdbCommandBase {
         const filePath = `/data/local/tmp/${fileName}.apk`;
 
         try {
-            await sync.write(filePath, stream);
+            await sync.write({
+                filename: filePath,
+                file: stream,
+            });
         } finally {
             await sync.dispose();
         }

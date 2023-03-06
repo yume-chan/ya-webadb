@@ -98,11 +98,14 @@ export class AdbScrcpyClient {
     public static async pushServer(
         adb: Adb,
         file: ReadableStream<Uint8Array>,
-        path = DEFAULT_SERVER_PATH
+        filename = DEFAULT_SERVER_PATH
     ) {
         const sync = await adb.sync();
         try {
-            await sync.write(path, file);
+            await sync.write({
+                filename: filename,
+                file,
+            });
         } finally {
             await sync.dispose();
         }
