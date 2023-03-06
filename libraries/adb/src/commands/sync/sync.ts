@@ -34,6 +34,7 @@ export interface AdbSyncWriteOptions {
     file: ReadableStream<Uint8Array>;
     mode?: number;
     mtime?: number;
+    dryRun?: boolean;
 }
 
 export class AdbSync extends AutoDisposable {
