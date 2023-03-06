@@ -29,6 +29,13 @@ export function dirname(path: string): string {
     return path.substring(0, end);
 }
 
+export interface AdbSyncWriteOptions {
+    filename: string;
+    file: ReadableStream<Uint8Array>;
+    mode?: number;
+    mtime?: number;
+}
+
 export class AdbSync extends AutoDisposable {
     protected _adb: Adb;
     protected _socket: AdbSyncSocket;
@@ -129,12 +136,7 @@ export class AdbSync extends AutoDisposable {
      * @param mtime The modified time of the file.
      * @returns A `WritableStream` that writes to the file.
      */
-    public async write(
-        filename: string,
-        file: ReadableStream<Uint8Array>,
-        mode?: number,
-        mtime?: number
-    ) {
+    public async write(options: AdbSyncWriteOptions) {
         if (this.needPushMkdirWorkaround) {
             // It may fail if the path is already existed.
             // Ignore the result.
@@ -142,18 +144,15 @@ export class AdbSync extends AutoDisposable {
             await this._adb.subprocess.spawnAndWait([
                 "mkdir",
                 "-p",
-                escapeArg(dirname(filename)),
+                escapeArg(dirname(options.filename)),
             ]);
         }
 
-        await adbSyncPush(
-            this.supportsSendReceiveV2,
-            this._socket,
-            filename,
-            file,
-            mode,
-            mtime
-        );
+        await adbSyncPush({
+            v2: this.supportsSendReceiveV2,
+            socket: this._socket,
+            ...options,
+        });
     }
 
     public override async dispose() {

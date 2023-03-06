@@ -570,18 +570,18 @@ class FileManagerState {
             );
 
             try {
-                await sync.write(
-                    itemPath,
-                    createFileStream(file).pipeThrough(
+                await sync.write({
+                    filename: itemPath,
+                    file: createFileStream(file).pipeThrough(
                         new ProgressStream(
                             action((uploaded) => {
                                 this.uploadedSize = uploaded;
                             })
                         )
                     ),
-                    (LinuxFileType.File << 12) | 0o666,
-                    file.lastModified / 1000
-                );
+                    mode: (LinuxFileType.File << 12) | 0o666,
+                    mtime: file.lastModified / 1000,
+                });
 
                 runInAction(() => {
                     this.uploadSpeed =
