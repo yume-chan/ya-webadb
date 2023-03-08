@@ -1,5 +1,5 @@
 import { ICommandBarItemProps, Stack } from "@fluentui/react";
-import { AdbFrameBuffer } from "@yume-chan/adb";
+import { AdbFrameBuffer, AdbFrameBufferV2 } from "@yume-chan/adb";
 import { action, autorun, computed, makeAutoObservable } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -47,7 +47,19 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
         }
 
         try {
+            const start = Date.now();
             const framebuffer = await GLOBAL_STATE.device.framebuffer();
+            console.log(
+                "Framebuffer speed",
+                (
+                    (((AdbFrameBufferV2.size + framebuffer.size) /
+                        (Date.now() - start)) *
+                        1000) /
+                    1024 /
+                    1024
+                ).toFixed(2),
+                "MB/s"
+            );
             state.setImage(framebuffer);
         } catch (e: any) {
             GLOBAL_STATE.showErrorDialog(e);

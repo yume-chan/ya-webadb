@@ -1,11 +1,19 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
-import { ChunkStream, WritableStream } from "@yume-chan/stream-extra";
+import {
+    AbortController,
+    DistributionStream,
+    WritableStream,
+} from "@yume-chan/stream-extra";
 import Struct, { placeholder } from "@yume-chan/struct";
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponse } from "./response.js";
-import type { AdbSyncSocket } from "./socket.js";
+import type { AdbSyncSocket, AdbSyncSocketLocked } from "./socket.js";
 import { LinuxFileType } from "./stat.js";
+
+const NOOP = () => {
+    // no-op
+};
 
 export const ADB_SYNC_MAX_PACKET_SIZE = 64 * 1024;
 
@@ -22,6 +30,43 @@ export const AdbSyncOkResponse = new Struct({ littleEndian: true }).uint32(
     "unused"
 );
 
+async function pipeFile(
+    locked: AdbSyncSocketLocked,
+    file: ReadableStream<Uint8Array>,
+    packetSize: number,
+    mtime: number
+) {
+    // Read and write in parallel,
+    // allow error response to abort the write.
+    const abortController = new AbortController();
+    file.pipeThrough(new DistributionStream(packetSize, true))
+        .pipeTo(
+            new WritableStream({
+                write: async (chunk) => {
+                    await adbSyncWriteRequest(
+                        locked,
+                        AdbSyncRequestId.Data,
+                        chunk
+                    );
+                },
+            }),
+            { signal: abortController.signal }
+        )
+        .then(async () => {
+            await adbSyncWriteRequest(locked, AdbSyncRequestId.Done, mtime);
+            await locked.flush();
+        }, NOOP);
+
+    await adbSyncReadResponse(
+        locked,
+        AdbSyncResponseId.Ok,
+        AdbSyncOkResponse
+    ).catch((e) => {
+        abortController.abort();
+        throw e;
+    });
+}
+
 export async function adbSyncPushV1({
     socket,
     filename,
@@ -34,25 +79,7 @@ export async function adbSyncPushV1({
     try {
         const pathAndMode = `${filename},${mode.toString()}`;
         await adbSyncWriteRequest(locked, AdbSyncRequestId.Send, pathAndMode);
-
-        await file.pipeThrough(new ChunkStream(packetSize, true)).pipeTo(
-            new WritableStream({
-                write: async (chunk) => {
-                    await adbSyncWriteRequest(
-                        locked,
-                        AdbSyncRequestId.Data,
-                        chunk
-                    );
-                },
-            })
-        );
-
-        await adbSyncWriteRequest(locked, AdbSyncRequestId.Done, mtime);
-        await adbSyncReadResponse(
-            locked,
-            AdbSyncResponseId.Ok,
-            AdbSyncOkResponse
-        );
+        await pipeFile(locked, file, packetSize, mtime);
     } finally {
         locked.release();
     }
@@ -109,24 +136,7 @@ export async function adbSyncPushV2({
             })
         );
 
-        await file.pipeThrough(new ChunkStream(packetSize, true)).pipeTo(
-            new WritableStream({
-                write: async (chunk) => {
-                    await adbSyncWriteRequest(
-                        locked,
-                        AdbSyncRequestId.Data,
-                        chunk
-                    );
-                },
-            })
-        );
-
-        await adbSyncWriteRequest(locked, AdbSyncRequestId.Done, mtime);
-        await adbSyncReadResponse(
-            locked,
-            AdbSyncResponseId.Ok,
-            AdbSyncOkResponse
-        );
+        await pipeFile(locked, file, packetSize, mtime);
     } finally {
         locked.release();
     }

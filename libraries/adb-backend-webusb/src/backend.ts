@@ -200,31 +200,34 @@ export class AdbWebUsbBackendStream
             })
         );
 
+        const zeroMask = outEndpoint.packetSize - 1;
         this._writable = pipeFrom(
             factory.createWritable(
-                new WritableStream(
-                    {
-                        write: async (chunk) => {
-                            try {
+                new WritableStream({
+                    write: async (chunk) => {
+                        try {
+                            await device.transferOut(
+                                outEndpoint.endpointNumber,
+                                chunk
+                            );
+
+                            if (
+                                zeroMask &&
+                                (chunk.byteLength & zeroMask) === 0
+                            ) {
                                 await device.transferOut(
                                     outEndpoint.endpointNumber,
-                                    chunk
+                                    EMPTY_UINT8_ARRAY
                                 );
-                            } catch (e) {
-                                if (closed) {
-                                    return;
-                                }
-                                throw e;
                             }
-                        },
+                        } catch (e) {
+                            if (closed) {
+                                return;
+                            }
+                            throw e;
+                        }
                     },
-                    {
-                        highWaterMark: 16 * 1024,
-                        size(chunk) {
-                            return chunk.byteLength;
-                        },
-                    }
-                )
+                })
             ),
             new AdbPacketSerializeStream()
         );

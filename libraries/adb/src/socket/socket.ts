@@ -6,7 +6,7 @@ import type {
     ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import {
-    ChunkStream,
+    DistributionStream,
     DuplexStreamFactory,
     PushReadableStream,
     WritableStream,
@@ -127,7 +127,7 @@ export class AdbSocketController
                     },
                 })
             ),
-            new ChunkStream(this.dispatcher.options.maxPayloadSize)
+            new DistributionStream(this.dispatcher.options.maxPayloadSize)
         );
 
         this._socket = new AdbSocket(this);
