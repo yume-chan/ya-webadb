@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
-import { DistributionStream } from "./chunk.js";
+import { DistributionStream } from "./distribution.js";
 import { ReadableStream, WritableStream } from "./stream.js";
 
 const TestData = new Uint8Array(50);
