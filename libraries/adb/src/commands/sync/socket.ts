@@ -73,19 +73,19 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
                     this._writeBufferAvailable -= available;
                     return;
                 }
+            }
 
-                while (available >= this._bufferCapacity) {
-                    const end = offset + this._bufferCapacity;
-                    await this._writer.write(data.subarray(offset, end));
-                    offset = end;
-                    available -= this._bufferCapacity;
-                }
+            while (available >= this._bufferCapacity) {
+                const end = offset + this._bufferCapacity;
+                await this._writer.write(data.subarray(offset, end));
+                offset = end;
+                available -= this._bufferCapacity;
+            }
 
-                if (available > 0) {
-                    this._writeBuffer.set(data.subarray(offset));
-                    this._writeBufferOffset = available;
-                    this._writeBufferAvailable -= available;
-                }
+            if (available > 0) {
+                this._writeBuffer.set(data.subarray(offset));
+                this._writeBufferOffset = available;
+                this._writeBufferAvailable -= available;
             }
         } finally {
             this._writeLock.notifyOne();
