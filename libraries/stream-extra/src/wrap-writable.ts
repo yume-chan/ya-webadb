@@ -52,8 +52,6 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 this.writer = this.writable.getWriter();
             },
             write: async (chunk) => {
-                // Maintain back pressure
-                await this.writer.ready;
                 await this.writer.write(chunk);
             },
             abort: async (reason) => {

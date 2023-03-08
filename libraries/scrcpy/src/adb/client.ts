@@ -103,7 +103,7 @@ export class AdbScrcpyClient {
         const sync = await adb.sync();
         try {
             await sync.write({
-                filename: filename,
+                filename,
                 file,
             });
         } finally {

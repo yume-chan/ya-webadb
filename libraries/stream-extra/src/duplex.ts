@@ -86,7 +86,6 @@ export class DuplexStreamFactory<R, W> {
         // So it only triggers `close`.
         return new WritableStream<W>({
             write: async (chunk) => {
-                await writer.ready;
                 await writer.write(chunk);
             },
             abort: async (reason) => {

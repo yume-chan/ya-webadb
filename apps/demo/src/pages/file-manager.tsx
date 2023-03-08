@@ -570,6 +570,8 @@ class FileManagerState {
             );
 
             try {
+                const start = Date.now();
+
                 await sync.write({
                     filename: itemPath,
                     file: createFileStream(file).pipeThrough(
@@ -582,6 +584,16 @@ class FileManagerState {
                     mode: (LinuxFileType.File << 12) | 0o666,
                     mtime: file.lastModified / 1000,
                 });
+
+                console.log(
+                    "Upload speed:",
+                    (
+                        ((file.size / (Date.now() - start)) * 1000) /
+                        1024 /
+                        1024
+                    ).toFixed(2),
+                    "MB/s"
+                );
 
                 runInAction(() => {
                     this.uploadSpeed =

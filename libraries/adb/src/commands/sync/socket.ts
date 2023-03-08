@@ -6,12 +6,14 @@ import type { AdbSocket } from "../../index.js";
 import { AutoResetEvent } from "../../index.js";
 
 export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
-    private _writer: WritableStreamDefaultWriter<Uint8Array>;
-    private _readable: BufferedReadableStream;
-    private _bufferSize: number;
-    private _buffered: Uint8Array[] = [];
-    private _bufferedLength = 0;
-    private _lock: AutoResetEvent;
+    private readonly _writer: WritableStreamDefaultWriter<Uint8Array>;
+    private readonly _readable: BufferedReadableStream;
+    private readonly _bufferCapacity: number;
+    private readonly _socketLock: AutoResetEvent;
+    private readonly _writeLock = new AutoResetEvent();
+    private readonly _writeBuffer: Uint8Array;
+    private _writeBufferOffset = 0;
+    private _writeBufferAvailable;
 
     public constructor(
         writer: WritableStreamDefaultWriter<Uint8Array>,
@@ -21,77 +23,84 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
     ) {
         this._writer = writer;
         this._readable = readable;
-        this._bufferSize = bufferSize;
-        this._lock = lock;
+        this._bufferCapacity = bufferSize;
+        this._socketLock = lock;
+        this._writeBuffer = new Uint8Array(bufferSize);
+        this._writeBufferAvailable = bufferSize;
     }
 
-    public async flush(hard: boolean) {
-        if (this._bufferedLength === 0) {
-            return;
-        }
-
-        if (!hard && this._bufferedLength < this._bufferSize) {
-            return;
-        }
-
-        if (this._buffered.length === 1) {
-            await this._writer.write(this._buffered[0]!);
-            this._buffered.length = 0;
-            this._bufferedLength = 0;
-            return;
-        }
-
-        if (hard) {
-            const data = new Uint8Array(this._bufferedLength);
-            let offset = 0;
-            for (const chunk of this._buffered) {
-                data.set(chunk, offset);
-                offset += chunk.byteLength;
+    public async flush() {
+        try {
+            await this._writeLock.wait();
+            if (this._writeBufferOffset === 0) {
+                return;
             }
-            this._buffered.length = 0;
-            this._bufferedLength = 0;
-            // Let AdbSocket chunk the data for us
-            await this._writer.write(data);
-        } else {
-            while (this._bufferedLength >= this._bufferSize) {
-                const data = new Uint8Array(this._bufferSize);
-                let offset = 0;
-                let available = this._bufferSize;
-                while (offset < this._bufferSize) {
-                    const chunk = this._buffered[0]!;
-                    if (chunk.byteLength <= available) {
-                        data.set(chunk, offset);
-                        offset += chunk.byteLength;
-                        available -= chunk.byteLength;
-                        this._buffered.shift();
-                        this._bufferedLength -= chunk.byteLength;
-                    } else {
-                        data.set(chunk.subarray(0, available), offset);
-                        this._buffered[0] = chunk.subarray(available);
-                        this._bufferedLength -= available;
-                        break;
-                    }
-                }
-                await this._writer.write(data);
-            }
+
+            await this._writer.write(
+                this._writeBuffer.subarray(0, this._writeBufferOffset)
+            );
+            this._writeBufferOffset = 0;
+            this._writeBufferAvailable = this._bufferCapacity;
+        } finally {
+            this._writeLock.notifyOne();
         }
     }
 
     public async write(data: Uint8Array) {
-        this._buffered.push(data);
-        this._bufferedLength += data.byteLength;
-        await this.flush(false);
+        try {
+            await this._writeLock.wait();
+            let offset = 0;
+            let available = data.byteLength;
+            if (this._writeBufferOffset !== 0) {
+                if (available >= this._writeBufferAvailable) {
+                    this._writeBuffer.set(
+                        data.subarray(0, this._writeBufferAvailable),
+                        this._writeBufferOffset
+                    );
+                    offset += this._writeBufferAvailable;
+                    available -= this._writeBufferAvailable;
+
+                    await this._writer.write(this._writeBuffer);
+                    this._writeBufferOffset = 0;
+                    this._writeBufferAvailable = this._bufferCapacity;
+
+                    if (available === 0) {
+                        return;
+                    }
+                } else {
+                    this._writeBuffer.set(data, this._writeBufferOffset);
+                    this._writeBufferOffset += available;
+                    this._writeBufferAvailable -= available;
+                    return;
+                }
+
+                while (available >= this._bufferCapacity) {
+                    const end = offset + this._bufferCapacity;
+                    await this._writer.write(data.subarray(offset, end));
+                    offset = end;
+                    available -= this._bufferCapacity;
+                }
+
+                if (available > 0) {
+                    this._writeBuffer.set(data.subarray(offset));
+                    this._writeBufferOffset = available;
+                    this._writeBufferAvailable -= available;
+                }
+            }
+        } finally {
+            this._writeLock.notifyOne();
+        }
     }
 
     public async read(length: number) {
-        await this.flush(true);
+        await this.flush();
         return await this._readable.read(length);
     }
 
     public release(): void {
-        this._buffered.length = 0;
-        this._bufferedLength = 0;
-        this._lock.notifyOne();
+        this._writeBufferOffset = 0;
+        this._writeBufferAvailable = this._bufferCapacity;
+        this._socketLock.notifyOne();
     }
 }
 
