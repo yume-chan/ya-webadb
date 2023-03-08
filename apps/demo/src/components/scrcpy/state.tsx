@@ -16,7 +16,7 @@ import {
 } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
 import {
-    ChunkStream,
+    DistributionStream,
     InspectStream,
     ReadableStream,
     WritableStream,
@@ -196,9 +196,11 @@ export class ScrcpyPageState {
                             controller.close();
                         },
                     })
-                        // In fact `pushServer` will pipe the stream through a ChunkStream,
+                        // In fact `pushServer` will pipe the stream through a DistributionStream,
                         // but without this pipeThrough, the progress will not be updated.
-                        .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
+                        .pipeThrough(
+                            new DistributionStream(ADB_SYNC_MAX_PACKET_SIZE)
+                        )
                         .pipeThrough(
                             new ProgressStream(
                                 action((progress) => {
