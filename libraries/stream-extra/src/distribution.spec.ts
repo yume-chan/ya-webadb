@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
+import { Consumable } from "./consumable.js";
 import { DistributionStream } from "./distribution.js";
 import { ReadableStream, WritableStream } from "./stream.js";
 
@@ -13,22 +14,32 @@ async function testInputOutput(
     inputLengths: number[],
     outputLengths: number[]
 ) {
-    const write = jest.fn<(chunk: Uint8Array) => void>(() => {
-        // no-op
+    const write = jest.fn((chunk: Uint8Array) => {
+        void chunk;
     });
-    await new ReadableStream<Uint8Array>({
-        start(controller) {
+    await new ReadableStream<Consumable<Uint8Array>>({
+        async start(controller) {
             let offset = 0;
             for (const length of inputLengths) {
                 const end = offset + length;
-                controller.enqueue(TestData.subarray(offset, end));
+                const output = new Consumable(TestData.subarray(offset, end));
+                controller.enqueue(output);
+                await output.consumed;
                 offset = end;
             }
             controller.close();
         },
     })
         .pipeThrough(new DistributionStream(10, combine || undefined))
-        .pipeTo(new WritableStream({ write }));
+        .pipeTo(
+            new WritableStream({
+                write(chunk) {
+                    // chunk.value will be reused, so we need to copy it
+                    write(chunk.value.slice());
+                    chunk.consume();
+                },
+            })
+        );
 
     expect(write).toHaveBeenCalledTimes(outputLengths.length);
     let offset = 0;
@@ -36,8 +47,7 @@ async function testInputOutput(
         const end = offset + outputLengths[i]!;
         expect(write).toHaveBeenNthCalledWith(
             i + 1,
-            TestData.subarray(offset, end),
-            expect.anything()
+            TestData.subarray(offset, end)
         );
         offset = end;
     }

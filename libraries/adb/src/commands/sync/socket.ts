@@ -1,12 +1,14 @@
 import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
-import { BufferedReadableStream } from "@yume-chan/stream-extra";
+import { BufferedReadableStream, Consumable } from "@yume-chan/stream-extra";
 import type { StructAsyncDeserializeStream } from "@yume-chan/struct";
 
 import type { AdbSocket } from "../../index.js";
 import { AutoResetEvent } from "../../index.js";
 
 export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
-    private readonly _writer: WritableStreamDefaultWriter<Uint8Array>;
+    private readonly _writer: WritableStreamDefaultWriter<
+        Consumable<Uint8Array>
+    >;
     private readonly _readable: BufferedReadableStream;
     private readonly _bufferCapacity: number;
     private readonly _socketLock: AutoResetEvent;
@@ -16,7 +18,7 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
     private _writeBufferAvailable;
 
     public constructor(
-        writer: WritableStreamDefaultWriter<Uint8Array>,
+        writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
         readable: BufferedReadableStream,
         bufferSize: number,
         lock: AutoResetEvent
@@ -29,6 +31,12 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
         this._writeBufferAvailable = bufferSize;
     }
 
+    private async writeInnerStream(buffer: Uint8Array) {
+        const output = new Consumable(buffer);
+        await this._writer.write(output);
+        await output.consumed;
+    }
+
     public async flush() {
         try {
             await this._writeLock.wait();
@@ -36,7 +44,7 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
                 return;
             }
 
-            await this._writer.write(
+            await this.writeInnerStream(
                 this._writeBuffer.subarray(0, this._writeBufferOffset)
             );
             this._writeBufferOffset = 0;
@@ -60,7 +68,7 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
                     offset += this._writeBufferAvailable;
                     available -= this._writeBufferAvailable;
 
-                    await this._writer.write(this._writeBuffer);
+                    await this.writeInnerStream(this._writeBuffer);
                     this._writeBufferOffset = 0;
                     this._writeBufferAvailable = this._bufferCapacity;
 
@@ -77,14 +85,17 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
 
             while (available >= this._bufferCapacity) {
                 const end = offset + this._bufferCapacity;
-                await this._writer.write(data.subarray(offset, end));
+                await this.writeInnerStream(data.subarray(offset, end));
                 offset = end;
                 available -= this._bufferCapacity;
             }
 
             if (available > 0) {
-                this._writeBuffer.set(data.subarray(offset));
-                this._writeBufferOffset = available;
+                this._writeBuffer.set(
+                    data.subarray(offset),
+                    this._writeBufferOffset
+                );
+                this._writeBufferOffset += available;
                 this._writeBufferAvailable -= available;
             }
         } finally {

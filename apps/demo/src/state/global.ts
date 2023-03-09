@@ -48,9 +48,12 @@ export class GlobalState {
     }
 
     appendLog(direction: PacketLogItemDirection, packet: AdbPacketData) {
-        (packet as PacketLogItem).direction = direction;
-        (packet as PacketLogItem).timestamp = new Date();
-        this.logs.push(packet as PacketLogItem);
+        this.logs.push({
+            ...packet,
+            direction,
+            timestamp: new Date(),
+            payload: packet.payload.slice(),
+        } as PacketLogItem);
     }
 
     clearLog() {

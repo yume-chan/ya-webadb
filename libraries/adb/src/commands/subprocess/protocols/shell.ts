@@ -5,9 +5,9 @@ import type {
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import {
+    Consumable,
     PushReadableStream,
     StructDeserializeStream,
-    StructSerializeStream,
     TransformStream,
     WritableStream,
     pipeFrom,
@@ -42,16 +42,19 @@ type AdbShellProtocolPacketInit = (typeof AdbShellProtocolPacket)["TInit"];
 type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
 
 class StdinSerializeStream extends TransformStream<
-    Uint8Array,
-    AdbShellProtocolPacketInit
+    Consumable<Uint8Array>,
+    Consumable<AdbShellProtocolPacketInit>
 > {
     constructor() {
         super({
-            transform(chunk, controller) {
-                controller.enqueue({
+            async transform(chunk, controller) {
+                const output = new Consumable<AdbShellProtocolPacketInit>({
                     id: AdbShellProtocolId.Stdin,
-                    data: chunk,
+                    data: chunk.value,
                 });
+                controller.enqueue(output);
+                await output.consumed;
+                chunk.consume();
             },
             flush() {
                 // TODO: AdbShellSubprocessProtocol: support closing stdin
@@ -141,9 +144,11 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     }
 
     private readonly _socket: AdbSocket;
-    private _socketWriter: WritableStreamDefaultWriter<AdbShellProtocolPacketInit>;
+    private _socketWriter: WritableStreamDefaultWriter<
+        Consumable<AdbShellProtocolPacketInit>
+    >;
 
-    private _stdin: WritableStream<Uint8Array>;
+    private _stdin: WritableStream<Consumable<Uint8Array>>;
     public get stdin() {
         return this._stdin;
     }
@@ -200,9 +205,22 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
             new StdoutDeserializeStream(AdbShellProtocolId.Stderr)
         );
 
-        const multiplexer = new MultiplexStream<AdbShellProtocolPacketInit>();
+        const multiplexer = new MultiplexStream<
+            Consumable<AdbShellProtocolPacketInit>
+        >();
         void multiplexer.readable
-            .pipeThrough(new StructSerializeStream(AdbShellProtocolPacket))
+            .pipeThrough(
+                new TransformStream({
+                    async transform(chunk, controller) {
+                        const output = new Consumable(
+                            AdbShellProtocolPacket.serialize(chunk.value)
+                        );
+                        controller.enqueue(output);
+                        await output.consumed;
+                        chunk.consume();
+                    },
+                })
+            )
             .pipeTo(socket.writable);
 
         this._stdin = pipeFrom(
@@ -214,7 +232,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     }
 
     public async resize(rows: number, cols: number) {
-        await this._socketWriter.write({
+        const output = new Consumable({
             id: AdbShellProtocolId.WindowSizeChange,
             data: encodeUtf8(
                 // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
@@ -223,6 +241,8 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                 `${rows}x${cols},0x0\0`
             ),
         });
+        await this._socketWriter.write(output);
+        await output.consumed;
     }
 
     public kill() {

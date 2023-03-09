@@ -16,6 +16,7 @@ import {
 } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
 import {
+    Consumable,
     DistributionStream,
     InspectStream,
     ReadableStream,
@@ -69,9 +70,9 @@ export class ScrcpyPageState {
         const serverBuffer = await fetchServer();
         await AdbScrcpyClient.pushServer(
             GLOBAL_STATE.device!,
-            new ReadableStream<Uint8Array>({
+            new ReadableStream<Consumable<Uint8Array>>({
                 start(controller) {
-                    controller.enqueue(serverBuffer);
+                    controller.enqueue(new Consumable(serverBuffer));
                     controller.close();
                 },
             })
@@ -190,9 +191,9 @@ export class ScrcpyPageState {
             try {
                 await AdbScrcpyClient.pushServer(
                     GLOBAL_STATE.device!,
-                    new ReadableStream<Uint8Array>({
+                    new ReadableStream<Consumable<Uint8Array>>({
                         start(controller) {
-                            controller.enqueue(serverBuffer);
+                            controller.enqueue(new Consumable(serverBuffer));
                             controller.close();
                         },
                     })

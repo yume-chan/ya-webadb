@@ -1,4 +1,4 @@
-import type { ReadableStream } from "@yume-chan/stream-extra";
+import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
 import {
     AbortController,
     DistributionStream,
@@ -20,7 +20,7 @@ export const ADB_SYNC_MAX_PACKET_SIZE = 64 * 1024;
 export interface AdbSyncPushV1Options {
     socket: AdbSyncSocket;
     filename: string;
-    file: ReadableStream<Uint8Array>;
+    file: ReadableStream<Consumable<Uint8Array>>;
     mode?: number;
     mtime?: number;
     packetSize?: number;
@@ -32,7 +32,7 @@ export const AdbSyncOkResponse = new Struct({ littleEndian: true }).uint32(
 
 async function pipeFile(
     locked: AdbSyncSocketLocked,
-    file: ReadableStream<Uint8Array>,
+    file: ReadableStream<Consumable<Uint8Array>>,
     packetSize: number,
     mtime: number
 ) {
@@ -46,8 +46,9 @@ async function pipeFile(
                     await adbSyncWriteRequest(
                         locked,
                         AdbSyncRequestId.Data,
-                        chunk
+                        chunk.value
                     );
+                    chunk.consume();
                 },
             }),
             { signal: abortController.signal }

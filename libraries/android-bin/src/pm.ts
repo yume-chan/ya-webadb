@@ -8,7 +8,7 @@ import {
     AdbSubprocessNoneProtocol,
     escapeArg,
 } from "@yume-chan/adb";
-import type { ReadableStream } from "@yume-chan/stream-extra";
+import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
 import { DecodeUtf8Stream, WrapReadableStream } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd.js";
@@ -224,7 +224,7 @@ export class PackageManager extends AdbCommandBase {
     }
 
     public async pushAndInstallStream(
-        stream: ReadableStream<Uint8Array>,
+        stream: ReadableStream<Consumable<Uint8Array>>,
         options?: Partial<PackageManagerInstallOptions>
     ): Promise<ReadableStream<string>> {
         const sync = await this.adb.sync();
@@ -257,7 +257,7 @@ export class PackageManager extends AdbCommandBase {
 
     public async installStream(
         size: number,
-        stream: ReadableStream<Uint8Array>,
+        stream: ReadableStream<Consumable<Uint8Array>>,
         options?: Partial<PackageManagerInstallOptions>
     ): Promise<ReadableStream<string>> {
         if (!this._cmd.supportsCmd) {

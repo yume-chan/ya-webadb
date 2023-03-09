@@ -8,7 +8,7 @@ import {
     PackageManager,
     PackageManagerInstallOptions,
 } from "@yume-chan/android-bin";
-import { WritableStream } from "@yume-chan/stream-extra";
+import { ConsumableStream, WritableStream } from "@yume-chan/stream-extra";
 import { action, makeAutoObservable, observable, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
@@ -82,29 +82,31 @@ class InstallPageState {
         const start = Date.now();
         const log = await pm.installStream(
             file.size,
-            createFileStream(file).pipeThrough(
-                new ProgressStream(
-                    action((uploaded) => {
-                        if (uploaded !== file.size) {
-                            this.progress = {
-                                filename: file.name,
-                                stage: Stage.Uploading,
-                                uploadedSize: uploaded,
-                                totalSize: file.size,
-                                value: (uploaded / file.size) * 0.8,
-                            };
-                        } else {
-                            this.progress = {
-                                filename: file.name,
-                                stage: Stage.Installing,
-                                uploadedSize: uploaded,
-                                totalSize: file.size,
-                                value: 0.8,
-                            };
-                        }
-                    })
+            createFileStream(file)
+                .pipeThrough(new ConsumableStream())
+                .pipeThrough(
+                    new ProgressStream(
+                        action((uploaded) => {
+                            if (uploaded !== file.size) {
+                                this.progress = {
+                                    filename: file.name,
+                                    stage: Stage.Uploading,
+                                    uploadedSize: uploaded,
+                                    totalSize: file.size,
+                                    value: (uploaded / file.size) * 0.8,
+                                };
+                            } else {
+                                this.progress = {
+                                    filename: file.name,
+                                    stage: Stage.Installing,
+                                    uploadedSize: uploaded,
+                                    totalSize: file.size,
+                                    value: 0.8,
+                                };
+                            }
+                        })
+                    )
                 )
-            )
         );
 
         const elapsed = Date.now() - start;

@@ -2,7 +2,11 @@
 
 import { AdbSubprocessProtocol, encodeUtf8 } from "@yume-chan/adb";
 import { AutoDisposable } from "@yume-chan/event";
-import { AbortController, WritableStream } from "@yume-chan/stream-extra";
+import {
+    AbortController,
+    Consumable,
+    WritableStream,
+} from "@yume-chan/stream-extra";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import { SearchAddon } from "xterm-addon-search";
@@ -66,7 +70,8 @@ export class AdbTerminal extends AutoDisposable {
             this.addDisposable(
                 this.terminal.onData((data) => {
                     const buffer = encodeUtf8(data);
-                    _writer.write(buffer);
+                    const output = new Consumable(buffer);
+                    _writer.write(output);
                 })
             );
 

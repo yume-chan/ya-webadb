@@ -1,46 +1,57 @@
+import { Consumable } from "./consumable.js";
 import { TransformStream } from "./stream.js";
 
 export class DistributionStream extends TransformStream<
-    Uint8Array,
-    Uint8Array
+    Consumable<Uint8Array>,
+    Consumable<Uint8Array>
 > {
     public constructor(size: number, combine = false) {
-        let combineBuffer = combine ? new Uint8Array(size) : undefined;
+        const combineBuffer = combine ? new Uint8Array(size) : undefined;
         let combineBufferOffset = 0;
         let combineBufferAvailable = size;
         super({
-            transform(chunk, controller) {
+            async transform(chunk, controller) {
                 let offset = 0;
-                let available = chunk.byteLength;
+                let available = chunk.value.byteLength;
 
                 if (combineBuffer && combineBufferOffset !== 0) {
                     if (available >= combineBufferAvailable) {
                         combineBuffer.set(
-                            chunk.subarray(0, combineBufferAvailable),
+                            chunk.value.subarray(0, combineBufferAvailable),
                             combineBufferOffset
                         );
                         offset += combineBufferAvailable;
                         available -= combineBufferAvailable;
 
-                        controller.enqueue(combineBuffer);
-                        combineBuffer = new Uint8Array(size);
+                        const output = new Consumable(combineBuffer);
+                        controller.enqueue(output);
+                        await output.consumed;
+
                         combineBufferOffset = 0;
                         combineBufferAvailable = size;
 
                         if (available === 0) {
+                            chunk.consume();
                             return;
                         }
                     } else {
-                        combineBuffer.set(chunk, combineBufferOffset);
+                        combineBuffer.set(chunk.value, combineBufferOffset);
                         combineBufferOffset += available;
                         combineBufferAvailable -= available;
+                        chunk.consume();
                         return;
                     }
                 }
 
                 while (available >= size) {
                     const end = offset + size;
-                    controller.enqueue(chunk.subarray(offset, end));
+
+                    const output = new Consumable(
+                        chunk.value.subarray(offset, end)
+                    );
+                    controller.enqueue(output);
+                    await output.consumed;
+
                     offset = end;
                     available -= size;
                 }
@@ -48,21 +59,29 @@ export class DistributionStream extends TransformStream<
                 if (available > 0) {
                     if (combineBuffer) {
                         combineBuffer.set(
-                            chunk.subarray(offset),
+                            chunk.value.subarray(offset),
                             combineBufferOffset
                         );
-                        combineBufferOffset += chunk.byteLength - offset;
-                        combineBufferAvailable -= chunk.byteLength - offset;
+                        combineBufferOffset += available;
+                        combineBufferAvailable -= available;
                     } else {
-                        controller.enqueue(chunk.subarray(offset));
+                        const output = new Consumable(
+                            chunk.value.subarray(offset)
+                        );
+                        controller.enqueue(output);
+                        await output.consumed;
                     }
                 }
+
+                chunk.consume();
             },
-            flush(controller) {
+            async flush(controller) {
                 if (combineBuffer && combineBufferOffset !== 0) {
-                    controller.enqueue(
+                    const output = new Consumable(
                         combineBuffer.subarray(0, combineBufferOffset)
                     );
+                    controller.enqueue(output);
+                    await output.consumed;
                 }
             },
         });

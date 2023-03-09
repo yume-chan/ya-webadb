@@ -4,6 +4,7 @@ import {
     AdbSubprocessNoneProtocol,
 } from "@yume-chan/adb";
 import type {
+    Consumable,
     ReadableStreamDefaultController,
     ReadableStreamDefaultReader,
     ReadableWritablePair,
@@ -97,7 +98,7 @@ export class ScrcpyExitedError extends Error {
 export class AdbScrcpyClient {
     public static async pushServer(
         adb: Adb,
-        file: ReadableStream<Uint8Array>,
+        file: ReadableStream<Consumable<Uint8Array>>,
         filename = DEFAULT_SERVER_PATH
     ) {
         const sync = await adb.sync();
@@ -328,7 +329,9 @@ export class AdbScrcpyClient {
         process: AdbSubprocessProtocol,
         stdout: ReadableStream<string>,
         videoStream: ReadableStream<Uint8Array>,
-        controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined
+        controlStream:
+            | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
+            | undefined
     ) {
         this.process = process;
         this._stdout = stdout;

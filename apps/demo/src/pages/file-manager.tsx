@@ -30,6 +30,7 @@ import {
 import { useConst } from "@fluentui/react-hooks";
 import { getIcon } from "@fluentui/style-utilities";
 import { AdbFeature, LinuxFileType, type AdbSyncEntry } from "@yume-chan/adb";
+import { ConsumableStream } from "@yume-chan/stream-extra";
 import {
     action,
     autorun,
@@ -574,13 +575,15 @@ class FileManagerState {
 
                 await sync.write({
                     filename: itemPath,
-                    file: createFileStream(file).pipeThrough(
-                        new ProgressStream(
-                            action((uploaded) => {
-                                this.uploadedSize = uploaded;
-                            })
-                        )
-                    ),
+                    file: createFileStream(file)
+                        .pipeThrough(new ConsumableStream())
+                        .pipeThrough(
+                            new ProgressStream(
+                                action((uploaded) => {
+                                    this.uploadedSize = uploaded;
+                                })
+                            )
+                        ),
                     mode: (LinuxFileType.File << 12) | 0o666,
                     mtime: file.lastModified / 1000,
                 });

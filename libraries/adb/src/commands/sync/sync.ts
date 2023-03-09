@@ -1,5 +1,5 @@
 import { AutoDisposable } from "@yume-chan/event";
-import type { ReadableStream } from "@yume-chan/stream-extra";
+import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
 
 import type { Adb } from "../../adb.js";
 import { AdbFeature } from "../../features.js";
@@ -31,7 +31,7 @@ export function dirname(path: string): string {
 
 export interface AdbSyncWriteOptions {
     filename: string;
-    file: ReadableStream<Uint8Array>;
+    file: ReadableStream<Consumable<Uint8Array>>;
     mode?: number;
     mtime?: number;
     dryRun?: boolean;

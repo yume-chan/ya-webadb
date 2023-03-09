@@ -1,5 +1,6 @@
 export * from "./buffered-transform.js";
 export * from "./buffered.js";
+export * from "./consumable.js";
 export * from "./decode-utf8.js";
 export * from "./distribution.js";
 export * from "./duplex.js";

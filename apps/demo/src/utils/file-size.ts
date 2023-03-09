@@ -1,8 +1,8 @@
-import { useSetInterval } from '@fluentui/react-hooks';
-import { InspectStream } from "@yume-chan/stream-extra";
-import { useEffect, useRef, useState } from 'react';
+import { useSetInterval } from "@fluentui/react-hooks";
+import { Consumable, InspectStream } from "@yume-chan/stream-extra";
+import { useEffect, useRef, useState } from "react";
 
-const units = [' B', ' KB', ' MB', ' GB'];
+const units = [" B", " KB", " MB", " GB"];
 
 export function formatSize(value: number): string {
     let index = 0;
@@ -10,17 +10,29 @@ export function formatSize(value: number): string {
         index += 1;
         value /= 1024;
     }
-    return value.toLocaleString(undefined, { maximumFractionDigits: 2 }) + units[index];
+    return (
+        value.toLocaleString(undefined, { maximumFractionDigits: 2 }) +
+        units[index]
+    );
 }
 
-export function formatSpeed(completed: number, total: number, speed: number): string | undefined {
+export function formatSpeed(
+    completed: number,
+    total: number,
+    speed: number
+): string | undefined {
     if (total === 0) {
         return undefined;
     }
-    return `${formatSize(completed)} of ${formatSize(total)} (${formatSize(speed)}/s)`;
+    return `${formatSize(completed)} of ${formatSize(total)} (${formatSize(
+        speed
+    )}/s)`;
 }
 
-export function useSpeed(completed: number, total: number): [completed: number, speed: number] {
+export function useSpeed(
+    completed: number,
+    total: number
+): [completed: number, speed: number] {
     const completedRef = useRef(completed);
     completedRef.current = completed;
 
@@ -31,7 +43,7 @@ export function useSpeed(completed: number, total: number): [completed: number, 
     const intervalIdRef = useRef<number>();
     useEffect(() => {
         intervalIdRef.current = setInterval(() => {
-            setDebouncedCompleted(debouncedCompleted => {
+            setDebouncedCompleted((debouncedCompleted) => {
                 setSpeed(completedRef.current - debouncedCompleted);
                 return completedRef.current;
             });
@@ -44,7 +56,7 @@ export function useSpeed(completed: number, total: number): [completed: number, 
 
     useEffect(() => {
         if (total !== 0 && completed === total) {
-            setDebouncedCompleted(debouncedCompleted => {
+            setDebouncedCompleted((debouncedCompleted) => {
                 setSpeed(total - debouncedCompleted);
                 return total;
             });
@@ -56,7 +68,7 @@ export function useSpeed(completed: number, total: number): [completed: number, 
 }
 
 export function delay(time: number): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         window.setTimeout(resolve, time);
     });
 }
@@ -65,11 +77,11 @@ export function delay(time: number): Promise<void> {
  * Because of internal buffer of upstream/downstream streams,
  * the progress value won't be 100% accurate. But it's usually good enough.
  */
-export class ProgressStream extends InspectStream<Uint8Array> {
+export class ProgressStream extends InspectStream<Consumable<Uint8Array>> {
     public constructor(onProgress: (value: number) => void) {
         let progress = 0;
-        super(chunk => {
-            progress += chunk.byteLength;
+        super((chunk) => {
+            progress += chunk.value.byteLength;
             onProgress(progress);
         });
     }
