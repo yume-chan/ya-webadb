@@ -15,6 +15,7 @@ interface GlobalEx {
     console: Console;
 }
 
+// `createTask` allows browser DevTools to track the call stack across async boundaries.
 const { console } = globalThis as unknown as GlobalEx;
 const createTask: Console["createTask"] =
     console.createTask?.bind(console) ??
@@ -59,13 +60,20 @@ export class Consumable<T> {
     }
 }
 
+async function enqueue<T>(
+    controller: { enqueue: (chunk: Consumable<T>) => void },
+    chunk: T
+) {
+    const output = new Consumable(chunk);
+    controller.enqueue(output);
+    await output.consumed;
+}
+
 export class WrapConsumableStream<T> extends TransformStream<T, Consumable<T>> {
     public constructor() {
         super({
             async transform(chunk, controller) {
-                const output = new Consumable(chunk);
-                controller.enqueue(output);
-                await output.consumed;
+                await enqueue(controller, chunk);
             },
         });
     }
@@ -128,9 +136,7 @@ export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
                 async start(controller) {
                     wrappedController = {
                         async enqueue(chunk) {
-                            const consumable = new Consumable(chunk);
-                            controller.enqueue(consumable);
-                            await consumable.consumed;
+                            await enqueue(controller, chunk);
                         },
                         close() {
                             controller.close();
@@ -235,9 +241,7 @@ export class ConsumableTransformStream<I, O> extends TransformStream<
             async start(controller) {
                 wrappedController = {
                     async enqueue(chunk) {
-                        const consumable = new Consumable(chunk);
-                        controller.enqueue(consumable);
-                        await consumable.consumed;
+                        await enqueue(controller, chunk);
                     },
                     close() {
                         controller.terminate();
