@@ -34,7 +34,7 @@
         "@yume-chan/struct": "workspace:^0.0.18",
         "mobx": "^6.7.0",
         "mobx-react-lite": "^3.4.0",
-        "next": "13.1.5",
+        "next": "13.2.4",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "webm-muxer": "^1.1.0",
@@ -50,7 +50,7 @@
         "@types/node": "^18.11.18",
         "@types/react": "18.0.27",
         "eslint": "^8.31.0",
-        "eslint-config-next": "13.1.5",
+        "eslint-config-next": "13.2.4",
         "source-map-loader": "^4.0.1",
         "typescript": "^4.9.4",
         "prettier": "^2.8.4"
