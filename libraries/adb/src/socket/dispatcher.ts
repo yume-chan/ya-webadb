@@ -222,7 +222,7 @@ export class AdbPacketDispatcher implements Closeable {
             return;
         }
 
-        // From https://android.googlesource.com/platform/packages/modules/adb/+/65d18e2c1cc48b585811954892311b28a4c3d188/adb.cpp#459
+        // https://android.googlesource.com/platform/packages/modules/adb/+/65d18e2c1cc48b585811954892311b28a4c3d188/adb.cpp#459
         /* According to protocol.txt, p->msg.arg0 might be 0 to indicate
          * a failed OPEN only. However, due to a bug in previous ADB
          * versions, CLOSE(0, remote-id, "") was also used for normal

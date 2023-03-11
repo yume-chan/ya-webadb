@@ -73,16 +73,15 @@ export class AdbSync extends AutoDisposable {
         this._adb = adb;
         this._socket = new AdbSyncSocket(socket, adb.maxPayloadSize);
 
-        this._supportsStat = adb.supportsFeature(AdbFeature.StatV2);
-        this._supportsListV2 = adb.supportsFeature(AdbFeature.ListV2);
-        this._fixedPushMkdir = adb.supportsFeature(AdbFeature.FixedPushMkdir);
-        this._supportsSendReceiveV2 = adb.supportsFeature(
+        this._supportsStat = adb.canUseFeature(AdbFeature.StatV2);
+        this._supportsListV2 = adb.canUseFeature(AdbFeature.ListV2);
+        this._fixedPushMkdir = adb.canUseFeature(AdbFeature.FixedPushMkdir);
+        this._supportsSendReceiveV2 = adb.canUseFeature(
             AdbFeature.SendReceiveV2
         );
         // https://android.googlesource.com/platform/packages/modules/adb/+/91768a57b7138166e0a3d11f79cd55909dda7014/client/file_sync_client.cpp#1361
         this._needPushMkdirWorkaround =
-            this._adb.supportsFeature(AdbFeature.ShellV2) &&
-            !this.fixedPushMkdir;
+            this._adb.canUseFeature(AdbFeature.ShellV2) && !this.fixedPushMkdir;
     }
 
     public async lstat(path: string) {

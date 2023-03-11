@@ -388,7 +388,7 @@ class FileManagerState {
             },
         ];
 
-        if (GLOBAL_STATE.device?.supportsFeature(AdbFeature.ListV2)) {
+        if (GLOBAL_STATE.device?.canUseFeature(AdbFeature.ListV2)) {
             list.push(
                 {
                     key: "ctime",

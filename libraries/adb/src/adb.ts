@@ -42,12 +42,40 @@ export enum AdbPropKey {
 }
 
 export const ADB_VERSION_OMIT_CHECKSUM = 0x01000001;
+
+export const ADB_CLIENT_DEFAULT_VERSION = 0x01000001;
+// Android 4: 4K, Android 7: 256K, Android 9: 1M
+export const ADB_CLIENT_DEFAULT_MAX_PAYLOAD_SIZE = 1024 * 1024;
+// https://cs.android.com/android/platform/superproject/+/master:packages/modules/adb/transport.cpp;l=77;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
+// There are some other feature constants, but some of them are only used by ADB server, not devices (daemons).
+export const ADB_CLIENT_DEFAULT_FEATURES = [
+    AdbFeature.ShellV2,
+    AdbFeature.Cmd,
+    AdbFeature.StatV2,
+    AdbFeature.ListV2,
+    AdbFeature.FixedPushMkdir,
+    "apex",
+    AdbFeature.Abb,
+    // only tells the client the symlink timestamp issue in `adb push --sync` has been fixed.
+    // No special handling required.
+    "fixed_push_symlink_timestamp",
+    AdbFeature.AbbExec,
+    "remount_shell",
+    "track_app",
+    AdbFeature.SendReceiveV2,
+    "sendrecv_v2_brotli",
+    "sendrecv_v2_lz4",
+    "sendrecv_v2_zstd",
+    "sendrecv_v2_dry_run_send",
+    AdbFeature.DelayedAck,
+] as readonly AdbFeature[];
 export const ADB_DEFAULT_INITIAL_PAYLOAD_SIZE = 32 * 1024 * 1024;
 
 export interface AdbClientAuthenticateOptions {
     connection: ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>;
-    credentialStore: AdbCredentialStore;
-    authenticators?: AdbAuthenticator[];
+    version?: number;
+    maxPayloadSize?: number;
+    clientFeatures?: readonly AdbFeature[];
     /**
      * The number of bytes the device can send before receiving an ack packet.
      *
@@ -57,13 +85,15 @@ export interface AdbClientAuthenticateOptions {
      * Delayed ack requires Android 14, this option is ignored on older versions.
      */
     initialDelayedAckBytes?: number;
+    credentialStore: AdbCredentialStore;
+    authenticators?: AdbAuthenticator[];
 }
 
 export interface AdbClientOptions {
     connection: ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>;
     version: number;
     maxPayloadSize: number;
-    banner: string;
+    clientFeatures?: readonly AdbFeature[];
     /**
      * The number of bytes the device can send before receiving an ack packet.
      *
@@ -74,6 +104,7 @@ export interface AdbClientOptions {
      * Delayed ack requires Android 14, this option is ignored on older versions.
      */
     initialDelayedAckBytes?: number;
+    banner: string;
 }
 
 export class Adb implements Closeable {
@@ -84,14 +115,22 @@ export class Adb implements Closeable {
      */
     public static async authenticate({
         connection,
+        version = ADB_CLIENT_DEFAULT_VERSION,
+        maxPayloadSize = ADB_CLIENT_DEFAULT_MAX_PAYLOAD_SIZE,
+        clientFeatures = ADB_CLIENT_DEFAULT_FEATURES,
+        initialDelayedAckBytes = ADB_DEFAULT_INITIAL_PAYLOAD_SIZE,
         credentialStore,
         authenticators = ADB_DEFAULT_AUTHENTICATORS,
-        initialDelayedAckBytes = ADB_DEFAULT_INITIAL_PAYLOAD_SIZE,
     }: AdbClientAuthenticateOptions): Promise<Adb> {
-        // Initially, set to highest-supported version and payload size.
-        let version = 0x01000001;
-        // Android 4: 4K, Android 7: 256K, Android 9: 1M
-        let maxPayloadSize = 1024 * 1024;
+        if (clientFeatures.includes(AdbFeature.DelayedAck)) {
+            if (initialDelayedAckBytes <= 0) {
+                throw new Error(
+                    "`initialDelayedAckBytes` must be greater than 0 when DelayedAck feature is enabled."
+                );
+            }
+        } else {
+            initialDelayedAckBytes = 0;
+        }
 
         const resolver = new PromiseResolver<string>();
         const authProcessor = new AdbAuthenticationProcessor(
@@ -99,8 +138,17 @@ export class Adb implements Closeable {
             credentialStore
         );
 
-        // Here is similar to `AdbPacketDispatcher`,
-        // But the received packet types and send packet processing are different.
+        const writer = connection.writable.getWriter();
+        async function sendPacket(init: AdbPacketData) {
+            // Always send checksum in auth steps
+            // Because we don't know if the device needs it or not.
+            (init as AdbPacketInit).checksum = calculateChecksum(init.payload);
+            (init as AdbPacketInit).magic = init.command ^ 0xffffffff;
+            await ConsumableWritableStream.write(writer, init as AdbPacketInit);
+        }
+
+        // This is similar to `AdbPacketDispatcher`,
+        // except the received packet types and send packet processing are different.
         const abortController = new AbortController();
         const pipe = connection.readable
             .pipeTo(
@@ -142,51 +190,17 @@ export class Adb implements Closeable {
                 resolver.reject(e);
             });
 
-        const writer = connection.writable.getWriter();
-        async function sendPacket(init: AdbPacketData) {
-            // Always send checksum in auth steps
-            // Because we don't know if the device needs it or not.
-            (init as AdbPacketInit).checksum = calculateChecksum(init.payload);
-            (init as AdbPacketInit).magic = init.command ^ 0xffffffff;
-            await ConsumableWritableStream.write(writer, init as AdbPacketInit);
-        }
-
         let banner: string;
         try {
-            // https://cs.android.com/android/platform/superproject/+/master:packages/modules/adb/transport.cpp;l=77;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
-            // There are some other feature constants, but some of them are only used by ADB server, not devices (daemons).
-            const features = [
-                AdbFeature.ShellV2,
-                AdbFeature.Cmd,
-                AdbFeature.StatV2,
-                AdbFeature.ListV2,
-                AdbFeature.FixedPushMkdir,
-                "apex",
-                AdbFeature.Abb,
-                // only tells the client the symlink timestamp issue in `adb push --sync` has been fixed.
-                // No special handling required.
-                "fixed_push_symlink_timestamp",
-                AdbFeature.AbbExec,
-                "remount_shell",
-                "track_app",
-                AdbFeature.SendReceiveV2,
-                "sendrecv_v2_brotli",
-                "sendrecv_v2_lz4",
-                "sendrecv_v2_zstd",
-                "sendrecv_v2_dry_run_send",
-            ];
-
-            if (initialDelayedAckBytes > 0) {
-                features.push(AdbFeature.DelayedAck);
-            }
-
             await sendPacket({
                 command: AdbCommand.Connect,
                 arg0: version,
                 arg1: maxPayloadSize,
                 // The terminating `;` is required in formal definition
                 // But ADB daemon (all versions) can still work without it
-                payload: encodeUtf8(`host::features=${features.join(",")};`),
+                payload: encodeUtf8(
+                    `host::features=${clientFeatures.join(",")};`
+                ),
             });
 
             banner = await resolver.promise;
@@ -204,8 +218,9 @@ export class Adb implements Closeable {
             connection,
             version,
             maxPayloadSize,
-            banner,
+            clientFeatures,
             initialDelayedAckBytes,
+            banner,
         });
     }
 
@@ -240,8 +255,13 @@ export class Adb implements Closeable {
         return this._device;
     }
 
+    private _clientFeatures: readonly AdbFeature[];
+    public get clientFeatures() {
+        return this._clientFeatures;
+    }
+
     private _features: AdbFeature[] = [];
-    public get features() {
+    public get features(): readonly AdbFeature[] {
         return this._features;
     }
 
@@ -254,12 +274,15 @@ export class Adb implements Closeable {
         connection,
         version,
         maxPayloadSize,
-        banner,
+        clientFeatures = ADB_CLIENT_DEFAULT_FEATURES,
         initialDelayedAckBytes = ADB_DEFAULT_INITIAL_PAYLOAD_SIZE,
+        banner,
     }: AdbClientOptions) {
+        this._clientFeatures = clientFeatures;
+
         this.parseBanner(banner);
 
-        if (this.supportsFeature(AdbFeature.DelayedAck)) {
+        if (this.canUseFeature(AdbFeature.DelayedAck)) {
             if (initialDelayedAckBytes <= 0) {
                 throw new Error(
                     "`initialDelayedAckBytes` must be greater than 0 when DelayedAck feature is enabled."
@@ -328,8 +351,11 @@ export class Adb implements Closeable {
         }
     }
 
-    public supportsFeature(feature: AdbFeature): boolean {
-        return this._features.includes(feature);
+    public canUseFeature(feature: AdbFeature): boolean {
+        return (
+            this._clientFeatures.includes(feature) &&
+            this._features.includes(feature)
+        );
     }
 
     /**

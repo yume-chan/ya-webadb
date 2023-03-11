@@ -126,7 +126,7 @@ class MultiplexStream<T> {
  */
 export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     public static isSupported(adb: Adb) {
-        return adb.supportsFeature(AdbFeature.ShellV2);
+        return adb.canUseFeature(AdbFeature.ShellV2);
     }
 
     public static async pty(adb: Adb, command: string) {
