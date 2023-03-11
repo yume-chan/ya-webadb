@@ -43,22 +43,10 @@ export type AdbPacketData = Omit<
     "checksum" | "magic"
 >;
 
-// All fields except `magic`, which can be calculated in `AdbPacketSerializeStream`
-export type AdbPacketInit = Omit<(typeof AdbPacket)["TInit"], "magic">;
+export type AdbPacketInit = (typeof AdbPacket)["TInit"];
 
-export function calculateChecksum(payload: Uint8Array): number;
-export function calculateChecksum(init: AdbPacketData): AdbPacketInit;
-export function calculateChecksum(
-    payload: Uint8Array | AdbPacketData
-): number | AdbPacketInit {
-    if (payload instanceof Uint8Array) {
-        return payload.reduce((result, item) => result + item, 0);
-    } else {
-        (payload as AdbPacketInit).checksum = calculateChecksum(
-            payload.payload
-        );
-        return payload as AdbPacketInit;
-    }
+export function calculateChecksum(payload: Uint8Array): number {
+    return payload.reduce((result, item) => result + item, 0);
 }
 
 export class AdbPacketSerializeStream extends TransformStream<
@@ -69,8 +57,6 @@ export class AdbPacketSerializeStream extends TransformStream<
         super({
             transform: (init, controller) => {
                 // This syntax is ugly, but I don't want to create a new object.
-                (init as unknown as AdbPacketHeaderInit).magic =
-                    init.command ^ 0xffffffff;
                 (init as unknown as AdbPacketHeaderInit).payloadLength =
                     init.payload.byteLength;
 
