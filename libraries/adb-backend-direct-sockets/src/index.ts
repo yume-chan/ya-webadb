@@ -3,45 +3,52 @@ import { AdbPacket, AdbPacketSerializeStream } from "@yume-chan/adb";
 import type { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 import {
     StructDeserializeStream,
+    UnwrapConsumableStream,
     WrapReadableStream,
     WrapWritableStream,
-    pipeFrom,
 } from "@yume-chan/stream-extra";
 
 declare global {
-    interface TCPSocket {
-        close(): Promise<void>;
-
-        readonly remoteAddress: string;
-        readonly remotePort: number;
-        readonly readable: ReadableStream<Uint8Array>;
-        readonly writable: WritableStream<BufferSource>;
-    }
-
-    interface SocketOptions {
-        localAddress?: string | undefined;
-        localPort?: number | undefined;
+    interface TCPSocketOpenInfo {
+        readable: ReadableStream<Uint8Array>;
+        writable: WritableStream<Uint8Array>;
 
         remoteAddress: string;
         remotePort: number;
 
+        localAddress: string;
+        localPort: number;
+    }
+
+    class TCPSocket {
+        constructor(
+            remoteAddress: string,
+            remotePort: number,
+            options?: TCPSocketOptions
+        );
+
+        opened: Promise<TCPSocketOpenInfo>;
+        closed: Promise<void>;
+
+        close(): Promise<void>;
+    }
+
+    interface TCPSocketOptions {
         sendBufferSize?: number;
         receiveBufferSize?: number;
 
-        keepAlive?: number;
         noDelay?: boolean;
+        keepAliveDelay?: number;
     }
 
-    interface Navigator {
-        openTCPSocket(options?: SocketOptions): Promise<TCPSocket>;
+    interface Window {
+        TCPSocket: typeof TCPSocket;
     }
 }
 
 export default class AdbDirectSocketsBackend implements AdbBackend {
     public static isSupported(): boolean {
-        return (
-            typeof window !== "undefined" && !!window.navigator?.openTCPSocket
-        );
+        return typeof window !== "undefined" && !!window.TCPSocket;
     }
 
     public readonly serial: string;
@@ -60,21 +67,16 @@ export default class AdbDirectSocketsBackend implements AdbBackend {
     }
 
     public async connect() {
-        const { readable, writable } = await navigator.openTCPSocket({
-            remoteAddress: this.host,
-            remotePort: this.port,
-            noDelay: true,
-        });
+        const socket = new TCPSocket(this.host, this.port, { noDelay: true });
+        const { readable, writable } = await socket.opened;
 
-        // Native streams can't `pipeTo()` or `pipeThrough()` polyfilled streams, so we need to wrap them
         return {
             readable: new WrapReadableStream(readable).pipeThrough(
                 new StructDeserializeStream(AdbPacket)
             ),
-            writable: pipeFrom(
-                new WrapWritableStream(writable),
-                new AdbPacketSerializeStream()
-            ),
+            writable: new WrapWritableStream(writable)
+                .bePipedThroughFrom(new UnwrapConsumableStream())
+                .bePipedThroughFrom(new AdbPacketSerializeStream()),
         };
     }
 }

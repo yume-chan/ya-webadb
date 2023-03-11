@@ -1,10 +1,15 @@
 import { AsyncOperationManager, PromiseResolver } from "@yume-chan/async";
 import type { RemoveEventListener } from "@yume-chan/event";
 import type {
+    Consumable,
     ReadableWritablePair,
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
-import { AbortController, WritableStream } from "@yume-chan/stream-extra";
+import {
+    AbortController,
+    ConsumableWritableStream,
+    WritableStream,
+} from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
@@ -54,7 +59,7 @@ export class AdbPacketDispatcher implements Closeable {
      */
     private readonly sockets = new Map<number, AdbSocketController>();
 
-    private _writer: WritableStreamDefaultWriter<AdbPacketInit>;
+    private _writer: WritableStreamDefaultWriter<Consumable<AdbPacketInit>>;
 
     public readonly options: AdbPacketDispatcherOptions;
 
@@ -69,7 +74,10 @@ export class AdbPacketDispatcher implements Closeable {
     private _abortController = new AbortController();
 
     public constructor(
-        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
+        connection: ReadableWritablePair<
+            AdbPacketData,
+            Consumable<AdbPacketInit>
+        >,
         options: AdbPacketDispatcherOptions
     ) {
         this.options = options;
@@ -284,7 +292,7 @@ export class AdbPacketDispatcher implements Closeable {
             throw new Error("payload too large");
         }
 
-        await this._writer.write({
+        await ConsumableWritableStream.write(this._writer, {
             command,
             arg0,
             arg1,

@@ -5,12 +5,13 @@ import type {
     PushReadableStreamController,
     ReadableStream,
     ReadableWritablePair,
+    WritableStream,
 } from "@yume-chan/stream-extra";
 import {
+    ConsumableWritableStream,
     DistributionStream,
     DuplexStreamFactory,
     PushReadableStream,
-    WritableStream,
     pipeFrom,
 } from "@yume-chan/stream-extra";
 
@@ -117,7 +118,7 @@ export class AdbSocketController
 
         this.writable = pipeFrom(
             this._duplex.createWritable(
-                new WritableStream<Consumable<Uint8Array>>({
+                new ConsumableWritableStream<Uint8Array>({
                     write: async (chunk) => {
                         // Wait for an ack packet
                         this._writePromise = new PromiseResolver();
@@ -125,10 +126,9 @@ export class AdbSocketController
                             AdbCommand.Write,
                             this.localId,
                             this.remoteId,
-                            chunk.value
+                            chunk
                         );
                         await this._writePromise.promise;
-                        chunk.consume();
                     },
                 })
             ),
@@ -138,14 +138,14 @@ export class AdbSocketController
         this._socket = new AdbSocket(this);
     }
 
-    public async enqueue(packet: Uint8Array) {
+    public async enqueue(data: Uint8Array) {
         // Consumer may abort the `ReadableStream` to close the socket,
         // it's OK to throw away further packets in this case.
         if (this._readableController.abortSignal.aborted) {
             return;
         }
 
-        await this._readableController.enqueue(packet);
+        await this._readableController.enqueue(data);
     }
 
     public ack() {

@@ -1,10 +1,14 @@
 import type { AdbBackend, AdbPacketData, AdbPacketInit } from "@yume-chan/adb";
 import { AdbPacketHeader, AdbPacketSerializeStream } from "@yume-chan/adb";
-import type { ReadableWritablePair } from "@yume-chan/stream-extra";
+import type {
+    Consumable,
+    ReadableWritablePair,
+    WritableStream,
+} from "@yume-chan/stream-extra";
 import {
+    ConsumableWritableStream,
     DuplexStreamFactory,
     ReadableStream,
-    WritableStream,
     pipeFrom,
 } from "@yume-chan/stream-extra";
 import type { StructDeserializeStream } from "@yume-chan/struct";
@@ -114,14 +118,14 @@ class Uint8ArrayStructDeserializeStream implements StructDeserializeStream {
 }
 
 export class AdbWebUsbBackendStream
-    implements ReadableWritablePair<AdbPacketData, AdbPacketInit>
+    implements ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
 {
     private _readable: ReadableStream<AdbPacketData>;
     public get readable() {
         return this._readable;
     }
 
-    private _writable: WritableStream<AdbPacketInit>;
+    private _writable: WritableStream<Consumable<AdbPacketInit>>;
     public get writable() {
         return this._writable;
     }
@@ -134,7 +138,10 @@ export class AdbWebUsbBackendStream
     ) {
         let closed = false;
 
-        const factory = new DuplexStreamFactory<AdbPacketData, Uint8Array>({
+        const factory = new DuplexStreamFactory<
+            AdbPacketData,
+            Consumable<Uint8Array>
+        >({
             close: async () => {
                 try {
                     closed = true;
@@ -203,7 +210,7 @@ export class AdbWebUsbBackendStream
         const zeroMask = outEndpoint.packetSize - 1;
         this._writable = pipeFrom(
             factory.createWritable(
-                new WritableStream({
+                new ConsumableWritableStream({
                     write: async (chunk) => {
                         try {
                             await device.transferOut(
@@ -272,7 +279,7 @@ export class AdbWebUsbBackend implements AdbBackend {
      * @returns The pair of `AdbPacket` streams.
      */
     public async connect(): Promise<
-        ReadableWritablePair<AdbPacketData, AdbPacketInit>
+        ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
     > {
         if (!this._device.opened) {
             await this._device.open();

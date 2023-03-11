@@ -1,8 +1,8 @@
 import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
 import {
     AbortController,
+    ConsumableWritableStream,
     DistributionStream,
-    WritableStream,
 } from "@yume-chan/stream-extra";
 import Struct, { placeholder } from "@yume-chan/struct";
 
@@ -41,14 +41,13 @@ async function pipeFile(
     const abortController = new AbortController();
     file.pipeThrough(new DistributionStream(packetSize, true))
         .pipeTo(
-            new WritableStream({
+            new ConsumableWritableStream({
                 write: async (chunk) => {
                     await adbSyncWriteRequest(
                         locked,
                         AdbSyncRequestId.Data,
-                        chunk.value
+                        chunk
                     );
-                    chunk.consume();
                 },
             }),
             { signal: abortController.signal }

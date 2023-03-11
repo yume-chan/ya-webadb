@@ -1,5 +1,4 @@
-import { Consumable } from "./consumable.js";
-import { TransformStream } from "./stream.js";
+import { ConsumableTransformStream } from "./consumable.js";
 
 /**
  * Splits or combines buffers to specified size.
@@ -78,47 +77,34 @@ export class BufferCombiner {
     }
 }
 
-export class DistributionStream extends TransformStream<
-    Consumable<Uint8Array>,
-    Consumable<Uint8Array>
+export class DistributionStream extends ConsumableTransformStream<
+    Uint8Array,
+    Uint8Array
 > {
     public constructor(size: number, combine = false) {
         const combiner = combine ? new BufferCombiner(size) : undefined;
         super({
             async transform(chunk, controller) {
                 if (combiner) {
-                    for (const buffer of combiner.push(chunk.value)) {
-                        const output = new Consumable(buffer);
-                        controller.enqueue(output);
-                        await output.consumed;
+                    for (const buffer of combiner.push(chunk)) {
+                        await controller.enqueue(buffer);
                     }
                 } else {
-                    const data = chunk.value;
                     let offset = 0;
-                    let available = data.byteLength;
+                    let available = chunk.byteLength;
                     while (available > 0) {
                         const end = offset + size;
-
-                        const output = new Consumable(
-                            data.subarray(offset, end)
-                        );
-                        controller.enqueue(output);
-                        await output.consumed;
-
+                        await controller.enqueue(chunk.subarray(offset, end));
                         offset = end;
                         available -= size;
                     }
                 }
-
-                chunk.consume();
             },
             async flush(controller) {
                 if (combiner) {
                     const data = combiner.flush();
                     if (data) {
-                        const output = new Consumable(data);
-                        controller.enqueue(output);
-                        await output.consumed;
+                        await controller.enqueue(data);
                     }
                 }
             },

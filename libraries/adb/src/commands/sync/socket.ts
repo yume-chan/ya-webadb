@@ -1,8 +1,11 @@
-import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
+import type {
+    Consumable,
+    WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 import {
     BufferCombiner,
     BufferedReadableStream,
-    Consumable,
+    ConsumableWritableStream,
 } from "@yume-chan/stream-extra";
 import type { StructAsyncDeserializeStream } from "@yume-chan/struct";
 
@@ -31,9 +34,7 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
     }
 
     private async writeInnerStream(buffer: Uint8Array) {
-        const output = new Consumable(buffer);
-        await this._writer.write(output);
-        await output.consumed;
+        await ConsumableWritableStream.write(this._writer, buffer);
     }
 
     public async flush() {

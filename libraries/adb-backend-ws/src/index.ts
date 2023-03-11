@@ -1,10 +1,11 @@
 import type { AdbBackend } from "@yume-chan/adb";
 import { AdbPacket, AdbPacketSerializeStream } from "@yume-chan/adb";
+import type { Consumable } from "@yume-chan/stream-extra";
 import {
+    ConsumableWritableStream,
     DuplexStreamFactory,
     ReadableStream,
     StructDeserializeStream,
-    WritableStream,
     pipeFrom,
 } from "@yume-chan/stream-extra";
 
@@ -29,7 +30,10 @@ export default class AdbWsBackend implements AdbBackend {
             };
         });
 
-        const factory = new DuplexStreamFactory<Uint8Array, Uint8Array>({
+        const factory = new DuplexStreamFactory<
+            Uint8Array,
+            Consumable<Uint8Array>
+        >({
             close: () => {
                 socket.close();
             },
@@ -64,19 +68,11 @@ export default class AdbWsBackend implements AdbBackend {
         );
 
         const writable = factory.createWritable(
-            new WritableStream(
-                {
-                    write: (chunk) => {
-                        socket.send(chunk);
-                    },
+            new ConsumableWritableStream({
+                write(chunk) {
+                    socket.send(chunk);
                 },
-                {
-                    highWaterMark: 16 * 1024,
-                    size(chunk) {
-                        return chunk.byteLength;
-                    },
-                }
-            )
+            })
         );
 
         return {

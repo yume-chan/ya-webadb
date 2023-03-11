@@ -17,6 +17,7 @@ import {
 import AdbWsBackend from "@yume-chan/adb-backend-ws";
 import AdbWebCredentialStore from "@yume-chan/adb-credential-web";
 import {
+    Consumable,
     InspectStream,
     ReadableStream,
     WritableStream,
@@ -181,7 +182,7 @@ function _Connect(): JSX.Element | null {
         setConnecting(true);
 
         let readable: ReadableStream<AdbPacketData>;
-        let writable: WritableStream<AdbPacketInit>;
+        let writable: WritableStream<Consumable<AdbPacketInit>>;
         try {
             const streams = await selectedBackend.connect();
 
@@ -194,8 +195,8 @@ function _Connect(): JSX.Element | null {
 
             writable = pipeFrom(
                 streams.writable,
-                new InspectStream((packet: AdbPacketInit) => {
-                    GLOBAL_STATE.appendLog("out", packet);
+                new InspectStream((packet: Consumable<AdbPacketInit>) => {
+                    GLOBAL_STATE.appendLog("out", packet.value);
                 })
             );
         } catch (e: any) {

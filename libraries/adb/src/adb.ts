@@ -1,7 +1,8 @@
 import { PromiseResolver } from "@yume-chan/async";
-import type { ReadableWritablePair } from "@yume-chan/stream-extra";
+import type { Consumable, ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
     AbortController,
+    ConsumableWritableStream,
     DecodeUtf8Stream,
     GatherStringStream,
     WritableStream,
@@ -49,7 +50,10 @@ export class Adb implements Closeable {
      * and starts a new authentication process.
      */
     public static async authenticate(
-        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
+        connection: ReadableWritablePair<
+            AdbPacketData,
+            Consumable<AdbPacketInit>
+        >,
         credentialStore: AdbCredentialStore,
         authenticators = ADB_DEFAULT_AUTHENTICATORS
     ): Promise<Adb> {
@@ -113,7 +117,7 @@ export class Adb implements Closeable {
             // Because we don't know if the device needs it or not.
             (init as AdbPacketInit).checksum = calculateChecksum(init.payload);
             (init as AdbPacketInit).magic = init.command ^ 0xffffffff;
-            await writer.write(init as AdbPacketInit);
+            await ConsumableWritableStream.write(writer, init as AdbPacketInit);
         }
 
         let banner: string;
@@ -206,7 +210,10 @@ export class Adb implements Closeable {
     public readonly tcpip: AdbTcpIpCommand;
 
     public constructor(
-        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
+        connection: ReadableWritablePair<
+            AdbPacketData,
+            Consumable<AdbPacketInit>
+        >,
         version: number,
         maxPayloadSize: number,
         banner: string
