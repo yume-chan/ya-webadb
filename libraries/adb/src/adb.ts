@@ -145,7 +145,9 @@ export class Adb implements Closeable {
         async function sendPacket(init: AdbPacketData) {
             // Always send checksum in auth steps
             // Because we don't know if the device needs it or not.
-            await writer.write(calculateChecksum(init));
+            (init as AdbPacketInit).checksum = calculateChecksum(init.payload);
+            (init as AdbPacketInit).magic = init.command ^ 0xffffffff;
+            await writer.write(init as AdbPacketInit);
         }
 
         let banner: string;

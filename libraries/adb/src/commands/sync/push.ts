@@ -150,9 +150,11 @@ export interface AdbSyncPushOptions extends AdbSyncPushV2Options {
 export function adbSyncPush(options: AdbSyncPushOptions) {
     if (options.v2) {
         return adbSyncPushV2(options);
-    } else if (options.dryRun) {
-        throw new Error("dryRun is not supported in v1");
-    } else {
-        return adbSyncPushV1(options);
     }
+
+    if (options.dryRun) {
+        throw new Error("dryRun is not supported in v1");
+    }
+
+    return adbSyncPushV1(options);
 }

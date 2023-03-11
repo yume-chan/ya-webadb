@@ -334,49 +334,30 @@ export class AdbPacketDispatcher implements Closeable {
         return controller.socket;
     }
 
-    public sendPacket(packet: AdbPacketInit): Promise<void>;
-    public sendPacket(
+    public async sendPacket(
         command: AdbCommand,
         arg0: number,
         arg1: number,
-        payload?: string | Uint8Array
-    ): Promise<void>;
-    public async sendPacket(
-        packetOrCommand: AdbPacketInit | AdbCommand,
-        arg0?: number,
-        arg1?: number,
         payload: string | Uint8Array = EMPTY_UINT8_ARRAY
     ): Promise<void> {
-        let init: AdbPacketData;
-        if (arg0 === undefined) {
-            init = packetOrCommand as AdbPacketInit;
-        } else {
-            if (typeof payload === "string") {
-                payload = encodeUtf8(payload);
-            }
-
-            init = {
-                command: packetOrCommand as AdbCommand,
-                arg0: arg0,
-                arg1: arg1 as number,
-                payload,
-            };
+        if (typeof payload === "string") {
+            payload = encodeUtf8(payload);
         }
 
-        if (
-            init.payload &&
-            init.payload.byteLength > this.options.maxPayloadSize
-        ) {
+        if (payload.byteLength > this.options.maxPayloadSize) {
             throw new Error("payload too large");
         }
 
-        if (this.options.calculateChecksum) {
-            calculateChecksum(init);
-        } else {
-            (init as AdbPacketInit).checksum = 0;
-        }
-
-        await this._writer.write(init as AdbPacketInit);
+        await this._writer.write({
+            command,
+            arg0,
+            arg1,
+            payload,
+            checksum: this.options.calculateChecksum
+                ? calculateChecksum(payload)
+                : 0,
+            magic: command ^ 0xffffffff,
+        });
     }
 
     private sendOk(localId: number, remoteId: number, ackBytes: number) {

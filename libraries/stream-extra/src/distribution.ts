@@ -1,87 +1,125 @@
 import { Consumable } from "./consumable.js";
 import { TransformStream } from "./stream.js";
 
+/**
+ * Splits or combines buffers to specified size.
+ */
+export class BufferCombiner {
+    private _capacity: number;
+    private readonly _buffer: Uint8Array;
+    private _offset: number;
+    private _available: number;
+
+    public constructor(size: number) {
+        this._capacity = size;
+        this._buffer = new Uint8Array(size);
+        this._offset = 0;
+        this._available = size;
+    }
+
+    /**
+     * Pushes data to the combiner.
+     * @param data The input data to be split or combined.
+     * @returns
+     * A generator that yields buffers of specified size.
+     * It may yield the same buffer multiple times, consume the data before calling `next`.
+     */
+    public *push(data: Uint8Array): Generator<Uint8Array, void, void> {
+        let offset = 0;
+        let available = data.byteLength;
+
+        if (this._offset !== 0) {
+            if (available >= this._available) {
+                this._buffer.set(
+                    data.subarray(0, this._available),
+                    this._offset
+                );
+                offset += this._available;
+                available -= this._available;
+
+                yield this._buffer;
+                this._offset = 0;
+                this._available = this._capacity;
+
+                if (available === 0) {
+                    return;
+                }
+            } else {
+                this._buffer.set(data, this._offset);
+                this._offset += available;
+                this._available -= available;
+                return;
+            }
+        }
+
+        while (available >= this._capacity) {
+            const end = offset + this._capacity;
+            yield data.subarray(offset, end);
+            offset = end;
+            available -= this._capacity;
+        }
+
+        if (available > 0) {
+            this._buffer.set(data.subarray(offset), this._offset);
+            this._offset += available;
+            this._available -= available;
+        }
+    }
+
+    public flush(): Uint8Array | undefined {
+        if (this._offset === 0) {
+            return undefined;
+        }
+
+        const output = this._buffer.subarray(0, this._offset);
+        this._offset = 0;
+        this._available = this._capacity;
+        return output;
+    }
+}
+
 export class DistributionStream extends TransformStream<
     Consumable<Uint8Array>,
     Consumable<Uint8Array>
 > {
     public constructor(size: number, combine = false) {
-        const combineBuffer = combine ? new Uint8Array(size) : undefined;
-        let combineBufferOffset = 0;
-        let combineBufferAvailable = size;
+        const combiner = combine ? new BufferCombiner(size) : undefined;
         super({
             async transform(chunk, controller) {
-                let offset = 0;
-                let available = chunk.value.byteLength;
-
-                if (combineBuffer && combineBufferOffset !== 0) {
-                    if (available >= combineBufferAvailable) {
-                        combineBuffer.set(
-                            chunk.value.subarray(0, combineBufferAvailable),
-                            combineBufferOffset
-                        );
-                        offset += combineBufferAvailable;
-                        available -= combineBufferAvailable;
-
-                        const output = new Consumable(combineBuffer);
+                if (combiner) {
+                    for (const buffer of combiner.push(chunk.value)) {
+                        const output = new Consumable(buffer);
                         controller.enqueue(output);
                         await output.consumed;
-
-                        combineBufferOffset = 0;
-                        combineBufferAvailable = size;
-
-                        if (available === 0) {
-                            chunk.consume();
-                            return;
-                        }
-                    } else {
-                        combineBuffer.set(chunk.value, combineBufferOffset);
-                        combineBufferOffset += available;
-                        combineBufferAvailable -= available;
-                        chunk.consume();
-                        return;
                     }
-                }
+                } else {
+                    const data = chunk.value;
+                    let offset = 0;
+                    let available = data.byteLength;
+                    while (available > 0) {
+                        const end = offset + size;
 
-                while (available >= size) {
-                    const end = offset + size;
-
-                    const output = new Consumable(
-                        chunk.value.subarray(offset, end)
-                    );
-                    controller.enqueue(output);
-                    await output.consumed;
-
-                    offset = end;
-                    available -= size;
-                }
-
-                if (available > 0) {
-                    if (combineBuffer) {
-                        combineBuffer.set(
-                            chunk.value.subarray(offset),
-                            combineBufferOffset
-                        );
-                        combineBufferOffset += available;
-                        combineBufferAvailable -= available;
-                    } else {
                         const output = new Consumable(
-                            chunk.value.subarray(offset)
+                            data.subarray(offset, end)
                         );
                         controller.enqueue(output);
                         await output.consumed;
+
+                        offset = end;
+                        available -= size;
                     }
                 }
 
                 chunk.consume();
             },
             async flush(controller) {
-                if (combineBuffer && combineBufferOffset !== 0) {
-                    const output = new Consumable(
-                        combineBuffer.subarray(0, combineBufferOffset)
-                    );
-                    controller.enqueue(output);
-                    await output.consumed;
+                if (combiner) {
+                    const data = combiner.flush();
+                    if (data) {
+                        const output = new Consumable(data);
+                        controller.enqueue(output);
+                        await output.consumed;
+                    }
                 }
             },
         });
