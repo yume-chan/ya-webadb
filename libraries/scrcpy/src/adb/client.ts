@@ -5,15 +5,14 @@ import {
 } from "@yume-chan/adb";
 import type {
     Consumable,
-    ReadableStreamDefaultController,
-    ReadableStreamDefaultReader,
+    ReadableStream,
     ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import {
     AbortController,
     DecodeUtf8Stream,
     InspectStream,
-    ReadableStream,
+    PushReadableStream,
     SplitStringStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
@@ -30,60 +29,26 @@ import { DEFAULT_SERVER_PATH } from "../options/index.js";
 import type { AdbScrcpyConnection } from "./connection.js";
 import type { AdbScrcpyOptions } from "./options/index.js";
 
-class ArrayToStream<T> extends ReadableStream<T> {
-    private array!: T[];
-    private index = 0;
-
-    constructor(array: T[]) {
-        super({
-            start: async () => {
-                await Promise.resolve();
-                this.array = array;
-            },
-            pull: (controller) => {
-                if (this.index < this.array.length) {
-                    controller.enqueue(this.array[this.index]!);
-                    this.index += 1;
-                } else {
-                    controller.close();
-                }
-            },
-        });
-    }
+function arrayToStream<T>(array: T[]): ReadableStream<T> {
+    return new PushReadableStream(async (controller) => {
+        for (const item of array) {
+            await controller.enqueue(item);
+        }
+    });
 }
 
-class ConcatStream<T> extends ReadableStream<T> {
-    private streams!: ReadableStream<T>[];
-    private index = 0;
-    private reader!: ReadableStreamDefaultReader<T>;
-
-    constructor(...streams: ReadableStream<T>[]) {
-        super({
-            start: async (controller) => {
-                await Promise.resolve();
-
-                this.streams = streams;
-                this.advance(controller);
-            },
-            pull: async (controller) => {
-                const result = await this.reader.read();
-                if (!result.done) {
-                    controller.enqueue(result.value);
-                    return;
-                }
-                this.advance(controller);
-            },
-        });
-    }
-
-    private advance(controller: ReadableStreamDefaultController<T>) {
-        if (this.index < this.streams.length) {
-            this.reader = this.streams[this.index]!.getReader();
-            this.index += 1;
-        } else {
-            controller.close();
+function concatStreams<T>(...streams: ReadableStream<T>[]): ReadableStream<T> {
+    return new PushReadableStream(async (controller) => {
+        for (const stream of streams) {
+            await stream.pipeTo(
+                new WritableStream({
+                    async write(chunk) {
+                        await controller.enqueue(chunk);
+                    },
+                })
+            );
         }
-    }
+    });
 }
 
 export class ScrcpyExitedError extends Error {
@@ -193,7 +158,7 @@ export class AdbScrcpyClient {
             return new AdbScrcpyClient(
                 options,
                 process,
-                new ConcatStream(new ArrayToStream(output), stdout),
+                concatStreams(arrayToStream(output), stdout),
                 videoStream,
                 controlStream
             );

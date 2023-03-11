@@ -1,11 +1,13 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type {
+    Consumable,
     PushReadableStreamController,
     ReadableStream,
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import {
-    Consumable,
+    ConsumableTransformStream,
+    ConsumableWritableStream,
     PushReadableStream,
     StructDeserializeStream,
     TransformStream,
@@ -41,20 +43,17 @@ type AdbShellProtocolPacketInit = (typeof AdbShellProtocolPacket)["TInit"];
 
 type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
 
-class StdinSerializeStream extends TransformStream<
-    Consumable<Uint8Array>,
-    Consumable<AdbShellProtocolPacketInit>
+class StdinSerializeStream extends ConsumableTransformStream<
+    Uint8Array,
+    AdbShellProtocolPacketInit
 > {
     constructor() {
         super({
             async transform(chunk, controller) {
-                const output = new Consumable<AdbShellProtocolPacketInit>({
+                await controller.enqueue({
                     id: AdbShellProtocolId.Stdin,
-                    data: chunk.value,
+                    data: chunk,
                 });
-                controller.enqueue(output);
-                await output.consumed;
-                chunk.consume();
             },
             flush() {
                 // TODO: AdbShellSubprocessProtocol: support closing stdin
@@ -210,14 +209,11 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
         >();
         void multiplexer.readable
             .pipeThrough(
-                new TransformStream({
+                new ConsumableTransformStream({
                     async transform(chunk, controller) {
-                        const output = new Consumable(
-                            AdbShellProtocolPacket.serialize(chunk.value)
+                        await controller.enqueue(
+                            AdbShellProtocolPacket.serialize(chunk)
                         );
-                        controller.enqueue(output);
-                        await output.consumed;
-                        chunk.consume();
                     },
                 })
             )
@@ -232,7 +228,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     }
 
     public async resize(rows: number, cols: number) {
-        const output = new Consumable({
+        await ConsumableWritableStream.write(this._socketWriter, {
             id: AdbShellProtocolId.WindowSizeChange,
             data: encodeUtf8(
                 // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
@@ -241,8 +237,6 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                 `${rows}x${cols},0x0\0`
             ),
         });
-        await this._socketWriter.write(output);
-        await output.consumed;
     }
 
     public kill() {

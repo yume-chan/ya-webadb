@@ -1,8 +1,10 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
-import { Consumable } from "./consumable.js";
+import {
+    ConsumableReadableStream,
+    ConsumableWritableStream,
+} from "./consumable.js";
 import { DistributionStream } from "./distribution.js";
-import { ReadableStream, WritableStream } from "./stream.js";
 
 const TestData = new Uint8Array(50);
 for (let i = 0; i < 50; i += 1) {
@@ -17,14 +19,12 @@ async function testInputOutput(
     const write = jest.fn((chunk: Uint8Array) => {
         void chunk;
     });
-    await new ReadableStream<Consumable<Uint8Array>>({
+    await new ConsumableReadableStream<Uint8Array>({
         async start(controller) {
             let offset = 0;
             for (const length of inputLengths) {
                 const end = offset + length;
-                const output = new Consumable(TestData.subarray(offset, end));
-                controller.enqueue(output);
-                await output.consumed;
+                await controller.enqueue(TestData.subarray(offset, end));
                 offset = end;
             }
             controller.close();
@@ -32,11 +32,10 @@ async function testInputOutput(
     })
         .pipeThrough(new DistributionStream(10, combine || undefined))
         .pipeTo(
-            new WritableStream({
+            new ConsumableWritableStream({
                 write(chunk) {
-                    // chunk.value will be reused, so we need to copy it
-                    write(chunk.value.slice());
-                    chunk.consume();
+                    // chunk will be reused, so we need to copy it
+                    write(chunk.slice());
                 },
             })
         );

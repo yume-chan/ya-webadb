@@ -1,4 +1,4 @@
-import { TransformStream } from "@yume-chan/stream-extra";
+import { ConsumableTransformStream } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
 export enum AdbCommand {
@@ -49,28 +49,25 @@ export function calculateChecksum(payload: Uint8Array): number {
     return payload.reduce((result, item) => result + item, 0);
 }
 
-export class AdbPacketSerializeStream extends TransformStream<
+export class AdbPacketSerializeStream extends ConsumableTransformStream<
     AdbPacketInit,
     Uint8Array
 > {
     public constructor() {
+        const headerBuffer = new Uint8Array(AdbPacketHeader.size);
         super({
-            transform: (init, controller) => {
-                // This syntax is ugly, but I don't want to create a new object.
-                (init as unknown as AdbPacketHeaderInit).payloadLength =
-                    init.payload.byteLength;
+            transform: async (chunk, controller) => {
+                const init = chunk as AdbPacketInit & AdbPacketHeaderInit;
+                init.payloadLength = init.payload.byteLength;
 
-                controller.enqueue(
-                    AdbPacketHeader.serialize(
-                        init as unknown as AdbPacketHeaderInit
-                    )
-                );
+                AdbPacketHeader.serialize(init, headerBuffer);
+                await controller.enqueue(headerBuffer);
 
                 if (init.payload.byteLength) {
                     // USB protocol preserves packet boundaries,
                     // so we must write payload separately as native ADB does,
                     // otherwise the read operation on device will fail.
-                    controller.enqueue(init.payload);
+                    await controller.enqueue(init.payload);
                 }
             },
         });

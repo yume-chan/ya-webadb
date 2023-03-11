@@ -1,8 +1,9 @@
 import type {
+    Consumable,
     WritableStream,
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
-import { Consumable } from "@yume-chan/stream-extra";
+import { ConsumableWritableStream } from "@yume-chan/stream-extra";
 
 import type {
     ScrcpyOptions,
@@ -55,9 +56,7 @@ export class ScrcpyControlMessageSerializer {
     }
 
     private async write(data: Uint8Array) {
-        const output = new Consumable(data);
-        await this.writer.write(output);
-        await output.consumed;
+        await ConsumableWritableStream.write(this.writer, data);
     }
 
     public injectKeyCode(

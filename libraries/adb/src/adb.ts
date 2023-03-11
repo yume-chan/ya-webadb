@@ -1,7 +1,8 @@
 import { PromiseResolver } from "@yume-chan/async";
-import type { ReadableWritablePair } from "@yume-chan/stream-extra";
+import type { Consumable, ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
     AbortController,
+    ConsumableWritableStream,
     DecodeUtf8Stream,
     GatherStringStream,
     WritableStream,
@@ -44,7 +45,7 @@ export const ADB_VERSION_OMIT_CHECKSUM = 0x01000001;
 export const ADB_DEFAULT_INITIAL_PAYLOAD_SIZE = 32 * 1024 * 1024;
 
 export interface AdbClientAuthenticateOptions {
-    connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>;
+    connection: ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>;
     credentialStore: AdbCredentialStore;
     authenticators?: AdbAuthenticator[];
     /**
@@ -59,7 +60,7 @@ export interface AdbClientAuthenticateOptions {
 }
 
 export interface AdbClientOptions {
-    connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>;
+    connection: ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>;
     version: number;
     maxPayloadSize: number;
     banner: string;
@@ -147,7 +148,7 @@ export class Adb implements Closeable {
             // Because we don't know if the device needs it or not.
             (init as AdbPacketInit).checksum = calculateChecksum(init.payload);
             (init as AdbPacketInit).magic = init.command ^ 0xffffffff;
-            await writer.write(init as AdbPacketInit);
+            await ConsumableWritableStream.write(writer, init as AdbPacketInit);
         }
 
         let banner: string;

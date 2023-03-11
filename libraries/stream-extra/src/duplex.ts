@@ -9,6 +9,10 @@ import type {
 import { WritableStream } from "./stream.js";
 import { WrapReadableStream } from "./wrap-readable.js";
 
+const NOOP = () => {
+    // no-op
+};
+
 export interface DuplexStreamFactoryOptions {
     /**
      * Callback when any `ReadableStream` is cancelled (the user doesn't need any more data),
@@ -68,7 +72,7 @@ export class DuplexStreamFactory<R, W> {
                 return readable;
             },
             cancel: async () => {
-                // cancel means the local peer closes the connection first.
+                // cancel means the local peer wants to close the connection.
                 await this.close();
             },
             close: async () => {
@@ -93,9 +97,7 @@ export class DuplexStreamFactory<R, W> {
                 await this.close();
             },
             close: async () => {
-                await writer.close().catch((e) => {
-                    void e;
-                });
+                await writer.close().catch(NOOP);
                 await this.close();
             },
         });
@@ -114,9 +116,7 @@ export class DuplexStreamFactory<R, W> {
         }
 
         for (const writer of this.writers) {
-            await writer.close().catch((e) => {
-                void e;
-            });
+            await writer.close().catch(NOOP);
         }
     }
 
@@ -127,8 +127,8 @@ export class DuplexStreamFactory<R, W> {
         for (const controller of this.readableControllers) {
             try {
                 controller.close();
-            } catch (e) {
-                void e;
+            } catch {
+                // ignore
             }
         }
 

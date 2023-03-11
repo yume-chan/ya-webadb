@@ -30,7 +30,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
         strategy?: QueuingStrategy<T>
     ) {
         let waterMarkLow: PromiseResolver<void> | undefined;
-        const canceled: AbortController = new AbortController();
+        const canceled = new AbortController();
 
         super(
             {
