@@ -112,6 +112,7 @@ export class Adb implements Closeable {
             // Always send checksum in auth steps
             // Because we don't know if the device needs it or not.
             (init as AdbPacketInit).checksum = calculateChecksum(init.payload);
+            (init as AdbPacketInit).magic = init.command ^ 0xffffffff;
             await writer.write(init as AdbPacketInit);
         }
 
