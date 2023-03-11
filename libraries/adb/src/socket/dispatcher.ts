@@ -67,7 +67,7 @@ export class AdbPacketDispatcher implements Closeable {
      */
     private readonly sockets = new Map<number, AdbSocketController>();
 
-    private _writer!: WritableStreamDefaultWriter<AdbPacketInit>;
+    private _writer: WritableStreamDefaultWriter<AdbPacketInit>;
 
     public readonly options: AdbPacketDispatcherOptions;
 
@@ -376,7 +376,6 @@ export class AdbPacketDispatcher implements Closeable {
             (init as AdbPacketInit).checksum = 0;
         }
 
-        await this._writer.ready;
         await this._writer.write(init as AdbPacketInit);
     }
 

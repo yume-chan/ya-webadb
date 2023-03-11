@@ -1,25 +1,16 @@
 import { AutoDisposable } from "@yume-chan/event";
-import type {
-    ReadableStream,
-    WritableStream,
-    WritableStreamDefaultWriter,
-} from "@yume-chan/stream-extra";
-import {
-    BufferedReadableStream,
-    WrapReadableStream,
-    WrapWritableStream,
-} from "@yume-chan/stream-extra";
+import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
 
 import type { Adb } from "../../adb.js";
-import { AdbFeatures } from "../../features.js";
+import { AdbFeature } from "../../features.js";
 import type { AdbSocket } from "../../socket/index.js";
-import { AutoResetEvent } from "../../utils/index.js";
 import { escapeArg } from "../subprocess/index.js";
 
 import type { AdbSyncEntry } from "./list.js";
 import { adbSyncOpenDir } from "./list.js";
 import { adbSyncPull } from "./pull.js";
 import { adbSyncPush } from "./push.js";
+import { AdbSyncSocket } from "./socket.js";
 import { adbSyncLstat, adbSyncStat } from "./stat.js";
 
 /**
@@ -38,57 +29,64 @@ export function dirname(path: string): string {
     return path.substring(0, end);
 }
 
-export class AdbSync extends AutoDisposable {
-    protected adb: Adb;
+export interface AdbSyncWriteOptions {
+    filename: string;
+    file: ReadableStream<Consumable<Uint8Array>>;
+    mode?: number;
+    mtime?: number;
+    dryRun?: boolean;
+}
 
-    protected stream: BufferedReadableStream;
-    // Getting another writer on a locked WritableStream will throw.
-    // We don't want this behavior on higher-level APIs.
-    // So we acquire the writer early and use a blocking lock to guard it.
-    protected writer: WritableStreamDefaultWriter<Uint8Array>;
-    protected sendLock = this.addDisposable(new AutoResetEvent());
+export class AdbSync extends AutoDisposable {
+    protected _adb: Adb;
+    protected _socket: AdbSyncSocket;
+
+    private _supportsStat: boolean;
+    private _supportsListV2: boolean;
+    private _fixedPushMkdir: boolean;
+    private _supportsSendReceiveV2: boolean;
+    private _needPushMkdirWorkaround: boolean;
 
     public get supportsStat(): boolean {
-        return this.adb.supportsFeature(AdbFeatures.StatV2);
+        return this._supportsStat;
     }
 
-    public get supportsList2(): boolean {
-        return this.adb.supportsFeature(AdbFeatures.ListV2);
+    public get supportsListV2(): boolean {
+        return this._supportsListV2;
     }
 
     public get fixedPushMkdir(): boolean {
-        return this.adb.supportsFeature(AdbFeatures.FixedPushMkdir);
+        return this._fixedPushMkdir;
+    }
+
+    public get supportsSendReceiveV2(): boolean {
+        return this._supportsSendReceiveV2;
     }
 
     public get needPushMkdirWorkaround(): boolean {
-        // https://android.googlesource.com/platform/packages/modules/adb/+/91768a57b7138166e0a3d11f79cd55909dda7014/client/file_sync_client.cpp#1361
-        return (
-            this.adb.supportsFeature(AdbFeatures.ShellV2) &&
-            !this.fixedPushMkdir
-        );
+        return this._needPushMkdirWorkaround;
     }
 
     public constructor(adb: Adb, socket: AdbSocket) {
         super();
 
-        this.adb = adb;
-        this.stream = new BufferedReadableStream(socket.readable);
-        this.writer = socket.writable.getWriter();
+        this._adb = adb;
+        this._socket = new AdbSyncSocket(socket, adb.maxPayloadSize);
+
+        this._supportsStat = adb.supportsFeature(AdbFeature.StatV2);
+        this._supportsListV2 = adb.supportsFeature(AdbFeature.ListV2);
+        this._fixedPushMkdir = adb.supportsFeature(AdbFeature.FixedPushMkdir);
+        this._supportsSendReceiveV2 = adb.supportsFeature(
+            AdbFeature.SendReceiveV2
+        );
+        // https://android.googlesource.com/platform/packages/modules/adb/+/91768a57b7138166e0a3d11f79cd55909dda7014/client/file_sync_client.cpp#1361
+        this._needPushMkdirWorkaround =
+            this._adb.supportsFeature(AdbFeature.ShellV2) &&
+            !this.fixedPushMkdir;
     }
 
     public async lstat(path: string) {
-        await this.sendLock.wait();
-
-        try {
-            return adbSyncLstat(
-                this.stream,
-                this.writer,
-                path,
-                this.supportsStat
-            );
-        } finally {
-            this.sendLock.notifyOne();
-        }
+        return await adbSyncLstat(this._socket, path, this.supportsStat);
     }
 
     public async stat(path: string) {
@@ -96,13 +94,7 @@ export class AdbSync extends AutoDisposable {
             throw new Error("Not supported");
         }
 
-        await this.sendLock.wait();
-
-        try {
-            return adbSyncStat(this.stream, this.writer, path);
-        } finally {
-            this.sendLock.notifyOne();
-        }
+        return await adbSyncStat(this._socket, path);
     }
 
     public async isDirectory(path: string): Promise<boolean> {
@@ -114,21 +106,8 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public async *opendir(
-        path: string
-    ): AsyncGenerator<AdbSyncEntry, void, void> {
-        await this.sendLock.wait();
-
-        try {
-            yield* adbSyncOpenDir(
-                this.stream,
-                this.writer,
-                path,
-                this.supportsList2
-            );
-        } finally {
-            this.sendLock.notifyOne();
-        }
+    public opendir(path: string): AsyncGenerator<AdbSyncEntry, void, void> {
+        return adbSyncOpenDir(this._socket, path, this.supportsListV2);
     }
 
     public async readdir(path: string) {
@@ -146,61 +125,39 @@ export class AdbSync extends AutoDisposable {
      * @returns A `ReadableStream` that reads from the file.
      */
     public read(filename: string): ReadableStream<Uint8Array> {
-        return new WrapReadableStream({
-            start: async () => {
-                await this.sendLock.wait();
-                return adbSyncPull(this.stream, this.writer, filename);
-            },
-            close: () => {
-                this.sendLock.notifyOne();
-            },
-        });
+        return adbSyncPull(this._socket, filename);
     }
 
     /**
      * Write (or overwrite) a file on device.
      *
      * @param filename The full path of the file on device to write.
+     * @param file The content to write.
      * @param mode The unix permissions of the file.
      * @param mtime The modified time of the file.
      * @returns A `WritableStream` that writes to the file.
      */
-    public write(
-        filename: string,
-        mode?: number,
-        mtime?: number
-    ): WritableStream<Uint8Array> {
-        return new WrapWritableStream({
-            start: async () => {
-                await this.sendLock.wait();
+    public async write(options: AdbSyncWriteOptions) {
+        if (this.needPushMkdirWorkaround) {
+            // It may fail if the path is already existed.
+            // Ignore the result.
+            // TODO: sync: test push mkdir workaround (need an Android 8 device)
+            await this._adb.subprocess.spawnAndWait([
+                "mkdir",
+                "-p",
+                escapeArg(dirname(options.filename)),
+            ]);
+        }
 
-                if (this.needPushMkdirWorkaround) {
-                    // It may fail if the path is already existed.
-                    // Ignore the result.
-                    // TODO: sync: test push mkdir workaround (need an Android 8 device)
-                    await this.adb.subprocess.spawnAndWait([
-                        "mkdir",
-                        "-p",
-                        escapeArg(dirname(filename)),
-                    ]);
-                }
-
-                return adbSyncPush(
-                    this.stream,
-                    this.writer,
-                    filename,
-                    mode,
-                    mtime
-                );
-            },
-            close: () => {
-                this.sendLock.notifyOne();
-            },
+        await adbSyncPush({
+            v2: this.supportsSendReceiveV2,
+            socket: this._socket,
+            ...options,
         });
     }
 
     public override async dispose() {
         super.dispose();
-        await this.writer.close();
+        await this._socket.close();
     }
 }

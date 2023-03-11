@@ -1,9 +1,10 @@
-import type { Adb, AdbSubprocessProtocol, AdbSync } from "@yume-chan/adb";
+import type { Adb, AdbSubprocessProtocol } from "@yume-chan/adb";
 import {
     AdbReverseNotSupportedError,
     AdbSubprocessNoneProtocol,
 } from "@yume-chan/adb";
 import type {
+    Consumable,
     ReadableStreamDefaultController,
     ReadableStreamDefaultReader,
     ReadableWritablePair,
@@ -14,7 +15,6 @@ import {
     InspectStream,
     ReadableStream,
     SplitStringStream,
-    WrapWritableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
 
@@ -96,17 +96,20 @@ export class ScrcpyExitedError extends Error {
 }
 
 export class AdbScrcpyClient {
-    public static pushServer(adb: Adb, path = DEFAULT_SERVER_PATH) {
-        let sync!: AdbSync;
-        return new WrapWritableStream<Uint8Array>({
-            async start() {
-                sync = await adb.sync();
-                return sync.write(path);
-            },
-            async close() {
-                await sync.dispose();
-            },
-        });
+    public static async pushServer(
+        adb: Adb,
+        file: ReadableStream<Consumable<Uint8Array>>,
+        filename = DEFAULT_SERVER_PATH
+    ) {
+        const sync = await adb.sync();
+        try {
+            await sync.write({
+                filename,
+                file,
+            });
+        } finally {
+            await sync.dispose();
+        }
     }
 
     public static async start(
@@ -326,7 +329,9 @@ export class AdbScrcpyClient {
         process: AdbSubprocessProtocol,
         stdout: ReadableStream<string>,
         videoStream: ReadableStream<Uint8Array>,
-        controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined
+        controlStream:
+            | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
+            | undefined
     ) {
         this.process = process;
         this._stdout = stdout;

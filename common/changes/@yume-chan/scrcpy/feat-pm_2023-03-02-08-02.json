@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/scrcpy",
-            "comment": "Update `AndroidKeyCode` enum to align with Web `KeyboardEvent.code`",
+            "comment": "Change `AdbScrcpyClient#pushServer` to take a `ReadableStream<Uint8Array>` instead of returning a `WritableStream<Uint8Array>`",
             "type": "none"
         }
     ],

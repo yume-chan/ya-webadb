@@ -3,6 +3,7 @@ import { AdbReverseNotSupportedError } from "@yume-chan/adb";
 import { delay } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
+    Consumable,
     ReadableStream,
     ReadableStreamDefaultReader,
     ReadableWritablePair,
@@ -42,7 +43,7 @@ export abstract class AdbScrcpyConnection implements Disposable {
         [
             videoSteam: ReadableStream<Uint8Array>,
             controlStream:
-                | ReadableWritablePair<Uint8Array, Uint8Array>
+                | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
                 | undefined
         ]
     >;
@@ -55,12 +56,14 @@ export abstract class AdbScrcpyConnection implements Disposable {
 export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     private _disposed = false;
 
-    private connect(): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
+    private connect(): Promise<
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
+    > {
         return this.adb.createSocket("localabstract:scrcpy");
     }
 
     private async connectAndRetry(): Promise<
-        ReadableWritablePair<Uint8Array, Uint8Array>
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
     > {
         for (let i = 0; !this._disposed && i < 100; i += 1) {
             try {
@@ -90,14 +93,14 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
         [
             videoSteam: ReadableStream<Uint8Array>,
             controlStream:
-                | ReadableWritablePair<Uint8Array, Uint8Array>
+                | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
                 | undefined
         ]
     > {
         const videoStream = await this.connectVideoStream();
 
         let controlStream:
-            | ReadableWritablePair<Uint8Array, Uint8Array>
+            | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
             | undefined;
         if (this.options.control) {
             controlStream = await this.connectAndRetry();
@@ -125,7 +128,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
 
 export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     private streams!: ReadableStreamDefaultReader<
-        ReadableWritablePair<Uint8Array, Uint8Array>
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
     >;
 
     private address!: string;
@@ -143,8 +146,8 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
         }
 
         const queue = new TransformStream<
-            ReadableWritablePair<Uint8Array, Uint8Array>,
-            ReadableWritablePair<Uint8Array, Uint8Array>
+            ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
+            ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
         >();
         this.streams = queue.readable.getReader();
         const writer = queue.writable.getWriter();
@@ -159,7 +162,7 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     }
 
     private async accept(): Promise<
-        ReadableWritablePair<Uint8Array, Uint8Array>
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
     > {
         return (await this.streams.read()).value!;
     }
@@ -168,14 +171,14 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
         [
             videoSteam: ReadableStream<Uint8Array>,
             controlStream:
-                | ReadableWritablePair<Uint8Array, Uint8Array>
+                | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
                 | undefined
         ]
     > {
         const { readable: videoStream } = await this.accept();
 
         let controlStream:
-            | ReadableWritablePair<Uint8Array, Uint8Array>
+            | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
             | undefined;
         if (this.options.control) {
             controlStream = await this.accept();

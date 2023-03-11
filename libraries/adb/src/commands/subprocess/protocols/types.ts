@@ -1,4 +1,8 @@
-import type { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
+import type {
+    Consumable,
+    ReadableStream,
+    WritableStream,
+} from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
 import type { Adb } from "../../../adb.js";
@@ -8,7 +12,7 @@ export interface AdbSubprocessProtocol {
     /**
      * A WritableStream that writes to the `stdin` stream.
      */
-    readonly stdin: WritableStream<Uint8Array>;
+    readonly stdin: WritableStream<Consumable<Uint8Array>>;
 
     /**
      * The `stdout` stream of the process.

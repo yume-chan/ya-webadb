@@ -18,7 +18,6 @@ export function pipeFrom<W, T>(
     const pipe = pair.readable.pipeTo(writable);
     return new WritableStream<T>({
         async write(chunk) {
-            await writer.ready;
             await writer.write(chunk);
         },
         async close() {

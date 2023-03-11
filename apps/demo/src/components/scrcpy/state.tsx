@@ -16,7 +16,8 @@ import {
 } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
 import {
-    ChunkStream,
+    Consumable,
+    DistributionStream,
     InspectStream,
     ReadableStream,
     WritableStream,
@@ -67,13 +68,15 @@ export class ScrcpyPageState {
 
     async pushServer() {
         const serverBuffer = await fetchServer();
-
-        await new ReadableStream<Uint8Array>({
-            start(controller) {
-                controller.enqueue(serverBuffer);
-                controller.close();
-            },
-        }).pipeTo(AdbScrcpyClient.pushServer(GLOBAL_STATE.device!));
+        await AdbScrcpyClient.pushServer(
+            GLOBAL_STATE.device!,
+            new ReadableStream<Consumable<Uint8Array>>({
+                start(controller) {
+                    controller.enqueue(new Consumable(serverBuffer));
+                    controller.close();
+                },
+            })
+        );
     }
 
     decoder: H264Decoder | undefined = undefined;
@@ -186,21 +189,27 @@ export class ScrcpyPageState {
             );
 
             try {
-                await new ReadableStream<Uint8Array>({
-                    start(controller) {
-                        controller.enqueue(serverBuffer);
-                        controller.close();
-                    },
-                })
-                    .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
-                    .pipeThrough(
-                        new ProgressStream(
-                            action((progress) => {
-                                this.serverUploadedSize = progress;
-                            })
+                await AdbScrcpyClient.pushServer(
+                    GLOBAL_STATE.device!,
+                    new ReadableStream<Consumable<Uint8Array>>({
+                        start(controller) {
+                            controller.enqueue(new Consumable(serverBuffer));
+                            controller.close();
+                        },
+                    })
+                        // In fact `pushServer` will pipe the stream through a DistributionStream,
+                        // but without this pipeThrough, the progress will not be updated.
+                        .pipeThrough(
+                            new DistributionStream(ADB_SYNC_MAX_PACKET_SIZE)
                         )
-                    )
-                    .pipeTo(AdbScrcpyClient.pushServer(GLOBAL_STATE.device!));
+                        .pipeThrough(
+                            new ProgressStream(
+                                action((progress) => {
+                                    this.serverUploadedSize = progress;
+                                })
+                            )
+                        )
+                );
 
                 runInAction(() => {
                     this.serverUploadSpeed =

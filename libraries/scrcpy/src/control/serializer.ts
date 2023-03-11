@@ -2,6 +2,7 @@ import type {
     WritableStream,
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
+import { Consumable } from "@yume-chan/stream-extra";
 
 import type {
     ScrcpyOptions,
@@ -23,11 +24,11 @@ export class ScrcpyControlMessageSerializer {
     private options: ScrcpyOptions<ScrcpyOptionsInit1_16>;
     /** Control message type values for current version of server */
     private types: ScrcpyControlMessageType[];
-    private writer: WritableStreamDefaultWriter<Uint8Array>;
+    private writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     private scrollController: ScrcpyScrollController;
 
     public constructor(
-        stream: WritableStream<Uint8Array>,
+        stream: WritableStream<Consumable<Uint8Array>>,
         options: ScrcpyOptions<ScrcpyOptionsInit1_16>
     ) {
         this.writer = stream.getWriter();
@@ -53,10 +54,16 @@ export class ScrcpyControlMessageSerializer {
         return message as T;
     }
 
+    private async write(data: Uint8Array) {
+        const output = new Consumable(data);
+        await this.writer.write(output);
+        await output.consumed;
+    }
+
     public injectKeyCode(
         message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">
     ) {
-        return this.writer.write(
+        return this.write(
             ScrcpyInjectKeyCodeControlMessage.serialize(
                 this.addMessageType(
                     message,
@@ -67,7 +74,7 @@ export class ScrcpyControlMessageSerializer {
     }
 
     public injectText(text: string) {
-        return this.writer.write(
+        return this.write(
             ScrcpyInjectTextControlMessage.serialize({
                 text,
                 type: this.getActualMessageType(
@@ -81,7 +88,7 @@ export class ScrcpyControlMessageSerializer {
      * `pressure` is a float value between 0 and 1.
      */
     public injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
-        return this.writer.write(
+        return this.write(
             ScrcpyInjectTouchControlMessage.serialize(
                 this.addMessageType(
                     message,
@@ -105,7 +112,7 @@ export class ScrcpyControlMessageSerializer {
             return;
         }
 
-        return this.writer.write(data);
+        return this.write(data);
     }
 
     public async backOrScreenOn(action: AndroidKeyEventAction) {
@@ -117,12 +124,12 @@ export class ScrcpyControlMessageSerializer {
         });
 
         if (buffer) {
-            return await this.writer.write(buffer);
+            return await this.write(buffer);
         }
     }
 
     public setScreenPowerMode(mode: AndroidScreenPowerMode) {
-        return this.writer.write(
+        return this.write(
             ScrcpySetScreenPowerModeControlMessage.serialize({
                 mode,
                 type: this.getActualMessageType(
@@ -133,7 +140,7 @@ export class ScrcpyControlMessageSerializer {
     }
 
     public rotateDevice() {
-        return this.writer.write(
+        return this.write(
             ScrcpyRotateDeviceControlMessage.serialize({
                 type: this.getActualMessageType(
                     ScrcpyControlMessageType.RotateDevice

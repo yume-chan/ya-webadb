@@ -5,7 +5,7 @@ import {
     Stack,
     TooltipHost,
 } from "@fluentui/react";
-import { AdbFeatures } from "@yume-chan/adb";
+import { AdbFeature } from "@yume-chan/adb";
 import { observer } from "mobx-react-lite";
 import type { NextPage } from "next";
 import Head from "next/head";
@@ -14,25 +14,28 @@ import { GLOBAL_STATE } from "../state";
 import { Icons, RouteStackProps } from "../utils";
 
 const KNOWN_FEATURES: Record<string, string> = {
-    [AdbFeatures.ShellV2]: `"shell" command now supports separating child process's stdout and stderr, and returning exit code`,
+    [AdbFeature.ShellV2]: `"shell" command now supports separating child process's stdout and stderr, and returning exit code`,
     // 'cmd': '',
-    [AdbFeatures.StatV2]:
+    [AdbFeature.StatV2]:
         '"sync" command now supports "STA2" (returns more information of a file than old "STAT") and "LST2" (returns information of a directory) sub command',
-    [AdbFeatures.ListV2]:
+    [AdbFeature.ListV2]:
         '"sync" command now supports "LST2" sub command which returns more information when listing a directory than old "LIST"',
-    [AdbFeatures.FixedPushMkdir]:
+    [AdbFeature.FixedPushMkdir]:
         "Android 9 (P) introduced a bug that pushing files to a non-existing directory would fail. This feature indicates it's fixed (Android 10)",
     // 'apex': '',
     // 'abb': '',
     // 'fixed_push_symlink_timestamp': '',
-    abb_exec:
-        'Support "exec" command which can stream stdin into child process',
+    [AdbFeature.AbbExec]:
+        'Supports "abb_exec" variant that can be used to install App faster',
     // 'remount_shell': '',
     // 'track_app': '',
     // 'sendrecv_v2': '',
-    // 'sendrecv_v2_brotli': '',
-    // 'sendrecv_v2_lz4': '',
-    // 'sendrecv_v2_zstd': '',
+    sendrecv_v2_brotli:
+        'Supports "brotli" compression algorithm when pushing/pulling files',
+    sendrecv_v2_lz4:
+        'Supports "lz4" compression algorithm when pushing/pulling files',
+    sendrecv_v2_zstd:
+        'Supports "zstd" compression algorithm when pushing/pulling files',
     // 'sendrecv_v2_dry_run_send': '',
 };
 

@@ -48,9 +48,14 @@ export class GlobalState {
     }
 
     appendLog(direction: PacketLogItemDirection, packet: AdbPacketData) {
-        (packet as PacketLogItem).direction = direction;
-        (packet as PacketLogItem).timestamp = new Date();
-        this.logs.push(packet as PacketLogItem);
+        // Payload buffer can be re-used,
+        // so make a copy
+        this.logs.push({
+            ...packet,
+            direction,
+            timestamp: new Date(),
+            payload: packet.payload.slice(),
+        } as PacketLogItem);
     }
 
     clearLog() {

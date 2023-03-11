@@ -1,12 +1,13 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
+    Consumable,
     PushReadableStreamController,
     ReadableStream,
     ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import {
-    ChunkStream,
+    DistributionStream,
     DuplexStreamFactory,
     PushReadableStream,
     WritableStream,
@@ -32,7 +33,7 @@ export interface AdbSocketConstructionOptions extends AdbSocketInfo {
 export class AdbSocketController
     implements
         AdbSocketInfo,
-        ReadableWritablePair<Uint8Array, Uint8Array>,
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
         Closeable,
         Disposable
 {
@@ -43,7 +44,7 @@ export class AdbSocketController
     public readonly localCreated!: boolean;
     public readonly serviceString!: string;
 
-    private _duplex: DuplexStreamFactory<Uint8Array, Uint8Array>;
+    private _duplex: DuplexStreamFactory<Uint8Array, Consumable<Uint8Array>>;
 
     private _readable: ReadableStream<Uint8Array>;
     private _readableController!: PushReadableStreamController<Uint8Array>;
@@ -67,7 +68,7 @@ export class AdbSocketController
     public get availableWriteBytes() {
         return this._availableWriteBytes;
     }
-    public readonly writable: WritableStream<Uint8Array>;
+    public readonly writable: WritableStream<Consumable<Uint8Array>>;
 
     private _closed = false;
     /**
@@ -91,7 +92,10 @@ export class AdbSocketController
         // cspell: disable-next-line
         // https://www.plantuml.com/plantuml/png/TL0zoeGm4ErpYc3l5JxyS0yWM6mX5j4C6p4cxcJ25ejttuGX88ZftizxUKmJI275pGhXl0PP_UkfK_CAz5Z2hcWsW9Ny2fdU4C1f5aSchFVxA8vJjlTPRhqZzDQMRB7AklwJ0xXtX0ZSKH1h24ghoKAdGY23FhxC4nS2pDvxzIvxb-8THU0XlEQJ-ZB7SnXTAvc_LhOckhMdLBnbtndpb-SB7a8q2SRD_W00
 
-        this._duplex = new DuplexStreamFactory<Uint8Array, Uint8Array>({
+        this._duplex = new DuplexStreamFactory<
+            Uint8Array,
+            Consumable<Uint8Array>
+        >({
             close: async () => {
                 this._closed = true;
 
@@ -120,9 +124,10 @@ export class AdbSocketController
 
         this.writable = pipeFrom(
             this._duplex.createWritable(
-                new WritableStream({
+                new WritableStream<Consumable<Uint8Array>>({
                     write: async (chunk) => {
-                        while (this._availableWriteBytes < chunk.byteLength) {
+                        const length = chunk.value.byteLength;
+                        while (this._availableWriteBytes < length) {
                             // Only one lock is required because Web Streams API guarantees
                             // that `write` is not reentrant.
                             this._availableWriteBytesChanged =
@@ -133,19 +138,20 @@ export class AdbSocketController
                         if (this._availableWriteBytes === Infinity) {
                             this._availableWriteBytes = -1;
                         } else {
-                            this._availableWriteBytes -= chunk.byteLength;
+                            this._availableWriteBytes -= length;
                         }
 
                         await this.dispatcher.sendPacket(
                             AdbCommand.Write,
                             this.localId,
                             this.remoteId,
-                            chunk
+                            chunk.value
                         );
+                        chunk.consume();
                     },
                 })
             ),
-            new ChunkStream(this.dispatcher.options.maxPayloadSize)
+            new DistributionStream(this.dispatcher.options.maxPayloadSize)
         );
 
         this._socket = new AdbSocket(this);
@@ -184,7 +190,9 @@ export class AdbSocketController
  * `socket.writable.close()` or `socket.writable.getWriter().close()`.
  */
 export class AdbSocket
-    implements AdbSocketInfo, ReadableWritablePair<Uint8Array, Uint8Array>
+    implements
+        AdbSocketInfo,
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
 {
     private _controller: AdbSocketController;
 
@@ -204,7 +212,7 @@ export class AdbSocket
     public get readable(): ReadableStream<Uint8Array> {
         return this._controller.readable;
     }
-    public get writable(): WritableStream<Uint8Array> {
+    public get writable(): WritableStream<Consumable<Uint8Array>> {
         return this._controller.writable;
     }
 

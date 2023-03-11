@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yume-chan/adb",
+      "comment": "Remove `Adb#install` in favor of `PackageManager#install` from `@yume-chan/android-bin` package",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yume-chan/adb"
+}

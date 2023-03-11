@@ -81,7 +81,9 @@ export class AdbPacketSerializeStream extends TransformStream<
                 );
 
                 if (init.payload.byteLength) {
-                    // Enqueue payload separately to avoid copying
+                    // USB protocol preserves packet boundaries,
+                    // so we must write payload separately as native ADB does,
+                    // otherwise the read operation on device will fail.
                     controller.enqueue(init.payload);
                 }
             },
