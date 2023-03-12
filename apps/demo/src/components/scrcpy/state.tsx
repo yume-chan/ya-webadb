@@ -4,7 +4,7 @@ import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
 import {
     AdbScrcpyClient,
-    AdbScrcpyOptions1_26,
+    AdbScrcpyOptions2_0,
     AndroidScreenPowerMode,
     CodecOptions,
     DEFAULT_SERVER_PATH,
@@ -12,7 +12,7 @@ import {
     ScrcpyHoverHelper,
     ScrcpyInstanceId,
     ScrcpyLogLevel,
-    ScrcpyOptions1_26,
+    ScrcpyOptions2_0,
     ScrcpyVideoStreamConfigurationPacket,
     ScrcpyVideoStreamPacket,
     clamp,
@@ -270,8 +270,8 @@ export class ScrcpyPageState {
             // Less latency
             // codecOptions.value.intraRefreshPeriod = 10000;
 
-            const options = new AdbScrcpyOptions1_26(
-                new ScrcpyOptions1_26({
+            const options = new AdbScrcpyOptions2_0(
+                new ScrcpyOptions2_0({
                     ...SETTING_STATE.settings,
                     logLevel: ScrcpyLogLevel.Debug,
                     scid: ScrcpyInstanceId.random(),

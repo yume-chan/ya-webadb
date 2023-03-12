@@ -13,11 +13,11 @@ import {
 import { makeStyles } from "@griffel/react";
 import {
     AdbScrcpyClient,
-    AdbScrcpyOptions1_22,
+    AdbScrcpyOptions2_0,
     DEFAULT_SERVER_PATH,
     ScrcpyLogLevel,
-    ScrcpyOptions1_25,
-    ScrcpyOptionsInit1_24,
+    ScrcpyOptions2_0,
+    ScrcpyOptionsInit2_0,
     ScrcpyVideoOrientation,
 } from "@yume-chan/scrcpy";
 import {
@@ -37,7 +37,7 @@ import { GLOBAL_STATE } from "../../state";
 import { Icons } from "../../utils";
 import { STATE } from "./state";
 
-export type Settings = Partial<ScrcpyOptionsInit1_24>;
+export type Settings = ScrcpyOptionsInit2_0;
 
 export interface ClientSettings {
     turnScreenOff?: boolean;
@@ -187,7 +187,7 @@ export const SETTING_STATE = makeAutoObservable(
 
         settings: {
             maxSize: 1080,
-            bitRate: 4_000_000,
+            videoBitRate: 4_000_000,
             lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
             displayId: 0,
             crop: "",
@@ -268,8 +268,8 @@ export const SETTING_DEFINITIONS = computed(() => {
                             GLOBAL_STATE.device!,
                             DEFAULT_SERVER_PATH,
                             SCRCPY_SERVER_VERSION,
-                            new AdbScrcpyOptions1_22(
-                                new ScrcpyOptions1_25({
+                            new AdbScrcpyOptions2_0(
+                                new ScrcpyOptions2_0({
                                     logLevel: ScrcpyLogLevel.Debug,
                                 })
                             )
@@ -319,9 +319,9 @@ export const SETTING_DEFINITIONS = computed(() => {
 
     result.push({
         group: "settings",
-        key: "bitRate",
+        key: "videoBitRate",
         type: "number",
-        label: "Max Bit Rate",
+        label: "Video Bit Rate",
         min: 100,
         max: 100_000_000,
         step: 100,
@@ -379,8 +379,8 @@ export const SETTING_DEFINITIONS = computed(() => {
                             GLOBAL_STATE.device!,
                             DEFAULT_SERVER_PATH,
                             SCRCPY_SERVER_VERSION,
-                            new AdbScrcpyOptions1_22(
-                                new ScrcpyOptions1_25({
+                            new AdbScrcpyOptions2_0(
+                                new ScrcpyOptions2_0({
                                     logLevel: ScrcpyLogLevel.Debug,
                                 })
                             )
