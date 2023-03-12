@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yume-chan/scrcpy",
+      "comment": "Add support for Scrcpy 2.0",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yume-chan/scrcpy"
+}
