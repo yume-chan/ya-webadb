@@ -10,7 +10,10 @@ import type {
     ScrcpyInjectTouchControlMessage,
 } from "../control/index.js";
 
-import { ScrcpyFloatToUint16FieldDefinition } from "./1_16/index.js";
+import {
+    CodecOptions,
+    ScrcpyFloatToUint16FieldDefinition,
+} from "./1_16/index.js";
 import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
 import { ScrcpyOptions1_25 } from "./1_25/index.js";
 import type { ScrcpyOptionValue, ScrcpyVideoStreamMetadata } from "./types.js";
@@ -53,27 +56,74 @@ export class ScrcpyInstanceId implements ScrcpyOptionValue {
 }
 
 export interface ScrcpyOptionsInit2_0 extends ScrcpyOptionsInit1_24 {
-    scid: ScrcpyInstanceId;
-    codec: "h264" | "h265" | "av1";
-    sendCodecId: boolean;
+    scid?: ScrcpyInstanceId;
+    audio?: boolean;
+    videoCodec?: "h264" | "h265" | "av1";
+    audioCodec?: "opus" | "aac" | "raw";
+    /**
+     * @deprecated Use `videoBitRate` instead
+     */
+    bitRate?: number;
+    videoBitRate?: number;
+    audioBitRate?: number;
+    /**
+     * @deprecated Use `videoCodecOptions` instead
+     */
+    codecOptions?: CodecOptions;
+    videoCodecOptions?: CodecOptions;
+    audioCodecOptions?: CodecOptions;
+    /**
+     * @deprecated Use `videoEncoder` instead
+     */
+    encoderName?: string;
+    videoEncoder?: string;
+    audioEncoder?: string;
+    listEncoders?: boolean;
+    listDisplay?: boolean;
+    sendCodecMeta?: boolean;
 }
 
 export class ScrcpyOptions2_0<
     T extends ScrcpyOptionsInit2_0 = ScrcpyOptionsInit2_0
 > extends ScrcpyOptions1_25<T> {
-    public constructor(init: Partial<ScrcpyOptionsInit2_0>) {
+    public constructor(init: ScrcpyOptionsInit2_0) {
+        if (!init.videoBitRate && init.bitRate) {
+            init.videoBitRate = init.bitRate;
+            delete init.bitRate;
+        }
+
+        if (!init.videoCodecOptions && init.codecOptions) {
+            init.videoCodecOptions = init.codecOptions;
+            delete init.codecOptions;
+        }
+
+        if (!init.videoEncoder && init.encoderName) {
+            init.videoEncoder = init.encoderName;
+            delete init.encoderName;
+        }
+
         if (!init.rawVideoStream) {
-            init.sendCodecId = false;
+            init.sendCodecMeta = false;
         }
 
         super(init);
     }
 
-    public override getDefaultValues(): T {
+    public override getDefaultValues(): Required<T> {
         return Object.assign(super.getDefaultValues(), {
             scid: ScrcpyInstanceId.NONE,
-            codec: "h264",
-            sendCodecId: true,
+            audio: true,
+            videoCodec: "h264",
+            audioCodec: "opus",
+            videoBitRate: 8000000,
+            audioBitRate: 128000,
+            videoCodecOptions: new CodecOptions(),
+            audioCodecOptions: new CodecOptions(),
+            videoEncoder: "",
+            audioEncoder: "",
+            listEncoders: false,
+            listDisplay: false,
+            sendCodecMeta: true,
         } satisfies Omit<ScrcpyOptionsInit2_0, keyof ScrcpyOptionsInit1_24>);
     }
 
@@ -81,7 +131,7 @@ export class ScrcpyOptions2_0<
         stream: ReadableStream<Uint8Array>
     ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
         const sendCodecId =
-            this.value.sendCodecId ?? this.getDefaultValues().sendCodecId;
+            this.value.sendCodecMeta ?? this.getDefaultValues().sendCodecMeta;
         if (!sendCodecId) {
             return super.parseVideoStreamMetadata(stream);
         } else {

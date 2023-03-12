@@ -90,9 +90,9 @@ export type ScrcpyVideoStreamPacket =
     | ScrcpyVideoStreamFramePacket;
 
 export interface ScrcpyOptions<T extends object> {
-    value: Partial<T>;
+    value: T;
 
-    getDefaultValues(): T;
+    getDefaultValues(): Required<T>;
 
     serializeServerArguments(): string[];
 

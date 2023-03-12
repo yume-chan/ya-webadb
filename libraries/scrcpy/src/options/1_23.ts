@@ -5,7 +5,7 @@ import { ScrcpyOptions1_22 } from "./1_22/options.js";
 import type { ScrcpyVideoStreamPacket } from "./types.js";
 
 export interface ScrcpyOptionsInit1_23 extends ScrcpyOptionsInit1_22 {
-    cleanup: boolean;
+    cleanup?: boolean;
 }
 
 const KEYFRAME_PTS = BigInt(1) << BigInt(62);
@@ -13,11 +13,11 @@ const KEYFRAME_PTS = BigInt(1) << BigInt(62);
 export class ScrcpyOptions1_23<
     T extends ScrcpyOptionsInit1_23 = ScrcpyOptionsInit1_23
 > extends ScrcpyOptions1_22<T> {
-    public constructor(init: Partial<ScrcpyOptionsInit1_23>) {
+    public constructor(init: ScrcpyOptionsInit1_23) {
         super(init);
     }
 
-    public override getDefaultValues(): T {
+    public override getDefaultValues(): Required<T> {
         return Object.assign(super.getDefaultValues(), {
             cleanup: true,
         } satisfies Omit<ScrcpyOptionsInit1_23, keyof ScrcpyOptionsInit1_22>);

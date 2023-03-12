@@ -53,21 +53,21 @@ export enum ScrcpyVideoOrientation {
 }
 
 export interface ScrcpyOptionsInit1_16 {
-    logLevel: ScrcpyLogLevel;
+    logLevel?: ScrcpyLogLevel;
 
     /**
      * The maximum value of both width and height.
      */
-    maxSize: number;
+    maxSize?: number;
 
-    bitRate: number;
+    bitRate?: number;
 
     /**
      * 0 for unlimited.
      *
      * @default 0
      */
-    maxFps: number;
+    maxFps?: number;
 
     /**
      * The orientation of the video stream.
@@ -75,7 +75,7 @@ export interface ScrcpyOptionsInit1_16 {
      * It will not keep the device screen in specific orientation,
      * only the captured video will in this orientation.
      */
-    lockVideoOrientation: ScrcpyVideoOrientation;
+    lockVideoOrientation?: ScrcpyVideoOrientation;
 
     /**
      * Use ADB forward tunnel instead of reverse tunnel.
@@ -85,9 +85,9 @@ export interface ScrcpyOptionsInit1_16 {
      *
      * When using `AdbScrcpyClient`, it can detect this situation and enable this option automatically.
      */
-    tunnelForward: boolean;
+    tunnelForward?: boolean;
 
-    crop: string;
+    crop?: string;
 
     /**
      * Send PTS so that the client may record properly
@@ -100,22 +100,22 @@ export interface ScrcpyOptionsInit1_16 {
      *
      * @default true
      */
-    sendFrameMeta: boolean;
+    sendFrameMeta?: boolean;
 
     /**
      * @default true
      */
-    control: boolean;
+    control?: boolean;
 
-    displayId: number;
+    displayId?: number;
 
-    showTouches: boolean;
+    showTouches?: boolean;
 
-    stayAwake: boolean;
+    stayAwake?: boolean;
 
-    codecOptions: CodecOptions;
+    codecOptions?: CodecOptions;
 
-    encoderName: string;
+    encoderName?: string;
 }
 
 export const ScrcpyVideoPacket = new Struct()
@@ -158,9 +158,9 @@ export class ScrcpyOptions1_16<
     T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
 > implements ScrcpyOptions<T>
 {
-    public value: Partial<T>;
+    public value: T;
 
-    public constructor(value: Partial<ScrcpyOptionsInit1_16>) {
+    public constructor(value: ScrcpyOptionsInit1_16) {
         if (
             new.target === ScrcpyOptions1_16 &&
             value.logLevel === ScrcpyLogLevel.Verbose
@@ -175,7 +175,7 @@ export class ScrcpyOptions1_16<
             value.lockVideoOrientation = ScrcpyVideoOrientation.Unlocked;
         }
 
-        this.value = value as Partial<T>;
+        this.value = value as T;
     }
 
     protected getArgumentOrder(): (keyof T)[] {
@@ -197,7 +197,7 @@ export class ScrcpyOptions1_16<
         ];
     }
 
-    public getDefaultValues(): T {
+    public getDefaultValues(): Required<T> {
         return {
             logLevel: ScrcpyLogLevel.Debug,
             maxSize: 0,
@@ -213,7 +213,7 @@ export class ScrcpyOptions1_16<
             stayAwake: false,
             codecOptions: new CodecOptions(),
             encoderName: "-",
-        } as T;
+        } as Required<T>;
     }
 
     public serializeServerArguments(): string[] {

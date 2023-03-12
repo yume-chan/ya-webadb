@@ -29,11 +29,11 @@ export type ScrcpySetClipboardControlMessage1_21 =
 export class ScrcpyOptions1_21<
     T extends ScrcpyOptionsInit1_21 = ScrcpyOptionsInit1_21
 > extends ScrcpyOptions1_18<T> {
-    public constructor(init: Partial<ScrcpyOptionsInit1_21>) {
+    public constructor(init: ScrcpyOptionsInit1_21) {
         super(init);
     }
 
-    public override getDefaultValues(): T {
+    public override getDefaultValues(): Required<T> {
         return Object.assign(super.getDefaultValues(), {
             clipboardAutosync: true,
         } satisfies Omit<ScrcpyOptionsInit1_21, keyof ScrcpyOptionsInit1_18>);

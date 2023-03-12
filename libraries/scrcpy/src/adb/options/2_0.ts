@@ -11,7 +11,7 @@ export class AdbScrcpyOptions2_0<
     protected override getConnectionOptions(): AdbScrcpyConnectionOptions {
         const defaults = this.getDefaultValues();
         return Object.assign(super.getConnectionOptions(), {
-            scid: this.value.scid?.value ?? defaults.scid.value,
+            scid: this.value.scid?.value ?? defaults.scid!.value,
         } satisfies Partial<AdbScrcpyConnectionOptions>);
     }
 }

@@ -13,7 +13,7 @@ import {
 } from "./1_16/options.js";
 
 export interface ScrcpyOptionsInit1_18 extends ScrcpyOptionsInit1_16 {
-    powerOffOnClose: boolean;
+    powerOffOnClose?: boolean;
 }
 
 export const ScrcpyBackOrScreenOnControlMessage1_18 = new Struct()
@@ -26,7 +26,7 @@ export type ScrcpyBackOrScreenOnControlMessage1_18 =
 export class ScrcpyOptions1_18<
     T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsInit1_18
 > extends ScrcpyOptions1_16<T> {
-    constructor(value: Partial<ScrcpyOptionsInit1_18>) {
+    constructor(value: ScrcpyOptionsInit1_18) {
         super(value);
     }
 
@@ -34,7 +34,7 @@ export class ScrcpyOptions1_18<
         return super.getArgumentOrder().concat(["powerOffOnClose"]);
     }
 
-    public override getDefaultValues(): T {
+    public override getDefaultValues(): Required<T> {
         return Object.assign(super.getDefaultValues(), {
             powerOffOnClose: false,
         } satisfies Omit<ScrcpyOptionsInit1_18, keyof ScrcpyOptionsInit1_16>);

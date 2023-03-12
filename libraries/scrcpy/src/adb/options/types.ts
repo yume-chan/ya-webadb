@@ -24,10 +24,10 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
 {
     private raw: ScrcpyOptions<T>;
 
-    public get value(): Partial<T> {
+    public get value(): T {
         return this.raw.value;
     }
-    public set value(value: Partial<T>) {
+    public set value(value: T) {
         this.raw.value = value;
     }
 
@@ -35,7 +35,7 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
         this.raw = raw;
     }
 
-    public getDefaultValues(): T {
+    public getDefaultValues(): Required<T> {
         return this.raw.getDefaultValues();
     }
 

@@ -9,34 +9,34 @@ import type { ScrcpyVideoStreamMetadata } from "../types.js";
 import { ScrcpyScrollController1_22 } from "./scroll.js";
 
 export interface ScrcpyOptionsInit1_22 extends ScrcpyOptionsInit1_21 {
-    downsizeOnError: boolean;
+    downsizeOnError?: boolean;
 
     /**
      * Send device name and size at start of video stream.
      *
      * @default true
      */
-    sendDeviceMeta: boolean;
+    sendDeviceMeta?: boolean;
 
     /**
      * Send a `0` byte on start of video stream to detect connection issues
      *
      * @default true
      */
-    sendDummyByte: boolean;
+    sendDummyByte?: boolean;
 
     /**
      * Implies `sendDeviceMeta: false`, `sendFrameMeta: false` and `sendDummyByte: false`
      *
      * @default false
      */
-    rawVideoStream: boolean;
+    rawVideoStream?: boolean;
 }
 
 export class ScrcpyOptions1_22<
     T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22
 > extends ScrcpyOptions1_21<T> {
-    public constructor(init: Partial<ScrcpyOptionsInit1_22>) {
+    public constructor(init: ScrcpyOptionsInit1_22) {
         if (init.rawVideoStream) {
             // Set implied options for client-side processing
             init.sendDeviceMeta = false;
@@ -47,7 +47,7 @@ export class ScrcpyOptions1_22<
         super(init);
     }
 
-    public override getDefaultValues(): T {
+    public override getDefaultValues(): Required<T> {
         return Object.assign(super.getDefaultValues(), {
             downsizeOnError: true,
             sendDeviceMeta: true,
