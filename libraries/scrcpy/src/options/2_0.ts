@@ -15,7 +15,7 @@ import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
 import { ScrcpyOptions1_25 } from "./1_25/index.js";
 import type { ScrcpyOptionValue, ScrcpyVideoStreamMetadata } from "./types.js";
 
-export const ScrcpyInjectTouchControlMessage1_26 = new Struct()
+export const ScrcpyInjectTouchControlMessage2_0 = new Struct()
     .uint8("type")
     .uint8("action", placeholder<AndroidMotionEventAction>())
     .uint64("pointerId")
@@ -27,8 +27,8 @@ export const ScrcpyInjectTouchControlMessage1_26 = new Struct()
     .uint32("actionButton")
     .uint32("buttons");
 
-export type ScrcpyInjectTouchControlMessage1_26 =
-    (typeof ScrcpyInjectTouchControlMessage1_26)["TInit"];
+export type ScrcpyInjectTouchControlMessage2_0 =
+    (typeof ScrcpyInjectTouchControlMessage2_0)["TInit"];
 
 export class ScrcpyInstanceId implements ScrcpyOptionValue {
     public static readonly NONE = new ScrcpyInstanceId(-1);
@@ -52,16 +52,16 @@ export class ScrcpyInstanceId implements ScrcpyOptionValue {
     }
 }
 
-export interface ScrcpyOptionsInit1_26 extends ScrcpyOptionsInit1_24 {
+export interface ScrcpyOptionsInit2_0 extends ScrcpyOptionsInit1_24 {
     scid: ScrcpyInstanceId;
     codec: "h264" | "h265" | "av1";
     sendCodecId: boolean;
 }
 
-export class ScrcpyOptions1_26<
-    T extends ScrcpyOptionsInit1_26 = ScrcpyOptionsInit1_26
+export class ScrcpyOptions2_0<
+    T extends ScrcpyOptionsInit2_0 = ScrcpyOptionsInit2_0
 > extends ScrcpyOptions1_25<T> {
-    public constructor(init: Partial<ScrcpyOptionsInit1_26>) {
+    public constructor(init: Partial<ScrcpyOptionsInit2_0>) {
         if (!init.rawVideoStream) {
             init.sendCodecId = false;
         }
@@ -74,7 +74,7 @@ export class ScrcpyOptions1_26<
             scid: ScrcpyInstanceId.NONE,
             codec: "h264",
             sendCodecId: true,
-        } satisfies Omit<ScrcpyOptionsInit1_26, keyof ScrcpyOptionsInit1_24>);
+        } satisfies Omit<ScrcpyOptionsInit2_0, keyof ScrcpyOptionsInit1_24>);
     }
 
     public override parseVideoStreamMetadata(
@@ -103,6 +103,6 @@ export class ScrcpyOptions1_26<
     public override serializeInjectTouchControlMessage(
         message: ScrcpyInjectTouchControlMessage
     ): Uint8Array {
-        return ScrcpyInjectTouchControlMessage1_26.serialize(message);
+        return ScrcpyInjectTouchControlMessage2_0.serialize(message);
     }
 }

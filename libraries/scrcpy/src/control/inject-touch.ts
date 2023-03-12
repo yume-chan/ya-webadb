@@ -1,4 +1,4 @@
-import type { ScrcpyInjectTouchControlMessage1_26 } from "../options/index.js";
+import type { ScrcpyInjectTouchControlMessage2_0 } from "../index.js";
 
 // https://developer.android.com/reference/android/view/MotionEvent#constants_1
 export enum AndroidMotionEventAction {
@@ -36,4 +36,4 @@ export namespace ScrcpyPointerId {
 }
 
 export type ScrcpyInjectTouchControlMessage =
-    ScrcpyInjectTouchControlMessage1_26;
+    ScrcpyInjectTouchControlMessage2_0;
