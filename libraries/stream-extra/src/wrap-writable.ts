@@ -1,6 +1,7 @@
-import { type ValueOrPromise } from "@yume-chan/struct";
+import type { ValueOrPromise } from "@yume-chan/struct";
 
-import { WritableStream, type WritableStreamDefaultWriter } from "./stream.js";
+import type { TransformStream, WritableStreamDefaultWriter } from "./stream.js";
+import { WritableStream } from "./stream.js";
 
 export type WrapWritableStreamStart<T> = () => ValueOrPromise<
     WritableStream<T>
@@ -51,8 +52,6 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 this.writer = this.writable.getWriter();
             },
             write: async (chunk) => {
-                // Maintain back pressure
-                await this.writer.ready;
                 await this.writer.write(chunk);
             },
             abort: async (reason) => {
@@ -70,6 +69,19 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 if ("close" in wrapper) {
                     await wrapper.close?.();
                 }
+            },
+        });
+    }
+
+    public bePipedThroughFrom<U>(transformer: TransformStream<U, T>) {
+        let promise: Promise<void>;
+        return new WrapWritableStream<U>({
+            start: () => {
+                promise = transformer.readable.pipeTo(this);
+                return transformer.writable;
+            },
+            async close() {
+                await promise;
             },
         });
     }

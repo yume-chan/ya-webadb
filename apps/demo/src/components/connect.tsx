@@ -10,12 +10,14 @@ import {
 } from "@fluentui/react";
 import { Adb, AdbBackend, AdbPacketData, AdbPacketInit } from "@yume-chan/adb";
 import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
-import AdbWebUsbBackend, {
+import {
+    AdbWebUsbBackendManager,
     AdbWebUsbBackendWatcher,
 } from "@yume-chan/adb-backend-webusb";
 import AdbWsBackend from "@yume-chan/adb-backend-ws";
 import AdbWebCredentialStore from "@yume-chan/adb-credential-web";
 import {
+    Consumable,
     InspectStream,
     ReadableStream,
     WritableStream,
@@ -40,7 +42,8 @@ function _Connect(): JSX.Element | null {
 
     const [usbBackendList, setUsbBackendList] = useState<AdbBackend[]>([]);
     const updateUsbBackendList = useCallback(async () => {
-        const backendList: AdbBackend[] = await AdbWebUsbBackend.getDevices();
+        const backendList: AdbBackend[] =
+            await AdbWebUsbBackendManager.BROWSER!.getDevices();
         setUsbBackendList(backendList);
         return backendList;
     }, []);
@@ -48,7 +51,7 @@ function _Connect(): JSX.Element | null {
     useEffect(
         () => {
             // Only run on client
-            const supported = AdbWebUsbBackend.isSupported();
+            const supported = !!AdbWebUsbBackendManager.BROWSER;
             setSupported(supported);
 
             if (!supported) {
@@ -70,7 +73,8 @@ function _Connect(): JSX.Element | null {
                         );
                         return;
                     }
-                }
+                },
+                window.navigator.usb
             );
 
             return () => watcher.dispose();
@@ -165,7 +169,7 @@ function _Connect(): JSX.Element | null {
     };
 
     const addUsbBackend = useCallback(async () => {
-        const backend = await AdbWebUsbBackend.requestDevice();
+        const backend = await AdbWebUsbBackendManager.BROWSER!.requestDevice();
         setSelectedBackend(backend);
         await updateUsbBackendList();
     }, [updateUsbBackendList]);
@@ -178,7 +182,7 @@ function _Connect(): JSX.Element | null {
         setConnecting(true);
 
         let readable: ReadableStream<AdbPacketData>;
-        let writable: WritableStream<AdbPacketInit>;
+        let writable: WritableStream<Consumable<AdbPacketInit>>;
         try {
             const streams = await selectedBackend.connect();
 
@@ -191,8 +195,8 @@ function _Connect(): JSX.Element | null {
 
             writable = pipeFrom(
                 streams.writable,
-                new InspectStream((packet: AdbPacketInit) => {
-                    GLOBAL_STATE.appendLog("out", packet);
+                new InspectStream((packet: Consumable<AdbPacketInit>) => {
+                    GLOBAL_STATE.appendLog("out", packet.value);
                 })
             );
         } catch (e: any) {

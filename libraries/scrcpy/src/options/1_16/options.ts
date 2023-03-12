@@ -1,26 +1,29 @@
+import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
     StructDeserializeStream,
     TransformStream,
-    type ReadableStream,
 } from "@yume-chan/stream-extra";
-import Struct, { placeholder, type ValueOrPromise } from "@yume-chan/struct";
+import type { ValueOrPromise } from "@yume-chan/struct";
+import Struct, { placeholder } from "@yume-chan/struct";
 
+import type {
+    AndroidMotionEventAction,
+    ScrcpyBackOrScreenOnControlMessage,
+    ScrcpyInjectTouchControlMessage,
+    ScrcpySetClipboardControlMessage,
+} from "../../control/index.js";
 import {
     AndroidKeyEventAction,
     BasicControlMessage,
     ScrcpyControlMessageType,
-    type AndroidMotionEventAction,
-    type ScrcpyBackOrScreenOnControlMessage,
-    type ScrcpyInjectTouchControlMessage,
-    type ScrcpySetClipboardControlMessage,
 } from "../../control/index.js";
-import {
-    toScrcpyOptionValue,
-    type ScrcpyOptions,
-    type ScrcpyVideoStreamMetadata,
-    type ScrcpyVideoStreamPacket,
+import type {
+    ScrcpyOptions,
+    ScrcpyVideoStreamMetadata,
+    ScrcpyVideoStreamPacket,
 } from "../types.js";
+import { toScrcpyOptionValue } from "../types.js";
 
 import { CodecOptions } from "./codec-options.js";
 import { ScrcpyFloatToUint16FieldDefinition } from "./float-to-uint16.js";
@@ -29,10 +32,8 @@ import {
     parseSequenceParameterSet,
     removeH264Emulation,
 } from "./h264-configuration.js";
-import {
-    ScrcpyScrollController1_16,
-    type ScrcpyScrollController,
-} from "./scroll.js";
+import type { ScrcpyScrollController } from "./scroll.js";
+import { ScrcpyScrollController1_16 } from "./scroll.js";
 
 export enum ScrcpyLogLevel {
     Verbose = "verbose",
@@ -132,7 +133,7 @@ export const ScrcpySetClipboardControlMessage1_15 = new Struct()
     .string("content", { lengthField: "length" });
 
 export type ScrcpySetClipboardControlMessage1_15 =
-    typeof ScrcpySetClipboardControlMessage1_15["TInit"];
+    (typeof ScrcpySetClipboardControlMessage1_15)["TInit"];
 
 export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
     .uint8("type")
@@ -146,7 +147,7 @@ export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
     .uint32("buttons");
 
 export type ScrcpyInjectTouchControlMessage1_16 =
-    typeof ScrcpyInjectTouchControlMessage1_16["TInit"];
+    (typeof ScrcpyInjectTouchControlMessage1_16)["TInit"];
 
 export const ScrcpyVideoStreamMetadata1_16 = new Struct()
     .string("deviceName", { length: 64 })

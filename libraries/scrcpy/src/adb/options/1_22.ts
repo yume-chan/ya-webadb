@@ -1,5 +1,5 @@
-import { type ScrcpyOptionsInit1_22 } from "../../options/index.js";
-import { type AdbScrcpyConnectionOptions } from "../connection.js";
+import type { ScrcpyOptionsInit1_22 } from "../../options/index.js";
+import type { AdbScrcpyConnectionOptions } from "../connection.js";
 
 import { AdbScrcpyOptions1_16 } from "./1_16.js";
 

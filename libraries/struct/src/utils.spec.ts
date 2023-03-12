@@ -1,9 +1,9 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it } from "@jest/globals";
 
-import { placeholder } from './utils.js';
+import { placeholder } from "./utils.js";
 
-describe('placeholder', () => {
-    it('should return `undefined`', () => {
+describe("placeholder", () => {
+    it("should return `undefined`", () => {
         expect(placeholder()).toBe(undefined);
     });
 });

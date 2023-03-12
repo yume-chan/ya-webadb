@@ -32,7 +32,11 @@ function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
         return false;
     }
 
+    STATE.fullScreenContainer!.focus();
     e.currentTarget.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    e.stopPropagation();
+
     return true;
 }
 
@@ -75,7 +79,7 @@ function handleHomePointerDown(e: PointerEvent<HTMLDivElement>) {
 
     STATE.client!.controlMessageSerializer!.injectKeyCode({
         action: AndroidKeyEventAction.Down,
-        keyCode: AndroidKeyCode.Home,
+        keyCode: AndroidKeyCode.AndroidHome,
         repeat: 0,
         metaState: 0,
     });
@@ -88,7 +92,7 @@ function handleHomePointerUp(e: PointerEvent<HTMLDivElement>) {
 
     STATE.client!.controlMessageSerializer!.injectKeyCode({
         action: AndroidKeyEventAction.Up,
-        keyCode: AndroidKeyCode.Home,
+        keyCode: AndroidKeyCode.AndroidHome,
         repeat: 0,
         metaState: 0,
     });
@@ -101,7 +105,7 @@ function handleAppSwitchPointerDown(e: PointerEvent<HTMLDivElement>) {
 
     STATE.client!.controlMessageSerializer!.injectKeyCode({
         action: AndroidKeyEventAction.Down,
-        keyCode: AndroidKeyCode.AppSwitch,
+        keyCode: AndroidKeyCode.AndroidAppSwitch,
         repeat: 0,
         metaState: 0,
     });
@@ -114,7 +118,7 @@ function handleAppSwitchPointerUp(e: PointerEvent<HTMLDivElement>) {
 
     STATE.client!.controlMessageSerializer!.injectKeyCode({
         action: AndroidKeyEventAction.Up,
-        keyCode: AndroidKeyCode.AppSwitch,
+        keyCode: AndroidKeyCode.AndroidAppSwitch,
         repeat: 0,
         metaState: 0,
     });

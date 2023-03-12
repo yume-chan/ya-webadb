@@ -11,4 +11,4 @@ export const ScrcpySetScreenPowerModeControlMessage = new Struct()
     .uint8("mode", placeholder<AndroidScreenPowerMode>());
 
 export type ScrcpySetScreenPowerModeControlMessage =
-    typeof ScrcpySetScreenPowerModeControlMessage["TInit"];
+    (typeof ScrcpySetScreenPowerModeControlMessage)["TInit"];

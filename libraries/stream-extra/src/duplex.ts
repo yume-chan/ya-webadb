@@ -1,16 +1,16 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { type ValueOrPromise } from "@yume-chan/struct";
+import type { ValueOrPromise } from "@yume-chan/struct";
 
-import {
-    WritableStream,
-    type ReadableStream,
-    type ReadableStreamDefaultController,
-    type WritableStreamDefaultWriter,
+import type {
+    ReadableStream,
+    ReadableStreamDefaultController,
+    WritableStreamDefaultWriter,
 } from "./stream.js";
+import { WritableStream } from "./stream.js";
 import { WrapReadableStream } from "./wrap-readable.js";
 
 const NOOP = () => {
-    /* empty */
+    // no-op
 };
 
 export interface DuplexStreamFactoryOptions {
@@ -72,7 +72,7 @@ export class DuplexStreamFactory<R, W> {
                 return readable;
             },
             cancel: async () => {
-                // cancel means the local peer closes the connection first.
+                // cancel means the local peer wants to close the connection.
                 await this.close();
             },
             close: async () => {
@@ -90,7 +90,6 @@ export class DuplexStreamFactory<R, W> {
         // So it only triggers `close`.
         return new WritableStream<W>({
             write: async (chunk) => {
-                await writer.ready;
                 await writer.write(chunk);
             },
             abort: async (reason) => {
@@ -116,9 +115,9 @@ export class DuplexStreamFactory<R, W> {
             await this.dispose();
         }
 
-        await Promise.all(
-            this.writers.map((writer) => writer.close().catch(NOOP))
-        );
+        for (const writer of this.writers) {
+            await writer.close().catch(NOOP);
+        }
     }
 
     public async dispose() {
@@ -128,8 +127,8 @@ export class DuplexStreamFactory<R, W> {
         for (const controller of this.readableControllers) {
             try {
                 controller.close();
-            } catch (e) {
-                void e;
+            } catch {
+                // ignore
             }
         }
 

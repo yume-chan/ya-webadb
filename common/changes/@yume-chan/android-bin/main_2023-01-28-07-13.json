@@ -1,10 +1,10 @@
 {
-  "changes": [
-    {
-      "packageName": "@yume-chan/android-bin",
-      "comment": "Add `OverlayDisplay` wrapper for creating overlay displays",
-      "type": "none"
-    }
-  ],
-  "packageName": "@yume-chan/android-bin"
+    "changes": [
+        {
+            "packageName": "@yume-chan/android-bin",
+            "comment": "Add `OverlayDisplay` wrapper for managing overlay displays",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/android-bin"
 }

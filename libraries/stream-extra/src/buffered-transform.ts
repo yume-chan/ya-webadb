@@ -1,15 +1,11 @@
-import { StructEmptyError, type ValueOrPromise } from "@yume-chan/struct";
+import type { ValueOrPromise } from "@yume-chan/struct";
+import { StructEmptyError } from "@yume-chan/struct";
 
 import { BufferedReadableStream } from "./buffered.js";
-import {
-    PushReadableStream,
-    type PushReadableStreamController,
-} from "./push-readable.js";
-import {
-    ReadableStream,
-    WritableStream,
-    type ReadableWritablePair,
-} from "./stream.js";
+import type { PushReadableStreamController } from "./push-readable.js";
+import { PushReadableStream } from "./push-readable.js";
+import type { ReadableWritablePair } from "./stream.js";
+import { ReadableStream, WritableStream } from "./stream.js";
 
 // TODO: BufferedTransformStream: find better implementation
 export class BufferedTransformStream<T>

@@ -1,10 +1,10 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it } from "@jest/globals";
 
-import Struct from './index.js';
+import Struct from "./index.js";
 
-describe('Struct', () => {
+describe("Struct", () => {
     describe("Index", () => {
-        it('should export default Struct', () => {
+        it("should export default Struct", () => {
             expect(Struct).toBeDefined();
         });
     });

@@ -1,15 +1,15 @@
 import Struct, { placeholder } from "@yume-chan/struct";
 
-import {
-    ScrcpyControlMessageType,
-    type AndroidKeyEventAction,
-    type ScrcpyBackOrScreenOnControlMessage,
+import type {
+    AndroidKeyEventAction,
+    ScrcpyBackOrScreenOnControlMessage,
 } from "../control/index.js";
+import { ScrcpyControlMessageType } from "../control/index.js";
 
+import type { ScrcpyOptionsInit1_16 } from "./1_16/options.js";
 import {
     ScrcpyBackOrScreenOnControlMessage1_16,
     ScrcpyOptions1_16,
-    type ScrcpyOptionsInit1_16,
 } from "./1_16/options.js";
 
 export interface ScrcpyOptionsInit1_18 extends ScrcpyOptionsInit1_16 {
@@ -21,7 +21,7 @@ export const ScrcpyBackOrScreenOnControlMessage1_18 = new Struct()
     .uint8("action", placeholder<AndroidKeyEventAction>());
 
 export type ScrcpyBackOrScreenOnControlMessage1_18 =
-    typeof ScrcpyBackOrScreenOnControlMessage1_18["TInit"];
+    (typeof ScrcpyBackOrScreenOnControlMessage1_18)["TInit"];
 
 export class ScrcpyOptions1_18<
     T extends ScrcpyOptionsInit1_18 = ScrcpyOptionsInit1_18

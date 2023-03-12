@@ -1,5 +1,5 @@
 export function escapeArg(s: string) {
-    let result = '';
+    let result = "";
     result += `'`;
 
     let base = 0;

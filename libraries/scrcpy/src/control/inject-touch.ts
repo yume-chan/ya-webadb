@@ -1,4 +1,4 @@
-import { type ScrcpyInjectTouchControlMessage1_26 } from "../options/index.js";
+import type { ScrcpyInjectTouchControlMessage1_26 } from "../options/index.js";
 
 // https://developer.android.com/reference/android/view/MotionEvent#constants_1
 export enum AndroidMotionEventAction {
@@ -35,4 +35,5 @@ export namespace ScrcpyPointerId {
     export const VirtualFinger = BigInt(-4);
 }
 
-export type ScrcpyInjectTouchControlMessage = ScrcpyInjectTouchControlMessage1_26;
+export type ScrcpyInjectTouchControlMessage =
+    ScrcpyInjectTouchControlMessage1_26;

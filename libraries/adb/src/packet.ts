@@ -1,4 +1,4 @@
-import { TransformStream } from "@yume-chan/stream-extra";
+import { ConsumableTransformStream } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
 export enum AdbCommand {
@@ -18,15 +18,15 @@ export const AdbPacketHeader = new Struct({ littleEndian: true })
     .uint32("checksum")
     .int32("magic");
 
-export type AdbPacketHeader = typeof AdbPacketHeader["TDeserializeResult"];
+export type AdbPacketHeader = (typeof AdbPacketHeader)["TDeserializeResult"];
 
-type AdbPacketHeaderInit = typeof AdbPacketHeader["TInit"];
+type AdbPacketHeaderInit = (typeof AdbPacketHeader)["TInit"];
 
 export const AdbPacket = new Struct({ littleEndian: true })
     .fields(AdbPacketHeader)
     .uint8Array("payload", { lengthField: "payloadLength" });
 
-export type AdbPacket = typeof AdbPacket["TDeserializeResult"];
+export type AdbPacket = (typeof AdbPacket)["TDeserializeResult"];
 
 /**
  * `AdbPacketData` contains all the useful fields of `AdbPacket`.
@@ -39,50 +39,35 @@ export type AdbPacket = typeof AdbPacket["TDeserializeResult"];
  * so `AdbSocket#writable#write` only needs `AdbPacketData`.
  */
 export type AdbPacketData = Omit<
-    typeof AdbPacket["TInit"],
+    (typeof AdbPacket)["TInit"],
     "checksum" | "magic"
 >;
 
-// All fields except `magic`, which can be calculated in `AdbPacketSerializeStream`
-export type AdbPacketInit = Omit<typeof AdbPacket["TInit"], "magic">;
+export type AdbPacketInit = (typeof AdbPacket)["TInit"];
 
-export function calculateChecksum(payload: Uint8Array): number;
-export function calculateChecksum(init: AdbPacketData): AdbPacketInit;
-export function calculateChecksum(
-    payload: Uint8Array | AdbPacketData
-): number | AdbPacketInit {
-    if (payload instanceof Uint8Array) {
-        return payload.reduce((result, item) => result + item, 0);
-    } else {
-        (payload as AdbPacketInit).checksum = calculateChecksum(
-            payload.payload
-        );
-        return payload as AdbPacketInit;
-    }
+export function calculateChecksum(payload: Uint8Array): number {
+    return payload.reduce((result, item) => result + item, 0);
 }
 
-export class AdbPacketSerializeStream extends TransformStream<
+export class AdbPacketSerializeStream extends ConsumableTransformStream<
     AdbPacketInit,
     Uint8Array
 > {
     public constructor() {
+        const headerBuffer = new Uint8Array(AdbPacketHeader.size);
         super({
-            transform: (init, controller) => {
-                // This syntax is ugly, but I don't want to create a new object.
-                (init as unknown as AdbPacketHeaderInit).magic =
-                    init.command ^ 0xffffffff;
-                (init as unknown as AdbPacketHeaderInit).payloadLength =
-                    init.payload.byteLength;
+            transform: async (chunk, controller) => {
+                const init = chunk as AdbPacketInit & AdbPacketHeaderInit;
+                init.payloadLength = init.payload.byteLength;
 
-                controller.enqueue(
-                    AdbPacketHeader.serialize(
-                        init as unknown as AdbPacketHeaderInit
-                    )
-                );
+                AdbPacketHeader.serialize(init, headerBuffer);
+                await controller.enqueue(headerBuffer);
 
                 if (init.payload.byteLength) {
-                    // Enqueue payload separately to avoid copying
-                    controller.enqueue(init.payload);
+                    // USB protocol preserves packet boundaries,
+                    // so we must write payload separately as native ADB does,
+                    // otherwise the read operation on device will fail.
+                    await controller.enqueue(init.payload);
                 }
             },
         });

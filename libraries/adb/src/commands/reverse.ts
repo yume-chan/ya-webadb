@@ -4,11 +4,8 @@ import { AutoDisposable } from "@yume-chan/event";
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import Struct, { StructEmptyError } from "@yume-chan/struct";
 
-import { type Adb } from "../adb.js";
-import {
-    type AdbIncomingSocketHandler,
-    type AdbSocket,
-} from "../socket/index.js";
+import type { Adb } from "../adb.js";
+import type { AdbIncomingSocketHandler, AdbSocket } from "../socket/index.js";
 import { decodeUtf8 } from "../utils/index.js";
 
 export interface AdbForwardListener {
@@ -110,10 +107,17 @@ export class AdbReverseCommand extends AutoDisposable {
     }
 
     /**
-     * @param deviceAddress The address adbd on device is listening on. Can be `tcp:0` to let adbd choose an available TCP port by itself.
-     * @param localAddress Native ADB client will open a connection to this address when reverse connection received. In WebADB, it's only used to uniquely identify a reverse tunnel registry, `handler` will be called to handle the connection.
+     * @param deviceAddress
+     * The address to be listened on device by ADB daemon. Or `tcp:0` to choose an available TCP port.
+     * @param localAddress
+     * An identifier for the reverse tunnel.
+     *
+     * When a socket wants to connect to {@link deviceAddress}, native ADB client will forward that connection to {@link localAddress}.
+     * However in this library, the {@link handler} is invoked instead. So this parameter is only used to identify the reverse tunnel.
      * @param handler A callback to handle incoming connections. It must return `true` if it accepts the connection.
      * @returns `tcp:{ACTUAL_LISTENING_PORT}`, If `deviceAddress` is `tcp:0`; otherwise, `deviceAddress`.
+     * @throws {AdbReverseNotSupportedError} If ADB reverse tunnel is not supported on this device when connected wirelessly.
+     * @throws {AdbReverseError} If ADB daemon returns an error.
      */
     public async add(
         deviceAddress: string,

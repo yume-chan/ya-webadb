@@ -1,23 +1,28 @@
-import { PromiseResolver } from '@yume-chan/async';
+import { PromiseResolver } from "@yume-chan/async";
+import type {
+    Consumable,
+    PushReadableStreamController,
+    ReadableStream,
+    WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 import {
+    ConsumableTransformStream,
+    ConsumableWritableStream,
     PushReadableStream,
     StructDeserializeStream,
-    StructSerializeStream,
     TransformStream,
     WritableStream,
     pipeFrom,
-    type PushReadableStreamController,
-    type ReadableStream,
-    type WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
-import Struct, { placeholder, type StructValueType } from '@yume-chan/struct';
+import type { StructValueType } from "@yume-chan/struct";
+import Struct, { placeholder } from "@yume-chan/struct";
 
-import { type Adb } from "../../../adb.js";
-import { AdbFeatures } from "../../../features.js";
-import { type AdbSocket } from "../../../socket/index.js";
+import type { Adb } from "../../../adb.js";
+import { AdbFeature } from "../../../features.js";
+import type { AdbSocket } from "../../../socket/index.js";
 import { encodeUtf8 } from "../../../utils/index.js";
 
-import { type AdbSubprocessProtocol } from "./types.js";
+import type { AdbSubprocessProtocol } from "./types.js";
 
 export enum AdbShellProtocolId {
     Stdin,
@@ -34,18 +39,18 @@ const AdbShellProtocolPacket = new Struct({ littleEndian: true })
     .uint32("length")
     .uint8Array("data", { lengthField: "length" });
 
-type AdbShellProtocolPacketInit = typeof AdbShellProtocolPacket["TInit"];
+type AdbShellProtocolPacketInit = (typeof AdbShellProtocolPacket)["TInit"];
 
 type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
 
-class StdinSerializeStream extends TransformStream<
+class StdinSerializeStream extends ConsumableTransformStream<
     Uint8Array,
     AdbShellProtocolPacketInit
 > {
     constructor() {
         super({
-            transform(chunk, controller) {
-                controller.enqueue({
+            async transform(chunk, controller) {
+                await controller.enqueue({
                     id: AdbShellProtocolId.Stdin,
                     data: chunk,
                 });
@@ -121,7 +126,7 @@ class MultiplexStream<T> {
  */
 export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     public static isSupported(adb: Adb) {
-        return adb.supportsFeature(AdbFeatures.ShellV2);
+        return adb.supportsFeature(AdbFeature.ShellV2);
     }
 
     public static async pty(adb: Adb, command: string) {
@@ -138,9 +143,11 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     }
 
     private readonly _socket: AdbSocket;
-    private _socketWriter: WritableStreamDefaultWriter<AdbShellProtocolPacketInit>;
+    private _socketWriter: WritableStreamDefaultWriter<
+        Consumable<AdbShellProtocolPacketInit>
+    >;
 
-    private _stdin: WritableStream<Uint8Array>;
+    private _stdin: WritableStream<Consumable<Uint8Array>>;
     public get stdin() {
         return this._stdin;
     }
@@ -197,9 +204,19 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
             new StdoutDeserializeStream(AdbShellProtocolId.Stderr)
         );
 
-        const multiplexer = new MultiplexStream<AdbShellProtocolPacketInit>();
+        const multiplexer = new MultiplexStream<
+            Consumable<AdbShellProtocolPacketInit>
+        >();
         void multiplexer.readable
-            .pipeThrough(new StructSerializeStream(AdbShellProtocolPacket))
+            .pipeThrough(
+                new ConsumableTransformStream({
+                    async transform(chunk, controller) {
+                        await controller.enqueue(
+                            AdbShellProtocolPacket.serialize(chunk)
+                        );
+                    },
+                })
+            )
             .pipeTo(socket.writable);
 
         this._stdin = pipeFrom(
@@ -211,7 +228,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     }
 
     public async resize(rows: number, cols: number) {
-        await this._socketWriter.write({
+        await ConsumableWritableStream.write(this._socketWriter, {
             id: AdbShellProtocolId.WindowSizeChange,
             data: encodeUtf8(
                 // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`

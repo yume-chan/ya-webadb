@@ -1,13 +1,8 @@
-import {
-    ExactReadableEndedError,
-    type AsyncExactReadable,
-} from "@yume-chan/struct";
+import { ExactReadableEndedError } from "@yume-chan/struct";
+import type { AsyncExactReadable } from "@yume-chan/struct";
 
 import { PushReadableStream } from "./push-readable.js";
-import {
-    type ReadableStream,
-    type ReadableStreamDefaultReader,
-} from "./stream.js";
+import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
 
 export class BufferedReadableStream implements AsyncExactReadable {
     private buffered: Uint8Array | undefined;

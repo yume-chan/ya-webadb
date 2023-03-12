@@ -1,6 +1,7 @@
 // cspell:ignore scid
 
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
+import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
 import {
     AdbScrcpyClient,
     AdbScrcpyOptions1_26,
@@ -19,7 +20,8 @@ import {
 import { ScrcpyVideoDecoder } from "@yume-chan/scrcpy-decoder-tinyh264";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
 import {
-    ChunkStream,
+    Consumable,
+    DistributionStream,
     InspectStream,
     ReadableStream,
     WritableStream,
@@ -27,16 +29,26 @@ import {
 import { action, autorun, makeAutoObservable, runInAction } from "mobx";
 import { GLOBAL_STATE } from "../../state";
 import { ProgressStream } from "../../utils";
-import { DeviceViewRef } from "../device-view";
 import { fetchServer } from "./fetch-server";
+import {
+    AoaKeyboardInjector,
+    KeyboardInjector,
+    ScrcpyKeyboardInjector,
+} from "./input";
 import { MuxerStream, RECORD_STATE } from "./recorder";
 import { SETTING_STATE } from "./settings";
+
+const NOOP = () => {
+    // no-op
+};
 
 export class ScrcpyPageState {
     running = false;
 
-    deviceView: DeviceViewRef | null = null;
+    fullScreenContainer: HTMLDivElement | null = null;
     rendererContainer: HTMLDivElement | null = null;
+
+    isFullScreen = false;
 
     logVisible = false;
     log: string[] = [];
@@ -56,16 +68,19 @@ export class ScrcpyPageState {
 
     client: AdbScrcpyClient | undefined = undefined;
     hoverHelper: ScrcpyHoverHelper | undefined = undefined;
+    keyboard: KeyboardInjector | undefined = undefined;
 
     async pushServer() {
         const serverBuffer = await fetchServer();
-
-        await new ReadableStream<Uint8Array>({
-            start(controller) {
-                controller.enqueue(serverBuffer);
-                controller.close();
-            },
-        }).pipeTo(AdbScrcpyClient.pushServer(GLOBAL_STATE.device!));
+        await AdbScrcpyClient.pushServer(
+            GLOBAL_STATE.device!,
+            new ReadableStream<Consumable<Uint8Array>>({
+                start(controller) {
+                    controller.enqueue(new Consumable(serverBuffer));
+                    controller.close();
+                },
+            })
+        );
     }
 
     decoder: ScrcpyVideoDecoder | undefined = undefined;
@@ -87,8 +102,8 @@ export class ScrcpyPageState {
             start: false,
             stop: action.bound,
             dispose: action.bound,
-            handleDeviceViewRef: action.bound,
-            handleRendererContainerRef: action.bound,
+            setFullScreenContainer: action.bound,
+            setRendererContainer: action.bound,
             clientPositionToDevicePosition: false,
         });
 
@@ -97,6 +112,16 @@ export class ScrcpyPageState {
                 this.dispose();
             }
         });
+
+        if (typeof document === "object") {
+            document.addEventListener("fullscreenchange", () => {
+                if (!document.fullscreenElement) {
+                    runInAction(() => {
+                        this.isFullScreen = false;
+                    });
+                }
+            });
+        }
 
         autorun(() => {
             if (this.rendererContainer && this.decoder) {
@@ -114,7 +139,7 @@ export class ScrcpyPageState {
         }
 
         try {
-            if (!SETTING_STATE.settings.decoder) {
+            if (!SETTING_STATE.clientSettings.decoder) {
                 throw new Error("No available decoder");
             }
 
@@ -168,21 +193,27 @@ export class ScrcpyPageState {
             );
 
             try {
-                await new ReadableStream<Uint8Array>({
-                    start(controller) {
-                        controller.enqueue(serverBuffer);
-                        controller.close();
-                    },
-                })
-                    .pipeThrough(new ChunkStream(ADB_SYNC_MAX_PACKET_SIZE))
-                    .pipeThrough(
-                        new ProgressStream(
-                            action((progress) => {
-                                this.serverUploadedSize = progress;
-                            })
+                await AdbScrcpyClient.pushServer(
+                    GLOBAL_STATE.device!,
+                    new ReadableStream<Consumable<Uint8Array>>({
+                        start(controller) {
+                            controller.enqueue(new Consumable(serverBuffer));
+                            controller.close();
+                        },
+                    })
+                        // In fact `pushServer` will pipe the stream through a DistributionStream,
+                        // but without this pipeThrough, the progress will not be updated.
+                        .pipeThrough(
+                            new DistributionStream(ADB_SYNC_MAX_PACKET_SIZE)
                         )
-                    )
-                    .pipeTo(AdbScrcpyClient.pushServer(GLOBAL_STATE.device!));
+                        .pipeThrough(
+                            new ProgressStream(
+                                action((progress) => {
+                                    this.serverUploadedSize = progress;
+                                })
+                            )
+                        )
+                );
 
                 runInAction(() => {
                     this.serverUploadSpeed =
@@ -196,7 +227,7 @@ export class ScrcpyPageState {
 
             const decoderDefinition =
                 SETTING_STATE.decoders.find(
-                    (x) => x.key === SETTING_STATE.settings.decoder
+                    (x) => x.key === SETTING_STATE.clientSettings.decoder
                 ) ?? SETTING_STATE.decoders[0];
             const decoder = new decoderDefinition.Constructor();
 
@@ -225,7 +256,7 @@ export class ScrcpyPageState {
             });
 
             const codecOptions = new CodecOptions();
-            if (!SETTING_STATE.settings.ignoreDecoderCodecArgs) {
+            if (!SETTING_STATE.clientSettings.ignoreDecoderCodecArgs) {
                 const capability = decoder.capabilities["h264"];
                 if (capability) {
                     codecOptions.value.profile = capability.maxProfile;
@@ -331,7 +362,7 @@ export class ScrcpyPageState {
                 )
                 .catch(() => {});
 
-            if (SETTING_STATE.settings.turnScreenOff) {
+            if (SETTING_STATE.clientSettings.turnScreenOff) {
                 await client.controlMessageSerializer!.setScreenPowerMode(
                     AndroidScreenPowerMode.Off
                 );
@@ -342,6 +373,14 @@ export class ScrcpyPageState {
                 this.hoverHelper = new ScrcpyHoverHelper();
                 this.running = true;
             });
+
+            if (GLOBAL_STATE.backend instanceof AdbWebUsbBackend) {
+                this.keyboard = await AoaKeyboardInjector.register(
+                    GLOBAL_STATE.backend.device
+                );
+            } else {
+                this.keyboard = new ScrcpyKeyboardInjector(client);
+            }
         } catch (e: any) {
             GLOBAL_STATE.showErrorDialog(e);
         } finally {
@@ -367,18 +406,26 @@ export class ScrcpyPageState {
             RECORD_STATE.recording = false;
         }
 
+        this.keyboard?.dispose();
+        this.keyboard = undefined;
+
         this.fps = "0";
         clearTimeout(this.fpsCounterIntervalId);
+
+        if (this.isFullScreen) {
+            document.exitFullscreen().catch(NOOP);
+            this.isFullScreen = false;
+        }
 
         this.client = undefined;
         this.running = false;
     }
 
-    handleDeviceViewRef(element: DeviceViewRef | null) {
-        this.deviceView = element;
+    setFullScreenContainer(element: HTMLDivElement | null) {
+        this.fullScreenContainer = element;
     }
 
-    handleRendererContainerRef(element: HTMLDivElement | null) {
+    setRendererContainer(element: HTMLDivElement | null) {
         this.rendererContainer = element;
     }
 

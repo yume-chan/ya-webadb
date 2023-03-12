@@ -4,7 +4,8 @@
 // cspell: ignore systemui
 // cspell: ignore sysui
 
-import { AdbCommandBase, type Adb } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
+import { AdbCommandBase } from "@yume-chan/adb";
 
 import { Settings } from "./settings.js";
 
@@ -37,7 +38,7 @@ export const DemoModeMobileDataTypes = [
     "null",
 ] as const;
 
-export type DemoModeMobileDataType = typeof DemoModeMobileDataTypes[number];
+export type DemoModeMobileDataType = (typeof DemoModeMobileDataTypes)[number];
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBar.java;l=3136
 export const DemoModeStatusBarModes = [
@@ -48,7 +49,7 @@ export const DemoModeStatusBarModes = [
     "warning",
 ] as const;
 
-export type DemoModeStatusBarMode = typeof DemoModeStatusBarModes[number];
+export type DemoModeStatusBarMode = (typeof DemoModeStatusBarModes)[number];
 
 export class DemoMode extends AdbCommandBase {
     private settings: Settings;

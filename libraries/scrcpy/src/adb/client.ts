@@ -1,95 +1,58 @@
+import type { Adb, AdbSubprocessProtocol } from "@yume-chan/adb";
 import {
     AdbReverseNotSupportedError,
     AdbSubprocessNoneProtocol,
-    type Adb,
-    type AdbSubprocessProtocol,
-    type AdbSync,
 } from "@yume-chan/adb";
+import type {
+    Consumable,
+    ReadableStream,
+    ReadableWritablePair,
+} from "@yume-chan/stream-extra";
 import {
     AbortController,
     DecodeUtf8Stream,
     InspectStream,
-    ReadableStream,
+    PushReadableStream,
     SplitStringStream,
-    WrapWritableStream,
     WritableStream,
-    type ReadableStreamDefaultController,
-    type ReadableStreamDefaultReader,
-    type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 
 import { ScrcpyControlMessageSerializer } from "../control/index.js";
-import {
-    ScrcpyDeviceMessageDeserializeStream,
-    type ScrcpyDeviceMessage,
-} from "../device-message/index.js";
-import {
-    DEFAULT_SERVER_PATH,
-    type ScrcpyOptionsInit1_16,
-    type ScrcpyVideoStreamPacket,
+import type { ScrcpyDeviceMessage } from "../device-message/index.js";
+import { ScrcpyDeviceMessageDeserializeStream } from "../device-message/index.js";
+import type {
+    ScrcpyOptionsInit1_16,
+    ScrcpyVideoStreamPacket,
 } from "../options/index.js";
+import { DEFAULT_SERVER_PATH } from "../options/index.js";
 
-import { type AdbScrcpyConnection } from "./connection.js";
-import { type AdbScrcpyOptions } from "./options/index.js";
+import type { AdbScrcpyConnection } from "./connection.js";
+import type { AdbScrcpyOptions } from "./options/index.js";
 
 const NOOP = () => {
-    /* empty */
+    // no-op
 };
 
-class ArrayToStream<T> extends ReadableStream<T> {
-    private array!: T[];
-    private index = 0;
-
-    constructor(array: T[]) {
-        super({
-            start: async () => {
-                await Promise.resolve();
-                this.array = array;
-            },
-            pull: (controller) => {
-                if (this.index < this.array.length) {
-                    controller.enqueue(this.array[this.index]!);
-                    this.index += 1;
-                } else {
-                    controller.close();
-                }
-            },
-        });
-    }
+function arrayToStream<T>(array: T[]): ReadableStream<T> {
+    return new PushReadableStream(async (controller) => {
+        for (const item of array) {
+            await controller.enqueue(item);
+        }
+    });
 }
 
-class ConcatStream<T> extends ReadableStream<T> {
-    private streams!: ReadableStream<T>[];
-    private index = 0;
-    private reader!: ReadableStreamDefaultReader<T>;
-
-    constructor(...streams: ReadableStream<T>[]) {
-        super({
-            start: async (controller) => {
-                await Promise.resolve();
-
-                this.streams = streams;
-                this.advance(controller);
-            },
-            pull: async (controller) => {
-                const result = await this.reader.read();
-                if (!result.done) {
-                    controller.enqueue(result.value);
-                    return;
-                }
-                this.advance(controller);
-            },
-        });
-    }
-
-    private advance(controller: ReadableStreamDefaultController<T>) {
-        if (this.index < this.streams.length) {
-            this.reader = this.streams[this.index]!.getReader();
-            this.index += 1;
-        } else {
-            controller.close();
+function concatStreams<T>(...streams: ReadableStream<T>[]): ReadableStream<T> {
+    return new PushReadableStream(async (controller) => {
+        for (const stream of streams) {
+            await stream.pipeTo(
+                new WritableStream({
+                    async write(chunk) {
+                        await controller.enqueue(chunk);
+                    },
+                })
+            );
         }
-    }
+    });
 }
 
 export class ScrcpyExitedError extends Error {
@@ -102,17 +65,20 @@ export class ScrcpyExitedError extends Error {
 }
 
 export class AdbScrcpyClient {
-    public static pushServer(adb: Adb, path = DEFAULT_SERVER_PATH) {
-        let sync!: AdbSync;
-        return new WrapWritableStream<Uint8Array>({
-            async start() {
-                sync = await adb.sync();
-                return sync.write(path);
-            },
-            async close() {
-                await sync.dispose();
-            },
-        });
+    public static async pushServer(
+        adb: Adb,
+        file: ReadableStream<Consumable<Uint8Array>>,
+        filename = DEFAULT_SERVER_PATH
+    ) {
+        const sync = await adb.sync();
+        try {
+            await sync.write({
+                filename,
+                file,
+            });
+        } finally {
+            await sync.dispose();
+        }
     }
 
     public static async start(
@@ -197,7 +163,7 @@ export class AdbScrcpyClient {
             return new AdbScrcpyClient(
                 options,
                 process,
-                new ConcatStream(new ArrayToStream(output), stdout),
+                concatStreams(arrayToStream(output), stdout),
                 videoStream,
                 controlStream
             );
@@ -333,7 +299,9 @@ export class AdbScrcpyClient {
         process: AdbSubprocessProtocol,
         stdout: ReadableStream<string>,
         videoStream: ReadableStream<Uint8Array>,
-        controlStream: ReadableWritablePair<Uint8Array, Uint8Array> | undefined
+        controlStream:
+            | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
+            | undefined
     ) {
         this.process = process;
         this._stdout = stdout;

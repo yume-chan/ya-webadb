@@ -1,10 +1,7 @@
 import { describe, expect, it, jest, test } from "@jest/globals";
 
-import {
-    StructDefaultOptions,
-    StructValue,
-    type ExactReadable,
-} from "../basic/index.js";
+import { StructDefaultOptions, StructValue } from "../basic/index.js";
+import type { ExactReadable } from "../basic/index.js";
 
 import { NumberFieldDefinition, NumberFieldType } from "./number.js";
 

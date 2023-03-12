@@ -1,0 +1,42 @@
+{
+    "name": "@yume-chan/aoa",
+    "version": "0.0.18",
+    "description": "TypeScript implementation of Android Open Accessory protocol.",
+    "keywords": [
+        "adb",
+        "android-phone"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/aoa#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "packages/aoa"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "scripts": {
+        "build": "tsc -b tsconfig.build.json",
+        "build:watch": "tsc -b tsconfig.build.json",
+        "lint": "eslint src/**/*.ts --fix",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@types/w3c-web-usb": "^1.0.6"
+    },
+    "devDependencies": {
+        "@yume-chan/eslint-config": "workspace:^1.0.0",
+        "@yume-chan/tsconfig": "workspace:^1.0.0",
+        "eslint": "^8.36.0",
+        "typescript": "^4.9.4"
+    }
+}

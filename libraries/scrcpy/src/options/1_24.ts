@@ -1,4 +1,5 @@
-import { ScrcpyOptions1_23, type ScrcpyOptionsInit1_23 } from "./1_23.js";
+import type { ScrcpyOptionsInit1_23 } from "./1_23.js";
+import { ScrcpyOptions1_23 } from "./1_23.js";
 
 export interface ScrcpyOptionsInit1_24 extends ScrcpyOptionsInit1_23 {
     powerOn: boolean;

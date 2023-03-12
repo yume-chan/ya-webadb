@@ -1,9 +1,10 @@
-import { type ReadableStream } from "@yume-chan/stream-extra";
-import { type ValueOrPromise } from "@yume-chan/struct";
+import type { ReadableStream } from "@yume-chan/stream-extra";
+import type { ValueOrPromise } from "@yume-chan/struct";
 
-import { type ScrcpyScrollController } from "../1_16/index.js";
-import { ScrcpyOptions1_21, type ScrcpyOptionsInit1_21 } from "../1_21.js";
-import { type ScrcpyVideoStreamMetadata } from "../types.js";
+import type { ScrcpyScrollController } from "../1_16/index.js";
+import type { ScrcpyOptionsInit1_21 } from "../1_21.js";
+import { ScrcpyOptions1_21 } from "../1_21.js";
+import type { ScrcpyVideoStreamMetadata } from "../types.js";
 
 import { ScrcpyScrollController1_22 } from "./scroll.js";
 

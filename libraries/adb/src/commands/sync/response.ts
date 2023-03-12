@@ -1,8 +1,9 @@
-import { type BufferedReadableStream } from "@yume-chan/stream-extra";
-import Struct, {
-    type StructLike,
-    type StructValueType,
+import type {
+    AsyncExactReadable,
+    StructLike,
+    StructValueType,
 } from "@yume-chan/struct";
+import Struct from "@yume-chan/struct";
 
 import { decodeUtf8 } from "../../utils/index.js";
 
@@ -26,7 +27,7 @@ export const AdbSyncFailResponse = new Struct({ littleEndian: true })
     });
 
 export async function adbSyncReadResponse<T>(
-    stream: BufferedReadableStream,
+    stream: AsyncExactReadable,
     id: AdbSyncResponseId,
     type: StructLike<T>
 ): Promise<T> {
@@ -45,7 +46,7 @@ export async function adbSyncReadResponse<T>(
 export async function* adbSyncReadResponses<
     T extends Struct<object, PropertyKey, object, any>
 >(
-    stream: BufferedReadableStream,
+    stream: AsyncExactReadable,
     id: AdbSyncResponseId,
     type: T
 ): AsyncGenerator<StructValueType<T>, void, void> {

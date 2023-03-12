@@ -1,17 +1,14 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
-import {
-    StructDefaultOptions,
-    StructValue,
-    type ExactReadable,
-} from "../../basic/index.js";
+import { StructDefaultOptions, StructValue } from "../../basic/index.js";
+import type { ExactReadable } from "../../basic/index.js";
 
+import type { BufferFieldSubType } from "./base.js";
 import {
     BufferLikeFieldDefinition,
     EMPTY_UINT8_ARRAY,
     StringBufferFieldSubType,
     Uint8ArrayBufferFieldSubType,
-    type BufferFieldSubType,
 } from "./base.js";
 
 class MockDeserializationStream implements ExactReadable {

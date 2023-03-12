@@ -2,71 +2,53 @@
 
 Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB), [Spec](https://wicg.github.io/webusb)) API.
 
-- [Note](#note)
-- [Use in Node.js](#use-in-nodejs)
-- [API](#api)
-  - [Constructor](#constructor)
-  - [`isSupported()`](#issupported)
-  - [`requestDevice`](#requestdevice)
-  - [`connect`](#connect)
+-   [Use in browser](#use-in-browser)
+-   [Use in Node.js](#use-in-nodejs)
+-   [`AdbWebUsbBackend`](#adbwebusbbackend)
+    -   [constructor](#constructor)
+    -   [`connect`](#connect)
+-   [`AdbWebUsbBackendManager`](#adbwebusbbackendmanager)
+    -   [`BROWSER`](#browser)
+    -   [constructor](#constructor-1)
+    -   [`requestDevice`](#requestdevice)
+    -   [`getDevices`](#getdevices)
+-   [Note on secure context](#note-on-secure-context)
 
-## Note
+## Use in browser
 
-WebUSB API requires [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS).
+| Chrome         | Edge           | Firefox | Internet Explorer | Safari |
+| -------------- | -------------- | ------- | ----------------- | ------ |
+| 61<sup>1</sup> | 79<sup>1</sup> | No      | No                | No     |
 
-Chrome will treat `localhost` as secure, but if you want to access a dev server running on another machine, follow the steps to add the domain name to allowlist:
-
-1. Open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`
-2. Add the protocol and domain part of your url (e.g. `http://192.168.0.100:9000`) to the input box
-3. Choose `Enable` from the dropdown menu
-4. Restart browser
+<sup>1</sup>: Chrome for Android is supported, Chrome for iOS is NOT supported.
 
 ## Use in Node.js
 
-Node.js doesn't support WebUSB API, but you might be able to use this package with the [`usb`](https://www.npmjs.com/package/usb) package (I didn't test this. If you have any results, please open a discussion to share with us).
+| Node.js | `usb` NPM Package |
+| ------- | ----------------- |
+| 10.5    | 2.8.1             |
 
-All static methods will not work, but the constructor only requires an object that's structurally compatible with `USBDevice` interface. The `WebUSBDevice` class in `usb` package should satisfy this requirement.
+Node.js doesn't have native support for WebUSB API, but the [`usb`](https://www.npmjs.com/package/usb) NPM package provides a WebUSB compatible API.
 
-## API
+To use a custom WebUSB API implementation, pass it to the constructor of `AdbWebUsbBackend`, `AdbWebUsbBackendManager` and `AdbWebUsbBackendWatcher` via the `usb` parameter.
 
-### Constructor
+## `AdbWebUsbBackend`
+
+### constructor
 
 ```ts
 public constructor(
     device: USBDevice,
     filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+    usb: USB
 );
 ```
 
-Create a new instance of `AdbWebBackend` using a `USBDevice` instance you already have.
+Create a new instance of `AdbWebBackend` using a specified `USBDevice` instance.
 
-`USBDevice` type is from WebUSB API.
+`USBDevice` and `USB` types are from WebUSB API.
 
-The `filters` parameter specifies the `classCode`, `subclassCode` and `protocolCode`  to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
-
-### `isSupported()`
-
-```ts
-public static isSupported(): boolean;
-```
-
-Check if WebUSB API is supported by the browser.
-
-### `requestDevice`
-
-```ts
-public static async requestDevice(
-    filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-): Promise<AdbWebUsbBackend | undefined>
-```
-
-Request access to a connected device from browser. The browser will display a list of devices to the user and let them choose one.
-
-Only available in browsers that support WebUSB API (When `isSupported()` returns `true`).
-
-The `filters` parameter must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface. It can also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
-
-Returns an `AdbWebUsbBackend` instance, or `undefined` if the user cancelled the picker.
+The `filters` parameter specifies the `classCode`, `subclassCode` and `protocolCode` to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
 
 ### `connect`
 
@@ -77,3 +59,63 @@ public async connect(): Promise<
 ```
 
 Claim the device and create a pair of `AdbPacket` streams to the ADB interface.
+
+## `AdbWebUsbBackendManager`
+
+A helper class that wraps the WebUSB API.
+
+### `BROWSER`
+
+```ts
+public static readonly BROWSER: AdbWebUsbBackendManager | undefined;
+```
+
+Gets the instance of `AdbWebUsbBackendManager` using browser WebUSB implementation.
+
+May be `undefined` if the browser does not support WebUSB.
+
+### constructor
+
+```ts
+public constructor(usb: USB);
+```
+
+Create a new instance of `AdbWebUsbBackendManager` using the specified WebUSB API implementation.
+
+### `requestDevice`
+
+```ts
+public async requestDevice(
+    filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+): Promise<AdbWebUsbBackend | undefined>
+```
+
+Request access to a connected device.
+This is a convince method for `usb.requestDevice()`.
+
+The `filters` parameter must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface. It can also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
+
+Returns an `AdbWebUsbBackend` instance, or `undefined` if the user cancelled the picker.
+
+### `getDevices`
+
+```ts
+public async getDevices(
+    filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+): Promise<AdbWebUsbBackend[]>
+```
+
+Get all connected and authenticated devices.
+
+This is a convince method for `usb.getDevices()`.
+
+## Note on secure context
+
+WebUSB requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS).
+
+`localhost` is considered secure, so local development works. But to access a self-hosted server running on another machine, either add a certificate, or add the domain name to the allowlist on each client machine:
+
+1. Open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`
+2. Add the protocol and domain part of your url (e.g. `http://192.168.0.100:9000`) to the input box
+3. Choose `Enable` from the dropdown menu
+4. Restart browser

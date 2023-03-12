@@ -6,4 +6,4 @@ export const ScrcpyInjectTextControlMessage = new Struct()
     .string("text", { lengthField: "length" });
 
 export type ScrcpyInjectTextControlMessage =
-    typeof ScrcpyInjectTextControlMessage["TInit"];
+    (typeof ScrcpyInjectTextControlMessage)["TInit"];

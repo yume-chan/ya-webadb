@@ -1,13 +1,15 @@
 // cspell:ignore scid
 
-import { type Adb } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 
-import { type ScrcpyOptionsInit1_16 } from "../../options/index.js";
+import type { ScrcpyOptionsInit1_16 } from "../../options/index.js";
+import type {
+    AdbScrcpyConnection,
+    AdbScrcpyConnectionOptions,
+} from "../connection.js";
 import {
     AdbScrcpyForwardConnection,
     AdbScrcpyReverseConnection,
-    type AdbScrcpyConnection,
-    type AdbScrcpyConnectionOptions,
 } from "../connection.js";
 
 import { AdbScrcpyOptionsBase } from "./types.js";

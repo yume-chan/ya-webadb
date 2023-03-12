@@ -1,7 +1,5 @@
-import {
-    AndroidMotionEventAction,
-    type ScrcpyInjectTouchControlMessage,
-} from "./inject-touch.js";
+import type { ScrcpyInjectTouchControlMessage } from "./inject-touch.js";
+import { AndroidMotionEventAction } from "./inject-touch.js";
 import { ScrcpyControlMessageType } from "./type.js";
 
 /**

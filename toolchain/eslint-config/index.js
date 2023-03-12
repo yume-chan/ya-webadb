@@ -19,9 +19,9 @@ module.exports = {
             },
         ],
 
-        "import/consistent-type-specifier-style": ["error", "prefer-inline"],
+        "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
         "import/no-cycle": "error",
-        "import/no-duplicates": "error",
+        "import/no-duplicates": ["error", { "prefer-inline": false }],
         "import/order": [
             "error",
             {

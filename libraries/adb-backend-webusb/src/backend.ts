@@ -1,21 +1,21 @@
+import type { AdbBackend, AdbPacketData, AdbPacketInit } from "@yume-chan/adb";
+import { AdbPacketHeader, AdbPacketSerializeStream } from "@yume-chan/adb";
+import type {
+    Consumable,
+    ReadableWritablePair,
+    WritableStream,
+} from "@yume-chan/stream-extra";
 import {
-    AdbPacketHeader,
-    AdbPacketSerializeStream,
-    type AdbBackend,
-    type AdbPacketData,
-    type AdbPacketInit,
-} from "@yume-chan/adb";
-import {
+    ConsumableWritableStream,
     DuplexStreamFactory,
     ReadableStream,
-    WritableStream,
     pipeFrom,
-    type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
-import { EMPTY_UINT8_ARRAY, type ExactReadable } from "@yume-chan/struct";
+import type { ExactReadable } from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
 const NOOP = () => {
-    /* empty */
+    // no-op
 };
 
 /**
@@ -27,6 +27,9 @@ export type AdbDeviceFilter = USBDeviceFilter &
         Pick<USBDeviceFilter, "classCode" | "subclassCode" | "protocolCode">
     >;
 
+/**
+ * The default filter for ADB devices, as defined by Google.
+ */
 export const ADB_DEFAULT_DEVICE_FILTER = {
     classCode: 0xff,
     subclassCode: 0x42,
@@ -125,14 +128,14 @@ class Uint8ArrayExactReadable implements ExactReadable {
 }
 
 export class AdbWebUsbBackendStream
-    implements ReadableWritablePair<AdbPacketData, AdbPacketInit>
+    implements ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
 {
     private _readable: ReadableStream<AdbPacketData>;
     public get readable() {
         return this._readable;
     }
 
-    private _writable: WritableStream<AdbPacketInit>;
+    private _writable: WritableStream<Consumable<AdbPacketInit>>;
     public get writable() {
         return this._writable;
     }
@@ -140,11 +143,15 @@ export class AdbWebUsbBackendStream
     public constructor(
         device: USBDevice,
         inEndpoint: USBEndpoint,
-        outEndpoint: USBEndpoint
+        outEndpoint: USBEndpoint,
+        usbManager: USB
     ) {
         let closed = false;
 
-        const factory = new DuplexStreamFactory<AdbPacketData, Uint8Array>({
+        const factory = new DuplexStreamFactory<
+            AdbPacketData,
+            Consumable<Uint8Array>
+        >({
             close: async () => {
                 try {
                     closed = true;
@@ -154,7 +161,7 @@ export class AdbWebUsbBackendStream
                 }
             },
             dispose: () => {
-                navigator.usb.removeEventListener(
+                usbManager.removeEventListener(
                     "disconnect",
                     handleUsbDisconnect
                 );
@@ -167,7 +174,7 @@ export class AdbWebUsbBackendStream
             }
         }
 
-        navigator.usb.addEventListener("disconnect", handleUsbDisconnect);
+        usbManager.addEventListener("disconnect", handleUsbDisconnect);
 
         this._readable = factory.wrapReadable(
             new ReadableStream<AdbPacketData>({
@@ -206,31 +213,34 @@ export class AdbWebUsbBackendStream
             })
         );
 
+        const zeroMask = outEndpoint.packetSize - 1;
         this._writable = pipeFrom(
             factory.createWritable(
-                new WritableStream(
-                    {
-                        write: async (chunk) => {
-                            try {
+                new ConsumableWritableStream({
+                    write: async (chunk) => {
+                        try {
+                            await device.transferOut(
+                                outEndpoint.endpointNumber,
+                                chunk
+                            );
+
+                            if (
+                                zeroMask &&
+                                (chunk.byteLength & zeroMask) === 0
+                            ) {
                                 await device.transferOut(
                                     outEndpoint.endpointNumber,
-                                    chunk
+                                    EMPTY_UINT8_ARRAY
                                 );
-                            } catch (e) {
-                                if (closed) {
-                                    return;
-                                }
-                                throw e;
                             }
-                        },
+                        } catch (e) {
+                            if (closed) {
+                                return;
+                            }
+                            throw e;
+                        }
                     },
-                    {
-                        highWaterMark: 16 * 1024,
-                        size(chunk) {
-                            return chunk.byteLength;
-                        },
-                    }
-                )
+                })
             ),
             new AdbPacketSerializeStream()
         );
@@ -238,54 +248,9 @@ export class AdbWebUsbBackendStream
 }
 
 export class AdbWebUsbBackend implements AdbBackend {
-    /**
-     * Check if WebUSB API is supported by the browser.
-     *
-     * @returns `true` if WebUSB is supported by the current browser.
-     */
-    public static isSupported(): boolean {
-        return !!globalThis.navigator?.usb;
-    }
-
-    /**
-     * Request access to a connected device from browser.
-     * The browser will display a list of devices to the user and let them choose one.
-     *
-     * Only available in browsers that support WebUSB API (When `isSupported()` returns `true`).
-     *
-     * @param filters
-     * The filters to apply to the device list.
-     *
-     * It must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface,
-     * but can also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
-     * @returns The `AdbWebUsbBackend` instance if the user selected a device, or `undefined` if the user cancelled the device picker.
-     */
-    public static async requestDevice(
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-    ): Promise<AdbWebUsbBackend | undefined> {
-        try {
-            const device = await navigator.usb.requestDevice({
-                filters,
-            });
-            return new AdbWebUsbBackend(device, filters);
-        } catch (e) {
-            // User cancelled the device picker
-            if (e instanceof DOMException && e.name === "NotFoundError") {
-                return undefined;
-            }
-
-            throw e;
-        }
-    }
-
-    public static async getDevices(
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-    ): Promise<AdbWebUsbBackend[]> {
-        const devices = await window.navigator.usb.getDevices();
-        return devices.map((device) => new AdbWebUsbBackend(device, filters));
-    }
-
     private _filters: AdbDeviceFilter[];
+    private _usb: USB;
+
     private _device: USBDevice;
     public get device() {
         return this._device;
@@ -300,17 +265,19 @@ export class AdbWebUsbBackend implements AdbBackend {
     }
 
     /**
-     * Create a new instance of `AdbWebBackend` using a `USBDevice` instance you already have.
+     * Create a new instance of `AdbWebBackend` using a specified `USBDevice` instance
      *
-     * @param device The `USBDevice` instance you already have.
-     * @param filters The filters to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
+     * @param device The `USBDevice` instance obtained elsewhere.
+     * @param filters The filters to use when searching for ADB interface. Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
      */
     public constructor(
         device: USBDevice,
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
+        usb: USB
     ) {
         this._device = device;
         this._filters = filters;
+        this._usb = usb;
     }
 
     /**
@@ -318,7 +285,7 @@ export class AdbWebUsbBackend implements AdbBackend {
      * @returns The pair of `AdbPacket` streams.
      */
     public async connect(): Promise<
-        ReadableWritablePair<AdbPacketData, AdbPacketInit>
+        ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
     > {
         if (!this._device.opened) {
             await this._device.open();
@@ -357,7 +324,8 @@ export class AdbWebUsbBackend implements AdbBackend {
         return new AdbWebUsbBackendStream(
             this._device,
             inEndpoint,
-            outEndpoint
+            outEndpoint,
+            this._usb
         );
     }
 }

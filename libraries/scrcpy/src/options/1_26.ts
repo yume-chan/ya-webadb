@@ -1,27 +1,19 @@
 // cspell:ignore scid
 
-import {
-    BufferedReadableStream,
-    type ReadableStream,
-} from "@yume-chan/stream-extra";
-import Struct, {
-    NumberFieldType,
-    placeholder,
-    type ValueOrPromise,
-} from "@yume-chan/struct";
+import type { ReadableStream } from "@yume-chan/stream-extra";
+import { BufferedReadableStream } from "@yume-chan/stream-extra";
+import type { ValueOrPromise } from "@yume-chan/struct";
+import Struct, { NumberFieldType, placeholder } from "@yume-chan/struct";
 
-import {
-    type AndroidMotionEventAction,
-    type ScrcpyInjectTouchControlMessage,
+import type {
+    AndroidMotionEventAction,
+    ScrcpyInjectTouchControlMessage,
 } from "../control/index.js";
 
 import { ScrcpyFloatToUint16FieldDefinition } from "./1_16/index.js";
-import { type ScrcpyOptionsInit1_24 } from "./1_24.js";
+import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
 import { ScrcpyOptions1_25 } from "./1_25/index.js";
-import {
-    type ScrcpyOptionValue,
-    type ScrcpyVideoStreamMetadata,
-} from "./types.js";
+import type { ScrcpyOptionValue, ScrcpyVideoStreamMetadata } from "./types.js";
 
 export const ScrcpyInjectTouchControlMessage1_26 = new Struct()
     .uint8("type")
@@ -36,7 +28,7 @@ export const ScrcpyInjectTouchControlMessage1_26 = new Struct()
     .uint32("buttons");
 
 export type ScrcpyInjectTouchControlMessage1_26 =
-    typeof ScrcpyInjectTouchControlMessage1_26["TInit"];
+    (typeof ScrcpyInjectTouchControlMessage1_26)["TInit"];
 
 export class ScrcpyInstanceId implements ScrcpyOptionValue {
     public static readonly NONE = new ScrcpyInstanceId(-1);

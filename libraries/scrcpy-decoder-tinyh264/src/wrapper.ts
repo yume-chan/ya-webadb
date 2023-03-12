@@ -1,9 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
-import {
-    AutoDisposable,
-    EventEmitter,
-    type Disposable,
-} from "@yume-chan/event";
+import { AutoDisposable, EventEmitter } from "@yume-chan/event";
+import type { Disposable } from "@yume-chan/event";
 
 let worker: Worker | undefined;
 let workerReady = false;

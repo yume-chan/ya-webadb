@@ -1,25 +1,27 @@
 import { AsyncOperationManager, PromiseResolver } from "@yume-chan/async";
-import { type RemoveEventListener } from "@yume-chan/event";
+import type { RemoveEventListener } from "@yume-chan/event";
+import type {
+    Consumable,
+    ReadableWritablePair,
+    WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 import {
     AbortController,
+    ConsumableWritableStream,
     WritableStream,
-    type ReadableWritablePair,
-    type WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
-import { EMPTY_UINT8_ARRAY, type ValueOrPromise } from "@yume-chan/struct";
+import type { ValueOrPromise } from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
-import {
-    AdbCommand,
-    calculateChecksum,
-    type AdbPacketData,
-    type AdbPacketInit,
-} from "../packet.js";
+import type { AdbPacketData, AdbPacketInit } from "../packet.js";
+import { AdbCommand, calculateChecksum } from "../packet.js";
 import { decodeUtf8, encodeUtf8 } from "../utils/index.js";
 
-import { AdbSocketController, type AdbSocket } from "./socket.js";
+import type { AdbSocket } from "./socket.js";
+import { AdbSocketController } from "./socket.js";
 
 const NOOP = () => {
-    /* empty */
+    // no-op
 };
 
 export interface AdbPacketDispatcherOptions {
@@ -61,7 +63,7 @@ export class AdbPacketDispatcher implements Closeable {
      */
     private readonly sockets = new Map<number, AdbSocketController>();
 
-    private _writer!: WritableStreamDefaultWriter<AdbPacketInit>;
+    private _writer: WritableStreamDefaultWriter<Consumable<AdbPacketInit>>;
 
     public readonly options: AdbPacketDispatcherOptions;
 
@@ -76,7 +78,10 @@ export class AdbPacketDispatcher implements Closeable {
     private _abortController = new AbortController();
 
     public constructor(
-        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
+        connection: ReadableWritablePair<
+            AdbPacketData,
+            Consumable<AdbPacketInit>
+        >,
         options: AdbPacketDispatcherOptions
     ) {
         this.options = options;
@@ -277,50 +282,30 @@ export class AdbPacketDispatcher implements Closeable {
         return controller.socket;
     }
 
-    public sendPacket(packet: AdbPacketInit): Promise<void>;
-    public sendPacket(
+    public async sendPacket(
         command: AdbCommand,
         arg0: number,
         arg1: number,
-        payload?: string | Uint8Array
-    ): Promise<void>;
-    public async sendPacket(
-        packetOrCommand: AdbPacketInit | AdbCommand,
-        arg0?: number,
-        arg1?: number,
         payload: string | Uint8Array = EMPTY_UINT8_ARRAY
     ): Promise<void> {
-        let init: AdbPacketData;
-        if (arg0 === undefined) {
-            init = packetOrCommand as AdbPacketInit;
-        } else {
-            if (typeof payload === "string") {
-                payload = encodeUtf8(payload);
-            }
-
-            init = {
-                command: packetOrCommand as AdbCommand,
-                arg0: arg0,
-                arg1: arg1 as number,
-                payload,
-            };
+        if (typeof payload === "string") {
+            payload = encodeUtf8(payload);
         }
 
-        if (
-            init.payload &&
-            init.payload.byteLength > this.options.maxPayloadSize
-        ) {
+        if (payload.byteLength > this.options.maxPayloadSize) {
             throw new Error("payload too large");
         }
 
-        if (this.options.calculateChecksum) {
-            calculateChecksum(init);
-        } else {
-            (init as AdbPacketInit).checksum = 0;
-        }
-
-        await this._writer.ready;
-        await this._writer.write(init as AdbPacketInit);
+        await ConsumableWritableStream.write(this._writer, {
+            command,
+            arg0,
+            arg1,
+            payload,
+            checksum: this.options.calculateChecksum
+                ? calculateChecksum(payload)
+                : 0,
+            magic: command ^ 0xffffffff,
+        });
     }
 
     public async close() {

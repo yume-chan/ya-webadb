@@ -2,15 +2,16 @@
 // cspell: ignore usec
 
 import { AdbCommandBase, AdbSubprocessNoneProtocol } from "@yume-chan/adb";
+import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     BufferedTransformStream,
     DecodeUtf8Stream,
     SplitStringStream,
     WrapReadableStream,
     WritableStream,
-    type ReadableStream,
 } from "@yume-chan/stream-extra";
-import Struct, { decodeUtf8, type AsyncExactReadable } from "@yume-chan/struct";
+import type { AsyncExactReadable } from "@yume-chan/struct";
+import Struct, { decodeUtf8 } from "@yume-chan/struct";
 
 // `adb logcat` is an alias to `adb shell logcat`
 // so instead of adding to core library, it's implemented here
@@ -103,7 +104,7 @@ export const LoggerEntry = new Struct({ littleEndian: true })
         },
     });
 
-export type LoggerEntry = typeof LoggerEntry["TDeserializeResult"];
+export type LoggerEntry = (typeof LoggerEntry)["TDeserializeResult"];
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;drc=bbe77d66e7bee8bd1f0bc7e5492b5376b0207ef6;bpv=0
 export interface AndroidLogEntry extends LoggerEntry {
@@ -124,7 +125,7 @@ export function formatAndroidLogEntry(
         // TODO: implement other formats
         default: {
             // prettier-ignore
-            const text=`${
+            const text = `${
                 AndroidLogPriorityToCharacter[entry.priority]
             }/${
                 entry.tag.padEnd(8)

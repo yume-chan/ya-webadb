@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/scrcpy",
+            "comment": "Change `AdbScrcpyClient#pushServer` to take a `ReadableStream<Uint8Array>` instead of returning a `WritableStream<Uint8Array>`",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/scrcpy"
+}

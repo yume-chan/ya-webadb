@@ -1,17 +1,19 @@
 import { PromiseResolver } from "@yume-chan/async";
+import type { Consumable, ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
     AbortController,
+    ConsumableWritableStream,
     DecodeUtf8Stream,
     GatherStringStream,
     WritableStream,
-    type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 
+import type { AdbCredentialStore } from "./auth.js";
 import {
     ADB_DEFAULT_AUTHENTICATORS,
     AdbAuthenticationProcessor,
-    type AdbCredentialStore,
 } from "./auth.js";
+import type { AdbFrameBuffer } from "./commands/index.js";
 import {
     AdbPower,
     AdbReverseCommand,
@@ -20,22 +22,16 @@ import {
     AdbTcpIpCommand,
     escapeArg,
     framebuffer,
-    install,
-    type AdbFrameBuffer,
 } from "./commands/index.js";
-import { AdbFeatures } from "./features.js";
-import {
-    AdbCommand,
-    calculateChecksum,
-    type AdbPacketData,
-    type AdbPacketInit,
-} from "./packet.js";
-import {
-    AdbPacketDispatcher,
-    type AdbIncomingSocketHandler,
-    type AdbSocket,
-    type Closeable,
+import { AdbFeature } from "./features.js";
+import type { AdbPacketData, AdbPacketInit } from "./packet.js";
+import { AdbCommand, calculateChecksum } from "./packet.js";
+import type {
+    AdbIncomingSocketHandler,
+    AdbSocket,
+    Closeable,
 } from "./socket/index.js";
+import { AdbPacketDispatcher } from "./socket/index.js";
 import { decodeUtf8, encodeUtf8 } from "./utils/index.js";
 
 export enum AdbPropKey {
@@ -54,13 +50,17 @@ export class Adb implements Closeable {
      * and starts a new authentication process.
      */
     public static async authenticate(
-        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
+        connection: ReadableWritablePair<
+            AdbPacketData,
+            Consumable<AdbPacketInit>
+        >,
         credentialStore: AdbCredentialStore,
         authenticators = ADB_DEFAULT_AUTHENTICATORS
     ): Promise<Adb> {
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
-        let maxPayloadSize = 0x100000;
+        // Android 4: 4K, Android 7: 256K, Android 9: 1M
+        let maxPayloadSize = 1024 * 1024;
 
         const resolver = new PromiseResolver<string>();
         const authProcessor = new AdbAuthenticationProcessor(
@@ -115,7 +115,9 @@ export class Adb implements Closeable {
         async function sendPacket(init: AdbPacketData) {
             // Always send checksum in auth steps
             // Because we don't know if the device needs it or not.
-            await writer.write(calculateChecksum(init));
+            (init as AdbPacketInit).checksum = calculateChecksum(init.payload);
+            (init as AdbPacketInit).magic = init.command ^ 0xffffffff;
+            await ConsumableWritableStream.write(writer, init as AdbPacketInit);
         }
 
         let banner: string;
@@ -123,17 +125,17 @@ export class Adb implements Closeable {
             // https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/transport.cpp#1252
             // There are some other feature constants, but some of them are only used by ADB server, not devices (daemons).
             const features = [
-                AdbFeatures.ShellV2,
-                AdbFeatures.Cmd,
-                AdbFeatures.StatV2,
-                AdbFeatures.ListV2,
-                AdbFeatures.FixedPushMkdir,
+                AdbFeature.ShellV2,
+                AdbFeature.Cmd,
+                AdbFeature.StatV2,
+                AdbFeature.ListV2,
+                AdbFeature.FixedPushMkdir,
                 "apex",
-                "abb",
+                AdbFeature.Abb,
                 // only tells the client the symlink timestamp issue in `adb push --sync` has been fixed.
                 // No special handling required.
                 "fixed_push_symlink_timestamp",
-                "abb_exec",
+                AdbFeature.AbbExec,
                 "remount_shell",
                 "track_app",
                 "sendrecv_v2",
@@ -172,9 +174,14 @@ export class Adb implements Closeable {
         return this.dispatcher.disconnected;
     }
 
-    private _protocolVersion: number | undefined;
+    private _protocolVersion: number;
     public get protocolVersion() {
         return this._protocolVersion;
+    }
+
+    private _maxPayloadSize: number;
+    public get maxPayloadSize() {
+        return this._maxPayloadSize;
     }
 
     private _product: string | undefined;
@@ -192,7 +199,7 @@ export class Adb implements Closeable {
         return this._device;
     }
 
-    private _features: AdbFeatures[] = [];
+    private _features: AdbFeature[] = [];
     public get features() {
         return this._features;
     }
@@ -203,7 +210,10 @@ export class Adb implements Closeable {
     public readonly tcpip: AdbTcpIpCommand;
 
     public constructor(
-        connection: ReadableWritablePair<AdbPacketData, AdbPacketInit>,
+        connection: ReadableWritablePair<
+            AdbPacketData,
+            Consumable<AdbPacketInit>
+        >,
         version: number,
         maxPayloadSize: number,
         banner: string
@@ -227,6 +237,7 @@ export class Adb implements Closeable {
         });
 
         this._protocolVersion = version;
+        this._maxPayloadSize = maxPayloadSize;
 
         this.subprocess = new AdbSubprocess(this);
         this.power = new AdbPower(this);
@@ -260,14 +271,14 @@ export class Adb implements Closeable {
                         this._device = value;
                         break;
                     case AdbPropKey.Features:
-                        this._features = value!.split(",") as AdbFeatures[];
+                        this._features = value!.split(",") as AdbFeature[];
                         break;
                 }
             }
         }
     }
 
-    public supportsFeature(feature: AdbFeatures): boolean {
+    public supportsFeature(feature: AdbFeature): boolean {
         return this._features.includes(feature);
     }
 
@@ -302,16 +313,13 @@ export class Adb implements Closeable {
     }
 
     public async rm(...filenames: string[]): Promise<string> {
+        // https://android.googlesource.com/platform/packages/modules/adb/+/1a0fb8846d4e6b671c8aa7f137a8c21d7b248716/client/adb_install.cpp#984
         const stdout = await this.subprocess.spawnAndWaitLegacy([
             "rm",
-            "-rf",
             ...filenames.map((arg) => escapeArg(arg)),
+            "</dev/null",
         ]);
         return stdout;
-    }
-
-    public install() {
-        return install(this);
     }
 
     public async sync(): Promise<AdbSync> {

@@ -7,4 +7,4 @@ export const ScrcpyAckClipboardDeviceMessage = new Struct()
     .extra({ type: ScrcpyDeviceMessageType.AckClipboard as const });
 
 export type ScrcpyAckClipboardDeviceMessage =
-    typeof ScrcpyAckClipboardDeviceMessage["TDeserializeResult"];
+    (typeof ScrcpyAckClipboardDeviceMessage)["TDeserializeResult"];

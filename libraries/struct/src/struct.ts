@@ -1,15 +1,23 @@
+import type {
+    AsyncExactReadable,
+    ExactReadable,
+    StructFieldDefinition,
+    StructFieldValue,
+    StructOptions,
+} from "./basic/index.js";
 import {
     ExactReadableEndedError,
     STRUCT_VALUE_SYMBOL,
     StructDefaultOptions,
     StructValue,
-    type AsyncExactReadable,
-    type ExactReadable,
-    type StructFieldDefinition,
-    type StructFieldValue,
-    type StructOptions,
 } from "./basic/index.js";
 import { SyncPromise } from "./sync-promise.js";
+import type {
+    BufferFieldSubType,
+    FixedLengthBufferLikeFieldOptions,
+    LengthField,
+    VariableLengthBufferLikeFieldOptions,
+} from "./types/index.js";
 import {
     BigIntFieldDefinition,
     BigIntFieldType,
@@ -19,17 +27,8 @@ import {
     StringBufferFieldSubType,
     Uint8ArrayBufferFieldSubType,
     VariableLengthBufferLikeFieldDefinition,
-    type BufferFieldSubType,
-    type FixedLengthBufferLikeFieldOptions,
-    type LengthField,
-    type VariableLengthBufferLikeFieldOptions,
 } from "./types/index.js";
-import {
-    type Evaluate,
-    type Identity,
-    type Overwrite,
-    type ValueOrPromise,
-} from "./utils.js";
+import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils.js";
 
 export interface StructLike<TValue> {
     deserialize(stream: ExactReadable | AsyncExactReadable): Promise<TValue>;

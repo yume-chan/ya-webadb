@@ -1,6 +1,9 @@
 import { TransformStream } from "./stream.js";
 
-function* split(input: string, separator: string): Generator<string, void, void> {
+function* split(
+    input: string,
+    separator: string
+): Generator<string, void, void> {
     let start = 0;
 
     while (true) {
@@ -23,7 +26,7 @@ export class SplitStringStream extends TransformStream<string, string> {
                 for (const part of split(chunk, separator)) {
                     controller.enqueue(part);
                 }
-            }
+            },
         });
     }
 }

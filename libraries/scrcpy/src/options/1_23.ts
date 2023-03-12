@@ -1,10 +1,8 @@
 import { TransformStream } from "@yume-chan/stream-extra";
 
-import {
-    ScrcpyOptions1_22,
-    type ScrcpyOptionsInit1_22,
-} from "./1_22/options.js";
-import { type ScrcpyVideoStreamPacket } from "./types.js";
+import type { ScrcpyOptionsInit1_22 } from "./1_22/options.js";
+import { ScrcpyOptions1_22 } from "./1_22/options.js";
+import type { ScrcpyVideoStreamPacket } from "./types.js";
 
 export interface ScrcpyOptionsInit1_23 extends ScrcpyOptionsInit1_22 {
     cleanup: boolean;

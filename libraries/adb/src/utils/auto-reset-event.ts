@@ -1,5 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { type Disposable } from "@yume-chan/event";
+import type { Disposable } from "@yume-chan/event";
 
 export class AutoResetEvent implements Disposable {
     private _set: boolean;

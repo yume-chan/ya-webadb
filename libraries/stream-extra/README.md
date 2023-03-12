@@ -40,4 +40,4 @@ web-streams-polyfill package's `ReadableStream#pipeTo` only uses public methods,
 
 Allowing reading specified amount of data by buffering incoming data.
 
-It's not a Web Stream API `ReadableStream`, because `ReadableStream` doesn't allow hinting the desired read size (except using BYOB readable, but causes extra allocations for small reads).
+It's not a Web Streams API `ReadableStream`, because `ReadableStream` doesn't allow hinting the desired read size (except using BYOB readable, but causes extra allocations for small reads).

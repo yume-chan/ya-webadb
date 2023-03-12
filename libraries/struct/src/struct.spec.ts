@@ -1,16 +1,15 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
-import {
-    StructDefaultOptions,
-    StructFieldDefinition,
-    type AsyncExactReadable,
-    type ExactReadable,
-    type StructFieldValue,
-    type StructOptions,
-    type StructValue,
+import type {
+    AsyncExactReadable,
+    ExactReadable,
+    StructFieldValue,
+    StructOptions,
+    StructValue,
 } from "./basic/index.js";
+import { StructDefaultOptions, StructFieldDefinition } from "./basic/index.js";
 import { Struct } from "./struct.js";
-import { type ValueOrPromise } from "./utils.js";
+import type { ValueOrPromise } from "./utils.js";
 
 import {
     BigIntFieldDefinition,

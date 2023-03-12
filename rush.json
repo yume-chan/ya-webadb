@@ -384,6 +384,10 @@
             "versionPolicyName": "adb"
         },
         {
+            "packageName": "@yume-chan/aoa",
+            "projectFolder": "libraries/aoa"
+        },
+        {
             "packageName": "@yume-chan/b-tree",
             "projectFolder": "libraries/b-tree"
         },

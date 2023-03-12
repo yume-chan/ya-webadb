@@ -1,13 +1,12 @@
-import {
-    StructFieldDefinition,
-    StructFieldValue,
-    type AsyncExactReadable,
-    type ExactReadable,
-    type StructOptions,
-    type StructValue,
+import type {
+    AsyncExactReadable,
+    ExactReadable,
+    StructOptions,
+    StructValue,
 } from "../basic/index.js";
+import { StructFieldDefinition, StructFieldValue } from "../basic/index.js";
 import { SyncPromise } from "../sync-promise.js";
-import { type ValueOrPromise } from "../utils.js";
+import type { ValueOrPromise } from "../utils.js";
 
 export interface NumberFieldType {
     signed: boolean;

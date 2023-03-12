@@ -420,7 +420,9 @@ describe("Types", () => {
                 const arrayBufferFieldDefinition =
                     new VariableLengthBufferLikeFieldDefinition(
                         arrayBufferFieldType,
-                        { lengthField }
+                        {
+                            lengthField,
+                        }
                     );
 
                 const value = new Uint8Array(100);
@@ -451,7 +453,9 @@ describe("Types", () => {
                 const arrayBufferFieldDefinition =
                     new VariableLengthBufferLikeFieldDefinition(
                         arrayBufferFieldType,
-                        { lengthField }
+                        {
+                            lengthField,
+                        }
                     );
 
                 const value = new Uint8Array(100);
@@ -484,7 +488,9 @@ describe("Types", () => {
                 const arrayBufferFieldDefinition =
                     new VariableLengthBufferLikeFieldDefinition(
                         arrayBufferFieldType,
-                        { lengthField }
+                        {
+                            lengthField,
+                        }
                     );
 
                 const value = new Uint8Array(100);

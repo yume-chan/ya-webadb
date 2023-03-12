@@ -3,11 +3,10 @@ import Struct, {
     NumberFieldType,
 } from "@yume-chan/struct";
 
-import {
-    ScrcpyControlMessageType,
-    type ScrcpyInjectScrollControlMessage,
-} from "../../control/index.js";
-import { clamp, type ScrcpyScrollController } from "../1_16/index.js";
+import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
+import { ScrcpyControlMessageType } from "../../control/index.js";
+import type { ScrcpyScrollController } from "../1_16/index.js";
+import { clamp } from "../1_16/index.js";
 
 export const ScrcpyFloatToInt16NumberType: NumberFieldType = {
     size: 2,
@@ -40,7 +39,7 @@ export const ScrcpyInjectScrollControlMessage1_25 = new Struct()
     .int32("buttons");
 
 export type ScrcpyInjectScrollControlMessage1_25 =
-    typeof ScrcpyInjectScrollControlMessage1_25["TInit"];
+    (typeof ScrcpyInjectScrollControlMessage1_25)["TInit"];
 
 export class ScrcpyScrollController1_25 implements ScrcpyScrollController {
     serializeScrollMessage(

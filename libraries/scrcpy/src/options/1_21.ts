@@ -2,9 +2,10 @@
 
 import Struct, { placeholder } from "@yume-chan/struct";
 
-import { type ScrcpySetClipboardControlMessage } from "../control/index.js";
+import type { ScrcpySetClipboardControlMessage } from "../control/index.js";
 
-import { ScrcpyOptions1_18, type ScrcpyOptionsInit1_18 } from "./1_18.js";
+import type { ScrcpyOptionsInit1_18 } from "./1_18.js";
+import { ScrcpyOptions1_18 } from "./1_18.js";
 import { toScrcpyOptionValue } from "./types.js";
 
 export interface ScrcpyOptionsInit1_21 extends ScrcpyOptionsInit1_18 {
@@ -23,7 +24,7 @@ export const ScrcpySetClipboardControlMessage1_21 = new Struct()
     .string("content", { lengthField: "length" });
 
 export type ScrcpySetClipboardControlMessage1_21 =
-    typeof ScrcpySetClipboardControlMessage1_21["TInit"];
+    (typeof ScrcpySetClipboardControlMessage1_21)["TInit"];
 
 export class ScrcpyOptions1_21<
     T extends ScrcpyOptionsInit1_21 = ScrcpyOptionsInit1_21

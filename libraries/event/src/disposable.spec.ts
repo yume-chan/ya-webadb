@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
-import { AutoDisposable, type Disposable } from "./disposable.js";
+import type { Disposable } from "./disposable.js";
+import { AutoDisposable } from "./disposable.js";
 
 describe("Event", () => {
     describe("AutoDisposable", () => {

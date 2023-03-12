@@ -1,4 +1,4 @@
-import { type StructFieldValue } from "./field-value.js";
+import type { StructFieldValue } from "./field-value.js";
 
 export const STRUCT_VALUE_SYMBOL = Symbol("struct-value");
 

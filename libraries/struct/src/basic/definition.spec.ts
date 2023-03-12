@@ -1,12 +1,12 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { type ValueOrPromise } from "../utils.js";
+import type { ValueOrPromise } from "../utils.js";
 
 import { StructFieldDefinition } from "./definition.js";
-import { type StructFieldValue } from "./field-value.js";
-import { type StructOptions } from "./options.js";
-import { type AsyncExactReadable, type ExactReadable } from "./stream.js";
-import { type StructValue } from "./struct-value.js";
+import type { StructFieldValue } from "./field-value.js";
+import type { StructOptions } from "./options.js";
+import type { AsyncExactReadable, ExactReadable } from "./stream.js";
+import type { StructValue } from "./struct-value.js";
 
 describe("StructFieldDefinition", () => {
     describe(".constructor", () => {

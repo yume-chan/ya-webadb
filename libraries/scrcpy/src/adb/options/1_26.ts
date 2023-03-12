@@ -1,7 +1,7 @@
 // cspell:ignore scid
 
-import { type ScrcpyOptionsInit1_26 } from "../../options/index.js";
-import { type AdbScrcpyConnectionOptions } from "../connection.js";
+import type { ScrcpyOptionsInit1_26 } from "../../options/index.js";
+import type { AdbScrcpyConnectionOptions } from "../connection.js";
 
 import { AdbScrcpyOptions1_22 } from "./1_22.js";
 

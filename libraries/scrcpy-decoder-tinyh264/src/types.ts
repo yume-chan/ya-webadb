@@ -1,6 +1,6 @@
-import { type Disposable } from "@yume-chan/event";
-import { type ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
-import { type WritableStream } from "@yume-chan/stream-extra";
+import type { Disposable } from "@yume-chan/event";
+import type { ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
+import type { WritableStream } from "@yume-chan/stream-extra";
 
 export interface ScrcpyVideoDecoderCapability {
     maxProfile?: number;

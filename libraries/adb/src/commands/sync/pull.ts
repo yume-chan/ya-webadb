@@ -1,16 +1,10 @@
-import {
-    ReadableStream,
-    type BufferedReadableStream,
-    type WritableStreamDefaultWriter,
-} from "@yume-chan/stream-extra";
+import type { ReadableStream } from "@yume-chan/stream-extra";
+import { PushReadableStream } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponses } from "./response.js";
-
-export const NOOP = () => {
-    /* empty */
-};
+import type { AdbSyncSocket } from "./socket.js";
 
 export const AdbSyncDataResponse = new Struct({ littleEndian: true })
     .uint32("dataLength")
@@ -18,47 +12,46 @@ export const AdbSyncDataResponse = new Struct({ littleEndian: true })
     .extra({ id: AdbSyncResponseId.Data as const });
 
 export type AdbSyncDataResponse =
-    typeof AdbSyncDataResponse["TDeserializeResult"];
+    (typeof AdbSyncDataResponse)["TDeserializeResult"];
+
+export async function* adbSyncPullGenerator(
+    socket: AdbSyncSocket,
+    path: string
+): AsyncGenerator<Uint8Array, void, void> {
+    const locked = await socket.lock();
+    let done = false;
+    try {
+        await adbSyncWriteRequest(locked, AdbSyncRequestId.Receive, path);
+        for await (const packet of adbSyncReadResponses(
+            locked,
+            AdbSyncResponseId.Data,
+            AdbSyncDataResponse
+        )) {
+            yield packet.data;
+        }
+        done = true;
+    } finally {
+        if (!done) {
+            // sync pull can't be cancelled, so we have to read all data
+            for await (const packet of adbSyncReadResponses(
+                locked,
+                AdbSyncResponseId.Data,
+                AdbSyncDataResponse
+            )) {
+                void packet;
+            }
+        }
+        locked.release();
+    }
+}
 
 export function adbSyncPull(
-    stream: BufferedReadableStream,
-    writer: WritableStreamDefaultWriter<Uint8Array>,
+    socket: AdbSyncSocket,
     path: string
 ): ReadableStream<Uint8Array> {
-    let generator!: AsyncGenerator<AdbSyncDataResponse, void, void>;
-    return new ReadableStream<Uint8Array>(
-        {
-            async start() {
-                // TODO: If `ReadableStream.from(AsyncGenerator)` is added to spec, use it instead.
-                await adbSyncWriteRequest(
-                    writer,
-                    AdbSyncRequestId.Receive,
-                    path
-                );
-                generator = adbSyncReadResponses(
-                    stream,
-                    AdbSyncResponseId.Data,
-                    AdbSyncDataResponse
-                );
-            },
-            async pull(controller) {
-                const { done, value } = await generator.next();
-                if (done) {
-                    controller.close();
-                    return;
-                }
-                controller.enqueue(value.data);
-            },
-            cancel() {
-                generator.return().catch(NOOP);
-                throw new Error(`Sync commands can't be canceled.`);
-            },
-        },
-        {
-            highWaterMark: 16 * 1024,
-            size(chunk) {
-                return chunk.byteLength;
-            },
+    return new PushReadableStream(async (controller) => {
+        for await (const data of adbSyncPullGenerator(socket, path)) {
+            await controller.enqueue(data);
         }
-    );
+    });
 }

@@ -1,11 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 
-import {
-    AbortController,
-    ReadableStream,
-    type AbortSignal,
-    type QueuingStrategy,
-} from "./stream.js";
+import type { AbortSignal, QueuingStrategy } from "./stream.js";
+import { AbortController, ReadableStream } from "./stream.js";
 
 export interface PushReadableStreamController<T> {
     abortSignal: AbortSignal;
@@ -34,7 +30,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
         strategy?: QueuingStrategy<T>
     ) {
         let waterMarkLow: PromiseResolver<void> | undefined;
-        const canceled: AbortController = new AbortController();
+        const canceled = new AbortController();
 
         super(
             {
