@@ -234,10 +234,17 @@ export class ScrcpyOptions1_16<
         return result;
     }
 
-    protected async parseUint32(
+    protected async parseUint16BE(
         stream: BufferedReadableStream
     ): Promise<number> {
-        const buffer = await stream.readExactly(4);
+        const buffer = await stream.readExactly(NumberFieldType.Uint16.size);
+        return NumberFieldType.Uint16.deserialize(buffer, false);
+    }
+
+    protected async parseUint32BE(
+        stream: BufferedReadableStream
+    ): Promise<number> {
+        const buffer = await stream.readExactly(NumberFieldType.Uint32.size);
         return NumberFieldType.Uint32.deserialize(buffer, false);
     }
 
@@ -248,8 +255,8 @@ export class ScrcpyOptions1_16<
             const buffered = new BufferedReadableStream(stream);
             const metadata: ScrcpyVideoStreamMetadata = {};
             metadata.deviceName = await this.parseCString(buffered);
-            metadata.width = await this.parseUint32(buffered);
-            metadata.height = await this.parseUint32(buffered);
+            metadata.width = await this.parseUint16BE(buffered);
+            metadata.height = await this.parseUint16BE(buffered);
             return [buffered.release(), metadata];
         })();
     }

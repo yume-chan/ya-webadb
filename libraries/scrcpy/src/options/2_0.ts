@@ -143,9 +143,9 @@ export class ScrcpyOptions2_0<
                     metadata.deviceName = await this.parseCString(buffered);
                 }
                 if (sendCodecMeta) {
-                    metadata.codec = await this.parseUint32(buffered);
-                    metadata.width = await this.parseUint32(buffered);
-                    metadata.height = await this.parseUint32(buffered);
+                    metadata.codec = await this.parseUint32BE(buffered);
+                    metadata.width = await this.parseUint32BE(buffered);
+                    metadata.height = await this.parseUint32BE(buffered);
                 }
                 return [buffered.release(), metadata];
             })();
