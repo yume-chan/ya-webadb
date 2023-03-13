@@ -59,8 +59,7 @@ export class ScrcpyOptions1_22<
     public override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>
     ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
-        const sendDeviceMeta =
-            this.value.sendDeviceMeta ?? this.getDefaultValues().sendDeviceMeta;
+        const sendDeviceMeta = this.value.sendDeviceMeta;
         if (!sendDeviceMeta) {
             return [stream, {}];
         } else {

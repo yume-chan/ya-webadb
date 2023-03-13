@@ -5,7 +5,11 @@ import {
     TransformStream,
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
-import Struct, { placeholder } from "@yume-chan/struct";
+import Struct, {
+    NumberFieldType,
+    decodeUtf8,
+    placeholder,
+} from "@yume-chan/struct";
 
 import type {
     AndroidMotionEventAction,
@@ -118,12 +122,12 @@ export interface ScrcpyOptionsInit1_16 {
     encoderName?: string;
 }
 
-export const ScrcpyVideoPacket = new Struct()
+export const ScrcpyMediaPacket = new Struct()
     .uint64("pts")
     .uint32("size")
     .uint8Array("data", { lengthField: "size" });
 
-export const NO_PTS = BigInt(1) << BigInt(63);
+export const SCRCPY_MEDIA_PACKET_FLAG_CONFIG = BigInt(1) << BigInt(63);
 
 export const ScrcpyBackOrScreenOnControlMessage1_16 = BasicControlMessage;
 
@@ -149,33 +153,28 @@ export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
 export type ScrcpyInjectTouchControlMessage1_16 =
     (typeof ScrcpyInjectTouchControlMessage1_16)["TInit"];
 
-export const ScrcpyVideoStreamMetadata1_16 = new Struct()
-    .string("deviceName", { length: 64 })
-    .uint16("width")
-    .uint16("height");
-
 export class ScrcpyOptions1_16<
     T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
 > implements ScrcpyOptions<T>
 {
-    public value: T;
+    public value: Required<T>;
 
-    public constructor(value: ScrcpyOptionsInit1_16) {
+    public constructor(init: ScrcpyOptionsInit1_16) {
         if (
             new.target === ScrcpyOptions1_16 &&
-            value.logLevel === ScrcpyLogLevel.Verbose
+            init.logLevel === ScrcpyLogLevel.Verbose
         ) {
-            value.logLevel = ScrcpyLogLevel.Debug;
+            init.logLevel = ScrcpyLogLevel.Debug;
         }
 
         if (
             new.target === ScrcpyOptions1_16 &&
-            value.lockVideoOrientation === ScrcpyVideoOrientation.Initial
+            init.lockVideoOrientation === ScrcpyVideoOrientation.Initial
         ) {
-            value.lockVideoOrientation = ScrcpyVideoOrientation.Unlocked;
+            init.lockVideoOrientation = ScrcpyVideoOrientation.Unlocked;
         }
 
-        this.value = value as T;
+        this.value = Object.assign(this.getDefaultValues(), init);
     }
 
     protected getArgumentOrder(): (keyof T)[] {
@@ -227,19 +226,31 @@ export class ScrcpyOptions1_16<
         return /\s+scrcpy --encoder-name '(.*?)'/;
     }
 
+    protected async parseCString(
+        stream: BufferedReadableStream
+    ): Promise<string> {
+        let result = decodeUtf8(await stream.readExactly(64));
+        result = result.substring(0, result.indexOf("\0"));
+        return result;
+    }
+
+    protected async parseUint32(
+        stream: BufferedReadableStream
+    ): Promise<number> {
+        const buffer = await stream.readExactly(4);
+        return NumberFieldType.Uint32.deserialize(buffer, false);
+    }
+
     public parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>
     ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
         return (async () => {
             const buffered = new BufferedReadableStream(stream);
-            const data = await ScrcpyVideoStreamMetadata1_16.deserialize(
-                buffered
-            );
-            data.deviceName = data.deviceName.substring(
-                0,
-                data.deviceName.indexOf("\0")
-            );
-            return [buffered.release(), data];
+            const metadata: ScrcpyVideoStreamMetadata = {};
+            metadata.deviceName = await this.parseCString(buffered);
+            metadata.width = await this.parseUint32(buffered);
+            metadata.height = await this.parseUint32(buffered);
+            return [buffered.release(), metadata];
         })();
     }
 
@@ -248,7 +259,7 @@ export class ScrcpyOptions1_16<
         ScrcpyVideoStreamPacket
     > {
         // Optimized path for video frames only
-        if (this.value.sendFrameMeta === false) {
+        if (!this.value.sendFrameMeta) {
             return new TransformStream({
                 transform(chunk, controller) {
                     controller.enqueue({
@@ -262,14 +273,14 @@ export class ScrcpyOptions1_16<
         let header: Uint8Array | undefined;
 
         const deserializeStream = new StructDeserializeStream(
-            ScrcpyVideoPacket
+            ScrcpyMediaPacket
         );
         return {
             writable: deserializeStream.writable,
             readable: deserializeStream.readable.pipeThrough(
                 new TransformStream({
                     transform(packet, controller) {
-                        if (packet.pts === NO_PTS) {
+                        if (packet.pts === SCRCPY_MEDIA_PACKET_FLAG_CONFIG) {
                             const {
                                 sequenceParameterSet,
                                 pictureParameterSet,

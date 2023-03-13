@@ -7,10 +7,9 @@ export class AdbScrcpyOptions1_22<
     T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22
 > extends AdbScrcpyOptions1_16<T> {
     protected override getConnectionOptions(): AdbScrcpyConnectionOptions {
-        const defaults = this.getDefaultValues();
         return Object.assign(super.getConnectionOptions(), {
-            control: this.value.control ?? defaults.control!,
-            sendDummyByte: this.value.sendDummyByte ?? defaults.sendDummyByte!,
+            control: this.value.control!,
+            sendDummyByte: this.value.sendDummyByte!,
         } satisfies Partial<AdbScrcpyConnectionOptions>);
     }
 }

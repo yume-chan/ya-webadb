@@ -3,7 +3,7 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
-import Struct, { NumberFieldType, placeholder } from "@yume-chan/struct";
+import Struct, { placeholder } from "@yume-chan/struct";
 
 import type {
     AndroidMotionEventAction,
@@ -130,21 +130,23 @@ export class ScrcpyOptions2_0<
     public override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>
     ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
-        const sendCodecId =
-            this.value.sendCodecMeta ?? this.getDefaultValues().sendCodecMeta;
-        if (!sendCodecId) {
-            return super.parseVideoStreamMetadata(stream);
+        const { sendDeviceMeta, sendCodecMeta } = this.value;
+        if (!sendDeviceMeta && !sendCodecMeta) {
+            return [stream, {}];
         } else {
             return (async () => {
-                let metadata: ScrcpyVideoStreamMetadata;
-                [stream, metadata] = await super.parseVideoStreamMetadata(
-                    stream
-                );
                 const buffered = new BufferedReadableStream(stream);
-                metadata.codec = NumberFieldType.Uint32.deserialize(
-                    await buffered.readExactly(4),
-                    false
-                );
+                const metadata: ScrcpyVideoStreamMetadata = {};
+                // `sendDeviceMeta` now only contains device name,
+                // can't use `super.parseVideoStreamMetadata` here
+                if (sendDeviceMeta) {
+                    metadata.deviceName = await this.parseCString(buffered);
+                }
+                if (sendCodecMeta) {
+                    metadata.codec = await this.parseUint32(buffered);
+                    metadata.width = await this.parseUint32(buffered);
+                    metadata.height = await this.parseUint32(buffered);
+                }
                 return [buffered.release(), metadata];
             })();
         }

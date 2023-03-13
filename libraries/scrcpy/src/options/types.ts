@@ -40,6 +40,12 @@ export function toScrcpyOptionValue<T>(value: unknown, empty: T): string | T {
     return String(value);
 }
 
+export enum ScrcpyVideoCodecId {
+    H264 = 0x68_32_36_34,
+    H265 = 0x68_32_36_35,
+    AV1 = 0x00_61_76_31,
+}
+
 export interface H264Configuration {
     profileIndex: number;
     constraintSet: number;
@@ -56,12 +62,6 @@ export interface H264Configuration {
 
     croppedWidth: number;
     croppedHeight: number;
-}
-
-export enum ScrcpyVideoCodecId {
-    H264 = 0x68_32_36_34,
-    H265 = 0x68_32_36_35,
-    AV1 = 0x00_61_76_31,
 }
 
 export interface ScrcpyVideoStreamMetadata {
@@ -89,8 +89,20 @@ export type ScrcpyVideoStreamPacket =
     | ScrcpyVideoStreamConfigurationPacket
     | ScrcpyVideoStreamFramePacket;
 
+export enum ScrcpyAudioCodecId {
+    Opus = 0x6f_70_75_73,
+    Aac = 0x00_61_61_63,
+    Raw = 0x00_72_61_77,
+    Disabled = 0x00_00_00_00,
+    Errored = 0x00_00_00_01,
+}
+
+export interface ScrcpyAudioStreamMetadata {
+    codec?: ScrcpyAudioCodecId;
+}
+
 export interface ScrcpyOptions<T extends object> {
-    value: T;
+    value: Required<T>;
 
     getDefaultValues(): Required<T>;
 
