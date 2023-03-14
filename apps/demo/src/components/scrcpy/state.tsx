@@ -1,5 +1,3 @@
-// cspell:ignore scid
-
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
 import {
@@ -11,7 +9,7 @@ import {
     ScrcpyDeviceMessageType,
     ScrcpyHoverHelper,
     ScrcpyInstanceId,
-    ScrcpyLogLevel,
+    ScrcpyLogLevel1_18,
     ScrcpyOptions2_0,
     ScrcpyVideoStreamConfigurationPacket,
     ScrcpyVideoStreamPacket,
@@ -255,12 +253,12 @@ export class ScrcpyPageState {
                 );
             });
 
-            const codecOptions = new CodecOptions();
+            const videoCodecOptions = new CodecOptions();
             if (!SETTING_STATE.clientSettings.ignoreDecoderCodecArgs) {
                 const capability = decoder.capabilities["h264"];
                 if (capability) {
-                    codecOptions.value.profile = capability.maxProfile;
-                    codecOptions.value.level = capability.maxLevel;
+                    videoCodecOptions.value.profile = capability.maxProfile;
+                    videoCodecOptions.value.level = capability.maxLevel;
                 }
             }
 
@@ -273,11 +271,11 @@ export class ScrcpyPageState {
             const options = new AdbScrcpyOptions2_0(
                 new ScrcpyOptions2_0({
                     ...SETTING_STATE.settings,
-                    logLevel: ScrcpyLogLevel.Debug,
+                    logLevel: ScrcpyLogLevel1_18.Debug,
                     scid: ScrcpyInstanceId.random(),
                     sendDeviceMeta: false,
                     sendDummyByte: false,
-                    codecOptions,
+                    videoCodecOptions,
                 })
             );
 
@@ -288,7 +286,7 @@ export class ScrcpyPageState {
                 );
                 this.log.push(
                     `[client] Server arguments: ${options
-                        .serializeServerArguments()
+                        .serialize()
                         .join(" ")}`
                 );
             });

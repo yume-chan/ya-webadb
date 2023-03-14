@@ -1,5 +1,3 @@
-// cspell:ignore scid
-
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
@@ -13,10 +11,14 @@ import type {
 import {
     CodecOptions,
     ScrcpyFloatToUint16FieldDefinition,
+    ScrcpyOptions1_16,
 } from "./1_16/index.js";
+import { ScrcpyOptions1_21 } from "./1_21.js";
 import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
+import { SCRCPY_OPTIONS_DEFAULT_1_24 } from "./1_24.js";
 import { ScrcpyOptions1_25 } from "./1_25/index.js";
 import type { ScrcpyOptionValue, ScrcpyVideoStreamMetadata } from "./types.js";
+import { ScrcpyOptionsBase } from "./types.js";
 
 export const ScrcpyInjectTouchControlMessage2_0 = new Struct()
     .uint8("type")
@@ -55,27 +57,19 @@ export class ScrcpyInstanceId implements ScrcpyOptionValue {
     }
 }
 
-export interface ScrcpyOptionsInit2_0 extends ScrcpyOptionsInit1_24 {
+export interface ScrcpyOptionsInit2_0
+    extends Omit<
+        ScrcpyOptionsInit1_24,
+        "bitRate" | "codecOptions" | "encoderName"
+    > {
     scid?: ScrcpyInstanceId;
     audio?: boolean;
     videoCodec?: "h264" | "h265" | "av1";
     audioCodec?: "opus" | "aac" | "raw";
-    /**
-     * @deprecated Use `videoBitRate` instead
-     */
-    bitRate?: number;
     videoBitRate?: number;
     audioBitRate?: number;
-    /**
-     * @deprecated Use `videoCodecOptions` instead
-     */
-    codecOptions?: CodecOptions;
     videoCodecOptions?: CodecOptions;
     audioCodecOptions?: CodecOptions;
-    /**
-     * @deprecated Use `videoEncoder` instead
-     */
-    encoderName?: string;
     videoEncoder?: string;
     audioEncoder?: string;
     listEncoders?: boolean;
@@ -83,48 +77,57 @@ export interface ScrcpyOptionsInit2_0 extends ScrcpyOptionsInit1_24 {
     sendCodecMeta?: boolean;
 }
 
-export class ScrcpyOptions2_0<
-    T extends ScrcpyOptionsInit2_0 = ScrcpyOptionsInit2_0
-> extends ScrcpyOptions1_25<T> {
+function omit<T extends object, K extends keyof T>(
+    obj: T,
+    keys: K[]
+): Omit<T, K> {
+    const result: Record<PropertyKey, unknown> = {};
+    for (const key in obj) {
+        if (!keys.includes(key as keyof T as K)) {
+            result[key] = obj[key];
+        }
+    }
+    return result as Omit<T, K>;
+}
+
+export const SCRCPY_OPTIONS_DEFAULT_2_0 = {
+    ...omit(SCRCPY_OPTIONS_DEFAULT_1_24, [
+        "bitRate",
+        "codecOptions",
+        "encoderName",
+    ]),
+    scid: ScrcpyInstanceId.NONE,
+    audio: true,
+    videoCodec: "h264",
+    audioCodec: "opus",
+    videoBitRate: 8000000,
+    audioBitRate: 128000,
+    videoCodecOptions: new CodecOptions(),
+    audioCodecOptions: new CodecOptions(),
+    videoEncoder: "",
+    audioEncoder: "",
+    listEncoders: false,
+    listDisplay: false,
+    sendCodecMeta: true,
+} as const satisfies Required<ScrcpyOptionsInit2_0>;
+
+export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
+    ScrcpyOptionsInit2_0,
+    ScrcpyOptions1_25
+> {
     public constructor(init: ScrcpyOptionsInit2_0) {
-        if (!init.videoBitRate && init.bitRate) {
-            init.videoBitRate = init.bitRate;
-            delete init.bitRate;
-        }
-
-        if (!init.videoCodecOptions && init.codecOptions) {
-            init.videoCodecOptions = init.codecOptions;
-            delete init.codecOptions;
-        }
-
-        if (!init.videoEncoder && init.encoderName) {
-            init.videoEncoder = init.encoderName;
-            delete init.encoderName;
-        }
-
-        if (!init.rawVideoStream) {
-            init.sendCodecMeta = false;
-        }
-
-        super(init);
+        super(new ScrcpyOptions1_25(init), {
+            ...SCRCPY_OPTIONS_DEFAULT_2_0,
+            ...init,
+        });
     }
 
-    public override getDefaultValues(): Required<T> {
-        return Object.assign(super.getDefaultValues(), {
-            scid: ScrcpyInstanceId.NONE,
-            audio: true,
-            videoCodec: "h264",
-            audioCodec: "opus",
-            videoBitRate: 8000000,
-            audioBitRate: 128000,
-            videoCodecOptions: new CodecOptions(),
-            audioCodecOptions: new CodecOptions(),
-            videoEncoder: "",
-            audioEncoder: "",
-            listEncoders: false,
-            listDisplay: false,
-            sendCodecMeta: true,
-        } satisfies Omit<ScrcpyOptionsInit2_0, keyof ScrcpyOptionsInit1_24>);
+    public override getDefaults(): Required<ScrcpyOptionsInit2_0> {
+        return SCRCPY_OPTIONS_DEFAULT_2_0;
+    }
+
+    public override serialize(): string[] {
+        return ScrcpyOptions1_21.serialize(this.value, this.getDefaults());
     }
 
     public override parseVideoStreamMetadata(
@@ -140,12 +143,21 @@ export class ScrcpyOptions2_0<
                 // `sendDeviceMeta` now only contains device name,
                 // can't use `super.parseVideoStreamMetadata` here
                 if (sendDeviceMeta) {
-                    metadata.deviceName = await this.parseCString(buffered);
+                    metadata.deviceName = await ScrcpyOptions1_16.parseCString(
+                        buffered,
+                        64
+                    );
                 }
                 if (sendCodecMeta) {
-                    metadata.codec = await this.parseUint32BE(buffered);
-                    metadata.width = await this.parseUint32BE(buffered);
-                    metadata.height = await this.parseUint32BE(buffered);
+                    metadata.codec = await ScrcpyOptions1_16.parseUint32BE(
+                        buffered
+                    );
+                    metadata.width = await ScrcpyOptions1_16.parseUint32BE(
+                        buffered
+                    );
+                    metadata.height = await ScrcpyOptions1_16.parseUint32BE(
+                        buffered
+                    );
                 }
                 return [buffered.release(), metadata];
             })();

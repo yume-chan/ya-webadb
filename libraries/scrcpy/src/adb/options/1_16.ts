@@ -1,5 +1,3 @@
-// cspell:ignore scid
-
 import type { Adb } from "@yume-chan/adb";
 
 import type { ScrcpyOptionsInit1_16 } from "../../options/index.js";
@@ -14,25 +12,30 @@ import {
 
 import { AdbScrcpyOptionsBase } from "./types.js";
 
-export class AdbScrcpyOptions1_16<
-    T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
-> extends AdbScrcpyOptionsBase<T> {
-    protected getConnectionOptions(): AdbScrcpyConnectionOptions {
-        return {
-            scid: -1,
-            // Old versions always have control stream no matter what the option is
-            // Pass `control: false` to `Connection` will disable the control stream
-            control: true,
-            sendDummyByte: true,
-        };
+export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit1_16> {
+    public static createConnection(
+        adb: Adb,
+        connectionOptions: AdbScrcpyConnectionOptions,
+        tunnelForward: boolean
+    ): AdbScrcpyConnection {
+        if (tunnelForward) {
+            return new AdbScrcpyForwardConnection(adb, connectionOptions);
+        } else {
+            return new AdbScrcpyReverseConnection(adb, connectionOptions);
+        }
     }
 
     public override createConnection(adb: Adb): AdbScrcpyConnection {
-        const options = this.getConnectionOptions();
-        if (this.value.tunnelForward) {
-            return new AdbScrcpyForwardConnection(adb, options);
-        } else {
-            return new AdbScrcpyReverseConnection(adb, options);
-        }
+        return AdbScrcpyOptions1_16.createConnection(
+            adb,
+            {
+                scid: -1,
+                // Old versions always have control stream no matter what the option is
+                // Pass `control: false` to `Connection` will disable the control stream
+                control: true,
+                sendDummyByte: true,
+            },
+            this.tunnelForwardOverride || this.value.tunnelForward
+        );
     }
 }

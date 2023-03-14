@@ -1,89 +1,39 @@
 import type { Adb } from "@yume-chan/adb";
-import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
 
-import type {
-    ScrcpyBackOrScreenOnControlMessage,
-    ScrcpyControlMessageType,
-    ScrcpyInjectTouchControlMessage,
-    ScrcpySetClipboardControlMessage,
-} from "../../control/index.js";
-import type {
-    ScrcpyOptions,
-    ScrcpyVideoStreamMetadata,
-    ScrcpyVideoStreamPacket,
-} from "../../options/index.js";
+import type { ScrcpyOptions } from "../../options/index.js";
+import { ScrcpyOptionsBase } from "../../options/index.js";
 import type { AdbScrcpyConnection } from "../connection.js";
 
 export interface AdbScrcpyOptions<T extends object> extends ScrcpyOptions<T> {
+    tunnelForwardOverride: boolean;
+
     createConnection(adb: Adb): AdbScrcpyConnection;
 }
 
 export abstract class AdbScrcpyOptionsBase<T extends object>
-    implements ScrcpyOptions<T>
+    extends ScrcpyOptionsBase<T, ScrcpyOptions<T>>
+    implements AdbScrcpyOptions<T>
 {
-    private raw: ScrcpyOptions<T>;
-
-    public get value(): Required<T> {
-        return this.raw.value;
-    }
-    public set value(value: Required<T>) {
-        this.raw.value = value;
+    public override get value(): Required<T> {
+        return this._base.value;
     }
 
-    public constructor(raw: ScrcpyOptions<T>) {
-        this.raw = raw;
+    public override set value(value: Required<T>) {
+        this._base.value = value;
     }
 
-    public getDefaultValues(): Required<T> {
-        return this.raw.getDefaultValues();
+    public tunnelForwardOverride = false;
+
+    public constructor(base: ScrcpyOptions<T>) {
+        super(base, base.value);
     }
 
-    public serializeServerArguments(): string[] {
-        return this.raw.serializeServerArguments();
+    public getDefaults(): Required<T> {
+        return this._base.getDefaults();
     }
 
-    public getOutputEncoderNameRegex(): RegExp {
-        return this.raw.getOutputEncoderNameRegex();
-    }
-
-    parseVideoStreamMetadata(
-        stream: ReadableStream<Uint8Array>
-    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
-        return this.raw.parseVideoStreamMetadata(stream);
-    }
-
-    public createVideoStreamTransformer(): TransformStream<
-        Uint8Array,
-        ScrcpyVideoStreamPacket
-    > {
-        return this.raw.createVideoStreamTransformer();
-    }
-
-    public getControlMessageTypes(): ScrcpyControlMessageType[] {
-        return this.raw.getControlMessageTypes();
-    }
-
-    public serializeInjectTouchControlMessage(
-        message: ScrcpyInjectTouchControlMessage
-    ): Uint8Array {
-        return this.raw.serializeInjectTouchControlMessage(message);
-    }
-
-    public serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage
-    ): Uint8Array | undefined {
-        return this.raw.serializeBackOrScreenOnControlMessage(message);
-    }
-
-    public serializeSetClipboardControlMessage(
-        message: ScrcpySetClipboardControlMessage
-    ): Uint8Array {
-        return this.raw.serializeSetClipboardControlMessage(message);
-    }
-
-    public getScrollController() {
-        return this.raw.getScrollController();
+    public serialize(): string[] {
+        return this._base.serialize();
     }
 
     public abstract createConnection(adb: Adb): AdbScrcpyConnection;

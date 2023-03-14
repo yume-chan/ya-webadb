@@ -5,8 +5,8 @@ import Struct, { placeholder } from "@yume-chan/struct";
 import type { ScrcpySetClipboardControlMessage } from "../control/index.js";
 
 import type { ScrcpyOptionsInit1_18 } from "./1_18.js";
-import { ScrcpyOptions1_18 } from "./1_18.js";
-import { toScrcpyOptionValue } from "./types.js";
+import { SCRCPY_OPTIONS_DEFAULT_1_18, ScrcpyOptions1_18 } from "./1_18.js";
+import { ScrcpyOptionsBase, toScrcpyOptionValue } from "./types.js";
 
 export interface ScrcpyOptionsInit1_21 extends ScrcpyOptionsInit1_18 {
     clipboardAutosync?: boolean;
@@ -26,24 +26,21 @@ export const ScrcpySetClipboardControlMessage1_21 = new Struct()
 export type ScrcpySetClipboardControlMessage1_21 =
     (typeof ScrcpySetClipboardControlMessage1_21)["TInit"];
 
-export class ScrcpyOptions1_21<
-    T extends ScrcpyOptionsInit1_21 = ScrcpyOptionsInit1_21
-> extends ScrcpyOptions1_18<T> {
-    public constructor(init: ScrcpyOptionsInit1_21) {
-        super(init);
-    }
+export const SCRCPY_OPTIONS_DEFAULT_1_21 = {
+    ...SCRCPY_OPTIONS_DEFAULT_1_18,
+    clipboardAutosync: true,
+} as const satisfies Required<ScrcpyOptionsInit1_21>;
 
-    public override getDefaultValues(): Required<T> {
-        return Object.assign(super.getDefaultValues(), {
-            clipboardAutosync: true,
-        } satisfies Omit<ScrcpyOptionsInit1_21, keyof ScrcpyOptionsInit1_18>);
-    }
-
-    public override serializeServerArguments(): string[] {
+export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
+    ScrcpyOptionsInit1_21,
+    ScrcpyOptions1_18
+> {
+    public static serialize<T extends object>(
+        options: T,
+        defaults: Required<T>
+    ): string[] {
         // 1.21 changed the format of arguments
-        // `getArgumentOrder()` is no longer used
-        const defaults = this.getDefaultValues();
-        return Object.entries(this.value)
+        return Object.entries(options)
             .map(
                 ([key, value]) =>
                     [key, toScrcpyOptionValue(value, undefined)] as const
@@ -58,6 +55,24 @@ export class ScrcpyOptions1_21<
                         )
             )
             .map(([key, value]) => `${toSnakeCase(key)}=${value}`);
+    }
+
+    public constructor(init: ScrcpyOptionsInit1_21) {
+        super(new ScrcpyOptions1_18(init), {
+            ...SCRCPY_OPTIONS_DEFAULT_1_21,
+            ...init,
+        });
+    }
+
+    public override getDefaults(): Required<ScrcpyOptionsInit1_21> {
+        return SCRCPY_OPTIONS_DEFAULT_1_21;
+    }
+
+    public override serialize(): string[] {
+        return ScrcpyOptions1_21.serialize(
+            this.value,
+            SCRCPY_OPTIONS_DEFAULT_1_21
+        );
     }
 
     public override serializeSetClipboardControlMessage(

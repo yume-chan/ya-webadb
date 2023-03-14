@@ -37,6 +37,7 @@
         "PKCS",
         "ponyfill",
         "runtimes",
+        "scid",
         "Scrcpy",
         "sendrecv",
         "sideload",

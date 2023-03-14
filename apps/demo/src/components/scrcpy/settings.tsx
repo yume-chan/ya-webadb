@@ -15,9 +15,10 @@ import {
     AdbScrcpyClient,
     AdbScrcpyOptions2_0,
     DEFAULT_SERVER_PATH,
+    ScrcpyEncoder,
     ScrcpyLogLevel,
-    ScrcpyOptions2_0,
-    ScrcpyOptionsInit2_0,
+    ScrcpyOptionsInitLatest,
+    ScrcpyOptionsLatest,
     ScrcpyVideoOrientation,
 } from "@yume-chan/scrcpy";
 import {
@@ -37,7 +38,7 @@ import { GLOBAL_STATE } from "../../state";
 import { Icons } from "../../utils";
 import { STATE } from "./state";
 
-export type Settings = ScrcpyOptionsInit2_0;
+export type Settings = ScrcpyOptionsInitLatest;
 
 export interface ClientSettings {
     turnScreenOff?: boolean;
@@ -176,7 +177,7 @@ export const SETTING_STATE = makeAutoObservable(
         settingsVisible: false,
 
         displays: [] as number[],
-        encoders: [] as string[],
+        encoders: [] as ScrcpyEncoder[],
         decoders: [
             {
                 key: "tinyh264",
@@ -207,7 +208,7 @@ autorun(() => {
     if (GLOBAL_STATE.device) {
         runInAction(() => {
             SETTING_STATE.encoders = [];
-            SETTING_STATE.settings.encoderName = undefined;
+            SETTING_STATE.settings.videoEncoder = undefined;
 
             SETTING_STATE.displays = [];
             SETTING_STATE.settings.displayId = undefined;
@@ -269,7 +270,7 @@ export const SETTING_DEFINITIONS = computed(() => {
                             DEFAULT_SERVER_PATH,
                             SCRCPY_SERVER_VERSION,
                             new AdbScrcpyOptions2_0(
-                                new ScrcpyOptions2_0({
+                                new ScrcpyOptionsLatest({
                                     logLevel: ScrcpyLogLevel.Debug,
                                 })
                             )
@@ -362,7 +363,7 @@ export const SETTING_DEFINITIONS = computed(() => {
 
     result.push({
         group: "settings",
-        key: "encoderName",
+        key: "videoEncoder",
         type: "dropdown",
         label: "Encoder",
         placeholder: "Press refresh to update available encoders",
@@ -380,7 +381,7 @@ export const SETTING_DEFINITIONS = computed(() => {
                             DEFAULT_SERVER_PATH,
                             SCRCPY_SERVER_VERSION,
                             new AdbScrcpyOptions2_0(
-                                new ScrcpyOptions2_0({
+                                new ScrcpyOptionsLatest({
                                     logLevel: ScrcpyLogLevel.Debug,
                                 })
                             )
@@ -389,13 +390,15 @@ export const SETTING_DEFINITIONS = computed(() => {
                         runInAction(() => {
                             SETTING_STATE.encoders = encoders;
                             if (
-                                !SETTING_STATE.settings.encoderName ||
-                                !SETTING_STATE.encoders.includes(
-                                    SETTING_STATE.settings.encoderName
+                                !SETTING_STATE.settings.videoEncoder ||
+                                !SETTING_STATE.encoders.some(
+                                    (item) =>
+                                        item.name ===
+                                        SETTING_STATE.settings.videoEncoder
                                 )
                             ) {
-                                SETTING_STATE.settings.encoderName =
-                                    SETTING_STATE.encoders[0];
+                                SETTING_STATE.settings.videoEncoder =
+                                    SETTING_STATE.encoders[0].name;
                             }
                         });
                     } catch (e: any) {
@@ -405,8 +408,8 @@ export const SETTING_DEFINITIONS = computed(() => {
             />
         ),
         options: SETTING_STATE.encoders.map((item) => ({
-            key: item,
-            text: item,
+            key: item.name,
+            text: item.name,
         })),
     });
 

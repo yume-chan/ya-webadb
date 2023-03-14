@@ -21,7 +21,7 @@ import { ScrcpyControlMessageSerializer } from "../control/index.js";
 import type { ScrcpyDeviceMessage } from "../device-message/index.js";
 import { ScrcpyDeviceMessageDeserializeStream } from "../device-message/index.js";
 import type {
-    ScrcpyOptionsInit1_16,
+    ScrcpyEncoder,
     ScrcpyVideoStreamPacket,
 } from "../options/index.js";
 import { DEFAULT_SERVER_PATH } from "../options/index.js";
@@ -85,7 +85,7 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<ScrcpyOptionsInit1_16>
+        options: AdbScrcpyOptions<object>
     ) {
         let connection: AdbScrcpyConnection | undefined;
         let process: AdbSubprocessProtocol | undefined;
@@ -97,7 +97,7 @@ export class AdbScrcpyClient {
             } catch (e) {
                 if (e instanceof AdbReverseNotSupportedError) {
                     // When reverse tunnel is not supported, try forward tunnel.
-                    options.value.tunnelForward = true;
+                    options.tunnelForwardOverride = true;
                     connection = options.createConnection(adb);
                     await connection.initialize();
                 } else {
@@ -114,7 +114,7 @@ export class AdbScrcpyClient {
                     /* unused */ "/",
                     "com.genymobile.scrcpy.Server",
                     version,
-                    ...options.serializeServerArguments(),
+                    ...options.serialize(),
                 ],
                 {
                     // Scrcpy server doesn't use stderr,
@@ -183,8 +183,8 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<ScrcpyOptionsInit1_16>
-    ): Promise<string[]> {
+        options: AdbScrcpyOptions<object>
+    ): Promise<ScrcpyEncoder[]> {
         Object.assign(options.value, {
             // Provide an invalid encoder name
             // So the server will return all available encoders
@@ -199,14 +199,13 @@ export class AdbScrcpyClient {
         // Thus although an invalid encoder name is given, the start process will success
         const client = await AdbScrcpyClient.start(adb, path, version, options);
 
-        const encoderNameRegex = options.getOutputEncoderNameRegex();
-        const encoders: string[] = [];
+        const encoders: ScrcpyEncoder[] = [];
         await client.stdout.pipeTo(
             new WritableStream({
                 write(line) {
-                    const match = line.match(encoderNameRegex);
-                    if (match) {
-                        encoders.push(match[1]!);
+                    const encoder = options.parseEncoder(line);
+                    if (encoder) {
+                        encoders.push(encoder);
                     }
                 },
             })
@@ -223,7 +222,7 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<ScrcpyOptionsInit1_16>
+        options: AdbScrcpyOptions<object>
     ): Promise<number[]> {
         Object.assign(options.value, {
             // Similar to `getEncoders`, pass an invalid option and parse the output
@@ -295,7 +294,7 @@ export class AdbScrcpyClient {
     }
 
     public constructor(
-        options: AdbScrcpyOptions<ScrcpyOptionsInit1_16>,
+        options: AdbScrcpyOptions<object>,
         process: AdbSubprocessProtocol,
         stdout: ReadableStream<string>,
         videoStream: ReadableStream<Uint8Array>,

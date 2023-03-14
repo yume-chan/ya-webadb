@@ -4,248 +4,107 @@ import {
     StructDeserializeStream,
     TransformStream,
 } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
-import Struct, {
-    NumberFieldType,
-    decodeUtf8,
-    placeholder,
-} from "@yume-chan/struct";
+import type { AsyncExactReadable, ValueOrPromise } from "@yume-chan/struct";
+import { NumberFieldType, decodeUtf8 } from "@yume-chan/struct";
 
 import type {
-    AndroidMotionEventAction,
     ScrcpyBackOrScreenOnControlMessage,
+    ScrcpyControlMessageType,
     ScrcpyInjectTouchControlMessage,
     ScrcpySetClipboardControlMessage,
 } from "../../control/index.js";
-import {
-    AndroidKeyEventAction,
-    BasicControlMessage,
-    ScrcpyControlMessageType,
-} from "../../control/index.js";
+import { AndroidKeyEventAction } from "../../control/index.js";
 import type {
+    ScrcpyEncoder,
     ScrcpyOptions,
     ScrcpyVideoStreamMetadata,
     ScrcpyVideoStreamPacket,
 } from "../types.js";
 import { toScrcpyOptionValue } from "../types.js";
 
-import { CodecOptions } from "./codec-options.js";
-import { ScrcpyFloatToUint16FieldDefinition } from "./float-to-uint16.js";
 import {
     findH264Configuration,
     parseSequenceParameterSet,
     removeH264Emulation,
 } from "./h264-configuration.js";
+import type { ScrcpyOptionsInit1_16 } from "./init.js";
+import { SCRCPY_OPTIONS_DEFAULT_1_16 } from "./init.js";
+import {
+    SCRCPY_CONTROL_MESSAGE_TYPES_1_16,
+    SCRCPY_MEDIA_PACKET_FLAG_CONFIG,
+    SCRCPY_OPTIONS_ORDER_1_16,
+    ScrcpyBackOrScreenOnControlMessage1_16,
+    ScrcpyInjectTouchControlMessage1_16,
+    ScrcpyMediaPacket,
+    ScrcpySetClipboardControlMessage1_15,
+} from "./message.js";
 import type { ScrcpyScrollController } from "./scroll.js";
 import { ScrcpyScrollController1_16 } from "./scroll.js";
 
-export enum ScrcpyLogLevel {
-    Verbose = "verbose",
-    Debug = "debug",
-    Info = "info",
-    Warn = "warn",
-    Error = "error",
-}
+export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
+    public static serialize<T>(options: T, order: readonly (keyof T)[]) {
+        return order.map((key) => toScrcpyOptionValue(options[key], "-"));
+    }
 
-export enum ScrcpyVideoOrientation {
-    Initial = -2,
-    Unlocked = -1,
-    Portrait = 0,
-    Landscape = 1,
-    PortraitFlipped = 2,
-    LandscapeFlipped = 3,
-}
-
-export interface ScrcpyOptionsInit1_16 {
-    logLevel?: ScrcpyLogLevel;
-
-    /**
-     * The maximum value of both width and height.
-     */
-    maxSize?: number;
-
-    bitRate?: number;
-
-    /**
-     * 0 for unlimited.
-     *
-     * @default 0
-     */
-    maxFps?: number;
-
-    /**
-     * The orientation of the video stream.
-     *
-     * It will not keep the device screen in specific orientation,
-     * only the captured video will in this orientation.
-     */
-    lockVideoOrientation?: ScrcpyVideoOrientation;
-
-    /**
-     * Use ADB forward tunnel instead of reverse tunnel.
-     *
-     * This option is mainly used for working around the bug that on Android <9,
-     * ADB daemon can't create reverse tunnels if connected wirelessly (ADB over WiFi).
-     *
-     * When using `AdbScrcpyClient`, it can detect this situation and enable this option automatically.
-     */
-    tunnelForward?: boolean;
-
-    crop?: string;
-
-    /**
-     * Send PTS so that the client may record properly
-     *
-     * Note: When `sendFrameMeta: false` is specified,
-     * the video stream will not contain `configuration` typed packets,
-     * which means it can't be decoded by the companion decoders.
-     * It's still possible to record the stream into a file,
-     * or to decode it with a more tolerant decoder like FFMpeg.
-     *
-     * @default true
-     */
-    sendFrameMeta?: boolean;
-
-    /**
-     * @default true
-     */
-    control?: boolean;
-
-    displayId?: number;
-
-    showTouches?: boolean;
-
-    stayAwake?: boolean;
-
-    codecOptions?: CodecOptions;
-
-    encoderName?: string;
-}
-
-export const ScrcpyMediaPacket = new Struct()
-    .uint64("pts")
-    .uint32("size")
-    .uint8Array("data", { lengthField: "size" });
-
-export const SCRCPY_MEDIA_PACKET_FLAG_CONFIG = BigInt(1) << BigInt(63);
-
-export const ScrcpyBackOrScreenOnControlMessage1_16 = BasicControlMessage;
-
-export const ScrcpySetClipboardControlMessage1_15 = new Struct()
-    .uint8("type")
-    .uint32("length")
-    .string("content", { lengthField: "length" });
-
-export type ScrcpySetClipboardControlMessage1_15 =
-    (typeof ScrcpySetClipboardControlMessage1_15)["TInit"];
-
-export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
-    .uint8("type")
-    .uint8("action", placeholder<AndroidMotionEventAction>())
-    .uint64("pointerId")
-    .uint32("pointerX")
-    .uint32("pointerY")
-    .uint16("screenWidth")
-    .uint16("screenHeight")
-    .field("pressure", ScrcpyFloatToUint16FieldDefinition)
-    .uint32("buttons");
-
-export type ScrcpyInjectTouchControlMessage1_16 =
-    (typeof ScrcpyInjectTouchControlMessage1_16)["TInit"];
-
-export class ScrcpyOptions1_16<
-    T extends ScrcpyOptionsInit1_16 = ScrcpyOptionsInit1_16
-> implements ScrcpyOptions<T>
-{
-    public value: Required<T>;
-
-    public constructor(init: ScrcpyOptionsInit1_16) {
-        if (
-            new.target === ScrcpyOptions1_16 &&
-            init.logLevel === ScrcpyLogLevel.Verbose
-        ) {
-            init.logLevel = ScrcpyLogLevel.Debug;
+    public static parseEncoder(
+        line: string,
+        encoderNameRegex: RegExp
+    ): ScrcpyEncoder | undefined {
+        const match = line.match(encoderNameRegex);
+        if (match) {
+            return { name: match[1]! };
         }
-
-        if (
-            new.target === ScrcpyOptions1_16 &&
-            init.lockVideoOrientation === ScrcpyVideoOrientation.Initial
-        ) {
-            init.lockVideoOrientation = ScrcpyVideoOrientation.Unlocked;
-        }
-
-        this.value = Object.assign(this.getDefaultValues(), init);
+        return undefined;
     }
 
-    protected getArgumentOrder(): (keyof T)[] {
-        return [
-            "logLevel",
-            "maxSize",
-            "bitRate",
-            "maxFps",
-            "lockVideoOrientation",
-            "tunnelForward",
-            "crop",
-            "sendFrameMeta",
-            "control",
-            "displayId",
-            "showTouches",
-            "stayAwake",
-            "codecOptions",
-            "encoderName",
-        ];
-    }
-
-    public getDefaultValues(): Required<T> {
-        return {
-            logLevel: ScrcpyLogLevel.Debug,
-            maxSize: 0,
-            bitRate: 8_000_000,
-            maxFps: 0,
-            lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
-            tunnelForward: false,
-            crop: "-",
-            sendFrameMeta: true,
-            control: true,
-            displayId: 0,
-            showTouches: false,
-            stayAwake: false,
-            codecOptions: new CodecOptions(),
-            encoderName: "-",
-        } as Required<T>;
-    }
-
-    public serializeServerArguments(): string[] {
-        const defaults = this.getDefaultValues();
-        return this.getArgumentOrder().map((key) =>
-            toScrcpyOptionValue(this.value[key] || defaults[key], "-")
-        );
-    }
-
-    public getOutputEncoderNameRegex(): RegExp {
-        return /\s+scrcpy --encoder-name '(.*?)'/;
-    }
-
-    protected async parseCString(
-        stream: BufferedReadableStream
+    public static async parseCString(
+        stream: AsyncExactReadable,
+        maxLength: number
     ): Promise<string> {
-        let result = decodeUtf8(await stream.readExactly(64));
+        let result = decodeUtf8(await stream.readExactly(maxLength));
         result = result.substring(0, result.indexOf("\0"));
         return result;
     }
 
-    protected async parseUint16BE(
-        stream: BufferedReadableStream
+    public static async parseUint16BE(
+        stream: AsyncExactReadable
     ): Promise<number> {
         const buffer = await stream.readExactly(NumberFieldType.Uint16.size);
         return NumberFieldType.Uint16.deserialize(buffer, false);
     }
 
-    protected async parseUint32BE(
-        stream: BufferedReadableStream
+    public static async parseUint32BE(
+        stream: AsyncExactReadable
     ): Promise<number> {
         const buffer = await stream.readExactly(NumberFieldType.Uint32.size);
         return NumberFieldType.Uint32.deserialize(buffer, false);
+    }
+
+    public value: Required<ScrcpyOptionsInit1_16>;
+
+    public readonly controlMessageTypes: readonly ScrcpyControlMessageType[] =
+        SCRCPY_CONTROL_MESSAGE_TYPES_1_16;
+
+    public constructor(init: ScrcpyOptionsInit1_16) {
+        this.value = { ...SCRCPY_OPTIONS_DEFAULT_1_16, ...init };
+    }
+
+    public getDefaults(): Required<ScrcpyOptionsInit1_16> {
+        return SCRCPY_OPTIONS_DEFAULT_1_16;
+    }
+
+    public serialize(): string[] {
+        return ScrcpyOptions1_16.serialize(
+            this.value,
+            SCRCPY_OPTIONS_ORDER_1_16
+        );
+    }
+
+    public parseEncoder(line: string): ScrcpyEncoder | undefined {
+        return ScrcpyOptions1_16.parseEncoder(
+            line,
+            /\s+scrcpy --encoder-name '(.*?)'/
+        );
     }
 
     public parseVideoStreamMetadata(
@@ -254,9 +113,12 @@ export class ScrcpyOptions1_16<
         return (async () => {
             const buffered = new BufferedReadableStream(stream);
             const metadata: ScrcpyVideoStreamMetadata = {};
-            metadata.deviceName = await this.parseCString(buffered);
-            metadata.width = await this.parseUint16BE(buffered);
-            metadata.height = await this.parseUint16BE(buffered);
+            metadata.deviceName = await ScrcpyOptions1_16.parseCString(
+                buffered,
+                64
+            );
+            metadata.width = await ScrcpyOptions1_16.parseUint16BE(buffered);
+            metadata.height = await ScrcpyOptions1_16.parseUint16BE(buffered);
             return [buffered.release(), metadata];
         })();
     }
@@ -369,23 +231,7 @@ export class ScrcpyOptions1_16<
         };
     }
 
-    public getControlMessageTypes(): ScrcpyControlMessageType[] {
-        return [
-            /*  0 */ ScrcpyControlMessageType.InjectKeyCode,
-            /*  1 */ ScrcpyControlMessageType.InjectText,
-            /*  2 */ ScrcpyControlMessageType.InjectTouch,
-            /*  3 */ ScrcpyControlMessageType.InjectScroll,
-            /*  4 */ ScrcpyControlMessageType.BackOrScreenOn,
-            /*  5 */ ScrcpyControlMessageType.ExpandNotificationPanel,
-            /*  6 */ ScrcpyControlMessageType.CollapseNotificationPanel,
-            /*  7 */ ScrcpyControlMessageType.GetClipboard,
-            /*  8 */ ScrcpyControlMessageType.SetClipboard,
-            /*  9 */ ScrcpyControlMessageType.SetScreenPowerMode,
-            /* 10 */ ScrcpyControlMessageType.RotateDevice,
-        ];
-    }
-
-    serializeInjectTouchControlMessage(
+    public serializeInjectTouchControlMessage(
         message: ScrcpyInjectTouchControlMessage
     ): Uint8Array {
         return ScrcpyInjectTouchControlMessage1_16.serialize(message);
@@ -407,7 +253,7 @@ export class ScrcpyOptions1_16<
         return ScrcpySetClipboardControlMessage1_15.serialize(message);
     }
 
-    public getScrollController(): ScrcpyScrollController {
+    public createScrollController(): ScrcpyScrollController {
         return new ScrcpyScrollController1_16();
     }
 }

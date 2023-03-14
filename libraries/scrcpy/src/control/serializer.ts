@@ -7,7 +7,6 @@ import { ConsumableWritableStream } from "@yume-chan/stream-extra";
 
 import type {
     ScrcpyOptions,
-    ScrcpyOptionsInit1_16,
     ScrcpyScrollController,
 } from "../options/index.js";
 
@@ -22,21 +21,21 @@ import { ScrcpySetScreenPowerModeControlMessage } from "./set-screen-power-mode.
 import { ScrcpyControlMessageType } from "./type.js";
 
 export class ScrcpyControlMessageSerializer {
-    private options: ScrcpyOptions<ScrcpyOptionsInit1_16>;
+    private options: ScrcpyOptions<object>;
     /** Control message type values for current version of server */
-    private types: ScrcpyControlMessageType[];
+    private types: readonly ScrcpyControlMessageType[];
     private writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
     private scrollController: ScrcpyScrollController;
 
     public constructor(
         stream: WritableStream<Consumable<Uint8Array>>,
-        options: ScrcpyOptions<ScrcpyOptionsInit1_16>
+        options: ScrcpyOptions<object>
     ) {
         this.writer = stream.getWriter();
 
         this.options = options;
-        this.types = options.getControlMessageTypes();
-        this.scrollController = options.getScrollController();
+        this.types = options.controlMessageTypes;
+        this.scrollController = options.createScrollController();
     }
 
     public getActualMessageType(type: ScrcpyControlMessageType): number {

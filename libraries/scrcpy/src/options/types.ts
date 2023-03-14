@@ -102,13 +102,15 @@ export interface ScrcpyAudioStreamMetadata {
 }
 
 export interface ScrcpyOptions<T extends object> {
+    readonly controlMessageTypes: readonly ScrcpyControlMessageType[];
+
     value: Required<T>;
 
-    getDefaultValues(): Required<T>;
+    getDefaults(): Required<T>;
 
-    serializeServerArguments(): string[];
+    serialize(): string[];
 
-    getOutputEncoderNameRegex(): RegExp;
+    parseEncoder(line: string): ScrcpyEncoder | undefined;
 
     /**
      * Parse the device metadata from video stream according to the current version and options.
@@ -127,8 +129,6 @@ export interface ScrcpyOptions<T extends object> {
         ScrcpyVideoStreamPacket
     >;
 
-    getControlMessageTypes(): ScrcpyControlMessageType[];
-
     serializeInjectTouchControlMessage(
         message: ScrcpyInjectTouchControlMessage
     ): Uint8Array;
@@ -141,5 +141,86 @@ export interface ScrcpyOptions<T extends object> {
         message: ScrcpySetClipboardControlMessage
     ): Uint8Array;
 
-    getScrollController(): ScrcpyScrollController;
+    createScrollController(): ScrcpyScrollController;
+}
+
+export interface ScrcpyEncoder {
+    codec?: string;
+    name: string;
+}
+
+export abstract class ScrcpyOptionsBase<
+    T extends object,
+    B extends ScrcpyOptions<object>
+> implements ScrcpyOptions<T>
+{
+    protected _base: B;
+
+    private _value: Required<T>;
+    public get value(): Required<T> {
+        return this._value;
+    }
+    public set value(value: Required<T>) {
+        this._value = value;
+    }
+
+    public get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
+        return this._base.controlMessageTypes;
+    }
+
+    public constructor(base: B, value: Required<T>) {
+        this._base = base;
+        this._value = value;
+    }
+
+    public abstract getDefaults(): Required<T>;
+
+    public abstract serialize(): string[];
+
+    public parseEncoder(line: string): ScrcpyEncoder | undefined {
+        return this._base.parseEncoder(line);
+    }
+
+    /**
+     * Parse the device metadata from video stream according to the current version and options.
+     * @param stream The video stream.
+     * @returns
+     * A tuple of the video stream and the metadata.
+     *
+     * The returned video stream may be different from the input stream, and should be used for further processing.
+     */
+    public parseVideoStreamMetadata(
+        stream: ReadableStream<Uint8Array>
+    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
+        return this._base.parseVideoStreamMetadata(stream);
+    }
+
+    public createVideoStreamTransformer(): TransformStream<
+        Uint8Array,
+        ScrcpyVideoStreamPacket
+    > {
+        return this._base.createVideoStreamTransformer();
+    }
+
+    public serializeInjectTouchControlMessage(
+        message: ScrcpyInjectTouchControlMessage
+    ): Uint8Array {
+        return this._base.serializeInjectTouchControlMessage(message);
+    }
+
+    public serializeBackOrScreenOnControlMessage(
+        message: ScrcpyBackOrScreenOnControlMessage
+    ): Uint8Array | undefined {
+        return this._base.serializeBackOrScreenOnControlMessage(message);
+    }
+
+    public serializeSetClipboardControlMessage(
+        message: ScrcpySetClipboardControlMessage
+    ): Uint8Array {
+        return this._base.serializeSetClipboardControlMessage(message);
+    }
+
+    public createScrollController(): ScrcpyScrollController {
+        return this._base.createScrollController();
+    }
 }

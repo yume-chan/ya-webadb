@@ -2,72 +2,44 @@ import type { ReadableStream } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
 import type { ScrcpyScrollController } from "../1_16/index.js";
-import type { ScrcpyOptionsInit1_21 } from "../1_21.js";
 import { ScrcpyOptions1_21 } from "../1_21.js";
 import type { ScrcpyVideoStreamMetadata } from "../types.js";
+import { ScrcpyOptionsBase } from "../types.js";
 
+import type { ScrcpyOptionsInit1_22 } from "./init.js";
+import { SCRCPY_OPTIONS_DEFAULT_1_22 } from "./init.js";
 import { ScrcpyScrollController1_22 } from "./scroll.js";
 
-export interface ScrcpyOptionsInit1_22 extends ScrcpyOptionsInit1_21 {
-    downsizeOnError?: boolean;
-
-    /**
-     * Send device name and size at start of video stream.
-     *
-     * @default true
-     */
-    sendDeviceMeta?: boolean;
-
-    /**
-     * Send a `0` byte on start of video stream to detect connection issues
-     *
-     * @default true
-     */
-    sendDummyByte?: boolean;
-
-    /**
-     * Implies `sendDeviceMeta: false`, `sendFrameMeta: false` and `sendDummyByte: false`
-     *
-     * @default false
-     */
-    rawVideoStream?: boolean;
-}
-
-export class ScrcpyOptions1_22<
-    T extends ScrcpyOptionsInit1_22 = ScrcpyOptionsInit1_22
-> extends ScrcpyOptions1_21<T> {
+export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
+    ScrcpyOptionsInit1_22,
+    ScrcpyOptions1_21
+> {
     public constructor(init: ScrcpyOptionsInit1_22) {
-        if (init.rawVideoStream) {
-            // Set implied options for client-side processing
-            init.sendDeviceMeta = false;
-            init.sendFrameMeta = false;
-            init.sendDummyByte = false;
-        }
-
-        super(init);
+        super(new ScrcpyOptions1_21(init), {
+            ...SCRCPY_OPTIONS_DEFAULT_1_22,
+            ...init,
+        });
     }
 
-    public override getDefaultValues(): Required<T> {
-        return Object.assign(super.getDefaultValues(), {
-            downsizeOnError: true,
-            sendDeviceMeta: true,
-            sendDummyByte: true,
-            rawVideoStream: false,
-        } satisfies Omit<ScrcpyOptionsInit1_22, keyof ScrcpyOptionsInit1_21>);
+    public override getDefaults(): Required<ScrcpyOptionsInit1_22> {
+        return SCRCPY_OPTIONS_DEFAULT_1_22;
     }
 
     public override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>
     ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
-        const sendDeviceMeta = this.value.sendDeviceMeta;
-        if (!sendDeviceMeta) {
+        if (!this.value.sendDeviceMeta) {
             return [stream, {}];
         } else {
-            return super.parseVideoStreamMetadata(stream);
+            return this._base.parseVideoStreamMetadata(stream);
         }
     }
 
-    public override getScrollController(): ScrcpyScrollController {
+    public override serialize(): string[] {
+        return ScrcpyOptions1_21.serialize(this.value, this.getDefaults());
+    }
+
+    public override createScrollController(): ScrcpyScrollController {
         return new ScrcpyScrollController1_22();
     }
 }

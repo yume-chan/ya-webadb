@@ -1,5 +1,3 @@
-// cspell:ignore scid
-
 import type { Adb } from "@yume-chan/adb";
 import { AdbReverseNotSupportedError } from "@yume-chan/adb";
 import { delay } from "@yume-chan/async";
