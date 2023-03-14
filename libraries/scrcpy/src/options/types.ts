@@ -102,11 +102,11 @@ export interface ScrcpyAudioStreamMetadata {
 }
 
 export interface ScrcpyOptions<T extends object> {
+    readonly defaults: Required<T>;
+
     readonly controlMessageTypes: readonly ScrcpyControlMessageType[];
 
-    value: Required<T>;
-
-    getDefaults(): Required<T>;
+    readonly value: Required<T>;
 
     serialize(): string[];
 
@@ -156,24 +156,18 @@ export abstract class ScrcpyOptionsBase<
 {
     protected _base: B;
 
-    private _value: Required<T>;
-    public get value(): Required<T> {
-        return this._value;
-    }
-    public set value(value: Required<T>) {
-        this._value = value;
-    }
+    public abstract get defaults(): Required<T>;
 
     public get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
         return this._base.controlMessageTypes;
     }
 
+    public readonly value: Required<T>;
+
     public constructor(base: B, value: Required<T>) {
         this._base = base;
-        this._value = value;
+        this.value = value;
     }
-
-    public abstract getDefaults(): Required<T>;
 
     public abstract serialize(): string[];
 

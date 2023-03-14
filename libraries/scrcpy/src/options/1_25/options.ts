@@ -10,6 +10,10 @@ export class ScrcpyOptions1_25 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_24,
     ScrcpyOptions1_24
 > {
+    public override get defaults(): Required<ScrcpyOptionsInit1_24> {
+        return SCRCPY_OPTIONS_DEFAULT_1_24;
+    }
+
     public constructor(init: ScrcpyOptionsInit1_24) {
         super(new ScrcpyOptions1_24(init), {
             ...SCRCPY_OPTIONS_DEFAULT_1_24,
@@ -17,12 +21,8 @@ export class ScrcpyOptions1_25 extends ScrcpyOptionsBase<
         });
     }
 
-    public override getDefaults(): Required<ScrcpyOptionsInit1_24> {
-        return SCRCPY_OPTIONS_DEFAULT_1_24;
-    }
-
     public override serialize(): string[] {
-        return ScrcpyOptions1_21.serialize(this.value, this.getDefaults());
+        return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
     public override createScrollController(): ScrcpyScrollController {

@@ -46,17 +46,6 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         return order.map((key) => toScrcpyOptionValue(options[key], "-"));
     }
 
-    public static parseEncoder(
-        line: string,
-        encoderNameRegex: RegExp
-    ): ScrcpyEncoder | undefined {
-        const match = line.match(encoderNameRegex);
-        if (match) {
-            return { name: match[1]! };
-        }
-        return undefined;
-    }
-
     public static async parseCString(
         stream: AsyncExactReadable,
         maxLength: number
@@ -82,15 +71,14 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     public value: Required<ScrcpyOptionsInit1_16>;
 
+    public readonly defaults: Required<ScrcpyOptionsInit1_16> =
+        SCRCPY_OPTIONS_DEFAULT_1_16;
+
     public readonly controlMessageTypes: readonly ScrcpyControlMessageType[] =
         SCRCPY_CONTROL_MESSAGE_TYPES_1_16;
 
     public constructor(init: ScrcpyOptionsInit1_16) {
         this.value = { ...SCRCPY_OPTIONS_DEFAULT_1_16, ...init };
-    }
-
-    public getDefaults(): Required<ScrcpyOptionsInit1_16> {
-        return SCRCPY_OPTIONS_DEFAULT_1_16;
     }
 
     public serialize(): string[] {
@@ -100,11 +88,8 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         );
     }
 
-    public parseEncoder(line: string): ScrcpyEncoder | undefined {
-        return ScrcpyOptions1_16.parseEncoder(
-            line,
-            /\s+scrcpy --encoder-name '(.*?)'/
-        );
+    public parseEncoder(): ScrcpyEncoder | undefined {
+        throw new Error("Not supported");
     }
 
     public parseVideoStreamMetadata(

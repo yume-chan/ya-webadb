@@ -24,6 +24,10 @@ export class ScrcpyOptions1_23 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_23,
     ScrcpyOptions1_22
 > {
+    public override get defaults(): Required<ScrcpyOptionsInit1_23> {
+        return SCRCPY_OPTIONS_DEFAULT_1_23;
+    }
+
     public constructor(init: ScrcpyOptionsInit1_22) {
         super(new ScrcpyOptions1_22(init), {
             ...SCRCPY_OPTIONS_DEFAULT_1_23,
@@ -31,12 +35,8 @@ export class ScrcpyOptions1_23 extends ScrcpyOptionsBase<
         });
     }
 
-    public override getDefaults(): Required<ScrcpyOptionsInit1_23> {
-        return SCRCPY_OPTIONS_DEFAULT_1_23;
-    }
-
     public override serialize(): string[] {
-        return ScrcpyOptions1_21.serialize(this.value, this.getDefaults());
+        return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
     public override createVideoStreamTransformer(): TransformStream<

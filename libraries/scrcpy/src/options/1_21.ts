@@ -57,6 +57,10 @@ export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
             .map(([key, value]) => `${toSnakeCase(key)}=${value}`);
     }
 
+    public override get defaults(): Required<ScrcpyOptionsInit1_21> {
+        return SCRCPY_OPTIONS_DEFAULT_1_21;
+    }
+
     public constructor(init: ScrcpyOptionsInit1_21) {
         super(new ScrcpyOptions1_18(init), {
             ...SCRCPY_OPTIONS_DEFAULT_1_21,
@@ -64,15 +68,8 @@ export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
         });
     }
 
-    public override getDefaults(): Required<ScrcpyOptionsInit1_21> {
-        return SCRCPY_OPTIONS_DEFAULT_1_21;
-    }
-
     public override serialize(): string[] {
-        return ScrcpyOptions1_21.serialize(
-            this.value,
-            SCRCPY_OPTIONS_DEFAULT_1_21
-        );
+        return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
     public override serializeSetClipboardControlMessage(

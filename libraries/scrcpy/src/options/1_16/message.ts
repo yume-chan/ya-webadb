@@ -38,7 +38,6 @@ export const SCRCPY_OPTIONS_ORDER_1_16 = [
     "showTouches",
     "stayAwake",
     "codecOptions",
-    "encoderName",
 ] as const satisfies readonly (keyof ScrcpyOptionsInit1_16)[];
 
 export const ScrcpyMediaPacket = new Struct()

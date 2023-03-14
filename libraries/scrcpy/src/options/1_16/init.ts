@@ -50,7 +50,7 @@ export interface ScrcpyOptionsInit1_16 {
      */
     tunnelForward?: boolean;
 
-    crop?: string;
+    crop?: string | undefined;
 
     /**
      * Send PTS so that the client may record properly
@@ -77,8 +77,6 @@ export interface ScrcpyOptionsInit1_16 {
     stayAwake?: boolean;
 
     codecOptions?: CodecOptions;
-
-    encoderName?: string;
 }
 
 export const SCRCPY_OPTIONS_DEFAULT_1_16 = {
@@ -88,12 +86,11 @@ export const SCRCPY_OPTIONS_DEFAULT_1_16 = {
     maxFps: 0,
     lockVideoOrientation: ScrcpyVideoOrientation1_16.Unlocked,
     tunnelForward: false,
-    crop: "",
+    crop: undefined,
     sendFrameMeta: true,
     control: true,
     displayId: 0,
     showTouches: false,
     stayAwake: false,
     codecOptions: new CodecOptions(),
-    encoderName: "",
 } as const satisfies Required<ScrcpyOptionsInit1_16>;

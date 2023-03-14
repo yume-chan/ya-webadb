@@ -122,12 +122,12 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
         });
     }
 
-    public override getDefaults(): Required<ScrcpyOptionsInit2_0> {
+    public override get defaults(): Required<ScrcpyOptionsInit2_0> {
         return SCRCPY_OPTIONS_DEFAULT_2_0;
     }
 
     public override serialize(): string[] {
-        return ScrcpyOptions1_21.serialize(this.value, this.getDefaults());
+        return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
     public override parseVideoStreamMetadata(

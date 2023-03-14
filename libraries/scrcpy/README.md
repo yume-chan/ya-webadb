@@ -6,26 +6,26 @@ It's compatible with the official Scrcpy server binaries.
 
 **WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
 
-- [Basic information](#basic-information)
-- [Prepare server binary](#prepare-server-binary)
-  - [`fetch-scrcpy-server`](#fetch-scrcpy-server)
-  - [Use the server binary](#use-the-server-binary)
-    - [Node.js CommonJS](#nodejs-commonjs)
-    - [Node.js ES module](#nodejs-es-module)
-    - [Webpack 4](#webpack-4)
-    - [Webpack 5](#webpack-5)
-  - [Read the server version](#read-the-server-version)
-- [Server versions](#server-versions)
-- [Use with `@yume-chan/adb`](#use-with-yume-chanadb)
-  - [Push server binary](#push-server-binary)
-  - [Start server on device](#start-server-on-device)
-- [Using other transportation](#using-other-transportation)
-  - [Parsing video packets](#parsing-video-packets)
-  - [Sending control messages](#sending-control-messages)
-  - [Reading device messages](#reading-device-messages)
-- [Always read the streams](#always-read-the-streams)
-- [Video stream](#video-stream)
-- [Decode video stream](#decode-video-stream)
+-   [Basic information](#basic-information)
+-   [Prepare server binary](#prepare-server-binary)
+    -   [`fetch-scrcpy-server`](#fetch-scrcpy-server)
+    -   [Use the server binary](#use-the-server-binary)
+        -   [Node.js CommonJS](#nodejs-commonjs)
+        -   [Node.js ES module](#nodejs-es-module)
+        -   [Webpack 4](#webpack-4)
+        -   [Webpack 5](#webpack-5)
+    -   [Read the server version](#read-the-server-version)
+-   [Server versions](#server-versions)
+-   [Use with `@yume-chan/adb`](#use-with-yume-chanadb)
+    -   [Push server binary](#push-server-binary)
+    -   [Start server on device](#start-server-on-device)
+-   [Using other transportation](#using-other-transportation)
+    -   [Parsing video packets](#parsing-video-packets)
+    -   [Sending control messages](#sending-control-messages)
+    -   [Reading device messages](#reading-device-messages)
+-   [Always read the streams](#always-read-the-streams)
+-   [Video stream](#video-stream)
+-   [Decode video stream](#decode-video-stream)
 
 ## Basic information
 
@@ -157,7 +157,8 @@ The latest one may continue to work for future server versions, but there is no 
 
 | Version   | Type                |
 | --------- | ------------------- |
-| 1.16~1.17 | `ScrcpyOptions1_16` |
+| 1.16      | `ScrcpyOptions1_16` |
+| 1.17      | `ScrcpyOptions1_17` |
 | 1.18~1.20 | `ScrcpyOptions1_18` |
 | 1.21      | `ScrcpyOptions1_21` |
 | 1.22      | `ScrcpyOptions1_22` |

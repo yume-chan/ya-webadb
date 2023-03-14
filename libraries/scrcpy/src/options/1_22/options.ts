@@ -14,15 +14,15 @@ export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_22,
     ScrcpyOptions1_21
 > {
+    public override get defaults(): Required<ScrcpyOptionsInit1_22> {
+        return SCRCPY_OPTIONS_DEFAULT_1_22;
+    }
+
     public constructor(init: ScrcpyOptionsInit1_22) {
         super(new ScrcpyOptions1_21(init), {
             ...SCRCPY_OPTIONS_DEFAULT_1_22,
             ...init,
         });
-    }
-
-    public override getDefaults(): Required<ScrcpyOptionsInit1_22> {
-        return SCRCPY_OPTIONS_DEFAULT_1_22;
     }
 
     public override parseVideoStreamMetadata(
@@ -36,7 +36,7 @@ export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
     }
 
     public override serialize(): string[] {
-        return ScrcpyOptions1_21.serialize(this.value, this.getDefaults());
+        return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
     public override createScrollController(): ScrcpyScrollController {
