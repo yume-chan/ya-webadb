@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { AndroidAvcProfile } from "../codec.js";
+import { AndroidAvcProfile } from "../codec/index.js";
 
 import { ScrcpyOptions1_21 } from "./1_21.js";
 
