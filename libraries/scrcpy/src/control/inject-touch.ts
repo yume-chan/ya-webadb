@@ -29,10 +29,10 @@ export enum AndroidMotionEventButton {
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ScrcpyPointerId {
-    export const Mouse = BigInt(-1);
-    export const Finger = BigInt(-2);
-    export const VirtualMouse = BigInt(-3);
-    export const VirtualFinger = BigInt(-4);
+    export const Mouse = -1n;
+    export const Finger = -2n;
+    export const VirtualMouse = -3n;
+    export const VirtualFinger = -4n;
 }
 
 export type ScrcpyInjectTouchControlMessage =

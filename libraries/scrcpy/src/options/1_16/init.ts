@@ -94,3 +94,19 @@ export const SCRCPY_OPTIONS_DEFAULT_1_16 = {
     stayAwake: false,
     codecOptions: new CodecOptions(),
 } as const satisfies Required<ScrcpyOptionsInit1_16>;
+
+export const SCRCPY_OPTIONS_ORDER_1_16 = [
+    "logLevel",
+    "maxSize",
+    "bitRate",
+    "maxFps",
+    "lockVideoOrientation",
+    "tunnelForward",
+    "crop",
+    "sendFrameMeta",
+    "control",
+    "displayId",
+    "showTouches",
+    "stayAwake",
+    "codecOptions",
+] as const satisfies readonly (keyof ScrcpyOptionsInit1_16)[];

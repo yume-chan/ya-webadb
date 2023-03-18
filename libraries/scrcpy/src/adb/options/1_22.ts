@@ -14,6 +14,7 @@ export class AdbScrcpyOptions1_22 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
                 scid: -1,
                 control: this.value.control,
                 sendDummyByte: this.value.sendDummyByte,
+                audio: false,
             },
             this.tunnelForwardOverride || this.value.tunnelForward
         );

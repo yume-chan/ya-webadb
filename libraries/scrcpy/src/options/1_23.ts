@@ -6,7 +6,7 @@ import {
     SCRCPY_OPTIONS_DEFAULT_1_22,
     ScrcpyOptions1_22,
 } from "./1_22/index.js";
-import type { ScrcpyVideoStreamPacket } from "./types.js";
+import type { ScrcpyMediaStreamPacket } from "./codec.js";
 import { ScrcpyOptionsBase } from "./types.js";
 
 export interface ScrcpyOptionsInit1_23 extends ScrcpyOptionsInit1_22 {
@@ -18,7 +18,7 @@ export const SCRCPY_OPTIONS_DEFAULT_1_23 = {
     cleanup: true,
 } as const satisfies Required<ScrcpyOptionsInit1_23>;
 
-const KEYFRAME_PTS = BigInt(1) << BigInt(62);
+const KEYFRAME_PTS = 1n << 62n;
 
 export class ScrcpyOptions1_23 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_23,
@@ -39,17 +39,17 @@ export class ScrcpyOptions1_23 extends ScrcpyOptionsBase<
         return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
-    public override createVideoStreamTransformer(): TransformStream<
+    public override createMediaStreamTransformer(): TransformStream<
         Uint8Array,
-        ScrcpyVideoStreamPacket
+        ScrcpyMediaStreamPacket
     > {
-        const baseStream = this._base.createVideoStreamTransformer();
+        const stream = this._base.createMediaStreamTransformer();
         return {
-            writable: baseStream.writable,
-            readable: baseStream.readable.pipeThrough(
+            writable: stream.writable,
+            readable: stream.readable.pipeThrough(
                 new TransformStream({
                     transform(packet, controller): void {
-                        if (packet.type !== "frame") {
+                        if (packet.type !== "data") {
                             controller.enqueue(packet);
                             return;
                         }

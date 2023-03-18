@@ -1,7 +1,8 @@
 import type {
     H264Configuration,
-    ScrcpyVideoStreamPacket,
+    ScrcpyMediaStreamPacket,
 } from "@yume-chan/scrcpy";
+import { h264ParseConfiguration } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
@@ -18,7 +19,7 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
             h264: {},
         };
 
-    private _writable: WritableStream<ScrcpyVideoStreamPacket>;
+    private _writable: WritableStream<ScrcpyMediaStreamPacket>;
     public get writable() {
         return this._writable;
     }
@@ -71,13 +72,18 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
             },
         });
 
-        this._writable = new WritableStream<ScrcpyVideoStreamPacket>({
+        this._writable = new WritableStream<ScrcpyMediaStreamPacket>({
             write: (packet) => {
                 switch (packet.type) {
                     case "configuration":
-                        this.configure(packet.data);
+                        {
+                            const configuration = h264ParseConfiguration(
+                                packet.data
+                            );
+                            void this.configure(configuration);
+                        }
                         break;
-                    case "frame":
+                    case "data":
                         this.decoder.decode(
                             new EncodedVideoChunk({
                                 // Treat `undefined` as `key`, otherwise won't decode.

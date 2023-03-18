@@ -34,6 +34,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
                 // Pass `control: false` to `Connection` will disable the control stream
                 control: true,
                 sendDummyByte: true,
+                audio: false,
             },
             this.tunnelForwardOverride || this.value.tunnelForward
         );

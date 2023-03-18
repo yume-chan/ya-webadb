@@ -1,9 +1,13 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type {
     H264Configuration,
-    ScrcpyVideoStreamPacket,
+    ScrcpyMediaStreamPacket,
 } from "@yume-chan/scrcpy";
-import { AndroidAvcLevel, AndroidAvcProfile } from "@yume-chan/scrcpy";
+import {
+    AndroidAvcLevel,
+    AndroidAvcProfile,
+    h264ParseConfiguration,
+} from "@yume-chan/scrcpy";
 import { WritableStream } from "@yume-chan/stream-extra";
 import type { default as YuvBuffer } from "yuv-buffer";
 import type { default as YuvCanvas } from "yuv-canvas";
@@ -60,7 +64,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this._frameSkipped;
     }
 
-    private _writable: WritableStream<ScrcpyVideoStreamPacket>;
+    private _writable: WritableStream<ScrcpyMediaStreamPacket>;
     public get writable() {
         return this._writable;
     }
@@ -73,13 +77,18 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
 
         this._renderer = document.createElement("canvas");
 
-        this._writable = new WritableStream<ScrcpyVideoStreamPacket>({
+        this._writable = new WritableStream<ScrcpyMediaStreamPacket>({
             write: async (packet) => {
                 switch (packet.type) {
                     case "configuration":
-                        void this.configure(packet.data);
+                        {
+                            const configuration = h264ParseConfiguration(
+                                packet.data
+                            );
+                            void this.configure(configuration);
+                        }
                         break;
-                    case "frame": {
+                    case "data": {
                         if (!this._initializer) {
                             throw new Error("Decoder not configured");
                         }

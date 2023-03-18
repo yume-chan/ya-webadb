@@ -30,9 +30,19 @@ export interface AdbScrcpyConnectionOptions {
      * In forward tunnel mode, read a byte from video socket on start to detect connection issues
      */
     sendDummyByte: boolean;
+
+    audio: boolean;
 }
 
 export const SCRCPY_SOCKET_NAME_PREFIX = "scrcpy";
+
+export interface AdbScrcpyConnectionStreams {
+    video: ReadableStream<Uint8Array>;
+    audio: ReadableStream<Uint8Array> | undefined;
+    control:
+        | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
+        | undefined;
+}
 
 export abstract class AdbScrcpyConnection implements Disposable {
     protected adb: Adb;
@@ -59,14 +69,7 @@ export abstract class AdbScrcpyConnection implements Disposable {
         return socketName;
     }
 
-    public abstract getStreams(): ValueOrPromise<
-        [
-            videoSteam: ReadableStream<Uint8Array>,
-            controlStream:
-                | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-                | undefined
-        ]
-    >;
+    public abstract getStreams(): ValueOrPromise<AdbScrcpyConnectionStreams>;
 
     public dispose(): void {
         // do nothing
@@ -96,35 +99,29 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     }
 
     private async connectVideoStream(): Promise<ReadableStream<Uint8Array>> {
-        const { readable: videoStream } = await this.connectAndRetry();
+        const { readable: stream } = await this.connectAndRetry();
         if (this.options.sendDummyByte) {
             // Can't guarantee the stream will preserve message boundary
             // so buffer the stream
-            const buffered = new BufferedReadableStream(videoStream);
+            const buffered = new BufferedReadableStream(stream);
             await buffered.readExactly(1);
             return buffered.release();
         }
-        return videoStream;
+        return stream;
     }
 
-    public override async getStreams(): Promise<
-        [
-            videoSteam: ReadableStream<Uint8Array>,
-            controlStream:
-                | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-                | undefined
-        ]
-    > {
-        const videoStream = await this.connectVideoStream();
+    public override async getStreams(): Promise<AdbScrcpyConnectionStreams> {
+        const video = await this.connectVideoStream();
 
-        let controlStream:
-            | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-            | undefined;
-        if (this.options.control) {
-            controlStream = await this.connectAndRetry();
-        }
+        const audio = this.options.audio
+            ? (await this.connectAndRetry()).readable
+            : undefined;
 
-        return [videoStream, controlStream];
+        const control = this.options.control
+            ? await this.connectAndRetry()
+            : undefined;
+
+        return { video, audio, control };
     }
 
     public override dispose(): void {
@@ -174,24 +171,16 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
         return (await this.streams.read()).value!;
     }
 
-    public async getStreams(): Promise<
-        [
-            videoSteam: ReadableStream<Uint8Array>,
-            controlStream:
-                | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-                | undefined
-        ]
-    > {
-        const { readable: videoStream } = await this.accept();
+    public async getStreams(): Promise<AdbScrcpyConnectionStreams> {
+        const { readable: video } = await this.accept();
 
-        let controlStream:
-            | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-            | undefined;
-        if (this.options.control) {
-            controlStream = await this.accept();
-        }
+        const audio = this.options.audio
+            ? (await this.accept()).readable
+            : undefined;
 
-        return [videoStream, controlStream];
+        const control = this.options.control ? await this.accept() : undefined;
+
+        return { video, audio, control };
     }
 
     public override dispose() {

@@ -6,14 +6,15 @@ import {
     AndroidScreenPowerMode,
     CodecOptions,
     DEFAULT_SERVER_PATH,
+    ScrcpyAudioCodecId,
     ScrcpyDeviceMessageType,
     ScrcpyHoverHelper,
     ScrcpyInstanceId,
     ScrcpyLogLevel1_18,
+    ScrcpyMediaStreamPacket,
     ScrcpyOptions2_0,
-    ScrcpyVideoStreamConfigurationPacket,
-    ScrcpyVideoStreamPacket,
     clamp,
+    h264ParseConfiguration,
 } from "@yume-chan/scrcpy";
 import { ScrcpyVideoDecoder } from "@yume-chan/scrcpy-decoder-tinyh264";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
@@ -27,13 +28,14 @@ import {
 import { action, autorun, makeAutoObservable, runInAction } from "mobx";
 import { GLOBAL_STATE } from "../../state";
 import { ProgressStream } from "../../utils";
+import { AudioPlayer } from "./audio-player";
 import { fetchServer } from "./fetch-server";
 import {
     AoaKeyboardInjector,
     KeyboardInjector,
     ScrcpyKeyboardInjector,
 } from "./input";
-import { MuxerStream, RECORD_STATE } from "./recorder";
+import { MatroskaMuxingRecorder, RECORD_STATE } from "./recorder";
 import { SETTING_STATE } from "./settings";
 
 const NOOP = () => {
@@ -67,6 +69,7 @@ export class ScrcpyPageState {
     client: AdbScrcpyClient | undefined = undefined;
     hoverHelper: ScrcpyHoverHelper | undefined = undefined;
     keyboard: KeyboardInjector | undefined = undefined;
+    audioPlayer: AudioPlayer | undefined = undefined;
 
     async pushServer() {
         const serverBuffer = await fetchServer();
@@ -82,7 +85,6 @@ export class ScrcpyPageState {
     }
 
     decoder: ScrcpyVideoDecoder | undefined = undefined;
-    configuration: ScrcpyVideoStreamConfigurationPacket | undefined = undefined;
     fpsCounterIntervalId: any = undefined;
     fps = "0";
 
@@ -135,6 +137,8 @@ export class ScrcpyPageState {
         if (!GLOBAL_STATE.device) {
             return;
         }
+
+        this.audioPlayer = new AudioPlayer(48000);
 
         try {
             if (!SETTING_STATE.clientSettings.decoder) {
@@ -276,6 +280,7 @@ export class ScrcpyPageState {
                     sendDeviceMeta: false,
                     sendDummyByte: false,
                     videoCodecOptions,
+                    audioCodec: "raw",
                 })
             );
 
@@ -306,41 +311,71 @@ export class ScrcpyPageState {
                 })
             );
 
-            RECORD_STATE.recorder = new MuxerStream();
-            let lastKeyframe = 0;
-            client.videoStream
-                .pipeThrough(
-                    new InspectStream(
-                        action((packet: ScrcpyVideoStreamPacket) => {
-                            if (packet.type === "configuration") {
-                                const { croppedWidth, croppedHeight } =
-                                    packet.data;
-                                this.log.push(
-                                    `[client] Video size changed: ${croppedWidth}x${croppedHeight}`
-                                );
+            RECORD_STATE.recorder = new MatroskaMuxingRecorder();
+            RECORD_STATE.videoMetadata = undefined;
+            RECORD_STATE.audioMetadata = undefined;
 
-                                this.configuration = packet;
-                                this.width = croppedWidth;
-                                this.height = croppedHeight;
-                            } else if (packet.keyframe) {
-                                if (lastKeyframe) {
+            let lastKeyframe = 0;
+            client.videoStream.then(({ stream, metadata }) => {
+                runInAction(() => {
+                    RECORD_STATE.videoMetadata = metadata;
+                });
+
+                stream
+                    .pipeThrough(
+                        new InspectStream(
+                            action((packet: ScrcpyMediaStreamPacket) => {
+                                if (packet.type === "configuration") {
+                                    const { croppedWidth, croppedHeight } =
+                                        h264ParseConfiguration(packet.data);
                                     this.log.push(
-                                        `[client] Keyframe interval: ${
-                                            ((Number(packet.pts) -
-                                                lastKeyframe) /
-                                                1000) |
-                                            0
-                                        }ms`
+                                        `[client] Video size changed: ${croppedWidth}x${croppedHeight}`
                                     );
+
+                                    this.width = croppedWidth;
+                                    this.height = croppedHeight;
+                                } else if (packet.keyframe) {
+                                    if (lastKeyframe) {
+                                        this.log.push(
+                                            `[client] Keyframe interval: ${
+                                                ((Number(packet.pts) -
+                                                    lastKeyframe) /
+                                                    1000) |
+                                                0
+                                            }ms`
+                                        );
+                                    }
+                                    lastKeyframe = Number(packet.pts);
                                 }
-                                lastKeyframe = Number(packet.pts);
-                            }
+                            })
+                        )
+                    )
+                    .pipeTo(decoder.writable)
+                    .catch((e) => {
+                        console.log("video error", e);
+                    });
+            });
+
+            client.audioStream?.then(async ({ stream, metadata }) => {
+                if (metadata.codec !== ScrcpyAudioCodecId.Raw) {
+                    return;
+                }
+
+                runInAction(() => {
+                    RECORD_STATE.audioMetadata = metadata;
+                });
+
+                await this.audioPlayer?.start();
+                stream
+                    .pipeTo(
+                        new WritableStream({
+                            write: (data) => {
+                                this.audioPlayer?.feed(data.data);
+                            },
                         })
                     )
-                )
-                .pipeThrough(RECORD_STATE.recorder)
-                .pipeTo(decoder.writable)
-                .catch(() => {});
+                    .catch(NOOP);
+            });
 
             client.exit.then(this.dispose);
 
@@ -406,6 +441,8 @@ export class ScrcpyPageState {
 
         this.keyboard?.dispose();
         this.keyboard = undefined;
+
+        this.audioPlayer?.stop();
 
         this.fps = "0";
         clearTimeout(this.fpsCounterIntervalId);

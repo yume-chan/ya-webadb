@@ -15,27 +15,24 @@ import type {
 } from "../../control/index.js";
 import { AndroidKeyEventAction } from "../../control/index.js";
 import type {
-    ScrcpyEncoder,
-    ScrcpyOptions,
+    ScrcpyMediaStreamPacket,
+    ScrcpyVideoStream,
     ScrcpyVideoStreamMetadata,
-    ScrcpyVideoStreamPacket,
-} from "../types.js";
+} from "../codec.js";
+import type { ScrcpyEncoder, ScrcpyOptions } from "../types.js";
 import { toScrcpyOptionValue } from "../types.js";
 
-import {
-    findH264Configuration,
-    parseSequenceParameterSet,
-    removeH264Emulation,
-} from "./h264-configuration.js";
 import type { ScrcpyOptionsInit1_16 } from "./init.js";
-import { SCRCPY_OPTIONS_DEFAULT_1_16 } from "./init.js";
+import {
+    SCRCPY_OPTIONS_DEFAULT_1_16,
+    SCRCPY_OPTIONS_ORDER_1_16,
+} from "./init.js";
 import {
     SCRCPY_CONTROL_MESSAGE_TYPES_1_16,
     SCRCPY_MEDIA_PACKET_FLAG_CONFIG,
-    SCRCPY_OPTIONS_ORDER_1_16,
     ScrcpyBackOrScreenOnControlMessage1_16,
     ScrcpyInjectTouchControlMessage1_16,
-    ScrcpyMediaPacket,
+    ScrcpyMediaStreamRawPacket,
     ScrcpySetClipboardControlMessage1_15,
 } from "./message.js";
 import type { ScrcpyScrollController } from "./scroll.js";
@@ -94,7 +91,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     public parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>
-    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
+    ): ValueOrPromise<ScrcpyVideoStream> {
         return (async () => {
             const buffered = new BufferedReadableStream(stream);
             const metadata: ScrcpyVideoStreamMetadata = {};
@@ -104,20 +101,24 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
             );
             metadata.width = await ScrcpyOptions1_16.parseUint16BE(buffered);
             metadata.height = await ScrcpyOptions1_16.parseUint16BE(buffered);
-            return [buffered.release(), metadata];
+            return { stream: buffered.release(), metadata };
         })();
     }
 
-    public createVideoStreamTransformer(): TransformStream<
+    public parseAudioStreamMetadata(): never {
+        throw new Error("Not supported");
+    }
+
+    public createMediaStreamTransformer(): TransformStream<
         Uint8Array,
-        ScrcpyVideoStreamPacket
+        ScrcpyMediaStreamPacket
     > {
         // Optimized path for video frames only
         if (!this.value.sendFrameMeta) {
             return new TransformStream({
                 transform(chunk, controller) {
                     controller.enqueue({
-                        type: "frame",
+                        type: "data",
                         data: chunk,
                     });
                 },
@@ -127,7 +128,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         let header: Uint8Array | undefined;
 
         const deserializeStream = new StructDeserializeStream(
-            ScrcpyMediaPacket
+            ScrcpyMediaStreamRawPacket
         );
         return {
             writable: deserializeStream.writable,
@@ -135,60 +136,10 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
                 new TransformStream({
                     transform(packet, controller) {
                         if (packet.pts === SCRCPY_MEDIA_PACKET_FLAG_CONFIG) {
-                            const {
-                                sequenceParameterSet,
-                                pictureParameterSet,
-                            } = findH264Configuration(packet.data);
-
-                            const {
-                                profile_idc: profileIndex,
-                                constraint_set: constraintSet,
-                                level_idc: levelIndex,
-                                pic_width_in_mbs_minus1,
-                                pic_height_in_map_units_minus1,
-                                frame_mbs_only_flag,
-                                frame_crop_left_offset,
-                                frame_crop_right_offset,
-                                frame_crop_top_offset,
-                                frame_crop_bottom_offset,
-                            } = parseSequenceParameterSet(
-                                removeH264Emulation(sequenceParameterSet)
-                            );
-
-                            const encodedWidth =
-                                (pic_width_in_mbs_minus1 + 1) * 16;
-                            const encodedHeight =
-                                (pic_height_in_map_units_minus1 + 1) *
-                                (2 - frame_mbs_only_flag) *
-                                16;
-                            const cropLeft = frame_crop_left_offset * 2;
-                            const cropRight = frame_crop_right_offset * 2;
-                            const cropTop = frame_crop_top_offset * 2;
-                            const cropBottom = frame_crop_bottom_offset * 2;
-
-                            const croppedWidth =
-                                encodedWidth - cropLeft - cropRight;
-                            const croppedHeight =
-                                encodedHeight - cropTop - cropBottom;
-
                             header = packet.data;
                             controller.enqueue({
                                 type: "configuration",
-                                pictureParameterSet,
-                                sequenceParameterSet,
-                                data: {
-                                    profileIndex,
-                                    constraintSet,
-                                    levelIndex,
-                                    encodedWidth,
-                                    encodedHeight,
-                                    cropLeft,
-                                    cropRight,
-                                    cropTop,
-                                    cropBottom,
-                                    croppedWidth,
-                                    croppedHeight,
-                                },
+                                data: header,
                             });
                             return;
                         }
@@ -206,7 +157,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
                         }
 
                         controller.enqueue({
-                            type: "frame",
+                            type: "data",
                             pts: packet.pts,
                             data: frameData,
                         });

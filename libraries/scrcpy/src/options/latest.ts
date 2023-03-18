@@ -10,3 +10,5 @@ export type ScrcpyVideoOrientation = ScrcpyVideoOrientation1_18;
 
 export type ScrcpyOptionsInitLatest = ScrcpyOptionsInit2_0;
 export class ScrcpyOptionsLatest extends ScrcpyOptions2_0 {}
+
+export const ScrcpyLatestVersion = "2.0";

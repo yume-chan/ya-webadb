@@ -1,5 +1,3 @@
-const BigInt32 = BigInt(32);
-
 export function getBigInt64(
     dataView: DataView,
     byteOffset: number,
@@ -14,7 +12,7 @@ export function getBigInt64(
                 dataView.getInt32(byteOffset + 4, littleEndian) *
                     littleEndianMask
         ) <<
-            BigInt32) |
+            32n) |
         BigInt(
             dataView.getUint32(byteOffset, littleEndian) * littleEndianMask +
                 dataView.getUint32(byteOffset + 4, littleEndian) * bigEndianMask
@@ -37,7 +35,7 @@ export function getBigUint64(
     // and only 3% slower than native implementation
     // https://jsbench.me/p8kyhg1eqv/1
     return (
-        (BigInt(a * bigEndianMask + b * littleEndianMask) << BigInt32) |
+        (BigInt(a * bigEndianMask + b * littleEndianMask) << 32n) |
         BigInt(a * littleEndianMask + b * bigEndianMask)
     );
 }
@@ -48,8 +46,8 @@ export function setBigInt64(
     value: bigint,
     littleEndian: boolean | undefined
 ) {
-    const hi = Number(value >> BigInt32);
-    const lo = Number(value & BigInt(0xffffffff));
+    const hi = Number(value >> 32n);
+    const lo = Number(BigInt.asUintN(32, value));
 
     if (littleEndian) {
         dataView.setInt32(byteOffset + 4, hi, littleEndian);
@@ -66,8 +64,8 @@ export function setBigUint64(
     value: bigint,
     littleEndian: boolean | undefined
 ) {
-    const hi = Number(value >> BigInt32);
-    const lo = Number(value & BigInt(0xffffffff));
+    const hi = Number(value >> 32n);
+    const lo = Number(BigInt.asUintN(32, value));
 
     if (littleEndian) {
         dataView.setUint32(byteOffset + 4, hi, littleEndian);

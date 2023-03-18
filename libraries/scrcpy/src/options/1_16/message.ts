@@ -7,7 +7,6 @@ import {
 } from "../../control/index.js";
 
 import { ScrcpyFloatToUint16FieldDefinition } from "./float-to-uint16.js";
-import type { ScrcpyOptionsInit1_16 } from "./init.js";
 
 export const SCRCPY_CONTROL_MESSAGE_TYPES_1_16: readonly ScrcpyControlMessageType[] =
     [
@@ -24,28 +23,12 @@ export const SCRCPY_CONTROL_MESSAGE_TYPES_1_16: readonly ScrcpyControlMessageTyp
         /* 10 */ ScrcpyControlMessageType.RotateDevice,
     ];
 
-export const SCRCPY_OPTIONS_ORDER_1_16 = [
-    "logLevel",
-    "maxSize",
-    "bitRate",
-    "maxFps",
-    "lockVideoOrientation",
-    "tunnelForward",
-    "crop",
-    "sendFrameMeta",
-    "control",
-    "displayId",
-    "showTouches",
-    "stayAwake",
-    "codecOptions",
-] as const satisfies readonly (keyof ScrcpyOptionsInit1_16)[];
-
-export const ScrcpyMediaPacket = new Struct()
+export const ScrcpyMediaStreamRawPacket = new Struct()
     .uint64("pts")
     .uint32("size")
     .uint8Array("data", { lengthField: "size" });
 
-export const SCRCPY_MEDIA_PACKET_FLAG_CONFIG = BigInt(1) << BigInt(63);
+export const SCRCPY_MEDIA_PACKET_FLAG_CONFIG = 1n << 63n;
 
 export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
     .uint8("type")

@@ -54,7 +54,7 @@ function injectTouch(
     const { pointerType } = e;
     let pointerId: bigint;
     if (pointerType === "mouse") {
-        pointerId = ScrcpyPointerId.Mouse;
+        pointerId = ScrcpyPointerId.Finger;
     } else {
         pointerId = BigInt(e.pointerId);
     }

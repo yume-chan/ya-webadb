@@ -17,7 +17,13 @@ import { ScrcpyOptions1_21 } from "./1_21.js";
 import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
 import { SCRCPY_OPTIONS_DEFAULT_1_24 } from "./1_24.js";
 import { ScrcpyOptions1_25 } from "./1_25/index.js";
-import type { ScrcpyOptionValue, ScrcpyVideoStreamMetadata } from "./types.js";
+import type {
+    ScrcpyAudioStream,
+    ScrcpyAudioStreamMetadata,
+    ScrcpyVideoStream,
+    ScrcpyVideoStreamMetadata,
+} from "./codec.js";
+import type { ScrcpyOptionValue } from "./types.js";
 import { ScrcpyOptionsBase } from "./types.js";
 
 export const ScrcpyInjectTouchControlMessage2_0 = new Struct()
@@ -63,15 +69,18 @@ export interface ScrcpyOptionsInit2_0
         "bitRate" | "codecOptions" | "encoderName"
     > {
     scid?: ScrcpyInstanceId;
-    audio?: boolean;
+
     videoCodec?: "h264" | "h265" | "av1";
-    audioCodec?: "opus" | "aac" | "raw";
     videoBitRate?: number;
-    audioBitRate?: number;
     videoCodecOptions?: CodecOptions;
-    audioCodecOptions?: CodecOptions;
     videoEncoder?: string;
+
+    audio?: boolean;
+    audioCodec?: "opus" | "aac" | "raw";
+    audioBitRate?: number;
+    audioCodecOptions?: CodecOptions;
     audioEncoder?: string;
+
     listEncoders?: boolean;
     listDisplay?: boolean;
     sendCodecMeta?: boolean;
@@ -97,15 +106,18 @@ export const SCRCPY_OPTIONS_DEFAULT_2_0 = {
         "encoderName",
     ]),
     scid: ScrcpyInstanceId.NONE,
-    audio: true,
+
     videoCodec: "h264",
-    audioCodec: "opus",
     videoBitRate: 8000000,
-    audioBitRate: 128000,
     videoCodecOptions: new CodecOptions(),
-    audioCodecOptions: new CodecOptions(),
     videoEncoder: "",
+
+    audio: true,
+    audioCodec: "opus",
+    audioBitRate: 128000,
+    audioCodecOptions: new CodecOptions(),
     audioEncoder: "",
+
     listEncoders: false,
     listDisplay: false,
     sendCodecMeta: true,
@@ -132,36 +144,51 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
 
     public override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>
-    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
+    ): ValueOrPromise<ScrcpyVideoStream> {
         const { sendDeviceMeta, sendCodecMeta } = this.value;
         if (!sendDeviceMeta && !sendCodecMeta) {
-            return [stream, {}];
-        } else {
-            return (async () => {
-                const buffered = new BufferedReadableStream(stream);
-                const metadata: ScrcpyVideoStreamMetadata = {};
-                // `sendDeviceMeta` now only contains device name,
-                // can't use `super.parseVideoStreamMetadata` here
-                if (sendDeviceMeta) {
-                    metadata.deviceName = await ScrcpyOptions1_16.parseCString(
-                        buffered,
-                        64
-                    );
-                }
-                if (sendCodecMeta) {
-                    metadata.codec = await ScrcpyOptions1_16.parseUint32BE(
-                        buffered
-                    );
-                    metadata.width = await ScrcpyOptions1_16.parseUint32BE(
-                        buffered
-                    );
-                    metadata.height = await ScrcpyOptions1_16.parseUint32BE(
-                        buffered
-                    );
-                }
-                return [buffered.release(), metadata];
-            })();
+            return { stream, metadata: {} };
         }
+
+        return (async () => {
+            const buffered = new BufferedReadableStream(stream);
+            const metadata: ScrcpyVideoStreamMetadata = {};
+            // `sendDeviceMeta` now only contains device name,
+            // can't use `super.parseVideoStreamMetadata` here
+            if (sendDeviceMeta) {
+                metadata.deviceName = await ScrcpyOptions1_16.parseCString(
+                    buffered,
+                    64
+                );
+            }
+            if (sendCodecMeta) {
+                metadata.codec = await ScrcpyOptions1_16.parseUint32BE(
+                    buffered
+                );
+                metadata.width = await ScrcpyOptions1_16.parseUint32BE(
+                    buffered
+                );
+                metadata.height = await ScrcpyOptions1_16.parseUint32BE(
+                    buffered
+                );
+            }
+            return { stream: buffered.release(), metadata };
+        })();
+    }
+
+    public override parseAudioStreamMetadata(
+        stream: ReadableStream<Uint8Array>
+    ): ValueOrPromise<ScrcpyAudioStream> {
+        if (!this.value.sendCodecMeta) {
+            return { stream, metadata: {} };
+        }
+
+        return (async () => {
+            const buffered = new BufferedReadableStream(stream);
+            const metadata: ScrcpyAudioStreamMetadata = {};
+            metadata.codec = await ScrcpyOptions1_16.parseUint32BE(buffered);
+            return { stream: buffered.release(), metadata };
+        })();
     }
 
     public override serializeInjectTouchControlMessage(

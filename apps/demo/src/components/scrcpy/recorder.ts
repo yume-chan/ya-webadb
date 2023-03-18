@@ -1,9 +1,13 @@
 import {
-    ScrcpyVideoStreamFramePacket,
-    ScrcpyVideoStreamPacket,
-    splitH264Stream,
+    ScrcpyAudioCodecId,
+    ScrcpyAudioStreamMetadata,
+    ScrcpyMediaStreamDataPacket,
+    ScrcpyMediaStreamPacket,
+    ScrcpyVideoCodecId,
+    ScrcpyVideoStreamMetadata,
+    h264SearchConfiguration,
+    h264SplitNalu,
 } from "@yume-chan/scrcpy";
-import { InspectStream } from "@yume-chan/stream-extra";
 import { action, makeAutoObservable, reaction } from "mobx";
 import WebMMuxer from "webm-muxer";
 import { saveFile } from "../../utils";
@@ -38,7 +42,7 @@ function h264StreamToAvcSample(buffer: Uint8Array) {
     const nalUnits: Uint8Array[] = [];
     let totalLength = 0;
 
-    for (const unit of splitH264Stream(buffer)) {
+    for (const unit of h264SplitNalu(buffer)) {
         nalUnits.push(unit);
         totalLength += unit.byteLength + 4;
     }
@@ -56,31 +60,38 @@ function h264StreamToAvcSample(buffer: Uint8Array) {
     return sample;
 }
 
-export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
+// https://github.com/FFmpeg/FFmpeg/blob/adb5f7b41faf354a3e0bf722f44aeb230aefa310/libavformat/matroska.c
+const MatroskaVideoCodecNameMap: Record<ScrcpyVideoCodecId, string> = {
+    [ScrcpyVideoCodecId.H264]: "V_MPEG4/ISO/AVC",
+    [ScrcpyVideoCodecId.H265]: "V_MPEGH/ISO/HEVC",
+    [ScrcpyVideoCodecId.AV1]: "V_AV1",
+};
+
+const MatroskaAudioCodecNameMap: Record<ScrcpyAudioCodecId, string> = {
+    [ScrcpyAudioCodecId.Raw]: "A_PCM/INT/LIT",
+    [ScrcpyAudioCodecId.Aac]: "A_AAC",
+    [ScrcpyAudioCodecId.Opus]: "A_OPUS",
+    [ScrcpyAudioCodecId.Disabled]: "",
+    [ScrcpyAudioCodecId.Errored]: "",
+};
+
+export class MatroskaMuxingRecorder {
     public running = false;
 
+    private _videoMetadata: ScrcpyVideoStreamMetadata | undefined;
+    private _audioMetadata: ScrcpyAudioStreamMetadata | undefined;
+
     private muxer: WebMMuxer | undefined;
-    private width = 0;
-    private height = 0;
-    private firstTimestamp = -1;
     private avcConfiguration: Uint8Array | undefined;
     private configurationWritten = false;
-    private framesFromKeyframe: ScrcpyVideoStreamFramePacket[] = [];
+    private framesFromKeyframe: ScrcpyMediaStreamDataPacket[] = [];
 
-    private appendFrame(frame: ScrcpyVideoStreamFramePacket) {
-        let timestamp = Number(frame.pts);
-        if (this.firstTimestamp === -1) {
-            this.firstTimestamp = timestamp;
-            timestamp = 0;
-        } else {
-            timestamp -= this.firstTimestamp;
-        }
-
+    private muxFrame(frame: ScrcpyMediaStreamDataPacket) {
         const sample = h264StreamToAvcSample(frame.data);
         this.muxer!.addVideoChunkRaw(
             sample,
             frame.keyframe ? "key" : "delta",
-            timestamp,
+            Number(frame.pts),
             this.configurationWritten
                 ? undefined
                 : {
@@ -94,59 +105,92 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
         this.configurationWritten = true;
     }
 
-    constructor() {
-        super((packet) => {
-            try {
-                if (packet.type === "configuration") {
-                    this.width = packet.data.croppedWidth;
-                    this.height = packet.data.croppedHeight;
-                    this.avcConfiguration =
-                        h264ConfigurationToAvcDecoderConfigurationRecord(
-                            packet.sequenceParameterSet,
-                            packet.pictureParameterSet
-                        );
-                    this.configurationWritten = false;
-                    return;
-                }
-
-                // To ensure the first frame is a keyframe
-                // save the last keyframe and the following frames
-                if (packet.keyframe === true) {
-                    this.framesFromKeyframe.length = 0;
-                }
-                this.framesFromKeyframe.push(packet);
-
-                if (!this.muxer) {
-                    return;
-                }
-
-                this.appendFrame(packet);
-            } catch (e) {
-                console.error(e);
+    public addVideoPacket(packet: ScrcpyMediaStreamPacket) {
+        try {
+            if (packet.type === "configuration") {
+                const { sequenceParameterSet, pictureParameterSet } =
+                    h264SearchConfiguration(packet.data);
+                this.avcConfiguration =
+                    h264ConfigurationToAvcDecoderConfigurationRecord(
+                        sequenceParameterSet,
+                        pictureParameterSet
+                    );
+                this.configurationWritten = false;
+                return;
             }
-        });
+
+            // To ensure the first frame is a keyframe
+            // save the last keyframe and the following frames
+            if (packet.keyframe === true) {
+                this.framesFromKeyframe.length = 0;
+            }
+            this.framesFromKeyframe.push(packet);
+
+            if (!this.muxer) {
+                return;
+            }
+
+            this.muxFrame(packet);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
-    start() {
+    public start(
+        videoMetadata: ScrcpyVideoStreamMetadata,
+        audioMetadata: ScrcpyAudioStreamMetadata | undefined
+    ) {
+        if (!videoMetadata.codec) {
+            throw new Error("Video codec is not defined");
+        }
+
+        if (audioMetadata) {
+            if (audioMetadata.codec === undefined) {
+                throw new Error("Audio codec is not defined");
+            }
+
+            if (
+                audioMetadata.codec === ScrcpyAudioCodecId.Disabled ||
+                audioMetadata.codec === ScrcpyAudioCodecId.Errored
+            ) {
+                audioMetadata = undefined;
+            }
+        }
+
+        this._videoMetadata = videoMetadata;
+        this._audioMetadata = audioMetadata;
+
         this.running = true;
-        this.muxer = new WebMMuxer({
+
+        const options: ConstructorParameters<typeof WebMMuxer>[0] = {
             target: "buffer",
+            type: "matroska",
+            firstTimestampBehavior: "offset",
             video: {
-                // https://www.matroska.org/technical/codec_specs.html
-                codec: "V_MPEG4/ISO/AVC",
-                width: this.width,
-                height: this.height,
+                codec: MatroskaVideoCodecNameMap[videoMetadata.codec!],
+                width: videoMetadata.width ?? 0,
+                height: videoMetadata.height ?? 0,
             },
-        });
+        };
+
+        if (audioMetadata) {
+            options.audio = {
+                codec: MatroskaAudioCodecNameMap[audioMetadata.codec!],
+                sampleRate: 48000,
+                numberOfChannels: 2,
+            };
+        }
+
+        this.muxer = new WebMMuxer(options);
 
         if (this.framesFromKeyframe.length > 0) {
             for (const frame of this.framesFromKeyframe) {
-                this.appendFrame(frame);
+                this.muxFrame(frame);
             }
         }
     }
 
-    stop() {
+    public stop() {
         if (!this.muxer) {
             return;
         }
@@ -167,7 +211,7 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
                 now.getMinutes().toString().padStart(2, '0')
             }-${
                 now.getSeconds().toString().padStart(2, '0')
-            }.webm`
+            }.mkv`
         );
         const writer = stream.getWriter();
         writer.write(new Uint8Array(buffer));
@@ -176,13 +220,14 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
         this.muxer = undefined;
         this.configurationWritten = false;
         this.running = false;
-        this.firstTimestamp = -1;
     }
 }
 
 export const RECORD_STATE = makeAutoObservable({
-    recorder: new MuxerStream(),
+    recorder: new MatroskaMuxingRecorder(),
     recording: false,
+    videoMetadata: undefined as ScrcpyVideoStreamMetadata | undefined,
+    audioMetadata: undefined as ScrcpyAudioStreamMetadata | undefined,
     intervalId: -1,
     hours: 0,
     minutes: 0,

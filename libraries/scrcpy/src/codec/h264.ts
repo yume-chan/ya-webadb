@@ -1,3 +1,39 @@
+// From https://developer.android.com/reference/android/media/MediaCodecInfo.CodecProfileLevel
+export enum AndroidAvcProfile {
+    Baseline = 1 << 0,
+    Main = 1 << 1,
+    Extended = 1 << 2,
+    High = 1 << 3,
+    High10 = 1 << 4,
+    High422 = 1 << 5,
+    High444 = 1 << 6,
+    ConstrainedBaseline = 1 << 16,
+    ConstrainedHigh = 1 << 19,
+}
+
+export enum AndroidAvcLevel {
+    Level1 = 1 << 0,
+    Level1b = 1 << 1,
+    Level11 = 1 << 2,
+    Level12 = 1 << 3,
+    Level13 = 1 << 4,
+    Level2 = 1 << 5,
+    Level21 = 1 << 6,
+    Level22 = 1 << 7,
+    Level3 = 1 << 8,
+    Level31 = 1 << 9,
+    Level32 = 1 << 10,
+    Level4 = 1 << 11,
+    Level41 = 1 << 12,
+    Level42 = 1 << 13,
+    Level5 = 1 << 14,
+    Level51 = 1 << 15,
+    Level52 = 1 << 16,
+    Level6 = 1 << 17,
+    Level61 = 1 << 18,
+    Level62 = 1 << 19,
+}
+
 // cspell: ignore golomb
 // cspell: ignore qpprime
 // cspell: ignore colour
@@ -61,7 +97,7 @@ class BitReader {
  * This methods returns a generator, so it can be stopped immediately
  * after the interested NAL unit is found.
  */
-export function* splitH264Stream(buffer: Uint8Array): Generator<Uint8Array> {
+export function* h264SplitNalu(buffer: Uint8Array): Generator<Uint8Array> {
     // -1 means we haven't found the first start code
     let start = -1;
     // How many `0x00`s in a row we have counted
@@ -152,7 +188,7 @@ export function* splitH264Stream(buffer: Uint8Array): Generator<Uint8Array> {
  * the input is returned as-is.
  * Otherwise, a new `Uint8Array` is created and returned.
  */
-export function removeH264Emulation(buffer: Uint8Array) {
+export function h264RemoveNaluEmulation(buffer: Uint8Array) {
     // output will be created when first emulation prevention byte is found
     let output: Uint8Array | undefined;
     let outputOffset = 0;
@@ -278,7 +314,7 @@ export function removeH264Emulation(buffer: Uint8Array) {
 
 // 7.3.2.1.1 Sequence parameter set data syntax
 // Variable names in this method uses the snake_case convention as in the spec for easier referencing.
-export function parseSequenceParameterSet(buffer: Uint8Array) {
+export function h264ParseSequenceParameterSet(buffer: Uint8Array) {
     const reader = new BitReader(buffer);
     if (reader.next() !== 0) {
         throw new Error("Invalid data");
@@ -450,11 +486,11 @@ export function parseSequenceParameterSet(buffer: Uint8Array) {
  * Find Sequence Parameter Set (SPS) and Picture Parameter Set (PPS)
  * from H.264 Annex B formatted data.
  */
-export function findH264Configuration(buffer: Uint8Array) {
+export function h264SearchConfiguration(buffer: Uint8Array) {
     let sequenceParameterSet: Uint8Array | undefined;
     let pictureParameterSet: Uint8Array | undefined;
 
-    for (const nalu of splitH264Stream(buffer)) {
+    for (const nalu of h264SplitNalu(buffer)) {
         const naluType = nalu[0]! & 0x1f;
         switch (naluType) {
             case 7: // Sequence parameter set
@@ -482,4 +518,72 @@ export function findH264Configuration(buffer: Uint8Array) {
     }
 
     throw new Error("Invalid data");
+}
+
+export interface H264Configuration {
+    pictureParameterSet: Uint8Array;
+    sequenceParameterSet: Uint8Array;
+
+    profileIndex: number;
+    constraintSet: number;
+    levelIndex: number;
+
+    encodedWidth: number;
+    encodedHeight: number;
+
+    cropLeft: number;
+    cropRight: number;
+
+    cropTop: number;
+    cropBottom: number;
+
+    croppedWidth: number;
+    croppedHeight: number;
+}
+
+export function h264ParseConfiguration(data: Uint8Array): H264Configuration {
+    const { sequenceParameterSet, pictureParameterSet } =
+        h264SearchConfiguration(data);
+
+    const {
+        profile_idc: profileIndex,
+        constraint_set: constraintSet,
+        level_idc: levelIndex,
+        pic_width_in_mbs_minus1,
+        pic_height_in_map_units_minus1,
+        frame_mbs_only_flag,
+        frame_crop_left_offset,
+        frame_crop_right_offset,
+        frame_crop_top_offset,
+        frame_crop_bottom_offset,
+    } = h264ParseSequenceParameterSet(
+        h264RemoveNaluEmulation(sequenceParameterSet)
+    );
+
+    const encodedWidth = (pic_width_in_mbs_minus1 + 1) * 16;
+    const encodedHeight =
+        (pic_height_in_map_units_minus1 + 1) * (2 - frame_mbs_only_flag) * 16;
+    const cropLeft = frame_crop_left_offset * 2;
+    const cropRight = frame_crop_right_offset * 2;
+    const cropTop = frame_crop_top_offset * 2;
+    const cropBottom = frame_crop_bottom_offset * 2;
+
+    const croppedWidth = encodedWidth - cropLeft - cropRight;
+    const croppedHeight = encodedHeight - cropTop - cropBottom;
+
+    return {
+        pictureParameterSet,
+        sequenceParameterSet,
+        profileIndex,
+        constraintSet,
+        levelIndex,
+        encodedWidth,
+        encodedHeight,
+        cropLeft,
+        cropRight,
+        cropTop,
+        cropBottom,
+        croppedWidth,
+        croppedHeight,
+    };
 }

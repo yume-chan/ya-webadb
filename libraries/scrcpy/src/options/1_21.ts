@@ -40,21 +40,24 @@ export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
         defaults: Required<T>
     ): string[] {
         // 1.21 changed the format of arguments
-        return Object.entries(options)
-            .map(
-                ([key, value]) =>
-                    [key, toScrcpyOptionValue(value, undefined)] as const
-            )
-            .filter(
-                (pair): pair is [string, string] =>
-                    pair[1] !== undefined &&
-                    pair[1] !==
-                        toScrcpyOptionValue(
-                            defaults[pair[0] as keyof T],
-                            undefined
-                        )
-            )
-            .map(([key, value]) => `${toSnakeCase(key)}=${value}`);
+        const result: string[] = [];
+        for (const [key, value] of Object.entries(options)) {
+            const serializedValue = toScrcpyOptionValue(value, undefined);
+            if (!serializedValue) {
+                continue;
+            }
+
+            const defaultValue = toScrcpyOptionValue(
+                defaults[key as keyof T],
+                undefined
+            );
+            if (serializedValue == defaultValue) {
+                continue;
+            }
+
+            result.push(`${toSnakeCase(key)}=${serializedValue}`);
+        }
+        return result;
     }
 
     public override get defaults(): Required<ScrcpyOptionsInit1_21> {

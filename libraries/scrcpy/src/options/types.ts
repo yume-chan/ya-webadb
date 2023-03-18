@@ -9,6 +9,11 @@ import type {
 } from "../control/index.js";
 
 import type { ScrcpyScrollController } from "./1_16/scroll.js";
+import type {
+    ScrcpyAudioStream,
+    ScrcpyMediaStreamPacket,
+    ScrcpyVideoStream,
+} from "./codec.js";
 
 export const DEFAULT_SERVER_PATH = "/data/local/tmp/scrcpy-server.jar";
 
@@ -40,67 +45,6 @@ export function toScrcpyOptionValue<T>(value: unknown, empty: T): string | T {
     return String(value);
 }
 
-export enum ScrcpyVideoCodecId {
-    H264 = 0x68_32_36_34,
-    H265 = 0x68_32_36_35,
-    AV1 = 0x00_61_76_31,
-}
-
-export interface H264Configuration {
-    profileIndex: number;
-    constraintSet: number;
-    levelIndex: number;
-
-    encodedWidth: number;
-    encodedHeight: number;
-
-    cropLeft: number;
-    cropRight: number;
-
-    cropTop: number;
-    cropBottom: number;
-
-    croppedWidth: number;
-    croppedHeight: number;
-}
-
-export interface ScrcpyVideoStreamMetadata {
-    deviceName?: string;
-    width?: number;
-    height?: number;
-    codec?: ScrcpyVideoCodecId;
-}
-
-export interface ScrcpyVideoStreamConfigurationPacket {
-    type: "configuration";
-    sequenceParameterSet: Uint8Array;
-    pictureParameterSet: Uint8Array;
-    data: H264Configuration;
-}
-
-export interface ScrcpyVideoStreamFramePacket {
-    type: "frame";
-    keyframe?: boolean;
-    pts?: bigint;
-    data: Uint8Array;
-}
-
-export type ScrcpyVideoStreamPacket =
-    | ScrcpyVideoStreamConfigurationPacket
-    | ScrcpyVideoStreamFramePacket;
-
-export enum ScrcpyAudioCodecId {
-    Opus = 0x6f_70_75_73,
-    Aac = 0x00_61_61_63,
-    Raw = 0x00_72_61_77,
-    Disabled = 0x00_00_00_00,
-    Errored = 0x00_00_00_01,
-}
-
-export interface ScrcpyAudioStreamMetadata {
-    codec?: ScrcpyAudioCodecId;
-}
-
 export interface ScrcpyOptions<T extends object> {
     readonly defaults: Required<T>;
 
@@ -122,11 +66,15 @@ export interface ScrcpyOptions<T extends object> {
      */
     parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>
-    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]>;
+    ): ValueOrPromise<ScrcpyVideoStream>;
 
-    createVideoStreamTransformer(): TransformStream<
+    parseAudioStreamMetadata(
+        stream: ReadableStream<Uint8Array>
+    ): ValueOrPromise<ScrcpyAudioStream>;
+
+    createMediaStreamTransformer(): TransformStream<
         Uint8Array,
-        ScrcpyVideoStreamPacket
+        ScrcpyMediaStreamPacket
     >;
 
     serializeInjectTouchControlMessage(
@@ -185,15 +133,21 @@ export abstract class ScrcpyOptionsBase<
      */
     public parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>
-    ): ValueOrPromise<[ReadableStream<Uint8Array>, ScrcpyVideoStreamMetadata]> {
+    ): ValueOrPromise<ScrcpyVideoStream> {
         return this._base.parseVideoStreamMetadata(stream);
     }
 
-    public createVideoStreamTransformer(): TransformStream<
+    public parseAudioStreamMetadata(
+        stream: ReadableStream<Uint8Array>
+    ): ValueOrPromise<ScrcpyAudioStream> {
+        return this._base.parseAudioStreamMetadata(stream);
+    }
+
+    public createMediaStreamTransformer(): TransformStream<
         Uint8Array,
-        ScrcpyVideoStreamPacket
+        ScrcpyMediaStreamPacket
     > {
-        return this._base.createVideoStreamTransformer();
+        return this._base.createMediaStreamTransformer();
     }
 
     public serializeInjectTouchControlMessage(
