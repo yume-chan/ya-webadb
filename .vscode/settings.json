@@ -95,5 +95,6 @@
     },
     "[typescriptreact]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
-    }
+    },
+    "explorer.sortOrder": "mixed"
 }
