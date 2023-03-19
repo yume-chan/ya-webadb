@@ -165,6 +165,7 @@ The latest one may continue to work for future server versions, but there is no 
 | 1.23      | `ScrcpyOptions1_23` |
 | 1.24      | `ScrcpyOptions1_24` |
 | 1.25      | `ScrcpyOptions1_25` |
+| 2.0       | `ScrcpyOptions2_0`  |
 
 When using `AdbScrcpyClient`, there are `AdbScrcpyOptions` containing `@yume-chan/adb` specific options:
 
@@ -172,6 +173,7 @@ When using `AdbScrcpyClient`, there are `AdbScrcpyOptions` containing `@yume-cha
 | --------- | ---------------------- |
 | 1.16~1.21 | `AdbScrcpyOptions1_16` |
 | 1.22~1.25 | `AdbScrcpyOptions1_22` |
+| 2.0       | `AdbScrcpyOptions2_0`  |
 
 ## Use with `@yume-chan/adb`
 

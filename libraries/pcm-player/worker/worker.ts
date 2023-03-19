@@ -13,7 +13,7 @@ class SourceProcessor
     public constructor() {
         super();
         this.port.onmessage = (event) => {
-            this._data.push(event.data);
+            this._data.push(event.data as Uint8Array);
         };
     }
 
@@ -45,7 +45,7 @@ class SourceProcessor
             if (dataOffset === data.length) {
                 this._data.shift();
             } else {
-                this._data[0] = data.slice(dataOffset);
+                this._data[0] = data.subarray(dataOffset);
             }
         }
 

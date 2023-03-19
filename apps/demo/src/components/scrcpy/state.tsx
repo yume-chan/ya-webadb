@@ -315,41 +315,41 @@ export class ScrcpyPageState {
             RECORD_STATE.videoMetadata = undefined;
             RECORD_STATE.audioMetadata = undefined;
 
-            let lastKeyframe = 0;
             client.videoStream.then(({ stream, metadata }) => {
                 runInAction(() => {
                     RECORD_STATE.videoMetadata = metadata;
                 });
 
-                stream
-                    .pipeThrough(
-                        new InspectStream(
-                            action((packet: ScrcpyMediaStreamPacket) => {
-                                if (packet.type === "configuration") {
-                                    const { croppedWidth, croppedHeight } =
-                                        h264ParseConfiguration(packet.data);
-                                    this.log.push(
-                                        `[client] Video size changed: ${croppedWidth}x${croppedHeight}`
-                                    );
+                let lastKeyframe = 0n;
+                const handler = new InspectStream<ScrcpyMediaStreamPacket>(
+                    action((packet) => {
+                        if (packet.type === "configuration") {
+                            const { croppedWidth, croppedHeight } =
+                                h264ParseConfiguration(packet.data);
+                            this.log.push(
+                                `[client] Video size changed: ${croppedWidth}x${croppedHeight}`
+                            );
 
-                                    this.width = croppedWidth;
-                                    this.height = croppedHeight;
-                                } else if (packet.keyframe) {
-                                    if (lastKeyframe) {
-                                        this.log.push(
-                                            `[client] Keyframe interval: ${
-                                                ((Number(packet.pts) -
-                                                    lastKeyframe) /
-                                                    1000) |
-                                                0
-                                            }ms`
-                                        );
-                                    }
-                                    lastKeyframe = Number(packet.pts);
-                                }
-                            })
-                        )
-                    )
+                            this.width = croppedWidth;
+                            this.height = croppedHeight;
+                        } else if (
+                            packet.keyframe &&
+                            packet.pts !== undefined
+                        ) {
+                            if (lastKeyframe) {
+                                const interval =
+                                    (Number(packet.pts - lastKeyframe) / 1000) |
+                                    0;
+                                this.log.push(
+                                    `[client] Keyframe interval: ${interval}ms`
+                                );
+                            }
+                            lastKeyframe = packet.pts!;
+                        }
+                    })
+                );
+                stream
+                    .pipeThrough(handler)
                     .pipeTo(decoder.writable)
                     .catch((e) => {
                         console.log("video error", e);

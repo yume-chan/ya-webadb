@@ -1,3 +1,7 @@
+// cspell: ignore golomb
+// cspell: ignore qpprime
+// cspell: ignore colour
+
 // From https://developer.android.com/reference/android/media/MediaCodecInfo.CodecProfileLevel
 export enum AndroidAvcProfile {
     Baseline = 1 << 0,
@@ -33,10 +37,6 @@ export enum AndroidAvcLevel {
     Level61 = 1 << 18,
     Level62 = 1 << 19,
 }
-
-// cspell: ignore golomb
-// cspell: ignore qpprime
-// cspell: ignore colour
 
 // H.264 has two standards: ITU-T H.264 and ISO/IEC 14496-10
 // they have the same content, and refer themselves as "H.264".
