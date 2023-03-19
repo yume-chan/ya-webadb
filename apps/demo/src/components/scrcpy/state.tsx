@@ -322,16 +322,20 @@ export class ScrcpyPageState {
 
                 let lastKeyframe = 0n;
                 const handler = new InspectStream<ScrcpyMediaStreamPacket>(
-                    action((packet) => {
+                    (packet) => {
+                        RECORD_STATE.recorder.addVideoPacket(packet);
+
                         if (packet.type === "configuration") {
                             const { croppedWidth, croppedHeight } =
                                 h264ParseConfiguration(packet.data);
-                            this.log.push(
-                                `[client] Video size changed: ${croppedWidth}x${croppedHeight}`
-                            );
 
-                            this.width = croppedWidth;
-                            this.height = croppedHeight;
+                            runInAction(() => {
+                                this.log.push(
+                                    `[client] Video size changed: ${croppedWidth}x${croppedHeight}`
+                                );
+                                this.width = croppedWidth;
+                                this.height = croppedHeight;
+                            });
                         } else if (
                             packet.keyframe &&
                             packet.pts !== undefined
@@ -340,14 +344,17 @@ export class ScrcpyPageState {
                                 const interval =
                                     (Number(packet.pts - lastKeyframe) / 1000) |
                                     0;
-                                this.log.push(
-                                    `[client] Keyframe interval: ${interval}ms`
-                                );
+                                runInAction(() => {
+                                    this.log.push(
+                                        `[client] Keyframe interval: ${interval}ms`
+                                    );
+                                });
                             }
                             lastKeyframe = packet.pts!;
                         }
-                    })
+                    }
                 );
+
                 stream
                     .pipeThrough(handler)
                     .pipeTo(decoder.writable)
@@ -369,8 +376,14 @@ export class ScrcpyPageState {
                 stream
                     .pipeTo(
                         new WritableStream({
-                            write: (data) => {
-                                this.audioPlayer?.feed(data.data);
+                            write: (packet) => {
+                                if (packet.type === "data") {
+                                    RECORD_STATE.recorder.addAudioPacket(
+                                        packet
+                                    );
+                                }
+
+                                this.audioPlayer?.feed(packet.data);
                             },
                         })
                     )
@@ -443,6 +456,7 @@ export class ScrcpyPageState {
         this.keyboard = undefined;
 
         await this.audioPlayer?.stop();
+        this.audioPlayer = undefined;
 
         this.fps = "0";
         clearTimeout(this.fpsCounterIntervalId);

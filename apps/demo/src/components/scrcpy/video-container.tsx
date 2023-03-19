@@ -54,6 +54,8 @@ function injectTouch(
     const { pointerType } = e;
     let pointerId: bigint;
     if (pointerType === "mouse") {
+        // Android 13 has bug with mouse injection
+        // https://github.com/Genymobile/scrcpy/issues/3708
         pointerId = ScrcpyPointerId.Finger;
     } else {
         pointerId = BigInt(e.pointerId);

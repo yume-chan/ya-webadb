@@ -84,14 +84,22 @@ export class MatroskaMuxingRecorder {
     private muxer: WebMMuxer | undefined;
     private avcConfiguration: Uint8Array | undefined;
     private configurationWritten = false;
-    private framesFromKeyframe: ScrcpyMediaStreamDataPacket[] = [];
+    private _firstTimestamp = -1;
+    private _packetsFromLastKeyframe: {
+        type: "video" | "audio";
+        packet: ScrcpyMediaStreamDataPacket;
+    }[] = [];
 
-    private muxFrame(frame: ScrcpyMediaStreamDataPacket) {
-        const sample = h264StreamToAvcSample(frame.data);
+    private addVideoChunk(packet: ScrcpyMediaStreamDataPacket) {
+        if (this._firstTimestamp === -1) {
+            this._firstTimestamp = Number(packet.pts!);
+        }
+
+        const sample = h264StreamToAvcSample(packet.data);
         this.muxer!.addVideoChunkRaw(
             sample,
-            frame.keyframe ? "key" : "delta",
-            Number(frame.pts),
+            packet.keyframe ? "key" : "delta",
+            Number(packet.pts) - this._firstTimestamp,
             this.configurationWritten
                 ? undefined
                 : {
@@ -122,18 +130,40 @@ export class MatroskaMuxingRecorder {
             // To ensure the first frame is a keyframe
             // save the last keyframe and the following frames
             if (packet.keyframe === true) {
-                this.framesFromKeyframe.length = 0;
+                this._packetsFromLastKeyframe.length = 0;
             }
-            this.framesFromKeyframe.push(packet);
+            this._packetsFromLastKeyframe.push({ type: "video", packet });
 
             if (!this.muxer) {
                 return;
             }
 
-            this.muxFrame(packet);
+            this.addVideoChunk(packet);
         } catch (e) {
             console.error(e);
         }
+    }
+
+    private addAudioChunk(chunk: ScrcpyMediaStreamDataPacket) {
+        if (this._firstTimestamp === -1) {
+            return;
+        }
+
+        const timestamp = Number(chunk.pts) - this._firstTimestamp;
+        if (timestamp < 0) {
+            return;
+        }
+
+        if (!this.muxer) {
+            return;
+        }
+
+        this.muxer.addAudioChunkRaw(chunk.data, "key", timestamp);
+    }
+
+    public addAudioPacket(packet: ScrcpyMediaStreamDataPacket) {
+        this._packetsFromLastKeyframe.push({ type: "audio", packet });
+        this.addAudioChunk(packet);
     }
 
     public start(
@@ -165,7 +195,7 @@ export class MatroskaMuxingRecorder {
         const options: ConstructorParameters<typeof WebMMuxer>[0] = {
             target: "buffer",
             type: "matroska",
-            firstTimestampBehavior: "offset",
+            firstTimestampBehavior: "permissive",
             video: {
                 codec: MatroskaVideoCodecNameMap[videoMetadata.codec!],
                 width: videoMetadata.width ?? 0,
@@ -178,14 +208,22 @@ export class MatroskaMuxingRecorder {
                 codec: MatroskaAudioCodecNameMap[audioMetadata.codec!],
                 sampleRate: 48000,
                 numberOfChannels: 2,
+                bitDepth:
+                    audioMetadata.codec === ScrcpyAudioCodecId.Raw
+                        ? 16
+                        : undefined,
             };
         }
 
         this.muxer = new WebMMuxer(options);
 
-        if (this.framesFromKeyframe.length > 0) {
-            for (const frame of this.framesFromKeyframe) {
-                this.muxFrame(frame);
+        if (this._packetsFromLastKeyframe.length > 0) {
+            for (const { type, packet } of this._packetsFromLastKeyframe) {
+                if (type === "video") {
+                    this.addVideoChunk(packet);
+                } else {
+                    this.addAudioChunk(packet);
+                }
             }
         }
     }
