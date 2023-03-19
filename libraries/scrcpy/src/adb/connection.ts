@@ -157,7 +157,10 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
         const writer = queue.writable.getWriter();
         this.address = await this.adb.reverse.add(
             this.socketName,
-            "tcp:27183",
+            // In Tango, `localAddress` can be any string,
+            // it only needs to uniquely identify the connection.
+            // So use `this.socketName` to let multiple Scrcpy start concurrently
+            this.socketName,
             (socket) => {
                 void writer.write(socket);
                 return true;
