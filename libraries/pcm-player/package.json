@@ -1,0 +1,48 @@
+{
+    "name": "@yume-chan/pcm-player",
+    "version": "0.0.18",
+    "description": "Play raw audio sample stream using Web Audio API",
+    "keywords": [
+        "audio"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/pcm-player#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "packages/pcm-player"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "scripts": {
+        "build": "tsc -b tsconfig.dom.json && tsc -b tsconfig.worker.json",
+        "build:watch": "tsc -b tsconfig.dom.json && tsc -b tsconfig.worker.json",
+        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+        "lint": "eslint src/**/*.ts --fix && prettier src/**/*.ts --write --tab-width 4",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "tslib": "^2.4.1"
+    },
+    "devDependencies": {
+        "@jest/globals": "^29.5.0",
+        "@types/audioworklet": "^0.0.39",
+        "@yume-chan/eslint-config": "workspace:^1.0.0",
+        "@yume-chan/tsconfig": "workspace:^1.0.0",
+        "cross-env": "^7.0.3",
+        "eslint": "^8.36.0",
+        "jest": "^29.5.0",
+        "prettier": "^2.8.4",
+        "ts-jest": "^29.0.4",
+        "typescript": "^5.0.2"
+    }
+}

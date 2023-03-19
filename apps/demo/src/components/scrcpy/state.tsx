@@ -1,5 +1,6 @@
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
+import { AudioPlayer } from "@yume-chan/pcm-player";
 import {
     AdbScrcpyClient,
     AdbScrcpyOptions2_0,
@@ -28,7 +29,6 @@ import {
 import { action, autorun, makeAutoObservable, runInAction } from "mobx";
 import { GLOBAL_STATE } from "../../state";
 import { ProgressStream } from "../../utils";
-import { AudioPlayer } from "./audio-player";
 import { fetchServer } from "./fetch-server";
 import {
     AoaKeyboardInjector,
@@ -426,10 +426,10 @@ export class ScrcpyPageState {
     async stop() {
         // Request to close client first
         await this.client?.close();
-        this.dispose();
+        await this.dispose();
     }
 
-    dispose() {
+    async dispose() {
         // Otherwise some packets may still arrive at decoder
         this.decoder?.dispose();
         this.decoder = undefined;
@@ -442,7 +442,7 @@ export class ScrcpyPageState {
         this.keyboard?.dispose();
         this.keyboard = undefined;
 
-        this.audioPlayer?.stop();
+        await this.audioPlayer?.stop();
 
         this.fps = "0";
         clearTimeout(this.fpsCounterIntervalId);
