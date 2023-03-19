@@ -439,10 +439,10 @@ export class ScrcpyPageState {
     async stop() {
         // Request to close client first
         await this.client?.close();
-        await this.dispose();
+        this.dispose();
     }
 
-    async dispose() {
+    dispose() {
         // Otherwise some packets may still arrive at decoder
         this.decoder?.dispose();
         this.decoder = undefined;
@@ -455,7 +455,7 @@ export class ScrcpyPageState {
         this.keyboard?.dispose();
         this.keyboard = undefined;
 
-        await this.audioPlayer?.stop();
+        this.audioPlayer?.stop();
         this.audioPlayer = undefined;
 
         this.fps = "0";
