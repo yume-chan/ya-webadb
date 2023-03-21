@@ -12,8 +12,8 @@ import { action, computed } from "mobx";
 import { observer } from "mobx-react-lite";
 import { GLOBAL_STATE } from "../../state";
 import { Icons } from "../../utils";
+import { CommandBarSpacerItem } from "../command-bar-spacer-item";
 import { ExternalLink } from "../external-link";
-import { CommandBarSpacerItem } from "./command-bar-spacer-item";
 import { RECORD_STATE } from "./recorder";
 import { SETTING_STATE } from "./settings";
 import { STATE } from "./state";
@@ -251,7 +251,7 @@ const ITEMS = computed(() => {
             onRender: () => <CommandBarSpacerItem />,
         },
         {
-            // HACK: add a separator in CommandBar
+            // HACK: add a separator in CommandBar overflow menu
             // https://github.com/microsoft/fluentui/issues/10035
             key: "separator",
             disabled: true,

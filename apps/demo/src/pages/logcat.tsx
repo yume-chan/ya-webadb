@@ -1,17 +1,23 @@
-import { ICommandBarItemProps, Stack, StackItem } from "@fluentui/react";
+import {
+    ContextualMenuItemType,
+    ICommandBarItemProps,
+    Stack,
+    StackItem,
+    isMac,
+} from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
 import {
     AndroidLogEntry,
     AndroidLogPriority,
     Logcat,
     LogcatFormat,
-    formatAndroidLogEntry,
 } from "@yume-chan/android-bin";
 import {
     AbortController,
     ReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
+import { encodeUtf8 } from "@yume-chan/struct";
 import {
     action,
     autorun,
@@ -22,7 +28,7 @@ import {
 import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
-import { PointerEvent } from "react";
+import { KeyboardEvent, PointerEvent, useCallback } from "react";
 
 import {
     CommandBar,
@@ -33,8 +39,9 @@ import {
     ObservableListSelection,
     isModKey,
 } from "../components";
+import { CommandBarSpacerItem } from "../components/command-bar-spacer-item";
 import { GLOBAL_STATE } from "../state";
-import { Icons, RouteStackProps, useStableCallback } from "../utils";
+import { Icons, RouteStackProps, saveFile, useStableCallback } from "../utils";
 
 const LINE_HEIGHT = 32;
 
@@ -86,6 +93,26 @@ const state = makeAutoObservable(
         stream: undefined as ReadableStream<AndroidLogEntry> | undefined,
         stopSignal: undefined as AbortController | undefined,
         animationFrameId: undefined as number | undefined,
+
+        format: LogcatFormat.ThreadTime,
+        formatModifierUid: false,
+        formatTime: "default" as "year" | "default" | "epoch" | "monotonic",
+        formatNanosecond: "millisecond" as
+            | "millisecond"
+            | "microsecond"
+            | "nanosecond",
+
+        formatEntry(entry: LogRow) {
+            return entry.toString(this.format, {
+                uid: this.formatModifierUid,
+                year: this.formatTime === "year",
+                epoch: this.formatTime === "epoch",
+                monotonic: this.formatTime === "monotonic",
+                microseconds: this.formatNanosecond === "microsecond",
+                nanoseconds: this.formatNanosecond === "nanosecond",
+            });
+        },
+
         start() {
             if (this.running) {
                 return;
@@ -154,18 +181,28 @@ const state = makeAutoObservable(
                     onClick: () => this.clear(),
                 },
                 {
-                    key: "copyAll",
-                    text: "Copy Rows",
+                    key: "select-all",
+                    disabled: this.empty,
+                    iconProps: { iconName: Icons.Wand },
+                    text: "Select All",
+                    onClick: action(() => {
+                        this.selection.clear();
+                        this.selection.select(
+                            this.list.length - 1,
+                            false,
+                            true
+                        );
+                    }),
+                },
+                {
+                    key: "copy",
+                    text: "Copy Selected",
                     disabled: this.selection.size === 0,
                     iconProps: { iconName: Icons.Copy },
                     onClick: () => {
                         let text = "";
                         for (const index of this.selection) {
-                            text +=
-                                formatAndroidLogEntry(
-                                    this.list[index],
-                                    LogcatFormat.Brief
-                                ) + "\n";
+                            text += this.formatEntry(this.list[index]) + "\n";
                         }
                         // Chrome on Windows can't copy null characters
                         text = text.replace(/\u0000/g, "");
@@ -173,18 +210,223 @@ const state = makeAutoObservable(
                     },
                 },
                 {
-                    key: "copyText",
-                    text: "Copy Messages",
+                    key: "save",
+                    text: "Save Selected",
                     disabled: this.selection.size === 0,
-                    iconProps: { iconName: Icons.Copy },
+                    iconProps: { iconName: Icons.Save },
                     onClick: () => {
-                        let text = "";
+                        const stream = saveFile(`logcat.txt`);
+                        const writer = stream.getWriter();
                         for (const index of this.selection) {
-                            text += this.list[index].message + "\n";
+                            writer.write(
+                                encodeUtf8(
+                                    this.formatEntry(this.list[index]) + "\n"
+                                )
+                            );
                         }
-                        // Chrome on Windows can't copy null characters
-                        text = text.replace(/\u0000/g, "");
-                        navigator.clipboard.writeText(text);
+                        writer.close();
+                    },
+                },
+
+                {
+                    // HACK: make CommandBar overflow on far items
+                    // https://github.com/microsoft/fluentui/issues/11842
+                    key: "spacer",
+                    onRender: () => <CommandBarSpacerItem />,
+                },
+                {
+                    // HACK: add a separator in CommandBar overflow menu
+                    // https://github.com/microsoft/fluentui/issues/10035
+                    key: "separator",
+                    disabled: true,
+                    itemType: ContextualMenuItemType.Divider,
+                },
+
+                {
+                    key: "format",
+                    iconProps: { iconName: Icons.TextGrammarSettings },
+                    text: "Format",
+                    subMenuProps: {
+                        items: [
+                            {
+                                key: "format",
+                                text: "Format",
+                                itemType: ContextualMenuItemType.Header,
+                            },
+                            {
+                                key: "brief",
+                                text: "Brief",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "format",
+                                },
+                                checked: this.format === LogcatFormat.Brief,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.format = LogcatFormat.Brief;
+                                }),
+                            },
+                            {
+                                key: "raw",
+                                text: "Raw",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "format",
+                                },
+                                checked: this.format === LogcatFormat.Raw,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.format = LogcatFormat.Raw;
+                                }),
+                            },
+                            {
+                                key: "threadTime",
+                                text: "ThreadTime",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "format",
+                                },
+                                checked:
+                                    this.format === LogcatFormat.ThreadTime,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.format = LogcatFormat.ThreadTime;
+                                }),
+                            },
+
+                            {
+                                key: "modifiers",
+                                text: "Modifiers",
+                                itemType: ContextualMenuItemType.Header,
+                            },
+                            {
+                                key: "uid",
+                                text: "UID",
+                                canCheck: true,
+                                checked: this.formatModifierUid,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.formatModifierUid =
+                                        !this.formatModifierUid;
+                                }),
+                            },
+
+                            {
+                                key: "time",
+                                text: "Time Format",
+                                itemType: ContextualMenuItemType.Header,
+                            },
+                            {
+                                key: "default",
+                                text: "Default",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "time",
+                                },
+                                checked: this.formatTime === "default",
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.formatTime = "default";
+                                }),
+                            },
+                            {
+                                key: "year",
+                                text: "Year",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "time",
+                                },
+                                checked: this.formatTime === "year",
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.formatTime = "year";
+                                }),
+                            },
+                            {
+                                key: "epoch",
+                                text: "Epoch",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "time",
+                                },
+                                checked: this.formatTime === "epoch",
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.formatTime = "epoch";
+                                }),
+                            },
+                            {
+                                key: "monotonic",
+                                text: "Monotonic",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "time",
+                                },
+                                checked: this.formatTime === "monotonic",
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.formatTime = "monotonic";
+                                }),
+                            },
+
+                            {
+                                key: "nanosecondFormat",
+                                text: "Nanosecond Format",
+                                itemType: ContextualMenuItemType.Header,
+                            },
+                            {
+                                key: "millisecond",
+                                text: "Millisecond",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "nanosecond",
+                                },
+                                checked:
+                                    this.formatNanosecond === "millisecond",
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.formatNanosecond = "millisecond";
+                                }),
+                            },
+                            {
+                                key: "microsecond",
+                                text: "Microsecond",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "nanosecond",
+                                },
+                                checked:
+                                    this.formatNanosecond === "microsecond",
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.formatNanosecond = "microsecond";
+                                }),
+                            },
+                            {
+                                key: "nanosecond",
+                                text: "Nanosecond",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "nanosecond",
+                                },
+                                checked: this.formatNanosecond === "nanosecond",
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.formatNanosecond = "nanosecond";
+                                }),
+                            },
+                        ],
                     },
                 },
             ];
@@ -203,7 +445,7 @@ const state = makeAutoObservable(
                         const item = this.list[rowIndex];
                         if (!item.timeString) {
                             item.timeString = new Date(
-                                item.second * 1000
+                                item.seconds * 1000
                             ).toISOString();
                         }
 
@@ -399,13 +641,12 @@ const Row = observer(function Row({
     const classes = useClasses();
 
     const handlePointerDown = useStableCallback(
-        (e: PointerEvent<HTMLDivElement>) => {
-            runInAction(() => {
+        action((e: PointerEvent<HTMLDivElement>) => {
+            if (e.shiftKey) {
                 e.preventDefault();
-                e.stopPropagation();
-                state.selection.select(rowIndex, isModKey(e), e.shiftKey);
-            });
-        }
+            }
+            state.selection.select(rowIndex, isModKey(e), e.shiftKey);
+        })
     );
 
     return (
@@ -424,6 +665,23 @@ const Row = observer(function Row({
 const LogcatPage: NextPage = () => {
     const classes = useClasses();
 
+    const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
+        if ((isMac() ? e.metaKey : e.ctrlKey) && e.code === "KeyA") {
+            e.preventDefault();
+            e.stopPropagation();
+            state.selection.clear();
+            state.selection.select(state.list.length - 1, false, true);
+            return;
+        }
+
+        if (e.code === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            state.selection.clear();
+            return;
+        }
+    }, []);
+
     return (
         <Stack {...RouteStackProps}>
             <Head>
@@ -440,6 +698,7 @@ const LogcatPage: NextPage = () => {
                     columns={state.columns}
                     HeaderComponent={Header}
                     RowComponent={Row}
+                    onKeyDown={handleKeyDown}
                 />
             </StackItem>
         </Stack>
