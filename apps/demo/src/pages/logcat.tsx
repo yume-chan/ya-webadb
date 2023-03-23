@@ -96,6 +96,7 @@ const state = makeAutoObservable(
 
         format: LogcatFormat.ThreadTime,
         formatModifierUid: false,
+        formatModifierTimezone: false,
         formatTime: "default" as "year" | "default" | "epoch" | "monotonic",
         formatNanosecond: "millisecond" as
             | "millisecond"
@@ -110,6 +111,7 @@ const state = makeAutoObservable(
                 monotonic: this.formatTime === "monotonic",
                 microseconds: this.formatNanosecond === "microsecond",
                 nanoseconds: this.formatNanosecond === "nanosecond",
+                timezone: this.formatModifierTimezone,
             });
         },
 
@@ -268,6 +270,48 @@ const state = makeAutoObservable(
                                 }),
                             },
                             {
+                                key: "process",
+                                text: "Process",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "format",
+                                },
+                                checked: this.format === LogcatFormat.Process,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.format = LogcatFormat.Process;
+                                }),
+                            },
+                            {
+                                key: "tag",
+                                text: "Tag",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "format",
+                                },
+                                checked: this.format === LogcatFormat.Tag,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.format = LogcatFormat.Tag;
+                                }),
+                            },
+                            {
+                                key: "thread",
+                                text: "Thread",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "format",
+                                },
+                                checked: this.format === LogcatFormat.Thread,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.format = LogcatFormat.Thread;
+                                }),
+                            },
+                            {
                                 key: "raw",
                                 text: "Raw",
                                 canCheck: true,
@@ -282,7 +326,21 @@ const state = makeAutoObservable(
                                 }),
                             },
                             {
-                                key: "threadTime",
+                                key: "time",
+                                text: "Time",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "format",
+                                },
+                                checked: this.format === LogcatFormat.Time,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.format = LogcatFormat.Time;
+                                }),
+                            },
+                            {
+                                key: "thread-time",
                                 text: "ThreadTime",
                                 canCheck: true,
                                 itemProps: {
@@ -294,6 +352,20 @@ const state = makeAutoObservable(
                                     e?.preventDefault();
                                     e?.stopPropagation();
                                     this.format = LogcatFormat.ThreadTime;
+                                }),
+                            },
+                            {
+                                key: "long",
+                                text: "Long",
+                                canCheck: true,
+                                itemProps: {
+                                    radioGroup: "format",
+                                },
+                                checked: this.format === LogcatFormat.Long,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.format = LogcatFormat.Long;
                                 }),
                             },
 
@@ -314,9 +386,21 @@ const state = makeAutoObservable(
                                         !this.formatModifierUid;
                                 }),
                             },
+                            {
+                                key: "timezone",
+                                text: "Timezone",
+                                canCheck: true,
+                                checked: this.formatModifierTimezone,
+                                onClick: action((e) => {
+                                    e?.preventDefault();
+                                    e?.stopPropagation();
+                                    this.formatModifierTimezone =
+                                        !this.formatModifierTimezone;
+                                }),
+                            },
 
                             {
-                                key: "time",
+                                key: "time-header",
                                 text: "Time Format",
                                 itemType: ContextualMenuItemType.Header,
                             },
