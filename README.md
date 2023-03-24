@@ -38,7 +38,7 @@ A library and application for browsers to interact with Android devices via ADB.
 
 ## Contribute
 
-See [CONTRIBUTE.md](./CONTRIBUTE.md)
+See [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## Credits
 
