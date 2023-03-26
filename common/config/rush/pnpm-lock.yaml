@@ -28,7 +28,7 @@ importers:
       '@yume-chan/async': ^2.2.0
       '@yume-chan/b-tree': workspace:^0.0.16
       '@yume-chan/event': workspace:^0.0.18
-      '@yume-chan/next-pwa': ^5.6.0
+      '@yume-chan/next-pwa': 5.6.0-mod.1
       '@yume-chan/scrcpy': workspace:^0.0.18
       '@yume-chan/scrcpy-decoder-tinyh264': workspace:^0.0.18
       '@yume-chan/scrcpy-decoder-webcodecs': workspace:^0.0.18
@@ -89,7 +89,7 @@ importers:
       '@next/mdx': 13.2.4_msthxdjvrhmdkfpqqalumiidgq
       '@types/node': 18.15.0
       '@types/react': 18.0.28
-      '@yume-chan/next-pwa': 5.6.0_next@13.2.4
+      '@yume-chan/next-pwa': 5.6.0-mod.1_next@13.2.4
       eslint: 8.36.0
       eslint-config-next: 13.2.4_vgl77cfdswitgr47lm5swmv43m
       prettier: 2.8.4
@@ -2922,8 +2922,8 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@yume-chan/next-pwa/5.6.0_next@13.2.4:
-    resolution: {integrity: sha512-0H+OOKeZhOGRYIWCCW0S/+ls/+s7etNgPS67s5loVoIIKRK2o/wxPmoIi2VU8JuJ5I/Z01vklicV9mxRmfQXSg==}
+  /@yume-chan/next-pwa/5.6.0-mod.1_next@13.2.4:
+    resolution: {integrity: sha512-/jDmFpFejc3WqBiTtXSQPPjzBYXq3zvdi0HlI19LR8pgW8ucQw/P4uhYV1IKgPN3h1MBMjIJ+hIuaWWhwDtUWA==}
     peerDependencies:
       next: '>=9.0.0'
     dependencies:

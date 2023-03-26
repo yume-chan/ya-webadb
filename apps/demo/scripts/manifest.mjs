@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-const baseUrl = (process.env.BASE_URL ?? "") + "/";
+const baseUrl = (process.env.BASE_PATH ?? "") + "/";
 
 fs.writeFileSync(
     new URL("../public/manifest.json", import.meta.url),
