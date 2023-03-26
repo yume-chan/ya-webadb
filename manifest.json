@@ -1,0 +1,20 @@
+{
+    "name": "Tango",
+    "short_name": "Tango",
+    "categories": [
+        "utilities",
+        "developer"
+    ],
+    "description": "ADB in your browser",
+    "scope": "/",
+    "start_url": "/",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "icons": [
+        {
+            "src": "favicon-256.png",
+            "type": "image/png",
+            "sizes": "256x256"
+        }
+    ]
+}
