@@ -16,6 +16,7 @@ import { Connect, ErrorDialogProvider } from "../components";
 import "../styles/globals.css";
 import { Icons } from "../utils";
 import { register as registerIcons } from "../utils/icons";
+import getConfig from "next/config";
 
 registerIcons();
 
@@ -118,6 +119,10 @@ const useClasses = makeStyles({
     },
 });
 
+const {
+    publicRuntimeConfig: { basePath },
+} = getConfig();
+
 function App({ Component, pageProps }: AppProps) {
     const classes = useClasses();
 
@@ -134,7 +139,7 @@ function App({ Component, pageProps }: AppProps) {
     return (
         <ErrorDialogProvider>
             <Head>
-                <link rel="manifest" href="/manifest.json" />
+                <link rel="manifest" href={basePath + "/manifest.json"} />
             </Head>
 
             <Stack verticalFill>
