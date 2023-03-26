@@ -134,7 +134,7 @@ function App({ Component, pageProps }: AppProps) {
     return (
         <ErrorDialogProvider>
             <Head>
-                <link rel="manifest" href="/manifest.webmanifest" />
+                <link rel="manifest" href="/manifest.json" />
             </Head>
 
             <Stack verticalFill>
