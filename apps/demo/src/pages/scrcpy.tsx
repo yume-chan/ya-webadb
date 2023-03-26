@@ -187,7 +187,7 @@ const Scrcpy: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Scrcpy - Android Web Toolbox</title>
+                <title>Scrcpy - Tango</title>
             </Head>
 
             <ScrcpyCommandBar />

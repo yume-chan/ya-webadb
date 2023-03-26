@@ -322,7 +322,7 @@ const PacketLog: NextPage = () => {
     return (
         <Stack {...RouteStackProps} tokens={{}}>
             <Head>
-                <title>Packet Log - Android Web Toolbox</title>
+                <title>Packet Log - Tango</title>
             </Head>
 
             <CommandBar items={state.commandBarItems} />

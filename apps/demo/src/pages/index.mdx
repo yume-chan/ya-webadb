@@ -1,11 +1,9 @@
 import { Stack } from "@fluentui/react";
-import Head from 'next/head';
-import { ExternalLink } from '../components';
+import Head from "next/head";
+import { ExternalLink } from "../components";
 import { RouteStackProps } from "../utils";
 
-{/*
-cspell: ignore cybojenix
-*/}
+{/* cspell: ignore cybojenix */}
 
 This is a demo for my <ExternalLink href="https://github.com/yume-chan/ya-webadb/">ya-webadb</ExternalLink> project, which can use ADB protocol to control Android phones, directly from Web browsers (or Node.js).
 
@@ -13,8 +11,12 @@ It started because I want to try the <ExternalLink href="https://developer.mozil
 
 It was called "ya-webadb" (Yet Another WebADB), because there have already been several similar projects, for example:
 
-* <ExternalLink href="https://github.com/webadb/webadb.js">webadb/webadb.js</ExternalLink>
-* <ExternalLink href="https://github.com/cybojenix/WebADB">cybojenix/WebADB</ExternalLink>
+-   <ExternalLink href="https://github.com/webadb/webadb.js">
+        webadb/webadb.js
+    </ExternalLink>
+-   <ExternalLink href="https://github.com/cybojenix/WebADB">
+        cybojenix/WebADB
+    </ExternalLink>
 
 However, they are all pretty simple and not maintained, so I decided to make my own.
 
@@ -46,10 +48,10 @@ One USB device can only be accessed by one application at a time. Please make su
 
 Extra software is required to bridge the connection. See <ExternalLink href="https://github.com/yume-chan/ya-webadb/discussions/245#discussioncomment-384030">this discussion</ExternalLink>.
 
-export default ({children}) => (
-    <div style={{ height: '100%', padding: '0 16px', overflow: 'auto' }}>
+export default ({ children }) => (
+    <div style={{ height: "100%", padding: "0 16px", overflow: "auto" }}>
         <Head>
-            <title>Android Web Toolbox</title>
+            <title>Tango</title>
         </Head>
         {children}
     </div>

@@ -43,7 +43,7 @@ const DeviceInfo: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Device Info - Android Web Toolbox</title>
+                <title>Device Info - Tango</title>
             </Head>
 
             <MessageBar>

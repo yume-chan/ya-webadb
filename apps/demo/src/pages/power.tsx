@@ -19,7 +19,7 @@ const Power: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Power Menu - Android Web Toolbox</title>
+                <title>Power Menu - Tango</title>
             </Head>
 
             <div>

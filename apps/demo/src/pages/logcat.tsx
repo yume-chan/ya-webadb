@@ -769,7 +769,7 @@ const LogcatPage: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Logcat - Android Web Toolbox</title>
+                <title>Logcat - Tango</title>
             </Head>
 
             <CommandBar items={state.commandBar} />

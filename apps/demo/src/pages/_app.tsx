@@ -151,7 +151,7 @@ function App({ Component, pageProps }: AppProps) {
                     />
 
                     <StackItem grow>
-                        <div className={classes.title}>Android Web Toolbox</div>
+                        <div className={classes.title}>Tango</div>
                     </StackItem>
 
                     <IconButton
