@@ -37,6 +37,7 @@ importers:
       '@yume-chan/struct': workspace:^0.0.18
       eslint: ^8.36.0
       eslint-config-next: 13.2.4
+      fflate: ^0.7.4
       mobx: ^6.7.0
       mobx-react-lite: ^3.4.3
       next: 13.2.4
@@ -73,6 +74,7 @@ importers:
       '@yume-chan/stream-extra': link:../../libraries/stream-extra
       '@yume-chan/stream-saver': 2.0.6
       '@yume-chan/struct': link:../../libraries/struct
+      fflate: 0.7.4
       mobx: 6.8.0
       mobx-react-lite: 3.4.3_woojb62cqeyk443mbl7msrwu2e
       next: 13.2.4_biqbaboplfbrettd7655fr4n2y
@@ -4324,6 +4326,10 @@ packages:
     dependencies:
       pend: 1.2.0
     dev: true
+
+  /fflate/0.7.4:
+    resolution: {integrity: sha512-5u2V/CDW15QM1XbbgS+0DfPxVB+jUKhWEKuuFuHncbk3tEEqzmoXL+2KyOFuKGqOnmdIy0/davWF1CkuwtibCw==}
+    dev: false
 
   /file-entry-cache/6.0.1:
     resolution: {integrity: sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==}

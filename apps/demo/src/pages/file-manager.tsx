@@ -29,8 +29,15 @@ import {
 } from "@fluentui/react-file-type-icons";
 import { useConst } from "@fluentui/react-hooks";
 import { getIcon } from "@fluentui/style-utilities";
-import { AdbFeature, LinuxFileType, type AdbSyncEntry } from "@yume-chan/adb";
-import { WrapConsumableStream } from "@yume-chan/stream-extra";
+import {
+    AdbFeature,
+    AdbSync,
+    LinuxFileType,
+    type AdbSyncEntry,
+} from "@yume-chan/adb";
+import { WrapConsumableStream, WritableStream } from "@yume-chan/stream-extra";
+import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
+import { Zip, ZipPassThrough } from "fflate";
 import {
     action,
     autorun,
@@ -174,9 +181,9 @@ class FileManagerState {
                     },
                 });
                 break;
-            case 1:
-                if (this.selectedItems[0].type === LinuxFileType.File) {
-                    result.push({
+            default:
+                result.push(
+                    {
                         key: "download",
                         text: "Download",
                         iconProps: {
@@ -188,63 +195,49 @@ class FileManagerState {
                             },
                         },
                         onClick: () => {
+                            void this.download();
+                            return false;
+                        },
+                    },
+                    {
+                        key: "delete",
+                        text: "Delete",
+                        iconProps: {
+                            iconName: Icons.Delete,
+                            style: {
+                                height: 20,
+                                fontSize: 20,
+                                lineHeight: 1.5,
+                            },
+                        },
+                        onClick: () => {
                             (async () => {
-                                const sync = await GLOBAL_STATE.device!.sync();
                                 try {
-                                    const item = this.selectedItems[0];
-                                    const itemPath = path.resolve(
-                                        this.path,
-                                        item.name
-                                    );
-                                    await sync
-                                        .read(itemPath)
-                                        .pipeTo(
-                                            saveFile(
-                                                item.name,
-                                                Number(item.size)
-                                            )
-                                        );
+                                    for (const item of this.selectedItems) {
+                                        const output =
+                                            await GLOBAL_STATE.device!.rm(
+                                                path.resolve(
+                                                    this.path,
+                                                    item.name!
+                                                )
+                                            );
+                                        if (output) {
+                                            GLOBAL_STATE.showErrorDialog(
+                                                output
+                                            );
+                                            return;
+                                        }
+                                    }
                                 } catch (e: any) {
                                     GLOBAL_STATE.showErrorDialog(e);
                                 } finally {
-                                    sync.dispose();
+                                    this.loadFiles();
                                 }
                             })();
                             return false;
                         },
-                    });
-                }
-            // fall through
-            default:
-                result.push({
-                    key: "delete",
-                    text: "Delete",
-                    iconProps: {
-                        iconName: Icons.Delete,
-                        style: { height: 20, fontSize: 20, lineHeight: 1.5 },
-                    },
-                    onClick: () => {
-                        (async () => {
-                            try {
-                                for (const item of this.selectedItems) {
-                                    const output =
-                                        await GLOBAL_STATE.device!.rm(
-                                            path.resolve(this.path, item.name!)
-                                        );
-                                    if (output) {
-                                        GLOBAL_STATE.showErrorDialog(output);
-                                        return;
-                                    }
-                                }
-                            } catch (e: any) {
-                                GLOBAL_STATE.showErrorDialog(e);
-                            } finally {
-                                this.loadFiles();
-                            }
-                        })();
-                        return false;
-                    },
-                });
+                    }
+                );
                 break;
         }
 
@@ -457,6 +450,139 @@ class FileManagerState {
                 this.initial = true;
             }
         });
+    }
+
+    private getFileStream(sync: AdbSync, basePath: string, name: string) {
+        return sync.read(path.resolve(basePath, name));
+    }
+
+    private async addDirectory(
+        sync: AdbSync,
+        zip: Zip,
+        basePath: string,
+        relativePath: string
+    ) {
+        if (relativePath !== ".") {
+            // Add empty directory
+            const file = new ZipPassThrough(relativePath + "/");
+            zip.add(file);
+            file.push(EMPTY_UINT8_ARRAY, true);
+        }
+
+        for (const entry of await sync.readdir(
+            path.resolve(basePath, relativePath)
+        )) {
+            if (entry.name === "." || entry.name === "..") {
+                continue;
+            }
+
+            switch (entry.type) {
+                case LinuxFileType.Directory:
+                    await this.addDirectory(
+                        sync,
+                        zip,
+                        basePath,
+                        path.resolve(relativePath, entry.name)
+                    );
+                    break;
+                case LinuxFileType.File:
+                    await this.addFile(
+                        sync,
+                        zip,
+                        basePath,
+                        path.resolve(relativePath, entry.name)
+                    );
+                    break;
+            }
+        }
+    }
+
+    private async addFile(
+        sync: AdbSync,
+        zip: Zip,
+        basePath: string,
+        name: string
+    ) {
+        const file = new ZipPassThrough(name);
+        zip.add(file);
+        await this.getFileStream(sync, basePath, name).pipeTo(
+            new WritableStream({
+                write(chunk) {
+                    file.push(chunk);
+                },
+                close() {
+                    file.push(EMPTY_UINT8_ARRAY, true);
+                },
+            })
+        );
+    }
+
+    private async download() {
+        const sync = await GLOBAL_STATE.device!.sync();
+        try {
+            if (this.selectedItems.length === 1) {
+                const item = this.selectedItems[0];
+                switch (item.type) {
+                    case LinuxFileType.Directory: {
+                        const stream = saveFile(
+                            `${this.selectedItems[0].name}.zip`
+                        );
+                        const writer = stream.getWriter();
+                        const zip = new Zip((err, data, final) => {
+                            writer.write(data);
+                            if (final) {
+                                writer.close();
+                            }
+                        });
+                        await this.addDirectory(
+                            sync,
+                            zip,
+                            path.resolve(this.path, item.name),
+                            "."
+                        );
+                        zip.end();
+                        break;
+                    }
+                    case LinuxFileType.File:
+                        await this.getFileStream(
+                            sync,
+                            this.path,
+                            item.name
+                        ).pipeTo(saveFile(item.name, Number(item.size)));
+                        break;
+                }
+                return;
+            }
+
+            const stream = saveFile(`${path.basename(this.path)}.zip`);
+            const writer = stream.getWriter();
+            const zip = new Zip((err, data, final) => {
+                writer.write(data);
+                if (final) {
+                    writer.close();
+                }
+            });
+            for (const item of this.selectedItems) {
+                switch (item.type) {
+                    case LinuxFileType.Directory:
+                        await this.addDirectory(
+                            sync,
+                            zip,
+                            this.path,
+                            item.name
+                        );
+                        break;
+                    case LinuxFileType.File:
+                        await this.addFile(sync, zip, this.path, item.name);
+                        break;
+                }
+            }
+            zip.end();
+        } catch (e: any) {
+            GLOBAL_STATE.showErrorDialog(e);
+        } finally {
+            sync.dispose();
+        }
     }
 
     pushPathQuery = (path: string) => {
