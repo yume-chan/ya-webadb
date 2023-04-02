@@ -1,4 +1,10 @@
-import { Dialog, LayerHost, ProgressIndicator, Stack } from "@fluentui/react";
+import {
+    Dialog,
+    LayerHost,
+    Link,
+    ProgressIndicator,
+    Stack,
+} from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { makeStyles, shorthands } from "@griffel/react";
 import { WebCodecsDecoder } from "@yume-chan/scrcpy-decoder-webcodecs";
@@ -17,6 +23,7 @@ import {
     SettingItem,
     VideoContainer,
 } from "../components/scrcpy";
+import { useLocalStorage } from "../hooks";
 import { GLOBAL_STATE } from "../state";
 import { CommonStackTokens, RouteStackProps, formatSpeed } from "../utils";
 
@@ -176,6 +183,11 @@ const Scrcpy: NextPage = () => {
         };
     }, []);
 
+    const [hintHidden, setHintHidden] = useLocalStorage<`${boolean}`>(
+        "scrcpy-hint-hidden",
+        "false"
+    );
+
     useEffect(() => {
         window.addEventListener("blur", handleBlur);
 
@@ -200,16 +212,24 @@ const Scrcpy: NextPage = () => {
                     onKeyDown={handleKeyEvent}
                     onKeyUp={handleKeyEvent}
                 >
-                    {keyboardLockEnabled && STATE.isFullScreen && (
-                        <div className={classes.fullScreenStatusBar}>
-                            <div>{GLOBAL_STATE.backend?.serial}</div>
-                            <div>FPS: {STATE.fps}</div>
+                    {keyboardLockEnabled &&
+                        hintHidden !== "true" &&
+                        STATE.isFullScreen && (
+                            <div className={classes.fullScreenStatusBar}>
+                                <div>{GLOBAL_STATE.backend?.serial}</div>
+                                <div>FPS: {STATE.fps}</div>
 
-                            <div className={classes.spacer} />
+                                <div className={classes.spacer} />
 
-                            <div>Press and hold ESC to exit full screen</div>
-                        </div>
-                    )}
+                                <div>
+                                    Press and hold ESC to exit full screen
+                                </div>
+
+                                <Link onClick={() => setHintHidden("true")}>
+                                    {`Don't show again`}
+                                </Link>
+                            </div>
+                        )}
                     <DeviceView
                         width={STATE.rotatedWidth}
                         height={STATE.rotatedHeight}
