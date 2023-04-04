@@ -17,7 +17,7 @@ importers:
       '@mdx-js/react': ^2.2.1
       '@next/mdx': ^13.2.4
       '@types/node': ^18.15.3
-      '@types/react': 18.0.28
+      '@types/react': 18.0.33
       '@yume-chan/adb': workspace:^0.0.18
       '@yume-chan/adb-backend-direct-sockets': workspace:^0.0.9
       '@yume-chan/adb-backend-webusb': workspace:^0.0.18
@@ -46,18 +46,18 @@ importers:
       react: ^18.2.0
       react-dom: ^18.2.0
       source-map-loader: ^4.0.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
       webm-muxer: ^2.1.2
       xterm: ^5.1.0
       xterm-addon-fit: ^0.7.0
       xterm-addon-search: ^0.11.0
       xterm-addon-webgl: ^0.14.0
     dependencies:
-      '@fluentui/react': 8.107.1_zula6vjvt3wdocc4mwcxqa6nzi
-      '@fluentui/react-file-type-icons': 8.8.13_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/react-hooks': 8.6.20_pmekkgnqduwlme35zpnqhenc34
+      '@fluentui/react': 8.107.1_zn3vyfk3tbnwebg5ldvieekjaq
+      '@fluentui/react-file-type-icons': 8.8.13_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/react-hooks': 8.6.20_pofolu2o2erjq4lhyzl3hqovzq
       '@fluentui/react-icons': 2.0.199_react@18.2.0
-      '@fluentui/style-utilities': 8.9.6_pmekkgnqduwlme35zpnqhenc34
+      '@fluentui/style-utilities': 8.9.6_pofolu2o2erjq4lhyzl3hqovzq
       '@griffel/react': 1.5.6_react@18.2.0
       '@yume-chan/adb': link:../../libraries/adb
       '@yume-chan/adb-backend-direct-sockets': link:../../libraries/adb-backend-direct-sockets
@@ -92,7 +92,7 @@ importers:
       '@mdx-js/react': 2.3.0_react@18.2.0
       '@next/mdx': 13.2.4_msthxdjvrhmdkfpqqalumiidgq
       '@types/node': 18.15.11
-      '@types/react': 18.0.28
+      '@types/react': 18.0.33
       '@yume-chan/next-pwa': 5.6.0-mod.1_next@13.2.4
       eslint: 8.37.0
       eslint-config-next: 13.2.4_vwh6htx42aidho2qgfca5u5rwm
@@ -117,7 +117,7 @@ importers:
       prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@yume-chan/async': 2.2.0
       '@yume-chan/dataview-bigint-polyfill': link:../dataview-bigint-polyfill
@@ -146,7 +146,7 @@ importers:
       eslint: ^8.36.0
       prettier: ^2.8.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@yume-chan/adb': link:../adb
       '@yume-chan/stream-extra': link:../stream-extra
@@ -169,7 +169,7 @@ importers:
       eslint: ^8.36.0
       prettier: ^2.8.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@types/w3c-web-usb': 1.0.6
       '@yume-chan/adb': link:../adb
@@ -193,7 +193,7 @@ importers:
       jest: ^29.5.0
       prettier: ^2.8.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@yume-chan/adb': link:../adb
       '@yume-chan/stream-extra': link:../stream-extra
@@ -214,7 +214,7 @@ importers:
       eslint: ^8.36.0
       prettier: ^2.8.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@yume-chan/adb': link:../adb
       tslib: 2.5.0
@@ -235,7 +235,7 @@ importers:
       eslint: ^8.36.0
       prettier: ^2.8.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@yume-chan/adb': link:../adb
       '@yume-chan/stream-extra': link:../stream-extra
@@ -254,7 +254,7 @@ importers:
       '@yume-chan/eslint-config': workspace:^1.0.0
       '@yume-chan/tsconfig': workspace:^1.0.0
       eslint: ^8.36.0
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@types/w3c-web-usb': 1.0.6
     devDependencies:
@@ -274,7 +274,7 @@ importers:
       prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       tslib: 2.5.0
     devDependencies:
@@ -296,7 +296,7 @@ importers:
       jest: ^29.5.0
       prettier: ^2.8.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       tslib: 2.5.0
     devDependencies:
@@ -319,7 +319,7 @@ importers:
       prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@yume-chan/async': 2.2.0
       tslib: 2.5.0
@@ -337,7 +337,7 @@ importers:
   ../../libraries/pcm-player:
     specifiers:
       '@jest/globals': ^29.5.0
-      '@types/audioworklet': ^0.0.39
+      '@types/audioworklet': ^0.0.41
       '@yume-chan/eslint-config': workspace:^1.0.0
       '@yume-chan/tsconfig': workspace:^1.0.0
       cross-env: ^7.0.3
@@ -346,12 +346,12 @@ importers:
       prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       tslib: 2.5.0
     devDependencies:
       '@jest/globals': 29.5.0
-      '@types/audioworklet': 0.0.39
+      '@types/audioworklet': 0.0.41
       '@yume-chan/eslint-config': link:../../toolchain/eslint-config
       '@yume-chan/tsconfig': link:../../toolchain/tsconfig
       cross-env: 7.0.3
@@ -378,7 +378,7 @@ importers:
       prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@yume-chan/async': 2.2.0
       '@yume-chan/event': link:../event
@@ -414,7 +414,7 @@ importers:
       tinyh264: ^0.0.7
       ts-jest: ^29.0.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
       yuv-buffer: ^1.0.0
       yuv-canvas: ^1.2.11
     dependencies:
@@ -452,7 +452,7 @@ importers:
       prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@types/dom-webcodecs': 0.1.6
       '@yume-chan/scrcpy': link:../scrcpy
@@ -483,7 +483,7 @@ importers:
       prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
       web-streams-polyfill: ^4.0.0-beta.3
     dependencies:
       '@yume-chan/async': 2.2.0
@@ -513,7 +513,7 @@ importers:
       prettier: ^2.8.4
       ts-jest: ^29.0.4
       tslib: ^2.4.1
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@yume-chan/dataview-bigint-polyfill': link:../dataview-bigint-polyfill
       tslib: 2.5.0
@@ -536,7 +536,7 @@ importers:
       eslint: ^8.36.0
       eslint-plugin-import: ^2.27.4
       prettier: ^2.8.4
-      typescript: ^5.0.2
+      typescript: ^5.0.3
     dependencies:
       '@rushstack/eslint-patch': 1.2.0
       '@typescript-eslint/eslint-plugin': 5.57.1_jwd5v5vphzanfmajybkjq25ld4
@@ -1811,19 +1811,19 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/font-icons-mdl2/8.5.13_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/font-icons-mdl2/8.5.13_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-3JjYN7lJZefpBdNPoQRFOiNpyVw+BOGynMkmYglnGjEWlg3uodawNi9lnKBODXCy31OHh900n9pAPFyNpdCbBg==}
     dependencies:
       '@fluentui/set-version': 8.2.6
-      '@fluentui/style-utilities': 8.9.6_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/utilities': 8.13.9_pmekkgnqduwlme35zpnqhenc34
+      '@fluentui/style-utilities': 8.9.6_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/utilities': 8.13.9_pofolu2o2erjq4lhyzl3hqovzq
       tslib: 2.5.0
     transitivePeerDependencies:
       - '@types/react'
       - react
     dev: false
 
-  /@fluentui/foundation-legacy/8.2.33_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/foundation-legacy/8.2.33_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-Z1Nl1hmyICAjTwaU2fvIGenzczRfyf0P3oaRniwac4gAa5MidE6QlpAkEcwCka2QEG/qUjcx/cMacDGLN/Dd0A==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
@@ -1831,9 +1831,9 @@ packages:
     dependencies:
       '@fluentui/merge-styles': 8.5.7
       '@fluentui/set-version': 8.2.6
-      '@fluentui/style-utilities': 8.9.6_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/utilities': 8.13.9_pmekkgnqduwlme35zpnqhenc34
-      '@types/react': 18.0.28
+      '@fluentui/style-utilities': 8.9.6_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/utilities': 8.13.9_pofolu2o2erjq4lhyzl3hqovzq
+      '@types/react': 18.0.33
       react: 18.2.0
       tslib: 2.5.0
     dev: false
@@ -1851,20 +1851,20 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/react-file-type-icons/8.8.13_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/react-file-type-icons/8.8.13_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-zAu64AamTdDJ2ySmZ+3fr2Zvqx5pa5ewhNd5nZQY7R8+pHpr4/7KwwBnctAC95IHJHd+i2dbhJSv8qUk93timw==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0'
     dependencies:
       '@fluentui/set-version': 8.2.6
-      '@fluentui/style-utilities': 8.9.6_pmekkgnqduwlme35zpnqhenc34
-      '@types/react': 18.0.28
+      '@fluentui/style-utilities': 8.9.6_pofolu2o2erjq4lhyzl3hqovzq
+      '@types/react': 18.0.33
       react: 18.2.0
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/react-focus/8.8.19_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/react-focus/8.8.19_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-Gswx0aOazRVFJONmcsj5o6SI/ebWQeZyBAlOsdFeSUuK38aRlVy4DbwVQ+5tQ675u3wmf/+Ln2a0xCixOAVvWg==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
@@ -1873,23 +1873,23 @@ packages:
       '@fluentui/keyboard-key': 0.4.6
       '@fluentui/merge-styles': 8.5.7
       '@fluentui/set-version': 8.2.6
-      '@fluentui/style-utilities': 8.9.6_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/utilities': 8.13.9_pmekkgnqduwlme35zpnqhenc34
-      '@types/react': 18.0.28
+      '@fluentui/style-utilities': 8.9.6_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/utilities': 8.13.9_pofolu2o2erjq4lhyzl3hqovzq
+      '@types/react': 18.0.33
       react: 18.2.0
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/react-hooks/8.6.20_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/react-hooks/8.6.20_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-vb90tgc0nGWvahE2zuPPtEpknIfAA0ABq7/ro7+CAcKgDx2sleGZKRGdzKXdYS026OxjQ8TN2K7/D3OI1v4Rjg==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0'
     dependencies:
-      '@fluentui/react-window-provider': 2.2.9_pmekkgnqduwlme35zpnqhenc34
+      '@fluentui/react-window-provider': 2.2.9_pofolu2o2erjq4lhyzl3hqovzq
       '@fluentui/set-version': 8.2.6
-      '@fluentui/utilities': 8.13.9_pmekkgnqduwlme35zpnqhenc34
-      '@types/react': 18.0.28
+      '@fluentui/utilities': 8.13.9_pofolu2o2erjq4lhyzl3hqovzq
+      '@types/react': 18.0.33
       react: 18.2.0
       tslib: 2.5.0
     dev: false
@@ -1904,30 +1904,30 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/react-portal-compat-context/9.0.5_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/react-portal-compat-context/9.0.5_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-vgGvv74jPi/salcxv37TCm06lOFn44CfNLX5wZw5HQIe9LYGUw/J7vkaniwNIzmQZsn62Y+fVxDS6Sq5S823tA==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0'
     dependencies:
       '@swc/helpers': 0.4.14
-      '@types/react': 18.0.28
+      '@types/react': 18.0.33
       react: 18.2.0
     dev: false
 
-  /@fluentui/react-window-provider/2.2.9_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/react-window-provider/2.2.9_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-BRa23ITjwUgewS9ynzCnW2bJIgaNHwhPUY0htLKcYSSv3fG7iib91B6FVC7QqmXDBTia00kqVul1TZz5G0qrlQ==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0'
     dependencies:
       '@fluentui/set-version': 8.2.6
-      '@types/react': 18.0.28
+      '@types/react': 18.0.33
       react: 18.2.0
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/react/8.107.1_zula6vjvt3wdocc4mwcxqa6nzi:
+  /@fluentui/react/8.107.1_zn3vyfk3tbnwebg5ldvieekjaq:
     resolution: {integrity: sha512-wz8Cjmh53qfYlLdovTabhlRcRbwys2DIJTC/bcEErP8JiY7FVrUH4ZyVK1a6mksZry0SDv9V4m8EdSykm9T+rw==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
@@ -1936,19 +1936,19 @@ packages:
       react-dom: '>=16.8.0 <19.0.0'
     dependencies:
       '@fluentui/date-time-utilities': 8.5.6
-      '@fluentui/font-icons-mdl2': 8.5.13_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/foundation-legacy': 8.2.33_pmekkgnqduwlme35zpnqhenc34
+      '@fluentui/font-icons-mdl2': 8.5.13_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/foundation-legacy': 8.2.33_pofolu2o2erjq4lhyzl3hqovzq
       '@fluentui/merge-styles': 8.5.7
-      '@fluentui/react-focus': 8.8.19_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/react-hooks': 8.6.20_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/react-portal-compat-context': 9.0.5_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/react-window-provider': 2.2.9_pmekkgnqduwlme35zpnqhenc34
+      '@fluentui/react-focus': 8.8.19_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/react-hooks': 8.6.20_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/react-portal-compat-context': 9.0.5_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/react-window-provider': 2.2.9_pofolu2o2erjq4lhyzl3hqovzq
       '@fluentui/set-version': 8.2.6
-      '@fluentui/style-utilities': 8.9.6_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/theme': 2.6.25_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/utilities': 8.13.9_pmekkgnqduwlme35zpnqhenc34
+      '@fluentui/style-utilities': 8.9.6_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/theme': 2.6.25_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/utilities': 8.13.9_pofolu2o2erjq4lhyzl3hqovzq
       '@microsoft/load-themed-styles': 1.10.295
-      '@types/react': 18.0.28
+      '@types/react': 18.0.33
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       tslib: 2.5.0
@@ -1960,13 +1960,13 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/style-utilities/8.9.6_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/style-utilities/8.9.6_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-glhexQzJNnLws66Tb7a0WPStYVE1tRy0QWwbtOdIRXsd/3CA1FZse76itss8/yqGakPin2PElkej/jTKpaRWew==}
     dependencies:
       '@fluentui/merge-styles': 8.5.7
       '@fluentui/set-version': 8.2.6
-      '@fluentui/theme': 2.6.25_pmekkgnqduwlme35zpnqhenc34
-      '@fluentui/utilities': 8.13.9_pmekkgnqduwlme35zpnqhenc34
+      '@fluentui/theme': 2.6.25_pofolu2o2erjq4lhyzl3hqovzq
+      '@fluentui/utilities': 8.13.9_pofolu2o2erjq4lhyzl3hqovzq
       '@microsoft/load-themed-styles': 1.10.295
       tslib: 2.5.0
     transitivePeerDependencies:
@@ -1974,7 +1974,7 @@ packages:
       - react
     dev: false
 
-  /@fluentui/theme/2.6.25_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/theme/2.6.25_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-slp+Tk+FEDj6HtZNWzckEMPLZMYfe2bECz4hLj/aq2ok51f2ztVTM8rjjmiJjOAidcTirF/gdYVbayc/5MOKag==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
@@ -1982,13 +1982,13 @@ packages:
     dependencies:
       '@fluentui/merge-styles': 8.5.7
       '@fluentui/set-version': 8.2.6
-      '@fluentui/utilities': 8.13.9_pmekkgnqduwlme35zpnqhenc34
-      '@types/react': 18.0.28
+      '@fluentui/utilities': 8.13.9_pofolu2o2erjq4lhyzl3hqovzq
+      '@types/react': 18.0.33
       react: 18.2.0
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/utilities/8.13.9_pmekkgnqduwlme35zpnqhenc34:
+  /@fluentui/utilities/8.13.9_pofolu2o2erjq4lhyzl3hqovzq:
     resolution: {integrity: sha512-8SkDFN+v3FZ2DNQtnRHnUxkY2tVQo6ojHVPWsR5WAbfKDAdlDUWxf5bM+U/8d4E4v49x4HpKY1fqsrx3hLAhyA==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
@@ -1997,7 +1997,7 @@ packages:
       '@fluentui/dom-utilities': 2.2.6
       '@fluentui/merge-styles': 8.5.7
       '@fluentui/set-version': 8.2.6
-      '@types/react': 18.0.28
+      '@types/react': 18.0.33
       react: 18.2.0
       tslib: 2.5.0
     dev: false
@@ -2354,7 +2354,7 @@ packages:
       react: '>=16'
     dependencies:
       '@types/mdx': 2.0.4
-      '@types/react': 18.0.28
+      '@types/react': 18.0.33
       react: 18.2.0
     dev: true
 
@@ -2619,8 +2619,8 @@ packages:
       '@types/estree': 1.0.0
     dev: true
 
-  /@types/audioworklet/0.0.39:
-    resolution: {integrity: sha512-A+7wthsUusNM1OoexiW5M+YA8HyJXib4eJELmLr0GoTheJpTHooeiB5ZVxUb0SecfzrB6Xi8QKIlZfBhVjl1kQ==}
+  /@types/audioworklet/0.0.41:
+    resolution: {integrity: sha512-8BWffzGoSRz436IviQVPye75YYWfac4OKdcLgkZxb3APZxSmAOp2SMtsH1yuM1x57/z/J7bsm05Yq98Hzk1t/w==}
     dev: true
 
   /@types/babel__core/7.20.0:
@@ -2775,8 +2775,8 @@ packages:
   /@types/prop-types/15.7.5:
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
 
-  /@types/react/18.0.28:
-    resolution: {integrity: sha512-RD0ivG1kEztNBdoAK7lekI9M+azSnitIn85h4iOiaLjaTrMjzslhaqCGaI4IyCJ1RljWiLCEu4jyrLLgqxBTew==}
+  /@types/react/18.0.33:
+    resolution: {integrity: sha512-sHxzVxeanvQyQ1lr8NSHaj0kDzcNiGpILEVt69g9S31/7PfMvNCKLKcsHw4lYKjs3cGNJjXSP4mYzX43QlnjNA==}
     dependencies:
       '@types/prop-types': 15.7.5
       '@types/scheduler': 0.16.3

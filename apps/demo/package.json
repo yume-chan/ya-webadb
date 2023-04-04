@@ -50,12 +50,12 @@
         "@mdx-js/react": "^2.2.1",
         "@next/mdx": "^13.2.4",
         "@types/node": "^18.15.3",
-        "@types/react": "18.0.28",
+        "@types/react": "18.0.33",
         "@yume-chan/next-pwa": "5.6.0-mod.1",
         "eslint": "^8.36.0",
         "eslint-config-next": "13.2.4",
         "prettier": "^2.8.4",
         "source-map-loader": "^4.0.1",
-        "typescript": "^5.0.2"
+        "typescript": "^5.0.3"
     }
 }
