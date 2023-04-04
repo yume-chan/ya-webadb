@@ -295,8 +295,9 @@ const Row = observer(function Row({
     const handlePointerDown = useStableCallback(
         (e: PointerEvent<HTMLDivElement>) => {
             runInAction(() => {
-                e.preventDefault();
-                e.stopPropagation();
+                if (e.shiftKey) {
+                    e.preventDefault();
+                }
                 state.selection.select(rowIndex, isModKey(e), e.shiftKey);
             });
         }
@@ -321,7 +322,7 @@ const PacketLog: NextPage = () => {
     return (
         <Stack {...RouteStackProps} tokens={{}}>
             <Head>
-                <title>Packet Log - Android Web Toolbox</title>
+                <title>Packet Log - Tango</title>
             </Head>
 
             <CommandBar items={state.commandBarItems} />

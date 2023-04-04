@@ -17,6 +17,7 @@
         "DESERIALIZERS",
         "ebml",
         "Embedder",
+        "fflate",
         "fluentui",
         "genymobile",
         "Genymobile's",

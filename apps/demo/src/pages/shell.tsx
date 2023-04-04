@@ -140,7 +140,7 @@ const Shell: NextPage = (): JSX.Element | null => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Interactive Shell - Android Web Toolbox</title>
+                <title>Interactive Shell - Tango</title>
             </Head>
 
             <StackItem>

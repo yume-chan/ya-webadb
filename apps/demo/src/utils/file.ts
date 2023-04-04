@@ -44,11 +44,21 @@ export function pickFile(
 
 let StreamSaver: typeof import("@yume-chan/stream-saver");
 if (typeof window !== "undefined") {
-    const { publicRuntimeConfig } = getConfig();
+    const {
+        publicRuntimeConfig: { basePath },
+    } = getConfig();
     // Can't use `import` here because ESM is read-only (can't set `mitm` field)
     // Add `await` here because top-level await is on, so every import can be a `Promise`
     StreamSaver = require("@yume-chan/stream-saver");
-    StreamSaver.mitm = publicRuntimeConfig.basePath + "/StreamSaver/mitm.html";
+    StreamSaver.mitm = basePath + "/StreamSaver/mitm.html";
+    // Pre-register the service worker for offline usage.
+    // Request for service worker script won't go through another service worker
+    // so can't be cached.
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register(basePath + "/StreamSaver/sw.js", {
+            scope: basePath + "/StreamSaver/",
+        });
+    }
 }
 
 export function saveFile(fileName: string, size?: number | undefined) {
