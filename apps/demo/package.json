@@ -49,6 +49,7 @@
         "@mdx-js/loader": "^2.2.1",
         "@mdx-js/react": "^2.2.1",
         "@next/mdx": "^13.2.4",
+        "@types/dom-webcodecs": "^0.1.6",
         "@types/node": "^18.15.3",
         "@types/react": "18.0.33",
         "@yume-chan/next-pwa": "5.6.0-mod.1",

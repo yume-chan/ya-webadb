@@ -1,5 +1,7 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
 
+import type { ScrcpyOptionValue } from "./types.js";
+
 export enum ScrcpyVideoCodecId {
     H264 = 0x68_32_36_34,
     H265 = 0x68_32_36_35,
@@ -18,22 +20,66 @@ export interface ScrcpyVideoStream {
     readonly metadata: ScrcpyVideoStreamMetadata;
 }
 
-export enum ScrcpyAudioCodecId {
-    Opus = 0x6f_70_75_73,
-    Aac = 0x00_61_61_63,
-    Raw = 0x00_72_61_77,
-    Disabled = 0x00_00_00_00,
-    Errored = 0x00_00_00_01,
+export class ScrcpyAudioCodec implements ScrcpyOptionValue {
+    public static readonly OPUS = new ScrcpyAudioCodec(
+        "opus",
+        0x6f_70_75_73,
+        "audio/opus",
+        "opus"
+    );
+    public static readonly AAC = new ScrcpyAudioCodec(
+        "aac",
+        0x00_61_61_63,
+        "audio/aac",
+        "mp4a.66"
+    );
+    public static readonly RAW = new ScrcpyAudioCodec(
+        "raw",
+        0x00_72_61_77,
+        "audio/raw",
+        "1"
+    );
+
+    public readonly optionValue: string;
+    public readonly metadataValue: number;
+    public readonly mimeType: string;
+    public readonly webCodecId: string;
+
+    public constructor(
+        optionValue: string,
+        metadataValue: number,
+        mimeType: string,
+        webCodecId: string
+    ) {
+        this.optionValue = optionValue;
+        this.metadataValue = metadataValue;
+        this.mimeType = mimeType;
+        this.webCodecId = webCodecId;
+    }
+
+    public toOptionValue(): string {
+        return this.optionValue;
+    }
 }
 
-export interface ScrcpyAudioStreamMetadata {
-    codec?: ScrcpyAudioCodecId;
+export interface ScrcpyAudioStreamDisabledMetadata {
+    readonly type: "disabled";
 }
 
-export interface ScrcpyAudioStream {
+export interface ScrcpyAudioStreamErroredMetadata {
+    readonly type: "errored";
+}
+
+export interface ScrcpyAudioStreamSuccessMetadata {
+    readonly type: "success";
+    readonly codec: ScrcpyAudioCodec;
     readonly stream: ReadableStream<Uint8Array>;
-    readonly metadata: ScrcpyAudioStreamMetadata;
 }
+
+export type ScrcpyAudioStreamMetadata =
+    | ScrcpyAudioStreamDisabledMetadata
+    | ScrcpyAudioStreamErroredMetadata
+    | ScrcpyAudioStreamSuccessMetadata;
 
 export interface ScrcpyMediaStreamConfigurationPacket {
     type: "configuration";

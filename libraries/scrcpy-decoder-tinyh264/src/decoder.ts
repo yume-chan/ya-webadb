@@ -1,8 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
-import type {
-    H264Configuration,
-    ScrcpyMediaStreamPacket,
-} from "@yume-chan/scrcpy";
+import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
 import {
     AndroidAvcLevel,
     AndroidAvcProfile,
@@ -44,7 +41,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
     public readonly capabilities: Record<string, ScrcpyVideoDecoderCapability> =
         {
             h264: {
-                maxProfile: AndroidAvcProfile.Main,
+                maxProfile: AndroidAvcProfile.Baseline,
                 maxLevel: AndroidAvcLevel.Level4,
             },
         };
@@ -81,12 +78,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             write: async (packet) => {
                 switch (packet.type) {
                     case "configuration":
-                        {
-                            const configuration = h264ParseConfiguration(
-                                packet.data
-                            );
-                            void this.configure(configuration);
-                        }
+                        this.configure(packet.data).catch(NOOP);
                         break;
                     case "data": {
                         if (!this._initializer) {
@@ -102,7 +94,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         });
     }
 
-    private async configure(config: H264Configuration) {
+    private async configure(data: Uint8Array) {
         this.dispose();
 
         this._initializer = new PromiseResolver<TinyH264Wrapper>();
@@ -112,23 +104,31 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             this._yuvCanvas = YuvCanvas.attach(this._renderer);
         }
 
-        const { encodedWidth, encodedHeight } = config;
+        const {
+            encodedWidth,
+            encodedHeight,
+            croppedWidth,
+            croppedHeight,
+            cropLeft,
+            cropTop,
+        } = h264ParseConfiguration(data);
+
+        // H.264 Baseline profile only supports YUV 420 pixel format
         const chromaWidth = encodedWidth / 2;
         const chromaHeight = encodedHeight / 2;
 
-        this._renderer.width = config.croppedWidth;
-        this._renderer.height = config.croppedHeight;
+        // YUVCanvas will set canvas size when format changes
         const format = YuvBuffer.format({
             width: encodedWidth,
             height: encodedHeight,
             chromaWidth,
             chromaHeight,
-            cropLeft: config.cropLeft,
-            cropTop: config.cropTop,
-            cropWidth: config.croppedWidth,
-            cropHeight: config.croppedHeight,
-            displayWidth: config.croppedWidth,
-            displayHeight: config.croppedHeight,
+            cropLeft: cropLeft,
+            cropTop: cropTop,
+            cropWidth: croppedWidth,
+            cropHeight: croppedHeight,
+            displayWidth: croppedWidth,
+            displayHeight: croppedHeight,
         });
 
         const wrapper = await createTinyH264Wrapper();
@@ -147,6 +147,8 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             );
             this._yuvCanvas!.drawFrame(frame);
         });
+
+        wrapper.feed(data.slice().buffer);
     }
 
     public dispose(): void {

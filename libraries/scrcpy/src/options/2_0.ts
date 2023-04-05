@@ -1,7 +1,10 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
-import { BufferedReadableStream } from "@yume-chan/stream-extra";
+import {
+    BufferedReadableStream,
+    PushReadableStream,
+} from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
-import Struct, { placeholder } from "@yume-chan/struct";
+import Struct, { NumberFieldType, placeholder } from "@yume-chan/struct";
 
 import type {
     AndroidMotionEventAction,
@@ -18,11 +21,11 @@ import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
 import { SCRCPY_OPTIONS_DEFAULT_1_24 } from "./1_24.js";
 import { ScrcpyOptions1_25 } from "./1_25/index.js";
 import type {
-    ScrcpyAudioStream,
     ScrcpyAudioStreamMetadata,
     ScrcpyVideoStream,
     ScrcpyVideoStreamMetadata,
 } from "./codec.js";
+import { ScrcpyAudioCodec } from "./codec.js";
 import type { ScrcpyOptionValue } from "./types.js";
 import { ScrcpyOptionsBase } from "./types.js";
 
@@ -178,16 +181,86 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
 
     public override parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>
-    ): ValueOrPromise<ScrcpyAudioStream> {
-        if (!this.value.sendCodecMeta) {
-            return { stream, metadata: {} };
-        }
-
-        return (async () => {
+    ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
+        return (async (): Promise<ScrcpyAudioStreamMetadata> => {
             const buffered = new BufferedReadableStream(stream);
-            const metadata: ScrcpyAudioStreamMetadata = {};
-            metadata.codec = await ScrcpyOptions1_16.parseUint32BE(buffered);
-            return { stream: buffered.release(), metadata };
+            const buffer = await buffered.readExactly(
+                NumberFieldType.Uint32.size
+            );
+
+            const codecMetadataValue = NumberFieldType.Uint32.deserialize(
+                buffer,
+                false
+            );
+            // Server will send `0x00_00_00_00` and `0x00_00_00_01` even if `sendCodecMeta` is false
+            switch (codecMetadataValue) {
+                case 0x00_00_00_00:
+                    return {
+                        type: "disabled",
+                    };
+                case 0x00_00_00_01:
+                    return {
+                        type: "errored",
+                    };
+            }
+
+            if (this.value.sendCodecMeta) {
+                let codec: ScrcpyAudioCodec;
+                switch (codecMetadataValue) {
+                    case ScrcpyAudioCodec.OPUS.metadataValue:
+                        codec = ScrcpyAudioCodec.OPUS;
+                        break;
+                    case ScrcpyAudioCodec.AAC.metadataValue:
+                        codec = ScrcpyAudioCodec.AAC;
+                        break;
+                    case ScrcpyAudioCodec.RAW.metadataValue:
+                        codec = ScrcpyAudioCodec.RAW;
+                        break;
+                    default:
+                        throw new Error(
+                            `Unknown audio codec metadata value: ${codecMetadataValue}`
+                        );
+                }
+                return {
+                    type: "success",
+                    codec,
+                    stream: buffered.release(),
+                };
+            }
+
+            // Infer codec from `audioCodec` option
+            let codec: ScrcpyAudioCodec;
+            switch (this.value.audioCodec) {
+                case "opus":
+                    codec = ScrcpyAudioCodec.OPUS;
+                    break;
+                case "aac":
+                    codec = ScrcpyAudioCodec.AAC;
+                    break;
+                case "raw":
+                    codec = ScrcpyAudioCodec.RAW;
+                    break;
+            }
+            return {
+                type: "success",
+                codec,
+                stream: new PushReadableStream<Uint8Array>(
+                    async (controller) => {
+                        // Put the first 4 bytes back
+                        await controller.enqueue(buffer);
+
+                        const stream = buffered.release();
+                        const reader = stream.getReader();
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) {
+                                break;
+                            }
+                            await controller.enqueue(value);
+                        }
+                    }
+                ),
+            };
         })();
     }
 

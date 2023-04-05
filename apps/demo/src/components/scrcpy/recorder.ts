@@ -1,6 +1,5 @@
 import {
-    ScrcpyAudioCodecId,
-    ScrcpyAudioStreamMetadata,
+    ScrcpyAudioCodec,
     ScrcpyMediaStreamDataPacket,
     ScrcpyMediaStreamPacket,
     ScrcpyVideoCodecId,
@@ -67,19 +66,17 @@ const MatroskaVideoCodecNameMap: Record<ScrcpyVideoCodecId, string> = {
     [ScrcpyVideoCodecId.AV1]: "V_AV1",
 };
 
-const MatroskaAudioCodecNameMap: Record<ScrcpyAudioCodecId, string> = {
-    [ScrcpyAudioCodecId.Raw]: "A_PCM/INT/LIT",
-    [ScrcpyAudioCodecId.Aac]: "A_AAC",
-    [ScrcpyAudioCodecId.Opus]: "A_OPUS",
-    [ScrcpyAudioCodecId.Disabled]: "",
-    [ScrcpyAudioCodecId.Errored]: "",
+const MatroskaAudioCodecNameMap: Record<string, string> = {
+    [ScrcpyAudioCodec.RAW.mimeType]: "A_PCM/INT/LIT",
+    [ScrcpyAudioCodec.AAC.mimeType]: "A_AAC",
+    [ScrcpyAudioCodec.OPUS.mimeType]: "A_OPUS",
 };
 
 export class MatroskaMuxingRecorder {
     public running = false;
 
     private _videoMetadata: ScrcpyVideoStreamMetadata | undefined;
-    private _audioMetadata: ScrcpyAudioStreamMetadata | undefined;
+    private _audioCodec: ScrcpyAudioCodec | undefined;
 
     private muxer: WebMMuxer | undefined;
     private avcConfiguration: Uint8Array | undefined;
@@ -168,27 +165,14 @@ export class MatroskaMuxingRecorder {
 
     public start(
         videoMetadata: ScrcpyVideoStreamMetadata,
-        audioMetadata: ScrcpyAudioStreamMetadata | undefined
+        audioCodec: ScrcpyAudioCodec | undefined
     ) {
         if (!videoMetadata.codec) {
             throw new Error("Video codec is not defined");
         }
 
-        if (audioMetadata) {
-            if (audioMetadata.codec === undefined) {
-                throw new Error("Audio codec is not defined");
-            }
-
-            if (
-                audioMetadata.codec === ScrcpyAudioCodecId.Disabled ||
-                audioMetadata.codec === ScrcpyAudioCodecId.Errored
-            ) {
-                audioMetadata = undefined;
-            }
-        }
-
         this._videoMetadata = videoMetadata;
-        this._audioMetadata = audioMetadata;
+        this._audioCodec = audioCodec;
 
         this.running = true;
 
@@ -203,15 +187,12 @@ export class MatroskaMuxingRecorder {
             },
         };
 
-        if (audioMetadata) {
+        if (audioCodec) {
             options.audio = {
-                codec: MatroskaAudioCodecNameMap[audioMetadata.codec!],
+                codec: MatroskaAudioCodecNameMap[audioCodec.mimeType!],
                 sampleRate: 48000,
                 numberOfChannels: 2,
-                bitDepth:
-                    audioMetadata.codec === ScrcpyAudioCodecId.Raw
-                        ? 16
-                        : undefined,
+                bitDepth: audioCodec === ScrcpyAudioCodec.RAW ? 16 : undefined,
             };
         }
 
@@ -265,7 +246,7 @@ export const RECORD_STATE = makeAutoObservable({
     recorder: new MatroskaMuxingRecorder(),
     recording: false,
     videoMetadata: undefined as ScrcpyVideoStreamMetadata | undefined,
-    audioMetadata: undefined as ScrcpyAudioStreamMetadata | undefined,
+    audioCodec: undefined as ScrcpyAudioCodec | undefined,
     intervalId: -1,
     hours: 0,
     minutes: 0,

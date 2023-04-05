@@ -7,7 +7,7 @@ import {
     AndroidScreenPowerMode,
     CodecOptions,
     DEFAULT_SERVER_PATH,
-    ScrcpyAudioCodecId,
+    ScrcpyAudioCodec,
     ScrcpyDeviceMessageType,
     ScrcpyHoverHelper,
     ScrcpyInstanceId,
@@ -24,11 +24,13 @@ import {
     DistributionStream,
     InspectStream,
     ReadableStream,
+    TransformStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
 import { action, autorun, makeAutoObservable, runInAction } from "mobx";
 import { GLOBAL_STATE } from "../../state";
 import { ProgressStream } from "../../utils";
+import { AudioDecodeStream } from "./audio-decode-stream";
 import { fetchServer } from "./fetch-server";
 import {
     AoaKeyboardInjector,
@@ -313,7 +315,7 @@ export class ScrcpyPageState {
 
             RECORD_STATE.recorder = new MatroskaMuxingRecorder();
             RECORD_STATE.videoMetadata = undefined;
-            RECORD_STATE.audioMetadata = undefined;
+            RECORD_STATE.audioCodec = undefined;
 
             client.videoStream.then(({ stream, metadata }) => {
                 runInAction(() => {
@@ -363,17 +365,66 @@ export class ScrcpyPageState {
                     });
             });
 
-            client.audioStream?.then(async ({ stream, metadata }) => {
-                if (metadata.codec !== ScrcpyAudioCodecId.Raw) {
-                    return;
+            client.audioStream?.then(async (metadata) => {
+                switch (metadata.type) {
+                    case "disabled":
+                        runInAction(() =>
+                            this.log.push(
+                                `[client] Demuxer audio: stream explicitly disabled by the device`
+                            )
+                        );
+                        return;
+                    case "errored":
+                        runInAction(() =>
+                            this.log.push(
+                                `[client] Demuxer audio: stream configuration error on the device`
+                            )
+                        );
+                        return;
+                    case "success":
+                        // Code is after this `switch`
+                        break;
+                    default:
+                        throw new Error(
+                            `Unexpected audio metadata type ${
+                                metadata["type"] as unknown as string
+                            }`
+                        );
+                }
+
+                const [recordStream, decodeStream] = metadata.stream.tee();
+                let playbackStream: ReadableStream<Uint8Array>;
+                switch (metadata.codec) {
+                    case ScrcpyAudioCodec.RAW:
+                        playbackStream = decodeStream.pipeThrough(
+                            new TransformStream({
+                                transform(chunk, controller) {
+                                    controller.enqueue(chunk.data);
+                                },
+                            })
+                        );
+                        break;
+                    case ScrcpyAudioCodec.OPUS:
+                    case ScrcpyAudioCodec.AAC:
+                        playbackStream = decodeStream.pipeThrough(
+                            new AudioDecodeStream({
+                                codec: metadata.codec.webCodecId,
+                                numberOfChannels: 2,
+                                sampleRate: 48000,
+                            })
+                        );
+                        break;
+                    default:
+                        throw new Error(
+                            `Unsupported audio codec ${metadata.codec.optionValue}`
+                        );
                 }
 
                 runInAction(() => {
-                    RECORD_STATE.audioMetadata = metadata;
+                    RECORD_STATE.audioCodec = metadata.codec;
                 });
 
-                await this.audioPlayer?.start();
-                stream
+                recordStream
                     .pipeTo(
                         new WritableStream({
                             write: (packet) => {
@@ -382,8 +433,17 @@ export class ScrcpyPageState {
                                         packet
                                     );
                                 }
+                            },
+                        })
+                    )
+                    .catch(NOOP);
 
-                                this.audioPlayer?.feed(packet.data);
+                await this.audioPlayer?.start();
+                playbackStream
+                    .pipeTo(
+                        new WritableStream({
+                            write: (packet) => {
+                                this.audioPlayer?.feed(packet);
                             },
                         })
                     )

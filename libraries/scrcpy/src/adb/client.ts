@@ -22,7 +22,9 @@ import { ScrcpyControlMessageSerializer } from "../control/index.js";
 import type { ScrcpyDeviceMessage } from "../device-message/index.js";
 import { ScrcpyDeviceMessageDeserializeStream } from "../device-message/index.js";
 import type {
-    ScrcpyAudioStreamMetadata,
+    ScrcpyAudioStreamDisabledMetadata,
+    ScrcpyAudioStreamErroredMetadata,
+    ScrcpyAudioStreamSuccessMetadata,
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
     ScrcpyVideoStreamMetadata,
@@ -84,10 +86,15 @@ export interface AdbScrcpyVideoStream {
     metadata: ScrcpyVideoStreamMetadata;
 }
 
-export interface AdbScrcpyAudioStream {
-    stream: ReadableStream<ScrcpyMediaStreamPacket>;
-    metadata: ScrcpyAudioStreamMetadata;
+export interface AdbScrcpyAudioStreamSuccessMetadata
+    extends Omit<ScrcpyAudioStreamSuccessMetadata, "stream"> {
+    readonly stream: ReadableStream<ScrcpyMediaStreamPacket>;
 }
+
+export type AdbScrcpyAudioStreamMetadata =
+    | ScrcpyAudioStreamDisabledMetadata
+    | ScrcpyAudioStreamErroredMetadata
+    | AdbScrcpyAudioStreamSuccessMetadata;
 
 export class AdbScrcpyClient {
     public static async pushServer(
@@ -300,7 +307,7 @@ export class AdbScrcpyClient {
         return this._videoStream;
     }
 
-    private _audioStream: Promise<AdbScrcpyAudioStream> | undefined;
+    private _audioStream: Promise<AdbScrcpyAudioStreamMetadata> | undefined;
     public get audioStream() {
         return this._audioStream;
     }
@@ -375,16 +382,31 @@ export class AdbScrcpyClient {
         };
     }
 
-    private async createAudioStream(initialStream: ReadableStream<Uint8Array>) {
-        const { stream, metadata } =
-            await this._options.parseAudioStreamMetadata(initialStream);
+    private async createAudioStream(
+        initialStream: ReadableStream<Uint8Array>
+    ): Promise<AdbScrcpyAudioStreamMetadata> {
+        const metadata = await this._options.parseAudioStreamMetadata(
+            initialStream
+        );
 
-        return {
-            stream: stream.pipeThrough(
-                this._options.createMediaStreamTransformer()
-            ),
-            metadata,
-        };
+        switch (metadata.type) {
+            case "disabled":
+            case "errored":
+                return metadata;
+            case "success":
+                return {
+                    ...metadata,
+                    stream: metadata.stream.pipeThrough(
+                        this._options.createMediaStreamTransformer()
+                    ),
+                };
+            default:
+                throw new Error(
+                    `Unexpected audio metadata type ${
+                        metadata["type"] as unknown as string
+                    }`
+                );
+        }
     }
 
     public async close() {

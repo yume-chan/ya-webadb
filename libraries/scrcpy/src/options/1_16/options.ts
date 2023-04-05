@@ -125,8 +125,6 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
             });
         }
 
-        let header: Uint8Array | undefined;
-
         const deserializeStream = new StructDeserializeStream(
             ScrcpyMediaStreamRawPacket
         );
@@ -136,30 +134,17 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
                 new TransformStream({
                     transform(packet, controller) {
                         if (packet.pts === SCRCPY_MEDIA_PACKET_FLAG_CONFIG) {
-                            header = packet.data;
                             controller.enqueue({
                                 type: "configuration",
-                                data: header,
+                                data: packet.data,
                             });
                             return;
-                        }
-
-                        let frameData: Uint8Array;
-                        if (header) {
-                            frameData = new Uint8Array(
-                                header.byteLength + packet.data.byteLength
-                            );
-                            frameData.set(header);
-                            frameData.set(packet.data, header.byteLength);
-                            header = undefined;
-                        } else {
-                            frameData = packet.data;
                         }
 
                         controller.enqueue({
                             type: "data",
                             pts: packet.pts,
-                            data: frameData,
+                            data: packet.data,
                         });
                     },
                 })

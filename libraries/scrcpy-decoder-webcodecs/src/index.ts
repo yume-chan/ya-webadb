@@ -1,7 +1,4 @@
-import type {
-    H264Configuration,
-    ScrcpyMediaStreamPacket,
-} from "@yume-chan/scrcpy";
+import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
 import { h264ParseConfiguration } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
@@ -76,12 +73,7 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
             write: (packet) => {
                 switch (packet.type) {
                     case "configuration":
-                        {
-                            const configuration = h264ParseConfiguration(
-                                packet.data
-                            );
-                            void this.configure(configuration);
-                        }
+                        this.configure(packet.data);
                         break;
                     case "data":
                         this.decoder.decode(
@@ -106,11 +98,17 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
         this.animationFrameId = requestAnimationFrame(this.onFramePresented);
     };
 
-    private configure(config: H264Configuration) {
-        const { profileIndex, constraintSet, levelIndex } = config;
+    private configure(data: Uint8Array) {
+        const {
+            profileIndex,
+            constraintSet,
+            levelIndex,
+            croppedWidth,
+            croppedHeight,
+        } = h264ParseConfiguration(data);
 
-        this._renderer.width = config.croppedWidth;
-        this._renderer.height = config.croppedHeight;
+        this._renderer.width = croppedWidth;
+        this._renderer.height = croppedHeight;
 
         // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
         // ISO Base Media File Format Name Space
@@ -121,6 +119,14 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
             codec: codec,
             optimizeForLatency: true,
         });
+
+        this.decoder.decode(
+            new EncodedVideoChunk({
+                type: "key",
+                timestamp: 0,
+                data,
+            })
+        );
     }
 
     public dispose() {

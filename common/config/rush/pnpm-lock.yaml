@@ -16,6 +16,7 @@ importers:
       '@mdx-js/loader': ^2.2.1
       '@mdx-js/react': ^2.2.1
       '@next/mdx': ^13.2.4
+      '@types/dom-webcodecs': ^0.1.6
       '@types/node': ^18.15.3
       '@types/react': 18.0.33
       '@yume-chan/adb': workspace:^0.0.18
@@ -91,6 +92,7 @@ importers:
       '@mdx-js/loader': 2.3.0
       '@mdx-js/react': 2.3.0_react@18.2.0
       '@next/mdx': 13.2.4_msthxdjvrhmdkfpqqalumiidgq
+      '@types/dom-webcodecs': 0.1.6
       '@types/node': 18.15.11
       '@types/react': 18.0.33
       '@yume-chan/next-pwa': 5.6.0-mod.1_next@13.2.4
@@ -2666,7 +2668,6 @@ packages:
 
   /@types/dom-webcodecs/0.1.6:
     resolution: {integrity: sha512-m+Y2WRIKvLwFzyToNGA5XV+sfihtrfcOaMrXzsZULVdqYyKy4yn0XZ8lES9RRwZTzW7TKcz84xed3e5FBk3wCg==}
-    dev: false
 
   /@types/download/8.0.2:
     resolution: {integrity: sha512-z1Jbba+2mUP3LuQ6EaH9xsVElphj7eY7UMCnIQ5Jw6L4ZZOC3oizFo7MbyjUx8DRMupsZvEZZfXnTmLEPQFzQg==}

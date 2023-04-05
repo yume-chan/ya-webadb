@@ -71,7 +71,7 @@ const ITEMS = computed(() => {
 
                       RECORD_STATE.recorder.start(
                           RECORD_STATE.videoMetadata!,
-                          RECORD_STATE.audioMetadata
+                          RECORD_STATE.audioCodec
                       );
                       RECORD_STATE.recording = true;
                   }),

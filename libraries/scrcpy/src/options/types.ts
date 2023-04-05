@@ -10,7 +10,7 @@ import type {
 
 import type { ScrcpyScrollController } from "./1_16/scroll.js";
 import type {
-    ScrcpyAudioStream,
+    ScrcpyAudioStreamMetadata,
     ScrcpyMediaStreamPacket,
     ScrcpyVideoStream,
 } from "./codec.js";
@@ -70,7 +70,7 @@ export interface ScrcpyOptions<T extends object> {
 
     parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>
-    ): ValueOrPromise<ScrcpyAudioStream>;
+    ): ValueOrPromise<ScrcpyAudioStreamMetadata>;
 
     createMediaStreamTransformer(): TransformStream<
         Uint8Array,
@@ -139,7 +139,7 @@ export abstract class ScrcpyOptionsBase<
 
     public parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>
-    ): ValueOrPromise<ScrcpyAudioStream> {
+    ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
         return this._base.parseAudioStreamMetadata(stream);
     }
 
