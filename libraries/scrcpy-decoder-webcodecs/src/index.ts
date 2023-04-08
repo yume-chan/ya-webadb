@@ -1,4 +1,7 @@
-import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
+import type {
+    ScrcpyMediaStreamDataPacket,
+    ScrcpyMediaStreamPacket,
+} from "@yume-chan/scrcpy";
 import { h264ParseConfiguration } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
@@ -38,6 +41,7 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
 
     private context: CanvasRenderingContext2D;
     private decoder: VideoDecoder;
+    private _config: Uint8Array | undefined;
 
     private currentFrameRendered = false;
     private animationFrameId = 0;
@@ -76,15 +80,7 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                         this.configure(packet.data);
                         break;
                     case "data":
-                        this.decoder.decode(
-                            new EncodedVideoChunk({
-                                // Treat `undefined` as `key`, otherwise won't decode.
-                                type:
-                                    packet.keyframe === false ? "delta" : "key",
-                                timestamp: 0,
-                                data: packet.data,
-                            })
-                        );
+                        this.decode(packet);
                         break;
                 }
             },
@@ -120,9 +116,28 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
             optimizeForLatency: true,
         });
 
+        this._config = data;
+    }
+
+    private decode(packet: ScrcpyMediaStreamDataPacket) {
+        // WebCodecs requires configuration data to be with the first frame.
+        // https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
+        let data: Uint8Array;
+        if (this._config !== undefined) {
+            data = new Uint8Array(
+                this._config.byteLength + packet.data.byteLength
+            );
+            data.set(this._config, 0);
+            data.set(packet.data, this._config.byteLength);
+            this._config = undefined;
+        } else {
+            data = packet.data;
+        }
+
         this.decoder.decode(
             new EncodedVideoChunk({
-                type: "key",
+                // Treat `undefined` as `key`, otherwise won't decode.
+                type: packet.keyframe === false ? "delta" : "key",
                 timestamp: 0,
                 data,
             })

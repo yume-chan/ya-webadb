@@ -1,6 +1,10 @@
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
-import { AudioPlayer } from "@yume-chan/pcm-player";
+import {
+    AudioPlayer,
+    F32PlanerAudioPlayer,
+    S16AudioPlayer,
+} from "@yume-chan/pcm-player";
 import {
     AdbScrcpyClient,
     AdbScrcpyOptions2_0,
@@ -24,13 +28,12 @@ import {
     DistributionStream,
     InspectStream,
     ReadableStream,
-    TransformStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
 import { action, autorun, makeAutoObservable, runInAction } from "mobx";
 import { GLOBAL_STATE } from "../../state";
 import { ProgressStream } from "../../utils";
-import { AudioDecodeStream } from "./audio-decode-stream";
+import { AacDecodeStream, OpusDecodeStream } from "./audio-decode-stream";
 import { fetchServer } from "./fetch-server";
 import {
     AoaKeyboardInjector,
@@ -71,7 +74,7 @@ export class ScrcpyPageState {
     client: AdbScrcpyClient | undefined = undefined;
     hoverHelper: ScrcpyHoverHelper | undefined = undefined;
     keyboard: KeyboardInjector | undefined = undefined;
-    audioPlayer: AudioPlayer | undefined = undefined;
+    audioPlayer: AudioPlayer<unknown> | undefined = undefined;
 
     async pushServer() {
         const serverBuffer = await fetchServer();
@@ -139,8 +142,6 @@ export class ScrcpyPageState {
         if (!GLOBAL_STATE.device) {
             return;
         }
-
-        this.audioPlayer = new AudioPlayer(48000);
 
         try {
             if (!SETTING_STATE.clientSettings.decoder) {
@@ -282,7 +283,7 @@ export class ScrcpyPageState {
                     sendDeviceMeta: false,
                     sendDummyByte: false,
                     videoCodecOptions,
-                    audioCodec: "raw",
+                    audioCodec: "aac",
                 })
             );
 
@@ -392,27 +393,62 @@ export class ScrcpyPageState {
                         );
                 }
 
-                const [recordStream, decodeStream] = metadata.stream.tee();
-                let playbackStream: ReadableStream<Uint8Array>;
+                const [recordStream, playbackStream] = metadata.stream.tee();
                 switch (metadata.codec) {
                     case ScrcpyAudioCodec.RAW:
-                        playbackStream = decodeStream.pipeThrough(
-                            new TransformStream({
-                                transform(chunk, controller) {
-                                    controller.enqueue(chunk.data);
-                                },
-                            })
-                        );
+                        this.audioPlayer = new S16AudioPlayer(48000);
+                        playbackStream
+                            .pipeTo(
+                                new WritableStream({
+                                    write: (chunk) => {
+                                        this.audioPlayer?.feed(
+                                            chunk.data.slice()
+                                        );
+                                    },
+                                })
+                            )
+                            .catch(NOOP);
+                        await this.audioPlayer.start();
                         break;
                     case ScrcpyAudioCodec.OPUS:
+                        this.audioPlayer = new F32PlanerAudioPlayer(48000);
+                        playbackStream
+                            .pipeThrough(
+                                new OpusDecodeStream({
+                                    codec: metadata.codec.webCodecId,
+                                    numberOfChannels: 2,
+                                    sampleRate: 48000,
+                                })
+                            )
+                            .pipeTo(
+                                new WritableStream({
+                                    write: (chunk) => {
+                                        this.audioPlayer?.feed(chunk);
+                                    },
+                                })
+                            )
+                            .catch(NOOP);
+                        await this.audioPlayer.start();
+                        break;
                     case ScrcpyAudioCodec.AAC:
-                        playbackStream = decodeStream.pipeThrough(
-                            new AudioDecodeStream({
-                                codec: metadata.codec.webCodecId,
-                                numberOfChannels: 2,
-                                sampleRate: 48000,
-                            })
-                        );
+                        this.audioPlayer = new F32PlanerAudioPlayer(48000);
+                        playbackStream
+                            .pipeThrough(
+                                new AacDecodeStream({
+                                    codec: metadata.codec.webCodecId,
+                                    numberOfChannels: 2,
+                                    sampleRate: 48000,
+                                })
+                            )
+                            .pipeTo(
+                                new WritableStream({
+                                    write: (chunk) => {
+                                        this.audioPlayer?.feed(chunk);
+                                    },
+                                })
+                            )
+                            .catch(NOOP);
+                        await this.audioPlayer.start();
                         break;
                     default:
                         throw new Error(
@@ -433,17 +469,6 @@ export class ScrcpyPageState {
                                         packet
                                     );
                                 }
-                            },
-                        })
-                    )
-                    .catch(NOOP);
-
-                await this.audioPlayer?.start();
-                playbackStream
-                    .pipeTo(
-                        new WritableStream({
-                            write: (packet) => {
-                                this.audioPlayer?.feed(packet);
                             },
                         })
                     )
