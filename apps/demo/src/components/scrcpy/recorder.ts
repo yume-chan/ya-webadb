@@ -1,3 +1,5 @@
+// cspell: ignore MPEGH
+
 import {
     ScrcpyAudioCodec,
     ScrcpyMediaStreamDataPacket,
@@ -5,7 +7,7 @@ import {
     ScrcpyVideoCodecId,
     ScrcpyVideoStreamMetadata,
     h264SearchConfiguration,
-    h264SplitNalu,
+    naluSplit,
 } from "@yume-chan/scrcpy";
 import { action, makeAutoObservable, reaction } from "mobx";
 import WebMMuxer from "webm-muxer";
@@ -41,7 +43,7 @@ function h264StreamToAvcSample(buffer: Uint8Array) {
     const nalUnits: Uint8Array[] = [];
     let totalLength = 0;
 
-    for (const unit of h264SplitNalu(buffer)) {
+    for (const unit of naluSplit(buffer)) {
         nalUnits.push(unit);
         totalLength += unit.byteLength + 4;
     }

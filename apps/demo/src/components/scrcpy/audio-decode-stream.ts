@@ -60,7 +60,7 @@ export class AacDecodeStream extends TransformStream<
 
 export class OpusDecodeStream extends TransformStream<
     ScrcpyMediaStreamPacket,
-    Float32Array[]
+    Float32Array
 > {
     constructor(config: AudioDecoderConfig) {
         let decoder: AudioDecoder;
@@ -72,21 +72,16 @@ export class OpusDecodeStream extends TransformStream<
                         controller.error(error);
                     },
                     output(output) {
-                        controller.enqueue(
-                            Array.from({ length: 2 }, (_, i) => {
-                                const options: AudioDataCopyToOptions = {
-                                    // Chrome only supports "f32-planar"
-                                    format: "f32-planar",
-                                    planeIndex: i,
-                                };
-                                const buffer = new Float32Array(
-                                    output.allocationSize(options) /
-                                        Float32Array.BYTES_PER_ELEMENT
-                                );
-                                output.copyTo(buffer, options);
-                                return buffer;
-                            })
+                        const options: AudioDataCopyToOptions = {
+                            format: "f32",
+                            planeIndex: 0,
+                        };
+                        const buffer = new Float32Array(
+                            output.allocationSize(options) /
+                                Float32Array.BYTES_PER_ELEMENT
                         );
+                        output.copyTo(buffer, options);
+                        controller.enqueue(buffer);
                     },
                 });
                 decoder.configure(config);
@@ -94,13 +89,19 @@ export class OpusDecodeStream extends TransformStream<
             transform(chunk) {
                 switch (chunk.type) {
                     case "configuration":
+                        // configuration data is a opus-in-ogg identification header,
+                        // but stream data is raw opus,
+                        // so it has no use here.
                         break;
                     case "data":
+                        if (chunk.data.length === 0) {
+                            break;
+                        }
                         decoder.decode(
                             new EncodedAudioChunk({
-                                data: chunk.data,
                                 type: "key",
                                 timestamp: 0,
+                                data: chunk.data,
                             })
                         );
                 }

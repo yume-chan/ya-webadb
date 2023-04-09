@@ -88,7 +88,7 @@ class BitReader {
 }
 
 /**
- * Split NAL units from a H.264 Annex B stream.
+ * Split NAL units from a H.264/H.265 Annex B stream.
  *
  * The input is not modified.
  * The returned NAL units are views of the input (no memory allocation nor copy),
@@ -97,7 +97,7 @@ class BitReader {
  * This methods returns a generator, so it can be stopped immediately
  * after the interested NAL unit is found.
  */
-export function* h264SplitNalu(buffer: Uint8Array): Generator<Uint8Array> {
+export function* naluSplit(buffer: Uint8Array): Generator<Uint8Array> {
     // -1 means we haven't found the first start code
     let start = -1;
     // How many `0x00`s in a row we have counted
@@ -181,14 +181,14 @@ export function* h264SplitNalu(buffer: Uint8Array): Generator<Uint8Array> {
 }
 
 /**
- * Remove emulation prevention bytes from a H.264 NAL Unit.
+ * Remove emulation prevention bytes from a H.264/H.265 NAL Unit.
  *
  * The input is not modified.
  * If the input doesn't contain any emulation prevention bytes,
  * the input is returned as-is.
  * Otherwise, a new `Uint8Array` is created and returned.
  */
-export function h264RemoveNaluEmulation(buffer: Uint8Array) {
+export function naluRemoveEmulation(buffer: Uint8Array) {
     // output will be created when first emulation prevention byte is found
     let output: Uint8Array | undefined;
     let outputOffset = 0;
@@ -490,7 +490,7 @@ export function h264SearchConfiguration(buffer: Uint8Array) {
     let sequenceParameterSet: Uint8Array | undefined;
     let pictureParameterSet: Uint8Array | undefined;
 
-    for (const nalu of h264SplitNalu(buffer)) {
+    for (const nalu of naluSplit(buffer)) {
         const naluType = nalu[0]! & 0x1f;
         switch (naluType) {
             case 7: // Sequence parameter set
@@ -557,7 +557,7 @@ export function h264ParseConfiguration(data: Uint8Array): H264Configuration {
         frame_crop_top_offset,
         frame_crop_bottom_offset,
     } = h264ParseSequenceParameterSet(
-        h264RemoveNaluEmulation(sequenceParameterSet)
+        naluRemoveEmulation(sequenceParameterSet)
     );
 
     const encodedWidth = (pic_width_in_mbs_minus1 + 1) * 16;

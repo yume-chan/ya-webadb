@@ -193,6 +193,7 @@ export const SETTING_STATE = makeAutoObservable(
             displayId: 0,
             crop: "",
             powerOn: true,
+            audioCodec: "aac",
         } as Settings,
 
         clientSettings: {} as ClientSettings,
@@ -365,7 +366,7 @@ export const SETTING_DEFINITIONS = computed(() => {
         group: "settings",
         key: "videoEncoder",
         type: "dropdown",
-        label: "Encoder",
+        label: "Video Encoder",
         placeholder: "Press refresh to update available encoders",
         labelExtra: (
             <IconButton
@@ -418,7 +419,7 @@ export const SETTING_DEFINITIONS = computed(() => {
             group: "clientSettings",
             key: "decoder",
             type: "dropdown",
-            label: "Decoder",
+            label: "Video Decoder",
             options: SETTING_STATE.decoders.map((item) => ({
                 key: item.key,
                 text: item.name,
@@ -431,8 +432,29 @@ export const SETTING_DEFINITIONS = computed(() => {
         group: "clientSettings",
         key: "ignoreDecoderCodecArgs",
         type: "toggle",
-        label: `Ignore decoder's codec arguments`,
+        label: `Ignore video decoder's codec options`,
         description: `Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.`,
+    });
+
+    result.push({
+        group: "settings",
+        key: "audioCodec",
+        type: "dropdown",
+        label: "Audio Codec",
+        options: [
+            {
+                key: "raw",
+                text: "Raw",
+            },
+            {
+                key: "aac",
+                text: "AAC",
+            },
+            {
+                key: "opus",
+                text: "Opus",
+            },
+        ],
     });
 
     return result;

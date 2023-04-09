@@ -1,9 +1,10 @@
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
 import {
-    AudioPlayer,
-    F32PlanerAudioPlayer,
-    S16AudioPlayer,
+    Float32PcmPlayer,
+    Float32PlanerPcmPlayer,
+    Int16PcmPlayer,
+    PcmPlayer,
 } from "@yume-chan/pcm-player";
 import {
     AdbScrcpyClient,
@@ -74,7 +75,7 @@ export class ScrcpyPageState {
     client: AdbScrcpyClient | undefined = undefined;
     hoverHelper: ScrcpyHoverHelper | undefined = undefined;
     keyboard: KeyboardInjector | undefined = undefined;
-    audioPlayer: AudioPlayer<unknown> | undefined = undefined;
+    audioPlayer: PcmPlayer<unknown> | undefined = undefined;
 
     async pushServer() {
         const serverBuffer = await fetchServer();
@@ -283,7 +284,6 @@ export class ScrcpyPageState {
                     sendDeviceMeta: false,
                     sendDummyByte: false,
                     videoCodecOptions,
-                    audioCodec: "aac",
                 })
             );
 
@@ -395,23 +395,31 @@ export class ScrcpyPageState {
 
                 const [recordStream, playbackStream] = metadata.stream.tee();
                 switch (metadata.codec) {
-                    case ScrcpyAudioCodec.RAW:
-                        this.audioPlayer = new S16AudioPlayer(48000);
+                    case ScrcpyAudioCodec.RAW: {
+                        const audioPlayer = new Int16PcmPlayer(48000);
+                        this.audioPlayer = audioPlayer;
+
                         playbackStream
                             .pipeTo(
                                 new WritableStream({
                                     write: (chunk) => {
-                                        this.audioPlayer?.feed(
-                                            chunk.data.slice()
+                                        audioPlayer.feed(
+                                            new Int16Array(
+                                                chunk.data.slice().buffer
+                                            )
                                         );
                                     },
                                 })
                             )
                             .catch(NOOP);
+
                         await this.audioPlayer.start();
                         break;
-                    case ScrcpyAudioCodec.OPUS:
-                        this.audioPlayer = new F32PlanerAudioPlayer(48000);
+                    }
+                    case ScrcpyAudioCodec.OPUS: {
+                        const audioPlayer = new Float32PcmPlayer(48000);
+                        this.audioPlayer = audioPlayer;
+
                         playbackStream
                             .pipeThrough(
                                 new OpusDecodeStream({
@@ -423,15 +431,18 @@ export class ScrcpyPageState {
                             .pipeTo(
                                 new WritableStream({
                                     write: (chunk) => {
-                                        this.audioPlayer?.feed(chunk);
+                                        audioPlayer.feed(chunk);
                                     },
                                 })
                             )
                             .catch(NOOP);
-                        await this.audioPlayer.start();
+                        await audioPlayer.start();
                         break;
-                    case ScrcpyAudioCodec.AAC:
-                        this.audioPlayer = new F32PlanerAudioPlayer(48000);
+                    }
+                    case ScrcpyAudioCodec.AAC: {
+                        const audioPlayer = new Float32PlanerPcmPlayer(48000);
+                        this.audioPlayer = audioPlayer;
+
                         playbackStream
                             .pipeThrough(
                                 new AacDecodeStream({
@@ -443,13 +454,14 @@ export class ScrcpyPageState {
                             .pipeTo(
                                 new WritableStream({
                                     write: (chunk) => {
-                                        this.audioPlayer?.feed(chunk);
+                                        audioPlayer.feed(chunk);
                                     },
                                 })
                             )
                             .catch(NOOP);
-                        await this.audioPlayer.start();
+                        await audioPlayer.start();
                         break;
+                    }
                     default:
                         throw new Error(
                             `Unsupported audio codec ${metadata.codec.optionValue}`

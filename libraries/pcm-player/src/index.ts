@@ -1,4 +1,4 @@
-export abstract class AudioPlayer<T> {
+export abstract class PcmPlayer<T> {
     protected abstract sourceName: string;
 
     private _context: AudioContext;
@@ -49,17 +49,29 @@ export abstract class AudioPlayer<T> {
     }
 }
 
-export class S16AudioPlayer extends AudioPlayer<Int16Array> {
-    protected override sourceName = "s16-source-processor";
+export class Int16PcmPlayer extends PcmPlayer<Int16Array> {
+    protected override sourceName = "int16-source-processor";
 
     protected override feedCore(worklet: AudioWorkletNode, source: Int16Array) {
         const { buffer } = source;
-        worklet.port.postMessage(buffer, [buffer]);
+        worklet.port.postMessage([buffer], [buffer]);
     }
 }
 
-export class F32PlanerAudioPlayer extends AudioPlayer<Float32Array[]> {
-    protected override sourceName = "f32-planer-source-processor";
+export class Float32PcmPlayer extends PcmPlayer<Float32Array> {
+    protected override sourceName = "float32-source-processor";
+
+    protected override feedCore(
+        worklet: AudioWorkletNode,
+        source: Float32Array
+    ) {
+        const { buffer } = source;
+        worklet.port.postMessage([buffer], [buffer]);
+    }
+}
+
+export class Float32PlanerPcmPlayer extends PcmPlayer<Float32Array[]> {
+    protected override sourceName = "float32-planer-source-processor";
 
     protected override feedCore(
         worklet: AudioWorkletNode,
