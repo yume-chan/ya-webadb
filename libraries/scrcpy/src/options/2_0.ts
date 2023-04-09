@@ -18,7 +18,7 @@ import {
 } from "./1_16/index.js";
 import { ScrcpyOptions1_21 } from "./1_21.js";
 import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
-import { SCRCPY_OPTIONS_DEFAULT_1_24 } from "./1_24.js";
+import { ScrcpyOptions1_24 } from "./1_24.js";
 import { ScrcpyOptions1_25 } from "./1_25/index.js";
 import type {
     ScrcpyAudioStreamMetadata,
@@ -102,43 +102,43 @@ function omit<T extends object, K extends keyof T>(
     return result as Omit<T, K>;
 }
 
-export const SCRCPY_OPTIONS_DEFAULT_2_0 = {
-    ...omit(SCRCPY_OPTIONS_DEFAULT_1_24, [
-        "bitRate",
-        "codecOptions",
-        "encoderName",
-    ]),
-    scid: ScrcpyInstanceId.NONE,
-
-    videoCodec: "h264",
-    videoBitRate: 8000000,
-    videoCodecOptions: new CodecOptions(),
-    videoEncoder: "",
-
-    audio: true,
-    audioCodec: "opus",
-    audioBitRate: 128000,
-    audioCodecOptions: new CodecOptions(),
-    audioEncoder: "",
-
-    listEncoders: false,
-    listDisplay: false,
-    sendCodecMeta: true,
-} as const satisfies Required<ScrcpyOptionsInit2_0>;
-
 export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit2_0,
     ScrcpyOptions1_25
 > {
-    public constructor(init: ScrcpyOptionsInit2_0) {
-        super(new ScrcpyOptions1_25(init), {
-            ...SCRCPY_OPTIONS_DEFAULT_2_0,
-            ...init,
-        });
-    }
+    public static readonly DEFAULTS = {
+        ...omit(ScrcpyOptions1_24.DEFAULTS, [
+            "bitRate",
+            "codecOptions",
+            "encoderName",
+        ]),
+        scid: ScrcpyInstanceId.NONE,
+
+        videoCodec: "h264",
+        videoBitRate: 8000000,
+        videoCodecOptions: new CodecOptions(),
+        videoEncoder: "",
+
+        audio: true,
+        audioCodec: "opus",
+        audioBitRate: 128000,
+        audioCodecOptions: new CodecOptions(),
+        audioEncoder: "",
+
+        listEncoders: false,
+        listDisplay: false,
+        sendCodecMeta: true,
+    } as const satisfies Required<ScrcpyOptionsInit2_0>;
 
     public override get defaults(): Required<ScrcpyOptionsInit2_0> {
-        return SCRCPY_OPTIONS_DEFAULT_2_0;
+        return ScrcpyOptions2_0.DEFAULTS;
+    }
+
+    public constructor(init: ScrcpyOptionsInit2_0) {
+        super(new ScrcpyOptions1_25(init), {
+            ...ScrcpyOptions2_0.DEFAULTS,
+            ...init,
+        });
     }
 
     public override serialize(): string[] {

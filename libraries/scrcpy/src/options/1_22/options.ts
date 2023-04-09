@@ -7,20 +7,26 @@ import type { ScrcpyVideoStream } from "../codec.js";
 import { ScrcpyOptionsBase } from "../types.js";
 
 import type { ScrcpyOptionsInit1_22 } from "./init.js";
-import { SCRCPY_OPTIONS_DEFAULT_1_22 } from "./init.js";
 import { ScrcpyScrollController1_22 } from "./scroll.js";
 
 export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_22,
     ScrcpyOptions1_21
 > {
+    public static readonly DEFAULTS = {
+        ...ScrcpyOptions1_21.DEFAULTS,
+        downsizeOnError: true,
+        sendDeviceMeta: true,
+        sendDummyByte: true,
+    } as const satisfies Required<ScrcpyOptionsInit1_22>;
+
     public override get defaults(): Required<ScrcpyOptionsInit1_22> {
-        return SCRCPY_OPTIONS_DEFAULT_1_22;
+        return ScrcpyOptions1_22.DEFAULTS;
     }
 
     public constructor(init: ScrcpyOptionsInit1_22) {
         super(new ScrcpyOptions1_21(init), {
-            ...SCRCPY_OPTIONS_DEFAULT_1_22,
+            ...ScrcpyOptions1_22.DEFAULTS,
             ...init,
         });
     }

@@ -1,4 +1,4 @@
-import { CodecOptions } from "./codec-options.js";
+import type { CodecOptions } from "./codec-options.js";
 
 export enum ScrcpyLogLevel1_16 {
     Debug = "debug",
@@ -78,35 +78,3 @@ export interface ScrcpyOptionsInit1_16 {
 
     codecOptions?: CodecOptions;
 }
-
-export const SCRCPY_OPTIONS_DEFAULT_1_16 = {
-    logLevel: ScrcpyLogLevel1_16.Debug,
-    maxSize: 0,
-    bitRate: 8_000_000,
-    maxFps: 0,
-    lockVideoOrientation: ScrcpyVideoOrientation1_16.Unlocked,
-    tunnelForward: false,
-    crop: undefined,
-    sendFrameMeta: true,
-    control: true,
-    displayId: 0,
-    showTouches: false,
-    stayAwake: false,
-    codecOptions: new CodecOptions(),
-} as const satisfies Required<ScrcpyOptionsInit1_16>;
-
-export const SCRCPY_OPTIONS_ORDER_1_16 = [
-    "logLevel",
-    "maxSize",
-    "bitRate",
-    "maxFps",
-    "lockVideoOrientation",
-    "tunnelForward",
-    "crop",
-    "sendFrameMeta",
-    "control",
-    "displayId",
-    "showTouches",
-    "stayAwake",
-    "codecOptions",
-] as const satisfies readonly (keyof ScrcpyOptionsInit1_16)[];

@@ -14,11 +14,7 @@ import {
     ScrcpyVideoOrientation1_16,
 } from "./1_16/index.js";
 import type { ScrcpyOptionsInit1_17 } from "./1_17.js";
-import {
-    SCRCPY_OPTIONS_DEFAULT_1_17,
-    SCRCPY_OPTIONS_ORDER_1_17,
-    ScrcpyOptions1_17,
-} from "./1_17.js";
+import { ScrcpyOptions1_17 } from "./1_17.js";
 import type { ScrcpyEncoder } from "./types.js";
 import { ScrcpyOptionsBase } from "./types.js";
 
@@ -55,13 +51,6 @@ export const ScrcpyBackOrScreenOnControlMessage1_18 = new Struct()
 export type ScrcpyBackOrScreenOnControlMessage1_18 =
     (typeof ScrcpyBackOrScreenOnControlMessage1_18)["TInit"];
 
-export const SCRCPY_OPTIONS_DEFAULT_1_18 = {
-    ...SCRCPY_OPTIONS_DEFAULT_1_17,
-    logLevel: ScrcpyLogLevel1_18.Debug,
-    lockVideoOrientation: ScrcpyVideoOrientation1_18.Unlocked,
-    powerOffOnClose: false,
-} as const satisfies Required<ScrcpyOptionsInit1_18>;
-
 export const SCRCPY_CONTROL_MESSAGE_TYPES_1_18 =
     SCRCPY_CONTROL_MESSAGE_TYPES_1_16.slice();
 SCRCPY_CONTROL_MESSAGE_TYPES_1_18.splice(
@@ -69,11 +58,6 @@ SCRCPY_CONTROL_MESSAGE_TYPES_1_18.splice(
     0,
     ScrcpyControlMessageType.ExpandSettingPanel
 );
-
-export const SCRCPY_OPTIONS_ORDER_1_18 = [
-    ...SCRCPY_OPTIONS_ORDER_1_17,
-    "powerOffOnClose",
-] as const satisfies readonly (keyof ScrcpyOptionsInit1_18)[];
 
 const LOG_LEVEL_MAP = {
     [ScrcpyLogLevel1_18.Verbose]: ScrcpyLogLevel1_16.Debug,
@@ -98,8 +82,20 @@ export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_18,
     ScrcpyOptions1_17
 > {
+    public static readonly DEFAULTS = {
+        ...ScrcpyOptions1_17.DEFAULTS,
+        logLevel: ScrcpyLogLevel1_18.Debug,
+        lockVideoOrientation: ScrcpyVideoOrientation1_18.Unlocked,
+        powerOffOnClose: false,
+    } as const satisfies Required<ScrcpyOptionsInit1_18>;
+
+    public static readonly SERIALIZE_ORDER = [
+        ...ScrcpyOptions1_17.SERIALIZE_ORDER,
+        "powerOffOnClose",
+    ] as const satisfies readonly (keyof ScrcpyOptionsInit1_18)[];
+
     public override get defaults(): Required<ScrcpyOptionsInit1_18> {
-        return SCRCPY_OPTIONS_DEFAULT_1_18;
+        return ScrcpyOptions1_18.DEFAULTS;
     }
 
     public override get controlMessageTypes() {
@@ -107,7 +103,7 @@ export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
     }
 
     constructor(init: ScrcpyOptionsInit1_18) {
-        const value = { ...SCRCPY_OPTIONS_DEFAULT_1_18, ...init };
+        const value = { ...ScrcpyOptions1_18.DEFAULTS, ...init };
         super(
             new ScrcpyOptions1_17({
                 ...init,
@@ -122,7 +118,7 @@ export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
     public serialize(): string[] {
         return ScrcpyOptions1_16.serialize(
             this.value,
-            SCRCPY_OPTIONS_ORDER_1_18
+            ScrcpyOptions1_18.SERIALIZE_ORDER
         );
     }
 

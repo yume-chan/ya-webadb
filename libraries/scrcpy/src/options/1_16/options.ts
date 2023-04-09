@@ -22,11 +22,9 @@ import type {
 import type { ScrcpyEncoder, ScrcpyOptions } from "../types.js";
 import { toScrcpyOptionValue } from "../types.js";
 
+import { CodecOptions } from "./codec-options.js";
 import type { ScrcpyOptionsInit1_16 } from "./init.js";
-import {
-    SCRCPY_OPTIONS_DEFAULT_1_16,
-    SCRCPY_OPTIONS_ORDER_1_16,
-} from "./init.js";
+import { ScrcpyLogLevel1_16, ScrcpyVideoOrientation1_16 } from "./init.js";
 import {
     SCRCPY_CONTROL_MESSAGE_TYPES_1_16,
     SCRCPY_MEDIA_PACKET_FLAG_CONFIG,
@@ -39,6 +37,38 @@ import type { ScrcpyScrollController } from "./scroll.js";
 import { ScrcpyScrollController1_16 } from "./scroll.js";
 
 export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
+    public static readonly DEFAULTS = {
+        logLevel: ScrcpyLogLevel1_16.Debug,
+        maxSize: 0,
+        bitRate: 8_000_000,
+        maxFps: 0,
+        lockVideoOrientation: ScrcpyVideoOrientation1_16.Unlocked,
+        tunnelForward: false,
+        crop: undefined,
+        sendFrameMeta: true,
+        control: true,
+        displayId: 0,
+        showTouches: false,
+        stayAwake: false,
+        codecOptions: new CodecOptions(),
+    } as const satisfies Required<ScrcpyOptionsInit1_16>;
+
+    public static readonly SERIALIZE_ORDER = [
+        "logLevel",
+        "maxSize",
+        "bitRate",
+        "maxFps",
+        "lockVideoOrientation",
+        "tunnelForward",
+        "crop",
+        "sendFrameMeta",
+        "control",
+        "displayId",
+        "showTouches",
+        "stayAwake",
+        "codecOptions",
+    ] as const satisfies readonly (keyof ScrcpyOptionsInit1_16)[];
+
     public static serialize<T>(options: T, order: readonly (keyof T)[]) {
         return order.map((key) => toScrcpyOptionValue(options[key], "-"));
     }
@@ -69,19 +99,19 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
     public value: Required<ScrcpyOptionsInit1_16>;
 
     public readonly defaults: Required<ScrcpyOptionsInit1_16> =
-        SCRCPY_OPTIONS_DEFAULT_1_16;
+        ScrcpyOptions1_16.DEFAULTS;
 
     public readonly controlMessageTypes: readonly ScrcpyControlMessageType[] =
         SCRCPY_CONTROL_MESSAGE_TYPES_1_16;
 
     public constructor(init: ScrcpyOptionsInit1_16) {
-        this.value = { ...SCRCPY_OPTIONS_DEFAULT_1_16, ...init };
+        this.value = { ...ScrcpyOptions1_16.DEFAULTS, ...init };
     }
 
     public serialize(): string[] {
         return ScrcpyOptions1_16.serialize(
             this.value,
-            SCRCPY_OPTIONS_ORDER_1_16
+            ScrcpyOptions1_16.SERIALIZE_ORDER
         );
     }
 

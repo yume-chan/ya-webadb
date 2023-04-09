@@ -1,9 +1,5 @@
 import type { ScrcpyOptionsInit1_16 } from "./1_16/index.js";
-import {
-    SCRCPY_OPTIONS_DEFAULT_1_16,
-    SCRCPY_OPTIONS_ORDER_1_16,
-    ScrcpyOptions1_16,
-} from "./1_16/index.js";
+import { ScrcpyOptions1_16 } from "./1_16/index.js";
 import type { ScrcpyEncoder } from "./types.js";
 import { ScrcpyOptionsBase } from "./types.js";
 
@@ -11,20 +7,20 @@ export interface ScrcpyOptionsInit1_17 extends ScrcpyOptionsInit1_16 {
     encoderName?: string | undefined;
 }
 
-export const SCRCPY_OPTIONS_DEFAULT_1_17 = {
-    ...SCRCPY_OPTIONS_DEFAULT_1_16,
-    encoderName: undefined,
-} as const satisfies Required<ScrcpyOptionsInit1_17>;
-
-export const SCRCPY_OPTIONS_ORDER_1_17 = [
-    ...SCRCPY_OPTIONS_ORDER_1_16,
-    "encoderName",
-] as const satisfies readonly (keyof ScrcpyOptionsInit1_17)[];
-
 export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_17,
     ScrcpyOptions1_16
 > {
+    public static readonly DEFAULTS = {
+        ...ScrcpyOptions1_16.DEFAULTS,
+        encoderName: undefined,
+    } as const satisfies Required<ScrcpyOptionsInit1_17>;
+
+    public static readonly SERIALIZE_ORDER = [
+        ...ScrcpyOptions1_16.SERIALIZE_ORDER,
+        "encoderName",
+    ] as const satisfies readonly (keyof ScrcpyOptionsInit1_17)[];
+
     public static parseEncoder(
         line: string,
         encoderNameRegex: RegExp
@@ -37,12 +33,12 @@ export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
     }
 
     public override get defaults(): Required<ScrcpyOptionsInit1_17> {
-        return SCRCPY_OPTIONS_DEFAULT_1_17;
+        return ScrcpyOptions1_17.DEFAULTS;
     }
 
     public constructor(init: ScrcpyOptionsInit1_17) {
         super(new ScrcpyOptions1_16(init), {
-            ...SCRCPY_OPTIONS_DEFAULT_1_17,
+            ...ScrcpyOptions1_17.DEFAULTS,
             ...init,
         });
     }
@@ -50,7 +46,7 @@ export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
     public override serialize(): string[] {
         return ScrcpyOptions1_16.serialize(
             this.value,
-            SCRCPY_OPTIONS_ORDER_1_17
+            ScrcpyOptions1_17.SERIALIZE_ORDER
         );
     }
 
