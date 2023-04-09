@@ -18,7 +18,8 @@ export class AacDecodeStream extends TransformStream<
                         controller.enqueue(
                             Array.from({ length: 2 }, (_, i) => {
                                 const options: AudioDataCopyToOptions = {
-                                    // Chrome only supports "f32-planar"
+                                    // AAC decodes to "f32-planar",
+                                    // converting to another format may cause audio glitches on Chrome.
                                     format: "f32-planar",
                                     planeIndex: i,
                                 };
@@ -36,6 +37,8 @@ export class AacDecodeStream extends TransformStream<
             transform(chunk) {
                 switch (chunk.type) {
                     case "configuration":
+                        // https://www.w3.org/TR/webcodecs-aac-codec-registration/#audiodecoderconfig-description
+                        // Raw AAC stream needs `description` to be set.
                         decoder.configure({
                             ...config,
                             description: chunk.data,
@@ -72,6 +75,8 @@ export class OpusDecodeStream extends TransformStream<
                         controller.error(error);
                     },
                     output(output) {
+                        // Opus decodes to "f32",
+                        // converting to another format may cause audio glitches on Chrome.
                         const options: AudioDataCopyToOptions = {
                             format: "f32",
                             planeIndex: 0,

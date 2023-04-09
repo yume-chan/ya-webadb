@@ -23,10 +23,9 @@ abstract class SourceProcessor<T>
         const outputLength = outputLeft.length;
         let outputIndex = 0;
 
-        // Resample source to the same length as output
+        // Resample source catch up with output
         // TODO: should we limit the minimum and maximum speed?
         // TODO: this simple resample method changes pitch
-        // TODO: treat the input as Uint32Array so don't need to shift
         const sourceIndexStep = this._sourceSampleCount > 48000 ? 1.02 : 1;
         let sourceIndex = 0;
 

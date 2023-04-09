@@ -53,6 +53,13 @@ export class Int16PcmPlayer extends PcmPlayer<Int16Array> {
     protected override sourceName = "int16-source-processor";
 
     protected override feedCore(worklet: AudioWorkletNode, source: Int16Array) {
+        if (
+            source.byteOffset !== 0 ||
+            source.byteLength !== source.buffer.byteLength
+        ) {
+            source = source.slice();
+        }
+
         const { buffer } = source;
         worklet.port.postMessage([buffer], [buffer]);
     }
@@ -65,6 +72,13 @@ export class Float32PcmPlayer extends PcmPlayer<Float32Array> {
         worklet: AudioWorkletNode,
         source: Float32Array
     ) {
+        if (
+            source.byteOffset !== 0 ||
+            source.byteLength !== source.buffer.byteLength
+        ) {
+            source = source.slice();
+        }
+
         const { buffer } = source;
         worklet.port.postMessage([buffer], [buffer]);
     }
@@ -77,7 +91,15 @@ export class Float32PlanerPcmPlayer extends PcmPlayer<Float32Array[]> {
         worklet: AudioWorkletNode,
         source: Float32Array[]
     ) {
-        const buffers = source.map((channel) => channel.buffer);
+        const buffers = source.map((channel) => {
+            if (
+                channel.byteOffset !== 0 ||
+                channel.byteLength !== channel.buffer.byteLength
+            ) {
+                channel = channel.slice();
+            }
+            return channel.buffer;
+        });
         worklet.port.postMessage(buffers, buffers);
     }
 }
