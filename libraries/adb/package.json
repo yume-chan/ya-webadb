@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb",
-    "version": "0.0.18",
+    "version": "0.0.19",
     "description": "TypeScript implementation of Android Debug Bridge (ADB) protocol.",
     "keywords": [
         "adb",
@@ -33,10 +33,10 @@
     },
     "dependencies": {
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/dataview-bigint-polyfill": "workspace:^0.0.18",
-        "@yume-chan/event": "workspace:^0.0.18",
-        "@yume-chan/stream-extra": "workspace:^0.0.18",
-        "@yume-chan/struct": "workspace:^0.0.18",
+        "@yume-chan/dataview-bigint-polyfill": "workspace:^0.0.19",
+        "@yume-chan/event": "workspace:^0.0.19",
+        "@yume-chan/stream-extra": "workspace:^0.0.19",
+        "@yume-chan/struct": "workspace:^0.0.19",
         "tslib": "^2.4.1"
     },
     "devDependencies": {

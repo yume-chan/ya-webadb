@@ -1,6 +1,16 @@
 # Change Log - @yume-chan/adb
 
-This log was last generated on Wed, 25 Jan 2023 21:33:49 GMT and should not be manually modified.
+This log was last generated on Sun, 09 Apr 2023 05:55:33 GMT and should not be manually modified.
+
+## 0.0.19
+Sun, 09 Apr 2023 05:55:33 GMT
+
+### Updates
+
+- Remove `Adb#install` in favor of `PackageManager#install` from `@yume-chan/android-bin` package
+- Change `AdbSync#write` to take a `ReadableStream<Uint8Array>` instead of returning a `WritableStream<Uint8Array>`
+- Add buffering in sync module to improve transfer speed
+- Add `AdbReverseError` and `AdbReverseNotSupportedError` for better error handling in reverse tunnel command.
 
 ## 0.0.18
 Wed, 25 Jan 2023 21:33:49 GMT

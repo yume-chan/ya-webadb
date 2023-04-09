@@ -31,8 +31,8 @@
         "lint": "eslint src/**/*.ts --fix"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.18",
-        "@yume-chan/stream-extra": "workspace:^0.0.18",
+        "@yume-chan/adb": "workspace:^0.0.19",
+        "@yume-chan/stream-extra": "workspace:^0.0.19",
         "tslib": "^2.4.1"
     },
     "devDependencies": {
