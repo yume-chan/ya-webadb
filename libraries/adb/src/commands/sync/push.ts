@@ -21,8 +21,8 @@ export interface AdbSyncPushV1Options {
     socket: AdbSyncSocket;
     filename: string;
     file: ReadableStream<Consumable<Uint8Array>>;
-    type: LinuxFileType;
-    permission: number;
+    type?: LinuxFileType;
+    permission?: number;
     mtime?: number;
     packetSize?: number;
 }

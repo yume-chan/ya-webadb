@@ -33,8 +33,8 @@ export function dirname(path: string): string {
 export interface AdbSyncWriteOptions {
     filename: string;
     file: ReadableStream<Consumable<Uint8Array>>;
-    type: LinuxFileType;
-    permission: number;
+    type?: LinuxFileType;
+    permission?: number;
     mtime?: number;
     dryRun?: boolean;
 }
