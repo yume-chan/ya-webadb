@@ -710,7 +710,8 @@ class FileManagerState {
                                 })
                             )
                         ),
-                    mode: (LinuxFileType.File << 12) | 0o666,
+                    type: LinuxFileType.File,
+                    permission: 0o666,
                     mtime: file.lastModified / 1000,
                 });
 

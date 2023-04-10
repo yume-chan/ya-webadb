@@ -21,7 +21,8 @@ export interface AdbSyncPushV1Options {
     socket: AdbSyncSocket;
     filename: string;
     file: ReadableStream<Consumable<Uint8Array>>;
-    mode?: number;
+    type: LinuxFileType;
+    permission: number;
     mtime?: number;
     packetSize?: number;
 }
@@ -71,12 +72,14 @@ export async function adbSyncPushV1({
     socket,
     filename,
     file,
-    mode = (LinuxFileType.File << 12) | 0o666,
+    type = LinuxFileType.File,
+    permission = 0o666,
     mtime = (Date.now() / 1000) | 0,
     packetSize = ADB_SYNC_MAX_PACKET_SIZE,
 }: AdbSyncPushV1Options) {
     const locked = await socket.lock();
     try {
+        const mode = (type << 12) | permission;
         const pathAndMode = `${filename},${mode.toString()}`;
         await adbSyncWriteRequest(locked, AdbSyncRequestId.Send, pathAndMode);
         await pipeFile(locked, file, packetSize, mtime);
@@ -115,7 +118,8 @@ export async function adbSyncPushV2({
     socket,
     filename,
     file,
-    mode = (LinuxFileType.File << 12) | 0o666,
+    type = LinuxFileType.File,
+    permission = 0o666,
     mtime = (Date.now() / 1000) | 0,
     packetSize = ADB_SYNC_MAX_PACKET_SIZE,
     dryRun = false,
@@ -124,6 +128,7 @@ export async function adbSyncPushV2({
     try {
         await adbSyncWriteRequest(locked, AdbSyncRequestId.SendV2, filename);
 
+        const mode = (type << 12) | permission;
         let flags: AdbSyncSendV2Flags = AdbSyncSendV2Flags.None;
         if (dryRun) {
             flags |= AdbSyncSendV2Flags.DryRun;
