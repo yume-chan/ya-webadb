@@ -136,6 +136,10 @@ function App({ Component, pageProps }: AppProps) {
 
     const router = useRouter();
 
+    if ("noLayout" in Component) {
+        return <Component {...pageProps} />;
+    }
+
     return (
         <ErrorDialogProvider>
             <Head>

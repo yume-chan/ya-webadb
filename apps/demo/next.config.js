@@ -64,7 +64,7 @@ module.exports = withPwa(
                         },
                         {
                             key: "Cross-Origin-Embedder-Policy",
-                            value: "require-corp",
+                            value: "credentialless",
                         },
                     ],
                 },
