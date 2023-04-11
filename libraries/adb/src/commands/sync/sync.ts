@@ -11,6 +11,7 @@ import { adbSyncOpenDir } from "./list.js";
 import { adbSyncPull } from "./pull.js";
 import { adbSyncPush } from "./push.js";
 import { AdbSyncSocket } from "./socket.js";
+import type { LinuxFileType } from "./stat.js";
 import { adbSyncLstat, adbSyncStat } from "./stat.js";
 
 /**
@@ -32,7 +33,8 @@ export function dirname(path: string): string {
 export interface AdbSyncWriteOptions {
     filename: string;
     file: ReadableStream<Consumable<Uint8Array>>;
-    mode?: number;
+    type?: LinuxFileType;
+    permission?: number;
     mtime?: number;
     dryRun?: boolean;
 }

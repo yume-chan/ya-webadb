@@ -2,6 +2,21 @@
   "name": "@yume-chan/android-bin",
   "entries": [
     {
+      "version": "0.0.19",
+      "tag": "@yume-chan/android-bin_v0.0.19",
+      "date": "Sun, 09 Apr 2023 05:55:33 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add wrapper for `cmd`, with support for Android Binder Bridge (abb)"
+          },
+          {
+            "comment": "Add `OverlayDisplay` wrapper for managing overlay displays"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.18",
       "tag": "@yume-chan/android-bin_v0.0.18",
       "date": "Wed, 25 Jan 2023 21:33:49 GMT",

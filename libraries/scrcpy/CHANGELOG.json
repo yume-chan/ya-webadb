@@ -2,6 +2,24 @@
   "name": "@yume-chan/scrcpy",
   "entries": [
     {
+      "version": "0.0.19",
+      "tag": "@yume-chan/scrcpy_v0.0.19",
+      "date": "Sun, 09 Apr 2023 05:55:33 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Change `AdbScrcpyClient#pushServer` to take a `ReadableStream<Uint8Array>` instead of returning a `WritableStream<Uint8Array>`"
+          },
+          {
+            "comment": "Add `AdbReverseNotSupportedError` handling and automatically switch to forward tunnel in `AdbScrcpyClient`."
+          },
+          {
+            "comment": "Update `AndroidKeyCode` enum to align with Web `KeyboardEvent.code`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.18",
       "tag": "@yume-chan/scrcpy_v0.0.18",
       "date": "Wed, 25 Jan 2023 21:33:49 GMT",

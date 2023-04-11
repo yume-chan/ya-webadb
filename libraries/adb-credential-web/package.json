@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-credential-web",
-    "version": "0.0.18",
+    "version": "0.0.19",
     "description": "Credential Store for `@yume-chan/adb` using Web LocalStorage API.",
     "keywords": [
         "adb"
@@ -30,7 +30,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.18",
+        "@yume-chan/adb": "workspace:^0.0.19",
         "tslib": "^2.4.1"
     },
     "devDependencies": {
