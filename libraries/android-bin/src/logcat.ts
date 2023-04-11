@@ -116,46 +116,34 @@ export interface AndroidLogEntry extends LoggerEntry {
     toString(format?: LogcatFormat, modifiers?: LogcatFormatModifiers): string;
 }
 
+function padZero(number: number, length: number) {
+    return number.toString().padStart(length, "0");
+}
+
 function formatSeconds(seconds: number, modifiers: LogcatFormatModifiers) {
     if (modifiers.monotonic) {
-        return seconds.toString().padStart(6);
+        return padZero(seconds, 6);
     }
 
     if (modifiers.epoch) {
-        return seconds.toString().padStart(19);
+        return padZero(seconds, 19);
     }
 
     const date = new Date(seconds * 1000);
 
+    const month = padZero(date.getMonth() + 1, 2);
+    const day = padZero(date.getDate(), 2);
+    const hour = padZero(date.getHours(), 2);
+    const minute = padZero(date.getMinutes(), 2);
+    const second = padZero(date.getSeconds(), 2);
+    const result = `${month}-${day} ${hour}:${minute}:${second}`;
+
     if (modifiers.year) {
-        // prettier-ignore
-        return `${
-            date.getFullYear().toString().padStart(4, "0")
-        }-${
-            (date.getMonth() + 1).toString().padStart(2, "0")
-        }-${
-            date.getDate().toString().padStart(2, "0")
-        } ${
-            date.getHours().toString().padStart(2, "0")
-        }:${
-            date.getMinutes().toString().padStart(2, "0")
-        }:${
-            date.getSeconds().toString().padStart(2, "0")
-        }`;
+        const year = padZero(date.getFullYear(), 4);
+        return `${year}-${result}`;
     }
 
-    // prettier-ignore
-    return `${
-        (date.getMonth() + 1).toString().padStart(2, "0")
-    }-${
-        date.getDate().toString().padStart(2, "0")
-    } ${
-        date.getHours().toString().padStart(2, "0")
-    }:${
-        date.getMinutes().toString().padStart(2, "0")
-    }:${
-        date.getSeconds().toString().padStart(2, "0")
-    }`;
+    return result;
 }
 
 function formatNanoseconds(
@@ -163,14 +151,14 @@ function formatNanoseconds(
     modifiers: LogcatFormatModifiers
 ) {
     if (modifiers.nanoseconds) {
-        return nanoseconds.toString().padStart(9, "0");
+        return padZero(nanoseconds, 9);
     }
 
     if (modifiers.microseconds) {
-        return ((nanoseconds / 1000) | 0).toString().padStart(6, "0");
+        return padZero(nanoseconds / 1000, 6);
     }
 
-    return ((nanoseconds / 1000000) | 0).toString().padStart(3, "0");
+    return padZero(nanoseconds / 1000000, 3);
 }
 
 function formatTimezone(seconds: number, modifiers: LogcatFormatModifiers) {

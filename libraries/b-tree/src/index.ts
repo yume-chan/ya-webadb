@@ -142,13 +142,16 @@ export class BTreeNode {
 
     public has(value: number): boolean {
         let index = this.search(value);
+
         if (index >= 0) {
             return true;
         }
+
         if (this.height > 0) {
             index = ~index;
             return this.children[index]!.has(value);
         }
+
         return false;
     }
 
@@ -192,16 +195,18 @@ export class BTreeNode {
             return true;
         }
 
-        if (this.height > 0) {
-            index = ~index;
-            const deleted = this.children[index]!.delete(value);
-            if (deleted) {
-                this.balance(index);
-            }
-            return deleted;
+        if (this.height === 0) {
+            return false;
         }
 
-        return false;
+        index = ~index;
+        const deleted = this.children[index]!.delete(value);
+
+        if (deleted) {
+            this.balance(index);
+        }
+
+        return deleted;
     }
 
     public max(): number {
@@ -340,17 +345,12 @@ export class BTree {
 
     public constructor(order: number) {
         this._order = order;
-        this._root = new BTreeNode(
-            order,
-            new Int32Array(order - 1),
-            0,
-            0,
-            new Array<BTreeNode>(order)
-        );
+        const keys = new Int32Array(order - 1);
+        const children = new Array<BTreeNode>(order);
+        this._root = new BTreeNode(order, keys, 0, 0, children);
     }
 
     public has(value: number) {
-        // TODO(btree): benchmark this non-recursive version
         let node = this._root;
         while (true) {
             const index = node.search(value);

@@ -39,14 +39,14 @@ export class Settings extends AdbCommandBase {
         tag?: string,
         makeDefault?: boolean
     ) {
-        return this.base(
-            "put",
-            namespace,
-            key,
-            value,
-            ...(tag ? [tag] : []),
-            ...(makeDefault ? ["default"] : [])
-        );
+        const args = [key, value];
+        if (tag) {
+            args.push(tag);
+        }
+        if (makeDefault) {
+            args.push("default");
+        }
+        return this.base("put", namespace, ...args);
     }
 
     public reset(
@@ -63,12 +63,11 @@ export class Settings extends AdbCommandBase {
         modeOrPackageName: string,
         tag?: string
     ): Promise<string> {
-        return this.base(
-            "reset",
-            namespace,
-            modeOrPackageName,
-            ...(tag ? [tag] : [])
-        );
+        const args = [modeOrPackageName];
+        if (tag) {
+            args.push(tag);
+        }
+        return this.base("reset", namespace, ...args);
     }
 
     public async list(namespace: SettingsNamespace): Promise<string[]> {
