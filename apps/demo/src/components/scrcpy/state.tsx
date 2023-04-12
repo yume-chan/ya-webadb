@@ -404,11 +404,12 @@ export class ScrcpyPageState {
                                 new WritableStream({
                                     write: (chunk) => {
                                         audioPlayer.feed(
-                                            // Convert data to `Int16Array`
-                                            // In generated assembly code, all ArrayBufferView types
-                                            // are just pointers, and pointers don't have types,
-                                            // so this is actually an no-op
-                                            new Int16Array(chunk.data.buffer)
+                                            new Int16Array(
+                                                chunk.data.buffer,
+                                                chunk.data.byteOffset,
+                                                chunk.data.byteLength /
+                                                    Int16Array.BYTES_PER_ELEMENT
+                                            )
                                         );
                                     },
                                 })
