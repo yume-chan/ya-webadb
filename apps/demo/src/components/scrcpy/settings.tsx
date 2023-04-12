@@ -96,6 +96,10 @@ const useClasses = makeStyles({
     labelRight: {
         marginLeft: "4px",
     },
+    item: {
+        width: "100%",
+        maxWidth: "300px",
+    },
 });
 
 export const SettingItem = observer(function SettingItem({
@@ -124,6 +128,7 @@ export const SettingItem = observer(function SettingItem({
         case "text":
             return (
                 <TextField
+                    className={classes.item}
                     label={label as any}
                     placeholder={definition.placeholder}
                     value={value}
@@ -133,6 +138,7 @@ export const SettingItem = observer(function SettingItem({
         case "dropdown":
             return (
                 <Dropdown
+                    className={classes.item}
                     label={label as any}
                     options={definition.options}
                     placeholder={definition.placeholder}
@@ -152,6 +158,7 @@ export const SettingItem = observer(function SettingItem({
         case "number":
             return (
                 <SpinButton
+                    className={classes.item}
                     label={definition.label}
                     labelPosition={Position.top}
                     min={definition.min}
@@ -174,8 +181,6 @@ export interface DecoderDefinition {
 
 export const SETTING_STATE = makeAutoObservable(
     {
-        settingsVisible: false,
-
         displays: [] as number[],
         encoders: [] as ScrcpyEncoder[],
         decoders: [
@@ -193,6 +198,7 @@ export const SETTING_STATE = makeAutoObservable(
             displayId: 0,
             crop: "",
             powerOn: true,
+            audio: true,
             audioCodec: "aac",
         } as Settings,
 
@@ -229,25 +235,25 @@ export const SETTING_DEFINITIONS = computed(() => {
             group: "settings",
             key: "powerOn",
             type: "toggle",
-            label: "Turn device on when starting",
+            label: "Wake device up on start",
         },
         {
             group: "clientSettings",
             key: "turnScreenOff",
             type: "toggle",
-            label: "Turn screen off when starting",
+            label: "Turn screen off during mirroring",
         },
         {
             group: "settings",
             key: "stayAwake",
             type: "toggle",
-            label: "Stay awake (if plugged in)",
+            label: "Stay awake during mirroring (if plugged in)",
         },
         {
             group: "settings",
             key: "powerOffOnClose",
             type: "toggle",
-            label: "Turn device off when exiting",
+            label: "Turn device off on stop",
         }
     );
 
@@ -255,7 +261,7 @@ export const SETTING_DEFINITIONS = computed(() => {
         group: "settings",
         key: "displayId",
         type: "dropdown",
-        label: "Display",
+        label: "Display ID",
         placeholder: "Press refresh to update available displays",
         labelExtra: (
             <IconButton
@@ -323,7 +329,7 @@ export const SETTING_DEFINITIONS = computed(() => {
         group: "settings",
         key: "videoBitRate",
         type: "number",
-        label: "Video Bit Rate",
+        label: "Max Video Bitrate (bps)",
         min: 100,
         max: 100_000_000,
         step: 100,
@@ -436,26 +442,34 @@ export const SETTING_DEFINITIONS = computed(() => {
         description: `Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.`,
     });
 
-    result.push({
-        group: "settings",
-        key: "audioCodec",
-        type: "dropdown",
-        label: "Audio Codec",
-        options: [
-            {
-                key: "raw",
-                text: "Raw",
-            },
-            {
-                key: "aac",
-                text: "AAC",
-            },
-            {
-                key: "opus",
-                text: "Opus",
-            },
-        ],
-    });
+    result.push(
+        {
+            group: "settings",
+            key: "audio",
+            type: "toggle",
+            label: "Forward Audio (Requires Android 11)",
+        },
+        {
+            group: "settings",
+            key: "audioCodec",
+            type: "dropdown",
+            label: "Audio Codec",
+            options: [
+                {
+                    key: "raw",
+                    text: "Raw",
+                },
+                {
+                    key: "aac",
+                    text: "AAC",
+                },
+                {
+                    key: "opus",
+                    text: "Opus",
+                },
+            ],
+        }
+    );
 
     return result;
 });
