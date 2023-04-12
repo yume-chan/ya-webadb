@@ -1,6 +1,6 @@
 import type { Adb } from "@yume-chan/adb";
+import type { ScrcpyOptionsInit1_16 } from "@yume-chan/scrcpy";
 
-import type { ScrcpyOptionsInit1_16 } from "../../options/index.js";
 import type {
     AdbScrcpyConnection,
     AdbScrcpyConnectionOptions,

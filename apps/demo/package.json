@@ -21,6 +21,7 @@
         "@yume-chan/adb-backend-webusb": "workspace:^0.0.19",
         "@yume-chan/adb-backend-ws": "workspace:^0.0.9",
         "@yume-chan/adb-credential-web": "workspace:^0.0.19",
+        "@yume-chan/adb-scrcpy": "workspace:^0.0.19",
         "@yume-chan/android-bin": "workspace:^0.0.19",
         "@yume-chan/aoa": "workspace:^0.0.18",
         "@yume-chan/async": "^2.2.0",

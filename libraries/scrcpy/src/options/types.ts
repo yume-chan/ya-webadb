@@ -54,6 +54,10 @@ export interface ScrcpyOptions<T extends object> {
 
     serialize(): string[];
 
+    setListEncoders(): void;
+
+    setListDisplays(): void;
+
     parseEncoder(line: string): ScrcpyEncoder | undefined;
 
     /**
@@ -118,6 +122,14 @@ export abstract class ScrcpyOptionsBase<
     }
 
     public abstract serialize(): string[];
+
+    public setListEncoders(): void {
+        this._base.setListEncoders();
+    }
+
+    public setListDisplays(): void {
+        this._base.setListDisplays();
+    }
 
     public parseEncoder(line: string): ScrcpyEncoder | undefined {
         return this._base.parseEncoder(line);

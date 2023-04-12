@@ -50,6 +50,13 @@ export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
         );
     }
 
+    public override setListEncoders() {
+        // Set to an invalid value
+        // Server will print valid values before crashing
+        // (server will crash after opening video and control sockets)
+        this.value.encoderName = "_";
+    }
+
     public override parseEncoder(line: string): ScrcpyEncoder | undefined {
         return ScrcpyOptions1_17.parseEncoder(
             line,

@@ -11,9 +11,8 @@ import {
     TooltipHost,
 } from "@fluentui/react";
 import { makeStyles } from "@griffel/react";
+import { AdbScrcpyClient, AdbScrcpyOptions2_0 } from "@yume-chan/adb-scrcpy";
 import {
-    AdbScrcpyClient,
-    AdbScrcpyOptions2_0,
     DEFAULT_SERVER_PATH,
     ScrcpyEncoder,
     ScrcpyLogLevel,

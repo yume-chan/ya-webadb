@@ -24,6 +24,7 @@ importers:
       '@yume-chan/adb-backend-webusb': workspace:^0.0.19
       '@yume-chan/adb-backend-ws': workspace:^0.0.9
       '@yume-chan/adb-credential-web': workspace:^0.0.19
+      '@yume-chan/adb-scrcpy': workspace:^0.0.19
       '@yume-chan/android-bin': workspace:^0.0.19
       '@yume-chan/aoa': workspace:^0.0.18
       '@yume-chan/async': ^2.2.0
@@ -65,6 +66,7 @@ importers:
       '@yume-chan/adb-backend-webusb': link:../../libraries/adb-backend-webusb
       '@yume-chan/adb-backend-ws': link:../../libraries/adb-backend-ws
       '@yume-chan/adb-credential-web': link:../../libraries/adb-credential-web
+      '@yume-chan/adb-scrcpy': link:../../libraries/adb-scrcpy
       '@yume-chan/android-bin': link:../../libraries/android-bin
       '@yume-chan/aoa': link:../../libraries/aoa
       '@yume-chan/async': 2.2.0
@@ -227,6 +229,43 @@ importers:
       prettier: 2.8.7
       typescript: 5.0.4
 
+  ../../libraries/adb-scrcpy:
+    specifiers:
+      '@jest/globals': ^29.5.0
+      '@yume-chan/adb': workspace:^0.0.19
+      '@yume-chan/async': ^2.2.0
+      '@yume-chan/eslint-config': workspace:^1.0.0
+      '@yume-chan/event': workspace:^0.0.19
+      '@yume-chan/scrcpy': workspace:^0.0.19
+      '@yume-chan/stream-extra': workspace:^0.0.19
+      '@yume-chan/struct': workspace:^0.0.19
+      '@yume-chan/tsconfig': workspace:^1.0.0
+      cross-env: ^7.0.3
+      eslint: ^8.36.0
+      jest: ^29.5.0
+      prettier: ^2.8.4
+      ts-jest: ^29.0.4
+      tslib: ^2.4.1
+      typescript: ^5.0.3
+    dependencies:
+      '@yume-chan/adb': link:../adb
+      '@yume-chan/async': 2.2.0
+      '@yume-chan/event': link:../event
+      '@yume-chan/scrcpy': link:../scrcpy
+      '@yume-chan/stream-extra': link:../stream-extra
+      '@yume-chan/struct': link:../struct
+      tslib: 2.5.0
+    devDependencies:
+      '@jest/globals': 29.5.0
+      '@yume-chan/eslint-config': link:../../toolchain/eslint-config
+      '@yume-chan/tsconfig': link:../../toolchain/tsconfig
+      cross-env: 7.0.3
+      eslint: 8.38.0
+      jest: 29.5.0
+      prettier: 2.8.7
+      ts-jest: 29.1.0_tobmchb5uviuq5lwsinkw5fvje
+      typescript: 5.0.4
+
   ../../libraries/android-bin:
     specifiers:
       '@yume-chan/adb': workspace:^0.0.19
@@ -366,7 +405,6 @@ importers:
   ../../libraries/scrcpy:
     specifiers:
       '@jest/globals': ^29.5.0
-      '@yume-chan/adb': workspace:^0.0.19
       '@yume-chan/async': ^2.2.0
       '@yume-chan/eslint-config': workspace:^1.0.0
       '@yume-chan/event': workspace:^0.0.19
@@ -389,7 +427,6 @@ importers:
       tslib: 2.5.0
     devDependencies:
       '@jest/globals': 29.5.0
-      '@yume-chan/adb': link:../adb
       '@yume-chan/eslint-config': link:../../toolchain/eslint-config
       '@yume-chan/tsconfig': link:../../toolchain/tsconfig
       cross-env: 7.0.3

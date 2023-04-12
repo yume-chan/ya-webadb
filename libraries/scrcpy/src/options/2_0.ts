@@ -26,7 +26,7 @@ import type {
     ScrcpyVideoStreamMetadata,
 } from "./codec.js";
 import { ScrcpyAudioCodec } from "./codec.js";
-import type { ScrcpyOptionValue } from "./types.js";
+import type { ScrcpyEncoder, ScrcpyOptionValue } from "./types.js";
 import { ScrcpyOptionsBase } from "./types.js";
 
 export const ScrcpyInjectTouchControlMessage2_0 = new Struct()
@@ -143,6 +143,27 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
 
     public override serialize(): string[] {
         return ScrcpyOptions1_21.serialize(this.value, this.defaults);
+    }
+
+    public override setListEncoders(): void {
+        this.value.listEncoders = true;
+    }
+
+    public override setListDisplays(): void {
+        this.value.listDisplay = true;
+    }
+
+    public override parseEncoder(line: string): ScrcpyEncoder | undefined {
+        const match = line.match(
+            /scrcpy --video-codec=(.*) --video-encoder=(.*)/
+        );
+        if (match) {
+            return {
+                codec: match[1]!,
+                name: match[2]!,
+            };
+        }
+        return undefined;
     }
 
     public override parseVideoStreamMetadata(

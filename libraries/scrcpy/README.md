@@ -16,10 +16,7 @@ It's compatible with the official Scrcpy server binaries.
         -   [Webpack 5](#webpack-5)
     -   [Read the server version](#read-the-server-version)
 -   [Server versions](#server-versions)
--   [Use with `@yume-chan/adb`](#use-with-yume-chanadb)
-    -   [Push server binary](#push-server-binary)
-    -   [Start server on device](#start-server-on-device)
--   [Using other transportation](#using-other-transportation)
+-   [Serialize and deserialize packets](#serialize-and-deserialize-packets)
     -   [Parsing video packets](#parsing-video-packets)
     -   [Sending control messages](#sending-control-messages)
     -   [Reading device messages](#reading-device-messages)
@@ -34,10 +31,6 @@ Although Scrcpy doesn't install any App on the device, it does have a server bin
 With the official Scrcpy client and server, the client uses ADB to transfer the server binary file to the device, run it, and communicate with it via ADB tunnel (the bootstrap process).
 
 This package provides types that can serialize and deserialize Scrcpy protocol messages, but it generally requires you to do the bootstrapping and provide the data stream to the server.
-
-If you are also using `@yume-chan/adb`, this package has a helper class that can complete the bootstrap process using it, doing what the official client does.
-
-**NOTE:** `@yume-chan/adb` is a peer dependency, you need to install it yourself. Only those types whose names begin with `Adb` requires `@yume-chan/adb`.
 
 ## Prepare server binary
 
@@ -167,97 +160,9 @@ The latest one may continue to work for future server versions, but there is no 
 | 1.25      | `ScrcpyOptions1_25` |
 | 2.0       | `ScrcpyOptions2_0`  |
 
-When using `AdbScrcpyClient`, there are `AdbScrcpyOptions` containing `@yume-chan/adb` specific options:
+## Serialize and deserialize packets
 
-| Version   | Type                   |
-| --------- | ---------------------- |
-| 1.16~1.21 | `AdbScrcpyOptions1_16` |
-| 1.22~1.25 | `AdbScrcpyOptions1_22` |
-| 2.0       | `AdbScrcpyOptions2_0`  |
-
-## Use with `@yume-chan/adb`
-
-`@yume-chan/adb` is a TypeScript ADB implementation that can run on Web browser. It can be used to bootstrap the server on a device.
-
-### Push server binary
-
-The `AdbSync#write()` method can be used to push files to the device. Read more at `@yume-chan/adb`'s documentation (https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb#readme).
-
-This package also provides the `AdbScrcpyClient.pushServer()` static method as a shortcut, plus it will automatically close the `AdbSync` object on completion.
-
-Example using a `ReadableStream`:
-
-```ts
-import { WrapReadableStream } from "@yume-chan/adb";
-import { AdbScrcpyClient } from "@yume-chan/scrcpy";
-
-await AdbScrcpyClient.pushServer(
-    adb,
-    await fetch(SCRCPY_SERVER_URL).then(
-        // `WrapReadableStream` is required because native `ReadableStream` (from `fetch`)
-        // doesn't support `pipeTo()` non-native `WritableStream`s
-        // (`@yume-chan/adb` is using `web-streams-polyfill`)
-        (response) => new WrapReadableStream(response.body)
-    )
-);
-```
-
-Example using an `ArrayBuffer`:
-
-```ts
-import { AdbScrcpyClient } from "@yume-chan/scrcpy";
-
-await AdbScrcpyClient.pushServer(
-    adb,
-    new ReadableStream({
-        start(controller) {
-            controller.enqueue(new Uint8Array(buffer));
-            controller.end();
-        },
-    })
-);
-```
-
-### Start server on device
-
-To start the server, use the `AdbScrcpyClient.start()` method. It automatically sets up port forwarding, launches the server, and connects to it.
-
-```js
-import {
-    AdbScrcpyClient,
-    AdbScrcpyOptions1_22,
-    DEFAULT_SERVER_PATH,
-    ScrcpyOptions1_24,
-} from "@yume-chan/scrcpy";
-import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version.js";
-
-const client: AdbScrcpyClient = await AdbScrcpyClient.start(
-    adb,
-    DEFAULT_SERVER_PATH,
-    // If server binary was downloaded manually, must provide the correct version
-    SCRCPY_SERVER_VERSION,
-    new AdbScrcpyOptions1_22(
-        ScrcpyOptions1_24({
-            // options
-        })
-    )
-);
-
-const stdout: ReadableStream<string> = client.stdout;
-const videoPacketStream: ReadableStream<ScrcpyVideoStreamPacket> =
-    client.videoStream;
-const controlMessageSerializer: ScrcpyControlMessageSerializer | undefined =
-    client.controlMessageSerializer;
-const deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined =
-    client.deviceMessageStream;
-
-// to stop the server
-client.close();
-```
-
-## Using other transportation
-
-If you push, start and connect to the server yourself, you can still use this package to serialize/deserialize packets.
+If you push, start and connect to the server yourself, you can use this package to serialize/deserialize packets. This packets operates on Web Streams API streams.
 
 ### Parsing video packets
 

@@ -1,7 +1,7 @@
+import { AdbScrcpyClient } from "@yume-chan/adb-scrcpy";
 import { AoaHidDevice, HidKeyCode, HidKeyboard } from "@yume-chan/aoa";
 import { Disposable } from "@yume-chan/event";
 import {
-    AdbScrcpyClient,
     AndroidKeyCode,
     AndroidKeyEventAction,
     AndroidKeyEventMeta,

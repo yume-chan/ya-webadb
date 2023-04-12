@@ -115,6 +115,17 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         );
     }
 
+    public setListEncoders(): void {
+        throw new Error("Not supported");
+    }
+
+    public setListDisplays(): void {
+        // Set to an invalid value
+        // Server will print valid values before crashing
+        // (server will crash before opening sockets)
+        this.value.displayId = -1;
+    }
+
     public parseEncoder(): ScrcpyEncoder | undefined {
         throw new Error("Not supported");
     }

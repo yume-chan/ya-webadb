@@ -1,7 +1,7 @@
 import type { Adb } from "@yume-chan/adb";
+import type { ScrcpyOptions } from "@yume-chan/scrcpy";
+import { ScrcpyOptionsBase } from "@yume-chan/scrcpy";
 
-import type { ScrcpyOptions } from "../../options/index.js";
-import { ScrcpyOptionsBase } from "../../options/index.js";
 import type { AdbScrcpyConnection } from "../connection.js";
 
 export interface AdbScrcpyOptions<T extends object> extends ScrcpyOptions<T> {

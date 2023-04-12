@@ -4,6 +4,22 @@ import {
     AdbSubprocessNoneProtocol,
 } from "@yume-chan/adb";
 import type {
+    ScrcpyAudioStreamDisabledMetadata,
+    ScrcpyAudioStreamErroredMetadata,
+    ScrcpyAudioStreamSuccessMetadata,
+    ScrcpyDeviceMessage,
+    ScrcpyEncoder,
+    ScrcpyMediaStreamPacket,
+    ScrcpyVideoStreamMetadata,
+} from "@yume-chan/scrcpy";
+import {
+    DEFAULT_SERVER_PATH,
+    ScrcpyControlMessageSerializer,
+    ScrcpyDeviceMessageDeserializeStream,
+    ScrcpyVideoCodecId,
+    h264ParseConfiguration,
+} from "@yume-chan/scrcpy";
+import type {
     Consumable,
     ReadableStream,
     ReadableWritablePair,
@@ -16,20 +32,6 @@ import {
     SplitStringStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-
-import { h264ParseConfiguration } from "../codec/index.js";
-import { ScrcpyControlMessageSerializer } from "../control/index.js";
-import type { ScrcpyDeviceMessage } from "../device-message/index.js";
-import { ScrcpyDeviceMessageDeserializeStream } from "../device-message/index.js";
-import type {
-    ScrcpyAudioStreamDisabledMetadata,
-    ScrcpyAudioStreamErroredMetadata,
-    ScrcpyAudioStreamSuccessMetadata,
-    ScrcpyEncoder,
-    ScrcpyMediaStreamPacket,
-    ScrcpyVideoStreamMetadata,
-} from "../options/index.js";
-import { DEFAULT_SERVER_PATH, ScrcpyVideoCodecId } from "../options/index.js";
 
 import type { AdbScrcpyConnection } from "./connection.js";
 import type { AdbScrcpyOptions } from "./options/index.js";
@@ -212,15 +214,7 @@ export class AdbScrcpyClient {
         version: string,
         options: AdbScrcpyOptions<object>
     ): Promise<ScrcpyEncoder[]> {
-        Object.assign(options.value, {
-            // Provide an invalid encoder name
-            // So the server will return all available encoders
-            encoderName: "_",
-            // Disable control for faster connection in 1.22+
-            control: false,
-            sendDeviceMeta: false,
-            sendDummyByte: false,
-        });
+        options.setListEncoders();
 
         // Scrcpy server will open connections, before initializing encoder
         // Thus although an invalid encoder name is given, the start process will success
@@ -251,14 +245,7 @@ export class AdbScrcpyClient {
         version: string,
         options: AdbScrcpyOptions<object>
     ): Promise<number[]> {
-        Object.assign(options.value, {
-            // Similar to `getEncoders`, pass an invalid option and parse the output
-            displayId: -1,
-            // Disable control for faster connection in 1.22+
-            control: false,
-            sendDeviceMeta: false,
-            sendDummyByte: false,
-        });
+        options.setListDisplays();
 
         try {
             // Server will exit before opening connections when an invalid display id was given.
