@@ -1,9 +1,6 @@
-import { useRouter } from "next/router";
 import { useEffect } from "react";
 
 function ChromeDevToolsFrame() {
-    const router = useRouter();
-
     useEffect(() => {
         var WebSocketOriginal = globalThis.WebSocket;
         globalThis.WebSocket = class WebSocket extends EventTarget {

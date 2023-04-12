@@ -35,7 +35,7 @@ importers:
       '@yume-chan/stream-extra': workspace:^0.0.19
       '@yume-chan/stream-saver': ^2.0.6
       '@yume-chan/struct': workspace:^0.0.19
-      '@yume-chan/undici-browser': 5.21.2-mod.8
+      '@yume-chan/undici-browser': 5.21.2-mod.9
       eslint: ^8.36.0
       eslint-config-next: 13.2.4
       fflate: ^0.7.4
@@ -75,7 +75,7 @@ importers:
       '@yume-chan/stream-extra': link:../../libraries/stream-extra
       '@yume-chan/stream-saver': 2.0.6
       '@yume-chan/struct': link:../../libraries/struct
-      '@yume-chan/undici-browser': 5.21.2-mod.8
+      '@yume-chan/undici-browser': 5.21.2-mod.9
       fflate: 0.7.4
       mobx: 6.8.0
       mobx-react-lite: 3.4.3_woojb62cqeyk443mbl7msrwu2e
@@ -2952,8 +2952,8 @@ packages:
     resolution: {integrity: sha512-DzRADjLoHcz18ocgGHvLIanapxygX3o9dlWwE32EUZqhyAsopfdvZ79ttR9+7pqAXIQamP9M4mbDy8hHgFKOIA==}
     dev: false
 
-  /@yume-chan/undici-browser/5.21.2-mod.8:
-    resolution: {integrity: sha512-jDqZCibBzYzNu6U1chYJ0BhDe7c2L7b9GS3Iy18orDXVL2YvmNJaPEoTJHyBe5pcB+rJsfeEpmc64oLeG4IA+A==}
+  /@yume-chan/undici-browser/5.21.2-mod.9:
+    resolution: {integrity: sha512-rkpYsC6E9o26D4d38FYCT2I+9NgQPyMzIRCSjo9ZKNpnpP/QL02U9h57LqXGaY1l/nBRgoAlK6ctdMwVClAQjw==}
     engines: {node: '>=12.18'}
     dependencies:
       busboy: 1.6.0
