@@ -8,6 +8,7 @@ import {
 } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
 import type { AppProps } from "next/app";
+import getConfig from "next/config";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -16,7 +17,6 @@ import { Connect, ErrorDialogProvider } from "../components";
 import "../styles/globals.css";
 import { Icons } from "../utils";
 import { register as registerIcons } from "../utils/icons";
-import getConfig from "next/config";
 
 registerIcons();
 
@@ -70,6 +70,11 @@ const ROUTES = [
         url: "/power",
         icon: Icons.Power,
         name: "Power Menu",
+    },
+    {
+        url: "/chrome-devtools",
+        icon: Icons.WindowDevTools,
+        name: "Chrome Remote Debugging",
     },
     {
         url: "/bug-report",
@@ -135,6 +140,10 @@ function App({ Component, pageProps }: AppProps) {
     }, []);
 
     const router = useRouter();
+
+    if ("noLayout" in Component) {
+        return <Component {...pageProps} />;
+    }
 
     return (
         <ErrorDialogProvider>

@@ -1,6 +1,7 @@
 import { registerIcons } from "@fluentui/react";
 import {
     AddCircleRegular,
+    WindowDevToolsRegular,
     ArrowClockwiseRegular,
     ArrowRotateClockwiseRegular,
     ArrowRotateCounterclockwiseRegular,
@@ -108,6 +109,7 @@ export function register() {
             Warning: <WarningRegular style={STYLE} />,
             WifiSettings: <WifiSettingsRegular style={STYLE} />,
             WindowConsole: <WindowConsoleRegular style={STYLE} />,
+            WindowDevTools: <WindowDevToolsRegular style={STYLE} />,
 
             // Required by @fluentui/react
             Checkmark: <CheckmarkRegular style={STYLE} />,
@@ -179,6 +181,8 @@ const Icons = {
     Warning: "Warning",
     WifiSettings: "WifiSettings",
     WindowConsole: "WindowConsole",
+    WindowDevTools: "WindowDevTools",
+
     Document20: "Document20",
 };
 

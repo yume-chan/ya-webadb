@@ -68,6 +68,11 @@ export class AdbSocketController
         return this._closed;
     }
 
+    private _endPromiseResolver = new PromiseResolver<void>();
+    public get end() {
+        return this._endPromiseResolver.promise;
+    }
+
     private _socket: AdbSocket;
     public get socket() {
         return this._socket;
@@ -99,6 +104,7 @@ export class AdbSocketController
             dispose: () => {
                 // Error out the pending writes
                 this._writePromise?.reject(new Error("Socket closed"));
+                this._endPromiseResolver.resolve();
             },
         });
 
@@ -194,6 +200,14 @@ export class AdbSocket
     }
     public get writable(): WritableStream<Consumable<Uint8Array>> {
         return this._controller.writable;
+    }
+
+    public get closed(): boolean {
+        return this._controller.closed;
+    }
+
+    public get end(): Promise<void> {
+        return this._controller.end;
     }
 
     public constructor(controller: AdbSocketController) {
