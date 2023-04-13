@@ -11,7 +11,7 @@ import {
     TooltipHost,
 } from "@fluentui/react";
 import { makeStyles } from "@griffel/react";
-import { AdbScrcpyClient, AdbScrcpyOptions2_0 } from "@yume-chan/adb-scrcpy";
+import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
 import {
     DEFAULT_SERVER_PATH,
     ScrcpyDisplay,
@@ -259,7 +259,7 @@ export const SETTING_DEFINITIONS = computed(() => {
         group: "settings",
         key: "displayId",
         type: "dropdown",
-        label: "Display ID",
+        label: "Display",
         placeholder: "Press refresh to update available displays",
         labelExtra: (
             <IconButton
@@ -274,7 +274,7 @@ export const SETTING_DEFINITIONS = computed(() => {
                             GLOBAL_STATE.device!,
                             DEFAULT_SERVER_PATH,
                             SCRCPY_SERVER_VERSION,
-                            new AdbScrcpyOptions2_0(
+                            new AdbScrcpyOptionsLatest(
                                 new ScrcpyOptionsLatest({
                                     logLevel: ScrcpyLogLevel.Debug,
                                 })
@@ -390,7 +390,7 @@ export const SETTING_DEFINITIONS = computed(() => {
                             GLOBAL_STATE.device!,
                             DEFAULT_SERVER_PATH,
                             SCRCPY_SERVER_VERSION,
-                            new AdbScrcpyOptions2_0(
+                            new AdbScrcpyOptionsLatest(
                                 new ScrcpyOptionsLatest({
                                     logLevel: ScrcpyLogLevel.Debug,
                                 })
@@ -489,7 +489,7 @@ export const SETTING_DEFINITIONS = computed(() => {
                                 GLOBAL_STATE.device!,
                                 DEFAULT_SERVER_PATH,
                                 SCRCPY_SERVER_VERSION,
-                                new AdbScrcpyOptions2_0(
+                                new AdbScrcpyOptionsLatest(
                                     new ScrcpyOptionsLatest({
                                         logLevel: ScrcpyLogLevel.Debug,
                                     })

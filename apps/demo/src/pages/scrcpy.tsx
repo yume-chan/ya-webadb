@@ -243,6 +243,7 @@ const Scrcpy: NextPage = () => {
                                         </Link>
                                     </div>
                                 )}
+
                             <DeviceView
                                 width={STATE.rotatedWidth}
                                 height={STATE.rotatedHeight}

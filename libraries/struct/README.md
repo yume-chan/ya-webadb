@@ -13,7 +13,7 @@ cspell: ignore uint8arraystring
 
 A C-style structure serializer and deserializer. Written in TypeScript and highly takes advantage of its type system.
 
-**WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
+**WARNING:** The public API is UNSTABLE. Open a GitHub discussion if you have any questions.
 
 ## Installation
 

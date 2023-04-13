@@ -2,20 +2,21 @@
 
 Use `@yume-chan/adb` to bootstrap `@yume-chan/scrcpy`.
 
-**WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
+**WARNING:** The public API is UNSTABLE. Open a GitHub discussion if you have any questions.
 
 -   [Prerequisites](#prerequisites)
 -   [Server versions](#server-versions)
     -   [Push server binary](#push-server-binary)
     -   [Start server on device](#start-server-on-device)
--   [Always read the streams](#always-read-the-streams)
--   [Video stream](#video-stream)
+-   [Always read all streams](#always-read-all-streams)
 
 ## Prerequisites
 
 See `@yume-chan/scrcpy`'s README for introduction and prerequisites.
 
 ## Server versions
+
+Similar to `@yume-chan/scrcpy`, this package supports multiple Scrcpy versions, but requires correct options for each version.
 
 | Version   | Type                   |
 | --------- | ---------------------- |
@@ -34,14 +35,16 @@ Example using a `ReadableStream`:
 ```ts
 import { WrapReadableStream } from "@yume-chan/adb";
 import { AdbScrcpyClient } from "@yume-chan/scrcpy";
+import {
+    WrapReadableStream,
+    WrapConsumableStream,
+} from "@yume-chan/stream-extra";
 
+const response = await fetch(SCRCPY_SERVER_URL);
 await AdbScrcpyClient.pushServer(
     adb,
-    await fetch(SCRCPY_SERVER_URL).then(
-        // `WrapReadableStream` is required because native `ReadableStream` (from `fetch`)
-        // doesn't support `pipeTo()` non-native `WritableStream`s
-        // (`@yume-chan/adb` is using `web-streams-polyfill`)
-        (response) => new WrapReadableStream(response.body)
+    new WrapReadableStream(response.body).pipeThrough(
+        new WrapConsumableStream()
     )
 );
 ```
@@ -50,13 +53,14 @@ Example using an `ArrayBuffer`:
 
 ```ts
 import { AdbScrcpyClient } from "@yume-chan/scrcpy";
+import { Consumable, ReadableStream } from "@yume-chan/stream-extra";
 
 await AdbScrcpyClient.pushServer(
     adb,
-    new ReadableStream({
+    new ReadableStream<Consumable<Uint8Array>>({
         start(controller) {
-            controller.enqueue(new Uint8Array(buffer));
-            controller.end();
+            controller.enqueue(new Consumable(serverBuffer));
+            controller.close();
         },
     })
 );
@@ -69,9 +73,9 @@ To start the server, use the `AdbScrcpyClient.start()` method. It automatically 
 ```js
 import {
     AdbScrcpyClient,
-    AdbScrcpyOptions1_22,
+    AdbScrcpyOptions2_0,
     DEFAULT_SERVER_PATH,
-    ScrcpyOptions1_24,
+    ScrcpyOptions2_0,
 } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version.js";
 
@@ -80,18 +84,20 @@ const client: AdbScrcpyClient = await AdbScrcpyClient.start(
     DEFAULT_SERVER_PATH,
     // If server binary was downloaded manually, must provide the correct version
     SCRCPY_SERVER_VERSION,
-    new AdbScrcpyOptions1_22(
-        ScrcpyOptions1_24({
+    new AdbScrcpyOptions2_0(
+        ScrcpyOptions2_0({
             // options
         })
     )
 );
 
 const stdout: ReadableStream<string> = client.stdout;
-const videoPacketStream: ReadableStream<ScrcpyVideoStreamPacket> =
-    client.videoStream;
-const controlMessageSerializer: ScrcpyControlMessageSerializer | undefined =
-    client.controlMessageSerializer;
+const { metadata: videoMetadata, stream: videoPacketStream } =
+    await client.videoStream;
+const { metadata: audioMetadata, stream: audioPacketStream } =
+    await client.audioStream;
+const controlMessageWriter: ScrcpyControlMessageWriter | undefined =
+    client.controlMessageWriter;
 const deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined =
     client.deviceMessageStream;
 
@@ -99,13 +105,12 @@ const deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined =
 client.close();
 ```
 
-## Always read the streams
+## Always read all streams
 
-In Web Streams API, `ReadableStream` will block its upstream when too many chunks are kept not read. If multiple streams are from the same upstream source, block one stream means blocking all of them.
-
-For Scrcpy, usually all streams are originated from the same ADB connection (either USB or TCP), so it's important to always read from all streams, even if you don't care about their data.
+In Web Streams API, pipes will block its upstream when downstream's queue is full (back-pressure mechanism). If multiple streams are separated from the same source (for example, all Scrcpy streams are from the same USB or TCP connection), blocking one stream means blocking all of them, so it's important to always read from all streams, even if you don't care about their data.
 
 ```ts
+// when using `AdbScrcpyClient`
 stdout
     .pipeTo(
         new WritableStream<string>({
@@ -139,28 +144,3 @@ deviceMessageStream
     )
     .catch(() => {});
 ```
-
-## Video stream
-
-The data from `videoPacketStream` has two types: `configuration` and `data`. Some fields may not be populated depending on the server version and options.
-
-```ts
-export interface ScrcpyVideoStreamConfigurationPacket {
-    type: "configuration";
-    data: Uint8Array;
-}
-
-export interface ScrcpyVideoStreamFramePacket {
-    type: "data";
-    keyframe?: boolean | undefined;
-    pts?: bigint | undefined;
-    data: Uint8Array;
-}
-```
-
-When `sendFrameMeta: false` is set, `videoPacketStream` only contains `frame` packets, and only the `data` field in it is available. It's commonly used when feeding into decoders like FFmpeg that can parse the H.264 stream itself, or saving to disk directly.
-
-Otherwise, both `configuration` and `data` packets are available.
-
--   `configuration` packets contain the parsed SPS data, and can be used to initialize a video decoder.
--   `pts` (and `keyframe` field from server version 1.23) fields in `data` packets are available to help decode the video.

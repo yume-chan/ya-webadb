@@ -1,6 +1,6 @@
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
 import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
-import { AdbScrcpyClient, AdbScrcpyOptions2_0 } from "@yume-chan/adb-scrcpy";
+import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
 import {
     Float32PcmPlayer,
     Float32PlanerPcmPlayer,
@@ -15,9 +15,9 @@ import {
     ScrcpyDeviceMessageType,
     ScrcpyHoverHelper,
     ScrcpyInstanceId,
-    ScrcpyLogLevel1_18,
+    ScrcpyLogLevel,
     ScrcpyMediaStreamPacket,
-    ScrcpyOptions2_0,
+    ScrcpyOptionsLatest,
     clamp,
     h264ParseConfiguration,
 } from "@yume-chan/scrcpy";
@@ -275,10 +275,10 @@ export class ScrcpyPageState {
             // Less latency
             // codecOptions.value.intraRefreshPeriod = 10000;
 
-            const options = new AdbScrcpyOptions2_0(
-                new ScrcpyOptions2_0({
+            const options = new AdbScrcpyOptionsLatest(
+                new ScrcpyOptionsLatest({
                     ...SETTING_STATE.settings,
-                    logLevel: ScrcpyLogLevel1_18.Debug,
+                    logLevel: ScrcpyLogLevel.Debug,
                     scid: ScrcpyInstanceId.random(),
                     sendDeviceMeta: false,
                     sendDummyByte: false,
