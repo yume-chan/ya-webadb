@@ -157,22 +157,30 @@ const {
 function getPopupParams(page: Page) {
     const frontendUrl = page.devtoolsFrontendUrl;
     const [frontendBase, params] = frontendUrl.split("?");
-    const script = frontendBase.startsWith(
-        "https://aka.ms/docs-landing-page/serve_rev/"
-    )
-        ? // Edge
-          frontendBase
-              .replace(
-                  "https://aka.ms/docs-landing-page/serve_rev/",
-                  "https://devtools.azureedge.net/serve_file/"
-              )
-              .replace("inspector.html", "entrypoints/inspector/inspector.js")
-        : // Chrome
-          frontendBase.replace(
-              "inspector.html",
-              "front_end/entrypoints/inspector/inspector.js"
-          );
-    return { script, params };
+    let frontendScript: string;
+    if (
+        frontendBase.startsWith("https://aka.ms/docs-landing-page/serve_rev/")
+    ) {
+        // Edge
+        frontendScript = frontendBase
+            .replace(
+                "https://aka.ms/docs-landing-page/serve_rev/",
+                "https://devtools.azureedge.net/serve_file/"
+            )
+            .replace("inspector.html", "entrypoints/inspector/inspector.js");
+    } else if (frontendBase.startsWith("https://devtools.opera.com/")) {
+        // Opera doesn't host its DevTools
+        // use Edge's instead
+        frontendScript =
+            "https://devtools.azureedge.net/serve_file/@de5387e0c9d4198cd2d786b4eb445a1fb74a3d18/entrypoints/inspector/inspector.js";
+    } else {
+        // Chrome
+        frontendScript = frontendBase.replace(
+            "inspector.html",
+            "front_end/entrypoints/inspector/inspector.js"
+        );
+    }
+    return { script: frontendScript, params };
 }
 
 interface Browser {
@@ -195,7 +203,7 @@ const STATE = makeAutoObservable(
 async function getBrowsers() {
     const device = GLOBAL_STATE.device!;
     const sockets = await device.subprocess.spawnAndWaitLegacy(
-        `cat /proc/net/unix | grep -E "@chrome_devtools_remote|@chrome_devtools_remote_[0-9]+" | awk '{print substr($8, 2)}'`
+        `cat /proc/net/unix | grep -E "@chrome_devtools_remote|@chrome_devtools_remote_[0-9]+|@com.opera.browser.devtools" | awk '{print substr($8, 2)}'`
     );
     const browsers: Browser[] = [];
     for (const socket of sockets.split("\n").filter(Boolean)) {
