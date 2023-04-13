@@ -405,9 +405,7 @@ importers:
   ../../libraries/scrcpy:
     specifiers:
       '@jest/globals': ^29.5.0
-      '@yume-chan/async': ^2.2.0
       '@yume-chan/eslint-config': workspace:^1.0.0
-      '@yume-chan/event': workspace:^0.0.19
       '@yume-chan/stream-extra': workspace:^0.0.19
       '@yume-chan/struct': workspace:^0.0.19
       '@yume-chan/tsconfig': workspace:^1.0.0
@@ -420,8 +418,6 @@ importers:
       tslib: ^2.4.1
       typescript: ^5.0.3
     dependencies:
-      '@yume-chan/async': 2.2.0
-      '@yume-chan/event': link:../event
       '@yume-chan/stream-extra': link:../stream-extra
       '@yume-chan/struct': link:../struct
       tslib: 2.5.0

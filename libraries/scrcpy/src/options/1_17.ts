@@ -27,7 +27,7 @@ export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
     ): ScrcpyEncoder | undefined {
         const match = line.match(encoderNameRegex);
         if (match) {
-            return { name: match[1]! };
+            return { type: "video", name: match[1]! };
         }
         return undefined;
     }

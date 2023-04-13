@@ -14,6 +14,7 @@ import { makeStyles } from "@griffel/react";
 import { AdbScrcpyClient, AdbScrcpyOptions2_0 } from "@yume-chan/adb-scrcpy";
 import {
     DEFAULT_SERVER_PATH,
+    ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyLogLevel,
     ScrcpyOptionsInitLatest,
@@ -180,7 +181,7 @@ export interface DecoderDefinition {
 
 export const SETTING_STATE = makeAutoObservable(
     {
-        displays: [] as number[],
+        displays: [] as ScrcpyDisplay[],
         encoders: [] as ScrcpyEncoder[],
         decoders: [
             {
@@ -214,8 +215,6 @@ autorun(() => {
     if (GLOBAL_STATE.device) {
         runInAction(() => {
             SETTING_STATE.encoders = [];
-            SETTING_STATE.settings.videoEncoder = undefined;
-
             SETTING_STATE.displays = [];
             SETTING_STATE.settings.displayId = undefined;
         });
@@ -286,12 +285,14 @@ export const SETTING_DEFINITIONS = computed(() => {
                             SETTING_STATE.displays = displays;
                             if (
                                 !SETTING_STATE.settings.displayId ||
-                                !SETTING_STATE.displays.includes(
-                                    SETTING_STATE.settings.displayId
+                                !SETTING_STATE.displays.some(
+                                    (x) =>
+                                        x.id ===
+                                        SETTING_STATE.settings.displayId
                                 )
                             ) {
                                 SETTING_STATE.settings.displayId =
-                                    SETTING_STATE.displays[0];
+                                    SETTING_STATE.displays[0]?.id;
                             }
                         });
                     } catch (e: any) {
@@ -301,8 +302,8 @@ export const SETTING_DEFINITIONS = computed(() => {
             />
         ),
         options: SETTING_STATE.displays.map((item) => ({
-            key: item,
-            text: item.toString(),
+            key: item.id,
+            text: `${item.id}${item.resolution ? ` (${item.resolution})` : ""}`,
         })),
     });
 
@@ -372,7 +373,10 @@ export const SETTING_DEFINITIONS = computed(() => {
         key: "videoEncoder",
         type: "dropdown",
         label: "Video Encoder",
-        placeholder: "Press refresh to update available encoders",
+        placeholder:
+            SETTING_STATE.encoders.length === 0
+                ? "Press refresh button to update encoder list"
+                : "(default)",
         labelExtra: (
             <IconButton
                 iconProps={{ iconName: Icons.ArrowClockwise }}
@@ -395,17 +399,6 @@ export const SETTING_DEFINITIONS = computed(() => {
 
                         runInAction(() => {
                             SETTING_STATE.encoders = encoders;
-                            if (
-                                !SETTING_STATE.settings.videoEncoder ||
-                                !SETTING_STATE.encoders.some(
-                                    (item) =>
-                                        item.name ===
-                                        SETTING_STATE.settings.videoEncoder
-                                )
-                            ) {
-                                SETTING_STATE.settings.videoEncoder =
-                                    SETTING_STATE.encoders[0].name;
-                            }
                         });
                     } catch (e: any) {
                         GLOBAL_STATE.showErrorDialog(e);
@@ -413,10 +406,16 @@ export const SETTING_DEFINITIONS = computed(() => {
                 }}
             />
         ),
-        options: SETTING_STATE.encoders.map((item) => ({
-            key: item.name,
-            text: item.name,
-        })),
+        options: SETTING_STATE.encoders
+            .filter(
+                (item) =>
+                    item.type === "video" &&
+                    (!item.codec || item.codec === "h264")
+            )
+            .map((item) => ({
+                key: item.name,
+                text: item.name,
+            })),
     });
 
     if (SETTING_STATE.decoders.length > 1) {
@@ -467,8 +466,92 @@ export const SETTING_DEFINITIONS = computed(() => {
                     text: "Opus",
                 },
             ],
+        },
+        {
+            group: "settings",
+            key: "audioEncoder",
+            type: "dropdown",
+            placeholder:
+                SETTING_STATE.encoders.length === 0
+                    ? "Press refresh button to update encoder list"
+                    : "(default)",
+            label: "Audio Encoder",
+            labelExtra: (
+                <IconButton
+                    iconProps={{ iconName: Icons.ArrowClockwise }}
+                    disabled={!GLOBAL_STATE.device}
+                    text="Refresh"
+                    onClick={async () => {
+                        try {
+                            await STATE.pushServer();
+
+                            const encoders = await AdbScrcpyClient.getEncoders(
+                                GLOBAL_STATE.device!,
+                                DEFAULT_SERVER_PATH,
+                                SCRCPY_SERVER_VERSION,
+                                new AdbScrcpyOptions2_0(
+                                    new ScrcpyOptionsLatest({
+                                        logLevel: ScrcpyLogLevel.Debug,
+                                    })
+                                )
+                            );
+
+                            runInAction(() => {
+                                SETTING_STATE.encoders = encoders;
+                            });
+                        } catch (e: any) {
+                            GLOBAL_STATE.showErrorDialog(e);
+                        }
+                    }}
+                />
+            ),
+            options: SETTING_STATE.encoders
+                .filter(
+                    (x) =>
+                        x.type === "audio" &&
+                        x.codec === SETTING_STATE.settings.audioCodec
+                )
+                .map((item) => ({
+                    key: item.name,
+                    text: item.name,
+                })),
         }
     );
 
     return result;
+});
+
+autorun(() => {
+    if (SETTING_STATE.encoders.length === 0) {
+        SETTING_STATE.settings.videoEncoder = "";
+        SETTING_STATE.settings.audioEncoder = "";
+        return;
+    }
+
+    const encodersForCurrentVideoCodec = SETTING_STATE.encoders.filter(
+        (item) =>
+            item.type === "video" && (!item.codec || item.codec === "h264")
+    );
+    if (
+        SETTING_STATE.settings.videoEncoder &&
+        encodersForCurrentVideoCodec.every(
+            (item) => item.name !== SETTING_STATE.settings.videoEncoder
+        )
+    ) {
+        SETTING_STATE.settings.videoEncoder = "";
+    }
+
+    const encodersForCurrentAudioCodec = SETTING_STATE.encoders.filter(
+        (item) =>
+            item.type === "audio" &&
+            item.codec === SETTING_STATE.settings.audioCodec
+    );
+    if (
+        SETTING_STATE.settings.audioEncoder &&
+        encodersForCurrentAudioCodec.every(
+            (item) => item.name !== SETTING_STATE.settings.audioEncoder
+        )
+    ) {
+        SETTING_STATE.settings.audioEncoder = "";
+    }
 });

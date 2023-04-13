@@ -26,7 +26,11 @@ import type {
     ScrcpyVideoStreamMetadata,
 } from "./codec.js";
 import { ScrcpyAudioCodec } from "./codec.js";
-import type { ScrcpyEncoder, ScrcpyOptionValue } from "./types.js";
+import type {
+    ScrcpyDisplay,
+    ScrcpyEncoder,
+    ScrcpyOptionValue,
+} from "./types.js";
 import { ScrcpyOptionsBase } from "./types.js";
 
 export const ScrcpyInjectTouchControlMessage2_0 = new Struct()
@@ -85,7 +89,7 @@ export interface ScrcpyOptionsInit2_0
     audioEncoder?: string;
 
     listEncoders?: boolean;
-    listDisplay?: boolean;
+    listDisplays?: boolean;
     sendCodecMeta?: boolean;
 }
 
@@ -126,7 +130,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
         audioEncoder: "",
 
         listEncoders: false,
-        listDisplay: false,
+        listDisplays: false,
         sendCodecMeta: true,
     } as const satisfies Required<ScrcpyOptionsInit2_0>;
 
@@ -150,18 +154,43 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     }
 
     public override setListDisplays(): void {
-        this.value.listDisplay = true;
+        this.value.listDisplays = true;
     }
 
     public override parseEncoder(line: string): ScrcpyEncoder | undefined {
-        const match = line.match(
-            /scrcpy --video-codec=(.*) --video-encoder=(.*)/
+        let match = line.match(
+            /\s+--video-codec=(.*)\s+--video-encoder='(.*)'/
         );
         if (match) {
             return {
+                type: "video",
                 codec: match[1]!,
                 name: match[2]!,
             };
+        }
+
+        match = line.match(/\s+--audio-codec=(.*)\s+--audio-encoder='(.*)'/);
+        if (match) {
+            return {
+                type: "audio",
+                codec: match[1]!,
+                name: match[2]!,
+            };
+        }
+
+        return undefined;
+    }
+
+    public override parseDisplay(line: string): ScrcpyDisplay | undefined {
+        const match = line.match(/\s+--display=(\d+)\s+\((.*?)\)/);
+        if (match) {
+            const display: ScrcpyDisplay = {
+                id: Number.parseInt(match[1]!, 10),
+            };
+            if (match[2] !== "size unknown") {
+                display.resolution = match[2]!;
+            }
+            return display;
         }
         return undefined;
     }

@@ -8,13 +8,14 @@ import type {
     ScrcpyAudioStreamErroredMetadata,
     ScrcpyAudioStreamSuccessMetadata,
     ScrcpyDeviceMessage,
+    ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
     ScrcpyVideoStreamMetadata,
 } from "@yume-chan/scrcpy";
 import {
     DEFAULT_SERVER_PATH,
-    ScrcpyControlMessageSerializer,
+    ScrcpyControlMessageWriter,
     ScrcpyDeviceMessageDeserializeStream,
     ScrcpyVideoCodecId,
     h264ParseConfiguration,
@@ -215,24 +216,7 @@ export class AdbScrcpyClient {
         options: AdbScrcpyOptions<object>
     ): Promise<ScrcpyEncoder[]> {
         options.setListEncoders();
-
-        // Scrcpy server will open connections, before initializing encoder
-        // Thus although an invalid encoder name is given, the start process will success
-        const client = await AdbScrcpyClient.start(adb, path, version, options);
-
-        const encoders: ScrcpyEncoder[] = [];
-        await client.stdout.pipeTo(
-            new WritableStream({
-                write(line) {
-                    const encoder = options.parseEncoder(line);
-                    if (encoder) {
-                        encoders.push(encoder);
-                    }
-                },
-            })
-        );
-
-        return encoders;
+        return await options.getEncoders(adb, path, version);
     }
 
     /**
@@ -244,27 +228,9 @@ export class AdbScrcpyClient {
         path: string,
         version: string,
         options: AdbScrcpyOptions<object>
-    ): Promise<number[]> {
+    ): Promise<ScrcpyDisplay[]> {
         options.setListDisplays();
-
-        try {
-            // Server will exit before opening connections when an invalid display id was given.
-            await AdbScrcpyClient.start(adb, path, version, options);
-        } catch (e) {
-            if (e instanceof AdbScrcpyExitedError) {
-                const displayIdRegex = /\s+scrcpy --display (\d+)/;
-                const displays: number[] = [];
-                for (const line of e.output) {
-                    const match = line.match(displayIdRegex);
-                    if (match) {
-                        displays.push(Number.parseInt(match[1]!, 10));
-                    }
-                }
-                return displays;
-            }
-        }
-
-        throw new Error("failed to get displays");
+        return await options.getDisplays(adb, path, version);
     }
 
     private _options: AdbScrcpyOptions<object>;
@@ -299,11 +265,9 @@ export class AdbScrcpyClient {
         return this._audioStream;
     }
 
-    private _controlMessageSerializer:
-        | ScrcpyControlMessageSerializer
-        | undefined;
-    public get controlMessageSerializer() {
-        return this._controlMessageSerializer;
+    private _controlMessageWriter: ScrcpyControlMessageWriter | undefined;
+    public get controlMessageWriter() {
+        return this._controlMessageWriter;
     }
 
     private _deviceMessageStream:
@@ -332,8 +296,8 @@ export class AdbScrcpyClient {
             : undefined;
 
         if (controlStream) {
-            this._controlMessageSerializer = new ScrcpyControlMessageSerializer(
-                controlStream.writable,
+            this._controlMessageWriter = new ScrcpyControlMessageWriter(
+                controlStream.writable.getWriter(),
                 options
             );
             this._deviceMessageStream = controlStream.readable.pipeThrough(

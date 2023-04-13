@@ -19,7 +19,7 @@ import type {
     ScrcpyVideoStream,
     ScrcpyVideoStreamMetadata,
 } from "../codec.js";
-import type { ScrcpyEncoder, ScrcpyOptions } from "../types.js";
+import type { ScrcpyDisplay, ScrcpyEncoder, ScrcpyOptions } from "../types.js";
 import { toScrcpyOptionValue } from "../types.js";
 
 import { CodecOptions } from "./codec-options.js";
@@ -128,6 +128,17 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     public parseEncoder(): ScrcpyEncoder | undefined {
         throw new Error("Not supported");
+    }
+
+    public parseDisplay(line: string): ScrcpyDisplay | undefined {
+        const displayIdRegex = /\s+scrcpy --display (\d+)/;
+        const match = line.match(displayIdRegex);
+        if (match) {
+            return {
+                id: Number.parseInt(match[1]!, 10),
+            };
+        }
+        return undefined;
     }
 
     public parseVideoStreamMetadata(

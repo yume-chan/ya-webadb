@@ -10,3 +10,4 @@ export * from "./serializer.js";
 export * from "./set-clipboard.js";
 export * from "./set-screen-power-mode.js";
 export * from "./type.js";
+export * from "./writer.js";

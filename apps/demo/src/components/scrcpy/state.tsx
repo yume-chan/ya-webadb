@@ -508,7 +508,7 @@ export class ScrcpyPageState {
                 .catch(() => {});
 
             if (SETTING_STATE.clientSettings.turnScreenOff) {
-                await client.controlMessageSerializer!.setScreenPowerMode(
+                await client.controlMessageWriter!.setScreenPowerMode(
                     AndroidScreenPowerMode.Off
                 );
             }

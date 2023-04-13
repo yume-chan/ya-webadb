@@ -12,7 +12,6 @@ import { action, computed } from "mobx";
 import { observer } from "mobx-react-lite";
 import { Icons } from "../../utils";
 import { CommandBarSpacerItem } from "../command-bar-spacer-item";
-import { ExternalLink } from "../external-link";
 import { RECORD_STATE } from "./recorder";
 import { STATE } from "./state";
 
@@ -91,13 +90,13 @@ const ITEMS = computed(() => {
                 STATE.fullScreenContainer!.focus();
 
                 // TODO: Auto repeat when holding
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
                     keyCode: AndroidKeyCode.VolumeUp,
                     repeat: 0,
                     metaState: 0,
                 });
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Up,
                     keyCode: AndroidKeyCode.VolumeUp,
                     repeat: 0,
@@ -114,13 +113,13 @@ const ITEMS = computed(() => {
             onClick: (async () => {
                 STATE.fullScreenContainer!.focus();
 
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
                     keyCode: AndroidKeyCode.VolumeDown,
                     repeat: 0,
                     metaState: 0,
                 });
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Up,
                     keyCode: AndroidKeyCode.VolumeDown,
                     repeat: 0,
@@ -137,13 +136,13 @@ const ITEMS = computed(() => {
             onClick: (async () => {
                 STATE.fullScreenContainer!.focus();
 
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
                     keyCode: AndroidKeyCode.VolumeMute,
                     repeat: 0,
                     metaState: 0,
                 });
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Up,
                     keyCode: AndroidKeyCode.VolumeMute,
                     repeat: 0,
@@ -163,7 +162,7 @@ const ITEMS = computed(() => {
             onClick: () => {
                 STATE.fullScreenContainer!.focus();
 
-                STATE.client!.controlMessageSerializer!.rotateDevice();
+                STATE.client!.controlMessageWriter!.rotateDevice();
             },
         },
         {
@@ -205,7 +204,7 @@ const ITEMS = computed(() => {
             onClick: () => {
                 STATE.fullScreenContainer!.focus();
 
-                STATE.client!.controlMessageSerializer!.setScreenPowerMode(
+                STATE.client!.controlMessageWriter!.setScreenPowerMode(
                     AndroidScreenPowerMode.Off
                 );
             },
@@ -219,7 +218,7 @@ const ITEMS = computed(() => {
             onClick: () => {
                 STATE.fullScreenContainer!.focus();
 
-                STATE.client!.controlMessageSerializer!.setScreenPowerMode(
+                STATE.client!.controlMessageWriter!.setScreenPowerMode(
                     AndroidScreenPowerMode.Normal
                 );
             },

@@ -24,7 +24,7 @@ function handleWheel(e: WheelEvent) {
     e.stopPropagation();
 
     const { x, y } = STATE.clientPositionToDevicePosition(e.clientX, e.clientY);
-    STATE.client!.controlMessageSerializer!.injectScroll({
+    STATE.client!.controlMessageWriter!.injectScroll({
         screenWidth: STATE.client!.screenWidth!,
         screenHeight: STATE.client!.screenHeight!,
         pointerX: x,
@@ -76,7 +76,7 @@ function injectTouch(
         buttons: e.buttons,
     });
     for (const message of messages) {
-        STATE.client.controlMessageSerializer!.injectTouch(message);
+        STATE.client.controlMessageWriter!.injectTouch(message);
     }
 }
 

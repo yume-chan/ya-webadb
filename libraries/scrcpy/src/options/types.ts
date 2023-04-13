@@ -45,6 +45,17 @@ export function toScrcpyOptionValue<T>(value: unknown, empty: T): string | T {
     return String(value);
 }
 
+export interface ScrcpyEncoder {
+    type: "video" | "audio";
+    codec?: string;
+    name: string;
+}
+
+export interface ScrcpyDisplay {
+    id: number;
+    resolution?: string;
+}
+
 export interface ScrcpyOptions<T extends object> {
     readonly defaults: Required<T>;
 
@@ -54,11 +65,27 @@ export interface ScrcpyOptions<T extends object> {
 
     serialize(): string[];
 
+    /**
+     * Set the essential options to let Scrcpy server print out available encoders.
+     */
     setListEncoders(): void;
 
+    /**
+     * Set the essential options to let Scrcpy server print out available displays.
+     */
     setListDisplays(): void;
 
+    /**
+     * Parse encoder information from Scrcpy server output
+     * @param line One line of Scrcpy server output
+     */
     parseEncoder(line: string): ScrcpyEncoder | undefined;
+
+    /**
+     * Parse display information from Scrcpy server output
+     * @param line One line of Scrcpy server output
+     */
+    parseDisplay(line: string): ScrcpyDisplay | undefined;
 
     /**
      * Parse the device metadata from video stream according to the current version and options.
@@ -96,11 +123,6 @@ export interface ScrcpyOptions<T extends object> {
     createScrollController(): ScrcpyScrollController;
 }
 
-export interface ScrcpyEncoder {
-    codec?: string;
-    name: string;
-}
-
 export abstract class ScrcpyOptionsBase<
     T extends object,
     B extends ScrcpyOptions<object>
@@ -133,6 +155,10 @@ export abstract class ScrcpyOptionsBase<
 
     public parseEncoder(line: string): ScrcpyEncoder | undefined {
         return this._base.parseEncoder(line);
+    }
+
+    public parseDisplay(line: string): ScrcpyDisplay | undefined {
+        return this._base.parseDisplay(line);
     }
 
     /**

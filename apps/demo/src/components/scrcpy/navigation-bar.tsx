@@ -57,7 +57,7 @@ function handleBackPointerDown(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.client!.controlMessageSerializer!.backOrScreenOn(
+    STATE.client!.controlMessageWriter!.backOrScreenOn(
         AndroidKeyEventAction.Down
     );
 }
@@ -67,7 +67,7 @@ function handleBackPointerUp(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.client!.controlMessageSerializer!.backOrScreenOn(
+    STATE.client!.controlMessageWriter!.backOrScreenOn(
         AndroidKeyEventAction.Up
     );
 }
@@ -77,7 +77,7 @@ function handleHomePointerDown(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.client!.controlMessageSerializer!.injectKeyCode({
+    STATE.client!.controlMessageWriter!.injectKeyCode({
         action: AndroidKeyEventAction.Down,
         keyCode: AndroidKeyCode.AndroidHome,
         repeat: 0,
@@ -90,7 +90,7 @@ function handleHomePointerUp(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.client!.controlMessageSerializer!.injectKeyCode({
+    STATE.client!.controlMessageWriter!.injectKeyCode({
         action: AndroidKeyEventAction.Up,
         keyCode: AndroidKeyCode.AndroidHome,
         repeat: 0,
@@ -103,7 +103,7 @@ function handleAppSwitchPointerDown(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.client!.controlMessageSerializer!.injectKeyCode({
+    STATE.client!.controlMessageWriter!.injectKeyCode({
         action: AndroidKeyEventAction.Down,
         keyCode: AndroidKeyCode.AndroidAppSwitch,
         repeat: 0,
@@ -116,7 +116,7 @@ function handleAppSwitchPointerUp(e: PointerEvent<HTMLDivElement>) {
         return;
     }
 
-    STATE.client!.controlMessageSerializer!.injectKeyCode({
+    STATE.client!.controlMessageWriter!.injectKeyCode({
         action: AndroidKeyEventAction.Up,
         keyCode: AndroidKeyCode.AndroidAppSwitch,
         repeat: 0,

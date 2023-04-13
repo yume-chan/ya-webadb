@@ -7,6 +7,9 @@
             "path": "../event/tsconfig.build.json"
         },
         {
+            "path": "../scrcpy/tsconfig.build.json"
+        },
+        {
             "path": "../stream-extra/tsconfig.build.json"
         },
         {
