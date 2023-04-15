@@ -6,8 +6,8 @@ import {
 } from "@yume-chan/dataview-bigint-polyfill/esm/fallback.js";
 
 import type {
-    StructAsyncDeserializeStream,
-    StructDeserializeStream,
+    AsyncExactReadable,
+    ExactReadable,
     StructOptions,
     StructValue,
 } from "../basic/index.js";
@@ -86,21 +86,21 @@ export class BigIntFieldDefinition<
 
     public override deserialize(
         options: Readonly<StructOptions>,
-        stream: StructDeserializeStream,
+        stream: ExactReadable,
         struct: StructValue
     ): BigIntFieldValue<this>;
     public override deserialize(
         options: Readonly<StructOptions>,
-        stream: StructAsyncDeserializeStream,
+        stream: AsyncExactReadable,
         struct: StructValue
     ): Promise<BigIntFieldValue<this>>;
     public override deserialize(
         options: Readonly<StructOptions>,
-        stream: StructDeserializeStream | StructAsyncDeserializeStream,
+        stream: ExactReadable | AsyncExactReadable,
         struct: StructValue
     ): ValueOrPromise<BigIntFieldValue<this>> {
         return SyncPromise.try(() => {
-            return stream.read(this.getSize());
+            return stream.readExactly(this.getSize());
         })
             .then((array) => {
                 const view = new DataView(

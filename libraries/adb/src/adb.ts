@@ -107,9 +107,18 @@ export class Adb implements Closeable {
                     signal: abortController.signal,
                 }
             )
-            .catch((e) => {
-                resolver.reject(e);
-            });
+            .then(
+                () => {
+                    if (resolver.state === "running") {
+                        resolver.reject(
+                            new Error("Connection closed unexpectedly")
+                        );
+                    }
+                },
+                (e) => {
+                    resolver.reject(e);
+                }
+            );
 
         const writer = connection.writable.getWriter();
         async function sendPacket(init: AdbPacketData) {
@@ -151,7 +160,7 @@ export class Adb implements Closeable {
                 arg1: maxPayloadSize,
                 // The terminating `;` is required in formal definition
                 // But ADB daemon (all versions) can still work without it
-                payload: encodeUtf8(`host::features=${features};`),
+                payload: encodeUtf8(`host::features=${features}`),
             });
 
             banner = await resolver.promise;

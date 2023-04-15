@@ -42,7 +42,7 @@ async function runTest(inputSizes: number[], readSizes: number[]) {
 
     index = 0;
     for (const size of readSizes) {
-        const buffer = await buffered.read(size);
+        const buffer = await buffered.readExactly(size);
         expect(buffer).toEqual(input.subarray(index, index + size));
         index += size;
     }
@@ -53,14 +53,14 @@ describe("BufferedStream", () => {
         it("read 0 buffer", async () => {
             const source = new MockReadableStream([]);
             const buffered = new BufferedReadableStream(source);
-            await expect(buffered.read(10)).rejects.toThrow();
+            await expect(buffered.readExactly(10)).rejects.toThrow();
         });
 
         it("input 1 exact buffer", async () => {
             const input = randomUint8Array(10);
             const source = new MockReadableStream([input]);
             const buffered = new BufferedReadableStream(source);
-            await expect(buffered.read(10)).resolves.toBe(input);
+            await expect(buffered.readExactly(10)).resolves.toBe(input);
         });
 
         it("input 1 large buffer", () => {
@@ -70,7 +70,7 @@ describe("BufferedStream", () => {
         it("read 1 small buffer", async () => {
             const source = new MockReadableStream([randomUint8Array(5)]);
             const buffered = new BufferedReadableStream(source);
-            await expect(buffered.read(10)).rejects.toThrow();
+            await expect(buffered.readExactly(10)).rejects.toThrow();
         });
 
         it("input 2 small buffers", () => {
@@ -83,7 +83,7 @@ describe("BufferedStream", () => {
                 randomUint8Array(5),
             ]);
             const buffered = new BufferedReadableStream(source);
-            await expect(buffered.read(20)).rejects.toThrow();
+            await expect(buffered.readExactly(20)).rejects.toThrow();
         });
 
         it("input 2 small + large buffers", () => {

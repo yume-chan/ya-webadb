@@ -1,9 +1,6 @@
 import type { StructFieldValue } from "./field-value.js";
 import type { StructOptions } from "./options.js";
-import type {
-    StructAsyncDeserializeStream,
-    StructDeserializeStream,
-} from "./stream.js";
+import type { AsyncExactReadable, ExactReadable } from "./stream.js";
 import type { StructValue } from "./struct-value.js";
 
 /**
@@ -60,12 +57,12 @@ export abstract class StructFieldDefinition<
      */
     public abstract deserialize(
         options: Readonly<StructOptions>,
-        stream: StructDeserializeStream,
+        stream: ExactReadable,
         structValue: StructValue
     ): StructFieldValue<this>;
     public abstract deserialize(
         options: Readonly<StructOptions>,
-        stream: StructAsyncDeserializeStream,
+        stream: AsyncExactReadable,
         struct: StructValue
     ): Promise<StructFieldValue<this>>;
 }

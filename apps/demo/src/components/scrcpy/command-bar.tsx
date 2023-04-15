@@ -10,33 +10,20 @@ import {
 } from "@yume-chan/scrcpy";
 import { action, computed } from "mobx";
 import { observer } from "mobx-react-lite";
-import { GLOBAL_STATE } from "../../state";
 import { Icons } from "../../utils";
 import { CommandBarSpacerItem } from "../command-bar-spacer-item";
-import { ExternalLink } from "../external-link";
 import { RECORD_STATE } from "./recorder";
-import { SETTING_STATE } from "./settings";
 import { STATE } from "./state";
 
 const ITEMS = computed(() => {
     const result: ICommandBarItemProps[] = [];
 
-    if (!STATE.running) {
-        result.push({
-            key: "start",
-            disabled: !GLOBAL_STATE.device,
-            iconProps: { iconName: Icons.Play },
-            text: "Start",
-            onClick: STATE.start as VoidFunction,
-        });
-    } else {
-        result.push({
-            key: "stop",
-            iconProps: { iconName: Icons.Stop },
-            text: "Stop",
-            onClick: STATE.stop as VoidFunction,
-        });
-    }
+    result.push({
+        key: "stop",
+        iconProps: { iconName: Icons.Stop },
+        text: "Stop",
+        onClick: STATE.stop as VoidFunction,
+    });
 
     result.push(
         RECORD_STATE.recording
@@ -100,13 +87,13 @@ const ITEMS = computed(() => {
                 STATE.fullScreenContainer!.focus();
 
                 // TODO: Auto repeat when holding
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
                     keyCode: AndroidKeyCode.VolumeUp,
                     repeat: 0,
                     metaState: 0,
                 });
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Up,
                     keyCode: AndroidKeyCode.VolumeUp,
                     repeat: 0,
@@ -123,13 +110,13 @@ const ITEMS = computed(() => {
             onClick: (async () => {
                 STATE.fullScreenContainer!.focus();
 
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
                     keyCode: AndroidKeyCode.VolumeDown,
                     repeat: 0,
                     metaState: 0,
                 });
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Up,
                     keyCode: AndroidKeyCode.VolumeDown,
                     repeat: 0,
@@ -146,13 +133,13 @@ const ITEMS = computed(() => {
             onClick: (async () => {
                 STATE.fullScreenContainer!.focus();
 
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Down,
                     keyCode: AndroidKeyCode.VolumeMute,
                     repeat: 0,
                     metaState: 0,
                 });
-                await STATE.client?.controlMessageSerializer!.injectKeyCode({
+                await STATE.client?.controlMessageWriter!.injectKeyCode({
                     action: AndroidKeyEventAction.Up,
                     keyCode: AndroidKeyCode.VolumeMute,
                     repeat: 0,
@@ -172,7 +159,7 @@ const ITEMS = computed(() => {
             onClick: () => {
                 STATE.fullScreenContainer!.focus();
 
-                STATE.client!.controlMessageSerializer!.rotateDevice();
+                STATE.client!.controlMessageWriter!.rotateDevice();
             },
         },
         {
@@ -214,7 +201,7 @@ const ITEMS = computed(() => {
             onClick: () => {
                 STATE.fullScreenContainer!.focus();
 
-                STATE.client!.controlMessageSerializer!.setScreenPowerMode(
+                STATE.client!.controlMessageWriter!.setScreenPowerMode(
                     AndroidScreenPowerMode.Off
                 );
             },
@@ -228,7 +215,7 @@ const ITEMS = computed(() => {
             onClick: () => {
                 STATE.fullScreenContainer!.focus();
 
-                STATE.client!.controlMessageSerializer!.setScreenPowerMode(
+                STATE.client!.controlMessageWriter!.setScreenPowerMode(
                     AndroidScreenPowerMode.Normal
                 );
             },
@@ -283,17 +270,6 @@ const ITEMS = computed(() => {
             }),
         },
         {
-            key: "Settings",
-            iconProps: { iconName: Icons.Settings },
-            canCheck: true,
-            checked: SETTING_STATE.settingsVisible,
-            text: "Settings",
-            iconOnly: true,
-            onClick: action(() => {
-                SETTING_STATE.settingsVisible = !SETTING_STATE.settingsVisible;
-            }),
-        },
-        {
             key: "DemoMode",
             iconProps: { iconName: Icons.Wand },
             canCheck: true,
@@ -303,36 +279,6 @@ const ITEMS = computed(() => {
             onClick: action(() => {
                 STATE.demoModeVisible = !STATE.demoModeVisible;
             }),
-        },
-        {
-            key: "info",
-            iconProps: { iconName: Icons.Info },
-            iconOnly: true,
-            text: "About",
-            tooltipHostProps: {
-                content: (
-                    <>
-                        <p>
-                            <ExternalLink
-                                href="https://github.com/Genymobile/scrcpy"
-                                spaceAfter
-                            >
-                                Scrcpy
-                            </ExternalLink>
-                            developed by Genymobile can display the screen with
-                            low latency (1~2 frames) and control the device, all
-                            without root access.
-                        </p>
-                        <p>
-                            This is a TypeScript implementation of the client
-                            part. Paired with official pre-built server binary.
-                        </p>
-                    </>
-                ),
-                calloutProps: {
-                    calloutMaxWidth: 300,
-                },
-            },
         }
     );
 

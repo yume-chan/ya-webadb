@@ -1,11 +1,8 @@
 // cspell: ignore killforward
 
 import { AutoDisposable } from "@yume-chan/event";
-import {
-    BufferedReadableStream,
-    BufferedReadableStreamEndedError,
-} from "@yume-chan/stream-extra";
-import Struct from "@yume-chan/struct";
+import { BufferedReadableStream } from "@yume-chan/stream-extra";
+import Struct, { StructEmptyError } from "@yume-chan/struct";
 
 import type { Adb } from "../adb.js";
 import type { AdbIncomingSocketHandler, AdbSocket } from "../socket/index.js";
@@ -26,16 +23,15 @@ const AdbReverseStringResponse = new Struct()
 export class AdbReverseError extends Error {
     public constructor(message: string) {
         super(message);
-        Object.setPrototypeOf(this, AdbReverseError.prototype);
+        Object.setPrototypeOf(this, new.target.prototype);
     }
 }
 
-export class AdbReverseNotSupportedError extends Error {
+export class AdbReverseNotSupportedError extends AdbReverseError {
     public constructor() {
         super(
             "ADB reverse tunnel is not supported on this device when connected wirelessly."
         );
-        Object.setPrototypeOf(this, AdbReverseNotSupportedError.prototype);
     }
 }
 
@@ -87,7 +83,7 @@ export class AdbReverseCommand extends AutoDisposable {
 
     private async sendRequest(service: string) {
         const stream = await this.createBufferedStream(service);
-        const success = decodeUtf8(await stream.read(4)) === "OKAY";
+        const success = decodeUtf8(await stream.readExactly(4)) === "OKAY";
         if (!success) {
             await AdbReverseErrorResponse.deserialize(stream);
         }
@@ -137,9 +133,12 @@ export class AdbReverseCommand extends AutoDisposable {
         if (deviceAddress.startsWith("tcp:")) {
             let length: number | undefined;
             try {
-                length = Number.parseInt(decodeUtf8(await stream.read(4)), 16);
+                length = Number.parseInt(
+                    decodeUtf8(await stream.readExactly(4)),
+                    16
+                );
             } catch (e) {
-                if (!(e instanceof BufferedReadableStreamEndedError)) {
+                if (!(e instanceof StructEmptyError)) {
                     throw e;
                 }
 
@@ -149,7 +148,7 @@ export class AdbReverseCommand extends AutoDisposable {
             }
 
             if (length !== undefined) {
-                const port = decodeUtf8(await stream.read(length));
+                const port = decodeUtf8(await stream.readExactly(length));
                 deviceAddress = `tcp:${Number.parseInt(port, 10)}`;
             }
         }

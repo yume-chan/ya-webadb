@@ -1,9 +1,20 @@
+// cspell: ignore MPEGH
+// cspell: ignore rbsp
+// cspell: ignore Nalus
+
 import {
-    ScrcpyVideoStreamFramePacket,
-    ScrcpyVideoStreamPacket,
-    splitH264Stream,
+    H265NaluRaw,
+    ScrcpyAudioCodec,
+    ScrcpyMediaStreamDataPacket,
+    ScrcpyMediaStreamPacket,
+    ScrcpyVideoCodecId,
+    ScrcpyVideoStreamMetadata,
+    annexBSplitNalu,
+    h264SearchConfiguration,
+    h265ParseSequenceParameterSet,
+    h265ParseVideoParameterSet,
+    h265SearchConfiguration,
 } from "@yume-chan/scrcpy";
-import { InspectStream } from "@yume-chan/stream-extra";
 import { action, makeAutoObservable, reaction } from "mobx";
 import WebMMuxer from "webm-muxer";
 import { saveFile } from "../../utils";
@@ -34,11 +45,159 @@ function h264ConfigurationToAvcDecoderConfigurationRecord(
     return buffer;
 }
 
+function h265ConfigurationToHevcDecoderConfigurationRecord(
+    videoParameterSet: H265NaluRaw,
+    sequenceParameterSet: H265NaluRaw,
+    pictureParameterSet: H265NaluRaw
+) {
+    const {
+        profileTierLevel: {
+            generalProfileTier: {
+                profile_space: general_profile_space,
+                tier_flag: general_tier_flag,
+                profile_idc: general_profile_idc,
+                profileCompatibilitySet: generalProfileCompatibilitySet,
+                constraintSet: generalConstraintSet,
+            },
+            general_level_idc,
+        },
+        vps_max_layers_minus1,
+        vps_temporal_id_nesting_flag,
+    } = h265ParseVideoParameterSet(videoParameterSet.rbsp);
+
+    const {
+        chroma_format_idc,
+        bit_depth_luma_minus8,
+        bit_depth_chroma_minus8,
+        vuiParameters: { min_spatial_segmentation_idc = 0 } = {},
+    } = h265ParseSequenceParameterSet(sequenceParameterSet.rbsp);
+
+    const buffer = new Uint8Array(
+        23 +
+            5 * 3 +
+            videoParameterSet.data.length +
+            sequenceParameterSet.data.length +
+            pictureParameterSet.data.length
+    );
+
+    /* unsigned int(8) configurationVersion = 1; */
+    buffer[0] = 1;
+
+    /*
+     * unsigned int(2) general_profile_space;
+     * unsigned int(1) general_tier_flag;
+     * unsigned int(5) general_profile_idc;
+     */
+    buffer[1] =
+        (general_profile_space << 6) |
+        (Number(general_tier_flag) << 5) |
+        general_profile_idc;
+
+    /* unsigned int(32) general_profile_compatibility_flags; */
+    buffer[2] = generalProfileCompatibilitySet[0];
+    buffer[3] = generalProfileCompatibilitySet[1];
+    buffer[4] = generalProfileCompatibilitySet[2];
+    buffer[5] = generalProfileCompatibilitySet[3];
+
+    /* unsigned int(48) general_constraint_indicator_flags; */
+    buffer[6] = generalConstraintSet[0];
+    buffer[7] = generalConstraintSet[1];
+    buffer[8] = generalConstraintSet[2];
+    buffer[9] = generalConstraintSet[3];
+    buffer[10] = generalConstraintSet[4];
+    buffer[11] = generalConstraintSet[5];
+
+    /* unsigned int(8) general_level_idc; */
+    buffer[12] = general_level_idc;
+
+    /*
+     * bit(4) reserved = '1111'b;
+     * unsigned int(12) min_spatial_segmentation_idc;
+     */
+    buffer[13] = 0xf0 | (min_spatial_segmentation_idc >> 8);
+    buffer[14] = min_spatial_segmentation_idc;
+
+    /*
+     * bit(6) reserved = '111111'b;
+     * unsigned int(2) parallelismType;
+     */
+    buffer[15] = 0xfc;
+
+    /*
+     * bit(6) reserved = '111111'b;
+     * unsigned int(2) chromaFormat;
+     */
+    buffer[16] = 0xfc | chroma_format_idc;
+
+    /*
+     * bit(5) reserved = '11111'b;
+     * unsigned int(3) bitDepthLumaMinus8;
+     */
+    buffer[17] = 0xf8 | bit_depth_luma_minus8;
+
+    /*
+     * bit(5) reserved = '11111'b;
+     * unsigned int(3) bitDepthChromaMinus8;
+     */
+    buffer[18] = 0xf8 | bit_depth_chroma_minus8;
+
+    /* bit(16) avgFrameRate; */
+    buffer[19] = 0;
+    buffer[20] = 0;
+
+    /*
+     * bit(2) constantFrameRate;
+     * bit(3) numTemporalLayers;
+     * bit(1) temporalIdNested;
+     * unsigned int(2) lengthSizeMinusOne;
+     */
+    buffer[21] =
+        ((vps_max_layers_minus1 + 1) << 3) |
+        (Number(vps_temporal_id_nesting_flag) << 2) |
+        3;
+
+    /* unsigned int(8) numOfArrays; */
+    buffer[22] = 3;
+
+    let i = 23;
+
+    for (const nalu of [
+        videoParameterSet,
+        sequenceParameterSet,
+        pictureParameterSet,
+    ]) {
+        /*
+         * bit(1) array_completeness;
+         * unsigned int(1) reserved = 0;
+         * unsigned int(6) NAL_unit_type;
+         */
+        buffer[i] = nalu.nal_unit_type;
+        i += 1;
+
+        /* unsigned int(16) numNalus; */
+        buffer[i] = 0;
+        i += 1;
+        buffer[i] = 1;
+        i += 1;
+
+        /* unsigned int(16) nalUnitLength; */
+        buffer[i] = nalu.data.length >> 8;
+        i += 1;
+        buffer[i] = nalu.data.length;
+        i += 1;
+
+        buffer.set(nalu.data, i);
+        i += nalu.data.length;
+    }
+
+    return buffer;
+}
+
 function h264StreamToAvcSample(buffer: Uint8Array) {
     const nalUnits: Uint8Array[] = [];
     let totalLength = 0;
 
-    for (const unit of splitH264Stream(buffer)) {
+    for (const unit of annexBSplitNalu(buffer)) {
         nalUnits.push(unit);
         totalLength += unit.byteLength + 4;
     }
@@ -56,97 +215,176 @@ function h264StreamToAvcSample(buffer: Uint8Array) {
     return sample;
 }
 
-export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
+// https://github.com/FFmpeg/FFmpeg/blob/adb5f7b41faf354a3e0bf722f44aeb230aefa310/libavformat/matroska.c
+const MatroskaVideoCodecNameMap: Record<ScrcpyVideoCodecId, string> = {
+    [ScrcpyVideoCodecId.H264]: "V_MPEG4/ISO/AVC",
+    [ScrcpyVideoCodecId.H265]: "V_MPEGH/ISO/HEVC",
+    [ScrcpyVideoCodecId.AV1]: "V_AV1",
+};
+
+const MatroskaAudioCodecNameMap: Record<string, string> = {
+    [ScrcpyAudioCodec.RAW.mimeType]: "A_PCM/INT/LIT",
+    [ScrcpyAudioCodec.AAC.mimeType]: "A_AAC",
+    [ScrcpyAudioCodec.OPUS.mimeType]: "A_OPUS",
+};
+
+export class MatroskaMuxingRecorder {
     public running = false;
 
-    private muxer: WebMMuxer | undefined;
-    private width = 0;
-    private height = 0;
-    private firstTimestamp = -1;
-    private avcConfiguration: Uint8Array | undefined;
-    private configurationWritten = false;
-    private framesFromKeyframe: ScrcpyVideoStreamFramePacket[] = [];
+    public videoMetadata: ScrcpyVideoStreamMetadata | undefined;
+    public audioCodec: ScrcpyAudioCodec | undefined;
 
-    private appendFrame(frame: ScrcpyVideoStreamFramePacket) {
-        let timestamp = Number(frame.pts);
-        if (this.firstTimestamp === -1) {
-            this.firstTimestamp = timestamp;
-            timestamp = 0;
-        } else {
-            timestamp -= this.firstTimestamp;
+    private muxer: WebMMuxer | undefined;
+    private videoCodecDescription: Uint8Array | undefined;
+    private configurationWritten = false;
+    private _firstTimestamp = -1;
+    private _packetsFromLastKeyframe: {
+        type: "video" | "audio";
+        packet: ScrcpyMediaStreamDataPacket;
+    }[] = [];
+
+    private addVideoChunk(packet: ScrcpyMediaStreamDataPacket) {
+        if (this._firstTimestamp === -1) {
+            this._firstTimestamp = Number(packet.pts!);
         }
 
-        const sample = h264StreamToAvcSample(frame.data);
+        const sample = h264StreamToAvcSample(packet.data);
         this.muxer!.addVideoChunkRaw(
             sample,
-            frame.keyframe ? "key" : "delta",
-            timestamp,
+            packet.keyframe ? "key" : "delta",
+            Number(packet.pts) - this._firstTimestamp,
             this.configurationWritten
                 ? undefined
                 : {
                       decoderConfig: {
                           // Not used
                           codec: "",
-                          description: this.avcConfiguration,
+                          description: this.videoCodecDescription,
                       },
                   }
         );
         this.configurationWritten = true;
     }
 
-    constructor() {
-        super((packet) => {
-            try {
-                if (packet.type === "configuration") {
-                    this.width = packet.data.croppedWidth;
-                    this.height = packet.data.croppedHeight;
-                    this.avcConfiguration =
-                        h264ConfigurationToAvcDecoderConfigurationRecord(
-                            packet.sequenceParameterSet,
-                            packet.pictureParameterSet
-                        );
-                    this.configurationWritten = false;
-                    return;
-                }
+    public addVideoPacket(packet: ScrcpyMediaStreamPacket) {
+        if (!this.videoMetadata) {
+            throw new Error("videoMetadata must be set");
+        }
 
-                // To ensure the first frame is a keyframe
-                // save the last keyframe and the following frames
-                if (packet.keyframe === true) {
-                    this.framesFromKeyframe.length = 0;
+        try {
+            if (packet.type === "configuration") {
+                switch (this.videoMetadata.codec) {
+                    case ScrcpyVideoCodecId.H264: {
+                        const { sequenceParameterSet, pictureParameterSet } =
+                            h264SearchConfiguration(packet.data);
+                        this.videoCodecDescription =
+                            h264ConfigurationToAvcDecoderConfigurationRecord(
+                                sequenceParameterSet,
+                                pictureParameterSet
+                            );
+                        this.configurationWritten = false;
+                        break;
+                    }
+                    case ScrcpyVideoCodecId.H265: {
+                        const {
+                            videoParameterSet,
+                            sequenceParameterSet,
+                            pictureParameterSet,
+                        } = h265SearchConfiguration(packet.data);
+                        this.videoCodecDescription =
+                            h265ConfigurationToHevcDecoderConfigurationRecord(
+                                videoParameterSet,
+                                sequenceParameterSet,
+                                pictureParameterSet
+                            );
+                        this.configurationWritten = false;
+                        break;
+                    }
                 }
-                this.framesFromKeyframe.push(packet);
-
-                if (!this.muxer) {
-                    return;
-                }
-
-                this.appendFrame(packet);
-            } catch (e) {
-                console.error(e);
+                return;
             }
-        });
+
+            // To ensure the first frame is a keyframe
+            // save the last keyframe and the following frames
+            if (packet.keyframe === true) {
+                this._packetsFromLastKeyframe.length = 0;
+            }
+            this._packetsFromLastKeyframe.push({ type: "video", packet });
+
+            if (!this.muxer) {
+                return;
+            }
+
+            this.addVideoChunk(packet);
+        } catch (e) {
+            console.error(e);
+        }
     }
 
-    start() {
-        this.running = true;
-        this.muxer = new WebMMuxer({
-            target: "buffer",
-            video: {
-                // https://www.matroska.org/technical/codec_specs.html
-                codec: "V_MPEG4/ISO/AVC",
-                width: this.width,
-                height: this.height,
-            },
-        });
+    private addAudioChunk(chunk: ScrcpyMediaStreamDataPacket) {
+        if (this._firstTimestamp === -1) {
+            return;
+        }
 
-        if (this.framesFromKeyframe.length > 0) {
-            for (const frame of this.framesFromKeyframe) {
-                this.appendFrame(frame);
+        const timestamp = Number(chunk.pts) - this._firstTimestamp;
+        if (timestamp < 0) {
+            return;
+        }
+
+        if (!this.muxer) {
+            return;
+        }
+
+        this.muxer.addAudioChunkRaw(chunk.data, "key", timestamp);
+    }
+
+    public addAudioPacket(packet: ScrcpyMediaStreamDataPacket) {
+        this._packetsFromLastKeyframe.push({ type: "audio", packet });
+        this.addAudioChunk(packet);
+    }
+
+    public start() {
+        if (!this.videoMetadata) {
+            throw new Error("videoMetadata must be set");
+        }
+
+        this.running = true;
+
+        const options: ConstructorParameters<typeof WebMMuxer>[0] = {
+            target: "buffer",
+            type: "matroska",
+            firstTimestampBehavior: "permissive",
+            video: {
+                codec: MatroskaVideoCodecNameMap[this.videoMetadata.codec!],
+                width: this.videoMetadata.width ?? 0,
+                height: this.videoMetadata.height ?? 0,
+            },
+        };
+
+        if (this.audioCodec) {
+            options.audio = {
+                codec: MatroskaAudioCodecNameMap[this.audioCodec.mimeType!],
+                sampleRate: 48000,
+                numberOfChannels: 2,
+                bitDepth:
+                    this.audioCodec === ScrcpyAudioCodec.RAW ? 16 : undefined,
+            };
+        }
+
+        this.muxer = new WebMMuxer(options);
+
+        if (this._packetsFromLastKeyframe.length > 0) {
+            for (const { type, packet } of this._packetsFromLastKeyframe) {
+                if (type === "video") {
+                    this.addVideoChunk(packet);
+                } else {
+                    this.addAudioChunk(packet);
+                }
             }
         }
     }
 
-    stop() {
+    public stop() {
         if (!this.muxer) {
             return;
         }
@@ -167,7 +405,7 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
                 now.getMinutes().toString().padStart(2, '0')
             }-${
                 now.getSeconds().toString().padStart(2, '0')
-            }.webm`
+            }.mkv`
         );
         const writer = stream.getWriter();
         writer.write(new Uint8Array(buffer));
@@ -176,12 +414,11 @@ export class MuxerStream extends InspectStream<ScrcpyVideoStreamPacket> {
         this.muxer = undefined;
         this.configurationWritten = false;
         this.running = false;
-        this.firstTimestamp = -1;
     }
 }
 
 export const RECORD_STATE = makeAutoObservable({
-    recorder: new MuxerStream(),
+    recorder: new MatroskaMuxingRecorder(),
     recording: false,
     intervalId: -1,
     hours: 0,

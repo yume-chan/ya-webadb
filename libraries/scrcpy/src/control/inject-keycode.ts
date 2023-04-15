@@ -1,7 +1,5 @@
 import Struct, { placeholder } from "@yume-chan/struct";
 
-import { ScrcpyControlMessageType } from "./type.js";
-
 export enum AndroidKeyEventAction {
     Down = 0,
     Up = 1,
@@ -207,7 +205,7 @@ export enum AndroidKeyCode {
 }
 
 export const ScrcpyInjectKeyCodeControlMessage = new Struct()
-    .uint8("type", ScrcpyControlMessageType.InjectKeyCode as const)
+    .uint8("type")
     .uint8("action", placeholder<AndroidKeyEventAction>())
     .uint32("keyCode")
     .uint32("repeat")

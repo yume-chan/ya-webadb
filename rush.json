@@ -466,6 +466,15 @@
         {
             "packageName": "@yume-chan/eslint-config",
             "projectFolder": "toolchain/eslint-config"
-        }
+        },
+        {
+            "packageName": "@yume-chan/pcm-player",
+            "projectFolder": "libraries/pcm-player"
+        },
+        {
+            "packageName": "@yume-chan/adb-scrcpy",
+            "projectFolder": "libraries/adb-scrcpy",
+            "versionPolicyName": "adb"
+        },
     ]
 }

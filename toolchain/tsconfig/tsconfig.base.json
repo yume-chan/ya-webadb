@@ -17,7 +17,6 @@
         // "jsx": "preserve",                     /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
         // "noEmit": true,                        /* Do not emit outputs. */
         "importHelpers": true, //                 /* Import emit helpers from 'tslib'. */
-        "isolatedModules": true, //               /* Transpile each file as a separate module (similar to 'ts.transpileModule'). */
         "skipLibCheck": true, //                  /* Skip type checking of all declaration files (*.d.ts). */
         /* Strict Type-Checking Options */
         "strict": true, //                        /* Enable all strict type-checking options. */
@@ -43,6 +42,7 @@
         "esModuleInterop": true, //               /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
         // "experimentalDecorators": true,        /* Enables experimental support for ES7 decorators. */
         // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
+        "verbatimModuleSyntax": true
     },
     "include": [
         "../../../src"

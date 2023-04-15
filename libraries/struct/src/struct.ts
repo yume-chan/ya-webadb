@@ -1,11 +1,12 @@
 import type {
-    StructAsyncDeserializeStream,
-    StructDeserializeStream,
+    AsyncExactReadable,
+    ExactReadable,
     StructFieldDefinition,
     StructFieldValue,
     StructOptions,
 } from "./basic/index.js";
 import {
+    ExactReadableEndedError,
     STRUCT_VALUE_SYMBOL,
     StructDefaultOptions,
     StructValue,
@@ -30,9 +31,7 @@ import {
 import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils.js";
 
 export interface StructLike<TValue> {
-    deserialize(
-        stream: StructDeserializeStream | StructAsyncDeserializeStream
-    ): Promise<TValue>;
+    deserialize(stream: ExactReadable | AsyncExactReadable): Promise<TValue>;
 }
 
 /**
@@ -191,6 +190,27 @@ export type StructDeserializedResult<
 > = TPostDeserialized extends undefined
     ? Overwrite<TExtra, TFields>
     : TPostDeserialized;
+
+export class StructDeserializeError extends Error {
+    public constructor(message: string) {
+        super(message);
+        Object.setPrototypeOf(this, new.target.prototype);
+    }
+}
+
+export class StructNotEnoughDataError extends StructDeserializeError {
+    public constructor() {
+        super(
+            "The underlying readable was ended before the struct was fully deserialized"
+        );
+    }
+}
+
+export class StructEmptyError extends StructDeserializeError {
+    public constructor() {
+        super("The underlying readable doesn't contain any more struct");
+    }
+}
 
 export class Struct<
     TFields extends object = Record<never, never>,
@@ -520,13 +540,13 @@ export class Struct<
      * Deserialize a struct value from `stream`.
      */
     public deserialize(
-        stream: StructDeserializeStream
+        stream: ExactReadable
     ): StructDeserializedResult<TFields, TExtra, TPostDeserialized>;
     public deserialize(
-        stream: StructAsyncDeserializeStream
+        stream: AsyncExactReadable
     ): Promise<StructDeserializedResult<TFields, TExtra, TPostDeserialized>>;
     public deserialize(
-        stream: StructDeserializeStream | StructAsyncDeserializeStream
+        stream: ExactReadable | AsyncExactReadable
     ): ValueOrPromise<
         StructDeserializedResult<TFields, TExtra, TPostDeserialized>
     > {
@@ -534,18 +554,28 @@ export class Struct<
 
         let promise = SyncPromise.resolve();
 
+        const startPosition = stream.position;
         for (const [name, definition] of this._fields) {
             promise = promise
                 .then(() =>
-                    definition.deserialize(
-                        this.options,
-                        stream as any,
-                        structValue
-                    )
+                    definition.deserialize(this.options, stream, structValue)
                 )
-                .then((fieldValue) => {
-                    structValue.set(name, fieldValue);
-                });
+                .then(
+                    (fieldValue) => {
+                        structValue.set(name, fieldValue);
+                    },
+                    (e) => {
+                        if (!(e instanceof ExactReadableEndedError)) {
+                            throw e;
+                        }
+
+                        if (stream.position === startPosition) {
+                            throw new StructEmptyError();
+                        } else {
+                            throw new StructNotEnoughDataError();
+                        }
+                    }
+                );
         }
 
         return promise

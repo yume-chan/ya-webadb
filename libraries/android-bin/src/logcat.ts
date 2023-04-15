@@ -10,7 +10,7 @@ import {
     WrapReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import type { StructAsyncDeserializeStream } from "@yume-chan/struct";
+import type { AsyncExactReadable } from "@yume-chan/struct";
 import Struct, { decodeUtf8 } from "@yume-chan/struct";
 
 // `adb logcat` is an alias to `adb shell logcat`
@@ -348,15 +348,14 @@ function findTagEnd(payload: Uint8Array) {
 }
 
 export async function deserializeAndroidLogEntry(
-    stream: StructAsyncDeserializeStream
+    stream: AsyncExactReadable
 ): Promise<AndroidLogEntry> {
-    const entry = (await LoggerEntry.deserialize(
-        stream
-    )) as unknown as AndroidLogEntry;
+    const entry = (await LoggerEntry.deserialize(stream)) as AndroidLogEntry;
     if (entry.headerSize !== LoggerEntry.size) {
-        await stream.read(entry.headerSize - LoggerEntry.size);
+        await stream.readExactly(entry.headerSize - LoggerEntry.size);
     }
-    let payload = await stream.read(entry.payloadSize);
+
+    let payload = await stream.readExactly(entry.payloadSize);
 
     // https://cs.android.com/android/platform/superproject/+/master:system/logging/logcat/logcat.cpp;l=193-194;drc=bbe77d66e7bee8bd1f0bc7e5492b5376b0207ef6
     // TODO: payload for some log IDs are in binary format.

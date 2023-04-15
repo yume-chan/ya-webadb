@@ -1,5 +1,5 @@
 import type {
-    StructAsyncDeserializeStream,
+    AsyncExactReadable,
     StructLike,
     StructValueType,
 } from "@yume-chan/struct";
@@ -27,11 +27,11 @@ export const AdbSyncFailResponse = new Struct({ littleEndian: true })
     });
 
 export async function adbSyncReadResponse<T>(
-    stream: StructAsyncDeserializeStream,
+    stream: AsyncExactReadable,
     id: AdbSyncResponseId,
     type: StructLike<T>
 ): Promise<T> {
-    const actualId = decodeUtf8(await stream.read(4));
+    const actualId = decodeUtf8(await stream.readExactly(4));
     switch (actualId) {
         case AdbSyncResponseId.Fail:
             await AdbSyncFailResponse.deserialize(stream);
@@ -46,12 +46,12 @@ export async function adbSyncReadResponse<T>(
 export async function* adbSyncReadResponses<
     T extends Struct<object, PropertyKey, object, any>
 >(
-    stream: StructAsyncDeserializeStream,
+    stream: AsyncExactReadable,
     id: AdbSyncResponseId,
     type: T
 ): AsyncGenerator<StructValueType<T>, void, void> {
     while (true) {
-        const actualId = decodeUtf8(await stream.read(4));
+        const actualId = decodeUtf8(await stream.readExactly(4));
         switch (actualId) {
             case AdbSyncResponseId.Fail:
                 await AdbSyncFailResponse.deserialize(stream);
@@ -61,7 +61,7 @@ export async function* adbSyncReadResponses<
                 //
                 // For example, `DONE` responses for `LIST` requests are 16 bytes (same as `DENT` responses),
                 // but `DONE` responses for `STAT` requests are 12 bytes (same as `STAT` responses).
-                await stream.read(type.size);
+                await stream.readExactly(type.size);
                 return;
             case id:
                 yield await type.deserialize(stream);

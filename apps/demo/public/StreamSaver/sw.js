@@ -4,8 +4,6 @@ self.addEventListener("install", () => {
     self.skipWaiting();
 });
 
-console.log("updated");
-
 self.addEventListener("activate", (event) => {
     const url = serviceWorker.scriptURL;
     const baseUrl = url.substring(0, url.lastIndexOf("/"));

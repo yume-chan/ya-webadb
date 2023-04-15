@@ -1,13 +1,12 @@
 // cspell: ignore autosync
 
-import Struct from "@yume-chan/struct";
+import Struct, { placeholder } from "@yume-chan/struct";
 
 import type { ScrcpySetClipboardControlMessage } from "../control/index.js";
-import { ScrcpyControlMessageType } from "../control/index.js";
 
 import type { ScrcpyOptionsInit1_18 } from "./1_18.js";
 import { ScrcpyOptions1_18 } from "./1_18.js";
-import { toScrcpyOptionValue } from "./types.js";
+import { ScrcpyOptionsBase, toScrcpyOptionValue } from "./types.js";
 
 export interface ScrcpyOptionsInit1_21 extends ScrcpyOptionsInit1_18 {
     clipboardAutosync?: boolean;
@@ -18,39 +17,62 @@ function toSnakeCase(input: string): string {
 }
 
 export const ScrcpySetClipboardControlMessage1_21 = new Struct()
-    .uint8("type", ScrcpyControlMessageType.SetClipboard as const)
+    .uint8("type")
     .uint64("sequence")
-    .int8("paste")
+    .int8("paste", placeholder<boolean>())
     .uint32("length")
     .string("content", { lengthField: "length" });
 
 export type ScrcpySetClipboardControlMessage1_21 =
     (typeof ScrcpySetClipboardControlMessage1_21)["TInit"];
 
-export class ScrcpyOptions1_21<
-    T extends ScrcpyOptionsInit1_21 = ScrcpyOptionsInit1_21
-> extends ScrcpyOptions1_18<T> {
-    public constructor(init: Partial<ScrcpyOptionsInit1_21>) {
-        super(init);
-    }
+export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
+    ScrcpyOptionsInit1_21,
+    ScrcpyOptions1_18
+> {
+    public static readonly DEFAULTS = {
+        ...ScrcpyOptions1_18.DEFAULTS,
+        clipboardAutosync: true,
+    } as const satisfies Required<ScrcpyOptionsInit1_21>;
 
-    public override getDefaultValue(): T {
-        return {
-            ...super.getDefaultValue(),
-            clipboardAutosync: true,
-        };
-    }
-
-    public override formatServerArguments(): string[] {
+    public static serialize<T extends object>(
+        options: T,
+        defaults: Required<T>
+    ): string[] {
         // 1.21 changed the format of arguments
-        // So `getArgumentOrder()` is no longer needed
-        return Object.entries(this.value)
-            .map(
-                ([key, value]) =>
-                    [key, toScrcpyOptionValue(value, undefined)] as const
-            )
-            .filter((pair): pair is [string, string] => pair[1] !== undefined)
-            .map(([key, value]) => `${toSnakeCase(key)}=${value}`);
+        const result: string[] = [];
+        for (const [key, value] of Object.entries(options)) {
+            const serializedValue = toScrcpyOptionValue(value, undefined);
+            if (!serializedValue) {
+                continue;
+            }
+
+            const defaultValue = toScrcpyOptionValue(
+                defaults[key as keyof T],
+                undefined
+            );
+            if (serializedValue == defaultValue) {
+                continue;
+            }
+
+            result.push(`${toSnakeCase(key)}=${serializedValue}`);
+        }
+        return result;
+    }
+
+    public override get defaults(): Required<ScrcpyOptionsInit1_21> {
+        return ScrcpyOptions1_21.DEFAULTS;
+    }
+
+    public constructor(init: ScrcpyOptionsInit1_21) {
+        super(new ScrcpyOptions1_18(init), {
+            ...ScrcpyOptions1_21.DEFAULTS,
+            ...init,
+        });
+    }
+
+    public override serialize(): string[] {
+        return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
     public override serializeSetClipboardControlMessage(

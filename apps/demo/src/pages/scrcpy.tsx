@@ -2,8 +2,10 @@ import {
     Dialog,
     LayerHost,
     Link,
+    PrimaryButton,
     ProgressIndicator,
     Stack,
+    StackItem,
 } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import { makeStyles, shorthands } from "@griffel/react";
@@ -13,7 +15,7 @@ import { observer } from "mobx-react-lite";
 import { NextPage } from "next";
 import Head from "next/head";
 import { KeyboardEvent, useEffect, useState } from "react";
-import { DemoModePanel, DeviceView } from "../components";
+import { DemoModePanel, DeviceView, ExternalLink } from "../components";
 import {
     NavigationBar,
     SETTING_DEFINITIONS,
@@ -82,7 +84,7 @@ const ConnectionDialog = observer(() => {
             >
                 <Stack tokens={CommonStackTokens}>
                     <ProgressIndicator
-                        label="1. Downloading scrcpy server..."
+                        label="Downloading scrcpy server..."
                         percentComplete={
                             STATE.serverTotalSize
                                 ? STATE.serverDownloadedSize /
@@ -97,7 +99,7 @@ const ConnectionDialog = observer(() => {
                     />
 
                     <ProgressIndicator
-                        label="2. Pushing scrcpy server to device..."
+                        label="Pushing scrcpy server to device..."
                         progressHidden={
                             STATE.serverTotalSize === 0 ||
                             STATE.serverDownloadedSize !== STATE.serverTotalSize
@@ -113,7 +115,7 @@ const ConnectionDialog = observer(() => {
                     />
 
                     <ProgressIndicator
-                        label="3. Starting scrcpy server on device..."
+                        label="Starting scrcpy server on device..."
                         progressHidden={
                             STATE.serverTotalSize === 0 ||
                             STATE.serverUploadedSize !== STATE.serverTotalSize
@@ -202,71 +204,105 @@ const Scrcpy: NextPage = () => {
                 <title>Scrcpy - Tango</title>
             </Head>
 
-            <ScrcpyCommandBar />
+            {STATE.running ? (
+                <>
+                    <ScrcpyCommandBar />
 
-            <Stack horizontal grow styles={{ root: { height: 0 } }}>
-                <div
-                    ref={STATE.setFullScreenContainer}
-                    className={classes.fullScreenContainer}
-                    tabIndex={0}
-                    onKeyDown={handleKeyEvent}
-                    onKeyUp={handleKeyEvent}
-                >
-                    {keyboardLockEnabled &&
-                        hintHidden !== "true" &&
-                        STATE.isFullScreen && (
-                            <div className={classes.fullScreenStatusBar}>
-                                <div>{GLOBAL_STATE.backend?.serial}</div>
-                                <div>FPS: {STATE.fps}</div>
+                    <Stack horizontal grow styles={{ root: { height: 0 } }}>
+                        <div
+                            ref={STATE.setFullScreenContainer}
+                            className={classes.fullScreenContainer}
+                            tabIndex={0}
+                            onKeyDown={handleKeyEvent}
+                            onKeyUp={handleKeyEvent}
+                        >
+                            {keyboardLockEnabled &&
+                                hintHidden !== "true" &&
+                                STATE.isFullScreen && (
+                                    <div
+                                        className={classes.fullScreenStatusBar}
+                                    >
+                                        <div>
+                                            {GLOBAL_STATE.backend?.serial}
+                                        </div>
+                                        <div>FPS: {STATE.fps}</div>
 
-                                <div className={classes.spacer} />
+                                        <div className={classes.spacer} />
 
-                                <div>
-                                    Press and hold ESC to exit full screen
-                                </div>
+                                        <div>
+                                            Press and hold ESC to exit full
+                                            screen
+                                        </div>
 
-                                <Link onClick={() => setHintHidden("true")}>
-                                    {`Don't show again`}
-                                </Link>
-                            </div>
-                        )}
-                    <DeviceView
-                        width={STATE.rotatedWidth}
-                        height={STATE.rotatedHeight}
-                        BottomElement={NavigationBar}
-                    >
-                        <VideoContainer />
-                    </DeviceView>
-                </div>
+                                        <Link
+                                            onClick={() =>
+                                                setHintHidden("true")
+                                            }
+                                        >
+                                            {`Don't show again`}
+                                        </Link>
+                                    </div>
+                                )}
 
-                <div
-                    style={{
-                        padding: 12,
-                        overflow: "hidden auto",
-                        display: STATE.logVisible ? "block" : "none",
-                        width: 500,
-                        fontFamily: "monospace",
-                        overflowY: "auto",
-                        whiteSpace: "pre-wrap",
-                        wordWrap: "break-word",
-                    }}
-                >
-                    {STATE.log.map((line, index) => (
-                        <div key={index}>{line}</div>
-                    ))}
-                </div>
+                            <DeviceView
+                                width={STATE.rotatedWidth}
+                                height={STATE.rotatedHeight}
+                                BottomElement={NavigationBar}
+                            >
+                                <VideoContainer />
+                            </DeviceView>
+                        </div>
 
-                <div
-                    style={{
-                        padding: 12,
-                        overflow: "hidden auto",
-                        display: SETTING_STATE.settingsVisible
-                            ? "block"
-                            : "none",
-                        width: 300,
-                    }}
-                >
-                    <div>Changes will take effect on next connection</div>
+                        <div
+                            style={{
+                                padding: 12,
+                                overflow: "hidden auto",
+                                display: STATE.logVisible ? "block" : "none",
+                                width: 500,
+                                fontFamily: "monospace",
+                                overflowY: "auto",
+                                whiteSpace: "pre-wrap",
+                                wordWrap: "break-word",
+                            }}
+                        >
+                            {STATE.log.map((line, index) => (
+                                <div key={index}>{line}</div>
+                            ))}
+                        </div>
+
+                        <DemoModePanel
+                            style={{
+                                display: STATE.demoModeVisible
+                                    ? "block"
+                                    : "none",
+                            }}
+                        />
+                    </Stack>
+                </>
+            ) : (
+                <>
+                    <div>
+                        <ExternalLink
+                            href="https://github.com/Genymobile/scrcpy"
+                            spaceAfter
+                        >
+                            Scrcpy
+                        </ExternalLink>
+                        can mirror device display and audio with low latency and
+                        control the device, all without root access.
+                    </div>
+                    <div>
+                        This is a TypeScript re-implementation of the client
+                        part. Paired with official pre-built server binary.
+                    </div>
+
+                    <StackItem align="start">
+                        <PrimaryButton
+                            text="Start"
+                            disabled={!GLOBAL_STATE.device}
+                            onClick={STATE.start}
+                        />
+                    </StackItem>
 
                     {SETTING_DEFINITIONS.get().map((definition) => (
                         <SettingItem
@@ -285,16 +321,10 @@ const Scrcpy: NextPage = () => {
                             )}
                         />
                     ))}
-                </div>
 
-                <DemoModePanel
-                    style={{
-                        display: STATE.demoModeVisible ? "block" : "none",
-                    }}
-                />
-
-                <ConnectionDialog />
-            </Stack>
+                    <ConnectionDialog />
+                </>
+            )}
         </Stack>
     );
 };
