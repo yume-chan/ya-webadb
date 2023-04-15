@@ -1,6 +1,9 @@
 // cspell: ignore MPEGH
+// cspell: ignore rbsp
+// cspell: ignore Nalus
 
 import {
+    H265NaluRaw,
     ScrcpyAudioCodec,
     ScrcpyMediaStreamDataPacket,
     ScrcpyMediaStreamPacket,
@@ -9,6 +12,8 @@ import {
     annexBSplitNalu,
     h264SearchConfiguration,
     h265ParseSequenceParameterSet,
+    h265ParseVideoParameterSet,
+    h265SearchConfiguration,
 } from "@yume-chan/scrcpy";
 import { action, makeAutoObservable, reaction } from "mobx";
 import WebMMuxer from "webm-muxer";
@@ -41,59 +46,151 @@ function h264ConfigurationToAvcDecoderConfigurationRecord(
 }
 
 function h265ConfigurationToHevcDecoderConfigurationRecord(
-    videoParameterSet: Uint8Array,
-    sequenceParameterSet: Uint8Array,
-    pictureParameterSet: Uint8Array
+    videoParameterSet: H265NaluRaw,
+    sequenceParameterSet: H265NaluRaw,
+    pictureParameterSet: H265NaluRaw
 ) {
-    const parsedSequenceParameterSet =
-        h265ParseSequenceParameterSet(sequenceParameterSet);
+    const {
+        profileTierLevel: {
+            generalProfileTier: {
+                profile_space: general_profile_space,
+                tier_flag: general_tier_flag,
+                profile_idc: general_profile_idc,
+                profileCompatibilitySet: generalProfileCompatibilitySet,
+                constraintSet: generalConstraintSet,
+            },
+            general_level_idc,
+        },
+        vps_max_layers_minus1,
+        vps_temporal_id_nesting_flag,
+    } = h265ParseVideoParameterSet(videoParameterSet.rbsp);
 
-    const buffer = new Uint8Array(100);
+    const {
+        chroma_format_idc,
+        bit_depth_luma_minus8,
+        bit_depth_chroma_minus8,
+        vuiParameters: { min_spatial_segmentation_idc = 0 } = {},
+    } = h265ParseSequenceParameterSet(sequenceParameterSet.rbsp);
+
+    const buffer = new Uint8Array(
+        23 +
+            5 * 3 +
+            videoParameterSet.data.length +
+            sequenceParameterSet.data.length +
+            pictureParameterSet.data.length
+    );
+
+    /* unsigned int(8) configurationVersion = 1; */
     buffer[0] = 1;
+
+    /*
+     * unsigned int(2) general_profile_space;
+     * unsigned int(1) general_tier_flag;
+     * unsigned int(5) general_profile_idc;
+     */
     buffer[1] =
-        (parsedSequenceParameterSet.profileTierLevel.generalProfileTier
-            .profile_space <<
-            6) |
-        (Number(
-            parsedSequenceParameterSet.profileTierLevel.generalProfileTier
-                .tier_flag
-        ) <<
-            5) |
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier
-            .profile_idc;
+        (general_profile_space << 6) |
+        (Number(general_tier_flag) << 5) |
+        general_profile_idc;
 
-    buffer[2] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.profileCompatibilitySet[0];
-    buffer[3] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.profileCompatibilitySet[1];
-    buffer[4] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.profileCompatibilitySet[2];
-    buffer[5] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.profileCompatibilitySet[3];
+    /* unsigned int(32) general_profile_compatibility_flags; */
+    buffer[2] = generalProfileCompatibilitySet[0];
+    buffer[3] = generalProfileCompatibilitySet[1];
+    buffer[4] = generalProfileCompatibilitySet[2];
+    buffer[5] = generalProfileCompatibilitySet[3];
 
-    buffer[6] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[0];
-    buffer[7] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[1];
-    buffer[8] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[2];
-    buffer[9] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[3];
-    buffer[10] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[4];
-    buffer[11] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[5];
-    buffer[12] =
-        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[6];
+    /* unsigned int(48) general_constraint_indicator_flags; */
+    buffer[6] = generalConstraintSet[0];
+    buffer[7] = generalConstraintSet[1];
+    buffer[8] = generalConstraintSet[2];
+    buffer[9] = generalConstraintSet[3];
+    buffer[10] = generalConstraintSet[4];
+    buffer[11] = generalConstraintSet[5];
 
-    buffer[13] = parsedSequenceParameterSet.profileTierLevel.general_level_idc;
+    /* unsigned int(8) general_level_idc; */
+    buffer[12] = general_level_idc;
 
-    buffer[14] = 0xf0;
-    buffer[15] = 0x00;
+    /*
+     * bit(4) reserved = '1111'b;
+     * unsigned int(12) min_spatial_segmentation_idc;
+     */
+    buffer[13] = 0xf0 | (min_spatial_segmentation_idc >> 8);
+    buffer[14] = min_spatial_segmentation_idc;
 
-    buffer[16] = 0xfc;
+    /*
+     * bit(6) reserved = '111111'b;
+     * unsigned int(2) parallelismType;
+     */
+    buffer[15] = 0xfc;
 
-    buffer[17] = 0xfc | parsedSequenceParameterSet.chroma_format_idc;
+    /*
+     * bit(6) reserved = '111111'b;
+     * unsigned int(2) chromaFormat;
+     */
+    buffer[16] = 0xfc | chroma_format_idc;
+
+    /*
+     * bit(5) reserved = '11111'b;
+     * unsigned int(3) bitDepthLumaMinus8;
+     */
+    buffer[17] = 0xf8 | bit_depth_luma_minus8;
+
+    /*
+     * bit(5) reserved = '11111'b;
+     * unsigned int(3) bitDepthChromaMinus8;
+     */
+    buffer[18] = 0xf8 | bit_depth_chroma_minus8;
+
+    /* bit(16) avgFrameRate; */
+    buffer[19] = 0;
+    buffer[20] = 0;
+
+    /*
+     * bit(2) constantFrameRate;
+     * bit(3) numTemporalLayers;
+     * bit(1) temporalIdNested;
+     * unsigned int(2) lengthSizeMinusOne;
+     */
+    buffer[21] =
+        ((vps_max_layers_minus1 + 1) << 3) |
+        (Number(vps_temporal_id_nesting_flag) << 2) |
+        3;
+
+    /* unsigned int(8) numOfArrays; */
+    buffer[22] = 3;
+
+    let i = 23;
+
+    for (const nalu of [
+        videoParameterSet,
+        sequenceParameterSet,
+        pictureParameterSet,
+    ]) {
+        /*
+         * bit(1) array_completeness;
+         * unsigned int(1) reserved = 0;
+         * unsigned int(6) NAL_unit_type;
+         */
+        buffer[i] = nalu.nal_unit_type;
+        i += 1;
+
+        /* unsigned int(16) numNalus; */
+        buffer[i] = 0;
+        i += 1;
+        buffer[i] = 1;
+        i += 1;
+
+        /* unsigned int(16) nalUnitLength; */
+        buffer[i] = nalu.data.length >> 8;
+        i += 1;
+        buffer[i] = nalu.data.length;
+        i += 1;
+
+        buffer.set(nalu.data, i);
+        i += nalu.data.length;
+    }
+
+    return buffer;
 }
 
 function h264StreamToAvcSample(buffer: Uint8Array) {
@@ -138,7 +235,7 @@ export class MatroskaMuxingRecorder {
     public audioCodec: ScrcpyAudioCodec | undefined;
 
     private muxer: WebMMuxer | undefined;
-    private avcConfiguration: Uint8Array | undefined;
+    private videoCodecDescription: Uint8Array | undefined;
     private configurationWritten = false;
     private _firstTimestamp = -1;
     private _packetsFromLastKeyframe: {
@@ -162,7 +259,7 @@ export class MatroskaMuxingRecorder {
                       decoderConfig: {
                           // Not used
                           codec: "",
-                          description: this.avcConfiguration,
+                          description: this.videoCodecDescription,
                       },
                   }
         );
@@ -180,7 +277,7 @@ export class MatroskaMuxingRecorder {
                     case ScrcpyVideoCodecId.H264: {
                         const { sequenceParameterSet, pictureParameterSet } =
                             h264SearchConfiguration(packet.data);
-                        this.avcConfiguration =
+                        this.videoCodecDescription =
                             h264ConfigurationToAvcDecoderConfigurationRecord(
                                 sequenceParameterSet,
                                 pictureParameterSet
@@ -189,6 +286,17 @@ export class MatroskaMuxingRecorder {
                         break;
                     }
                     case ScrcpyVideoCodecId.H265: {
+                        const {
+                            videoParameterSet,
+                            sequenceParameterSet,
+                            pictureParameterSet,
+                        } = h265SearchConfiguration(packet.data);
+                        this.videoCodecDescription =
+                            h265ConfigurationToHevcDecoderConfigurationRecord(
+                                videoParameterSet,
+                                sequenceParameterSet,
+                                pictureParameterSet
+                            );
                         this.configurationWritten = false;
                         break;
                     }

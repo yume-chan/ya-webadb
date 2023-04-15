@@ -12,6 +12,8 @@
 // cspell: ignore ivmc
 // cspell: ignore dbbp
 // cspell: ignore texmc
+// cspell: ignore rbsp
+// cspell: ignore cprms
 
 import { NaluSodbBitReader, annexBSplitNalu } from "./nalu.js";
 
@@ -104,6 +106,13 @@ export function h265ParseNaluHeader(nalu: Uint8Array) {
     };
 }
 
+export type H265NaluHeader = ReturnType<typeof h265ParseNaluHeader>;
+
+export interface H265NaluRaw extends H265NaluHeader {
+    data: Uint8Array;
+    rbsp: Uint8Array;
+}
+
 /**
  * 7.3.2.1 Video parameter set RBSP syntax
  */
@@ -116,7 +125,7 @@ export function h265ParseVideoParameterSet(nalu: Uint8Array) {
     const vps_max_layers_minus1 = reader.read(6);
     const vps_max_sub_layers_minus1 = reader.read(3);
     const vps_temporal_id_nesting_flag = !!reader.next();
-    reader.skip(16); // vps_reserved_0xffff_16bits
+    reader.skip(16);
 
     const profileTierLevel = h265ParseProfileTierLevel(
         reader,
@@ -1191,46 +1200,39 @@ function getCpbCnt(cpb_cnt_minus_1: number) {
 }
 
 export function h265SearchConfiguration(buffer: Uint8Array) {
-    let videoParameterSet: Uint8Array | undefined;
-    let sequenceParameterSet: Uint8Array | undefined;
-    let pictureParameterSet: Uint8Array | undefined;
+    let videoParameterSet!: H265NaluRaw;
+    let sequenceParameterSet!: H265NaluRaw;
+    let pictureParameterSet!: H265NaluRaw;
+    let count = 0;
 
     for (const nalu of annexBSplitNalu(buffer)) {
         const header = h265ParseNaluHeader(nalu);
+        const raw: H265NaluRaw = {
+            ...header,
+            data: nalu,
+            rbsp: nalu.subarray(2),
+        };
         switch (header.nal_unit_type) {
             case 32:
-                videoParameterSet = nalu.subarray(2);
-                if (sequenceParameterSet && pictureParameterSet) {
-                    return {
-                        videoParameterSet,
-                        sequenceParameterSet,
-                        pictureParameterSet,
-                    };
-                }
+                videoParameterSet = raw;
                 break;
             case 33:
-                sequenceParameterSet = nalu.subarray(2);
-                if (videoParameterSet && pictureParameterSet) {
-                    return {
-                        videoParameterSet,
-                        sequenceParameterSet,
-                        pictureParameterSet,
-                    };
-                }
+                sequenceParameterSet = raw;
                 break;
             case 34:
-                pictureParameterSet = nalu.subarray(2);
-                if (videoParameterSet && sequenceParameterSet) {
-                    return {
-                        videoParameterSet,
-                        sequenceParameterSet,
-                        pictureParameterSet,
-                    };
-                }
+                pictureParameterSet = raw;
                 break;
             default:
-                // ignore
-                break;
+                continue;
+        }
+
+        count += 1;
+        if (count === 3) {
+            return {
+                videoParameterSet,
+                sequenceParameterSet,
+                pictureParameterSet,
+            };
         }
     }
 
@@ -1294,9 +1296,9 @@ export function h265ParseSps3dExtension(reader: NaluSodbBitReader) {
 export type H265Sps3dExtension = ReturnType<typeof h265ParseSps3dExtension>;
 
 export interface H265Configuration {
-    videoParameterSet: Uint8Array;
-    sequenceParameterSet: Uint8Array;
-    pictureParameterSet: Uint8Array;
+    videoParameterSet: H265NaluRaw;
+    sequenceParameterSet: H265NaluRaw;
+    pictureParameterSet: H265NaluRaw;
 
     generalProfileSpace: number;
     generalProfileIndex: number;
@@ -1331,7 +1333,7 @@ export function h265ParseConfiguration(data: Uint8Array): H265Configuration {
             },
             general_level_idc: generalLevelIndex,
         },
-    } = h265ParseVideoParameterSet(videoParameterSet);
+    } = h265ParseVideoParameterSet(videoParameterSet.rbsp);
 
     const {
         chroma_format_idc,
@@ -1341,7 +1343,7 @@ export function h265ParseConfiguration(data: Uint8Array): H265Configuration {
         conf_win_right_offset: cropRight = 0,
         conf_win_top_offset: cropTop = 0,
         conf_win_bottom_offset: cropBottom = 0,
-    } = h265ParseSequenceParameterSet(sequenceParameterSet);
+    } = h265ParseSequenceParameterSet(sequenceParameterSet.rbsp);
 
     const SubWidthC = getSubWidthC(chroma_format_idc);
     const SubHeightC = getSubHeightC(chroma_format_idc);
