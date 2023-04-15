@@ -19,6 +19,7 @@ import type {
     ScrcpyVideoStream,
     ScrcpyVideoStreamMetadata,
 } from "../codec.js";
+import { ScrcpyVideoCodecId } from "../codec.js";
 import type { ScrcpyDisplay, ScrcpyEncoder, ScrcpyOptions } from "../types.js";
 import { toScrcpyOptionValue } from "../types.js";
 
@@ -146,7 +147,9 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
     ): ValueOrPromise<ScrcpyVideoStream> {
         return (async () => {
             const buffered = new BufferedReadableStream(stream);
-            const metadata: ScrcpyVideoStreamMetadata = {};
+            const metadata: ScrcpyVideoStreamMetadata = {
+                codec: ScrcpyVideoCodecId.H264,
+            };
             metadata.deviceName = await ScrcpyOptions1_16.parseCString(
                 buffered,
                 64

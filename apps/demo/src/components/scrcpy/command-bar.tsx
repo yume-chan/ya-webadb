@@ -56,10 +56,7 @@ const ITEMS = computed(() => {
                   onClick: action(() => {
                       STATE.fullScreenContainer!.focus();
 
-                      RECORD_STATE.recorder.start(
-                          RECORD_STATE.videoMetadata!,
-                          RECORD_STATE.audioCodec
-                      );
+                      RECORD_STATE.recorder.start();
                       RECORD_STATE.recording = true;
                   }),
               }

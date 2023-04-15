@@ -2,7 +2,11 @@ import type {
     ScrcpyMediaStreamDataPacket,
     ScrcpyMediaStreamPacket,
 } from "@yume-chan/scrcpy";
-import { h264ParseConfiguration } from "@yume-chan/scrcpy";
+import {
+    ScrcpyVideoCodecId,
+    h264ParseConfiguration,
+    h265ParseConfiguration,
+} from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
@@ -13,11 +17,28 @@ function toHex(value: number) {
     return value.toString(16).padStart(2, "0").toUpperCase();
 }
 
+function toUint32Le(data: Uint8Array, offset: number) {
+    return (
+        data[offset]! |
+        (data[offset + 1]! << 8) |
+        (data[offset + 2]! << 16) |
+        (data[offset + 3]! << 24)
+    );
+}
+
 export class WebCodecsDecoder implements ScrcpyVideoDecoder {
-    public readonly capabilities: Record<string, ScrcpyVideoDecoderCapability> =
-        {
-            h264: {},
-        };
+    public static readonly capabilities: Record<
+        string,
+        ScrcpyVideoDecoderCapability
+    > = {
+        h264: {},
+        h265: {},
+    };
+
+    private _codec: ScrcpyVideoCodecId;
+    public get codec() {
+        return this._codec;
+    }
 
     private _writable: WritableStream<ScrcpyMediaStreamPacket>;
     public get writable() {
@@ -46,7 +67,9 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
     private currentFrameRendered = false;
     private animationFrameId = 0;
 
-    public constructor() {
+    public constructor(codec: ScrcpyVideoCodecId) {
+        this._codec = codec;
+
         this._renderer = document.createElement("canvas");
 
         this.context = this._renderer.getContext("2d")!;
@@ -95,27 +118,67 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
     };
 
     private configure(data: Uint8Array) {
-        const {
-            profileIndex,
-            constraintSet,
-            levelIndex,
-            croppedWidth,
-            croppedHeight,
-        } = h264ParseConfiguration(data);
+        switch (this._codec) {
+            case ScrcpyVideoCodecId.H264: {
+                const {
+                    profileIndex,
+                    constraintSet,
+                    levelIndex,
+                    croppedWidth,
+                    croppedHeight,
+                } = h264ParseConfiguration(data);
 
-        this._renderer.width = croppedWidth;
-        this._renderer.height = croppedHeight;
+                this._renderer.width = croppedWidth;
+                this._renderer.height = croppedHeight;
 
-        // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
-        // ISO Base Media File Format Name Space
-        const codec = `avc1.${[profileIndex, constraintSet, levelIndex]
-            .map(toHex)
-            .join("")}`;
-        this.decoder.configure({
-            codec: codec,
-            optimizeForLatency: true,
-        });
+                // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
+                // ISO Base Media File Format Name Space
+                const codec = `avc1.${[profileIndex, constraintSet, levelIndex]
+                    .map(toHex)
+                    .join("")}`;
+                this.decoder.configure({
+                    codec: codec,
+                    optimizeForLatency: true,
+                });
+                break;
+            }
+            case ScrcpyVideoCodecId.H265: {
+                const {
+                    generalProfileSpace,
+                    generalProfileIndex,
+                    generalProfileCompatibilitySet,
+                    generalTierFlag,
+                    generalLevelIndex,
+                    generalConstraintSet,
+                    croppedWidth,
+                    croppedHeight,
+                } = h265ParseConfiguration(data);
 
+                this._renderer.width = croppedWidth;
+                this._renderer.height = croppedHeight;
+
+                const codec = [
+                    "hev1",
+                    ["", "A", "B", "C"][generalProfileSpace]! +
+                        generalProfileIndex.toString(),
+                    toUint32Le(generalProfileCompatibilitySet, 0).toString(16),
+                    (generalTierFlag ? "H" : "L") +
+                        generalLevelIndex.toString(),
+                    toUint32Le(generalConstraintSet, 0)
+                        .toString(16)
+                        .toUpperCase(),
+                    toUint32Le(generalConstraintSet, 4)
+                        .toString(16)
+                        .toUpperCase(),
+                ].join(".");
+                console.log("codec", codec);
+                this.decoder.configure({
+                    codec,
+                    optimizeForLatency: true,
+                });
+                break;
+            }
+        }
         this._config = data;
     }
 
@@ -146,6 +209,8 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
 
     public dispose() {
         cancelAnimationFrame(this.animationFrameId);
-        this.decoder.close();
+        if (this.decoder.state !== "closed") {
+            this.decoder.close();
+        }
     }
 }

@@ -19,6 +19,7 @@ import {
     ScrcpyDeviceMessageDeserializeStream,
     ScrcpyVideoCodecId,
     h264ParseConfiguration,
+    h265ParseConfiguration,
 } from "@yume-chan/scrcpy";
 import type {
     Consumable,
@@ -317,13 +318,21 @@ export class AdbScrcpyClient {
                     new InspectStream((packet) => {
                         if (packet.type === "configuration") {
                             switch (metadata.codec) {
-                                case ScrcpyVideoCodecId.H264:
-                                case undefined: {
+                                case ScrcpyVideoCodecId.H264: {
                                     const { croppedWidth, croppedHeight } =
                                         h264ParseConfiguration(packet.data);
 
                                     this._screenWidth = croppedWidth;
                                     this._screenHeight = croppedHeight;
+                                    break;
+                                }
+                                case ScrcpyVideoCodecId.H265: {
+                                    const { croppedWidth, croppedHeight } =
+                                        h265ParseConfiguration(packet.data);
+
+                                    this._screenWidth = croppedWidth;
+                                    this._screenHeight = croppedHeight;
+                                    break;
                                 }
                             }
                         }

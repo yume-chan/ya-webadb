@@ -20,12 +20,8 @@ import { ScrcpyOptions1_21 } from "./1_21.js";
 import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
 import { ScrcpyOptions1_24 } from "./1_24.js";
 import { ScrcpyOptions1_25 } from "./1_25/index.js";
-import type {
-    ScrcpyAudioStreamMetadata,
-    ScrcpyVideoStream,
-    ScrcpyVideoStreamMetadata,
-} from "./codec.js";
-import { ScrcpyAudioCodec } from "./codec.js";
+import type { ScrcpyAudioStreamMetadata, ScrcpyVideoStream } from "./codec.js";
+import { ScrcpyAudioCodec, ScrcpyVideoCodecId } from "./codec.js";
 import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
@@ -200,32 +196,56 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     ): ValueOrPromise<ScrcpyVideoStream> {
         const { sendDeviceMeta, sendCodecMeta } = this.value;
         if (!sendDeviceMeta && !sendCodecMeta) {
-            return { stream, metadata: {} };
+            let codec: ScrcpyVideoCodecId;
+            switch (this.value.videoCodec) {
+                case "h264":
+                    codec = ScrcpyVideoCodecId.H264;
+                    break;
+                case "h265":
+                    codec = ScrcpyVideoCodecId.H265;
+                    break;
+                case "av1":
+                    codec = ScrcpyVideoCodecId.AV1;
+                    break;
+            }
+            return { stream, metadata: { codec } };
         }
 
         return (async () => {
             const buffered = new BufferedReadableStream(stream);
-            const metadata: ScrcpyVideoStreamMetadata = {};
+
             // `sendDeviceMeta` now only contains device name,
             // can't use `super.parseVideoStreamMetadata` here
+            let deviceName: string | undefined;
             if (sendDeviceMeta) {
-                metadata.deviceName = await ScrcpyOptions1_16.parseCString(
-                    buffered,
-                    64
-                );
+                deviceName = await ScrcpyOptions1_16.parseCString(buffered, 64);
             }
+
+            let codec: ScrcpyVideoCodecId;
+            let width: number | undefined;
+            let height: number | undefined;
             if (sendCodecMeta) {
-                metadata.codec = await ScrcpyOptions1_16.parseUint32BE(
-                    buffered
-                );
-                metadata.width = await ScrcpyOptions1_16.parseUint32BE(
-                    buffered
-                );
-                metadata.height = await ScrcpyOptions1_16.parseUint32BE(
-                    buffered
-                );
+                codec = await ScrcpyOptions1_16.parseUint32BE(buffered);
+                width = await ScrcpyOptions1_16.parseUint32BE(buffered);
+                height = await ScrcpyOptions1_16.parseUint32BE(buffered);
+            } else {
+                switch (this.value.videoCodec) {
+                    case "h264":
+                        codec = ScrcpyVideoCodecId.H264;
+                        break;
+                    case "h265":
+                        codec = ScrcpyVideoCodecId.H265;
+                        break;
+                    case "av1":
+                        codec = ScrcpyVideoCodecId.AV1;
+                        break;
+                }
             }
-            return { stream: buffered.release(), metadata };
+
+            return {
+                stream: buffered.release(),
+                metadata: { deviceName, codec, width, height },
+            };
         })();
     }
 

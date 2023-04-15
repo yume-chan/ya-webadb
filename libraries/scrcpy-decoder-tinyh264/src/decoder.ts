@@ -38,13 +38,15 @@ function initialize() {
 }
 
 export class TinyH264Decoder implements ScrcpyVideoDecoder {
-    public readonly capabilities: Record<string, ScrcpyVideoDecoderCapability> =
-        {
-            h264: {
-                maxProfile: AndroidAvcProfile.Baseline,
-                maxLevel: AndroidAvcLevel.Level4,
-            },
-        };
+    public static readonly capabilities: Record<
+        string,
+        ScrcpyVideoDecoderCapability
+    > = {
+        h264: {
+            maxProfile: AndroidAvcProfile.Baseline,
+            maxLevel: AndroidAvcLevel.Level4,
+        },
+    };
 
     private _renderer: HTMLCanvasElement;
     public get renderer() {

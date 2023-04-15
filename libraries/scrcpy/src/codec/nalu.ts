@@ -8,7 +8,7 @@
  * This methods returns a generator, so it can be stopped immediately
  * after the interested NAL unit is found.
  */
-export function* naluSplit(buffer: Uint8Array): Generator<Uint8Array> {
+export function* annexBSplitNalu(buffer: Uint8Array): Generator<Uint8Array> {
     // -1 means we haven't found the first start code
     let start = -1;
     // How many `0x00`s in a row we have counted
@@ -148,8 +148,9 @@ export function naluRemoveEmulation(buffer: Uint8Array) {
                 // Create output and copy the data before the emulation prevention byte
                 // Output size is unknown, so we use the input size as an upper bound
                 output = new Uint8Array(buffer.length - 1);
-                output.set(buffer.subarray(0, i - prevZeroCount));
-                outputOffset = i - prevZeroCount + 1;
+                output.set(buffer.subarray(0, i));
+                outputOffset = i;
+                i += 1;
                 break scan;
             default:
                 // `0x000004` or larger are as-is
@@ -172,6 +173,12 @@ export function naluRemoveEmulation(buffer: Uint8Array) {
             if (byte > 0x03) {
                 // `0x00000304` or larger are invalid
                 throw new Error("Invalid data");
+            }
+
+            // `00000300000300` results in `0000000000` (both `0x03` are removed)
+            // which means the `0x00` after `0x03` also counts
+            if (byte === 0x00) {
+                zeroCount += 1;
             }
 
             inEmulation = false;
@@ -221,4 +228,146 @@ export function naluRemoveEmulation(buffer: Uint8Array) {
     }
 
     return output.subarray(0, outputOffset);
+}
+
+export class NaluSodbBitReader {
+    private readonly _nalu: Uint8Array;
+    private readonly _byteLength: number;
+    private readonly _stopBitIndex: number;
+
+    private _zeroCount = 0;
+    private _bytePosition = -1;
+    private _bitPosition = -1;
+    private _byte = 0;
+
+    public get byteLength() {
+        return this._byteLength;
+    }
+
+    public get stopBitIndex() {
+        return this._stopBitIndex;
+    }
+
+    public get bytePosition() {
+        return this._bytePosition;
+    }
+
+    public get bitPosition() {
+        return this._bitPosition;
+    }
+
+    public get ended() {
+        return (
+            this._bytePosition === this._byteLength &&
+            this._bitPosition === this._stopBitIndex
+        );
+    }
+
+    public constructor(nalu: Uint8Array) {
+        this._nalu = nalu;
+
+        for (let i = nalu.length - 1; i >= 0; i -= 1) {
+            if (this._nalu[i] === 0) {
+                continue;
+            }
+
+            const byte = nalu[i]!;
+            for (let j = 0; j < 8; j += 1) {
+                if (((byte >> j) & 1) === 1) {
+                    this._byteLength = i;
+                    this._stopBitIndex = j;
+                    this.readByte();
+                    return;
+                }
+            }
+        }
+
+        throw new Error("End bit not found");
+    }
+
+    private readByte() {
+        this._byte = this._nalu[this._bytePosition]!;
+        if (this._zeroCount === 2 && this._byte === 3) {
+            this._zeroCount = 0;
+            this._bytePosition += 1;
+            this.readByte();
+            return;
+        }
+
+        if (this._byte === 0) {
+            this._zeroCount += 1;
+        } else {
+            this._zeroCount = 0;
+        }
+    }
+
+    public next() {
+        if (this._bitPosition === -1) {
+            this._bitPosition = 7;
+            this._bytePosition += 1;
+            this.readByte();
+        }
+
+        if (
+            this._bytePosition === this._byteLength &&
+            this._bitPosition === this._stopBitIndex
+        ) {
+            throw new Error("Bit index out of bounds");
+        }
+
+        const value = (this._byte >> this._bitPosition) & 1;
+        this._bitPosition -= 1;
+        return value;
+    }
+
+    public read(length: number): number {
+        if (length > 32) {
+            throw new Error("Read length too large");
+        }
+
+        let result = 0;
+        for (let i = 0; i < length; i += 1) {
+            result = (result << 1) | this.next();
+        }
+        return result;
+    }
+
+    public skip(length: number) {
+        for (let i = 0; i < length; i += 1) {
+            this.next();
+        }
+    }
+
+    public decodeExponentialGolombNumber(): number {
+        let length = 0;
+        while (this.next() === 0) {
+            length += 1;
+        }
+        if (length === 0) {
+            return 0;
+        }
+        return ((1 << length) | this.read(length)) - 1;
+    }
+
+    public peek(length: number) {
+        const { _zeroCount, _bytePosition, _bitPosition, _byte } = this;
+        const result = this.read(length);
+        Object.assign(this, { _zeroCount, _bytePosition, _bitPosition, _byte });
+        return result;
+    }
+
+    public readBytes(length: number): Uint8Array {
+        const result = new Uint8Array(length);
+        for (let i = 0; i < length; i += 1) {
+            result[i] = this.read(8);
+        }
+        return result;
+    }
+
+    public peekBytes(length: number): Uint8Array {
+        const { _zeroCount, _bytePosition, _bitPosition, _byte } = this;
+        const result = this.readBytes(length);
+        Object.assign(this, { _zeroCount, _bytePosition, _bitPosition, _byte });
+        return result;
+    }
 }

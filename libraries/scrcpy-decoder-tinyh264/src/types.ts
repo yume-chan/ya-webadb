@@ -1,5 +1,8 @@
 import type { Disposable } from "@yume-chan/event";
-import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
+import type {
+    ScrcpyMediaStreamPacket,
+    ScrcpyVideoCodecId,
+} from "@yume-chan/scrcpy";
 import type { WritableStream } from "@yume-chan/stream-extra";
 
 export interface ScrcpyVideoDecoderCapability {
@@ -8,8 +11,6 @@ export interface ScrcpyVideoDecoderCapability {
 }
 
 export interface ScrcpyVideoDecoder extends Disposable {
-    readonly capabilities: Record<string, ScrcpyVideoDecoderCapability>;
-
     readonly renderer: HTMLElement;
     readonly frameRendered: number;
     readonly frameSkipped: number;
@@ -17,5 +18,7 @@ export interface ScrcpyVideoDecoder extends Disposable {
 }
 
 export interface ScrcpyVideoDecoderConstructor {
-    new (): ScrcpyVideoDecoder;
+    readonly capabilities: Record<string, ScrcpyVideoDecoderCapability>;
+
+    new (codec: ScrcpyVideoCodecId): ScrcpyVideoDecoder;
 }

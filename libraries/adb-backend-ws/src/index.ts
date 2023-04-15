@@ -44,7 +44,7 @@ export default class AdbWsBackend implements AdbBackend {
         });
 
         socket.onclose = () => {
-            factory.dispose().catch(NOOP);
+            factory.close().catch(NOOP);
         };
 
         const readable = factory.wrapReadable(

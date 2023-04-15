@@ -4,6 +4,7 @@ import type { ValueOrPromise } from "@yume-chan/struct";
 import type { ScrcpyScrollController } from "../1_16/index.js";
 import { ScrcpyOptions1_21 } from "../1_21.js";
 import type { ScrcpyVideoStream } from "../codec.js";
+import { ScrcpyVideoCodecId } from "../codec.js";
 import { ScrcpyOptionsBase } from "../types.js";
 
 import type { ScrcpyOptionsInit1_22 } from "./init.js";
@@ -35,7 +36,7 @@ export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
         stream: ReadableStream<Uint8Array>
     ): ValueOrPromise<ScrcpyVideoStream> {
         if (!this.value.sendDeviceMeta) {
-            return { stream, metadata: {} };
+            return { stream, metadata: { codec: ScrcpyVideoCodecId.H264 } };
         } else {
             return this._base.parseVideoStreamMetadata(stream);
         }

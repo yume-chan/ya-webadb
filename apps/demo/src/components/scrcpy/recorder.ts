@@ -6,8 +6,9 @@ import {
     ScrcpyMediaStreamPacket,
     ScrcpyVideoCodecId,
     ScrcpyVideoStreamMetadata,
+    annexBSplitNalu,
     h264SearchConfiguration,
-    naluSplit,
+    h265ParseSequenceParameterSet,
 } from "@yume-chan/scrcpy";
 import { action, makeAutoObservable, reaction } from "mobx";
 import WebMMuxer from "webm-muxer";
@@ -39,11 +40,67 @@ function h264ConfigurationToAvcDecoderConfigurationRecord(
     return buffer;
 }
 
+function h265ConfigurationToHevcDecoderConfigurationRecord(
+    videoParameterSet: Uint8Array,
+    sequenceParameterSet: Uint8Array,
+    pictureParameterSet: Uint8Array
+) {
+    const parsedSequenceParameterSet =
+        h265ParseSequenceParameterSet(sequenceParameterSet);
+
+    const buffer = new Uint8Array(100);
+    buffer[0] = 1;
+    buffer[1] =
+        (parsedSequenceParameterSet.profileTierLevel.generalProfileTier
+            .profile_space <<
+            6) |
+        (Number(
+            parsedSequenceParameterSet.profileTierLevel.generalProfileTier
+                .tier_flag
+        ) <<
+            5) |
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier
+            .profile_idc;
+
+    buffer[2] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.profileCompatibilitySet[0];
+    buffer[3] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.profileCompatibilitySet[1];
+    buffer[4] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.profileCompatibilitySet[2];
+    buffer[5] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.profileCompatibilitySet[3];
+
+    buffer[6] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[0];
+    buffer[7] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[1];
+    buffer[8] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[2];
+    buffer[9] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[3];
+    buffer[10] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[4];
+    buffer[11] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[5];
+    buffer[12] =
+        parsedSequenceParameterSet.profileTierLevel.generalProfileTier.constraintSet[6];
+
+    buffer[13] = parsedSequenceParameterSet.profileTierLevel.general_level_idc;
+
+    buffer[14] = 0xf0;
+    buffer[15] = 0x00;
+
+    buffer[16] = 0xfc;
+
+    buffer[17] = 0xfc | parsedSequenceParameterSet.chroma_format_idc;
+}
+
 function h264StreamToAvcSample(buffer: Uint8Array) {
     const nalUnits: Uint8Array[] = [];
     let totalLength = 0;
 
-    for (const unit of naluSplit(buffer)) {
+    for (const unit of annexBSplitNalu(buffer)) {
         nalUnits.push(unit);
         totalLength += unit.byteLength + 4;
     }
@@ -77,8 +134,8 @@ const MatroskaAudioCodecNameMap: Record<string, string> = {
 export class MatroskaMuxingRecorder {
     public running = false;
 
-    private _videoMetadata: ScrcpyVideoStreamMetadata | undefined;
-    private _audioCodec: ScrcpyAudioCodec | undefined;
+    public videoMetadata: ScrcpyVideoStreamMetadata | undefined;
+    public audioCodec: ScrcpyAudioCodec | undefined;
 
     private muxer: WebMMuxer | undefined;
     private avcConfiguration: Uint8Array | undefined;
@@ -113,16 +170,29 @@ export class MatroskaMuxingRecorder {
     }
 
     public addVideoPacket(packet: ScrcpyMediaStreamPacket) {
+        if (!this.videoMetadata) {
+            throw new Error("videoMetadata must be set");
+        }
+
         try {
             if (packet.type === "configuration") {
-                const { sequenceParameterSet, pictureParameterSet } =
-                    h264SearchConfiguration(packet.data);
-                this.avcConfiguration =
-                    h264ConfigurationToAvcDecoderConfigurationRecord(
-                        sequenceParameterSet,
-                        pictureParameterSet
-                    );
-                this.configurationWritten = false;
+                switch (this.videoMetadata.codec) {
+                    case ScrcpyVideoCodecId.H264: {
+                        const { sequenceParameterSet, pictureParameterSet } =
+                            h264SearchConfiguration(packet.data);
+                        this.avcConfiguration =
+                            h264ConfigurationToAvcDecoderConfigurationRecord(
+                                sequenceParameterSet,
+                                pictureParameterSet
+                            );
+                        this.configurationWritten = false;
+                        break;
+                    }
+                    case ScrcpyVideoCodecId.H265: {
+                        this.configurationWritten = false;
+                        break;
+                    }
+                }
                 return;
             }
 
@@ -165,16 +235,10 @@ export class MatroskaMuxingRecorder {
         this.addAudioChunk(packet);
     }
 
-    public start(
-        videoMetadata: ScrcpyVideoStreamMetadata,
-        audioCodec: ScrcpyAudioCodec | undefined
-    ) {
-        if (!videoMetadata.codec) {
-            throw new Error("Video codec is not defined");
+    public start() {
+        if (!this.videoMetadata) {
+            throw new Error("videoMetadata must be set");
         }
-
-        this._videoMetadata = videoMetadata;
-        this._audioCodec = audioCodec;
 
         this.running = true;
 
@@ -183,18 +247,19 @@ export class MatroskaMuxingRecorder {
             type: "matroska",
             firstTimestampBehavior: "permissive",
             video: {
-                codec: MatroskaVideoCodecNameMap[videoMetadata.codec!],
-                width: videoMetadata.width ?? 0,
-                height: videoMetadata.height ?? 0,
+                codec: MatroskaVideoCodecNameMap[this.videoMetadata.codec!],
+                width: this.videoMetadata.width ?? 0,
+                height: this.videoMetadata.height ?? 0,
             },
         };
 
-        if (audioCodec) {
+        if (this.audioCodec) {
             options.audio = {
-                codec: MatroskaAudioCodecNameMap[audioCodec.mimeType!],
+                codec: MatroskaAudioCodecNameMap[this.audioCodec.mimeType!],
                 sampleRate: 48000,
                 numberOfChannels: 2,
-                bitDepth: audioCodec === ScrcpyAudioCodec.RAW ? 16 : undefined,
+                bitDepth:
+                    this.audioCodec === ScrcpyAudioCodec.RAW ? 16 : undefined,
             };
         }
 
@@ -247,8 +312,6 @@ export class MatroskaMuxingRecorder {
 export const RECORD_STATE = makeAutoObservable({
     recorder: new MatroskaMuxingRecorder(),
     recording: false,
-    videoMetadata: undefined as ScrcpyVideoStreamMetadata | undefined,
-    audioCodec: undefined as ScrcpyAudioCodec | undefined,
     intervalId: -1,
     hours: 0,
     minutes: 0,

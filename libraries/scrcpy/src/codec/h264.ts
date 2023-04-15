@@ -2,7 +2,7 @@
 // cspell: ignore qpprime
 // cspell: ignore colour
 
-import { naluRemoveEmulation, naluSplit } from './nalu.js';
+import { NaluSodbBitReader, annexBSplitNalu } from "./nalu.js";
 
 // From https://developer.android.com/reference/android/media/MediaCodecInfo.CodecProfileLevel
 export enum AndroidAvcProfile {
@@ -47,52 +47,10 @@ export enum AndroidAvcLevel {
 // Because this module parses H.264 Annex B format,
 // it's named "h264" instead of "avc".
 
-class BitReader {
-    private buffer: Uint8Array;
-
-    private bytePosition = 0;
-
-    private bitPosition = 0;
-
-    public constructor(buffer: Uint8Array) {
-        this.buffer = buffer;
-    }
-
-    public read(length: number): number {
-        let result = 0;
-        for (let i = 0; i < length; i += 1) {
-            result = (result << 1) | this.next();
-        }
-        return result;
-    }
-
-    public next(): number {
-        const value =
-            (this.buffer[this.bytePosition]! >> (7 - this.bitPosition)) & 1;
-        this.bitPosition += 1;
-        if (this.bitPosition === 8) {
-            this.bytePosition += 1;
-            this.bitPosition = 0;
-        }
-        return value;
-    }
-
-    public decodeExponentialGolombNumber(): number {
-        let length = 0;
-        while (this.next() === 0) {
-            length += 1;
-        }
-        if (length === 0) {
-            return 0;
-        }
-        return ((1 << length) | this.read(length)) - 1;
-    }
-}
-
 // 7.3.2.1.1 Sequence parameter set data syntax
 // Variable names in this method uses the snake_case convention as in the spec for easier referencing.
-export function h264ParseSequenceParameterSet(buffer: Uint8Array) {
-    const reader = new BitReader(buffer);
+export function h264ParseSequenceParameterSet(nalu: Uint8Array) {
+    const reader = new NaluSodbBitReader(nalu);
     if (reader.next() !== 0) {
         throw new Error("Invalid data");
     }
@@ -109,20 +67,17 @@ export function h264ParseSequenceParameterSet(buffer: Uint8Array) {
     }
 
     const profile_idc = reader.read(8);
-    const constraint_set = reader.read(8);
+    const constraint_set = reader.peek(8);
 
-    const constraint_set_reader = new BitReader(
-        new Uint8Array([constraint_set])
-    );
-    const constraint_set0_flag = !!constraint_set_reader.next();
-    const constraint_set1_flag = !!constraint_set_reader.next();
-    const constraint_set2_flag = !!constraint_set_reader.next();
-    const constraint_set3_flag = !!constraint_set_reader.next();
-    const constraint_set4_flag = !!constraint_set_reader.next();
-    const constraint_set5_flag = !!constraint_set_reader.next();
+    const constraint_set0_flag = !!reader.next();
+    const constraint_set1_flag = !!reader.next();
+    const constraint_set2_flag = !!reader.next();
+    const constraint_set3_flag = !!reader.next();
+    const constraint_set4_flag = !!reader.next();
+    const constraint_set5_flag = !!reader.next();
 
     // reserved_zero_2bits
-    if (constraint_set_reader.read(2) !== 0) {
+    if (reader.read(2) !== 0) {
         throw new Error("Invalid data");
     }
 
@@ -267,7 +222,7 @@ export function h264SearchConfiguration(buffer: Uint8Array) {
     let sequenceParameterSet: Uint8Array | undefined;
     let pictureParameterSet: Uint8Array | undefined;
 
-    for (const nalu of naluSplit(buffer)) {
+    for (const nalu of annexBSplitNalu(buffer)) {
         const naluType = nalu[0]! & 0x1f;
         switch (naluType) {
             case 7: // Sequence parameter set
@@ -310,10 +265,8 @@ export interface H264Configuration {
 
     cropLeft: number;
     cropRight: number;
-
     cropTop: number;
     cropBottom: number;
-
     croppedWidth: number;
     croppedHeight: number;
 }
@@ -333,9 +286,7 @@ export function h264ParseConfiguration(data: Uint8Array): H264Configuration {
         frame_crop_right_offset,
         frame_crop_top_offset,
         frame_crop_bottom_offset,
-    } = h264ParseSequenceParameterSet(
-        naluRemoveEmulation(sequenceParameterSet)
-    );
+    } = h264ParseSequenceParameterSet(sequenceParameterSet);
 
     const encodedWidth = (pic_width_in_mbs_minus1 + 1) * 16;
     const encodedHeight =

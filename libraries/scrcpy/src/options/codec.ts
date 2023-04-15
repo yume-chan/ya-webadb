@@ -9,10 +9,10 @@ export enum ScrcpyVideoCodecId {
 }
 
 export interface ScrcpyVideoStreamMetadata {
-    deviceName?: string;
-    width?: number;
-    height?: number;
-    codec?: ScrcpyVideoCodecId;
+    deviceName?: string | undefined;
+    width?: number | undefined;
+    height?: number | undefined;
+    codec: ScrcpyVideoCodecId;
 }
 
 export interface ScrcpyVideoStream {

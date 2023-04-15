@@ -194,6 +194,7 @@ export const SETTING_STATE = makeAutoObservable(
         settings: {
             maxSize: 1080,
             videoBitRate: 4_000_000,
+            videoCodec: "h264",
             lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
             displayId: 0,
             crop: "",
@@ -315,25 +316,92 @@ export const SETTING_DEFINITIONS = computed(() => {
         placeholder: "W:H:X:Y",
     });
 
-    result.push({
-        group: "settings",
-        key: "maxSize",
-        type: "number",
-        label: "Max Resolution (longer side, 0 = unlimited)",
-        min: 0,
-        max: 2560,
-        step: 50,
-    });
+    result.push(
+        {
+            group: "settings",
+            key: "maxSize",
+            type: "number",
+            label: "Max Resolution (longer side, 0 = unlimited)",
+            min: 0,
+            max: 2560,
+            step: 50,
+        },
+        {
+            group: "settings",
+            key: "videoBitRate",
+            type: "number",
+            label: "Max Video Bitrate (bps)",
+            min: 100,
+            max: 100_000_000,
+            step: 100,
+        },
+        {
+            group: "settings",
+            key: "videoCodec",
+            type: "dropdown",
+            label: "Video Codec",
+            options: [
+                {
+                    key: "h264",
+                    text: "H.264",
+                },
+                {
+                    key: "h265",
+                    text: "H.265",
+                },
+            ],
+        },
+        {
+            group: "settings",
+            key: "videoEncoder",
+            type: "dropdown",
+            label: "Video Encoder",
+            placeholder:
+                SETTING_STATE.encoders.length === 0
+                    ? "Press refresh button to update encoder list"
+                    : "(default)",
+            labelExtra: (
+                <IconButton
+                    iconProps={{ iconName: Icons.ArrowClockwise }}
+                    disabled={!GLOBAL_STATE.device}
+                    text="Refresh"
+                    onClick={async () => {
+                        try {
+                            await STATE.pushServer();
 
-    result.push({
-        group: "settings",
-        key: "videoBitRate",
-        type: "number",
-        label: "Max Video Bitrate (bps)",
-        min: 100,
-        max: 100_000_000,
-        step: 100,
-    });
+                            const encoders = await AdbScrcpyClient.getEncoders(
+                                GLOBAL_STATE.device!,
+                                DEFAULT_SERVER_PATH,
+                                SCRCPY_SERVER_VERSION,
+                                new AdbScrcpyOptionsLatest(
+                                    new ScrcpyOptionsLatest({
+                                        logLevel: ScrcpyLogLevel.Debug,
+                                    })
+                                )
+                            );
+
+                            runInAction(() => {
+                                SETTING_STATE.encoders = encoders;
+                            });
+                        } catch (e: any) {
+                            GLOBAL_STATE.showErrorDialog(e);
+                        }
+                    }}
+                />
+            ),
+            options: SETTING_STATE.encoders
+                .filter(
+                    (item) =>
+                        item.type === "video" &&
+                        (!item.codec ||
+                            item.codec === SETTING_STATE.settings.videoCodec!)
+                )
+                .map((item) => ({
+                    key: item.name,
+                    text: item.name,
+                })),
+        }
+    );
 
     result.push({
         group: "settings",
@@ -366,56 +434,6 @@ export const SETTING_DEFINITIONS = computed(() => {
                 text: "Landscape (Flipped)",
             },
         ],
-    });
-
-    result.push({
-        group: "settings",
-        key: "videoEncoder",
-        type: "dropdown",
-        label: "Video Encoder",
-        placeholder:
-            SETTING_STATE.encoders.length === 0
-                ? "Press refresh button to update encoder list"
-                : "(default)",
-        labelExtra: (
-            <IconButton
-                iconProps={{ iconName: Icons.ArrowClockwise }}
-                disabled={!GLOBAL_STATE.device}
-                text="Refresh"
-                onClick={async () => {
-                    try {
-                        await STATE.pushServer();
-
-                        const encoders = await AdbScrcpyClient.getEncoders(
-                            GLOBAL_STATE.device!,
-                            DEFAULT_SERVER_PATH,
-                            SCRCPY_SERVER_VERSION,
-                            new AdbScrcpyOptionsLatest(
-                                new ScrcpyOptionsLatest({
-                                    logLevel: ScrcpyLogLevel.Debug,
-                                })
-                            )
-                        );
-
-                        runInAction(() => {
-                            SETTING_STATE.encoders = encoders;
-                        });
-                    } catch (e: any) {
-                        GLOBAL_STATE.showErrorDialog(e);
-                    }
-                }}
-            />
-        ),
-        options: SETTING_STATE.encoders
-            .filter(
-                (item) =>
-                    item.type === "video" &&
-                    (!item.codec || item.codec === "h264")
-            )
-            .map((item) => ({
-                key: item.name,
-                text: item.name,
-            })),
     });
 
     if (SETTING_STATE.decoders.length > 1) {
@@ -530,7 +548,8 @@ autorun(() => {
 
     const encodersForCurrentVideoCodec = SETTING_STATE.encoders.filter(
         (item) =>
-            item.type === "video" && (!item.codec || item.codec === "h264")
+            item.type === "video" &&
+            item.codec === SETTING_STATE.settings.videoCodec
     );
     if (
         SETTING_STATE.settings.videoEncoder &&

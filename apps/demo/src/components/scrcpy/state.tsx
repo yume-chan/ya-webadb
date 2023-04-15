@@ -18,8 +18,10 @@ import {
     ScrcpyLogLevel,
     ScrcpyMediaStreamPacket,
     ScrcpyOptionsLatest,
+    ScrcpyVideoCodecId,
     clamp,
     h264ParseConfiguration,
+    h265ParseConfiguration,
 } from "@yume-chan/scrcpy";
 import { ScrcpyVideoDecoder } from "@yume-chan/scrcpy-decoder-tinyh264";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
@@ -234,35 +236,13 @@ export class ScrcpyPageState {
                 SETTING_STATE.decoders.find(
                     (x) => x.key === SETTING_STATE.clientSettings.decoder
                 ) ?? SETTING_STATE.decoders[0];
-            const decoder = new decoderDefinition.Constructor();
-
-            runInAction(() => {
-                this.decoder = decoder;
-
-                let lastFrameRendered = 0;
-                let lastFrameSkipped = 0;
-                this.fpsCounterIntervalId = setInterval(
-                    action(() => {
-                        const deltaRendered =
-                            decoder.frameRendered - lastFrameRendered;
-                        const deltaSkipped =
-                            decoder.frameSkipped - lastFrameSkipped;
-                        // prettier-ignore
-                        this.fps = `${
-                            deltaRendered
-                        }${
-                            deltaSkipped ? `+${deltaSkipped} skipped` : ""
-                        }`;
-                        lastFrameRendered = decoder.frameRendered;
-                        lastFrameSkipped = decoder.frameSkipped;
-                    }),
-                    1000
-                );
-            });
 
             const videoCodecOptions = new CodecOptions();
             if (!SETTING_STATE.clientSettings.ignoreDecoderCodecArgs) {
-                const capability = decoder.capabilities["h264"];
+                const capability =
+                    decoderDefinition.Constructor.capabilities[
+                        SETTING_STATE.settings.videoCodec!
+                    ];
                 if (capability) {
                     videoCodecOptions.value.profile = capability.maxProfile;
                     videoCodecOptions.value.level = capability.maxLevel;
@@ -314,12 +294,38 @@ export class ScrcpyPageState {
             );
 
             RECORD_STATE.recorder = new MatroskaMuxingRecorder();
-            RECORD_STATE.videoMetadata = undefined;
-            RECORD_STATE.audioCodec = undefined;
 
             client.videoStream.then(({ stream, metadata }) => {
                 runInAction(() => {
-                    RECORD_STATE.videoMetadata = metadata;
+                    RECORD_STATE.recorder.videoMetadata = metadata;
+                });
+
+                const decoder = new decoderDefinition.Constructor(
+                    metadata.codec
+                );
+
+                runInAction(() => {
+                    this.decoder = decoder;
+
+                    let lastFrameRendered = 0;
+                    let lastFrameSkipped = 0;
+                    this.fpsCounterIntervalId = setInterval(
+                        action(() => {
+                            const deltaRendered =
+                                decoder.frameRendered - lastFrameRendered;
+                            const deltaSkipped =
+                                decoder.frameSkipped - lastFrameSkipped;
+                            // prettier-ignore
+                            this.fps = `${
+                            deltaRendered
+                        }${
+                            deltaSkipped ? `+${deltaSkipped} skipped` : ""
+                        }`;
+                            lastFrameRendered = decoder.frameRendered;
+                            lastFrameSkipped = decoder.frameSkipped;
+                        }),
+                        1000
+                    );
                 });
 
                 let lastKeyframe = 0n;
@@ -328,8 +334,20 @@ export class ScrcpyPageState {
                         RECORD_STATE.recorder.addVideoPacket(packet);
 
                         if (packet.type === "configuration") {
-                            const { croppedWidth, croppedHeight } =
-                                h264ParseConfiguration(packet.data);
+                            let croppedWidth: number;
+                            let croppedHeight: number;
+                            switch (metadata.codec) {
+                                case ScrcpyVideoCodecId.H264:
+                                    ({ croppedWidth, croppedHeight } =
+                                        h264ParseConfiguration(packet.data));
+                                    break;
+                                case ScrcpyVideoCodecId.H265:
+                                    ({ croppedWidth, croppedHeight } =
+                                        h265ParseConfiguration(packet.data));
+                                    break;
+                                default:
+                                    throw new Error("Codec not supported");
+                            }
 
                             runInAction(() => {
                                 this.log.push(
@@ -471,7 +489,7 @@ export class ScrcpyPageState {
                 }
 
                 runInAction(() => {
-                    RECORD_STATE.audioCodec = metadata.codec;
+                    RECORD_STATE.recorder.audioCodec = metadata.codec;
                 });
 
                 recordStream
