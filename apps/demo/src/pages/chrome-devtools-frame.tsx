@@ -1,6 +1,19 @@
+import { Stack } from "@fluentui/react";
+import { makeStyles } from "@griffel/react";
 import { useEffect } from "react";
 
+const useClasses = makeStyles({
+    body: {
+        "@media (prefers-color-scheme: dark)": {
+            backgroundColor: "rgb(41, 42, 45)",
+            color: "#ddd",
+        },
+    },
+});
+
 function ChromeDevToolsFrame() {
+    const classes = useClasses();
+
     useEffect(() => {
         var WebSocketOriginal = globalThis.WebSocket;
         globalThis.WebSocket = class WebSocket extends EventTarget {
@@ -92,7 +105,17 @@ function ChromeDevToolsFrame() {
         document.body.appendChild(script);
     }, []);
 
-    return null;
+    return (
+        <Stack
+            className={classes.body}
+            verticalFill
+            verticalAlign="center"
+            horizontalAlign="center"
+        >
+            <div>Loading DevTools...</div>
+            <div>(requires network connection)</div>
+        </Stack>
+    );
 }
 ChromeDevToolsFrame.noLayout = true;
 export default ChromeDevToolsFrame;

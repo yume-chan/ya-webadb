@@ -46,11 +46,15 @@ class AdbUndiciSocket extends Duplex {
     }
 
     async _read(size: number): Promise<void> {
-        const result = await this._reader.read();
-        if (result.done) {
-            this.emit("end");
-        } else {
-            this.push(result.value);
+        try {
+            const result = await this._reader.read();
+            if (result.done) {
+                this.emit("end");
+            } else {
+                this.push(result.value);
+            }
+        } catch {
+            //ignore
         }
     }
 
@@ -157,30 +161,26 @@ const {
 function getPopupParams(page: Page) {
     const frontendUrl = page.devtoolsFrontendUrl;
     const [frontendBase, params] = frontendUrl.split("?");
-    let frontendScript: string;
+    let script: string;
     if (
-        frontendBase.startsWith("https://aka.ms/docs-landing-page/serve_rev/")
+        frontendBase.startsWith("https://chrome-devtools-frontend.appspot.com")
     ) {
-        // Edge
-        frontendScript = frontendBase
-            .replace(
-                "https://aka.ms/docs-landing-page/serve_rev/",
-                "https://devtools.azureedge.net/serve_file/"
-            )
-            .replace("inspector.html", "entrypoints/inspector/inspector.js");
-    } else if (frontendBase.startsWith("https://devtools.opera.com/")) {
-        // Opera doesn't host its DevTools
-        // use Edge's instead
-        frontendScript =
-            "https://devtools.azureedge.net/serve_file/@de5387e0c9d4198cd2d786b4eb445a1fb74a3d18/entrypoints/inspector/inspector.js";
-    } else {
-        // Chrome
-        frontendScript = frontendBase.replace(
+        // For Chrome, use the specified version.
+        script = frontendBase.replace(
             "inspector.html",
             "front_end/entrypoints/inspector/inspector.js"
         );
+    } else {
+        // Otherwise wse a fixed version from Chrome's distribution, updated regularly.
+        // Can't find Opera's own distribution.
+        // Edge's distribution has only nightly versions.
+        script =
+            "https://chrome-devtools-frontend.appspot.com/serve_internal_file/@7edf0130cbb9f0611d524fe4870b2d4aa7f8279f/front_end/entrypoints/inspector/inspector.js";
     }
-    return { script: frontendScript, params };
+    return {
+        script,
+        params,
+    };
 }
 
 interface Browser {
@@ -203,7 +203,7 @@ const STATE = makeAutoObservable(
 async function getBrowsers() {
     const device = GLOBAL_STATE.device!;
     const sockets = await device.subprocess.spawnAndWaitLegacy(
-        `cat /proc/net/unix | grep -E "@chrome_devtools_remote|@chrome_devtools_remote_[0-9]+|@com.opera.browser.devtools" | awk '{print substr($8, 2)}'`
+        `cat /proc/net/unix | grep -E "@chrome_devtools_remote|@chrome_devtools_remote_[0-9]+|@com.opera.browser.devtools|@com.opera.browser.beta.devtools" | awk '{print substr($8, 2)}'`
     );
     const browsers: Browser[] = [];
     for (const socket of sockets.split("\n").filter(Boolean)) {
