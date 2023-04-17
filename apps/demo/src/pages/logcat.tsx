@@ -71,6 +71,25 @@ const useClasses = makeStyles({
         cursor: "default",
         ...shorthands.overflow("hidden"),
     },
+    // Android Studio Classic Light theme
+    rowVerbose: {
+        color: "#000000",
+    },
+    rowDebug: {
+        color: "#000000",
+    },
+    rowInfo: {
+        color: "#000000",
+    },
+    rowWarn: {
+        color: "#645607",
+    },
+    rowError: {
+        color: "#CD0000",
+    },
+    rowFatal: {
+        color: "#CD0000",
+    },
 });
 
 export interface Column extends GridColumn {
@@ -717,6 +736,21 @@ const Header = observer(function Header({
     );
 });
 
+const PRIORITY_COLORS: Record<
+    AndroidLogPriority,
+    keyof ReturnType<typeof useClasses>
+> = {
+    [AndroidLogPriority.Default]: "rowVerbose",
+    [AndroidLogPriority.Unknown]: "rowVerbose",
+    [AndroidLogPriority.Silent]: "rowVerbose",
+    [AndroidLogPriority.Verbose]: "rowVerbose",
+    [AndroidLogPriority.Debug]: "rowDebug",
+    [AndroidLogPriority.Info]: "rowInfo",
+    [AndroidLogPriority.Warn]: "rowWarn",
+    [AndroidLogPriority.Error]: "rowError",
+    [AndroidLogPriority.Fatal]: "rowFatal",
+};
+
 const Row = observer(function Row({
     className,
     rowIndex,
@@ -738,7 +772,8 @@ const Row = observer(function Row({
             className={mergeClasses(
                 className,
                 classes.row,
-                state.selection.has(rowIndex) && classes.selected
+                state.selection.has(rowIndex) && classes.selected,
+                classes[PRIORITY_COLORS[state.list[rowIndex]!.priority]]
             )}
             onPointerDown={handlePointerDown}
             {...rest}
