@@ -103,10 +103,14 @@ const agent = new Agent({
         return pool;
     },
     async connect(options, callback) {
-        const socket = await GLOBAL_STATE.device!.createSocket(
-            "localabstract:" + options.hostname
-        );
-        callback(null, new AdbUndiciSocket(socket) as unknown as Socket);
+        try {
+            const socket = await GLOBAL_STATE.device!.createSocket(
+                "localabstract:" + options.hostname
+            );
+            callback(null, new AdbUndiciSocket(socket) as unknown as Socket);
+        } catch (e) {
+            callback(e as Error, null);
+        }
     },
 });
 // WebSocket only uses global dispatcher
@@ -200,10 +204,23 @@ const STATE = makeAutoObservable(
     }
 );
 
+const SOCKET_NAMES = [
+    "@chrome_devtools_remote",
+    "@chrome_devtools_remote_[0-9]+",
+    "@com.opera.browser.devtools",
+    "@com.opera.browser.beta.devtools",
+];
+
+const GET_SOCKET_COMMAND = [
+    "cat /proc/net/unix",
+    `grep -E "${SOCKET_NAMES.join("|")}"`,
+    "awk '{print substr($8, 2)}'",
+];
+
 async function getBrowsers() {
     const device = GLOBAL_STATE.device!;
     const sockets = await device.subprocess.spawnAndWaitLegacy(
-        `cat /proc/net/unix | grep -E "@chrome_devtools_remote|@chrome_devtools_remote_[0-9]+|@com.opera.browser.devtools|@com.opera.browser.beta.devtools" | awk '{print substr($8, 2)}'`
+        GET_SOCKET_COMMAND.join(" | ")
     );
     const browsers: Browser[] = [];
     for (const socket of sockets.split("\n").filter(Boolean)) {
