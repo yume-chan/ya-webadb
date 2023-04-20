@@ -162,27 +162,18 @@ const {
     publicRuntimeConfig: { basePath },
 } = getConfig();
 
+// Use a fixed version from Chrome's distribution, updated regularly.
+// Opera: doesn't host its own frontend
+// Edge: only have versions for Canary version, have license issues
+// Brave: `frontendUrl` points to Google's but version number is invalid
+const FRONTEND_SCRIPT =
+    "https://chrome-devtools-frontend.appspot.com/serve_internal_file/@3c3641f7c28cf564edd441cc4ca2838b32c4e52a/front_end/entrypoints/inspector/inspector.js";
+
 function getPopupParams(page: Page) {
     const frontendUrl = page.devtoolsFrontendUrl;
-    const [frontendBase, params] = frontendUrl.split("?");
-    let script: string;
-    if (
-        frontendBase.startsWith("https://chrome-devtools-frontend.appspot.com")
-    ) {
-        // For Chrome, use the specified version.
-        script = frontendBase.replace(
-            "inspector.html",
-            "front_end/entrypoints/inspector/inspector.js"
-        );
-    } else {
-        // Otherwise wse a fixed version from Chrome's distribution, updated regularly.
-        // Can't find Opera's own distribution.
-        // Edge's distribution has only nightly versions.
-        script =
-            "https://chrome-devtools-frontend.appspot.com/serve_internal_file/@7edf0130cbb9f0611d524fe4870b2d4aa7f8279f/front_end/entrypoints/inspector/inspector.js";
-    }
+    const [, params] = frontendUrl.split("?");
     return {
-        script,
+        script: FRONTEND_SCRIPT,
         params,
     };
 }
@@ -262,8 +253,24 @@ reaction(
     }
 );
 
+const PACKAGE_NAMES: Record<string, string | undefined> = {
+    "com.android.chrome": "Google Chrome",
+    "com.chrome.beta": "Google Chrome Beta",
+    "com.chrome.dev": "Google Chrome Dev",
+    "com.chrome.canary": "Google Chrome Canary",
+    "com.microsoft.emmx": "Microsoft Edge",
+    "com.microsoft.emmx.beta": "Microsoft Edge Beta",
+    "com.microsoft.emmx.dev": "Microsoft Edge Dev",
+    "com.microsoft.emmx.canary": "Microsoft Edge Canary",
+    "com.opera.browser": "Opera",
+    "com.opera.browser.beta": "Opera Beta",
+    "com.vivaldi.browser": "Vivaldi",
+};
+
 function getBrowserName(version: Version) {
-    const [name, versionNumber] = version.Browser.split("/");
+    const [, versionNumber] = version.Browser.split("/");
+    const name =
+        PACKAGE_NAMES[version["Android-Package"]] || version["Android-Package"];
     return `${name} (${versionNumber})`;
 }
 
@@ -369,61 +376,83 @@ const ChromeDevToolsPage: NextPage = observer(function ChromeDevTools() {
                 <title>Chrome Remote Debugging - Tango</title>
             </Head>
 
-            {STATE.browsers.map((browser) => (
+            {STATE.browsers.length === 0 ? (
                 <>
-                    {browser.version && (
-                        <h3 className={classes.header}>
-                            {getBrowserName(browser.version)}
-                        </h3>
-                    )}
-
-                    {browser.pages.map((page) => (
-                        <div key={page.id}>
-                            <div>
-                                {page.title ? (
-                                    <span
-                                        dangerouslySetInnerHTML={{
-                                            __html: page.title,
-                                        }}
-                                    />
-                                ) : (
-                                    <i>No Title</i>
-                                )}
-
-                                <span className={classes.url}>
-                                    {page.url || <i>No URL</i>}
-                                </span>
-                            </div>
-                            <div>
-                                <Link
-                                    className={classes.link}
-                                    onClick={() =>
-                                        handleInspectClick(browser.socket, page)
-                                    }
-                                >
-                                    Inspect
-                                </Link>
-                                <Link
-                                    className={classes.link}
-                                    onClick={() =>
-                                        handleFocusClick(browser.socket, page)
-                                    }
-                                >
-                                    Focus
-                                </Link>
-                                <Link
-                                    className={classes.link}
-                                    onClick={() =>
-                                        handleCloseClick(browser.socket, page)
-                                    }
-                                >
-                                    Close
-                                </Link>
-                            </div>
-                        </div>
-                    ))}
+                    <h2>Supported browsers:</h2>
+                    <ul>
+                        <li>Google Chrome (stable/beta/dev/canary)</li>
+                        <li>Microsoft Edge (stable/beta/dev/canary)</li>
+                        <li>Opera (stable/beta)</li>
+                        <li>Vivaldi</li>
+                        <li>Any WebView with remote debugging on</li>
+                    </ul>
                 </>
-            ))}
+            ) : (
+                STATE.browsers.map((browser) => (
+                    <>
+                        {browser.version && (
+                            <h3 className={classes.header}>
+                                {getBrowserName(browser.version)}
+                            </h3>
+                        )}
+
+                        {browser.pages.map((page) => (
+                            <div key={page.id}>
+                                <div>
+                                    {page.title ? (
+                                        <span
+                                            dangerouslySetInnerHTML={{
+                                                __html: page.title,
+                                            }}
+                                        />
+                                    ) : (
+                                        <i>No Title</i>
+                                    )}
+
+                                    <span className={classes.url}>
+                                        {page.url || <i>No URL</i>}
+                                    </span>
+                                </div>
+                                <div>
+                                    <Link
+                                        className={classes.link}
+                                        onClick={() =>
+                                            handleInspectClick(
+                                                browser.socket,
+                                                page
+                                            )
+                                        }
+                                    >
+                                        Inspect
+                                    </Link>
+                                    <Link
+                                        className={classes.link}
+                                        onClick={() =>
+                                            handleFocusClick(
+                                                browser.socket,
+                                                page
+                                            )
+                                        }
+                                    >
+                                        Focus
+                                    </Link>
+                                    <Link
+                                        className={classes.link}
+                                        onClick={() =>
+                                            handleCloseClick(
+                                                browser.socket,
+                                                page
+                                            )
+                                        }
+                                    >
+                                        Close
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </>
+                ))
+            )}
         </Stack>
     );
 });
