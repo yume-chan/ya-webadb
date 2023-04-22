@@ -186,9 +186,18 @@ export class Adb implements Closeable {
                     signal: abortController.signal,
                 }
             )
-            .catch((e) => {
-                resolver.reject(e);
-            });
+            .then(
+                () => {
+                    if (resolver.state === "running") {
+                        resolver.reject(
+                            new Error("Connection closed unexpectedly")
+                        );
+                    }
+                },
+                (e) => {
+                    resolver.reject(e);
+                }
+            );
 
         let banner: string;
         try {
