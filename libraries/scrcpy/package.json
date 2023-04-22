@@ -38,7 +38,7 @@
     "dependencies": {
         "@yume-chan/stream-extra": "workspace:^0.0.19",
         "@yume-chan/struct": "workspace:^0.0.19",
-        "tslib": "^2.4.1"
+        "tslib": "^2.5.0"
     },
     "devDependencies": {
         "@jest/globals": "^29.5.0",

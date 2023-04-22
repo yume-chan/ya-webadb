@@ -1,0 +1,39 @@
+{
+    "name": "@yume-chan/tabby-tango",
+    "version": "0.0.19",
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts",
+    "scripts": {
+        "build": "webpack --progress --color",
+        "watch": "webpack --progress --color --watch"
+    },
+    "files": [
+        "data",
+        "dist"
+    ],
+    "author": "Eugene Pankov",
+    "license": "MIT",
+    "devDependencies": {
+        "@angular/compiler": "^12.0.0",
+        "@angular/compiler-cli": "^12.0.0",
+        "@angular/core": "^12.0.0",
+        "@angular/platform-browser": "^12.0.0",
+        "@types/node": "^18.15.3",
+        "@types/webpack-env": "^1.16.0",
+        "@yume-chan/adb": "workspace:^0.0.19",
+        "@yume-chan/stream-extra": "workspace:^0.0.19",
+        "babel-loader": "^9.1.2",
+        "mobx": "^6.7.0",
+        "source-map-loader": "^4.0.1",
+        "tabby-core": "^1.0.189-nightly.2",
+        "tabby-terminal": "^1.0.189-nightly.2",
+        "tslib": "^2.5.0",
+        "ts-loader": "^9.4.2",
+        "webpack": "^5.75.0",
+        "webpack-bundle-analyzer": "^4.7.0",
+        "webpack-cli": "^5.0.1"
+    },
+    "dependencies": {
+        "svg-inline-loader": "^0.8.2"
+    }
+}

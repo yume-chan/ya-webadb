@@ -476,5 +476,9 @@
             "projectFolder": "libraries/adb-scrcpy",
             "versionPolicyName": "adb"
         },
+        {
+            "packageName": "@yume-chan/tabby-tango",
+            "projectFolder": "libraries/tabby-tango"
+        }
     ]
 }

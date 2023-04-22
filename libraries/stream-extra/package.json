@@ -34,7 +34,7 @@
     "dependencies": {
         "@yume-chan/async": "^2.2.0",
         "@yume-chan/struct": "workspace:^0.0.19",
-        "tslib": "^2.4.1",
+        "tslib": "^2.5.0",
         "web-streams-polyfill": "^4.0.0-beta.3"
     },
     "devDependencies": {
