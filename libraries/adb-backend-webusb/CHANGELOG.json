@@ -2,6 +2,21 @@
   "name": "@yume-chan/adb-backend-webusb",
   "entries": [
     {
+      "version": "0.0.19",
+      "tag": "@yume-chan/adb-backend-webusb_v0.0.19",
+      "date": "Sun, 09 Apr 2023 05:55:33 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Remove stream queuing"
+          },
+          {
+            "comment": "Add the `AdbWebUsbBackendManager` class to simplify the usage with custom WebUSB implementations (for example the `usb` NPM package)."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.18",
       "tag": "@yume-chan/adb-backend-webusb_v0.0.18",
       "date": "Wed, 25 Jan 2023 21:33:49 GMT",

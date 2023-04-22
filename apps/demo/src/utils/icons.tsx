@@ -1,6 +1,7 @@
 import { registerIcons } from "@fluentui/react";
 import {
     AddCircleRegular,
+    WindowDevToolsRegular,
     ArrowClockwiseRegular,
     ArrowRotateClockwiseRegular,
     ArrowRotateCounterclockwiseRegular,
@@ -48,6 +49,7 @@ import {
     SpeakerOffRegular,
     StopRegular,
     TextGrammarErrorRegular,
+    TextGrammarSettingsRegular,
     WandRegular,
     WarningRegular,
     WifiSettingsRegular,
@@ -102,10 +104,12 @@ export function register() {
             SpeakerOff: <SpeakerOffRegular style={STYLE} />,
             Stop: <StopRegular style={STYLE} />,
             TextGrammarError: <TextGrammarErrorRegular style={STYLE} />,
+            TextGrammarSettings: <TextGrammarSettingsRegular style={STYLE} />,
             Wand: <WandRegular style={STYLE} />,
             Warning: <WarningRegular style={STYLE} />,
             WifiSettings: <WifiSettingsRegular style={STYLE} />,
             WindowConsole: <WindowConsoleRegular style={STYLE} />,
+            WindowDevTools: <WindowDevToolsRegular style={STYLE} />,
 
             // Required by @fluentui/react
             Checkmark: <CheckmarkRegular style={STYLE} />,
@@ -172,10 +176,13 @@ const Icons = {
     SpeakerOff: "SpeakerOff",
     Stop: "Stop",
     TextGrammarError: "TextGrammarError",
+    TextGrammarSettings: "TextGrammarSettings",
     Wand: "Wand",
     Warning: "Warning",
     WifiSettings: "WifiSettings",
     WindowConsole: "WindowConsole",
+    WindowDevTools: "WindowDevTools",
+
     Document20: "Document20",
 };
 

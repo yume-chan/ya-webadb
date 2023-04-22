@@ -4,8 +4,9 @@ import Struct, {
 } from "@yume-chan/struct";
 
 import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
-import { clamp, ScrcpyControlMessageType } from "../../control/index.js";
+import { ScrcpyControlMessageType } from "../../control/index.js";
 import type { ScrcpyScrollController } from "../1_16/index.js";
+import { clamp } from "../1_16/index.js";
 
 export const ScrcpyFloatToInt16NumberType: NumberFieldType = {
     size: 2,

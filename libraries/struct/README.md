@@ -13,7 +13,7 @@ cspell: ignore uint8arraystring
 
 A C-style structure serializer and deserializer. Written in TypeScript and highly takes advantage of its type system.
 
-**WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
+**WARNING:** The public API is UNSTABLE. Open a GitHub discussion if you have any questions.
 
 ## Installation
 
@@ -24,60 +24,59 @@ $ npm i @yume-chan/struct
 ## Quick Start
 
 ```ts
-import Struct from '@yume-chan/struct';
+import Struct from "@yume-chan/struct";
 
-const MyStruct =
-    new Struct({ littleEndian: true })
-        .int8('foo')
-        .int64('bar')
-        .int32('bazLength')
-        .string('baz', { lengthField: 'bazLength' });
+const MyStruct = new Struct({ littleEndian: true })
+    .int8("foo")
+    .int64("bar")
+    .int32("bazLength")
+    .string("baz", { lengthField: "bazLength" });
 
 const value = await MyStruct.deserialize(stream);
-value.foo // number
-value.bar // bigint
-value.bazLength // number
-value.baz // string
+value.foo; // number
+value.bar; // bigint
+value.bazLength; // number
+value.baz; // string
 
 const buffer = MyStruct.serialize({
     foo: 42,
     bar: 42n,
     // `bazLength` automatically set to `baz`'s byte length
-    baz: 'Hello, World!',
+    baz: "Hello, World!",
 });
 ```
 
 <!-- cspell: disable -->
 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Compatibility](#compatibility)
-  - [Basic usage](#basic-usage)
-  - [`int64`/`uint64`](#int64uint64)
-  - [`string`](#string)
-- [API](#api)
-  - [`placeholder`](#placeholder)
-  - [`Struct`](#struct)
-    - [`int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32`](#int8uint8int16uint16int32uint32)
-    - [`int64`/`uint64`](#int64uint64-1)
-    - [`uint8Array`/`string`](#uint8arraystring)
-    - [`fields`](#fields)
-    - [`extra`](#extra)
-    - [`postDeserialize`](#postdeserialize)
-    - [`deserialize`](#deserialize)
-    - [`serialize`](#serialize)
-- [Custom field type](#custom-field-type)
-  - [`Struct#field`](#structfield)
-  - [Relationship between types](#relationship-between-types)
-  - [`StructFieldDefinition`](#structfielddefinition)
-    - [`TValue`/`TOmitInitKey`](#tvaluetomitinitkey)
-    - [`getSize`](#getsize)
-    - [`create`](#create)
-    - [`deserialize`](#deserialize-1)
-  - [`StructFieldValue`](#structfieldvalue)
-    - [`getSize`](#getsize-1)
-    - [`get`/`set`](#getset)
-    - [`serialize`](#serialize-1)
+-   [Installation](#installation)
+-   [Quick Start](#quick-start)
+-   [Compatibility](#compatibility)
+    -   [Basic usage](#basic-usage)
+    -   [`int64`/`uint64`](#int64uint64)
+    -   [`string`](#string)
+-   [API](#api)
+    -   [`placeholder`](#placeholder)
+    -   [`Struct`](#struct)
+        -   [`int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32`](#int8uint8int16uint16int32uint32)
+        -   [`int64`/`uint64`](#int64uint64-1)
+        -   [`uint8Array`/`string`](#uint8arraystring)
+        -   [`fields`](#fields)
+        -   [`extra`](#extra)
+        -   [`postDeserialize`](#postdeserialize)
+        -   [`deserialize`](#deserialize)
+        -   [`serialize`](#serialize)
+-   [Custom field type](#custom-field-type)
+    -   [`Struct#field`](#structfield)
+    -   [Relationship between types](#relationship-between-types)
+    -   [`StructFieldDefinition`](#structfielddefinition)
+        -   [`TValue`/`TOmitInitKey`](#tvaluetomitinitkey)
+        -   [`getSize`](#getsize)
+        -   [`create`](#create)
+        -   [`deserialize`](#deserialize-1)
+    -   [`StructFieldValue`](#structfieldvalue)
+        -   [`getSize`](#getsize-1)
+        -   [`get`/`set`](#getset)
+        -   [`serialize`](#serialize-1)
 
 <!-- cspell: enable -->
 
@@ -91,17 +90,17 @@ Some features can be polyfilled to support older runtimes, but this library does
 
 | API                              | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js |
 | -------------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------- |
-| [`Promise`][MDN_Promise]         | 32     | 12   | 29      | No                | 8      | 0.12    |
-| [`ArrayBuffer`][MDN_ArrayBuffer] | 7      | 12   | 4       | 10                | 5.1    | 0.10    |
-| [`Uint8Array`][MDN_Uint8Array]   | 7      | 12   | 4       | 10                | 5.1    | 0.10    |
-| [`DataView`][MDN_DataView]       | 9      | 12   | 15      | 10                | 5.1    | 0.10    |
-| *Overall*                        | 32     | 12   | 29      | No                | 8      | 0.12    |
+| [`Promise`][mdn_promise]         | 32     | 12   | 29      | No                | 8      | 0.12    |
+| [`ArrayBuffer`][mdn_arraybuffer] | 7      | 12   | 4       | 10                | 5.1    | 0.10    |
+| [`Uint8Array`][mdn_uint8array]   | 7      | 12   | 4       | 10                | 5.1    | 0.10    |
+| [`DataView`][mdn_dataview]       | 9      | 12   | 15      | 10                | 5.1    | 0.10    |
+| _Overall_                        | 32     | 12   | 29      | No                | 8      | 0.12    |
 
 ### [`int64`/`uint64`](#int64uint64-1)
 
 | API                                | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js |
 | ---------------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------- |
-| [`BigInt`][MDN_BigInt]<sup>1</sup> | 67     | 79   | 68      | No                | 14     | 10.4    |
+| [`BigInt`][mdn_bigint]<sup>1</sup> | 67     | 79   | 68      | No                | 14     | 10.4    |
 
 <sup>1</sup> Can't be polyfilled
 
@@ -109,17 +108,17 @@ Some features can be polyfilled to support older runtimes, but this library does
 
 | API                              | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js             |
 | -------------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------------------- |
-| [`TextEncoder`][MDN_TextEncoder] | 38     | 79   | 19      | No                | 10.1   | 8.3<sup>1</sup>, 11 |
+| [`TextEncoder`][mdn_textencoder] | 38     | 79   | 19      | No                | 10.1   | 8.3<sup>1</sup>, 11 |
 
 <sup>1</sup> `TextEncoder` and `TextDecoder` are only available in `util` module. Need to be assigned to `globalThis`.
 
-[MDN_Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
-[MDN_ArrayBuffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
-[MDN_Uint8Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
-[MDN_DataView]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
-[MDN_BigInt]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
-[MDN_DataView]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
-[MDN_TextEncoder]: https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder
+[mdn_promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
+[mdn_arraybuffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+[mdn_uint8array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
+[mdn_dataview]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
+[mdn_bigint]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
+[mdn_dataview]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
+[mdn_textencoder]: https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder
 
 ## API
 
@@ -154,9 +153,10 @@ declare function fn2<A, B>(a: A, b: B): [A, B];
 I don't really need a value of type `B`, I only require its type information
 
 ```ts
-fn2(42, placeholder<boolean>()) // fn2<number, boolean>
+fn2(42, placeholder<boolean>()); // fn2<number, boolean>
 ```
-</details>
+
+</details><br/>
 
 To workaround this issue, these methods have an extra `_typescriptType` parameter, to let you specify a generic parameter, without passing all other generic arguments manually. The actual value of `_typescriptType` argument is never used, so you can pass any value, as long as it has the correct type, including values produced by this `placeholder` method.
 
@@ -186,14 +186,15 @@ This information was added to help you understand how does it work. These are co
 2. `TOmitInitKey`: When serializing a structure containing variable length buffers, the length field can be calculate from the buffer field, so they doesn't need to be provided explicitly.
 3. `TExtra`: Type of extra fields. Modified when `extra` is called.
 4. `TPostDeserialized`: State of the `postDeserialize` function. Modified when `postDeserialize` is called. Affects return type of `deserialize`
-</details>
+
+</details><br/>
 
 **Parameters**
 
 1. `options`:
-   * `littleEndian:boolean = false`: Whether all multi-byte fields in this struct are [little-endian encoded][Wikipeida_Endianess].
+    - `littleEndian:boolean = false`: Whether all multi-byte fields in this struct are [little-endian encoded][wikipeida_endianess].
 
-[Wikipeida_Endianess]: https://en.wikipedia.org/wiki/Endianness
+[wikipeida_endianess]: https://en.wikipedia.org/wiki/Endianness
 
 #### `int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32`
 
@@ -219,7 +220,8 @@ Appends an `int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32` field to the `Struct
 
 1. `TName`: Literal type of the field's name.
 2. `TTypeScriptType = number`: Type of the field in the result object. For example you can declare it as a number literal type, or some enum type.
-</details>
+
+</details><br/>
 
 **Parameters**
 
@@ -237,18 +239,17 @@ So it's technically possible to pass in an incompatible type (e.g. `string`). Bu
 1. Append an `int32` field named `foo`
 
     ```ts
-    const struct = new Struct()
-        .int32('foo');
+    const struct = new Struct().int32("foo");
 
     const value = await struct.deserialize(stream);
     value.foo; // number
 
-    struct.serialize({ }) // error: 'foo' is required
-    struct.serialize({ foo: 'bar' }) // error: 'foo' must be a number
-    struct.serialize({ foo: 42 }) // ok
+    struct.serialize({}); // error: 'foo' is required
+    struct.serialize({ foo: "bar" }); // error: 'foo' must be a number
+    struct.serialize({ foo: 42 }); // ok
     ```
 
-2. Set fields' type (can be used with [`placeholder` method](#placeholder))
+2. Set fields' type (can use [`placeholder` method](#placeholder))
 
     ```ts
     enum MyEnum {
@@ -257,8 +258,8 @@ So it's technically possible to pass in an incompatible type (e.g. `string`). Bu
     }
 
     const struct = new Struct()
-        .int32('foo', placeholder<MyEnum>())
-        .int32('bar', MyEnum.a as const);
+        .int32("foo", placeholder<MyEnum>())
+        .int32("bar", MyEnum.a as const);
 
     const value = await struct.deserialize(stream);
     value.foo; // MyEnum
@@ -326,10 +327,10 @@ uint8Array<
 
 Appends an `uint8Array`/`string` field to the `Struct`.
 
-The `options` parameter defines its length, it can be in two formats:
+The `options` parameter defines its length, it supports two formats:
 
-* `{ length: number }`: Presence of the `length` option indicates that it's a fixed length array.
-* `{ lengthField: string; lengthFieldRadix?: number }`: Presence of the `lengthField` option indicates it's a variable length array. The `lengthField` options must refers to a `number` or `string` (can't be `bigint`) typed field that's already defined in this `Struct`. If the length field is a `string`, the optional `lengthFieldRadix` option (defaults to `10`) defines the radix when converting the string to a number. When deserializing, it will use that field's value as its length. When serializing, it will write its length to that field.
+-   `{ length: number }`: Presence of the `length` option indicates that it's a fixed length array.
+-   `{ lengthField: string; lengthFieldRadix?: number }`: Presence of the `lengthField` option indicates it's a variable length array. The `lengthField` options must refers to a `number` or `string` (can't be `bigint`) typed field that's already defined in this `Struct`. If the length field is a `string`, the optional `lengthFieldRadix` option (defaults to `10`) defines the radix when converting the string to a number. When deserializing, it will use that field's value as its length. When serializing, it will write its length to that field.
 
 #### `fields`
 
@@ -353,14 +354,9 @@ Merges (flats) another `Struct`'s fields and extra fields into the current one.
 1. Extending another `Struct`
 
     ```ts
-    const MyStructV1 =
-        new Struct()
-            .int32('field1');
+    const MyStructV1 = new Struct().int32("field1");
 
-    const MyStructV2 =
-        new Struct()
-            .fields(MyStructV1)
-            .int32('field2');
+    const MyStructV2 = new Struct().fields(MyStructV1).int32("field2");
 
     const structV2 = await MyStructV2.deserialize(stream);
     structV2.field1; // number
@@ -371,14 +367,9 @@ Merges (flats) another `Struct`'s fields and extra fields into the current one.
 2. Also possible in any order
 
     ```ts
-    const MyStructV1 =
-        new Struct()
-            .int32('field1');
+    const MyStructV1 = new Struct().int32("field1");
 
-    const MyStructV2 =
-        new Struct()
-            .int32('field2')
-            .fields(MyStructV1);
+    const MyStructV2 = new Struct().int32("field2").fields(MyStructV1);
 
     const structV2 = await MyStructV2.deserialize(stream);
     structV2.field1; // number
@@ -427,35 +418,31 @@ Multiple calls merge all extra fields together.
 1. Add an extra field
 
     ```ts
-    const struct = new Struct()
-        .int32('foo')
-        .extra({
-            bar: 'hello',
-        });
+    const struct = new Struct().int32("foo").extra({
+        bar: "hello",
+    });
 
     const value = await struct.deserialize(stream);
     value.foo; // number
     value.bar; // 'hello'
 
     struct.serialize({ foo: 42 }); // ok
-    struct.serialize({ foo: 42, bar: 'hello' }); // error: 'bar' is redundant
+    struct.serialize({ foo: 42, bar: "hello" }); // error: 'bar' is redundant
     ```
 
 2. Add getters and methods. `this` in functions refers to the result object.
 
     ```ts
-    const struct = new Struct()
-        .int32('foo')
-        .extra({
-            get bar() {
-                // `this` is the result Struct value
-                return this.foo + 1;
-            },
-            logBar() {
-                // `this` also contains other extra fields
-                console.log(this.bar);
-            },
-        });
+    const struct = new Struct().int32("foo").extra({
+        get bar() {
+            // `this` is the result Struct value
+            return this.foo + 1;
+        },
+        logBar() {
+            // `this` also contains other extra fields
+            console.log(this.bar);
+        },
+    });
 
     const value = await struct.deserialize(stream);
     value.foo; // number
@@ -516,9 +503,9 @@ A callback returning anything other than `undefined` will cause `deserialize` to
     // But you don't want to modify all receiving path
 
     const struct = new Struct()
-        .int32('messageLength')
-        .string('message', { lengthField: 'messageLength' })
-        .postDeserialize(value => {
+        .int32("messageLength")
+        .string("message", { lengthField: "messageLength" })
+        .postDeserialize((value) => {
             throw new Error(value.message);
         });
     ```
@@ -532,50 +519,53 @@ A callback returning anything other than `undefined` will cause `deserialize` to
 3. Replace result object
 
     ```ts
-    const struct1 = new Struct()
-        .int32('foo')
-        .postDeserialize(value => {
-            return {
-                bar: value.foo,
-            };
-        });
+    const struct1 = new Struct().int32("foo").postDeserialize((value) => {
+        return {
+            bar: value.foo,
+        };
+    });
 
     const value = await struct.deserialize(stream);
-    value.foo // error: not exist
+    value.foo; // error: not exist
     value.bar; // number
     ```
 
 #### `deserialize`
 
 ```ts
-interface StructDeserializeStream {
+
+interface ExactReadable {
+    readonly position: number;
+
     /**
      * Read data from the underlying data source.
      *
      * The stream must return exactly `length` bytes or data. If that's not possible
-     * (due to end of file or other error condition), it must throw an error.
+     * (due to end of file or other error condition), it must throw an {@link ExactReadableEndedError}.
      */
-    read(length: number): Uint8Array;
+    readExactly(length: number): Uint8Array;
 }
 
-interface StructAsyncDeserializeStream {
+interface AsyncExactReadable {
+    readonly position: number;
+
     /**
      * Read data from the underlying data source.
      *
      * The stream must return exactly `length` bytes or data. If that's not possible
-     * (due to end of file or other error condition), it must throw an error.
+     * (due to end of file or other error condition), it must throw an {@link ExactReadableEndedError}.
      */
-    read(length: number): Promise<Uint8Array>;
+    readExactly(length: number): ValueOrPromise<Uint8Array>;
 }
 
 deserialize(
-    stream: StructDeserializeStream,
+    stream: ExactReadable,
 ): TPostDeserialized extends undefined
     ? Overwrite<TExtra, TValue>
     : TPostDeserialized
 >;
 deserialize(
-    stream: StructAsyncDeserializeStream,
+    stream: AsyncExactReadable,
 ): Promise<
     TPostDeserialized extends undefined
         ? Overwrite<TExtra, TValue>
@@ -589,8 +579,6 @@ Deserialize a struct value from `stream`.
 It will be synchronous (returns a value) or asynchronous (returns a `Promise`) depending on the type of `stream`.
 
 As the signature shows, if the `postDeserialize` callback returns any value, `deserialize` will return that value instead.
-
-The `read` method of `stream`, when being called, should returns exactly `length` bytes of data (or throw an `Error` if it can't).
 
 #### `serialize`
 
@@ -629,27 +617,22 @@ Appends a `StructFieldDefinition` to the `Struct`.
 All built-in field type methods are actually aliases to it. For example, calling
 
 ```ts
-struct.int8('foo')
+struct.int8("foo");
 ```
 
 is same as
 
 ```ts
-struct.field(
-    'foo',
-    new NumberFieldDefinition(
-        NumberFieldType.Int8
-    )
-)
+struct.field("foo", new NumberFieldDefinition(NumberFieldType.Int8));
 ```
 
 ### Relationship between types
 
-* `StructFieldValue`: Contains value of a field, with optional metadata and accessor methods.
-* `StructFieldDefinition`: Definition of a field, can deserialize `StructFieldValue`s from a stream or create them from exist values.
-* `StructValue`: A map between field names and `StructFieldValue`s.
-* `Struct`: Definiton of a struct, a map between field names and `StructFieldDefintion`s. May contain extra metadata.
-* Result of `Struct#deserialize()`: A map between field names and results of `StructFieldValue#get()`.
+-   `StructFieldValue`: Contains value of a field, with optional metadata and accessor methods.
+-   `StructFieldDefinition`: Definition of a field, can deserialize `StructFieldValue`s from a stream or create them from exist values.
+-   `StructValue`: A map between field names and `StructFieldValue`s.
+-   `Struct`: Definition of a struct, a map between field names and `StructFieldDefintion`s. May contain extra metadata.
+-   Result of `Struct#deserialize()`: A map between field names and results of `StructFieldValue#get()`.
 
 ### `StructFieldDefinition`
 
@@ -657,7 +640,7 @@ struct.field(
 abstract class StructFieldDefinition<
     TOptions = void,
     TValue = unknown,
-    TOmitInitKey extends PropertyKey = never,
+    TOmitInitKey extends PropertyKey = never
 > {
     public readonly options: TOptions;
 
@@ -702,12 +685,12 @@ Derived classes must implement this method to create its own field value instanc
 ```ts
 abstract deserialize(
     options: Readonly<StructOptions>,
-    stream: StructDeserializeStream,
+    stream: ExactReadable,
     struct: StructValue,
 ): StructFieldValue<this>;
 abstract deserialize(
     options: Readonly<StructOptions>,
-    stream: StructAsyncDeserializeStream,
+    stream: AsyncExactReadable,
     struct: StructValue,
 ): Promise<StructFieldValue<this>>;
 ```

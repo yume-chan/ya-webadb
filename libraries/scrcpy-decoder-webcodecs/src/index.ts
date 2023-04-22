@@ -1,20 +1,46 @@
 import type {
-    H264Configuration,
-    ScrcpyVideoStreamPacket,
+    ScrcpyMediaStreamDataPacket,
+    ScrcpyMediaStreamPacket,
 } from "@yume-chan/scrcpy";
+import {
+    ScrcpyVideoCodecId,
+    h264ParseConfiguration,
+    h265ParseConfiguration,
+} from "@yume-chan/scrcpy";
+import type {
+    ScrcpyVideoDecoder,
+    ScrcpyVideoDecoderCapability,
+} from "@yume-chan/scrcpy-decoder-tinyh264";
 import { WritableStream } from "@yume-chan/stream-extra";
 
 function toHex(value: number) {
     return value.toString(16).padStart(2, "0").toUpperCase();
 }
 
-export class WebCodecsDecoder {
-    // Usually, browsers can decode most configurations,
-    // So let device choose best profile and level for itself.
-    public readonly maxProfile = undefined;
-    public readonly maxLevel = undefined;
+function toUint32Le(data: Uint8Array, offset: number) {
+    return (
+        data[offset]! |
+        (data[offset + 1]! << 8) |
+        (data[offset + 2]! << 16) |
+        (data[offset + 3]! << 24)
+    );
+}
 
-    private _writable: WritableStream<ScrcpyVideoStreamPacket>;
+export class WebCodecsDecoder implements ScrcpyVideoDecoder {
+    public static readonly capabilities: Record<
+        string,
+        ScrcpyVideoDecoderCapability
+    > = {
+        h264: {},
+        h265: {},
+    };
+
+    private _codec: ScrcpyVideoCodecId;
+    public get codec() {
+        return this._codec;
+    }
+
+    private _writable: WritableStream<ScrcpyMediaStreamPacket>;
     public get writable() {
         return this._writable;
     }
@@ -36,11 +62,14 @@ export class WebCodecsDecoder {
 
     private context: CanvasRenderingContext2D;
     private decoder: VideoDecoder;
+    private _config: Uint8Array | undefined;
 
     private currentFrameRendered = false;
     private animationFrameId = 0;
 
-    public constructor() {
+    public constructor(codec: ScrcpyVideoCodecId) {
+        this._codec = codec;
+
         this._renderer = document.createElement("canvas");
 
         this.context = this._renderer.getContext("2d")!;
@@ -67,22 +96,14 @@ export class WebCodecsDecoder {
             },
         });
 
-        this._writable = new WritableStream<ScrcpyVideoStreamPacket>({
+        this._writable = new WritableStream<ScrcpyMediaStreamPacket>({
             write: (packet) => {
                 switch (packet.type) {
                     case "configuration":
                         this.configure(packet.data);
                         break;
-                    case "frame":
-                        this.decoder.decode(
-                            new EncodedVideoChunk({
-                                // Treat `undefined` as `key`, otherwise won't decode.
-                                type:
-                                    packet.keyframe === false ? "delta" : "key",
-                                timestamp: 0,
-                                data: packet.data,
-                            })
-                        );
+                    case "data":
+                        this.decode(packet);
                         break;
                 }
             },
@@ -96,25 +117,100 @@ export class WebCodecsDecoder {
         this.animationFrameId = requestAnimationFrame(this.onFramePresented);
     };
 
-    private configure(config: H264Configuration) {
-        const { profileIndex, constraintSet, levelIndex } = config;
+    private configure(data: Uint8Array) {
+        switch (this._codec) {
+            case ScrcpyVideoCodecId.H264: {
+                const {
+                    profileIndex,
+                    constraintSet,
+                    levelIndex,
+                    croppedWidth,
+                    croppedHeight,
+                } = h264ParseConfiguration(data);
 
-        this._renderer.width = config.croppedWidth;
-        this._renderer.height = config.croppedHeight;
+                this._renderer.width = croppedWidth;
+                this._renderer.height = croppedHeight;
 
-        // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
-        // ISO Base Media File Format Name Space
-        const codec = `avc1.${[profileIndex, constraintSet, levelIndex]
-            .map(toHex)
-            .join("")}`;
-        this.decoder.configure({
-            codec: codec,
-            optimizeForLatency: true,
-        });
+                // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
+                // ISO Base Media File Format Name Space
+                const codec = `avc1.${[profileIndex, constraintSet, levelIndex]
+                    .map(toHex)
+                    .join("")}`;
+                this.decoder.configure({
+                    codec: codec,
+                    optimizeForLatency: true,
+                });
+                break;
+            }
+            case ScrcpyVideoCodecId.H265: {
+                const {
+                    generalProfileSpace,
+                    generalProfileIndex,
+                    generalProfileCompatibilitySet,
+                    generalTierFlag,
+                    generalLevelIndex,
+                    generalConstraintSet,
+                    croppedWidth,
+                    croppedHeight,
+                } = h265ParseConfiguration(data);
+
+                this._renderer.width = croppedWidth;
+                this._renderer.height = croppedHeight;
+
+                const codec = [
+                    "hev1",
+                    ["", "A", "B", "C"][generalProfileSpace]! +
+                        generalProfileIndex.toString(),
+                    toUint32Le(generalProfileCompatibilitySet, 0).toString(16),
+                    (generalTierFlag ? "H" : "L") +
+                        generalLevelIndex.toString(),
+                    toUint32Le(generalConstraintSet, 0)
+                        .toString(16)
+                        .toUpperCase(),
+                    toUint32Le(generalConstraintSet, 4)
+                        .toString(16)
+                        .toUpperCase(),
+                ].join(".");
+                console.log("codec", codec);
+                this.decoder.configure({
+                    codec,
+                    optimizeForLatency: true,
+                });
+                break;
+            }
+        }
+        this._config = data;
+    }
+
+    private decode(packet: ScrcpyMediaStreamDataPacket) {
+        // WebCodecs requires configuration data to be with the first frame.
+        // https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
+        let data: Uint8Array;
+        if (this._config !== undefined) {
+            data = new Uint8Array(
+                this._config.byteLength + packet.data.byteLength
+            );
+            data.set(this._config, 0);
+            data.set(packet.data, this._config.byteLength);
+            this._config = undefined;
+        } else {
+            data = packet.data;
+        }
+
+        this.decoder.decode(
+            new EncodedVideoChunk({
+                // Treat `undefined` as `key`, otherwise won't decode.
+                type: packet.keyframe === false ? "delta" : "key",
+                timestamp: 0,
+                data,
+            })
+        );
     }
 
     public dispose() {
         cancelAnimationFrame(this.animationFrameId);
-        this.decoder.close();
+        if (this.decoder.state !== "closed") {
+            this.decoder.close();
+        }
     }
 }

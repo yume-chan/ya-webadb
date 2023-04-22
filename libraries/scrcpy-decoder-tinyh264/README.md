@@ -4,7 +4,7 @@ Decode and render H.264 streams using TinyH264, the old Android H.264 software d
 
 The video stream will be decoded into YUV frames on CPU, then converted to RGB using a WebGL shader (using GPU). It's slow, but works on most browsers.
 
-**WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
+**WARNING:** The public API is UNSTABLE. Open a GitHub discussion if you have any questions.
 
 ## Compatibility
 

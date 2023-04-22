@@ -20,7 +20,7 @@ export function isModKey(e: { metaKey: boolean; ctrlKey: boolean }): boolean {
     }
 }
 
-export class ObservableBTree implements BTree {
+export class ObservableBTree implements Omit<BTree, never> {
     data: BTree;
     hasMap: Map<number, IObservableValue<boolean>>;
     keys: IAtom;
@@ -33,10 +33,6 @@ export class ObservableBTree implements BTree {
 
     get order(): number {
         return this.data.order;
-    }
-
-    get root(): BTreeNode {
-        return this.data.root;
     }
 
     get size(): number {

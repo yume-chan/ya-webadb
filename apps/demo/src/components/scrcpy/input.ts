@@ -1,7 +1,7 @@
+import { AdbScrcpyClient } from "@yume-chan/adb-scrcpy";
 import { AoaHidDevice, HidKeyCode, HidKeyboard } from "@yume-chan/aoa";
 import { Disposable } from "@yume-chan/event";
 import {
-    AdbScrcpyClient,
     AndroidKeyCode,
     AndroidKeyEventAction,
     AndroidKeyEventMeta,
@@ -124,7 +124,7 @@ export class ScrcpyKeyboardInjector implements KeyboardInjector {
 
         this.setModifier(keyCode, true);
         this._keys.add(keyCode);
-        await this.client.controlMessageSerializer?.injectKeyCode({
+        await this.client.controlMessageWriter?.injectKeyCode({
             action: AndroidKeyEventAction.Down,
             keyCode,
             metaState: this.getMetaState(),
@@ -140,7 +140,7 @@ export class ScrcpyKeyboardInjector implements KeyboardInjector {
 
         this.setModifier(keyCode, false);
         this._keys.delete(keyCode);
-        await this.client.controlMessageSerializer?.injectKeyCode({
+        await this.client.controlMessageWriter?.injectKeyCode({
             action: AndroidKeyEventAction.Up,
             keyCode,
             metaState: this.getMetaState(),

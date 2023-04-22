@@ -3,11 +3,6 @@ import {
     setBigUint64,
 } from "@yume-chan/dataview-bigint-polyfill/esm/fallback.js";
 
-const BigInt0 = BigInt(0);
-const BigInt1 = BigInt(1);
-const BigInt2 = BigInt(2);
-const BigInt64 = BigInt(64);
-
 /**
  * Gets the `BigInt` value at the specified byte offset and length from the start of the view. There is
  * no alignment constraint; multi-byte values may be fetched from any offset.
@@ -20,13 +15,13 @@ export function getBigUint(
     byteOffset: number,
     length: number
 ): bigint {
-    let result = BigInt0;
+    let result = 0n;
 
     // Currently `length` must be a multiplication of 8
     // Support for arbitrary length can be easily added
 
     for (let i = byteOffset; i < byteOffset + length; i += 8) {
-        result <<= BigInt64;
+        result <<= 64n;
         const value = getBigUint64(dataView, i, false);
         result += value;
     }
@@ -50,18 +45,18 @@ export function setBigUint(
     const start = byteOffset;
 
     if (littleEndian) {
-        while (value > BigInt0) {
+        while (value > 0n) {
             setBigUint64(dataView, byteOffset, value, true);
             byteOffset += 8;
-            value >>= BigInt64;
+            value >>= 64n;
         }
     } else {
         // Because we don't know how long (in bits) the `value` is,
         // Convert it to an array of `uint64` first.
         const uint64Array: bigint[] = [];
-        while (value > BigInt0) {
+        while (value > 0n) {
             uint64Array.push(BigInt.asUintN(64, value));
-            value >>= BigInt64;
+            value >>= 64n;
         }
 
         for (let i = uint64Array.length - 1; i >= 0; i -= 1) {
@@ -191,12 +186,9 @@ export function calculatePublicKey(
     outputOffset += 4;
 
     // Calculate `n0inv`
-    // Don't know why need to multiple -1
+    // Don't know why need to multiply by -1
     // Didn't exist in Android codebase
-    const n0inv = modInverse(
-        Number(BigInt.asUintN(32, n) * BigInt(-1)),
-        2 ** 32
-    );
+    const n0inv = modInverse(-Number(BigInt.asUintN(32, n)), 2 ** 32);
     outputView.setUint32(outputOffset, n0inv, true);
     outputOffset += 4;
 
@@ -205,7 +197,7 @@ export function calculatePublicKey(
     outputOffset += 256;
 
     // Calculate rr = (2^(rsa_size)) ^ 2 mod n
-    const rr = BigInt(2) ** BigInt(4096) % n;
+    const rr = 2n ** 4096n % n;
     outputOffset += setBigUint(outputView, outputOffset, rr, true);
 
     // exponent
@@ -231,20 +223,20 @@ export function powMod(
     exponent: bigint,
     modulus: bigint
 ): bigint {
-    if (modulus === BigInt1) {
-        return BigInt0;
+    if (modulus === 1n) {
+        return 0n;
     }
 
-    let r = BigInt1;
+    let r = 1n;
     base = base % modulus;
 
-    while (exponent > BigInt0) {
-        if (BigInt.asUintN(1, exponent) === BigInt1) {
+    while (exponent > 0n) {
+        if (BigInt.asUintN(1, exponent) === 1n) {
             r = (r * base) % modulus;
         }
 
-        exponent >>= BigInt1;
-        base = base ** BigInt2 % modulus;
+        base = (base * base) % modulus;
+        exponent >>= 1n;
     }
 
     return r;

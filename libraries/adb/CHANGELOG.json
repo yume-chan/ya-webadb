@@ -2,6 +2,27 @@
   "name": "@yume-chan/adb",
   "entries": [
     {
+      "version": "0.0.19",
+      "tag": "@yume-chan/adb_v0.0.19",
+      "date": "Sun, 09 Apr 2023 05:55:33 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Remove `Adb#install` in favor of `PackageManager#install` from `@yume-chan/android-bin` package"
+          },
+          {
+            "comment": "Change `AdbSync#write` to take a `ReadableStream<Uint8Array>` instead of returning a `WritableStream<Uint8Array>`"
+          },
+          {
+            "comment": "Add buffering in sync module to improve transfer speed"
+          },
+          {
+            "comment": "Add `AdbReverseError` and `AdbReverseNotSupportedError` for better error handling in reverse tunnel command."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.18",
       "tag": "@yume-chan/adb_v0.0.18",
       "date": "Wed, 25 Jan 2023 21:33:49 GMT",

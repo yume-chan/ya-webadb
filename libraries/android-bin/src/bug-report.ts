@@ -11,6 +11,10 @@ import {
     WritableStream,
 } from "@yume-chan/stream-extra";
 
+const NOOP = () => {
+    // no-op
+};
+
 export interface BugReportZVersion {
     major: number;
     minor: number;
@@ -151,9 +155,7 @@ export class BugReportZ extends AdbCommandBase {
                         },
                     })
                 )
-                .catch((e) => {
-                    void e;
-                });
+                .catch(NOOP);
             process.stderr
                 .pipeThrough(new DecodeUtf8Stream())
                 .pipeTo(
@@ -163,9 +165,7 @@ export class BugReportZ extends AdbCommandBase {
                         },
                     })
                 )
-                .catch((e) => {
-                    void e;
-                });
+                .catch(NOOP);
             await process.exit;
         });
     }

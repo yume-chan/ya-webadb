@@ -5,10 +5,7 @@ import type { ValueOrPromise } from "../utils.js";
 import { StructFieldDefinition } from "./definition.js";
 import type { StructFieldValue } from "./field-value.js";
 import type { StructOptions } from "./options.js";
-import type {
-    StructAsyncDeserializeStream,
-    StructDeserializeStream,
-} from "./stream.js";
+import type { AsyncExactReadable, ExactReadable } from "./stream.js";
 import type { StructValue } from "./struct-value.js";
 
 describe("StructFieldDefinition", () => {
@@ -33,19 +30,17 @@ describe("StructFieldDefinition", () => {
                 }
                 public override deserialize(
                     options: Readonly<StructOptions>,
-                    stream: StructDeserializeStream,
+                    stream: ExactReadable,
                     struct: StructValue
                 ): StructFieldValue<this>;
                 public override deserialize(
                     options: Readonly<StructOptions>,
-                    stream: StructAsyncDeserializeStream,
+                    stream: AsyncExactReadable,
                     struct: StructValue
                 ): Promise<StructFieldValue<this>>;
                 public deserialize(
                     options: Readonly<StructOptions>,
-                    stream:
-                        | StructDeserializeStream
-                        | StructAsyncDeserializeStream,
+                    stream: ExactReadable | AsyncExactReadable,
                     struct: StructValue
                 ): ValueOrPromise<StructFieldValue<this>> {
                     void options;

@@ -142,13 +142,16 @@ export class BTreeNode {
 
     public has(value: number): boolean {
         let index = this.search(value);
+
         if (index >= 0) {
             return true;
         }
+
         if (this.height > 0) {
             index = ~index;
             return this.children[index]!.has(value);
         }
+
         return false;
     }
 
@@ -192,16 +195,18 @@ export class BTreeNode {
             return true;
         }
 
-        if (this.height > 0) {
-            index = ~index;
-            const deleted = this.children[index]!.delete(value);
-            if (deleted) {
-                this.balance(index);
-            }
-            return deleted;
+        if (this.height === 0) {
+            return false;
         }
 
-        return false;
+        index = ~index;
+        const deleted = this.children[index]!.delete(value);
+
+        if (deleted) {
+            this.balance(index);
+        }
+
+        return deleted;
     }
 
     public max(): number {
@@ -326,25 +331,27 @@ export class BTreeNode {
 }
 
 export class BTree {
-    order: number;
-    root: BTreeNode;
+    private _order: number;
+    public get order() {
+        return this._order;
+    }
 
-    size = 0;
+    private _root: BTreeNode;
+
+    private _size = 0;
+    public get size() {
+        return this._size;
+    }
 
     public constructor(order: number) {
-        this.order = order;
-        this.root = new BTreeNode(
-            order,
-            new Int32Array(order - 1),
-            0,
-            0,
-            new Array<BTreeNode>(order)
-        );
+        this._order = order;
+        const keys = new Int32Array(order - 1);
+        const children = new Array<BTreeNode>(order);
+        this._root = new BTreeNode(order, keys, 0, 0, children);
     }
 
     public has(value: number) {
-        // TODO(btree): benchmark this non-recursive version
-        let node = this.root;
+        let node = this._root;
         while (true) {
             const index = node.search(value);
             if (index >= 0) {
@@ -359,49 +366,49 @@ export class BTree {
     }
 
     public add(value: number) {
-        const split = this.root.add(value);
+        const split = this._root.add(value);
         if (typeof split === "object") {
-            const keys = new Int32Array(this.order - 1);
+            const keys = new Int32Array(this._order - 1);
             keys[0] = split.key;
 
-            const children = new Array<BTreeNode>(this.order);
-            children[0] = this.root;
+            const children = new Array<BTreeNode>(this._order);
+            children[0] = this._root;
             children[1] = split.child;
 
-            this.root = new BTreeNode(
-                this.order,
+            this._root = new BTreeNode(
+                this._order,
                 keys,
                 1,
-                this.root.height + 1,
+                this._root.height + 1,
                 children
             );
         }
         if (split) {
-            this.size += 1;
+            this._size += 1;
         }
         return !!split;
     }
 
     public delete(value: number) {
-        const deleted = this.root.delete(value);
+        const deleted = this._root.delete(value);
         if (deleted) {
-            if (this.root.height > 0 && this.root.keyCount === 0) {
-                this.root = this.root.children[0]!;
+            if (this._root.height > 0 && this._root.keyCount === 0) {
+                this._root = this._root.children[0]!;
             }
-            this.size -= 1;
+            this._size -= 1;
         }
         return deleted;
     }
 
     public clear() {
-        this.root.keyCount = 0;
-        this.root.height = 0;
+        this._root.keyCount = 0;
+        this._root.height = 0;
         // immediately release all references
-        this.root.children = new Array<BTreeNode>(this.order);
-        this.size = 0;
+        this._root.children = new Array<BTreeNode>(this._order);
+        this._size = 0;
     }
 
     public [Symbol.iterator]() {
-        return this.root[Symbol.iterator]();
+        return this._root[Symbol.iterator]();
     }
 }

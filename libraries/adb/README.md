@@ -2,39 +2,39 @@
 
 TypeScript implementation of Android Debug Bridge (ADB) protocol.
 
-**WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
+**WARNING:** The public API is UNSTABLE. Open a GitHub discussion if you have any questions.
 
-- [Compatibility](#compatibility)
-  - [Basic usage](#basic-usage)
-  - [Use without bundlers](#use-without-bundlers)
-- [Connection](#connection)
-  - [Backend](#backend)
-    - [`connect`](#connect)
-- [Authentication](#authentication)
-    - [AdbCredentialStore](#adbcredentialstore)
-      - [`generateKey`](#generatekey)
-      - [`iterateKeys`](#iteratekeys)
-      - [Implementations](#implementations)
-    - [AdbAuthenticator](#adbauthenticator)
-    - [`authenticate`](#authenticate)
-- [Stream multiplex](#stream-multiplex)
-- [Commands](#commands)
-  - [subprocess](#subprocess)
-    - [raw mode](#raw-mode)
-    - [pty mode](#pty-mode)
-  - [usb](#usb)
-  - [tcpip](#tcpip)
-  - [sync](#sync)
-    - [LIST](#list)
-    - [LIS2](#lis2)
-    - [STAT](#stat)
-    - [LST2](#lst2)
-    - [STA2](#sta2)
-    - [RECV](#recv)
-    - [RCV2](#rcv2)
-    - [SEND](#send)
-    - [SND2](#snd2)
-- [Useful links](#useful-links)
+-   [Compatibility](#compatibility)
+    -   [Basic usage](#basic-usage)
+    -   [Use without bundlers](#use-without-bundlers)
+-   [Connection](#connection)
+    -   [Backend](#backend)
+        -   [`connect`](#connect)
+-   [Authentication](#authentication)
+    -   [AdbCredentialStore](#adbcredentialstore)
+        -   [`generateKey`](#generatekey)
+        -   [`iterateKeys`](#iteratekeys)
+        -   [Implementations](#implementations)
+    -   [AdbAuthenticator](#adbauthenticator)
+    -   [`authenticate`](#authenticate)
+-   [Stream multiplex](#stream-multiplex)
+-   [Commands](#commands)
+    -   [subprocess](#subprocess)
+        -   [raw mode](#raw-mode)
+        -   [pty mode](#pty-mode)
+    -   [usb](#usb)
+    -   [tcpip](#tcpip)
+    -   [sync](#sync)
+        -   [LIST](#list)
+        -   [LIS2](#lis2)
+        -   [STAT](#stat)
+        -   [LST2](#lst2)
+        -   [STA2](#sta2)
+        -   [RECV](#recv)
+        -   [RCV2](#rcv2)
+        -   [SEND](#send)
+        -   [SND2](#snd2)
+-   [Useful links](#useful-links)
 
 ## Compatibility
 
@@ -49,7 +49,7 @@ Each backend may have different requirements.
 |                                 | Chrome | Edge | Firefox | Internet Explorer | Safari | Node.js             |
 | ------------------------------- | ------ | ---- | ------- | ----------------- | ------ | ------------------- |
 | `@yume-chan/struct`<sup>1</sup> | 67     | 79   | 68      | No                | 14     | 8.3<sup>2</sup>, 11 |
-| *Overall*                       | 67     | 79   | No      | No                | 14.1   | 16.5                |
+| _Overall_                       | 67     | 79   | No      | No                | 14.1   | 16.5                |
 
 <sup>1</sup> `uint64` and `string` are used.
 
@@ -165,11 +165,11 @@ Use `spawn` method to create a subprocess in raw mode.
 
 In PTY mode, the subprocess has a pseudo-terminal, so it can send special control sequences like clear screen and set cursor position. The two protocols both send data in `stdout`, but Shell Protocol also supports resizing the terminal from client.
 
-|                             | Legacy protocol             | Shell Protocol               |
-| --------------------------- | --------------------------- | ---------------------------- |
-| Feature flag                | -                           | `shell_v2`                   |
-| Implementation              | `AdbNoneSubprocessProtocol` | `AdbShellSubprocessProtocol` |
-| Resizing window             | No                          | Yes                          |
+|                 | Legacy protocol             | Shell Protocol               |
+| --------------- | --------------------------- | ---------------------------- |
+| Feature flag    | -                           | `shell_v2`                   |
+| Implementation  | `AdbNoneSubprocessProtocol` | `AdbShellSubprocessProtocol` |
+| Resizing window | No                          | Yes                          |
 
 Use `shell` method to create a subprocess in PTY mode.
 
@@ -221,7 +221,7 @@ Request server to send the content of a file.
 
 #### RCV2
 
-*(Not Implemented)*
+_(Not Implemented)_
 
 Version 2 of the RECV command.
 
@@ -229,13 +229,13 @@ Supported on devices with `sendrecv_v2` feature.
 
 #### SEND
 
-*(Not Implemented)*
+_(Not Implemented)_
 
 Send a file onto server's file system.
 
 #### SND2
 
-*(Not Implemented)*
+_(Not Implemented)_
 
 Version 2 of the SEND command.
 
@@ -243,5 +243,5 @@ Supported on devices with `sendrecv_v2` feature.
 
 ## Useful links
 
-* [ADB protocol overview](https://android.googlesource.com/platform/packages/modules/adb/+/2fd69306184634c6d90db3ed3be5349e71dcc471/OVERVIEW.TXT)
-* [ADB commands](https://android.googlesource.com/platform/packages/modules/adb/+/2fd69306184634c6d90db3ed3be5349e71dcc471/SERVICES.TXT#145)
+-   [ADB protocol overview](https://android.googlesource.com/platform/packages/modules/adb/+/2fd69306184634c6d90db3ed3be5349e71dcc471/OVERVIEW.TXT)
+-   [ADB commands](https://android.googlesource.com/platform/packages/modules/adb/+/2fd69306184634c6d90db3ed3be5349e71dcc471/SERVICES.TXT#145)

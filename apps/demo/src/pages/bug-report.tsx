@@ -110,7 +110,7 @@ const BugReportPage: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>BugReport - Android Web Toolbox</title>
+                <title>BugReport - Tango</title>
             </Head>
 
             <MessageBar messageBarType={MessageBarType.info}>

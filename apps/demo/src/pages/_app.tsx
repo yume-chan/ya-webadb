@@ -8,6 +8,7 @@ import {
 } from "@fluentui/react";
 import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
 import type { AppProps } from "next/app";
+import getConfig from "next/config";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -71,6 +72,11 @@ const ROUTES = [
         name: "Power Menu",
     },
     {
+        url: "/chrome-devtools",
+        icon: Icons.WindowDevTools,
+        name: "Chrome Remote Debugging",
+    },
+    {
         url: "/bug-report",
         icon: Icons.Bug,
         name: "Bug Report",
@@ -118,6 +124,10 @@ const useClasses = makeStyles({
     },
 });
 
+const {
+    publicRuntimeConfig: { basePath },
+} = getConfig();
+
 function App({ Component, pageProps }: AppProps) {
     const classes = useClasses();
 
@@ -131,10 +141,14 @@ function App({ Component, pageProps }: AppProps) {
 
     const router = useRouter();
 
+    if ("noLayout" in Component) {
+        return <Component {...pageProps} />;
+    }
+
     return (
         <ErrorDialogProvider>
             <Head>
-                <link rel="manifest" href="/manifest.webmanifest" />
+                <link rel="manifest" href={basePath + "/manifest.json"} />
             </Head>
 
             <Stack verticalFill>
@@ -151,7 +165,7 @@ function App({ Component, pageProps }: AppProps) {
                     />
 
                     <StackItem grow>
-                        <div className={classes.title}>Android Web Toolbox</div>
+                        <div className={classes.title}>Tango</div>
                     </StackItem>
 
                     <IconButton

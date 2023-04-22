@@ -10,7 +10,7 @@ import {
     WrapReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import type { StructAsyncDeserializeStream } from "@yume-chan/struct";
+import type { AsyncExactReadable } from "@yume-chan/struct";
 import Struct, { decodeUtf8 } from "@yume-chan/struct";
 
 // `adb logcat` is an alias to `adb shell logcat`
@@ -68,10 +68,11 @@ export enum LogcatFormat {
 }
 
 export interface LogcatFormatModifiers {
-    usec?: boolean;
+    microseconds?: boolean;
+    nanoseconds?: boolean;
     printable?: boolean;
     year?: boolean;
-    zone?: boolean;
+    timezone?: boolean;
     epoch?: boolean;
     monotonic?: boolean;
     uid?: boolean;
@@ -91,14 +92,14 @@ export const LoggerEntry = new Struct({ littleEndian: true })
     .uint16("headerSize")
     .int32("pid")
     .uint32("tid")
-    .uint32("second")
+    .uint32("seconds")
     .uint32("nanoseconds")
     .uint32("logId")
     .uint32("uid")
     .extra({
         get timestamp() {
             return (
-                BigInt(this.second) * NANOSECONDS_PER_SECOND +
+                BigInt(this.seconds) * NANOSECONDS_PER_SECOND +
                 BigInt(this.nanoseconds)
             );
         },
@@ -111,33 +112,222 @@ export interface AndroidLogEntry extends LoggerEntry {
     priority: AndroidLogPriority;
     tag: string;
     message: string;
+
+    toString(format?: LogcatFormat, modifiers?: LogcatFormatModifiers): string;
 }
 
-// https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;l=1415;drc=8dbf3b2bb6b6d1652d9797e477b9abd03278bb79
-export function formatAndroidLogEntry(
-    entry: AndroidLogEntry,
-    format: LogcatFormat = LogcatFormat.Brief,
-    modifier?: LogcatFormatModifiers
-) {
-    const uid = modifier?.uid ? `${entry.uid.toString().padStart(5)}:` : "";
+function padZero(number: number, length: number) {
+    return number.toString().padStart(length, "0");
+}
 
+function formatSeconds(seconds: number, modifiers: LogcatFormatModifiers) {
+    if (modifiers.monotonic) {
+        return padZero(seconds, 6);
+    }
+
+    if (modifiers.epoch) {
+        return padZero(seconds, 19);
+    }
+
+    const date = new Date(seconds * 1000);
+
+    const month = padZero(date.getMonth() + 1, 2);
+    const day = padZero(date.getDate(), 2);
+    const hour = padZero(date.getHours(), 2);
+    const minute = padZero(date.getMinutes(), 2);
+    const second = padZero(date.getSeconds(), 2);
+    const result = `${month}-${day} ${hour}:${minute}:${second}`;
+
+    if (modifiers.year) {
+        const year = padZero(date.getFullYear(), 4);
+        return `${year}-${result}`;
+    }
+
+    return result;
+}
+
+function formatNanoseconds(
+    nanoseconds: number,
+    modifiers: LogcatFormatModifiers
+) {
+    if (modifiers.nanoseconds) {
+        return padZero(nanoseconds, 9);
+    }
+
+    if (modifiers.microseconds) {
+        return padZero(nanoseconds / 1000, 6);
+    }
+
+    return padZero(nanoseconds / 1000000, 3);
+}
+
+function formatTimezone(seconds: number, modifiers: LogcatFormatModifiers) {
+    if (!modifiers.timezone || modifiers.monotonic || modifiers.epoch) {
+        return "";
+    }
+
+    const date = new Date(seconds * 1000);
+    const offset = date.getTimezoneOffset();
+    const sign = offset <= 0 ? "+" : "-";
+    const absolute = Math.abs(offset);
+    const hours = (absolute / 60) | 0;
+    const minutes = absolute % 60;
+
+    // prettier-ignore
+    return ` ${
+        sign
+    }${
+        hours.toString().padStart(2, "0")
+    }:${
+        minutes.toString().padStart(2, "0")
+    }`;
+}
+
+function formatTime(
+    seconds: number,
+    nanoseconds: number,
+    modifiers: LogcatFormatModifiers
+) {
+    const secondsString = formatSeconds(seconds, modifiers);
+    const nanosecondsString = formatNanoseconds(nanoseconds, modifiers);
+    const zoneString = formatTimezone(seconds, modifiers);
+    return `${secondsString}.${nanosecondsString}${zoneString}`;
+}
+
+function formatUid(
+    uid: number,
+    modifiers: LogcatFormatModifiers,
+    suffix: string
+) {
+    return modifiers.uid ? `${uid.toString().padStart(5)}${suffix}` : "";
+}
+
+function getFormatPrefix(
+    entry: AndroidLogEntry,
+    format: LogcatFormat,
+    modifiers: LogcatFormatModifiers
+) {
+    // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;l=1415;drc=8dbf3b2bb6b6d1652d9797e477b9abd03278bb79
     switch (format) {
         // TODO: implement other formats
-        default: {
+        case LogcatFormat.Tag:
             // prettier-ignore
-            const text = `${
+            return `${
+                AndroidLogPriorityToCharacter[entry.priority]
+            }/${
+                entry.tag.padEnd(8)
+            }: `;
+        case LogcatFormat.Process:
+            // prettier-ignore
+            return `${
+                AndroidLogPriorityToCharacter[entry.priority]
+            }(${
+                formatUid(entry.uid, modifiers, ":")
+            }${
+                entry.pid.toString().padStart(5)
+            }) `;
+        case LogcatFormat.Thread:
+            // prettier-ignore
+            return `${
+                AndroidLogPriorityToCharacter[entry.priority]
+            }(${
+                formatUid(entry.uid, modifiers, ":")
+            }${
+                entry.pid.toString().padStart(5)
+            }:${
+                entry.tid.toString().padStart(5)
+            }) `;
+        case LogcatFormat.Raw:
+            return "";
+        case LogcatFormat.Time:
+            // prettier-ignore
+            return `${
+                formatTime(entry.seconds, entry.nanoseconds, modifiers)
+            } ${
                 AndroidLogPriorityToCharacter[entry.priority]
             }/${
                 entry.tag.padEnd(8)
             }(${
-                uid
+                formatUid(entry.uid, modifiers, ":")
             }${
                 entry.pid.toString().padStart(5)
-            }): ${
-                entry.message
-            }`;
-            return text;
-        }
+            }): `;
+        case LogcatFormat.ThreadTime:
+            // prettier-ignore
+            return `${
+                formatTime(entry.seconds, entry.nanoseconds, modifiers)
+            } ${
+                formatUid(entry.uid, modifiers, " ")
+            }${
+                entry.pid.toString().padStart(5)
+            } ${
+                entry.tid.toString().padStart(5)
+            } ${
+                AndroidLogPriorityToCharacter[entry.priority]
+            } ${
+                entry.tag.toString().padEnd(8)
+            }: `;
+        case LogcatFormat.Brief:
+        default:
+            // prettier-ignore
+            return `${
+                AndroidLogPriorityToCharacter[entry.priority]
+            }/${
+                entry.tag.padEnd(8)
+            }(${
+                formatUid(entry.uid, modifiers, ":")
+            }${
+                entry.pid.toString().padStart(5)
+            }): `;
+    }
+}
+
+function getFormatSuffix(entry: AndroidLogEntry, format: LogcatFormat) {
+    switch (format) {
+        case LogcatFormat.Process:
+            return `  (${entry.tag})`;
+        default:
+            return "";
+    }
+}
+
+function formatEntryWrapLine(
+    entry: AndroidLogEntry,
+    format: LogcatFormat,
+    modifiers: LogcatFormatModifiers
+) {
+    const prefix = getFormatPrefix(entry, format, modifiers);
+    const suffix = getFormatSuffix(entry, format);
+    return (
+        prefix + entry.message.replaceAll("\n", suffix + "\n" + prefix) + suffix
+    );
+}
+
+function AndroidLogEntryToString(
+    this: AndroidLogEntry,
+    format: LogcatFormat = LogcatFormat.ThreadTime,
+    modifiers: LogcatFormatModifiers = {}
+) {
+    switch (format) {
+        case LogcatFormat.Long:
+            // prettier-ignore
+            return `[ ${
+                formatTime(this.seconds, this.nanoseconds, modifiers)
+            } ${
+                formatUid(this.uid, modifiers, ":")
+            }${
+                this.pid.toString().padStart(5)
+            }:${
+                this.tid.toString().padStart(5)
+            } ${
+                AndroidLogPriorityToCharacter[this.priority]
+            }/${
+                this.tag.padEnd(8)
+            } ]\n${
+                this.message
+            }\n`;
+        default:
+            return formatEntryWrapLine(this, format, modifiers);
     }
 }
 
@@ -158,15 +348,14 @@ function findTagEnd(payload: Uint8Array) {
 }
 
 export async function deserializeAndroidLogEntry(
-    stream: StructAsyncDeserializeStream
+    stream: AsyncExactReadable
 ): Promise<AndroidLogEntry> {
-    const entry = (await LoggerEntry.deserialize(
-        stream
-    )) as unknown as AndroidLogEntry;
+    const entry = (await LoggerEntry.deserialize(stream)) as AndroidLogEntry;
     if (entry.headerSize !== LoggerEntry.size) {
-        await stream.read(entry.headerSize - LoggerEntry.size);
+        await stream.readExactly(entry.headerSize - LoggerEntry.size);
     }
-    let payload = await stream.read(entry.payloadSize);
+
+    let payload = await stream.readExactly(entry.payloadSize);
 
     // https://cs.android.com/android/platform/superproject/+/master:system/logging/logcat/logcat.cpp;l=193-194;drc=bbe77d66e7bee8bd1f0bc7e5492b5376b0207ef6
     // TODO: payload for some log IDs are in binary format.
@@ -179,6 +368,7 @@ export async function deserializeAndroidLogEntry(
         tagEnd < payload.length - 1
             ? decodeUtf8(payload.subarray(tagEnd + 1))
             : "";
+    entry.toString = AndroidLogEntryToString;
     return entry;
 }
 
@@ -253,6 +443,7 @@ export class Logcat extends AdbCommandBase {
                                 maxEntrySize: parseInt(match[8]!, 10),
                                 maxPayloadSize: parseInt(match[9]!, 10),
                             });
+                            return;
                         }
 
                         match = chunk.match(Logcat.LOG_SIZE_REGEX_10);

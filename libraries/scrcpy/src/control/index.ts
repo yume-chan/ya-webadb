@@ -1,4 +1,5 @@
 export * from "./back-or-screen-on.js";
+export * from "./basic.js";
 export * from "./hover-helper.js";
 export * from "./inject-keycode.js";
 export * from "./inject-scroll.js";
@@ -9,3 +10,4 @@ export * from "./serializer.js";
 export * from "./set-clipboard.js";
 export * from "./set-screen-power-mode.js";
 export * from "./type.js";
+export * from "./writer.js";

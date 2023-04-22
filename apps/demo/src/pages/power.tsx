@@ -19,7 +19,7 @@ const Power: NextPage = () => {
     return (
         <Stack {...RouteStackProps}>
             <Head>
-                <title>Power Menu - Android Web Toolbox</title>
+                <title>Power Menu - Tango</title>
             </Head>
 
             <div>
@@ -113,24 +113,6 @@ const Power: NextPage = () => {
                 <TooltipHost
                     content={<span>Only works on Samsung devices.</span>}
                 >
-                    <Icon
-                        style={{
-                            verticalAlign: "middle",
-                            marginLeft: 4,
-                            fontSize: 18,
-                        }}
-                        iconName={Icons.Info}
-                    />
-                </TooltipHost>
-            </div>
-
-            <div style={{ marginTop: 20 }}>
-                <DefaultButton
-                    text="Reboot to Factory"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.reboot("factory")}
-                />
-                <TooltipHost content={<span>Only works on some devices.</span>}>
                     <Icon
                         style={{
                             verticalAlign: "middle",

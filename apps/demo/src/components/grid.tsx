@@ -1,39 +1,47 @@
-import { makeStyles, mergeClasses, shorthands } from '@griffel/react';
-import { ComponentType, CSSProperties, useEffect, useMemo, useState } from "react";
+import { makeStyles, mergeClasses, shorthands } from "@griffel/react";
+import {
+    CSSProperties,
+    ComponentType,
+    HTMLAttributes,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import { useStableCallback, withDisplayName } from "../utils";
-import { ResizeObserver, Size } from './resize-observer';
+import { ResizeObserver, Size } from "./resize-observer";
 
 const useClasses = makeStyles({
     container: {
-        display: 'flex',
-        flexDirection: 'column',
-        ...shorthands.overflow('hidden'),
+        display: "flex",
+        flexDirection: "column",
+        outlineStyle: "none",
+        ...shorthands.overflow("hidden"),
     },
     header: {
-        position: 'relative',
+        position: "relative",
     },
     body: {
-        position: 'relative',
+        position: "relative",
         flexGrow: 1,
         height: 0,
-        ...shorthands.overflow('auto'),
+        ...shorthands.overflow("auto"),
     },
     placeholder: {
         // make horizontal scrollbar visible
-        minHeight: '1px',
+        minHeight: "1px",
     },
     row: {
-        position: 'absolute',
+        position: "absolute",
         top: 0,
         left: 0,
         right: 0,
-        willChange: 'transform',
+        willChange: "transform",
     },
     cell: {
-        position: 'absolute',
+        position: "absolute",
         top: 0,
         left: 0,
-        willChange: 'transform',
+        willChange: "transform",
     },
 });
 
@@ -53,31 +61,36 @@ export interface GridCellWrapperProps {
     columnOffset: number;
 }
 
-const GridCellWrapper = withDisplayName('GridCellWrapper')(({
-    CellComponent,
-    rowIndex,
-    rowHeight,
-    columnIndex,
-    columnWidth,
-    columnOffset,
-}: GridCellWrapperProps) => {
-    const classes = useClasses();
+const GridCellWrapper = withDisplayName("GridCellWrapper")(
+    ({
+        CellComponent,
+        rowIndex,
+        rowHeight,
+        columnIndex,
+        columnWidth,
+        columnOffset,
+    }: GridCellWrapperProps) => {
+        const classes = useClasses();
 
-    const styles = useMemo(() => ({
-        width: columnWidth,
-        height: rowHeight,
-        transform: `translateX(${columnOffset}px)`,
-    }), [rowHeight, columnWidth, columnOffset]);
+        const styles = useMemo(
+            () => ({
+                width: columnWidth,
+                height: rowHeight,
+                transform: `translateX(${columnOffset}px)`,
+            }),
+            [rowHeight, columnWidth, columnOffset]
+        );
 
-    return (
-        <CellComponent
-            className={classes.cell}
-            style={styles}
-            rowIndex={rowIndex}
-            columnIndex={columnIndex}
-        />
-    );
-});
+        return (
+            <CellComponent
+                className={classes.cell}
+                style={styles}
+                rowIndex={rowIndex}
+                columnIndex={columnIndex}
+            />
+        );
+    }
+);
 
 export interface GridRowProps {
     className: string;
@@ -99,42 +112,42 @@ interface GridRowWrapperProps {
     RowComponent: ComponentType<GridRowProps>;
     rowIndex: number;
     rowHeight: number;
-    columns: (GridColumn & { offset: number; })[];
+    columns: (GridColumn & { offset: number })[];
 }
 
-const GridRowWrapper = withDisplayName('GridRowWrapper')(({
-    RowComponent,
-    rowIndex,
-    rowHeight,
-    columns,
-}: GridRowWrapperProps) => {
-    const classes = useClasses();
+const GridRowWrapper = withDisplayName("GridRowWrapper")(
+    ({ RowComponent, rowIndex, rowHeight, columns }: GridRowWrapperProps) => {
+        const classes = useClasses();
 
-    const styles = useMemo(() => ({
-        height: rowHeight,
-        transform: `translateY(${rowIndex * rowHeight}px)`,
-    }), [rowIndex, rowHeight]);
+        const styles = useMemo(
+            () => ({
+                height: rowHeight,
+                transform: `translateY(${rowIndex * rowHeight}px)`,
+            }),
+            [rowIndex, rowHeight]
+        );
 
-    return (
-        <RowComponent
-            className={classes.row}
-            style={styles}
-            rowIndex={rowIndex}
-        >
-            {columns.map((column, columnIndex) => (
-                <GridCellWrapper
-                    key={columnIndex}
-                    rowIndex={rowIndex}
-                    rowHeight={rowHeight}
-                    columnIndex={columnIndex}
-                    columnWidth={column.width}
-                    columnOffset={column.offset}
-                    CellComponent={column.CellComponent}
-                />
-            ))}
-        </RowComponent>
-    );
-});
+        return (
+            <RowComponent
+                className={classes.row}
+                style={styles}
+                rowIndex={rowIndex}
+            >
+                {columns.map((column, columnIndex) => (
+                    <GridCellWrapper
+                        key={columnIndex}
+                        rowIndex={rowIndex}
+                        rowHeight={rowHeight}
+                        columnIndex={columnIndex}
+                        columnWidth={column.width}
+                        columnOffset={column.offset}
+                        CellComponent={column.CellComponent}
+                    />
+                ))}
+            </RowComponent>
+        );
+    }
+);
 
 export interface GridHeaderProps {
     className: string;
@@ -142,8 +155,7 @@ export interface GridHeaderProps {
     style: CSSProperties;
 }
 
-export interface GridProps {
-    className?: string;
+export interface GridProps extends HTMLAttributes<HTMLDivElement> {
     rowCount: number;
     rowHeight: number;
     columns: GridColumn[];
@@ -151,187 +163,222 @@ export interface GridProps {
     RowComponent: ComponentType<GridRowProps>;
 }
 
-export const Grid = withDisplayName('Grid')(({
-    className,
-    rowCount,
-    rowHeight,
-    columns,
-    HeaderComponent,
-    RowComponent,
-}: GridProps) => {
-    const classes = useClasses();
+export const Grid = withDisplayName("Grid")(
+    ({
+        className,
+        rowCount,
+        rowHeight,
+        columns,
+        HeaderComponent,
+        RowComponent,
+        ...props
+    }: GridProps) => {
+        const classes = useClasses();
 
-    const [scrollLeft, setScrollLeft] = useState(0);
-    const [scrollTop, setScrollTop] = useState(0);
+        const [scrollLeft, setScrollLeft] = useState(0);
+        const [scrollTop, setScrollTop] = useState(0);
 
-    const [bodyRef, setBodyRef] = useState<HTMLDivElement | null>(null);
-    const [bodySize, setBodySize] = useState<Size>({ width: 0, height: 0 });
+        const [bodyRef, setBodyRef] = useState<HTMLDivElement | null>(null);
+        const [bodySize, setBodySize] = useState<Size>({ width: 0, height: 0 });
 
-    const [autoScroll, setAutoScroll] = useState(true);
+        const [autoScroll, setAutoScroll] = useState(true);
 
-    const handleScroll = useStableCallback(() => {
-        if (bodyRef && bodyRef.scrollTop !== scrollTop) {
-            if (autoScroll) {
-                if (scrollTop < bodyRef.scrollHeight - bodyRef.clientHeight && bodyRef.scrollTop < scrollTop) {
-                    setAutoScroll(false);
+        const handleScroll = useStableCallback(() => {
+            if (bodyRef && bodyRef.scrollTop !== scrollTop) {
+                if (autoScroll) {
+                    if (
+                        scrollTop <
+                            bodyRef.scrollHeight - bodyRef.clientHeight &&
+                        bodyRef.scrollTop < scrollTop
+                    ) {
+                        setAutoScroll(false);
+                    }
+                } else if (
+                    bodyRef.scrollTop + bodyRef.offsetHeight >=
+                    bodyRef.scrollHeight - 10
+                ) {
+                    setAutoScroll(true);
                 }
-            } else if (bodyRef.scrollTop + bodyRef.offsetHeight >= bodyRef.scrollHeight - 10) {
-                setAutoScroll(true);
+
+                setScrollLeft(bodyRef.scrollLeft);
+                setScrollTop(bodyRef.scrollTop);
+            }
+        });
+
+        useEffect(() => {
+            if (bodyRef) {
+                setScrollLeft(bodyRef.scrollLeft);
+                setScrollTop(bodyRef.scrollTop);
+            }
+        }, [bodyRef]);
+
+        const rowRange = useMemo(() => {
+            const start = Math.min(rowCount, Math.floor(scrollTop / rowHeight));
+            const end = Math.min(
+                rowCount,
+                Math.ceil((scrollTop + bodySize.height) / rowHeight)
+            );
+            return { start, end, offset: scrollTop - start * rowHeight };
+        }, [scrollTop, bodySize.height, rowCount, rowHeight]);
+
+        const columnMetadata = useMemo(() => {
+            if (bodySize.width === 0) {
+                return {
+                    columns: [],
+                    totalWidth: 0,
+                };
             }
 
-            setScrollLeft(bodyRef.scrollLeft);
-            setScrollTop(bodyRef.scrollTop);
-        }
-    });
+            const result = [];
+            let requestedWidth = 0;
+            let columnsCanGrow = [];
+            let totalFlexGrow = 0;
+            let columnsCanShrink = [];
+            let totalFlexShrink = 0;
+            for (const column of columns) {
+                const copy = { ...column, offset: 0 };
+                result.push(copy);
 
-    useEffect(() => {
-        if (bodyRef) {
-            setScrollLeft(bodyRef.scrollLeft);
-            setScrollTop(bodyRef.scrollTop);
-        }
-    }, [bodyRef]);
+                requestedWidth += copy.width;
 
-    const rowRange = useMemo(() => {
-        const start = Math.min(rowCount, Math.floor(scrollTop / rowHeight));
-        const end = Math.min(rowCount, Math.ceil((scrollTop + bodySize.height) / rowHeight));
-        return { start, end, offset: scrollTop - start * rowHeight };
-    }, [scrollTop, bodySize.height, rowCount, rowHeight]);
+                if (copy.flexGrow !== undefined) {
+                    columnsCanGrow.push(copy);
+                    totalFlexGrow += copy.flexGrow;
+                }
 
-    const columnMetadata = useMemo(() => {
-        if (bodySize.width === 0) {
+                if (copy.flexShrink !== 0) {
+                    if (copy.flexShrink === undefined) {
+                        copy.flexShrink = 1;
+                    }
+                    if (copy.minWidth === undefined) {
+                        copy.minWidth = 0;
+                    }
+                    columnsCanShrink.push(copy);
+                    totalFlexShrink += copy.flexShrink;
+                }
+            }
+
+            let extraWidth = bodySize.width - requestedWidth;
+            while (extraWidth > 1 && columnsCanGrow.length > 0) {
+                const growPerRatio = extraWidth / totalFlexGrow;
+                columnsCanGrow = columnsCanGrow.filter((column) => {
+                    let canGrowFurther = true;
+                    const initialWidth = column.width;
+                    column.width += column.flexGrow! * growPerRatio;
+                    if (
+                        column.maxWidth !== undefined &&
+                        column.width > column.maxWidth
+                    ) {
+                        column.width = column.maxWidth;
+                        canGrowFurther = false;
+                    }
+                    extraWidth -= column.width - initialWidth;
+                    return canGrowFurther;
+                });
+            }
+
+            while (extraWidth < -1 && columnsCanShrink.length > 0) {
+                const shrinkPerRatio = -extraWidth / totalFlexShrink;
+                columnsCanShrink = columnsCanShrink.filter((column) => {
+                    let canShrinkFurther = true;
+                    const initialWidth = column.width;
+                    column.width -= column.flexShrink! * shrinkPerRatio;
+                    if (column.width < column.minWidth!) {
+                        column.width = column.minWidth!;
+                        canShrinkFurther = false;
+                    }
+                    extraWidth += initialWidth - column.width;
+                    return canShrinkFurther;
+                });
+            }
+
+            let offset = 0;
+            for (const column of result) {
+                column.offset = offset;
+                offset += column.width;
+            }
+
             return {
-                columns: [],
-                totalWidth: 0,
+                columns: result,
+                totalWidth: offset,
             };
-        }
+        }, [columns, bodySize.width]);
 
-        const result = [];
-        let requestedWidth = 0;
-        let columnsCanGrow = [];
-        let totalFlexGrow = 0;
-        let columnsCanShrink = [];
-        let totalFlexShrink = 0;
-        for (const column of columns) {
-            const copy = { ...column, offset: 0 };
-            result.push(copy);
-
-            requestedWidth += copy.width;
-
-            if (copy.flexGrow !== undefined) {
-                columnsCanGrow.push(copy);
-                totalFlexGrow += copy.flexGrow;
+        useEffect(() => {
+            if (autoScroll && bodyRef) {
+                void bodyRef.offsetLeft;
+                bodyRef.scrollTop = bodyRef.scrollHeight;
             }
+        });
 
-            if (copy.flexShrink !== 0) {
-                if (copy.flexShrink === undefined) {
-                    copy.flexShrink = 1;
-                }
-                if (copy.minWidth === undefined) {
-                    copy.minWidth = 0;
-                }
-                columnsCanShrink.push(copy);
-                totalFlexShrink += copy.flexShrink;
-            }
-        }
+        const headers = useMemo(
+            () =>
+                columnMetadata.columns.map((column, index) => (
+                    <HeaderComponent
+                        key={index}
+                        columnIndex={index}
+                        className={classes.cell}
+                        style={{
+                            width: column.width,
+                            height: rowHeight,
+                            transform: `translateX(${column.offset}px)`,
+                        }}
+                    />
+                )),
+            [columnMetadata, HeaderComponent, classes, rowHeight]
+        );
 
-        let extraWidth = bodySize.width - requestedWidth;
-        while (extraWidth > 1 && columnsCanGrow.length > 0) {
-            const growPerRatio = extraWidth / totalFlexGrow;
-            columnsCanGrow = columnsCanGrow.filter(column => {
-                let canGrowFurther = true;
-                const initialWidth = column.width;
-                column.width += column.flexGrow! * growPerRatio;
-                if (column.maxWidth !== undefined && column.width > column.maxWidth) {
-                    column.width = column.maxWidth;
-                    canGrowFurther = false;
-                }
-                extraWidth -= (column.width - initialWidth);
-                return canGrowFurther;
-            });
-        }
+        const headerStyle = useMemo(
+            () => ({
+                height: rowHeight,
+                transform: `translateX(-${scrollLeft}px)`,
+            }),
+            [rowHeight, scrollLeft]
+        );
 
-        while (extraWidth < -1 && columnsCanShrink.length > 0) {
-            const shrinkPerRatio = -extraWidth / totalFlexShrink;
-            columnsCanShrink = columnsCanShrink.filter(column => {
-                let canShrinkFurther = true;
-                const initialWidth = column.width;
-                column.width -= column.flexShrink! * shrinkPerRatio;
-                if (column.width < column.minWidth!) {
-                    column.width = column.minWidth!;
-                    canShrinkFurther = false;
-                }
-                extraWidth += (initialWidth - column.width);
-                return canShrinkFurther;
-            });
-        }
+        const placeholder = useMemo(
+            () => (
+                <div
+                    className={classes.placeholder}
+                    style={{
+                        width: columnMetadata.totalWidth,
+                        height: rowCount * rowHeight,
+                    }}
+                />
+            ),
+            [classes, columnMetadata, rowCount, rowHeight]
+        );
 
-        let offset = 0;
-        for (const column of result) {
-            column.offset = offset;
-            offset += column.width;
-        }
-
-        return {
-            columns: result,
-            totalWidth: offset,
-        };
-    }, [columns, bodySize.width]);
-
-    useEffect(() => {
-        if (autoScroll && bodyRef) {
-            void bodyRef.offsetLeft;
-            bodyRef.scrollTop = bodyRef.scrollHeight;
-        }
-    });
-
-    const headers = useMemo(() => (
-        columnMetadata.columns.map((column, index) => (
-            <HeaderComponent
-                key={index}
-                columnIndex={index}
-                className={classes.cell}
-                style={{
-                    width: column.width,
-                    height: rowHeight,
-                    transform: `translateX(${column.offset}px)`,
-                }}
-            />
-        ))
-    ), [columnMetadata, HeaderComponent, classes, rowHeight]);
-
-    const headerStyle = useMemo(() => ({
-        height: rowHeight,
-        transform: `translateX(-${scrollLeft}px)`,
-    }), [rowHeight, scrollLeft]);
-
-    const placeholder = useMemo(() => (
-        <div
-            className={classes.placeholder}
-            style={{ width: columnMetadata.totalWidth, height: rowCount * rowHeight }}
-        />
-    ), [classes, columnMetadata, rowCount, rowHeight]);
-
-    return (
-        <div className={mergeClasses(classes.container, className)}>
-            <div className={classes.header} style={headerStyle}>
-                {headers}
+        return (
+            <div
+                className={mergeClasses(classes.container, className)}
+                tabIndex={-1}
+                {...props}
+            >
+                <div className={classes.header} style={headerStyle}>
+                    {headers}
+                </div>
+                <div
+                    ref={setBodyRef}
+                    className={classes.body}
+                    onScroll={handleScroll}
+                >
+                    <ResizeObserver onResize={setBodySize} />
+                    {placeholder}
+                    {Array.from(
+                        { length: rowRange.end - rowRange.start },
+                        (_, rowIndex) => (
+                            <GridRowWrapper
+                                key={rowRange.start + rowIndex}
+                                RowComponent={RowComponent}
+                                rowIndex={rowRange.start + rowIndex}
+                                rowHeight={rowHeight}
+                                columns={columnMetadata.columns}
+                            />
+                        )
+                    )}
+                </div>
             </div>
-            <div ref={setBodyRef} className={classes.body} onScroll={handleScroll}>
-                <ResizeObserver onResize={setBodySize} />
-                {placeholder}
-                {Array.from(
-                    { length: rowRange.end - rowRange.start },
-                    (_, rowIndex) => (
-                        <GridRowWrapper
-                            key={rowRange.start + rowIndex}
-                            RowComponent={RowComponent}
-                            rowIndex={rowRange.start + rowIndex}
-                            rowHeight={rowHeight}
-                            columns={columnMetadata.columns}
-                        />
-                    )
-                )}
-            </div>
-        </div>
-    );
-});
+        );
+    }
+);

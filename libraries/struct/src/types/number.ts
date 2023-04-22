@@ -1,6 +1,6 @@
 import type {
-    StructAsyncDeserializeStream,
-    StructDeserializeStream,
+    AsyncExactReadable,
+    ExactReadable,
     StructOptions,
     StructValue,
 } from "../basic/index.js";
@@ -137,21 +137,21 @@ export class NumberFieldDefinition<
 
     public override deserialize(
         options: Readonly<StructOptions>,
-        stream: StructDeserializeStream,
+        stream: ExactReadable,
         struct: StructValue
     ): NumberFieldValue<this>;
     public override deserialize(
         options: Readonly<StructOptions>,
-        stream: StructAsyncDeserializeStream,
+        stream: AsyncExactReadable,
         struct: StructValue
     ): Promise<NumberFieldValue<this>>;
     public override deserialize(
         options: Readonly<StructOptions>,
-        stream: StructDeserializeStream | StructAsyncDeserializeStream,
+        stream: ExactReadable | AsyncExactReadable,
         struct: StructValue
     ): ValueOrPromise<NumberFieldValue<this>> {
         return SyncPromise.try(() => {
-            return stream.read(this.getSize());
+            return stream.readExactly(this.getSize());
         })
             .then((array) => {
                 const value = this.type.deserialize(

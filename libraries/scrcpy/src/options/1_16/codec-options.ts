@@ -1,4 +1,3 @@
-import type { AndroidCodecLevel, AndroidCodecProfile } from "../../codec.js";
 import type { ScrcpyOptionValue } from "../types.js";
 
 /**
@@ -6,8 +5,8 @@ import type { ScrcpyOptionValue } from "../types.js";
  * please file an issue on GitHub.
  */
 export interface CodecOptionsInit {
-    profile: AndroidCodecProfile;
-    level: AndroidCodecLevel;
+    profile: number;
+    level: number;
 
     iFrameInterval: number;
     maxBframes: number;

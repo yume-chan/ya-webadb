@@ -13,14 +13,18 @@
         "CLSE",
         "CNXN",
         "colour",
+        "Demuxer",
         "Deserialization",
         "DESERIALIZERS",
         "ebml",
         "Embedder",
+        "entrypoints",
+        "fflate",
         "fluentui",
         "genymobile",
         "Genymobile's",
         "getprop",
+        "Golomb",
         "griffel",
         "keyof",
         "laggy",
@@ -37,9 +41,11 @@
         "PKCS",
         "ponyfill",
         "runtimes",
+        "scid",
         "Scrcpy",
         "sendrecv",
         "sideload",
+        "Sodb",
         "streamsaver",
         "struct",
         "struct's",
@@ -48,6 +54,7 @@
         "transferables",
         "tsbuildinfo",
         "typeof",
+        "undici",
         "webadb",
         "webcodecs",
         "webm",
@@ -94,5 +101,6 @@
     },
     "[typescriptreact]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
-    }
+    },
+    "explorer.sortOrder": "mixed"
 }

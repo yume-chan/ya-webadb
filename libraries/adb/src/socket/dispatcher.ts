@@ -20,6 +20,10 @@ import { decodeUtf8, encodeUtf8 } from "../utils/index.js";
 import type { AdbSocket } from "./socket.js";
 import { AdbSocketController } from "./socket.js";
 
+const NOOP = () => {
+    // no-op
+};
+
 export interface AdbPacketDispatcherOptions {
     calculateChecksum: boolean;
     /**
@@ -398,9 +402,7 @@ export class AdbPacketDispatcher implements Closeable {
 
     private dispose() {
         for (const socket of this.sockets.values()) {
-            socket.dispose().catch((e) => {
-                void e;
-            });
+            socket.dispose().catch(NOOP);
         }
 
         this._disconnected.resolve();

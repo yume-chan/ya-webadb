@@ -1,6 +1,15 @@
 # Change Log - @yume-chan/scrcpy
 
-This log was last generated on Wed, 25 Jan 2023 21:33:49 GMT and should not be manually modified.
+This log was last generated on Sun, 09 Apr 2023 05:55:33 GMT and should not be manually modified.
+
+## 0.0.19
+Sun, 09 Apr 2023 05:55:33 GMT
+
+### Updates
+
+- Change `AdbScrcpyClient#pushServer` to take a `ReadableStream<Uint8Array>` instead of returning a `WritableStream<Uint8Array>`
+- Add `AdbReverseNotSupportedError` handling and automatically switch to forward tunnel in `AdbScrcpyClient`.
+- Update `AndroidKeyCode` enum to align with Web `KeyboardEvent.code`
 
 ## 0.0.18
 Wed, 25 Jan 2023 21:33:49 GMT

@@ -1,9 +1,7 @@
 import type { ValueOrPromise } from "@yume-chan/struct";
+import { StructEmptyError } from "@yume-chan/struct";
 
-import {
-    BufferedReadableStream,
-    BufferedReadableStreamEndedError,
-} from "./buffered.js";
+import { BufferedReadableStream } from "./buffered.js";
 import type { PushReadableStreamController } from "./push-readable.js";
 import { PushReadableStream } from "./push-readable.js";
 import type { ReadableWritablePair } from "./stream.js";
@@ -44,7 +42,7 @@ export class BufferedTransformStream<T>
                     // Treat `BufferedReadableStreamEndedError` as a normal end.
                     // If the `transform` method doesn't have enough data to return a value,
                     // it should throw another error to indicate that.
-                    if (e instanceof BufferedReadableStreamEndedError) {
+                    if (e instanceof StructEmptyError) {
                         controller.close();
                         return;
                     }

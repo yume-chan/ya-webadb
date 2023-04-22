@@ -1,5 +1,9 @@
 import { makeStyles } from "@griffel/react";
-import { AndroidMotionEventAction, ScrcpyPointerId } from "@yume-chan/scrcpy";
+import {
+    AndroidMotionEventAction,
+    AndroidMotionEventButton,
+    ScrcpyPointerId,
+} from "@yume-chan/scrcpy";
 import { MouseEvent, PointerEvent, useEffect, useState } from "react";
 import { STATE } from "./state";
 
@@ -20,7 +24,7 @@ function handleWheel(e: WheelEvent) {
     e.stopPropagation();
 
     const { x, y } = STATE.clientPositionToDevicePosition(e.clientX, e.clientY);
-    STATE.client!.controlMessageSerializer!.injectScroll({
+    STATE.client!.controlMessageWriter!.injectScroll({
         screenWidth: STATE.client!.screenWidth!,
         screenHeight: STATE.client!.screenHeight!,
         pointerX: x,
@@ -30,6 +34,14 @@ function handleWheel(e: WheelEvent) {
         buttons: 0,
     });
 }
+
+const MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON = [
+    AndroidMotionEventButton.Primary,
+    AndroidMotionEventButton.Tertiary,
+    AndroidMotionEventButton.Secondary,
+    AndroidMotionEventButton.Back,
+    AndroidMotionEventButton.Forward,
+];
 
 function injectTouch(
     action: AndroidMotionEventAction,
@@ -42,8 +54,8 @@ function injectTouch(
     const { pointerType } = e;
     let pointerId: bigint;
     if (pointerType === "mouse") {
-        // ScrcpyPointerId.Mouse doesn't work with Chrome browser
-        // https://github.com/Genymobile/scrcpy/issues/3635
+        // Android 13 has bug with mouse injection
+        // https://github.com/Genymobile/scrcpy/issues/3708
         pointerId = ScrcpyPointerId.Finger;
     } else {
         pointerId = BigInt(e.pointerId);
@@ -59,10 +71,12 @@ function injectTouch(
         pointerX: x,
         pointerY: y,
         pressure: e.pressure,
+        actionButton: MOUSE_EVENT_BUTTON_TO_ANDROID_BUTTON[e.button],
+        // `MouseEvent.buttons` has the same order as Android `MotionEvent`
         buttons: e.buttons,
     });
     for (const message of messages) {
-        STATE.client.controlMessageSerializer!.injectTouch(message);
+        STATE.client.controlMessageWriter!.injectTouch(message);
     }
 }
 

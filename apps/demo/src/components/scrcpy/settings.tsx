@@ -11,22 +11,21 @@ import {
     TooltipHost,
 } from "@fluentui/react";
 import { makeStyles } from "@griffel/react";
-import { Disposable } from "@yume-chan/event";
+import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
 import {
-    AdbScrcpyClient,
-    AdbScrcpyOptions1_22,
-    AndroidCodecLevel,
-    AndroidCodecProfile,
     DEFAULT_SERVER_PATH,
+    ScrcpyDisplay,
+    ScrcpyEncoder,
     ScrcpyLogLevel,
-    ScrcpyOptions1_25,
-    ScrcpyOptionsInit1_24,
+    ScrcpyOptionsInitLatest,
+    ScrcpyOptionsLatest,
     ScrcpyVideoOrientation,
-    ScrcpyVideoStreamPacket,
 } from "@yume-chan/scrcpy";
-import { TinyH264Decoder } from "@yume-chan/scrcpy-decoder-tinyh264";
+import {
+    ScrcpyVideoDecoderConstructor,
+    TinyH264Decoder,
+} from "@yume-chan/scrcpy-decoder-tinyh264";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
-import { WritableStream } from "@yume-chan/stream-extra";
 import {
     autorun,
     computed,
@@ -39,7 +38,7 @@ import { GLOBAL_STATE } from "../../state";
 import { Icons } from "../../utils";
 import { STATE } from "./state";
 
-export type Settings = Partial<ScrcpyOptionsInit1_24>;
+export type Settings = ScrcpyOptionsInitLatest;
 
 export interface ClientSettings {
     turnScreenOff?: boolean;
@@ -97,6 +96,10 @@ const useClasses = makeStyles({
     labelRight: {
         marginLeft: "4px",
     },
+    item: {
+        width: "100%",
+        maxWidth: "300px",
+    },
 });
 
 export const SettingItem = observer(function SettingItem({
@@ -125,6 +128,7 @@ export const SettingItem = observer(function SettingItem({
         case "text":
             return (
                 <TextField
+                    className={classes.item}
                     label={label as any}
                     placeholder={definition.placeholder}
                     value={value}
@@ -134,6 +138,7 @@ export const SettingItem = observer(function SettingItem({
         case "dropdown":
             return (
                 <Dropdown
+                    className={classes.item}
                     label={label as any}
                     options={definition.options}
                     placeholder={definition.placeholder}
@@ -153,6 +158,7 @@ export const SettingItem = observer(function SettingItem({
         case "number":
             return (
                 <SpinButton
+                    className={classes.item}
                     label={definition.label}
                     labelPosition={Position.top}
                     min={definition.min}
@@ -167,32 +173,16 @@ export const SettingItem = observer(function SettingItem({
     }
 });
 
-export interface H264Decoder extends Disposable {
-    readonly maxProfile: AndroidCodecProfile | undefined;
-    readonly maxLevel: AndroidCodecLevel | undefined;
-
-    readonly renderer: HTMLElement;
-    readonly frameRendered: number;
-    readonly frameSkipped: number;
-    readonly writable: WritableStream<ScrcpyVideoStreamPacket>;
-}
-
-export interface H264DecoderConstructor {
-    new (): H264Decoder;
-}
-
 export interface DecoderDefinition {
     key: string;
     name: string;
-    Constructor: H264DecoderConstructor;
+    Constructor: ScrcpyVideoDecoderConstructor;
 }
 
 export const SETTING_STATE = makeAutoObservable(
     {
-        settingsVisible: false,
-
-        displays: [] as number[],
-        encoders: [] as string[],
+        displays: [] as ScrcpyDisplay[],
+        encoders: [] as ScrcpyEncoder[],
         decoders: [
             {
                 key: "tinyh264",
@@ -203,11 +193,14 @@ export const SETTING_STATE = makeAutoObservable(
 
         settings: {
             maxSize: 1080,
-            bitRate: 4_000_000,
+            videoBitRate: 4_000_000,
+            videoCodec: "h264",
             lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
             displayId: 0,
             crop: "",
             powerOn: true,
+            audio: true,
+            audioCodec: "aac",
         } as Settings,
 
         clientSettings: {} as ClientSettings,
@@ -223,8 +216,6 @@ autorun(() => {
     if (GLOBAL_STATE.device) {
         runInAction(() => {
             SETTING_STATE.encoders = [];
-            SETTING_STATE.settings.encoderName = undefined;
-
             SETTING_STATE.displays = [];
             SETTING_STATE.settings.displayId = undefined;
         });
@@ -243,25 +234,25 @@ export const SETTING_DEFINITIONS = computed(() => {
             group: "settings",
             key: "powerOn",
             type: "toggle",
-            label: "Turn device on when starting",
+            label: "Wake device up on start",
         },
         {
             group: "clientSettings",
             key: "turnScreenOff",
             type: "toggle",
-            label: "Turn screen off when starting",
+            label: "Turn screen off during mirroring",
         },
         {
             group: "settings",
             key: "stayAwake",
             type: "toggle",
-            label: "Stay awake (if plugged in)",
+            label: "Stay awake during mirroring (if plugged in)",
         },
         {
             group: "settings",
             key: "powerOffOnClose",
             type: "toggle",
-            label: "Turn device off when exiting",
+            label: "Turn device off on stop",
         }
     );
 
@@ -284,8 +275,8 @@ export const SETTING_DEFINITIONS = computed(() => {
                             GLOBAL_STATE.device!,
                             DEFAULT_SERVER_PATH,
                             SCRCPY_SERVER_VERSION,
-                            new AdbScrcpyOptions1_22(
-                                new ScrcpyOptions1_25({
+                            new AdbScrcpyOptionsLatest(
+                                new ScrcpyOptionsLatest({
                                     logLevel: ScrcpyLogLevel.Debug,
                                 })
                             )
@@ -295,12 +286,14 @@ export const SETTING_DEFINITIONS = computed(() => {
                             SETTING_STATE.displays = displays;
                             if (
                                 !SETTING_STATE.settings.displayId ||
-                                !SETTING_STATE.displays.includes(
-                                    SETTING_STATE.settings.displayId
+                                !SETTING_STATE.displays.some(
+                                    (x) =>
+                                        x.id ===
+                                        SETTING_STATE.settings.displayId
                                 )
                             ) {
                                 SETTING_STATE.settings.displayId =
-                                    SETTING_STATE.displays[0];
+                                    SETTING_STATE.displays[0]?.id;
                             }
                         });
                     } catch (e: any) {
@@ -310,8 +303,8 @@ export const SETTING_DEFINITIONS = computed(() => {
             />
         ),
         options: SETTING_STATE.displays.map((item) => ({
-            key: item,
-            text: item.toString(),
+            key: item.id,
+            text: `${item.id}${item.resolution ? ` (${item.resolution})` : ""}`,
         })),
     });
 
@@ -323,25 +316,92 @@ export const SETTING_DEFINITIONS = computed(() => {
         placeholder: "W:H:X:Y",
     });
 
-    result.push({
-        group: "settings",
-        key: "maxSize",
-        type: "number",
-        label: "Max Resolution (longer side, 0 = unlimited)",
-        min: 0,
-        max: 2560,
-        step: 50,
-    });
+    result.push(
+        {
+            group: "settings",
+            key: "maxSize",
+            type: "number",
+            label: "Max Resolution (longer side, 0 = unlimited)",
+            min: 0,
+            max: 2560,
+            step: 50,
+        },
+        {
+            group: "settings",
+            key: "videoBitRate",
+            type: "number",
+            label: "Max Video Bitrate (bps)",
+            min: 100,
+            max: 100_000_000,
+            step: 100,
+        },
+        {
+            group: "settings",
+            key: "videoCodec",
+            type: "dropdown",
+            label: "Video Codec",
+            options: [
+                {
+                    key: "h264",
+                    text: "H.264",
+                },
+                {
+                    key: "h265",
+                    text: "H.265",
+                },
+            ],
+        },
+        {
+            group: "settings",
+            key: "videoEncoder",
+            type: "dropdown",
+            label: "Video Encoder",
+            placeholder:
+                SETTING_STATE.encoders.length === 0
+                    ? "Press refresh button to update encoder list"
+                    : "(default)",
+            labelExtra: (
+                <IconButton
+                    iconProps={{ iconName: Icons.ArrowClockwise }}
+                    disabled={!GLOBAL_STATE.device}
+                    text="Refresh"
+                    onClick={async () => {
+                        try {
+                            await STATE.pushServer();
 
-    result.push({
-        group: "settings",
-        key: "bitRate",
-        type: "number",
-        label: "Max Bit Rate",
-        min: 100,
-        max: 100_000_000,
-        step: 100,
-    });
+                            const encoders = await AdbScrcpyClient.getEncoders(
+                                GLOBAL_STATE.device!,
+                                DEFAULT_SERVER_PATH,
+                                SCRCPY_SERVER_VERSION,
+                                new AdbScrcpyOptionsLatest(
+                                    new ScrcpyOptionsLatest({
+                                        logLevel: ScrcpyLogLevel.Debug,
+                                    })
+                                )
+                            );
+
+                            runInAction(() => {
+                                SETTING_STATE.encoders = encoders;
+                            });
+                        } catch (e: any) {
+                            GLOBAL_STATE.showErrorDialog(e);
+                        }
+                    }}
+                />
+            ),
+            options: SETTING_STATE.encoders
+                .filter(
+                    (item) =>
+                        item.type === "video" &&
+                        (!item.codec ||
+                            item.codec === SETTING_STATE.settings.videoCodec!)
+                )
+                .map((item) => ({
+                    key: item.name,
+                    text: item.name,
+                })),
+        }
+    );
 
     result.push({
         group: "settings",
@@ -376,62 +436,12 @@ export const SETTING_DEFINITIONS = computed(() => {
         ],
     });
 
-    result.push({
-        group: "settings",
-        key: "encoderName",
-        type: "dropdown",
-        label: "Encoder",
-        placeholder: "Press refresh to update available encoders",
-        labelExtra: (
-            <IconButton
-                iconProps={{ iconName: Icons.ArrowClockwise }}
-                disabled={!GLOBAL_STATE.device}
-                text="Refresh"
-                onClick={async () => {
-                    try {
-                        await STATE.pushServer();
-
-                        const encoders = await AdbScrcpyClient.getEncoders(
-                            GLOBAL_STATE.device!,
-                            DEFAULT_SERVER_PATH,
-                            SCRCPY_SERVER_VERSION,
-                            new AdbScrcpyOptions1_22(
-                                new ScrcpyOptions1_25({
-                                    logLevel: ScrcpyLogLevel.Debug,
-                                })
-                            )
-                        );
-
-                        runInAction(() => {
-                            SETTING_STATE.encoders = encoders;
-                            if (
-                                !SETTING_STATE.settings.encoderName ||
-                                !SETTING_STATE.encoders.includes(
-                                    SETTING_STATE.settings.encoderName
-                                )
-                            ) {
-                                SETTING_STATE.settings.encoderName =
-                                    SETTING_STATE.encoders[0];
-                            }
-                        });
-                    } catch (e: any) {
-                        GLOBAL_STATE.showErrorDialog(e);
-                    }
-                }}
-            />
-        ),
-        options: SETTING_STATE.encoders.map((item) => ({
-            key: item,
-            text: item,
-        })),
-    });
-
     if (SETTING_STATE.decoders.length > 1) {
         result.push({
             group: "clientSettings",
             key: "decoder",
             type: "dropdown",
-            label: "Decoder",
+            label: "Video Decoder",
             options: SETTING_STATE.decoders.map((item) => ({
                 key: item.key,
                 text: item.name,
@@ -444,9 +454,123 @@ export const SETTING_DEFINITIONS = computed(() => {
         group: "clientSettings",
         key: "ignoreDecoderCodecArgs",
         type: "toggle",
-        label: `Ignore decoder's codec arguments`,
+        label: `Ignore video decoder's codec options`,
         description: `Some decoders don't support all H.264 profile/levels, so they request the device to encode at their highest-supported codec. However, some super old devices may not support that codec so their encoders will fail to start. Use this option to let device choose the codec to be used.`,
     });
 
+    result.push(
+        {
+            group: "settings",
+            key: "audio",
+            type: "toggle",
+            label: "Forward Audio (Requires Android 11)",
+        },
+        {
+            group: "settings",
+            key: "audioCodec",
+            type: "dropdown",
+            label: "Audio Codec",
+            options: [
+                {
+                    key: "raw",
+                    text: "Raw",
+                },
+                {
+                    key: "aac",
+                    text: "AAC",
+                },
+                {
+                    key: "opus",
+                    text: "Opus",
+                },
+            ],
+        },
+        {
+            group: "settings",
+            key: "audioEncoder",
+            type: "dropdown",
+            placeholder:
+                SETTING_STATE.encoders.length === 0
+                    ? "Press refresh button to update encoder list"
+                    : "(default)",
+            label: "Audio Encoder",
+            labelExtra: (
+                <IconButton
+                    iconProps={{ iconName: Icons.ArrowClockwise }}
+                    disabled={!GLOBAL_STATE.device}
+                    text="Refresh"
+                    onClick={async () => {
+                        try {
+                            await STATE.pushServer();
+
+                            const encoders = await AdbScrcpyClient.getEncoders(
+                                GLOBAL_STATE.device!,
+                                DEFAULT_SERVER_PATH,
+                                SCRCPY_SERVER_VERSION,
+                                new AdbScrcpyOptionsLatest(
+                                    new ScrcpyOptionsLatest({
+                                        logLevel: ScrcpyLogLevel.Debug,
+                                    })
+                                )
+                            );
+
+                            runInAction(() => {
+                                SETTING_STATE.encoders = encoders;
+                            });
+                        } catch (e: any) {
+                            GLOBAL_STATE.showErrorDialog(e);
+                        }
+                    }}
+                />
+            ),
+            options: SETTING_STATE.encoders
+                .filter(
+                    (x) =>
+                        x.type === "audio" &&
+                        x.codec === SETTING_STATE.settings.audioCodec
+                )
+                .map((item) => ({
+                    key: item.name,
+                    text: item.name,
+                })),
+        }
+    );
+
     return result;
+});
+
+autorun(() => {
+    if (SETTING_STATE.encoders.length === 0) {
+        SETTING_STATE.settings.videoEncoder = "";
+        SETTING_STATE.settings.audioEncoder = "";
+        return;
+    }
+
+    const encodersForCurrentVideoCodec = SETTING_STATE.encoders.filter(
+        (item) =>
+            item.type === "video" &&
+            item.codec === SETTING_STATE.settings.videoCodec
+    );
+    if (
+        SETTING_STATE.settings.videoEncoder &&
+        encodersForCurrentVideoCodec.every(
+            (item) => item.name !== SETTING_STATE.settings.videoEncoder
+        )
+    ) {
+        SETTING_STATE.settings.videoEncoder = "";
+    }
+
+    const encodersForCurrentAudioCodec = SETTING_STATE.encoders.filter(
+        (item) =>
+            item.type === "audio" &&
+            item.codec === SETTING_STATE.settings.audioCodec
+    );
+    if (
+        SETTING_STATE.settings.audioEncoder &&
+        encodersForCurrentAudioCodec.every(
+            (item) => item.name !== SETTING_STATE.settings.audioEncoder
+        )
+    ) {
+        SETTING_STATE.settings.audioEncoder = "";
+    }
 });

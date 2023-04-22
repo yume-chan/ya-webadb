@@ -25,19 +25,19 @@ $ rush install
 
 ### Everyday commands
 
-* Build all packages:
+-   Build all packages:
 
     ```sh
     $ rush build
     ```
 
-* Watch changes and rebuild in all libraries:
+-   Watch changes and rebuild in all libraries:
 
     ```sh
     $ rush build:watch
     ```
 
-* Start demo's dev-server:
+-   Start demo's dev-server:
 
     ```sh
     $ cd apps/demo
@@ -60,6 +60,14 @@ npx next export
 ```
 
 This will create an `out` folder containing exported HTML files and all required resource files.
+
+## Release new versions
+
+```sh
+rush version --bump
+export NPM_AUTH_TOKEN=...
+rush publish -p --include-all --set-access-level public
+```
 
 ## FAQ
 

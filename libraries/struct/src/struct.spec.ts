@@ -1,8 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
 import type {
-    StructAsyncDeserializeStream,
-    StructDeserializeStream,
+    AsyncExactReadable,
+    ExactReadable,
     StructFieldValue,
     StructOptions,
     StructValue,
@@ -21,10 +21,12 @@ import {
     VariableLengthBufferLikeFieldDefinition,
 } from "./index.js";
 
-class MockDeserializationStream implements StructDeserializeStream {
+class MockDeserializationStream implements ExactReadable {
     public buffer = new Uint8Array(0);
 
-    public read = jest.fn(() => this.buffer);
+    public position = 0;
+
+    public readExactly = jest.fn(() => this.buffer);
 }
 
 describe("Struct", () => {
@@ -58,17 +60,17 @@ describe("Struct", () => {
             }
             public override deserialize(
                 options: Readonly<StructOptions>,
-                stream: StructDeserializeStream,
+                stream: ExactReadable,
                 struct: StructValue
             ): StructFieldValue<this>;
             public override deserialize(
                 options: Readonly<StructOptions>,
-                stream: StructAsyncDeserializeStream,
+                stream: AsyncExactReadable,
                 struct: StructValue
             ): Promise<StructFieldValue<this>>;
             public override deserialize(
                 options: Readonly<StructOptions>,
-                stream: StructDeserializeStream | StructAsyncDeserializeStream,
+                stream: ExactReadable | AsyncExactReadable,
                 struct: StructValue
             ): ValueOrPromise<StructFieldValue<this>> {
                 void options;
@@ -309,16 +311,16 @@ describe("Struct", () => {
                 const struct = new Struct().int8("foo").int16("bar");
 
                 const stream = new MockDeserializationStream();
-                stream.read
+                stream.readExactly
                     .mockReturnValueOnce(new Uint8Array([2]))
                     .mockReturnValueOnce(new Uint8Array([0, 16]));
 
                 const result = struct.deserialize(stream);
                 expect(result).toEqual({ foo: 2, bar: 16 });
 
-                expect(stream.read).toBeCalledTimes(2);
-                expect(stream.read).nthCalledWith(1, 1);
-                expect(stream.read).nthCalledWith(2, 2);
+                expect(stream.readExactly).toBeCalledTimes(2);
+                expect(stream.readExactly).nthCalledWith(1, 1);
+                expect(stream.readExactly).nthCalledWith(2, 2);
             });
 
             it("should deserialize with dynamic size fields", () => {
@@ -327,7 +329,7 @@ describe("Struct", () => {
                     .uint8Array("foo", { lengthField: "fooLength" });
 
                 const stream = new MockDeserializationStream();
-                stream.read
+                stream.readExactly
                     .mockReturnValueOnce(new Uint8Array([2]))
                     .mockReturnValueOnce(new Uint8Array([3, 4]));
 
@@ -336,9 +338,9 @@ describe("Struct", () => {
                     fooLength: 2,
                     foo: new Uint8Array([3, 4]),
                 });
-                expect(stream.read).toBeCalledTimes(2);
-                expect(stream.read).nthCalledWith(1, 1);
-                expect(stream.read).nthCalledWith(2, 2);
+                expect(stream.readExactly).toBeCalledTimes(2);
+                expect(stream.readExactly).nthCalledWith(1, 1);
+                expect(stream.readExactly).nthCalledWith(2, 2);
             });
         });
 

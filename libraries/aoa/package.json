@@ -36,7 +36,7 @@
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
-        "eslint": "^8.31.0",
-        "typescript": "^4.9.4"
+        "eslint": "^8.36.0",
+        "typescript": "^5.0.3"
     }
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it, jest, test } from "@jest/globals";
 
-import type { StructDeserializeStream } from "../basic/index.js";
 import { StructDefaultOptions, StructValue } from "../basic/index.js";
+import type { ExactReadable } from "../basic/index.js";
 
 import { NumberFieldDefinition, NumberFieldType } from "./number.js";
 
@@ -189,8 +189,10 @@ describe("Types", () => {
 
             describe("#deserialize", () => {
                 it("should deserialize Uint8", () => {
-                    const read = jest.fn(() => new Uint8Array([1, 2, 3, 4]));
-                    const stream: StructDeserializeStream = { read };
+                    const readExactly = jest.fn(
+                        () => new Uint8Array([1, 2, 3, 4])
+                    );
+                    const stream: ExactReadable = { position: 0, readExactly };
 
                     const definition = new NumberFieldDefinition(
                         NumberFieldType.Uint8
@@ -203,13 +205,17 @@ describe("Types", () => {
                     );
 
                     expect(value.get()).toBe(1);
-                    expect(read).toBeCalledTimes(1);
-                    expect(read).lastCalledWith(NumberFieldType.Uint8.size);
+                    expect(readExactly).toBeCalledTimes(1);
+                    expect(readExactly).lastCalledWith(
+                        NumberFieldType.Uint8.size
+                    );
                 });
 
                 it("should deserialize Uint16", () => {
-                    const read = jest.fn(() => new Uint8Array([1, 2, 3, 4]));
-                    const stream: StructDeserializeStream = { read };
+                    const readExactly = jest.fn(
+                        () => new Uint8Array([1, 2, 3, 4])
+                    );
+                    const stream: ExactReadable = { position: 0, readExactly };
 
                     const definition = new NumberFieldDefinition(
                         NumberFieldType.Uint16
@@ -222,13 +228,17 @@ describe("Types", () => {
                     );
 
                     expect(value.get()).toBe((1 << 8) | 2);
-                    expect(read).toBeCalledTimes(1);
-                    expect(read).lastCalledWith(NumberFieldType.Uint16.size);
+                    expect(readExactly).toBeCalledTimes(1);
+                    expect(readExactly).lastCalledWith(
+                        NumberFieldType.Uint16.size
+                    );
                 });
 
                 it("should deserialize Uint16LE", () => {
-                    const read = jest.fn(() => new Uint8Array([1, 2, 3, 4]));
-                    const stream: StructDeserializeStream = { read };
+                    const readExactly = jest.fn(
+                        () => new Uint8Array([1, 2, 3, 4])
+                    );
+                    const stream: ExactReadable = { position: 0, readExactly };
 
                     const definition = new NumberFieldDefinition(
                         NumberFieldType.Uint16
@@ -241,8 +251,10 @@ describe("Types", () => {
                     );
 
                     expect(value.get()).toBe((2 << 8) | 1);
-                    expect(read).toBeCalledTimes(1);
-                    expect(read).lastCalledWith(NumberFieldType.Uint16.size);
+                    expect(readExactly).toBeCalledTimes(1);
+                    expect(readExactly).lastCalledWith(
+                        NumberFieldType.Uint16.size
+                    );
                 });
             });
         });

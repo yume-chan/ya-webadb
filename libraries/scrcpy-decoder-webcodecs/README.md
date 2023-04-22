@@ -4,7 +4,7 @@ Decode and render H.264 streams using the [WebCodecs API](https://developer.mozi
 
 It has no dependencies and high performance, but is only available on recent versions of Chrome.
 
-**WARNING:** The public API is UNSTABLE. If you have any questions, please open an issue.
+**WARNING:** The public API is UNSTABLE. Open a GitHub discussion if you have any questions.
 
 -   [Compatibility](#compatibility)
 -   [Usage](#usage)

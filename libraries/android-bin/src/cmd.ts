@@ -38,27 +38,27 @@ export class Cmd extends AdbCommandBase {
         command: string,
         ...args: string[]
     ) {
-        let supportAbb: boolean;
-        let supportCmd: boolean = this.supportsCmd;
+        let supportsAbb: boolean;
+        let supportsCmd: boolean = this.supportsCmd;
         let service: string;
         let Protocol: AdbSubprocessProtocolConstructor;
         if (shellProtocol) {
-            supportAbb = this._supportsAbb;
-            supportCmd &&= this.supportsShellV2;
+            supportsAbb = this._supportsAbb;
+            supportsCmd &&= this.supportsShellV2;
             service = "abb";
             Protocol = AdbSubprocessShellProtocol;
         } else {
-            supportAbb = this._supportsAbbExec;
+            supportsAbb = this._supportsAbbExec;
             service = "abb_exec";
             Protocol = AdbSubprocessNoneProtocol;
         }
 
-        if (supportAbb) {
+        if (supportsAbb) {
             const socket = await this.adb.createSocket(
                 `${service}:${command}\0${args.join("\0")}\0`
             );
             return new Protocol(socket);
-        } else if (supportCmd) {
+        } else if (supportsCmd) {
             return Protocol.raw(this.adb, `cmd ${command} ${args.join(" ")}`);
         } else {
             throw new Error("Not supported");

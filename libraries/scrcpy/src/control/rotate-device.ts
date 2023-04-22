@@ -1,11 +1,6 @@
-import Struct from "@yume-chan/struct";
+import { BasicControlMessage } from "./basic.js";
 
-import { ScrcpyControlMessageType } from "./type.js";
-
-export const ScrcpyRotateDeviceControlMessage = new Struct().uint8(
-    "type",
-    ScrcpyControlMessageType.RotateDevice as const
-);
+export const ScrcpyRotateDeviceControlMessage = BasicControlMessage;
 
 export type ScrcpyRotateDeviceControlMessage =
     (typeof ScrcpyRotateDeviceControlMessage)["TInit"];

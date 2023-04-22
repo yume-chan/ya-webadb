@@ -7,12 +7,12 @@ import {
     BufferedReadableStream,
     ConsumableWritableStream,
 } from "@yume-chan/stream-extra";
-import type { StructAsyncDeserializeStream } from "@yume-chan/struct";
+import type { AsyncExactReadable } from "@yume-chan/struct";
 
-import type { AdbSocket } from "../../index.js";
-import { AutoResetEvent } from "../../index.js";
+import type { AdbSocket } from "../../socket/index.js";
+import { AutoResetEvent } from "../../utils/index.js";
 
-export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
+export class AdbSyncSocketLocked implements AsyncExactReadable {
     private readonly _writer: WritableStreamDefaultWriter<
         Consumable<Uint8Array>
     >;
@@ -20,6 +20,10 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
     private readonly _socketLock: AutoResetEvent;
     private readonly _writeLock = new AutoResetEvent();
     private readonly _combiner: BufferCombiner;
+
+    public get position() {
+        return this._readable.position;
+    }
 
     public constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
@@ -60,9 +64,9 @@ export class AdbSyncSocketLocked implements StructAsyncDeserializeStream {
         }
     }
 
-    public async read(length: number) {
+    public async readExactly(length: number) {
         await this.flush();
-        return await this._readable.read(length);
+        return await this._readable.readExactly(length);
     }
 
     public release(): void {
