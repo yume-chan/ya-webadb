@@ -27,3 +27,27 @@ fs.writeFileSync(
     ),
     "utf8"
 );
+
+fs.writeFileSync(
+    new URL(
+        "../node_modules/tabby-web-container/dist/preload.mjs",
+        import.meta.url
+    ),
+    "export {};\n" +
+        fs
+            .readFileSync(
+                new URL(
+                    "../node_modules/tabby-web-container/dist/preload.js",
+                    import.meta.url
+                ),
+                "utf8"
+            )
+            .replaceAll(/__webpack_require__\.p \+ "(.+)"/g, (_, match) => {
+                return `new URL("./${match}", import.meta.url).toString()`;
+            })
+            .replaceAll(/__webpack_require__/g, "__webpack_require_nested__")
+            .replace(
+                "var scriptUrl;",
+                "var scriptUrl = import.meta.url.toString();"
+            )
+);

@@ -11,12 +11,12 @@ interface Console {
     createTask(name: string): Task;
 }
 
-interface GlobalEx {
+interface GlobalExtension {
     console: Console;
 }
 
 // `createTask` allows browser DevTools to track the call stack across async boundaries.
-const { console } = globalThis as unknown as GlobalEx;
+const { console } = globalThis as unknown as GlobalExtension;
 const createTask: Console["createTask"] =
     console.createTask?.bind(console) ??
     (() => ({
