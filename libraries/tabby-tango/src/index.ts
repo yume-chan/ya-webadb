@@ -1,8 +1,5 @@
 import { NgModule } from "@angular/core";
-import { BrowserModule } from "@angular/platform-browser";
-// @ts-ignore
 import { FormsModule } from "@angular/forms";
-// @ts-ignore
 import { NgbModule } from "@ng-bootstrap/ng-bootstrap";
 import TabbyCorePlugin, {
     AppService,
@@ -13,18 +10,12 @@ import TabbyTerminalModule from "tabby-terminal";
 import { ButtonProvider } from "./buttonProvider";
 import { AdbTerminalTabComponent } from "./components/terminalTab.component";
 import { AdbProfilesService } from "./profiles";
-import { TabbyAdb } from "./state";
+import { AdbState } from "./state";
 
-export { TabbyAdb };
+export { AdbState };
 
 @NgModule({
-    imports: [
-        FormsModule,
-        BrowserModule,
-        NgbModule,
-        TabbyCorePlugin,
-        TabbyTerminalModule,
-    ],
+    imports: [FormsModule, NgbModule, TabbyCorePlugin, TabbyTerminalModule],
     providers: [
         {
             provide: ProfileProvider,
@@ -37,7 +28,6 @@ export { TabbyAdb };
             multi: true,
         },
     ],
-    entryComponents: [AdbTerminalTabComponent],
     declarations: [AdbTerminalTabComponent],
     exports: [AdbTerminalTabComponent],
 })

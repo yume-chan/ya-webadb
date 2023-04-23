@@ -1,19 +1,32 @@
-const path = require("path");
-const webpack = require("webpack");
-const BundleAnalyzerPlugin =
-    require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+import { AngularWebpackPlugin } from "@ngtools/webpack";
+import * as fs from "fs";
+import * as path from "path";
+import wp from "webpack";
+import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
 const bundleAnalyzer = new BundleAnalyzerPlugin({
     analyzerPort: 0,
 });
 
-module.exports = (options) => {
+import { createEs2015LinkerPlugin } from "@angular/compiler-cli/linker/babel";
+const linkerPlugin = createEs2015LinkerPlugin({
+    linkerJitMode: true,
+    fileSystem: {
+        resolve: path.resolve,
+        exists: fs.existsSync,
+        dirname: path.dirname,
+        relative: path.relative,
+        readFile: fs.readFileSync,
+    },
+});
+
+export default (options) => {
     const sourceMapOptions = {
         exclude: [/node_modules/, /vendor/],
         filename: "[file].map",
         moduleFilenameTemplate: `webpack-tabby-${options.name}:///[resource-path]`,
     };
-    let SourceMapDevToolPlugin = webpack.SourceMapDevToolPlugin;
+    let devtoolPlugin = wp.SourceMapDevToolPlugin;
 
     if (process.env.CI) {
         sourceMapOptions.append =
@@ -21,7 +34,7 @@ module.exports = (options) => {
     }
 
     if (process.platform === "win32" && process.env.TABBY_DEV) {
-        SourceMapDevToolPlugin = webpack.EvalSourceMapDevToolPlugin;
+        devtoolPlugin = wp.EvalSourceMapDevToolPlugin;
     }
 
     const isDev = !!process.env.TABBY_DEV;
@@ -53,7 +66,6 @@ module.exports = (options) => {
               },
         resolve: {
             alias: options.alias ?? {},
-            // modules: ['.', 'src', 'node_modules', '../app/node_modules', '../node_modules'].map(x => path.join(options.dirname, x)),
             extensions: [".ts", ".js"],
             mainFields: ["esm2015", "browser", "module", "main"],
         },
@@ -80,19 +92,37 @@ module.exports = (options) => {
                     },
                 },
                 {
-                    test: /\.ts$/,
-                    use: {
-                        loader: "ts-loader",
-                        options: {
-                            configFile: path.resolve(
-                                options.dirname,
-                                "tsconfig.json"
-                            ),
-                            allowTsInNodeModules: true,
-                        },
+                    test: /\.(m?)js$/,
+                    loader: "babel-loader",
+                    options: {
+                        plugins: [linkerPlugin],
+                        compact: false,
+                        cacheDirectory: true,
+                    },
+                    resolve: {
+                        fullySpecified: false,
                     },
                 },
-                { test: /\.pug$/, use: ["apply-loader", "pug-loader"] },
+                {
+                    test: /\.ts$/,
+                    use: [
+                        {
+                            loader: "@ngtools/webpack",
+                        },
+                    ],
+                },
+                {
+                    test: /\.pug$/,
+                    use: [
+                        "apply-loader",
+                        {
+                            loader: "pug-loader",
+                            options: {
+                                pretty: true,
+                            },
+                        },
+                    ],
+                },
                 {
                     test: /\.scss$/,
                     use: [
@@ -117,7 +147,7 @@ module.exports = (options) => {
                     use: ["style-loader", "css-loader"],
                     exclude: /component\.css/,
                 },
-                { test: /\.yaml$/, use: ["json-loader", "yaml-loader"] },
+                { test: /\.yaml$/, use: ["yaml-loader"] },
                 { test: /\.svg/, use: ["svg-inline-loader"] },
                 {
                     test: /\.(eot|otf|woff|woff2|ogg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
@@ -166,7 +196,14 @@ module.exports = (options) => {
             /^tabby-/,
             ...(options.externals || []),
         ],
-        plugins: [new SourceMapDevToolPlugin(sourceMapOptions)],
+        plugins: [
+            new devtoolPlugin(sourceMapOptions),
+            new AngularWebpackPlugin({
+                tsconfig: path.resolve(options.dirname, "tsconfig.json"),
+                directTemplateLoading: false,
+                jitMode: true,
+            }),
+        ],
     };
     if (process.env.PLUGIN_BUNDLE_ANALYZER === options.name) {
         config.plugins.push(bundleAnalyzer);

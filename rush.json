@@ -479,6 +479,10 @@
         {
             "packageName": "@yume-chan/tabby-tango",
             "projectFolder": "libraries/tabby-tango"
+        },
+        {
+            "packageName": "@yume-chan/adb-backend-proxy",
+            "projectFolder": "libraries/adb-backend-proxy"
         }
     ]
 }

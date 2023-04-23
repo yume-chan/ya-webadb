@@ -8,9 +8,9 @@ import {
 } from "@yume-chan/stream-extra";
 import type { Logger } from "tabby-core";
 import { BaseSession } from "tabby-terminal";
-import { TabbyAdb } from "./state";
+import { AdbState } from "./state";
 
-export class Session extends BaseSession {
+export class AdbSession extends BaseSession {
     private shell!: AdbSubprocessProtocol;
     private writer!: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
 
@@ -19,13 +19,13 @@ export class Session extends BaseSession {
     }
 
     async start(): Promise<void> {
-        if (!TabbyAdb.value) {
+        if (!AdbState.value) {
             return;
         }
 
         this.open = true;
 
-        this.shell = await TabbyAdb.value.subprocess.shell();
+        this.shell = await AdbState.value.subprocess.shell();
         this.writer = this.shell.stdin.getWriter();
         this.shell.stdout.pipeTo(
             new WritableStream({

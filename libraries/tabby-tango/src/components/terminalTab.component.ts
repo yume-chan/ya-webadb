@@ -1,6 +1,10 @@
 import { Component, Injector } from "@angular/core";
-import { BaseSession, BaseTerminalTabComponent } from "tabby-terminal";
-import { Session } from "../session";
+import {
+    BaseSession,
+    BaseTerminalProfile,
+    BaseTerminalTabComponent,
+} from "tabby-terminal";
+import { AdbSession } from "../session";
 
 @Component({
     selector: "adbTerminalTab",
@@ -8,14 +12,14 @@ import { Session } from "../session";
     styles: BaseTerminalTabComponent.styles,
     animations: BaseTerminalTabComponent.animations,
 })
-export class AdbTerminalTabComponent extends BaseTerminalTabComponent {
+export class AdbTerminalTabComponent extends BaseTerminalTabComponent<BaseTerminalProfile> {
     constructor(injector: Injector) {
         super(injector);
     }
 
     ngOnInit(): void {
         this.logger = this.log.create("terminalTab");
-        this.session = new Session(
+        this.session = new AdbSession(
             this.injector,
             this.logger
         ) as unknown as BaseSession;

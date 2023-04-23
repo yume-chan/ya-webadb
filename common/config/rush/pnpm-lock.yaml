@@ -7,7 +7,7 @@ importers:
 
   ../../apps/demo:
     specifiers:
-      '@angular/core': ^12.0.0
+      '@angular/compiler': ^15.2.6
       '@fluentui/react': ^8.107.5
       '@fluentui/react-file-type-icons': ^8.8.13
       '@fluentui/react-hooks': ^8.6.20
@@ -22,6 +22,7 @@ importers:
       '@types/react': 18.0.35
       '@yume-chan/adb': workspace:^0.0.19
       '@yume-chan/adb-backend-direct-sockets': workspace:^0.0.9
+      '@yume-chan/adb-backend-proxy': workspace:^0.0.9
       '@yume-chan/adb-backend-webusb': workspace:^0.0.19
       '@yume-chan/adb-backend-ws': workspace:^0.0.9
       '@yume-chan/adb-credential-web': workspace:^0.0.19
@@ -52,20 +53,17 @@ importers:
       react-dom: ^18.2.0
       rxjs: ^7.8.0
       source-map-loader: ^4.0.1
-      tabby-community-color-schemes: ^1.0.189-nightly.2
-      tabby-core: ^1.0.189-nightly.2
-      tabby-settings: ^1.0.189-nightly.2
-      tabby-terminal: ^1.0.189-nightly.2
-      tabby-web: ^1.0.189-nightly.2
-      tabby-web-container: ^1.0.189-nightly.2
+      tabby-community-color-schemes: ^1.0.197-nightly.0
+      tabby-core: ^1.0.197-nightly.0
+      tabby-settings: ^1.0.197-nightly.0
+      tabby-terminal: ^1.0.197-nightly.0
+      tabby-web: ^1.0.197-nightly.0
+      tabby-web-container: ^1.0.197-nightly.0
       typescript: ^5.0.3
       webm-muxer: ^2.2.3
-      xterm: ^5.1.0
-      xterm-addon-fit: ^0.7.0
-      xterm-addon-search: ^0.11.0
-      xterm-addon-webgl: ^0.14.0
+      yaml: ^2.2.1
     dependencies:
-      '@angular/core': 12.2.17_rxjs@7.8.0
+      '@angular/compiler': 15.2.8
       '@fluentui/react': 8.107.5_7geocmx3442bocz6x6zwg5lxxi
       '@fluentui/react-file-type-icons': 8.8.13_yuz6bkerhkjfjuf6zeb7j6ybc4
       '@fluentui/react-hooks': 8.6.20_yuz6bkerhkjfjuf6zeb7j6ybc4
@@ -74,6 +72,7 @@ importers:
       '@griffel/react': 1.5.7_react@18.2.0
       '@yume-chan/adb': link:../../libraries/adb
       '@yume-chan/adb-backend-direct-sockets': link:../../libraries/adb-backend-direct-sockets
+      '@yume-chan/adb-backend-proxy': link:../../libraries/adb-backend-proxy
       '@yume-chan/adb-backend-webusb': link:../../libraries/adb-backend-webusb
       '@yume-chan/adb-backend-ws': link:../../libraries/adb-backend-ws
       '@yume-chan/adb-credential-web': link:../../libraries/adb-credential-web
@@ -99,17 +98,14 @@ importers:
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
       rxjs: 7.8.0
-      tabby-community-color-schemes: 1.0.189-nightly.2_zbeviprrgyskxbk7zxro2ahyse
-      tabby-core: 1.0.189-nightly.2_nonkoc5aydgqe76zzqizj3duyy
-      tabby-settings: 1.0.189-nightly.2_3gsqjwwctc6mz4ik7uryo2zice
-      tabby-terminal: 1.0.189-nightly.2_o6ro5ae2bj4x4k5peutuitdsoa
-      tabby-web: 1.0.189-nightly.2_@angular+core@12.2.17
-      tabby-web-container: 1.0.189-nightly.2
+      tabby-community-color-schemes: 1.0.197-nightly.0_vjh6z6twcfeduj6kamqky3fpim
+      tabby-core: 1.0.197-nightly.0_rxjs@7.8.0
+      tabby-settings: 1.0.197-nightly.0_fyo4ievpkairjbbtl6deiturja
+      tabby-terminal: 1.0.197-nightly.0_dilxtdhekremd4bipshrhnnymy
+      tabby-web: 1.0.197-nightly.0
+      tabby-web-container: 1.0.197-nightly.0
       webm-muxer: 2.2.3
-      xterm: 5.1.0
-      xterm-addon-fit: 0.7.0_xterm@5.1.0
-      xterm-addon-search: 0.11.0_xterm@5.1.0
-      xterm-addon-webgl: 0.14.0_xterm@5.1.0
+      yaml: 2.2.1
     devDependencies:
       '@mdx-js/loader': 2.3.0
       '@mdx-js/react': 2.3.0_react@18.2.0
@@ -174,6 +170,31 @@ importers:
     dependencies:
       '@yume-chan/adb': link:../adb
       '@yume-chan/stream-extra': link:../stream-extra
+      tslib: 2.5.0
+    devDependencies:
+      '@yume-chan/eslint-config': link:../../toolchain/eslint-config
+      '@yume-chan/tsconfig': link:../../toolchain/tsconfig
+      eslint: 8.38.0
+      prettier: 2.8.7
+      typescript: 5.0.4
+
+  ../../libraries/adb-backend-proxy:
+    specifiers:
+      '@yume-chan/adb': workspace:^0.0.19
+      '@yume-chan/async': ^2.2.0
+      '@yume-chan/eslint-config': workspace:^1.0.0
+      '@yume-chan/stream-extra': workspace:^0.0.19
+      '@yume-chan/struct': workspace:^0.0.19
+      '@yume-chan/tsconfig': workspace:^1.0.0
+      eslint: ^8.36.0
+      prettier: ^2.8.4
+      tslib: ^2.5.0
+      typescript: ^5.0.3
+    dependencies:
+      '@yume-chan/adb': link:../adb
+      '@yume-chan/async': 2.2.0
+      '@yume-chan/stream-extra': link:../stream-extra
+      '@yume-chan/struct': link:../struct
       tslib: 2.5.0
     devDependencies:
       '@yume-chan/eslint-config': link:../../toolchain/eslint-config
@@ -585,10 +606,13 @@ importers:
 
   ../../libraries/tabby-tango:
     specifiers:
-      '@angular/compiler': ^12.0.0
-      '@angular/compiler-cli': ^12.0.0
-      '@angular/core': ^12.0.0
-      '@angular/platform-browser': ^12.0.0
+      '@angular/compiler': ^15.2.6
+      '@angular/compiler-cli': ^15.2.6
+      '@angular/core': ^15.2.6
+      '@angular/forms': ^15.2.6
+      '@angular/platform-browser': ^15.2.6
+      '@ng-bootstrap/ng-bootstrap': ^14.1.0
+      '@ngtools/webpack': ^15.2.5
       '@types/node': ^18.15.3
       '@types/webpack-env': ^1.16.0
       '@yume-chan/adb': workspace:^0.0.19
@@ -597,9 +621,8 @@ importers:
       mobx: ^6.7.0
       source-map-loader: ^4.0.1
       svg-inline-loader: ^0.8.2
-      tabby-core: ^1.0.189-nightly.2
-      tabby-terminal: ^1.0.189-nightly.2
-      ts-loader: ^9.4.2
+      tabby-core: ^1.0.197-nightly.0
+      tabby-terminal: ^1.0.197-nightly.0
       tslib: ^2.5.0
       webpack: ^5.75.0
       webpack-bundle-analyzer: ^4.7.0
@@ -607,10 +630,13 @@ importers:
     dependencies:
       svg-inline-loader: 0.8.2
     devDependencies:
-      '@angular/compiler': 12.2.17
-      '@angular/compiler-cli': 12.2.17_@angular+compiler@12.2.17
-      '@angular/core': 12.2.17
-      '@angular/platform-browser': 12.2.17_@angular+core@12.2.17
+      '@angular/compiler': 15.2.8_@angular+core@15.2.8
+      '@angular/compiler-cli': 15.2.8_@angular+compiler@15.2.8
+      '@angular/core': 15.2.8
+      '@angular/forms': 15.2.8_iolsbsydholska74fb3o4t3nty
+      '@angular/platform-browser': 15.2.8_@angular+core@15.2.8
+      '@ng-bootstrap/ng-bootstrap': 14.1.0_qk3tdh4uew5ksgwi2jmldcntyi
+      '@ngtools/webpack': 15.2.6_rpa5tiyywhsthbxiqfrprd3tti
       '@types/node': 18.15.11
       '@types/webpack-env': 1.18.0
       '@yume-chan/adb': link:../adb
@@ -618,9 +644,8 @@ importers:
       babel-loader: 9.1.2_webpack@5.80.0
       mobx: 6.9.0
       source-map-loader: 4.0.1_webpack@5.80.0
-      tabby-core: 1.0.189-nightly.2_7gr72xazwpsvbbd4r25i7zg4q4
-      tabby-terminal: 1.0.189-nightly.2_qasv6e6cj2zvj4lwfyuasoq33i
-      ts-loader: 9.4.2_webpack@5.80.0
+      tabby-core: 1.0.197-nightly.0_nv3ng6b6m32bx252stc4u2qfmi
+      tabby-terminal: 1.0.197-nightly.0_4vr7bxuw32pbuzzs3gfajq7eey
       tslib: 2.5.0
       webpack: 5.80.0_webpack-cli@5.0.2
       webpack-bundle-analyzer: 4.8.0
@@ -661,73 +686,90 @@ packages:
       '@jridgewell/trace-mapping': 0.3.18
     dev: true
 
-  /@angular/compiler-cli/12.2.17_@angular+compiler@12.2.17:
-    resolution: {integrity: sha512-gJJlnDr8Fhs6z0hH0Y/5GC1YAgHY+sRh2BUrbDu+nIUubyyOVYSyQdL1jwEfCSIZl1GSg+4b4thU7pp7HtmX8g==}
-    engines: {node: ^12.14.1 || >=14.0.0}
+  /@angular/compiler-cli/15.2.8_@angular+compiler@15.2.8:
+    resolution: {integrity: sha512-fFxaDlbILo0t2t662qA0cjgn+kWItGlc1tFYKU6X7bvYb3t2e0cd9FzrFPLXUQVboGis83ULcJ2zkDxScnuPuQ==}
+    engines: {node: ^14.20.0 || ^16.13.0 || >=18.10.0}
     hasBin: true
     peerDependencies:
-      '@angular/compiler': 12.2.17
-      typescript: '>=4.2.3 <4.4'
+      '@angular/compiler': 15.2.8
+      typescript: '>=4.8.2 <5.0'
     dependencies:
-      '@angular/compiler': 12.2.17
-      '@babel/core': 7.21.4
-      '@babel/types': 7.21.4
-      canonical-path: 1.0.0
+      '@angular/compiler': 15.2.8_@angular+core@15.2.8
+      '@babel/core': 7.19.3
+      '@jridgewell/sourcemap-codec': 1.4.15
       chokidar: 3.5.3
       convert-source-map: 1.9.0
       dependency-graph: 0.11.0
-      magic-string: 0.25.9
-      minimist: 1.2.8
+      magic-string: 0.27.0
       reflect-metadata: 0.1.13
       semver: 7.4.0
-      source-map: 0.6.1
-      sourcemap-codec: 1.4.8
       tslib: 2.5.0
       yargs: 17.7.1
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /@angular/compiler/12.2.17:
-    resolution: {integrity: sha512-dxM1CxzvEJPk6ShJngkW5j5BejBloxQNi+fJi+F8P/GN/Rj7vJUf0JxL+TUt1+Iv575V4NidJDKKikk6K485CA==}
-    engines: {node: ^12.14.1 || >=14.0.0}
-    dependencies:
-      tslib: 2.5.0
-    dev: true
-
-  /@angular/core/12.2.17:
-    resolution: {integrity: sha512-XUvTgU0D8XqNH5Y7UlTMk/XjUQaEGC0kZxhw/QSSQr65WrXtXmcD4d8Cg84TJ52uGXmf7IAruKvtbvu1Mbmvug==}
-    engines: {node: ^12.14.1 || >=14.0.0}
+  /@angular/compiler/15.2.8:
+    resolution: {integrity: sha512-+dvspIDvuGoYqdL7r/3o9ojkR3fH1zevgC0ISJivcIrMi+WcJ0FV2JmJdnm8V52oNsHy+sMF9eEZGEbCbACE/A==}
+    engines: {node: ^14.20.0 || ^16.13.0 || >=18.10.0}
     peerDependencies:
-      rxjs: ^6.5.3 || ^7.0.0
-      zone.js: ~0.11.4
+      '@angular/core': 15.2.8
+    peerDependenciesMeta:
+      '@angular/core':
+        optional: true
     dependencies:
-      tslib: 2.5.0
-    dev: true
-
-  /@angular/core/12.2.17_rxjs@7.8.0:
-    resolution: {integrity: sha512-XUvTgU0D8XqNH5Y7UlTMk/XjUQaEGC0kZxhw/QSSQr65WrXtXmcD4d8Cg84TJ52uGXmf7IAruKvtbvu1Mbmvug==}
-    engines: {node: ^12.14.1 || >=14.0.0}
-    peerDependencies:
-      rxjs: ^6.5.3 || ^7.0.0
-      zone.js: ~0.11.4
-    dependencies:
-      rxjs: 7.8.0
       tslib: 2.5.0
     dev: false
 
-  /@angular/platform-browser/12.2.17_@angular+core@12.2.17:
-    resolution: {integrity: sha512-fxs0FDEnS9mzd36u0bHd6TbCvRC9pqK0YCWNnoLCf5ALQtyIL8CpgGNjOMnO8mCEl5l9QTFCDvKOn4V3p7E/dg==}
-    engines: {node: ^12.14.1 || >=14.0.0}
+  /@angular/compiler/15.2.8_@angular+core@15.2.8:
+    resolution: {integrity: sha512-+dvspIDvuGoYqdL7r/3o9ojkR3fH1zevgC0ISJivcIrMi+WcJ0FV2JmJdnm8V52oNsHy+sMF9eEZGEbCbACE/A==}
+    engines: {node: ^14.20.0 || ^16.13.0 || >=18.10.0}
     peerDependencies:
-      '@angular/animations': 12.2.17
-      '@angular/common': 12.2.17
-      '@angular/core': 12.2.17
+      '@angular/core': 15.2.8
+    peerDependenciesMeta:
+      '@angular/core':
+        optional: true
+    dependencies:
+      '@angular/core': 15.2.8
+      tslib: 2.5.0
+    dev: true
+
+  /@angular/core/15.2.8:
+    resolution: {integrity: sha512-NDs+g4uM4EhyCvluf8a0YBCFXsDAEfCMHOD5cS00Bl+liTQ7JwtmepkWXMyjLB92irC9JaR79kdy4BoIKOh8WA==}
+    engines: {node: ^14.20.0 || ^16.13.0 || >=18.10.0}
+    peerDependencies:
+      rxjs: ^6.5.3 || ^7.4.0
+      zone.js: ~0.11.4 || ~0.12.0 || ~0.13.0
+    dependencies:
+      tslib: 2.5.0
+    dev: true
+
+  /@angular/forms/15.2.8_iolsbsydholska74fb3o4t3nty:
+    resolution: {integrity: sha512-VyevVj20DdQWjAQUyiFTe+DAzqG9GqfAOWn376Y/lhPcwxAojXePTGNgtQud566/urDrNrP5haaLD6O36/3n+w==}
+    engines: {node: ^14.20.0 || ^16.13.0 || >=18.10.0}
+    peerDependencies:
+      '@angular/common': 15.2.8
+      '@angular/core': 15.2.8
+      '@angular/platform-browser': 15.2.8
+      rxjs: ^6.5.3 || ^7.4.0
+    dependencies:
+      '@angular/core': 15.2.8
+      '@angular/platform-browser': 15.2.8_@angular+core@15.2.8
+      tslib: 2.5.0
+    dev: true
+
+  /@angular/platform-browser/15.2.8_@angular+core@15.2.8:
+    resolution: {integrity: sha512-8sKFUld54inj0FnQ1ydhFxnDgsbbf43W9FALye/5uEtLgwwE/ZvkNYMaQ7hq1JPuQRMDj3gJkFqaLeFjplpHDA==}
+    engines: {node: ^14.20.0 || ^16.13.0 || >=18.10.0}
+    peerDependencies:
+      '@angular/animations': 15.2.8
+      '@angular/common': 15.2.8
+      '@angular/core': 15.2.8
     peerDependenciesMeta:
       '@angular/animations':
         optional: true
     dependencies:
-      '@angular/core': 12.2.17
+      '@angular/core': 15.2.8
       tslib: 2.5.0
     dev: true
 
@@ -753,6 +795,29 @@ packages:
   /@babel/compat-data/7.21.4:
     resolution: {integrity: sha512-/DYyDpeCfaVinT40FPGdkkb+lYSKvsVuMjDAG7jPOWWiM1ibOaB9CXJAlc4d1QpP/U2q2P9jbrSlClKSErd55g==}
     engines: {node: '>=6.9.0'}
+    dev: true
+
+  /@babel/core/7.19.3:
+    resolution: {integrity: sha512-WneDJxdsjEvyKtXKsaBGbDeiyOjR5vYq4HcShxnIbG0qixpoHjI3MqeZM9NDvsojNCEBItQE4juOo/bU6e72gQ==}
+    engines: {node: '>=6.9.0'}
+    dependencies:
+      '@ampproject/remapping': 2.2.1
+      '@babel/code-frame': 7.21.4
+      '@babel/generator': 7.21.4
+      '@babel/helper-compilation-targets': 7.21.4_@babel+core@7.19.3
+      '@babel/helper-module-transforms': 7.21.2
+      '@babel/helpers': 7.21.0
+      '@babel/parser': 7.21.4
+      '@babel/template': 7.20.7
+      '@babel/traverse': 7.21.4
+      '@babel/types': 7.21.4
+      convert-source-map: 1.9.0
+      debug: 4.3.4
+      gensync: 1.0.0-beta.2
+      json5: 2.2.3
+      semver: 6.3.0
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /@babel/core/7.21.4:
@@ -801,6 +866,20 @@ packages:
     dependencies:
       '@babel/helper-explode-assignable-expression': 7.18.6
       '@babel/types': 7.21.4
+    dev: true
+
+  /@babel/helper-compilation-targets/7.21.4_@babel+core@7.19.3:
+    resolution: {integrity: sha512-Fa0tTuOXZ1iL8IeDFUWCzjZcn+sJGd9RZdH9esYVjEejGmzf+FFYQpMi/kZUk2kPy/q1H3/GPw7np8qar/stfg==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+    dependencies:
+      '@babel/compat-data': 7.21.4
+      '@babel/core': 7.19.3
+      '@babel/helper-validator-option': 7.21.0
+      browserslist: 4.21.5
+      lru-cache: 5.1.1
+      semver: 6.3.0
     dev: true
 
   /@babel/helper-compilation-targets/7.21.4_@babel+core@7.21.4:
@@ -2628,6 +2707,33 @@ packages:
     requiresBuild: true
     optional: true
 
+  /@ng-bootstrap/ng-bootstrap/14.1.0_qk3tdh4uew5ksgwi2jmldcntyi:
+    resolution: {integrity: sha512-vFJ9SLpALrkUjnhdOONrABojmPFZDkP5DYVZbuel4ug045DKi7bBNvSfBOEG1tvpxP1mPmbKg5REPAMsxHmShQ==}
+    peerDependencies:
+      '@angular/common': ^15.0.0
+      '@angular/core': ^15.0.0
+      '@angular/forms': ^15.0.0
+      '@angular/localize': ^15.0.0
+      '@popperjs/core': ^2.11.6
+      rxjs: ^6.5.3 || ^7.4.0
+    dependencies:
+      '@angular/core': 15.2.8
+      '@angular/forms': 15.2.8_iolsbsydholska74fb3o4t3nty
+      tslib: 2.5.0
+    dev: true
+
+  /@ngtools/webpack/15.2.6_rpa5tiyywhsthbxiqfrprd3tti:
+    resolution: {integrity: sha512-I+kekKItfsCLdX+ZjjmsWqd0AyoYGTQPjlbQAiPtmdH73/rfPOF4Q/3AU4tzTdn0n0GXqZWv6VOs91w99ydi0A==}
+    engines: {node: ^14.20.0 || ^16.13.0 || >=18.10.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
+    peerDependencies:
+      '@angular/compiler-cli': ^15.0.0
+      typescript: '>=4.8.2 <5.0'
+      webpack: ^5.54.0
+    dependencies:
+      '@angular/compiler-cli': 15.2.8_@angular+compiler@15.2.8
+      webpack: 5.80.0_webpack-cli@5.0.2
+    dev: true
+
   /@nodelib/fs.scandir/2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -3805,10 +3911,6 @@ packages:
 
   /caniuse-lite/1.0.30001478:
     resolution: {integrity: sha512-gMhDyXGItTHipJj2ApIvR+iVB5hd0KP3svMWWXDvZOmjzJJassGLMfxRkQCSYgGd2gtdL/ReeiyvMSFD1Ss6Mw==}
-
-  /canonical-path/1.0.0:
-    resolution: {integrity: sha512-feylzsbDxi1gPZ1IjystzIQZagYYLvfKrSuygUCgf7z6x790VEzze5QEkdSV1U58RA7Hi0+v6fv4K54atOzATg==}
-    dev: true
 
   /ccount/2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -6427,6 +6529,13 @@ packages:
       sourcemap-codec: 1.4.8
     dev: true
 
+  /magic-string/0.27.0:
+    resolution: {integrity: sha512-8UnnX2PeRAPZuN12svgR9j7M1uWMovg/CEnIwIG0LFkXSJJe4PdfUGiTGl8V9bsBHFUtfVINcSyYxd7q+kx9fA==}
+    engines: {node: '>=12'}
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.4.15
+    dev: true
+
   /make-dir/1.3.0:
     resolution: {integrity: sha512-2w31R7SJtieJJnQtGc7RVL2StM2vGYVfqUOvUDxH6bC6aJTxPxTF0GnIgCyu7tjockiUWAYQRbxa7vKn34s5sQ==}
     engines: {node: '>=4'}
@@ -8095,20 +8204,19 @@ packages:
       tslib: 2.5.0
     dev: true
 
-  /tabby-community-color-schemes/1.0.189-nightly.2_zbeviprrgyskxbk7zxro2ahyse:
-    resolution: {integrity: sha512-VAB/4csFYJcUbyVd8QftIitkm4uDb5hhETqKWUTTAJF5oXmCX+irdkJER/R8Z1CbQ2zOJfucBYa8U50BBce6YQ==}
+  /tabby-community-color-schemes/1.0.197-nightly.0_vjh6z6twcfeduj6kamqky3fpim:
+    resolution: {integrity: sha512-bty5zuBhPnMOjP924WV+N57rzQkfRWWU6DCjNACoXlsBvp+MUfN5c5x1Zaev6Qxoy8G2asca7kSPza185ZzU6Q==}
     peerDependencies:
       '@angular/core': ^9.1.9
       tabby-core: '*'
       tabby-terminal: '*'
     dependencies:
-      '@angular/core': 12.2.17_rxjs@7.8.0
-      tabby-core: 1.0.189-nightly.2_nonkoc5aydgqe76zzqizj3duyy
-      tabby-terminal: 1.0.189-nightly.2_o6ro5ae2bj4x4k5peutuitdsoa
+      tabby-core: 1.0.197-nightly.0_rxjs@7.8.0
+      tabby-terminal: 1.0.197-nightly.0_dilxtdhekremd4bipshrhnnymy
     dev: false
 
-  /tabby-core/1.0.189-nightly.2_7gr72xazwpsvbbd4r25i7zg4q4:
-    resolution: {integrity: sha512-PuChaLGO/4xGIDVqYBjHsN/G+OdebUb4x+GsIvDu9Ng+ebhUDb935y2B6U/af4jb/RWRwRWqzeIEMN9uwiPWgQ==}
+  /tabby-core/1.0.197-nightly.0_nv3ng6b6m32bx252stc4u2qfmi:
+    resolution: {integrity: sha512-eivriFWUZwMlKYxm4zd7KAWusEpeW8CJPtF9IrGEJlfirH6I0vuQbOI2JoEqtE9+FqD2Gi0QG357mVthXuO3fg==}
     peerDependencies:
       '@angular/animations': ^9.1.9
       '@angular/common': ^9.1.11
@@ -8118,12 +8226,13 @@ packages:
       '@angular/platform-browser-dynamic': ^9.1.11
       rxjs: ^6.6.3
     dependencies:
-      '@angular/core': 12.2.17
-      '@angular/platform-browser': 12.2.17_@angular+core@12.2.17
+      '@angular/core': 15.2.8
+      '@angular/forms': 15.2.8_iolsbsydholska74fb3o4t3nty
+      '@angular/platform-browser': 15.2.8_@angular+core@15.2.8
     dev: true
 
-  /tabby-core/1.0.189-nightly.2_nonkoc5aydgqe76zzqizj3duyy:
-    resolution: {integrity: sha512-PuChaLGO/4xGIDVqYBjHsN/G+OdebUb4x+GsIvDu9Ng+ebhUDb935y2B6U/af4jb/RWRwRWqzeIEMN9uwiPWgQ==}
+  /tabby-core/1.0.197-nightly.0_rxjs@7.8.0:
+    resolution: {integrity: sha512-eivriFWUZwMlKYxm4zd7KAWusEpeW8CJPtF9IrGEJlfirH6I0vuQbOI2JoEqtE9+FqD2Gi0QG357mVthXuO3fg==}
     peerDependencies:
       '@angular/animations': ^9.1.9
       '@angular/common': ^9.1.11
@@ -8133,12 +8242,11 @@ packages:
       '@angular/platform-browser-dynamic': ^9.1.11
       rxjs: ^6.6.3
     dependencies:
-      '@angular/core': 12.2.17_rxjs@7.8.0
       rxjs: 7.8.0
     dev: false
 
-  /tabby-settings/1.0.189-nightly.2_3gsqjwwctc6mz4ik7uryo2zice:
-    resolution: {integrity: sha512-IPxQgxQmK1qcS6I5rN2wm8BgY30bUOBkvrm4qKgrDjyJARpdRkN9H1F3OrFNaB/U9D+blpX8Ucu6Luzr9S1W6A==}
+  /tabby-settings/1.0.197-nightly.0_fyo4ievpkairjbbtl6deiturja:
+    resolution: {integrity: sha512-+BrDE9567NKE7sAaFA4UBGV/oIZAgrfFrBwLWWSpKoJQHz9wdOzXiA8pqar7de3L6stFBfj5gbSObtSa6oHllA==}
     peerDependencies:
       '@angular/animations': ^9.1.9
       '@angular/common': ^9.1.11
@@ -8149,13 +8257,12 @@ packages:
       rxjs: ^6.5.5
       tabby-core: '*'
     dependencies:
-      '@angular/core': 12.2.17_rxjs@7.8.0
       rxjs: 7.8.0
-      tabby-core: 1.0.189-nightly.2_nonkoc5aydgqe76zzqizj3duyy
+      tabby-core: 1.0.197-nightly.0_rxjs@7.8.0
     dev: false
 
-  /tabby-terminal/1.0.189-nightly.2_o6ro5ae2bj4x4k5peutuitdsoa:
-    resolution: {integrity: sha512-imlzaWYtDC8+MMFGdrPrHAJwoiaYELw7+9+7Tb4A/n7IpSPqzz/93FC5vVVylAGEnE/O2pqUpQWk+vSuJuGTWA==}
+  /tabby-terminal/1.0.197-nightly.0_4vr7bxuw32pbuzzs3gfajq7eey:
+    resolution: {integrity: sha512-K4O8PAdGIfdFt4SLIz5mIFPUe2k4NYmzrehFisGZ1PHLh9IY4hEBzooj220b2uCaDOceHz8L4h1ISa4F9biUzA==}
     peerDependencies:
       '@angular/animations': ^9.1.9
       '@angular/common': ^9.1.11
@@ -8167,14 +8274,15 @@ packages:
       tabby-core: '*'
       tabby-settings: '*'
     dependencies:
-      '@angular/core': 12.2.17_rxjs@7.8.0
-      rxjs: 7.8.0
-      tabby-core: 1.0.189-nightly.2_nonkoc5aydgqe76zzqizj3duyy
-      tabby-settings: 1.0.189-nightly.2_3gsqjwwctc6mz4ik7uryo2zice
-    dev: false
+      '@angular/core': 15.2.8
+      '@angular/forms': 15.2.8_iolsbsydholska74fb3o4t3nty
+      '@angular/platform-browser': 15.2.8_@angular+core@15.2.8
+      '@ng-bootstrap/ng-bootstrap': 14.1.0_qk3tdh4uew5ksgwi2jmldcntyi
+      tabby-core: 1.0.197-nightly.0_nv3ng6b6m32bx252stc4u2qfmi
+    dev: true
 
-  /tabby-terminal/1.0.189-nightly.2_qasv6e6cj2zvj4lwfyuasoq33i:
-    resolution: {integrity: sha512-imlzaWYtDC8+MMFGdrPrHAJwoiaYELw7+9+7Tb4A/n7IpSPqzz/93FC5vVVylAGEnE/O2pqUpQWk+vSuJuGTWA==}
+  /tabby-terminal/1.0.197-nightly.0_dilxtdhekremd4bipshrhnnymy:
+    resolution: {integrity: sha512-K4O8PAdGIfdFt4SLIz5mIFPUe2k4NYmzrehFisGZ1PHLh9IY4hEBzooj220b2uCaDOceHz8L4h1ISa4F9biUzA==}
     peerDependencies:
       '@angular/animations': ^9.1.9
       '@angular/common': ^9.1.11
@@ -8186,21 +8294,19 @@ packages:
       tabby-core: '*'
       tabby-settings: '*'
     dependencies:
-      '@angular/core': 12.2.17
-      '@angular/platform-browser': 12.2.17_@angular+core@12.2.17
-      tabby-core: 1.0.189-nightly.2_7gr72xazwpsvbbd4r25i7zg4q4
-    dev: true
-
-  /tabby-web-container/1.0.189-nightly.2:
-    resolution: {integrity: sha512-Aniyku3uIiknyzab2eyuVlBSFhiAZRhW78BrNy9a4P+znhYoOJMu/35T5bq6ToIT53rvxob5oNfFBgBVw2iClg==}
+      rxjs: 7.8.0
+      tabby-core: 1.0.197-nightly.0_rxjs@7.8.0
+      tabby-settings: 1.0.197-nightly.0_fyo4ievpkairjbbtl6deiturja
     dev: false
 
-  /tabby-web/1.0.189-nightly.2_@angular+core@12.2.17:
-    resolution: {integrity: sha512-dUEM8MNtlOgzevLDqLcf1wTr9xawqGz0xtUEBTnhUuaugnyUTUuVJ1OZfkuRfXd8E5nshV/OIUXQ/Jbxj/FUZA==}
+  /tabby-web-container/1.0.197-nightly.0:
+    resolution: {integrity: sha512-dUTe6jzhzkO8EtTnv4HAl8sALiOeGNmUev6G1ieaVnagwcKBReK/6xVTNt41DVbevPcK0xaaV0CJ3xDESlJaaw==}
+    dev: false
+
+  /tabby-web/1.0.197-nightly.0:
+    resolution: {integrity: sha512-++UCW+CnUqRbcvwZT2iYQgtJHeYmlY/qM/+cFkCd6BsREa+5zBK08k4Op4Ou/28MHZ3X2QhD3CHLo/KngyHNMg==}
     peerDependencies:
       '@angular/core': ^9.1.9
-    dependencies:
-      '@angular/core': 12.2.17_rxjs@7.8.0
     dev: false
 
   /tapable/2.2.1:
@@ -8406,20 +8512,6 @@ packages:
       semver: 7.4.0
       typescript: 5.0.4
       yargs-parser: 21.1.1
-    dev: true
-
-  /ts-loader/9.4.2_webpack@5.80.0:
-    resolution: {integrity: sha512-OmlC4WVmFv5I0PpaxYb+qGeGOdm5giHU7HwDDUjw59emP2UYMHy9fFSDcYgSNoH8sXcj4hGCSEhlDZ9ULeDraA==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      typescript: '*'
-      webpack: ^5.0.0
-    dependencies:
-      chalk: 4.1.2
-      enhanced-resolve: 5.13.0
-      micromatch: 4.0.5
-      semver: 7.4.0
-      webpack: 5.80.0_webpack-cli@5.0.2
     dev: true
 
   /tsconfig-paths/3.14.2:
@@ -9082,34 +9174,6 @@ packages:
     engines: {node: '>=0.4'}
     dev: true
 
-  /xterm-addon-fit/0.7.0_xterm@5.1.0:
-    resolution: {integrity: sha512-tQgHGoHqRTgeROPnvmtEJywLKoC/V9eNs4bLLz7iyJr1aW/QFzRwfd3MGiJ6odJd9xEfxcW36/xRU47JkD5NKQ==}
-    peerDependencies:
-      xterm: ^5.0.0
-    dependencies:
-      xterm: 5.1.0
-    dev: false
-
-  /xterm-addon-search/0.11.0_xterm@5.1.0:
-    resolution: {integrity: sha512-6U4uHXcQ7G5igsdaGqrJ9ehm7vep24bXqWxuy3AnIosXF2Z5uy2MvmYRyTGNembIqPV/x1YhBQ7uShtuqBHhOQ==}
-    peerDependencies:
-      xterm: ^5.0.0
-    dependencies:
-      xterm: 5.1.0
-    dev: false
-
-  /xterm-addon-webgl/0.14.0_xterm@5.1.0:
-    resolution: {integrity: sha512-zcxL4RVVjeS7NNFeKe5HHQI8OUEx3wZpE4EqLoTVipa2UrTR+qLsigo16UEp/yVcYBMhK7tsJ/AJokoEe/f0mw==}
-    peerDependencies:
-      xterm: ^5.0.0
-    dependencies:
-      xterm: 5.1.0
-    dev: false
-
-  /xterm/5.1.0:
-    resolution: {integrity: sha512-LovENH4WDzpwynj+OTkLyZgJPeDom9Gra4DMlGAgz6pZhIDCQ+YuO7yfwanY+gVbn/mmZIStNOnVRU/ikQuAEQ==}
-    dev: false
-
   /y18n/5.0.8:
     resolution: {integrity: sha512-0pfFzegeDWJHJIAmTLRP2DwHjdF5s7jo9tuztdQxAhINCdvS+3nGINqPd00AphqJR/0LhANUS6/+7SCb98YOfA==}
     engines: {node: '>=10'}
@@ -9121,6 +9185,11 @@ packages:
 
   /yallist/4.0.0:
     resolution: {integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==}
+
+  /yaml/2.2.1:
+    resolution: {integrity: sha512-e0WHiYql7+9wr4cWMx3TVQrNwejKaEe7/rHNmQmqRjazfOP5W8PB6Jpebb5o6fIapbz9o9+2ipcaTM2ZwDI6lw==}
+    engines: {node: '>= 14'}
+    dev: false
 
   /yargs-parser/21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}

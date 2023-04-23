@@ -25,10 +25,13 @@ export class AdbProfilesService extends ProfileProvider<Profile> {
     }
 
     async getNewTabParameters(
-        _profile: Profile
+        profile: Profile
     ): Promise<NewTabParameters<AdbTerminalTabComponent>> {
         return {
             type: AdbTerminalTabComponent,
+            inputs: {
+                profile,
+            },
         };
     }
 
