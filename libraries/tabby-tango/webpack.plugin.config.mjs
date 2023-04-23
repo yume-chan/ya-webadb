@@ -1,7 +1,6 @@
 import { AngularWebpackPlugin } from "@ngtools/webpack";
 import * as fs from "fs";
 import * as path from "path";
-import wp from "webpack";
 import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
 const bundleAnalyzer = new BundleAnalyzerPlugin({
@@ -21,28 +20,12 @@ const linkerPlugin = createEs2015LinkerPlugin({
 });
 
 export default (options) => {
-    const sourceMapOptions = {
-        exclude: [/node_modules/, /vendor/],
-        filename: "[file].map",
-        moduleFilenameTemplate: `webpack-tabby-${options.name}:///[resource-path]`,
-    };
-    let devtoolPlugin = wp.SourceMapDevToolPlugin;
-
-    if (process.env.CI) {
-        sourceMapOptions.append =
-            "\n//# sourceMappingURL=../../../app.asar.unpacked/assets/webpack/[url]";
-    }
-
-    if (process.platform === "win32" && process.env.TABBY_DEV) {
-        devtoolPlugin = wp.EvalSourceMapDevToolPlugin;
-    }
-
     const isDev = !!process.env.TABBY_DEV;
     const config = {
         target: "node",
         entry: "./src/index.ts",
         context: options.dirname,
-        devtool: false,
+        devtool: "source-map",
         output: {
             path: path.resolve(options.dirname, "dist"),
             filename: "index.js",
@@ -74,25 +57,12 @@ export default (options) => {
             rules: [
                 ...(options.rules ?? []),
                 {
-                    test: /\.js$/,
+                    test: /.*\.m?js$/,
                     enforce: "pre",
-                    use: {
-                        loader: "source-map-loader",
-                        options: {
-                            filterSourceMappingUrl: (url, resourcePath) => {
-                                if (
-                                    /node_modules/.test(resourcePath) &&
-                                    !resourcePath.includes("xterm")
-                                ) {
-                                    return false;
-                                }
-                                return true;
-                            },
-                        },
-                    },
+                    use: ["source-map-loader"],
                 },
                 {
-                    test: /\.(m?)js$/,
+                    test: /\.m?js$/,
                     loader: "babel-loader",
                     options: {
                         plugins: [linkerPlugin],
@@ -197,7 +167,6 @@ export default (options) => {
             ...(options.externals || []),
         ],
         plugins: [
-            new devtoolPlugin(sourceMapOptions),
             new AngularWebpackPlugin({
                 tsconfig: path.resolve(options.dirname, "tsconfig.json"),
                 directTemplateLoading: false,

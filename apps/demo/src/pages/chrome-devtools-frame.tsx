@@ -105,6 +105,7 @@ function ChromeDevToolsFrame() {
         document.body.appendChild(script);
     }, []);
 
+    // DevTools will set `document.title` to debugged page's title.
     return (
         <Stack
             className={classes.body}
@@ -117,5 +118,7 @@ function ChromeDevToolsFrame() {
         </Stack>
     );
 }
+
 ChromeDevToolsFrame.noLayout = true;
+
 export default ChromeDevToolsFrame;

@@ -1,6 +1,7 @@
 import { Adb } from "@yume-chan/adb";
-import AdbProxyBackend, {
-    AdbProxyServerHandle,
+import {
+    AdbProxyBackend,
+    AdbProxyServerInfo,
 } from "@yume-chan/adb-backend-proxy";
 import { useEffect } from "react";
 import { Subject } from "rxjs";
@@ -172,7 +173,7 @@ async function start() {
     window.addEventListener("message", (e) => {
         if ("type" in e.data && e.data.type === "adb") {
             const { port, version, maxPayloadSize, banner } =
-                e.data as AdbProxyServerHandle;
+                e.data as AdbProxyServerInfo;
             const backend = new AdbProxyBackend(port);
             const connection = backend.connect();
             TabbyTango.AdbState.value = new Adb(
@@ -183,6 +184,7 @@ async function start() {
             );
         }
     });
+    window.parent.postMessage("adb", "*");
 
     pluginModules.push(TabbyTango);
 

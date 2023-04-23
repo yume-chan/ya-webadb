@@ -19,13 +19,14 @@ export class AdbSession extends BaseSession {
     }
 
     async start(): Promise<void> {
-        if (!AdbState.value) {
+        const adb = AdbState.value;
+        if (!adb) {
             return;
         }
 
         this.open = true;
 
-        this.shell = await AdbState.value.subprocess.shell();
+        this.shell = await adb.subprocess.shell();
         this.writer = this.shell.stdin.getWriter();
         this.shell.stdout.pipeTo(
             new WritableStream({
@@ -34,13 +35,14 @@ export class AdbSession extends BaseSession {
                 },
             })
         );
-        this.shell.exit.then(() => {
-            this.closed.next();
+
+        adb.disconnected.then(() => {
+            this.emitOutput(Buffer.from("\n[Disconnected]\n", "utf8"));
         });
     }
 
     resize(columns: number, rows: number): void {
-        this.shell.resize(columns, rows);
+        this.shell?.resize(columns, rows);
     }
 
     write(data: Buffer): void {
@@ -48,7 +50,7 @@ export class AdbSession extends BaseSession {
     }
 
     kill(_signal?: string): void {
-        this.shell.kill();
+        this.shell?.kill();
     }
 
     async gracefullyKillProcess(): Promise<void> {}
