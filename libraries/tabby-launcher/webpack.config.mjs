@@ -36,6 +36,7 @@ const config = {
             url: require.resolve("./browser/url.js"),
         },
         fallback: {
+            assert: false,
             fs: false,
             http: false,
             https: false,
