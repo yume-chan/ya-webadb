@@ -1,9 +1,4 @@
 {
-    "peerDependencies": {
-        "@yume-chan/adb": "workspace:^0.0.19",
-        "@yume-chan/adb-backend-proxy": "workspace:^0.0.19",
-        "@yume-chan/stream-extra": "workspace:^0.0.19"
-    },
     "devDependencies": {
         "@angular/animations": "^15.2.6",
         "@angular/cdk": "^15.2.6",
@@ -23,6 +18,7 @@
         "@yume-chan/stream-extra": "workspace:^0.0.19",
         "@yume-chan/tabby-tango": "workspace:^0.0.19",
         "buffer": "^6.0.3",
+        "console-browserify": "^1.2.0",
         "core-js": "^3.21.1",
         "crypto-browserify": "^3.12.0",
         "css-loader": "^6.7.3",
@@ -40,11 +36,11 @@
         "source-map-loader": "^4.0.1",
         "source-sans-pro": "3.6.0",
         "style-loader": "^3.3.1",
-        "tabby-community-color-schemes": "1.0.197-nightly.1",
-        "tabby-core": "1.0.197-nightly.1",
-        "tabby-settings": "1.0.197-nightly.1",
-        "tabby-terminal": "1.0.197-nightly.1",
-        "tabby-web": "1.0.197-nightly.1",
+        "tabby-community-color-schemes": "^1.0.197-nightly.1",
+        "tabby-core": "^1.0.197-nightly.1",
+        "tabby-settings": "^1.0.197-nightly.1",
+        "tabby-terminal": "^1.0.197-nightly.1",
+        "tabby-web": "^1.0.197-nightly.1",
         "ts-loader": "^9.4.2",
         "typescript": "^5.0.3",
         "url": "^0.11.0",
@@ -56,6 +52,11 @@
     },
     "main": "dist/main.js",
     "name": "@yume-chan/tabby-launcher",
+    "peerDependencies": {
+        "@yume-chan/adb": "workspace:^0.0.19",
+        "@yume-chan/adb-backend-proxy": "workspace:^0.0.19",
+        "@yume-chan/stream-extra": "workspace:^0.0.19"
+    },
     "resolutions": {
         "**/util": "^0.12.0"
     },

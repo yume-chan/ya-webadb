@@ -610,6 +610,7 @@ importers:
       '@yume-chan/stream-extra': workspace:^0.0.19
       '@yume-chan/tabby-tango': workspace:^0.0.19
       buffer: ^6.0.3
+      console-browserify: ^1.2.0
       core-js: ^3.21.1
       crypto-browserify: ^3.12.0
       css-loader: ^6.7.3
@@ -627,11 +628,11 @@ importers:
       source-map-loader: ^4.0.1
       source-sans-pro: 3.6.0
       style-loader: ^3.3.1
-      tabby-community-color-schemes: 1.0.197-nightly.1
-      tabby-core: 1.0.197-nightly.1
-      tabby-settings: 1.0.197-nightly.1
-      tabby-terminal: 1.0.197-nightly.1
-      tabby-web: 1.0.197-nightly.1
+      tabby-community-color-schemes: ^1.0.197-nightly.1
+      tabby-core: ^1.0.197-nightly.1
+      tabby-settings: ^1.0.197-nightly.1
+      tabby-terminal: ^1.0.197-nightly.1
+      tabby-web: ^1.0.197-nightly.1
       ts-loader: ^9.4.2
       typescript: ^5.0.3
       url: ^0.11.0
@@ -659,6 +660,7 @@ importers:
       '@yume-chan/stream-extra': link:../stream-extra
       '@yume-chan/tabby-tango': link:../tabby-tango
       buffer: 6.0.3
+      console-browserify: 1.2.0
       core-js: 3.30.1
       crypto-browserify: 3.12.0
       css-loader: 6.7.3_webpack@5.80.0
@@ -712,9 +714,9 @@ importers:
       rxjs: ^7.8.0
       source-map-loader: ^4.0.1
       svg-inline-loader: ^0.8.2
-      tabby-core: 1.0.197-nightly.1
-      tabby-settings: 1.0.197-nightly.1
-      tabby-terminal: 1.0.197-nightly.1
+      tabby-core: ^1.0.197-nightly.1
+      tabby-settings: ^1.0.197-nightly.1
+      tabby-terminal: ^1.0.197-nightly.1
       tslib: ^2.5.0
       typescript: ^5.0.3
       webpack: ^5.78.0
@@ -4364,6 +4366,10 @@ packages:
 
   /concat-map/0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+
+  /console-browserify/1.2.0:
+    resolution: {integrity: sha512-ZMkYO/LkF17QvCPqM0gxw8yUzigAOZOSWSHg91FH6orS7vcEj5dVZTidN2fQ14yBSdg97RqhSNwLUXInd52OTA==}
+    dev: true
 
   /content-disposition/0.5.4:
     resolution: {integrity: sha512-FveZTNuGw04cxlAiWbzi6zTAL/lhehaWbTtgluJh4/E95DqMwTmha3KZN1aAWA8cFIhHzMZUvLevkw5Rqk+tSQ==}
