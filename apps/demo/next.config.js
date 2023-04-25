@@ -7,15 +7,26 @@ const withMDX = require("@next/mdx")({
     },
 });
 
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+    enabled: process.env.ANALYZE === "true",
+});
+
 const basePath = process.env.BASE_PATH ?? "";
 
 const withPwa = require("@yume-chan/next-pwa")({
     dest: "public",
 });
 
+function pipe(value, ...callbacks) {
+    for (const callback of callbacks) {
+        value = callback(value);
+    }
+    return value;
+}
+
 /** @type {import('next').NextConfig} */
-module.exports = withPwa(
-    withMDX({
+module.exports = pipe(
+    {
         basePath,
         pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
         reactStrictMode: false,
@@ -27,7 +38,8 @@ module.exports = withPwa(
         publicRuntimeConfig: {
             basePath,
         },
-        webpack(config, options) {
+        webpack(config) {
+            // Bundle Scrcpy Server
             config.module.rules.push({
                 resourceQuery: /url/,
                 type: "asset/resource",
@@ -49,10 +61,9 @@ module.exports = withPwa(
                 enforce: "pre",
             });
 
-            // config.experiments.topLevelAwait = true;
-
             return config;
         },
+        // Enable Direct Sockets API
         async headers() {
             return [
                 {
@@ -70,5 +81,8 @@ module.exports = withPwa(
                 },
             ];
         },
-    })
+    },
+    withBundleAnalyzer,
+    withPwa,
+    withMDX
 );

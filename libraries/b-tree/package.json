@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/b-tree",
-    "version": "0.0.16",
+    "version": "0.0.19",
     "description": "A B-tree implementation in TypeScript",
     "keywords": [
         "data-structure",
@@ -41,9 +41,9 @@
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "cross-env": "^7.0.3",
-        "eslint": "^8.36.0",
+        "eslint": "^8.39.0",
         "jest": "^29.5.0",
-        "prettier": "^2.8.4",
+        "prettier": "^2.8.8",
         "ts-jest": "^29.0.4",
         "typescript": "^5.0.3"
     }

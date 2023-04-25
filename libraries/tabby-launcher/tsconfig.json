@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "module": "ESNext",
+        "target": "es2015",
+        "moduleResolution": "bundler",
+        "declaration": false,
+        "noImplicitAny": false,
+        "sourceMap": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "noUnusedParameters": true,
+        "noUnusedLocals": true,
+        "lib": [
+            "dom",
+            "ESNext"
+        ],
+    },
+}

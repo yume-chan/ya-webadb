@@ -7,4 +7,5 @@ export default () =>
     config({
         name: "web-demo",
         dirname: __dirname,
+        externals: ["@yume-chan/adb", "@yume-chan/stream-extra"],
     });

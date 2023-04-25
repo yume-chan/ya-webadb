@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/aoa",
-    "version": "0.0.18",
+    "version": "0.0.19",
     "description": "TypeScript implementation of Android Open Accessory protocol.",
     "keywords": [
         "adb",
@@ -36,7 +36,7 @@
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
-        "eslint": "^8.36.0",
+        "eslint": "^8.39.0",
         "typescript": "^5.0.3"
     }
 }

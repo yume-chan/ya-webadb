@@ -1,7 +1,7 @@
 {
     "name": "@yume-chan/adb-backend-proxy",
     "private": true,
-    "version": "0.0.9",
+    "version": "0.0.19",
     "description": "Backend for `@yume-chan/adb` by proxy sockets to another `Adb` instance.",
     "keywords": [
         "adb",
@@ -42,8 +42,8 @@
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
-        "eslint": "^8.36.0",
-        "prettier": "^2.8.4",
+        "eslint": "^8.39.0",
+        "prettier": "^2.8.8",
         "typescript": "^5.0.3"
     }
 }

@@ -31,7 +31,6 @@ export default (options) => {
             filename: "index.js",
             pathinfo: true,
             libraryTarget: "umd",
-            publicPath: "auto",
         },
         mode: isDev ? "development" : "production",
         optimization: {
