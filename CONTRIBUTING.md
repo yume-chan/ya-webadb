@@ -10,7 +10,7 @@ $ npm i -g @microsoft/rush
 
 ### Get code
 
-The build script only works inside Git repositories, so, always use `git` to clone this repository. "Download ZIP" option in GitHub code menu or source code tarball in GitHub releases will NOT work.
+The build script only works inside a Git repository, so, always use `git` to clone this repository. "Download ZIP" option in GitHub code menu or source code tarball in GitHub releases will NOT work.
 
 ```sh
 git clone https://github.com/yume-chan/ya-webadb.git
@@ -44,7 +44,7 @@ $ rush install
     $ npm run dev
     ```
 
-Usually you need two terminals to run both 2 and 3 for testing your changes.
+Usually you need two terminals to run both 2 and 3 to test your changes.
 
 ## Deploy Demo
 
@@ -65,16 +65,17 @@ This will create an `out` folder containing exported HTML files and all required
 
 ```sh
 rush version --bump
-export NPM_AUTH_TOKEN=...
+export NPM_AUTH_TOKEN=... // Copy NPM auth token from ~/.npmrc
 rush publish -p --include-all --set-access-level public
 ```
 
 ## FAQ
 
-### 1. WebUSB and File downloading doesn't when developing/self-host?
+### 1. WebUSB and File downloading doesn't work in development/self-host environment?
 
 WebUSB and Service Worker (which is used for file downloading) requires Secure Context (HTTPS or localhost).
 
-If you access the development server using IP address, that will not work.
-
-You can add a self issued SSL certificate, or add the URL to `chrome://flags/#unsafely-treat-insecure-origin-as-secure`.
+-   If you have a domain name, add a free SSL certificate from [Let's Encrypt](https://letsencrypt.org/).
+-   If you are using IP address or can't get a free SSL certificate, either
+    -   Add a self-issued SSL certificate and trust it on every device accessing it.
+    -   Add the hostname to `chrome://flags/#unsafely-treat-insecure-origin-as-secure` on every device accessing it.

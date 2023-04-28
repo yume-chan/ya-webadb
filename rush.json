@@ -385,11 +385,15 @@
         },
         {
             "packageName": "@yume-chan/aoa",
-            "projectFolder": "libraries/aoa"
+            "projectFolder": "libraries/aoa",
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/b-tree",
-            "projectFolder": "libraries/b-tree"
+            "projectFolder": "libraries/b-tree",
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/dataview-bigint-polyfill",
@@ -438,21 +442,25 @@
         {
             "packageName": "@yume-chan/scrcpy",
             "projectFolder": "libraries/scrcpy",
+            "shouldPublish": true,
             "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/scrcpy-decoder-tinyh264",
             "projectFolder": "libraries/scrcpy-decoder-tinyh264",
+            "shouldPublish": true,
             "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/scrcpy-decoder-webcodecs",
             "projectFolder": "libraries/scrcpy-decoder-webcodecs",
+            "shouldPublish": true,
             "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/stream-extra",
             "projectFolder": "libraries/stream-extra",
+            "shouldPublish": true,
             "versionPolicyName": "adb"
         },
         {
@@ -469,12 +477,27 @@
         },
         {
             "packageName": "@yume-chan/pcm-player",
-            "projectFolder": "libraries/pcm-player"
+            "projectFolder": "libraries/pcm-player",
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/adb-scrcpy",
             "projectFolder": "libraries/adb-scrcpy",
+            "shouldPublish": true,
             "versionPolicyName": "adb"
         },
+        {
+            "packageName": "@yume-chan/tabby-tango",
+            "projectFolder": "libraries/tabby-tango"
+        },
+        {
+            "packageName": "@yume-chan/adb-backend-proxy",
+            "projectFolder": "libraries/adb-backend-proxy"
+        },
+        {
+            "packageName": "@yume-chan/tabby-launcher",
+            "projectFolder": "libraries/tabby-launcher"
+        }
     ]
 }

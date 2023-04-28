@@ -48,7 +48,6 @@ if (typeof window !== "undefined") {
         publicRuntimeConfig: { basePath },
     } = getConfig();
     // Can't use `import` here because ESM is read-only (can't set `mitm` field)
-    // Add `await` here because top-level await is on, so every import can be a `Promise`
     StreamSaver = require("@yume-chan/stream-saver");
     StreamSaver.mitm = basePath + "/StreamSaver/mitm.html";
     // Pre-register the service worker for offline usage.

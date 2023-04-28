@@ -249,6 +249,11 @@ export class Adb implements Closeable {
         return this._maxPayloadSize;
     }
 
+    private _banner: string;
+    public get banner() {
+        return this._banner;
+    }
+
     private _product: string | undefined;
     public get product() {
         return this._product;
@@ -289,6 +294,7 @@ export class Adb implements Closeable {
     }: AdbClientOptions) {
         this._clientFeatures = clientFeatures;
 
+        this._banner = banner;
         this.parseBanner(banner);
 
         if (this.canUseFeature(AdbFeature.DelayedAck)) {

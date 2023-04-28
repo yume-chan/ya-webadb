@@ -2,7 +2,7 @@
 
 import { AutoDisposable } from "@yume-chan/event";
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
-import Struct, { StructEmptyError } from "@yume-chan/struct";
+import Struct, { ExactReadableEndedError } from "@yume-chan/struct";
 
 import type { Adb } from "../adb.js";
 import type { AdbIncomingSocketHandler, AdbSocket } from "../socket/index.js";
@@ -72,8 +72,16 @@ export class AdbReverseCommand extends AutoDisposable {
     protected handleIncomingSocket = async (socket: AdbSocket) => {
         let address = socket.serviceString;
         // ADB daemon appends `\0` to the service string
-        address = address.replace(/\0/g, "");
-        return !!(await this.localAddressToHandler.get(address)?.(socket));
+        if (address.endsWith("\0")) {
+            address = address.substring(0, address.length - 1);
+        }
+
+        const handler = this.localAddressToHandler.get(address);
+        if (!handler) {
+            return false;
+        }
+
+        return await handler(socket);
     };
 
     private async createBufferedStream(service: string) {
@@ -81,9 +89,14 @@ export class AdbReverseCommand extends AutoDisposable {
         return new BufferedReadableStream(socket.readable);
     }
 
+    private async readString(stream: BufferedReadableStream, length: number) {
+        const buffer = await stream.readExactly(length);
+        return decodeUtf8(buffer);
+    }
+
     private async sendRequest(service: string) {
         const stream = await this.createBufferedStream(service);
-        const success = decodeUtf8(await stream.readExactly(4)) === "OKAY";
+        const success = (await this.readString(stream, 4)) === "OKAY";
         if (!success) {
             await AdbReverseErrorResponse.deserialize(stream);
         }
@@ -131,25 +144,23 @@ export class AdbReverseCommand extends AutoDisposable {
         // `tcp:0` tells the device to pick an available port.
         // On Android >=8, device will respond with the selected port for all `tcp:` requests.
         if (deviceAddress.startsWith("tcp:")) {
-            let length: number | undefined;
+            const position = stream.position;
             try {
-                length = Number.parseInt(
-                    decodeUtf8(await stream.readExactly(4)),
-                    16
-                );
+                const lengthString = await this.readString(stream, 4);
+                const length = Number.parseInt(lengthString, 16);
+                const port = await this.readString(stream, length);
+                deviceAddress = `tcp:${Number.parseInt(port, 10)}`;
             } catch (e) {
-                if (!(e instanceof StructEmptyError)) {
+                if (
+                    e instanceof ExactReadableEndedError &&
+                    stream.position === position
+                ) {
+                    // Android <8 doesn't have this response.
+                    // (the stream is closed now)
+                    // Can be safely ignored.
+                } else {
                     throw e;
                 }
-
-                // Android <8 doesn't have this response.
-                // (the stream is closed now)
-                // Can be safely ignored.
-            }
-
-            if (length !== undefined) {
-                const port = decodeUtf8(await stream.readExactly(length));
-                deviceAddress = `tcp:${Number.parseInt(port, 10)}`;
             }
         }
 

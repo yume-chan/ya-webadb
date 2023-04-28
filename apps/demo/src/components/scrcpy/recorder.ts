@@ -16,7 +16,7 @@ import {
     h265SearchConfiguration,
 } from "@yume-chan/scrcpy";
 import { action, makeAutoObservable, reaction } from "mobx";
-import WebMMuxer from "webm-muxer";
+import { ArrayBufferTarget, Muxer as WebMMuxer } from "webm-muxer";
 import { saveFile } from "../../utils";
 
 // https://ffmpeg.org/doxygen/0.11/avc_8c-source.html#l00106
@@ -234,7 +234,7 @@ export class MatroskaMuxingRecorder {
     public videoMetadata: ScrcpyVideoStreamMetadata | undefined;
     public audioCodec: ScrcpyAudioCodec | undefined;
 
-    private muxer: WebMMuxer | undefined;
+    private muxer: WebMMuxer<ArrayBufferTarget> | undefined;
     private videoCodecDescription: Uint8Array | undefined;
     private configurationWritten = false;
     private _firstTimestamp = -1;
@@ -351,7 +351,7 @@ export class MatroskaMuxingRecorder {
         this.running = true;
 
         const options: ConstructorParameters<typeof WebMMuxer>[0] = {
-            target: "buffer",
+            target: new ArrayBufferTarget(),
             type: "matroska",
             firstTimestampBehavior: "permissive",
             video: {
@@ -371,7 +371,7 @@ export class MatroskaMuxingRecorder {
             };
         }
 
-        this.muxer = new WebMMuxer(options);
+        this.muxer = new WebMMuxer(options as any);
 
         if (this._packetsFromLastKeyframe.length > 0) {
             for (const { type, packet } of this._packetsFromLastKeyframe) {
@@ -389,7 +389,8 @@ export class MatroskaMuxingRecorder {
             return;
         }
 
-        const buffer = this.muxer.finalize()!;
+        this.muxer.finalize()!;
+        const buffer = this.muxer.target.buffer;
         const now = new Date();
         const stream = saveFile(
             // prettier-ignore

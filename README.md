@@ -4,15 +4,19 @@
 
 A library and application for browsers to interact with Android devices via ADB.
 
+All features are working on Chrome for Android, use a C-to-C cable or run WebSockify in Termux to connect.
+
 [🚀 Online Demo](https://yume-chan.github.io/ya-webadb)
+
+For USB connection, close Google ADB (Run `adb kill-server` in a terminal or close `adb.exe` from Task Manager) and all programs that may use ADB (e.g. Android Studio, Visual Studio, Godot Editor, etc.) before connecting.
 
 ## Compatibility
 
-| Connection                            | Chromium-based Browsers        | Firefox   | Node.js                       |
-| ------------------------------------- | ------------------------------ | --------- | ----------------------------- |
-| USB cable                             | Supported using [WebUSB] API   | No        | Supported using `usb` package |
-| Wireless via [WebSocket] <sup>1</sup> | Supported                      | Supported | Possible using `ws` package   |
-| Wireless via TCP                      | WIP using [Direct Sockets] API | No        | Possible using `net` module   |
+| Connection                                | Chromium-based Browsers        | Firefox   | Node.js                       |
+| ----------------------------------------- | ------------------------------ | --------- | ----------------------------- |
+| USB cable                                 | Supported using [WebUSB] API   | No        | Supported using `usb` package |
+| Wireless through [WebSocket] <sup>1</sup> | Supported                      | Supported | Possible using `ws` package   |
+| Wireless through TCP                      | WIP using [Direct Sockets] API | No        | Possible using `net` module   |
 
 [webusb]: https://wicg.github.io/webusb/
 [websocket]: https://websockets.spec.whatwg.org/
@@ -28,19 +32,32 @@ A library and application for browsers to interact with Android devices via ADB.
     -   ⬇ Download
     -   🗑 Delete
 -   📷 Screen Capture
--   📜 Interactive Shell
+-   📜 Terminal Emulator powered by [Tabby](https://github.com/Eugeny/tabby)
+    -   Tabs and split panes
+    -   Color themes
+    -   Rich configuration
 -   ⚙ Enable ADB over WiFi
 -   📦 Install APK
--   🎥 [Scrcpy](https://github.com/Genymobile/scrcpy) compatible client (screen mirroring and controlling device)
+-   🎥 [Scrcpy](https://github.com/Genymobile/scrcpy) compatible client
+    -   Screen mirroring
+    -   Audio forwarding (Android >= 11)
+    -   Recording
+    -   Control device with mouse, touch and keyboard
+-   🐛 Chrome Remote Debugging that supporting
+    -   Google Chrome (stable, beta, dev, canary)
+    -   Microsoft Edge (stable, beta, dev, canary)
+    -   Opera (stable, beta)
+    -   Vivaldi
 -   🔌 Power and reboot to different modes
-
-[📋 Project Roadmap](https://github.com/yume-chan/ya-webadb/issues/348)
 
 ## Contribute
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md)
 
-## Credits
+## Used open-source projects
 
--   Google for [ADB](https://android.googlesource.com/platform/packages/modules/adb) ([Apache License 2.0](./adb.NOTICE))
--   Romain Vimont for [Scrcpy](https://github.com/Genymobile/scrcpy) ([Apache License 2.0](https://github.com/Genymobile/scrcpy/blob/master/LICENSE))
+-   [ADB](https://android.googlesource.com/platform/packages/modules/adb) from Google ([Apache License 2.0](./adb.NOTICE))
+-   [Scrcpy](https://github.com/Genymobile/scrcpy) from Romain Vimont ([Apache License 2.0](https://github.com/Genymobile/scrcpy/blob/master/LICENSE))
+-   [Tabby](https://github.com/Eugeny/tabby) from Eugeny ([MIT License](https://github.com/Eugeny/tabby/blob/master/LICENSE))
+-   [webm-muxer](https://github.com/Vanilagy/webm-muxer) from Vanilagy ([MIT License](https://github.com/Vanilagy/webm-muxer/blob/main/LICENSE))
+-   [web-streams-polyfill](https://github.com/MattiasBuelens/web-streams-polyfill) from Mattias Buelens ([MIT License](https://github.com/MattiasBuelens/web-streams-polyfill/blob/master/LICENSE))
