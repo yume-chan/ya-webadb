@@ -71,7 +71,7 @@ rush publish -p --include-all --set-access-level public
 
 ## FAQ
 
-### 1. WebUSB and File downloading doesn't use in develope/self-host environment?
+### 1. WebUSB and File downloading doesn't work in development/self-host environment?
 
 WebUSB and Service Worker (which is used for file downloading) requires Secure Context (HTTPS or localhost).
 
