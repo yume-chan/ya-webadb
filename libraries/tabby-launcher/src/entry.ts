@@ -192,16 +192,17 @@ async function start() {
             "type" in e.data &&
             e.data.type === "adb"
         ) {
-            const { port, version, maxPayloadSize, banner } =
+            const { port, clientFeatures, version, maxPayloadSize, banner } =
                 e.data as AdbProxyServerInfo;
             const backend = new AdbProxyBackend(port);
             const connection = backend.connect();
-            TabbyTango.AdbState.value = new Adb(
+            TabbyTango.AdbState.value = new Adb({
+                clientFeatures,
                 connection,
                 version,
                 maxPayloadSize,
-                banner
-            );
+                banner,
+            });
         }
     });
     window.parent.postMessage("adb", "*");

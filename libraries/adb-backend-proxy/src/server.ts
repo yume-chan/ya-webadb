@@ -1,4 +1,4 @@
-import type { Adb, AdbPacketData, AdbSocket } from "@yume-chan/adb";
+import type { Adb, AdbFeature, AdbPacketData, AdbSocket } from "@yume-chan/adb";
 import { AdbCommand } from "@yume-chan/adb";
 import { PromiseResolver } from "@yume-chan/async";
 import { AutoDisposable, EventEmitter } from "@yume-chan/event";
@@ -75,6 +75,7 @@ class AdbProxyServerSocket {
 
 export interface AdbProxyServerInfo {
     port: MessagePort;
+    clientFeatures: readonly AdbFeature[];
     version: number;
     maxPayloadSize: number;
     banner: string;
@@ -259,6 +260,7 @@ export class AdbProxyServer extends AutoDisposable {
         });
         return {
             port: channel.port2,
+            clientFeatures: this._adb.clientFeatures,
             version: this._adb.protocolVersion,
             maxPayloadSize: this._adb.maxPayloadSize,
             banner: this._adb.banner,
