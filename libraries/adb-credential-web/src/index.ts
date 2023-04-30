@@ -2,9 +2,9 @@
 
 import type { AdbCredentialStore } from "@yume-chan/adb";
 import {
+    adbGeneratePublicKey,
+    adbGetPublicKeySize,
     calculateBase64EncodedLength,
-    calculatePublicKey,
-    calculatePublicKeyLength,
     decodeBase64,
     decodeUtf8,
     encodeBase64,
@@ -54,11 +54,11 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
         // It will generate the public key from private key every time.
         // However, maybe there are people want to manually put this public key onto their device,
         // so also save the public key for their convenience.
-        const publicKeyLength = calculatePublicKeyLength();
+        const publicKeyLength = adbGetPublicKeySize();
         const [publicKeyBase64Length] =
             calculateBase64EncodedLength(publicKeyLength);
         const publicKeyBuffer = new Uint8Array(publicKeyBase64Length);
-        calculatePublicKey(privateKey, publicKeyBuffer);
+        adbGeneratePublicKey(privateKey, publicKeyBuffer);
         encodeBase64(
             publicKeyBuffer.subarray(0, publicKeyLength),
             publicKeyBuffer

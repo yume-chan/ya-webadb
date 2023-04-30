@@ -163,7 +163,6 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
             this.socketName,
             (socket) => {
                 void writer.write(socket);
-                return true;
             }
         );
     }
