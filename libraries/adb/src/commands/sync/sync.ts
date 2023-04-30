@@ -1,9 +1,8 @@
 import { AutoDisposable } from "@yume-chan/event";
 import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
 
-import type { Adb } from "../../adb.js";
+import type { Adb, AdbSocket } from "../../adb.js";
 import { AdbFeature } from "../../features.js";
-import type { AdbSocket } from "../../socket/index.js";
 import { escapeArg } from "../subprocess/index.js";
 
 import type { AdbSyncEntry } from "./list.js";

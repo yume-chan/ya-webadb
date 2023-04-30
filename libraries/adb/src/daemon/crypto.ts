@@ -94,7 +94,7 @@ const RsaPrivateKeyNLength = 2048 / 8;
 const RsaPrivateKeyDOffset = 303;
 const RsaPrivateKeyDLength = 2048 / 8;
 
-export function parsePrivateKey(key: Uint8Array): [n: bigint, d: bigint] {
+export function rsaParsePrivateKey(key: Uint8Array): [n: bigint, d: bigint] {
     const view = new DataView(key.buffer, key.byteOffset, key.byteLength);
     const n = getBigUint(view, RsaPrivateKeyNOffset, RsaPrivateKeyNLength);
     const d = getBigUint(view, RsaPrivateKeyDOffset, RsaPrivateKeyDLength);
@@ -128,16 +128,16 @@ export function modInverse(a: number, m: number) {
     return ((y % m) + m) % m;
 }
 
-export function calculatePublicKeyLength() {
+export function adbGetPublicKeySize() {
     return 4 + 4 + 2048 / 8 + 2048 / 8 + 4;
 }
 
-export function calculatePublicKey(privateKey: Uint8Array): Uint8Array;
-export function calculatePublicKey(
+export function adbGeneratePublicKey(privateKey: Uint8Array): Uint8Array;
+export function adbGeneratePublicKey(
     privateKey: Uint8Array,
     output: Uint8Array
 ): number;
-export function calculatePublicKey(
+export function adbGeneratePublicKey(
     privateKey: Uint8Array,
     output?: Uint8Array
 ): Uint8Array | number {
@@ -159,10 +159,10 @@ export function calculatePublicKey(
     // See https://android.googlesource.com/platform/system/core.git/+/91784040db2b9273687f88d8b95f729d4a61ecc2/libcrypto_utils/android_pubkey.cpp#38
 
     // extract `n` from private key
-    const [n] = parsePrivateKey(privateKey);
+    const [n] = rsaParsePrivateKey(privateKey);
 
     let outputType: "Uint8Array" | "number";
-    const outputLength = calculatePublicKeyLength();
+    const outputLength = adbGetPublicKeySize();
     if (!output) {
         output = new Uint8Array(outputLength);
         outputType = "Uint8Array";
@@ -275,8 +275,8 @@ export const SHA1_DIGEST_INFO = new Uint8Array([
 // encrypt the given data with its private key)
 // However SubtileCrypto.encrypt() doesn't accept 'RSASSA-PKCS1-v1_5' algorithm
 // So we need to implement the encryption by ourself
-export function sign(privateKey: Uint8Array, data: Uint8Array): Uint8Array {
-    const [n, d] = parsePrivateKey(privateKey);
+export function rsaSign(privateKey: Uint8Array, data: Uint8Array): Uint8Array {
+    const [n, d] = rsaParsePrivateKey(privateKey);
 
     // PKCS#1 padding
     const padded = new Uint8Array(256);

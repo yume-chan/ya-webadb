@@ -4,8 +4,7 @@ import { AutoDisposable } from "@yume-chan/event";
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import Struct, { ExactReadableEndedError } from "@yume-chan/struct";
 
-import type { Adb } from "../adb.js";
-import type { AdbIncomingSocketHandler, AdbSocket } from "../socket/index.js";
+import type { Adb, AdbIncomingSocketHandler } from "../adb.js";
 import { decodeUtf8 } from "../utils/index.js";
 
 export interface AdbForwardListener {
@@ -49,40 +48,15 @@ const AdbReverseErrorResponse = new Struct()
     });
 
 export class AdbReverseCommand extends AutoDisposable {
-    protected localAddressToHandler = new Map<
-        string,
-        AdbIncomingSocketHandler
-    >();
-
-    protected deviceAddressToLocalAddress = new Map<string, string>();
-
     protected adb: Adb;
 
-    protected listening = false;
+    private readonly _deviceAddressToLocalAddress = new Map<string, string>();
 
     public constructor(adb: Adb) {
         super();
 
         this.adb = adb;
-        this.addDisposable(
-            this.adb.onIncomingSocket(this.handleIncomingSocket)
-        );
     }
-
-    protected handleIncomingSocket = async (socket: AdbSocket) => {
-        let address = socket.serviceString;
-        // ADB daemon appends `\0` to the service string
-        if (address.endsWith("\0")) {
-            address = address.substring(0, address.length - 1);
-        }
-
-        const handler = this.localAddressToHandler.get(address);
-        if (!handler) {
-            return false;
-        }
-
-        return await handler(socket);
-    };
 
     private async createBufferedStream(service: string) {
         const socket = await this.adb.createSocket(service);
@@ -137,6 +111,8 @@ export class AdbReverseCommand extends AutoDisposable {
         localAddress: string,
         handler: AdbIncomingSocketHandler
     ): Promise<string> {
+        await this.adb.transport.addReverseTunnel(localAddress, handler);
+
         const stream = await this.sendRequest(
             `reverse:forward:${deviceAddress};${localAddress}`
         );
@@ -164,31 +140,30 @@ export class AdbReverseCommand extends AutoDisposable {
             }
         }
 
-        this.localAddressToHandler.set(localAddress, handler);
-        this.deviceAddressToLocalAddress.set(deviceAddress, localAddress);
+        this._deviceAddressToLocalAddress.set(deviceAddress, localAddress);
+
         return deviceAddress;
 
         // No need to close the stream, device will close it
     }
 
     public async remove(deviceAddress: string): Promise<void> {
-        await this.sendRequest(`reverse:killforward:${deviceAddress}`);
-
-        if (this.deviceAddressToLocalAddress.has(deviceAddress)) {
-            this.localAddressToHandler.delete(
-                this.deviceAddressToLocalAddress.get(deviceAddress)!
-            );
-            this.deviceAddressToLocalAddress.delete(deviceAddress);
+        const localAddress =
+            this._deviceAddressToLocalAddress.get(deviceAddress);
+        if (localAddress) {
+            await this.adb.transport.removeReverseTunnel(localAddress);
         }
+
+        await this.sendRequest(`reverse:killforward:${deviceAddress}`);
 
         // No need to close the stream, device will close it
     }
 
     public async removeAll(): Promise<void> {
-        await this.sendRequest(`reverse:killforward-all`);
+        this._deviceAddressToLocalAddress.clear();
+        await this.adb.transport.clearReverseTunnels();
 
-        this.deviceAddressToLocalAddress.clear();
-        this.localAddressToHandler.clear();
+        await this.sendRequest(`reverse:killforward-all`);
 
         // No need to close the stream, device will close it
     }

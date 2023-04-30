@@ -89,8 +89,9 @@ const config = {
     },
     externals: {
         "@yume-chan/adb": "commonjs @yume-chan/adb",
-        "@yume-chan/adb-backend-proxy": "commonjs @yume-chan/adb-backend-proxy",
+        "@yume-chan/async": "commonjs @yume-chan/async",
         "@yume-chan/stream-extra": "commonjs @yume-chan/stream-extra",
+        comlink: "commonjs comlink",
     },
     plugins: [
         new webpack.ProvidePlugin({

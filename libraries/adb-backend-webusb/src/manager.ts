@@ -1,7 +1,10 @@
-import type { AdbDeviceFilter } from "./backend.js";
-import { ADB_DEFAULT_DEVICE_FILTER, AdbWebUsbBackend } from "./backend.js";
+import type { AdbDeviceFilter } from "./connection.js";
+import {
+    ADB_DEFAULT_DEVICE_FILTER,
+    AdbDaemonWebUsbConnection,
+} from "./connection.js";
 
-export class AdbWebUsbBackendManager {
+export class AdbDaemonWebUsbConnectionManager {
     /**
      * Gets the instance of AdbWebUsbBackendManager using browser WebUSB implementation.
      *
@@ -9,7 +12,7 @@ export class AdbWebUsbBackendManager {
      */
     public static readonly BROWSER =
         typeof window !== "undefined" && !!window.navigator.usb
-            ? new AdbWebUsbBackendManager(window.navigator.usb)
+            ? new AdbDaemonWebUsbConnectionManager(window.navigator.usb)
             : undefined;
 
     private _usb: USB;
@@ -42,12 +45,12 @@ export class AdbWebUsbBackendManager {
      */
     public async requestDevice(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-    ): Promise<AdbWebUsbBackend | undefined> {
+    ): Promise<AdbDaemonWebUsbConnection | undefined> {
         try {
             const device = await this._usb.requestDevice({
                 filters,
             });
-            return new AdbWebUsbBackend(device, filters, this._usb);
+            return new AdbDaemonWebUsbConnection(device, filters, this._usb);
         } catch (e) {
             // No device selected
             // This check is compatible with both Browser implementation
@@ -85,10 +88,11 @@ export class AdbWebUsbBackendManager {
      */
     public async getDevices(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-    ): Promise<AdbWebUsbBackend[]> {
+    ): Promise<AdbDaemonWebUsbConnection[]> {
         const devices = await this._usb.getDevices();
         return devices.map(
-            (device) => new AdbWebUsbBackend(device, filters, this._usb)
+            (device) =>
+                new AdbDaemonWebUsbConnection(device, filters, this._usb)
         );
     }
 }

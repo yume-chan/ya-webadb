@@ -42,7 +42,7 @@ class AdbUndiciSocket extends Duplex {
         this._socket = socket;
         this._reader = this._socket.readable.getReader();
         this._writer = this._socket.writable.getWriter();
-        this._socket.end.then(() => this.emit("end"));
+        this._reader.closed.then(() => this.emit("end"));
     }
 
     async _read(size: number): Promise<void> {

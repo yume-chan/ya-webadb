@@ -1,4 +1,4 @@
-import type { AdbBackend } from "@yume-chan/adb";
+import type { AdbDaemonConnection } from "@yume-chan/adb";
 import { AdbPacket, AdbPacketSerializeStream } from "@yume-chan/adb";
 import type { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 import {
@@ -46,7 +46,9 @@ declare global {
     }
 }
 
-export default class AdbDirectSocketsBackend implements AdbBackend {
+export default class AdbDaemonDirectSocketsConnection
+    implements AdbDaemonConnection
+{
     public static isSupported(): boolean {
         return typeof window !== "undefined" && !!window.TCPSocket;
     }

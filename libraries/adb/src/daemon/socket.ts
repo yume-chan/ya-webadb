@@ -15,27 +15,29 @@ import {
     pipeFrom,
 } from "@yume-chan/stream-extra";
 
-import { AdbCommand } from "../packet.js";
+import type { Closeable } from "../adb.js";
 
-import type { AdbPacketDispatcher, Closeable } from "./dispatcher.js";
+import type { AdbPacketDispatcher } from "./dispatcher.js";
+import { AdbCommand } from "./packet.js";
 
-export interface AdbSocketInfo {
+export interface AdbDaemonSocketInfo {
     localId: number;
     remoteId: number;
 
     localCreated: boolean;
-    serviceString: string;
+    service: string;
 }
 
-export interface AdbSocketConstructionOptions extends AdbSocketInfo {
+export interface AdbDaemonSocketConstructionOptions
+    extends AdbDaemonSocketInfo {
     dispatcher: AdbPacketDispatcher;
 
     highWaterMark?: number | undefined;
 }
 
-export class AdbSocketController
+export class AdbDaemonSocketController
     implements
-        AdbSocketInfo,
+        AdbDaemonSocketInfo,
         ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
         Closeable,
         Disposable
@@ -45,7 +47,7 @@ export class AdbSocketController
     public readonly localId!: number;
     public readonly remoteId!: number;
     public readonly localCreated!: boolean;
-    public readonly serviceString!: string;
+    public readonly service!: string;
 
     private _duplex: DuplexStreamFactory<Uint8Array, Consumable<Uint8Array>>;
 
@@ -68,17 +70,12 @@ export class AdbSocketController
         return this._closed;
     }
 
-    private _endPromiseResolver = new PromiseResolver<void>();
-    public get end() {
-        return this._endPromiseResolver.promise;
-    }
-
-    private _socket: AdbSocket;
+    private _socket: AdbDaemonSocket;
     public get socket() {
         return this._socket;
     }
 
-    public constructor(options: AdbSocketConstructionOptions) {
+    public constructor(options: AdbDaemonSocketConstructionOptions) {
         Object.assign(this, options);
 
         // Check this image to help you understand the stream graph
@@ -104,7 +101,6 @@ export class AdbSocketController
             dispose: () => {
                 // Error out the pending writes
                 this._writePromise?.reject(new Error("Socket closed"));
-                this._endPromiseResolver.resolve();
             },
         });
 
@@ -141,7 +137,7 @@ export class AdbSocketController
             new DistributionStream(this.dispatcher.options.maxPayloadSize)
         );
 
-        this._socket = new AdbSocket(this);
+        this._socket = new AdbDaemonSocket(this);
     }
 
     public async enqueue(data: Uint8Array) {
@@ -175,12 +171,12 @@ export class AdbSocketController
  * `socket.writable.abort()`, `socket.writable.getWriter().abort()`,
  * `socket.writable.close()` or `socket.writable.getWriter().close()`.
  */
-export class AdbSocket
+export class AdbDaemonSocket
     implements
-        AdbSocketInfo,
+        AdbDaemonSocketInfo,
         ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
 {
-    private _controller: AdbSocketController;
+    private _controller: AdbDaemonSocketController;
 
     public get localId(): number {
         return this._controller.localId;
@@ -191,8 +187,8 @@ export class AdbSocket
     public get localCreated(): boolean {
         return this._controller.localCreated;
     }
-    public get serviceString(): string {
-        return this._controller.serviceString;
+    public get service(): string {
+        return this._controller.service;
     }
 
     public get readable(): ReadableStream<Uint8Array> {
@@ -206,11 +202,7 @@ export class AdbSocket
         return this._controller.closed;
     }
 
-    public get end(): Promise<void> {
-        return this._controller.end;
-    }
-
-    public constructor(controller: AdbSocketController) {
+    public constructor(controller: AdbDaemonSocketController) {
         this._controller = controller;
     }
 

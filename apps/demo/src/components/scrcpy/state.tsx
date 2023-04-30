@@ -1,5 +1,5 @@
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
-import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
+import { AdbDaemonWebUsbConnection } from "@yume-chan/adb-backend-webusb";
 import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
 import {
     Float32PcmPlayer,
@@ -537,9 +537,9 @@ export class ScrcpyPageState {
                 this.running = true;
             });
 
-            if (GLOBAL_STATE.backend instanceof AdbWebUsbBackend) {
+            if (GLOBAL_STATE.connection instanceof AdbDaemonWebUsbConnection) {
                 this.keyboard = await AoaKeyboardInjector.register(
-                    GLOBAL_STATE.backend.device
+                    GLOBAL_STATE.connection.device
                 );
             } else {
                 this.keyboard = new ScrcpyKeyboardInjector(client);

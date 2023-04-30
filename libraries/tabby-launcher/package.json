@@ -14,10 +14,11 @@
         "@popperjs/core": "^2.11.6",
         "@types/js-yaml": "^4.0.5",
         "@yume-chan/adb": "workspace:^0.0.19",
-        "@yume-chan/adb-backend-proxy": "workspace:^0.0.19",
+        "@yume-chan/async": "^2.2.0",
         "@yume-chan/stream-extra": "workspace:^0.0.19",
         "@yume-chan/tabby-tango": "workspace:^0.0.19",
         "buffer": "^6.0.3",
+        "comlink": "^4.4.1",
         "console-browserify": "^1.2.0",
         "core-js": "^3.21.1",
         "crypto-browserify": "^3.12.0",
@@ -54,8 +55,9 @@
     "name": "@yume-chan/tabby-launcher",
     "peerDependencies": {
         "@yume-chan/adb": "workspace:^0.0.19",
-        "@yume-chan/adb-backend-proxy": "workspace:^0.0.19",
-        "@yume-chan/stream-extra": "workspace:^0.0.19"
+        "@yume-chan/async": "^2.2.0",
+        "@yume-chan/stream-extra": "workspace:^0.0.19",
+        "comlink": "^4.4.1"
     },
     "resolutions": {
         "**/util": "^0.12.0"

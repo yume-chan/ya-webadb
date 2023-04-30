@@ -1,4 +1,8 @@
-import type { AdbBackend, AdbPacketData, AdbPacketInit } from "@yume-chan/adb";
+import type {
+    AdbDaemonConnection,
+    AdbPacketData,
+    AdbPacketInit,
+} from "@yume-chan/adb";
 import { AdbPacketHeader, AdbPacketSerializeStream } from "@yume-chan/adb";
 import type {
     Consumable,
@@ -127,7 +131,7 @@ class Uint8ArrayExactReadable implements ExactReadable {
     }
 }
 
-export class AdbWebUsbBackendStream
+export class AdbDaemonWebUsbConnectionStreams
     implements ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
 {
     private _readable: ReadableStream<AdbPacketData>;
@@ -247,7 +251,7 @@ export class AdbWebUsbBackendStream
     }
 }
 
-export class AdbWebUsbBackend implements AdbBackend {
+export class AdbDaemonWebUsbConnection implements AdbDaemonConnection {
     private _filters: AdbDeviceFilter[];
     private _usb: USB;
 
@@ -321,7 +325,7 @@ export class AdbWebUsbBackend implements AdbBackend {
         const { inEndpoint, outEndpoint } = findUsbEndpoints(
             alternate.endpoints
         );
-        return new AdbWebUsbBackendStream(
+        return new AdbDaemonWebUsbConnectionStreams(
             this._device,
             inEndpoint,
             outEndpoint,

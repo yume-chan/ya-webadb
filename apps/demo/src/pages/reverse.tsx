@@ -19,24 +19,19 @@ reaction(
         await device.reverse.remove("tcp:3000").catch(() => {});
         await device.reverse.add("tcp:3000", "tcp:1234", (socket) => {
             runInAction(() => {
-                state.log.push(`received stream ${socket.localId}`);
+                state.log.push(`received stream`);
             });
             socket.readable.pipeTo(
                 new WritableStream({
                     write: (chunk) => {
                         runInAction(() => {
                             state.log.push(
-                                `data from ${socket.localId}: ${decodeUtf8(
-                                    chunk
-                                )}`
+                                `received data: ${decodeUtf8(chunk)}`
                             );
                         });
                     },
                 })
             );
-
-            // Return true to accept the connection.
-            return true;
         });
     },
     { fireImmediately: true }

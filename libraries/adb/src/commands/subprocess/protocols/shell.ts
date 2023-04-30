@@ -17,9 +17,8 @@ import {
 import type { StructValueType } from "@yume-chan/struct";
 import Struct, { placeholder } from "@yume-chan/struct";
 
-import type { Adb } from "../../../adb.js";
+import type { Adb, AdbSocket } from "../../../adb.js";
 import { AdbFeature } from "../../../features.js";
-import type { AdbSocket } from "../../../socket/index.js";
 import { encodeUtf8 } from "../../../utils/index.js";
 
 import type { AdbSubprocessProtocol } from "./types.js";

@@ -1,5 +1,4 @@
 import { AsyncOperationManager, PromiseResolver } from "@yume-chan/async";
-import type { RemoveEventListener } from "@yume-chan/event";
 import type {
     Consumable,
     ReadableWritablePair,
@@ -10,19 +9,14 @@ import {
     ConsumableWritableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
 import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
-import type { AdbPacketData, AdbPacketInit } from "../packet.js";
-import { AdbCommand, calculateChecksum } from "../packet.js";
-import { decodeUtf8, encodeUtf8 } from "../utils/index.js";
+import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
+import { NOOP, decodeUtf8, encodeUtf8 } from "../utils/index.js";
 
-import type { AdbSocket } from "./socket.js";
-import { AdbSocketController } from "./socket.js";
-
-const NOOP = () => {
-    // no-op
-};
+import type { AdbPacketData, AdbPacketInit } from "./packet.js";
+import { AdbCommand, calculateChecksum } from "./packet.js";
+import { AdbDaemonSocketController } from "./socket.js";
 
 export interface AdbPacketDispatcherOptions {
     calculateChecksum: boolean;
@@ -34,14 +28,6 @@ export interface AdbPacketDispatcherOptions {
      */
     appendNullToServiceString: boolean;
     maxPayloadSize: number;
-}
-
-export type AdbIncomingSocketHandler = (
-    socket: AdbSocket
-) => ValueOrPromise<boolean>;
-
-export interface Closeable {
-    close(): ValueOrPromise<void>;
 }
 
 /**
@@ -61,7 +47,7 @@ export class AdbPacketDispatcher implements Closeable {
     /**
      * Socket local ID to the socket controller.
      */
-    private readonly sockets = new Map<number, AdbSocketController>();
+    private readonly sockets = new Map<number, AdbDaemonSocketController>();
 
     private _writer: WritableStreamDefaultWriter<Consumable<AdbPacketInit>>;
 
@@ -73,7 +59,10 @@ export class AdbPacketDispatcher implements Closeable {
         return this._disconnected.promise;
     }
 
-    private _incomingSocketHandlers: Set<AdbIncomingSocketHandler> = new Set();
+    private _incomingSocketHandlers = new Map<
+        string,
+        AdbIncomingSocketHandler
+    >();
 
     private _abortController = new AbortController();
 
@@ -216,20 +205,19 @@ export class AdbPacketDispatcher implements Closeable {
         // the device may also respond with two `CLSE` packets.
     }
 
-    /**
-     * Add a handler for incoming socket.
-     * @param handler A function to call with new incoming sockets. It must return `true` if it accepts the socket.
-     * @returns A function to remove the handler.
-     */
-    public onIncomingSocket(
+    public addReverseTunnel(
+        address: string,
         handler: AdbIncomingSocketHandler
-    ): RemoveEventListener {
-        this._incomingSocketHandlers.add(handler);
-        const remove = () => {
-            this._incomingSocketHandlers.delete(handler);
-        };
-        remove.dispose = remove;
-        return remove;
+    ) {
+        this._incomingSocketHandlers.set(address, handler);
+    }
+
+    public removeReverseTunnel(address: string) {
+        this._incomingSocketHandlers.delete(address);
+    }
+
+    public clearReverseTunnels() {
+        this._incomingSocketHandlers.clear();
     }
 
     private async handleOpen(packet: AdbPacketData) {
@@ -239,43 +227,47 @@ export class AdbPacketDispatcher implements Closeable {
         this.initializers.resolve(localId, undefined);
 
         const remoteId = packet.arg0;
-        const serviceString = decodeUtf8(packet.payload);
+        const service = decodeUtf8(packet.payload);
 
-        const controller = new AdbSocketController({
+        const handler = this._incomingSocketHandlers.get(service);
+        if (!handler) {
+            await this.sendPacket(AdbCommand.Close, 0, remoteId);
+            return;
+        }
+
+        const controller = new AdbDaemonSocketController({
             dispatcher: this,
             localId,
             remoteId,
             localCreated: false,
-            serviceString,
+            service,
         });
 
-        for (const handler of this._incomingSocketHandlers) {
-            if (await handler(controller.socket)) {
-                this.sockets.set(localId, controller);
-                await this.sendPacket(AdbCommand.OK, localId, remoteId);
-                return;
-            }
+        try {
+            await handler(controller.socket);
+            this.sockets.set(localId, controller);
+            await this.sendPacket(AdbCommand.OK, localId, remoteId);
+        } catch (e) {
+            await this.sendPacket(AdbCommand.Close, 0, remoteId);
         }
-
-        await this.sendPacket(AdbCommand.Close, 0, remoteId);
     }
 
-    public async createSocket(serviceString: string): Promise<AdbSocket> {
+    public async createSocket(service: string): Promise<AdbSocket> {
         if (this.options.appendNullToServiceString) {
-            serviceString += "\0";
+            service += "\0";
         }
 
         const [localId, initializer] = this.initializers.add<number>();
-        await this.sendPacket(AdbCommand.Open, localId, 0, serviceString);
+        await this.sendPacket(AdbCommand.Open, localId, 0, service);
 
         // Fulfilled by `handleOk`
         const remoteId = await initializer;
-        const controller = new AdbSocketController({
+        const controller = new AdbDaemonSocketController({
             dispatcher: this,
             localId,
             remoteId,
             localCreated: true,
-            serviceString,
+            service,
         });
         this.sockets.set(localId, controller);
 

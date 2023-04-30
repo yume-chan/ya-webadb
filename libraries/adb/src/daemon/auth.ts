@@ -2,14 +2,15 @@ import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
+import { calculateBase64EncodedLength, encodeBase64 } from "../utils/index.js";
+
 import {
-    calculatePublicKey,
-    calculatePublicKeyLength,
-    sign,
+    adbGeneratePublicKey,
+    adbGetPublicKeySize,
+    rsaSign,
 } from "./crypto.js";
 import type { AdbPacketData } from "./packet.js";
 import { AdbCommand } from "./packet.js";
-import { calculateBase64EncodedLength, encodeBase64 } from "./utils/index.js";
 
 export type AdbKeyIterable = Iterable<Uint8Array> | AsyncIterable<Uint8Array>;
 
@@ -64,7 +65,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
             return;
         }
 
-        const signature = sign(key, packet.payload);
+        const signature = rsaSign(key, packet.payload);
         yield {
             command: AdbCommand.Auth,
             arg0: AdbAuthType.Signature,
@@ -94,7 +95,7 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
         privateKey = await credentialStore.generateKey();
     }
 
-    const publicKeyLength = calculatePublicKeyLength();
+    const publicKeyLength = adbGetPublicKeySize();
     const [publicKeyBase64Length] =
         calculateBase64EncodedLength(publicKeyLength);
 
@@ -102,7 +103,7 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
         publicKeyBase64Length + 1 // Null character
     );
 
-    calculatePublicKey(privateKey, publicKeyBuffer);
+    adbGeneratePublicKey(privateKey, publicKeyBuffer);
     encodeBase64(publicKeyBuffer.subarray(0, publicKeyLength), publicKeyBuffer);
 
     yield {

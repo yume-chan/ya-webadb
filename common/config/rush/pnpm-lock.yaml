@@ -22,7 +22,6 @@ importers:
       '@types/react': 18.0.38
       '@yume-chan/adb': workspace:^0.0.19
       '@yume-chan/adb-backend-direct-sockets': workspace:^0.0.9
-      '@yume-chan/adb-backend-proxy': workspace:^0.0.19
       '@yume-chan/adb-backend-webusb': workspace:^0.0.19
       '@yume-chan/adb-backend-ws': workspace:^0.0.9
       '@yume-chan/adb-credential-web': workspace:^0.0.19
@@ -42,6 +41,7 @@ importers:
       '@yume-chan/struct': workspace:^0.0.19
       '@yume-chan/tabby-launcher': workspace:^1.0.197-nightly.1
       '@yume-chan/undici-browser': 5.21.2-mod.9
+      comlink: ^4.4.1
       eslint: ^8.39.0
       eslint-config-next: 13.3.1
       fflate: ^0.7.4
@@ -63,7 +63,6 @@ importers:
       '@griffel/react': 1.5.7_react@18.2.0
       '@yume-chan/adb': link:../../libraries/adb
       '@yume-chan/adb-backend-direct-sockets': link:../../libraries/adb-backend-direct-sockets
-      '@yume-chan/adb-backend-proxy': link:../../libraries/adb-backend-proxy
       '@yume-chan/adb-backend-webusb': link:../../libraries/adb-backend-webusb
       '@yume-chan/adb-backend-ws': link:../../libraries/adb-backend-ws
       '@yume-chan/adb-credential-web': link:../../libraries/adb-credential-web
@@ -82,6 +81,7 @@ importers:
       '@yume-chan/struct': link:../../libraries/struct
       '@yume-chan/tabby-launcher': link:../../libraries/tabby-launcher
       '@yume-chan/undici-browser': 5.21.2-mod.9
+      comlink: 4.4.1
       fflate: 0.7.4
       mobx: 6.9.0
       mobx-react-lite: 3.4.3_lrdhi4fih7ii4kmeak7ov4c3ha
@@ -154,33 +154,6 @@ importers:
     dependencies:
       '@yume-chan/adb': link:../adb
       '@yume-chan/stream-extra': link:../stream-extra
-      tslib: 2.5.0
-    devDependencies:
-      '@yume-chan/eslint-config': link:../../toolchain/eslint-config
-      '@yume-chan/tsconfig': link:../../toolchain/tsconfig
-      eslint: 8.39.0
-      prettier: 2.8.8
-      typescript: 5.0.4
-
-  ../../libraries/adb-backend-proxy:
-    specifiers:
-      '@yume-chan/adb': workspace:^0.0.19
-      '@yume-chan/async': ^2.2.0
-      '@yume-chan/eslint-config': workspace:^1.0.0
-      '@yume-chan/event': workspace:^0.0.19
-      '@yume-chan/stream-extra': workspace:^0.0.19
-      '@yume-chan/struct': workspace:^0.0.19
-      '@yume-chan/tsconfig': workspace:^1.0.0
-      eslint: ^8.39.0
-      prettier: ^2.8.8
-      tslib: ^2.5.0
-      typescript: ^5.0.3
-    dependencies:
-      '@yume-chan/adb': link:../adb
-      '@yume-chan/async': 2.2.0
-      '@yume-chan/event': link:../event
-      '@yume-chan/stream-extra': link:../stream-extra
-      '@yume-chan/struct': link:../struct
       tslib: 2.5.0
     devDependencies:
       '@yume-chan/eslint-config': link:../../toolchain/eslint-config
@@ -606,10 +579,11 @@ importers:
       '@popperjs/core': ^2.11.6
       '@types/js-yaml': ^4.0.5
       '@yume-chan/adb': workspace:^0.0.19
-      '@yume-chan/adb-backend-proxy': workspace:^0.0.19
+      '@yume-chan/async': ^2.2.0
       '@yume-chan/stream-extra': workspace:^0.0.19
       '@yume-chan/tabby-tango': workspace:^0.0.19
       buffer: ^6.0.3
+      comlink: ^4.4.1
       console-browserify: ^1.2.0
       core-js: ^3.21.1
       crypto-browserify: ^3.12.0
@@ -656,10 +630,11 @@ importers:
       '@popperjs/core': 2.11.7
       '@types/js-yaml': 4.0.5
       '@yume-chan/adb': link:../adb
-      '@yume-chan/adb-backend-proxy': link:../adb-backend-proxy
+      '@yume-chan/async': 2.2.0
       '@yume-chan/stream-extra': link:../stream-extra
       '@yume-chan/tabby-tango': link:../tabby-tango
       buffer: 6.0.3
+      comlink: 4.4.1
       console-browserify: 1.2.0
       core-js: 3.30.1
       crypto-browserify: 3.12.0
@@ -3557,7 +3532,6 @@ packages:
     resolution: {integrity: sha512-jatCtX1/3DsR9Vt3EB8CGFy0MNrXP5f+eNiRGHLH+LkYz7MPLzpqL/DnvXSip+Z0EKBCDnzuNuELjsKEEzcdQA==}
     dependencies:
       tslib: 2.5.0
-    dev: false
 
   /@yume-chan/next-pwa/5.6.0-mod.2_next@13.3.1:
     resolution: {integrity: sha512-no8+dpzcmd4QDSAZd6rFBLO3h63S5POSh8yJH1BvJErqyFdWhx8aKaUM0VdnhYX2honygKJY31nr5MKK7Tqo5g==}
@@ -4336,6 +4310,9 @@ packages:
     dependencies:
       delayed-stream: 1.0.0
     dev: true
+
+  /comlink/4.4.1:
+    resolution: {integrity: sha512-+1dlx0aY5Jo1vHy/tSsIGpSkN4tS9rZSW8FIhG0JH/crs9wwweswIo/POr451r7bZww3hFbPAKnTpimzL/mm4Q==}
 
   /comma-separated-tokens/2.0.3:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}

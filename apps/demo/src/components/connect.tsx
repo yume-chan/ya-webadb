@@ -8,13 +8,19 @@ import {
     Stack,
     StackItem,
 } from "@fluentui/react";
-import { Adb, AdbBackend, AdbPacketData, AdbPacketInit } from "@yume-chan/adb";
+import {
+    Adb,
+    AdbDaemonConnection,
+    AdbDaemonTransport,
+    AdbPacketData,
+    AdbPacketInit,
+} from "@yume-chan/adb";
 import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
 import {
-    AdbWebUsbBackendManager,
-    AdbWebUsbBackendWatcher,
+    AdbDaemonWebUsbConnectionManager,
+    AdbDaemonWebUsbConnectionWatcher,
 } from "@yume-chan/adb-backend-webusb";
-import AdbWsBackend from "@yume-chan/adb-backend-ws";
+import AdbDaemonWebSocketConnection from "@yume-chan/adb-backend-ws";
 import AdbWebCredentialStore from "@yume-chan/adb-credential-web";
 import {
     Consumable,
@@ -33,26 +39,25 @@ const DropdownStyles = { dropdown: { width: "100%" } };
 const CredentialStore = new AdbWebCredentialStore();
 
 function _Connect(): JSX.Element | null {
-    const [supported, setSupported] = useState(true);
-
-    const [selectedBackend, setSelectedBackend] = useState<
-        AdbBackend | undefined
-    >();
+    const [selected, setSelected] = useState<AdbDaemonConnection | undefined>();
     const [connecting, setConnecting] = useState(false);
 
-    const [usbBackendList, setUsbBackendList] = useState<AdbBackend[]>([]);
-    const updateUsbBackendList = useCallback(async () => {
-        const backendList: AdbBackend[] =
-            await AdbWebUsbBackendManager.BROWSER!.getDevices();
-        setUsbBackendList(backendList);
-        return backendList;
+    const [usbSupported, setUsbSupported] = useState(true);
+    const [usbConnectionList, setUsbConnectionList] = useState<
+        AdbDaemonConnection[]
+    >([]);
+    const updateUsbConnectionList = useCallback(async () => {
+        const connections: AdbDaemonConnection[] =
+            await AdbDaemonWebUsbConnectionManager.BROWSER!.getDevices();
+        setUsbConnectionList(connections);
+        return connections;
     }, []);
 
     useEffect(
         () => {
             // Only run on client
-            const supported = !!AdbWebUsbBackendManager.BROWSER;
-            setSupported(supported);
+            const supported = !!AdbDaemonWebUsbConnectionManager.BROWSER;
+            setUsbSupported(supported);
 
             if (!supported) {
                 GLOBAL_STATE.showErrorDialog(
@@ -61,14 +66,14 @@ function _Connect(): JSX.Element | null {
                 return;
             }
 
-            updateUsbBackendList();
+            updateUsbConnectionList();
 
-            const watcher = new AdbWebUsbBackendWatcher(
+            const watcher = new AdbDaemonWebUsbConnectionWatcher(
                 async (serial?: string) => {
-                    const list = await updateUsbBackendList();
+                    const list = await updateUsbConnectionList();
 
                     if (serial) {
-                        setSelectedBackend(
+                        setSelected(
                             list.find((backend) => backend.serial === serial)
                         );
                         return;
@@ -83,7 +88,9 @@ function _Connect(): JSX.Element | null {
         []
     );
 
-    const [wsBackendList, setWsBackendList] = useState<AdbWsBackend[]>([]);
+    const [webSocketConnectionList, setWebSocketConnectionList] = useState<
+        AdbDaemonWebSocketConnection[]
+    >([]);
     useEffect(() => {
         const savedList = localStorage.getItem("ws-backend-list");
         if (!savedList) {
@@ -91,17 +98,19 @@ function _Connect(): JSX.Element | null {
         }
 
         const parsed = JSON.parse(savedList) as { address: string }[];
-        setWsBackendList(parsed.map((x) => new AdbWsBackend(x.address)));
+        setWebSocketConnectionList(
+            parsed.map((x) => new AdbDaemonWebSocketConnection(x.address))
+        );
     }, []);
 
-    const addWsBackend = useCallback(() => {
+    const addWebSocketConnection = useCallback(() => {
         const address = window.prompt("Enter the address of WebSockify server");
         if (!address) {
             return;
         }
-        setWsBackendList((list) => {
+        setWebSocketConnectionList((list) => {
             const copy = list.slice();
-            copy.push(new AdbWsBackend(address));
+            copy.push(new AdbDaemonWebSocketConnection(address));
             window.localStorage.setItem(
                 "ws-backend-list",
                 JSON.stringify(copy.map((x) => ({ address: x.serial })))
@@ -110,7 +119,7 @@ function _Connect(): JSX.Element | null {
         });
     }, []);
 
-    const [tcpBackendList, setTcpBackendList] = useState<
+    const [tcpConnectionList, setTcpConnectionList] = useState<
         AdbDirectSocketsBackend[]
     >([]);
     useEffect(() => {
@@ -127,12 +136,12 @@ function _Connect(): JSX.Element | null {
             address: string;
             port: number;
         }[];
-        setTcpBackendList(
+        setTcpConnectionList(
             parsed.map((x) => new AdbDirectSocketsBackend(x.address, x.port))
         );
     }, []);
 
-    const addTcpBackend = useCallback(() => {
+    const addTcpConnection = useCallback(() => {
         const host = window.prompt("Enter the address of device");
         if (!host) {
             return;
@@ -145,7 +154,7 @@ function _Connect(): JSX.Element | null {
 
         const portNumber = Number.parseInt(port, 10);
 
-        setTcpBackendList((list) => {
+        setTcpConnectionList((list) => {
             const copy = list.slice();
             copy.push(new AdbDirectSocketsBackend(host, portNumber));
             window.localStorage.setItem(
@@ -161,21 +170,22 @@ function _Connect(): JSX.Element | null {
         });
     }, []);
 
-    const handleSelectedBackendChange = (
+    const handleSelectedChange = (
         e: React.FormEvent<HTMLDivElement>,
         option?: IDropdownOption
     ) => {
-        setSelectedBackend(option?.data as AdbBackend);
+        setSelected(option?.data as AdbDaemonConnection);
     };
 
-    const addUsbBackend = useCallback(async () => {
-        const backend = await AdbWebUsbBackendManager.BROWSER!.requestDevice();
-        setSelectedBackend(backend);
-        await updateUsbBackendList();
-    }, [updateUsbBackendList]);
+    const addUsbConnection = useCallback(async () => {
+        const connection =
+            await AdbDaemonWebUsbConnectionManager.BROWSER!.requestDevice();
+        setSelected(connection);
+        await updateUsbConnectionList();
+    }, [updateUsbConnectionList]);
 
     const connect = useCallback(async () => {
-        if (!selectedBackend) {
+        if (!selected) {
             return;
         }
 
@@ -184,7 +194,7 @@ function _Connect(): JSX.Element | null {
         let readable: ReadableStream<AdbPacketData>;
         let writable: WritableStream<Consumable<AdbPacketInit>>;
         try {
-            const streams = await selectedBackend.connect();
+            const streams = await selected.connect();
 
             // Use `InspectStream`s to intercept and log packets
             readable = streams.readable.pipeThrough(
@@ -218,10 +228,12 @@ function _Connect(): JSX.Element | null {
         }
 
         try {
-            const device = await Adb.authenticate(
-                { readable, writable },
-                CredentialStore,
-                undefined
+            const device = new Adb(
+                await AdbDaemonTransport.authenticate({
+                    serial: selected.serial,
+                    connection: { readable, writable },
+                    credentialStore: CredentialStore,
+                })
             );
 
             device.disconnected.then(
@@ -234,14 +246,14 @@ function _Connect(): JSX.Element | null {
                 }
             );
 
-            GLOBAL_STATE.setDevice(selectedBackend, device);
+            GLOBAL_STATE.setDevice(selected, device);
         } catch (e: any) {
             GLOBAL_STATE.showErrorDialog(e);
             await dispose();
         } finally {
             setConnecting(false);
         }
-    }, [selectedBackend]);
+    }, [selected]);
 
     const disconnect = useCallback(async () => {
         try {
@@ -251,30 +263,30 @@ function _Connect(): JSX.Element | null {
         }
     }, []);
 
-    const backendList = useMemo(
+    const connectionList = useMemo(
         () =>
-            ([] as AdbBackend[]).concat(
-                usbBackendList,
-                wsBackendList,
-                tcpBackendList
+            ([] as AdbDaemonConnection[]).concat(
+                usbConnectionList,
+                webSocketConnectionList,
+                tcpConnectionList
             ),
-        [usbBackendList, wsBackendList, tcpBackendList]
+        [usbConnectionList, webSocketConnectionList, tcpConnectionList]
     );
 
-    const backendOptions = useMemo(() => {
-        return backendList.map((backend) => ({
+    const connectionOptions = useMemo(() => {
+        return connectionList.map((backend) => ({
             key: backend.serial,
             text: `${backend.serial} ${
                 backend.name ? `(${backend.name})` : ""
             }`,
             data: backend,
         }));
-    }, [backendList]);
+    }, [connectionList]);
 
     useEffect(() => {
-        setSelectedBackend((old) => {
+        setSelected((old) => {
             if (old) {
-                const current = backendList.find(
+                const current = connectionList.find(
                     (backend) => backend.serial === old.serial
                 );
                 if (current) {
@@ -282,49 +294,58 @@ function _Connect(): JSX.Element | null {
                 }
             }
 
-            return backendList.length ? backendList[0] : undefined;
+            return connectionList.length ? connectionList[0] : undefined;
         });
-    }, [backendList]);
+    }, [connectionList]);
 
     const addMenuProps = useMemo(() => {
         const items = [];
 
-        items.push({
-            key: "usb",
-            text: "USB",
-            onClick: addUsbBackend,
-        });
+        if (usbSupported) {
+            items.push({
+                key: "usb",
+                text: "USB",
+                onClick: addUsbConnection,
+            });
+        }
 
         items.push({
             key: "websocket",
             text: "WebSocket",
-            onClick: addWsBackend,
+            onClick: addWebSocketConnection,
         });
 
         if (AdbDirectSocketsBackend.isSupported()) {
             items.push({
                 key: "direct-sockets",
                 text: "Direct Sockets TCP",
-                onClick: addTcpBackend,
+                onClick: addTcpConnection,
             });
         }
 
         return {
             items,
         };
-    }, [addUsbBackend, addWsBackend, addTcpBackend]);
+    }, [
+        usbSupported,
+        addUsbConnection,
+        addWebSocketConnection,
+        addTcpConnection,
+    ]);
 
     return (
         <Stack tokens={{ childrenGap: 8, padding: "0 0 8px 8px" }}>
             <Dropdown
-                disabled={!!GLOBAL_STATE.device || backendOptions.length === 0}
+                disabled={
+                    !!GLOBAL_STATE.device || connectionOptions.length === 0
+                }
                 label="Available devices"
                 placeholder="No available devices"
-                options={backendOptions}
+                options={connectionOptions}
                 styles={DropdownStyles}
                 dropdownWidth={300}
-                selectedKey={selectedBackend?.serial}
-                onChange={handleSelectedBackendChange}
+                selectedKey={selected?.serial}
+                onChange={handleSelectedChange}
             />
 
             {!GLOBAL_STATE.device ? (
@@ -333,8 +354,8 @@ function _Connect(): JSX.Element | null {
                         <PrimaryButton
                             iconProps={{ iconName: Icons.PlugConnected }}
                             text="Connect"
-                            disabled={!selectedBackend}
-                            primary={!!selectedBackend}
+                            disabled={!selected}
+                            primary={!!selected}
                             styles={{ root: { width: "100%" } }}
                             onClick={connect}
                         />
@@ -346,10 +367,10 @@ function _Connect(): JSX.Element | null {
                             split
                             splitButtonAriaLabel="Add other connection type"
                             menuProps={addMenuProps}
-                            disabled={!supported}
-                            primary={!selectedBackend}
+                            disabled={!usbSupported}
+                            primary={!selected}
                             styles={{ root: { width: "100%" } }}
-                            onClick={addUsbBackend}
+                            onClick={addUsbConnection}
                         />
                     </StackItem>
                 </Stack>

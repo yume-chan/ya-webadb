@@ -6,14 +6,12 @@ import {
 } from "@yume-chan/stream-extra";
 import Struct, { placeholder } from "@yume-chan/struct";
 
+import { NOOP } from "../../utils/index.js";
+
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponse } from "./response.js";
 import type { AdbSyncSocket, AdbSyncSocketLocked } from "./socket.js";
 import { LinuxFileType } from "./stat.js";
-
-const NOOP = () => {
-    // no-op
-};
 
 export const ADB_SYNC_MAX_PACKET_SIZE = 64 * 1024;
 

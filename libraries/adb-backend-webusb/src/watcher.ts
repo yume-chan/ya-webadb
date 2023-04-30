@@ -1,4 +1,4 @@
-export class AdbWebUsbBackendWatcher {
+export class AdbDaemonWebUsbConnectionWatcher {
     private _callback: (newDeviceSerial?: string) => void;
     private _usb: USB;
 

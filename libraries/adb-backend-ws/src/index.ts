@@ -1,4 +1,4 @@
-import type { AdbBackend } from "@yume-chan/adb";
+import type { AdbDaemonConnection } from "@yume-chan/adb";
 import { AdbPacket, AdbPacketSerializeStream } from "@yume-chan/adb";
 import type { Consumable } from "@yume-chan/stream-extra";
 import {
@@ -13,7 +13,9 @@ const NOOP = () => {
     // no-op
 };
 
-export default class AdbWsBackend implements AdbBackend {
+export default class AdbDaemonWebSocketConnection
+    implements AdbDaemonConnection
+{
     public readonly serial: string;
 
     public name: string | undefined;
