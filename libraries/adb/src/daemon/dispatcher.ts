@@ -206,10 +206,10 @@ export class AdbPacketDispatcher implements Closeable {
     }
 
     public addReverseTunnel(
-        address: string,
+        service: string,
         handler: AdbIncomingSocketHandler
     ) {
-        this._incomingSocketHandlers.set(address, handler);
+        this._incomingSocketHandlers.set(service, handler);
     }
 
     public removeReverseTunnel(address: string) {
@@ -227,7 +227,10 @@ export class AdbPacketDispatcher implements Closeable {
         this.initializers.resolve(localId, undefined);
 
         const remoteId = packet.arg0;
-        const service = decodeUtf8(packet.payload);
+        let service = decodeUtf8(packet.payload);
+        if (service.endsWith("\0")) {
+            service = service.substring(0, service.length - 1);
+        }
 
         const handler = this._incomingSocketHandlers.get(service);
         if (!handler) {

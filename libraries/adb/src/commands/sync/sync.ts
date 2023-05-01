@@ -10,7 +10,7 @@ import { adbSyncOpenDir } from "./list.js";
 import { adbSyncPull } from "./pull.js";
 import { adbSyncPush } from "./push.js";
 import { AdbSyncSocket } from "./socket.js";
-import type { LinuxFileType } from "./stat.js";
+import type { AdbSyncStat, LinuxFileType } from "./stat.js";
 import { adbSyncLstat, adbSyncStat } from "./stat.js";
 
 /**
@@ -86,7 +86,7 @@ export class AdbSync extends AutoDisposable {
             !this.fixedPushMkdir;
     }
 
-    public async lstat(path: string) {
+    public async lstat(path: string): Promise<AdbSyncStat> {
         return await adbSyncLstat(this._socket, path, this.supportsStat);
     }
 

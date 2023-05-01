@@ -94,25 +94,12 @@ export class AdbReverseCommand extends AutoDisposable {
     }
 
     /**
-     * @param deviceAddress
-     * The address to be listened on device by ADB daemon. Or `tcp:0` to choose an available TCP port.
-     * @param localAddress
-     * An identifier for the reverse tunnel.
-     *
-     * When a socket wants to connect to {@link deviceAddress}, native ADB client will forward that connection to {@link localAddress}.
-     * However in this library, the {@link handler} is invoked instead. So this parameter is only used to identify the reverse tunnel.
-     * @param handler A callback to handle incoming connections. It must return `true` if it accepts the connection.
+     * Add an already existing reverse tunnel. Depends on the transport type, this may not do anything.
+     * @param deviceAddress The address to be listened on device by ADB daemon. Or `tcp:0` to choose an available TCP port.
+     * @param localAddress The address that listens on the local machine.
      * @returns `tcp:{ACTUAL_LISTENING_PORT}`, If `deviceAddress` is `tcp:0`; otherwise, `deviceAddress`.
-     * @throws {AdbReverseNotSupportedError} If ADB reverse tunnel is not supported on this device when connected wirelessly.
-     * @throws {AdbReverseError} If ADB daemon returns an error.
      */
-    public async add(
-        deviceAddress: string,
-        localAddress: string,
-        handler: AdbIncomingSocketHandler
-    ): Promise<string> {
-        await this.adb.transport.addReverseTunnel(localAddress, handler);
-
+    public async addExternal(deviceAddress: string, localAddress: string) {
         const stream = await this.sendRequest(
             `reverse:forward:${deviceAddress};${localAddress}`
         );
@@ -140,11 +127,35 @@ export class AdbReverseCommand extends AutoDisposable {
             }
         }
 
-        this._deviceAddressToLocalAddress.set(deviceAddress, localAddress);
-
         return deviceAddress;
+    }
 
-        // No need to close the stream, device will close it
+    /**
+     * @param deviceAddress The address to be listened on device by ADB daemon. Or `tcp:0` to choose an available TCP port.
+     * @param handler A callback to handle incoming connections.
+     * @param localAddressThe The address that listens on the local machine. May be `undefined` to let the transport choose an appropriate one.
+     * @returns `tcp:{ACTUAL_LISTENING_PORT}`, If `deviceAddress` is `tcp:0`; otherwise, `deviceAddress`.
+     * @throws {AdbReverseNotSupportedError} If ADB reverse tunnel is not supported on this device when connected wirelessly.
+     * @throws {AdbReverseError} If ADB daemon returns an error.
+     */
+    public async add(
+        deviceAddress: string,
+        handler: AdbIncomingSocketHandler,
+        localAddress?: string
+    ): Promise<string> {
+        localAddress = await this.adb.transport.addReverseTunnel(
+            handler,
+            localAddress
+        );
+
+        try {
+            deviceAddress = await this.addExternal(deviceAddress, localAddress);
+            this._deviceAddressToLocalAddress.set(deviceAddress, localAddress);
+            return deviceAddress;
+        } catch (e) {
+            await this.adb.transport.removeReverseTunnel(localAddress);
+            throw e;
+        }
     }
 
     public async remove(deviceAddress: string): Promise<void> {
@@ -160,8 +171,8 @@ export class AdbReverseCommand extends AutoDisposable {
     }
 
     public async removeAll(): Promise<void> {
-        this._deviceAddressToLocalAddress.clear();
         await this.adb.transport.clearReverseTunnels();
+        this._deviceAddressToLocalAddress.clear();
 
         await this.sendRequest(`reverse:killforward-all`);
 

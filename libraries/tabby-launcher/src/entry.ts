@@ -65,9 +65,9 @@ export interface AdbProxyTransportServer {
     ): void;
 
     addReverseTunnel(
-        address: string,
-        handler: AdbIncomingSocketHandler
-    ): ValueOrPromise<void>;
+        handler: AdbIncomingSocketHandler,
+        address: string
+    ): ValueOrPromise<string>;
 
     removeReverseTunnel(address: string): ValueOrPromise<void>;
 
@@ -129,10 +129,10 @@ class AdbProxyTransport implements AdbTransport {
     }
 
     public async addReverseTunnel(
-        address: string,
-        handler: AdbIncomingSocketHandler
+        handler: AdbIncomingSocketHandler,
+        address: string
     ) {
-        await this._remote.addReverseTunnel(address, handler);
+        return await this._remote.addReverseTunnel(handler, address);
     }
 
     public async removeReverseTunnel(address: string) {

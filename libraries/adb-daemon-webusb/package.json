@@ -1,0 +1,47 @@
+{
+    "name": "@yume-chan/adb-daemon-webusb",
+    "version": "0.0.19",
+    "description": "Backend for `@yume-chan/adb` using WebUSB API.",
+    "keywords": [
+        "webusb",
+        "adb"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-daemon-webusb#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "libraries/adb-daemon-webusb"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "scripts": {
+        "build": "tsc -b tsconfig.build.json",
+        "build:watch": "tsc -b tsconfig.build.json",
+        "lint": "eslint src/**/*.ts --fix && prettier src/**/*.ts --write --tab-width 4",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@types/w3c-web-usb": "^1.0.6",
+        "@yume-chan/adb": "workspace:^0.0.19",
+        "@yume-chan/stream-extra": "workspace:^0.0.19",
+        "@yume-chan/struct": "workspace:^0.0.19",
+        "tslib": "^2.5.0"
+    },
+    "devDependencies": {
+        "@yume-chan/eslint-config": "workspace:^1.0.0",
+        "@yume-chan/tsconfig": "workspace:^1.0.0",
+        "eslint": "^8.39.0",
+        "prettier": "^2.8.8",
+        "typescript": "^5.0.3"
+    }
+}

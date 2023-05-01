@@ -1,4 +1,4 @@
-# @yume-chan/adb-backend-webusb
+# @yume-chan/adb-daemon-webusb
 
 Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB), [Spec](https://wicg.github.io/webusb)) API.
 

@@ -1,26 +1,27 @@
 {
-    "name": "@yume-chan/adb-backend-webusb",
-    "version": "0.0.19",
-    "description": "Backend for `@yume-chan/adb` using WebUSB API.",
+    "name": "@yume-chan/adb-daemon-direct-sockets",
+    "private": true,
+    "version": "0.0.9",
+    "description": "Backend for `@yume-chan/adb` using Direct Sockets API.",
     "keywords": [
-        "webusb",
-        "adb"
+        "adb",
+        "direct-sockets"
     ],
-    "license": "MIT",
     "author": {
         "name": "Simon Chan",
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-backend-webusb#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-daemon-direct-sockets#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "libraries/adb-backend-webusb"
+        "directory": "libraries/adb-daemon-direct-sockets"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
     },
+    "license": "MIT",
     "type": "module",
     "main": "esm/index.js",
     "types": "esm/index.d.ts",
@@ -31,10 +32,8 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@types/w3c-web-usb": "^1.0.6",
         "@yume-chan/adb": "workspace:^0.0.19",
         "@yume-chan/stream-extra": "workspace:^0.0.19",
-        "@yume-chan/struct": "workspace:^0.0.19",
         "tslib": "^2.5.0"
     },
     "devDependencies": {

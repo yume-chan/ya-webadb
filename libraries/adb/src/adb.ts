@@ -41,9 +41,9 @@ export interface AdbTransport extends Closeable {
     connect(service: string): ValueOrPromise<AdbSocket>;
 
     addReverseTunnel(
-        address: string,
-        handler: AdbIncomingSocketHandler
-    ): ValueOrPromise<void>;
+        handler: AdbIncomingSocketHandler,
+        address?: string
+    ): ValueOrPromise<string>;
 
     removeReverseTunnel(address: string): ValueOrPromise<void>;
 

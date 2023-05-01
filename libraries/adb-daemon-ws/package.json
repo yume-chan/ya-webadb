@@ -1,5 +1,5 @@
 {
-    "name": "@yume-chan/adb-backend-ws",
+    "name": "@yume-chan/adb-daemon-ws",
     "private": true,
     "version": "0.0.9",
     "description": "Backend for `@yume-chan/adb` using WebSocket API.",
@@ -13,11 +13,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-backend-ws#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-daemon-ws#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "libraries/adb-backend-ws"
+        "directory": "libraries/adb-daemon-ws"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"

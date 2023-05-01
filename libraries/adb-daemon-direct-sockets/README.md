@@ -1,4 +1,4 @@
-# `@yume-chan/adb-backend-direct-sockets`
+# `@yume-chan/adb-daemon-direct-sockets`
 
 Use [Direct Sockets API](https://wicg.github.io/direct-sockets/) for plugin-free ADB over WiFi connection.
 

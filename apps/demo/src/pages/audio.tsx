@@ -1,5 +1,5 @@
 import { DefaultButton, PrimaryButton } from "@fluentui/react";
-import { AdbDaemonWebUsbConnection } from "@yume-chan/adb-backend-webusb";
+import { AdbDaemonWebUsbConnection } from "@yume-chan/adb-daemon-webusb";
 import {
     aoaGetProtocol,
     aoaSetAudioMode,

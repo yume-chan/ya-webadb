@@ -1,4 +1,4 @@
-# `@yume-chan/adb-backend-ws`
+# `@yume-chan/adb-daemon-ws`
 
 Backend for `@yume-chan/adb` using WebSocket API.
 

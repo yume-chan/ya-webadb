@@ -241,10 +241,15 @@ export class AdbDaemonTransport implements AdbTransport {
     }
 
     public addReverseTunnel(
-        address: string,
-        handler: AdbIncomingSocketHandler
-    ): void {
+        handler: AdbIncomingSocketHandler,
+        address?: string
+    ): string {
+        if (!address) {
+            const id = Math.random().toString().substring(2);
+            address = `localabstract:reverse_${id}`;
+        }
         this._dispatcher.addReverseTunnel(address, handler);
+        return address;
     }
 
     public removeReverseTunnel(address: string): void {

@@ -21,7 +21,7 @@ import { AdbBanner } from "../banner.js";
 import type { AdbFeature } from "../features.js";
 import { NOOP } from "../utils/index.js";
 
-import { AdbServerSocketTransport } from "./transport.js";
+import { AdbServerTransport } from "./transport.js";
 
 function hexCharToNumber(char: number) {
     if (char < 48) {
@@ -68,9 +68,9 @@ export interface AdbServerConnection {
     connect(): ValueOrPromise<ReadableWritablePair<Uint8Array, Uint8Array>>;
 
     addReverseTunnel(
-        address: string,
-        handler: AdbIncomingSocketHandler
-    ): ValueOrPromise<void>;
+        handler: AdbIncomingSocketHandler,
+        address?: string
+    ): ValueOrPromise<string>;
 
     removeReverseTunnel(address: string): ValueOrPromise<void>;
 
@@ -163,7 +163,7 @@ export class AdbServerClient {
         }
     }
 
-    public async getVersion() {
+    public async getVersion(): Promise<string> {
         const connection = await this.connect("host:version");
         const readable = new BufferedReadableStream(connection.readable);
         try {
@@ -177,7 +177,7 @@ export class AdbServerClient {
         }
     }
 
-    public async kill() {
+    public async kill(): Promise<void> {
         const connection = await this.connect("host:kill");
         connection.writable.close().catch(NOOP);
         connection.readable.cancel().catch(NOOP);
@@ -195,11 +195,11 @@ export class AdbServerClient {
         }
     }
 
-    public async getDevices(): Promise<AdbServerSocketTransport[]> {
+    public async getDevices(): Promise<AdbServerTransport[]> {
         const connection = await this.connect("host:devices-l");
         const readable = new BufferedReadableStream(connection.readable);
         const response = await AdbServerClient.readString(readable);
-        const devices: AdbServerSocketTransport[] = [];
+        const devices: AdbServerTransport[] = [];
         for (const line of response.split("\n")) {
             if (!line) {
                 continue;
@@ -239,7 +239,7 @@ export class AdbServerClient {
             const features = await this.getDeviceFeatures({ transportId });
             const banner = new AdbBanner(product, model, device, features);
             devices.push(
-                new AdbServerSocketTransport(this, serial, banner, transportId)
+                new AdbServerTransport(this, serial, banner, transportId)
             );
         }
         connection.writable.close().catch(NOOP);
@@ -269,7 +269,9 @@ export class AdbServerClient {
         throw new Error("Invalid device selector");
     }
 
-    public async getDeviceFeatures(device: AdbServerDeviceSelector) {
+    public async getDeviceFeatures(
+        device: AdbServerDeviceSelector
+    ): Promise<AdbFeature[]> {
         const connection = await this.connect(
             this.formatDeviceService(device, "features")
         );

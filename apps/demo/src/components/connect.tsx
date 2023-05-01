@@ -15,13 +15,13 @@ import {
     AdbPacketData,
     AdbPacketInit,
 } from "@yume-chan/adb";
-import AdbDirectSocketsBackend from "@yume-chan/adb-backend-direct-sockets";
+import AdbWebCredentialStore from "@yume-chan/adb-credential-web";
+import AdbDaemonDirectSocketsConnection from "@yume-chan/adb-daemon-direct-sockets";
 import {
     AdbDaemonWebUsbConnectionManager,
     AdbDaemonWebUsbConnectionWatcher,
-} from "@yume-chan/adb-backend-webusb";
-import AdbDaemonWebSocketConnection from "@yume-chan/adb-backend-ws";
-import AdbWebCredentialStore from "@yume-chan/adb-credential-web";
+} from "@yume-chan/adb-daemon-webusb";
+import AdbDaemonWebSocketConnection from "@yume-chan/adb-daemon-ws";
 import {
     Consumable,
     InspectStream,
@@ -120,10 +120,10 @@ function _Connect(): JSX.Element | null {
     }, []);
 
     const [tcpConnectionList, setTcpConnectionList] = useState<
-        AdbDirectSocketsBackend[]
+        AdbDaemonDirectSocketsConnection[]
     >([]);
     useEffect(() => {
-        if (!AdbDirectSocketsBackend.isSupported()) {
+        if (!AdbDaemonDirectSocketsConnection.isSupported()) {
             return;
         }
 
@@ -137,7 +137,9 @@ function _Connect(): JSX.Element | null {
             port: number;
         }[];
         setTcpConnectionList(
-            parsed.map((x) => new AdbDirectSocketsBackend(x.address, x.port))
+            parsed.map(
+                (x) => new AdbDaemonDirectSocketsConnection(x.address, x.port)
+            )
         );
     }, []);
 
@@ -156,7 +158,7 @@ function _Connect(): JSX.Element | null {
 
         setTcpConnectionList((list) => {
             const copy = list.slice();
-            copy.push(new AdbDirectSocketsBackend(host, portNumber));
+            copy.push(new AdbDaemonDirectSocketsConnection(host, portNumber));
             window.localStorage.setItem(
                 "tcp-backend-list",
                 JSON.stringify(
@@ -315,7 +317,7 @@ function _Connect(): JSX.Element | null {
             onClick: addWebSocketConnection,
         });
 
-        if (AdbDirectSocketsBackend.isSupported()) {
+        if (AdbDaemonDirectSocketsConnection.isSupported()) {
             items.push({
                 key: "direct-sockets",
                 text: "Direct Sockets TCP",

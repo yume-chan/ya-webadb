@@ -17,7 +17,7 @@ import { NOOP } from "../utils/index.js";
 
 import { AdbServerClient } from "./client.js";
 
-export class AdbServerSocketTransport implements AdbTransport {
+export class AdbServerTransport implements AdbTransport {
     private _client: AdbServerClient;
 
     public readonly serial: string;
@@ -85,10 +85,10 @@ export class AdbServerSocketTransport implements AdbTransport {
     }
 
     public async addReverseTunnel(
-        address: string,
-        handler: AdbIncomingSocketHandler
-    ): Promise<void> {
-        await this._client.connection.addReverseTunnel(address, handler);
+        handler: AdbIncomingSocketHandler,
+        address?: string
+    ): Promise<string> {
+        return await this._client.connection.addReverseTunnel(handler, address);
     }
 
     public async removeReverseTunnel(address: string): Promise<void> {

@@ -31,11 +31,11 @@ export type AdbPacket = (typeof AdbPacket)["TDeserializeResult"];
 /**
  * `AdbPacketData` contains all the useful fields of `AdbPacket`.
  *
- * `AdbBackend#connect` will return a `ReadableStream<AdbPacketData>`,
- * so each backend can encode `AdbPacket` in different ways.
+ * `AdvDaemonConnection#connect` will return a `ReadableStream<AdbPacketData>`,
+ * allow each connection to encode `AdbPacket` in different methods.
  *
- * `AdbBackend#connect` will return a `WritableStream<AdbPacketInit>`,
- * however, `AdbPacketDispatcher` will transform `AdbPacketData` to `AdbPacketInit` for you,
+ * `AdvDaemonConnection#connect` will return a `WritableStream<AdbPacketInit>`,
+ * however, `AdbDaemonTransport` will transform `AdbPacketData` to `AdbPacketInit` for you,
  * so `AdbSocket#writable#write` only needs `AdbPacketData`.
  */
 export type AdbPacketData = Omit<

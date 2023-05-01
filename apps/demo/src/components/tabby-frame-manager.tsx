@@ -1,7 +1,5 @@
 import { AdbIncomingSocketHandler, AdbTransport } from "@yume-chan/adb";
 import {
-    Consumable,
-    UnwrapConsumableStream,
     WrapConsumableStream,
     WrapWritableStream,
 } from "@yume-chan/stream-extra";
@@ -28,9 +26,9 @@ export interface AdbProxyTransportServer {
     ): void;
 
     addReverseTunnel(
-        address: string,
-        handler: AdbIncomingSocketHandler
-    ): ValueOrPromise<void>;
+        handler: AdbIncomingSocketHandler,
+        address?: string
+    ): ValueOrPromise<string>;
 
     removeReverseTunnel(address: string): ValueOrPromise<void>;
 
@@ -70,10 +68,10 @@ class AdbProxyTransportServerImpl implements AdbProxyTransportServer {
     }
 
     public addReverseTunnel(
-        address: string,
-        handler: AdbIncomingSocketHandler
-    ): ValueOrPromise<void> {
-        return this._transport.addReverseTunnel(address, handler);
+        handler: AdbIncomingSocketHandler,
+        address?: string
+    ): ValueOrPromise<string> {
+        return this._transport.addReverseTunnel(handler, address);
     }
 
     public removeReverseTunnel(address: string): ValueOrPromise<void> {
