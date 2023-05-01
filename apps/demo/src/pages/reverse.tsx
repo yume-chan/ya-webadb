@@ -17,7 +17,7 @@ reaction(
         }
 
         await device.reverse.remove("tcp:3000").catch(() => {});
-        await device.reverse.add("tcp:3000", "tcp:1234", (socket) => {
+        await device.reverse.add("tcp:3000", (socket) => {
             runInAction(() => {
                 state.log.push(`received stream`);
             });
