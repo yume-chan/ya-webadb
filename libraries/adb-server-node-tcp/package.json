@@ -2,7 +2,7 @@
     "name": "@yume-chan/adb-server-node-tcp",
     "private": true,
     "version": "0.0.9",
-    "description": "Backend for `@yume-chan/adb` using WebSocket API.",
+    "description": "ADB server connection for `@yume-chan/adb` using Node.js' `net` module",
     "keywords": [
         "websocket",
         "adb"

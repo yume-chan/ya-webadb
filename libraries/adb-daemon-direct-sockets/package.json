@@ -2,7 +2,7 @@
     "name": "@yume-chan/adb-daemon-direct-sockets",
     "private": true,
     "version": "0.0.9",
-    "description": "Backend for `@yume-chan/adb` using Direct Sockets API.",
+    "description": "ADB daemon transport connection for `@yume-chan/adb` using Direct Sockets API.",
     "keywords": [
         "adb",
         "direct-sockets"

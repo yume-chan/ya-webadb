@@ -1,7 +1,7 @@
 {
     "name": "@yume-chan/adb-daemon-webusb",
     "version": "0.0.19",
-    "description": "Backend for `@yume-chan/adb` using WebUSB API.",
+    "description": "Adb daemon transport connection for `@yume-chan/adb` using WebUSB API.",
     "keywords": [
         "webusb",
         "adb"

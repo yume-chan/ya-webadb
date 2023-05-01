@@ -1,13 +1,14 @@
 # @yume-chan/adb-daemon-webusb
 
-Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB), [Spec](https://wicg.github.io/webusb)) API.
+ADB daemon transport connection for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/USB), [Spec](https://wicg.github.io/webusb)) API.
 
 -   [Use in browser](#use-in-browser)
 -   [Use in Node.js](#use-in-nodejs)
--   [`AdbWebUsbBackend`](#adbwebusbbackend)
+-   [`AdbDaemonWebUsbConnection`](#adbdaemonwebusbconnection)
     -   [constructor](#constructor)
+    -   [`device`](#device)
     -   [`connect`](#connect)
--   [`AdbWebUsbBackendManager`](#adbwebusbbackendmanager)
+-   [`AdbDaemonWebUsbConnectionManager`](#adbdaemonwebusbconnectionmanager)
     -   [`BROWSER`](#browser)
     -   [constructor](#constructor-1)
     -   [`requestDevice`](#requestdevice)
@@ -30,9 +31,9 @@ Backend for `@yume-chan/adb` using WebUSB ([MDN](https://developer.mozilla.org/e
 
 Node.js doesn't have native support for WebUSB API, but the [`usb`](https://www.npmjs.com/package/usb) NPM package provides a WebUSB compatible API.
 
-To use a custom WebUSB API implementation, pass it to the constructor of `AdbWebUsbBackend`, `AdbWebUsbBackendManager` and `AdbWebUsbBackendWatcher` via the `usb` parameter.
+To use a custom WebUSB API implementation, pass it to the constructor of `AdbDaemonWebUsbConnection`, `AdbDaemonWebUsbConnectionManager` and `AdbDaemonWebUsbConnectionWatcher` via the `usb` parameter.
 
-## `AdbWebUsbBackend`
+## `AdbDaemonWebUsbConnection`
 
 ### constructor
 
@@ -44,11 +45,19 @@ public constructor(
 );
 ```
 
-Create a new instance of `AdbWebBackend` using a specified `USBDevice` instance.
+Create a new instance of `AdbDaemonWebUsbConnection` using a specified `USBDevice` instance.
 
 `USBDevice` and `USB` types are from WebUSB API.
 
 The `filters` parameter specifies the `classCode`, `subclassCode` and `protocolCode` to use when searching for ADB interface. The default value is `[{ classCode: 0xff, subclassCode: 0x42, protocolCode: 0x1 }]`, defined by Google.
+
+### `device`
+
+```ts
+public get device(): USBDevice;
+```
+
+Gets the `USBDevice` from the connection. Allow sending/receiving USB packets to other interfaces/endpoints. For example can be used with `@yume-chan/aoa` package.
 
 ### `connect`
 
@@ -60,17 +69,17 @@ public async connect(): Promise<
 
 Claim the device and create a pair of `AdbPacket` streams to the ADB interface.
 
-## `AdbWebUsbBackendManager`
+## `AdbDaemonWebUsbConnectionManager`
 
 A helper class that wraps the WebUSB API.
 
 ### `BROWSER`
 
 ```ts
-public static readonly BROWSER: AdbWebUsbBackendManager | undefined;
+public static readonly BROWSER: AdbDaemonWebUsbConnectionManager | undefined;
 ```
 
-Gets the instance of `AdbWebUsbBackendManager` using browser WebUSB implementation.
+Gets the instance of `AdbDaemonWebUsbConnectionManager` using browser WebUSB implementation.
 
 May be `undefined` if the browser does not support WebUSB.
 
@@ -80,14 +89,14 @@ May be `undefined` if the browser does not support WebUSB.
 public constructor(usb: USB);
 ```
 
-Create a new instance of `AdbWebUsbBackendManager` using the specified WebUSB API implementation.
+Create a new instance of `AdbDaemonWebUsbConnectionManager` using the specified WebUSB API implementation.
 
 ### `requestDevice`
 
 ```ts
 public async requestDevice(
     filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-): Promise<AdbWebUsbBackend | undefined>
+): Promise<AdbDaemonWebUsbConnection | undefined>
 ```
 
 Request access to a connected device.
@@ -95,14 +104,14 @@ This is a convince method for `usb.requestDevice()`.
 
 The `filters` parameter must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface. It can also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
 
-Returns an `AdbWebUsbBackend` instance, or `undefined` if the user cancelled the picker.
+Returns an `AdbDaemonWebUsbConnection` instance, or `undefined` if the user cancelled the picker.
 
 ### `getDevices`
 
 ```ts
 public async getDevices(
     filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-): Promise<AdbWebUsbBackend[]>
+): Promise<AdbDaemonWebUsbConnection[]>
 ```
 
 Get all connected and authenticated devices.

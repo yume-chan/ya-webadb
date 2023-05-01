@@ -2,7 +2,7 @@
     "name": "@yume-chan/adb-daemon-ws",
     "private": true,
     "version": "0.0.9",
-    "description": "Backend for `@yume-chan/adb` using WebSocket API.",
+    "description": "ADB daemon transport connection for `@yume-chan/adb` using WebSocket API.",
     "keywords": [
         "websocket",
         "adb"

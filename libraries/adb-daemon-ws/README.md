@@ -1,6 +1,6 @@
 # `@yume-chan/adb-daemon-ws`
 
-Backend for `@yume-chan/adb` using WebSocket API.
+ADB daemon transport connection for `@yume-chan/adb` using WebSocket API.
 
 Requires WebSockify softwares to bridge the connection between TCP (ADB over Wi-Fi) and WebSocket.
 

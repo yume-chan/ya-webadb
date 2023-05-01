@@ -74,7 +74,9 @@ function _Connect(): JSX.Element | null {
 
                     if (serial) {
                         setSelected(
-                            list.find((backend) => backend.serial === serial)
+                            list.find(
+                                (connection) => connection.serial === serial
+                            )
                         );
                         return;
                     }
@@ -276,12 +278,12 @@ function _Connect(): JSX.Element | null {
     );
 
     const connectionOptions = useMemo(() => {
-        return connectionList.map((backend) => ({
-            key: backend.serial,
-            text: `${backend.serial} ${
-                backend.name ? `(${backend.name})` : ""
+        return connectionList.map((connection) => ({
+            key: connection.serial,
+            text: `${connection.serial} ${
+                connection.name ? `(${connection.name})` : ""
             }`,
-            data: backend,
+            data: connection,
         }));
     }, [connectionList]);
 
@@ -289,7 +291,7 @@ function _Connect(): JSX.Element | null {
         setSelected((old) => {
             if (old) {
                 const current = connectionList.find(
-                    (backend) => backend.serial === old.serial
+                    (connection) => connection.serial === old.serial
                 );
                 if (current) {
                     return current;

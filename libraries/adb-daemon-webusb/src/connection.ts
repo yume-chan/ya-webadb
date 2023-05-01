@@ -269,7 +269,7 @@ export class AdbDaemonWebUsbConnection implements AdbDaemonConnection {
     }
 
     /**
-     * Create a new instance of `AdbWebBackend` using a specified `USBDevice` instance
+     * Create a new instance of `AdbDaemonWebUsbConnection` using a specified `USBDevice` instance
      *
      * @param device The `USBDevice` instance obtained elsewhere.
      * @param filters The filters to use when searching for ADB interface. Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.

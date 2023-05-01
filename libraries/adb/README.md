@@ -44,7 +44,7 @@ Here is a list of features, their used APIs, and their compatibilities. If an op
 
 Some features can be polyfilled to support older runtimes, but this library doesn't ship with any polyfills.
 
-Each backend may have different requirements.
+Each transport and connection may have different requirements.
 
 ### Basic usage
 
