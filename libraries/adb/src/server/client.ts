@@ -25,27 +25,27 @@ import { AdbServerTransport } from "./transport.js";
 
 function hexCharToNumber(char: number) {
     if (char < 48) {
-        throw new Error("Invalid hex char");
+        throw new Error(`Invalid hex char ${char}`);
     }
     if (char < 58) {
         return char - 48;
     }
 
     if (char < 65) {
-        throw new Error("Invalid hex char");
+        throw new Error(`Invalid hex char ${char}`);
     }
     if (char < 71) {
         return char - 55;
     }
 
     if (char < 97) {
-        throw new Error("Invalid hex char");
+        throw new Error(`Invalid hex char ${char}`);
     }
     if (char < 103) {
         return char - 87;
     }
 
-    throw new Error("Invalid hex char");
+    throw new Error(`Invalid hex char ${char}`);
 }
 
 function numberToHex(value: number) {
@@ -61,11 +61,22 @@ function numberToHex(value: number) {
         }
         index -= 1;
     }
+    while (index >= 0) {
+        // '0'
+        result[index] = 48;
+        index -= 1;
+    }
     return result;
 }
 
+export interface AdbServerConnectionOptions {
+    unref?: boolean | undefined;
+}
+
 export interface AdbServerConnection {
-    connect(): ValueOrPromise<ReadableWritablePair<Uint8Array, Uint8Array>>;
+    connect(
+        options?: AdbServerConnectionOptions
+    ): ValueOrPromise<ReadableWritablePair<Uint8Array, Uint8Array>>;
 
     addReverseTunnel(
         handler: AdbIncomingSocketHandler,
@@ -140,9 +151,10 @@ export class AdbServerClient {
     }
 
     public async connect(
-        request: string
+        request: string,
+        options?: AdbServerConnectionOptions
     ): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
-        const connection = await this.connection.connect();
+        const connection = await this.connection.connect(options);
 
         const writer = connection.writable.getWriter();
         await AdbServerClient.writeString(writer, request);
@@ -198,53 +210,60 @@ export class AdbServerClient {
     public async getDevices(): Promise<AdbServerTransport[]> {
         const connection = await this.connect("host:devices-l");
         const readable = new BufferedReadableStream(connection.readable);
-        const response = await AdbServerClient.readString(readable);
-        const devices: AdbServerTransport[] = [];
-        for (const line of response.split("\n")) {
-            if (!line) {
-                continue;
-            }
-
-            const parts = line.split(" ").filter(Boolean);
-            const serial = parts[0]!;
-            const status = parts[1]!;
-            if (status !== "device") {
-                continue;
-            }
-
-            let product: string | undefined;
-            let model: string | undefined;
-            let device: string | undefined;
-            let transportId: number | undefined;
-            for (let i = 2; i < parts.length; i += 1) {
-                const [key, value] = parts[i]!.split(":");
-                switch (key) {
-                    case "product":
-                        product = value;
-                        break;
-                    case "model":
-                        model = value;
-                        break;
-                    case "device":
-                        device = value;
-                        break;
-                    case "transport-id":
-                        transportId = Number.parseInt(value!, 10);
-                        break;
+        try {
+            const devices: AdbServerTransport[] = [];
+            const response = await AdbServerClient.readString(readable);
+            for (const line of response.split("\n")) {
+                if (!line) {
+                    continue;
                 }
+
+                const parts = line.split(" ").filter(Boolean);
+                const serial = parts[0]!;
+                const status = parts[1]!;
+                if (status !== "device") {
+                    continue;
+                }
+
+                let product: string | undefined;
+                let model: string | undefined;
+                let device: string | undefined;
+                let transportId: number | undefined;
+                for (let i = 2; i < parts.length; i += 1) {
+                    const [key, value] = parts[i]!.split(":");
+                    switch (key) {
+                        case "product":
+                            product = value;
+                            break;
+                        case "model":
+                            model = value;
+                            break;
+                        case "device":
+                            device = value;
+                            break;
+                        case "transport_id":
+                            transportId = Number.parseInt(value!, 10);
+                            break;
+                    }
+                }
+                if (!transportId) {
+                    throw new Error(`No transport id for device ${serial}`);
+                }
+                const features = await this.getDeviceFeatures({ transportId });
+                const banner = new AdbBanner(product, model, device, features);
+                const transport = new AdbServerTransport(
+                    this,
+                    serial,
+                    banner,
+                    transportId
+                );
+                devices.push(transport);
             }
-            if (!transportId) {
-                throw new Error(`No transport id for device ${serial}`);
-            }
-            const features = await this.getDeviceFeatures({ transportId });
-            const banner = new AdbBanner(product, model, device, features);
-            devices.push(
-                new AdbServerTransport(this, serial, banner, transportId)
-            );
+            return devices;
+        } finally {
+            connection.writable.close().catch(NOOP);
+            readable.cancel().catch(NOOP);
         }
-        connection.writable.close().catch(NOOP);
-        readable.cancel().catch(NOOP);
-        return devices;
     }
 
     public formatDeviceService(
@@ -333,7 +352,7 @@ export class AdbServerClient {
     public async waitFor(
         device: AdbServerDeviceSelector,
         state: "device" | "disconnect",
-        signal?: AbortSignal
+        { signal, unref }: { signal?: AbortSignal; unref?: boolean } = {}
     ): Promise<void> {
         let type: string;
         if (!device) {
@@ -355,7 +374,7 @@ export class AdbServerClient {
             `wait-for-${type}-${state}`
         );
 
-        await raceSignal(() => this.connect(service), signal);
+        await raceSignal(() => this.connect(service, { unref }), signal);
     }
 }
 

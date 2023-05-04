@@ -1,8 +1,12 @@
-import { ExactReadableEndedError } from "@yume-chan/struct";
 import type { AsyncExactReadable } from "@yume-chan/struct";
+import { ExactReadableEndedError } from "@yume-chan/struct";
 
 import { PushReadableStream } from "./push-readable.js";
 import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
+
+const NOOP = () => {
+    // no-op
+};
 
 export class BufferedReadableStream implements AsyncExactReadable {
     private buffered: Uint8Array | undefined;
@@ -113,10 +117,15 @@ export class BufferedReadableStream implements AsyncExactReadable {
      * @returns A `ReadableStream`
      */
     public release(): ReadableStream<Uint8Array> {
-        if (this.buffered) {
+        if (this.bufferedLength > 0) {
             return new PushReadableStream<Uint8Array>(async (controller) => {
                 // Put the remaining data back to the stream
-                await controller.enqueue(this.buffered!);
+                const buffered = this.buffered!.subarray(this.bufferedOffset);
+                await controller.enqueue(buffered);
+
+                controller.abortSignal.addEventListener("abort", () => {
+                    this.reader.cancel().catch(NOOP);
+                });
 
                 // Manually pipe the stream
                 while (true) {

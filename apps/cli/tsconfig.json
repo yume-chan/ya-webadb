@@ -1,0 +1,13 @@
+{
+    "references": [
+        {
+            "path": "../../libraries/adb/tsconfig.build.json"
+        },
+        {
+            "path": "../../libraries/stream-extra/tsconfig.build.json"
+        },
+        {
+            "path": "./tsconfig.build.json"
+        },
+    ]
+}

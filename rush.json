@@ -498,6 +498,10 @@
         {
             "packageName": "@yume-chan/adb-server-node-tcp",
             "projectFolder": "libraries/adb-server-node-tcp"
+        },
+        {
+            "packageName": "@yume-chan/adb-cli",
+            "projectFolder": "apps/cli"
         }
     ]
 }

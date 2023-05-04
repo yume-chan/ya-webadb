@@ -30,19 +30,19 @@ export class PushReadableStream<T> extends ReadableStream<T> {
         strategy?: QueuingStrategy<T>
     ) {
         let waterMarkLow: PromiseResolver<void> | undefined;
-        const canceled = new AbortController();
+        const abortController = new AbortController();
 
         super(
             {
                 start: (controller) => {
                     const result = source({
-                        abortSignal: canceled.signal,
+                        abortSignal: abortController.signal,
                         async enqueue(chunk) {
-                            if (canceled.signal.aborted) {
+                            if (abortController.signal.aborted) {
                                 // If the stream is already cancelled,
                                 // throw immediately.
                                 throw (
-                                    canceled.signal.reason ??
+                                    abortController.signal.reason ??
                                     new Error("Aborted")
                                 );
                             }
@@ -71,7 +71,11 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                     if (result && "then" in result) {
                         result.then(
                             () => {
-                                controller.close();
+                                try {
+                                    controller.close();
+                                } catch (e) {
+                                    // controller already closed
+                                }
                             },
                             (e) => {
                                 controller.error(e);
@@ -83,7 +87,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                     waterMarkLow?.resolve();
                 },
                 cancel: (reason) => {
-                    canceled.abort(reason);
+                    abortController.abort(reason);
                     waterMarkLow?.reject(reason);
                 },
             },

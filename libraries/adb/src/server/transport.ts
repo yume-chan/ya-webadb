@@ -1,10 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
-import {
-    AbortController,
-    BufferedReadableStream,
-    UnwrapConsumableStream,
-    WrapWritableStream,
-} from "@yume-chan/stream-extra";
+import { AbortController } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
 import type {
@@ -13,9 +8,8 @@ import type {
     AdbTransport,
 } from "../adb.js";
 import type { AdbBanner } from "../banner.js";
-import { NOOP } from "../utils/index.js";
 
-import { AdbServerClient } from "./client.js";
+import type { AdbServerClient } from "./client.js";
 
 export class AdbServerTransport implements AdbTransport {
     private _client: AdbServerClient;
@@ -45,43 +39,20 @@ export class AdbServerTransport implements AdbTransport {
 
         this.disconnected = Promise.race([
             this._closed.promise,
-            client.waitFor(
-                { transportId },
-                "disconnect",
-                this._waitAbortController.signal
-            ),
+            client.waitFor({ transportId }, "disconnect", {
+                signal: this._waitAbortController.signal,
+                unref: true,
+            }),
         ]);
     }
 
     public async connect(service: string): Promise<AdbSocket> {
-        const connection = await this._client.connect(
-            `host:transport-id:${this.transportId}`
+        return await this._client.createDeviceSocket(
+            {
+                transportId: this.transportId,
+            },
+            service
         );
-
-        const writer = connection.writable.getWriter();
-        await AdbServerClient.writeString(writer, service);
-        writer.releaseLock();
-
-        const readable = new BufferedReadableStream(connection.readable);
-
-        try {
-            await AdbServerClient.readOkay(readable);
-
-            return {
-                service,
-                readable: readable.release(),
-                writable: new WrapWritableStream(
-                    connection.writable
-                ).bePipedThroughFrom(new UnwrapConsumableStream()),
-                close() {
-                    connection.readable.cancel().catch(NOOP);
-                    connection.writable.abort().catch(NOOP);
-                },
-            };
-        } finally {
-            readable.cancel().catch(NOOP);
-            writer.close().catch(NOOP);
-        }
     }
 
     public async addReverseTunnel(

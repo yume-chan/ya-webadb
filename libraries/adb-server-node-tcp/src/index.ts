@@ -4,6 +4,7 @@ import { Server, Socket } from "net";
 import type {
     AdbIncomingSocketHandler,
     AdbServerConnection,
+    AdbServerConnectionOptions,
 } from "@yume-chan/adb";
 import type { ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
@@ -15,6 +16,7 @@ import {
 import type { ValueOrPromise } from "@yume-chan/struct";
 
 function nodeSocketToStreamPair(socket: Socket) {
+    socket.setNoDelay(true);
     return {
         readable: new PushReadableStream<Uint8Array>((controller) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -23,8 +25,15 @@ function nodeSocketToStreamPair(socket: Socket) {
                 await controller.enqueue(data);
                 socket.resume();
             });
-            socket.on("close", () => {
-                controller.close();
+            socket.on("end", () => {
+                try {
+                    controller.close();
+                } catch (e) {
+                    // controller already closed
+                }
+            });
+            controller.abortSignal.addEventListener("abort", () => {
+                socket.end();
             });
         }),
         writable: new WritableStream<Uint8Array>({
@@ -40,7 +49,9 @@ function nodeSocketToStreamPair(socket: Socket) {
                 });
             },
             close() {
-                socket.end();
+                return new Promise<void>((resolve) => {
+                    socket.end(resolve);
+                });
             },
         }),
     };
@@ -55,10 +66,13 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
         this.spec = spec;
     }
 
-    public async connect(): Promise<
-        ReadableWritablePair<Uint8Array, Uint8Array>
-    > {
+    public async connect(
+        { unref }: AdbServerConnectionOptions = { unref: false }
+    ): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
         const socket = new Socket();
+        if (unref) {
+            socket.unref();
+        }
         socket.connect(this.spec);
         await new Promise<void>((resolve, reject) => {
             socket.once("connect", resolve);

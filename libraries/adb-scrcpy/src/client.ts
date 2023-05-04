@@ -53,13 +53,14 @@ function arrayToStream<T>(array: T[]): ReadableStream<T> {
 function concatStreams<T>(...streams: ReadableStream<T>[]): ReadableStream<T> {
     return new PushReadableStream(async (controller) => {
         for (const stream of streams) {
-            await stream.pipeTo(
-                new WritableStream({
-                    async write(chunk) {
-                        await controller.enqueue(chunk);
-                    },
-                })
-            );
+            const reader = stream.getReader();
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+                await controller.enqueue(value);
+            }
         }
     });
 }
