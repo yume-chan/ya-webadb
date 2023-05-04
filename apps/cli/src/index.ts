@@ -66,7 +66,10 @@ program
 
 program
     .command("shell [args...]")
-    .option("-t <id>", "transport id", (value) => Number.parseInt(value, 10))
+    .usage("[options] [-- <args...>]")
+    .option("-t <id>", "use device with given transport id", (value) =>
+        Number.parseInt(value, 10)
+    )
     .action(async (args: string[], options: { t: number }) => {
         const opts: { H: string; P: number } = program.opts();
         const connection = new AdbServerNodeTcpConnection({
