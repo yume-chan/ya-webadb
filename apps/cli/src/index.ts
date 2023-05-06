@@ -1,12 +1,6 @@
 import "source-map-support/register.js";
 
-import {
-    Adb,
-    AdbBanner,
-    AdbServerClient,
-    AdbServerTransport,
-    NOOP,
-} from "@yume-chan/adb";
+import { Adb, AdbServerClient, NOOP } from "@yume-chan/adb";
 import { AdbServerNodeTcpConnection } from "@yume-chan/adb-server-node-tcp";
 import {
     ConsumableWritableStream,
@@ -49,11 +43,11 @@ program
                     `${
                         device.serial.padEnd(22)
                     }device${
-                        appendTransportInfo("product", device.banner.product)
+                        appendTransportInfo("product", device.product)
                     }${
-                        appendTransportInfo("model", device.banner.model)
+                        appendTransportInfo("model", device.model)
                     }${
-                        appendTransportInfo("device", device.banner.device)
+                        appendTransportInfo("device", device.device)
                     }${
                         appendTransportInfo("transport_id", device.transportId.toString())
                     }`
@@ -66,32 +60,37 @@ program
 
 program
     .command("shell [args...]")
+    .description(
+        "run remote shell command (interactive shell if no command given). `--` is required before command name."
+    )
     .usage("[options] [-- <args...>]")
     .option("-t <id>", "use device with given transport id", (value) =>
-        Number.parseInt(value, 10)
+        BigInt(value)
     )
-    .action(async (args: string[], options: { t: number }) => {
+    .action(async (args: string[], options: { t: bigint | undefined }) => {
         const opts: { H: string; P: number } = program.opts();
         const connection = new AdbServerNodeTcpConnection({
             host: opts.H,
             port: opts.P,
         });
         const client = new AdbServerClient(connection);
-        const features = await client.getDeviceFeatures({
-            transportId: options.t,
-        });
-        const transport = new AdbServerTransport(
-            client,
-            "device",
-            new AdbBanner("", "", "", features),
-            options.t
+        const transport = await client.createTransport(
+            options.t !== undefined
+                ? {
+                      transportId: options.t,
+                  }
+                : undefined
         );
         const adb = new Adb(transport);
         const shell = await adb.subprocess.shell(args);
+
+        // TODO: intercept Ctrl+C and send it to the shell
+
         const stdinWriter = shell.stdin.getWriter();
         process.stdin.on("data", (data: Uint8Array) => {
             ConsumableWritableStream.write(stdinWriter, data).catch(NOOP);
         });
+
         shell.stdout
             .pipeTo(
                 new WritableStream({
@@ -101,6 +100,12 @@ program
                 })
             )
             .catch(NOOP);
+
+        shell.exit.then((code) => {
+            // `process.stdin.on("data")` will keep the process alive,
+            // so call `process.exit` explicitly.
+            process.exit(code);
+        }, NOOP);
     });
 
 program.parse();

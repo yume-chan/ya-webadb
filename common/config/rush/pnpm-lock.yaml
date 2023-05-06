@@ -151,6 +151,7 @@ importers:
       ts-jest: ^29.0.4
       tslib: ^2.5.0
       typescript: ^5.0.3
+      web-streams-polyfill: ^4.0.0-beta.3
     dependencies:
       '@yume-chan/async': 2.2.0
       '@yume-chan/dataview-bigint-polyfill': link:../dataview-bigint-polyfill
@@ -169,6 +170,7 @@ importers:
       prettier: 2.8.8
       ts-jest: 29.1.0_tobmchb5uviuq5lwsinkw5fvje
       typescript: 5.0.4
+      web-streams-polyfill: 4.0.0-beta.3
 
   ../../libraries/adb-credential-web:
     specifiers:
@@ -9534,7 +9536,6 @@ packages:
   /web-streams-polyfill/4.0.0-beta.3:
     resolution: {integrity: sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug==}
     engines: {node: '>= 14'}
-    dev: false
 
   /webidl-conversions/3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}

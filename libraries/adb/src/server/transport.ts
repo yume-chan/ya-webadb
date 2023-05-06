@@ -16,7 +16,7 @@ export class AdbServerTransport implements AdbTransport {
 
     public readonly serial: string;
 
-    public readonly transportId: number;
+    public readonly transportId: bigint;
 
     public readonly maxPayloadSize: number = 1 * 1024 * 1024;
 
@@ -30,7 +30,7 @@ export class AdbServerTransport implements AdbTransport {
         client: AdbServerClient,
         serial: string,
         banner: AdbBanner,
-        transportId: number
+        transportId: bigint
     ) {
         this._client = client;
         this.serial = serial;
@@ -47,7 +47,7 @@ export class AdbServerTransport implements AdbTransport {
     }
 
     public async connect(service: string): Promise<AdbSocket> {
-        return await this._client.createDeviceSocket(
+        return await this._client.connectDevice(
             {
                 transportId: this.transportId,
             },

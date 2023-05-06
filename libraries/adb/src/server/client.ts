@@ -1,3 +1,5 @@
+// cspell:ignore tport
+
 import { PromiseResolver } from "@yume-chan/async";
 import type {
     AbortSignal,
@@ -14,7 +16,12 @@ import type {
     ExactReadable,
     ValueOrPromise,
 } from "@yume-chan/struct";
-import { SyncPromise, decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
+import {
+    BigIntFieldType,
+    SyncPromise,
+    decodeUtf8,
+    encodeUtf8,
+} from "@yume-chan/struct";
 
 import type { AdbIncomingSocketHandler, AdbSocket } from "../adb.js";
 import { AdbBanner } from "../banner.js";
@@ -46,6 +53,16 @@ function hexCharToNumber(char: number) {
     }
 
     throw new Error(`Invalid hex char ${char}`);
+}
+
+// It's 22x faster than converting `data` to string then `Number.parseInt`
+// https://jsbench.me/dglha94ozl/1
+function hexToNumber(data: Uint8Array): number {
+    let result = 0;
+    for (let i = 0; i < data.length; i += 1) {
+        result = (result << 4) | hexCharToNumber(data[i]!);
+    }
+    return result;
 }
 
 function numberToHex(value: number) {
@@ -88,16 +105,30 @@ export interface AdbServerConnection {
     clearReverseTunnels(): ValueOrPromise<void>;
 }
 
+export interface AdbServerSocket extends AdbSocket {
+    transportId: bigint;
+}
+
 export type AdbServerDeviceSelector =
     | {
           serial: string;
       }
-    | { transportId: number }
+    | { transportId: bigint }
     | { usb: true }
     | { emulator: true }
     | undefined;
 
+export interface AdbServerDevice {
+    serial: string;
+    product?: string | undefined;
+    model?: string | undefined;
+    device?: string | undefined;
+    transportId: bigint;
+}
+
 export class AdbServerClient {
+    public static readonly VERSION = 41;
+
     public readonly connection: AdbServerConnection;
 
     public constructor(connection: AdbServerConnection) {
@@ -111,10 +142,7 @@ export class AdbServerClient {
     ): string | PromiseLike<string> {
         return SyncPromise.try(() => stream.readExactly(4))
             .then((buffer) => {
-                let length = 0;
-                for (let i = 0; i < 4; i += 1) {
-                    length = (length << 4) | hexCharToNumber(buffer[i]!);
-                }
+                const length = hexToNumber(buffer);
                 return stream.readExactly(length);
             })
             .then((valueBuffer) => {
@@ -175,17 +203,25 @@ export class AdbServerClient {
         }
     }
 
-    public async getVersion(): Promise<string> {
+    public async getVersion(): Promise<number> {
         const connection = await this.connect("host:version");
         const readable = new BufferedReadableStream(connection.readable);
         try {
-            const version = await AdbServerClient.readString(readable);
-            connection.writable.close().catch(NOOP);
-            readable.cancel().catch(NOOP);
+            const length = hexToNumber(await readable.readExactly(4));
+            const version = hexToNumber(await readable.readExactly(length));
             return version;
         } finally {
             connection.writable.close().catch(NOOP);
             readable.cancel().catch(NOOP);
+        }
+    }
+
+    public async validateVersion() {
+        const version = await this.getVersion();
+        if (version !== AdbServerClient.VERSION) {
+            throw new Error(
+                `adb server version (${version}) doesn't match this client (${AdbServerClient.VERSION})`
+            );
         }
     }
 
@@ -207,11 +243,11 @@ export class AdbServerClient {
         }
     }
 
-    public async getDevices(): Promise<AdbServerTransport[]> {
+    public async getDevices(): Promise<AdbServerDevice[]> {
         const connection = await this.connect("host:devices-l");
         const readable = new BufferedReadableStream(connection.readable);
         try {
-            const devices: AdbServerTransport[] = [];
+            const devices: AdbServerDevice[] = [];
             const response = await AdbServerClient.readString(readable);
             for (const line of response.split("\n")) {
                 if (!line) {
@@ -228,7 +264,7 @@ export class AdbServerClient {
                 let product: string | undefined;
                 let model: string | undefined;
                 let device: string | undefined;
-                let transportId: number | undefined;
+                let transportId: bigint | undefined;
                 for (let i = 2; i < parts.length; i += 1) {
                     const [key, value] = parts[i]!.split(":");
                     switch (key) {
@@ -242,22 +278,20 @@ export class AdbServerClient {
                             device = value;
                             break;
                         case "transport_id":
-                            transportId = Number.parseInt(value!, 10);
+                            transportId = BigInt(value!);
                             break;
                     }
                 }
                 if (!transportId) {
                     throw new Error(`No transport id for device ${serial}`);
                 }
-                const features = await this.getDeviceFeatures({ transportId });
-                const banner = new AdbBanner(product, model, device, features);
-                const transport = new AdbServerTransport(
-                    this,
+                devices.push({
                     serial,
-                    banner,
-                    transportId
-                );
-                devices.push(transport);
+                    product,
+                    model,
+                    device,
+                    transportId,
+                });
             }
             return devices;
         } finally {
@@ -288,11 +322,9 @@ export class AdbServerClient {
         throw new Error("Invalid device selector");
     }
 
-    public async getDeviceFeatures(
-        device: AdbServerDeviceSelector
-    ): Promise<AdbFeature[]> {
+    public async getDeviceFeatures(transportId: bigint): Promise<AdbFeature[]> {
         const connection = await this.connect(
-            this.formatDeviceService(device, "features")
+            this.formatDeviceService({ transportId }, "features")
         );
         const readable = new BufferedReadableStream(connection.readable);
         try {
@@ -304,21 +336,25 @@ export class AdbServerClient {
         }
     }
 
-    public async createDeviceSocket(
+    public async connectDevice(
         device: AdbServerDeviceSelector,
         service: string
-    ): Promise<AdbSocket> {
+    ): Promise<AdbServerSocket> {
+        await this.validateVersion();
+
         let switchService: string;
+        let transportId: bigint | undefined;
         if (!device) {
-            switchService = `host:transport-any`;
+            switchService = `host:tport:any`;
         } else if ("transportId" in device) {
             switchService = `host:transport-id:${device.transportId}`;
+            transportId = device.transportId;
         } else if ("serial" in device) {
-            switchService = `host:transport:${device.serial}`;
+            switchService = `host:tport:serial:${device.serial}`;
         } else if ("usb" in device) {
-            switchService = `host:transport-usb`;
+            switchService = `host:tport:usb`;
         } else if ("emulator" in device) {
-            switchService = `host:transport-local`;
+            switchService = `host:tport:local`;
         } else {
             throw new Error("Invalid device selector");
         }
@@ -327,11 +363,23 @@ export class AdbServerClient {
         const readable = new BufferedReadableStream(connection.readable);
         const writer = connection.writable.getWriter();
         try {
+            if (transportId === undefined) {
+                const array = await readable.readExactly(8);
+                // TODO: switch to a more performant algorithm.
+                const dataView = new DataView(
+                    array.buffer,
+                    array.byteOffset,
+                    array.byteLength
+                );
+                transportId = BigIntFieldType.Uint64.getter(dataView, 0, true);
+            }
+
             await AdbServerClient.writeString(writer, service);
             await AdbServerClient.readOkay(readable);
 
             writer.releaseLock();
             return {
+                transportId,
                 service,
                 readable: readable.release(),
                 writable: new WrapWritableStream(
@@ -369,12 +417,51 @@ export class AdbServerClient {
             throw new Error("Invalid device selector");
         }
 
+        // `waitFor` can't use `connectDevice`, because the device
+        // might not be available yet.
         const service = this.formatDeviceService(
             device,
             `wait-for-${type}-${state}`
         );
 
         await raceSignal(() => this.connect(service, { unref }), signal);
+    }
+
+    public async createTransport(
+        device: AdbServerDeviceSelector
+    ): Promise<AdbServerTransport> {
+        // Usually the client should send a device command after `connectDevice`,
+        // so the command got executed on ADB daemon.
+        // But it's also possible to send another host command to the host,
+        // if the command requires a device but doesn't specify one,
+        // it will be executed against the device selected by `connectDevice`.
+        const socket = await this.connectDevice(device, "host:features");
+
+        const devices = await this.getDevices();
+        const info = devices.find(
+            (device) => device.transportId === socket.transportId
+        );
+
+        const readable = new BufferedReadableStream(socket.readable);
+        const featuresString = await AdbServerClient.readString(readable);
+        const features = featuresString.split(",") as AdbFeature[];
+
+        const banner = new AdbBanner(
+            info?.product,
+            info?.model,
+            info?.device,
+            features
+        );
+
+        readable.cancel().catch(NOOP);
+        socket.writable.abort().catch(NOOP);
+
+        return new AdbServerTransport(
+            this,
+            info?.serial ?? "",
+            banner,
+            socket.transportId
+        );
     }
 }
 

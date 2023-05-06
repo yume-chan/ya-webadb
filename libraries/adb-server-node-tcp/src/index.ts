@@ -107,7 +107,7 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
         if (address) {
             const url = new URL(address);
             if (url.protocol === "tcp:") {
-                server.listen(Number.parseInt(url.port, 10), "0.0.0.0");
+                server.listen(Number.parseInt(url.port, 10), url.hostname);
             } else if (url.protocol === "unix:") {
                 server.listen(url.pathname);
             } else {

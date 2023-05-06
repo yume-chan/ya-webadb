@@ -74,8 +74,8 @@ export class Adb implements Closeable {
     public readonly reverse: AdbReverseCommand;
     public readonly tcpip: AdbTcpIpCommand;
 
-    public constructor(connector: AdbTransport) {
-        this.transport = connector;
+    public constructor(transport: AdbTransport) {
+        this.transport = transport;
 
         this.subprocess = new AdbSubprocess(this);
         this.power = new AdbPower(this);

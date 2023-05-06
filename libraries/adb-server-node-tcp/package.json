@@ -4,8 +4,10 @@
     "version": "0.0.19",
     "description": "ADB server connection for `@yume-chan/adb` using Node.js' `net` module",
     "keywords": [
-        "websocket",
-        "adb"
+        "adb",
+        "adb-server-connection",
+        "node",
+        "tcp"
     ],
     "license": "MIT",
     "author": {

@@ -1,11 +1,11 @@
 {
     "name": "@yume-chan/adb-cli",
     "private": true,
-    "version": "0.0.9",
+    "version": "0.0.19",
     "description": "Re-implement `adb`",
     "keywords": [
-        "websocket",
-        "adb"
+        "adb",
+        "cli"
     ],
     "license": "MIT",
     "author": {
@@ -13,11 +13,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-cli#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/apps/adb-cli#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "libraries/adb-cli"
+        "directory": "apps/adb-cli"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
