@@ -3,11 +3,13 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type {
     AbortSignal,
+    Consumable,
     ReadableWritablePair,
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
+    DuplexStreamFactory,
     UnwrapConsumableStream,
     WrapWritableStream,
 } from "@yume-chan/stream-extra";
@@ -378,16 +380,25 @@ export class AdbServerClient {
             await AdbServerClient.readOkay(readable);
 
             writer.releaseLock();
+
+            const duplex = new DuplexStreamFactory<
+                Uint8Array,
+                Consumable<Uint8Array>
+            >();
+            const socketReadable = duplex.wrapReadable(readable.release());
+            const socketWritable = duplex.createWritable(
+                new WrapWritableStream(connection.writable).bePipedThroughFrom(
+                    new UnwrapConsumableStream()
+                )
+            );
+
             return {
                 transportId,
                 service,
-                readable: readable.release(),
-                writable: new WrapWritableStream(
-                    connection.writable
-                ).bePipedThroughFrom(new UnwrapConsumableStream()),
+                readable: socketReadable,
+                writable: socketWritable,
                 close() {
-                    writer.close().catch(NOOP);
-                    readable.cancel().catch(NOOP);
+                    duplex.close().catch(NOOP);
                 },
             };
         } catch (e) {

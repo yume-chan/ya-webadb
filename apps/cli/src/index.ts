@@ -84,9 +84,9 @@ program
         const adb = new Adb(transport);
         const shell = await adb.subprocess.shell(args);
 
-        // TODO: intercept Ctrl+C and send it to the shell
-
         const stdinWriter = shell.stdin.getWriter();
+
+        process.stdin.setRawMode(true);
         process.stdin.on("data", (data: Uint8Array) => {
             ConsumableWritableStream.write(stdinWriter, data).catch(NOOP);
         });
