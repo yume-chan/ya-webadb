@@ -117,7 +117,7 @@ export type AdbServerDeviceSelector =
       }
     | { transportId: bigint }
     | { usb: true }
-    | { emulator: true }
+    | { tcp: true }
     | undefined;
 
 export interface AdbServerDevice {
@@ -227,7 +227,7 @@ export class AdbServerClient {
         }
     }
 
-    public async kill(): Promise<void> {
+    public async killServer(): Promise<void> {
         const connection = await this.connect("host:kill");
         connection.writable.close().catch(NOOP);
         connection.readable.cancel().catch(NOOP);
@@ -318,7 +318,7 @@ export class AdbServerClient {
         if ("usb" in device) {
             return `host-usb:${command}`;
         }
-        if ("emulator" in device) {
+        if ("tcp" in device) {
             return `host-local:${command}`;
         }
         throw new Error("Invalid device selector");
@@ -355,7 +355,7 @@ export class AdbServerClient {
             switchService = `host:tport:serial:${device.serial}`;
         } else if ("usb" in device) {
             switchService = `host:tport:usb`;
-        } else if ("emulator" in device) {
+        } else if ("tcp" in device) {
             switchService = `host:tport:local`;
         } else {
             throw new Error("Invalid device selector");
@@ -422,7 +422,7 @@ export class AdbServerClient {
             type = "any";
         } else if ("usb" in device) {
             type = "usb";
-        } else if ("emulator" in device) {
+        } else if ("tcp" in device) {
             type = "local";
         } else {
             throw new Error("Invalid device selector");
