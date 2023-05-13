@@ -147,18 +147,26 @@ const state = makeAutoObservable(
             this.running = true;
             this.stream = this.logcat!.binary();
             this.stopSignal = new AbortController();
-            this.stream.pipeTo(
-                new WritableStream({
-                    write: (chunk) => {
-                        this.buffer.push(chunk);
-                        if (!this.flushRequested) {
-                            this.flushRequested = true;
-                            requestAnimationFrame(this.flush);
-                        }
-                    },
-                }),
-                { signal: this.stopSignal.signal }
-            );
+            this.stream
+                .pipeTo(
+                    new WritableStream({
+                        write: (chunk) => {
+                            this.buffer.push(chunk);
+                            if (!this.flushRequested) {
+                                this.flushRequested = true;
+                                requestAnimationFrame(this.flush);
+                            }
+                        },
+                    }),
+                    { signal: this.stopSignal.signal }
+                )
+                .catch((e) => {
+                    if (this.stopSignal?.signal.aborted) {
+                        return;
+                    }
+
+                    throw e;
+                });
         },
         flush() {
             this.list.push(...this.buffer);
