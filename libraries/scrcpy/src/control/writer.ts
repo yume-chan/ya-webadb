@@ -28,24 +28,26 @@ export class ScrcpyControlMessageWriter {
     }
 
     private async write(message: Uint8Array) {
-        return await ConsumableWritableStream.write(this._writer, message);
+        await ConsumableWritableStream.write(this._writer, message);
     }
 
-    public injectKeyCode(
+    public async injectKeyCode(
         message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">
     ) {
-        return this.write(this._serializer.injectKeyCode(message));
+        await this.write(this._serializer.injectKeyCode(message));
     }
 
-    public injectText(text: string) {
-        return this.write(this._serializer.injectText(text));
+    public async injectText(text: string) {
+        await this.write(this._serializer.injectText(text));
     }
 
     /**
      * `pressure` is a float value between 0 and 1.
      */
-    public injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
-        return this.write(this._serializer.injectTouch(message));
+    public async injectTouch(
+        message: Omit<ScrcpyInjectTouchControlMessage, "type">
+    ) {
+        await this.write(this._serializer.injectTouch(message));
     }
 
     /**
@@ -67,19 +69,19 @@ export class ScrcpyControlMessageWriter {
         }
     }
 
-    public setScreenPowerMode(mode: AndroidScreenPowerMode) {
-        return this.write(this._serializer.setScreenPowerMode(mode));
+    public async setScreenPowerMode(mode: AndroidScreenPowerMode) {
+        await this.write(this._serializer.setScreenPowerMode(mode));
     }
 
-    public rotateDevice() {
-        return this.write(this._serializer.rotateDevice());
+    public async rotateDevice() {
+        await this.write(this._serializer.rotateDevice());
     }
 
     public releaseLock() {
         this._writer.releaseLock();
     }
 
-    public close() {
-        return this._writer.close();
+    public async close() {
+        await this._writer.close();
     }
 }

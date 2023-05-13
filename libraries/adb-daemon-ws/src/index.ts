@@ -1,5 +1,9 @@
 import type { AdbDaemonConnection } from "@yume-chan/adb";
-import { AdbPacket, AdbPacketSerializeStream } from "@yume-chan/adb";
+import {
+    AdbPacket,
+    AdbPacketSerializeStream,
+    unreachable,
+} from "@yume-chan/adb";
 import type { Consumable } from "@yume-chan/stream-extra";
 import {
     ConsumableWritableStream,
@@ -8,10 +12,6 @@ import {
     StructDeserializeStream,
     pipeFrom,
 } from "@yume-chan/stream-extra";
-
-const NOOP = () => {
-    // no-op
-};
 
 export default class AdbDaemonWebSocketConnection
     implements AdbDaemonConnection
@@ -36,7 +36,7 @@ export default class AdbDaemonWebSocketConnection
             };
         });
 
-        const factory = new DuplexStreamFactory<
+        const duplex = new DuplexStreamFactory<
             Uint8Array,
             Consumable<Uint8Array>
         >({
@@ -46,10 +46,10 @@ export default class AdbDaemonWebSocketConnection
         });
 
         socket.onclose = () => {
-            factory.close().catch(NOOP);
+            duplex.dispose().catch(unreachable);
         };
 
-        const readable = factory.wrapReadable(
+        const readable = duplex.wrapReadable(
             new ReadableStream(
                 {
                     start: (controller) => {
@@ -71,7 +71,7 @@ export default class AdbDaemonWebSocketConnection
             )
         );
 
-        const writable = factory.createWritable(
+        const writable = duplex.createWritable(
             new ConsumableWritableStream({
                 write(chunk) {
                     socket.send(chunk);

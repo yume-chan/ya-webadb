@@ -12,7 +12,7 @@ import {
 import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
-import { NOOP, decodeUtf8, encodeUtf8 } from "../utils/index.js";
+import { decodeUtf8, encodeUtf8, unreachable } from "../utils/index.js";
 
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 import { AdbCommand, calculateChecksum } from "./packet.js";
@@ -321,7 +321,7 @@ export class AdbPacketDispatcher implements Closeable {
 
     private dispose() {
         for (const socket of this.sockets.values()) {
-            socket.dispose().catch(NOOP);
+            socket.dispose().catch(unreachable);
         }
 
         this._disconnected.resolve();

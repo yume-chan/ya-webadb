@@ -80,7 +80,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             write: async (packet) => {
                 switch (packet.type) {
                     case "configuration":
-                        this.configure(packet.data).catch(NOOP);
+                        await this.configure(packet.data);
                         break;
                     case "data": {
                         if (!this._initializer) {
@@ -156,6 +156,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
     public dispose(): void {
         this._initializer?.promise
             .then((wrapper) => wrapper.dispose())
+            // NOOP: It's disposed so nobody cares about the error
             .catch(NOOP);
         this._initializer = undefined;
     }

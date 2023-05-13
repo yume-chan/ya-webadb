@@ -1,5 +1,5 @@
 import type { Adb } from "@yume-chan/adb";
-import { AdbReverseNotSupportedError } from "@yume-chan/adb";
+import { AdbReverseNotSupportedError, NOOP } from "@yume-chan/adb";
 import { delay } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
@@ -13,10 +13,6 @@ import {
     TransformStream,
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
-
-const NOOP = () => {
-    // no-op
-};
 
 export interface AdbScrcpyConnectionOptions {
     scid: number;
@@ -58,7 +54,7 @@ export abstract class AdbScrcpyConnection implements Disposable {
     }
 
     public initialize(): ValueOrPromise<void> {
-        // do nothing
+        // pure virtual method
     }
 
     protected getSocketName(): string {
@@ -72,7 +68,7 @@ export abstract class AdbScrcpyConnection implements Disposable {
     public abstract getStreams(): ValueOrPromise<AdbScrcpyConnectionStreams>;
 
     public dispose(): void {
-        // do nothing
+        // pure virtual method
     }
 }
 
@@ -82,7 +78,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     private connect(): Promise<
         ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
     > {
-        return this.adb.createSocket("localabstract:scrcpy");
+        return this.adb.createSocket(this.socketName);
     }
 
     private async connectAndRetry(): Promise<
@@ -92,6 +88,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
             try {
                 return await this.connect();
             } catch (e) {
+                // Maybe the server is still starting
                 await delay(100);
             }
         }
@@ -101,7 +98,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     private async connectVideoStream(): Promise<ReadableStream<Uint8Array>> {
         const { readable: stream } = await this.connectAndRetry();
         if (this.options.sendDummyByte) {
-            // Can't guarantee the stream will preserve message boundary
+            // Can't guarantee the stream will preserve message boundaries,
             // so buffer the stream
             const buffered = new BufferedReadableStream(stream);
             await buffered.readExactly(1);
@@ -125,7 +122,6 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     }
 
     public override dispose(): void {
-        super.dispose();
         this._disposed = true;
     }
 }
@@ -138,16 +134,14 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     private address!: string;
 
     public override async initialize(): Promise<void> {
-        try {
-            // try to unbind first
-            await this.adb.reverse.remove(this.socketName);
-        } catch (e) {
+        // try to unbind first
+        await this.adb.reverse.remove(this.socketName).catch((e) => {
             if (e instanceof AdbReverseNotSupportedError) {
                 throw e;
             }
 
             // Ignore other errors when unbinding
-        }
+        });
 
         const queue = new TransformStream<
             ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
@@ -181,7 +175,8 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     public override dispose() {
         // Don't await this!
         // `reverse.remove`'s response will never arrive
-        // before we read all pending data from `videoStream`
+        // before we read all pending data from Scrcpy streams
+        // NOOP: failed to remove reverse tunnel is not a big deal
         this.adb.reverse.remove(this.address).catch(NOOP);
     }
 }

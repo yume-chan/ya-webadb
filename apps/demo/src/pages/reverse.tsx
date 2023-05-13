@@ -1,4 +1,4 @@
-import { decodeUtf8 } from "@yume-chan/adb";
+import { NOOP, decodeUtf8 } from "@yume-chan/adb";
 import { WritableStream } from "@yume-chan/stream-extra";
 import { makeAutoObservable, reaction, runInAction } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -16,7 +16,7 @@ reaction(
             return;
         }
 
-        await device.reverse.remove("tcp:3000").catch(() => {});
+        await device.reverse.remove("tcp:3000").catch(NOOP);
         await device.reverse.add("tcp:3000", (socket) => {
             runInAction(() => {
                 state.log.push(`received stream`);

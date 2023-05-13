@@ -38,10 +38,6 @@ import {
 import type { AdbScrcpyConnection } from "./connection.js";
 import type { AdbScrcpyOptions } from "./options/index.js";
 
-const NOOP = () => {
-    // no-op
-};
-
 function arrayToStream<T>(array: T[]): ReadableStream<T> {
     return new PushReadableStream(async (controller) => {
         for (const item of array) {
@@ -179,7 +175,13 @@ export class AdbScrcpyClient {
                         preventCancel: true,
                     }
                 )
-                .catch(NOOP);
+                .catch((e) => {
+                    if (abortController.signal.aborted) {
+                        return;
+                    }
+
+                    throw e;
+                });
 
             const streams = await Promise.race([
                 process.exit.then(() => {

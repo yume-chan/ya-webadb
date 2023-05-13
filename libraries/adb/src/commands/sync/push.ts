@@ -29,7 +29,7 @@ export const AdbSyncOkResponse = new Struct({ littleEndian: true }).uint32(
     "unused"
 );
 
-async function pipeFile(
+async function pipeFileData(
     locked: AdbSyncSocketLocked,
     file: ReadableStream<Consumable<Uint8Array>>,
     packetSize: number,
@@ -80,7 +80,7 @@ export async function adbSyncPushV1({
         const mode = (type << 12) | permission;
         const pathAndMode = `${filename},${mode.toString()}`;
         await adbSyncWriteRequest(locked, AdbSyncRequestId.Send, pathAndMode);
-        await pipeFile(locked, file, packetSize, mtime);
+        await pipeFileData(locked, file, packetSize, mtime);
     } finally {
         locked.release();
     }
@@ -139,7 +139,7 @@ export async function adbSyncPushV2({
             })
         );
 
-        await pipeFile(locked, file, packetSize, mtime);
+        await pipeFileData(locked, file, packetSize, mtime);
     } finally {
         locked.release();
     }

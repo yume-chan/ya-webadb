@@ -6,9 +6,9 @@ import {
 
 export class AdbDaemonWebUsbConnectionManager {
     /**
-     * Gets the instance of AdbDaemonWebUsbConnectionManager using browser WebUSB implementation.
+     * Gets the instance of {@link AdbDaemonWebUsbConnectionManager} using browser WebUSB implementation.
      *
-     * May be `undefined` if the browser does not support WebUSB.
+     * May be `undefined` if current runtime does not support WebUSB.
      */
     public static readonly BROWSER =
         typeof window !== "undefined" && !!window.navigator.usb
@@ -18,7 +18,7 @@ export class AdbDaemonWebUsbConnectionManager {
     private _usb: USB;
 
     /**
-     * Create a new instance of `AdbDaemonWebUsbConnectionManager` using the specified WebUSB API implementation.
+     * Create a new instance of {@link AdbDaemonWebUsbConnectionManager} using the specified WebUSB implementation.
      * @param usb A WebUSB compatible interface.
      */
     public constructor(usb: USB) {
@@ -35,12 +35,7 @@ export class AdbDaemonWebUsbConnectionManager {
      * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
      *
      * Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
-     * @param usbManager
-     * A WebUSB compatible interface.
-     * For example, `usb` NPM package for Node.js has a `webusb` object that can be used here.
-     *
-     * Defaults to `window.navigator.usb` (will throw an error if not exist).
-     * @returns The `AdbDaemonWebUsbConnection` instance if the user selected a device,
+     * @returns An {@link AdbDaemonWebUsbConnection} instance if the user selected a device,
      * or `undefined` if the user cancelled the device picker.
      */
     public async requestDevice(
@@ -76,15 +71,10 @@ export class AdbDaemonWebUsbConnectionManager {
      * The filters to apply to the device list.
      *
      * It must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface,
-     * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
+     * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the device list.
      *
      * Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
-     * @param usbManager
-     * A WebUSB compatible interface.
-     * For example, `usb` NPM package for Node.js has a `webusb` object that can be used here.
-     *
-     * Defaults to `window.navigator.usb` (will throw an error if not exist).
-     * @returns An array of `AdbDaemonWebUsbConnection` instances for all connected and authenticated devices.
+     * @returns An array of {@link AdbDaemonWebUsbConnection} instances for all connected and authenticated devices.
      */
     public async getDevices(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]

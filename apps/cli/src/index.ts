@@ -1,6 +1,6 @@
 import "source-map-support/register.js";
 
-import { Adb, AdbServerClient, NOOP } from "@yume-chan/adb";
+import { Adb, AdbServerClient } from "@yume-chan/adb";
 import { AdbServerNodeTcpConnection } from "@yume-chan/adb-server-node-tcp";
 import {
     ConsumableWritableStream,
@@ -138,7 +138,10 @@ createDeviceCommand("shell [args...]")
 
         process.stdin.setRawMode(true);
         process.stdin.on("data", (data: Uint8Array) => {
-            ConsumableWritableStream.write(stdinWriter, data).catch(NOOP);
+            ConsumableWritableStream.write(stdinWriter, data).catch((e) => {
+                console.error(e);
+                process.exit(1);
+            });
         });
 
         shell.stdout
@@ -149,13 +152,22 @@ createDeviceCommand("shell [args...]")
                     },
                 })
             )
-            .catch(NOOP);
+            .catch((e) => {
+                console.error(e);
+                process.exit(1);
+            });
 
-        shell.exit.then((code) => {
-            // `process.stdin.on("data")` will keep the process alive,
-            // so call `process.exit` explicitly.
-            process.exit(code);
-        }, NOOP);
+        shell.exit.then(
+            (code) => {
+                // `process.stdin.on("data")` will keep the process alive,
+                // so call `process.exit` explicitly.
+                process.exit(code);
+            },
+            (e) => {
+                console.error(e);
+                process.exit(1);
+            }
+        );
     });
 
 createDeviceCommand("logcat [args...]")

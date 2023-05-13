@@ -3,7 +3,11 @@ import type {
     AdbPacketData,
     AdbPacketInit,
 } from "@yume-chan/adb";
-import { AdbPacketHeader, AdbPacketSerializeStream } from "@yume-chan/adb";
+import {
+    AdbPacketHeader,
+    AdbPacketSerializeStream,
+    unreachable,
+} from "@yume-chan/adb";
 import type {
     Consumable,
     ReadableWritablePair,
@@ -17,10 +21,6 @@ import {
 } from "@yume-chan/stream-extra";
 import type { ExactReadable } from "@yume-chan/struct";
 import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
-
-const NOOP = () => {
-    // no-op
-};
 
 /**
  * `classCode`, `subclassCode` and `protocolCode` are required
@@ -152,7 +152,7 @@ export class AdbDaemonWebUsbConnectionStreams
     ) {
         let closed = false;
 
-        const factory = new DuplexStreamFactory<
+        const duplex = new DuplexStreamFactory<
             AdbPacketData,
             Consumable<Uint8Array>
         >({
@@ -174,18 +174,18 @@ export class AdbDaemonWebUsbConnectionStreams
 
         function handleUsbDisconnect(e: USBConnectionEvent) {
             if (e.device === device) {
-                factory.dispose().catch(NOOP);
+                duplex.dispose().catch(unreachable);
             }
         }
 
         usbManager.addEventListener("disconnect", handleUsbDisconnect);
 
-        this._readable = factory.wrapReadable(
+        this._readable = duplex.wrapReadable(
             new ReadableStream<AdbPacketData>({
                 async pull(controller) {
                     // The `length` argument in `transferIn` must not be smaller than what the device sent,
                     // otherwise it will return `babble` status without any data.
-                    // Here we read exactly 24 bytes (packet header) followed by exactly `payloadLength`.
+                    // ADB daemon sends each packet in two parts, the 24-byte header and the payload.
                     const result = await device.transferIn(
                         inEndpoint.endpointNumber,
                         24
@@ -198,7 +198,7 @@ export class AdbDaemonWebUsbConnectionStreams
                     const buffer = new Uint8Array(result.data!.buffer);
                     const stream = new Uint8ArrayExactReadable(buffer);
 
-                    // Add `payload` field to its type, because we will assign `payload` in next step.
+                    // Add `payload` field to its type, it's assigned below.
                     const packet = AdbPacketHeader.deserialize(
                         stream
                     ) as AdbPacketHeader & { payload: Uint8Array };
@@ -219,7 +219,7 @@ export class AdbDaemonWebUsbConnectionStreams
 
         const zeroMask = outEndpoint.packetSize - 1;
         this._writable = pipeFrom(
-            factory.createWritable(
+            duplex.createWritable(
                 new ConsumableWritableStream({
                     write: async (chunk) => {
                         try {
@@ -228,6 +228,10 @@ export class AdbDaemonWebUsbConnectionStreams
                                 chunk
                             );
 
+                            // In USB protocol, a not-full packet means the end of a transfer.
+                            // If the payload size is a multiple of the packet size,
+                            // we need to send an empty packet to indicate the end,
+                            // so the OS will send it to the device immediately.
                             if (
                                 zeroMask &&
                                 (chunk.byteLength & zeroMask) === 0

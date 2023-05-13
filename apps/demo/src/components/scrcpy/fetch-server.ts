@@ -69,7 +69,7 @@ export function fetchServer(
 ) {
     if (!cachedValue) {
         cachedValue = new FetchWithProgress(SERVER_URL);
-        cachedValue.promise.catch((e) => {
+        cachedValue.promise.catch(() => {
             cachedValue = undefined;
         });
     }

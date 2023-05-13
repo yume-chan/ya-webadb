@@ -90,6 +90,7 @@ function numberToHex(value: number) {
 
 export interface AdbServerConnectionOptions {
     unref?: boolean | undefined;
+    signal?: AbortSignal | undefined;
 }
 
 export interface AdbServerConnection {
@@ -190,8 +191,14 @@ export class AdbServerClient {
         await AdbServerClient.writeString(writer, request);
 
         const readable = new BufferedReadableStream(connection.readable);
+
         try {
-            await AdbServerClient.readOkay(readable);
+            // `raceSignal` throws if the signal is aborted,
+            // so the `catch` block can close the connection.
+            await raceSignal(
+                () => AdbServerClient.readOkay(readable),
+                options?.signal
+            );
 
             writer.releaseLock();
             return {
@@ -324,20 +331,40 @@ export class AdbServerClient {
         throw new Error("Invalid device selector");
     }
 
-    public async getDeviceFeatures(transportId: bigint): Promise<AdbFeature[]> {
-        const connection = await this.connect(
-            this.formatDeviceService({ transportId }, "features")
-        );
-        const readable = new BufferedReadableStream(connection.readable);
+    /**
+     * Gets the features supported by the device.
+     * The transport ID of the selected device is also returned,
+     * so the caller can execute other commands against the same device.
+     * @param device The device selector
+     * @returns The transport ID of the selected device, and the features supported by the device.
+     */
+    public async getDeviceFeatures(
+        device: AdbServerDeviceSelector
+    ): Promise<{ transportId: bigint; features: AdbFeature[] }> {
+        // Usually the client sends a device command using `connectDevice`,
+        // so the command got forwarded and handled by ADB daemon.
+        // However, in fact, `connectDevice` only forwards unknown services to device,
+        // if the service is a host command, it will still be handled by ADB server.
+        // Also, if the command is about a device, but didn't specify a selector,
+        // it will be executed against the device selected previously by `connectDevice`.
+        // Using this method, we can get the transport ID and device features in one connection.
+        const socket = await this.connectDevice(device, "host:features");
         try {
-            const response = await AdbServerClient.readString(readable);
-            return response.split(",") as AdbFeature[];
+            const readable = new BufferedReadableStream(socket.readable);
+            const featuresString = await AdbServerClient.readString(readable);
+            const features = featuresString.split(",") as AdbFeature[];
+            return { transportId: socket.transportId, features };
         } finally {
-            connection.writable.close().catch(NOOP);
-            readable.cancel().catch(NOOP);
+            await socket.close();
         }
     }
 
+    /**
+     * Creates a connection that will forward the service to device.
+     * @param device The device selector
+     * @param service The service to forward
+     * @returns An `AdbServerSocket` that can be used to communicate with the service
+     */
     public async connectDevice(
         device: AdbServerDeviceSelector,
         service: string
@@ -385,8 +412,8 @@ export class AdbServerClient {
                 Uint8Array,
                 Consumable<Uint8Array>
             >();
-            const socketReadable = duplex.wrapReadable(readable.release());
-            const socketWritable = duplex.createWritable(
+            const wrapReadable = duplex.wrapReadable(readable.release());
+            const wrapWritable = duplex.createWritable(
                 new WrapWritableStream(connection.writable).bePipedThroughFrom(
                     new UnwrapConsumableStream()
                 )
@@ -395,10 +422,10 @@ export class AdbServerClient {
             return {
                 transportId,
                 service,
-                readable: socketReadable,
-                writable: socketWritable,
+                readable: wrapReadable,
+                writable: wrapWritable,
                 close() {
-                    duplex.close().catch(NOOP);
+                    return duplex.close();
                 },
             };
         } catch (e) {
@@ -408,10 +435,17 @@ export class AdbServerClient {
         }
     }
 
+    /**
+     * Wait for a device to be connected or disconnected.
+     * @param device The device selector
+     * @param state The state to wait for
+     * @param options The options
+     * @returns A promise that resolves when the condition is met.
+     */
     public async waitFor(
         device: AdbServerDeviceSelector,
         state: "device" | "disconnect",
-        { signal, unref }: { signal?: AbortSignal; unref?: boolean } = {}
+        options?: AdbServerConnectionOptions
     ): Promise<void> {
         let type: string;
         if (!device) {
@@ -435,27 +469,20 @@ export class AdbServerClient {
             `wait-for-${type}-${state}`
         );
 
-        await raceSignal(() => this.connect(service, { unref }), signal);
+        // `connect` resolves when server writes `OKAY`,
+        // but for this command the server writes `OKAY` after the condition is met.
+        await this.connect(service, options);
     }
 
     public async createTransport(
         device: AdbServerDeviceSelector
     ): Promise<AdbServerTransport> {
-        // Usually the client should send a device command after `connectDevice`,
-        // so the command got executed on ADB daemon.
-        // But it's also possible to send another host command to the host,
-        // if the command requires a device but doesn't specify one,
-        // it will be executed against the device selected by `connectDevice`.
-        const socket = await this.connectDevice(device, "host:features");
+        const { transportId, features } = await this.getDeviceFeatures(device);
 
         const devices = await this.getDevices();
         const info = devices.find(
-            (device) => device.transportId === socket.transportId
+            (device) => device.transportId === transportId
         );
-
-        const readable = new BufferedReadableStream(socket.readable);
-        const featuresString = await AdbServerClient.readString(readable);
-        const features = featuresString.split(",") as AdbFeature[];
 
         const banner = new AdbBanner(
             info?.product,
@@ -464,14 +491,11 @@ export class AdbServerClient {
             features
         );
 
-        readable.cancel().catch(NOOP);
-        socket.writable.abort().catch(NOOP);
-
         return new AdbServerTransport(
             this,
             info?.serial ?? "",
             banner,
-            socket.transportId
+            transportId
         );
     }
 }

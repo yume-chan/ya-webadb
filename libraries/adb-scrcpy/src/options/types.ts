@@ -9,6 +9,10 @@ import { ScrcpyOptionsBase } from "@yume-chan/scrcpy";
 import type { AdbScrcpyConnection } from "../connection.js";
 
 export interface AdbScrcpyOptions<T extends object> extends ScrcpyOptions<T> {
+    /**
+     * Allows the client to forcefully enable forward tunnel mode
+     * when reverse tunnel fails.
+     */
     tunnelForwardOverride: boolean;
 
     getEncoders(

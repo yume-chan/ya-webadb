@@ -105,6 +105,8 @@ export class BufferedReadableStream implements AsyncExactReadable {
             }
 
             this.buffered = undefined;
+            this.bufferedLength = 0;
+            this.bufferedOffset = 0;
             return this.readAsync(length, array.subarray(offset));
         }
 
@@ -124,6 +126,7 @@ export class BufferedReadableStream implements AsyncExactReadable {
                 await controller.enqueue(buffered);
 
                 controller.abortSignal.addEventListener("abort", () => {
+                    // NOOP: the reader might already be released
                     this.reader.cancel().catch(NOOP);
                 });
 
