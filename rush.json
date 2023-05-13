@@ -414,18 +414,18 @@
             "versionPolicyName": "adb"
         },
         {
-            "packageName": "@yume-chan/adb-backend-webusb",
-            "projectFolder": "libraries/adb-backend-webusb",
+            "packageName": "@yume-chan/adb-daemon-webusb",
+            "projectFolder": "libraries/adb-daemon-webusb",
             "shouldPublish": true,
             "versionPolicyName": "adb"
         },
         {
-            "packageName": "@yume-chan/adb-backend-ws",
-            "projectFolder": "libraries/adb-backend-ws"
+            "packageName": "@yume-chan/adb-daemon-ws",
+            "projectFolder": "libraries/adb-daemon-ws"
         },
         {
-            "packageName": "@yume-chan/adb-backend-direct-sockets",
-            "projectFolder": "libraries/adb-backend-direct-sockets"
+            "packageName": "@yume-chan/adb-daemon-direct-sockets",
+            "projectFolder": "libraries/adb-daemon-direct-sockets"
         },
         {
             "packageName": "@yume-chan/adb-credential-web",
@@ -492,12 +492,16 @@
             "projectFolder": "libraries/tabby-tango"
         },
         {
-            "packageName": "@yume-chan/adb-backend-proxy",
-            "projectFolder": "libraries/adb-backend-proxy"
-        },
-        {
             "packageName": "@yume-chan/tabby-launcher",
             "projectFolder": "libraries/tabby-launcher"
+        },
+        {
+            "packageName": "@yume-chan/adb-server-node-tcp",
+            "projectFolder": "libraries/adb-server-node-tcp"
+        },
+        {
+            "packageName": "@yume-chan/adb-cli",
+            "projectFolder": "apps/cli"
         }
     ]
 }

@@ -160,7 +160,13 @@ const state = makeAutoObservable(
                     }),
                     { signal: this.stopSignal.signal }
                 )
-                .catch(() => {});
+                .catch((e) => {
+                    if (this.stopSignal?.signal.aborted) {
+                        return;
+                    }
+
+                    throw e;
+                });
         },
         flush() {
             this.list.push(...this.buffer);

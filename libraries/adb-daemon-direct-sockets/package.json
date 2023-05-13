@@ -1,0 +1,46 @@
+{
+    "name": "@yume-chan/adb-daemon-direct-sockets",
+    "private": true,
+    "version": "0.0.9",
+    "description": "ADB daemon transport connection for `@yume-chan/adb` using Direct Sockets API.",
+    "keywords": [
+        "adb",
+        "direct-sockets"
+    ],
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-daemon-direct-sockets#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "libraries/adb-daemon-direct-sockets"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "license": "MIT",
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "scripts": {
+        "build": "tsc -b tsconfig.build.json",
+        "build:watch": "tsc -b tsconfig.build.json",
+        "lint": "eslint src/**/*.ts --fix && prettier src/**/*.ts --write --tab-width 4",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@yume-chan/adb": "workspace:^0.0.19",
+        "@yume-chan/stream-extra": "workspace:^0.0.19",
+        "tslib": "^2.5.0"
+    },
+    "devDependencies": {
+        "@yume-chan/eslint-config": "workspace:^1.0.0",
+        "@yume-chan/tsconfig": "workspace:^1.0.0",
+        "eslint": "^8.39.0",
+        "prettier": "^2.8.8",
+        "typescript": "^5.0.3"
+    }
+}

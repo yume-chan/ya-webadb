@@ -6,14 +6,12 @@ import {
 } from "@yume-chan/stream-extra";
 import Struct, { placeholder } from "@yume-chan/struct";
 
+import { NOOP } from "../../utils/index.js";
+
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponse } from "./response.js";
 import type { AdbSyncSocket, AdbSyncSocketLocked } from "./socket.js";
 import { LinuxFileType } from "./stat.js";
-
-const NOOP = () => {
-    // no-op
-};
 
 export const ADB_SYNC_MAX_PACKET_SIZE = 64 * 1024;
 
@@ -31,7 +29,7 @@ export const AdbSyncOkResponse = new Struct({ littleEndian: true }).uint32(
     "unused"
 );
 
-async function pipeFile(
+async function pipeFileData(
     locked: AdbSyncSocketLocked,
     file: ReadableStream<Consumable<Uint8Array>>,
     packetSize: number,
@@ -82,7 +80,7 @@ export async function adbSyncPushV1({
         const mode = (type << 12) | permission;
         const pathAndMode = `${filename},${mode.toString()}`;
         await adbSyncWriteRequest(locked, AdbSyncRequestId.Send, pathAndMode);
-        await pipeFile(locked, file, packetSize, mtime);
+        await pipeFileData(locked, file, packetSize, mtime);
     } finally {
         locked.release();
     }
@@ -141,7 +139,7 @@ export async function adbSyncPushV2({
             })
         );
 
-        await pipeFile(locked, file, packetSize, mtime);
+        await pipeFileData(locked, file, packetSize, mtime);
     } finally {
         locked.release();
     }

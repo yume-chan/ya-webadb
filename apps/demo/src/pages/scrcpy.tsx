@@ -147,6 +147,38 @@ function handleBlur() {
     STATE.keyboard?.reset();
 }
 
+const FullscreenHint = observer(function FullscreenHint({
+    keyboardLockEnabled,
+}: {
+    keyboardLockEnabled: boolean;
+}) {
+    const classes = useClasses();
+
+    const [hintHidden, setHintHidden] = useLocalStorage<`${boolean}`>(
+        "scrcpy-hint-hidden",
+        "false"
+    );
+
+    if (!keyboardLockEnabled || !STATE.isFullScreen || hintHidden === "true") {
+        return null;
+    }
+
+    return (
+        <div className={classes.fullScreenStatusBar}>
+            <div>{GLOBAL_STATE.connection?.serial}</div>
+            <div>FPS: {STATE.fps}</div>
+
+            <div className={classes.spacer} />
+
+            <div>Press and hold ESC to exit full screen</div>
+
+            <Link onClick={() => setHintHidden("true")}>
+                {`Don't show again`}
+            </Link>
+        </div>
+    );
+});
+
 const Scrcpy: NextPage = () => {
     const classes = useClasses();
 
@@ -185,11 +217,6 @@ const Scrcpy: NextPage = () => {
         };
     }, []);
 
-    const [hintHidden, setHintHidden] = useLocalStorage<`${boolean}`>(
-        "scrcpy-hint-hidden",
-        "false"
-    );
-
     useEffect(() => {
         window.addEventListener("blur", handleBlur);
 
@@ -216,33 +243,9 @@ const Scrcpy: NextPage = () => {
                             onKeyDown={handleKeyEvent}
                             onKeyUp={handleKeyEvent}
                         >
-                            {keyboardLockEnabled &&
-                                hintHidden !== "true" &&
-                                STATE.isFullScreen && (
-                                    <div
-                                        className={classes.fullScreenStatusBar}
-                                    >
-                                        <div>
-                                            {GLOBAL_STATE.backend?.serial}
-                                        </div>
-                                        <div>FPS: {STATE.fps}</div>
-
-                                        <div className={classes.spacer} />
-
-                                        <div>
-                                            Press and hold ESC to exit full
-                                            screen
-                                        </div>
-
-                                        <Link
-                                            onClick={() =>
-                                                setHintHidden("true")
-                                            }
-                                        >
-                                            {`Don't show again`}
-                                        </Link>
-                                    </div>
-                                )}
+                            <FullscreenHint
+                                keyboardLockEnabled={keyboardLockEnabled}
+                            />
 
                             <DeviceView
                                 width={STATE.rotatedWidth}

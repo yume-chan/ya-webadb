@@ -9,7 +9,6 @@ import { AdbFeature } from "@yume-chan/adb";
 import { observer } from "mobx-react-lite";
 import type { NextPage } from "next";
 import Head from "next/head";
-import { ExternalLink } from "../components";
 import { GLOBAL_STATE } from "../state";
 import { Icons, RouteStackProps } from "../utils";
 
@@ -47,54 +46,24 @@ const DeviceInfo: NextPage = () => {
             </Head>
 
             <MessageBar>
-                <span>
-                    ADB protocol version decides the packet format between
-                    client and server. By now it has 2 versions:
-                </span>
-                <br />
-
-                <code>01000000</code>
-                <span> used in Android versions until 8 (Oreo)</span>
-                <br />
-
-                <code>01000001</code>
-                <span> used in Android versions from 9 (Pie)</span>
-                <br />
-
-                <span>For more information, you can check</span>
-                <ExternalLink href="https://chensi.moe/blog/2020/09/30/webadb-part2-connection/#version">
-                    my blog post
-                </ExternalLink>
-            </MessageBar>
-            <span>
-                <span>Protocol Version: </span>
-                <code>
-                    {GLOBAL_STATE.device?.protocolVersion
-                        ?.toString(16)
-                        .padStart(8, "0")}
-                </code>
-            </span>
-            <Separator />
-
-            <MessageBar>
                 <code>ro.product.name</code>
                 <span> field in Android Build Props</span>
             </MessageBar>
-            <span>Product Name: {GLOBAL_STATE.device?.product}</span>
+            <span>Product Name: {GLOBAL_STATE.device?.banner.product}</span>
             <Separator />
 
             <MessageBar>
                 <code>ro.product.model</code>
                 <span> field in Android Build Props</span>
             </MessageBar>
-            <span>Model Name: {GLOBAL_STATE.device?.model}</span>
+            <span>Model Name: {GLOBAL_STATE.device?.banner.model}</span>
             <Separator />
 
             <MessageBar>
                 <code>ro.product.device</code>
                 <span> field in Android Build Props</span>
             </MessageBar>
-            <span>Device Name: {GLOBAL_STATE.device?.device}</span>
+            <span>Device Name: {GLOBAL_STATE.device?.banner.device}</span>
             <Separator />
 
             <MessageBar>
@@ -113,7 +82,7 @@ const DeviceInfo: NextPage = () => {
             </MessageBar>
             <span>
                 <span>Features: </span>
-                {GLOBAL_STATE.device?.features?.map((feature, index) => (
+                {GLOBAL_STATE.device?.banner.features.map((feature, index) => (
                     <span key={feature}>
                         {index !== 0 && <span>, </span>}
                         <span>{feature}</span>

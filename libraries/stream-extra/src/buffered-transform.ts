@@ -39,7 +39,7 @@ export class BufferedTransformStream<T>
                     const value = await transform(buffered);
                     controller.enqueue(value);
                 } catch (e) {
-                    // Treat `BufferedReadableStreamEndedError` as a normal end.
+                    // Treat `StructEmptyError` as a normal end.
                     // If the `transform` method doesn't have enough data to return a value,
                     // it should throw another error to indicate that.
                     if (e instanceof StructEmptyError) {

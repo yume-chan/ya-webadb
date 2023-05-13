@@ -1,9 +1,8 @@
 import { AutoDisposable } from "@yume-chan/event";
 import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
 
-import type { Adb } from "../../adb.js";
+import type { Adb, AdbSocket } from "../../adb.js";
 import { AdbFeature } from "../../features.js";
-import type { AdbSocket } from "../../socket/index.js";
 import { escapeArg } from "../subprocess/index.js";
 
 import type { AdbSyncEntry } from "./list.js";
@@ -11,7 +10,7 @@ import { adbSyncOpenDir } from "./list.js";
 import { adbSyncPull } from "./pull.js";
 import { adbSyncPush } from "./push.js";
 import { AdbSyncSocket } from "./socket.js";
-import type { LinuxFileType } from "./stat.js";
+import type { AdbSyncStat, LinuxFileType } from "./stat.js";
 import { adbSyncLstat, adbSyncStat } from "./stat.js";
 
 /**
@@ -87,7 +86,7 @@ export class AdbSync extends AutoDisposable {
             !this.fixedPushMkdir;
     }
 
-    public async lstat(path: string) {
+    public async lstat(path: string): Promise<AdbSyncStat> {
         return await adbSyncLstat(this._socket, path, this.supportsStat);
     }
 

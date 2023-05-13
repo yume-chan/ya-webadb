@@ -19,17 +19,23 @@ import "../app/src/toastr.scss";
 import { ApplicationRef, NgModuleRef, enableProdMode } from "@angular/core";
 import { enableDebugTools } from "@angular/platform-browser";
 import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
-import { Adb } from "@yume-chan/adb";
+import { Adb, AdbIncomingSocketHandler, AdbTransport } from "@yume-chan/adb";
+import { PromiseResolver } from "@yume-chan/async";
 import {
-    AdbProxyBackend,
-    AdbProxyServerInfo,
-} from "@yume-chan/adb-backend-proxy";
+    UnwrapConsumableStream,
+    WrapWritableStream,
+    type Consumable,
+    type ReadableStream,
+    type WritableStream,
+} from "@yume-chan/stream-extra";
+import * as Comlink from "comlink";
 import Yaml from "js-yaml";
 import { Subject } from "rxjs";
 import { BOOTSTRAP_DATA, BootstrapData } from "tabby-core";
 
 import { getRootModule } from "../app/src/app.module";
 
+import { AdbBanner } from "@yume-chan/adb/esm/banner";
 import * as TabbyTango from "@yume-chan/tabby-tango";
 import * as TabbyCommunityColorSchemes from "tabby-community-color-schemes";
 import * as TabbyCore from "tabby-core";
@@ -42,6 +48,105 @@ interface BootstrapOptions {
     bootstrapData: BootstrapData;
     debugMode: boolean;
     connector: any;
+}
+
+export type ValueOrPromise<T> = T | PromiseLike<T>;
+
+export interface AdbProxyTransportServer {
+    disconnected: Promise<void>;
+
+    connect(
+        service: string,
+        callback: (
+            readable: ReadableStream<Uint8Array>,
+            writable: WritableStream<Uint8Array>,
+            close: () => ValueOrPromise<void>
+        ) => void
+    ): void;
+
+    addReverseTunnel(
+        handler: AdbIncomingSocketHandler,
+        address: string
+    ): ValueOrPromise<string>;
+
+    removeReverseTunnel(address: string): ValueOrPromise<void>;
+
+    clearReverseTunnels(): ValueOrPromise<void>;
+
+    close(): ValueOrPromise<void>;
+}
+
+class AdbProxyTransport implements AdbTransport {
+    private _port: MessagePort;
+    private _remote: Comlink.Remote<AdbProxyTransportServer>;
+
+    public readonly serial: string;
+    public readonly maxPayloadSize: number;
+    public readonly banner: AdbBanner;
+
+    private _disconnected = new PromiseResolver<void>();
+    public get disconnected(): Promise<void> {
+        return this._disconnected.promise;
+    }
+
+    constructor(
+        port: MessagePort,
+        serial: string,
+        maxPayloadSize: number,
+        banner: AdbBanner
+    ) {
+        this._port = port;
+        this._remote = Comlink.wrap(port);
+        this._remote.disconnected.then(() => {
+            this._disconnected.resolve();
+        });
+
+        this.serial = serial;
+        this.maxPayloadSize = maxPayloadSize;
+        this.banner = banner;
+    }
+
+    public async connect(service: string) {
+        let readable: ReadableStream<Uint8Array>;
+        let writable: WritableStream<Consumable<Uint8Array>>;
+        let close: () => void;
+        await this._remote.connect(
+            service,
+            Comlink.proxy((r, w, c) => {
+                readable = r;
+                writable = new WrapWritableStream(w).bePipedThroughFrom(
+                    new UnwrapConsumableStream()
+                );
+                close = c;
+            })
+        );
+        return {
+            service,
+            readable: readable!,
+            writable: writable!,
+            close: close!,
+        };
+    }
+
+    public async addReverseTunnel(
+        handler: AdbIncomingSocketHandler,
+        address: string
+    ) {
+        return await this._remote.addReverseTunnel(handler, address);
+    }
+
+    public async removeReverseTunnel(address: string) {
+        await this._remote.removeReverseTunnel(address);
+    }
+
+    public async clearReverseTunnels() {
+        await this._remote.clearReverseTunnels();
+    }
+
+    public async close() {
+        await this._remote.close();
+        this._port.close();
+    }
 }
 
 async function bootstrap(options: BootstrapOptions): Promise<NgModuleRef<any>> {
@@ -186,25 +291,23 @@ async function start() {
         },
     ];
 
-    window.addEventListener("message", (e) => {
+    window.addEventListener("message", ({ data }) => {
         if (
-            typeof e.data === "object" &&
-            "type" in e.data &&
-            e.data.type === "adb"
+            typeof data === "object" &&
+            "type" in data &&
+            data.type === "adb-connect"
         ) {
-            const { port, version, maxPayloadSize, banner } =
-                e.data as AdbProxyServerInfo;
-            const backend = new AdbProxyBackend(port);
-            const connection = backend.connect();
-            TabbyTango.AdbState.value = new Adb(
-                connection,
-                version,
+            const { port, serial, maxPayloadSize, banner } = data;
+            const transport = new AdbProxyTransport(
+                port,
+                serial,
                 maxPayloadSize,
                 banner
             );
+            TabbyTango.AdbState.value = new Adb(transport);
         }
     });
-    window.parent.postMessage("adb", "*");
+    window.parent.postMessage("adb-ready", "*");
 
     const pluginModules = [];
     for (const info of pluginInfos) {

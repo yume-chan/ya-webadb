@@ -1,28 +1,126 @@
-import { AdbProxyServer } from "@yume-chan/adb-backend-proxy";
+import { AdbIncomingSocketHandler, AdbTransport } from "@yume-chan/adb";
+import {
+    WrapConsumableStream,
+    WrapWritableStream,
+} from "@yume-chan/stream-extra";
+import { ValueOrPromise } from "@yume-chan/struct";
+import * as Comlink from "comlink";
 import { autorun } from "mobx";
 import getConfig from "next/config";
 import { GLOBAL_STATE } from "../state";
 
-let proxy: AdbProxyServer | undefined;
+let port: MessagePort | undefined;
 let resizeObserver: ResizeObserver | undefined;
 let frame: HTMLIFrameElement | undefined;
 
-function syncDevice() {
-    if (proxy) {
-        proxy.dispose();
-        proxy = undefined;
+export interface AdbProxyTransportServer {
+    disconnected: Promise<void>;
+
+    connect(
+        service: string,
+        callback: (
+            readable: ReadableStream<Uint8Array>,
+            writable: WritableStream<Uint8Array>,
+            close: () => ValueOrPromise<void>
+        ) => void
+    ): void;
+
+    addReverseTunnel(
+        handler: AdbIncomingSocketHandler,
+        address?: string
+    ): ValueOrPromise<string>;
+
+    removeReverseTunnel(address: string): ValueOrPromise<void>;
+
+    clearReverseTunnels(): ValueOrPromise<void>;
+
+    close(): ValueOrPromise<void>;
+}
+
+class AdbProxyTransportServerImpl implements AdbProxyTransportServer {
+    private _transport: AdbTransport;
+
+    public get disconnected() {
+        return this._transport.disconnected;
     }
 
-    if (GLOBAL_STATE.device && frame) {
-        const proxy = new AdbProxyServer(GLOBAL_STATE.device);
-        const info = proxy.createPort();
+    public constructor(transport: AdbTransport) {
+        this._transport = transport;
+    }
+
+    public async connect(
+        service: string,
+        callback: (
+            readable: ReadableStream<Uint8Array>,
+            writable: WritableStream<Uint8Array>,
+            close: () => ValueOrPromise<void>
+        ) => void
+    ) {
+        const socket = await this._transport.connect(service);
+        const writable = new WrapWritableStream(
+            socket.writable
+        ).bePipedThroughFrom(new WrapConsumableStream());
+        callback(
+            Comlink.transfer(socket.readable, [socket.readable]),
+            Comlink.transfer(writable, [writable]),
+            Comlink.proxy(() => socket.close())
+        );
+    }
+
+    public addReverseTunnel(
+        handler: AdbIncomingSocketHandler,
+        address?: string
+    ): ValueOrPromise<string> {
+        return this._transport.addReverseTunnel(handler, address);
+    }
+
+    public removeReverseTunnel(address: string): ValueOrPromise<void> {
+        return this._transport.removeReverseTunnel(address);
+    }
+
+    public clearReverseTunnels(): ValueOrPromise<void> {
+        return this._transport.clearReverseTunnels();
+    }
+
+    public close(): ValueOrPromise<void> {
+        return this._transport.close();
+    }
+}
+
+function syncDevice() {
+    if (!frame) {
+        return;
+    }
+
+    if (port) {
+        port.close();
+        port = undefined;
+    }
+
+    const { device: adb } = GLOBAL_STATE;
+    if (adb) {
+        const channel = new MessageChannel();
+        port = channel.port1;
+
+        const server = new AdbProxyTransportServerImpl(adb.transport);
+        Comlink.expose(server, port);
+
+        const { product, model, device, features } = adb.banner;
         frame.contentWindow?.postMessage(
             {
-                type: "adb",
-                ...info,
+                type: "adb-connect",
+                serial: adb.serial,
+                maxPayloadSize: adb.maxPayloadSize,
+                banner: {
+                    product,
+                    model,
+                    device,
+                    features,
+                },
+                port: channel.port2,
             },
             "*",
-            [info.port]
+            [channel.port2]
         );
     }
 }
@@ -52,7 +150,7 @@ export function attachTabbyFrame(container: HTMLDivElement | null) {
 
         window.addEventListener("message", (e) => {
             // Wait for Tabby to be ready
-            if (e.source === frame?.contentWindow && e.data === "adb") {
+            if (e.source === frame?.contentWindow && e.data === "adb-ready") {
                 syncDevice();
             }
         });

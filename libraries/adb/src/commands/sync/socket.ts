@@ -9,7 +9,7 @@ import {
 } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable } from "@yume-chan/struct";
 
-import type { AdbSocket } from "../../socket/index.js";
+import type { AdbSocket } from "../../adb.js";
 import { AutoResetEvent } from "../../utils/index.js";
 
 export class AdbSyncSocketLocked implements AsyncExactReadable {

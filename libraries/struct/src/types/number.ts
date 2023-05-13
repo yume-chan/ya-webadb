@@ -49,15 +49,12 @@ export namespace NumberFieldType {
         signed: false,
         size: 2,
         deserialize(array, littleEndian) {
-            // PERF: Chrome's `DataView#getUint16` uses inefficient operations,
-            // including branching, bit extending and 32-bit bit swapping.
-            // The best way should use 16-bit bit rotation and conditional move,
-            // like LLVM does for code similar to the below one.
-            // This code is much faster on V8, but the actual generated assembly is unknown.
-            return (
-                (((array[1]! << 8) | array[0]!) * (littleEndian as any)) |
-                (((array[0]! << 8) | array[1]!) * (!littleEndian as any))
-            );
+            // PERF: Creating many `DataView`s over small buffers is 90% slower
+            // than this. Even if the `DataView` is cached, `DataView#getUint16`
+            // is still 1% slower than this.
+            const a = (array[1]! << 8) | array[0]!;
+            const b = (array[0]! << 8) | array[1]!;
+            return littleEndian ? a : b;
         },
         serialize(dataView, offset, value, littleEndian) {
             dataView.setUint16(offset, value, littleEndian);
@@ -92,18 +89,17 @@ export namespace NumberFieldType {
         signed: true,
         size: 4,
         deserialize(array, littleEndian) {
-            return (
-                (((array[3]! << 24) |
-                    (array[2]! << 16) |
-                    (array[1]! << 8) |
-                    array[0]!) *
-                    (littleEndian as any)) |
-                (((array[0]! << 24) |
-                    (array[1]! << 16) |
-                    (array[2]! << 8) |
-                    array[3]!) *
-                    (!littleEndian as any))
-            );
+            const a =
+                (array[3]! << 24) |
+                (array[2]! << 16) |
+                (array[1]! << 8) |
+                array[0]!;
+            const b =
+                (array[0]! << 24) |
+                (array[1]! << 16) |
+                (array[2]! << 8) |
+                array[3]!;
+            return littleEndian ? a : b;
         },
         serialize(dataView, offset, value, littleEndian) {
             dataView.setInt32(offset, value, littleEndian);

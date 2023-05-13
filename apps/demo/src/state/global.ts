@@ -1,4 +1,4 @@
-import { Adb, AdbBackend, AdbPacketData } from "@yume-chan/adb";
+import { Adb, AdbDaemonConnection, AdbPacketData } from "@yume-chan/adb";
 import { action, makeAutoObservable, observable } from "mobx";
 
 export type PacketLogItemDirection = "in" | "out";
@@ -14,7 +14,7 @@ export interface PacketLogItem extends AdbPacketData {
 }
 
 export class GlobalState {
-    backend: AdbBackend | undefined = undefined;
+    connection: AdbDaemonConnection | undefined = undefined;
     device: Adb | undefined = undefined;
 
     errorDialogVisible = false;
@@ -29,8 +29,11 @@ export class GlobalState {
         });
     }
 
-    setDevice(backend: AdbBackend | undefined, device: Adb | undefined) {
-        this.backend = backend;
+    setDevice(
+        connection: AdbDaemonConnection | undefined,
+        device: Adb | undefined
+    ) {
+        this.connection = connection;
         this.device = device;
     }
 

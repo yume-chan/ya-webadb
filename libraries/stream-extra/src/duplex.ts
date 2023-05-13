@@ -97,6 +97,7 @@ export class DuplexStreamFactory<R, W> {
                 await this.close();
             },
             close: async () => {
+                // NOOP: the writer is already closed
                 await writer.close().catch(NOOP);
                 await this.close();
             },
@@ -116,7 +117,8 @@ export class DuplexStreamFactory<R, W> {
         }
 
         for (const writer of this.writers) {
-            await writer.close().catch(NOOP);
+            // NOOP: the writer is already closed
+            writer.close().catch(NOOP);
         }
     }
 

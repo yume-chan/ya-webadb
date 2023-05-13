@@ -1,5 +1,5 @@
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
-import { AdbWebUsbBackend } from "@yume-chan/adb-backend-webusb";
+import { AdbDaemonWebUsbConnection } from "@yume-chan/adb-daemon-webusb";
 import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
 import {
     Float32PcmPlayer,
@@ -375,12 +375,7 @@ export class ScrcpyPageState {
                     }
                 );
 
-                stream
-                    .pipeThrough(handler)
-                    .pipeTo(decoder.writable)
-                    .catch((e) => {
-                        console.log("video error", e);
-                    });
+                stream.pipeThrough(handler).pipeTo(decoder.writable);
             });
 
             client.audioStream?.then(async (metadata) => {
@@ -416,22 +411,20 @@ export class ScrcpyPageState {
                         const audioPlayer = new Int16PcmPlayer(48000);
                         this.audioPlayer = audioPlayer;
 
-                        playbackStream
-                            .pipeTo(
-                                new WritableStream({
-                                    write: (chunk) => {
-                                        audioPlayer.feed(
-                                            new Int16Array(
-                                                chunk.data.buffer,
-                                                chunk.data.byteOffset,
-                                                chunk.data.byteLength /
-                                                    Int16Array.BYTES_PER_ELEMENT
-                                            )
-                                        );
-                                    },
-                                })
-                            )
-                            .catch(NOOP);
+                        playbackStream.pipeTo(
+                            new WritableStream({
+                                write: (chunk) => {
+                                    audioPlayer.feed(
+                                        new Int16Array(
+                                            chunk.data.buffer,
+                                            chunk.data.byteOffset,
+                                            chunk.data.byteLength /
+                                                Int16Array.BYTES_PER_ELEMENT
+                                        )
+                                    );
+                                },
+                            })
+                        );
 
                         await this.audioPlayer.start();
                         break;
@@ -454,8 +447,7 @@ export class ScrcpyPageState {
                                         audioPlayer.feed(chunk);
                                     },
                                 })
-                            )
-                            .catch(NOOP);
+                            );
                         await audioPlayer.start();
                         break;
                     }
@@ -477,8 +469,7 @@ export class ScrcpyPageState {
                                         audioPlayer.feed(chunk);
                                     },
                                 })
-                            )
-                            .catch(NOOP);
+                            );
                         await audioPlayer.start();
                         break;
                     }
@@ -492,38 +483,32 @@ export class ScrcpyPageState {
                     RECORD_STATE.recorder.audioCodec = metadata.codec;
                 });
 
-                recordStream
-                    .pipeTo(
-                        new WritableStream({
-                            write: (packet) => {
-                                if (packet.type === "data") {
-                                    RECORD_STATE.recorder.addAudioPacket(
-                                        packet
-                                    );
-                                }
-                            },
-                        })
-                    )
-                    .catch(NOOP);
+                recordStream.pipeTo(
+                    new WritableStream({
+                        write: (packet) => {
+                            if (packet.type === "data") {
+                                RECORD_STATE.recorder.addAudioPacket(packet);
+                            }
+                        },
+                    })
+                );
             });
 
             client.exit.then(this.dispose);
 
-            client
-                .deviceMessageStream!.pipeTo(
-                    new WritableStream({
-                        write(message) {
-                            switch (message.type) {
-                                case ScrcpyDeviceMessageType.Clipboard:
-                                    window.navigator.clipboard.writeText(
-                                        message.content
-                                    );
-                                    break;
-                            }
-                        },
-                    })
-                )
-                .catch(() => {});
+            client.deviceMessageStream!.pipeTo(
+                new WritableStream({
+                    write(message) {
+                        switch (message.type) {
+                            case ScrcpyDeviceMessageType.Clipboard:
+                                window.navigator.clipboard.writeText(
+                                    message.content
+                                );
+                                break;
+                        }
+                    },
+                })
+            );
 
             if (SETTING_STATE.clientSettings.turnScreenOff) {
                 await client.controlMessageWriter!.setScreenPowerMode(
@@ -537,9 +522,10 @@ export class ScrcpyPageState {
                 this.running = true;
             });
 
-            if (GLOBAL_STATE.backend instanceof AdbWebUsbBackend) {
+            const connection = GLOBAL_STATE.connection!;
+            if (connection instanceof AdbDaemonWebUsbConnection) {
                 this.keyboard = await AoaKeyboardInjector.register(
-                    GLOBAL_STATE.backend.device
+                    connection.device
                 );
             } else {
                 this.keyboard = new ScrcpyKeyboardInjector(client);
@@ -579,7 +565,7 @@ export class ScrcpyPageState {
         clearTimeout(this.fpsCounterIntervalId);
 
         if (this.isFullScreen) {
-            document.exitFullscreen().catch(NOOP);
+            document.exitFullscreen();
             this.isFullScreen = false;
         }
 

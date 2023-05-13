@@ -106,7 +106,9 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
                 const url = canvas.toDataURL();
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `Screenshot of ${GLOBAL_STATE.backend!.name}.png`;
+                a.download = `Screenshot of ${
+                    GLOBAL_STATE.connection!.name
+                }.png`;
                 a.click();
             },
         },

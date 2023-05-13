@@ -171,7 +171,6 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                         .toString(16)
                         .toUpperCase(),
                 ].join(".");
-                console.log("codec", codec);
                 this.decoder.configure({
                     codec,
                     optimizeForLatency: true,
@@ -183,6 +182,10 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
     }
 
     private decode(packet: ScrcpyMediaStreamDataPacket) {
+        if (this.decoder.state !== "configured") {
+            return;
+        }
+
         // WebCodecs requires configuration data to be with the first frame.
         // https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
         let data: Uint8Array;
