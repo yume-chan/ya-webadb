@@ -14,7 +14,6 @@ import {
     Symbols,
     WebSocket,
     request,
-    setGlobalDispatcher,
 } from "@yume-chan/undici-browser";
 import {
     action,
@@ -113,8 +112,6 @@ const agent = new Agent({
         }
     },
 });
-// WebSocket only uses global dispatcher
-setGlobalDispatcher(agent);
 
 interface Page {
     description: string;
@@ -139,23 +136,31 @@ interface Version {
 // https://source.chromium.org/chromium/chromium/src/+/refs/heads/main:chrome/browser/devtools/device/devtools_device_discovery.cc;l=36;drc=4651cec294d1542d6673a89190e192e20de03240
 
 async function getPages(socket: string) {
-    const response = await request(`http://${socket}/json`);
+    const response = await request(`http://${socket}/json`, {
+        dispatcher: agent,
+    });
     const body = await response.body.json();
     return body as Page[];
 }
 
 async function getVersion(socket: string) {
-    const response = await request(`http://${socket}/json/version`);
+    const response = await request(`http://${socket}/json/version`, {
+        dispatcher: agent,
+    });
     const body = await response.body.json();
     return body as Version;
 }
 
 async function focusPage(socket: string, page: Page) {
-    await request(`http://${socket}/json/activate/${page.id}`);
+    await request(`http://${socket}/json/activate/${page.id}`, {
+        dispatcher: agent,
+    });
 }
 
 async function closePage(socket: string, page: Page) {
-    await request(`http://${socket}/json/close/${page.id}`);
+    await request(`http://${socket}/json/close/${page.id}`, {
+        dispatcher: agent,
+    });
 }
 
 const {
@@ -322,7 +327,9 @@ const ChromeDevToolsPage: NextPage = observer(function ChromeDevTools() {
 
             const port = e.ports[0];
 
-            const ws = new WebSocket(url);
+            const ws = new WebSocket(url, {
+                dispatcher: agent,
+            });
             ws.binaryType = "arraybuffer";
             ws.onopen = () => {
                 port.postMessage({ type: "open" });

@@ -8,5 +8,16 @@
         "types": [
             "dom-webcodecs"
         ]
-    }
+    },
+    "references": [
+        {
+            "path": "../scrcpy/tsconfig.build.json"
+        },
+        {
+            "path": "../scrcpy-decoder-tinyh264/tsconfig.build.json"
+        },
+        {
+            "path": "../stream-extra/tsconfig.build.json"
+        },
+    ]
 }

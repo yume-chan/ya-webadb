@@ -9,4 +9,15 @@
             "w3c-web-usb",
         ]
     },
+    "references": [
+        {
+            "path": "../adb/tsconfig.build.json"
+        },
+        {
+            "path": "../stream-extra/tsconfig.build.json"
+        },
+        {
+            "path": "../struct/tsconfig.build.json"
+        },
+    ]
 }

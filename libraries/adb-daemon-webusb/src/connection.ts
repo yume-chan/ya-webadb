@@ -165,6 +165,7 @@ export class AdbDaemonWebUsbConnectionStreams
                 }
             },
             dispose: () => {
+                closed = true;
                 usbManager.removeEventListener(
                     "disconnect",
                     handleUsbDisconnect
@@ -183,36 +184,64 @@ export class AdbDaemonWebUsbConnectionStreams
         this._readable = duplex.wrapReadable(
             new ReadableStream<AdbPacketData>({
                 async pull(controller) {
-                    // The `length` argument in `transferIn` must not be smaller than what the device sent,
-                    // otherwise it will return `babble` status without any data.
-                    // ADB daemon sends each packet in two parts, the 24-byte header and the payload.
-                    const result = await device.transferIn(
-                        inEndpoint.endpointNumber,
-                        24
-                    );
-
-                    // TODO: webusb: handle `babble` by discarding the data and receive again
-                    // TODO: webusb: on Windows, `transferIn` throws an NetworkError when device disconnected, check with other OSs.
-
-                    // From spec, the `result.data` always covers the whole `buffer`.
-                    const buffer = new Uint8Array(result.data!.buffer);
-                    const stream = new Uint8ArrayExactReadable(buffer);
-
-                    // Add `payload` field to its type, it's assigned below.
-                    const packet = AdbPacketHeader.deserialize(
-                        stream
-                    ) as AdbPacketHeader & { payload: Uint8Array };
-                    if (packet.payloadLength !== 0) {
+                    try {
+                        // The `length` argument in `transferIn` must not be smaller than what the device sent,
+                        // otherwise it will return `babble` status without any data.
+                        // ADB daemon sends each packet in two parts, the 24-byte header and the payload.
                         const result = await device.transferIn(
                             inEndpoint.endpointNumber,
-                            packet.payloadLength
+                            24
                         );
-                        packet.payload = new Uint8Array(result.data!.buffer);
-                    } else {
-                        packet.payload = EMPTY_UINT8_ARRAY;
-                    }
 
-                    controller.enqueue(packet);
+                        // TODO: webusb: handle `babble` by discarding the data and receive again
+
+                        // Per spec, the `result.data` always covers the whole `buffer`.
+                        const buffer = new Uint8Array(result.data!.buffer);
+                        const stream = new Uint8ArrayExactReadable(buffer);
+
+                        // Add `payload` field to its type, it's assigned below.
+                        const packet = AdbPacketHeader.deserialize(
+                            stream
+                        ) as AdbPacketHeader & { payload: Uint8Array };
+                        if (packet.payloadLength !== 0) {
+                            const result = await device.transferIn(
+                                inEndpoint.endpointNumber,
+                                packet.payloadLength
+                            );
+                            packet.payload = new Uint8Array(
+                                result.data!.buffer
+                            );
+                        } else {
+                            packet.payload = EMPTY_UINT8_ARRAY;
+                        }
+
+                        controller.enqueue(packet);
+                    } catch (e) {
+                        // On Windows, disconnecting the device will cause `NetworkError` to be thrown,
+                        // even before the `disconnect` event is fired.
+                        // We need to wait a little bit and check if the device is still connected.
+                        // https://github.com/WICG/webusb/issues/219
+                        if (
+                            typeof e === "object" &&
+                            e !== null &&
+                            "name" in e &&
+                            e.name === "NetworkError"
+                        ) {
+                            await new Promise<void>((resolve) => {
+                                setTimeout(() => {
+                                    resolve();
+                                }, 100);
+                            });
+
+                            if (closed) {
+                                controller.close();
+                            } else {
+                                throw e;
+                            }
+                        }
+
+                        throw e;
+                    }
                 },
             })
         );
@@ -228,7 +257,7 @@ export class AdbDaemonWebUsbConnectionStreams
                                 chunk
                             );
 
-                            // In USB protocol, a not-full packet means the end of a transfer.
+                            // In USB protocol, a not-full packet indicates the end of a transfer.
                             // If the payload size is a multiple of the packet size,
                             // we need to send an empty packet to indicate the end,
                             // so the OS will send it to the device immediately.

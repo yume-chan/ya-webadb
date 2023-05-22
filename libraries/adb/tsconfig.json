@@ -1,15 +1,6 @@
 {
     "references": [
         {
-            "path": "../event/tsconfig.build.json"
-        },
-        {
-            "path": "../stream-extra/tsconfig.build.json"
-        },
-        {
-            "path": "../struct/tsconfig.build.json"
-        },
-        {
             "path": "./tsconfig.test.json"
         },
         {

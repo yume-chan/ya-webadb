@@ -6,4 +6,9 @@
             "DOM"
         ]
     },
+    "references": [
+        {
+            "path": "../adb/tsconfig.build.json"
+        }
+    ]
 }
