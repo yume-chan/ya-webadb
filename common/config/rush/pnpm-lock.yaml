@@ -69,7 +69,7 @@ importers:
       '@yume-chan/stream-saver': ^2.0.6
       '@yume-chan/struct': workspace:^0.0.19
       '@yume-chan/tabby-launcher': workspace:^1.0.197-nightly.1
-      '@yume-chan/undici-browser': 5.22.1-mod.6
+      '@yume-chan/undici-browser': 5.22.1-mod.7
       comlink: ^4.4.1
       eslint: ^8.41.0
       eslint-config-next: 13.4.3
@@ -109,7 +109,7 @@ importers:
       '@yume-chan/stream-saver': 2.0.6
       '@yume-chan/struct': link:../../libraries/struct
       '@yume-chan/tabby-launcher': link:../../libraries/tabby-launcher
-      '@yume-chan/undici-browser': 5.22.1-mod.6
+      '@yume-chan/undici-browser': 5.22.1-mod.7
       comlink: 4.4.1
       fflate: 0.7.4
       mobx: 6.9.0
@@ -3617,8 +3617,8 @@ packages:
     resolution: {integrity: sha512-DzRADjLoHcz18ocgGHvLIanapxygX3o9dlWwE32EUZqhyAsopfdvZ79ttR9+7pqAXIQamP9M4mbDy8hHgFKOIA==}
     dev: false
 
-  /@yume-chan/undici-browser/5.22.1-mod.6:
-    resolution: {integrity: sha512-JHiAlkhrDiVeaWRdR/fajxPsWtrjw3u4DPZUXLaYqyOsOcCXMGTZcwsDJ9clvKQ8MP3fKaENuZSp1bET7RkDgw==}
+  /@yume-chan/undici-browser/5.22.1-mod.7:
+    resolution: {integrity: sha512-/Am3A2aowR5YfIbvm+lYWPfbwqSfSqN5dfaQVcD5hKzYhE4a6sXNAHY/cojunpYHZ4QNq1gODBF5NeTJgfSGSw==}
     engines: {node: '>=14.0'}
     dependencies:
       busboy: 1.6.0
