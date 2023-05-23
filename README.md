@@ -1,6 +1,7 @@
 # Tango
 
-[![GitHub license](https://img.shields.io/github/license/yume-chan/ya-webadb)](https://github.com/yume-chan/ya-webadb/blob/main/LICENSE)
+[![MIT license](https://img.shields.io/github/license/yume-chan/ya-webadb)](https://github.com/yume-chan/ya-webadb/blob/main/LICENSE)
+[![Sponsors](https://opencollective.com/ya-webadb/tiers/badge.svg)](https://opencollective.com/ya-webadb)
 
 A library and application for browsers to interact with Android devices via ADB.
 
@@ -53,6 +54,10 @@ For USB connection, close Google ADB (Run `adb kill-server` in a terminal or clo
 ## Contribute
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+## Sponsors
+
+<object type="image/svg+xml" data="https://opencollective.com/ya-webadb/tiers/sponsor.svg?avatarHeight=36&width=600"></object>
 
 ## Used open-source projects
 
