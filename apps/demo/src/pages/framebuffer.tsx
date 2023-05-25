@@ -42,13 +42,13 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     const capture = useCallback(async () => {
-        if (!GLOBAL_STATE.device) {
+        if (!GLOBAL_STATE.adb) {
             return;
         }
 
         try {
             const start = Date.now();
-            const framebuffer = await GLOBAL_STATE.device.framebuffer();
+            const framebuffer = await GLOBAL_STATE.adb.framebuffer();
             console.log(
                 "Framebuffer speed",
                 (
@@ -81,7 +81,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
     const commandBarItems = computed(() => [
         {
             key: "start",
-            disabled: !GLOBAL_STATE.device,
+            disabled: !GLOBAL_STATE.adb,
             iconProps: {
                 iconName: Icons.Camera,
                 style: { height: 20, fontSize: 20, lineHeight: 1.5 },
@@ -106,9 +106,7 @@ const FrameBuffer: NextPage = (): JSX.Element | null => {
                 const url = canvas.toDataURL();
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `Screenshot of ${
-                    GLOBAL_STATE.connection!.name
-                }.png`;
+                a.download = `Screenshot of ${GLOBAL_STATE.device!.name}.png`;
                 a.click();
             },
         },

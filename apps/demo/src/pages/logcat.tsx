@@ -714,9 +714,9 @@ const state = makeAutoObservable(
 );
 
 autorun(() => {
-    if (GLOBAL_STATE.device) {
+    if (GLOBAL_STATE.adb) {
         runInAction(() => {
-            state.logcat = new Logcat(GLOBAL_STATE.device!);
+            state.logcat = new Logcat(GLOBAL_STATE.adb!);
         });
     } else {
         runInAction(() => {

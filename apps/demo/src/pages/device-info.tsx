@@ -49,21 +49,21 @@ const DeviceInfo: NextPage = () => {
                 <code>ro.product.name</code>
                 <span> field in Android Build Props</span>
             </MessageBar>
-            <span>Product Name: {GLOBAL_STATE.device?.banner.product}</span>
+            <span>Product Name: {GLOBAL_STATE.adb?.banner.product}</span>
             <Separator />
 
             <MessageBar>
                 <code>ro.product.model</code>
                 <span> field in Android Build Props</span>
             </MessageBar>
-            <span>Model Name: {GLOBAL_STATE.device?.banner.model}</span>
+            <span>Model Name: {GLOBAL_STATE.adb?.banner.model}</span>
             <Separator />
 
             <MessageBar>
                 <code>ro.product.device</code>
                 <span> field in Android Build Props</span>
             </MessageBar>
-            <span>Device Name: {GLOBAL_STATE.device?.banner.device}</span>
+            <span>Device Name: {GLOBAL_STATE.adb?.banner.device}</span>
             <Separator />
 
             <MessageBar>
@@ -82,7 +82,7 @@ const DeviceInfo: NextPage = () => {
             </MessageBar>
             <span>
                 <span>Features: </span>
-                {GLOBAL_STATE.device?.banner.features.map((feature, index) => (
+                {GLOBAL_STATE.adb?.banner.features.map((feature, index) => (
                     <span key={feature}>
                         {index !== 0 && <span>, </span>}
                         <span>{feature}</span>

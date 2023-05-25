@@ -59,7 +59,7 @@ const useClasses = makeStyles({
     },
 });
 
-const ConnectionDialog = observer(() => {
+const ConnectingDialog = observer(() => {
     const classes = useClasses();
     const layerHostId = useId("layerHost");
 
@@ -165,7 +165,7 @@ const FullscreenHint = observer(function FullscreenHint({
 
     return (
         <div className={classes.fullScreenStatusBar}>
-            <div>{GLOBAL_STATE.connection?.serial}</div>
+            <div>{GLOBAL_STATE.device?.serial}</div>
             <div>FPS: {STATE.fps}</div>
 
             <div className={classes.spacer} />
@@ -186,7 +186,7 @@ const Scrcpy: NextPage = () => {
         // Detect WebCodecs support at client side
         if (
             SETTING_STATE.decoders.length === 1 &&
-            typeof window.VideoDecoder === "function"
+            WebCodecsDecoder.isSupported()
         ) {
             runInAction(() => {
                 SETTING_STATE.decoders.unshift({
@@ -302,7 +302,7 @@ const Scrcpy: NextPage = () => {
                     <StackItem align="start">
                         <PrimaryButton
                             text="Start"
-                            disabled={!GLOBAL_STATE.device}
+                            disabled={!GLOBAL_STATE.adb}
                             onClick={STATE.start}
                         />
                     </StackItem>
@@ -325,7 +325,7 @@ const Scrcpy: NextPage = () => {
                         />
                     ))}
 
-                    <ConnectionDialog />
+                    <ConnectingDialog />
                 </>
             )}
         </Stack>

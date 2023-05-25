@@ -69,7 +69,7 @@ export function useSpeed(
 
 export function delay(time: number): Promise<void> {
     return new Promise((resolve) => {
-        window.setTimeout(resolve, time);
+        globalThis.setTimeout(resolve, time);
     });
 }
 

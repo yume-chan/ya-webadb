@@ -10,7 +10,7 @@ import {
 
 const IS_MAC =
     typeof window != "undefined" &&
-    /Mac|iPod|iPhone|iPad/.test(window.navigator.platform);
+    /Mac|iPod|iPhone|iPad/.test(globalThis.navigator.platform);
 
 export function isModKey(e: { metaKey: boolean; ctrlKey: boolean }): boolean {
     if (IS_MAC) {

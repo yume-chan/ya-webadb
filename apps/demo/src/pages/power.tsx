@@ -25,24 +25,24 @@ const Power: NextPage = () => {
             <div>
                 <DefaultButton
                     text="Reboot"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.reboot()}
+                    disabled={!GLOBAL_STATE.adb}
+                    onClick={() => GLOBAL_STATE.adb!.power.reboot()}
                 />
             </div>
 
             <div style={{ marginTop: 20 }}>
                 <DefaultButton
                     text="Power Off"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.powerOff()}
+                    disabled={!GLOBAL_STATE.adb}
+                    onClick={() => GLOBAL_STATE.adb!.power.powerOff()}
                 />
             </div>
 
             <div style={{ marginTop: 20 }}>
                 <DefaultButton
                     text="Press Power Button"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.powerButton()}
+                    disabled={!GLOBAL_STATE.adb}
+                    onClick={() => GLOBAL_STATE.adb!.power.powerButton()}
                 />
             </div>
 
@@ -55,40 +55,40 @@ const Power: NextPage = () => {
             <div style={{ marginTop: 20 }}>
                 <DefaultButton
                     text="Reboot to Bootloader"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.bootloader()}
+                    disabled={!GLOBAL_STATE.adb}
+                    onClick={() => GLOBAL_STATE.adb!.power.bootloader()}
                 />
             </div>
 
             <div style={{ marginTop: 20 }}>
                 <DefaultButton
                     text="Reboot to Fastboot"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.fastboot()}
+                    disabled={!GLOBAL_STATE.adb}
+                    onClick={() => GLOBAL_STATE.adb!.power.fastboot()}
                 />
             </div>
 
             <div style={{ marginTop: 20 }}>
                 <DefaultButton
                     text="Reboot to Recovery"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.recovery()}
+                    disabled={!GLOBAL_STATE.adb}
+                    onClick={() => GLOBAL_STATE.adb!.power.recovery()}
                 />
             </div>
 
             <div style={{ marginTop: 20 }}>
                 <DefaultButton
                     text="Reboot to Sideload"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.sideload()}
+                    disabled={!GLOBAL_STATE.adb}
+                    onClick={() => GLOBAL_STATE.adb!.power.sideload()}
                 />
             </div>
 
             <div style={{ marginTop: 20 }}>
                 <DefaultButton
                     text="Reboot to Qualcomm EDL Mode"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.qualcommEdlMode()}
+                    disabled={!GLOBAL_STATE.adb}
+                    onClick={() => GLOBAL_STATE.adb!.power.qualcommEdlMode()}
                 />
                 <TooltipHost
                     content={<span>Only works on some Qualcomm devices.</span>}
@@ -107,8 +107,8 @@ const Power: NextPage = () => {
             <div style={{ marginTop: 20 }}>
                 <DefaultButton
                     text="Reboot to Samsung Odin Download Mode"
-                    disabled={!GLOBAL_STATE.device}
-                    onClick={() => GLOBAL_STATE.device!.power.samsungOdin()}
+                    disabled={!GLOBAL_STATE.adb}
+                    onClick={() => GLOBAL_STATE.adb!.power.samsungOdin()}
                 />
                 <TooltipHost
                     content={<span>Only works on Samsung devices.</span>}

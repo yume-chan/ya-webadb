@@ -35,7 +35,7 @@ class TcpIpState {
         });
 
         autorun(() => {
-            if (GLOBAL_STATE.device) {
+            if (GLOBAL_STATE.adb) {
                 if (this.initial && this.visible) {
                     this.initial = false;
                     this.queryInfo();
@@ -50,14 +50,14 @@ class TcpIpState {
         return [
             {
                 key: "refresh",
-                disabled: !GLOBAL_STATE.device,
+                disabled: !GLOBAL_STATE.adb,
                 iconProps: { iconName: Icons.ArrowClockwise },
                 text: "Refresh",
                 onClick: this.queryInfo as VoidFunction,
             },
             {
                 key: "apply",
-                disabled: !GLOBAL_STATE.device,
+                disabled: !GLOBAL_STATE.adb,
                 iconProps: { iconName: Icons.Save },
                 text: "Apply",
                 onClick: this.applyServicePort,
@@ -66,7 +66,7 @@ class TcpIpState {
     }
 
     queryInfo = asyncEffect(async (signal) => {
-        if (!GLOBAL_STATE.device) {
+        if (!GLOBAL_STATE.adb) {
             runInAction(() => {
                 this.serviceListenAddresses = undefined;
                 this.servicePortEnabled = false;
@@ -77,13 +77,13 @@ class TcpIpState {
             return;
         }
 
-        const serviceListenAddresses = await GLOBAL_STATE.device.getProp(
+        const serviceListenAddresses = await GLOBAL_STATE.adb.getProp(
             "service.adb.listen_addrs"
         );
-        const servicePort = await GLOBAL_STATE.device.getProp(
+        const servicePort = await GLOBAL_STATE.adb.getProp(
             "service.adb.tcp.port"
         );
-        const persistPort = await GLOBAL_STATE.device.getProp(
+        const persistPort = await GLOBAL_STATE.adb.getProp(
             "persist.adb.tcp.port"
         );
 
@@ -118,16 +118,16 @@ class TcpIpState {
     });
 
     applyServicePort = async () => {
-        if (!GLOBAL_STATE.device) {
+        if (!GLOBAL_STATE.adb) {
             return;
         }
 
         if (state.servicePortEnabled) {
-            await GLOBAL_STATE.device.tcpip.setPort(
+            await GLOBAL_STATE.adb.tcpip.setPort(
                 Number.parseInt(state.servicePort, 10)
             );
         } else {
-            await GLOBAL_STATE.device.tcpip.disable();
+            await GLOBAL_STATE.adb.tcpip.disable();
         }
     };
 }
@@ -223,7 +223,7 @@ const TcpIp: NextPage = () => {
                     label="service.adb.tcp.port"
                     checked={state.servicePortEnabled}
                     disabled={
-                        !GLOBAL_STATE.device || !!state.serviceListenAddresses
+                        !GLOBAL_STATE.adb || !!state.serviceListenAddresses
                     }
                     onText="Enabled"
                     offText="Disabled"
@@ -231,7 +231,7 @@ const TcpIp: NextPage = () => {
                 />
                 <TextField
                     disabled={
-                        !GLOBAL_STATE.device || !!state.serviceListenAddresses
+                        !GLOBAL_STATE.adb || !!state.serviceListenAddresses
                     }
                     value={state.servicePort}
                     styles={{ root: { width: 300 } }}

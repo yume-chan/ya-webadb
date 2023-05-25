@@ -30,7 +30,7 @@ class FetchWithProgress {
     }
 
     private async fetch(url: string | URL) {
-        const response = await window.fetch(url);
+        const response = await globalThis.fetch(url);
         this._total = Number.parseInt(
             response.headers.get("Content-Length") ?? "0",
             10

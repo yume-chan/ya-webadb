@@ -48,10 +48,10 @@ class BugReportState {
         });
 
         autorun(() => {
-            if (GLOBAL_STATE.device) {
+            if (GLOBAL_STATE.adb) {
                 runInAction(() => {
-                    this.bugReport = new BugReport(GLOBAL_STATE.device!);
-                    this.bugReportZ = new BugReportZ(GLOBAL_STATE.device!);
+                    this.bugReport = new BugReport(GLOBAL_STATE.adb!);
+                    this.bugReportZ = new BugReportZ(GLOBAL_STATE.adb!);
 
                     this.bugReportZ.version().then(
                         action((version) => {
@@ -91,7 +91,7 @@ class BugReportState {
                 : undefined
         );
 
-        const sync = await GLOBAL_STATE.device!.sync();
+        const sync = await GLOBAL_STATE.adb!.sync();
         await sync.read(filename).pipeTo(saveFile("bugreport.zip"));
 
         sync.dispose();

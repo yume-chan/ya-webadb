@@ -80,7 +80,7 @@ class DemoModePanelState {
         makeAutoObservable(this);
 
         reaction(
-            () => GLOBAL_STATE.device,
+            () => GLOBAL_STATE.adb,
             async (device) => {
                 if (device) {
                     runInAction(() => (this.demoMode = new DemoMode(device)));
@@ -376,7 +376,7 @@ export const DemoModePanel = observer(({ style }: DemoModePanelProps) => {
         <div style={{ padding: 12, overflow: "hidden auto", ...style }}>
             <Toggle
                 label="Allowed"
-                disabled={!GLOBAL_STATE.device}
+                disabled={!GLOBAL_STATE.adb}
                 checked={state.allowed}
                 onChange={handleAllowedChange}
             />

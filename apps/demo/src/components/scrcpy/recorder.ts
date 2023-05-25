@@ -431,7 +431,7 @@ reaction(
     () => RECORD_STATE.recording,
     (recording) => {
         if (recording) {
-            RECORD_STATE.intervalId = window.setInterval(
+            RECORD_STATE.intervalId = globalThis.setInterval(
                 action(() => {
                     RECORD_STATE.seconds += 1;
                     if (RECORD_STATE.seconds >= 60) {
@@ -444,9 +444,9 @@ reaction(
                     }
                 }),
                 1000
-            );
+            ) as unknown as number;
         } else {
-            window.clearInterval(RECORD_STATE.intervalId);
+            globalThis.clearInterval(RECORD_STATE.intervalId);
             RECORD_STATE.intervalId = -1;
             RECORD_STATE.hours = 0;
             RECORD_STATE.minutes = 0;

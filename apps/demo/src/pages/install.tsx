@@ -78,7 +78,7 @@ class InstallPageState {
             this.log = "";
         });
 
-        const pm = new PackageManager(GLOBAL_STATE.device!);
+        const pm = new PackageManager(GLOBAL_STATE.adb!);
         const start = Date.now();
         const log = await pm.installStream(
             file.size,
@@ -165,7 +165,7 @@ const Install: NextPage = () => {
 
             <Stack horizontal>
                 <PrimaryButton
-                    disabled={!GLOBAL_STATE.device || state.installing}
+                    disabled={!GLOBAL_STATE.adb || state.installing}
                     text="Browse APK"
                     onClick={state.install}
                 />

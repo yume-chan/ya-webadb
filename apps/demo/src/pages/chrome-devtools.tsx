@@ -103,7 +103,7 @@ const agent = new Agent({
     },
     async connect(options, callback) {
         try {
-            const socket = await GLOBAL_STATE.device!.createSocket(
+            const socket = await GLOBAL_STATE.adb!.createSocket(
                 "localabstract:" + options.hostname
             );
             callback(null, new AdbUndiciSocket(socket) as unknown as Socket);
@@ -214,7 +214,7 @@ const GET_SOCKET_COMMAND = [
 ];
 
 async function getBrowsers() {
-    const device = GLOBAL_STATE.device!;
+    const device = GLOBAL_STATE.adb!;
     const sockets = await device.subprocess.spawnAndWaitLegacy(
         GET_SOCKET_COMMAND.join(" | ")
     );
@@ -239,7 +239,7 @@ async function getBrowsers() {
 }
 
 reaction(
-    () => [GLOBAL_STATE.device, STATE.visible] as const,
+    () => [GLOBAL_STATE.adb, STATE.visible] as const,
     ([device, visible]) => {
         if (!device || !visible) {
             STATE.browsers = [];
@@ -361,7 +361,7 @@ const ChromeDevToolsPage: NextPage = observer(function ChromeDevTools() {
                 ws.close();
             });
 
-            window.addEventListener("beforeunload", () => {
+            globalThis.addEventListener("beforeunload", () => {
                 port.postMessage({ type: "close" });
                 port.close();
             });

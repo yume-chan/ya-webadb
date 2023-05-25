@@ -1,5 +1,5 @@
 import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
-import { AdbDaemonWebUsbConnection } from "@yume-chan/adb-daemon-webusb";
+import { AdbDaemonWebUsbDevice } from "@yume-chan/adb-daemon-webusb";
 import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
 import {
     Float32PcmPlayer,
@@ -81,7 +81,7 @@ export class ScrcpyPageState {
     async pushServer() {
         const serverBuffer = await fetchServer();
         await AdbScrcpyClient.pushServer(
-            GLOBAL_STATE.device!,
+            GLOBAL_STATE.adb!,
             new ReadableStream<Consumable<Uint8Array>>({
                 start(controller) {
                     controller.enqueue(new Consumable(serverBuffer));
@@ -115,7 +115,7 @@ export class ScrcpyPageState {
         });
 
         autorun(() => {
-            if (!GLOBAL_STATE.device) {
+            if (!GLOBAL_STATE.adb) {
                 this.dispose();
             }
         });
@@ -141,7 +141,7 @@ export class ScrcpyPageState {
     }
 
     start = async () => {
-        if (!GLOBAL_STATE.device) {
+        if (!GLOBAL_STATE.adb) {
             return;
         }
 
@@ -201,7 +201,7 @@ export class ScrcpyPageState {
 
             try {
                 await AdbScrcpyClient.pushServer(
-                    GLOBAL_STATE.device!,
+                    GLOBAL_STATE.adb!,
                     new ReadableStream<Consumable<Uint8Array>>({
                         start(controller) {
                             controller.enqueue(new Consumable(serverBuffer));
@@ -279,7 +279,7 @@ export class ScrcpyPageState {
             });
 
             const client = await AdbScrcpyClient.start(
-                GLOBAL_STATE.device!,
+                GLOBAL_STATE.adb!,
                 DEFAULT_SERVER_PATH,
                 SCRCPY_SERVER_VERSION,
                 options
@@ -501,7 +501,7 @@ export class ScrcpyPageState {
                     write(message) {
                         switch (message.type) {
                             case ScrcpyDeviceMessageType.Clipboard:
-                                window.navigator.clipboard.writeText(
+                                globalThis.navigator.clipboard.writeText(
                                     message.content
                                 );
                                 break;
@@ -522,11 +522,9 @@ export class ScrcpyPageState {
                 this.running = true;
             });
 
-            const connection = GLOBAL_STATE.connection!;
-            if (connection instanceof AdbDaemonWebUsbConnection) {
-                this.keyboard = await AoaKeyboardInjector.register(
-                    connection.device
-                );
+            const device = GLOBAL_STATE.device!;
+            if (device instanceof AdbDaemonWebUsbDevice) {
+                this.keyboard = await AoaKeyboardInjector.register(device.raw);
             } else {
                 this.keyboard = new ScrcpyKeyboardInjector(client);
             }

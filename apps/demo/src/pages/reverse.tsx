@@ -10,7 +10,7 @@ const state = makeAutoObservable({
 });
 
 reaction(
-    () => GLOBAL_STATE.device,
+    () => GLOBAL_STATE.adb,
     async (device) => {
         if (!device) {
             return;

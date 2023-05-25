@@ -1,5 +1,5 @@
 import { DefaultButton, PrimaryButton } from "@fluentui/react";
-import { AdbDaemonWebUsbConnection } from "@yume-chan/adb-daemon-webusb";
+import { AdbDaemonWebUsbDevice } from "@yume-chan/adb-daemon-webusb";
 import {
     aoaGetProtocol,
     aoaSetAudioMode,
@@ -12,15 +12,15 @@ import { GLOBAL_STATE } from "../state";
 function AudioPage() {
     const [supported, setSupported] = useState<boolean | undefined>(undefined);
     const handleQuerySupportClick = useCallback(async () => {
-        const transport = GLOBAL_STATE.connection as AdbDaemonWebUsbConnection;
-        const device = transport.device;
+        const transport = GLOBAL_STATE.device as AdbDaemonWebUsbDevice;
+        const device = transport.raw;
         const version = await aoaGetProtocol(device);
         setSupported(version >= 2);
     }, []);
 
     const handleEnableClick = useCallback(async () => {
-        const transport = GLOBAL_STATE.connection as AdbDaemonWebUsbConnection;
-        const device = transport.device;
+        const transport = GLOBAL_STATE.device as AdbDaemonWebUsbDevice;
+        const device = transport.raw;
         const version = await aoaGetProtocol(device);
         if (version < 2) {
             return;
@@ -29,8 +29,8 @@ function AudioPage() {
         await aoaStartAccessory(device);
     }, []);
     const handleDisableClick = useCallback(async () => {
-        const transport = GLOBAL_STATE.connection as AdbDaemonWebUsbConnection;
-        const device = transport.device;
+        const transport = GLOBAL_STATE.device as AdbDaemonWebUsbDevice;
+        const device = transport.raw;
         const version = await aoaGetProtocol(device);
         if (version < 2) {
             return;
@@ -40,8 +40,8 @@ function AudioPage() {
     }, []);
 
     if (
-        !GLOBAL_STATE.connection ||
-        !(GLOBAL_STATE.connection instanceof AdbDaemonWebUsbConnection)
+        !GLOBAL_STATE.device ||
+        !(GLOBAL_STATE.device instanceof AdbDaemonWebUsbDevice)
     ) {
         return (
             <div>Audio forward can only be used with WebUSB connection.</div>
@@ -56,7 +56,7 @@ function AudioPage() {
             </div>
             <div>
                 <PrimaryButton
-                    disabled={!GLOBAL_STATE.connection}
+                    disabled={!GLOBAL_STATE.device}
                     onClick={handleQuerySupportClick}
                 >
                     Query Support

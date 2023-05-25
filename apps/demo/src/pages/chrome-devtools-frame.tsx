@@ -81,7 +81,7 @@ function ChromeDevToolsFrame() {
                             break;
                     }
                 };
-                window.postMessage({ type: "AdbWebSocket", url }, "*", [
+                globalThis.postMessage({ type: "AdbWebSocket", url }, "*", [
                     channel.port2,
                 ]);
             }

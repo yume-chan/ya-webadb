@@ -97,7 +97,7 @@ function syncDevice() {
         port = undefined;
     }
 
-    const { device: adb } = GLOBAL_STATE;
+    const { adb: adb } = GLOBAL_STATE;
     if (adb) {
         const channel = new MessageChannel();
         port = channel.port1;
@@ -148,7 +148,7 @@ export function attachTabbyFrame(container: HTMLDivElement | null) {
         frame.style.border = "none";
         document.body.appendChild(frame);
 
-        window.addEventListener("message", (e) => {
+        globalThis.addEventListener("message", (e) => {
             // Wait for Tabby to be ready
             if (e.source === frame?.contentWindow && e.data === "adb-ready") {
                 syncDevice();

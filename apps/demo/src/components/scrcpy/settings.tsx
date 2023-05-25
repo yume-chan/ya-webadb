@@ -213,7 +213,7 @@ export const SETTING_STATE = makeAutoObservable(
 );
 
 autorun(() => {
-    if (GLOBAL_STATE.device) {
+    if (GLOBAL_STATE.adb) {
         runInAction(() => {
             SETTING_STATE.encoders = [];
             SETTING_STATE.displays = [];
@@ -265,14 +265,14 @@ export const SETTING_DEFINITIONS = computed(() => {
         labelExtra: (
             <IconButton
                 iconProps={{ iconName: Icons.ArrowClockwise }}
-                disabled={!GLOBAL_STATE.device}
+                disabled={!GLOBAL_STATE.adb}
                 text="Refresh"
                 onClick={async () => {
                     try {
                         await STATE.pushServer();
 
                         const displays = await AdbScrcpyClient.getDisplays(
-                            GLOBAL_STATE.device!,
+                            GLOBAL_STATE.adb!,
                             DEFAULT_SERVER_PATH,
                             SCRCPY_SERVER_VERSION,
                             new AdbScrcpyOptionsLatest(
@@ -363,14 +363,14 @@ export const SETTING_DEFINITIONS = computed(() => {
             labelExtra: (
                 <IconButton
                     iconProps={{ iconName: Icons.ArrowClockwise }}
-                    disabled={!GLOBAL_STATE.device}
+                    disabled={!GLOBAL_STATE.adb}
                     text="Refresh"
                     onClick={async () => {
                         try {
                             await STATE.pushServer();
 
                             const encoders = await AdbScrcpyClient.getEncoders(
-                                GLOBAL_STATE.device!,
+                                GLOBAL_STATE.adb!,
                                 DEFAULT_SERVER_PATH,
                                 SCRCPY_SERVER_VERSION,
                                 new AdbScrcpyOptionsLatest(
@@ -497,14 +497,14 @@ export const SETTING_DEFINITIONS = computed(() => {
             labelExtra: (
                 <IconButton
                     iconProps={{ iconName: Icons.ArrowClockwise }}
-                    disabled={!GLOBAL_STATE.device}
+                    disabled={!GLOBAL_STATE.adb}
                     text="Refresh"
                     onClick={async () => {
                         try {
                             await STATE.pushServer();
 
                             const encoders = await AdbScrcpyClient.getEncoders(
-                                GLOBAL_STATE.device!,
+                                GLOBAL_STATE.adb!,
                                 DEFAULT_SERVER_PATH,
                                 SCRCPY_SERVER_VERSION,
                                 new AdbScrcpyOptionsLatest(

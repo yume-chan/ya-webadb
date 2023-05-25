@@ -167,7 +167,7 @@ class FileManagerState {
                         iconName: Icons.CloudArrowUp,
                         style: { height: 20, fontSize: 20, lineHeight: 1.5 },
                     },
-                    disabled: !GLOBAL_STATE.device,
+                    disabled: !GLOBAL_STATE.adb,
                     onClick: () => {
                         (async () => {
                             const files = await pickFile({ multiple: true });
@@ -215,7 +215,7 @@ class FileManagerState {
                                 try {
                                     for (const item of this.selectedItems) {
                                         const output =
-                                            await GLOBAL_STATE.device!.rm(
+                                            await GLOBAL_STATE.adb!.rm(
                                                 path.resolve(
                                                     this.path,
                                                     item.name!
@@ -381,7 +381,7 @@ class FileManagerState {
             },
         ];
 
-        if (GLOBAL_STATE.device?.supportsFeature(AdbFeature.ListV2)) {
+        if (GLOBAL_STATE.adb?.supportsFeature(AdbFeature.ListV2)) {
             list.push(
                 {
                     key: "ctime",
@@ -441,7 +441,7 @@ class FileManagerState {
         });
 
         autorun(() => {
-            if (GLOBAL_STATE.device) {
+            if (GLOBAL_STATE.adb) {
                 if (this.initial && this.visible) {
                     this.initial = false;
                     this.loadFiles();
@@ -518,7 +518,7 @@ class FileManagerState {
     }
 
     private async download() {
-        const sync = await GLOBAL_STATE.device!.sync();
+        const sync = await GLOBAL_STATE.adb!.sync();
         try {
             if (this.selectedItems.length === 1) {
                 const item = this.selectedItems[0];
@@ -596,7 +596,7 @@ class FileManagerState {
 
         this.path = path;
 
-        if (!GLOBAL_STATE.device) {
+        if (!GLOBAL_STATE.adb) {
             return;
         }
 
@@ -608,13 +608,13 @@ class FileManagerState {
 
         runInAction(() => (this.items = []));
 
-        if (!GLOBAL_STATE.device) {
+        if (!GLOBAL_STATE.adb) {
             return;
         }
 
         runInAction(() => (this.loading = true));
 
-        const sync = await GLOBAL_STATE.device.sync();
+        const sync = await GLOBAL_STATE.adb.sync();
 
         const items: ListItem[] = [];
         const linkItems: AdbSyncEntry[] = [];
@@ -675,7 +675,7 @@ class FileManagerState {
     });
 
     upload = async (file: File) => {
-        const sync = await GLOBAL_STATE.device!.sync();
+        const sync = await GLOBAL_STATE.adb!.sync();
         try {
             const itemPath = path.resolve(this.path!, file.name);
             runInAction(() => {
@@ -798,13 +798,13 @@ const FileManager: NextPage = (): JSX.Element | null => {
 
     const [previewUrl, setPreviewUrl] = useState<string | undefined>();
     const previewImage = useCallback(async (path: string) => {
-        const sync = await GLOBAL_STATE.device!.sync();
+        const sync = await GLOBAL_STATE.adb!.sync();
         try {
             const readable = sync.read(path);
             // @ts-ignore ReadableStream definitions are slightly incompatible
             const response = new Response(readable);
             const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
+            const url = globalThis.URL.createObjectURL(blob);
             setPreviewUrl(url);
         } finally {
             sync.dispose();
