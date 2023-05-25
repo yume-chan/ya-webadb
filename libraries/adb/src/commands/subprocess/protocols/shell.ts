@@ -125,33 +125,33 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
         );
     }
 
-    private readonly _socket: AdbSocket;
-    private _socketWriter: WritableStreamDefaultWriter<
+    readonly #socket: AdbSocket;
+    #socketWriter: WritableStreamDefaultWriter<
         Consumable<AdbShellProtocolPacketInit>
     >;
 
-    private _stdin: WritableStream<Consumable<Uint8Array>>;
+    #stdin: WritableStream<Consumable<Uint8Array>>;
     public get stdin() {
-        return this._stdin;
+        return this.#stdin;
     }
 
-    private _stdout: ReadableStream<Uint8Array>;
+    #stdout: ReadableStream<Uint8Array>;
     public get stdout() {
-        return this._stdout;
+        return this.#stdout;
     }
 
-    private _stderr: ReadableStream<Uint8Array>;
+    #stderr: ReadableStream<Uint8Array>;
     public get stderr() {
-        return this._stderr;
+        return this.#stderr;
     }
 
-    private readonly _exit = new PromiseResolver<number>();
+    readonly #exit = new PromiseResolver<number>();
     public get exit() {
-        return this._exit.promise;
+        return this.#exit.promise;
     }
 
     public constructor(socket: AdbSocket) {
-        this._socket = socket;
+        this.#socket = socket;
 
         // Check this image to help you understand the stream graph
         // cspell: disable-next-line
@@ -159,10 +159,10 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
 
         let stdoutController!: PushReadableStreamController<Uint8Array>;
         let stderrController!: PushReadableStreamController<Uint8Array>;
-        this._stdout = new PushReadableStream<Uint8Array>((controller) => {
+        this.#stdout = new PushReadableStream<Uint8Array>((controller) => {
             stdoutController = controller;
         });
-        this._stderr = new PushReadableStream<Uint8Array>((controller) => {
+        this.#stderr = new PushReadableStream<Uint8Array>((controller) => {
             stderrController = controller;
         });
 
@@ -173,7 +173,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                     write: async (chunk) => {
                         switch (chunk.id) {
                             case AdbShellProtocolId.Exit:
-                                this._exit.resolve(chunk.data[0]!);
+                                this.#exit.resolve(chunk.data[0]!);
                                 break;
                             case AdbShellProtocolId.Stdout:
                                 await stdoutController.enqueue(chunk.data);
@@ -189,8 +189,8 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                 () => {
                     stdoutController.close();
                     stderrController.close();
-                    if (this._exit.state !== "resolved") {
-                        this._exit.reject(
+                    if (this.#exit.state !== "resolved") {
+                        this.#exit.reject(
                             new Error("Socket ended without exit message")
                         );
                     }
@@ -216,16 +216,16 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
             )
             .pipeTo(socket.writable);
 
-        this._stdin = pipeFrom(
+        this.#stdin = pipeFrom(
             multiplexer.createWriteable(),
             new StdinSerializeStream()
         );
 
-        this._socketWriter = multiplexer.createWriteable().getWriter();
+        this.#socketWriter = multiplexer.createWriteable().getWriter();
     }
 
     public async resize(rows: number, cols: number) {
-        await ConsumableWritableStream.write(this._socketWriter, {
+        await ConsumableWritableStream.write(this.#socketWriter, {
             id: AdbShellProtocolId.WindowSizeChange,
             data: encodeUtf8(
                 // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
@@ -237,6 +237,6 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     }
 
     public kill() {
-        return this._socket.close();
+        return this.#socket.close();
     }
 }

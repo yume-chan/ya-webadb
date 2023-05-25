@@ -11,14 +11,14 @@ import { ReadableStream, WritableStream } from "./stream.js";
 export class BufferedTransformStream<T>
     implements ReadableWritablePair<T, Uint8Array>
 {
-    private _readable: ReadableStream<T>;
+    #readable: ReadableStream<T>;
     public get readable() {
-        return this._readable;
+        return this.#readable;
     }
 
-    private _writable: WritableStream<Uint8Array>;
+    #writable: WritableStream<Uint8Array>;
     public get writable() {
-        return this._writable;
+        return this.#writable;
     }
 
     constructor(
@@ -33,7 +33,7 @@ export class BufferedTransformStream<T>
             })
         );
 
-        this._readable = new ReadableStream<T>({
+        this.#readable = new ReadableStream<T>({
             async pull(controller) {
                 try {
                     const value = await transform(buffered);
@@ -56,7 +56,7 @@ export class BufferedTransformStream<T>
             },
         });
 
-        this._writable = new WritableStream({
+        this.#writable = new WritableStream({
             async write(chunk) {
                 await sourceStreamController.enqueue(chunk);
             },

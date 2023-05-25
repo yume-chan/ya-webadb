@@ -26,35 +26,35 @@ const createTask: Console["createTask"] =
     }));
 
 export class Consumable<T> {
-    private readonly task: Task;
-    private readonly resolver: PromiseResolver<void>;
+    readonly #task: Task;
+    readonly #resolver: PromiseResolver<void>;
 
     public readonly value: T;
     public readonly consumed: Promise<void>;
 
     public constructor(value: T) {
-        this.task = createTask("Consumable");
+        this.#task = createTask("Consumable");
         this.value = value;
-        this.resolver = new PromiseResolver<void>();
-        this.consumed = this.resolver.promise;
+        this.#resolver = new PromiseResolver<void>();
+        this.consumed = this.#resolver.promise;
     }
 
     public consume() {
-        this.resolver.resolve();
+        this.#resolver.resolve();
     }
 
     public error(error: any) {
-        this.resolver.reject(error);
+        this.#resolver.reject(error);
     }
 
     public async tryConsume<U>(callback: (value: T) => U) {
         try {
             // eslint-disable-next-line @typescript-eslint/await-thenable
-            const result = await this.task.run(() => callback(this.value));
+            const result = await this.#task.run(() => callback(this.value));
             this.consume();
             return result;
         } catch (e) {
-            this.resolver.reject(e);
+            this.#resolver.reject(e);
             throw e;
         }
     }

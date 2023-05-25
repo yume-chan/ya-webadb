@@ -238,22 +238,22 @@ export class Struct<
 
     public readonly options: Readonly<StructOptions>;
 
-    private _size = 0;
+    #size = 0;
     /**
      * Gets the static size (exclude fields that can change size at runtime)
      */
     public get size() {
-        return this._size;
+        return this.#size;
     }
 
-    private _fields: [
+    #fields: [
         name: PropertyKey,
         definition: StructFieldDefinition<any, any, any>
     ][] = [];
 
-    private _extra: Record<PropertyKey, unknown> = {};
+    #extra: Record<PropertyKey, unknown> = {};
 
-    private _postDeserialized?: StructPostDeserialized<any, any> | undefined;
+    #postDeserialized?: StructPostDeserialized<any, any> | undefined;
 
     public constructor(options?: Partial<Readonly<StructOptions>>) {
         this.options = { ...StructDefaultOptions, ...options };
@@ -276,20 +276,20 @@ export class Struct<
         TName,
         TDefinition
     > {
-        for (const field of this._fields) {
+        for (const field of this.#fields) {
             if (field[0] === name) {
+                // Convert Symbol to string
+                const nameString = String(name);
                 throw new Error(
-                    `This struct already have a field with name '${String(
-                        name
-                    )}'`
+                    `This struct already have a field with name '${nameString}'`
                 );
             }
         }
 
-        this._fields.push([name, definition]);
+        this.#fields.push([name, definition]);
 
         const size = definition.getSize();
-        this._size += size;
+        this.#size += size;
 
         // Force cast `this` to another type
         return this as any;
@@ -306,13 +306,13 @@ export class Struct<
         TExtra & TOther["TExtra"],
         TPostDeserialized
     > {
-        for (const field of other._fields) {
-            this._fields.push(field);
+        for (const field of other.#fields) {
+            this.#fields.push(field);
         }
-        this._size += other._size;
+        this.#size += other.#size;
         Object.defineProperties(
-            this._extra,
-            Object.getOwnPropertyDescriptors(other._extra)
+            this.#extra,
+            Object.getOwnPropertyDescriptors(other.#extra)
         );
         return this as any;
     }
@@ -498,7 +498,7 @@ export class Struct<
         value: T & ThisType<Overwrite<Overwrite<TExtra, T>, TFields>>
     ): Struct<TFields, TOmitInitKey, Overwrite<TExtra, T>, TPostDeserialized> {
         Object.defineProperties(
-            this._extra,
+            this.#extra,
             Object.getOwnPropertyDescriptors(value)
         );
         return this as any;
@@ -532,7 +532,7 @@ export class Struct<
         callback?: StructPostDeserialized<TFields, TPostSerialize>
     ): Struct<TFields, TOmitInitKey, TExtra, TPostSerialize>;
     public postDeserialize(callback?: StructPostDeserialized<TFields, any>) {
-        this._postDeserialized = callback;
+        this.#postDeserialized = callback;
         return this as any;
     }
 
@@ -550,12 +550,12 @@ export class Struct<
     ): ValueOrPromise<
         StructDeserializedResult<TFields, TExtra, TPostDeserialized>
     > {
-        const structValue = new StructValue(this._extra);
+        const structValue = new StructValue(this.#extra);
 
         let promise = SyncPromise.resolve();
 
         const startPosition = stream.position;
-        for (const [name, definition] of this._fields) {
+        for (const [name, definition] of this.#fields) {
             promise = promise
                 .then(() =>
                     definition.deserialize(this.options, stream, structValue)
@@ -580,14 +580,11 @@ export class Struct<
 
         return promise
             .then(() => {
-                const object = structValue.value;
+                const value = structValue.value;
 
                 // Run `postDeserialized`
-                if (this._postDeserialized) {
-                    const override = this._postDeserialized.call(
-                        object,
-                        object
-                    );
+                if (this.#postDeserialized) {
+                    const override = this.#postDeserialized.call(value, value);
                     // If it returns a new value, use that as result
                     // Otherwise it only inspects/mutates the object in place.
                     if (override !== undefined) {
@@ -595,7 +592,7 @@ export class Struct<
                     }
                 }
 
-                return object;
+                return value;
             })
             .valueOrPromise();
     }
@@ -620,7 +617,7 @@ export class Struct<
             }
         } else {
             structValue = new StructValue({});
-            for (const [name, definition] of this._fields) {
+            for (const [name, definition] of this.#fields) {
                 const fieldValue = definition.create(
                     this.options,
                     structValue,
@@ -633,7 +630,7 @@ export class Struct<
         let structSize = 0;
         const fieldsInfo: { fieldValue: StructFieldValue; size: number }[] = [];
 
-        for (const [name] of this._fields) {
+        for (const [name] of this.#fields) {
             const fieldValue = structValue.get(name);
             const size = fieldValue.getSize();
             fieldsInfo.push({ fieldValue, size });

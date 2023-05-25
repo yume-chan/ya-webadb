@@ -9,13 +9,13 @@ const NOOP = () => {
 };
 
 export class BufferedReadableStream implements AsyncExactReadable {
-    private buffered: Uint8Array | undefined;
-    private bufferedOffset = 0;
-    private bufferedLength = 0;
+    #buffered: Uint8Array | undefined;
+    #bufferedOffset = 0;
+    #bufferedLength = 0;
 
-    private _position = 0;
+    #position = 0;
     public get position() {
-        return this._position;
+        return this.#position;
     }
 
     protected readonly stream: ReadableStream<Uint8Array>;
@@ -31,7 +31,7 @@ export class BufferedReadableStream implements AsyncExactReadable {
         if (done) {
             throw new ExactReadableEndedError();
         }
-        this._position += value.byteLength;
+        this.#position += value.byteLength;
         return value;
     }
 
@@ -51,9 +51,9 @@ export class BufferedReadableStream implements AsyncExactReadable {
             }
 
             if (array.byteLength > length) {
-                this.buffered = array;
-                this.bufferedOffset = length;
-                this.bufferedLength = array.byteLength - length;
+                this.#buffered = array;
+                this.#bufferedOffset = length;
+                this.#bufferedLength = array.byteLength - length;
                 return array.subarray(0, length);
             }
 
@@ -71,9 +71,9 @@ export class BufferedReadableStream implements AsyncExactReadable {
             }
 
             if (array.byteLength > length) {
-                this.buffered = array;
-                this.bufferedOffset = length;
-                this.bufferedLength = array.byteLength - length;
+                this.#buffered = array;
+                this.#bufferedOffset = length;
+                this.#bufferedLength = array.byteLength - length;
                 result.set(array.subarray(0, length), index);
                 return result;
             }
@@ -93,20 +93,20 @@ export class BufferedReadableStream implements AsyncExactReadable {
      */
     public readExactly(length: number): Uint8Array | Promise<Uint8Array> {
         // PERF: Add a synchronous path for reading from internal buffer
-        if (this.buffered) {
-            const array = this.buffered;
-            const offset = this.bufferedOffset;
-            if (this.bufferedLength > length) {
+        if (this.#buffered) {
+            const array = this.#buffered;
+            const offset = this.#bufferedOffset;
+            if (this.#bufferedLength > length) {
                 // PERF: `subarray` is slow
                 // don't use it until absolutely necessary
-                this.bufferedOffset += length;
-                this.bufferedLength -= length;
+                this.#bufferedOffset += length;
+                this.#bufferedLength -= length;
                 return array.subarray(offset, offset + length);
             }
 
-            this.buffered = undefined;
-            this.bufferedLength = 0;
-            this.bufferedOffset = 0;
+            this.#buffered = undefined;
+            this.#bufferedLength = 0;
+            this.#bufferedOffset = 0;
             return this.readAsync(length, array.subarray(offset));
         }
 
@@ -119,10 +119,10 @@ export class BufferedReadableStream implements AsyncExactReadable {
      * @returns A `ReadableStream`
      */
     public release(): ReadableStream<Uint8Array> {
-        if (this.bufferedLength > 0) {
+        if (this.#bufferedLength > 0) {
             return new PushReadableStream<Uint8Array>(async (controller) => {
                 // Put the remaining data back to the stream
-                const buffered = this.buffered!.subarray(this.bufferedOffset);
+                const buffered = this.#buffered!.subarray(this.#bufferedOffset);
                 await controller.enqueue(buffered);
 
                 controller.abortSignal.addEventListener("abort", () => {

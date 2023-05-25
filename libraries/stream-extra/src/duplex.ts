@@ -46,29 +46,29 @@ export interface DuplexStreamFactoryOptions {
  * when any of them is closed, all other streams will be closed as well.
  */
 export class DuplexStreamFactory<R, W> {
-    private readableControllers: ReadableStreamDefaultController<R>[] = [];
-    private writers: WritableStreamDefaultWriter<W>[] = [];
+    #readableControllers: ReadableStreamDefaultController<R>[] = [];
+    #writers: WritableStreamDefaultWriter<W>[] = [];
 
-    private _writableClosed = false;
+    #writableClosed = false;
     public get writableClosed() {
-        return this._writableClosed;
+        return this.#writableClosed;
     }
 
-    private _closed = new PromiseResolver<void>();
+    #closed = new PromiseResolver<void>();
     public get closed() {
-        return this._closed.promise;
+        return this.#closed.promise;
     }
 
-    private options: DuplexStreamFactoryOptions;
+    readonly #options: DuplexStreamFactoryOptions;
 
     public constructor(options?: DuplexStreamFactoryOptions) {
-        this.options = options ?? {};
+        this.#options = options ?? {};
     }
 
     public wrapReadable(readable: ReadableStream<R>): WrapReadableStream<R> {
         return new WrapReadableStream<R>({
             start: (controller) => {
-                this.readableControllers.push(controller);
+                this.#readableControllers.push(controller);
                 return readable;
             },
             cancel: async () => {
@@ -84,7 +84,7 @@ export class DuplexStreamFactory<R, W> {
 
     public createWritable(stream: WritableStream<W>): WritableStream<W> {
         const writer = stream.getWriter();
-        this.writers.push(writer);
+        this.#writers.push(writer);
 
         // `WritableStream` has no way to tell if the remote peer has closed the connection.
         // So it only triggers `close`.
@@ -105,28 +105,28 @@ export class DuplexStreamFactory<R, W> {
     }
 
     public async close() {
-        if (this._writableClosed) {
+        if (this.#writableClosed) {
             return;
         }
-        this._writableClosed = true;
+        this.#writableClosed = true;
 
         // Call `close` first, so it can still write data to `WritableStream`s.
-        if ((await this.options.close?.()) !== false) {
+        if ((await this.#options.close?.()) !== false) {
             // `close` can return `false` to disable automatic `dispose`.
             await this.dispose();
         }
 
-        for (const writer of this.writers) {
+        for (const writer of this.#writers) {
             // NOOP: the writer is already closed
             writer.close().catch(NOOP);
         }
     }
 
     public async dispose() {
-        this._writableClosed = true;
-        this._closed.resolve();
+        this.#writableClosed = true;
+        this.#closed.resolve();
 
-        for (const controller of this.readableControllers) {
+        for (const controller of this.#readableControllers) {
             try {
                 controller.close();
             } catch {
@@ -134,6 +134,6 @@ export class DuplexStreamFactory<R, W> {
             }
         }
 
-        await this.options.dispose?.();
+        await this.#options.dispose?.();
     }
 }

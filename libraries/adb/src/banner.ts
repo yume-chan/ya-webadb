@@ -48,24 +48,24 @@ export class AdbBanner {
         return new AdbBanner(product, model, device, features);
     }
 
-    private _product: string | undefined;
+    #product: string | undefined;
     public get product() {
-        return this._product;
+        return this.#product;
     }
 
-    private _model: string | undefined;
+    #model: string | undefined;
     public get model() {
-        return this._model;
+        return this.#model;
     }
 
-    private _device: string | undefined;
+    #device: string | undefined;
     public get device() {
-        return this._device;
+        return this.#device;
     }
 
-    private _features: AdbFeature[] = [];
+    #features: AdbFeature[] = [];
     public get features() {
-        return this._features;
+        return this.#features;
     }
 
     public constructor(
@@ -74,9 +74,9 @@ export class AdbBanner {
         device: string | undefined,
         features: AdbFeature[]
     ) {
-        this._product = product;
-        this._model = model;
-        this._device = device;
-        this._features = features;
+        this.#product = product;
+        this.#model = model;
+        this.#device = device;
+        this.#features = features;
     }
 }

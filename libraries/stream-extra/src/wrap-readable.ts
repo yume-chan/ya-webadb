@@ -44,7 +44,7 @@ function getWrappedReadableStream<T>(
 export class WrapReadableStream<T> extends ReadableStream<T> {
     public readable!: ReadableStream<T>;
 
-    private reader!: ReadableStreamDefaultReader<T>;
+    #reader!: ReadableStreamDefaultReader<T>;
 
     public constructor(
         wrapper:
@@ -64,16 +64,16 @@ export class WrapReadableStream<T> extends ReadableStream<T> {
                     wrapper,
                     controller
                 );
-                this.reader = this.readable.getReader();
+                this.#reader = this.readable.getReader();
             },
             cancel: async (reason) => {
-                await this.reader.cancel(reason);
+                await this.#reader.cancel(reason);
                 if ("cancel" in wrapper) {
                     await wrapper.cancel?.(reason);
                 }
             },
             pull: async (controller) => {
-                const result = await this.reader.read();
+                const result = await this.#reader.read();
                 if (result.done) {
                     controller.close();
                     if ("close" in wrapper) {

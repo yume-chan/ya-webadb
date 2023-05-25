@@ -34,7 +34,7 @@ export type AdbPacket = (typeof AdbPacket)["TDeserializeResult"];
  * `AdvDaemonConnection#connect` will return a `ReadableStream<AdbPacketData>`,
  * allow each connection to encode `AdbPacket` in different methods.
  *
- * `AdvDaemonConnection#connect` will return a `WritableStream<AdbPacketInit>`,
+ * `AdbDaemonConnection#connect` will return a `WritableStream<AdbPacketInit>`,
  * however, `AdbDaemonTransport` will transform `AdbPacketData` to `AdbPacketInit` for you,
  * so `AdbSocket#writable#write` only needs `AdbPacketData`.
  */

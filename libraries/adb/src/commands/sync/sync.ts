@@ -42,30 +42,30 @@ export class AdbSync extends AutoDisposable {
     protected _adb: Adb;
     protected _socket: AdbSyncSocket;
 
-    private _supportsStat: boolean;
-    private _supportsListV2: boolean;
-    private _fixedPushMkdir: boolean;
-    private _supportsSendReceiveV2: boolean;
-    private _needPushMkdirWorkaround: boolean;
+    readonly #supportsStat: boolean;
+    readonly #supportsListV2: boolean;
+    readonly #fixedPushMkdir: boolean;
+    readonly #supportsSendReceiveV2: boolean;
+    readonly #needPushMkdirWorkaround: boolean;
 
     public get supportsStat(): boolean {
-        return this._supportsStat;
+        return this.#supportsStat;
     }
 
     public get supportsListV2(): boolean {
-        return this._supportsListV2;
+        return this.#supportsListV2;
     }
 
     public get fixedPushMkdir(): boolean {
-        return this._fixedPushMkdir;
+        return this.#fixedPushMkdir;
     }
 
     public get supportsSendReceiveV2(): boolean {
-        return this._supportsSendReceiveV2;
+        return this.#supportsSendReceiveV2;
     }
 
     public get needPushMkdirWorkaround(): boolean {
-        return this._needPushMkdirWorkaround;
+        return this.#needPushMkdirWorkaround;
     }
 
     public constructor(adb: Adb, socket: AdbSocket) {
@@ -74,14 +74,14 @@ export class AdbSync extends AutoDisposable {
         this._adb = adb;
         this._socket = new AdbSyncSocket(socket, adb.maxPayloadSize);
 
-        this._supportsStat = adb.supportsFeature(AdbFeature.StatV2);
-        this._supportsListV2 = adb.supportsFeature(AdbFeature.ListV2);
-        this._fixedPushMkdir = adb.supportsFeature(AdbFeature.FixedPushMkdir);
-        this._supportsSendReceiveV2 = adb.supportsFeature(
+        this.#supportsStat = adb.supportsFeature(AdbFeature.StatV2);
+        this.#supportsListV2 = adb.supportsFeature(AdbFeature.ListV2);
+        this.#fixedPushMkdir = adb.supportsFeature(AdbFeature.FixedPushMkdir);
+        this.#supportsSendReceiveV2 = adb.supportsFeature(
             AdbFeature.SendReceiveV2
         );
         // https://android.googlesource.com/platform/packages/modules/adb/+/91768a57b7138166e0a3d11f79cd55909dda7014/client/file_sync_client.cpp#1361
-        this._needPushMkdirWorkaround =
+        this.#needPushMkdirWorkaround =
             this._adb.supportsFeature(AdbFeature.ShellV2) &&
             !this.fixedPushMkdir;
     }

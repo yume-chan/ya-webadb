@@ -124,9 +124,8 @@ export class AdbAuthenticationProcessor implements Disposable {
 
     private readonly credentialStore: AdbCredentialStore;
 
-    private pendingRequest = new PromiseResolver<AdbPacketData>();
-
-    private iterator: AsyncIterator<AdbPacketData, void, void> | undefined;
+    #pendingRequest = new PromiseResolver<AdbPacketData>();
+    #iterator: AsyncIterator<AdbPacketData, void, void> | undefined;
 
     public constructor(
         authenticators: readonly AdbAuthenticator[],
@@ -137,7 +136,7 @@ export class AdbAuthenticationProcessor implements Disposable {
     }
 
     private getNextRequest = (): Promise<AdbPacketData> => {
-        return this.pendingRequest.promise;
+        return this.#pendingRequest.promise;
     };
 
     private async *invokeAuthenticator(): AsyncGenerator<
@@ -152,7 +151,7 @@ export class AdbAuthenticationProcessor implements Disposable {
             )) {
                 // If the authenticator yielded a response
                 // Prepare `nextRequest` for next authentication request
-                this.pendingRequest = new PromiseResolver();
+                this.#pendingRequest = new PromiseResolver();
 
                 // Yield the response to outer layer
                 yield packet;
@@ -164,13 +163,13 @@ export class AdbAuthenticationProcessor implements Disposable {
     }
 
     public async process(packet: AdbPacketData): Promise<AdbPacketData> {
-        if (!this.iterator) {
-            this.iterator = this.invokeAuthenticator();
+        if (!this.#iterator) {
+            this.#iterator = this.invokeAuthenticator();
         }
 
-        this.pendingRequest.resolve(packet);
+        this.#pendingRequest.resolve(packet);
 
-        const result = await this.iterator.next();
+        const result = await this.#iterator.next();
         if (result.done) {
             throw new Error("No authenticator can handle the request");
         }
@@ -179,6 +178,6 @@ export class AdbAuthenticationProcessor implements Disposable {
     }
 
     public dispose() {
-        void this.iterator?.return?.();
+        void this.#iterator?.return?.();
     }
 }

@@ -32,7 +32,7 @@ async function getWrappedWritableStream<T>(
 export class WrapWritableStream<T> extends WritableStream<T> {
     public writable!: WritableStream<T>;
 
-    private writer!: WritableStreamDefaultWriter<T>;
+    #writer!: WritableStreamDefaultWriter<T>;
 
     public constructor(
         wrapper:
@@ -49,13 +49,13 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 await Promise.resolve();
 
                 this.writable = await getWrappedWritableStream(wrapper);
-                this.writer = this.writable.getWriter();
+                this.#writer = this.writable.getWriter();
             },
             write: async (chunk) => {
-                await this.writer.write(chunk);
+                await this.#writer.write(chunk);
             },
             abort: async (reason) => {
-                await this.writer.abort(reason);
+                await this.#writer.abort(reason);
                 if ("close" in wrapper) {
                     await wrapper.close?.();
                 }
@@ -65,7 +65,7 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 // Usually the inner stream is a logical sub-stream over the outer stream,
                 // closing the outer stream first will make the inner stream incapable of
                 // sending data in its `close` handler.
-                await this.writer.close();
+                await this.#writer.close();
                 if ("close" in wrapper) {
                     await wrapper.close?.();
                 }

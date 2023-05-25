@@ -13,16 +13,14 @@ import type { AdbSocket } from "../../adb.js";
 import { AutoResetEvent } from "../../utils/index.js";
 
 export class AdbSyncSocketLocked implements AsyncExactReadable {
-    private readonly _writer: WritableStreamDefaultWriter<
-        Consumable<Uint8Array>
-    >;
-    private readonly _readable: BufferedReadableStream;
-    private readonly _socketLock: AutoResetEvent;
-    private readonly _writeLock = new AutoResetEvent();
-    private readonly _combiner: BufferCombiner;
+    readonly #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
+    readonly #readable: BufferedReadableStream;
+    readonly #socketLock: AutoResetEvent;
+    readonly #writeLock = new AutoResetEvent();
+    readonly #combiner: BufferCombiner;
 
     public get position() {
-        return this._readable.position;
+        return this.#readable.position;
     }
 
     public constructor(
@@ -31,71 +29,71 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
         bufferSize: number,
         lock: AutoResetEvent
     ) {
-        this._writer = writer;
-        this._readable = readable;
-        this._socketLock = lock;
-        this._combiner = new BufferCombiner(bufferSize);
+        this.#writer = writer;
+        this.#readable = readable;
+        this.#socketLock = lock;
+        this.#combiner = new BufferCombiner(bufferSize);
     }
 
     private async writeInnerStream(buffer: Uint8Array) {
-        await ConsumableWritableStream.write(this._writer, buffer);
+        await ConsumableWritableStream.write(this.#writer, buffer);
     }
 
     public async flush() {
         try {
-            await this._writeLock.wait();
-            const buffer = this._combiner.flush();
+            await this.#writeLock.wait();
+            const buffer = this.#combiner.flush();
             if (buffer) {
                 await this.writeInnerStream(buffer);
             }
         } finally {
-            this._writeLock.notifyOne();
+            this.#writeLock.notifyOne();
         }
     }
 
     public async write(data: Uint8Array) {
         try {
-            await this._writeLock.wait();
-            for (const buffer of this._combiner.push(data)) {
+            await this.#writeLock.wait();
+            for (const buffer of this.#combiner.push(data)) {
                 await this.writeInnerStream(buffer);
             }
         } finally {
-            this._writeLock.notifyOne();
+            this.#writeLock.notifyOne();
         }
     }
 
     public async readExactly(length: number) {
         await this.flush();
-        return await this._readable.readExactly(length);
+        return await this.#readable.readExactly(length);
     }
 
     public release(): void {
-        this._combiner.flush();
-        this._socketLock.notifyOne();
+        this.#combiner.flush();
+        this.#socketLock.notifyOne();
     }
 }
 
 export class AdbSyncSocket {
-    private _lock = new AutoResetEvent();
-    private _socket: AdbSocket;
-    private _locked: AdbSyncSocketLocked;
+    readonly #lock = new AutoResetEvent();
+    readonly #socket: AdbSocket;
+    readonly #locked: AdbSyncSocketLocked;
 
     public constructor(socket: AdbSocket, bufferSize: number) {
-        this._socket = socket;
-        this._locked = new AdbSyncSocketLocked(
+        this.#socket = socket;
+        this.#locked = new AdbSyncSocketLocked(
             socket.writable.getWriter(),
             new BufferedReadableStream(socket.readable),
             bufferSize,
-            this._lock
+            this.#lock
         );
     }
 
     public async lock() {
-        await this._lock.wait();
-        return this._locked;
+        await this.#lock.wait();
+        return this.#locked;
     }
 
     public async close() {
-        await this._socket.close();
+        await this.#socket.close();
     }
 }

@@ -2,39 +2,39 @@ import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 
 export class AutoResetEvent implements Disposable {
-    private _set: boolean;
-    private readonly _queue: PromiseResolver<void>[] = [];
+    #set: boolean;
+    readonly #queue: PromiseResolver<void>[] = [];
 
     public constructor(initialSet = false) {
-        this._set = initialSet;
+        this.#set = initialSet;
     }
 
     public wait(): Promise<void> {
-        if (!this._set) {
-            this._set = true;
+        if (!this.#set) {
+            this.#set = true;
 
-            if (this._queue.length === 0) {
+            if (this.#queue.length === 0) {
                 return Promise.resolve();
             }
         }
 
         const resolver = new PromiseResolver<void>();
-        this._queue.push(resolver);
+        this.#queue.push(resolver);
         return resolver.promise;
     }
 
     public notifyOne() {
-        if (this._queue.length !== 0) {
-            this._queue.pop()!.resolve();
+        if (this.#queue.length !== 0) {
+            this.#queue.pop()!.resolve();
         } else {
-            this._set = false;
+            this.#set = false;
         }
     }
 
     public dispose() {
-        for (const item of this._queue) {
+        for (const item of this.#queue) {
             item.reject(new Error("The AutoResetEvent has been disposed"));
         }
-        this._queue.length = 0;
+        this.#queue.length = 0;
     }
 }

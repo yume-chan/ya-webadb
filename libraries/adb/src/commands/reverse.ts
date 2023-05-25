@@ -5,7 +5,7 @@ import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import Struct, { ExactReadableEndedError } from "@yume-chan/struct";
 
 import type { Adb, AdbIncomingSocketHandler } from "../adb.js";
-import { decodeUtf8 } from "../utils/index.js";
+import { decodeUtf8, hexToNumber } from "../utils/index.js";
 
 export interface AdbForwardListener {
     deviceSerial: string;
@@ -47,10 +47,15 @@ const AdbReverseErrorResponse = new Struct()
         }
     });
 
+async function readString(stream: BufferedReadableStream, length: number) {
+    const buffer = await stream.readExactly(length);
+    return decodeUtf8(buffer);
+}
+
 export class AdbReverseCommand extends AutoDisposable {
     protected adb: Adb;
 
-    private readonly _deviceAddressToLocalAddress = new Map<string, string>();
+    readonly #deviceAddressToLocalAddress = new Map<string, string>();
 
     public constructor(adb: Adb) {
         super();
@@ -58,19 +63,14 @@ export class AdbReverseCommand extends AutoDisposable {
         this.adb = adb;
     }
 
-    private async createBufferedStream(service: string) {
+    protected async createBufferedStream(service: string) {
         const socket = await this.adb.createSocket(service);
         return new BufferedReadableStream(socket.readable);
     }
 
-    private async readString(stream: BufferedReadableStream, length: number) {
-        const buffer = await stream.readExactly(length);
-        return decodeUtf8(buffer);
-    }
-
-    private async sendRequest(service: string) {
+    protected async sendRequest(service: string) {
         const stream = await this.createBufferedStream(service);
-        const success = (await this.readString(stream, 4)) === "OKAY";
+        const success = (await readString(stream, 4)) === "OKAY";
         if (!success) {
             await AdbReverseErrorResponse.deserialize(stream);
         }
@@ -109,9 +109,8 @@ export class AdbReverseCommand extends AutoDisposable {
         if (deviceAddress.startsWith("tcp:")) {
             const position = stream.position;
             try {
-                const lengthString = await this.readString(stream, 4);
-                const length = Number.parseInt(lengthString, 16);
-                const port = await this.readString(stream, length);
+                const length = hexToNumber(await stream.readExactly(4));
+                const port = await readString(stream, length);
                 deviceAddress = `tcp:${Number.parseInt(port, 10)}`;
             } catch (e) {
                 if (
@@ -150,7 +149,7 @@ export class AdbReverseCommand extends AutoDisposable {
 
         try {
             deviceAddress = await this.addExternal(deviceAddress, localAddress);
-            this._deviceAddressToLocalAddress.set(deviceAddress, localAddress);
+            this.#deviceAddressToLocalAddress.set(deviceAddress, localAddress);
             return deviceAddress;
         } catch (e) {
             await this.adb.transport.removeReverseTunnel(localAddress);
@@ -160,7 +159,7 @@ export class AdbReverseCommand extends AutoDisposable {
 
     public async remove(deviceAddress: string): Promise<void> {
         const localAddress =
-            this._deviceAddressToLocalAddress.get(deviceAddress);
+            this.#deviceAddressToLocalAddress.get(deviceAddress);
         if (localAddress) {
             await this.adb.transport.removeReverseTunnel(localAddress);
         }
@@ -172,7 +171,7 @@ export class AdbReverseCommand extends AutoDisposable {
 
     public async removeAll(): Promise<void> {
         await this.adb.transport.clearReverseTunnels();
-        this._deviceAddressToLocalAddress.clear();
+        this.#deviceAddressToLocalAddress.clear();
 
         await this.sendRequest(`reverse:killforward-all`);
 

@@ -4,16 +4,16 @@ import { ConsumableTransformStream } from "./consumable.js";
  * Splits or combines buffers to specified size.
  */
 export class BufferCombiner {
-    private _capacity: number;
-    private readonly _buffer: Uint8Array;
-    private _offset: number;
-    private _available: number;
+    #capacity: number;
+    readonly #buffer: Uint8Array;
+    #offset: number;
+    #available: number;
 
     public constructor(size: number) {
-        this._capacity = size;
-        this._buffer = new Uint8Array(size);
-        this._offset = 0;
-        this._available = size;
+        this.#capacity = size;
+        this.#buffer = new Uint8Array(size);
+        this.#offset = 0;
+        this.#available = size;
     }
 
     /**
@@ -27,52 +27,52 @@ export class BufferCombiner {
         let offset = 0;
         let available = data.byteLength;
 
-        if (this._offset !== 0) {
-            if (available >= this._available) {
-                this._buffer.set(
-                    data.subarray(0, this._available),
-                    this._offset
+        if (this.#offset !== 0) {
+            if (available >= this.#available) {
+                this.#buffer.set(
+                    data.subarray(0, this.#available),
+                    this.#offset
                 );
-                offset += this._available;
-                available -= this._available;
+                offset += this.#available;
+                available -= this.#available;
 
-                yield this._buffer;
-                this._offset = 0;
-                this._available = this._capacity;
+                yield this.#buffer;
+                this.#offset = 0;
+                this.#available = this.#capacity;
 
                 if (available === 0) {
                     return;
                 }
             } else {
-                this._buffer.set(data, this._offset);
-                this._offset += available;
-                this._available -= available;
+                this.#buffer.set(data, this.#offset);
+                this.#offset += available;
+                this.#available -= available;
                 return;
             }
         }
 
-        while (available >= this._capacity) {
-            const end = offset + this._capacity;
+        while (available >= this.#capacity) {
+            const end = offset + this.#capacity;
             yield data.subarray(offset, end);
             offset = end;
-            available -= this._capacity;
+            available -= this.#capacity;
         }
 
         if (available > 0) {
-            this._buffer.set(data.subarray(offset), this._offset);
-            this._offset += available;
-            this._available -= available;
+            this.#buffer.set(data.subarray(offset), this.#offset);
+            this.#offset += available;
+            this.#available -= available;
         }
     }
 
     public flush(): Uint8Array | undefined {
-        if (this._offset === 0) {
+        if (this.#offset === 0) {
             return undefined;
         }
 
-        const output = this._buffer.subarray(0, this._offset);
-        this._offset = 0;
-        this._available = this._capacity;
+        const output = this.#buffer.subarray(0, this.#offset);
+        this.#offset = 0;
+        this.#available = this.#capacity;
         return output;
     }
 }

@@ -31,50 +31,50 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
         );
     }
 
-    private readonly _socket: AdbSocket;
+    readonly #socket: AdbSocket;
 
-    private readonly _duplex: DuplexStreamFactory<Uint8Array, Uint8Array>;
+    readonly #duplex: DuplexStreamFactory<Uint8Array, Uint8Array>;
 
     // Legacy shell forwards all data to stdin.
     public get stdin() {
-        return this._socket.writable;
+        return this.#socket.writable;
     }
 
-    private _stdout: ReadableStream<Uint8Array>;
+    #stdout: ReadableStream<Uint8Array>;
     /**
      * Legacy shell mixes stdout and stderr.
      */
     public get stdout() {
-        return this._stdout;
+        return this.#stdout;
     }
 
-    private _stderr: ReadableStream<Uint8Array>;
+    #stderr: ReadableStream<Uint8Array>;
     /**
      * `stderr` will always be empty.
      */
     public get stderr() {
-        return this._stderr;
+        return this.#stderr;
     }
 
-    private _exit: Promise<number>;
+    #exit: Promise<number>;
     public get exit() {
-        return this._exit;
+        return this.#exit;
     }
 
     public constructor(socket: AdbSocket) {
-        this._socket = socket;
+        this.#socket = socket;
 
         // Link `stdout`, `stderr` and `stdin` together,
         // so closing any of them will close the others.
-        this._duplex = new DuplexStreamFactory<Uint8Array, Uint8Array>({
+        this.#duplex = new DuplexStreamFactory<Uint8Array, Uint8Array>({
             close: async () => {
-                await this._socket.close();
+                await this.#socket.close();
             },
         });
 
-        this._stdout = this._duplex.wrapReadable(this._socket.readable);
-        this._stderr = this._duplex.wrapReadable(new ReadableStream());
-        this._exit = this._duplex.closed.then(() => 0);
+        this.#stdout = this.#duplex.wrapReadable(this.#socket.readable);
+        this.#stderr = this.#duplex.wrapReadable(new ReadableStream());
+        this.#exit = this.#duplex.closed.then(() => 0);
     }
 
     public resize() {
@@ -82,6 +82,6 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     }
 
     public kill() {
-        return this._duplex.close();
+        return this.#duplex.close();
     }
 }

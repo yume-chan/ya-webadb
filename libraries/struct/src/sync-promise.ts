@@ -55,10 +55,10 @@ export const SyncPromise: SyncPromiseStatic = {
 };
 
 class PendingSyncPromise<T> implements SyncPromise<T> {
-    private promise: PromiseLike<T>;
+    #promise: PromiseLike<T>;
 
     public constructor(promise: PromiseLike<T>) {
-        this.promise = promise;
+        this.#promise = promise;
     }
 
     public then<TResult1 = T, TResult2 = never>(
@@ -72,20 +72,20 @@ class PendingSyncPromise<T> implements SyncPromise<T> {
             | undefined
     ) {
         return new PendingSyncPromise<TResult1 | TResult2>(
-            this.promise.then(onfulfilled, onrejected)
+            this.#promise.then(onfulfilled, onrejected)
         );
     }
 
     public valueOrPromise(): T | PromiseLike<T> {
-        return this.promise;
+        return this.#promise;
     }
 }
 
 class ResolvedSyncPromise<T> implements SyncPromise<T> {
-    private value: T;
+    #value: T;
 
     public constructor(value: T) {
-        this.value = value;
+        this.#value = value;
     }
 
     public then<TResult1 = T>(
@@ -97,19 +97,19 @@ class ResolvedSyncPromise<T> implements SyncPromise<T> {
         if (!onfulfilled) {
             return this as any;
         }
-        return SyncPromise.try(() => onfulfilled(this.value));
+        return SyncPromise.try(() => onfulfilled(this.#value));
     }
 
     public valueOrPromise(): T | PromiseLike<T> {
-        return this.value;
+        return this.#value;
     }
 }
 
 class RejectedSyncPromise<T> implements SyncPromise<T> {
-    private reason: any;
+    #reason: any;
 
     public constructor(reason: any) {
-        this.reason = reason;
+        this.#reason = reason;
     }
 
     public then<TResult1 = T, TResult2 = never>(
@@ -125,10 +125,10 @@ class RejectedSyncPromise<T> implements SyncPromise<T> {
         if (!onrejected) {
             return this as any;
         }
-        return SyncPromise.try(() => onrejected(this.reason));
+        return SyncPromise.try(() => onrejected(this.#reason));
     }
 
     public valueOrPromise(): T | PromiseLike<T> {
-        throw this.reason;
+        throw this.#reason;
     }
 }

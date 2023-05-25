@@ -180,30 +180,30 @@ export class AdbDaemonTransport implements AdbTransport {
         });
     }
 
-    private readonly _dispatcher: AdbPacketDispatcher;
+    readonly #dispatcher: AdbPacketDispatcher;
 
-    private _serial: string;
+    #serial: string;
     public get serial() {
-        return this._serial;
+        return this.#serial;
     }
 
-    private _protocolVersion: number;
+    #protocolVersion: number;
     public get protocolVersion() {
-        return this._protocolVersion;
+        return this.#protocolVersion;
     }
 
-    private _maxPayloadSize: number;
+    #maxPayloadSize: number;
     public get maxPayloadSize() {
-        return this._maxPayloadSize;
+        return this.#maxPayloadSize;
     }
 
-    private _banner: AdbBanner;
+    #banner: AdbBanner;
     public get banner() {
-        return this._banner;
+        return this.#banner;
     }
 
     public get disconnected() {
-        return this._dispatcher.disconnected;
+        return this.#dispatcher.disconnected;
     }
 
     public constructor({
@@ -213,8 +213,8 @@ export class AdbDaemonTransport implements AdbTransport {
         maxPayloadSize,
         banner,
     }: AdbDaemonSocketConnectorConstructionOptions) {
-        this._serial = serial;
-        this._banner = AdbBanner.parse(banner);
+        this.#serial = serial;
+        this.#banner = AdbBanner.parse(banner);
 
         let calculateChecksum: boolean;
         let appendNullToServiceString: boolean;
@@ -226,18 +226,18 @@ export class AdbDaemonTransport implements AdbTransport {
             appendNullToServiceString = true;
         }
 
-        this._dispatcher = new AdbPacketDispatcher(connection, {
+        this.#dispatcher = new AdbPacketDispatcher(connection, {
             calculateChecksum,
             appendNullToServiceString,
             maxPayloadSize,
         });
 
-        this._protocolVersion = version;
-        this._maxPayloadSize = maxPayloadSize;
+        this.#protocolVersion = version;
+        this.#maxPayloadSize = maxPayloadSize;
     }
 
     public connect(service: string): ValueOrPromise<AdbSocket> {
-        return this._dispatcher.createSocket(service);
+        return this.#dispatcher.createSocket(service);
     }
 
     public addReverseTunnel(
@@ -248,19 +248,19 @@ export class AdbDaemonTransport implements AdbTransport {
             const id = Math.random().toString().substring(2);
             address = `localabstract:reverse_${id}`;
         }
-        this._dispatcher.addReverseTunnel(address, handler);
+        this.#dispatcher.addReverseTunnel(address, handler);
         return address;
     }
 
     public removeReverseTunnel(address: string): void {
-        this._dispatcher.removeReverseTunnel(address);
+        this.#dispatcher.removeReverseTunnel(address);
     }
 
     public clearReverseTunnels(): void {
-        this._dispatcher.clearReverseTunnels();
+        this.#dispatcher.clearReverseTunnels();
     }
 
     public close(): ValueOrPromise<void> {
-        return this._dispatcher.close();
+        return this.#dispatcher.close();
     }
 }
