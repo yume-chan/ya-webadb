@@ -1,27 +1,69 @@
 // cspell: ignore RSASSA
 
 import type { AdbCredentialStore } from "@yume-chan/adb";
-import {
-    adbGeneratePublicKey,
-    adbGetPublicKeySize,
-    calculateBase64EncodedLength,
-    decodeBase64,
-    decodeUtf8,
-    encodeBase64,
-} from "@yume-chan/adb";
+
+function openDatabase() {
+    return new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open("Tango", 1);
+        request.onerror = () => {
+            reject(request.error);
+        };
+        request.onupgradeneeded = () => {
+            const db = request.result;
+            db.createObjectStore("Authentication", { autoIncrement: true });
+        };
+        request.onsuccess = () => {
+            const db = request.result;
+            resolve(db);
+        };
+    });
+}
+
+async function saveKey(key: Uint8Array): Promise<void> {
+    const db = await openDatabase();
+
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("Authentication", "readwrite");
+        const store = transaction.objectStore("Authentication");
+        const putRequest = store.add(key);
+        putRequest.onerror = () => {
+            reject(putRequest.error);
+        };
+        putRequest.onsuccess = () => {
+            resolve();
+        };
+        transaction.onerror = () => {
+            reject(transaction.error);
+        };
+        transaction.oncomplete = () => {
+            db.close();
+        };
+    });
+}
+
+async function getAllKeys() {
+    const db = await openDatabase();
+
+    return new Promise<Uint8Array[]>((resolve, reject) => {
+        const transaction = db.transaction("Authentication", "readonly");
+        const store = transaction.objectStore("Authentication");
+        const getRequest = store.getAll();
+        getRequest.onerror = () => {
+            reject(getRequest.error);
+        };
+        getRequest.onsuccess = () => {
+            resolve(getRequest.result as Uint8Array[]);
+        };
+        transaction.onerror = () => {
+            reject(transaction.error);
+        };
+        transaction.oncomplete = () => {
+            db.close();
+        };
+    });
+}
 
 export default class AdbWebCredentialStore implements AdbCredentialStore {
-    public readonly localStorageKey: string;
-
-    /**
-     * Create a new instance of `AdbWebCredentialStore`.
-     *
-     * @param localStorageKey Specifies the key to use when reading and writing the private key in LocalStorage.
-     */
-    public constructor(localStorageKey = "private-key") {
-        this.localStorageKey = localStorageKey;
-    }
-
     /**
      * Generate a RSA private key and store it into LocalStorage.
      *
@@ -45,28 +87,7 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
         const privateKey = new Uint8Array(
             await crypto.subtle.exportKey("pkcs8", cryptoKey)
         );
-        window.localStorage.setItem(
-            this.localStorageKey,
-            decodeUtf8(encodeBase64(privateKey))
-        );
-
-        // The authentication module in core doesn't need public keys.
-        // It will generate the public key from private key every time.
-        // However, maybe there are people want to manually put this public key onto their device,
-        // so also save the public key for their convenience.
-        const publicKeyLength = adbGetPublicKeySize();
-        const [publicKeyBase64Length] =
-            calculateBase64EncodedLength(publicKeyLength);
-        const publicKeyBuffer = new Uint8Array(publicKeyBase64Length);
-        adbGeneratePublicKey(privateKey, publicKeyBuffer);
-        encodeBase64(
-            publicKeyBuffer.subarray(0, publicKeyLength),
-            publicKeyBuffer
-        );
-        window.localStorage.setItem(
-            this.localStorageKey + ".pub",
-            decodeUtf8(publicKeyBuffer)
-        );
+        await saveKey(privateKey);
 
         return privateKey;
     }
@@ -74,12 +95,11 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
     /**
      * Yield the stored RSA private key. `AdbWebCredentialStore` only stores one key, so only one value will be yielded.
      *
-     * This method returns a generator, so `for...of...` loop should be used to read the key.
+     * This method returns a generator, so `for await...of...` loop should be used to read the key.
      */
-    public *iterateKeys(): Generator<Uint8Array, void, void> {
-        const privateKey = window.localStorage.getItem(this.localStorageKey);
-        if (privateKey) {
-            yield decodeBase64(privateKey);
+    public async *iterateKeys(): AsyncGenerator<Uint8Array, void, void> {
+        for (const key of await getAllKeys()) {
+            yield key;
         }
     }
 }

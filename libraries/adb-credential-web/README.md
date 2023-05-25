@@ -1,20 +1,20 @@
 # `@yume-chan/adb-credential-web`
 
-Generate RSA keys using Web Crypto API ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)) and store them in LocalStorage ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API)).
+Generate RSA keys using Web Crypto API ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API)) and store them in IndexedDB ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)).
 
-- [Constructor](#constructor)
-- [`generateKey`](#generatekey)
-- [`iterateKeys`](#iteratekeys)
+Local storage is not available in Web Workers (for example WebUSB API is supported in Chrome extension service workers), so IndexedDB is used instead.
+
+-   [Constructor](#constructor)
+-   [`generateKey`](#generatekey)
+-   [`iterateKeys`](#iteratekeys)
 
 ## Constructor
 
 ```ts
-public constructor(localStorageKey = "private-key");
+public constructor();
 ```
 
 Create a new instance of `AdbWebCredentialStore`.
-
-The `localStorageKey` parameter specifies the key to use when reading and writing the private key in LocalStorage.
 
 ## `generateKey`
 
@@ -31,9 +31,9 @@ The returned `Uint8Array` is the private key in PKCS #8 format.
 ## `iterateKeys`
 
 ```ts
-*iterateKeys(): Generator<Uint8Array, void, void>
+async *iterateKeys(): AsyncGenerator<Uint8Array, void, void>
 ```
 
 Yield the stored RSA private key. `AdbWebCredentialStore` only stores one key, so only one value will be yielded.
 
-This method returns a generator, so `for...of...` loop should be used to read the key.
+This method returns a generator, so `for await...of...` loop should be used to read the key.
