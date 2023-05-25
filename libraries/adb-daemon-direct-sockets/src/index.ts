@@ -1,4 +1,4 @@
-import type { AdbDaemonConnection } from "@yume-chan/adb";
+import type { AdbDaemonDevice } from "@yume-chan/adb";
 import { AdbPacket, AdbPacketSerializeStream } from "@yume-chan/adb";
 import type { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 import {
@@ -20,13 +20,7 @@ declare global {
         localPort: number;
     }
 
-    class TCPSocket {
-        constructor(
-            remoteAddress: string,
-            remotePort: number,
-            options?: TCPSocketOptions
-        );
-
+    interface TCPSocket {
         opened: Promise<TCPSocketOpenInfo>;
         closed: Promise<void>;
 
@@ -41,16 +35,19 @@ declare global {
         keepAliveDelay?: number;
     }
 
-    interface Window {
-        TCPSocket: typeof TCPSocket;
-    }
+    // eslint-disable-next-line no-var
+    var TCPSocket: {
+        new (
+            remoteAddress: string,
+            remotePort: number,
+            options?: TCPSocketOptions
+        ): TCPSocket;
+    };
 }
 
-export default class AdbDaemonDirectSocketsConnection
-    implements AdbDaemonConnection
-{
+export default class AdbDaemonDirectSocketsDevice implements AdbDaemonDevice {
     public static isSupported(): boolean {
-        return typeof window !== "undefined" && !!window.TCPSocket;
+        return typeof globalThis.TCPSocket !== "undefined";
     }
 
     public readonly serial: string;
@@ -69,7 +66,9 @@ export default class AdbDaemonDirectSocketsConnection
     }
 
     public async connect() {
-        const socket = new TCPSocket(this.host, this.port, { noDelay: true });
+        const socket = new globalThis.TCPSocket(this.host, this.port, {
+            noDelay: true,
+        });
         const { readable, writable } = await socket.opened;
 
         return {

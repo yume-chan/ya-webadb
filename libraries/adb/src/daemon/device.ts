@@ -3,7 +3,7 @@ import type { ValueOrPromise } from "@yume-chan/struct";
 
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 
-export interface AdbDaemonConnection {
+export interface AdbDaemonDevice {
     readonly serial: string;
 
     readonly name: string | undefined;

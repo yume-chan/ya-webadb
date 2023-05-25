@@ -1,28 +1,27 @@
-import type { AdbDeviceFilter } from "./connection.js";
-import {
-    ADB_DEFAULT_DEVICE_FILTER,
-    AdbDaemonWebUsbConnection,
-} from "./connection.js";
+import { ADB_DEFAULT_DEVICE_FILTER, AdbDaemonWebUsbDevice } from "./device.js";
+import type { AdbDeviceFilter } from "./utils.js";
+import { findUsbAlternateInterface, isErrorName } from "./utils.js";
 
-export class AdbDaemonWebUsbConnectionManager {
+export class AdbDaemonWebUsbDeviceManager {
     /**
-     * Gets the instance of {@link AdbDaemonWebUsbConnectionManager} using browser WebUSB implementation.
+     * Gets the instance of {@link AdbDaemonWebUsbDeviceManager} using browser WebUSB implementation.
      *
      * May be `undefined` if current runtime does not support WebUSB.
      */
     public static readonly BROWSER =
-        typeof window !== "undefined" && !!window.navigator.usb
-            ? new AdbDaemonWebUsbConnectionManager(window.navigator.usb)
+        typeof globalThis.navigator !== "undefined" &&
+        !!globalThis.navigator.usb
+            ? new AdbDaemonWebUsbDeviceManager(globalThis.navigator.usb)
             : undefined;
 
-    private _usb: USB;
+    #usbManager: USB;
 
     /**
-     * Create a new instance of {@link AdbDaemonWebUsbConnectionManager} using the specified WebUSB implementation.
-     * @param usb A WebUSB compatible interface.
+     * Create a new instance of {@link AdbDaemonWebUsbDeviceManager} using the specified WebUSB implementation.
+     * @param usbManager A WebUSB compatible interface.
      */
-    public constructor(usb: USB) {
-        this._usb = usb;
+    public constructor(usbManager: USB) {
+        this.#usbManager = usbManager;
     }
 
     /**
@@ -35,28 +34,20 @@ export class AdbDaemonWebUsbConnectionManager {
      * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
      *
      * Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
-     * @returns An {@link AdbDaemonWebUsbConnection} instance if the user selected a device,
+     * @returns An {@link AdbDaemonWebUsbDevice} instance if the user selected a device,
      * or `undefined` if the user cancelled the device picker.
      */
     public async requestDevice(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-    ): Promise<AdbDaemonWebUsbConnection | undefined> {
+    ): Promise<AdbDaemonWebUsbDevice | undefined> {
         try {
-            const device = await this._usb.requestDevice({
+            const device = await this.#usbManager.requestDevice({
                 filters,
             });
-            return new AdbDaemonWebUsbConnection(device, filters, this._usb);
+            return new AdbDaemonWebUsbDevice(device, filters, this.#usbManager);
         } catch (e) {
             // No device selected
-            // This check is compatible with both Browser implementation
-            // and `usb` NPM package from version 2.8.1
-            // https://github.com/node-usb/node-usb/issues/573
-            if (
-                typeof e === "object" &&
-                e !== null &&
-                "name" in e &&
-                e.name === "NotFoundError"
-            ) {
+            if (isErrorName(e, "NotFoundError")) {
                 return undefined;
             }
 
@@ -74,15 +65,46 @@ export class AdbDaemonWebUsbConnectionManager {
      * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the device list.
      *
      * Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
-     * @returns An array of {@link AdbDaemonWebUsbConnection} instances for all connected and authenticated devices.
+     * @returns An array of {@link AdbDaemonWebUsbDevice} instances for all connected and authenticated devices.
      */
     public async getDevices(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
-    ): Promise<AdbDaemonWebUsbConnection[]> {
-        const devices = await this._usb.getDevices();
-        return devices.map(
-            (device) =>
-                new AdbDaemonWebUsbConnection(device, filters, this._usb)
-        );
+    ): Promise<AdbDaemonWebUsbDevice[]> {
+        const devices = await this.#usbManager.getDevices();
+        return devices
+            .filter((device) => {
+                for (const filter of filters) {
+                    if (
+                        "vendorId" in filter &&
+                        device.vendorId !== filter.vendorId
+                    ) {
+                        continue;
+                    }
+                    if (
+                        "productId" in filter &&
+                        device.productId !== filter.productId
+                    ) {
+                        continue;
+                    }
+                    if (
+                        "serialNumber" in filter &&
+                        device.serialNumber !== filter.serialNumber
+                    ) {
+                        continue;
+                    }
+
+                    try {
+                        findUsbAlternateInterface(device, filters);
+                        return true;
+                    } catch {
+                        continue;
+                    }
+                }
+                return false;
+            })
+            .map(
+                (device) =>
+                    new AdbDaemonWebUsbDevice(device, filters, this.#usbManager)
+            );
     }
 }

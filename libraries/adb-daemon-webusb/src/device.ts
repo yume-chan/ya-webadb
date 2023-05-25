@@ -1,5 +1,5 @@
 import type {
-    AdbDaemonConnection,
+    AdbDaemonDevice,
     AdbPacketData,
     AdbPacketInit,
 } from "@yume-chan/adb";
@@ -22,14 +22,8 @@ import {
 import type { ExactReadable } from "@yume-chan/struct";
 import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
-/**
- * `classCode`, `subclassCode` and `protocolCode` are required
- * for selecting correct USB configuration and interface.
- */
-export type AdbDeviceFilter = USBDeviceFilter &
-    Required<
-        Pick<USBDeviceFilter, "classCode" | "subclassCode" | "protocolCode">
-    >;
+import type { AdbDeviceFilter } from "./utils.js";
+import { findUsbAlternateInterface, isErrorName } from "./utils.js";
 
 /**
  * The default filter for ADB devices, as defined by Google.
@@ -39,35 +33,6 @@ export const ADB_DEFAULT_DEVICE_FILTER = {
     subclassCode: 0x42,
     protocolCode: 1,
 } as const satisfies AdbDeviceFilter;
-
-function alternateMatchesFilter(
-    alternate: USBAlternateInterface,
-    filters: AdbDeviceFilter[]
-) {
-    return filters.some(
-        (filter) =>
-            alternate.interfaceClass === filter.classCode &&
-            alternate.interfaceSubclass === filter.subclassCode &&
-            alternate.interfaceProtocol === filter.protocolCode
-    );
-}
-
-function findUsbAlternateInterface(
-    device: USBDevice,
-    filters: AdbDeviceFilter[]
-) {
-    for (const configuration of device.configurations) {
-        for (const interface_ of configuration.interfaces) {
-            for (const alternate of interface_.alternates) {
-                if (alternateMatchesFilter(alternate, filters)) {
-                    return { configuration, interface_, alternate };
-                }
-            }
-        }
-    }
-
-    throw new Error("No matched alternate interface found");
-}
 
 /**
  * Find the first pair of input and output endpoints from an alternate interface.
@@ -109,39 +74,39 @@ function findUsbEndpoints(endpoints: USBEndpoint[]) {
 }
 
 class Uint8ArrayExactReadable implements ExactReadable {
-    private _data: Uint8Array;
-    private _position: number;
+    #data: Uint8Array;
+    #position: number;
 
     public get position() {
-        return this._position;
+        return this.#position;
     }
 
     public constructor(data: Uint8Array) {
-        this._data = data;
-        this._position = 0;
+        this.#data = data;
+        this.#position = 0;
     }
 
     public readExactly(length: number): Uint8Array {
-        const result = this._data.subarray(
-            this._position,
-            this._position + length
+        const result = this.#data.subarray(
+            this.#position,
+            this.#position + length
         );
-        this._position += length;
+        this.#position += length;
         return result;
     }
 }
 
-export class AdbDaemonWebUsbConnectionStreams
+export class AdbDaemonWebUsbConnection
     implements ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
 {
-    private _readable: ReadableStream<AdbPacketData>;
+    #readable: ReadableStream<AdbPacketData>;
     public get readable() {
-        return this._readable;
+        return this.#readable;
     }
 
-    private _writable: WritableStream<Consumable<AdbPacketInit>>;
+    #writable: WritableStream<Consumable<AdbPacketInit>>;
     public get writable() {
-        return this._writable;
+        return this.#writable;
     }
 
     public constructor(
@@ -181,7 +146,7 @@ export class AdbDaemonWebUsbConnectionStreams
 
         usbManager.addEventListener("disconnect", handleUsbDisconnect);
 
-        this._readable = duplex.wrapReadable(
+        this.#readable = duplex.wrapReadable(
             new ReadableStream<AdbPacketData>({
                 async pull(controller) {
                     try {
@@ -221,12 +186,7 @@ export class AdbDaemonWebUsbConnectionStreams
                         // even before the `disconnect` event is fired.
                         // We need to wait a little bit and check if the device is still connected.
                         // https://github.com/WICG/webusb/issues/219
-                        if (
-                            typeof e === "object" &&
-                            e !== null &&
-                            "name" in e &&
-                            e.name === "NetworkError"
-                        ) {
+                        if (isErrorName(e, "NetworkError")) {
                             await new Promise<void>((resolve) => {
                                 setTimeout(() => {
                                     resolve();
@@ -247,7 +207,7 @@ export class AdbDaemonWebUsbConnectionStreams
         );
 
         const zeroMask = outEndpoint.packetSize - 1;
-        this._writable = pipeFrom(
+        this.#writable = pipeFrom(
             duplex.createWritable(
                 new ConsumableWritableStream({
                     write: async (chunk) => {
@@ -284,21 +244,21 @@ export class AdbDaemonWebUsbConnectionStreams
     }
 }
 
-export class AdbDaemonWebUsbConnection implements AdbDaemonConnection {
-    private _filters: AdbDeviceFilter[];
-    private _usb: USB;
+export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
+    #filters: AdbDeviceFilter[];
+    #usbManager: USB;
 
-    private _device: USBDevice;
-    public get device() {
-        return this._device;
+    #raw: USBDevice;
+    public get raw() {
+        return this.#raw;
     }
 
     public get serial(): string {
-        return this._device.serialNumber!;
+        return this.#raw.serialNumber!;
     }
 
     public get name(): string {
-        return this._device.productName!;
+        return this.#raw.productName!;
     }
 
     /**
@@ -310,11 +270,11 @@ export class AdbDaemonWebUsbConnection implements AdbDaemonConnection {
     public constructor(
         device: USBDevice,
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
-        usb: USB
+        usbManager: USB
     ) {
-        this._device = device;
-        this._filters = filters;
-        this._usb = usb;
+        this.#raw = device;
+        this.#filters = filters;
+        this.#usbManager = usbManager;
     }
 
     /**
@@ -324,32 +284,32 @@ export class AdbDaemonWebUsbConnection implements AdbDaemonConnection {
     public async connect(): Promise<
         ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
     > {
-        if (!this._device.opened) {
-            await this._device.open();
+        if (!this.#raw.opened) {
+            await this.#raw.open();
         }
 
         const { configuration, interface_, alternate } =
-            findUsbAlternateInterface(this._device, this._filters);
+            findUsbAlternateInterface(this.#raw, this.#filters);
 
         if (
-            this._device.configuration?.configurationValue !==
+            this.#raw.configuration?.configurationValue !==
             configuration.configurationValue
         ) {
             // Note: Switching configuration is not supported on Windows,
             // but Android devices should always expose ADB function at the first (default) configuration.
-            await this._device.selectConfiguration(
+            await this.#raw.selectConfiguration(
                 configuration.configurationValue
             );
         }
 
         if (!interface_.claimed) {
-            await this._device.claimInterface(interface_.interfaceNumber);
+            await this.#raw.claimInterface(interface_.interfaceNumber);
         }
 
         if (
             interface_.alternate.alternateSetting !== alternate.alternateSetting
         ) {
-            await this._device.selectAlternateInterface(
+            await this.#raw.selectAlternateInterface(
                 interface_.interfaceNumber,
                 alternate.alternateSetting
             );
@@ -358,11 +318,11 @@ export class AdbDaemonWebUsbConnection implements AdbDaemonConnection {
         const { inEndpoint, outEndpoint } = findUsbEndpoints(
             alternate.endpoints
         );
-        return new AdbDaemonWebUsbConnectionStreams(
-            this._device,
+        return new AdbDaemonWebUsbConnection(
+            this.#raw,
             inEndpoint,
             outEndpoint,
-            this._usb
+            this.#usbManager
         );
     }
 }

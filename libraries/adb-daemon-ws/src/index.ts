@@ -1,4 +1,4 @@
-import type { AdbDaemonConnection } from "@yume-chan/adb";
+import type { AdbDaemonDevice } from "@yume-chan/adb";
 import {
     AdbPacket,
     AdbPacketSerializeStream,
@@ -13,9 +13,7 @@ import {
     pipeFrom,
 } from "@yume-chan/stream-extra";
 
-export default class AdbDaemonWebSocketConnection
-    implements AdbDaemonConnection
-{
+export default class AdbDaemonWebSocketDevice implements AdbDaemonDevice {
     public readonly serial: string;
 
     public name: string | undefined;
