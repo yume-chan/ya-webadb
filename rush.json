@@ -502,6 +502,10 @@
         {
             "packageName": "@yume-chan/adb-cli",
             "projectFolder": "apps/cli"
+        },
+        {
+            "packageName": "@yume-chan/tango-web",
+            "projectFolder": "apps/web"
         }
     ]
 }
