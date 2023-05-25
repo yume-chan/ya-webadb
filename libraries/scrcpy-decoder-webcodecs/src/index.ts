@@ -27,6 +27,10 @@ function toUint32Le(data: Uint8Array, offset: number) {
 }
 
 export class WebCodecsDecoder implements ScrcpyVideoDecoder {
+    public static isSupported() {
+        return typeof globalThis.VideoDecoder !== "undefined";
+    }
+
     public static readonly capabilities: Record<
         string,
         ScrcpyVideoDecoderCapability
