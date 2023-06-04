@@ -104,6 +104,12 @@ export enum AdbSyncSendV2Flags {
 }
 
 export interface AdbSyncPushV2Options extends AdbSyncPushV1Options {
+    /**
+     * Don't write the file to disk. Requires the `sendrecv_v2` feature.
+     *
+     * It was used during ADB development to benchmark the performance of
+     * compression algorithms.
+     */
     dryRun?: boolean;
 }
 
@@ -146,6 +152,9 @@ export async function adbSyncPushV2({
 }
 
 export interface AdbSyncPushOptions extends AdbSyncPushV2Options {
+    /**
+     * Whether to use the v2 protocol. Requires the `sendrecv_v2` feature.
+     */
     v2: boolean;
 }
 

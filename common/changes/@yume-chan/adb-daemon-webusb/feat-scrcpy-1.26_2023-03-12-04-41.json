@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/adb-daemon-webusb",
-            "comment": "",
+            "comment": "Rename `AdbWebUsbBackend` to `AdbDaemonWebUsbDevice` following the renaming of `AdbDaemonTransport`.",
             "type": "none"
         }
     ],

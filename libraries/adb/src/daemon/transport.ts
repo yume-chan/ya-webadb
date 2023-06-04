@@ -44,9 +44,12 @@ interface AdbDaemonSocketConnectorConstructionOptions {
 
 export class AdbDaemonTransport implements AdbTransport {
     /**
-     * It's possible to call `authenticate` multiple times on a single connection,
-     * every time the device receives a `CNXN` packet, it resets its internal state,
-     * and starts a new authentication process.
+     * Authenticates the connection and creates an `AdbDaemonTransport` instance
+     * that can be used by `Adb` class.
+     *
+     * If an authentication process failed, it's possible to call `authenticate` again
+     * on the same connection. Because every time the device receives a `CNXN` packet,
+     * it resets all internal state, and starts a new authentication process.
      */
     public static async authenticate({
         serial,

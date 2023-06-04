@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/adb",
-            "comment": "Use ECMAScript private class fields syntax (supported by Chrome 74, Firefox 90, Safari 14.1 and Node.js 12.0.0).",
+            "comment": "Refactor `AdbSubprocessShellProtocol` class, this should improve some performance.",
             "type": "none"
         }
     ],

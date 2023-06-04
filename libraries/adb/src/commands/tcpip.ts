@@ -8,7 +8,7 @@ export class AdbTcpIpCommand extends AdbCommandBase {
 
         const output = await this.adb.createSocketAndWait(`tcpip:${port}`);
         if (output !== `restarting in TCP mode port: ${port}\n`) {
-            throw new Error("Invalid response");
+            throw new Error(output);
         }
         return output;
     }
@@ -16,7 +16,7 @@ export class AdbTcpIpCommand extends AdbCommandBase {
     public async disable(): Promise<string> {
         const output = await this.adb.createSocketAndWait("usb:");
         if (output !== "restarting in USB mode\n") {
-            throw new Error("Invalid response");
+            throw new Error(output);
         }
         return output;
     }

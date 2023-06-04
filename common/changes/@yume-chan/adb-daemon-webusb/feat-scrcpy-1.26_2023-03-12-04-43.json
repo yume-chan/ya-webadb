@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb-daemon-webusb",
+            "comment": "Add `filters` parameter to `AdbDaemonWebUsbDeviceManager#getDevices`. The filtration is manually implemented because WebUSB's `getDevice` API doesn't support filters.",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb-daemon-webusb"
+}

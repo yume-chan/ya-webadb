@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/scrcpy",
+            "comment": "Move ADB related code to `@yume-chan/adb-scrcpy` package. This package now only implements the Scrcpy protocol.",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/scrcpy"
+}

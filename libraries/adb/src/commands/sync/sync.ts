@@ -120,25 +120,21 @@ export class AdbSync extends AutoDisposable {
     }
 
     /**
-     * Read the content of a file on device.
+     * Reads the content of a file on device.
      *
      * @param filename The full path of the file on device to read.
-     * @returns A `ReadableStream` that reads from the file.
+     * @returns A `ReadableStream` that contains the file content.
      */
     public read(filename: string): ReadableStream<Uint8Array> {
         return adbSyncPull(this._socket, filename);
     }
 
     /**
-     * Write (or overwrite) a file on device.
+     * Writes a file on device. If the file name already exists, it will be overwritten.
      *
-     * @param filename The full path of the file on device to write.
-     * @param file The content to write.
-     * @param mode The unix permissions of the file.
-     * @param mtime The modified time of the file.
-     * @returns A `WritableStream` that writes to the file.
+     * @param options The content and options of the file to write.
      */
-    public async write(options: AdbSyncWriteOptions) {
+    public async write(options: AdbSyncWriteOptions): Promise<void> {
         if (this.needPushMkdirWorkaround) {
             // It may fail if the path is already existed.
             // Ignore the result.

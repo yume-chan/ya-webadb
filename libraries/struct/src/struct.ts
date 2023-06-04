@@ -250,6 +250,12 @@ export class Struct<
         name: PropertyKey,
         definition: StructFieldDefinition<any, any, any>
     ][] = [];
+    public get fields(): readonly [
+        name: PropertyKey,
+        definition: StructFieldDefinition<any, any, any>
+    ][] {
+        return this.#fields;
+    }
 
     #extra: Record<PropertyKey, unknown> = {};
 
@@ -298,7 +304,7 @@ export class Struct<
     /**
      * Merges (flats) another `Struct`'s fields and extra fields into this one.
      */
-    public fields<TOther extends Struct<any, any, any, any>>(
+    public concat<TOther extends Struct<any, any, any, any>>(
         other: TOther
     ): Struct<
         TFields & TOther["TFields"],

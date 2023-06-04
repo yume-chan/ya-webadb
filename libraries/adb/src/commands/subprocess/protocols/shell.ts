@@ -189,15 +189,16 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                 () => {
                     stdoutController.close();
                     stderrController.close();
-                    if (this.#exit.state !== "resolved") {
-                        this.#exit.reject(
-                            new Error("Socket ended without exit message")
-                        );
-                    }
+                    // If `#exit` has already resolved, this will be a no-op
+                    this.#exit.reject(
+                        new Error("Socket ended without exit message")
+                    );
                 },
                 (e) => {
                     stdoutController.error(e);
                     stderrController.error(e);
+                    // If `#exit` has already resolved, this will be a no-op
+                    this.#exit.reject(e);
                 }
             );
 

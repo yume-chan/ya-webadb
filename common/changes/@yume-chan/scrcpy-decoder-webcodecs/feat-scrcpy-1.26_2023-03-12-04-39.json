@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/scrcpy-decoder-webcodecs",
-            "comment": "",
+            "comment": "Add support for decoding H.265 on supported browsers (Chrome works, Microsoft Edge with HEVC Video Extension from Microsoft Store doesn't decode H.265 correctly).",
             "type": "none"
         }
     ],

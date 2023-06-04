@@ -1,10 +1,10 @@
 {
-  "changes": [
-    {
-      "packageName": "@yume-chan/adb-credential-web",
-      "comment": "",
-      "type": "none"
-    }
-  ],
-  "packageName": "@yume-chan/adb-credential-web"
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb-credential-web",
+            "comment": "Change `AdbWebCredentialStore` to save private keys in IndexedDB, so it can be used in Web Workers. Previously saved keys in `localStorage` will be ignored and a new key will be generated.",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb-credential-web"
 }

@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb-daemon-webusb",
+            "comment": "Add Support for detecting device disconnects. It no longer throws an `NetworkError` when the device is disconnected.",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb-daemon-webusb"
+}

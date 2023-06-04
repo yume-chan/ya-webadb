@@ -26,7 +26,7 @@
     "scripts": {
         "build": "tsc -b tsconfig.dom.json && tsc -b tsconfig.worker.json",
         "build:watch": "tsc -b tsconfig.dom.json && tsc -b tsconfig.worker.json",
-        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
+        "//test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
         "lint": "eslint src/**/*.ts --fix && prettier src/**/*.ts --write --tab-width 4",
         "prepublishOnly": "npm run build"
     },

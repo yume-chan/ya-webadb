@@ -160,7 +160,7 @@ export class AdbScrcpyClient {
                 .pipeThrough(new DecodeUtf8Stream())
                 .pipeThrough(new SplitStringStream("\n"));
 
-            // Read stdout, otherwise `process.exit` won't resolve.
+            // Must read all streams, otherwise the whole connection will be blocked.
             const output: string[] = [];
             const abortController = new AbortController();
             const pipe = stdout

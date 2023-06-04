@@ -1,0 +1,25 @@
+name: Publish Package to npm
+on:
+  push:
+    tags:
+      - "v**"
+
+jobs:
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - run: node common/scripts/install-run-rush.js install
+      - run: node common/scripts/install-run-rush.js build --verbose
+      - run: node common/scripts/install-run-rush.js version --bump
+      - run: node common/scripts/install-run-rush.js publish -p --include-all --set-access-level public
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
