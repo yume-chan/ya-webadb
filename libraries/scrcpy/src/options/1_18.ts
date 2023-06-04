@@ -45,7 +45,7 @@ export interface ScrcpyOptionsInit1_18
 }
 
 export const ScrcpyBackOrScreenOnControlMessage1_18 = new Struct()
-    .fields(ScrcpyBackOrScreenOnControlMessage1_16)
+    .concat(ScrcpyBackOrScreenOnControlMessage1_16)
     .uint8("action", placeholder<AndroidKeyEventAction>());
 
 export type ScrcpyBackOrScreenOnControlMessage1_18 =

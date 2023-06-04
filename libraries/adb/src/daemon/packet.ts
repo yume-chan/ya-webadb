@@ -23,7 +23,7 @@ export type AdbPacketHeader = (typeof AdbPacketHeader)["TDeserializeResult"];
 type AdbPacketHeaderInit = (typeof AdbPacketHeader)["TInit"];
 
 export const AdbPacket = new Struct({ littleEndian: true })
-    .fields(AdbPacketHeader)
+    .concat(AdbPacketHeader)
     .uint8Array("payload", { lengthField: "payloadLength" });
 
 export type AdbPacket = (typeof AdbPacket)["TDeserializeResult"];

@@ -15,6 +15,7 @@
         "CNXN",
         "colour",
         "comlink",
+        "concat",
         "Demuxer",
         "Deserialization",
         "DESERIALIZERS",

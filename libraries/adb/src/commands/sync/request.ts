@@ -20,7 +20,7 @@ export const AdbSyncNumberRequest = new Struct({ littleEndian: true })
     .uint32("arg");
 
 export const AdbSyncDataRequest = new Struct({ littleEndian: true })
-    .fields(AdbSyncNumberRequest)
+    .concat(AdbSyncNumberRequest)
     .uint8Array("data", { lengthField: "arg" });
 
 export interface AdbSyncWritable {

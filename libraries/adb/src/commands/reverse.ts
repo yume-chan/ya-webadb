@@ -35,7 +35,7 @@ export class AdbReverseNotSupportedError extends AdbReverseError {
 }
 
 const AdbReverseErrorResponse = new Struct()
-    .fields(AdbReverseStringResponse)
+    .concat(AdbReverseStringResponse)
     .postDeserialize((value) => {
         // https://issuetracker.google.com/issues/37066218
         // ADB on Android <9 can't create reverse tunnels when connected wirelessly (ADB over WiFi),

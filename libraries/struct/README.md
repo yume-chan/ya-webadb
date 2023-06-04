@@ -60,7 +60,7 @@ const buffer = MyStruct.serialize({
         -   [`int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32`](#int8uint8int16uint16int32uint32)
         -   [`int64`/`uint64`](#int64uint64-1)
         -   [`uint8Array`/`string`](#uint8arraystring)
-        -   [`fields`](#fields)
+        -   [`concat`](#concat)
         -   [`extra`](#extra)
         -   [`postDeserialize`](#postdeserialize)
         -   [`deserialize`](#deserialize)
@@ -332,10 +332,10 @@ The `options` parameter defines its length, it supports two formats:
 -   `{ length: number }`: Presence of the `length` option indicates that it's a fixed length array.
 -   `{ lengthField: string; lengthFieldRadix?: number }`: Presence of the `lengthField` option indicates it's a variable length array. The `lengthField` options must refers to a `number` or `string` (can't be `bigint`) typed field that's already defined in this `Struct`. If the length field is a `string`, the optional `lengthFieldRadix` option (defaults to `10`) defines the radix when converting the string to a number. When deserializing, it will use that field's value as its length. When serializing, it will write its length to that field.
 
-#### `fields`
+#### `concat`
 
 ```ts
-fields<
+concat<
     TOther extends Struct<any, any, any, any>
 >(
     other: TOther
@@ -356,7 +356,7 @@ Merges (flats) another `Struct`'s fields and extra fields into the current one.
     ```ts
     const MyStructV1 = new Struct().int32("field1");
 
-    const MyStructV2 = new Struct().fields(MyStructV1).int32("field2");
+    const MyStructV2 = new Struct().concat(MyStructV1).int32("field2");
 
     const structV2 = await MyStructV2.deserialize(stream);
     structV2.field1; // number
@@ -369,7 +369,7 @@ Merges (flats) another `Struct`'s fields and extra fields into the current one.
     ```ts
     const MyStructV1 = new Struct().int32("field1");
 
-    const MyStructV2 = new Struct().int32("field2").fields(MyStructV1);
+    const MyStructV2 = new Struct().int32("field2").concat(MyStructV1);
 
     const structV2 = await MyStructV2.deserialize(stream);
     structV2.field1; // number
