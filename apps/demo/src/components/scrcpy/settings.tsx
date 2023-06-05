@@ -11,6 +11,7 @@ import {
     TooltipHost,
 } from "@fluentui/react";
 import { makeStyles } from "@griffel/react";
+import { AdbSyncError } from "@yume-chan/adb";
 import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
 import {
     DEFAULT_SERVER_PATH,
@@ -26,6 +27,7 @@ import {
     TinyH264Decoder,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
+import { DecodeUtf8Stream, GatherStringStream } from "@yume-chan/stream-extra";
 import {
     autorun,
     computed,
@@ -179,6 +181,18 @@ export interface DecoderDefinition {
     Constructor: ScrcpyVideoDecoderConstructor;
 }
 
+const DEFAULT_SETTINGS = {
+    maxSize: 1080,
+    videoBitRate: 4_000_000,
+    videoCodec: "h264",
+    lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
+    displayId: 0,
+    crop: "",
+    powerOn: true,
+    audio: true,
+    audioCodec: "aac",
+} as Settings;
+
 export const SETTING_STATE = makeAutoObservable(
     {
         displays: [] as ScrcpyDisplay[],
@@ -191,17 +205,7 @@ export const SETTING_STATE = makeAutoObservable(
             },
         ] as DecoderDefinition[],
 
-        settings: {
-            maxSize: 1080,
-            videoBitRate: 4_000_000,
-            videoCodec: "h264",
-            lockVideoOrientation: ScrcpyVideoOrientation.Unlocked,
-            displayId: 0,
-            crop: "",
-            powerOn: true,
-            audio: true,
-            audioCodec: "aac",
-        } as Settings,
+        settings: DEFAULT_SETTINGS,
 
         clientSettings: {} as ClientSettings,
     },
@@ -212,8 +216,35 @@ export const SETTING_STATE = makeAutoObservable(
     }
 );
 
+export const SCRCPY_SETTINGS_FILENAME = "/data/local/tmp/.tango.json";
+
 autorun(() => {
     if (GLOBAL_STATE.adb) {
+        (async () => {
+            const sync = await GLOBAL_STATE.adb!.sync();
+            try {
+                const content = new GatherStringStream();
+                await sync
+                    .read(SCRCPY_SETTINGS_FILENAME)
+                    .pipeThrough(new DecodeUtf8Stream())
+                    .pipeTo(content);
+                const settings = JSON.parse(content.result);
+                runInAction(() => {
+                    SETTING_STATE.settings = {
+                        ...DEFAULT_SETTINGS,
+                        ...settings.settings,
+                    };
+                    SETTING_STATE.clientSettings = settings.clientSettings;
+                });
+            } catch (e) {
+                if (!(e instanceof AdbSyncError)) {
+                    throw e;
+                }
+            } finally {
+                await sync.dispose();
+            }
+        })();
+
         runInAction(() => {
             SETTING_STATE.encoders = [];
             SETTING_STATE.displays = [];

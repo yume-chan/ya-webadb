@@ -1,4 +1,4 @@
-import { ADB_SYNC_MAX_PACKET_SIZE } from "@yume-chan/adb";
+import { ADB_SYNC_MAX_PACKET_SIZE, encodeUtf8 } from "@yume-chan/adb";
 import { AdbDaemonWebUsbDevice } from "@yume-chan/adb-daemon-webusb";
 import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
 import {
@@ -43,7 +43,7 @@ import {
     ScrcpyKeyboardInjector,
 } from "./input";
 import { MatroskaMuxingRecorder, RECORD_STATE } from "./recorder";
-import { SETTING_STATE } from "./settings";
+import { SCRCPY_SETTINGS_FILENAME, SETTING_STATE } from "./settings";
 
 const NOOP = () => {
     // no-op
@@ -292,6 +292,31 @@ export class ScrcpyPageState {
                     }),
                 })
             );
+
+            const sync = await GLOBAL_STATE.adb!.sync();
+            try {
+                await sync.write({
+                    filename: SCRCPY_SETTINGS_FILENAME,
+                    file: new ReadableStream<Consumable<Uint8Array>>({
+                        start(controller) {
+                            controller.enqueue(
+                                new Consumable(
+                                    encodeUtf8(
+                                        JSON.stringify({
+                                            settings: SETTING_STATE.settings,
+                                            clientSettings:
+                                                SETTING_STATE.clientSettings,
+                                        })
+                                    )
+                                )
+                            );
+                            controller.close();
+                        },
+                    }),
+                });
+            } finally {
+                sync.dispose();
+            }
 
             RECORD_STATE.recorder = new MatroskaMuxingRecorder();
 

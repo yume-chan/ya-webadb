@@ -19,11 +19,13 @@ export enum AdbSyncResponseId {
     Fail = "FAIL",
 }
 
+export class AdbSyncError extends Error {}
+
 export const AdbSyncFailResponse = new Struct({ littleEndian: true })
     .uint32("messageLength")
     .string("message", { lengthField: "messageLength" })
     .postDeserialize((object) => {
-        throw new Error(object.message);
+        throw new AdbSyncError(object.message);
     });
 
 export async function adbSyncReadResponse<T>(
