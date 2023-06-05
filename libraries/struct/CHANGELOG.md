@@ -1,6 +1,16 @@
 # Change Log - @yume-chan/struct
 
-This log was last generated on Sun, 09 Apr 2023 05:55:33 GMT and should not be manually modified.
+This log was last generated on Mon, 05 Jun 2023 02:51:41 GMT and should not be manually modified.
+
+## 0.0.20
+Mon, 05 Jun 2023 02:51:41 GMT
+
+### Updates
+
+- Rename `StructDeserializeStream` and `StructAsyncDeserializeStream` to `ExactReadable` and `AsyncExactReadable`. Rename its `read` method to `readExactly`. Add a `position` field so the caller can check how many bytes have been read.
+- Improve performance for decoding integers.
+- Rename `Struct#fields` to `Struct#concat`. Now `Struct#fields` returns an array of `[name: PropertyKey, definition: StructFieldDefinition<any, any, any>]` tuples.
+- Use ECMAScript private class fields syntax (supported by Chrome 74, Firefox 90, Safari 14.1 and Node.js 12.0.0).
 
 ## 0.0.19
 Sun, 09 Apr 2023 05:55:33 GMT

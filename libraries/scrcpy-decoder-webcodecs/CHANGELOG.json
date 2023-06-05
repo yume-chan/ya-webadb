@@ -2,6 +2,18 @@
   "name": "@yume-chan/scrcpy-decoder-webcodecs",
   "entries": [
     {
+      "version": "0.0.20",
+      "tag": "@yume-chan/scrcpy-decoder-webcodecs_v0.0.20",
+      "date": "Mon, 05 Jun 2023 02:51:41 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add support for decoding H.265 on supported browsers (Chrome works, Microsoft Edge with HEVC Video Extension from Microsoft Store doesn't decode H.265 correctly)."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.19",
       "tag": "@yume-chan/scrcpy-decoder-webcodecs_v0.0.19",
       "date": "Sun, 09 Apr 2023 05:55:33 GMT",

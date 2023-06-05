@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/android-bin",
-    "version": "0.0.19",
+    "version": "0.0.20",
     "description": "Wrappers for Android built-in executables.",
     "keywords": [
         "adb",
@@ -31,9 +31,9 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.19",
-        "@yume-chan/stream-extra": "workspace:^0.0.19",
-        "@yume-chan/struct": "workspace:^0.0.19",
+        "@yume-chan/adb": "workspace:^0.0.20",
+        "@yume-chan/stream-extra": "workspace:^0.0.20",
+        "@yume-chan/struct": "workspace:^0.0.20",
         "tslib": "^2.5.2"
     },
     "devDependencies": {

@@ -1,6 +1,13 @@
 # Change Log - @yume-chan/adb-credential-web
 
-This log was last generated on Sun, 09 Apr 2023 05:55:33 GMT and should not be manually modified.
+This log was last generated on Mon, 05 Jun 2023 02:51:41 GMT and should not be manually modified.
+
+## 0.0.20
+Mon, 05 Jun 2023 02:51:41 GMT
+
+### Updates
+
+- Change `AdbWebCredentialStore` to save private keys in IndexedDB, so it can be used in Web Workers. Previously saved keys in `localStorage` will be ignored and a new key will be generated.
 
 ## 0.0.19
 Sun, 09 Apr 2023 05:55:33 GMT

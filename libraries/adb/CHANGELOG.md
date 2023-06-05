@@ -1,6 +1,20 @@
 # Change Log - @yume-chan/adb
 
-This log was last generated on Sun, 09 Apr 2023 05:55:33 GMT and should not be manually modified.
+This log was last generated on Mon, 05 Jun 2023 02:51:41 GMT and should not be manually modified.
+
+## 0.0.20
+Mon, 05 Jun 2023 02:51:41 GMT
+
+### Updates
+
+- Use ECMAScript private class fields syntax (supported by Chrome 74, Firefox 90, Safari 14.1 and Node.js 12.0.0).
+- Refactor `AdbSubprocessShellProtocol` class, this should improve some performance.
+- Split `mode` parameter in `AdbSync#write()` into `type` and `permission` for ease of use.
+- Add `AdbReverseCommand#addExternal()`. This only register the reverse tunnel to the device, the handler should already exists (for example you are adding a reverse tunnel for an external program that's already listening on the port). In ADB direct connection, this should do nothing, because the reverse tunnel is handled by this library and there is no mean of "external" handler.
+- Change `AdbTcpIpCommand#setPort` and `AdbTcpIpCommand#disable` to return or throw the response text. This can be displayed to the user to know what's wrong.
+- Add support for connecting to ADB servers. Because a USB device can only be used by one process at a time, the ADB server is the process that manages all connected devices. The server proxies and multiplexes connections from ADB clients so multiple adb commands can be executed on one device at the same time. The `Adb` class is no longer responsible for connecting and authenticating with ADB daemons. The `AdbTransport` interface and its two implementations `AdbDaemonTransport` and `AdbServerTransport` was added to connect to either ADB daemons or servers in compatible environments. Read the PR for details, migration paths, and examples. ([#549](https://github.com/yume-chan/ya-webadb/pull/549))
+- Add `serial` field to `Adb` class.
+- Group `product`, `model`, `device` and `features` fields on `Adb` class to the `banner` field with type of `AdbBanner`.
 
 ## 0.0.19
 Sun, 09 Apr 2023 05:55:33 GMT

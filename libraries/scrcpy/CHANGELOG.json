@@ -2,6 +2,21 @@
   "name": "@yume-chan/scrcpy",
   "entries": [
     {
+      "version": "0.0.20",
+      "tag": "@yume-chan/scrcpy_v0.0.20",
+      "date": "Mon, 05 Jun 2023 02:51:41 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add support for Scrcpy 2.0. New features including audio forwarding (supports PCM, AAC and OPUS encoding) and other video codecs (supports H.264 and H.265, AV1 not supported). Read the PR for new options and breaking changes. ([#495](https://github.com/yume-chan/ya-webadb/pull/495))"
+          },
+          {
+            "comment": "Move ADB related code to `@yume-chan/adb-scrcpy` package. This package now only implements the Scrcpy protocol."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.19",
       "tag": "@yume-chan/scrcpy_v0.0.19",
       "date": "Sun, 09 Apr 2023 05:55:33 GMT",

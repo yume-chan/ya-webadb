@@ -2,6 +2,18 @@
   "name": "@yume-chan/adb-credential-web",
   "entries": [
     {
+      "version": "0.0.20",
+      "tag": "@yume-chan/adb-credential-web_v0.0.20",
+      "date": "Mon, 05 Jun 2023 02:51:41 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Change `AdbWebCredentialStore` to save private keys in IndexedDB, so it can be used in Web Workers. Previously saved keys in `localStorage` will be ignored and a new key will be generated."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.19",
       "tag": "@yume-chan/adb-credential-web_v0.0.19",
       "date": "Sun, 09 Apr 2023 05:55:33 GMT",

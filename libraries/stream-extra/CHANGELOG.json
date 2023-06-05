@@ -1,35 +1,50 @@
 {
-    "name": "@yume-chan/stream-extra",
-    "entries": [
-        {
-            "version": "0.0.19",
-            "tag": "@yume-chan/stream-extra_v0.0.19",
-            "date": "Sun, 09 Apr 2023 05:55:33 GMT",
-            "comments": {
-                "none": [
-                    {
-                        "comment": "Add an option to combine small chunks into target size in `ChunkStream`, and rename it to `DistributionStream`"
-                    }
-                ]
-            }
-        },
-        {
-            "version": "0.0.18",
-            "tag": "@yume-chan/stream-extra_v0.0.18",
-            "date": "Wed, 25 Jan 2023 21:33:49 GMT",
-            "comments": {
-                "none": [
-                    {
-                        "comment": "Change to load native Web Streams API implementation from `globalThis` if available"
-                    }
-                ]
-            }
-        },
-        {
-            "version": "0.0.17",
-            "tag": "@yume-chan/stream-extra_v0.0.17",
-            "date": "Tue, 18 Oct 2022 09:32:30 GMT",
-            "comments": {}
-        }
-    ]
+  "name": "@yume-chan/stream-extra",
+  "entries": [
+    {
+      "version": "0.0.20",
+      "tag": "@yume-chan/stream-extra_v0.0.20",
+      "date": "Mon, 05 Jun 2023 02:51:41 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Fix a bug where `BufferedReadableStream#release` might output duplicate data."
+          },
+          {
+            "comment": "Use ECMAScript private class fields syntax (supported by Chrome 74, Firefox 90, Safari 14.1 and Node.js 12.0.0)."
+          }
+        ]
+      }
+    },
+    {
+      "version": "0.0.19",
+      "tag": "@yume-chan/stream-extra_v0.0.19",
+      "date": "Sun, 09 Apr 2023 05:55:33 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add an option to combine small chunks into target size in `ChunkStream`, and rename it to `DistributionStream`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "0.0.18",
+      "tag": "@yume-chan/stream-extra_v0.0.18",
+      "date": "Wed, 25 Jan 2023 21:33:49 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Change to load native Web Streams API implementation from `globalThis` if available"
+          }
+        ]
+      }
+    },
+    {
+      "version": "0.0.17",
+      "tag": "@yume-chan/stream-extra_v0.0.17",
+      "date": "Tue, 18 Oct 2022 09:32:30 GMT",
+      "comments": {}
+    }
+  ]
 }
