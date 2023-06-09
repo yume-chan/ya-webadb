@@ -71,13 +71,6 @@ class AdbUndiciSocket extends Duplex {
         }
     }
 
-    async _final(
-        callback: (error?: Error | null | undefined) => void
-    ): Promise<void> {
-        await this._socket.close();
-        callback();
-    }
-
     async _destroy(
         error: Error | null,
         callback: (error: Error | null) => void
@@ -201,10 +194,8 @@ const STATE = makeAutoObservable(
 );
 
 const SOCKET_NAMES = [
-    "@chrome_devtools_remote",
-    "@chrome_devtools_remote_[0-9]+",
-    "@com.opera.browser.devtools",
-    "@com.opera.browser.beta.devtools",
+    "@(.*)_devtools_remote(_\\d+)?",
+    "@com\\.opera\\.browser(\\.beta)?\\.devtools",
 ];
 
 const GET_SOCKET_COMMAND = [
