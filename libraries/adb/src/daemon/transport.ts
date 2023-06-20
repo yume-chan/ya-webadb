@@ -147,7 +147,7 @@ export class AdbDaemonTransport implements AdbTransport {
                 AdbFeature.AbbExec,
                 "remount_shell",
                 "track_app",
-                "sendrecv_v2",
+                AdbFeature.SendReceiveV2,
                 "sendrecv_v2_brotli",
                 "sendrecv_v2_lz4",
                 "sendrecv_v2_zstd",
