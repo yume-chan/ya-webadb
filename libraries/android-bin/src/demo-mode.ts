@@ -71,7 +71,7 @@ export class DemoMode extends AdbCommandBase {
             "global",
             DemoMode.AllowedSettingKey
         );
-        return output.trim() === "1";
+        return output === "1";
     }
 
     public async setAllowed(value: boolean): Promise<void> {
@@ -88,7 +88,7 @@ export class DemoMode extends AdbCommandBase {
             "global",
             DemoMode.EnabledSettingKey
         );
-        return result.trim() === "1";
+        return result === "1";
     }
 
     public async setEnabled(value: boolean): Promise<void> {

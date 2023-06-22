@@ -108,15 +108,15 @@ export class AdbSubprocess extends AdbCommandBase {
         command: string | string[],
         options?: Partial<AdbSubprocessOptions>
     ): Promise<AdbSubprocessWaitResult> {
-        const shell = await this.spawn(command, options);
+        const process = await this.spawn(command, options);
 
         const stdout = new GatherStringStream();
         const stderr = new GatherStringStream();
 
         const [, , exitCode] = await Promise.all([
-            shell.stdout.pipeThrough(new DecodeUtf8Stream()).pipeTo(stdout),
-            shell.stderr.pipeThrough(new DecodeUtf8Stream()).pipeTo(stderr),
-            shell.exit,
+            process.stdout.pipeThrough(new DecodeUtf8Stream()).pipeTo(stdout),
+            process.stderr.pipeThrough(new DecodeUtf8Stream()).pipeTo(stderr),
+            process.exit,
         ]);
 
         return {

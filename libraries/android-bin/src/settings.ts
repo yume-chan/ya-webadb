@@ -1,77 +1,127 @@
+import type { Adb, AdbSubprocessWaitResult } from "@yume-chan/adb";
 import { AdbCommandBase } from "@yume-chan/adb";
+
+import { Cmd } from "./cmd.js";
 
 export type SettingsNamespace = "system" | "secure" | "global";
 
-export type SettingsResetMode =
-    | "untrusted_defaults"
-    | "untrusted_clear"
-    | "trusted_defaults";
+export enum SettingsResetMode {
+    UntrustedDefaults = "untrusted_defaults",
+    UntrustedClear = "untrusted_clear",
+    TrustedDefaults = "trusted_defaults",
+}
+
+export interface SettingsOptions {
+    user?: number | "current";
+}
+
+export interface SettingsPutOptions extends SettingsOptions {
+    tag?: string;
+    makeDefault?: boolean;
+}
 
 // frameworks/base/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
 export class Settings extends AdbCommandBase {
-    // TODO: `--user <user>` argument
+    #cmd: Cmd;
 
-    public base(
-        command: string,
+    public constructor(adb: Adb) {
+        super(adb);
+        this.#cmd = new Cmd(adb);
+    }
+
+    public async base(
+        verb: string,
         namespace: SettingsNamespace,
+        options: SettingsOptions | undefined,
         ...args: string[]
+    ): Promise<string> {
+        let command = ["settings"];
+
+        if (options?.user !== undefined) {
+            command.push("--user", options.user.toString());
+        }
+
+        command.push(verb, namespace);
+        command = command.concat(args);
+
+        let output: AdbSubprocessWaitResult;
+        if (this.#cmd.supportsCmd) {
+            output = await this.#cmd.spawnAndWait(
+                command[0]!,
+                ...command.slice(1)
+            );
+        } else {
+            output = await this.adb.subprocess.spawnAndWait(command);
+        }
+
+        if (output.stderr) {
+            throw new Error(output.stderr);
+        }
+
+        return output.stdout;
+    }
+
+    public async get(
+        namespace: SettingsNamespace,
+        key: string,
+        options?: SettingsOptions
     ) {
-        return this.adb.subprocess.spawnAndWaitLegacy([
-            "settings",
-            command,
-            namespace,
-            ...args,
-        ]);
+        const output = await this.base("get", namespace, options, key);
+        // Remove last \n
+        return output.substring(0, output.length - 1);
     }
 
-    public get(namespace: SettingsNamespace, key: string) {
-        return this.base("get", namespace, key);
+    public async delete(
+        namespace: SettingsNamespace,
+        key: string,
+        options?: SettingsOptions
+    ): Promise<void> {
+        await this.base("delete", namespace, options, key);
     }
 
-    public delete(namespace: SettingsNamespace, key: string) {
-        return this.base("delete", namespace, key);
-    }
-
-    public put(
+    public async put(
         namespace: SettingsNamespace,
         key: string,
         value: string,
-        tag?: string,
-        makeDefault?: boolean
-    ) {
+        options?: SettingsPutOptions
+    ): Promise<void> {
         const args = [key, value];
-        if (tag) {
-            args.push(tag);
+        if (options?.tag) {
+            args.push(options.tag);
         }
-        if (makeDefault) {
+        if (options?.makeDefault) {
             args.push("default");
         }
-        return this.base("put", namespace, ...args);
+        await this.base("put", namespace, options, ...args);
     }
 
     public reset(
         namespace: SettingsNamespace,
-        mode: SettingsResetMode
-    ): Promise<string>;
+        mode: SettingsResetMode,
+        options?: SettingsOptions
+    ): Promise<void>;
     public reset(
         namespace: SettingsNamespace,
         packageName: string,
-        tag?: string
-    ): Promise<string>;
-    public reset(
+        tag?: string,
+        options?: SettingsOptions
+    ): Promise<void>;
+    public async reset(
         namespace: SettingsNamespace,
         modeOrPackageName: string,
-        tag?: string
-    ): Promise<string> {
+        tagOrOptions?: string | SettingsOptions,
+        options?: SettingsOptions
+    ): Promise<void> {
         const args = [modeOrPackageName];
-        if (tag) {
-            args.push(tag);
+        if (
+            modeOrPackageName === SettingsResetMode.UntrustedDefaults ||
+            modeOrPackageName === SettingsResetMode.UntrustedClear ||
+            modeOrPackageName === SettingsResetMode.TrustedDefaults
+        ) {
+            options = tagOrOptions as SettingsOptions;
+        } else if (typeof tagOrOptions === "string") {
+            args.push(tagOrOptions);
         }
-        return this.base("reset", namespace, ...args);
-    }
-
-    public async list(namespace: SettingsNamespace): Promise<string[]> {
-        const output = await this.base("list", namespace);
-        return output.split("\n");
+        await this.base("reset", namespace, options, ...args);
     }
 }
