@@ -17,6 +17,10 @@ import type { ValueOrPromise } from "@yume-chan/struct";
 export interface AdbScrcpyConnectionOptions {
     scid: number;
 
+    video: boolean;
+
+    audio: boolean;
+
     /**
      * Whether to create a control stream
      */
@@ -26,18 +30,14 @@ export interface AdbScrcpyConnectionOptions {
      * In forward tunnel mode, read a byte from video socket on start to detect connection issues
      */
     sendDummyByte: boolean;
-
-    audio: boolean;
 }
 
 export const SCRCPY_SOCKET_NAME_PREFIX = "scrcpy";
 
 export interface AdbScrcpyConnectionStreams {
-    video: ReadableStream<Uint8Array>;
-    audio: ReadableStream<Uint8Array> | undefined;
-    control:
-        | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-        | undefined;
+    video?: ReadableStream<Uint8Array>;
+    audio?: ReadableStream<Uint8Array>;
+    control?: ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>;
 }
 
 export abstract class AdbScrcpyConnection implements Disposable {
@@ -81,12 +81,25 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
         return this.adb.createSocket(this.socketName);
     }
 
-    private async connectAndRetry(): Promise<
-        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-    > {
+    private async connectAndRetry(
+        sendDummyByte: boolean
+    ): Promise<ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>> {
         for (let i = 0; !this._disposed && i < 100; i += 1) {
             try {
-                return await this.connect();
+                const stream = await this.connect();
+                if (sendDummyByte) {
+                    // Can't guarantee the stream will preserve message boundaries,
+                    // so buffer the stream
+                    const buffered = new BufferedReadableStream(
+                        stream.readable
+                    );
+                    await buffered.readExactly(1);
+                    return {
+                        readable: buffered.release(),
+                        writable: stream.writable,
+                    };
+                }
+                return stream;
             } catch (e) {
                 // Maybe the server is still starting
                 await delay(100);
@@ -95,30 +108,30 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
         throw new Error(`Can't connect to server after 100 retries`);
     }
 
-    private async connectVideoStream(): Promise<ReadableStream<Uint8Array>> {
-        const { readable: stream } = await this.connectAndRetry();
-        if (this.options.sendDummyByte) {
-            // Can't guarantee the stream will preserve message boundaries,
-            // so buffer the stream
-            const buffered = new BufferedReadableStream(stream);
-            await buffered.readExactly(1);
-            return buffered.release();
-        }
-        return stream;
-    }
-
     public override async getStreams(): Promise<AdbScrcpyConnectionStreams> {
-        const video = await this.connectVideoStream();
+        let { sendDummyByte } = this.options;
 
-        const audio = this.options.audio
-            ? (await this.connectAndRetry()).readable
-            : undefined;
+        const streams: AdbScrcpyConnectionStreams = {};
 
-        const control = this.options.control
-            ? await this.connectAndRetry()
-            : undefined;
+        if (this.options.video) {
+            const video = await this.connectAndRetry(sendDummyByte);
+            streams.video = video.readable;
+            sendDummyByte = false;
+        }
 
-        return { video, audio, control };
+        if (this.options.audio) {
+            const audio = await this.connectAndRetry(sendDummyByte);
+            streams.audio = audio.readable;
+            sendDummyByte = false;
+        }
+
+        if (this.options.control) {
+            const control = await this.connectAndRetry(sendDummyByte);
+            sendDummyByte = false;
+            streams.control = control;
+        }
+
+        return streams;
     }
 
     public override dispose(): void {
@@ -161,15 +174,24 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     }
 
     public async getStreams(): Promise<AdbScrcpyConnectionStreams> {
-        const { readable: video } = await this.accept();
+        const streams: AdbScrcpyConnectionStreams = {};
 
-        const audio = this.options.audio
-            ? (await this.accept()).readable
-            : undefined;
+        if (this.options.video) {
+            const video = await this.accept();
+            streams.video = video.readable;
+        }
 
-        const control = this.options.control ? await this.accept() : undefined;
+        if (this.options.audio) {
+            const audio = await this.accept();
+            streams.audio = audio.readable;
+        }
 
-        return { video, audio, control };
+        if (this.options.control) {
+            const control = await this.accept();
+            streams.control = control;
+        }
+
+        return streams;
     }
 
     public override dispose() {

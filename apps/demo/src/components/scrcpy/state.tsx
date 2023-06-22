@@ -320,7 +320,7 @@ export class ScrcpyPageState {
 
             RECORD_STATE.recorder = new MatroskaMuxingRecorder();
 
-            client.videoStream.then(({ stream, metadata }) => {
+            client.videoStream!.then(({ stream, metadata }) => {
                 runInAction(() => {
                     RECORD_STATE.recorder.videoMetadata = metadata;
                 });

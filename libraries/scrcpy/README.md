@@ -67,7 +67,7 @@ npx fetch-scrcpy-server <version>
 For example:
 
 ```
-npx fetch-scrcpy-server 1.25
+npx fetch-scrcpy-server 2.1
 ```
 
 Add it to `scripts.postinstall` in your `package.json`, so running `npm install` automatically invokes the script:
@@ -75,7 +75,7 @@ Add it to `scripts.postinstall` in your `package.json`, so running `npm install`
 ```json
 {
     "scripts": {
-        "postinstall": "fetch-scrcpy-server 1.25"
+        "postinstall": "fetch-scrcpy-server 2.1"
     }
 }
 ```
@@ -87,7 +87,7 @@ It will also save the version number to `bin/version.js`.
 ```js
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version.js";
 
-console.log(SCRCPY_SERVER_VERSION); // "1.25"
+console.log(SCRCPY_SERVER_VERSION); // "2.1"
 ```
 
 ### Use the server binary
@@ -171,6 +171,7 @@ The latest one may continue to work for future server versions, but there is no 
 | 1.24      | `ScrcpyOptions1_24` |
 | 1.25      | `ScrcpyOptions1_25` |
 | 2.0       | `ScrcpyOptions2_0`  |
+| 2.1       | `ScrcpyOptions2_1`  |
 
 ## Reading and writing packets
 
@@ -183,9 +184,9 @@ This packets operates on Web Streams API streams.
 Requires a `ReadableStream<Uint8Array>` that reads from the video socket.
 
 ```ts
-import { ScrcpyOptions1_25, ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
+import { ScrcpyOptions2_1, ScrcpyVideoStreamPacket } from "@yume-chan/scrcpy";
 
-const options = new ScrcpyOptions1_25({
+const options = new ScrcpyOptions2_1({
     // use the same version and options when starting the server
 });
 
@@ -212,10 +213,10 @@ Control socket is optional if control is not enabled. Video socket and control s
 ```ts
 import {
     ScrcpyControlMessageWriter,
-    ScrcpyOptions1_25,
+    ScrcpyOptions2_1,
 } from "@yume-chan/scrcpy";
 
-const options = new ScrcpyOptions1_25({
+const options = new ScrcpyOptions2_1({
     // use the same version and options when starting the server
 });
 
@@ -235,10 +236,7 @@ controlMessageWriter.injectText("Hello World!");
 Requires a `ReadableStream<Uint8Array>` that reads from the control socket.
 
 ```ts
-import {
-    ScrcpyDeviceMessageDeserializeStream,
-    ScrcpyOptions1_24,
-} from "@yume-chan/scrcpy";
+import { ScrcpyDeviceMessageDeserializeStream } from "@yume-chan/scrcpy";
 
 const controlStream: ReadableWritablePair<Uint8Array, Uint8Array>; // get the stream yourself
 
@@ -253,7 +251,7 @@ const deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> =
 In Web Streams API, pipes will block its upstream when downstream's queue is full (back-pressure mechanism). If multiple streams are separated from the same source (for example, all Scrcpy streams are from the same USB or TCP connection), blocking one stream means blocking all of them, so it's important to always read from all streams, even if you don't care about their data.
 
 ```ts
-// when using `AdbScrcpyClient`
+// if using `AdbScrcpyClient`
 stdout
     .pipeTo(
         new WritableStream<string>({

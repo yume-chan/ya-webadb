@@ -2,21 +2,22 @@ import type { Adb } from "@yume-chan/adb";
 import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
-    ScrcpyOptionsInit1_22,
+    ScrcpyOptionsInit2_1,
 } from "@yume-chan/scrcpy";
 
 import type { AdbScrcpyConnection } from "../connection.js";
 
 import { AdbScrcpyOptions1_16 } from "./1_16.js";
+import { AdbScrcpyOptions2_0 } from "./2_0.js";
 import { AdbScrcpyOptionsBase } from "./types.js";
 
-export class AdbScrcpyOptions1_22 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit1_22> {
-    public override getEncoders(
+export class AdbScrcpyOptions2_1 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit2_1> {
+    public override async getEncoders(
         adb: Adb,
         path: string,
         version: string
     ): Promise<ScrcpyEncoder[]> {
-        return AdbScrcpyOptions1_16.getEncoders(adb, path, version, this);
+        return AdbScrcpyOptions2_0.getEncoders(adb, path, version, this);
     }
 
     public override getDisplays(
@@ -31,9 +32,9 @@ export class AdbScrcpyOptions1_22 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         return AdbScrcpyOptions1_16.createConnection(
             adb,
             {
-                scid: -1,
-                video: true,
-                audio: false,
+                scid: this.value.scid.value,
+                video: this.value.video,
+                audio: this.value.audio,
                 control: this.value.control,
                 sendDummyByte: this.value.sendDummyByte,
             },

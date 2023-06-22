@@ -75,7 +75,7 @@ interface AdbScrcpyClientInit {
     process: AdbSubprocessProtocol;
     stdout: ReadableStream<string>;
 
-    videoStream: ReadableStream<Uint8Array>;
+    videoStream: ReadableStream<Uint8Array> | undefined;
     audioStream: ReadableStream<Uint8Array> | undefined;
     controlStream:
         | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
@@ -259,7 +259,7 @@ export class AdbScrcpyClient {
         return this._screenHeight;
     }
 
-    private _videoStream: Promise<AdbScrcpyVideoStream>;
+    private _videoStream: Promise<AdbScrcpyVideoStream> | undefined;
     public get videoStream() {
         return this._videoStream;
     }
@@ -293,7 +293,9 @@ export class AdbScrcpyClient {
         this._process = process;
         this._stdout = stdout;
 
-        this._videoStream = this.createVideoStream(videoStream);
+        this._videoStream = videoStream
+            ? this.createVideoStream(videoStream)
+            : undefined;
 
         this._audioStream = audioStream
             ? this.createAudioStream(audioStream)

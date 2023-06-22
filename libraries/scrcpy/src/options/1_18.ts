@@ -115,7 +115,7 @@ export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
         );
     }
 
-    public serialize(): string[] {
+    public override serialize(): string[] {
         return ScrcpyOptions1_16.serialize(
             this.value,
             ScrcpyOptions1_18.SERIALIZE_ORDER

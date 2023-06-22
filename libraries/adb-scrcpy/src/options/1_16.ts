@@ -107,11 +107,12 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
             adb,
             {
                 scid: -1,
+                video: true,
+                audio: false,
                 // Old versions always have control stream no matter what the option is
                 // Pass `control: false` to `Connection` will disable the control stream
                 control: true,
                 sendDummyByte: true,
-                audio: false,
             },
             this.tunnelForwardOverride || this.value.tunnelForward
         );

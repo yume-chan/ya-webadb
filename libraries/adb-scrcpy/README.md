@@ -23,6 +23,7 @@ Similar to `@yume-chan/scrcpy`, this package supports multiple Scrcpy versions, 
 | 1.16~1.21 | `AdbScrcpyOptions1_16` |
 | 1.22~1.25 | `AdbScrcpyOptions1_22` |
 | 2.0       | `AdbScrcpyOptions2_0`  |
+| 2.1       | `AdbScrcpyOptions2_1`  |
 
 ### Push server binary
 
@@ -73,9 +74,9 @@ To start the server, use the `AdbScrcpyClient.start()` method. It automatically 
 ```js
 import {
     AdbScrcpyClient,
-    AdbScrcpyOptions2_0,
+    AdbScrcpyOptions2_1,
     DEFAULT_SERVER_PATH,
-    ScrcpyOptions2_0,
+    ScrcpyOptions2_1,
 } from "@yume-chan/scrcpy";
 import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version.js";
 
@@ -84,18 +85,40 @@ const client: AdbScrcpyClient = await AdbScrcpyClient.start(
     DEFAULT_SERVER_PATH,
     // If server binary was downloaded manually, must provide the correct version
     SCRCPY_SERVER_VERSION,
-    new AdbScrcpyOptions2_0(
-        ScrcpyOptions2_0({
+    new AdbScrcpyOptions2_1(
+        ScrcpyOptions2_1({
             // options
         })
     )
 );
 
 const stdout: ReadableStream<string> = client.stdout;
-const { metadata: videoMetadata, stream: videoPacketStream } =
-    await client.videoStream;
-const { metadata: audioMetadata, stream: audioPacketStream } =
-    await client.audioStream;
+
+// `undefined` if `video: false` option was given
+if (client.videoSteam) {
+    const { metadata: videoMetadata, stream: videoPacketStream } =
+        await client.videoStream;
+}
+
+// `undefined` if `audio: false` option was given
+if (client.audioStream) {
+    const metadata = await client.audioStream;
+    switch (metadata.type) {
+        case "disabled":
+            // Audio not supported by device
+            break;
+        case "errored":
+            // Other error when initializing audio
+            break;
+        case "success":
+            // Audio packets in the codec specified in options
+            const audioPacketStream: ReadableStream<ScrcpyMediaStreamPacket> =
+                metadata.stream;
+            break;
+    }
+}
+
+// `undefined` if `control: false` option was given
 const controlMessageWriter: ScrcpyControlMessageWriter | undefined =
     client.controlMessageWriter;
 const deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined =
@@ -110,7 +133,6 @@ client.close();
 In Web Streams API, pipes will block its upstream when downstream's queue is full (back-pressure mechanism). If multiple streams are separated from the same source (for example, all Scrcpy streams are from the same USB or TCP connection), blocking one stream means blocking all of them, so it's important to always read from all streams, even if you don't care about their data.
 
 ```ts
-// when using `AdbScrcpyClient`
 stdout
     .pipeTo(
         new WritableStream<string>({
@@ -126,9 +148,19 @@ stdout
 
 videoPacketStream
     .pipeTo(
-        new WritableStream<ScrcpyVideoStreamPacket>({
+        new WritableStream<ScrcpyMediaStreamPacket>({
             write: (packet) => {
                 // Handle or ignore the video packet
+            },
+        })
+    )
+    .catch(() => {});
+
+audioPacketStream
+    .pipeTo(
+        new WritableStream<ScrcpyMediaStreamPacket>({
+            write: (packet) => {
+                // Handle or ignore the audio packet
             },
         })
     )
