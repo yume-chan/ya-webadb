@@ -27,6 +27,7 @@
         "@yume-chan/async": "^2.2.0",
         "@yume-chan/b-tree": "workspace:^0.0.20",
         "@yume-chan/event": "workspace:^0.0.20",
+        "@yume-chan/fetch-scrcpy-server": "workspace:^0.0.20",
         "@yume-chan/pcm-player": "workspace:^0.0.20",
         "@yume-chan/scrcpy": "workspace:^0.0.20",
         "@yume-chan/scrcpy-decoder-tinyh264": "workspace:^0.0.20",

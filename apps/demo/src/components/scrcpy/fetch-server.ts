@@ -1,9 +1,5 @@
 import { EventEmitter } from "@yume-chan/event";
-
-const SERVER_URL = new URL(
-    "@yume-chan/scrcpy/bin/scrcpy-server?url",
-    import.meta.url
-);
+import { BIN } from "@yume-chan/fetch-scrcpy-server";
 
 class FetchWithProgress {
     public readonly promise: Promise<Uint8Array>;
@@ -68,7 +64,7 @@ export function fetchServer(
     onProgress?: (e: [downloaded: number, total: number]) => void
 ) {
     if (!cachedValue) {
-        cachedValue = new FetchWithProgress(SERVER_URL);
+        cachedValue = new FetchWithProgress(BIN);
         cachedValue.promise.catch(() => {
             cachedValue = undefined;
         });

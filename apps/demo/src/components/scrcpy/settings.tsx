@@ -26,7 +26,7 @@ import {
     ScrcpyVideoDecoderConstructor,
     TinyH264Decoder,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
-import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
+import { VERSION } from "@yume-chan/fetch-scrcpy-server";
 import { DecodeUtf8Stream, GatherStringStream } from "@yume-chan/stream-extra";
 import {
     autorun,
@@ -305,7 +305,7 @@ export const SETTING_DEFINITIONS = computed(() => {
                         const displays = await AdbScrcpyClient.getDisplays(
                             GLOBAL_STATE.adb!,
                             DEFAULT_SERVER_PATH,
-                            SCRCPY_SERVER_VERSION,
+                            VERSION,
                             new AdbScrcpyOptionsLatest(
                                 new ScrcpyOptionsLatest({
                                     logLevel: ScrcpyLogLevel.Debug,
@@ -403,7 +403,7 @@ export const SETTING_DEFINITIONS = computed(() => {
                             const encoders = await AdbScrcpyClient.getEncoders(
                                 GLOBAL_STATE.adb!,
                                 DEFAULT_SERVER_PATH,
-                                SCRCPY_SERVER_VERSION,
+                                VERSION,
                                 new AdbScrcpyOptionsLatest(
                                     new ScrcpyOptionsLatest({
                                         logLevel: ScrcpyLogLevel.Debug,
@@ -537,7 +537,7 @@ export const SETTING_DEFINITIONS = computed(() => {
                             const encoders = await AdbScrcpyClient.getEncoders(
                                 GLOBAL_STATE.adb!,
                                 DEFAULT_SERVER_PATH,
-                                SCRCPY_SERVER_VERSION,
+                                VERSION,
                                 new AdbScrcpyOptionsLatest(
                                     new ScrcpyOptionsLatest({
                                         logLevel: ScrcpyLogLevel.Debug,

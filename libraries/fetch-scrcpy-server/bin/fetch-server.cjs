@@ -12,7 +12,7 @@ const fs = require("fs").promises;
     }
 
     console.log(`Downloading Scrcpy server binary version ${serverVersion}...`);
-    const binFolder = path.resolve(__dirname, "..", "bin");
+    const binFolder = path.resolve(__dirname, "..");
 
     await fetchVersion({
         repository: "Genymobile/scrcpy",
@@ -24,15 +24,34 @@ const fs = require("fs").promises;
 
     await fs.rename(
         path.resolve(binFolder, `scrcpy-server-v${serverVersion}`),
-        path.resolve(binFolder, "scrcpy-server")
+        path.resolve(binFolder, "server.bin")
+    );
+
+    fs.writeFile(
+        path.resolve(binFolder, "index.js"),
+        `
+export const VERSION ='${serverVersion}';
+export const BIN = new URL('./server.bin', import.meta.url);
+`
+    );
+    fs.writeFile(
+        path.resolve(binFolder, "index.d.ts"),
+        `
+export const VERSION: '${serverVersion}';
+export const BIN: URL;
+`
     );
 
     fs.writeFile(
         path.resolve(binFolder, "version.js"),
-        `export default '${serverVersion}';`
+        `
+export const VERSION ='${serverVersion}';
+`
     );
     fs.writeFile(
         path.resolve(binFolder, "version.d.ts"),
-        `export default '${serverVersion}';`
+        `
+export const VERSION: '${serverVersion}';
+`
     );
 })();

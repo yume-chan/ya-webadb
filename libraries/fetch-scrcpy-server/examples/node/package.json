@@ -1,0 +1,19 @@
+{
+    "name": "example-node",
+    "private": true,
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "author": "",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@yume-chan/fetch-scrcpy-server": "link:../.."
+    },
+    "devDependencies": {
+        "@types/node": "^20.3.2"
+    }
+}

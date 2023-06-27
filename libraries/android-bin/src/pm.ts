@@ -396,7 +396,7 @@ export class PackageManager extends AdbCommandBase {
         return output
             .split("\n")
             .filter((line) => !!line)
-            .map(PackageManager.parsePackageListItem);
+            .map((line) => PackageManager.parsePackageListItem(line));
     }
 
     // TODO: install: support split apk formats (`adb install-multiple`)

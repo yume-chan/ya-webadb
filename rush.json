@@ -446,6 +446,12 @@
             "versionPolicyName": "adb"
         },
         {
+            "packageName": "@yume-chan/fetch-scrcpy-server",
+            "projectFolder": "libraries/fetch-scrcpy-server",
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
+        },
+        {
             "packageName": "@yume-chan/scrcpy-decoder-tinyh264",
             "projectFolder": "libraries/scrcpy-decoder-tinyh264",
             "shouldPublish": true,

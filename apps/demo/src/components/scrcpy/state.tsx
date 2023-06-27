@@ -1,6 +1,7 @@
 import { ADB_SYNC_MAX_PACKET_SIZE, encodeUtf8 } from "@yume-chan/adb";
 import { AdbDaemonWebUsbDevice } from "@yume-chan/adb-daemon-webusb";
 import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
+import { VERSION } from "@yume-chan/fetch-scrcpy-server";
 import {
     Float32PcmPlayer,
     Float32PlanerPcmPlayer,
@@ -24,7 +25,6 @@ import {
     h265ParseConfiguration,
 } from "@yume-chan/scrcpy";
 import { ScrcpyVideoDecoder } from "@yume-chan/scrcpy-decoder-tinyh264";
-import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version";
 import {
     Consumable,
     DistributionStream,
@@ -268,9 +268,7 @@ export class ScrcpyPageState {
 
             runInAction(() => {
                 this.log = [];
-                this.log.push(
-                    `[client] Server version: ${SCRCPY_SERVER_VERSION}`
-                );
+                this.log.push(`[client] Server version: ${VERSION}`);
                 this.log.push(
                     `[client] Server arguments: ${options
                         .serialize()
@@ -281,7 +279,7 @@ export class ScrcpyPageState {
             const client = await AdbScrcpyClient.start(
                 GLOBAL_STATE.adb!,
                 DEFAULT_SERVER_PATH,
-                SCRCPY_SERVER_VERSION,
+                VERSION,
                 options
             );
 

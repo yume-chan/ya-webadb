@@ -1,0 +1,21 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  '@yume-chan/fetch-scrcpy-server':
+    specifier: link:../..
+    version: link:../..
+
+devDependencies:
+  '@types/node':
+    specifier: ^20.3.2
+    version: 20.3.2
+
+packages:
+
+  /@types/node@20.3.2:
+    resolution: {integrity: sha512-vOBLVQeCQfIcF/2Y7eKFTqrMnizK5lRNQ7ykML/5RuwVXVWxYkgwS7xbt4B6fKCUPgbSL5FSsjHQpaGQP/dQmw==}
+    dev: true

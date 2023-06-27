@@ -39,15 +39,6 @@ module.exports = pipe(
             basePath,
         },
         webpack(config) {
-            // Bundle Scrcpy Server
-            config.module.rules.push({
-                resourceQuery: /url/,
-                type: "asset/resource",
-                generator: {
-                    filename: "static/chunks/[name].[hash][ext]",
-                },
-            });
-
             config.module.rules.push({
                 test: /.*\.m?js$/,
                 // disable these modules because they generate a lot of warnings about

@@ -1,0 +1,19 @@
+{
+    "name": "example-vite",
+    "private": true,
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "start": "vite preview"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "vite": "^4.3.9",
+        "@yume-chan/fetch-scrcpy-server": "link:../.."
+    }
+}
