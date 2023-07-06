@@ -24,9 +24,8 @@ function pipe(value, ...callbacks) {
     return value;
 }
 
-/** @type {import('next').NextConfig} */
 module.exports = pipe(
-    {
+    /** @type {import('next').NextConfig} */ ({
         basePath,
         pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"],
         reactStrictMode: false,
@@ -72,7 +71,8 @@ module.exports = pipe(
                 },
             ];
         },
-    },
+        poweredByHeader: false,
+    }),
     withBundleAnalyzer,
     withPwa,
     withMDX

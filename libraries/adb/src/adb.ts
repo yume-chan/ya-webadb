@@ -1,5 +1,5 @@
 import type { Consumable, ReadableWritablePair } from "@yume-chan/stream-extra";
-import { DecodeUtf8Stream, GatherStringStream } from "@yume-chan/stream-extra";
+import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
 import type { AdbBanner } from "./banner.js";
@@ -93,11 +93,9 @@ export class Adb implements Closeable {
 
     public async createSocketAndWait(service: string): Promise<string> {
         const socket = await this.createSocket(service);
-        const gatherStream = new GatherStringStream();
-        await socket.readable
+        return await socket.readable
             .pipeThrough(new DecodeUtf8Stream())
-            .pipeTo(gatherStream);
-        return gatherStream.result;
+            .pipeThrough(new ConcatStringStream());
     }
 
     public async getProp(key: string): Promise<string> {

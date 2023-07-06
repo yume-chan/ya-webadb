@@ -62,14 +62,18 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         options: AdbScrcpyOptions<object>
     ): Promise<ScrcpyDisplay[]> {
         try {
-            // Server will exit before opening connections when an invalid display id was given.
+            // Server will exit before opening connections when an invalid display id was given
+            // so `start` will throw an `AdbScrcpyExitedError`
             const client = await AdbScrcpyClient.start(
                 adb,
                 path,
                 version,
                 options
             );
+
+            // If the server didn't exit, manually stop it and throw an error
             await client.close();
+            throw new Error("Unexpected server output");
         } catch (e) {
             if (e instanceof AdbScrcpyExitedError) {
                 const displays: ScrcpyDisplay[] = [];
@@ -81,9 +85,9 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
                 }
                 return displays;
             }
-        }
 
-        throw new Error("failed to get displays");
+            throw e;
+        }
     }
 
     public override getEncoders(

@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 import "source-map-support/register.js";
 
 import { Adb, AdbServerClient } from "@yume-chan/adb";

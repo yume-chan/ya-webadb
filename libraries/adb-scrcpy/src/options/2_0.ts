@@ -18,15 +18,20 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit2
         path: string,
         version: string,
         options: AdbScrcpyOptions<object>
-    ) {
+    ): Promise<ScrcpyEncoder[]> {
         try {
+            // Similar to `AdbScrcpyOptions1_16.getDisplays`,
+            // server start process won't complete and `start `will throw
             const client = await AdbScrcpyClient.start(
                 adb,
                 path,
                 version,
                 options
             );
+
+            // If the server didn't exit, manually stop it and throw an error
             await client.close();
+            throw new Error("Unexpected server output");
         } catch (e) {
             if (e instanceof AdbScrcpyExitedError) {
                 const encoders: ScrcpyEncoder[] = [];
@@ -38,8 +43,9 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit2
                 }
                 return encoders;
             }
+
+            throw e;
         }
-        throw new Error("Unexpected error");
     }
 
     public override async getEncoders(

@@ -19,6 +19,8 @@
         "Demuxer",
         "Deserialization",
         "DESERIALIZERS",
+        "diskstats",
+        "dumpsys",
         "ebml",
         "Embedder",
         "entrypoints",

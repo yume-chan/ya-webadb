@@ -13,6 +13,7 @@ import {
 import { makeStyles } from "@griffel/react";
 import { AdbSyncError } from "@yume-chan/adb";
 import { AdbScrcpyClient, AdbScrcpyOptionsLatest } from "@yume-chan/adb-scrcpy";
+import { VERSION } from "@yume-chan/fetch-scrcpy-server";
 import {
     DEFAULT_SERVER_PATH,
     ScrcpyDisplay,
@@ -26,8 +27,7 @@ import {
     ScrcpyVideoDecoderConstructor,
     TinyH264Decoder,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
-import { VERSION } from "@yume-chan/fetch-scrcpy-server";
-import { DecodeUtf8Stream, GatherStringStream } from "@yume-chan/stream-extra";
+import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
 import {
     autorun,
     computed,
@@ -223,12 +223,12 @@ autorun(() => {
         (async () => {
             const sync = await GLOBAL_STATE.adb!.sync();
             try {
-                const content = new GatherStringStream();
-                await sync
-                    .read(SCRCPY_SETTINGS_FILENAME)
-                    .pipeThrough(new DecodeUtf8Stream())
-                    .pipeTo(content);
-                const settings = JSON.parse(content.result);
+                const settings = JSON.parse(
+                    await sync
+                        .read(SCRCPY_SETTINGS_FILENAME)
+                        .pipeThrough(new DecodeUtf8Stream())
+                        .pipeThrough(new ConcatStringStream())
+                );
                 runInAction(() => {
                     SETTING_STATE.settings = {
                         ...DEFAULT_SETTINGS,
