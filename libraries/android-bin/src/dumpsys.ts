@@ -1,7 +1,7 @@
 import { AdbCommandBase } from "@yume-chan/adb";
 
 export class DumpSys extends AdbCommandBase {
-    async diskStats() {
+    public async diskStats() {
         const output = await this.adb.subprocess.spawnAndWaitLegacy([
             "dumpsys",
             "diskstats",
@@ -31,6 +31,61 @@ export class DumpSys extends AdbCommandBase {
             cacheTotal,
             systemFree,
             systemTotal,
+        };
+    }
+
+    public async battery() {
+        const output = await this.adb.subprocess.spawnAndWaitLegacy([
+            "dumpsys",
+            "battery",
+        ]);
+
+        let acPowered = false;
+        let usbPowered = false;
+        let wirelessPowered = false;
+        let level: number | undefined;
+        let scale: number | undefined;
+        let voltage: number | undefined;
+        let current: number | undefined;
+        for (const line of output) {
+            const parts = line.split(":");
+            if (parts.length !== 2) {
+                continue;
+            }
+
+            switch (parts[0]!.trim()) {
+                case "AC powered":
+                    acPowered = parts[1]!.trim() === "true";
+                    break;
+                case "USB powered":
+                    usbPowered = parts[1]!.trim() === "true";
+                    break;
+                case "Wireless powered":
+                    wirelessPowered = parts[1]!.trim() === "true";
+                    break;
+                case "level":
+                    level = Number.parseInt(parts[1]!.trim(), 10);
+                    break;
+                case "scale":
+                    scale = Number.parseInt(parts[1]!.trim(), 10);
+                    break;
+                case "voltage":
+                    voltage = Number.parseInt(parts[1]!.trim(), 10);
+                    break;
+                case "current now":
+                    current = Number.parseInt(parts[1]!.trim(), 10);
+                    break;
+            }
+        }
+
+        return {
+            acPowered,
+            usbPowered,
+            wirelessPowered,
+            level,
+            scale,
+            voltage,
+            current,
         };
     }
 }
