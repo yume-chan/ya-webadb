@@ -13,7 +13,7 @@ export abstract class StructFieldValue<
         any,
         any,
         any
-    > = StructFieldDefinition<any, any, any>
+    > = StructFieldDefinition<any, any, any>,
 > {
     /** Gets the definition associated with this runtime value */
     public readonly definition: TDefinition;
@@ -37,7 +37,7 @@ export abstract class StructFieldValue<
         definition: TDefinition,
         options: Readonly<StructOptions>,
         struct: StructValue,
-        value: TDefinition["TValue"]
+        value: TDefinition["TValue"],
     ) {
         this.definition = definition;
         this.options = options;

@@ -26,14 +26,14 @@ export interface AdbSyncPushV1Options {
 }
 
 export const AdbSyncOkResponse = new Struct({ littleEndian: true }).uint32(
-    "unused"
+    "unused",
 );
 
 async function pipeFileData(
     locked: AdbSyncSocketLocked,
     file: ReadableStream<Consumable<Uint8Array>>,
     packetSize: number,
-    mtime: number
+    mtime: number,
 ) {
     // Read and write in parallel,
     // allow error response to abort the write.
@@ -45,11 +45,11 @@ async function pipeFileData(
                     await adbSyncWriteRequest(
                         locked,
                         AdbSyncRequestId.Data,
-                        chunk
+                        chunk,
                     );
                 },
             }),
-            { signal: abortController.signal }
+            { signal: abortController.signal },
         )
         .then(async () => {
             await adbSyncWriteRequest(locked, AdbSyncRequestId.Done, mtime);
@@ -59,7 +59,7 @@ async function pipeFileData(
     await adbSyncReadResponse(
         locked,
         AdbSyncResponseId.Ok,
-        AdbSyncOkResponse
+        AdbSyncOkResponse,
     ).catch((e) => {
         abortController.abort();
         throw e;
@@ -142,7 +142,7 @@ export async function adbSyncPushV2({
                 id: AdbSyncRequestId.SendV2,
                 mode,
                 flags,
-            })
+            }),
         );
 
         await pipeFileData(locked, file, packetSize, mtime);

@@ -38,7 +38,7 @@ const DropdownStyles = { dropdown: { width: "100%" } };
 
 const CredentialStore = new AdbWebCredentialStore();
 
-function _Connect(): JSX.Element | null {
+function ConnectCore(): JSX.Element | null {
     const [selected, setSelected] = useState<AdbDaemonDevice | undefined>();
     const [connecting, setConnecting] = useState(false);
 
@@ -386,4 +386,4 @@ function _Connect(): JSX.Element | null {
     );
 }
 
-export const Connect = observer(_Connect);
+export const Connect = observer(ConnectCore);

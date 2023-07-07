@@ -18,14 +18,14 @@ import type { ValueOrPromise } from "../utils.js";
 type DataViewBigInt64Getter = (
     dataView: DataView,
     byteOffset: number,
-    littleEndian: boolean | undefined
+    littleEndian: boolean | undefined,
 ) => bigint;
 
 type DataViewBigInt64Setter = (
     dataView: DataView,
     byteOffset: number,
     value: bigint,
-    littleEndian: boolean | undefined
+    littleEndian: boolean | undefined,
 ) => void;
 
 export class BigIntFieldType {
@@ -40,7 +40,7 @@ export class BigIntFieldType {
     public constructor(
         size: number,
         getter: DataViewBigInt64Getter,
-        setter: DataViewBigInt64Setter
+        setter: DataViewBigInt64Setter,
     ) {
         this.size = size;
         this.getter = getter;
@@ -50,19 +50,19 @@ export class BigIntFieldType {
     public static readonly Int64 = new BigIntFieldType(
         8,
         getBigInt64,
-        setBigInt64
+        setBigInt64,
     );
 
     public static readonly Uint64 = new BigIntFieldType(
         8,
         getBigUint64,
-        setBigUint64
+        setBigUint64,
     );
 }
 
 export class BigIntFieldDefinition<
     TType extends BigIntFieldType = BigIntFieldType,
-    TTypeScriptType = TType["TTypeScriptType"]
+    TTypeScriptType = TType["TTypeScriptType"],
 > extends StructFieldDefinition<void, TTypeScriptType> {
     public readonly type: TType;
 
@@ -79,7 +79,7 @@ export class BigIntFieldDefinition<
     public create(
         options: Readonly<StructOptions>,
         struct: StructValue,
-        value: TTypeScriptType
+        value: TTypeScriptType,
     ): BigIntFieldValue<this> {
         return new BigIntFieldValue(this, options, struct, value);
     }
@@ -87,17 +87,17 @@ export class BigIntFieldDefinition<
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): BigIntFieldValue<this>;
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: AsyncExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): Promise<BigIntFieldValue<this>>;
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable | AsyncExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): ValueOrPromise<BigIntFieldValue<this>> {
         return SyncPromise.try(() => {
             return stream.readExactly(this.getSize());
@@ -106,7 +106,7 @@ export class BigIntFieldDefinition<
                 const view = new DataView(
                     array.buffer,
                     array.byteOffset,
-                    array.byteLength
+                    array.byteLength,
                 );
                 const value = this.type.getter(view, 0, options.littleEndian);
                 return this.create(options, struct, value as any);
@@ -116,14 +116,14 @@ export class BigIntFieldDefinition<
 }
 
 export class BigIntFieldValue<
-    TDefinition extends BigIntFieldDefinition<BigIntFieldType, any>
+    TDefinition extends BigIntFieldDefinition<BigIntFieldType, any>,
 > extends StructFieldValue<TDefinition> {
     public serialize(dataView: DataView, offset: number): void {
         this.definition.type.setter(
             dataView,
             offset,
             this.value,
-            this.options.littleEndian
+            this.options.littleEndian,
         );
     }
 }

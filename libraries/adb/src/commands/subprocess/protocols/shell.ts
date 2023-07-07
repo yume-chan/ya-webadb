@@ -115,13 +115,13 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     public static async pty(adb: Adb, command: string) {
         // TODO: AdbShellSubprocessProtocol: Support setting `XTERM` environment variable
         return new AdbSubprocessShellProtocol(
-            await adb.createSocket(`shell,v2,pty:${command}`)
+            await adb.createSocket(`shell,v2,pty:${command}`),
         );
     }
 
     public static async raw(adb: Adb, command: string) {
         return new AdbSubprocessShellProtocol(
-            await adb.createSocket(`shell,v2,raw:${command}`)
+            await adb.createSocket(`shell,v2,raw:${command}`),
         );
     }
 
@@ -183,7 +183,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                                 break;
                         }
                     },
-                })
+                }),
             )
             .then(
                 () => {
@@ -191,7 +191,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                     stderrController.close();
                     // If `#exit` has already resolved, this will be a no-op
                     this.#exit.reject(
-                        new Error("Socket ended without exit message")
+                        new Error("Socket ended without exit message"),
                     );
                 },
                 (e) => {
@@ -199,7 +199,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                     stderrController.error(e);
                     // If `#exit` has already resolved, this will be a no-op
                     this.#exit.reject(e);
-                }
+                },
             );
 
         const multiplexer = new MultiplexStream<
@@ -210,16 +210,16 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                 new ConsumableTransformStream({
                     async transform(chunk, controller) {
                         await controller.enqueue(
-                            AdbShellProtocolPacket.serialize(chunk)
+                            AdbShellProtocolPacket.serialize(chunk),
                         );
                     },
-                })
+                }),
             )
             .pipeTo(socket.writable);
 
         this.#stdin = pipeFrom(
             multiplexer.createWriteable(),
-            new StdinSerializeStream()
+            new StdinSerializeStream(),
         );
 
         this.#socketWriter = multiplexer.createWriteable().getWriter();
@@ -232,7 +232,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                 // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
                 // However, according to https://linux.die.net/man/4/tty_ioctl
                 // `x_pixels` and `y_pixels` are unused, so always sending `0` should be fine.
-                `${rows}x${cols},0x0\0`
+                `${rows}x${cols},0x0\0`,
             ),
         });
     }

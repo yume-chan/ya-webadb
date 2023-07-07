@@ -4,7 +4,7 @@ import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
 
 export interface ScrcpyScrollController {
     serializeScrollMessage(
-        message: ScrcpyInjectScrollControlMessage
+        message: ScrcpyInjectScrollControlMessage,
     ): Uint8Array | undefined;
 }
 
@@ -28,7 +28,7 @@ export class ScrcpyScrollController1_16 implements ScrcpyScrollController {
     private accumulatedY = 0;
 
     protected processMessage(
-        message: ScrcpyInjectScrollControlMessage
+        message: ScrcpyInjectScrollControlMessage,
     ): ScrcpyInjectScrollControlMessage | undefined {
         this.accumulatedX += message.scrollX;
         this.accumulatedY += message.scrollY;
@@ -61,7 +61,7 @@ export class ScrcpyScrollController1_16 implements ScrcpyScrollController {
     }
 
     public serializeScrollMessage(
-        message: ScrcpyInjectScrollControlMessage
+        message: ScrcpyInjectScrollControlMessage,
     ): Uint8Array | undefined {
         const processed = this.processMessage(message);
         if (!processed) {

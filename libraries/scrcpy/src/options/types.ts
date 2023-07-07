@@ -22,7 +22,7 @@ export interface ScrcpyOptionValue {
 }
 
 export function isScrcpyOptionValue(
-    value: unknown
+    value: unknown,
 ): value is ScrcpyOptionValue {
     return (
         typeof value === "object" &&
@@ -96,11 +96,11 @@ export interface ScrcpyOptions<T extends object> {
      * The returned video stream may be different from the input stream, and should be used for further processing.
      */
     parseVideoStreamMetadata(
-        stream: ReadableStream<Uint8Array>
+        stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream>;
 
     parseAudioStreamMetadata(
-        stream: ReadableStream<Uint8Array>
+        stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyAudioStreamMetadata>;
 
     createMediaStreamTransformer(): TransformStream<
@@ -109,15 +109,15 @@ export interface ScrcpyOptions<T extends object> {
     >;
 
     serializeInjectTouchControlMessage(
-        message: ScrcpyInjectTouchControlMessage
+        message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array;
 
     serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage
+        message: ScrcpyBackOrScreenOnControlMessage,
     ): Uint8Array | undefined;
 
     serializeSetClipboardControlMessage(
-        message: ScrcpySetClipboardControlMessage
+        message: ScrcpySetClipboardControlMessage,
     ): Uint8Array;
 
     createScrollController(): ScrcpyScrollController;
@@ -125,7 +125,7 @@ export interface ScrcpyOptions<T extends object> {
 
 export abstract class ScrcpyOptionsBase<
     T extends object,
-    B extends ScrcpyOptions<object>
+    B extends ScrcpyOptions<object>,
 > implements ScrcpyOptions<T>
 {
     protected _base: B;
@@ -170,13 +170,13 @@ export abstract class ScrcpyOptionsBase<
      * The returned video stream may be different from the input stream, and should be used for further processing.
      */
     public parseVideoStreamMetadata(
-        stream: ReadableStream<Uint8Array>
+        stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream> {
         return this._base.parseVideoStreamMetadata(stream);
     }
 
     public parseAudioStreamMetadata(
-        stream: ReadableStream<Uint8Array>
+        stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
         return this._base.parseAudioStreamMetadata(stream);
     }
@@ -189,19 +189,19 @@ export abstract class ScrcpyOptionsBase<
     }
 
     public serializeInjectTouchControlMessage(
-        message: ScrcpyInjectTouchControlMessage
+        message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array {
         return this._base.serializeInjectTouchControlMessage(message);
     }
 
     public serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage
+        message: ScrcpyBackOrScreenOnControlMessage,
     ): Uint8Array | undefined {
         return this._base.serializeBackOrScreenOnControlMessage(message);
     }
 
     public serializeSetClipboardControlMessage(
-        message: ScrcpySetClipboardControlMessage
+        message: ScrcpySetClipboardControlMessage,
     ): Uint8Array {
         return this._base.serializeSetClipboardControlMessage(message);
     }

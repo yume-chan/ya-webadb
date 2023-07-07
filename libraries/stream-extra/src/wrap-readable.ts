@@ -7,7 +7,7 @@ import type {
 import { ReadableStream } from "./stream.js";
 
 export type WrapReadableStreamStart<T> = (
-    controller: ReadableStreamDefaultController<T>
+    controller: ReadableStreamDefaultController<T>,
 ) => ValueOrPromise<ReadableStream<T>>;
 
 export interface ReadableStreamWrapper<T> {
@@ -21,7 +21,7 @@ function getWrappedReadableStream<T>(
         | ReadableStream<T>
         | WrapReadableStreamStart<T>
         | ReadableStreamWrapper<T>,
-    controller: ReadableStreamDefaultController<T>
+    controller: ReadableStreamDefaultController<T>,
 ) {
     if ("start" in wrapper) {
         return wrapper.start(controller);
@@ -50,7 +50,7 @@ export class WrapReadableStream<T> extends ReadableStream<T> {
         wrapper:
             | ReadableStream<T>
             | WrapReadableStreamStart<T>
-            | ReadableStreamWrapper<T>
+            | ReadableStreamWrapper<T>,
     ) {
         super({
             start: async (controller) => {
@@ -62,7 +62,7 @@ export class WrapReadableStream<T> extends ReadableStream<T> {
 
                 this.readable = await getWrappedReadableStream(
                     wrapper,
-                    controller
+                    controller,
                 );
                 this.#reader = this.readable.getReader();
             },

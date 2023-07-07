@@ -35,9 +35,9 @@ export class OverlayDisplay extends AdbCommandBase {
                         p.literal("x"),
                         { name: "height", format: p.digits() },
                         p.literal("/"),
-                        { name: "density", format: p.digits() }
+                        { name: "density", format: p.digits() },
                     ),
-                    1
+                    1,
                 ),
             },
             {
@@ -49,15 +49,15 @@ export class OverlayDisplay extends AdbCommandBase {
                             format: p.union(
                                 p.literal("secure"),
                                 p.literal("own_content_only"),
-                                p.literal("show_system_decorations")
+                                p.literal("show_system_decorations"),
                             ),
-                        })
+                        }),
                     ),
                     (value) => value.map((item) => item.flag),
-                    (value) => value.map((item) => ({ flag: item }))
+                    (value) => value.map((item) => ({ flag: item })),
                 ),
-            }
-        )
+            },
+        ),
     );
 
     constructor(adb: Adb) {
@@ -69,7 +69,7 @@ export class OverlayDisplay extends AdbCommandBase {
         return OverlayDisplay.OverlayDisplayDevicesFormat.parse({
             value: await this.settings.get(
                 "global",
-                OverlayDisplay.OVERLAY_DISPLAY_DEVICES_KEY
+                OverlayDisplay.OVERLAY_DISPLAY_DEVICES_KEY,
             ),
             position: 0,
         }).map((device) => ({
@@ -77,7 +77,7 @@ export class OverlayDisplay extends AdbCommandBase {
             secure: device.flags.includes("secure"),
             ownContentOnly: device.flags.includes("own_content_only"),
             showSystemDecorations: device.flags.includes(
-                "show_system_decorations"
+                "show_system_decorations",
             ),
         }));
     }
@@ -106,8 +106,8 @@ export class OverlayDisplay extends AdbCommandBase {
                         modes: device.modes,
                         flags,
                     };
-                })
-            )
+                }),
+            ),
         );
     }
 }

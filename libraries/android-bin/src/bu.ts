@@ -22,7 +22,7 @@ export class AdbBackup extends AdbCommandBase {
      * User must confirm backup on device within 60 seconds.
      */
     public async backup(
-        options: AdbBackupOptions
+        options: AdbBackupOptions,
     ): Promise<ReadableStream<Uint8Array>> {
         const args = ["bu", "backup"];
 
@@ -36,7 +36,7 @@ export class AdbBackup extends AdbCommandBase {
         args.push(options.savePackageApk ? "--apk" : "--no-apk");
         args.push(options.savePackageObb ? "--obb" : "--no-obb");
         args.push(
-            options.savePackageKeyValue ? "--key-value" : "--no-key-value"
+            options.savePackageKeyValue ? "--key-value" : "--no-key-value",
         );
 
         args.push(options.compress ? "--compress" : "--no-compress");

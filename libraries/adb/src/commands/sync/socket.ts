@@ -27,7 +27,7 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
         readable: BufferedReadableStream,
         bufferSize: number,
-        lock: AutoResetEvent
+        lock: AutoResetEvent,
     ) {
         this.#writer = writer;
         this.#readable = readable;
@@ -84,7 +84,7 @@ export class AdbSyncSocket {
             socket.writable.getWriter(),
             new BufferedReadableStream(socket.readable),
             bufferSize,
-            this.#lock
+            this.#lock,
         );
     }
 

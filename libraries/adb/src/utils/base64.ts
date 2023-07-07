@@ -26,7 +26,7 @@ addRange("/", "/");
  * @returns Length of the output in bytes
  */
 export function calculateBase64EncodedLength(
-    inputLength: number
+    inputLength: number,
 ): [outputLength: number, paddingLength: number] {
     const remainder = inputLength % 3;
     const paddingLength = remainder !== 0 ? 3 - remainder : 0;
@@ -54,10 +54,10 @@ export function encodeBase64(input: Uint8Array): Uint8Array;
 export function encodeBase64(input: Uint8Array, output: Uint8Array): number;
 export function encodeBase64(
     input: Uint8Array,
-    output?: Uint8Array
+    output?: Uint8Array,
 ): Uint8Array | number {
     const [outputLength, paddingLength] = calculateBase64EncodedLength(
-        input.length
+        input.length,
     );
 
     if (!output) {
@@ -123,7 +123,7 @@ export function encodeBase64(
 function encodeForward(
     input: Uint8Array,
     output: Uint8Array,
-    paddingLength: number
+    paddingLength: number,
 ) {
     let inputIndex = 0;
     let outputIndex = 0;
@@ -200,7 +200,7 @@ function encodeForward(
 function encodeBackward(
     input: Uint8Array,
     output: Uint8Array,
-    paddingLength: number
+    paddingLength: number,
 ) {
     let inputIndex = input.length - 1;
     let outputIndex = output.length - 1;

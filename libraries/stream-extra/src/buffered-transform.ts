@@ -22,7 +22,7 @@ export class BufferedTransformStream<T>
     }
 
     constructor(
-        transform: (stream: BufferedReadableStream) => ValueOrPromise<T>
+        transform: (stream: BufferedReadableStream) => ValueOrPromise<T>,
     ) {
         // Convert incoming chunks to a `BufferedReadableStream`
         let sourceStreamController!: PushReadableStreamController<Uint8Array>;
@@ -30,7 +30,7 @@ export class BufferedTransformStream<T>
         const buffered = new BufferedReadableStream(
             new PushReadableStream<Uint8Array>((controller) => {
                 sourceStreamController = controller;
-            })
+            }),
         );
 
         this.#readable = new ReadableStream<T>({

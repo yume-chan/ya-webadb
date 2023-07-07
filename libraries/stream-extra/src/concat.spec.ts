@@ -50,7 +50,7 @@ describe("ConcatStringStream", () => {
         await stream.writable.getWriter().abort(reason);
         await expect(stream.readable).rejects.toBe(reason);
         await expect(() => stream.readable.getReader().read()).rejects.toBe(
-            reason
+            reason,
         );
     });
 });
@@ -95,7 +95,7 @@ describe("ConcatBufferStream", () => {
         }).pipeThrough(new ConcatBufferStream());
 
         await expect(readable).resolves.toEqual(
-            new Uint8Array([1, 2, 3, 4, 5, 6])
+            new Uint8Array([1, 2, 3, 4, 5, 6]),
         );
     });
 
@@ -125,7 +125,7 @@ describe("ConcatBufferStream", () => {
         await stream.writable.getWriter().abort(reason);
         await expect(stream.readable).rejects.toBe(reason);
         await expect(() => stream.readable.getReader().read()).rejects.toBe(
-            reason
+            reason,
         );
     });
 });

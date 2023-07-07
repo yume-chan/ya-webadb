@@ -21,7 +21,7 @@ if (!("setBigInt64" in DataView)) {
     DataView.prototype.setBigInt64 = function (
         byteOffset,
         value,
-        littleEndian
+        littleEndian,
     ) {
         setBigInt64(this, byteOffset, value, littleEndian);
     };
@@ -31,7 +31,7 @@ if (!("setBigUint64" in DataView)) {
     DataView.prototype.setBigUint64 = function (
         byteOffset,
         value,
-        littleEndian
+        littleEndian,
     ) {
         setBigUint64(this, byteOffset, value, littleEndian);
     };

@@ -22,7 +22,7 @@ export interface AdbSocket
 }
 
 export type AdbIncomingSocketHandler = (
-    socket: AdbSocket
+    socket: AdbSocket,
 ) => ValueOrPromise<void>;
 
 export interface Closeable {
@@ -42,7 +42,7 @@ export interface AdbTransport extends Closeable {
 
     addReverseTunnel(
         handler: AdbIncomingSocketHandler,
-        address?: string
+        address?: string,
     ): ValueOrPromise<string>;
 
     removeReverseTunnel(address: string): ValueOrPromise<void>;

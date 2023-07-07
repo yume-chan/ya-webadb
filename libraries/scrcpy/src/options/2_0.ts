@@ -91,7 +91,7 @@ export interface ScrcpyOptionsInit2_0
 
 function omit<T extends object, K extends keyof T>(
     obj: T,
-    keys: K[]
+    keys: K[],
 ): Omit<T, K> {
     const result: Record<PropertyKey, unknown> = {};
     for (const key in obj) {
@@ -155,7 +155,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
 
     public override parseEncoder(line: string): ScrcpyEncoder | undefined {
         let match = line.match(
-            /\s+--video-codec=(.*)\s+--video-encoder='(.*)'/
+            /\s+--video-codec=(.*)\s+--video-encoder='(.*)'/,
         );
         if (match) {
             return {
@@ -192,7 +192,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     }
 
     public override parseVideoStreamMetadata(
-        stream: ReadableStream<Uint8Array>
+        stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream> {
         const { sendDeviceMeta, sendCodecMeta } = this.value;
         if (!sendDeviceMeta && !sendCodecMeta) {
@@ -250,17 +250,17 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     }
 
     public override parseAudioStreamMetadata(
-        stream: ReadableStream<Uint8Array>
+        stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
         return (async (): Promise<ScrcpyAudioStreamMetadata> => {
             const buffered = new BufferedReadableStream(stream);
             const buffer = await buffered.readExactly(
-                NumberFieldType.Uint32.size
+                NumberFieldType.Uint32.size,
             );
 
             const codecMetadataValue = NumberFieldType.Uint32.deserialize(
                 buffer,
-                false
+                false,
             );
             // Server will send `0x00_00_00_00` and `0x00_00_00_01` even if `sendCodecMeta` is false
             switch (codecMetadataValue) {
@@ -288,7 +288,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
                         break;
                     default:
                         throw new Error(
-                            `Unknown audio codec metadata value: ${codecMetadataValue}`
+                            `Unknown audio codec metadata value: ${codecMetadataValue}`,
                         );
                 }
                 return {
@@ -328,14 +328,14 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
                             }
                             await controller.enqueue(value);
                         }
-                    }
+                    },
                 ),
             };
         })();
     }
 
     public override serializeInjectTouchControlMessage(
-        message: ScrcpyInjectTouchControlMessage
+        message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array {
         return ScrcpyInjectTouchControlMessage2_0.serialize(message);
     }

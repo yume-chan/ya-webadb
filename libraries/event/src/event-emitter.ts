@@ -11,7 +11,7 @@ export interface EventListenerInfo<TEvent, TResult = unknown> {
 
 export interface AddEventListener<TEvent, TResult = unknown> {
     (
-        listener: EventListener<TEvent, unknown, [], TResult>
+        listener: EventListener<TEvent, unknown, [], TResult>,
     ): RemoveEventListener;
     <TThis, TArgs extends unknown[]>(
         listener: EventListener<TEvent, TThis, TArgs, TResult>,
@@ -28,7 +28,7 @@ export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
     }
 
     protected addEventListener(
-        info: EventListenerInfo<TEvent, TResult>
+        info: EventListenerInfo<TEvent, TResult>,
     ): RemoveEventListener {
         this.listeners.push(info);
 
@@ -44,7 +44,7 @@ export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
 
     public event: AddEventListener<TEvent, TResult> = <
         TThis,
-        TArgs extends unknown[]
+        TArgs extends unknown[],
     >(
         listener: EventListener<TEvent, TThis, TArgs, TResult>,
         thisArg?: TThis,

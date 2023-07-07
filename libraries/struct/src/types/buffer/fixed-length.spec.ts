@@ -9,7 +9,7 @@ describe("Types", () => {
             it("should return size in its options", () => {
                 const definition = new FixedLengthBufferLikeFieldDefinition(
                     Uint8ArrayBufferFieldSubType.Instance,
-                    { length: 10 }
+                    { length: 10 },
                 );
                 expect(definition.getSize()).toBe(10);
             });

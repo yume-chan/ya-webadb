@@ -38,7 +38,7 @@ export class AdbDaemonWebUsbDeviceManager {
      * or `undefined` if the user cancelled the device picker.
      */
     public async requestDevice(
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
     ): Promise<AdbDaemonWebUsbDevice | undefined> {
         try {
             const device = await this.#usbManager.requestDevice({
@@ -68,7 +68,7 @@ export class AdbDaemonWebUsbDeviceManager {
      * @returns An array of {@link AdbDaemonWebUsbDevice} instances for all connected and authenticated devices.
      */
     public async getDevices(
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER]
+        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
     ): Promise<AdbDaemonWebUsbDevice[]> {
         const devices = await this.#usbManager.getDevices();
         return devices
@@ -104,7 +104,11 @@ export class AdbDaemonWebUsbDeviceManager {
             })
             .map(
                 (device) =>
-                    new AdbDaemonWebUsbDevice(device, filters, this.#usbManager)
+                    new AdbDaemonWebUsbDevice(
+                        device,
+                        filters,
+                        this.#usbManager,
+                    ),
             );
     }
 }

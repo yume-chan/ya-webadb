@@ -24,28 +24,28 @@ describe("Types", () => {
         describe("Uint8ArrayBufferFieldSubType", () => {
             it("should have a static instance", () => {
                 expect(Uint8ArrayBufferFieldSubType.Instance).toBeInstanceOf(
-                    Uint8ArrayBufferFieldSubType
+                    Uint8ArrayBufferFieldSubType,
                 );
             });
 
             it("`#toBuffer` should return the same `Uint8Array`", () => {
                 const array = new Uint8Array(10);
                 expect(
-                    Uint8ArrayBufferFieldSubType.Instance.toBuffer(array)
+                    Uint8ArrayBufferFieldSubType.Instance.toBuffer(array),
                 ).toBe(array);
             });
 
             it("`#fromBuffer` should return the same `Uint8Array`", () => {
                 const buffer = new Uint8Array(10);
                 expect(
-                    Uint8ArrayBufferFieldSubType.Instance.toValue(buffer)
+                    Uint8ArrayBufferFieldSubType.Instance.toValue(buffer),
                 ).toBe(buffer);
             });
 
             it("`#getSize` should return the `byteLength` of the `Uint8Array`", () => {
                 const array = new Uint8Array(10);
                 expect(
-                    Uint8ArrayBufferFieldSubType.Instance.getSize(array)
+                    Uint8ArrayBufferFieldSubType.Instance.getSize(array),
                 ).toBe(10);
             });
         });
@@ -53,7 +53,7 @@ describe("Types", () => {
         describe("StringBufferFieldSubType", () => {
             it("should have a static instance", () => {
                 expect(StringBufferFieldSubType.Instance).toBeInstanceOf(
-                    StringBufferFieldSubType
+                    StringBufferFieldSubType,
                 );
             });
 
@@ -61,7 +61,7 @@ describe("Types", () => {
                 const text = "foo";
                 const array = new Uint8Array(Buffer.from(text, "utf-8"));
                 expect(
-                    StringBufferFieldSubType.Instance.toBuffer(text)
+                    StringBufferFieldSubType.Instance.toBuffer(text),
                 ).toEqual(array);
             });
 
@@ -69,7 +69,7 @@ describe("Types", () => {
                 const text = "foo";
                 const array = new Uint8Array(Buffer.from(text, "utf-8"));
                 expect(StringBufferFieldSubType.Instance.toValue(array)).toBe(
-                    text
+                    text,
                 );
             });
 
@@ -79,7 +79,7 @@ describe("Types", () => {
         });
 
         class MockArrayBufferFieldDefinition<
-            TType extends BufferFieldSubType
+            TType extends BufferFieldSubType,
         > extends BufferLikeFieldDefinition<TType, number> {
             public getSize(): number {
                 return this.options;
@@ -91,7 +91,7 @@ describe("Types", () => {
                 const size = 10;
                 const definition = new MockArrayBufferFieldDefinition(
                     Uint8ArrayBufferFieldSubType.Instance,
-                    size
+                    size,
                 );
 
                 const context = new MockDeserializationStream();
@@ -102,7 +102,7 @@ describe("Types", () => {
                 const fieldValue = definition.deserialize(
                     StructDefaultOptions,
                     context,
-                    struct
+                    struct,
                 );
                 expect(context.readExactly).toBeCalledTimes(1);
                 expect(context.readExactly).toBeCalledWith(size);
@@ -115,7 +115,7 @@ describe("Types", () => {
                 const size = 0;
                 const definition = new MockArrayBufferFieldDefinition(
                     Uint8ArrayBufferFieldSubType.Instance,
-                    size
+                    size,
                 );
 
                 const context = new MockDeserializationStream();
@@ -126,7 +126,7 @@ describe("Types", () => {
                 const fieldValue = definition.deserialize(
                     StructDefaultOptions,
                     context,
-                    struct
+                    struct,
                 );
                 expect(context.readExactly).toBeCalledTimes(0);
                 expect(fieldValue["array"]).toBeInstanceOf(Uint8Array);
@@ -144,7 +144,7 @@ describe("Types", () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(
                         Uint8ArrayBufferFieldSubType.Instance,
-                        size
+                        size,
                     );
 
                     const context = new MockDeserializationStream();
@@ -155,7 +155,7 @@ describe("Types", () => {
                     const fieldValue = definition.deserialize(
                         StructDefaultOptions,
                         context,
-                        struct
+                        struct,
                     );
 
                     const newValue = new Uint8Array(20);
@@ -170,12 +170,12 @@ describe("Types", () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(
                         Uint8ArrayBufferFieldSubType.Instance,
-                        size
+                        size,
                     );
 
                     const context = new MockDeserializationStream();
                     const sourceArray = new Uint8Array(
-                        Array.from({ length: size }, (_, i) => i)
+                        Array.from({ length: size }, (_, i) => i),
                     );
                     const array = sourceArray;
                     context.array = array;
@@ -184,7 +184,7 @@ describe("Types", () => {
                     const fieldValue = definition.deserialize(
                         StructDefaultOptions,
                         context,
-                        struct
+                        struct,
                     );
 
                     const targetArray = new Uint8Array(size);
@@ -198,12 +198,12 @@ describe("Types", () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(
                         Uint8ArrayBufferFieldSubType.Instance,
-                        size
+                        size,
                     );
 
                     const context = new MockDeserializationStream();
                     const sourceArray = new Uint8Array(
-                        Array.from({ length: size }, (_, i) => i)
+                        Array.from({ length: size }, (_, i) => i),
                     );
                     const array = sourceArray;
                     context.array = array;
@@ -212,7 +212,7 @@ describe("Types", () => {
                     const fieldValue = definition.deserialize(
                         StructDefaultOptions,
                         context,
-                        struct
+                        struct,
                     );
 
                     fieldValue.set(sourceArray);

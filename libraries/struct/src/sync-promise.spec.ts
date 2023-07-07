@@ -25,7 +25,7 @@ describe("SyncPromise", () => {
 
         it("should resolve with a pending SyncPromise", async () => {
             const promise = SyncPromise.resolve(
-                SyncPromise.resolve(Promise.resolve(42))
+                SyncPromise.resolve(Promise.resolve(42)),
             );
             await expect(promise.valueOrPromise()).resolves.toBe(42);
         });
@@ -37,7 +37,7 @@ describe("SyncPromise", () => {
 
         it("should resolve with a rejected SyncPromise", () => {
             const promise = SyncPromise.resolve(
-                SyncPromise.reject(new Error("error"))
+                SyncPromise.reject(new Error("error")),
             );
             expect(() => promise.valueOrPromise()).toThrowError("error");
         });
@@ -71,7 +71,7 @@ describe("SyncPromise", () => {
 
         it("should resolve with a pending SyncPromise", async () => {
             const promise = SyncPromise.try(() =>
-                SyncPromise.resolve(Promise.resolve(42))
+                SyncPromise.resolve(Promise.resolve(42)),
             );
             await expect(promise.valueOrPromise()).resolves.toBe(42);
         });
@@ -83,7 +83,7 @@ describe("SyncPromise", () => {
 
         it("should resolve with a rejected SyncPromise", () => {
             const promise = SyncPromise.try(() =>
-                SyncPromise.reject(new Error("error"))
+                SyncPromise.reject(new Error("error")),
             );
             expect(() => promise.valueOrPromise()).toThrowError("error");
         });

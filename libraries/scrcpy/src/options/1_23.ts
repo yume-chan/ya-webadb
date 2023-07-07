@@ -61,7 +61,7 @@ export class ScrcpyOptions1_23 extends ScrcpyOptionsBase<
 
                         controller.enqueue(packet);
                     },
-                })
+                }),
             ),
         };
     }

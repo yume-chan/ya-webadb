@@ -30,6 +30,6 @@
         "gh-release-fetch": "^3.0.2"
     },
     "devDependencies": {
-        "@types/node": "^20.2.1"
+        "@types/node": "^20.4.0"
     }
 }

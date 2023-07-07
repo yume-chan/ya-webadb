@@ -9,7 +9,7 @@ export class DumpSys extends AdbCommandBase {
 
         function getSize(name: string) {
             const match = output.match(
-                new RegExp(`${name}-Free: (\\d+)K / (\\d+)K`)
+                new RegExp(`${name}-Free: (\\d+)K / (\\d+)K`),
             );
             if (!match) {
                 return [0, 0];

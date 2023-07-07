@@ -145,7 +145,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
                 format,
                 YuvBuffer.lumaPlane(format, array, encodedWidth, 0),
                 YuvBuffer.chromaPlane(format, array, chromaWidth, uPlaneOffset),
-                YuvBuffer.chromaPlane(format, array, chromaWidth, vPlaneOffset)
+                YuvBuffer.chromaPlane(format, array, chromaWidth, vPlaneOffset),
             );
             this._yuvCanvas!.drawFrame(frame);
         });

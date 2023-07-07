@@ -14,7 +14,7 @@ export type ScrcpyInjectScrollControlMessage1_22 =
 
 export class ScrcpyScrollController1_22 extends ScrcpyScrollController1_16 {
     public override serializeScrollMessage(
-        message: ScrcpyInjectScrollControlMessage1_22
+        message: ScrcpyInjectScrollControlMessage1_22,
     ): Uint8Array | undefined {
         const processed = this.processMessage(message);
         if (!processed) {

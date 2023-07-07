@@ -108,8 +108,8 @@ export class ConcatBufferStream {
                     result = new Uint8Array(
                         this.#segments.reduce(
                             (prev, item) => prev + item.length,
-                            0
-                        )
+                            0,
+                        ),
                     );
                     for (const segment of this.#segments) {
                         result.set(segment, offset);

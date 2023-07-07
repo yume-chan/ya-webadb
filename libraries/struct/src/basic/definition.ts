@@ -13,7 +13,7 @@ import type { StructValue } from "./struct-value.js";
 export abstract class StructFieldDefinition<
     TOptions = void,
     TValue = unknown,
-    TOmitInitKey extends PropertyKey = never
+    TOmitInitKey extends PropertyKey = never,
 > {
     /**
      * When `T` is a type initiated `StructFieldDefinition`,
@@ -46,7 +46,7 @@ export abstract class StructFieldDefinition<
     public abstract create(
         options: Readonly<StructOptions>,
         structValue: StructValue,
-        value: TValue
+        value: TValue,
     ): StructFieldValue<this>;
 
     /**
@@ -58,11 +58,11 @@ export abstract class StructFieldDefinition<
     public abstract deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable,
-        structValue: StructValue
+        structValue: StructValue,
     ): StructFieldValue<this>;
     public abstract deserialize(
         options: Readonly<StructOptions>,
         stream: AsyncExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): Promise<StructFieldValue<this>>;
 }

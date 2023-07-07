@@ -25,7 +25,7 @@ export abstract class PcmPlayer<T> {
 
     public async start() {
         await this._context.audioWorklet.addModule(
-            new URL("./worker.js", import.meta.url)
+            new URL("./worker.js", import.meta.url),
         );
 
         this._worklet = new AudioWorkletNode(this._context, this.sourceName, {
@@ -70,7 +70,7 @@ export class Float32PcmPlayer extends PcmPlayer<Float32Array> {
 
     protected override feedCore(
         worklet: AudioWorkletNode,
-        source: Float32Array
+        source: Float32Array,
     ) {
         if (
             source.byteOffset !== 0 ||
@@ -89,7 +89,7 @@ export class Float32PlanerPcmPlayer extends PcmPlayer<Float32Array[]> {
 
     protected override feedCore(
         worklet: AudioWorkletNode,
-        source: Float32Array[]
+        source: Float32Array[],
     ) {
         const buffers = source.map((channel) => {
             if (

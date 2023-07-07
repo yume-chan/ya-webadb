@@ -41,7 +41,7 @@ export class ScrcpyControlMessageTypeValue {
 
     public fillMessageType<T extends { type: ScrcpyControlMessageType }>(
         message: Omit<T, "type">,
-        type: T["type"]
+        type: T["type"],
     ): T {
         (message as T).type = this.get(type);
         return message as T;

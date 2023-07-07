@@ -19,7 +19,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
 
     public static async pty(adb: Adb, command: string) {
         return new AdbSubprocessNoneProtocol(
-            await adb.createSocket(`shell:${command}`)
+            await adb.createSocket(`shell:${command}`),
         );
     }
 
@@ -27,7 +27,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
         // `shell,raw:${command}` also triggers raw mode,
         // But is not supported on Android version <7.
         return new AdbSubprocessNoneProtocol(
-            await adb.createSocket(`exec:${command}`)
+            await adb.createSocket(`exec:${command}`),
         );
     }
 

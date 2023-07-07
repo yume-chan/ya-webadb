@@ -27,7 +27,7 @@ describe("BTree", () => {
         if (!root) {
             // Math.ceil(order / 2) - 1
             expect(node.keyCount).toBeGreaterThanOrEqual(
-                ((node.order + 1) >> 1) - 1
+                ((node.order + 1) >> 1) - 1,
             );
         }
         expect(node.keyCount).toBeLessThan(node.order);
@@ -57,7 +57,7 @@ describe("BTree", () => {
 
                 const values = Array.from(
                     { length: LENGTH },
-                    (_, i) => i - LENGTH / 2
+                    (_, i) => i - LENGTH / 2,
                 );
                 for (const value of values) {
                     tree.add(value);
@@ -77,7 +77,7 @@ describe("BTree", () => {
 
                 const values = Array.from(
                     { length: LENGTH },
-                    (_, i) => i - LENGTH / 2
+                    (_, i) => i - LENGTH / 2,
                 );
                 shuffle(values);
                 for (const value of values) {

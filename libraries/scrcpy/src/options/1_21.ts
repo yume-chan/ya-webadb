@@ -37,7 +37,7 @@ export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
 
     public static serialize<T extends object>(
         options: T,
-        defaults: Required<T>
+        defaults: Required<T>,
     ): string[] {
         // 1.21 changed the format of arguments
         const result: string[] = [];
@@ -49,7 +49,7 @@ export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
 
             const defaultValue = toScrcpyOptionValue(
                 defaults[key as keyof T],
-                undefined
+                undefined,
             );
             if (serializedValue == defaultValue) {
                 continue;
@@ -76,7 +76,7 @@ export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
     }
 
     public override serializeSetClipboardControlMessage(
-        message: ScrcpySetClipboardControlMessage
+        message: ScrcpySetClipboardControlMessage,
     ): Uint8Array {
         return ScrcpySetClipboardControlMessage1_21.serialize(message);
     }

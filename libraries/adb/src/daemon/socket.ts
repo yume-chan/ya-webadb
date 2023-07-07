@@ -92,7 +92,7 @@ export class AdbDaemonSocketController
                 await this.dispatcher.sendPacket(
                     AdbCommand.Close,
                     this.localId,
-                    this.remoteId
+                    this.remoteId,
                 );
 
                 // Don't `dispose` here, we need to wait for `CLSE` response packet.
@@ -114,8 +114,8 @@ export class AdbDaemonSocketController
                     size(chunk) {
                         return chunk.byteLength;
                     },
-                }
-            )
+                },
+            ),
         );
 
         this.writable = pipeFrom(
@@ -128,13 +128,13 @@ export class AdbDaemonSocketController
                             AdbCommand.Write,
                             this.localId,
                             this.remoteId,
-                            chunk
+                            chunk,
                         );
                         await this.#writePromise.promise;
                     },
-                })
+                }),
             ),
-            new DistributionStream(this.dispatcher.options.maxPayloadSize)
+            new DistributionStream(this.dispatcher.options.maxPayloadSize),
         );
 
         this._socket = new AdbDaemonSocket(this);

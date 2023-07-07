@@ -89,7 +89,7 @@ class Uint8ArrayExactReadable implements ExactReadable {
     public readExactly(length: number): Uint8Array {
         const result = this.#data.subarray(
             this.#position,
-            this.#position + length
+            this.#position + length,
         );
         this.#position += length;
         return result;
@@ -113,7 +113,7 @@ export class AdbDaemonWebUsbConnection
         device: USBDevice,
         inEndpoint: USBEndpoint,
         outEndpoint: USBEndpoint,
-        usbManager: USB
+        usbManager: USB,
     ) {
         let closed = false;
 
@@ -133,7 +133,7 @@ export class AdbDaemonWebUsbConnection
                 closed = true;
                 usbManager.removeEventListener(
                     "disconnect",
-                    handleUsbDisconnect
+                    handleUsbDisconnect,
                 );
             },
         });
@@ -155,7 +155,7 @@ export class AdbDaemonWebUsbConnection
                         // ADB daemon sends each packet in two parts, the 24-byte header and the payload.
                         const result = await device.transferIn(
                             inEndpoint.endpointNumber,
-                            24
+                            24,
                         );
 
                         // TODO: webusb: handle `babble` by discarding the data and receive again
@@ -166,15 +166,15 @@ export class AdbDaemonWebUsbConnection
 
                         // Add `payload` field to its type, it's assigned below.
                         const packet = AdbPacketHeader.deserialize(
-                            stream
+                            stream,
                         ) as AdbPacketHeader & { payload: Uint8Array };
                         if (packet.payloadLength !== 0) {
                             const result = await device.transferIn(
                                 inEndpoint.endpointNumber,
-                                packet.payloadLength
+                                packet.payloadLength,
                             );
                             packet.payload = new Uint8Array(
-                                result.data!.buffer
+                                result.data!.buffer,
                             );
                         } else {
                             packet.payload = EMPTY_UINT8_ARRAY;
@@ -203,7 +203,7 @@ export class AdbDaemonWebUsbConnection
                         throw e;
                     }
                 },
-            })
+            }),
         );
 
         const zeroMask = outEndpoint.packetSize - 1;
@@ -214,7 +214,7 @@ export class AdbDaemonWebUsbConnection
                         try {
                             await device.transferOut(
                                 outEndpoint.endpointNumber,
-                                chunk
+                                chunk,
                             );
 
                             // In USB protocol, a not-full packet indicates the end of a transfer.
@@ -227,7 +227,7 @@ export class AdbDaemonWebUsbConnection
                             ) {
                                 await device.transferOut(
                                     outEndpoint.endpointNumber,
-                                    EMPTY_UINT8_ARRAY
+                                    EMPTY_UINT8_ARRAY,
                                 );
                             }
                         } catch (e) {
@@ -237,9 +237,9 @@ export class AdbDaemonWebUsbConnection
                             throw e;
                         }
                     },
-                })
+                }),
             ),
-            new AdbPacketSerializeStream()
+            new AdbPacketSerializeStream(),
         );
     }
 }
@@ -270,7 +270,7 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
     public constructor(
         device: USBDevice,
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
-        usbManager: USB
+        usbManager: USB,
     ) {
         this.#raw = device;
         this.#filters = filters;
@@ -298,7 +298,7 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
             // Note: Switching configuration is not supported on Windows,
             // but Android devices should always expose ADB function at the first (default) configuration.
             await this.#raw.selectConfiguration(
-                configuration.configurationValue
+                configuration.configurationValue,
             );
         }
 
@@ -311,18 +311,18 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
         ) {
             await this.#raw.selectAlternateInterface(
                 interface_.interfaceNumber,
-                alternate.alternateSetting
+                alternate.alternateSetting,
             );
         }
 
         const { inEndpoint, outEndpoint } = findUsbEndpoints(
-            alternate.endpoints
+            alternate.endpoints,
         );
         return new AdbDaemonWebUsbConnection(
             this.#raw,
             inEndpoint,
             outEndpoint,
-            this.#usbManager
+            this.#usbManager,
         );
     }
 }

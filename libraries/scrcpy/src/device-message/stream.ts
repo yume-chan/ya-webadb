@@ -21,11 +21,11 @@ export class ScrcpyDeviceMessageDeserializeStream extends BufferedTransformStrea
                 switch (type[0]) {
                     case ScrcpyDeviceMessageType.Clipboard:
                         return await ScrcpyClipboardDeviceMessage.deserialize(
-                            stream
+                            stream,
                         );
                     case ScrcpyDeviceMessageType.AckClipboard:
                         return await ScrcpyAckClipboardDeviceMessage.deserialize(
-                            stream
+                            stream,
                         );
                     default:
                         throw new Error("Unsupported control message type");

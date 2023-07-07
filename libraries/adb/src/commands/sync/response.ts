@@ -31,7 +31,7 @@ export const AdbSyncFailResponse = new Struct({ littleEndian: true })
 export async function adbSyncReadResponse<T>(
     stream: AsyncExactReadable,
     id: AdbSyncResponseId,
-    type: StructLike<T>
+    type: StructLike<T>,
 ): Promise<T> {
     const actualId = decodeUtf8(await stream.readExactly(4));
     switch (actualId) {
@@ -46,11 +46,11 @@ export async function adbSyncReadResponse<T>(
 }
 
 export async function* adbSyncReadResponses<
-    T extends Struct<object, PropertyKey, object, any>
+    T extends Struct<object, PropertyKey, object, any>,
 >(
     stream: AsyncExactReadable,
     id: AdbSyncResponseId,
-    type: T
+    type: T,
 ): AsyncGenerator<StructValueType<T>, void, void> {
     while (true) {
         const actualId = decodeUtf8(await stream.readExactly(4));
@@ -70,7 +70,7 @@ export async function* adbSyncReadResponses<
                 break;
             default:
                 throw new Error(
-                    `Expected '${id}' or '${AdbSyncResponseId.Done}', but got '${actualId}'`
+                    `Expected '${id}' or '${AdbSyncResponseId.Done}', but got '${actualId}'`,
                 );
         }
     }

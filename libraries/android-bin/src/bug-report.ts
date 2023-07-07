@@ -79,7 +79,7 @@ export class BugReportZ extends AdbCommandBase {
      * @returns The path of the bugreport file.
      */
     public async generate(
-        onProgress?: (progress: string, total: string) => void
+        onProgress?: (progress: string, total: string) => void,
     ): Promise<string> {
         const process = await this.adb.subprocess.spawn([
             "bugreportz",
@@ -118,7 +118,7 @@ export class BugReportZ extends AdbCommandBase {
                             error = match[1];
                         }
                     },
-                })
+                }),
             );
 
         if (error) {
@@ -149,7 +149,7 @@ export class BugReportZ extends AdbCommandBase {
                         async write(chunk) {
                             await controller.enqueue(chunk);
                         },
-                    })
+                    }),
                 )
                 .catch((e) => {
                     controller.error(e);
@@ -161,7 +161,7 @@ export class BugReportZ extends AdbCommandBase {
                         write(chunk) {
                             controller.error(new Error(chunk));
                         },
-                    })
+                    }),
                 )
                 .catch((e) => {
                     controller.error(e);

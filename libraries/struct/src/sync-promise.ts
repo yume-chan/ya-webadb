@@ -7,7 +7,7 @@ export interface SyncPromise<T> {
         onrejected?:
             | ((reason: any) => TResult2 | PromiseLike<TResult2>)
             | null
-            | undefined
+            | undefined,
     ): SyncPromise<TResult1 | TResult2>;
 
     valueOrPromise(): T | PromiseLike<T>;
@@ -69,10 +69,10 @@ class PendingSyncPromise<T> implements SyncPromise<T> {
         onrejected?:
             | ((reason: any) => TResult2 | PromiseLike<TResult2>)
             | null
-            | undefined
+            | undefined,
     ) {
         return new PendingSyncPromise<TResult1 | TResult2>(
-            this.#promise.then(onfulfilled, onrejected)
+            this.#promise.then(onfulfilled, onrejected),
         );
     }
 
@@ -92,7 +92,7 @@ class ResolvedSyncPromise<T> implements SyncPromise<T> {
         onfulfilled?:
             | ((value: T) => TResult1 | PromiseLike<TResult1>)
             | null
-            | undefined
+            | undefined,
     ) {
         if (!onfulfilled) {
             return this as any;
@@ -120,7 +120,7 @@ class RejectedSyncPromise<T> implements SyncPromise<T> {
         onrejected?:
             | ((reason: any) => TResult2 | PromiseLike<TResult2>)
             | null
-            | undefined
+            | undefined,
     ) {
         if (!onrejected) {
             return this as any;

@@ -13,7 +13,7 @@ export type LengthField<TFields> = KeysOfType<TFields, number | string>;
 
 export interface VariableLengthBufferLikeFieldOptions<
     TFields = object,
-    TLengthField extends LengthField<TFields> = any
+    TLengthField extends LengthField<TFields> = any,
 > {
     /**
      * The name of the field that contains the length of the buffer.
@@ -33,8 +33,9 @@ export interface VariableLengthBufferLikeFieldOptions<
 
 export class VariableLengthBufferLikeFieldDefinition<
     TType extends BufferFieldSubType = BufferFieldSubType,
-    TOptions extends VariableLengthBufferLikeFieldOptions = VariableLengthBufferLikeFieldOptions,
-    TTypeScriptType = TType["TTypeScriptType"]
+    TOptions extends
+        VariableLengthBufferLikeFieldOptions = VariableLengthBufferLikeFieldOptions,
+    TTypeScriptType = TType["TTypeScriptType"],
 > extends BufferLikeFieldDefinition<
     TType,
     TOptions,
@@ -57,20 +58,21 @@ export class VariableLengthBufferLikeFieldDefinition<
         options: Readonly<StructOptions>,
         struct: StructValue,
         value: TTypeScriptType,
-        array?: Uint8Array
+        array?: Uint8Array,
     ): VariableLengthBufferLikeStructFieldValue<this> {
         return new VariableLengthBufferLikeStructFieldValue(
             this,
             options,
             struct,
             value,
-            array
+            array,
         );
     }
 }
 
 export class VariableLengthBufferLikeStructFieldValue<
-    TDefinition extends VariableLengthBufferLikeFieldDefinition = VariableLengthBufferLikeFieldDefinition
+    TDefinition extends
+        VariableLengthBufferLikeFieldDefinition = VariableLengthBufferLikeFieldDefinition,
 > extends BufferLikeFieldValue<TDefinition> {
     protected length: number | undefined;
 
@@ -81,7 +83,7 @@ export class VariableLengthBufferLikeStructFieldValue<
         options: Readonly<StructOptions>,
         struct: StructValue,
         value: TDefinition["TValue"],
-        array?: Uint8Array
+        array?: Uint8Array,
     ) {
         super(definition, options, struct, value, array);
 
@@ -95,7 +97,7 @@ export class VariableLengthBufferLikeStructFieldValue<
         const originalValue = struct.get(lengthField);
         this.lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
             originalValue,
-            this
+            this,
         );
         struct.set(lengthField, this.lengthFieldValue);
     }
@@ -131,13 +133,13 @@ export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue {
 
     public constructor(
         originalField: StructFieldValue,
-        arrayBufferField: VariableLengthBufferLikeFieldValueLike
+        arrayBufferField: VariableLengthBufferLikeFieldValueLike,
     ) {
         super(
             originalField.definition,
             originalField.options,
             originalField.struct,
-            0
+            0,
         );
         this.originalField = originalField;
         this.bufferField = arrayBufferField;
@@ -153,7 +155,7 @@ export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue {
         const originalValue = this.originalField.get();
         if (typeof originalValue === "string") {
             value = value.toString(
-                this.bufferField.definition.options.lengthFieldRadix ?? 10
+                this.bufferField.definition.options.lengthFieldRadix ?? 10,
             );
         }
 

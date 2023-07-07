@@ -21,7 +21,7 @@ export class ScrcpyHoverHelper {
     private lastHoverMessage: ScrcpyInjectTouchControlMessage | undefined;
 
     public process(
-        message: Omit<ScrcpyInjectTouchControlMessage, "type">
+        message: Omit<ScrcpyInjectTouchControlMessage, "type">,
     ): ScrcpyInjectTouchControlMessage[] {
         const result: ScrcpyInjectTouchControlMessage[] = [];
 

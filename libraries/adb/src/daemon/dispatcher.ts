@@ -67,7 +67,7 @@ export class AdbPacketDispatcher implements Closeable {
             AdbPacketData,
             Consumable<AdbPacketInit>
         >,
-        options: AdbPacketDispatcherOptions
+        options: AdbPacketDispatcherOptions,
     ) {
         this.options = options;
 
@@ -90,12 +90,12 @@ export class AdbPacketDispatcher implements Closeable {
                                     await this.sendPacket(
                                         AdbCommand.OK,
                                         packet.arg1,
-                                        packet.arg0
+                                        packet.arg0,
                                     );
                                     break;
                                 }
                                 throw new Error(
-                                    `Unknown local socket id: ${packet.arg1}`
+                                    `Unknown local socket id: ${packet.arg1}`,
                                 );
                             case AdbCommand.Open:
                                 await this.handleOpen(packet);
@@ -107,8 +107,8 @@ export class AdbPacketDispatcher implements Closeable {
                                 // (although it's possible that Adb added new commands in the future)
                                 throw new Error(
                                     `Unknown command: ${packet.command.toString(
-                                        16
-                                    )}`
+                                        16,
+                                    )}`,
                                 );
                         }
                     },
@@ -121,7 +121,7 @@ export class AdbPacketDispatcher implements Closeable {
                     // So don't close `readable` here.
                     preventCancel: true,
                     signal: this.#readAbortController.signal,
-                }
+                },
             )
             .then(
                 () => {
@@ -132,7 +132,7 @@ export class AdbPacketDispatcher implements Closeable {
                         this.#disconnected.reject(e);
                     }
                     this.dispose();
-                }
+                },
             );
 
         this.#writer = connection.writable.getWriter();
@@ -162,7 +162,7 @@ export class AdbPacketDispatcher implements Closeable {
             packet.arg0 === 0 &&
             this.#initializers.reject(
                 packet.arg1,
-                new Error("Socket open failed")
+                new Error("Socket open failed"),
             )
         ) {
             // Device failed to create the socket
@@ -188,7 +188,7 @@ export class AdbPacketDispatcher implements Closeable {
                 await this.sendPacket(
                     AdbCommand.Close,
                     packet.arg1,
-                    packet.arg0
+                    packet.arg0,
                 );
             }
             await socket.dispose();
@@ -203,7 +203,7 @@ export class AdbPacketDispatcher implements Closeable {
 
     public addReverseTunnel(
         service: string,
-        handler: AdbIncomingSocketHandler
+        handler: AdbIncomingSocketHandler,
     ) {
         this.#incomingSocketHandlers.set(service, handler);
     }
@@ -277,7 +277,7 @@ export class AdbPacketDispatcher implements Closeable {
         command: AdbCommand,
         arg0: number,
         arg1: number,
-        payload: string | Uint8Array = EMPTY_UINT8_ARRAY
+        payload: string | Uint8Array = EMPTY_UINT8_ARRAY,
     ): Promise<void> {
         if (typeof payload === "string") {
             payload = encodeUtf8(payload);
@@ -302,7 +302,7 @@ export class AdbPacketDispatcher implements Closeable {
     public async close() {
         // Send `CLSE` packets for all sockets
         await Promise.all(
-            Array.from(this.#sockets.values(), (socket) => socket.close())
+            Array.from(this.#sockets.values(), (socket) => socket.close()),
         );
 
         // Stop receiving

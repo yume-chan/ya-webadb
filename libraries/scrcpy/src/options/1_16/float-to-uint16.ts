@@ -29,5 +29,5 @@ export const ScrcpyFloatToUint16NumberType: NumberFieldType = {
 };
 
 export const ScrcpyFloatToUint16FieldDefinition = new NumberFieldDefinition(
-    ScrcpyFloatToUint16NumberType
+    ScrcpyFloatToUint16NumberType,
 );

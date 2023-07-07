@@ -64,8 +64,8 @@ export class Cmd extends AdbCommandBase {
         if (supportsAbb) {
             return new Protocol(
                 await this.adb.createSocket(
-                    `${service}:${command}\0${args.join("\0")}\0`
-                )
+                    `${service}:${command}\0${args.join("\0")}\0`,
+                ),
             );
         }
 

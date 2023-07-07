@@ -33,7 +33,7 @@ export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
     }
 
     public override parseVideoStreamMetadata(
-        stream: ReadableStream<Uint8Array>
+        stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream> {
         if (!this.value.sendDeviceMeta) {
             return { stream, metadata: { codec: ScrcpyVideoCodecId.H264 } };

@@ -81,11 +81,11 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
                 hash: "SHA-1",
             },
             true,
-            ["sign", "verify"]
+            ["sign", "verify"],
         );
 
         const privateKey = new Uint8Array(
-            await crypto.subtle.exportKey("pkcs8", cryptoKey)
+            await crypto.subtle.exportKey("pkcs8", cryptoKey),
         );
         await saveKey(privateKey);
 

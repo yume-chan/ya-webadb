@@ -14,7 +14,7 @@ export class AdbDaemonWebUsbDeviceWatcher {
         this.#usbManager.removeEventListener("connect", this.handleConnect);
         this.#usbManager.removeEventListener(
             "disconnect",
-            this.handleDisconnect
+            this.handleDisconnect,
         );
     }
 

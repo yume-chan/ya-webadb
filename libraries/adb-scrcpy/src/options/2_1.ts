@@ -15,7 +15,7 @@ export class AdbScrcpyOptions2_1 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit2
     public override async getEncoders(
         adb: Adb,
         path: string,
-        version: string
+        version: string,
     ): Promise<ScrcpyEncoder[]> {
         return AdbScrcpyOptions2_0.getEncoders(adb, path, version, this);
     }
@@ -23,7 +23,7 @@ export class AdbScrcpyOptions2_1 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit2
     public override getDisplays(
         adb: Adb,
         path: string,
-        version: string
+        version: string,
     ): Promise<ScrcpyDisplay[]> {
         return AdbScrcpyOptions1_16.getDisplays(adb, path, version, this);
     }
@@ -38,7 +38,7 @@ export class AdbScrcpyOptions2_1 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit2
                 control: this.value.control,
                 sendDummyByte: this.value.sendDummyByte,
             },
-            this.tunnelForwardOverride || this.value.tunnelForward
+            this.tunnelForwardOverride || this.value.tunnelForward,
         );
     }
 }

@@ -25,19 +25,19 @@ export class ScrcpyAudioCodec implements ScrcpyOptionValue {
         "opus",
         0x6f_70_75_73,
         "audio/opus",
-        "opus"
+        "opus",
     );
     public static readonly AAC = new ScrcpyAudioCodec(
         "aac",
         0x00_61_61_63,
         "audio/aac",
-        "mp4a.66"
+        "mp4a.66",
     );
     public static readonly RAW = new ScrcpyAudioCodec(
         "raw",
         0x00_72_61_77,
         "audio/raw",
-        "1"
+        "1",
     );
 
     public readonly optionValue: string;
@@ -49,7 +49,7 @@ export class ScrcpyAudioCodec implements ScrcpyOptionValue {
         optionValue: string,
         metadataValue: number,
         mimeType: string,
-        webCodecId: string
+        webCodecId: string,
     ) {
         this.optionValue = optionValue;
         this.metadataValue = metadataValue;

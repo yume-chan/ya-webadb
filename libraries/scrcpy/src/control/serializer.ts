@@ -28,13 +28,13 @@ export class ScrcpyControlMessageSerializer {
     }
 
     public injectKeyCode(
-        message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">
+        message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">,
     ) {
         return ScrcpyInjectKeyCodeControlMessage.serialize(
             this._typeValues.fillMessageType(
                 message,
-                ScrcpyControlMessageType.InjectKeyCode
-            )
+                ScrcpyControlMessageType.InjectKeyCode,
+            ),
         );
     }
 
@@ -52,8 +52,8 @@ export class ScrcpyControlMessageSerializer {
         return this._options.serializeInjectTouchControlMessage(
             this._typeValues.fillMessageType(
                 message,
-                ScrcpyControlMessageType.InjectTouch
-            )
+                ScrcpyControlMessageType.InjectTouch,
+            ),
         );
     }
 
@@ -61,13 +61,13 @@ export class ScrcpyControlMessageSerializer {
      * `scrollX` and `scrollY` are float values between 0 and 1.
      */
     public injectScroll(
-        message: Omit<ScrcpyInjectScrollControlMessage, "type">
+        message: Omit<ScrcpyInjectScrollControlMessage, "type">,
     ) {
         return this._scrollController.serializeScrollMessage(
             this._typeValues.fillMessageType(
                 message,
-                ScrcpyControlMessageType.InjectScroll
-            )
+                ScrcpyControlMessageType.InjectScroll,
+            ),
         );
     }
 
@@ -82,7 +82,7 @@ export class ScrcpyControlMessageSerializer {
         return ScrcpySetScreenPowerModeControlMessage.serialize({
             mode,
             type: this._typeValues.get(
-                ScrcpyControlMessageType.SetScreenPowerMode
+                ScrcpyControlMessageType.SetScreenPowerMode,
             ),
         });
     }

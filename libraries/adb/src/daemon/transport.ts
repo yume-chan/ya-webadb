@@ -65,7 +65,7 @@ export class AdbDaemonTransport implements AdbTransport {
         const resolver = new PromiseResolver<string>();
         const authProcessor = new AdbAuthenticationProcessor(
             authenticators,
-            credentialStore
+            credentialStore,
         );
 
         // Here is similar to `AdbPacketDispatcher`,
@@ -80,13 +80,13 @@ export class AdbDaemonTransport implements AdbTransport {
                                 version = Math.min(version, packet.arg0);
                                 maxPayloadSize = Math.min(
                                     maxPayloadSize,
-                                    packet.arg1
+                                    packet.arg1,
                                 );
                                 resolver.resolve(decodeUtf8(packet.payload));
                                 break;
                             case AdbCommand.Auth: {
                                 const response = await authProcessor.process(
-                                    packet
+                                    packet,
                                 );
                                 await sendPacket(response);
                                 break;
@@ -105,19 +105,19 @@ export class AdbDaemonTransport implements AdbTransport {
                     // Don't cancel the source ReadableStream on AbortSignal abort.
                     preventCancel: true,
                     signal: abortController.signal,
-                }
+                },
             )
             .then(
                 () => {
                     if (resolver.state === "running") {
                         resolver.reject(
-                            new Error("Connection closed unexpectedly")
+                            new Error("Connection closed unexpectedly"),
                         );
                     }
                 },
                 (e) => {
                     resolver.reject(e);
-                }
+                },
             );
 
         const writer = connection.writable.getWriter();
@@ -245,7 +245,7 @@ export class AdbDaemonTransport implements AdbTransport {
 
     public addReverseTunnel(
         handler: AdbIncomingSocketHandler,
-        address?: string
+        address?: string,
     ): string {
         if (!address) {
             const id = Math.random().toString().substring(2);

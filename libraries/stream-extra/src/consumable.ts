@@ -62,7 +62,7 @@ export class Consumable<T> {
 
 async function enqueue<T>(
     controller: { enqueue: (chunk: Consumable<T>) => void },
-    chunk: T
+    chunk: T,
 ) {
     const output = new Consumable(chunk);
     controller.enqueue(output);
@@ -101,10 +101,10 @@ export interface ConsumableReadableStreamController<T> {
 
 export interface ConsumableReadableStreamSource<T> {
     start?(
-        controller: ConsumableReadableStreamController<T>
+        controller: ConsumableReadableStreamController<T>,
     ): void | PromiseLike<void>;
     pull?(
-        controller: ConsumableReadableStreamController<T>
+        controller: ConsumableReadableStreamController<T>,
     ): void | PromiseLike<void>;
     cancel?(reason: any): void | PromiseLike<void>;
 }
@@ -112,7 +112,7 @@ export interface ConsumableReadableStreamSource<T> {
 export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
     public constructor(
         source: ConsumableReadableStreamSource<T>,
-        strategy?: QueuingStrategy<T>
+        strategy?: QueuingStrategy<T>,
     ) {
         let wrappedController:
             | ConsumableReadableStreamController<T>
@@ -155,7 +155,7 @@ export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
                     await source.cancel?.(reason);
                 },
             },
-            wrappedStrategy
+            wrappedStrategy,
         );
     }
 }
@@ -170,7 +170,7 @@ export interface ConsumableWritableStreamSink<T> {
 export class ConsumableWritableStream<T> extends WritableStream<Consumable<T>> {
     public static async write<T>(
         writer: WritableStreamDefaultWriter<Consumable<T>>,
-        value: T
+        value: T,
     ) {
         const consumable = new Consumable(value);
         await writer.write(consumable);
@@ -179,7 +179,7 @@ export class ConsumableWritableStream<T> extends WritableStream<Consumable<T>> {
 
     public constructor(
         sink: ConsumableWritableStreamSink<T>,
-        strategy?: QueuingStrategy<T>
+        strategy?: QueuingStrategy<T>,
     ) {
         let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
         if (strategy) {
@@ -210,21 +210,21 @@ export class ConsumableWritableStream<T> extends WritableStream<Consumable<T>> {
                     return sink.close?.();
                 },
             },
-            wrappedStrategy
+            wrappedStrategy,
         );
     }
 }
 
 export interface ConsumableTransformer<I, O> {
     start?(
-        controller: ConsumableReadableStreamController<O>
+        controller: ConsumableReadableStreamController<O>,
     ): void | PromiseLike<void>;
     transform?(
         chunk: I,
-        controller: ConsumableReadableStreamController<O>
+        controller: ConsumableReadableStreamController<O>,
     ): void | PromiseLike<void>;
     flush?(
-        controller: ConsumableReadableStreamController<O>
+        controller: ConsumableReadableStreamController<O>,
     ): void | PromiseLike<void>;
 }
 
@@ -254,8 +254,9 @@ export class ConsumableTransformStream<I, O> extends TransformStream<
                 await transformer.start?.(wrappedController);
             },
             async transform(chunk) {
-                await chunk.tryConsume((value) =>
-                    transformer.transform?.(value, wrappedController!)
+                await chunk.tryConsume(
+                    (value) =>
+                        transformer.transform?.(value, wrappedController!),
                 );
                 chunk.consume();
             },

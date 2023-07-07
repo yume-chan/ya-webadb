@@ -9,7 +9,7 @@ function testEndian(
     type: NumberFieldType,
     min: number,
     max: number,
-    littleEndian: boolean
+    littleEndian: boolean,
 ) {
     test(`min = ${min}`, () => {
         const buffer = new ArrayBuffer(type.size);
@@ -156,33 +156,33 @@ describe("Types", () => {
                 it("should return size of its type", () => {
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Int8
-                        ).getSize()
+                            NumberFieldType.Int8,
+                        ).getSize(),
                     ).toBe(1);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Uint8
-                        ).getSize()
+                            NumberFieldType.Uint8,
+                        ).getSize(),
                     ).toBe(1);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Int16
-                        ).getSize()
+                            NumberFieldType.Int16,
+                        ).getSize(),
                     ).toBe(2);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Uint16
-                        ).getSize()
+                            NumberFieldType.Uint16,
+                        ).getSize(),
                     ).toBe(2);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Int32
-                        ).getSize()
+                            NumberFieldType.Int32,
+                        ).getSize(),
                     ).toBe(4);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Uint32
-                        ).getSize()
+                            NumberFieldType.Uint32,
+                        ).getSize(),
                     ).toBe(4);
                 });
             });
@@ -190,70 +190,70 @@ describe("Types", () => {
             describe("#deserialize", () => {
                 it("should deserialize Uint8", () => {
                     const readExactly = jest.fn(
-                        () => new Uint8Array([1, 2, 3, 4])
+                        () => new Uint8Array([1, 2, 3, 4]),
                     );
                     const stream: ExactReadable = { position: 0, readExactly };
 
                     const definition = new NumberFieldDefinition(
-                        NumberFieldType.Uint8
+                        NumberFieldType.Uint8,
                     );
                     const struct = new StructValue({});
                     const value = definition.deserialize(
                         StructDefaultOptions,
                         stream,
-                        struct
+                        struct,
                     );
 
                     expect(value.get()).toBe(1);
                     expect(readExactly).toBeCalledTimes(1);
                     expect(readExactly).lastCalledWith(
-                        NumberFieldType.Uint8.size
+                        NumberFieldType.Uint8.size,
                     );
                 });
 
                 it("should deserialize Uint16", () => {
                     const readExactly = jest.fn(
-                        () => new Uint8Array([1, 2, 3, 4])
+                        () => new Uint8Array([1, 2, 3, 4]),
                     );
                     const stream: ExactReadable = { position: 0, readExactly };
 
                     const definition = new NumberFieldDefinition(
-                        NumberFieldType.Uint16
+                        NumberFieldType.Uint16,
                     );
                     const struct = new StructValue({});
                     const value = definition.deserialize(
                         StructDefaultOptions,
                         stream,
-                        struct
+                        struct,
                     );
 
                     expect(value.get()).toBe((1 << 8) | 2);
                     expect(readExactly).toBeCalledTimes(1);
                     expect(readExactly).lastCalledWith(
-                        NumberFieldType.Uint16.size
+                        NumberFieldType.Uint16.size,
                     );
                 });
 
                 it("should deserialize Uint16LE", () => {
                     const readExactly = jest.fn(
-                        () => new Uint8Array([1, 2, 3, 4])
+                        () => new Uint8Array([1, 2, 3, 4]),
                     );
                     const stream: ExactReadable = { position: 0, readExactly };
 
                     const definition = new NumberFieldDefinition(
-                        NumberFieldType.Uint16
+                        NumberFieldType.Uint16,
                     );
                     const struct = new StructValue({});
                     const value = definition.deserialize(
                         { ...StructDefaultOptions, littleEndian: true },
                         stream,
-                        struct
+                        struct,
                     );
 
                     expect(value.get()).toBe((2 << 8) | 1);
                     expect(readExactly).toBeCalledTimes(1);
                     expect(readExactly).lastCalledWith(
-                        NumberFieldType.Uint16.size
+                        NumberFieldType.Uint16.size,
                     );
                 });
             });
@@ -267,37 +267,37 @@ describe("Types", () => {
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Int8)
                             .create(StructDefaultOptions, struct, 42)
-                            .getSize()
+                            .getSize(),
                     ).toBe(1);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Uint8)
                             .create(StructDefaultOptions, struct, 42)
-                            .getSize()
+                            .getSize(),
                     ).toBe(1);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Int16)
                             .create(StructDefaultOptions, struct, 42)
-                            .getSize()
+                            .getSize(),
                     ).toBe(2);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Uint16)
                             .create(StructDefaultOptions, struct, 42)
-                            .getSize()
+                            .getSize(),
                     ).toBe(2);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Int32)
                             .create(StructDefaultOptions, struct, 42)
-                            .getSize()
+                            .getSize(),
                     ).toBe(4);
 
                     expect(
                         new NumberFieldDefinition(NumberFieldType.Uint32)
                             .create(StructDefaultOptions, struct, 42)
-                            .getSize()
+                            .getSize(),
                     ).toBe(4);
                 });
             });
@@ -305,13 +305,13 @@ describe("Types", () => {
             describe("#serialize", () => {
                 it("should serialize uint8", () => {
                     const definition = new NumberFieldDefinition(
-                        NumberFieldType.Int8
+                        NumberFieldType.Int8,
                     );
                     const struct = new StructValue({});
                     const value = definition.create(
                         StructDefaultOptions,
                         struct,
-                        42
+                        42,
                     );
 
                     const array = new Uint8Array(10);

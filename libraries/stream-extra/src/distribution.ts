@@ -31,7 +31,7 @@ export class BufferCombiner {
             if (available >= this.#available) {
                 this.#buffer.set(
                     data.subarray(0, this.#available),
-                    this.#offset
+                    this.#offset,
                 );
                 offset += this.#available;
                 available -= this.#available;

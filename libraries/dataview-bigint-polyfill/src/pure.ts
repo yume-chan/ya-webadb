@@ -1,7 +1,7 @@
 export function getBigInt64(
     dataView: DataView,
     byteOffset: number,
-    littleEndian: boolean | undefined
+    littleEndian: boolean | undefined,
 ): bigint {
     const littleEndianMask = Number(!!littleEndian);
     const bigEndianMask = Number(!littleEndian);
@@ -10,12 +10,13 @@ export function getBigInt64(
         (BigInt(
             dataView.getInt32(byteOffset, littleEndian) * bigEndianMask +
                 dataView.getInt32(byteOffset + 4, littleEndian) *
-                    littleEndianMask
+                    littleEndianMask,
         ) <<
             32n) |
         BigInt(
             dataView.getUint32(byteOffset, littleEndian) * littleEndianMask +
-                dataView.getUint32(byteOffset + 4, littleEndian) * bigEndianMask
+                dataView.getUint32(byteOffset + 4, littleEndian) *
+                    bigEndianMask,
         )
     );
 }
@@ -23,7 +24,7 @@ export function getBigInt64(
 export function getBigUint64(
     dataView: DataView,
     byteOffset: number,
-    littleEndian: boolean | undefined
+    littleEndian: boolean | undefined,
 ): bigint {
     const a = dataView.getUint32(byteOffset, littleEndian);
     const b = dataView.getUint32(byteOffset + 4, littleEndian);
@@ -44,7 +45,7 @@ export function setBigInt64(
     dataView: DataView,
     byteOffset: number,
     value: bigint,
-    littleEndian: boolean | undefined
+    littleEndian: boolean | undefined,
 ) {
     const hi = Number(value >> 32n);
     const lo = Number(BigInt.asUintN(32, value));
@@ -62,7 +63,7 @@ export function setBigUint64(
     dataView: DataView,
     byteOffset: number,
     value: bigint,
-    littleEndian: boolean | undefined
+    littleEndian: boolean | undefined,
 ) {
     const hi = Number(value >> 32n);
     const lo = Number(BigInt.asUintN(32, value));

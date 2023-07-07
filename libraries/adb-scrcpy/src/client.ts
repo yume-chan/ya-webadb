@@ -101,7 +101,7 @@ export class AdbScrcpyClient {
     public static async pushServer(
         adb: Adb,
         file: ReadableStream<Consumable<Uint8Array>>,
-        filename = DEFAULT_SERVER_PATH
+        filename = DEFAULT_SERVER_PATH,
     ) {
         const sync = await adb.sync();
         try {
@@ -118,7 +118,7 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>
+        options: AdbScrcpyOptions<object>,
     ) {
         let connection: AdbScrcpyConnection | undefined;
         let process: AdbSubprocessProtocol | undefined;
@@ -153,7 +153,7 @@ export class AdbScrcpyClient {
                     // Scrcpy server doesn't use stderr,
                     // so disable Shell Protocol to simplify processing
                     protocols: [AdbSubprocessNoneProtocol],
-                }
+                },
             );
 
             const stdout = process.stdout
@@ -173,7 +173,7 @@ export class AdbScrcpyClient {
                     {
                         signal: abortController.signal,
                         preventCancel: true,
-                    }
+                    },
                 )
                 .catch((e) => {
                     if (abortController.signal.aborted) {
@@ -217,7 +217,7 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>
+        options: AdbScrcpyOptions<object>,
     ): Promise<ScrcpyEncoder[]> {
         options.setListEncoders();
         return await options.getEncoders(adb, path, version);
@@ -231,7 +231,7 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>
+        options: AdbScrcpyOptions<object>,
     ): Promise<ScrcpyDisplay[]> {
         options.setListDisplays();
         return await options.getDisplays(adb, path, version);
@@ -304,10 +304,10 @@ export class AdbScrcpyClient {
         if (controlStream) {
             this._controlMessageWriter = new ScrcpyControlMessageWriter(
                 controlStream.writable.getWriter(),
-                options
+                options,
             );
             this._deviceMessageStream = controlStream.readable.pipeThrough(
-                new ScrcpyDeviceMessageDeserializeStream()
+                new ScrcpyDeviceMessageDeserializeStream(),
             );
         }
     }
@@ -341,17 +341,17 @@ export class AdbScrcpyClient {
                                 }
                             }
                         }
-                    })
+                    }),
                 ),
             metadata,
         };
     }
 
     private async createAudioStream(
-        initialStream: ReadableStream<Uint8Array>
+        initialStream: ReadableStream<Uint8Array>,
     ): Promise<AdbScrcpyAudioStreamMetadata> {
         const metadata = await this._options.parseAudioStreamMetadata(
-            initialStream
+            initialStream,
         );
 
         switch (metadata.type) {
@@ -362,14 +362,14 @@ export class AdbScrcpyClient {
                 return {
                     ...metadata,
                     stream: metadata.stream.pipeThrough(
-                        this._options.createMediaStreamTransformer()
+                        this._options.createMediaStreamTransformer(),
                     ),
                 };
             default:
                 throw new Error(
                     `Unexpected audio metadata type ${
                         metadata["type"] as unknown as string
-                    }`
+                    }`,
                 );
         }
     }

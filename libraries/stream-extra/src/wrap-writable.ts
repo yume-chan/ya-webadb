@@ -16,7 +16,7 @@ async function getWrappedWritableStream<T>(
     wrapper:
         | WritableStream<T>
         | WrapWritableStreamStart<T>
-        | WritableStreamWrapper<T>
+        | WritableStreamWrapper<T>,
 ) {
     if ("start" in wrapper) {
         return await wrapper.start();
@@ -38,7 +38,7 @@ export class WrapWritableStream<T> extends WritableStream<T> {
         wrapper:
             | WritableStream<T>
             | WrapWritableStreamStart<T>
-            | WritableStreamWrapper<T>
+            | WritableStreamWrapper<T>,
     ) {
         super({
             start: async () => {

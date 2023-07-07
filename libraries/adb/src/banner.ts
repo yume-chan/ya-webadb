@@ -72,7 +72,7 @@ export class AdbBanner {
         product: string | undefined,
         model: string | undefined,
         device: string | undefined,
-        features: AdbFeature[]
+        features: AdbFeature[],
     ) {
         this.#product = product;
         this.#model = model;

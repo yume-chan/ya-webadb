@@ -14,7 +14,7 @@ for (let i = 0; i < 50; i += 1) {
 async function testInputOutput(
     combine: boolean,
     inputLengths: number[],
-    outputLengths: number[]
+    outputLengths: number[],
 ) {
     const write = jest.fn((chunk: Uint8Array) => {
         void chunk;
@@ -37,7 +37,7 @@ async function testInputOutput(
                     // chunk will be reused, so we need to copy it
                     write(chunk.slice());
                 },
-            })
+            }),
         );
 
     expect(write).toHaveBeenCalledTimes(outputLengths.length);
@@ -46,7 +46,7 @@ async function testInputOutput(
         const end = offset + outputLengths[i]!;
         expect(write).toHaveBeenNthCalledWith(
             i + 1,
-            TestData.subarray(offset, end)
+            TestData.subarray(offset, end),
         );
         offset = end;
     }

@@ -29,7 +29,7 @@ export class AdbReverseError extends Error {
 export class AdbReverseNotSupportedError extends AdbReverseError {
     public constructor() {
         super(
-            "ADB reverse tunnel is not supported on this device when connected wirelessly."
+            "ADB reverse tunnel is not supported on this device when connected wirelessly.",
         );
     }
 }
@@ -85,7 +85,7 @@ export class AdbReverseCommand extends AutoDisposable {
             const [deviceSerial, localName, remoteName] = line.split(" ") as [
                 string,
                 string,
-                string
+                string,
             ];
             return { deviceSerial, localName, remoteName };
         });
@@ -101,7 +101,7 @@ export class AdbReverseCommand extends AutoDisposable {
      */
     public async addExternal(deviceAddress: string, localAddress: string) {
         const stream = await this.sendRequest(
-            `reverse:forward:${deviceAddress};${localAddress}`
+            `reverse:forward:${deviceAddress};${localAddress}`,
         );
 
         // `tcp:0` tells the device to pick an available port.
@@ -140,11 +140,11 @@ export class AdbReverseCommand extends AutoDisposable {
     public async add(
         deviceAddress: string,
         handler: AdbIncomingSocketHandler,
-        localAddress?: string
+        localAddress?: string,
     ): Promise<string> {
         localAddress = await this.adb.transport.addReverseTunnel(
             handler,
-            localAddress
+            localAddress,
         );
 
         try {

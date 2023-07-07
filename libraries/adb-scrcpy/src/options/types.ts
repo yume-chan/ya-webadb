@@ -18,13 +18,13 @@ export interface AdbScrcpyOptions<T extends object> extends ScrcpyOptions<T> {
     getEncoders(
         adb: Adb,
         path: string,
-        version: string
+        version: string,
     ): Promise<ScrcpyEncoder[]>;
 
     getDisplays(
         adb: Adb,
         path: string,
-        version: string
+        version: string,
     ): Promise<ScrcpyDisplay[]>;
 
     createConnection(adb: Adb): AdbScrcpyConnection;
@@ -51,13 +51,13 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
     public abstract getEncoders(
         adb: Adb,
         path: string,
-        version: string
+        version: string,
     ): Promise<ScrcpyEncoder[]>;
 
     public abstract getDisplays(
         adb: Adb,
         path: string,
-        version: string
+        version: string,
     ): Promise<ScrcpyDisplay[]>;
 
     public abstract createConnection(adb: Adb): AdbScrcpyConnection;

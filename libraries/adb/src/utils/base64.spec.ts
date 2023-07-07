@@ -21,7 +21,7 @@ describe("base64", () => {
 
     const inputs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 254, 255, 256].map(
         (x) =>
-            new Uint8Array(Array.from({ length: x }, (_, index) => x - index))
+            new Uint8Array(Array.from({ length: x }, (_, index) => x - index)),
     );
 
     describe("decodeBase64", () => {
@@ -33,7 +33,7 @@ describe("base64", () => {
             describe(`input length = ${input.length}`, () => {
                 it("should return correct decoded buffer", () => {
                     expect(decodeBase64(nodeEncodeBase64(input))).toEqual(
-                        input
+                        input,
                     );
                 });
             });
@@ -47,8 +47,8 @@ describe("base64", () => {
                 // Convert base64 string to Buffer
                 Buffer.from(
                     // Convert `input` to base64 string
-                    Buffer.from(input).toString("base64")
-                )
+                    Buffer.from(input).toString("base64"),
+                ),
             );
         }
 
@@ -61,7 +61,7 @@ describe("base64", () => {
         function concatBuffers(...buffers: Uint8Array[]) {
             const length = buffers.reduce(
                 (sum, buffer) => sum + buffer.length,
-                0
+                0,
             );
             const result = new Uint8Array(length);
             let offset = 0;
@@ -88,7 +88,7 @@ describe("base64", () => {
 
                     const outputLength = encodeBase64(
                         input,
-                        output.subarray(2, 2 + correct.length + 2)
+                        output.subarray(2, 2 + correct.length + 2),
                     );
                     expect(outputLength).toEqual(correct.length);
                     expect(output).toEqual(expectedOutput);
@@ -104,7 +104,7 @@ describe("base64", () => {
                 describe("in-place encoding", () => {
                     function canEncodeInPlaceForward(
                         inputOffset: number,
-                        outputOffset: number
+                        outputOffset: number,
                     ) {
                         let inputIndex = inputOffset;
                         let outputIndex = outputOffset;
@@ -128,13 +128,13 @@ describe("base64", () => {
 
                     function canEncodeInPlaceBackward(
                         inputOffset: number,
-                        outputOffset: number
+                        outputOffset: number,
                     ) {
                         let inputIndex = inputOffset + input.length - 1;
                         let outputIndex = outputOffset + correct.length - 1;
 
                         const paddingLength = correct.filter(
-                            (x) => x === "=".charCodeAt(0)
+                            (x) => x === "=".charCodeAt(0),
                         ).length;
                         if (paddingLength !== 0) {
                             inputIndex -= 3 - paddingLength;
@@ -156,12 +156,12 @@ describe("base64", () => {
 
                     function canEncodeInPlace(
                         inputOffset: number,
-                        outputOffset: number
+                        outputOffset: number,
                     ) {
                         return (
                             canEncodeInPlaceForward(
                                 inputOffset,
-                                outputOffset
+                                outputOffset,
                             ) ||
                             canEncodeInPlaceBackward(inputOffset, outputOffset)
                         );
@@ -171,7 +171,7 @@ describe("base64", () => {
                         const buffer = concatBuffers(
                             createFilledBuffer(correct.length + 2, 0xcc),
                             input,
-                            createFilledBuffer(correct.length + 2, 0xcc)
+                            createFilledBuffer(correct.length + 2, 0xcc),
                         );
 
                         const expectedBuffer = buffer.slice();
@@ -180,9 +180,9 @@ describe("base64", () => {
                         const outputLength = encodeBase64(
                             buffer.subarray(
                                 correct.length + 2,
-                                correct.length + 2 + input.length
+                                correct.length + 2 + input.length,
                             ),
-                            buffer.subarray(outputOffset)
+                            buffer.subarray(outputOffset),
                         );
                         expect(outputLength).toEqual(correct.length);
                         expect(buffer).toEqual(expectedBuffer);
@@ -204,7 +204,7 @@ describe("base64", () => {
                                     i - 1
                                 }`, () => {
                                     expect(() =>
-                                        testInPlaceEncodeBase64(i - 1)
+                                        testInPlaceEncodeBase64(i - 1),
                                     ).toThrow();
                                 });
                             }
@@ -231,7 +231,7 @@ describe("base64", () => {
 
                             it(`should throw with offset = ${i}`, () => {
                                 expect(() =>
-                                    testInPlaceEncodeBase64(i)
+                                    testInPlaceEncodeBase64(i),
                                 ).toThrow();
                             });
                         }

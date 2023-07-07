@@ -13,7 +13,7 @@ import {
 export function getBigUint(
     dataView: DataView,
     byteOffset: number,
-    length: number
+    length: number,
 ): bigint {
     let result = 0n;
 
@@ -40,7 +40,7 @@ export function setBigUint(
     dataView: DataView,
     byteOffset: number,
     value: bigint,
-    littleEndian?: boolean
+    littleEndian?: boolean,
 ) {
     const start = byteOffset;
 
@@ -135,11 +135,11 @@ export function adbGetPublicKeySize() {
 export function adbGeneratePublicKey(privateKey: Uint8Array): Uint8Array;
 export function adbGeneratePublicKey(
     privateKey: Uint8Array,
-    output: Uint8Array
+    output: Uint8Array,
 ): number;
 export function adbGeneratePublicKey(
     privateKey: Uint8Array,
-    output?: Uint8Array
+    output?: Uint8Array,
 ): Uint8Array | number {
     // Android has its own public key generation algorithm
     // See https://android.googlesource.com/platform/system/core.git/+/91784040db2b9273687f88d8b95f729d4a61ecc2/libcrypto_utils/android_pubkey.cpp#111
@@ -177,7 +177,7 @@ export function adbGeneratePublicKey(
     const outputView = new DataView(
         output.buffer,
         output.byteOffset,
-        output.byteLength
+        output.byteLength,
     );
     let outputOffset = 0;
 
@@ -221,7 +221,7 @@ export function adbGeneratePublicKey(
 export function powMod(
     base: bigint,
     exponent: bigint,
-    modulus: bigint
+    modulus: bigint,
 ): bigint {
     if (modulus === 1n) {
         return 0n;

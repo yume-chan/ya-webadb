@@ -6,13 +6,13 @@ describe("nalu", () => {
     describe.only("NaluSodbReader", () => {
         it("should throw error if no end bit found", () => {
             expect(
-                () => new NaluSodbBitReader(new Uint8Array([0b00000000]))
+                () => new NaluSodbBitReader(new Uint8Array([0b00000000])),
             ).toThrowError();
             expect(
                 () =>
                     new NaluSodbBitReader(
-                        new Uint8Array([0b00000000, 0b00000000])
-                    )
+                        new Uint8Array([0b00000000, 0b00000000]),
+                    ),
             ).toThrowError();
         });
 
@@ -21,7 +21,7 @@ describe("nalu", () => {
             expect(() => reader.next()).toThrowError();
 
             reader = new NaluSodbBitReader(
-                new Uint8Array([0b11111111, 0b10000000])
+                new Uint8Array([0b11111111, 0b10000000]),
             );
             for (let i = 0; i < 8; i += 1) {
                 expect(reader.next()).toBe(1);
@@ -31,7 +31,7 @@ describe("nalu", () => {
 
         it("should skip emulation prevent byte", () => {
             const reader = new NaluSodbBitReader(
-                new Uint8Array([0xff, 0x00, 0x00, 0x03, 0xff, 0x80])
+                new Uint8Array([0xff, 0x00, 0x00, 0x03, 0xff, 0x80]),
             );
             for (let i = 0; i < 8; i += 1) {
                 expect(reader.next()).toBe(1);
@@ -48,7 +48,7 @@ describe("nalu", () => {
             const reader = new NaluSodbBitReader(
                 new Uint8Array([
                     0xff, 0x00, 0x00, 0x03, 0x00, 0x00, 0x03, 0xff, 0x80,
-                ])
+                ]),
             );
             for (let i = 0; i < 8; i += 1) {
                 expect(reader.next()).toBe(1);

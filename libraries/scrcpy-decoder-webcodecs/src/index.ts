@@ -195,7 +195,7 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
         let data: Uint8Array;
         if (this._config !== undefined) {
             data = new Uint8Array(
-                this._config.byteLength + packet.data.byteLength
+                this._config.byteLength + packet.data.byteLength,
             );
             data.set(this._config, 0);
             data.set(packet.data, this._config.byteLength);
@@ -210,7 +210,7 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                 type: packet.keyframe === false ? "delta" : "key",
                 timestamp: 0,
                 data,
-            })
+            }),
         );
     }
 

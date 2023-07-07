@@ -82,7 +82,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
     }
 
     private async connectAndRetry(
-        sendDummyByte: boolean
+        sendDummyByte: boolean,
     ): Promise<ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>> {
         for (let i = 0; !this._disposed && i < 100; i += 1) {
             try {
@@ -91,7 +91,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
                     // Can't guarantee the stream will preserve message boundaries,
                     // so buffer the stream
                     const buffered = new BufferedReadableStream(
-                        stream.readable
+                        stream.readable,
                     );
                     await buffered.readExactly(1);
                     return {

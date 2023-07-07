@@ -40,7 +40,7 @@ declare global {
         new (
             remoteAddress: string,
             remotePort: number,
-            options?: TCPSocketOptions
+            options?: TCPSocketOptions,
         ): TCPSocket;
     };
 }
@@ -73,7 +73,7 @@ export default class AdbDaemonDirectSocketsDevice implements AdbDaemonDevice {
 
         return {
             readable: new WrapReadableStream(readable).pipeThrough(
-                new StructDeserializeStream(AdbPacket)
+                new StructDeserializeStream(AdbPacket),
             ),
             writable: new WrapWritableStream(writable)
                 .bePipedThroughFrom(new UnwrapConsumableStream())

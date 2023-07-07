@@ -30,7 +30,7 @@ export class AdbServerTransport implements AdbTransport {
         client: AdbServerClient,
         serial: string,
         banner: AdbBanner,
-        transportId: bigint
+        transportId: bigint,
     ) {
         this.#client = client;
         this.serial = serial;
@@ -51,13 +51,13 @@ export class AdbServerTransport implements AdbTransport {
             {
                 transportId: this.transportId,
             },
-            service
+            service,
         );
     }
 
     public async addReverseTunnel(
         handler: AdbIncomingSocketHandler,
-        address?: string
+        address?: string,
     ): Promise<string> {
         return await this.#client.connection.addReverseTunnel(handler, address);
     }

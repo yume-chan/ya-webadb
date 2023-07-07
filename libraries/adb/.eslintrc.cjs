@@ -1,11 +1,7 @@
 module.exports = {
-    "extends": [
-        "@yume-chan"
-    ],
+    extends: ["@yume-chan"],
     parserOptions: {
         tsconfigRootDir: __dirname,
-        project: [
-            "./tsconfig.test.json"
-        ],
+        project: ["./tsconfig.test.json"],
     },
-}
+};

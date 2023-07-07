@@ -28,7 +28,7 @@ describe("StructFieldValue", () => {
                 definition,
                 options,
                 struct,
-                value
+                value,
             );
             expect(fieldValue).toHaveProperty("definition", definition);
             expect(fieldValue).toHaveProperty("options", options);
@@ -46,7 +46,7 @@ describe("StructFieldValue", () => {
                 public create(
                     options: Readonly<StructOptions>,
                     struct: StructValue,
-                    value: unknown
+                    value: unknown,
                 ): StructFieldValue<this> {
                     void options;
                     void struct;
@@ -57,17 +57,17 @@ describe("StructFieldValue", () => {
                 public override deserialize(
                     options: Readonly<StructOptions>,
                     stream: ExactReadable,
-                    struct: StructValue
+                    struct: StructValue,
                 ): StructFieldValue<this>;
                 public override deserialize(
                     options: Readonly<StructOptions>,
                     stream: AsyncExactReadable,
-                    struct: StructValue
+                    struct: StructValue,
                 ): Promise<StructFieldValue<this>>;
                 public override deserialize(
                     options: Readonly<StructOptions>,
                     stream: ExactReadable | AsyncExactReadable,
-                    struct: StructValue
+                    struct: StructValue,
                 ): ValueOrPromise<StructFieldValue<this>> {
                     void options;
                     void stream;
@@ -89,7 +89,7 @@ describe("StructFieldValue", () => {
                 fieldDefinition,
                 undefined as any,
                 undefined as any,
-                undefined as any
+                undefined as any,
             );
             expect(fieldValue.getSize()).toBe(42);
         });
@@ -109,7 +109,7 @@ describe("StructFieldValue", () => {
                 undefined as any,
                 undefined as any,
                 undefined as any,
-                undefined as any
+                undefined as any,
             );
             fieldValue.set(1);
             expect(fieldValue.get()).toBe(1);

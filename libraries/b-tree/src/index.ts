@@ -7,7 +7,7 @@ function insert(
     array: Int32Array,
     length: number,
     value: number,
-    index: number
+    index: number,
 ) {
     if (index !== length) {
         array.set(array.subarray(index, length), index + 1);
@@ -37,7 +37,7 @@ export class BTreeNode {
         keys: Int32Array,
         keyCount: number,
         height: number,
-        children: BTreeNode[]
+        children: BTreeNode[],
     ) {
         this.order = order;
         this.mid = this.order >> 1;
@@ -62,7 +62,7 @@ export class BTreeNode {
     protected split(
         value: number,
         index: number,
-        child?: BTreeNode
+        child?: BTreeNode,
     ): BTreeInsertionResult {
         let middleKey: number;
         const rightKeys = new Int32Array(this.order - 1);
@@ -78,7 +78,7 @@ export class BTreeNode {
                 // internal node
                 rightChildren = this.children.splice(
                     this.mid,
-                    this.order - this.mid
+                    this.order - this.mid,
                 );
                 // TODO: this may cause the underlying array to grow (re-alloc and copy)
                 // investigate if this hurts performance.
@@ -103,7 +103,7 @@ export class BTreeNode {
             if (child) {
                 rightChildren = this.children.splice(
                     this.mid + 1,
-                    this.order - this.mid - 1
+                    this.order - this.mid - 1,
                 );
                 rightChildren.splice(index - this.mid, 0, child);
             } else {
@@ -119,7 +119,7 @@ export class BTreeNode {
                 rightKeys,
                 this.order - 1 - this.mid,
                 this.height,
-                rightChildren
+                rightChildren,
             ),
         };
     }
@@ -243,7 +243,7 @@ export class BTreeNode {
             left.keyCount += 1;
             left.keys.set(
                 child.keys.subarray(0, child.keyCount),
-                left.keyCount
+                left.keyCount,
             );
             if (this.height > 1) {
                 for (let i = 0; i <= child.keyCount; i += 1) {
@@ -264,7 +264,7 @@ export class BTreeNode {
             if (this.height > 1) {
                 child.children[child.keyCount + 1] = right.children.splice(
                     0,
-                    1
+                    1,
                 )[0]!;
             }
             child.keyCount += 1;
@@ -380,7 +380,7 @@ export class BTree {
                 keys,
                 1,
                 this._root.height + 1,
-                children
+                children,
             );
         }
         if (split) {

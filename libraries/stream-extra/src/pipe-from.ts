@@ -12,7 +12,7 @@ import { WritableStream } from "./stream.js";
  */
 export function pipeFrom<W, T>(
     writable: WritableStream<W>,
-    pair: ReadableWritablePair<W, T>
+    pair: ReadableWritablePair<W, T>,
 ) {
     const writer = pair.writable.getWriter();
     const pipe = pair.readable.pipeTo(writable);

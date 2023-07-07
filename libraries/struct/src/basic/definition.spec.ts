@@ -21,7 +21,7 @@ describe("StructFieldDefinition", () => {
                 public create(
                     options: Readonly<StructOptions>,
                     struct: StructValue,
-                    value: unknown
+                    value: unknown,
                 ): StructFieldValue<this> {
                     void options;
                     void struct;
@@ -31,17 +31,17 @@ describe("StructFieldDefinition", () => {
                 public override deserialize(
                     options: Readonly<StructOptions>,
                     stream: ExactReadable,
-                    struct: StructValue
+                    struct: StructValue,
                 ): StructFieldValue<this>;
                 public override deserialize(
                     options: Readonly<StructOptions>,
                     stream: AsyncExactReadable,
-                    struct: StructValue
+                    struct: StructValue,
                 ): Promise<StructFieldValue<this>>;
                 public deserialize(
                     options: Readonly<StructOptions>,
                     stream: ExactReadable | AsyncExactReadable,
-                    struct: StructValue
+                    struct: StructValue,
                 ): ValueOrPromise<StructFieldValue<this>> {
                     void options;
                     void stream;

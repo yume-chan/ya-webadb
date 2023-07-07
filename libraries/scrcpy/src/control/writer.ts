@@ -21,7 +21,7 @@ export class ScrcpyControlMessageWriter {
 
     public constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
-        options: ScrcpyOptions<object>
+        options: ScrcpyOptions<object>,
     ) {
         this._writer = writer;
         this._serializer = new ScrcpyControlMessageSerializer(options);
@@ -32,7 +32,7 @@ export class ScrcpyControlMessageWriter {
     }
 
     public async injectKeyCode(
-        message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">
+        message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">,
     ) {
         await this.write(this._serializer.injectKeyCode(message));
     }
@@ -45,7 +45,7 @@ export class ScrcpyControlMessageWriter {
      * `pressure` is a float value between 0 and 1.
      */
     public async injectTouch(
-        message: Omit<ScrcpyInjectTouchControlMessage, "type">
+        message: Omit<ScrcpyInjectTouchControlMessage, "type">,
     ) {
         await this.write(this._serializer.injectTouch(message));
     }
@@ -54,7 +54,7 @@ export class ScrcpyControlMessageWriter {
      * `scrollX` and `scrollY` are float values between 0 and 1.
      */
     public async injectScroll(
-        message: Omit<ScrcpyInjectScrollControlMessage, "type">
+        message: Omit<ScrcpyInjectScrollControlMessage, "type">,
     ) {
         const data = this._serializer.injectScroll(message);
         if (data) {

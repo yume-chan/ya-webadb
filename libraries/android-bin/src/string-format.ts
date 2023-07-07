@@ -39,7 +39,7 @@ type SequenceResult<
     T extends readonly (
         | Format<unknown>
         | { name: string; format: Format<unknown> }
-    )[]
+    )[],
 > = UnionToIntersection<
     {
         [K in keyof T]: T[K] extends {
@@ -119,7 +119,7 @@ export const p = {
         separator: string,
         format: Format<T>,
         min = 0,
-        max = Infinity
+        max = Infinity,
     ): Format<T[]> => ({
         parse(reader: Reader) {
             const result: T[] = [];
@@ -171,7 +171,7 @@ export const p = {
         const T extends readonly (
             | Format<unknown>
             | { name: string; format: Format<unknown> }
-        )[]
+        )[],
     >(
         ...args: T
     ): Format<Evaluate<SequenceResult<T>>> => ({
@@ -191,7 +191,7 @@ export const p = {
             for (const part of args) {
                 if ("name" in part) {
                     result += part.format.stringify(
-                        value[part.name as keyof typeof value]
+                        value[part.name as keyof typeof value],
                     );
                 }
             }
@@ -201,7 +201,7 @@ export const p = {
     map: <T, R>(
         format: Format<T>,
         map: (value: T) => R,
-        reverse: (value: R) => T
+        reverse: (value: R) => T,
     ): Format<R> => ({
         parse(reader: Reader) {
             return map(format.parse(reader));

@@ -18,19 +18,19 @@ export type AdbDeviceFilter = USBDeviceFilter &
 
 function alternateMatchesFilter(
     alternate: USBAlternateInterface,
-    filters: AdbDeviceFilter[]
+    filters: AdbDeviceFilter[],
 ) {
     return filters.some(
         (filter) =>
             alternate.interfaceClass === filter.classCode &&
             alternate.interfaceSubclass === filter.subclassCode &&
-            alternate.interfaceProtocol === filter.protocolCode
+            alternate.interfaceProtocol === filter.protocolCode,
     );
 }
 
 export function findUsbAlternateInterface(
     device: USBDevice,
-    filters: AdbDeviceFilter[]
+    filters: AdbDeviceFilter[],
 ) {
     for (const configuration of device.configurations) {
         for (const interface_ of configuration.interfaces) {

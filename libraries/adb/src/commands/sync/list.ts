@@ -30,7 +30,7 @@ export type AdbSyncEntry2Response =
 
 export async function* adbSyncOpenDirV2(
     socket: AdbSyncSocket,
-    path: string
+    path: string,
 ): AsyncGenerator<AdbSyncEntry2Response, void, void> {
     const locked = await socket.lock();
     try {
@@ -38,7 +38,7 @@ export async function* adbSyncOpenDirV2(
         for await (const item of adbSyncReadResponses(
             locked,
             AdbSyncResponseId.Entry2,
-            AdbSyncEntry2Response
+            AdbSyncEntry2Response,
         )) {
             // `LST2` can return error codes for failed `lstat` calls.
             // `LIST` just ignores them.
@@ -55,7 +55,7 @@ export async function* adbSyncOpenDirV2(
 
 export async function* adbSyncOpenDirV1(
     socket: AdbSyncSocket,
-    path: string
+    path: string,
 ): AsyncGenerator<AdbSyncEntryResponse, void, void> {
     const locked = await socket.lock();
     try {
@@ -63,7 +63,7 @@ export async function* adbSyncOpenDirV1(
         for await (const item of adbSyncReadResponses(
             locked,
             AdbSyncResponseId.Entry,
-            AdbSyncEntryResponse
+            AdbSyncEntryResponse,
         )) {
             yield item;
         }
@@ -75,7 +75,7 @@ export async function* adbSyncOpenDirV1(
 export async function* adbSyncOpenDir(
     socket: AdbSyncSocket,
     path: string,
-    v2: boolean
+    v2: boolean,
 ): AsyncGenerator<AdbSyncEntry, void, void> {
     if (v2) {
         yield* adbSyncOpenDirV2(socket, path);

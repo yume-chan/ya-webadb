@@ -69,7 +69,7 @@ export class DemoMode extends AdbCommandBase {
     public async getAllowed(): Promise<boolean> {
         const output = await this.settings.get(
             "global",
-            DemoMode.AllowedSettingKey
+            DemoMode.AllowedSettingKey,
         );
         return output === "1";
     }
@@ -86,7 +86,7 @@ export class DemoMode extends AdbCommandBase {
     public async getEnabled(): Promise<boolean> {
         const result = await this.settings.get(
             "global",
-            DemoMode.EnabledSettingKey
+            DemoMode.EnabledSettingKey,
         );
         return result === "1";
     }
@@ -102,7 +102,7 @@ export class DemoMode extends AdbCommandBase {
 
     public async broadcast(
         command: string,
-        extra?: Record<string, string>
+        extra?: Record<string, string>,
     ): Promise<void> {
         await this.adb.subprocess.spawnAndWaitLegacy([
             "am",
@@ -139,13 +139,13 @@ export class DemoMode extends AdbCommandBase {
     }
 
     public async setWifiSignalStrength(
-        value: DemoModeSignalStrength
+        value: DemoModeSignalStrength,
     ): Promise<void> {
         await this.broadcast("network", { wifi: "show", level: value });
     }
 
     public async setMobileDataType(
-        value: DemoModeMobileDataType
+        value: DemoModeMobileDataType,
     ): Promise<void> {
         for (let i = 0; i < 2; i += 1) {
             await this.broadcast("network", {
@@ -165,7 +165,7 @@ export class DemoMode extends AdbCommandBase {
     }
 
     public async setMobileSignalStrength(
-        value: DemoModeSignalStrength
+        value: DemoModeSignalStrength,
     ): Promise<void> {
         await this.broadcast("network", { mobile: "show", level: value });
     }

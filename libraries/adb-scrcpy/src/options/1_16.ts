@@ -23,7 +23,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
     public static createConnection(
         adb: Adb,
         connectionOptions: AdbScrcpyConnectionOptions,
-        tunnelForward: boolean
+        tunnelForward: boolean,
     ): AdbScrcpyConnection {
         if (tunnelForward) {
             return new AdbScrcpyForwardConnection(adb, connectionOptions);
@@ -36,7 +36,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>
+        options: AdbScrcpyOptions<object>,
     ): Promise<ScrcpyEncoder[]> {
         const client = await AdbScrcpyClient.start(adb, path, version, options);
 
@@ -49,7 +49,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
                         encoders.push(encoder);
                     }
                 },
-            })
+            }),
         );
 
         return encoders;
@@ -59,7 +59,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>
+        options: AdbScrcpyOptions<object>,
     ): Promise<ScrcpyDisplay[]> {
         try {
             // Server will exit before opening connections when an invalid display id was given
@@ -68,7 +68,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
                 adb,
                 path,
                 version,
-                options
+                options,
             );
 
             // If the server didn't exit, manually stop it and throw an error
@@ -93,7 +93,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
     public override getEncoders(
         adb: Adb,
         path: string,
-        version: string
+        version: string,
     ): Promise<ScrcpyEncoder[]> {
         return AdbScrcpyOptions1_16.getEncoders(adb, path, version, this);
     }
@@ -101,7 +101,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
     public override getDisplays(
         adb: Adb,
         path: string,
-        version: string
+        version: string,
     ): Promise<ScrcpyDisplay[]> {
         return AdbScrcpyOptions1_16.getDisplays(adb, path, version, this);
     }
@@ -118,7 +118,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
                 control: true,
                 sendDummyByte: true,
             },
-            this.tunnelForwardOverride || this.value.tunnelForward
+            this.tunnelForwardOverride || this.value.tunnelForward,
         );
     }
 }

@@ -23,7 +23,7 @@ export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
 
     public static parseEncoder(
         line: string,
-        encoderNameRegex: RegExp
+        encoderNameRegex: RegExp,
     ): ScrcpyEncoder | undefined {
         const match = line.match(encoderNameRegex);
         if (match) {
@@ -46,7 +46,7 @@ export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
     public override serialize(): string[] {
         return ScrcpyOptions1_16.serialize(
             this.value,
-            ScrcpyOptions1_17.SERIALIZE_ORDER
+            ScrcpyOptions1_17.SERIALIZE_ORDER,
         );
     }
 
@@ -60,7 +60,7 @@ export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
     public override parseEncoder(line: string): ScrcpyEncoder | undefined {
         return ScrcpyOptions1_17.parseEncoder(
             line,
-            /\s+scrcpy --encoder-name '(.*?)'/
+            /\s+scrcpy --encoder-name '(.*?)'/,
         );
     }
 }

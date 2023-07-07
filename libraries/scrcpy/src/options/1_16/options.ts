@@ -76,7 +76,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     public static async parseCString(
         stream: AsyncExactReadable,
-        maxLength: number
+        maxLength: number,
     ): Promise<string> {
         let result = decodeUtf8(await stream.readExactly(maxLength));
         result = result.substring(0, result.indexOf("\0"));
@@ -84,14 +84,14 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
     }
 
     public static async parseUint16BE(
-        stream: AsyncExactReadable
+        stream: AsyncExactReadable,
     ): Promise<number> {
         const buffer = await stream.readExactly(NumberFieldType.Uint16.size);
         return NumberFieldType.Uint16.deserialize(buffer, false);
     }
 
     public static async parseUint32BE(
-        stream: AsyncExactReadable
+        stream: AsyncExactReadable,
     ): Promise<number> {
         const buffer = await stream.readExactly(NumberFieldType.Uint32.size);
         return NumberFieldType.Uint32.deserialize(buffer, false);
@@ -112,7 +112,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
     public serialize(): string[] {
         return ScrcpyOptions1_16.serialize(
             this.value,
-            ScrcpyOptions1_16.SERIALIZE_ORDER
+            ScrcpyOptions1_16.SERIALIZE_ORDER,
         );
     }
 
@@ -143,7 +143,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
     }
 
     public parseVideoStreamMetadata(
-        stream: ReadableStream<Uint8Array>
+        stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream> {
         return (async () => {
             const buffered = new BufferedReadableStream(stream);
@@ -152,7 +152,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
             };
             metadata.deviceName = await ScrcpyOptions1_16.parseCString(
                 buffered,
-                64
+                64,
             );
             metadata.width = await ScrcpyOptions1_16.parseUint16BE(buffered);
             metadata.height = await ScrcpyOptions1_16.parseUint16BE(buffered);
@@ -181,7 +181,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         }
 
         const deserializeStream = new StructDeserializeStream(
-            ScrcpyMediaStreamRawPacket
+            ScrcpyMediaStreamRawPacket,
         );
         return {
             writable: deserializeStream.writable,
@@ -202,19 +202,19 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
                             data: packet.data,
                         });
                     },
-                })
+                }),
             ),
         };
     }
 
     public serializeInjectTouchControlMessage(
-        message: ScrcpyInjectTouchControlMessage
+        message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array {
         return ScrcpyInjectTouchControlMessage1_16.serialize(message);
     }
 
     public serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage
+        message: ScrcpyBackOrScreenOnControlMessage,
     ) {
         if (message.action === AndroidKeyEventAction.Down) {
             return ScrcpyBackOrScreenOnControlMessage1_16.serialize(message);
@@ -224,7 +224,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
     }
 
     public serializeSetClipboardControlMessage(
-        message: ScrcpySetClipboardControlMessage
+        message: ScrcpySetClipboardControlMessage,
     ): Uint8Array {
         return ScrcpySetClipboardControlMessage1_15.serialize(message);
     }

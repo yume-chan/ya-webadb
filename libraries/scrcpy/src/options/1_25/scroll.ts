@@ -25,7 +25,7 @@ export const ScrcpyFloatToInt16NumberType: NumberFieldType = {
 };
 
 const ScrcpyFloatToInt16FieldDefinition = new NumberFieldDefinition(
-    ScrcpyFloatToInt16NumberType
+    ScrcpyFloatToInt16NumberType,
 );
 
 export const ScrcpyInjectScrollControlMessage1_25 = new Struct()
@@ -43,7 +43,7 @@ export type ScrcpyInjectScrollControlMessage1_25 =
 
 export class ScrcpyScrollController1_25 implements ScrcpyScrollController {
     serializeScrollMessage(
-        message: ScrcpyInjectScrollControlMessage
+        message: ScrcpyInjectScrollControlMessage,
     ): Uint8Array | undefined {
         return ScrcpyInjectScrollControlMessage1_25.serialize(message);
     }

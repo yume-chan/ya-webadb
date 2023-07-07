@@ -229,7 +229,7 @@ export class PackageManager extends AdbCommandBase {
     private buildArguments<T>(
         commands: string[],
         options: Partial<T> | undefined,
-        map: Record<keyof T, string>
+        map: Record<keyof T, string>,
     ): string[] {
         const args = ["pm", ...commands];
         if (options) {
@@ -254,18 +254,18 @@ export class PackageManager extends AdbCommandBase {
     }
 
     private buildInstallArguments(
-        options: Partial<PackageManagerInstallOptions> | undefined
+        options: Partial<PackageManagerInstallOptions> | undefined,
     ): string[] {
         return this.buildArguments(
             ["install"],
             options,
-            PACKAGE_MANAGER_INSTALL_OPTIONS_MAP
+            PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
         );
     }
 
     public async install(
         apks: string[],
-        options?: Partial<PackageManagerInstallOptions>
+        options?: Partial<PackageManagerInstallOptions>,
     ): Promise<string> {
         const args = this.buildInstallArguments(options);
         // WIP: old version of pm doesn't support multiple apks
@@ -275,7 +275,7 @@ export class PackageManager extends AdbCommandBase {
 
     public async pushAndInstallStream(
         stream: ReadableStream<Consumable<Uint8Array>>,
-        options?: Partial<PackageManagerInstallOptions>
+        options?: Partial<PackageManagerInstallOptions>,
     ): Promise<ReadableStream<string>> {
         const sync = await this.adb.sync();
 
@@ -299,7 +299,7 @@ export class PackageManager extends AdbCommandBase {
         args.push(filePath);
         const process = await AdbSubprocessNoneProtocol.raw(
             this.adb,
-            args.map(escapeArg).join(" ")
+            args.map(escapeArg).join(" "),
         );
         return new WrapReadableStream({
             start: () => process.stdout.pipeThrough(new DecodeUtf8Stream()),
@@ -312,7 +312,7 @@ export class PackageManager extends AdbCommandBase {
     public async installStream(
         size: number,
         stream: ReadableStream<Consumable<Uint8Array>>,
-        options?: Partial<PackageManagerInstallOptions>
+        options?: Partial<PackageManagerInstallOptions>,
     ): Promise<ReadableStream<string>> {
         // Android 7 added both `cmd` command and streaming install support,
         // we can't detect whether `pm` supports streaming install,
@@ -331,7 +331,7 @@ export class PackageManager extends AdbCommandBase {
     }
 
     public static parsePackageListItem(
-        line: string
+        line: string,
     ): PackageManagerListPackagesResult {
         line = line.substring("package:".length);
 
@@ -358,7 +358,7 @@ export class PackageManager extends AdbCommandBase {
         if (index !== -1) {
             versionCode = Number.parseInt(
                 line.substring(index + " versionCode:".length),
-                10
+                10,
             );
             line = line.substring(0, index);
         }
@@ -382,12 +382,12 @@ export class PackageManager extends AdbCommandBase {
     }
 
     public async listPackages(
-        options?: Partial<PackageManagerListPackagesOptions>
+        options?: Partial<PackageManagerListPackagesOptions>,
     ): Promise<PackageManagerListPackagesResult[]> {
         const args = this.buildArguments(
             ["list", "packages"],
             options,
-            PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP
+            PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP,
         );
         if (options?.filter) {
             args.push(options.filter);

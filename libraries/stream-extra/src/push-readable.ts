@@ -14,7 +14,7 @@ export interface PushReadableStreamController<T> {
 }
 
 export type PushReadableStreamSource<T> = (
-    controller: PushReadableStreamController<T>
+    controller: PushReadableStreamController<T>,
 ) => void | Promise<void>;
 
 export class PushReadableStream<T> extends ReadableStream<T> {
@@ -27,7 +27,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
      */
     public constructor(
         source: PushReadableStreamSource<T>,
-        strategy?: QueuingStrategy<T>
+        strategy?: QueuingStrategy<T>,
     ) {
         let waterMarkLow: PromiseResolver<void> | undefined;
         const abortController = new AbortController();
@@ -79,7 +79,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                             },
                             (e) => {
                                 controller.error(e);
-                            }
+                            },
                         );
                     }
                 },
@@ -91,7 +91,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                     waterMarkLow?.reject(reason);
                 },
             },
-            strategy
+            strategy,
         );
     }
 }

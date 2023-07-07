@@ -148,7 +148,7 @@ function formatSeconds(seconds: number, modifiers: LogcatFormatModifiers) {
 
 function formatNanoseconds(
     nanoseconds: number,
-    modifiers: LogcatFormatModifiers
+    modifiers: LogcatFormatModifiers,
 ) {
     if (modifiers.nanoseconds) {
         return padZero(nanoseconds, 9);
@@ -186,7 +186,7 @@ function formatTimezone(seconds: number, modifiers: LogcatFormatModifiers) {
 function formatTime(
     seconds: number,
     nanoseconds: number,
-    modifiers: LogcatFormatModifiers
+    modifiers: LogcatFormatModifiers,
 ) {
     const secondsString = formatSeconds(seconds, modifiers);
     const nanosecondsString = formatNanoseconds(nanoseconds, modifiers);
@@ -197,7 +197,7 @@ function formatTime(
 function formatUid(
     uid: number,
     modifiers: LogcatFormatModifiers,
-    suffix: string
+    suffix: string,
 ) {
     return modifiers.uid ? `${uid.toString().padStart(5)}${suffix}` : "";
 }
@@ -205,7 +205,7 @@ function formatUid(
 function getFormatPrefix(
     entry: AndroidLogEntry,
     format: LogcatFormat,
-    modifiers: LogcatFormatModifiers
+    modifiers: LogcatFormatModifiers,
 ) {
     // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;l=1415;drc=8dbf3b2bb6b6d1652d9797e477b9abd03278bb79
     switch (format) {
@@ -294,7 +294,7 @@ function getFormatSuffix(entry: AndroidLogEntry, format: LogcatFormat) {
 function formatEntryWrapLine(
     entry: AndroidLogEntry,
     format: LogcatFormat,
-    modifiers: LogcatFormatModifiers
+    modifiers: LogcatFormatModifiers,
 ) {
     const prefix = getFormatPrefix(entry, format, modifiers);
     const suffix = getFormatSuffix(entry, format);
@@ -306,7 +306,7 @@ function formatEntryWrapLine(
 function AndroidLogEntryToString(
     this: AndroidLogEntry,
     format: LogcatFormat = LogcatFormat.ThreadTime,
-    modifiers: LogcatFormatModifiers = {}
+    modifiers: LogcatFormatModifiers = {},
 ) {
     switch (format) {
         case LogcatFormat.Long:
@@ -348,7 +348,7 @@ function findTagEnd(payload: Uint8Array) {
 }
 
 export async function deserializeAndroidLogEntry(
-    stream: AsyncExactReadable
+    stream: AsyncExactReadable,
 ): Promise<AndroidLogEntry> {
     const entry = (await LoggerEntry.deserialize(stream)) as AndroidLogEntry;
     if (entry.headerSize !== LoggerEntry.size) {
@@ -430,15 +430,15 @@ export class Logcat extends AdbCommandBase {
                                 id: Logcat.logNameToId(match[1]!),
                                 size: Logcat.parseSize(
                                     Number.parseInt(match[2]!, 10),
-                                    match[3]!
+                                    match[3]!,
                                 ),
                                 readable: Logcat.parseSize(
                                     Number.parseInt(match[6]!, 10),
-                                    match[7]!
+                                    match[7]!,
                                 ),
                                 consumed: Logcat.parseSize(
                                     Number.parseInt(match[4]!, 10),
-                                    match[5]!
+                                    match[5]!,
                                 ),
                                 maxEntrySize: parseInt(match[8]!, 10),
                                 maxPayloadSize: parseInt(match[9]!, 10),
@@ -452,18 +452,18 @@ export class Logcat extends AdbCommandBase {
                                 id: Logcat.logNameToId(match[1]!),
                                 size: Logcat.parseSize(
                                     Number.parseInt(match[2]!, 10),
-                                    match[3]!
+                                    match[3]!,
                                 ),
                                 consumed: Logcat.parseSize(
                                     Number.parseInt(match[4]!, 10),
-                                    match[5]!
+                                    match[5]!,
                                 ),
                                 maxEntrySize: parseInt(match[6]!, 10),
                                 maxPayloadSize: parseInt(match[7]!, 10),
                             });
                         }
                     },
-                })
+                }),
             );
 
         return result;
@@ -493,13 +493,13 @@ export class Logcat extends AdbCommandBase {
                 {
                     // PERF: None protocol is 150% faster then Shell protocol
                     protocols: [AdbSubprocessNoneProtocol],
-                }
+                },
             );
             return stdout;
         }).pipeThrough(
             new BufferedTransformStream((stream) => {
                 return deserializeAndroidLogEntry(stream);
-            })
+            }),
         );
     }
 }

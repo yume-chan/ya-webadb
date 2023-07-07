@@ -103,7 +103,7 @@ export type AdbSyncStatResponse =
 export async function adbSyncLstat(
     socket: AdbSyncSocket,
     path: string,
-    v2: boolean
+    v2: boolean,
 ): Promise<AdbSyncStat> {
     const locked = await socket.lock();
     try {
@@ -112,14 +112,14 @@ export async function adbSyncLstat(
             return await adbSyncReadResponse(
                 locked,
                 AdbSyncResponseId.Lstat2,
-                AdbSyncStatResponse
+                AdbSyncStatResponse,
             );
         } else {
             await adbSyncWriteRequest(locked, AdbSyncRequestId.Lstat, path);
             const response = await adbSyncReadResponse(
                 locked,
                 AdbSyncResponseId.Lstat,
-                AdbSyncLstatResponse
+                AdbSyncLstatResponse,
             );
             return {
                 mode: response.mode,
@@ -141,7 +141,7 @@ export async function adbSyncLstat(
 
 export async function adbSyncStat(
     socket: AdbSyncSocket,
-    path: string
+    path: string,
 ): Promise<AdbSyncStatResponse> {
     const locked = await socket.lock();
     try {
@@ -149,7 +149,7 @@ export async function adbSyncStat(
         return await adbSyncReadResponse(
             locked,
             AdbSyncResponseId.Stat,
-            AdbSyncStatResponse
+            AdbSyncStatResponse,
         );
     } finally {
         locked.release();

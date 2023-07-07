@@ -31,7 +31,7 @@ declare module "yuv-buffer" {
         format: YUVFormat,
         source: Uint8Array,
         stride: number,
-        offset: number
+        offset: number,
     ): YUVPlane;
 
     /**
@@ -48,7 +48,7 @@ declare module "yuv-buffer" {
         format: YUVFormat,
         source: Uint8Array,
         stride: number,
-        offset: number
+        offset: number,
     ): YUVPlane;
 
     /**
@@ -63,7 +63,7 @@ declare module "yuv-buffer" {
         format: YUVFormat,
         y: YUVPlane,
         u: YUVPlane,
-        v: YUVPlane
+        v: YUVPlane,
     ): YUVFrame;
 
     /**
@@ -80,7 +80,7 @@ declare module "yuv-buffer" {
      * @returns {Array} - list of transferable objects
      */
     export function transferables(
-        frame: YUVFrame
+        frame: YUVFrame,
     ): (ArrayBuffer | SharedArrayBuffer)[];
 
     /**

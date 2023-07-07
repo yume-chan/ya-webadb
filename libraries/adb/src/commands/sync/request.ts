@@ -30,7 +30,7 @@ export interface AdbSyncWritable {
 export async function adbSyncWriteRequest(
     writable: AdbSyncWritable,
     id: AdbSyncRequestId | string,
-    value: number | string | Uint8Array
+    value: number | string | Uint8Array,
 ): Promise<void> {
     if (typeof value === "number") {
         const buffer = AdbSyncNumberRequest.serialize({
@@ -42,12 +42,12 @@ export async function adbSyncWriteRequest(
         // Let `writable` buffer writes
         const buffer = encodeUtf8(value);
         await writable.write(
-            AdbSyncNumberRequest.serialize({ id, arg: buffer.byteLength })
+            AdbSyncNumberRequest.serialize({ id, arg: buffer.byteLength }),
         );
         await writable.write(buffer);
     } else {
         await writable.write(
-            AdbSyncNumberRequest.serialize({ id, arg: value.byteLength })
+            AdbSyncNumberRequest.serialize({ id, arg: value.byteLength }),
         );
         await writable.write(value);
     }

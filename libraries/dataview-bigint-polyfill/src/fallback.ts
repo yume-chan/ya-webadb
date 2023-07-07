@@ -10,7 +10,7 @@ export const getBigInt64 =
         ? (
               dataView: DataView,
               byteOffset: number,
-              littleEndian: boolean | undefined
+              littleEndian: boolean | undefined,
           ) => dataView.getBigInt64(byteOffset, littleEndian)
         : fallbackGetBigInt64;
 
@@ -19,7 +19,7 @@ export const getBigUint64 =
         ? (
               dataView: DataView,
               byteOffset: number,
-              littleEndian: boolean | undefined
+              littleEndian: boolean | undefined,
           ) => dataView.getBigUint64(byteOffset, littleEndian)
         : fallbackGetBigUint64;
 
@@ -29,7 +29,7 @@ export const setBigInt64 =
               dataView: DataView,
               byteOffset: number,
               value: bigint,
-              littleEndian: boolean | undefined
+              littleEndian: boolean | undefined,
           ) => dataView.setBigInt64(byteOffset, value, littleEndian)
         : fallbackSetBigInt64;
 
@@ -39,6 +39,6 @@ export const setBigUint64 =
               dataView: DataView,
               byteOffset: number,
               value: bigint,
-              littleEndian: boolean | undefined
+              littleEndian: boolean | undefined,
           ) => dataView.setBigUint64(byteOffset, value, littleEndian)
         : fallbackSetBigUint64;

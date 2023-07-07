@@ -16,7 +16,7 @@ export type AdbSyncDataResponse =
 
 export async function* adbSyncPullGenerator(
     socket: AdbSyncSocket,
-    path: string
+    path: string,
 ): AsyncGenerator<Uint8Array, void, void> {
     const locked = await socket.lock();
     let done = false;
@@ -25,7 +25,7 @@ export async function* adbSyncPullGenerator(
         for await (const packet of adbSyncReadResponses(
             locked,
             AdbSyncResponseId.Data,
-            AdbSyncDataResponse
+            AdbSyncDataResponse,
         )) {
             yield packet.data;
         }
@@ -36,7 +36,7 @@ export async function* adbSyncPullGenerator(
             for await (const packet of adbSyncReadResponses(
                 locked,
                 AdbSyncResponseId.Data,
-                AdbSyncDataResponse
+                AdbSyncDataResponse,
             )) {
                 void packet;
             }
@@ -47,7 +47,7 @@ export async function* adbSyncPullGenerator(
 
 export function adbSyncPull(
     socket: AdbSyncSocket,
-    path: string
+    path: string,
 ): ReadableStream<Uint8Array> {
     return new PushReadableStream(async (controller) => {
         for await (const data of adbSyncPullGenerator(socket, path)) {

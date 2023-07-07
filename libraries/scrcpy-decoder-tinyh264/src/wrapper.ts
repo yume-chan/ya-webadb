@@ -24,7 +24,7 @@ const PICTURE_READY_SUBSCRIPTIONS = new Map<
 
 function subscribePictureReady(
     streamId: number,
-    handler: (e: PictureReadyEventArgs) => void
+    handler: (e: PictureReadyEventArgs) => void,
 ): Disposable {
     PICTURE_READY_SUBSCRIPTIONS.set(streamId, handler);
 
@@ -49,7 +49,7 @@ export class TinyH264Wrapper extends AutoDisposable {
 
         this.streamId = streamId;
         this.addDisposable(
-            subscribePictureReady(streamId, this.handlePictureReady)
+            subscribePictureReady(streamId, this.handlePictureReady),
         );
     }
 
@@ -66,7 +66,7 @@ export class TinyH264Wrapper extends AutoDisposable {
                 length: data.byteLength,
                 renderStateId: this.streamId,
             },
-            [data]
+            [data],
         );
     }
 
@@ -114,11 +114,11 @@ export function createTinyH264Wrapper(): Promise<TinyH264Wrapper> {
                         break;
                     case "pictureReady":
                         PICTURE_READY_SUBSCRIPTIONS.get(data.renderStateId)?.(
-                            data
+                            data,
                         );
                         break;
                 }
-            }
+            },
         );
     }
 

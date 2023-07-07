@@ -56,7 +56,7 @@ export const SCRCPY_CONTROL_MESSAGE_TYPES_1_18 =
 SCRCPY_CONTROL_MESSAGE_TYPES_1_18.splice(
     6,
     0,
-    ScrcpyControlMessageType.ExpandSettingPanel
+    ScrcpyControlMessageType.ExpandSettingPanel,
 );
 
 const LOG_LEVEL_MAP = {
@@ -111,26 +111,26 @@ export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
                 lockVideoOrientation:
                     VIDEO_ORIENTATION_MAP[value.lockVideoOrientation],
             }),
-            value
+            value,
         );
     }
 
     public override serialize(): string[] {
         return ScrcpyOptions1_16.serialize(
             this.value,
-            ScrcpyOptions1_18.SERIALIZE_ORDER
+            ScrcpyOptions1_18.SERIALIZE_ORDER,
         );
     }
 
     public override parseEncoder(line: string): ScrcpyEncoder | undefined {
         return ScrcpyOptions1_17.parseEncoder(
             line,
-            /\s+scrcpy --encoder '(.*?)'/
+            /\s+scrcpy --encoder '(.*?)'/,
         );
     }
 
     public override serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage
+        message: ScrcpyBackOrScreenOnControlMessage,
     ) {
         return ScrcpyBackOrScreenOnControlMessage1_18.serialize(message);
     }

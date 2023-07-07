@@ -16,7 +16,7 @@ export interface NumberFieldType {
         dataView: DataView,
         offset: number,
         value: number,
-        littleEndian: boolean
+        littleEndian: boolean,
     ): void;
 }
 
@@ -109,7 +109,7 @@ export namespace NumberFieldType {
 
 export class NumberFieldDefinition<
     TType extends NumberFieldType = NumberFieldType,
-    TTypeScriptType = number
+    TTypeScriptType = number,
 > extends StructFieldDefinition<void, TTypeScriptType> {
     public readonly type: TType;
 
@@ -126,7 +126,7 @@ export class NumberFieldDefinition<
     public create(
         options: Readonly<StructOptions>,
         struct: StructValue,
-        value: TTypeScriptType
+        value: TTypeScriptType,
     ): NumberFieldValue<this> {
         return new NumberFieldValue(this, options, struct, value);
     }
@@ -134,17 +134,17 @@ export class NumberFieldDefinition<
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): NumberFieldValue<this>;
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: AsyncExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): Promise<NumberFieldValue<this>>;
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable | AsyncExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): ValueOrPromise<NumberFieldValue<this>> {
         return SyncPromise.try(() => {
             return stream.readExactly(this.getSize());
@@ -152,7 +152,7 @@ export class NumberFieldDefinition<
             .then((array) => {
                 const value = this.type.deserialize(
                     array,
-                    options.littleEndian
+                    options.littleEndian,
                 );
                 return this.create(options, struct, value as any);
             })
@@ -161,14 +161,14 @@ export class NumberFieldDefinition<
 }
 
 export class NumberFieldValue<
-    TDefinition extends NumberFieldDefinition<NumberFieldType, any>
+    TDefinition extends NumberFieldDefinition<NumberFieldType, any>,
 > extends StructFieldValue<TDefinition> {
     public serialize(dataView: DataView, offset: number): void {
         this.definition.type.serialize(
             dataView,
             offset,
             this.value,
-            this.options.littleEndian
+            this.options.littleEndian,
         );
     }
 }

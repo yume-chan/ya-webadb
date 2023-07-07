@@ -37,7 +37,7 @@ export class ConditionalVariable implements Disposable {
     public dispose(): void {
         for (const item of this.#queue) {
             item.resolver.reject(
-                new Error("The ConditionalVariable has been disposed")
+                new Error("The ConditionalVariable has been disposed"),
             );
         }
         this.#queue.length = 0;

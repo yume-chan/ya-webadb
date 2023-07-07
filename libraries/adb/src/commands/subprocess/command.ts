@@ -40,7 +40,7 @@ export class AdbSubprocess extends AdbCommandBase {
     private async createProtocol(
         mode: "pty" | "raw",
         command?: string | string[],
-        options?: Partial<AdbSubprocessOptions>
+        options?: Partial<AdbSubprocessOptions>,
     ): Promise<AdbSubprocessProtocol> {
         const { protocols } = { ...DEFAULT_OPTIONS, ...options };
 
@@ -77,7 +77,7 @@ export class AdbSubprocess extends AdbCommandBase {
      */
     public shell(
         command?: string | string[],
-        options?: Partial<AdbSubprocessOptions>
+        options?: Partial<AdbSubprocessOptions>,
     ): Promise<AdbSubprocessProtocol> {
         return this.createProtocol("pty", command, options);
     }
@@ -93,7 +93,7 @@ export class AdbSubprocess extends AdbCommandBase {
      */
     public spawn(
         command: string | string[],
-        options?: Partial<AdbSubprocessOptions>
+        options?: Partial<AdbSubprocessOptions>,
     ): Promise<AdbSubprocessProtocol> {
         return this.createProtocol("raw", command, options);
     }
@@ -106,7 +106,7 @@ export class AdbSubprocess extends AdbCommandBase {
      */
     public async spawnAndWait(
         command: string | string[],
-        options?: Partial<AdbSubprocessOptions>
+        options?: Partial<AdbSubprocessOptions>,
     ): Promise<AdbSubprocessWaitResult> {
         const process = await this.spawn(command, options);
 
@@ -133,7 +133,7 @@ export class AdbSubprocess extends AdbCommandBase {
      * @returns The entire output of the command
      */
     public async spawnAndWaitLegacy(
-        command: string | string[]
+        command: string | string[],
     ): Promise<string> {
         const { stdout } = await this.spawnAndWait(command, {
             protocols: [AdbSubprocessNoneProtocol],

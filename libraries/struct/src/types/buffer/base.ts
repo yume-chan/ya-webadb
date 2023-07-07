@@ -20,7 +20,7 @@ import { decodeUtf8, encodeUtf8 } from "../../utils.js";
  */
 export abstract class BufferFieldSubType<
     TValue = unknown,
-    TTypeScriptType = TValue
+    TTypeScriptType = TValue,
 > {
     public readonly TTypeScriptType!: TTypeScriptType;
 
@@ -47,7 +47,7 @@ export abstract class BufferFieldSubType<
 
 /** An `BufferFieldSubType` that's actually an `Uint8Array` */
 export class Uint8ArrayBufferFieldSubType<
-    TTypeScriptType = Uint8Array
+    TTypeScriptType = Uint8Array,
 > extends BufferFieldSubType<Uint8Array, TTypeScriptType> {
     public static readonly Instance = new Uint8ArrayBufferFieldSubType();
 
@@ -70,7 +70,7 @@ export class Uint8ArrayBufferFieldSubType<
 
 /** An `BufferFieldSubType` that converts between `Uint8Array` and `string` */
 export class StringBufferFieldSubType<
-    TTypeScriptType = string
+    TTypeScriptType = string,
 > extends BufferFieldSubType<string, TTypeScriptType> {
     public static readonly Instance = new StringBufferFieldSubType();
 
@@ -99,7 +99,7 @@ export abstract class BufferLikeFieldDefinition<
     >,
     TOptions = void,
     TOmitInitKey extends PropertyKey = never,
-    TTypeScriptType = TType["TTypeScriptType"]
+    TTypeScriptType = TType["TTypeScriptType"],
 > extends StructFieldDefinition<TOptions, TTypeScriptType, TOmitInitKey> {
     public readonly type: TType;
 
@@ -120,7 +120,7 @@ export abstract class BufferLikeFieldDefinition<
         options: Readonly<StructOptions>,
         struct: StructValue,
         value: TType["TTypeScriptType"],
-        array?: Uint8Array
+        array?: Uint8Array,
     ): BufferLikeFieldValue<this> {
         return new BufferLikeFieldValue(this, options, struct, value, array);
     }
@@ -128,17 +128,17 @@ export abstract class BufferLikeFieldDefinition<
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): BufferLikeFieldValue<this>;
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: AsyncExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): Promise<BufferLikeFieldValue<this>>;
     public override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable | AsyncExactReadable,
-        struct: StructValue
+        struct: StructValue,
     ): ValueOrPromise<BufferLikeFieldValue<this>> {
         return SyncPromise.try(() => {
             const size = this.getDeserializeSize(struct);
@@ -161,7 +161,7 @@ export class BufferLikeFieldValue<
         BufferFieldSubType<unknown, unknown>,
         any,
         any
-    >
+    >,
 > extends StructFieldValue<TDefinition> {
     protected array: Uint8Array | undefined;
 
@@ -170,7 +170,7 @@ export class BufferLikeFieldValue<
         options: Readonly<StructOptions>,
         struct: StructValue,
         value: TDefinition["TValue"],
-        array?: Uint8Array
+        array?: Uint8Array,
     ) {
         super(definition, options, struct, value);
         this.array = array;
@@ -191,7 +191,7 @@ export class BufferLikeFieldValue<
         new Uint8Array(
             dataView.buffer,
             dataView.byteOffset,
-            dataView.byteLength
+            dataView.byteLength,
         ).set(this.array, offset);
     }
 }

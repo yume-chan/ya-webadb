@@ -130,7 +130,7 @@ export function h265ParseVideoParameterSet(nalu: Uint8Array) {
     const profileTierLevel = h265ParseProfileTierLevel(
         reader,
         true,
-        vps_max_sub_layers_minus1
+        vps_max_sub_layers_minus1,
     );
 
     const vps_sub_layer_ordering_info_present_flag = !!reader.next();
@@ -193,7 +193,7 @@ export function h265ParseVideoParameterSet(nalu: Uint8Array) {
             hrdParameters[i] = h265ParseHrdParameters(
                 reader,
                 cprms_present_flag[i]!,
-                vps_max_sub_layers_minus1
+                vps_max_sub_layers_minus1,
             );
         }
     }
@@ -245,7 +245,7 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
     const profileTierLevel = h265ParseProfileTierLevel(
         reader,
         true,
-        sps_max_sub_layers_minus1
+        sps_max_sub_layers_minus1,
     );
 
     const sps_seq_parameter_set_id = reader.decodeExponentialGolombNumber();
@@ -345,7 +345,7 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
             reader,
             i,
             num_short_term_ref_pic_sets,
-            shortTermRefPicSets
+            shortTermRefPicSets,
         );
     }
 
@@ -359,7 +359,7 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
         used_by_curr_pic_lt_sps_flag = [];
         for (let i = 0; i < num_long_term_ref_pics_sps; i += 1) {
             lt_ref_pic_poc_lsb_sps[i] = reader.read(
-                log2_max_pic_order_cnt_lsb_minus4 + 4
+                log2_max_pic_order_cnt_lsb_minus4 + 4,
             );
             used_by_curr_pic_lt_sps_flag[i] = !!reader.next();
         }
@@ -624,22 +624,22 @@ export interface H265ProfileTierLevel {
 function h265ParseProfileTierLevel(
     reader: NaluSodbBitReader,
     profilePresentFlag: true,
-    maxNumSubLayersMinus1: number
+    maxNumSubLayersMinus1: number,
 ): H265ProfileTierLevel & { generalProfileTier: H265ProfileTier };
 function h265ParseProfileTierLevel(
     reader: NaluSodbBitReader,
     profilePresentFlag: false,
-    maxNumSubLayersMinus1: number
+    maxNumSubLayersMinus1: number,
 ): H265ProfileTierLevel & { generalProfileTier: undefined };
 function h265ParseProfileTierLevel(
     reader: NaluSodbBitReader,
     profilePresentFlag: boolean,
-    maxNumSubLayersMinus1: number
+    maxNumSubLayersMinus1: number,
 ): H265ProfileTierLevel;
 function h265ParseProfileTierLevel(
     reader: NaluSodbBitReader,
     profilePresentFlag: boolean,
-    maxNumSubLayersMinus1: number
+    maxNumSubLayersMinus1: number,
 ): H265ProfileTierLevel {
     let generalProfileTier: H265ProfileTier | undefined;
     if (profilePresentFlag) {
@@ -739,7 +739,7 @@ export function h265ParseShortTermReferencePictureSet(
     reader: NaluSodbBitReader,
     stRpsIdx: number,
     num_short_term_ref_pic_sets: number,
-    sets: ShortTermReferencePictureSet[]
+    sets: ShortTermReferencePictureSet[],
 ): ShortTermReferencePictureSet {
     let inter_ref_pic_set_prediction_flag = false;
     if (stRpsIdx !== 0) {
@@ -1058,7 +1058,7 @@ export type H265VuiParameters = ReturnType<typeof h265ParseVuiParameters>;
 export function h265ParseHrdParameters(
     reader: NaluSodbBitReader,
     commonInfPresentFlag: boolean,
-    maxNumSubLayersMinus1: number
+    maxNumSubLayersMinus1: number,
 ) {
     let nal_hrd_parameters_present_flag: boolean | undefined;
     let vcl_hrd_parameters_present_flag: boolean | undefined;
@@ -1125,14 +1125,14 @@ export function h265ParseHrdParameters(
             nalHrdParameters[i] = h265ParseSubLayerHrdParameters(
                 reader,
                 i,
-                getCpbCnt(cpb_cnt_minus1[i]!)
+                getCpbCnt(cpb_cnt_minus1[i]!),
             );
         }
         if (vcl_hrd_parameters_present_flag) {
             vclHrdParameters[i] = h265ParseSubLayerHrdParameters(
                 reader,
                 i,
-                getCpbCnt(cpb_cnt_minus1[i]!)
+                getCpbCnt(cpb_cnt_minus1[i]!),
             );
         }
     }
@@ -1169,7 +1169,7 @@ export type H265HrdParameters = ReturnType<typeof h265ParseHrdParameters>;
 export function h265ParseSubLayerHrdParameters(
     reader: NaluSodbBitReader,
     subLayerId: number,
-    CpbCnt: number
+    CpbCnt: number,
 ) {
     const bit_rate_value_minus1: number[] = [];
     const cpb_size_value_minus1: number[] = [];

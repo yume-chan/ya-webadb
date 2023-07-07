@@ -51,7 +51,7 @@ describe("Struct", () => {
             public create(
                 options: Readonly<StructOptions>,
                 struct: StructValue,
-                value: unknown
+                value: unknown,
             ): StructFieldValue<this> {
                 void options;
                 void struct;
@@ -61,17 +61,17 @@ describe("Struct", () => {
             public override deserialize(
                 options: Readonly<StructOptions>,
                 stream: ExactReadable,
-                struct: StructValue
+                struct: StructValue,
             ): StructFieldValue<this>;
             public override deserialize(
                 options: Readonly<StructOptions>,
                 stream: AsyncExactReadable,
-                struct: StructValue
+                struct: StructValue,
             ): Promise<StructFieldValue<this>>;
             public override deserialize(
                 options: Readonly<StructOptions>,
                 stream: ExactReadable | AsyncExactReadable,
-                struct: StructValue
+                struct: StructValue,
             ): ValueOrPromise<StructFieldValue<this>> {
                 void options;
                 void stream;
@@ -107,7 +107,7 @@ describe("Struct", () => {
             const fieldName = "foo";
             struct.field(fieldName, new MockFieldDefinition(4));
             expect(() =>
-                struct.field(fieldName, new MockFieldDefinition(4))
+                struct.field(fieldName, new MockFieldDefinition(4)),
             ).toThrowError();
         });
     });
@@ -203,7 +203,7 @@ describe("Struct", () => {
                     const definition = struct
                         .fields[0]![1] as FixedLengthBufferLikeFieldDefinition;
                     expect(definition).toBeInstanceOf(
-                        FixedLengthBufferLikeFieldDefinition
+                        FixedLengthBufferLikeFieldDefinition,
                     );
                     expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.length).toBe(10);
@@ -217,7 +217,7 @@ describe("Struct", () => {
                     const definition = struct
                         .fields[0]![1] as FixedLengthBufferLikeFieldDefinition;
                     expect(definition).toBeInstanceOf(
-                        FixedLengthBufferLikeFieldDefinition
+                        FixedLengthBufferLikeFieldDefinition,
                     );
                     expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.length).toBe(10);
@@ -235,7 +235,7 @@ describe("Struct", () => {
                     const definition = struct
                         .fields[1]![1] as VariableLengthBufferLikeFieldDefinition;
                     expect(definition).toBeInstanceOf(
-                        VariableLengthBufferLikeFieldDefinition
+                        VariableLengthBufferLikeFieldDefinition,
                     );
                     expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.lengthField).toBe("barLength");
@@ -251,7 +251,7 @@ describe("Struct", () => {
                     const definition = struct
                         .fields[1]![1] as VariableLengthBufferLikeFieldDefinition;
                     expect(definition).toBeInstanceOf(
-                        VariableLengthBufferLikeFieldDefinition
+                        VariableLengthBufferLikeFieldDefinition,
                     );
                     expect(definition.type).toBeInstanceOf(BufferFieldSubType);
                     expect(definition.options.lengthField).toBe("barLength");
@@ -334,9 +334,9 @@ describe("Struct", () => {
                 expect(
                     Object.entries(
                         Object.getOwnPropertyDescriptors(
-                            Object.getPrototypeOf(result)
-                        )
-                    )
+                            Object.getPrototypeOf(result),
+                        ),
+                    ),
                 ).toEqual([
                     [
                         "foo",
@@ -378,9 +378,9 @@ describe("Struct", () => {
                 expect(
                     Object.entries(
                         Object.getOwnPropertyDescriptors(
-                            Object.getPrototypeOf(result)
-                        )
-                    )
+                            Object.getPrototypeOf(result),
+                        ),
+                    ),
                 ).toEqual([
                     [
                         "foo",
@@ -462,7 +462,7 @@ describe("Struct", () => {
                 const struct = new Struct().int8("foo").int16("bar");
 
                 const result = new Uint8Array(
-                    struct.serialize({ foo: 0x42, bar: 0x1024 })
+                    struct.serialize({ foo: 0x42, bar: 0x1024 }),
                 );
 
                 expect(result).toEqual(new Uint8Array([0x42, 0x10, 0x24]));
@@ -476,11 +476,11 @@ describe("Struct", () => {
                 const result = new Uint8Array(
                     struct.serialize({
                         foo: new Uint8Array([0x03, 0x04, 0x05]),
-                    })
+                    }),
                 );
 
                 expect(result).toEqual(
-                    new Uint8Array([0x03, 0x03, 0x04, 0x05])
+                    new Uint8Array([0x03, 0x03, 0x04, 0x05]),
                 );
             });
         });

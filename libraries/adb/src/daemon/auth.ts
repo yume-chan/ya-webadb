@@ -50,13 +50,13 @@ export interface AdbAuthenticator {
      */
     (
         credentialStore: AdbCredentialStore,
-        getNextRequest: () => Promise<AdbPacketData>
+        getNextRequest: () => Promise<AdbPacketData>,
     ): AsyncIterable<AdbPacketData>;
 }
 
 export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
     credentialStore: AdbCredentialStore,
-    getNextRequest: () => Promise<AdbPacketData>
+    getNextRequest: () => Promise<AdbPacketData>,
 ): AsyncIterable<AdbPacketData> {
     for await (const key of credentialStore.iterateKeys()) {
         const packet = await getNextRequest();
@@ -77,7 +77,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
 
 export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     credentialStore: AdbCredentialStore,
-    getNextRequest: () => Promise<AdbPacketData>
+    getNextRequest: () => Promise<AdbPacketData>,
 ): AsyncIterable<AdbPacketData> {
     const packet = await getNextRequest();
 
@@ -100,7 +100,7 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
         calculateBase64EncodedLength(publicKeyLength);
 
     const publicKeyBuffer = new Uint8Array(
-        publicKeyBase64Length + 1 // Null character
+        publicKeyBase64Length + 1, // Null character
     );
 
     adbGeneratePublicKey(privateKey, publicKeyBuffer);
@@ -129,7 +129,7 @@ export class AdbAuthenticationProcessor implements Disposable {
 
     public constructor(
         authenticators: readonly AdbAuthenticator[],
-        credentialStore: AdbCredentialStore
+        credentialStore: AdbCredentialStore,
     ) {
         this.authenticators = authenticators;
         this.credentialStore = credentialStore;
@@ -147,7 +147,7 @@ export class AdbAuthenticationProcessor implements Disposable {
         for (const authenticator of this.authenticators) {
             for await (const packet of authenticator(
                 this.credentialStore,
-                this.getNextRequest
+                this.getNextRequest,
             )) {
                 // If the authenticator yielded a response
                 // Prepare `nextRequest` for next authentication request

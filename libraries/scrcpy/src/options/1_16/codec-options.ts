@@ -35,7 +35,7 @@ export class CodecOptions implements ScrcpyOptionValue {
 
     public toOptionValue(): string | undefined {
         const entries = Object.entries(this.value).filter(
-            ([, value]) => value !== undefined
+            ([, value]) => value !== undefined,
         );
 
         if (entries.length === 0) {

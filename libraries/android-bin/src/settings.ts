@@ -48,7 +48,7 @@ export class Settings extends AdbCommandBase {
         if (this.#cmd.supportsCmd) {
             output = await this.#cmd.spawnAndWait(
                 command[0]!,
-                ...command.slice(1)
+                ...command.slice(1),
             );
         } else {
             output = await this.adb.subprocess.spawnAndWait(command);
@@ -64,7 +64,7 @@ export class Settings extends AdbCommandBase {
     public async get(
         namespace: SettingsNamespace,
         key: string,
-        options?: SettingsOptions
+        options?: SettingsOptions,
     ) {
         const output = await this.base("get", namespace, options, key);
         // Remove last \n
@@ -74,7 +74,7 @@ export class Settings extends AdbCommandBase {
     public async delete(
         namespace: SettingsNamespace,
         key: string,
-        options?: SettingsOptions
+        options?: SettingsOptions,
     ): Promise<void> {
         await this.base("delete", namespace, options, key);
     }
@@ -83,7 +83,7 @@ export class Settings extends AdbCommandBase {
         namespace: SettingsNamespace,
         key: string,
         value: string,
-        options?: SettingsPutOptions
+        options?: SettingsPutOptions,
     ): Promise<void> {
         const args = [key, value];
         if (options?.tag) {
@@ -98,19 +98,19 @@ export class Settings extends AdbCommandBase {
     public reset(
         namespace: SettingsNamespace,
         mode: SettingsResetMode,
-        options?: SettingsOptions
+        options?: SettingsOptions,
     ): Promise<void>;
     public reset(
         namespace: SettingsNamespace,
         packageName: string,
         tag?: string,
-        options?: SettingsOptions
+        options?: SettingsOptions,
     ): Promise<void>;
     public async reset(
         namespace: SettingsNamespace,
         modeOrPackageName: string,
         tagOrOptions?: string | SettingsOptions,
-        options?: SettingsOptions
+        options?: SettingsOptions,
     ): Promise<void> {
         const args = [modeOrPackageName];
         if (

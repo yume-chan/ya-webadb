@@ -39,12 +39,12 @@ export interface AdbServerConnectionOptions {
 
 export interface AdbServerConnection {
     connect(
-        options?: AdbServerConnectionOptions
+        options?: AdbServerConnectionOptions,
     ): ValueOrPromise<ReadableWritablePair<Uint8Array, Uint8Array>>;
 
     addReverseTunnel(
         handler: AdbIncomingSocketHandler,
-        address?: string
+        address?: string,
     ): ValueOrPromise<string>;
 
     removeReverseTunnel(address: string): ValueOrPromise<void>;
@@ -85,7 +85,7 @@ export class AdbServerClient {
     public static readString(stream: ExactReadable): string;
     public static readString(stream: AsyncExactReadable): PromiseLike<string>;
     public static readString(
-        stream: ExactReadable | AsyncExactReadable
+        stream: ExactReadable | AsyncExactReadable,
     ): string | PromiseLike<string> {
         return SyncPromise.try(() => stream.readExactly(4))
             .then((buffer) => {
@@ -100,7 +100,7 @@ export class AdbServerClient {
 
     public static async writeString(
         writer: WritableStreamDefaultWriter<Uint8Array>,
-        value: string
+        value: string,
     ): Promise<void> {
         const valueBuffer = encodeUtf8(value);
         const buffer = new Uint8Array(4 + valueBuffer.length);
@@ -110,7 +110,7 @@ export class AdbServerClient {
     }
 
     public static async readOkay(
-        stream: ExactReadable | AsyncExactReadable
+        stream: ExactReadable | AsyncExactReadable,
     ): Promise<void> {
         const response = decodeUtf8(await stream.readExactly(4));
         if (response === "OKAY") {
@@ -127,7 +127,7 @@ export class AdbServerClient {
 
     public async connect(
         request: string,
-        options?: AdbServerConnectionOptions
+        options?: AdbServerConnectionOptions,
     ): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
         const connection = await this.connection.connect(options);
 
@@ -141,7 +141,7 @@ export class AdbServerClient {
             // so the `catch` block can close the connection.
             await raceSignal(
                 () => AdbServerClient.readOkay(readable),
-                options?.signal
+                options?.signal,
             );
 
             writer.releaseLock();
@@ -173,7 +173,7 @@ export class AdbServerClient {
         const version = await this.getVersion();
         if (version !== AdbServerClient.VERSION) {
             throw new Error(
-                `adb server version (${version}) doesn't match this client (${AdbServerClient.VERSION})`
+                `adb server version (${version}) doesn't match this client (${AdbServerClient.VERSION})`,
             );
         }
     }
@@ -255,7 +255,7 @@ export class AdbServerClient {
 
     public formatDeviceService(
         device: AdbServerDeviceSelector,
-        command: string
+        command: string,
     ) {
         if (!device) {
             return `host:${command}`;
@@ -283,7 +283,7 @@ export class AdbServerClient {
      * @returns The transport ID of the selected device, and the features supported by the device.
      */
     public async getDeviceFeatures(
-        device: AdbServerDeviceSelector
+        device: AdbServerDeviceSelector,
     ): Promise<{ transportId: bigint; features: AdbFeature[] }> {
         // Usually the client sends a device command using `connectDevice`,
         // so the command got forwarded and handled by ADB daemon.
@@ -311,7 +311,7 @@ export class AdbServerClient {
      */
     public async connectDevice(
         device: AdbServerDeviceSelector,
-        service: string
+        service: string,
     ): Promise<AdbServerSocket> {
         await this.validateVersion();
 
@@ -342,7 +342,7 @@ export class AdbServerClient {
                 const dataView = new DataView(
                     array.buffer,
                     array.byteOffset,
-                    array.byteLength
+                    array.byteLength,
                 );
                 transportId = BigIntFieldType.Uint64.getter(dataView, 0, true);
             }
@@ -359,8 +359,8 @@ export class AdbServerClient {
             const wrapReadable = duplex.wrapReadable(readable.release());
             const wrapWritable = duplex.createWritable(
                 new WrapWritableStream(connection.writable).bePipedThroughFrom(
-                    new UnwrapConsumableStream()
-                )
+                    new UnwrapConsumableStream(),
+                ),
             );
 
             return {
@@ -389,7 +389,7 @@ export class AdbServerClient {
     public async waitFor(
         device: AdbServerDeviceSelector,
         state: "device" | "disconnect",
-        options?: AdbServerConnectionOptions
+        options?: AdbServerConnectionOptions,
     ): Promise<void> {
         let type: string;
         if (!device) {
@@ -410,7 +410,7 @@ export class AdbServerClient {
         // might not be available yet.
         const service = this.formatDeviceService(
             device,
-            `wait-for-${type}-${state}`
+            `wait-for-${type}-${state}`,
         );
 
         // `connect` resolves when server writes `OKAY`,
@@ -419,27 +419,27 @@ export class AdbServerClient {
     }
 
     public async createTransport(
-        device: AdbServerDeviceSelector
+        device: AdbServerDeviceSelector,
     ): Promise<AdbServerTransport> {
         const { transportId, features } = await this.getDeviceFeatures(device);
 
         const devices = await this.getDevices();
         const info = devices.find(
-            (device) => device.transportId === transportId
+            (device) => device.transportId === transportId,
         );
 
         const banner = new AdbBanner(
             info?.product,
             info?.model,
             info?.device,
-            features
+            features,
         );
 
         return new AdbServerTransport(
             this,
             info?.serial ?? "",
             banner,
-            transportId
+            transportId,
         );
     }
 }
