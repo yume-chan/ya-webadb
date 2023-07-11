@@ -12,12 +12,12 @@ export class BufferedTransformStream<T>
     implements ReadableWritablePair<T, Uint8Array>
 {
     #readable: ReadableStream<T>;
-    public get readable() {
+    get readable() {
         return this.#readable;
     }
 
     #writable: WritableStream<Uint8Array>;
-    public get writable() {
+    get writable() {
         return this.#writable;
     }
 

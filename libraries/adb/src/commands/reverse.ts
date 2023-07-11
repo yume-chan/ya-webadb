@@ -20,14 +20,14 @@ const AdbReverseStringResponse = new Struct()
     .string("content", { lengthField: "length", lengthFieldRadix: 16 });
 
 export class AdbReverseError extends Error {
-    public constructor(message: string) {
+    constructor(message: string) {
         super(message);
         Object.setPrototypeOf(this, new.target.prototype);
     }
 }
 
 export class AdbReverseNotSupportedError extends AdbReverseError {
-    public constructor() {
+    constructor() {
         super(
             "ADB reverse tunnel is not supported on this device when connected wirelessly.",
         );
@@ -57,7 +57,7 @@ export class AdbReverseCommand extends AutoDisposable {
 
     readonly #deviceAddressToLocalAddress = new Map<string, string>();
 
-    public constructor(adb: Adb) {
+    constructor(adb: Adb) {
         super();
 
         this.adb = adb;
@@ -77,7 +77,7 @@ export class AdbReverseCommand extends AutoDisposable {
         return stream;
     }
 
-    public async list(): Promise<AdbForwardListener[]> {
+    async list(): Promise<AdbForwardListener[]> {
         const stream = await this.createBufferedStream("reverse:list-forward");
 
         const response = await AdbReverseStringResponse.deserialize(stream);
@@ -99,7 +99,7 @@ export class AdbReverseCommand extends AutoDisposable {
      * @param localAddress The address that listens on the local machine.
      * @returns `tcp:{ACTUAL_LISTENING_PORT}`, If `deviceAddress` is `tcp:0`; otherwise, `deviceAddress`.
      */
-    public async addExternal(deviceAddress: string, localAddress: string) {
+    async addExternal(deviceAddress: string, localAddress: string) {
         const stream = await this.sendRequest(
             `reverse:forward:${deviceAddress};${localAddress}`,
         );
@@ -137,7 +137,7 @@ export class AdbReverseCommand extends AutoDisposable {
      * @throws {AdbReverseNotSupportedError} If ADB reverse tunnel is not supported on this device when connected wirelessly.
      * @throws {AdbReverseError} If ADB daemon returns an error.
      */
-    public async add(
+    async add(
         deviceAddress: string,
         handler: AdbIncomingSocketHandler,
         localAddress?: string,
@@ -157,7 +157,7 @@ export class AdbReverseCommand extends AutoDisposable {
         }
     }
 
-    public async remove(deviceAddress: string): Promise<void> {
+    async remove(deviceAddress: string): Promise<void> {
         const localAddress =
             this.#deviceAddressToLocalAddress.get(deviceAddress);
         if (localAddress) {
@@ -169,7 +169,7 @@ export class AdbReverseCommand extends AutoDisposable {
         // No need to close the stream, device will close it
     }
 
-    public async removeAll(): Promise<void> {
+    async removeAll(): Promise<void> {
         await this.adb.transport.clearReverseTunnels();
         this.#deviceAddressToLocalAddress.clear();
 

@@ -14,19 +14,19 @@ import type { AdbServerClient } from "./client.js";
 export class AdbServerTransport implements AdbTransport {
     #client: AdbServerClient;
 
-    public readonly serial: string;
+    readonly serial: string;
 
-    public readonly transportId: bigint;
+    readonly transportId: bigint;
 
-    public readonly maxPayloadSize: number = 1 * 1024 * 1024;
+    readonly maxPayloadSize: number = 1 * 1024 * 1024;
 
-    public readonly banner: AdbBanner;
+    readonly banner: AdbBanner;
 
     #closed = new PromiseResolver<void>();
     #waitAbortController = new AbortController();
-    public readonly disconnected: Promise<void>;
+    readonly disconnected: Promise<void>;
 
-    public constructor(
+    constructor(
         client: AdbServerClient,
         serial: string,
         banner: AdbBanner,
@@ -46,7 +46,7 @@ export class AdbServerTransport implements AdbTransport {
         ]);
     }
 
-    public async connect(service: string): Promise<AdbSocket> {
+    async connect(service: string): Promise<AdbSocket> {
         return await this.#client.connectDevice(
             {
                 transportId: this.transportId,
@@ -55,18 +55,18 @@ export class AdbServerTransport implements AdbTransport {
         );
     }
 
-    public async addReverseTunnel(
+    async addReverseTunnel(
         handler: AdbIncomingSocketHandler,
         address?: string,
     ): Promise<string> {
         return await this.#client.connection.addReverseTunnel(handler, address);
     }
 
-    public async removeReverseTunnel(address: string): Promise<void> {
+    async removeReverseTunnel(address: string): Promise<void> {
         await this.#client.connection.removeReverseTunnel(address);
     }
 
-    public async clearReverseTunnels(): Promise<void> {
+    async clearReverseTunnels(): Promise<void> {
         await this.#client.connection.clearReverseTunnels();
     }
 

@@ -130,34 +130,34 @@ export abstract class ScrcpyOptionsBase<
 {
     protected _base: B;
 
-    public abstract get defaults(): Required<T>;
+    abstract get defaults(): Required<T>;
 
-    public get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
+    get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
         return this._base.controlMessageTypes;
     }
 
-    public readonly value: Required<T>;
+    readonly value: Required<T>;
 
-    public constructor(base: B, value: Required<T>) {
+    constructor(base: B, value: Required<T>) {
         this._base = base;
         this.value = value;
     }
 
-    public abstract serialize(): string[];
+    abstract serialize(): string[];
 
-    public setListEncoders(): void {
+    setListEncoders(): void {
         this._base.setListEncoders();
     }
 
-    public setListDisplays(): void {
+    setListDisplays(): void {
         this._base.setListDisplays();
     }
 
-    public parseEncoder(line: string): ScrcpyEncoder | undefined {
+    parseEncoder(line: string): ScrcpyEncoder | undefined {
         return this._base.parseEncoder(line);
     }
 
-    public parseDisplay(line: string): ScrcpyDisplay | undefined {
+    parseDisplay(line: string): ScrcpyDisplay | undefined {
         return this._base.parseDisplay(line);
     }
 
@@ -169,44 +169,44 @@ export abstract class ScrcpyOptionsBase<
      *
      * The returned video stream may be different from the input stream, and should be used for further processing.
      */
-    public parseVideoStreamMetadata(
+    parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream> {
         return this._base.parseVideoStreamMetadata(stream);
     }
 
-    public parseAudioStreamMetadata(
+    parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
         return this._base.parseAudioStreamMetadata(stream);
     }
 
-    public createMediaStreamTransformer(): TransformStream<
+    createMediaStreamTransformer(): TransformStream<
         Uint8Array,
         ScrcpyMediaStreamPacket
     > {
         return this._base.createMediaStreamTransformer();
     }
 
-    public serializeInjectTouchControlMessage(
+    serializeInjectTouchControlMessage(
         message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array {
         return this._base.serializeInjectTouchControlMessage(message);
     }
 
-    public serializeBackOrScreenOnControlMessage(
+    serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnControlMessage,
     ): Uint8Array | undefined {
         return this._base.serializeBackOrScreenOnControlMessage(message);
     }
 
-    public serializeSetClipboardControlMessage(
+    serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): Uint8Array {
         return this._base.serializeSetClipboardControlMessage(message);
     }
 
-    public createScrollController(): ScrcpyScrollController {
+    createScrollController(): ScrcpyScrollController {
         return this._base.createScrollController();
     }
 }

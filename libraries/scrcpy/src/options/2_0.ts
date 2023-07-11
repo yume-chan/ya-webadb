@@ -45,20 +45,20 @@ export type ScrcpyInjectTouchControlMessage2_0 =
     (typeof ScrcpyInjectTouchControlMessage2_0)["TInit"];
 
 export class ScrcpyInstanceId implements ScrcpyOptionValue {
-    public static readonly NONE = new ScrcpyInstanceId(-1);
+    static readonly NONE = new ScrcpyInstanceId(-1);
 
-    public static random(): ScrcpyInstanceId {
+    static random(): ScrcpyInstanceId {
         // A random 31-bit unsigned integer
         return new ScrcpyInstanceId((Math.random() * 0x80000000) | 0);
     }
 
-    public value: number;
+    value: number;
 
-    public constructor(value: number) {
+    constructor(value: number) {
         this.value = value;
     }
 
-    public toOptionValue(): string | undefined {
+    toOptionValue(): string | undefined {
         if (this.value < 0) {
             return undefined;
         }
@@ -106,7 +106,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit2_0,
     ScrcpyOptions1_25
 > {
-    public static readonly DEFAULTS = {
+    static readonly DEFAULTS = {
         ...omit(ScrcpyOptions1_24.DEFAULTS, [
             "bitRate",
             "codecOptions",
@@ -130,30 +130,30 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
         sendCodecMeta: true,
     } as const satisfies Required<ScrcpyOptionsInit2_0>;
 
-    public override get defaults(): Required<ScrcpyOptionsInit2_0> {
+    override get defaults(): Required<ScrcpyOptionsInit2_0> {
         return ScrcpyOptions2_0.DEFAULTS;
     }
 
-    public constructor(init: ScrcpyOptionsInit2_0) {
+    constructor(init: ScrcpyOptionsInit2_0) {
         super(new ScrcpyOptions1_25(init), {
             ...ScrcpyOptions2_0.DEFAULTS,
             ...init,
         });
     }
 
-    public override serialize(): string[] {
+    override serialize(): string[] {
         return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
-    public override setListEncoders(): void {
+    override setListEncoders(): void {
         this.value.listEncoders = true;
     }
 
-    public override setListDisplays(): void {
+    override setListDisplays(): void {
         this.value.listDisplays = true;
     }
 
-    public override parseEncoder(line: string): ScrcpyEncoder | undefined {
+    override parseEncoder(line: string): ScrcpyEncoder | undefined {
         let match = line.match(
             /\s+--video-codec=(.*)\s+--video-encoder='(.*)'/,
         );
@@ -177,7 +177,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
         return undefined;
     }
 
-    public override parseDisplay(line: string): ScrcpyDisplay | undefined {
+    override parseDisplay(line: string): ScrcpyDisplay | undefined {
         const match = line.match(/\s+--display=(\d+)\s+\((.*?)\)/);
         if (match) {
             const display: ScrcpyDisplay = {
@@ -191,7 +191,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
         return undefined;
     }
 
-    public override parseVideoStreamMetadata(
+    override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream> {
         const { sendDeviceMeta, sendCodecMeta } = this.value;
@@ -249,7 +249,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
         })();
     }
 
-    public override parseAudioStreamMetadata(
+    override parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
         return (async (): Promise<ScrcpyAudioStreamMetadata> => {
@@ -334,7 +334,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
         })();
     }
 
-    public override serializeInjectTouchControlMessage(
+    override serializeInjectTouchControlMessage(
         message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array {
         return ScrcpyInjectTouchControlMessage2_0.serialize(message);

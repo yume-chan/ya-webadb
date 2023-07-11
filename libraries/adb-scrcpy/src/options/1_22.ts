@@ -11,7 +11,7 @@ import { AdbScrcpyOptions1_16 } from "./1_16.js";
 import { AdbScrcpyOptionsBase } from "./types.js";
 
 export class AdbScrcpyOptions1_22 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit1_22> {
-    public override getEncoders(
+    override getEncoders(
         adb: Adb,
         path: string,
         version: string,
@@ -19,7 +19,7 @@ export class AdbScrcpyOptions1_22 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         return AdbScrcpyOptions1_16.getEncoders(adb, path, version, this);
     }
 
-    public override getDisplays(
+    override getDisplays(
         adb: Adb,
         path: string,
         version: string,
@@ -27,7 +27,7 @@ export class AdbScrcpyOptions1_22 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         return AdbScrcpyOptions1_16.getDisplays(adb, path, version, this);
     }
 
-    public override createConnection(adb: Adb): AdbScrcpyConnection {
+    override createConnection(adb: Adb): AdbScrcpyConnection {
         return AdbScrcpyOptions1_16.createConnection(
             adb,
             {

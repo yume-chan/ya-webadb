@@ -47,13 +47,13 @@ export abstract class AdbScrcpyConnection implements Disposable {
 
     protected socketName: string;
 
-    public constructor(adb: Adb, options: AdbScrcpyConnectionOptions) {
+    constructor(adb: Adb, options: AdbScrcpyConnectionOptions) {
         this.adb = adb;
         this.options = options;
         this.socketName = this.getSocketName();
     }
 
-    public initialize(): ValueOrPromise<void> {
+    initialize(): ValueOrPromise<void> {
         // pure virtual method
     }
 
@@ -65,28 +65,28 @@ export abstract class AdbScrcpyConnection implements Disposable {
         return socketName;
     }
 
-    public abstract getStreams(): ValueOrPromise<AdbScrcpyConnectionStreams>;
+    abstract getStreams(): ValueOrPromise<AdbScrcpyConnectionStreams>;
 
-    public dispose(): void {
+    dispose(): void {
         // pure virtual method
     }
 }
 
 export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
-    private _disposed = false;
+    #disposed = false;
 
-    private connect(): Promise<
+    #connect(): Promise<
         ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
     > {
         return this.adb.createSocket(this.socketName);
     }
 
-    private async connectAndRetry(
+    async #connectAndRetry(
         sendDummyByte: boolean,
     ): Promise<ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>> {
-        for (let i = 0; !this._disposed && i < 100; i += 1) {
+        for (let i = 0; !this.#disposed && i < 100; i += 1) {
             try {
-                const stream = await this.connect();
+                const stream = await this.#connect();
                 if (sendDummyByte) {
                     // Can't guarantee the stream will preserve message boundaries,
                     // so buffer the stream
@@ -108,25 +108,25 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
         throw new Error(`Can't connect to server after 100 retries`);
     }
 
-    public override async getStreams(): Promise<AdbScrcpyConnectionStreams> {
+    override async getStreams(): Promise<AdbScrcpyConnectionStreams> {
         let { sendDummyByte } = this.options;
 
         const streams: AdbScrcpyConnectionStreams = {};
 
         if (this.options.video) {
-            const video = await this.connectAndRetry(sendDummyByte);
+            const video = await this.#connectAndRetry(sendDummyByte);
             streams.video = video.readable;
             sendDummyByte = false;
         }
 
         if (this.options.audio) {
-            const audio = await this.connectAndRetry(sendDummyByte);
+            const audio = await this.#connectAndRetry(sendDummyByte);
             streams.audio = audio.readable;
             sendDummyByte = false;
         }
 
         if (this.options.control) {
-            const control = await this.connectAndRetry(sendDummyByte);
+            const control = await this.#connectAndRetry(sendDummyByte);
             sendDummyByte = false;
             streams.control = control;
         }
@@ -134,19 +134,19 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
         return streams;
     }
 
-    public override dispose(): void {
-        this._disposed = true;
+    override dispose(): void {
+        this.#disposed = true;
     }
 }
 
 export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
-    private streams!: ReadableStreamDefaultReader<
+    #streams!: ReadableStreamDefaultReader<
         ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
     >;
 
-    private address!: string;
+    #address!: string;
 
-    public override async initialize(): Promise<void> {
+    override async initialize(): Promise<void> {
         // try to unbind first
         await this.adb.reverse.remove(this.socketName).catch((e) => {
             if (e instanceof AdbReverseNotSupportedError) {
@@ -160,45 +160,48 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
             ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
             ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
         >();
-        this.streams = queue.readable.getReader();
+        this.#streams = queue.readable.getReader();
         const writer = queue.writable.getWriter();
-        this.address = await this.adb.reverse.add(this.socketName, (socket) => {
-            void writer.write(socket);
-        });
+        this.#address = await this.adb.reverse.add(
+            this.socketName,
+            (socket) => {
+                void writer.write(socket);
+            },
+        );
     }
 
-    private async accept(): Promise<
+    async #accept(): Promise<
         ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
     > {
-        return (await this.streams.read()).value!;
+        return (await this.#streams.read()).value!;
     }
 
-    public async getStreams(): Promise<AdbScrcpyConnectionStreams> {
+    async getStreams(): Promise<AdbScrcpyConnectionStreams> {
         const streams: AdbScrcpyConnectionStreams = {};
 
         if (this.options.video) {
-            const video = await this.accept();
+            const video = await this.#accept();
             streams.video = video.readable;
         }
 
         if (this.options.audio) {
-            const audio = await this.accept();
+            const audio = await this.#accept();
             streams.audio = audio.readable;
         }
 
         if (this.options.control) {
-            const control = await this.accept();
+            const control = await this.#accept();
             streams.control = control;
         }
 
         return streams;
     }
 
-    public override dispose() {
+    override dispose() {
         // Don't await this!
         // `reverse.remove`'s response will never arrive
         // before we read all pending data from Scrcpy streams
         // NOOP: failed to remove reverse tunnel is not a big deal
-        this.adb.reverse.remove(this.address).catch(NOOP);
+        this.adb.reverse.remove(this.#address).catch(NOOP);
     }
 }

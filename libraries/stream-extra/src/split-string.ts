@@ -20,7 +20,7 @@ function* split(
 }
 
 export class SplitStringStream extends TransformStream<string, string> {
-    public constructor(separator: string) {
+    constructor(separator: string) {
         super({
             transform(chunk, controller) {
                 for (const part of split(chunk, separator)) {

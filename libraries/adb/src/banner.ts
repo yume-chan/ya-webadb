@@ -8,7 +8,7 @@ export enum AdbBannerKey {
 }
 
 export class AdbBanner {
-    public static parse(banner: string) {
+    static parse(banner: string) {
         let product: string | undefined;
         let model: string | undefined;
         let device: string | undefined;
@@ -49,26 +49,26 @@ export class AdbBanner {
     }
 
     #product: string | undefined;
-    public get product() {
+    get product() {
         return this.#product;
     }
 
     #model: string | undefined;
-    public get model() {
+    get model() {
         return this.#model;
     }
 
     #device: string | undefined;
-    public get device() {
+    get device() {
         return this.#device;
     }
 
     #features: AdbFeature[] = [];
-    public get features() {
+    get features() {
         return this.#features;
     }
 
-    public constructor(
+    constructor(
         product: string | undefined,
         model: string | undefined,
         device: string | undefined,

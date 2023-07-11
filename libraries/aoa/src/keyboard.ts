@@ -229,7 +229,7 @@ export class HidKeyboard {
      * It's compatible with the legacy boot protocol. (1 byte modifier, 1 byte reserved, 6 bytes key codes).
      * Technically it doesn't need to be compatible with the legacy boot protocol, but it's the most common implementation.
      */
-    public static readonly DESCRIPTOR = new Uint8Array(
+    static readonly DESCRIPTOR = new Uint8Array(
         // prettier-ignore
         [
             0x05, 0x01, // Usage Page (Generic Desktop)
@@ -271,35 +271,35 @@ export class HidKeyboard {
         ]
     );
 
-    private _modifiers = 0;
-    private _keys: Set<HidKeyCode> = new Set();
+    #modifiers = 0;
+    #keys: Set<HidKeyCode> = new Set();
 
-    public down(key: HidKeyCode) {
+    down(key: HidKeyCode) {
         if (key >= HidKeyCode.ControlLeft && key <= HidKeyCode.MetaRight) {
-            this._modifiers |= 1 << (key - HidKeyCode.ControlLeft);
+            this.#modifiers |= 1 << (key - HidKeyCode.ControlLeft);
         } else {
-            this._keys.add(key);
+            this.#keys.add(key);
         }
     }
 
-    public up(key: HidKeyCode) {
+    up(key: HidKeyCode) {
         if (key >= HidKeyCode.ControlLeft && key <= HidKeyCode.MetaRight) {
-            this._modifiers &= ~(1 << (key - HidKeyCode.ControlLeft));
+            this.#modifiers &= ~(1 << (key - HidKeyCode.ControlLeft));
         } else {
-            this._keys.delete(key);
+            this.#keys.delete(key);
         }
     }
 
-    public reset() {
-        this._modifiers = 0;
-        this._keys.clear();
+    reset() {
+        this.#modifiers = 0;
+        this.#keys.clear();
     }
 
-    public serializeInputReport() {
+    serializeInputReport() {
         const buffer = new Uint8Array(8);
-        buffer[0] = this._modifiers;
+        buffer[0] = this.#modifiers;
         let i = 2;
-        for (const key of this._keys) {
+        for (const key of this.#keys) {
             buffer[i] = key;
             i += 1;
             if (i >= 8) {

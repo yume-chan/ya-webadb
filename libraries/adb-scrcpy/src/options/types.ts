@@ -34,31 +34,31 @@ export abstract class AdbScrcpyOptionsBase<T extends object>
     extends ScrcpyOptionsBase<T, ScrcpyOptions<T>>
     implements AdbScrcpyOptions<T>
 {
-    public override get defaults(): Required<T> {
+    override get defaults(): Required<T> {
         return this._base.defaults;
     }
 
-    public tunnelForwardOverride = false;
+    tunnelForwardOverride = false;
 
-    public constructor(base: ScrcpyOptions<T>) {
+    constructor(base: ScrcpyOptions<T>) {
         super(base, base.value);
     }
 
-    public serialize(): string[] {
+    serialize(): string[] {
         return this._base.serialize();
     }
 
-    public abstract getEncoders(
+    abstract getEncoders(
         adb: Adb,
         path: string,
         version: string,
     ): Promise<ScrcpyEncoder[]>;
 
-    public abstract getDisplays(
+    abstract getDisplays(
         adb: Adb,
         path: string,
         version: string,
     ): Promise<ScrcpyDisplay[]>;
 
-    public abstract createConnection(adb: Adb): AdbScrcpyConnection;
+    abstract createConnection(adb: Adb): AdbScrcpyConnection;
 }

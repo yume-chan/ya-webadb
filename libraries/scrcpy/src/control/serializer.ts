@@ -17,40 +17,38 @@ import {
 } from "./type.js";
 
 export class ScrcpyControlMessageSerializer {
-    private _options: ScrcpyOptions<object>;
-    private _typeValues: ScrcpyControlMessageTypeValue;
-    private _scrollController: ScrcpyScrollController;
+    #options: ScrcpyOptions<object>;
+    #typeValues: ScrcpyControlMessageTypeValue;
+    #scrollController: ScrcpyScrollController;
 
-    public constructor(options: ScrcpyOptions<object>) {
-        this._options = options;
-        this._typeValues = new ScrcpyControlMessageTypeValue(options);
-        this._scrollController = options.createScrollController();
+    constructor(options: ScrcpyOptions<object>) {
+        this.#options = options;
+        this.#typeValues = new ScrcpyControlMessageTypeValue(options);
+        this.#scrollController = options.createScrollController();
     }
 
-    public injectKeyCode(
-        message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">,
-    ) {
+    injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">) {
         return ScrcpyInjectKeyCodeControlMessage.serialize(
-            this._typeValues.fillMessageType(
+            this.#typeValues.fillMessageType(
                 message,
                 ScrcpyControlMessageType.InjectKeyCode,
             ),
         );
     }
 
-    public injectText(text: string) {
+    injectText(text: string) {
         return ScrcpyInjectTextControlMessage.serialize({
             text,
-            type: this._typeValues.get(ScrcpyControlMessageType.InjectText),
+            type: this.#typeValues.get(ScrcpyControlMessageType.InjectText),
         });
     }
 
     /**
      * `pressure` is a float value between 0 and 1.
      */
-    public injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
-        return this._options.serializeInjectTouchControlMessage(
-            this._typeValues.fillMessageType(
+    injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
+        return this.#options.serializeInjectTouchControlMessage(
+            this.#typeValues.fillMessageType(
                 message,
                 ScrcpyControlMessageType.InjectTouch,
             ),
@@ -60,36 +58,34 @@ export class ScrcpyControlMessageSerializer {
     /**
      * `scrollX` and `scrollY` are float values between 0 and 1.
      */
-    public injectScroll(
-        message: Omit<ScrcpyInjectScrollControlMessage, "type">,
-    ) {
-        return this._scrollController.serializeScrollMessage(
-            this._typeValues.fillMessageType(
+    injectScroll(message: Omit<ScrcpyInjectScrollControlMessage, "type">) {
+        return this.#scrollController.serializeScrollMessage(
+            this.#typeValues.fillMessageType(
                 message,
                 ScrcpyControlMessageType.InjectScroll,
             ),
         );
     }
 
-    public backOrScreenOn(action: AndroidKeyEventAction) {
-        return this._options.serializeBackOrScreenOnControlMessage({
+    backOrScreenOn(action: AndroidKeyEventAction) {
+        return this.#options.serializeBackOrScreenOnControlMessage({
             action,
-            type: this._typeValues.get(ScrcpyControlMessageType.BackOrScreenOn),
+            type: this.#typeValues.get(ScrcpyControlMessageType.BackOrScreenOn),
         });
     }
 
-    public setScreenPowerMode(mode: AndroidScreenPowerMode) {
+    setScreenPowerMode(mode: AndroidScreenPowerMode) {
         return ScrcpySetScreenPowerModeControlMessage.serialize({
             mode,
-            type: this._typeValues.get(
+            type: this.#typeValues.get(
                 ScrcpyControlMessageType.SetScreenPowerMode,
             ),
         });
     }
 
-    public rotateDevice() {
+    rotateDevice() {
         return ScrcpyRotateDeviceControlMessage.serialize({
-            type: this._typeValues.get(ScrcpyControlMessageType.RotateDevice),
+            type: this.#typeValues.get(ScrcpyControlMessageType.RotateDevice),
         });
     }
 }

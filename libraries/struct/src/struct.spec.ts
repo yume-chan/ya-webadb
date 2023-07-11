@@ -22,11 +22,11 @@ import {
 } from "./index.js";
 
 class MockDeserializationStream implements ExactReadable {
-    public buffer = new Uint8Array(0);
+    buffer = new Uint8Array(0);
 
-    public position = 0;
+    position = 0;
 
-    public readExactly = jest.fn(() => this.buffer);
+    readExactly = jest.fn(() => this.buffer);
 }
 
 describe("Struct", () => {
@@ -40,15 +40,15 @@ describe("Struct", () => {
 
     describe("#field", () => {
         class MockFieldDefinition extends StructFieldDefinition<number> {
-            public constructor(size: number) {
+            constructor(size: number) {
                 super(size);
             }
 
-            public getSize = jest.fn(() => {
+            getSize = jest.fn(() => {
                 return this.options;
             });
 
-            public create(
+            create(
                 options: Readonly<StructOptions>,
                 struct: StructValue,
                 value: unknown,
@@ -58,17 +58,17 @@ describe("Struct", () => {
                 void value;
                 throw new Error("Method not implemented.");
             }
-            public override deserialize(
+            override deserialize(
                 options: Readonly<StructOptions>,
                 stream: ExactReadable,
                 struct: StructValue,
             ): StructFieldValue<this>;
-            public override deserialize(
+            override deserialize(
                 options: Readonly<StructOptions>,
                 stream: AsyncExactReadable,
                 struct: StructValue,
             ): Promise<StructFieldValue<this>>;
-            public override deserialize(
+            override deserialize(
                 options: Readonly<StructOptions>,
                 stream: ExactReadable | AsyncExactReadable,
                 struct: StructValue,

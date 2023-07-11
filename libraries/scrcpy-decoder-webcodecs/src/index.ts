@@ -27,63 +27,61 @@ function toUint32Le(data: Uint8Array, offset: number) {
 }
 
 export class WebCodecsDecoder implements ScrcpyVideoDecoder {
-    public static isSupported() {
+    static isSupported() {
         return typeof globalThis.VideoDecoder !== "undefined";
     }
 
-    public static readonly capabilities: Record<
-        string,
-        ScrcpyVideoDecoderCapability
-    > = {
-        h264: {},
-        h265: {},
-    };
+    static readonly capabilities: Record<string, ScrcpyVideoDecoderCapability> =
+        {
+            h264: {},
+            h265: {},
+        };
 
-    private _codec: ScrcpyVideoCodecId;
-    public get codec() {
-        return this._codec;
+    #codec: ScrcpyVideoCodecId;
+    get codec() {
+        return this.#codec;
     }
 
-    private _writable: WritableStream<ScrcpyMediaStreamPacket>;
-    public get writable() {
-        return this._writable;
+    #writable: WritableStream<ScrcpyMediaStreamPacket>;
+    get writable() {
+        return this.#writable;
     }
 
-    private _renderer: HTMLCanvasElement;
-    public get renderer() {
-        return this._renderer;
+    #renderer: HTMLCanvasElement;
+    get renderer() {
+        return this.#renderer;
     }
 
-    private _frameRendered = 0;
-    public get frameRendered() {
-        return this._frameRendered;
+    #frameRendered = 0;
+    get frameRendered() {
+        return this.#frameRendered;
     }
 
-    private _frameSkipped = 0;
-    public get frameSkipped() {
-        return this._frameSkipped;
+    #frameSkipped = 0;
+    get frameSkipped() {
+        return this.#frameSkipped;
     }
 
-    private context: CanvasRenderingContext2D;
-    private decoder: VideoDecoder;
-    private _config: Uint8Array | undefined;
+    #context: CanvasRenderingContext2D;
+    #decoder: VideoDecoder;
+    #config: Uint8Array | undefined;
 
-    private currentFrameRendered = false;
-    private animationFrameId = 0;
+    #currentFrameRendered = false;
+    #animationFrameId = 0;
 
-    public constructor(codec: ScrcpyVideoCodecId) {
-        this._codec = codec;
+    constructor(codec: ScrcpyVideoCodecId) {
+        this.#codec = codec;
 
-        this._renderer = document.createElement("canvas");
+        this.#renderer = document.createElement("canvas");
 
-        this.context = this._renderer.getContext("2d")!;
-        this.decoder = new VideoDecoder({
+        this.#context = this.#renderer.getContext("2d")!;
+        this.#decoder = new VideoDecoder({
             output: (frame) => {
-                if (this.currentFrameRendered) {
-                    this._frameSkipped += 1;
+                if (this.#currentFrameRendered) {
+                    this.#frameSkipped += 1;
                 } else {
-                    this.currentFrameRendered = true;
-                    this._frameRendered += 1;
+                    this.#currentFrameRendered = true;
+                    this.#frameRendered += 1;
                 }
 
                 // PERF: H.264 renderer may draw multiple frames in one vertical sync interval to minimize latency.
@@ -92,7 +90,7 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                 // But this ensures users can always see the most up-to-date screen.
                 // This is also the behavior of official Scrcpy client.
                 // https://github.com/Genymobile/scrcpy/issues/3679
-                this.context.drawImage(frame, 0, 0);
+                this.#context.drawImage(frame, 0, 0);
                 frame.close();
             },
             error(e) {
@@ -100,29 +98,29 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
             },
         });
 
-        this._writable = new WritableStream<ScrcpyMediaStreamPacket>({
+        this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
             write: (packet) => {
                 switch (packet.type) {
                     case "configuration":
-                        this.configure(packet.data);
+                        this.#configure(packet.data);
                         break;
                     case "data":
-                        this.decode(packet);
+                        this.#decode(packet);
                         break;
                 }
             },
         });
 
-        this.onFramePresented();
+        this.#onFramePresented();
     }
 
-    private onFramePresented = () => {
-        this.currentFrameRendered = false;
-        this.animationFrameId = requestAnimationFrame(this.onFramePresented);
+    #onFramePresented = () => {
+        this.#currentFrameRendered = false;
+        this.#animationFrameId = requestAnimationFrame(this.#onFramePresented);
     };
 
-    private configure(data: Uint8Array) {
-        switch (this._codec) {
+    #configure(data: Uint8Array) {
+        switch (this.#codec) {
             case ScrcpyVideoCodecId.H264: {
                 const {
                     profileIndex,
@@ -132,15 +130,15 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                     croppedHeight,
                 } = h264ParseConfiguration(data);
 
-                this._renderer.width = croppedWidth;
-                this._renderer.height = croppedHeight;
+                this.#renderer.width = croppedWidth;
+                this.#renderer.height = croppedHeight;
 
                 // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
                 // ISO Base Media File Format Name Space
                 const codec = `avc1.${[profileIndex, constraintSet, levelIndex]
                     .map(toHex)
                     .join("")}`;
-                this.decoder.configure({
+                this.#decoder.configure({
                     codec: codec,
                     optimizeForLatency: true,
                 });
@@ -158,8 +156,8 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                     croppedHeight,
                 } = h265ParseConfiguration(data);
 
-                this._renderer.width = croppedWidth;
-                this._renderer.height = croppedHeight;
+                this.#renderer.width = croppedWidth;
+                this.#renderer.height = croppedHeight;
 
                 const codec = [
                     "hev1",
@@ -175,36 +173,36 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                         .toString(16)
                         .toUpperCase(),
                 ].join(".");
-                this.decoder.configure({
+                this.#decoder.configure({
                     codec,
                     optimizeForLatency: true,
                 });
                 break;
             }
         }
-        this._config = data;
+        this.#config = data;
     }
 
-    private decode(packet: ScrcpyMediaStreamDataPacket) {
-        if (this.decoder.state !== "configured") {
+    #decode(packet: ScrcpyMediaStreamDataPacket) {
+        if (this.#decoder.state !== "configured") {
             return;
         }
 
         // WebCodecs requires configuration data to be with the first frame.
         // https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
         let data: Uint8Array;
-        if (this._config !== undefined) {
+        if (this.#config !== undefined) {
             data = new Uint8Array(
-                this._config.byteLength + packet.data.byteLength,
+                this.#config.byteLength + packet.data.byteLength,
             );
-            data.set(this._config, 0);
-            data.set(packet.data, this._config.byteLength);
-            this._config = undefined;
+            data.set(this.#config, 0);
+            data.set(packet.data, this.#config.byteLength);
+            this.#config = undefined;
         } else {
             data = packet.data;
         }
 
-        this.decoder.decode(
+        this.#decoder.decode(
             new EncodedVideoChunk({
                 // Treat `undefined` as `key`, otherwise won't decode.
                 type: packet.keyframe === false ? "delta" : "key",
@@ -214,10 +212,10 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
         );
     }
 
-    public dispose() {
-        cancelAnimationFrame(this.animationFrameId);
-        if (this.decoder.state !== "closed") {
-            this.decoder.close();
+    dispose() {
+        cancelAnimationFrame(this.#animationFrameId);
+        if (this.#decoder.state !== "closed") {
+            this.#decoder.close();
         }
     }
 }

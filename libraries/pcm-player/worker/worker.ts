@@ -2,16 +2,16 @@ abstract class SourceProcessor<T>
     extends AudioWorkletProcessor
     implements AudioWorkletProcessorImpl
 {
-    private _sources: T[] = [];
-    private _sourceSampleCount = 0;
+    #sources: T[] = [];
+    #sourceSampleCount = 0;
 
-    public constructor() {
+    constructor() {
         super();
         this.port.onmessage = (event) => {
             const data = event.data as ArrayBuffer[];
             const [source, length] = this.createSource(data);
-            this._sources.push(source);
-            this._sourceSampleCount += length;
+            this.#sources.push(source);
+            this.#sourceSampleCount += length;
         };
     }
 
@@ -26,13 +26,13 @@ abstract class SourceProcessor<T>
         // Resample source catch up with output
         // TODO: should we limit the minimum and maximum speed?
         // TODO: this simple resample method changes pitch
-        const sourceIndexStep = this._sourceSampleCount > 48000 ? 1.02 : 1;
+        const sourceIndexStep = this.#sourceSampleCount > 48000 ? 1.02 : 1;
         let sourceIndex = 0;
 
-        while (this._sources.length > 0 && outputIndex < outputLength) {
+        while (this.#sources.length > 0 && outputIndex < outputLength) {
             const beginSourceIndex = sourceIndex | 0;
 
-            let source: T | undefined = this._sources[0];
+            let source: T | undefined = this.#sources[0];
             [source, sourceIndex, outputIndex] = this.copyChunk(
                 sourceIndex,
                 sourceIndexStep,
@@ -44,16 +44,16 @@ abstract class SourceProcessor<T>
             );
 
             const consumedSampleCount = (sourceIndex | 0) - beginSourceIndex;
-            this._sourceSampleCount -= consumedSampleCount;
+            this.#sourceSampleCount -= consumedSampleCount;
             sourceIndex -= consumedSampleCount;
 
             if (source) {
                 // Output full
-                this._sources[0] = source;
+                this.#sources[0] = source;
                 return true;
             }
 
-            this._sources.shift();
+            this.#sources.shift();
         }
 
         if (outputIndex < outputLength) {
@@ -98,7 +98,7 @@ class Int16SourceProcessor
     ): [
         source: Int16Array | undefined,
         sourceIndex: number,
-        outputIndex: number
+        outputIndex: number,
     ] {
         const sourceLength = source.length;
         let sourceSampleIndex = sourceIndex << 1;
@@ -145,7 +145,7 @@ class Float32SourceProcessor extends SourceProcessor<Float32Array> {
     ): [
         source: Float32Array | undefined,
         sourceIndex: number,
-        outputIndex: number
+        outputIndex: number,
     ] {
         const sourceLength = source.length;
         let sourceSampleIndex = sourceIndex << 1;
@@ -192,7 +192,7 @@ class Float32PlanerSourceProcessor extends SourceProcessor<Float32Array[]> {
     ): [
         source: Float32Array[] | undefined,
         sourceIndex: number,
-        outputIndex: number
+        outputIndex: number,
     ] {
         const sourceLeft = source[0]!;
         const sourceRight = source[1]!;

@@ -43,11 +43,11 @@ describe("BTree", () => {
 
     function validateTree(tree: BTree) {
         if (tree.size === 0) {
-            expect(tree["_root"].keyCount).toBe(0);
+            expect(tree.root.keyCount).toBe(0);
             return;
         }
 
-        validateNode(tree["_root"], true);
+        validateNode(tree.root, true);
     }
 
     for (let order = 3; order < 10; order += 1) {

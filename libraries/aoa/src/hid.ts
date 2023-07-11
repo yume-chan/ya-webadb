@@ -77,7 +77,7 @@ export class AoaHidDevice {
      * @param reportDescriptor The HID report descriptor.
      * @returns An instance of AoaHidDevice to send events.
      */
-    public static async register(
+    static async register(
         device: USBDevice,
         accessoryId: number,
         reportDescriptor: Uint8Array
@@ -87,19 +87,19 @@ export class AoaHidDevice {
         return new AoaHidDevice(device, accessoryId);
     }
 
-    private _device: USBDevice;
-    private _accessoryId: number;
+    #device: USBDevice;
+    #accessoryId: number;
 
-    private constructor(device: USBDevice, accessoryId: number) {
-        this._device = device;
-        this._accessoryId = accessoryId;
+    constructor(device: USBDevice, accessoryId: number) {
+        this.#device = device;
+        this.#accessoryId = accessoryId;
     }
 
-    public async sendInputReport(event: Uint8Array) {
-        await aoaHidSendInputReport(this._device, this._accessoryId, event);
+    async sendInputReport(event: Uint8Array) {
+        await aoaHidSendInputReport(this.#device, this.#accessoryId, event);
     }
 
-    public async unregister() {
-        await aoaHidUnregister(this._device, this._accessoryId);
+    async unregister() {
+        await aoaHidUnregister(this.#device, this.#accessoryId);
     }
 }

@@ -27,13 +27,13 @@ const CODEC_OPTION_TYPES: Partial<
 };
 
 export class CodecOptions implements ScrcpyOptionValue {
-    public value: Partial<CodecOptionsInit>;
+    value: Partial<CodecOptionsInit>;
 
-    public constructor(value: Partial<CodecOptionsInit> = {}) {
+    constructor(value: Partial<CodecOptionsInit> = {}) {
         this.value = value;
     }
 
-    public toOptionValue(): string | undefined {
+    toOptionValue(): string | undefined {
         const entries = Object.entries(this.value).filter(
             ([, value]) => value !== undefined,
         );

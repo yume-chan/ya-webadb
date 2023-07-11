@@ -61,38 +61,38 @@ class StdinSerializeStream extends ConsumableTransformStream<
 }
 
 class MultiplexStream<T> {
-    private _readable: PushReadableStream<T>;
-    private _readableController!: PushReadableStreamController<T>;
-    public get readable() {
-        return this._readable;
+    #readable: PushReadableStream<T>;
+    #readableController!: PushReadableStreamController<T>;
+    get readable() {
+        return this.#readable;
     }
 
-    private _activeCount = 0;
+    #activeCount = 0;
 
     constructor() {
-        this._readable = new PushReadableStream((controller) => {
-            this._readableController = controller;
+        this.#readable = new PushReadableStream((controller) => {
+            this.#readableController = controller;
         });
     }
 
-    public createWriteable() {
+    createWriteable() {
         return new WritableStream<T>({
             start: () => {
-                this._activeCount += 1;
+                this.#activeCount += 1;
             },
             write: async (chunk) => {
-                await this._readableController.enqueue(chunk);
+                await this.#readableController.enqueue(chunk);
             },
             abort: () => {
-                this._activeCount -= 1;
-                if (this._activeCount === 0) {
-                    this._readableController.close();
+                this.#activeCount -= 1;
+                if (this.#activeCount === 0) {
+                    this.#readableController.close();
                 }
             },
             close: () => {
-                this._activeCount -= 1;
-                if (this._activeCount === 0) {
-                    this._readableController.close();
+                this.#activeCount -= 1;
+                if (this.#activeCount === 0) {
+                    this.#readableController.close();
                 }
             },
         });
@@ -108,18 +108,18 @@ class MultiplexStream<T> {
  * * `resize`: Yes
  */
 export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
-    public static isSupported(adb: Adb) {
+    static isSupported(adb: Adb) {
         return adb.supportsFeature(AdbFeature.ShellV2);
     }
 
-    public static async pty(adb: Adb, command: string) {
+    static async pty(adb: Adb, command: string) {
         // TODO: AdbShellSubprocessProtocol: Support setting `XTERM` environment variable
         return new AdbSubprocessShellProtocol(
             await adb.createSocket(`shell,v2,pty:${command}`),
         );
     }
 
-    public static async raw(adb: Adb, command: string) {
+    static async raw(adb: Adb, command: string) {
         return new AdbSubprocessShellProtocol(
             await adb.createSocket(`shell,v2,raw:${command}`),
         );
@@ -131,26 +131,26 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     >;
 
     #stdin: WritableStream<Consumable<Uint8Array>>;
-    public get stdin() {
+    get stdin() {
         return this.#stdin;
     }
 
     #stdout: ReadableStream<Uint8Array>;
-    public get stdout() {
+    get stdout() {
         return this.#stdout;
     }
 
     #stderr: ReadableStream<Uint8Array>;
-    public get stderr() {
+    get stderr() {
         return this.#stderr;
     }
 
     readonly #exit = new PromiseResolver<number>();
-    public get exit() {
+    get exit() {
         return this.#exit.promise;
     }
 
-    public constructor(socket: AdbSocket) {
+    constructor(socket: AdbSocket) {
         this.#socket = socket;
 
         // Check this image to help you understand the stream graph
@@ -225,7 +225,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
         this.#socketWriter = multiplexer.createWriteable().getWriter();
     }
 
-    public async resize(rows: number, cols: number) {
+    async resize(rows: number, cols: number) {
         await ConsumableWritableStream.write(this.#socketWriter, {
             id: AdbShellProtocolId.WindowSizeChange,
             data: encodeUtf8(
@@ -237,7 +237,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
         });
     }
 
-    public kill() {
+    kill() {
         return this.#socket.close();
     }
 }

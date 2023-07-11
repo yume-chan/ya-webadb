@@ -14,25 +14,25 @@ export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_22,
     ScrcpyOptions1_21
 > {
-    public static readonly DEFAULTS = {
+    static readonly DEFAULTS = {
         ...ScrcpyOptions1_21.DEFAULTS,
         downsizeOnError: true,
         sendDeviceMeta: true,
         sendDummyByte: true,
     } as const satisfies Required<ScrcpyOptionsInit1_22>;
 
-    public override get defaults(): Required<ScrcpyOptionsInit1_22> {
+    override get defaults(): Required<ScrcpyOptionsInit1_22> {
         return ScrcpyOptions1_22.DEFAULTS;
     }
 
-    public constructor(init: ScrcpyOptionsInit1_22) {
+    constructor(init: ScrcpyOptionsInit1_22) {
         super(new ScrcpyOptions1_21(init), {
             ...ScrcpyOptions1_22.DEFAULTS,
             ...init,
         });
     }
 
-    public override parseVideoStreamMetadata(
+    override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream> {
         if (!this.value.sendDeviceMeta) {
@@ -42,11 +42,11 @@ export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
         }
     }
 
-    public override serialize(): string[] {
+    override serialize(): string[] {
         return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
-    public override createScrollController(): ScrcpyScrollController {
+    override createScrollController(): ScrcpyScrollController {
         return new ScrcpyScrollController1_22();
     }
 }

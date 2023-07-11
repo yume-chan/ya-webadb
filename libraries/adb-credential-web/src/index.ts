@@ -71,7 +71,7 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
      *
      * @returns The private key in PKCS #8 format.
      */
-    public async generateKey(): Promise<Uint8Array> {
+    async generateKey(): Promise<Uint8Array> {
         const { privateKey: cryptoKey } = await crypto.subtle.generateKey(
             {
                 name: "RSASSA-PKCS1-v1_5",
@@ -97,7 +97,7 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
      *
      * This method returns a generator, so `for await...of...` loop should be used to read the key.
      */
-    public async *iterateKeys(): AsyncGenerator<Uint8Array, void, void> {
+    async *iterateKeys(): AsyncGenerator<Uint8Array, void, void> {
         for (const key of await getAllKeys()) {
             yield key;
         }

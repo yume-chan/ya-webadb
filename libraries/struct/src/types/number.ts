@@ -111,19 +111,19 @@ export class NumberFieldDefinition<
     TType extends NumberFieldType = NumberFieldType,
     TTypeScriptType = number,
 > extends StructFieldDefinition<void, TTypeScriptType> {
-    public readonly type: TType;
+    readonly type: TType;
 
-    public constructor(type: TType, typescriptType?: TTypeScriptType) {
+    constructor(type: TType, typescriptType?: TTypeScriptType) {
         void typescriptType;
         super();
         this.type = type;
     }
 
-    public getSize(): number {
+    getSize(): number {
         return this.type.size;
     }
 
-    public create(
+    create(
         options: Readonly<StructOptions>,
         struct: StructValue,
         value: TTypeScriptType,
@@ -131,17 +131,17 @@ export class NumberFieldDefinition<
         return new NumberFieldValue(this, options, struct, value);
     }
 
-    public override deserialize(
+    override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable,
         struct: StructValue,
     ): NumberFieldValue<this>;
-    public override deserialize(
+    override deserialize(
         options: Readonly<StructOptions>,
         stream: AsyncExactReadable,
         struct: StructValue,
     ): Promise<NumberFieldValue<this>>;
-    public override deserialize(
+    override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable | AsyncExactReadable,
         struct: StructValue,
@@ -163,7 +163,7 @@ export class NumberFieldDefinition<
 export class NumberFieldValue<
     TDefinition extends NumberFieldDefinition<NumberFieldType, any>,
 > extends StructFieldValue<TDefinition> {
-    public serialize(dataView: DataView, offset: number): void {
+    serialize(dataView: DataView, offset: number): void {
         this.definition.type.serialize(
             dataView,
             offset,

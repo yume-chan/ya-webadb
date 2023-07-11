@@ -6,7 +6,7 @@ export class ParseError extends Error {
         return this.#expected;
     }
 
-    public constructor(expected: string[]) {
+    constructor(expected: string[]) {
         super(`Expected ${expected.join(", ")}`);
         this.#expected = expected;
     }
@@ -29,34 +29,20 @@ type UnionResult<T extends readonly Format<unknown>[]> = Exclude<
     undefined
 >;
 
-type UnionToIntersection<T> = (
-    T extends unknown ? (x: T) => void : never
-) extends (x: infer R) => void
-    ? R
-    : never;
-
 type SequenceResult<
     T extends readonly (
         | Format<unknown>
         | { name: string; format: Format<unknown> }
     )[],
-> = UnionToIntersection<
-    {
-        [K in keyof T]: T[K] extends {
-            name: string;
-            format: Format<unknown>;
-        }
-            ? Record<
-                  T[K]["name"],
-                  T[K]["format"] extends Format<infer F>
-                      ? Exclude<F, undefined>
-                      : never
-              >
-            : never;
-    }[number]
->;
-
-type Evaluate<T> = T extends infer U ? { [K in keyof U]: U[K] } : never;
+> = {
+    [K in keyof T as K extends `${number}`
+        ? T[K] extends { name: infer N extends string }
+            ? N
+            : never
+        : never]: T[K] extends { format: Format<infer F> } ? F : never;
+} extends infer R extends Record<string, unknown>
+    ? R
+    : never;
 
 export const p = {
     literal: <T extends string>(value: T): Format<T> => ({
@@ -174,7 +160,7 @@ export const p = {
         )[],
     >(
         ...args: T
-    ): Format<Evaluate<SequenceResult<T>>> => ({
+    ): Format<SequenceResult<T>> => ({
         parse(reader: Reader) {
             const result: Record<string, unknown> = {};
             for (const part of args) {
@@ -184,9 +170,9 @@ export const p = {
                     void part.parse(reader);
                 }
             }
-            return result as Evaluate<SequenceResult<T>>;
+            return result as SequenceResult<T>;
         },
-        stringify: (value: Evaluate<SequenceResult<T>>) => {
+        stringify: (value: SequenceResult<T>) => {
             let result = "";
             for (const part of args) {
                 if ("name" in part) {

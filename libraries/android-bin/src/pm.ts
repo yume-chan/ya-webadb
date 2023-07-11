@@ -219,14 +219,14 @@ export interface PackageManagerListPackagesResult {
 }
 
 export class PackageManager extends AdbCommandBase {
-    private _cmd: Cmd;
+    #cmd: Cmd;
 
-    public constructor(adb: Adb) {
+    constructor(adb: Adb) {
         super(adb);
-        this._cmd = new Cmd(adb);
+        this.#cmd = new Cmd(adb);
     }
 
-    private buildArguments<T>(
+    #buildArguments<T>(
         commands: string[],
         options: Partial<T> | undefined,
         map: Record<keyof T, string>,
@@ -253,27 +253,27 @@ export class PackageManager extends AdbCommandBase {
         return args;
     }
 
-    private buildInstallArguments(
+    #buildInstallArguments(
         options: Partial<PackageManagerInstallOptions> | undefined,
     ): string[] {
-        return this.buildArguments(
+        return this.#buildArguments(
             ["install"],
             options,
             PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
         );
     }
 
-    public async install(
+    async install(
         apks: string[],
         options?: Partial<PackageManagerInstallOptions>,
     ): Promise<string> {
-        const args = this.buildInstallArguments(options);
+        const args = this.#buildInstallArguments(options);
         // WIP: old version of pm doesn't support multiple apks
         args.push(...apks);
         return await this.adb.subprocess.spawnAndWaitLegacy(args);
     }
 
-    public async pushAndInstallStream(
+    async pushAndInstallStream(
         stream: ReadableStream<Consumable<Uint8Array>>,
         options?: Partial<PackageManagerInstallOptions>,
     ): Promise<ReadableStream<string>> {
@@ -295,7 +295,7 @@ export class PackageManager extends AdbCommandBase {
         // and `cmd package` launches faster than `pm`.
         // But `cmd package` can't read `/data/local/tmp` folder due to SELinux policy,
         // so installing a file must use `pm`.
-        const args = this.buildInstallArguments(options);
+        const args = this.#buildInstallArguments(options);
         args.push(filePath);
         const process = await AdbSubprocessNoneProtocol.raw(
             this.adb,
@@ -309,7 +309,7 @@ export class PackageManager extends AdbCommandBase {
         });
     }
 
-    public async installStream(
+    async installStream(
         size: number,
         stream: ReadableStream<Consumable<Uint8Array>>,
         options?: Partial<PackageManagerInstallOptions>,
@@ -317,20 +317,20 @@ export class PackageManager extends AdbCommandBase {
         // Android 7 added both `cmd` command and streaming install support,
         // we can't detect whether `pm` supports streaming install,
         // so we detect `cmd` command support instead.
-        if (!this._cmd.supportsCmd) {
+        if (!this.#cmd.supportsCmd) {
             return this.pushAndInstallStream(stream, options);
         }
 
-        const args = this.buildInstallArguments(options);
+        const args = this.#buildInstallArguments(options);
         // Remove `pm` from args, final command will starts with `cmd package install`
         args.shift();
         args.push("-S", size.toString());
-        const process = await this._cmd.spawn(false, "package", ...args);
+        const process = await this.#cmd.spawn(false, "package", ...args);
         await stream.pipeTo(process.stdin);
         return process.stdout.pipeThrough(new DecodeUtf8Stream());
     }
 
-    public static parsePackageListItem(
+    static parsePackageListItem(
         line: string,
     ): PackageManagerListPackagesResult {
         line = line.substring("package:".length);
@@ -381,10 +381,10 @@ export class PackageManager extends AdbCommandBase {
         };
     }
 
-    public async listPackages(
+    async listPackages(
         options?: Partial<PackageManagerListPackagesOptions>,
     ): Promise<PackageManagerListPackagesResult[]> {
-        const args = this.buildArguments(
+        const args = this.#buildArguments(
             ["list", "packages"],
             options,
             PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP,

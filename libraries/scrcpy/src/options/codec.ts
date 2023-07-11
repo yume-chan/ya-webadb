@@ -21,31 +21,31 @@ export interface ScrcpyVideoStream {
 }
 
 export class ScrcpyAudioCodec implements ScrcpyOptionValue {
-    public static readonly OPUS = new ScrcpyAudioCodec(
+    static readonly OPUS = new ScrcpyAudioCodec(
         "opus",
         0x6f_70_75_73,
         "audio/opus",
         "opus",
     );
-    public static readonly AAC = new ScrcpyAudioCodec(
+    static readonly AAC = new ScrcpyAudioCodec(
         "aac",
         0x00_61_61_63,
         "audio/aac",
         "mp4a.66",
     );
-    public static readonly RAW = new ScrcpyAudioCodec(
+    static readonly RAW = new ScrcpyAudioCodec(
         "raw",
         0x00_72_61_77,
         "audio/raw",
         "1",
     );
 
-    public readonly optionValue: string;
-    public readonly metadataValue: number;
-    public readonly mimeType: string;
-    public readonly webCodecId: string;
+    readonly optionValue: string;
+    readonly metadataValue: number;
+    readonly mimeType: string;
+    readonly webCodecId: string;
 
-    public constructor(
+    constructor(
         optionValue: string,
         metadataValue: number,
         mimeType: string,
@@ -57,7 +57,7 @@ export class ScrcpyAudioCodec implements ScrcpyOptionValue {
         this.webCodecId = webCodecId;
     }
 
-    public toOptionValue(): string {
+    toOptionValue(): string {
         return this.optionValue;
     }
 }

@@ -16,15 +16,15 @@ export abstract class StructFieldValue<
     > = StructFieldDefinition<any, any, any>,
 > {
     /** Gets the definition associated with this runtime value */
-    public readonly definition: TDefinition;
+    readonly definition: TDefinition;
 
     /** Gets the options of the associated `Struct` */
-    public readonly options: Readonly<StructOptions>;
+    readonly options: Readonly<StructOptions>;
 
     /** Gets the associated `Struct` instance */
-    public readonly struct: StructValue;
+    readonly struct: StructValue;
 
-    public get hasCustomAccessors(): boolean {
+    get hasCustomAccessors(): boolean {
         return (
             this.get !== StructFieldValue.prototype.get ||
             this.set !== StructFieldValue.prototype.set
@@ -33,7 +33,7 @@ export abstract class StructFieldValue<
 
     protected value: TDefinition["TValue"];
 
-    public constructor(
+    constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
         struct: StructValue,
@@ -50,26 +50,26 @@ export abstract class StructFieldValue<
      *
      * When overridden in derived classes, can have custom logic to calculate the actual size.
      */
-    public getSize(): number {
+    getSize(): number {
         return this.definition.getSize();
     }
 
     /**
      * When implemented in derived classes, reads current field's value.
      */
-    public get(): TDefinition["TValue"] {
+    get(): TDefinition["TValue"] {
         return this.value;
     }
 
     /**
      * When implemented in derived classes, updates current field's value.
      */
-    public set(value: TDefinition["TValue"]): void {
+    set(value: TDefinition["TValue"]): void {
         this.value = value;
     }
 
     /**
      * When implemented in derived classes, serializes this field into `dataView` at `offset`
      */
-    public abstract serialize(dataView: DataView, offset: number): void;
+    abstract serialize(dataView: DataView, offset: number): void;
 }

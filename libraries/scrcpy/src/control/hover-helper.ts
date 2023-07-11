@@ -15,12 +15,11 @@ import { ScrcpyControlMessageType } from "./type.js";
  * so Scrcpy server can remove the previously hovering pointer.
  */
 export class ScrcpyHoverHelper {
-    // AFAIK, only mouse and pen can have hover state
-    // and you can't have two mouses or pens.
-    // So remember the last hovering pointer is enough.
-    private lastHoverMessage: ScrcpyInjectTouchControlMessage | undefined;
+    // There can be only one hovering pointer (either mouse or pen,
+    // touch can have multiple pointers but no hovering state).
+    #lastHoverMessage: ScrcpyInjectTouchControlMessage | undefined;
 
-    public process(
+    process(
         message: Omit<ScrcpyInjectTouchControlMessage, "type">,
     ): ScrcpyInjectTouchControlMessage[] {
         const result: ScrcpyInjectTouchControlMessage[] = [];
@@ -28,21 +27,21 @@ export class ScrcpyHoverHelper {
         // A different pointer appeared,
         // Cancel previously hovering pointer so Scrcpy server can free up the pointer ID.
         if (
-            this.lastHoverMessage &&
-            this.lastHoverMessage.pointerId !== message.pointerId
+            this.#lastHoverMessage &&
+            this.#lastHoverMessage.pointerId !== message.pointerId
         ) {
             // TODO: Inject MotionEvent.ACTION_HOVER_EXIT
             // From testing, it seems no App cares about this event.
             result.push({
-                ...this.lastHoverMessage,
+                ...this.#lastHoverMessage,
                 action: AndroidMotionEventAction.Up,
             });
-            this.lastHoverMessage = undefined;
+            this.#lastHoverMessage = undefined;
         }
 
         if (message.action === AndroidMotionEventAction.HoverMove) {
             // TODO: Inject MotionEvent.ACTION_HOVER_ENTER
-            this.lastHoverMessage = message as ScrcpyInjectTouchControlMessage;
+            this.#lastHoverMessage = message as ScrcpyInjectTouchControlMessage;
         }
 
         (message as ScrcpyInjectTouchControlMessage).type =

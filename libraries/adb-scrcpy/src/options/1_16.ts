@@ -20,7 +20,7 @@ import type { AdbScrcpyOptions } from "./types.js";
 import { AdbScrcpyOptionsBase } from "./types.js";
 
 export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit1_16> {
-    public static createConnection(
+    static createConnection(
         adb: Adb,
         connectionOptions: AdbScrcpyConnectionOptions,
         tunnelForward: boolean,
@@ -32,7 +32,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         }
     }
 
-    public static async getEncoders(
+    static async getEncoders(
         adb: Adb,
         path: string,
         version: string,
@@ -55,7 +55,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         return encoders;
     }
 
-    public static async getDisplays(
+    static async getDisplays(
         adb: Adb,
         path: string,
         version: string,
@@ -90,7 +90,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         }
     }
 
-    public override getEncoders(
+    override getEncoders(
         adb: Adb,
         path: string,
         version: string,
@@ -98,7 +98,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         return AdbScrcpyOptions1_16.getEncoders(adb, path, version, this);
     }
 
-    public override getDisplays(
+    override getDisplays(
         adb: Adb,
         path: string,
         version: string,
@@ -106,7 +106,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         return AdbScrcpyOptions1_16.getDisplays(adb, path, version, this);
     }
 
-    public override createConnection(adb: Adb): AdbScrcpyConnection {
+    override createConnection(adb: Adb): AdbScrcpyConnection {
         return AdbScrcpyOptions1_16.createConnection(
             adb,
             {

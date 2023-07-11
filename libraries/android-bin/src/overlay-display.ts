@@ -18,12 +18,11 @@ export interface OverlayDisplayDevice {
 }
 
 export class OverlayDisplay extends AdbCommandBase {
-    private settings: Settings;
+    #settings: Settings;
 
-    public static readonly OVERLAY_DISPLAY_DEVICES_KEY =
-        "overlay_display_devices";
+    static readonly SETTING_KEY = "overlay_display_devices";
 
-    public static readonly OverlayDisplayDevicesFormat = p.separated(
+    static readonly SETTING_FORMAT = p.separated(
         ";",
         p.sequence(
             {
@@ -62,14 +61,14 @@ export class OverlayDisplay extends AdbCommandBase {
 
     constructor(adb: Adb) {
         super(adb);
-        this.settings = new Settings(adb);
+        this.#settings = new Settings(adb);
     }
 
-    public async get() {
-        return OverlayDisplay.OverlayDisplayDevicesFormat.parse({
-            value: await this.settings.get(
+    async get() {
+        return OverlayDisplay.SETTING_FORMAT.parse({
+            value: await this.#settings.get(
                 "global",
-                OverlayDisplay.OVERLAY_DISPLAY_DEVICES_KEY,
+                OverlayDisplay.SETTING_KEY,
             ),
             position: 0,
         }).map((device) => ({
@@ -82,11 +81,11 @@ export class OverlayDisplay extends AdbCommandBase {
         }));
     }
 
-    public async set(devices: OverlayDisplayDevice[]) {
-        await this.settings.put(
+    async set(devices: OverlayDisplayDevice[]) {
+        await this.#settings.put(
             "global",
-            OverlayDisplay.OVERLAY_DISPLAY_DEVICES_KEY,
-            OverlayDisplay.OverlayDisplayDevicesFormat.stringify(
+            OverlayDisplay.SETTING_KEY,
+            OverlayDisplay.SETTING_FORMAT.stringify(
                 devices.map((device) => {
                     const flags: (
                         | "secure"

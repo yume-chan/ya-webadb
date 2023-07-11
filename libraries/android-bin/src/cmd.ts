@@ -14,26 +14,26 @@ import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
 
 export class Cmd extends AdbCommandBase {
     #supportsShellV2: boolean;
-    public get supportsShellV2() {
+    get supportsShellV2() {
         return this.#supportsShellV2;
     }
 
     #supportsCmd: boolean;
-    public get supportsCmd() {
+    get supportsCmd() {
         return this.#supportsCmd;
     }
 
     #supportsAbb: boolean;
-    public get supportsAbb() {
+    get supportsAbb() {
         return this.#supportsAbb;
     }
 
     #supportsAbbExec: boolean;
-    public get supportsAbbExec() {
+    get supportsAbbExec() {
         return this.#supportsAbbExec;
     }
 
-    public constructor(adb: Adb) {
+    constructor(adb: Adb) {
         super(adb);
         this.#supportsShellV2 = adb.supportsFeature(AdbFeature.ShellV2);
         this.#supportsCmd = adb.supportsFeature(AdbFeature.Cmd);
@@ -41,7 +41,7 @@ export class Cmd extends AdbCommandBase {
         this.#supportsAbbExec = adb.supportsFeature(AdbFeature.AbbExec);
     }
 
-    public async spawn(
+    async spawn(
         shellProtocol: boolean,
         command: string,
         ...args: string[]
@@ -76,7 +76,7 @@ export class Cmd extends AdbCommandBase {
         throw new Error("Not supported");
     }
 
-    public async spawnAndWait(
+    async spawnAndWait(
         command: string,
         ...args: string[]
     ): Promise<AdbSubprocessWaitResult> {

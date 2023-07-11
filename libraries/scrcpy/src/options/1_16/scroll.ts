@@ -24,31 +24,31 @@ export const ScrcpyInjectScrollControlMessage1_16 = new Struct()
  * reaches 1 or -1.
  */
 export class ScrcpyScrollController1_16 implements ScrcpyScrollController {
-    private accumulatedX = 0;
-    private accumulatedY = 0;
+    #accumulatedX = 0;
+    #accumulatedY = 0;
 
     protected processMessage(
         message: ScrcpyInjectScrollControlMessage,
     ): ScrcpyInjectScrollControlMessage | undefined {
-        this.accumulatedX += message.scrollX;
-        this.accumulatedY += message.scrollY;
+        this.#accumulatedX += message.scrollX;
+        this.#accumulatedY += message.scrollY;
 
         let scrollX = 0;
         let scrollY = 0;
-        if (this.accumulatedX >= 1) {
+        if (this.#accumulatedX >= 1) {
             scrollX = 1;
-            this.accumulatedX = 0;
-        } else if (this.accumulatedX <= -1) {
+            this.#accumulatedX = 0;
+        } else if (this.#accumulatedX <= -1) {
             scrollX = -1;
-            this.accumulatedX = 0;
+            this.#accumulatedX = 0;
         }
 
-        if (this.accumulatedY >= 1) {
+        if (this.#accumulatedY >= 1) {
             scrollY = 1;
-            this.accumulatedY = 0;
-        } else if (this.accumulatedY <= -1) {
+            this.#accumulatedY = 0;
+        } else if (this.#accumulatedY <= -1) {
             scrollY = -1;
-            this.accumulatedY = 0;
+            this.#accumulatedY = 0;
         }
 
         if (scrollX === 0 && scrollY === 0) {
@@ -60,7 +60,7 @@ export class ScrcpyScrollController1_16 implements ScrcpyScrollController {
         return message;
     }
 
-    public serializeScrollMessage(
+    serializeScrollMessage(
         message: ScrcpyInjectScrollControlMessage,
     ): Uint8Array | undefined {
         const processed = this.processMessage(message);

@@ -32,7 +32,7 @@ export class BTreeNode {
     height: number;
     children: BTreeNode[];
 
-    public constructor(
+    constructor(
         order: number,
         keys: Int32Array,
         keyCount: number,
@@ -124,7 +124,7 @@ export class BTreeNode {
         };
     }
 
-    public search(value: number): number {
+    search(value: number): number {
         let start = 0;
         let end = this.keyCount - 1;
         while (start <= end) {
@@ -140,7 +140,7 @@ export class BTreeNode {
         return ~start;
     }
 
-    public has(value: number): boolean {
+    has(value: number): boolean {
         let index = this.search(value);
 
         if (index >= 0) {
@@ -155,7 +155,7 @@ export class BTreeNode {
         return false;
     }
 
-    public add(value: number): BTreeInsertionResult | boolean {
+    add(value: number): BTreeInsertionResult | boolean {
         let index = this.search(value);
         if (index >= 0) {
             return false;
@@ -188,7 +188,7 @@ export class BTreeNode {
         return true;
     }
 
-    public delete(value: number): boolean {
+    delete(value: number): boolean {
         let index = this.search(value);
         if (index >= 0) {
             this.deleteAt(index);
@@ -209,7 +209,7 @@ export class BTreeNode {
         return deleted;
     }
 
-    public max(): number {
+    max(): number {
         if (this.height === 0) {
             return this.keys[this.keyCount - 1]!;
         }
@@ -315,7 +315,7 @@ export class BTreeNode {
         this.balance(index);
     }
 
-    public *[Symbol.iterator](): Generator<number, void, void> {
+    *[Symbol.iterator](): Generator<number, void, void> {
         if (this.height > 0) {
             for (let i = 0; i < this.keyCount; i += 1) {
                 yield* this.children[i]!;
@@ -331,27 +331,31 @@ export class BTreeNode {
 }
 
 export class BTree {
-    private _order: number;
-    public get order() {
-        return this._order;
+    #order: number;
+    get order() {
+        return this.#order;
     }
 
-    private _root: BTreeNode;
-
-    private _size = 0;
-    public get size() {
-        return this._size;
+    #root: BTreeNode;
+    /** @internal */
+    get root() {
+        return this.#root;
     }
 
-    public constructor(order: number) {
-        this._order = order;
+    #size = 0;
+    get size() {
+        return this.#size;
+    }
+
+    constructor(order: number) {
+        this.#order = order;
         const keys = new Int32Array(order - 1);
         const children = new Array<BTreeNode>(order);
-        this._root = new BTreeNode(order, keys, 0, 0, children);
+        this.#root = new BTreeNode(order, keys, 0, 0, children);
     }
 
-    public has(value: number) {
-        let node = this._root;
+    has(value: number) {
+        let node = this.#root;
         while (true) {
             const index = node.search(value);
             if (index >= 0) {
@@ -365,50 +369,50 @@ export class BTree {
         }
     }
 
-    public add(value: number) {
-        const split = this._root.add(value);
+    add(value: number) {
+        const split = this.#root.add(value);
         if (typeof split === "object") {
-            const keys = new Int32Array(this._order - 1);
+            const keys = new Int32Array(this.#order - 1);
             keys[0] = split.key;
 
-            const children = new Array<BTreeNode>(this._order);
-            children[0] = this._root;
+            const children = new Array<BTreeNode>(this.#order);
+            children[0] = this.#root;
             children[1] = split.child;
 
-            this._root = new BTreeNode(
-                this._order,
+            this.#root = new BTreeNode(
+                this.#order,
                 keys,
                 1,
-                this._root.height + 1,
+                this.#root.height + 1,
                 children,
             );
         }
         if (split) {
-            this._size += 1;
+            this.#size += 1;
         }
         return !!split;
     }
 
-    public delete(value: number) {
-        const deleted = this._root.delete(value);
+    delete(value: number) {
+        const deleted = this.#root.delete(value);
         if (deleted) {
-            if (this._root.height > 0 && this._root.keyCount === 0) {
-                this._root = this._root.children[0]!;
+            if (this.#root.height > 0 && this.#root.keyCount === 0) {
+                this.#root = this.#root.children[0]!;
             }
-            this._size -= 1;
+            this.#size -= 1;
         }
         return deleted;
     }
 
-    public clear() {
-        this._root.keyCount = 0;
-        this._root.height = 0;
+    clear() {
+        this.#root.keyCount = 0;
+        this.#root.height = 0;
         // immediately release all references
-        this._root.children = new Array<BTreeNode>(this._order);
-        this._size = 0;
+        this.#root.children = new Array<BTreeNode>(this.#order);
+        this.#size = 0;
     }
 
-    public [Symbol.iterator]() {
-        return this._root[Symbol.iterator]();
+    [Symbol.iterator]() {
+        return this.#root[Symbol.iterator]();
     }
 }

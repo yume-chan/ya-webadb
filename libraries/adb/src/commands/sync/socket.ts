@@ -19,11 +19,11 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
     readonly #writeLock = new AutoResetEvent();
     readonly #combiner: BufferCombiner;
 
-    public get position() {
+    get position() {
         return this.#readable.position;
     }
 
-    public constructor(
+    constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
         readable: BufferedReadableStream,
         bufferSize: number,
@@ -35,39 +35,39 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
         this.#combiner = new BufferCombiner(bufferSize);
     }
 
-    private async writeInnerStream(buffer: Uint8Array) {
+    async #writeInnerStream(buffer: Uint8Array) {
         await ConsumableWritableStream.write(this.#writer, buffer);
     }
 
-    public async flush() {
+    async flush() {
         try {
             await this.#writeLock.wait();
             const buffer = this.#combiner.flush();
             if (buffer) {
-                await this.writeInnerStream(buffer);
+                await this.#writeInnerStream(buffer);
             }
         } finally {
             this.#writeLock.notifyOne();
         }
     }
 
-    public async write(data: Uint8Array) {
+    async write(data: Uint8Array) {
         try {
             await this.#writeLock.wait();
             for (const buffer of this.#combiner.push(data)) {
-                await this.writeInnerStream(buffer);
+                await this.#writeInnerStream(buffer);
             }
         } finally {
             this.#writeLock.notifyOne();
         }
     }
 
-    public async readExactly(length: number) {
+    async readExactly(length: number) {
         await this.flush();
         return await this.#readable.readExactly(length);
     }
 
-    public release(): void {
+    release(): void {
         this.#combiner.flush();
         this.#socketLock.notifyOne();
     }
@@ -78,7 +78,7 @@ export class AdbSyncSocket {
     readonly #socket: AdbSocket;
     readonly #locked: AdbSyncSocketLocked;
 
-    public constructor(socket: AdbSocket, bufferSize: number) {
+    constructor(socket: AdbSocket, bufferSize: number) {
         this.#socket = socket;
         this.#locked = new AdbSyncSocketLocked(
             socket.writable.getWriter(),
@@ -88,12 +88,12 @@ export class AdbSyncSocket {
         );
     }
 
-    public async lock() {
+    async lock() {
         await this.#lock.wait();
         return this.#locked;
     }
 
-    public async close() {
+    async close() {
         await this.#socket.close();
     }
 }

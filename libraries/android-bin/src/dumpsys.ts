@@ -1,7 +1,7 @@
 import { AdbCommandBase } from "@yume-chan/adb";
 
 export class DumpSys extends AdbCommandBase {
-    public async diskStats() {
+    async diskStats() {
         const output = await this.adb.subprocess.spawnAndWaitLegacy([
             "dumpsys",
             "diskstats",
@@ -34,7 +34,7 @@ export class DumpSys extends AdbCommandBase {
         };
     }
 
-    public async battery() {
+    async battery() {
         const output = await this.adb.subprocess.spawnAndWaitLegacy([
             "dumpsys",
             "battery",

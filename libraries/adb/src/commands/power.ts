@@ -6,23 +6,23 @@
 import { AdbCommandBase } from "./base.js";
 
 export class AdbPower extends AdbCommandBase {
-    public reboot(mode = "") {
+    reboot(mode = "") {
         return this.adb.createSocketAndWait(`reboot:${mode}`);
     }
 
-    public bootloader() {
+    bootloader() {
         return this.reboot("bootloader");
     }
 
-    public fastboot() {
+    fastboot() {
         return this.reboot("fastboot");
     }
 
-    public recovery() {
+    recovery() {
         return this.reboot("recovery");
     }
 
-    public sideload() {
+    sideload() {
         return this.reboot("sideload");
     }
 
@@ -31,15 +31,15 @@ export class AdbPower extends AdbCommandBase {
      *
      * Only works on some Qualcomm devices.
      */
-    public qualcommEdlMode() {
+    qualcommEdlMode() {
         return this.reboot("edl");
     }
 
-    public powerOff() {
+    powerOff() {
         return this.adb.subprocess.spawnAndWaitLegacy(["reboot", "-p"]);
     }
 
-    public powerButton(longPress = false) {
+    powerButton(longPress = false) {
         return this.adb.subprocess.spawnAndWaitLegacy([
             "input",
             "keyevent",
@@ -52,7 +52,7 @@ export class AdbPower extends AdbCommandBase {
      *
      * Only works on Samsung devices.
      */
-    public samsungOdin() {
+    samsungOdin() {
         return this.reboot("download");
     }
 }

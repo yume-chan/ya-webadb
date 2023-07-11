@@ -53,7 +53,7 @@ export class AdbPacketSerializeStream extends ConsumableTransformStream<
     AdbPacketInit,
     Uint8Array
 > {
-    public constructor() {
+    constructor() {
         const headerBuffer = new Uint8Array(AdbPacketHeader.size);
         super({
             transform: async (chunk, controller) => {

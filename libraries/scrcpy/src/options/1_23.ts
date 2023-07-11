@@ -16,27 +16,27 @@ export class ScrcpyOptions1_23 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_23,
     ScrcpyOptions1_22
 > {
-    public static readonly DEFAULTS = {
+    static readonly DEFAULTS = {
         ...ScrcpyOptions1_22.DEFAULTS,
         cleanup: true,
     } as const satisfies Required<ScrcpyOptionsInit1_23>;
 
-    public override get defaults(): Required<ScrcpyOptionsInit1_23> {
+    override get defaults(): Required<ScrcpyOptionsInit1_23> {
         return ScrcpyOptions1_23.DEFAULTS;
     }
 
-    public constructor(init: ScrcpyOptionsInit1_22) {
+    constructor(init: ScrcpyOptionsInit1_22) {
         super(new ScrcpyOptions1_22(init), {
             ...ScrcpyOptions1_23.DEFAULTS,
             ...init,
         });
     }
 
-    public override serialize(): string[] {
+    override serialize(): string[] {
         return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
-    public override createMediaStreamTransformer(): TransformStream<
+    override createMediaStreamTransformer(): TransformStream<
         Uint8Array,
         ScrcpyMediaStreamPacket
     > {

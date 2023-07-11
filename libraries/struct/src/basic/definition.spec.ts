@@ -12,13 +12,13 @@ describe("StructFieldDefinition", () => {
     describe(".constructor", () => {
         it("should save the `options` parameter", () => {
             class MockFieldDefinition extends StructFieldDefinition<number> {
-                public constructor(options: number) {
+                constructor(options: number) {
                     super(options);
                 }
-                public getSize(): number {
+                getSize(): number {
                     throw new Error("Method not implemented.");
                 }
-                public create(
+                create(
                     options: Readonly<StructOptions>,
                     struct: StructValue,
                     value: unknown,
@@ -28,17 +28,17 @@ describe("StructFieldDefinition", () => {
                     void value;
                     throw new Error("Method not implemented.");
                 }
-                public override deserialize(
+                override deserialize(
                     options: Readonly<StructOptions>,
                     stream: ExactReadable,
                     struct: StructValue,
                 ): StructFieldValue<this>;
-                public override deserialize(
+                override deserialize(
                     options: Readonly<StructOptions>,
                     stream: AsyncExactReadable,
                     struct: StructValue,
                 ): Promise<StructFieldValue<this>>;
-                public deserialize(
+                deserialize(
                     options: Readonly<StructOptions>,
                     stream: ExactReadable | AsyncExactReadable,
                     struct: StructValue,

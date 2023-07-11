@@ -9,7 +9,7 @@ export class BufferCombiner {
     #offset: number;
     #available: number;
 
-    public constructor(size: number) {
+    constructor(size: number) {
         this.#capacity = size;
         this.#buffer = new Uint8Array(size);
         this.#offset = 0;
@@ -23,7 +23,7 @@ export class BufferCombiner {
      * A generator that yields buffers of specified size.
      * It may yield the same buffer multiple times, consume the data before calling `next`.
      */
-    public *push(data: Uint8Array): Generator<Uint8Array, void, void> {
+    *push(data: Uint8Array): Generator<Uint8Array, void, void> {
         let offset = 0;
         let available = data.byteLength;
 
@@ -65,7 +65,7 @@ export class BufferCombiner {
         }
     }
 
-    public flush(): Uint8Array | undefined {
+    flush(): Uint8Array | undefined {
         if (this.#offset === 0) {
             return undefined;
         }
@@ -81,7 +81,7 @@ export class DistributionStream extends ConsumableTransformStream<
     Uint8Array,
     Uint8Array
 > {
-    public constructor(size: number, combine = false) {
+    constructor(size: number, combine = false) {
         const combiner = combine ? new BufferCombiner(size) : undefined;
         super({
             async transform(chunk, controller) {

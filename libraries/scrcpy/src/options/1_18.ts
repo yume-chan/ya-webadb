@@ -82,23 +82,23 @@ export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_18,
     ScrcpyOptions1_17
 > {
-    public static readonly DEFAULTS = {
+    static readonly DEFAULTS = {
         ...ScrcpyOptions1_17.DEFAULTS,
         logLevel: ScrcpyLogLevel1_18.Debug,
         lockVideoOrientation: ScrcpyVideoOrientation1_18.Unlocked,
         powerOffOnClose: false,
     } as const satisfies Required<ScrcpyOptionsInit1_18>;
 
-    public static readonly SERIALIZE_ORDER = [
+    static readonly SERIALIZE_ORDER = [
         ...ScrcpyOptions1_17.SERIALIZE_ORDER,
         "powerOffOnClose",
     ] as const satisfies readonly (keyof ScrcpyOptionsInit1_18)[];
 
-    public override get defaults(): Required<ScrcpyOptionsInit1_18> {
+    override get defaults(): Required<ScrcpyOptionsInit1_18> {
         return ScrcpyOptions1_18.DEFAULTS;
     }
 
-    public override get controlMessageTypes() {
+    override get controlMessageTypes() {
         return SCRCPY_CONTROL_MESSAGE_TYPES_1_18;
     }
 
@@ -115,21 +115,21 @@ export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
         );
     }
 
-    public override serialize(): string[] {
+    override serialize(): string[] {
         return ScrcpyOptions1_16.serialize(
             this.value,
             ScrcpyOptions1_18.SERIALIZE_ORDER,
         );
     }
 
-    public override parseEncoder(line: string): ScrcpyEncoder | undefined {
+    override parseEncoder(line: string): ScrcpyEncoder | undefined {
         return ScrcpyOptions1_17.parseEncoder(
             line,
             /\s+scrcpy --encoder '(.*?)'/,
         );
     }
 
-    public override serializeBackOrScreenOnControlMessage(
+    override serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnControlMessage,
     ) {
         return ScrcpyBackOrScreenOnControlMessage1_18.serialize(message);

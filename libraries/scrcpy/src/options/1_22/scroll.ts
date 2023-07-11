@@ -13,7 +13,7 @@ export type ScrcpyInjectScrollControlMessage1_22 =
     (typeof ScrcpyInjectScrollControlMessage1_22)["TInit"];
 
 export class ScrcpyScrollController1_22 extends ScrcpyScrollController1_16 {
-    public override serializeScrollMessage(
+    override serializeScrollMessage(
         message: ScrcpyInjectScrollControlMessage1_22,
     ): Uint8Array | undefined {
         const processed = this.processMessage(message);

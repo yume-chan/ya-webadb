@@ -14,16 +14,16 @@ import {
 } from "@yume-chan/stream-extra";
 
 export default class AdbDaemonWebSocketDevice implements AdbDaemonDevice {
-    public readonly serial: string;
+    readonly serial: string;
 
-    public name: string | undefined;
+    name: string | undefined;
 
-    public constructor(url: string, name?: string) {
+    constructor(url: string, name?: string) {
         this.serial = url;
         this.name = name;
     }
 
-    public async connect() {
+    async connect() {
         const socket = new WebSocket(this.serial);
         socket.binaryType = "arraybuffer";
 

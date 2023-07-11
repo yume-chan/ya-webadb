@@ -24,12 +24,12 @@ export interface SettingsPutOptions extends SettingsOptions {
 export class Settings extends AdbCommandBase {
     #cmd: Cmd;
 
-    public constructor(adb: Adb) {
+    constructor(adb: Adb) {
         super(adb);
         this.#cmd = new Cmd(adb);
     }
 
-    public async base(
+    async base(
         verb: string,
         namespace: SettingsNamespace,
         options: SettingsOptions | undefined,
@@ -61,7 +61,7 @@ export class Settings extends AdbCommandBase {
         return output.stdout;
     }
 
-    public async get(
+    async get(
         namespace: SettingsNamespace,
         key: string,
         options?: SettingsOptions,
@@ -71,7 +71,7 @@ export class Settings extends AdbCommandBase {
         return output.substring(0, output.length - 1);
     }
 
-    public async delete(
+    async delete(
         namespace: SettingsNamespace,
         key: string,
         options?: SettingsOptions,
@@ -79,7 +79,7 @@ export class Settings extends AdbCommandBase {
         await this.base("delete", namespace, options, key);
     }
 
-    public async put(
+    async put(
         namespace: SettingsNamespace,
         key: string,
         value: string,
@@ -95,18 +95,18 @@ export class Settings extends AdbCommandBase {
         await this.base("put", namespace, options, ...args);
     }
 
-    public reset(
+    reset(
         namespace: SettingsNamespace,
         mode: SettingsResetMode,
         options?: SettingsOptions,
     ): Promise<void>;
-    public reset(
+    reset(
         namespace: SettingsNamespace,
         packageName: string,
         tag?: string,
         options?: SettingsOptions,
     ): Promise<void>;
-    public async reset(
+    async reset(
         namespace: SettingsNamespace,
         modeOrPackageName: string,
         tagOrOptions?: string | SettingsOptions,

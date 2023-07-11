@@ -120,34 +120,30 @@ export const ADB_DEFAULT_AUTHENTICATORS: AdbAuthenticator[] = [
 ];
 
 export class AdbAuthenticationProcessor implements Disposable {
-    public readonly authenticators: readonly AdbAuthenticator[];
+    readonly authenticators: readonly AdbAuthenticator[];
 
-    private readonly credentialStore: AdbCredentialStore;
+    readonly #credentialStore: AdbCredentialStore;
 
     #pendingRequest = new PromiseResolver<AdbPacketData>();
     #iterator: AsyncIterator<AdbPacketData, void, void> | undefined;
 
-    public constructor(
+    constructor(
         authenticators: readonly AdbAuthenticator[],
         credentialStore: AdbCredentialStore,
     ) {
         this.authenticators = authenticators;
-        this.credentialStore = credentialStore;
+        this.#credentialStore = credentialStore;
     }
 
-    private getNextRequest = (): Promise<AdbPacketData> => {
+    #getNextRequest = (): Promise<AdbPacketData> => {
         return this.#pendingRequest.promise;
     };
 
-    private async *invokeAuthenticator(): AsyncGenerator<
-        AdbPacketData,
-        void,
-        void
-    > {
+    async *#invokeAuthenticator(): AsyncGenerator<AdbPacketData, void, void> {
         for (const authenticator of this.authenticators) {
             for await (const packet of authenticator(
-                this.credentialStore,
-                this.getNextRequest,
+                this.#credentialStore,
+                this.#getNextRequest,
             )) {
                 // If the authenticator yielded a response
                 // Prepare `nextRequest` for next authentication request
@@ -162,9 +158,9 @@ export class AdbAuthenticationProcessor implements Disposable {
         }
     }
 
-    public async process(packet: AdbPacketData): Promise<AdbPacketData> {
+    async process(packet: AdbPacketData): Promise<AdbPacketData> {
         if (!this.#iterator) {
-            this.#iterator = this.invokeAuthenticator();
+            this.#iterator = this.#invokeAuthenticator();
         }
 
         this.#pendingRequest.resolve(packet);
@@ -177,7 +173,7 @@ export class AdbAuthenticationProcessor implements Disposable {
         return result.value;
     }
 
-    public dispose() {
+    dispose() {
         void this.#iterator?.return?.();
     }
 }

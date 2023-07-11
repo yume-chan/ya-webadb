@@ -25,7 +25,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
      * when the `Promise` is resolved, and be errored when the `Promise` is rejected.
      * @param strategy
      */
-    public constructor(
+    constructor(
         source: PushReadableStreamSource<T>,
         strategy?: QueuingStrategy<T>,
     ) {

@@ -30,12 +30,12 @@ export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit1_21,
     ScrcpyOptions1_18
 > {
-    public static readonly DEFAULTS = {
+    static readonly DEFAULTS = {
         ...ScrcpyOptions1_18.DEFAULTS,
         clipboardAutosync: true,
     } as const satisfies Required<ScrcpyOptionsInit1_21>;
 
-    public static serialize<T extends object>(
+    static serialize<T extends object>(
         options: T,
         defaults: Required<T>,
     ): string[] {
@@ -60,22 +60,22 @@ export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
         return result;
     }
 
-    public override get defaults(): Required<ScrcpyOptionsInit1_21> {
+    override get defaults(): Required<ScrcpyOptionsInit1_21> {
         return ScrcpyOptions1_21.DEFAULTS;
     }
 
-    public constructor(init: ScrcpyOptionsInit1_21) {
+    constructor(init: ScrcpyOptionsInit1_21) {
         super(new ScrcpyOptions1_18(init), {
             ...ScrcpyOptions1_21.DEFAULTS,
             ...init,
         });
     }
 
-    public override serialize(): string[] {
+    override serialize(): string[] {
         return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 
-    public override serializeSetClipboardControlMessage(
+    override serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): Uint8Array {
         return ScrcpySetClipboardControlMessage1_21.serialize(message);

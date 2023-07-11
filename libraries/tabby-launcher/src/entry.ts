@@ -80,12 +80,12 @@ class AdbProxyTransport implements AdbTransport {
     private _port: MessagePort;
     private _remote: Comlink.Remote<AdbProxyTransportServer>;
 
-    public readonly serial: string;
-    public readonly maxPayloadSize: number;
-    public readonly banner: AdbBanner;
+    readonly serial: string;
+    readonly maxPayloadSize: number;
+    readonly banner: AdbBanner;
 
     private _disconnected = new PromiseResolver<void>();
-    public get disconnected(): Promise<void> {
+    get disconnected(): Promise<void> {
         return this._disconnected.promise;
     }
 
@@ -106,7 +106,7 @@ class AdbProxyTransport implements AdbTransport {
         this.banner = banner;
     }
 
-    public async connect(service: string) {
+    async connect(service: string) {
         let readable: ReadableStream<Uint8Array>;
         let writable: WritableStream<Consumable<Uint8Array>>;
         let close: () => void;
@@ -128,22 +128,19 @@ class AdbProxyTransport implements AdbTransport {
         };
     }
 
-    public async addReverseTunnel(
-        handler: AdbIncomingSocketHandler,
-        address: string
-    ) {
+    async addReverseTunnel(handler: AdbIncomingSocketHandler, address: string) {
         return await this._remote.addReverseTunnel(handler, address);
     }
 
-    public async removeReverseTunnel(address: string) {
+    async removeReverseTunnel(address: string) {
         await this._remote.removeReverseTunnel(address);
     }
 
-    public async clearReverseTunnels() {
+    async clearReverseTunnels() {
         await this._remote.clearReverseTunnels();
     }
 
-    public async close() {
+    async close() {
         await this._remote.close();
         this._port.close();
     }

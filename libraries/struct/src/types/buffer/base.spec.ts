@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
-import { StructDefaultOptions, StructValue } from "../../basic/index.js";
 import type { ExactReadable } from "../../basic/index.js";
+import { StructDefaultOptions, StructValue } from "../../basic/index.js";
 
 import type { BufferFieldSubType } from "./base.js";
 import {
@@ -12,11 +12,11 @@ import {
 } from "./base.js";
 
 class MockDeserializationStream implements ExactReadable {
-    public array = EMPTY_UINT8_ARRAY;
+    array = EMPTY_UINT8_ARRAY;
 
-    public position = 0;
+    position = 0;
 
-    public readExactly = jest.fn(() => this.array);
+    readExactly = jest.fn(() => this.array);
 }
 
 describe("Types", () => {
@@ -81,7 +81,7 @@ describe("Types", () => {
         class MockArrayBufferFieldDefinition<
             TType extends BufferFieldSubType,
         > extends BufferLikeFieldDefinition<TType, number> {
-            public getSize(): number {
+            getSize(): number {
                 return this.options;
             }
         }

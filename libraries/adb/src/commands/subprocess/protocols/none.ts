@@ -13,17 +13,17 @@ import type { AdbSubprocessProtocol } from "./types.js";
  * * `resize`: No
  */
 export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
-    public static isSupported() {
+    static isSupported() {
         return true;
     }
 
-    public static async pty(adb: Adb, command: string) {
+    static async pty(adb: Adb, command: string) {
         return new AdbSubprocessNoneProtocol(
             await adb.createSocket(`shell:${command}`),
         );
     }
 
-    public static async raw(adb: Adb, command: string) {
+    static async raw(adb: Adb, command: string) {
         // `shell,raw:${command}` also triggers raw mode,
         // But is not supported on Android version <7.
         return new AdbSubprocessNoneProtocol(
@@ -36,7 +36,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     readonly #duplex: DuplexStreamFactory<Uint8Array, Uint8Array>;
 
     // Legacy shell forwards all data to stdin.
-    public get stdin() {
+    get stdin() {
         return this.#socket.writable;
     }
 
@@ -44,7 +44,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     /**
      * Legacy shell mixes stdout and stderr.
      */
-    public get stdout() {
+    get stdout() {
         return this.#stdout;
     }
 
@@ -52,16 +52,16 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     /**
      * `stderr` will always be empty.
      */
-    public get stderr() {
+    get stderr() {
         return this.#stderr;
     }
 
     #exit: Promise<number>;
-    public get exit() {
+    get exit() {
         return this.#exit;
     }
 
-    public constructor(socket: AdbSocket) {
+    constructor(socket: AdbSocket) {
         this.#socket = socket;
 
         // Link `stdout`, `stderr` and `stdin` together,
@@ -77,11 +77,11 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
         this.#exit = this.#duplex.closed.then(() => 0);
     }
 
-    public resize() {
+    resize() {
         // Not supported, but don't throw.
     }
 
-    public kill() {
+    kill() {
         return this.#duplex.close();
     }
 }

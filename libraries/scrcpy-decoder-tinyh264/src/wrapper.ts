@@ -1,6 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { AutoDisposable, EventEmitter } from "@yume-chan/event";
 import type { Disposable } from "@yume-chan/event";
+import { AutoDisposable, EventEmitter } from "@yume-chan/event";
 
 let worker: Worker | undefined;
 let workerReady = false;
@@ -36,28 +36,27 @@ function subscribePictureReady(
 }
 
 export class TinyH264Wrapper extends AutoDisposable {
-    public readonly streamId: number;
+    readonly streamId: number;
 
-    private readonly pictureReadyEvent =
-        new EventEmitter<PictureReadyEventArgs>();
-    public get onPictureReady() {
-        return this.pictureReadyEvent.event;
+    readonly #pictureReadyEvent = new EventEmitter<PictureReadyEventArgs>();
+    get onPictureReady() {
+        return this.#pictureReadyEvent.event;
     }
 
-    public constructor(streamId: number) {
+    constructor(streamId: number) {
         super();
 
         this.streamId = streamId;
         this.addDisposable(
-            subscribePictureReady(streamId, this.handlePictureReady),
+            subscribePictureReady(streamId, this.#handlePictureReady),
         );
     }
 
-    private handlePictureReady = (e: PictureReadyEventArgs) => {
-        this.pictureReadyEvent.fire(e);
+    #handlePictureReady = (e: PictureReadyEventArgs) => {
+        this.#pictureReadyEvent.fire(e);
     };
 
-    public feed(data: ArrayBuffer) {
+    feed(data: ArrayBuffer) {
         worker!.postMessage(
             {
                 type: "decode",
@@ -70,7 +69,7 @@ export class TinyH264Wrapper extends AutoDisposable {
         );
     }
 
-    public override dispose() {
+    override dispose() {
         super.dispose();
         worker!.postMessage({
             type: "release",

@@ -1,12 +1,12 @@
 export abstract class PcmPlayer<T> {
     protected abstract sourceName: string;
 
-    private _context: AudioContext;
-    private _worklet: AudioWorkletNode | undefined;
-    private _buffer: T[] = [];
+    #context: AudioContext;
+    #worklet: AudioWorkletNode | undefined;
+    #buffers: T[] = [];
 
     constructor(sampleRate: number) {
-        this._context = new AudioContext({
+        this.#context = new AudioContext({
             latencyHint: "interactive",
             sampleRate,
         });
@@ -14,38 +14,38 @@ export abstract class PcmPlayer<T> {
 
     protected abstract feedCore(worklet: AudioWorkletNode, source: T): void;
 
-    public feed(source: T) {
-        if (this._worklet === undefined) {
-            this._buffer.push(source);
+    feed(source: T) {
+        if (this.#worklet === undefined) {
+            this.#buffers.push(source);
             return;
         }
 
-        this.feedCore(this._worklet, source);
+        this.feedCore(this.#worklet, source);
     }
 
-    public async start() {
-        await this._context.audioWorklet.addModule(
+    async start() {
+        await this.#context.audioWorklet.addModule(
             new URL("./worker.js", import.meta.url),
         );
 
-        this._worklet = new AudioWorkletNode(this._context, this.sourceName, {
+        this.#worklet = new AudioWorkletNode(this.#context, this.sourceName, {
             numberOfInputs: 0,
             numberOfOutputs: 1,
             outputChannelCount: [2],
         });
-        this._worklet.connect(this._context.destination);
+        this.#worklet.connect(this.#context.destination);
 
-        for (const source of this._buffer) {
-            this.feedCore(this._worklet, source);
+        for (const source of this.#buffers) {
+            this.feedCore(this.#worklet, source);
         }
-        this._buffer.length = 0;
+        this.#buffers.length = 0;
     }
 
     async stop() {
-        this._worklet?.disconnect();
-        this._worklet = undefined;
+        this.#worklet?.disconnect();
+        this.#worklet = undefined;
 
-        await this._context.close();
+        await this.#context.close();
     }
 }
 

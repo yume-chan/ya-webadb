@@ -1,5 +1,5 @@
 export class HidMouse {
-    public static readonly descriptor = new Uint8Array(
+    static readonly descriptor = new Uint8Array(
         // prettier-ignore
         [
             0x05, 0x01,       // Usage Page (Generic Desktop)
@@ -42,7 +42,7 @@ export class HidMouse {
         ]
     );
 
-    public static serializeInputReport(
+    static serializeInputReport(
         movementX: number,
         movementY: number,
         buttons: number,

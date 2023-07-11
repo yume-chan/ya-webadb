@@ -42,23 +42,23 @@ export class AdbDaemonSocketController
         Closeable,
         Disposable
 {
-    private readonly dispatcher!: AdbPacketDispatcher;
+    readonly #dispatcher!: AdbPacketDispatcher;
 
-    public readonly localId!: number;
-    public readonly remoteId!: number;
-    public readonly localCreated!: boolean;
-    public readonly service!: string;
+    readonly localId!: number;
+    readonly remoteId!: number;
+    readonly localCreated!: boolean;
+    readonly service!: string;
 
     #duplex: DuplexStreamFactory<Uint8Array, Consumable<Uint8Array>>;
 
     #readable: ReadableStream<Uint8Array>;
     #readableController!: PushReadableStreamController<Uint8Array>;
-    public get readable() {
+    get readable() {
         return this.#readable;
     }
 
     #writePromise: PromiseResolver<void> | undefined;
-    public readonly writable: WritableStream<Consumable<Uint8Array>>;
+    readonly writable: WritableStream<Consumable<Uint8Array>>;
 
     #closed = false;
     /**
@@ -66,17 +66,21 @@ export class AdbDaemonSocketController
      *
      * It's only used by dispatcher to avoid sending another `CLSE` packet to remote.
      */
-    public get closed() {
+    get closed() {
         return this.#closed;
     }
 
-    private _socket: AdbDaemonSocket;
-    public get socket() {
-        return this._socket;
+    #socket: AdbDaemonSocket;
+    get socket() {
+        return this.#socket;
     }
 
-    public constructor(options: AdbDaemonSocketConstructionOptions) {
-        Object.assign(this, options);
+    constructor(options: AdbDaemonSocketConstructionOptions) {
+        this.#dispatcher = options.dispatcher;
+        this.localId = options.localId;
+        this.remoteId = options.remoteId;
+        this.localCreated = options.localCreated;
+        this.service = options.service;
 
         // Check this image to help you understand the stream graph
         // cspell: disable-next-line
@@ -89,10 +93,10 @@ export class AdbDaemonSocketController
             close: async () => {
                 this.#closed = true;
 
-                await this.dispatcher.sendPacket(
+                await this.#dispatcher.sendPacket(
                     AdbCommand.Close,
                     this.localId,
-                    this.remoteId,
+                    this.remoteId
                 );
 
                 // Don't `dispose` here, we need to wait for `CLSE` response packet.
@@ -114,8 +118,8 @@ export class AdbDaemonSocketController
                     size(chunk) {
                         return chunk.byteLength;
                     },
-                },
-            ),
+                }
+            )
         );
 
         this.writable = pipeFrom(
@@ -124,23 +128,23 @@ export class AdbDaemonSocketController
                     write: async (chunk) => {
                         // Wait for an ack packet
                         this.#writePromise = new PromiseResolver();
-                        await this.dispatcher.sendPacket(
+                        await this.#dispatcher.sendPacket(
                             AdbCommand.Write,
                             this.localId,
                             this.remoteId,
-                            chunk,
+                            chunk
                         );
                         await this.#writePromise.promise;
                     },
-                }),
+                })
             ),
-            new DistributionStream(this.dispatcher.options.maxPayloadSize),
+            new DistributionStream(this.#dispatcher.options.maxPayloadSize)
         );
 
-        this._socket = new AdbDaemonSocket(this);
+        this.#socket = new AdbDaemonSocket(this);
     }
 
-    public async enqueue(data: Uint8Array) {
+    async enqueue(data: Uint8Array) {
         // Consumer may abort the `ReadableStream` to close the socket,
         // it's OK to throw away further packets in this case.
         if (this.#readableController.abortSignal.aborted) {
@@ -150,15 +154,15 @@ export class AdbDaemonSocketController
         await this.#readableController.enqueue(data);
     }
 
-    public ack() {
+    ack() {
         this.#writePromise?.resolve();
     }
 
-    public async close(): Promise<void> {
+    async close(): Promise<void> {
         await this.#duplex.close();
     }
 
-    public dispose() {
+    dispose() {
         return this.#duplex.dispose();
     }
 }
@@ -178,35 +182,35 @@ export class AdbDaemonSocket
 {
     #controller: AdbDaemonSocketController;
 
-    public get localId(): number {
+    get localId(): number {
         return this.#controller.localId;
     }
-    public get remoteId(): number {
+    get remoteId(): number {
         return this.#controller.remoteId;
     }
-    public get localCreated(): boolean {
+    get localCreated(): boolean {
         return this.#controller.localCreated;
     }
-    public get service(): string {
+    get service(): string {
         return this.#controller.service;
     }
 
-    public get readable(): ReadableStream<Uint8Array> {
+    get readable(): ReadableStream<Uint8Array> {
         return this.#controller.readable;
     }
-    public get writable(): WritableStream<Consumable<Uint8Array>> {
+    get writable(): WritableStream<Consumable<Uint8Array>> {
         return this.#controller.writable;
     }
 
-    public get closed(): boolean {
+    get closed(): boolean {
         return this.#controller.closed;
     }
 
-    public constructor(controller: AdbDaemonSocketController) {
+    constructor(controller: AdbDaemonSocketController) {
         this.#controller = controller;
     }
 
-    public close() {
+    close() {
         return this.#controller.close();
     }
 }

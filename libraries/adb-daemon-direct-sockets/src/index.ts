@@ -46,26 +46,26 @@ declare global {
 }
 
 export default class AdbDaemonDirectSocketsDevice implements AdbDaemonDevice {
-    public static isSupported(): boolean {
+    static isSupported(): boolean {
         return typeof globalThis.TCPSocket !== "undefined";
     }
 
-    public readonly serial: string;
+    readonly serial: string;
 
-    public readonly host: string;
+    readonly host: string;
 
-    public readonly port: number;
+    readonly port: number;
 
-    public name: string | undefined;
+    name: string | undefined;
 
-    public constructor(host: string, port = 5555, name?: string) {
+    constructor(host: string, port = 5555, name?: string) {
         this.host = host;
         this.port = port;
         this.serial = `${host}:${port}`;
         this.name = name;
     }
 
-    public async connect() {
+    async connect() {
         const socket = new globalThis.TCPSocket(this.host, this.port, {
             noDelay: true,
         });

@@ -42,7 +42,7 @@ export class VariableLengthBufferLikeFieldDefinition<
     TOptions["lengthField"],
     TTypeScriptType
 > {
-    public getSize(): number {
+    getSize(): number {
         return 0;
     }
 
@@ -54,7 +54,7 @@ export class VariableLengthBufferLikeFieldDefinition<
         return value;
     }
 
-    public override create(
+    override create(
         options: Readonly<StructOptions>,
         struct: StructValue,
         value: TTypeScriptType,
@@ -78,7 +78,7 @@ export class VariableLengthBufferLikeStructFieldValue<
 
     protected lengthFieldValue: VariableLengthBufferLikeFieldLengthValue;
 
-    public constructor(
+    constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
         struct: StructValue,
@@ -102,7 +102,7 @@ export class VariableLengthBufferLikeStructFieldValue<
         struct.set(lengthField, this.lengthFieldValue);
     }
 
-    public override getSize() {
+    override getSize() {
         if (this.length === undefined) {
             this.length = this.definition.type.getSize(this.value);
             if (this.length === -1) {
@@ -114,7 +114,7 @@ export class VariableLengthBufferLikeStructFieldValue<
         return this.length;
     }
 
-    public override set(value: unknown) {
+    override set(value: unknown) {
         super.set(value);
         this.array = undefined;
         this.length = undefined;
@@ -131,7 +131,7 @@ export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue {
 
     protected bufferField: VariableLengthBufferLikeFieldValueLike;
 
-    public constructor(
+    constructor(
         originalField: StructFieldValue,
         arrayBufferField: VariableLengthBufferLikeFieldValueLike,
     ) {
@@ -145,11 +145,11 @@ export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue {
         this.bufferField = arrayBufferField;
     }
 
-    public override getSize() {
+    override getSize() {
         return this.originalField.getSize();
     }
 
-    public override get() {
+    override get() {
         let value: string | number = this.bufferField.getSize();
 
         const originalValue = this.originalField.get();
@@ -162,7 +162,7 @@ export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue {
         return value;
     }
 
-    public override set() {
+    override set() {
         // Ignore setting
         // It will always be in sync with the buffer size
     }

@@ -21,7 +21,7 @@ export class AdbBackup extends AdbCommandBase {
     /**
      * User must confirm backup on device within 60 seconds.
      */
-    public async backup(
+    async backup(
         options: AdbBackupOptions,
     ): Promise<ReadableStream<Uint8Array>> {
         const args = ["bu", "backup"];
@@ -62,7 +62,7 @@ export class AdbBackup extends AdbCommandBase {
      * User must enter the password (if any) and
      * confirm restore on device within 60 seconds.
      */
-    public async restore(options: AdbRestoreOptions): Promise<void> {
+    async restore(options: AdbRestoreOptions): Promise<void> {
         const args = ["bu", "restore"];
         if (options.user !== undefined) {
             args.push("--user", options.user.toString());

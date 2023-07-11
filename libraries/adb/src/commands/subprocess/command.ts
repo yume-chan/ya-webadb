@@ -37,7 +37,7 @@ export interface AdbSubprocessWaitResult {
 }
 
 export class AdbSubprocess extends AdbCommandBase {
-    private async createProtocol(
+    async #createProtocol(
         mode: "pty" | "raw",
         command?: string | string[],
         options?: Partial<AdbSubprocessOptions>,
@@ -75,11 +75,11 @@ export class AdbSubprocess extends AdbCommandBase {
      * @param options The options for creating the `AdbSubprocessProtocol`
      * @returns A new `AdbSubprocessProtocol` instance connecting to the spawned process.
      */
-    public shell(
+    shell(
         command?: string | string[],
         options?: Partial<AdbSubprocessOptions>,
     ): Promise<AdbSubprocessProtocol> {
-        return this.createProtocol("pty", command, options);
+        return this.#createProtocol("pty", command, options);
     }
 
     /**
@@ -91,11 +91,11 @@ export class AdbSubprocess extends AdbCommandBase {
      * @param options The options for creating the `AdbSubprocessProtocol`
      * @returns A new `AdbSubprocessProtocol` instance connecting to the spawned process.
      */
-    public spawn(
+    spawn(
         command: string | string[],
         options?: Partial<AdbSubprocessOptions>,
     ): Promise<AdbSubprocessProtocol> {
-        return this.createProtocol("raw", command, options);
+        return this.#createProtocol("raw", command, options);
     }
 
     /**
@@ -104,7 +104,7 @@ export class AdbSubprocess extends AdbCommandBase {
      * @param options The options for creating the `AdbSubprocessProtocol`
      * @returns The entire output of the command
      */
-    public async spawnAndWait(
+    async spawnAndWait(
         command: string | string[],
         options?: Partial<AdbSubprocessOptions>,
     ): Promise<AdbSubprocessWaitResult> {
@@ -132,9 +132,7 @@ export class AdbSubprocess extends AdbCommandBase {
      * @param command The command to run
      * @returns The entire output of the command
      */
-    public async spawnAndWaitLegacy(
-        command: string | string[],
-    ): Promise<string> {
+    async spawnAndWaitLegacy(command: string | string[]): Promise<string> {
         const { stdout } = await this.spawnAndWait(command, {
             protocols: [AdbSubprocessNoneProtocol],
         });

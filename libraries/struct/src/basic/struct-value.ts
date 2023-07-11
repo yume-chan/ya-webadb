@@ -14,9 +14,9 @@ export class StructValue {
     /**
      * Gets the result struct value object
      */
-    public readonly value: Record<PropertyKey, unknown>;
+    readonly value: Record<PropertyKey, unknown>;
 
-    public constructor(prototype: object) {
+    constructor(prototype: object) {
         // PERF: `Object.create(extra)` is 50% faster
         // than `Object.defineProperties(this.value, extra)`
         this.value = Object.create(prototype) as Record<PropertyKey, unknown>;
@@ -35,7 +35,7 @@ export class StructValue {
      * @param name The field name
      * @param fieldValue The associated `StructFieldValue`
      */
-    public set(name: PropertyKey, fieldValue: StructFieldValue): void {
+    set(name: PropertyKey, fieldValue: StructFieldValue): void {
         this.fieldValues[name] = fieldValue;
 
         // PERF: `Object.defineProperty` is slow
@@ -61,7 +61,7 @@ export class StructValue {
      *
      * @param name The field name
      */
-    public get(name: PropertyKey): StructFieldValue {
+    get(name: PropertyKey): StructFieldValue {
         return this.fieldValues[name]!;
     }
 }

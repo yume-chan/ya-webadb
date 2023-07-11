@@ -18,23 +18,23 @@ import {
 } from "./variable-length.js";
 
 class MockLengthFieldValue extends StructFieldValue {
-    public constructor() {
+    constructor() {
         super({} as any, {} as any, {} as any, {});
     }
 
-    public override value: string | number = 0;
+    override value: string | number = 0;
 
-    public override get = jest.fn((): string | number => this.value);
+    override get = jest.fn((): string | number => this.value);
 
-    public size = 0;
+    size = 0;
 
-    public override getSize = jest.fn((): number => this.size);
+    override getSize = jest.fn((): number => this.size);
 
-    public override set = jest.fn((value: string | number) => {
+    override set = jest.fn((value: string | number) => {
         void value;
     });
 
-    public serialize = jest.fn((dataView: DataView, offset: number): void => {
+    serialize = jest.fn((dataView: DataView, offset: number): void => {
         void dataView;
         void offset;
     });
@@ -43,15 +43,15 @@ class MockLengthFieldValue extends StructFieldValue {
 describe("Types", () => {
     describe("VariableLengthBufferLikeFieldLengthValue", () => {
         class MockBufferLikeFieldValue extends StructFieldValue {
-            public constructor() {
+            constructor() {
                 super({ options: {} } as any, {} as any, {} as any, {});
             }
 
-            public size = 0;
+            size = 0;
 
-            public override getSize = jest.fn(() => this.size);
+            override getSize = jest.fn(() => this.size);
 
-            public serialize(dataView: DataView, offset: number): void {
+            serialize(dataView: DataView, offset: number): void {
                 void dataView;
                 void offset;
                 throw new Error("Method not implemented.");
@@ -387,26 +387,22 @@ describe("Types", () => {
 
         describe("#getSize", () => {
             class MockArrayBufferFieldType extends BufferFieldSubType<Uint8Array> {
-                public override toBuffer = jest.fn(
-                    (value: Uint8Array): Uint8Array => {
-                        return value;
-                    },
-                );
+                override toBuffer = jest.fn((value: Uint8Array): Uint8Array => {
+                    return value;
+                });
 
-                public override toValue = jest.fn(
+                override toValue = jest.fn(
                     (arrayBuffer: Uint8Array): Uint8Array => {
                         return arrayBuffer;
                     },
                 );
 
-                public size = 0;
+                size = 0;
 
-                public override getSize = jest.fn(
-                    (value: Uint8Array): number => {
-                        void value;
-                        return this.size;
-                    },
-                );
+                override getSize = jest.fn((value: Uint8Array): number => {
+                    void value;
+                    return this.size;
+                });
             }
 
             it("should return cached size if exist", () => {

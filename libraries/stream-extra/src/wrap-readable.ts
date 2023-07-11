@@ -42,11 +42,11 @@ function getWrappedReadableStream<T>(
  * 3. Convert native `ReadableStream`s to polyfilled ones so they can `pipe` between.
  */
 export class WrapReadableStream<T> extends ReadableStream<T> {
-    public readable!: ReadableStream<T>;
+    readable!: ReadableStream<T>;
 
     #reader!: ReadableStreamDefaultReader<T>;
 
-    public constructor(
+    constructor(
         wrapper:
             | ReadableStream<T>
             | WrapReadableStreamStart<T>

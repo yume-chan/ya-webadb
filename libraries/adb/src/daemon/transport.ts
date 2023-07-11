@@ -51,7 +51,7 @@ export class AdbDaemonTransport implements AdbTransport {
      * on the same connection. Because every time the device receives a `CNXN` packet,
      * it resets all internal state, and starts a new authentication process.
      */
-    public static async authenticate({
+    static async authenticate({
         serial,
         connection,
         credentialStore,
@@ -186,30 +186,30 @@ export class AdbDaemonTransport implements AdbTransport {
     readonly #dispatcher: AdbPacketDispatcher;
 
     #serial: string;
-    public get serial() {
+    get serial() {
         return this.#serial;
     }
 
     #protocolVersion: number;
-    public get protocolVersion() {
+    get protocolVersion() {
         return this.#protocolVersion;
     }
 
     #maxPayloadSize: number;
-    public get maxPayloadSize() {
+    get maxPayloadSize() {
         return this.#maxPayloadSize;
     }
 
     #banner: AdbBanner;
-    public get banner() {
+    get banner() {
         return this.#banner;
     }
 
-    public get disconnected() {
+    get disconnected() {
         return this.#dispatcher.disconnected;
     }
 
-    public constructor({
+    constructor({
         serial,
         connection,
         version,
@@ -239,11 +239,11 @@ export class AdbDaemonTransport implements AdbTransport {
         this.#maxPayloadSize = maxPayloadSize;
     }
 
-    public connect(service: string): ValueOrPromise<AdbSocket> {
+    connect(service: string): ValueOrPromise<AdbSocket> {
         return this.#dispatcher.createSocket(service);
     }
 
-    public addReverseTunnel(
+    addReverseTunnel(
         handler: AdbIncomingSocketHandler,
         address?: string,
     ): string {
@@ -255,15 +255,15 @@ export class AdbDaemonTransport implements AdbTransport {
         return address;
     }
 
-    public removeReverseTunnel(address: string): void {
+    removeReverseTunnel(address: string): void {
         this.#dispatcher.removeReverseTunnel(address);
     }
 
-    public clearReverseTunnels(): void {
+    clearReverseTunnels(): void {
         this.#dispatcher.clearReverseTunnels();
     }
 
-    public close(): ValueOrPromise<void> {
+    close(): ValueOrPromise<void> {
         return this.#dispatcher.close();
     }
 }

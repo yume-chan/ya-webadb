@@ -192,14 +192,14 @@ export type StructDeserializedResult<
     : TPostDeserialized;
 
 export class StructDeserializeError extends Error {
-    public constructor(message: string) {
+    constructor(message: string) {
         super(message);
         Object.setPrototypeOf(this, new.target.prototype);
     }
 }
 
 export class StructNotEnoughDataError extends StructDeserializeError {
-    public constructor() {
+    constructor() {
         super(
             "The underlying readable was ended before the struct was fully deserialized",
         );
@@ -207,7 +207,7 @@ export class StructNotEnoughDataError extends StructDeserializeError {
 }
 
 export class StructEmptyError extends StructDeserializeError {
-    public constructor() {
+    constructor() {
         super("The underlying readable doesn't contain any more struct");
     }
 }
@@ -222,27 +222,27 @@ export class Struct<
             StructDeserializedResult<TFields, TExtra, TPostDeserialized>
         >
 {
-    public readonly TFields!: TFields;
+    readonly TFields!: TFields;
 
-    public readonly TOmitInitKey!: TOmitInitKey;
+    readonly TOmitInitKey!: TOmitInitKey;
 
-    public readonly TExtra!: TExtra;
+    readonly TExtra!: TExtra;
 
-    public readonly TInit!: Evaluate<Omit<TFields, TOmitInitKey>>;
+    readonly TInit!: Evaluate<Omit<TFields, TOmitInitKey>>;
 
-    public readonly TDeserializeResult!: StructDeserializedResult<
+    readonly TDeserializeResult!: StructDeserializedResult<
         TFields,
         TExtra,
         TPostDeserialized
     >;
 
-    public readonly options: Readonly<StructOptions>;
+    readonly options: Readonly<StructOptions>;
 
     #size = 0;
     /**
      * Gets the static size (exclude fields that can change size at runtime)
      */
-    public get size() {
+    get size() {
         return this.#size;
     }
 
@@ -250,7 +250,7 @@ export class Struct<
         name: PropertyKey,
         definition: StructFieldDefinition<any, any, any>,
     ][] = [];
-    public get fields(): readonly [
+    get fields(): readonly [
         name: PropertyKey,
         definition: StructFieldDefinition<any, any, any>,
     ][] {
@@ -261,14 +261,14 @@ export class Struct<
 
     #postDeserialized?: StructPostDeserialized<any, any> | undefined;
 
-    public constructor(options?: Partial<Readonly<StructOptions>>) {
+    constructor(options?: Partial<Readonly<StructOptions>>) {
         this.options = { ...StructDefaultOptions, ...options };
     }
 
     /**
      * Appends a `StructFieldDefinition` to the `Struct
      */
-    public field<
+    field<
         TName extends PropertyKey,
         TDefinition extends StructFieldDefinition<any, any, any>,
     >(
@@ -304,7 +304,7 @@ export class Struct<
     /**
      * Merges (flats) another `Struct`'s fields and extra fields into this one.
      */
-    public concat<TOther extends Struct<any, any, any, any>>(
+    concat<TOther extends Struct<any, any, any, any>>(
         other: TOther,
     ): Struct<
         TFields & TOther["TFields"],
@@ -323,7 +323,7 @@ export class Struct<
         return this as any;
     }
 
-    private number<
+    #number<
         TName extends PropertyKey,
         TType extends NumberFieldType = NumberFieldType,
         TTypeScriptType = number,
@@ -337,64 +337,64 @@ export class Struct<
     /**
      * Appends an `int8` field to the `Struct`
      */
-    public int8<TName extends PropertyKey, TTypeScriptType = number>(
+    int8<TName extends PropertyKey, TTypeScriptType = number>(
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.number(name, NumberFieldType.Int8, typeScriptType);
+        return this.#number(name, NumberFieldType.Int8, typeScriptType);
     }
 
     /**
      * Appends an `uint8` field to the `Struct`
      */
-    public uint8<TName extends PropertyKey, TTypeScriptType = number>(
+    uint8<TName extends PropertyKey, TTypeScriptType = number>(
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.number(name, NumberFieldType.Uint8, typeScriptType);
+        return this.#number(name, NumberFieldType.Uint8, typeScriptType);
     }
 
     /**
      * Appends an `int16` field to the `Struct`
      */
-    public int16<TName extends PropertyKey, TTypeScriptType = number>(
+    int16<TName extends PropertyKey, TTypeScriptType = number>(
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.number(name, NumberFieldType.Int16, typeScriptType);
+        return this.#number(name, NumberFieldType.Int16, typeScriptType);
     }
 
     /**
      * Appends an `uint16` field to the `Struct`
      */
-    public uint16<TName extends PropertyKey, TTypeScriptType = number>(
+    uint16<TName extends PropertyKey, TTypeScriptType = number>(
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.number(name, NumberFieldType.Uint16, typeScriptType);
+        return this.#number(name, NumberFieldType.Uint16, typeScriptType);
     }
 
     /**
      * Appends an `int32` field to the `Struct`
      */
-    public int32<TName extends PropertyKey, TTypeScriptType = number>(
+    int32<TName extends PropertyKey, TTypeScriptType = number>(
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.number(name, NumberFieldType.Int32, typeScriptType);
+        return this.#number(name, NumberFieldType.Int32, typeScriptType);
     }
 
     /**
      * Appends an `uint32` field to the `Struct`
      */
-    public uint32<TName extends PropertyKey, TTypeScriptType = number>(
+    uint32<TName extends PropertyKey, TTypeScriptType = number>(
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.number(name, NumberFieldType.Uint32, typeScriptType);
+        return this.#number(name, NumberFieldType.Uint32, typeScriptType);
     }
 
-    private bigint<
+    #bigint<
         TName extends PropertyKey,
         TType extends BigIntFieldType = BigIntFieldType,
         TTypeScriptType = TType["TTypeScriptType"],
@@ -410,11 +410,11 @@ export class Struct<
      *
      * Requires native `BigInt` support
      */
-    public int64<
+    int64<
         TName extends PropertyKey,
         TTypeScriptType = BigIntFieldType["TTypeScriptType"],
     >(name: TName, typeScriptType?: TTypeScriptType) {
-        return this.bigint(name, BigIntFieldType.Int64, typeScriptType);
+        return this.#bigint(name, BigIntFieldType.Int64, typeScriptType);
     }
 
     /**
@@ -422,14 +422,14 @@ export class Struct<
      *
      * Requires native `BigInt` support
      */
-    public uint64<
+    uint64<
         TName extends PropertyKey,
         TTypeScriptType = BigIntFieldType["TTypeScriptType"],
     >(name: TName, typeScriptType?: TTypeScriptType) {
-        return this.bigint(name, BigIntFieldType.Uint64, typeScriptType);
+        return this.#bigint(name, BigIntFieldType.Uint64, typeScriptType);
     }
 
-    private arrayBufferLike: ArrayBufferLikeFieldCreator<
+    #arrayBufferLike: ArrayBufferLikeFieldCreator<
         TFields,
         TOmitInitKey,
         TExtra,
@@ -454,14 +454,14 @@ export class Struct<
         }
     };
 
-    public uint8Array: BoundArrayBufferLikeFieldDefinitionCreator<
+    uint8Array: BoundArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
         TPostDeserialized,
         Uint8ArrayBufferFieldSubType
     > = (name: PropertyKey, options: any, typeScriptType: any): any => {
-        return this.arrayBufferLike(
+        return this.#arrayBufferLike(
             name,
             Uint8ArrayBufferFieldSubType.Instance,
             options,
@@ -469,14 +469,14 @@ export class Struct<
         );
     };
 
-    public string: BoundArrayBufferLikeFieldDefinitionCreator<
+    string: BoundArrayBufferLikeFieldDefinitionCreator<
         TFields,
         TOmitInitKey,
         TExtra,
         TPostDeserialized,
         StringBufferFieldSubType
     > = (name: PropertyKey, options: any, typeScriptType: any): any => {
-        return this.arrayBufferLike(
+        return this.#arrayBufferLike(
             name,
             StringBufferFieldSubType.Instance,
             options,
@@ -494,7 +494,7 @@ export class Struct<
      * @param value
      * An object containing properties to be added to the result value. Accessors and methods are also allowed.
      */
-    public extra<
+    extra<
         T extends Record<
             // This trick disallows any keys that are already in `TValue`
             Exclude<keyof T, Exclude<keyof T, keyof TFields>>,
@@ -516,7 +516,7 @@ export class Struct<
      * A callback returning `never` (always throw an error)
      * will also change the return type of `deserialize` to `never`.
      */
-    public postDeserialize(
+    postDeserialize(
         callback: StructPostDeserialized<TFields, never>,
     ): Struct<TFields, TOmitInitKey, TExtra, never>;
     /**
@@ -525,7 +525,7 @@ export class Struct<
      * A callback returning `void` means it modify the result object in-place
      * (or doesn't modify it at all), so `deserialize` will still return the result object.
      */
-    public postDeserialize(
+    postDeserialize(
         callback?: StructPostDeserialized<TFields, void>,
     ): Struct<TFields, TOmitInitKey, TExtra, undefined>;
     /**
@@ -534,10 +534,10 @@ export class Struct<
      * A callback returning anything other than `undefined`
      * will `deserialize` to return that object instead.
      */
-    public postDeserialize<TPostSerialize>(
+    postDeserialize<TPostSerialize>(
         callback?: StructPostDeserialized<TFields, TPostSerialize>,
     ): Struct<TFields, TOmitInitKey, TExtra, TPostSerialize>;
-    public postDeserialize(callback?: StructPostDeserialized<TFields, any>) {
+    postDeserialize(callback?: StructPostDeserialized<TFields, any>) {
         this.#postDeserialized = callback;
         return this as any;
     }
@@ -545,13 +545,13 @@ export class Struct<
     /**
      * Deserialize a struct value from `stream`.
      */
-    public deserialize(
+    deserialize(
         stream: ExactReadable,
     ): StructDeserializedResult<TFields, TExtra, TPostDeserialized>;
-    public deserialize(
+    deserialize(
         stream: AsyncExactReadable,
     ): Promise<StructDeserializedResult<TFields, TExtra, TPostDeserialized>>;
-    public deserialize(
+    deserialize(
         stream: ExactReadable | AsyncExactReadable,
     ): ValueOrPromise<
         StructDeserializedResult<TFields, TExtra, TPostDeserialized>
@@ -603,12 +603,12 @@ export class Struct<
             .valueOrPromise();
     }
 
-    public serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): Uint8Array;
-    public serialize(
+    serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): Uint8Array;
+    serialize(
         init: Evaluate<Omit<TFields, TOmitInitKey>>,
         output: Uint8Array,
     ): number;
-    public serialize(
+    serialize(
         init: Evaluate<Omit<TFields, TOmitInitKey>>,
         output?: Uint8Array,
     ): Uint8Array | number {

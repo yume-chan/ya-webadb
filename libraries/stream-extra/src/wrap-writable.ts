@@ -30,11 +30,11 @@ async function getWrappedWritableStream<T>(
 }
 
 export class WrapWritableStream<T> extends WritableStream<T> {
-    public writable!: WritableStream<T>;
+    writable!: WritableStream<T>;
 
     #writer!: WritableStreamDefaultWriter<T>;
 
-    public constructor(
+    constructor(
         wrapper:
             | WritableStream<T>
             | WrapWritableStreamStart<T>
@@ -73,7 +73,7 @@ export class WrapWritableStream<T> extends WritableStream<T> {
         });
     }
 
-    public bePipedThroughFrom<U>(transformer: TransformStream<U, T>) {
+    bePipedThroughFrom<U>(transformer: TransformStream<U, T>) {
         let promise: Promise<void>;
         return new WrapWritableStream<U>({
             start: () => {

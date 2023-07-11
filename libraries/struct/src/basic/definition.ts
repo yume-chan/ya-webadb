@@ -19,17 +19,17 @@ export abstract class StructFieldDefinition<
      * When `T` is a type initiated `StructFieldDefinition`,
      * use `T['TValue']` to retrieve its `TValue` type parameter.
      */
-    public readonly TValue!: TValue;
+    readonly TValue!: TValue;
 
     /**
      * When `T` is a type initiated `StructFieldDefinition`,
      * use `T['TOmitInitKey']` to retrieve its `TOmitInitKey` type parameter.
      */
-    public readonly TOmitInitKey!: TOmitInitKey;
+    readonly TOmitInitKey!: TOmitInitKey;
 
-    public readonly options: TOptions;
+    readonly options: TOptions;
 
-    public constructor(options: TOptions) {
+    constructor(options: TOptions) {
         this.options = options;
     }
 
@@ -38,12 +38,12 @@ export abstract class StructFieldDefinition<
      *
      * Actual size can be retrieved from `StructFieldValue#getSize`
      */
-    public abstract getSize(): number;
+    abstract getSize(): number;
 
     /**
      * When implemented in derived classes, creates a `StructFieldValue` from a given `value`.
      */
-    public abstract create(
+    abstract create(
         options: Readonly<StructOptions>,
         structValue: StructValue,
         value: TValue,
@@ -55,12 +55,12 @@ export abstract class StructFieldDefinition<
      *
      *  `SyncPromise` can be used to simplify implementation.
      */
-    public abstract deserialize(
+    abstract deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable,
         structValue: StructValue,
     ): StructFieldValue<this>;
-    public abstract deserialize(
+    abstract deserialize(
         options: Readonly<StructOptions>,
         stream: AsyncExactReadable,
         struct: StructValue,

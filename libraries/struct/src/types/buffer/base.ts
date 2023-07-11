@@ -22,7 +22,7 @@ export abstract class BufferFieldSubType<
     TValue = unknown,
     TTypeScriptType = TValue,
 > {
-    public readonly TTypeScriptType!: TTypeScriptType;
+    readonly TTypeScriptType!: TTypeScriptType;
 
     /**
      * When implemented in derived classes, converts the type-specific `value` to an `Uint8Array`
@@ -30,10 +30,10 @@ export abstract class BufferFieldSubType<
      * This function should be "pure", i.e.,
      * same `value` should always be converted to `Uint8Array`s that have same content.
      */
-    public abstract toBuffer(value: TValue): Uint8Array;
+    abstract toBuffer(value: TValue): Uint8Array;
 
     /** When implemented in derived classes, converts the `Uint8Array` to a type-specific value */
-    public abstract toValue(array: Uint8Array): TValue;
+    abstract toValue(array: Uint8Array): TValue;
 
     /**
      * When implemented in derived classes, gets the size in byte of the type-specific `value`.
@@ -42,28 +42,28 @@ export abstract class BufferFieldSubType<
      * implementer can returns `-1`, so the caller will get its size by first converting it to
      * an `Uint8Array` (and cache the result).
      */
-    public abstract getSize(value: TValue): number;
+    abstract getSize(value: TValue): number;
 }
 
 /** An `BufferFieldSubType` that's actually an `Uint8Array` */
 export class Uint8ArrayBufferFieldSubType<
     TTypeScriptType = Uint8Array,
 > extends BufferFieldSubType<Uint8Array, TTypeScriptType> {
-    public static readonly Instance = new Uint8ArrayBufferFieldSubType();
+    static readonly Instance = new Uint8ArrayBufferFieldSubType();
 
     protected constructor() {
         super();
     }
 
-    public toBuffer(value: Uint8Array): Uint8Array {
+    toBuffer(value: Uint8Array): Uint8Array {
         return value;
     }
 
-    public toValue(buffer: Uint8Array): Uint8Array {
+    toValue(buffer: Uint8Array): Uint8Array {
         return buffer;
     }
 
-    public getSize(value: Uint8Array): number {
+    getSize(value: Uint8Array): number {
         return value.byteLength;
     }
 }
@@ -72,17 +72,17 @@ export class Uint8ArrayBufferFieldSubType<
 export class StringBufferFieldSubType<
     TTypeScriptType = string,
 > extends BufferFieldSubType<string, TTypeScriptType> {
-    public static readonly Instance = new StringBufferFieldSubType();
+    static readonly Instance = new StringBufferFieldSubType();
 
-    public toBuffer(value: string): Uint8Array {
+    toBuffer(value: string): Uint8Array {
         return encodeUtf8(value);
     }
 
-    public toValue(array: Uint8Array): string {
+    toValue(array: Uint8Array): string {
         return decodeUtf8(array);
     }
 
-    public getSize(): number {
+    getSize(): number {
         // Return `-1`, so `BufferLikeFieldDefinition` will
         // convert this `value` into an `Uint8Array` (and cache the result),
         // Then get the size from that `Uint8Array`
@@ -101,9 +101,9 @@ export abstract class BufferLikeFieldDefinition<
     TOmitInitKey extends PropertyKey = never,
     TTypeScriptType = TType["TTypeScriptType"],
 > extends StructFieldDefinition<TOptions, TTypeScriptType, TOmitInitKey> {
-    public readonly type: TType;
+    readonly type: TType;
 
-    public constructor(type: TType, options: TOptions) {
+    constructor(type: TType, options: TOptions) {
         super(options);
         this.type = type;
     }
@@ -116,7 +116,7 @@ export abstract class BufferLikeFieldDefinition<
     /**
      * When implemented in derived classes, creates a `StructFieldValue` for the current field definition.
      */
-    public create(
+    create(
         options: Readonly<StructOptions>,
         struct: StructValue,
         value: TType["TTypeScriptType"],
@@ -125,17 +125,17 @@ export abstract class BufferLikeFieldDefinition<
         return new BufferLikeFieldValue(this, options, struct, value, array);
     }
 
-    public override deserialize(
+    override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable,
         struct: StructValue,
     ): BufferLikeFieldValue<this>;
-    public override deserialize(
+    override deserialize(
         options: Readonly<StructOptions>,
         stream: AsyncExactReadable,
         struct: StructValue,
     ): Promise<BufferLikeFieldValue<this>>;
-    public override deserialize(
+    override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable | AsyncExactReadable,
         struct: StructValue,
@@ -165,7 +165,7 @@ export class BufferLikeFieldValue<
 > extends StructFieldValue<TDefinition> {
     protected array: Uint8Array | undefined;
 
-    public constructor(
+    constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
         struct: StructValue,
@@ -176,14 +176,14 @@ export class BufferLikeFieldValue<
         this.array = array;
     }
 
-    public override set(value: TDefinition["TValue"]): void {
+    override set(value: TDefinition["TValue"]): void {
         super.set(value);
         // When value changes, clear the cached `array`
         // It will be lazily calculated in `serialize()`
         this.array = undefined;
     }
 
-    public serialize(dataView: DataView, offset: number): void {
+    serialize(dataView: DataView, offset: number): void {
         if (!this.array) {
             this.array = this.definition.type.toBuffer(this.value);
         }

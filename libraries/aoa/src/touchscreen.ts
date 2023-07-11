@@ -81,40 +81,40 @@ interface Finger {
  * A ten-point touch screen.
  */
 export class HidTouchScreen {
-    public static readonly FINGER_DESCRIPTOR = FINGER_DESCRIPTOR;
+    static readonly FINGER_DESCRIPTOR = FINGER_DESCRIPTOR;
 
-    public static readonly DESCRIPTOR = DESCRIPTOR;
+    static readonly DESCRIPTOR = DESCRIPTOR;
 
-    private fingers: Map<number, Finger> = new Map();
+    #fingers: Map<number, Finger> = new Map();
 
-    public down(id: number, x: number, y: number) {
-        if (this.fingers.size >= 10) {
+    down(id: number, x: number, y: number) {
+        if (this.#fingers.size >= 10) {
             return;
         }
 
-        this.fingers.set(id, {
+        this.#fingers.set(id, {
             x,
             y,
         });
     }
 
-    public move(id: number, x: number, y: number) {
-        const finger = this.fingers.get(id);
+    move(id: number, x: number, y: number) {
+        const finger = this.#fingers.get(id);
         if (finger) {
             finger.x = x;
             finger.y = y;
         }
     }
 
-    public up(id: number) {
-        this.fingers.delete(id);
+    up(id: number) {
+        this.#fingers.delete(id);
     }
 
-    public serializeInputReport(): Uint8Array {
+    serializeInputReport(): Uint8Array {
         const report = new Uint8Array(1 + 6 * 10);
-        report[0] = this.fingers.size;
+        report[0] = this.#fingers.size;
         let offset = 1;
-        for (const [id, finger] of this.fingers) {
+        for (const [id, finger] of this.#fingers) {
             report[offset] = id;
             offset += 1;
 

@@ -382,35 +382,35 @@ export interface LogSize {
 }
 
 export class Logcat extends AdbCommandBase {
-    public static logIdToName(id: LogId): string {
+    static logIdToName(id: LogId): string {
         return LogId[id]!;
     }
 
-    public static logNameToId(name: string): LogId {
+    static logNameToId(name: string): LogId {
         const key = name[0]!.toUpperCase() + name.substring(1);
         return LogId[key as keyof typeof LogId];
     }
 
-    public static joinLogId(ids: LogId[]): string {
+    static joinLogId(ids: LogId[]): string {
         return ids.map((id) => Logcat.logIdToName(id)).join(",");
     }
 
-    public static parseSize(value: number, multiplier: string): number {
+    static parseSize(value: number, multiplier: string): number {
         const MULTIPLIERS = ["", "Ki", "Mi", "Gi"];
         return value * 1024 ** (MULTIPLIERS.indexOf(multiplier) || 0);
     }
 
     // TODO: logcat: Support output format before Android 10
     // ref https://android-review.googlesource.com/c/platform/system/core/+/748128
-    public static readonly LOG_SIZE_REGEX_10 =
+    static readonly LOG_SIZE_REGEX_10 =
         /(.*): ring buffer is (.*) (.*)B \((.*) (.*)B consumed\), max entry is (.*) B, max payload is (.*) B/;
 
     // Android 11 added `readable` part
     // ref https://android-review.googlesource.com/c/platform/system/core/+/1390940
-    public static readonly LOG_SIZE_REGEX_11 =
+    static readonly LOG_SIZE_REGEX_11 =
         /(.*): ring buffer is (.*) (.*)B \((.*) (.*)B consumed, (.*) (.*)B readable\), max entry is (.*) B, max payload is (.*) B/;
 
-    public async getLogSize(ids?: LogId[]): Promise<LogSize[]> {
+    async getLogSize(ids?: LogId[]): Promise<LogSize[]> {
         const { stdout } = await this.adb.subprocess.spawn([
             "logcat",
             "-g",
@@ -469,7 +469,7 @@ export class Logcat extends AdbCommandBase {
         return result;
     }
 
-    public async clear(ids?: LogId[]) {
+    async clear(ids?: LogId[]) {
         await this.adb.subprocess.spawnAndWait([
             "logcat",
             "-c",
@@ -477,7 +477,7 @@ export class Logcat extends AdbCommandBase {
         ]);
     }
 
-    public binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {
+    binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {
         return new WrapReadableStream(async () => {
             // TODO: make `spawn` return synchronously with streams pending
             // so it's easier to chain them.

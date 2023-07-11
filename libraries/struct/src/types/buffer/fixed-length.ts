@@ -11,7 +11,7 @@ export class FixedLengthBufferLikeFieldDefinition<
         FixedLengthBufferLikeFieldOptions = FixedLengthBufferLikeFieldOptions,
     TTypeScriptType = TType["TTypeScriptType"],
 > extends BufferLikeFieldDefinition<TType, TOptions, never, TTypeScriptType> {
-    public getSize(): number {
+    getSize(): number {
         return this.options.length;
     }
 }

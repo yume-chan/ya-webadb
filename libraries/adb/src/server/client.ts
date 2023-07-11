@@ -74,17 +74,17 @@ export interface AdbServerDevice {
 }
 
 export class AdbServerClient {
-    public static readonly VERSION = 41;
+    static readonly VERSION = 41;
 
-    public readonly connection: AdbServerConnection;
+    readonly connection: AdbServerConnection;
 
-    public constructor(connection: AdbServerConnection) {
+    constructor(connection: AdbServerConnection) {
         this.connection = connection;
     }
 
-    public static readString(stream: ExactReadable): string;
-    public static readString(stream: AsyncExactReadable): PromiseLike<string>;
-    public static readString(
+    static readString(stream: ExactReadable): string;
+    static readString(stream: AsyncExactReadable): PromiseLike<string>;
+    static readString(
         stream: ExactReadable | AsyncExactReadable,
     ): string | PromiseLike<string> {
         return SyncPromise.try(() => stream.readExactly(4))
@@ -98,7 +98,7 @@ export class AdbServerClient {
             .valueOrPromise();
     }
 
-    public static async writeString(
+    static async writeString(
         writer: WritableStreamDefaultWriter<Uint8Array>,
         value: string,
     ): Promise<void> {
@@ -109,7 +109,7 @@ export class AdbServerClient {
         await writer.write(buffer);
     }
 
-    public static async readOkay(
+    static async readOkay(
         stream: ExactReadable | AsyncExactReadable,
     ): Promise<void> {
         const response = decodeUtf8(await stream.readExactly(4));
@@ -125,7 +125,7 @@ export class AdbServerClient {
         throw new Error(`Unexpected response: ${response}`);
     }
 
-    public async connect(
+    async connect(
         request: string,
         options?: AdbServerConnectionOptions,
     ): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
@@ -156,7 +156,7 @@ export class AdbServerClient {
         }
     }
 
-    public async getVersion(): Promise<number> {
+    async getVersion(): Promise<number> {
         const connection = await this.connect("host:version");
         const readable = new BufferedReadableStream(connection.readable);
         try {
@@ -169,7 +169,7 @@ export class AdbServerClient {
         }
     }
 
-    public async validateVersion() {
+    async validateVersion() {
         const version = await this.getVersion();
         if (version !== AdbServerClient.VERSION) {
             throw new Error(
@@ -178,13 +178,13 @@ export class AdbServerClient {
         }
     }
 
-    public async killServer(): Promise<void> {
+    async killServer(): Promise<void> {
         const connection = await this.connect("host:kill");
         connection.writable.close().catch(NOOP);
         connection.readable.cancel().catch(NOOP);
     }
 
-    public async getServerFeatures(): Promise<AdbFeature[]> {
+    async getServerFeatures(): Promise<AdbFeature[]> {
         const connection = await this.connect("host:host-features");
         const readable = new BufferedReadableStream(connection.readable);
         try {
@@ -196,7 +196,7 @@ export class AdbServerClient {
         }
     }
 
-    public async getDevices(): Promise<AdbServerDevice[]> {
+    async getDevices(): Promise<AdbServerDevice[]> {
         const connection = await this.connect("host:devices-l");
         const readable = new BufferedReadableStream(connection.readable);
         try {
@@ -253,10 +253,7 @@ export class AdbServerClient {
         }
     }
 
-    public formatDeviceService(
-        device: AdbServerDeviceSelector,
-        command: string,
-    ) {
+    formatDeviceService(device: AdbServerDeviceSelector, command: string) {
         if (!device) {
             return `host:${command}`;
         }
@@ -282,7 +279,7 @@ export class AdbServerClient {
      * @param device The device selector
      * @returns The transport ID of the selected device, and the features supported by the device.
      */
-    public async getDeviceFeatures(
+    async getDeviceFeatures(
         device: AdbServerDeviceSelector,
     ): Promise<{ transportId: bigint; features: AdbFeature[] }> {
         // Usually the client sends a device command using `connectDevice`,
@@ -309,7 +306,7 @@ export class AdbServerClient {
      * @param service The service to forward
      * @returns An `AdbServerSocket` that can be used to communicate with the service
      */
-    public async connectDevice(
+    async connectDevice(
         device: AdbServerDeviceSelector,
         service: string,
     ): Promise<AdbServerSocket> {
@@ -386,7 +383,7 @@ export class AdbServerClient {
      * @param options The options
      * @returns A promise that resolves when the condition is met.
      */
-    public async waitFor(
+    async waitFor(
         device: AdbServerDeviceSelector,
         state: "device" | "disconnect",
         options?: AdbServerConnectionOptions,
@@ -418,7 +415,7 @@ export class AdbServerClient {
         await this.connect(service, options);
     }
 
-    public async createTransport(
+    async createTransport(
         device: AdbServerDeviceSelector,
     ): Promise<AdbServerTransport> {
         const { transportId, features } = await this.getDeviceFeatures(device);

@@ -29,25 +29,25 @@ export class Consumable<T> {
     readonly #task: Task;
     readonly #resolver: PromiseResolver<void>;
 
-    public readonly value: T;
-    public readonly consumed: Promise<void>;
+    readonly value: T;
+    readonly consumed: Promise<void>;
 
-    public constructor(value: T) {
+    constructor(value: T) {
         this.#task = createTask("Consumable");
         this.value = value;
         this.#resolver = new PromiseResolver<void>();
         this.consumed = this.#resolver.promise;
     }
 
-    public consume() {
+    consume() {
         this.#resolver.resolve();
     }
 
-    public error(error: any) {
+    error(error: any) {
         this.#resolver.reject(error);
     }
 
-    public async tryConsume<U>(callback: (value: T) => U) {
+    async tryConsume<U>(callback: (value: T) => U) {
         try {
             // eslint-disable-next-line @typescript-eslint/await-thenable
             const result = await this.#task.run(() => callback(this.value));
@@ -70,7 +70,7 @@ async function enqueue<T>(
 }
 
 export class WrapConsumableStream<T> extends TransformStream<T, Consumable<T>> {
-    public constructor() {
+    constructor() {
         super({
             async transform(chunk, controller) {
                 await enqueue(controller, chunk);
@@ -83,7 +83,7 @@ export class UnwrapConsumableStream<T> extends TransformStream<
     Consumable<T>,
     T
 > {
-    public constructor() {
+    constructor() {
         super({
             transform(chunk, controller) {
                 controller.enqueue(chunk.value);
@@ -110,7 +110,7 @@ export interface ConsumableReadableStreamSource<T> {
 }
 
 export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
-    public constructor(
+    constructor(
         source: ConsumableReadableStreamSource<T>,
         strategy?: QueuingStrategy<T>,
     ) {
@@ -168,7 +168,7 @@ export interface ConsumableWritableStreamSink<T> {
 }
 
 export class ConsumableWritableStream<T> extends WritableStream<Consumable<T>> {
-    public static async write<T>(
+    static async write<T>(
         writer: WritableStreamDefaultWriter<Consumable<T>>,
         value: T,
     ) {
@@ -177,7 +177,7 @@ export class ConsumableWritableStream<T> extends WritableStream<Consumable<T>> {
         await consumable.consumed;
     }
 
-    public constructor(
+    constructor(
         sink: ConsumableWritableStreamSink<T>,
         strategy?: QueuingStrategy<T>,
     ) {
@@ -232,7 +232,7 @@ export class ConsumableTransformStream<I, O> extends TransformStream<
     Consumable<I>,
     Consumable<O>
 > {
-    public constructor(transformer: ConsumableTransformer<I, O>) {
+    constructor(transformer: ConsumableTransformer<I, O>) {
         let wrappedController:
             | ConsumableReadableStreamController<O>
             | undefined;
@@ -271,7 +271,7 @@ export class ConsumableInspectStream<T> extends TransformStream<
     Consumable<T>,
     Consumable<T>
 > {
-    public constructor(callback: (value: T) => void) {
+    constructor(callback: (value: T) => void) {
         super({
             transform(chunk, controller) {
                 callback(chunk.value);

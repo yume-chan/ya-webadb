@@ -77,16 +77,16 @@ class Uint8ArrayExactReadable implements ExactReadable {
     #data: Uint8Array;
     #position: number;
 
-    public get position() {
+    get position() {
         return this.#position;
     }
 
-    public constructor(data: Uint8Array) {
+    constructor(data: Uint8Array) {
         this.#data = data;
         this.#position = 0;
     }
 
-    public readExactly(length: number): Uint8Array {
+    readExactly(length: number): Uint8Array {
         const result = this.#data.subarray(
             this.#position,
             this.#position + length,
@@ -100,16 +100,16 @@ export class AdbDaemonWebUsbConnection
     implements ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
 {
     #readable: ReadableStream<AdbPacketData>;
-    public get readable() {
+    get readable() {
         return this.#readable;
     }
 
     #writable: WritableStream<Consumable<AdbPacketInit>>;
-    public get writable() {
+    get writable() {
         return this.#writable;
     }
 
-    public constructor(
+    constructor(
         device: USBDevice,
         inEndpoint: USBEndpoint,
         outEndpoint: USBEndpoint,
@@ -249,15 +249,15 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
     #usbManager: USB;
 
     #raw: USBDevice;
-    public get raw() {
+    get raw() {
         return this.#raw;
     }
 
-    public get serial(): string {
+    get serial(): string {
         return this.#raw.serialNumber!;
     }
 
-    public get name(): string {
+    get name(): string {
         return this.#raw.productName!;
     }
 
@@ -267,7 +267,7 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
      * @param device The `USBDevice` instance obtained elsewhere.
      * @param filters The filters to use when searching for ADB interface. Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
      */
-    public constructor(
+    constructor(
         device: USBDevice,
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
         usbManager: USB,
@@ -281,7 +281,7 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
      * Claim the device and create a pair of `AdbPacket` streams to the ADB interface.
      * @returns The pair of `AdbPacket` streams.
      */
-    public async connect(): Promise<
+    async connect(): Promise<
         ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
     > {
         if (!this.#raw.opened) {

@@ -10,7 +10,7 @@ export class ConditionalVariable implements Disposable {
     #locked = false;
     readonly #queue: WaitEntry[] = [];
 
-    public wait(condition: () => boolean): Promise<void> {
+    wait(condition: () => boolean): Promise<void> {
         if (!this.#locked) {
             this.#locked = true;
             if (this.#queue.length === 0 && condition()) {
@@ -23,7 +23,7 @@ export class ConditionalVariable implements Disposable {
         return resolver.promise;
     }
 
-    public notifyOne() {
+    notifyOne() {
         const entry = this.#queue.shift();
         if (entry) {
             if (entry.condition()) {
@@ -34,7 +34,7 @@ export class ConditionalVariable implements Disposable {
         }
     }
 
-    public dispose(): void {
+    dispose(): void {
         for (const item of this.#queue) {
             item.resolver.reject(
                 new Error("The ConditionalVariable has been disposed"),

@@ -25,21 +25,21 @@ export enum ScrcpyControlMessageType {
  * This class provides a way to get the actual value for a given type.
  */
 export class ScrcpyControlMessageTypeValue {
-    private types: readonly ScrcpyControlMessageType[];
+    #types: readonly ScrcpyControlMessageType[];
 
-    public constructor(options: ScrcpyOptions<object>) {
-        this.types = options.controlMessageTypes;
+    constructor(options: ScrcpyOptions<object>) {
+        this.#types = options.controlMessageTypes;
     }
 
-    public get(type: ScrcpyControlMessageType): number {
-        const value = this.types.indexOf(type);
+    get(type: ScrcpyControlMessageType): number {
+        const value = this.#types.indexOf(type);
         if (value === -1) {
             throw new Error("Not supported");
         }
         return value;
     }
 
-    public fillMessageType<T extends { type: ScrcpyControlMessageType }>(
+    fillMessageType<T extends { type: ScrcpyControlMessageType }>(
         message: Omit<T, "type">,
         type: T["type"],
     ): T {

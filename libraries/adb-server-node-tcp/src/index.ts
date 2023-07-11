@@ -58,15 +58,15 @@ function nodeSocketToStreamPair(socket: Socket) {
 }
 
 export class AdbServerNodeTcpConnection implements AdbServerConnection {
-    public readonly spec: SocketConnectOpts;
+    readonly spec: SocketConnectOpts;
 
-    private readonly _listeners = new Map<string, Server>();
+    readonly #listeners = new Map<string, Server>();
 
-    public constructor(spec: SocketConnectOpts) {
+    constructor(spec: SocketConnectOpts) {
         this.spec = spec;
     }
 
-    public async connect(
+    async connect(
         { unref }: AdbServerConnectionOptions = { unref: false }
     ): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
         const socket = new Socket();
@@ -81,7 +81,7 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
         return nodeSocketToStreamPair(socket);
     }
 
-    public async addReverseTunnel(
+    async addReverseTunnel(
         handler: AdbIncomingSocketHandler,
         address?: string
     ): Promise<string> {
@@ -127,23 +127,23 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
             address = `tcp:${info.address}:${info.port}`;
         }
 
-        this._listeners.set(address, server);
+        this.#listeners.set(address, server);
         return address;
     }
 
     removeReverseTunnel(address: string): ValueOrPromise<void> {
-        const server = this._listeners.get(address);
+        const server = this.#listeners.get(address);
         if (!server) {
             return;
         }
         server.close();
-        this._listeners.delete(address);
+        this.#listeners.delete(address);
     }
 
     clearReverseTunnels(): ValueOrPromise<void> {
-        for (const server of this._listeners.values()) {
+        for (const server of this.#listeners.values()) {
             server.close();
         }
-        this._listeners.clear();
+        this.#listeners.clear();
     }
 }

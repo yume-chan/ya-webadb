@@ -12,24 +12,24 @@ export class ScrcpyOptions2_1 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit2_1,
     ScrcpyOptions2_0
 > {
-    public static readonly DEFAULTS = {
+    static readonly DEFAULTS = {
         ...ScrcpyOptions2_0.DEFAULTS,
         video: true,
         audioSource: "output",
     } as const satisfies Required<ScrcpyOptionsInit2_1>;
 
-    public override get defaults(): Required<ScrcpyOptionsInit2_1> {
+    override get defaults(): Required<ScrcpyOptionsInit2_1> {
         return ScrcpyOptions2_1.DEFAULTS;
     }
 
-    public constructor(init: ScrcpyOptionsInit2_1) {
+    constructor(init: ScrcpyOptionsInit2_1) {
         super(new ScrcpyOptions2_0(init), {
             ...ScrcpyOptions2_1.DEFAULTS,
             ...init,
         });
     }
 
-    public override serialize(): string[] {
+    override serialize(): string[] {
         return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }
 }

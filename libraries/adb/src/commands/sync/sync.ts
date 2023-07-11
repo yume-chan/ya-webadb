@@ -48,27 +48,27 @@ export class AdbSync extends AutoDisposable {
     readonly #supportsSendReceiveV2: boolean;
     readonly #needPushMkdirWorkaround: boolean;
 
-    public get supportsStat(): boolean {
+    get supportsStat(): boolean {
         return this.#supportsStat;
     }
 
-    public get supportsListV2(): boolean {
+    get supportsListV2(): boolean {
         return this.#supportsListV2;
     }
 
-    public get fixedPushMkdir(): boolean {
+    get fixedPushMkdir(): boolean {
         return this.#fixedPushMkdir;
     }
 
-    public get supportsSendReceiveV2(): boolean {
+    get supportsSendReceiveV2(): boolean {
         return this.#supportsSendReceiveV2;
     }
 
-    public get needPushMkdirWorkaround(): boolean {
+    get needPushMkdirWorkaround(): boolean {
         return this.#needPushMkdirWorkaround;
     }
 
-    public constructor(adb: Adb, socket: AdbSocket) {
+    constructor(adb: Adb, socket: AdbSocket) {
         super();
 
         this._adb = adb;
@@ -86,11 +86,11 @@ export class AdbSync extends AutoDisposable {
             !this.fixedPushMkdir;
     }
 
-    public async lstat(path: string): Promise<AdbSyncStat> {
+    async lstat(path: string): Promise<AdbSyncStat> {
         return await adbSyncLstat(this._socket, path, this.supportsStat);
     }
 
-    public async stat(path: string) {
+    async stat(path: string) {
         if (!this.supportsStat) {
             throw new Error("Not supported");
         }
@@ -98,7 +98,7 @@ export class AdbSync extends AutoDisposable {
         return await adbSyncStat(this._socket, path);
     }
 
-    public async isDirectory(path: string): Promise<boolean> {
+    async isDirectory(path: string): Promise<boolean> {
         try {
             await this.lstat(path + "/");
             return true;
@@ -107,11 +107,11 @@ export class AdbSync extends AutoDisposable {
         }
     }
 
-    public opendir(path: string): AsyncGenerator<AdbSyncEntry, void, void> {
+    opendir(path: string): AsyncGenerator<AdbSyncEntry, void, void> {
         return adbSyncOpenDir(this._socket, path, this.supportsListV2);
     }
 
-    public async readdir(path: string) {
+    async readdir(path: string) {
         const results: AdbSyncEntry[] = [];
         for await (const entry of this.opendir(path)) {
             results.push(entry);
@@ -125,7 +125,7 @@ export class AdbSync extends AutoDisposable {
      * @param filename The full path of the file on device to read.
      * @returns A `ReadableStream` that contains the file content.
      */
-    public read(filename: string): ReadableStream<Uint8Array> {
+    read(filename: string): ReadableStream<Uint8Array> {
         return adbSyncPull(this._socket, filename);
     }
 
@@ -134,7 +134,7 @@ export class AdbSync extends AutoDisposable {
      *
      * @param options The content and options of the file to write.
      */
-    public async write(options: AdbSyncWriteOptions): Promise<void> {
+    async write(options: AdbSyncWriteOptions): Promise<void> {
         if (this.needPushMkdirWorkaround) {
             // It may fail if the path is already existed.
             // Ignore the result.
@@ -153,7 +153,7 @@ export class AdbSync extends AutoDisposable {
         });
     }
 
-    public override async dispose() {
+    override async dispose() {
         super.dispose();
         await this._socket.close();
     }

@@ -51,30 +51,30 @@ export interface AdbTransport extends Closeable {
 }
 
 export class Adb implements Closeable {
-    public readonly transport: AdbTransport;
+    readonly transport: AdbTransport;
 
-    public get serial() {
+    get serial() {
         return this.transport.serial;
     }
 
-    public get maxPayloadSize() {
+    get maxPayloadSize() {
         return this.transport.maxPayloadSize;
     }
 
-    public get banner() {
+    get banner() {
         return this.transport.banner;
     }
 
-    public get disconnected() {
+    get disconnected() {
         return this.transport.disconnected;
     }
 
-    public readonly subprocess: AdbSubprocess;
-    public readonly power: AdbPower;
-    public readonly reverse: AdbReverseCommand;
-    public readonly tcpip: AdbTcpIpCommand;
+    readonly subprocess: AdbSubprocess;
+    readonly power: AdbPower;
+    readonly reverse: AdbReverseCommand;
+    readonly tcpip: AdbTcpIpCommand;
 
-    public constructor(transport: AdbTransport) {
+    constructor(transport: AdbTransport) {
         this.transport = transport;
 
         this.subprocess = new AdbSubprocess(this);
@@ -83,22 +83,22 @@ export class Adb implements Closeable {
         this.tcpip = new AdbTcpIpCommand(this);
     }
 
-    public supportsFeature(feature: AdbFeature): boolean {
+    supportsFeature(feature: AdbFeature): boolean {
         return this.banner.features.includes(feature);
     }
 
-    public async createSocket(service: string): Promise<AdbSocket> {
+    async createSocket(service: string): Promise<AdbSocket> {
         return this.transport.connect(service);
     }
 
-    public async createSocketAndWait(service: string): Promise<string> {
+    async createSocketAndWait(service: string): Promise<string> {
         const socket = await this.createSocket(service);
         return await socket.readable
             .pipeThrough(new DecodeUtf8Stream())
             .pipeThrough(new ConcatStringStream());
     }
 
-    public async getProp(key: string): Promise<string> {
+    async getProp(key: string): Promise<string> {
         const stdout = await this.subprocess.spawnAndWaitLegacy([
             "getprop",
             key,
@@ -106,7 +106,7 @@ export class Adb implements Closeable {
         return stdout.trim();
     }
 
-    public async rm(...filenames: string[]): Promise<string> {
+    async rm(...filenames: string[]): Promise<string> {
         // https://android.googlesource.com/platform/packages/modules/adb/+/1a0fb8846d4e6b671c8aa7f137a8c21d7b248716/client/adb_install.cpp#984
         const stdout = await this.subprocess.spawnAndWaitLegacy([
             "rm",
@@ -116,16 +116,16 @@ export class Adb implements Closeable {
         return stdout;
     }
 
-    public async sync(): Promise<AdbSync> {
+    async sync(): Promise<AdbSync> {
         const socket = await this.createSocket("sync:");
         return new AdbSync(this, socket);
     }
 
-    public async framebuffer(): Promise<AdbFrameBuffer> {
+    async framebuffer(): Promise<AdbFrameBuffer> {
         return framebuffer(this);
     }
 
-    public async close(): Promise<void> {
+    async close(): Promise<void> {
         await this.transport.close();
     }
 }

@@ -50,22 +50,22 @@ export class DuplexStreamFactory<R, W> {
     #writers: WritableStreamDefaultWriter<W>[] = [];
 
     #writableClosed = false;
-    public get writableClosed() {
+    get writableClosed() {
         return this.#writableClosed;
     }
 
     #closed = new PromiseResolver<void>();
-    public get closed() {
+    get closed() {
         return this.#closed.promise;
     }
 
     readonly #options: DuplexStreamFactoryOptions;
 
-    public constructor(options?: DuplexStreamFactoryOptions) {
+    constructor(options?: DuplexStreamFactoryOptions) {
         this.#options = options ?? {};
     }
 
-    public wrapReadable(readable: ReadableStream<R>): WrapReadableStream<R> {
+    wrapReadable(readable: ReadableStream<R>): WrapReadableStream<R> {
         return new WrapReadableStream<R>({
             start: (controller) => {
                 this.#readableControllers.push(controller);
@@ -82,7 +82,7 @@ export class DuplexStreamFactory<R, W> {
         });
     }
 
-    public createWritable(stream: WritableStream<W>): WritableStream<W> {
+    createWritable(stream: WritableStream<W>): WritableStream<W> {
         const writer = stream.getWriter();
         this.#writers.push(writer);
 
@@ -104,7 +104,7 @@ export class DuplexStreamFactory<R, W> {
         });
     }
 
-    public async close() {
+    async close() {
         if (this.#writableClosed) {
             return;
         }
@@ -122,7 +122,7 @@ export class DuplexStreamFactory<R, W> {
         }
     }
 
-    public async dispose() {
+    async dispose() {
         this.#writableClosed = true;
         this.#closed.resolve();
 

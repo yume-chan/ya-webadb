@@ -41,7 +41,7 @@ export class ConcatStringStream {
             this.#readableController.error(reason);
         },
     });
-    public get writable(): WritableStream<string> {
+    get writable(): WritableStream<string> {
         return this.#writable;
     }
 
@@ -51,11 +51,11 @@ export class ConcatStringStream {
             this.#readableController = controller;
         },
     }) as ConcatStringReadableStream;
-    public get readable(): ConcatStringReadableStream {
+    get readable(): ConcatStringReadableStream {
         return this.#readable;
     }
 
-    public constructor() {
+    constructor() {
         void Object.defineProperties(this.#readable, {
             then: {
                 get: () =>
@@ -127,7 +127,7 @@ export class ConcatBufferStream {
             this.#readableController.error(reason);
         },
     });
-    public get writable(): WritableStream<Uint8Array> {
+    get writable(): WritableStream<Uint8Array> {
         return this.#writable;
     }
 
@@ -137,11 +137,11 @@ export class ConcatBufferStream {
             this.#readableController = controller;
         },
     }) as ConcatBufferReadableStream;
-    public get readable(): ConcatBufferReadableStream {
+    get readable(): ConcatBufferReadableStream {
         return this.#readable;
     }
 
-    public constructor() {
+    constructor() {
         void Object.defineProperties(this.#readable, {
             then: {
                 get: () =>

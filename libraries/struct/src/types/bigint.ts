@@ -29,15 +29,15 @@ type DataViewBigInt64Setter = (
 ) => void;
 
 export class BigIntFieldType {
-    public readonly TTypeScriptType!: bigint;
+    readonly TTypeScriptType!: bigint;
 
-    public readonly size: number;
+    readonly size: number;
 
-    public readonly getter: DataViewBigInt64Getter;
+    readonly getter: DataViewBigInt64Getter;
 
-    public readonly setter: DataViewBigInt64Setter;
+    readonly setter: DataViewBigInt64Setter;
 
-    public constructor(
+    constructor(
         size: number,
         getter: DataViewBigInt64Getter,
         setter: DataViewBigInt64Setter,
@@ -47,36 +47,28 @@ export class BigIntFieldType {
         this.setter = setter;
     }
 
-    public static readonly Int64 = new BigIntFieldType(
-        8,
-        getBigInt64,
-        setBigInt64,
-    );
+    static readonly Int64 = new BigIntFieldType(8, getBigInt64, setBigInt64);
 
-    public static readonly Uint64 = new BigIntFieldType(
-        8,
-        getBigUint64,
-        setBigUint64,
-    );
+    static readonly Uint64 = new BigIntFieldType(8, getBigUint64, setBigUint64);
 }
 
 export class BigIntFieldDefinition<
     TType extends BigIntFieldType = BigIntFieldType,
     TTypeScriptType = TType["TTypeScriptType"],
 > extends StructFieldDefinition<void, TTypeScriptType> {
-    public readonly type: TType;
+    readonly type: TType;
 
-    public constructor(type: TType, typescriptType?: TTypeScriptType) {
+    constructor(type: TType, typescriptType?: TTypeScriptType) {
         void typescriptType;
         super();
         this.type = type;
     }
 
-    public getSize(): number {
+    getSize(): number {
         return this.type.size;
     }
 
-    public create(
+    create(
         options: Readonly<StructOptions>,
         struct: StructValue,
         value: TTypeScriptType,
@@ -84,17 +76,17 @@ export class BigIntFieldDefinition<
         return new BigIntFieldValue(this, options, struct, value);
     }
 
-    public override deserialize(
+    override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable,
         struct: StructValue,
     ): BigIntFieldValue<this>;
-    public override deserialize(
+    override deserialize(
         options: Readonly<StructOptions>,
         stream: AsyncExactReadable,
         struct: StructValue,
     ): Promise<BigIntFieldValue<this>>;
-    public override deserialize(
+    override deserialize(
         options: Readonly<StructOptions>,
         stream: ExactReadable | AsyncExactReadable,
         struct: StructValue,
@@ -118,7 +110,7 @@ export class BigIntFieldDefinition<
 export class BigIntFieldValue<
     TDefinition extends BigIntFieldDefinition<BigIntFieldType, any>,
 > extends StructFieldValue<TDefinition> {
-    public serialize(dataView: DataView, offset: number): void {
+    serialize(dataView: DataView, offset: number): void {
         this.definition.type.setter(
             dataView,
             offset,

@@ -8,7 +8,7 @@ export class AdbDaemonWebUsbDeviceManager {
      *
      * May be `undefined` if current runtime does not support WebUSB.
      */
-    public static readonly BROWSER =
+    static readonly BROWSER =
         typeof globalThis.navigator !== "undefined" &&
         !!globalThis.navigator.usb
             ? new AdbDaemonWebUsbDeviceManager(globalThis.navigator.usb)
@@ -20,7 +20,7 @@ export class AdbDaemonWebUsbDeviceManager {
      * Create a new instance of {@link AdbDaemonWebUsbDeviceManager} using the specified WebUSB implementation.
      * @param usbManager A WebUSB compatible interface.
      */
-    public constructor(usbManager: USB) {
+    constructor(usbManager: USB) {
         this.#usbManager = usbManager;
     }
 
@@ -37,7 +37,7 @@ export class AdbDaemonWebUsbDeviceManager {
      * @returns An {@link AdbDaemonWebUsbDevice} instance if the user selected a device,
      * or `undefined` if the user cancelled the device picker.
      */
-    public async requestDevice(
+    async requestDevice(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
     ): Promise<AdbDaemonWebUsbDevice | undefined> {
         try {
@@ -67,7 +67,7 @@ export class AdbDaemonWebUsbDeviceManager {
      * Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
      * @returns An array of {@link AdbDaemonWebUsbDevice} instances for all connected and authenticated devices.
      */
-    public async getDevices(
+    async getDevices(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
     ): Promise<AdbDaemonWebUsbDevice[]> {
         const devices = await this.#usbManager.getDevices();

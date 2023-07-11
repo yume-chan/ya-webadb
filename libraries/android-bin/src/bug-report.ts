@@ -20,22 +20,22 @@ export interface BugReportZVersion {
 }
 
 export class BugReportZ extends AdbCommandBase {
-    public static VERSION_REGEX = /(\d+)\.(\d+)/;
+    static VERSION_REGEX = /(\d+)\.(\d+)/;
 
-    public static BEGIN_REGEX = /BEGIN:(.*)/;
+    static BEGIN_REGEX = /BEGIN:(.*)/;
 
-    public static PROGRESS_REGEX = /PROGRESS:(.*)\/(.*)/;
+    static PROGRESS_REGEX = /PROGRESS:(.*)\/(.*)/;
 
-    public static OK_REGEX = /OK:(.*)/;
+    static OK_REGEX = /OK:(.*)/;
 
-    public static FAIL_REGEX = /FAIL:(.*)/;
+    static FAIL_REGEX = /FAIL:(.*)/;
 
     /**
      * Retrieve the version of bugreportz.
      *
      * @returns a `BugReportVersion` object, or `undefined` if `bugreportz` is not available.
      */
-    public async version(): Promise<BugReportZVersion | undefined> {
+    async version(): Promise<BugReportZVersion | undefined> {
         // bugreportz requires shell protocol
         if (!AdbSubprocessShellProtocol.isSupported(this.adb)) {
             return undefined;
@@ -65,7 +65,7 @@ export class BugReportZ extends AdbCommandBase {
         };
     }
 
-    public supportProgress(major: number, minor: number): boolean {
+    supportProgress(major: number, minor: number): boolean {
         return major > 1 || minor >= 1;
     }
 
@@ -78,7 +78,7 @@ export class BugReportZ extends AdbCommandBase {
      * @param onProgress Progress callback. Only specify this if `supportsProgress` is `true`.
      * @returns The path of the bugreport file.
      */
-    public async generate(
+    async generate(
         onProgress?: (progress: string, total: string) => void,
     ): Promise<string> {
         const process = await this.adb.subprocess.spawn([
@@ -133,11 +133,11 @@ export class BugReportZ extends AdbCommandBase {
         return filename;
     }
 
-    public supportStream(major: number, minor: number): boolean {
+    supportStream(major: number, minor: number): boolean {
         return major > 1 || minor >= 2;
     }
 
-    public stream(): ReadableStream<Uint8Array> {
+    stream(): ReadableStream<Uint8Array> {
         return new PushReadableStream(async (controller) => {
             const process = await this.adb.subprocess.spawn([
                 "bugreportz",
@@ -173,7 +173,7 @@ export class BugReportZ extends AdbCommandBase {
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/native/cmds/bugreport/bugreport.cpp;drc=9b73bf07d73dbab5b792632e1e233edbad77f5fd;bpv=0;bpt=0
 export class BugReport extends AdbCommandBase {
-    public generate(): ReadableStream<Uint8Array> {
+    generate(): ReadableStream<Uint8Array> {
         return new WrapReadableStream(async () => {
             const process = await this.adb.subprocess.spawn(["bugreport"]);
             return process.stdout;

@@ -3,12 +3,12 @@ import { describe, expect, it } from "@jest/globals";
 import { OverlayDisplay } from "./overlay-display.js";
 
 describe("OverlayDisplay", () => {
-    describe("OverlayDisplayDevicesFormat", () => {
+    describe("SETTING_FORMAT", () => {
         // values are from https://cs.android.com/android/platform/superproject/+/master:frameworks/base/packages/SettingsLib/res/values/arrays.xml;l=468;drc=60c1d392225bc6e1601693c7d5cfdf1d7f510015
 
         it("should parse 0 device", () => {
             expect(
-                OverlayDisplay.OverlayDisplayDevicesFormat.parse({
+                OverlayDisplay.SETTING_FORMAT.parse({
                     value: "",
                     position: 0,
                 }),
@@ -17,7 +17,7 @@ describe("OverlayDisplay", () => {
 
         it("should parse 1 mode", () => {
             expect(
-                OverlayDisplay.OverlayDisplayDevicesFormat.parse({
+                OverlayDisplay.SETTING_FORMAT.parse({
                     value: "720x480/142",
                     position: 0,
                 }),
@@ -37,7 +37,7 @@ describe("OverlayDisplay", () => {
 
         it("should parse 2 modes", () => {
             expect(
-                OverlayDisplay.OverlayDisplayDevicesFormat.parse({
+                OverlayDisplay.SETTING_FORMAT.parse({
                     value: "1920x1080/320|3840x2160/640",
                     position: 0,
                 }),
@@ -62,7 +62,7 @@ describe("OverlayDisplay", () => {
 
         it("should parse 2 device", () => {
             expect(
-                OverlayDisplay.OverlayDisplayDevicesFormat.parse({
+                OverlayDisplay.SETTING_FORMAT.parse({
                     value: "1280x720/213;1920x1080/320",
                     position: 0,
                 }),
@@ -92,7 +92,7 @@ describe("OverlayDisplay", () => {
 
         it("should parse flags", () => {
             expect(
-                OverlayDisplay.OverlayDisplayDevicesFormat.parse({
+                OverlayDisplay.SETTING_FORMAT.parse({
                     value: "1920x1080/320|3840x2160/640,secure",
                     position: 0,
                 }),

@@ -231,96 +231,93 @@ export function naluRemoveEmulation(buffer: Uint8Array) {
 }
 
 export class NaluSodbBitReader {
-    private readonly _nalu: Uint8Array;
-    private readonly _byteLength: number;
-    private readonly _stopBitIndex: number;
+    readonly #nalu: Uint8Array;
+    readonly #byteLength: number;
+    readonly #stopBitIndex: number;
 
-    private _zeroCount = 0;
-    private _bytePosition = -1;
-    private _bitPosition = -1;
-    private _byte = 0;
+    #zeroCount = 0;
+    #bytePosition = -1;
+    #bitPosition = -1;
+    #byte = 0;
 
-    public get byteLength() {
-        return this._byteLength;
+    get byteLength() {
+        return this.#byteLength;
     }
 
-    public get stopBitIndex() {
-        return this._stopBitIndex;
+    get stopBitIndex() {
+        return this.#stopBitIndex;
     }
 
-    public get bytePosition() {
-        return this._bytePosition;
+    get bytePosition() {
+        return this.#bytePosition;
     }
 
-    public get bitPosition() {
-        return this._bitPosition;
+    get bitPosition() {
+        return this.#bitPosition;
     }
 
-    public get ended() {
+    get ended() {
         return (
-            this._bytePosition === this._byteLength &&
-            this._bitPosition === this._stopBitIndex
+            this.#bytePosition === this.#byteLength &&
+            this.#bitPosition === this.#stopBitIndex
         );
     }
 
-    public constructor(nalu: Uint8Array) {
-        this._nalu = nalu;
+    constructor(nalu: Uint8Array) {
+        this.#nalu = nalu;
 
         for (let i = nalu.length - 1; i >= 0; i -= 1) {
-            if (this._nalu[i] === 0) {
+            if (this.#nalu[i] === 0) {
                 continue;
             }
 
             const byte = nalu[i]!;
             for (let j = 0; j < 8; j += 1) {
                 if (((byte >> j) & 1) === 1) {
-                    this._byteLength = i;
-                    this._stopBitIndex = j;
-                    this.readByte();
+                    this.#byteLength = i;
+                    this.#stopBitIndex = j;
+                    this.#readByte();
                     return;
                 }
             }
         }
 
-        throw new Error("End bit not found");
+        throw new Error("Stop bit not found");
     }
 
-    private readByte() {
-        this._byte = this._nalu[this._bytePosition]!;
-        if (this._zeroCount === 2 && this._byte === 3) {
-            this._zeroCount = 0;
-            this._bytePosition += 1;
-            this.readByte();
+    #readByte() {
+        this.#byte = this.#nalu[this.#bytePosition]!;
+        if (this.#zeroCount === 2 && this.#byte === 3) {
+            this.#zeroCount = 0;
+            this.#bytePosition += 1;
+            this.#readByte();
             return;
         }
 
-        if (this._byte === 0) {
-            this._zeroCount += 1;
+        if (this.#byte === 0) {
+            this.#zeroCount += 1;
         } else {
-            this._zeroCount = 0;
+            this.#zeroCount = 0;
         }
     }
 
-    public next() {
-        if (this._bitPosition === -1) {
-            this._bitPosition = 7;
-            this._bytePosition += 1;
-            this.readByte();
+    next() {
+        if (this.#bitPosition === -1) {
+            this.#bitPosition = 7;
+            this.#bytePosition += 1;
+            this.#readByte();
         }
 
-        if (
-            this._bytePosition === this._byteLength &&
-            this._bitPosition === this._stopBitIndex
-        ) {
+        if (this.ended) {
             throw new Error("Bit index out of bounds");
         }
 
-        const value = (this._byte >> this._bitPosition) & 1;
-        this._bitPosition -= 1;
+        const value = (this.#byte >> this.#bitPosition) & 1;
+        this.#bitPosition -= 1;
         return value;
     }
 
-    public read(length: number): number {
+    read(length: number): number {
         if (length > 32) {
             throw new Error("Read length too large");
         }
@@ -332,13 +329,13 @@ export class NaluSodbBitReader {
         return result;
     }
 
-    public skip(length: number) {
+    skip(length: number) {
         for (let i = 0; i < length; i += 1) {
             this.next();
         }
     }
 
-    public decodeExponentialGolombNumber(): number {
+    decodeExponentialGolombNumber(): number {
         let length = 0;
         while (this.next() === 0) {
             length += 1;
@@ -349,14 +346,35 @@ export class NaluSodbBitReader {
         return ((1 << length) | this.read(length)) - 1;
     }
 
-    public peek(length: number) {
-        const { _zeroCount, _bytePosition, _bitPosition, _byte } = this;
+    #save() {
+        return {
+            zeroCount: this.#zeroCount,
+            bytePosition: this.#bytePosition,
+            bitPosition: this.#bitPosition,
+            byte: this.#byte,
+        };
+    }
+
+    #restore(state: {
+        zeroCount: number;
+        bytePosition: number;
+        bitPosition: number;
+        byte: number;
+    }) {
+        this.#zeroCount = state.zeroCount;
+        this.#bytePosition = state.bytePosition;
+        this.#bitPosition = state.bitPosition;
+        this.#byte = state.byte;
+    }
+
+    peek(length: number) {
+        const state = this.#save();
         const result = this.read(length);
-        Object.assign(this, { _zeroCount, _bytePosition, _bitPosition, _byte });
+        this.#restore(state);
         return result;
     }
 
-    public readBytes(length: number): Uint8Array {
+    readBytes(length: number): Uint8Array {
         const result = new Uint8Array(length);
         for (let i = 0; i < length; i += 1) {
             result[i] = this.read(8);
@@ -364,10 +382,10 @@ export class NaluSodbBitReader {
         return result;
     }
 
-    public peekBytes(length: number): Uint8Array {
-        const { _zeroCount, _bytePosition, _bitPosition, _byte } = this;
+    peekBytes(length: number): Uint8Array {
+        const state = this.#save();
         const result = this.readBytes(length);
-        Object.assign(this, { _zeroCount, _bytePosition, _bitPosition, _byte });
+        this.#restore(state);
         return result;
     }
 }

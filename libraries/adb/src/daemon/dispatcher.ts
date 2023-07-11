@@ -51,18 +51,18 @@ export class AdbPacketDispatcher implements Closeable {
 
     #writer: WritableStreamDefaultWriter<Consumable<AdbPacketInit>>;
 
-    public readonly options: AdbPacketDispatcherOptions;
+    readonly options: AdbPacketDispatcherOptions;
 
     #closed = false;
     #disconnected = new PromiseResolver<void>();
-    public get disconnected() {
+    get disconnected() {
         return this.#disconnected.promise;
     }
 
     #incomingSocketHandlers = new Map<string, AdbIncomingSocketHandler>();
     #readAbortController = new AbortController();
 
-    public constructor(
+    constructor(
         connection: ReadableWritablePair<
             AdbPacketData,
             Consumable<AdbPacketInit>
@@ -77,10 +77,10 @@ export class AdbPacketDispatcher implements Closeable {
                     write: async (packet) => {
                         switch (packet.command) {
                             case AdbCommand.OK:
-                                this.handleOk(packet);
+                                this.#handleOk(packet);
                                 break;
                             case AdbCommand.Close:
-                                await this.handleClose(packet);
+                                await this.#handleClose(packet);
                                 break;
                             case AdbCommand.Write:
                                 if (this.#sockets.has(packet.arg1)) {
@@ -98,7 +98,7 @@ export class AdbPacketDispatcher implements Closeable {
                                     `Unknown local socket id: ${packet.arg1}`,
                                 );
                             case AdbCommand.Open:
-                                await this.handleOpen(packet);
+                                await this.#handleOpen(packet);
                                 break;
                             default:
                                 // Junk data may only appear in the authentication phase,
@@ -125,20 +125,20 @@ export class AdbPacketDispatcher implements Closeable {
             )
             .then(
                 () => {
-                    this.dispose();
+                    this.#dispose();
                 },
                 (e) => {
                     if (!this.#closed) {
                         this.#disconnected.reject(e);
                     }
-                    this.dispose();
+                    this.#dispose();
                 },
             );
 
         this.#writer = connection.writable.getWriter();
     }
 
-    private handleOk(packet: AdbPacketData) {
+    #handleOk(packet: AdbPacketData) {
         if (this.#initializers.resolve(packet.arg1, packet.arg0)) {
             // Device successfully created the socket
             return;
@@ -156,7 +156,7 @@ export class AdbPacketDispatcher implements Closeable {
         void this.sendPacket(AdbCommand.Close, packet.arg1, packet.arg0);
     }
 
-    private async handleClose(packet: AdbPacketData) {
+    async #handleClose(packet: AdbPacketData) {
         // If the socket is still pending
         if (
             packet.arg0 === 0 &&
@@ -201,22 +201,19 @@ export class AdbPacketDispatcher implements Closeable {
         // the device may also respond with two `CLSE` packets.
     }
 
-    public addReverseTunnel(
-        service: string,
-        handler: AdbIncomingSocketHandler,
-    ) {
+    addReverseTunnel(service: string, handler: AdbIncomingSocketHandler) {
         this.#incomingSocketHandlers.set(service, handler);
     }
 
-    public removeReverseTunnel(address: string) {
+    removeReverseTunnel(address: string) {
         this.#incomingSocketHandlers.delete(address);
     }
 
-    public clearReverseTunnels() {
+    clearReverseTunnels() {
         this.#incomingSocketHandlers.clear();
     }
 
-    private async handleOpen(packet: AdbPacketData) {
+    async #handleOpen(packet: AdbPacketData) {
         // `AsyncOperationManager` doesn't support skipping IDs
         // Use `add` + `resolve` to simulate this behavior
         const [localId] = this.#initializers.add<number>();
@@ -251,7 +248,7 @@ export class AdbPacketDispatcher implements Closeable {
         }
     }
 
-    public async createSocket(service: string): Promise<AdbSocket> {
+    async createSocket(service: string): Promise<AdbSocket> {
         if (this.options.appendNullToServiceString) {
             service += "\0";
         }
@@ -273,7 +270,7 @@ export class AdbPacketDispatcher implements Closeable {
         return controller.socket;
     }
 
-    public async sendPacket(
+    async sendPacket(
         command: AdbCommand,
         arg0: number,
         arg1: number,
@@ -299,7 +296,7 @@ export class AdbPacketDispatcher implements Closeable {
         });
     }
 
-    public async close() {
+    async close() {
         // Send `CLSE` packets for all sockets
         await Promise.all(
             Array.from(this.#sockets.values(), (socket) => socket.close()),
@@ -315,7 +312,7 @@ export class AdbPacketDispatcher implements Closeable {
         // `pipe().then()` will call `dispose`
     }
 
-    private dispose() {
+    #dispose() {
         for (const socket of this.#sockets.values()) {
             socket.dispose().catch(unreachable);
         }

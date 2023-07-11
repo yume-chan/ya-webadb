@@ -57,11 +57,11 @@ export const SyncPromise: SyncPromiseStatic = {
 class PendingSyncPromise<T> implements SyncPromise<T> {
     #promise: PromiseLike<T>;
 
-    public constructor(promise: PromiseLike<T>) {
+    constructor(promise: PromiseLike<T>) {
         this.#promise = promise;
     }
 
-    public then<TResult1 = T, TResult2 = never>(
+    then<TResult1 = T, TResult2 = never>(
         onfulfilled?:
             | ((value: T) => TResult1 | PromiseLike<TResult1>)
             | null
@@ -76,7 +76,7 @@ class PendingSyncPromise<T> implements SyncPromise<T> {
         );
     }
 
-    public valueOrPromise(): T | PromiseLike<T> {
+    valueOrPromise(): T | PromiseLike<T> {
         return this.#promise;
     }
 }
@@ -84,11 +84,11 @@ class PendingSyncPromise<T> implements SyncPromise<T> {
 class ResolvedSyncPromise<T> implements SyncPromise<T> {
     #value: T;
 
-    public constructor(value: T) {
+    constructor(value: T) {
         this.#value = value;
     }
 
-    public then<TResult1 = T>(
+    then<TResult1 = T>(
         onfulfilled?:
             | ((value: T) => TResult1 | PromiseLike<TResult1>)
             | null
@@ -100,7 +100,7 @@ class ResolvedSyncPromise<T> implements SyncPromise<T> {
         return SyncPromise.try(() => onfulfilled(this.#value));
     }
 
-    public valueOrPromise(): T | PromiseLike<T> {
+    valueOrPromise(): T | PromiseLike<T> {
         return this.#value;
     }
 }
@@ -108,11 +108,11 @@ class ResolvedSyncPromise<T> implements SyncPromise<T> {
 class RejectedSyncPromise<T> implements SyncPromise<T> {
     #reason: any;
 
-    public constructor(reason: any) {
+    constructor(reason: any) {
         this.#reason = reason;
     }
 
-    public then<TResult1 = T, TResult2 = never>(
+    then<TResult1 = T, TResult2 = never>(
         onfulfilled?:
             | ((value: T) => TResult1 | PromiseLike<TResult1>)
             | null
@@ -128,7 +128,7 @@ class RejectedSyncPromise<T> implements SyncPromise<T> {
         return SyncPromise.try(() => onrejected(this.#reason));
     }
 
-    public valueOrPromise(): T | PromiseLike<T> {
+    valueOrPromise(): T | PromiseLike<T> {
         throw this.#reason;
     }
 }

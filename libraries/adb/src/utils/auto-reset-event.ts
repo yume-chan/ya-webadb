@@ -5,11 +5,11 @@ export class AutoResetEvent implements Disposable {
     #set: boolean;
     readonly #queue: PromiseResolver<void>[] = [];
 
-    public constructor(initialSet = false) {
+    constructor(initialSet = false) {
         this.#set = initialSet;
     }
 
-    public wait(): Promise<void> {
+    wait(): Promise<void> {
         if (!this.#set) {
             this.#set = true;
 
@@ -23,7 +23,7 @@ export class AutoResetEvent implements Disposable {
         return resolver.promise;
     }
 
-    public notifyOne() {
+    notifyOne() {
         if (this.#queue.length !== 0) {
             this.#queue.pop()!.resolve();
         } else {
@@ -31,7 +31,7 @@ export class AutoResetEvent implements Disposable {
         }
     }
 
-    public dispose() {
+    dispose() {
         for (const item of this.#queue) {
             item.reject(new Error("The AutoResetEvent has been disposed"));
         }

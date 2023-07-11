@@ -6,7 +6,7 @@ import { BufferedTransformStream } from "./buffered-transform.js";
 export class StructDeserializeStream<
     T extends Struct<any, any, any, any>,
 > extends BufferedTransformStream<StructValueType<T>> {
-    public constructor(struct: T) {
+    constructor(struct: T) {
         super((stream) => {
             return struct.deserialize(stream);
         });
