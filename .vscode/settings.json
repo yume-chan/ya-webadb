@@ -109,5 +109,6 @@
     "[typescriptreact]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
-    "explorer.sortOrder": "mixed"
+    "explorer.sortOrder": "mixed",
+    "prettier.prettierPath": "./common/temp/node_modules/prettier/index.cjs"
 }
