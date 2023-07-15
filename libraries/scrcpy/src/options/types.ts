@@ -141,6 +141,17 @@ export abstract class ScrcpyOptionsBase<
     constructor(base: B, value: Required<T>) {
         this._base = base;
         this.value = value;
+        this.#setValue();
+    }
+
+    #setValue() {
+        // Share `value` with `_base` class,
+        // so updating `_base.value` in `_base.setListEncoders()`/
+        // `_base.setListDisplays()` will also update `this.value`.
+        Object.assign(this._base, { value: this.value });
+        if (this._base instanceof ScrcpyOptionsBase) {
+            this._base.#setValue();
+        }
     }
 
     abstract serialize(): string[];

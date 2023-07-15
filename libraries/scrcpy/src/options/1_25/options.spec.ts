@@ -14,4 +14,12 @@ describe("ScrcpyOptions1_25", () => {
         ).createScrollController();
         expect(controller1_25).not.toBe(controller1_24);
     });
+
+    describe("setListDisplays", () => {
+        it("should set `display` to `-1`", () => {
+            const options = new ScrcpyOptions1_25({});
+            options.setListDisplays();
+            expect(options.value.displayId).toBe(-1);
+        });
+    });
 });
