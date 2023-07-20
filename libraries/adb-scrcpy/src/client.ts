@@ -260,21 +260,54 @@ export class AdbScrcpyClient {
     }
 
     #videoStream: Promise<AdbScrcpyVideoStream> | undefined;
+    /**
+     * Gets a `Promise` that resolves to the parsed video stream.
+     *
+     * On server version 2.1 and above, it will be `undefined` if
+     * video is disabled by `options.video: false`.
+     *
+     * Note: if it's not `undefined`, it must be consumed to prevent
+     * the connection from being blocked.
+     */
     get videoStream() {
         return this.#videoStream;
     }
 
     #audioStream: Promise<AdbScrcpyAudioStreamMetadata> | undefined;
+    /**
+     * Gets a `Promise` that resolves to the parsed audio stream.
+     *
+     * On server versions before 2.0, it will always be `undefined`.
+     * On server version 2.0 and above, it will be `undefined` if
+     * audio is disabled by `options.audio: false`.
+     *
+     * Note: if it's not `undefined`, it must be consumed to prevent
+     * the connection from being blocked.
+     */
     get audioStream() {
         return this.#audioStream;
     }
 
     #controlMessageWriter: ScrcpyControlMessageWriter | undefined;
+    /**
+     * Gets the control message writer.
+     *
+     * On server version 1.22 and above, it will be `undefined` if
+     * control is disabled by `options.control: false`.
+     */
     get controlMessageWriter() {
         return this.#controlMessageWriter;
     }
 
     #deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined;
+    /**
+     * Gets the device message stream.
+     *
+     * On server version 1.22 and above, it will be `undefined` if
+     * control is disabled by `options.control: false`.
+     *
+     * Note: it must be consumed to prevent the connection from being blocked.
+     */
     get deviceMessageStream() {
         return this.#deviceMessageStream;
     }
