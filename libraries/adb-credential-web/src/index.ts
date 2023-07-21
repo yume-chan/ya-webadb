@@ -1,6 +1,6 @@
 // cspell: ignore RSASSA
 
-import type { AdbCredentialStore } from "@yume-chan/adb";
+import type { AdbCredentialStore, AdbPrivateKey } from "@yume-chan/adb";
 
 function openDatabase() {
     return new Promise<IDBDatabase>((resolve, reject) => {
@@ -64,14 +64,20 @@ async function getAllKeys() {
 }
 
 export default class AdbWebCredentialStore implements AdbCredentialStore {
+    #appName: string;
+
+    constructor(appName = "Tango") {
+        this.#appName = appName;
+    }
+
     /**
-     * Generate a RSA private key and store it into LocalStorage.
+     * Generates a RSA private key and store it into LocalStorage.
      *
      * Calling this method multiple times will overwrite the previous key.
      *
      * @returns The private key in PKCS #8 format.
      */
-    async generateKey(): Promise<Uint8Array> {
+    async generateKey(): Promise<AdbPrivateKey> {
         const { privateKey: cryptoKey } = await crypto.subtle.generateKey(
             {
                 name: "RSASSA-PKCS1-v1_5",
@@ -89,17 +95,23 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
         );
         await saveKey(privateKey);
 
-        return privateKey;
+        return {
+            buffer: privateKey,
+            name: `${this.#appName}@${window.location.hostname}`,
+        };
     }
 
     /**
-     * Yield the stored RSA private key. `AdbWebCredentialStore` only stores one key, so only one value will be yielded.
+     * Yields the stored RSA private key.
      *
      * This method returns a generator, so `for await...of...` loop should be used to read the key.
      */
-    async *iterateKeys(): AsyncGenerator<Uint8Array, void, void> {
+    async *iterateKeys(): AsyncGenerator<AdbPrivateKey, void, void> {
         for (const key of await getAllKeys()) {
-            yield key;
+            yield {
+                buffer: key,
+                name: `${this.#appName}@${window.location.hostname}`,
+            };
         }
     }
 }

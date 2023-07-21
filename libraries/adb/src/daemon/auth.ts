@@ -1,8 +1,13 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type { ValueOrPromise } from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
-import { calculateBase64EncodedLength, encodeBase64 } from "../utils/index.js";
+import {
+    calculateBase64EncodedLength,
+    encodeBase64,
+    encodeUtf8,
+} from "../utils/index.js";
 
 import {
     adbGeneratePublicKey,
@@ -12,18 +17,26 @@ import {
 import type { AdbPacketData } from "./packet.js";
 import { AdbCommand } from "./packet.js";
 
-export type AdbKeyIterable = Iterable<Uint8Array> | AsyncIterable<Uint8Array>;
+export interface AdbPrivateKey {
+    /**
+     * The private key in PKCS #8 format.
+     */
+    buffer: Uint8Array;
+    name?: string | undefined;
+}
+
+export type AdbKeyIterable =
+    | Iterable<AdbPrivateKey>
+    | AsyncIterable<AdbPrivateKey>;
 
 export interface AdbCredentialStore {
     /**
-     * Generate and store a RSA private key with modulus length `2048` and public exponent `65537`.
-     *
-     * The returned `Uint8Array` is the private key in PKCS #8 format.
+     * Generates and stores a RSA private key with modulus length `2048` and public exponent `65537`.
      */
-    generateKey(): ValueOrPromise<Uint8Array>;
+    generateKey(): ValueOrPromise<AdbPrivateKey>;
 
     /**
-     * Synchronously or asynchronously iterate through all stored RSA private keys.
+     * Synchronously or asynchronously iterates through all stored RSA private keys.
      *
      * Each call to `iterateKeys` must return a different iterator that iterate through all stored keys.
      */
@@ -65,7 +78,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
             return;
         }
 
-        const signature = rsaSign(key, packet.payload);
+        const signature = rsaSign(key.buffer, packet.payload);
         yield {
             command: AdbCommand.Auth,
             arg0: AdbAuthType.Signature,
@@ -85,7 +98,7 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
         return;
     }
 
-    let privateKey: Uint8Array | undefined;
+    let privateKey: AdbPrivateKey | undefined;
     for await (const key of credentialStore.iterateKeys()) {
         privateKey = key;
         break;
@@ -99,12 +112,22 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     const [publicKeyBase64Length] =
         calculateBase64EncodedLength(publicKeyLength);
 
+    const nameBuffer = privateKey.name?.length
+        ? encodeUtf8(privateKey.name)
+        : EMPTY_UINT8_ARRAY;
     const publicKeyBuffer = new Uint8Array(
-        publicKeyBase64Length + 1, // Null character
+        publicKeyBase64Length +
+            (nameBuffer.length ? nameBuffer.length + 1 : 0) + // Space character + name
+            1, // Null character
     );
 
-    adbGeneratePublicKey(privateKey, publicKeyBuffer);
+    adbGeneratePublicKey(privateKey.buffer, publicKeyBuffer);
     encodeBase64(publicKeyBuffer.subarray(0, publicKeyLength), publicKeyBuffer);
+
+    if (nameBuffer.length) {
+        publicKeyBuffer[publicKeyBase64Length] = 0x20;
+        publicKeyBuffer.set(nameBuffer, publicKeyBase64Length + 1);
+    }
 
     yield {
         command: AdbCommand.Auth,

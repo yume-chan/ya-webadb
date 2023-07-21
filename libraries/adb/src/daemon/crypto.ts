@@ -158,9 +158,6 @@ export function adbGeneratePublicKey(
     // (All in little endian)
     // See https://android.googlesource.com/platform/system/core.git/+/91784040db2b9273687f88d8b95f729d4a61ecc2/libcrypto_utils/android_pubkey.cpp#38
 
-    // extract `n` from private key
-    const [n] = rsaParsePrivateKey(privateKey);
-
     let outputType: "Uint8Array" | "number";
     const outputLength = adbGetPublicKeySize();
     if (!output) {
@@ -184,6 +181,9 @@ export function adbGeneratePublicKey(
     // modulusLengthInWords
     outputView.setUint32(outputOffset, 2048 / 8 / 4, true);
     outputOffset += 4;
+
+    // extract `n` from private key
+    const [n] = rsaParsePrivateKey(privateKey);
 
     // Calculate `n0inv`
     // Don't know why need to multiply by -1
