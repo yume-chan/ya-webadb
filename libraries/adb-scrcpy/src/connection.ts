@@ -114,21 +114,21 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
         const streams: AdbScrcpyConnectionStreams = {};
 
         if (this.options.video) {
-            const video = await this.#connectAndRetry(sendDummyByte);
-            streams.video = video.readable;
+            const stream = await this.#connectAndRetry(sendDummyByte);
+            streams.video = stream.readable;
             sendDummyByte = false;
         }
 
         if (this.options.audio) {
-            const audio = await this.#connectAndRetry(sendDummyByte);
-            streams.audio = audio.readable;
+            const stream = await this.#connectAndRetry(sendDummyByte);
+            streams.audio = stream.readable;
             sendDummyByte = false;
         }
 
         if (this.options.control) {
-            const control = await this.#connectAndRetry(sendDummyByte);
+            const stream = await this.#connectAndRetry(sendDummyByte);
+            streams.control = stream;
             sendDummyByte = false;
-            streams.control = control;
         }
 
         return streams;
@@ -180,18 +180,18 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
         const streams: AdbScrcpyConnectionStreams = {};
 
         if (this.options.video) {
-            const video = await this.#accept();
-            streams.video = video.readable;
+            const stream = await this.#accept();
+            streams.video = stream.readable;
         }
 
         if (this.options.audio) {
-            const audio = await this.#accept();
-            streams.audio = audio.readable;
+            const stream = await this.#accept();
+            streams.audio = stream.readable;
         }
 
         if (this.options.control) {
-            const control = await this.#accept();
-            streams.control = control;
+            const stream = await this.#accept();
+            streams.control = stream;
         }
 
         return streams;

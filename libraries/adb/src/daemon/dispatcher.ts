@@ -28,6 +28,10 @@ export interface AdbPacketDispatcherOptions {
      */
     appendNullToServiceString: boolean;
     maxPayloadSize: number;
+    /**
+     * Whether to preserve the connection open after the `AdbPacketDispatcher` is closed.
+     */
+    preserveConnection?: boolean | undefined;
 }
 
 /**
@@ -114,12 +118,7 @@ export class AdbPacketDispatcher implements Closeable {
                     },
                 }),
                 {
-                    // There are multiple reasons for the pipe to stop,
-                    // (device disconnection, protocol error, or user abortion)
-                    // if the underlying streams are still open,
-                    // it's still possible to create another ADB connection.
-                    // So don't close `readable` here.
-                    preventCancel: true,
+                    preventCancel: options.preserveConnection ?? false,
                     signal: this.#readAbortController.signal,
                 },
             )

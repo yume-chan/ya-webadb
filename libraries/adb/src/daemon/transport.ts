@@ -32,6 +32,10 @@ interface AdbDaemonAuthenticationOptions {
     connection: ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>;
     credentialStore: AdbCredentialStore;
     authenticators?: AdbAuthenticator[];
+    /**
+     * Whether to preserve the connection open after the `AdbDaemonTransport` is closed.
+     */
+    preserveConnection?: boolean | undefined;
 }
 
 interface AdbDaemonSocketConnectorConstructionOptions {
@@ -40,6 +44,10 @@ interface AdbDaemonSocketConnectorConstructionOptions {
     version: number;
     maxPayloadSize: number;
     banner: string;
+    /**
+     * Whether to preserve the connection open after the `AdbDaemonTransport` is closed.
+     */
+    preserveConnection?: boolean | undefined;
 }
 
 export class AdbDaemonTransport implements AdbTransport {
@@ -56,6 +64,7 @@ export class AdbDaemonTransport implements AdbTransport {
         connection,
         credentialStore,
         authenticators = ADB_DEFAULT_AUTHENTICATORS,
+        preserveConnection,
     }: AdbDaemonAuthenticationOptions): Promise<AdbDaemonTransport> {
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
@@ -180,6 +189,7 @@ export class AdbDaemonTransport implements AdbTransport {
             version,
             maxPayloadSize,
             banner,
+            preserveConnection,
         });
     }
 
@@ -215,6 +225,7 @@ export class AdbDaemonTransport implements AdbTransport {
         version,
         maxPayloadSize,
         banner,
+        preserveConnection,
     }: AdbDaemonSocketConnectorConstructionOptions) {
         this.#serial = serial;
         this.#banner = AdbBanner.parse(banner);
@@ -233,6 +244,7 @@ export class AdbDaemonTransport implements AdbTransport {
             calculateChecksum,
             appendNullToServiceString,
             maxPayloadSize,
+            preserveConnection,
         });
 
         this.#protocolVersion = version;
