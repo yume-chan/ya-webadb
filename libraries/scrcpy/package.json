@@ -22,9 +22,6 @@
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
     },
-    "bin": {
-        "fetch-scrcpy-server": "scripts/fetch-server.cjs"
-    },
     "type": "module",
     "main": "esm/index.js",
     "types": "esm/index.d.ts",
