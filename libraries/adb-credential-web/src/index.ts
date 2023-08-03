@@ -110,7 +110,7 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
         for (const key of await getAllKeys()) {
             yield {
                 buffer: key,
-                name: `${this.#appName}@${window.location.hostname}`,
+                name: `${this.#appName}@${globalThis.location.hostname}`,
             };
         }
     }

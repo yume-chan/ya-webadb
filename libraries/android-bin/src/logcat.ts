@@ -80,6 +80,7 @@ export interface LogcatFormatModifiers {
 }
 
 export interface LogcatOptions {
+    dump?: boolean;
     pid?: number;
     ids?: LogId[];
 }
@@ -479,22 +480,23 @@ export class Logcat extends AdbCommandBase {
 
     binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {
         return new WrapReadableStream(async () => {
+            const args = ["logcat", "-B"];
+            if (options?.dump) {
+                args.push("-d");
+            }
+            if (options?.pid) {
+                args.push("--pid", options.pid.toString());
+            }
+            if (options?.ids) {
+                args.push("-b", Logcat.joinLogId(options.ids));
+            }
+
             // TODO: make `spawn` return synchronously with streams pending
             // so it's easier to chain them.
-            const { stdout } = await this.adb.subprocess.spawn(
-                [
-                    "logcat",
-                    "-B",
-                    ...(options?.pid ? ["--pid", options.pid.toString()] : []),
-                    ...(options?.ids
-                        ? ["-b", Logcat.joinLogId(options.ids)]
-                        : []),
-                ],
-                {
-                    // PERF: None protocol is 150% faster then Shell protocol
-                    protocols: [AdbSubprocessNoneProtocol],
-                },
-            );
+            const { stdout } = await this.adb.subprocess.spawn(args, {
+                // PERF: None protocol is 150% faster then Shell protocol
+                protocols: [AdbSubprocessNoneProtocol],
+            });
             return stdout;
         }).pipeThrough(
             new BufferedTransformStream((stream) => {
