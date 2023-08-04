@@ -106,13 +106,27 @@ export class Adb implements Closeable {
         return stdout.trim();
     }
 
-    async rm(...filenames: string[]): Promise<string> {
+    async rm(
+        filenames: string | string[],
+        options?: { recursive?: boolean; force?: boolean },
+    ): Promise<string> {
+        const args = ["rm"];
+        if (options?.recursive) {
+            args.push("-r");
+        }
+        if (options?.force) {
+            args.push("-f");
+        }
+        if (Array.isArray(filenames)) {
+            for (const filename of filenames) {
+                args.push(escapeArg(filename));
+            }
+        } else {
+            args.push(escapeArg(filenames));
+        }
         // https://android.googlesource.com/platform/packages/modules/adb/+/1a0fb8846d4e6b671c8aa7f137a8c21d7b248716/client/adb_install.cpp#984
-        const stdout = await this.subprocess.spawnAndWaitLegacy([
-            "rm",
-            ...filenames.map((arg) => escapeArg(arg)),
-            "</dev/null",
-        ]);
+        args.push("</dev/null");
+        const stdout = await this.subprocess.spawnAndWaitLegacy(args);
         return stdout;
     }
 
