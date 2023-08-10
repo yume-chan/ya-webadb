@@ -1,6 +1,7 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
+import type { Adb, AdbSync } from "@yume-chan/adb";
 import { AdbCommandBase, AdbSubprocessShellProtocol } from "@yume-chan/adb";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
@@ -11,15 +12,15 @@ import {
     WritableStream,
 } from "@yume-chan/stream-extra";
 
-export interface BugReportZVersion {
-    major: number;
-    minor: number;
-
-    supportProgress: boolean;
-    supportStream: boolean;
+export interface BugReportCapabilities {
+    supportsBugReport: boolean;
+    bugReportZVersion?: string | undefined;
+    supportsBugReportZ: boolean;
+    supportsBugReportZProgress: boolean;
+    supportsBugReportZStream: boolean;
 }
 
-export class BugReportZ extends AdbCommandBase {
+export class BugReport extends AdbCommandBase {
     static VERSION_REGEX = /(\d+)\.(\d+)/;
 
     static BEGIN_REGEX = /BEGIN:(.*)/;
@@ -31,60 +32,168 @@ export class BugReportZ extends AdbCommandBase {
     static FAIL_REGEX = /FAIL:(.*)/;
 
     /**
-     * Retrieve the version of bugreportz.
-     *
-     * @returns a `BugReportVersion` object, or `undefined` if `bugreportz` is not available.
+     * Queries the device's bugreport capabilities.
      */
-    async version(): Promise<BugReportZVersion | undefined> {
+    static async queryCapabilities(adb: Adb): Promise<BugReport> {
         // bugreportz requires shell protocol
-        if (!AdbSubprocessShellProtocol.isSupported(this.adb)) {
-            return undefined;
+        if (!AdbSubprocessShellProtocol.isSupported(adb)) {
+            return new BugReport(adb, {
+                supportsBugReport: true,
+                bugReportZVersion: undefined,
+                supportsBugReportZ: false,
+                supportsBugReportZProgress: false,
+                supportsBugReportZStream: false,
+            });
         }
 
-        const { stderr, exitCode } = await this.adb.subprocess.spawnAndWait([
+        const { stderr, exitCode } = await adb.subprocess.spawnAndWait([
             "bugreportz",
             "-v",
         ]);
         if (exitCode !== 0 || stderr === "") {
-            return undefined;
+            return new BugReport(adb, {
+                supportsBugReport: true,
+                bugReportZVersion: undefined,
+                supportsBugReportZ: false,
+                supportsBugReportZProgress: false,
+                supportsBugReportZStream: false,
+            });
         }
 
-        const match = stderr.match(BugReportZ.VERSION_REGEX);
+        const match = stderr.match(BugReport.VERSION_REGEX);
         if (!match) {
-            return undefined;
+            return new BugReport(adb, {
+                supportsBugReport: true,
+                bugReportZVersion: undefined,
+                supportsBugReportZ: false,
+                supportsBugReportZProgress: false,
+                supportsBugReportZStream: false,
+            });
         }
 
-        const major = parseInt(match[1]!, 10);
-        const minor = parseInt(match[2]!, 10);
-        return {
-            major,
-            minor,
-
-            supportProgress: this.supportProgress(major, minor),
-            supportStream: this.supportStream(major, minor),
-        };
+        const [major, minor] = match[0]
+            .split(".")
+            .map((x) => parseInt(x, 10)) as [number, number];
+        return new BugReport(adb, {
+            // Before BugReportZ version 1.2 (Android 12), BugReport was deprecated but still works.
+            supportsBugReport: major === 1 && minor <= 1,
+            bugReportZVersion: match[0],
+            supportsBugReportZ: true,
+            supportsBugReportZProgress: major > 1 || minor >= 1,
+            supportsBugReportZStream: major > 1 || minor >= 2,
+        });
     }
 
-    supportProgress(major: number, minor: number): boolean {
-        return major > 1 || minor >= 1;
+    #supportsBugReport: boolean;
+    /**
+     * Gets whether the device supports flat (text file, non-zipped) bugreport.
+     *
+     * Should be `true` for Android version <= 11.
+     */
+    get supportsBugReport() {
+        return this.#supportsBugReport;
+    }
+
+    #bugReportZVersion: string | undefined;
+    /**
+     * Gets the version of BugReportZ.
+     *
+     * Will be `undefined` if BugReportZ is not supported.
+     */
+    get bugReportZVersion() {
+        return this.#bugReportZVersion;
+    }
+
+    #supportsBugReportZ: boolean;
+    /**
+     * Gets whether the device supports zipped bugreport.
+     *
+     * Should be `true` for Android version >= 7.
+     */
+    get supportsBugReportZ() {
+        return this.#supportsBugReportZ;
+    }
+
+    #supportsBugReportZProgress: boolean;
+    /**
+     * Gets whether the device supports progress report for zipped bugreport.
+     *
+     * Should be `true` for Android version >= 8.
+     */
+    get supportsBugReportZProgress() {
+        return this.#supportsBugReportZProgress;
+    }
+
+    #supportsBugReportZStream: boolean;
+    /**
+     * Gets whether the device supports streaming zipped bugreport.
+     *
+     * Should be `true` for Android version >= 12.
+     */
+    get supportsBugReportZStream() {
+        return this.#supportsBugReportZStream;
+    }
+
+    constructor(adb: Adb, capabilities: BugReportCapabilities) {
+        super(adb);
+
+        this.#supportsBugReport = capabilities.supportsBugReport;
+        this.#bugReportZVersion = capabilities.bugReportZVersion;
+        this.#supportsBugReportZ = capabilities.supportsBugReportZ;
+        this.#supportsBugReportZProgress =
+            capabilities.supportsBugReportZProgress;
+        this.#supportsBugReportZStream = capabilities.supportsBugReportZStream;
     }
 
     /**
-     * Create a zipped bugreport file.
+     * Creates a legacy, non-zipped bugreport file, or throws an error if `supportsBugReport` is `false`.
      *
-     * Compare to `stream`, this method will write the output to a file on device.
+     * @returns A flat (text file, non-zipped) bugreport.
+     */
+    bugReport(): ReadableStream<Uint8Array> {
+        if (!this.#supportsBugReport) {
+            throw new Error(
+                "Flat (text file, non-zipped) bugreport is not supported.",
+            );
+        }
+
+        return new WrapReadableStream(async () => {
+            // https://cs.android.com/android/platform/superproject/+/master:frameworks/native/cmds/bugreport/bugreport.cpp;drc=9b73bf07d73dbab5b792632e1e233edbad77f5fd;bpv=0;bpt=0
+            const process = await this.adb.subprocess.spawn(["bugreport"]);
+            return process.stdout;
+        });
+    }
+
+    /**
+     * Creates a zipped bugreport file, or throws an error if `supportsBugReportZ` is `false`.
+     *
+     * Compare to `bugReportZStream`, this method will write the output to a file on device.
      * You can pull it later using sync protocol.
      *
-     * @param onProgress Progress callback. Only specify this if `supportsProgress` is `true`.
-     * @returns The path of the bugreport file.
+     * @param onProgress
+     * A callback that will be called when progress is updated.
+     *
+     * Specify `onProgress` when `supportsBugReportZProgress` is `false` will throw an error.
+     * @returns The path to the generated bugreport file on device filesystem.
      */
-    async generate(
-        onProgress?: (progress: string, total: string) => void,
+    async bugReportZ(
+        onProgress?: (completed: string, total: string) => void,
     ): Promise<string> {
-        const process = await this.adb.subprocess.spawn([
-            "bugreportz",
-            ...(onProgress ? ["-p"] : []),
-        ]);
+        if (!this.#supportsBugReportZ) {
+            throw new Error("bugreportz is not supported");
+        }
+
+        const args = ["bugreportz"];
+        if (onProgress) {
+            if (!this.#supportsBugReportZProgress) {
+                throw new Error("bugreportz progress is not supported");
+            }
+            args.push("-p");
+        }
+
+        const process = await this.adb.subprocess.spawn(args, {
+            protocols: [AdbSubprocessShellProtocol],
+        });
 
         let filename: string | undefined;
         let error: string | undefined;
@@ -96,22 +205,22 @@ export class BugReportZ extends AdbCommandBase {
                 new WritableStream<string>({
                     write(line) {
                         // `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
-                        let match = line.match(BugReportZ.PROGRESS_REGEX);
+                        let match = line.match(BugReport.PROGRESS_REGEX);
                         if (match) {
                             onProgress?.(match[1]!, match[2]!);
                         }
 
-                        match = line.match(BugReportZ.BEGIN_REGEX);
+                        match = line.match(BugReport.BEGIN_REGEX);
                         if (match) {
                             filename = match[1]!;
                         }
 
-                        match = line.match(BugReportZ.OK_REGEX);
+                        match = line.match(BugReport.OK_REGEX);
                         if (match) {
                             filename = match[1];
                         }
 
-                        match = line.match(BugReportZ.FAIL_REGEX);
+                        match = line.match(BugReport.FAIL_REGEX);
                         if (match) {
                             // Don't report error now
                             // We want to gather all output.
@@ -133,16 +242,17 @@ export class BugReportZ extends AdbCommandBase {
         return filename;
     }
 
-    supportStream(major: number, minor: number): boolean {
-        return major > 1 || minor >= 2;
-    }
-
-    stream(): ReadableStream<Uint8Array> {
+    /**
+     * Creates a zipped bugreport file, or throws an error if `supportsBugReportZStream` is `false`.
+     *
+     * @returns The content of the generated bugreport file.
+     */
+    bugReportZStream(): ReadableStream<Uint8Array> {
         return new PushReadableStream(async (controller) => {
-            const process = await this.adb.subprocess.spawn([
-                "bugreportz",
-                "-s",
-            ]);
+            const process = await this.adb.subprocess.spawn(
+                ["bugreportz", "-s"],
+                { protocols: [AdbSubprocessShellProtocol] },
+            );
             process.stdout
                 .pipeTo(
                     new WritableStream({
@@ -169,14 +279,54 @@ export class BugReportZ extends AdbCommandBase {
             await process.exit;
         });
     }
-}
 
-// https://cs.android.com/android/platform/superproject/+/master:frameworks/native/cmds/bugreport/bugreport.cpp;drc=9b73bf07d73dbab5b792632e1e233edbad77f5fd;bpv=0;bpt=0
-export class BugReport extends AdbCommandBase {
-    generate(): ReadableStream<Uint8Array> {
-        return new WrapReadableStream(async () => {
-            const process = await this.adb.subprocess.spawn(["bugreport"]);
-            return process.stdout;
-        });
+    /**
+     * Automatically choose the best bugreport method.
+     *
+     * * If `supportsBugReportZStream` is `true`, this method will return a stream of zipped bugreport.
+     * * If `supportsBugReportZ` is `true`, this method will return a stream of zipped bugreport, and will delete the file on device after the stream is closed.
+     * * If `supportsBugReport` is `true`, this method will return a stream of flat bugreport.
+     *
+     * @param onProgress
+     * If `supportsBugReportZStream` is `false` and `supportsBugReportZProgress` is `true`,
+     * this callback will be called when progress is updated.
+     */
+    automatic(onProgress?: (completed: string, total: string) => void): {
+        type: "bugreport" | "bugreportz";
+        stream: ReadableStream<Uint8Array>;
+    } {
+        if (this.#supportsBugReportZStream) {
+            return { type: "bugreportz", stream: this.bugReportZStream() };
+        }
+
+        if (this.#supportsBugReportZ) {
+            let path: string | undefined;
+            let sync: AdbSync | undefined;
+            const cleanup = async () => {
+                await sync?.dispose();
+                if (path) {
+                    await this.adb.rm(path);
+                }
+            };
+
+            return {
+                type: "bugreportz",
+                stream: new WrapReadableStream({
+                    start: async () => {
+                        path = await this.bugReportZ(
+                            this.#supportsBugReportZProgress
+                                ? onProgress
+                                : undefined,
+                        );
+                        sync = await this.adb.sync();
+                        return sync.read(path);
+                    },
+                    cancel: cleanup,
+                    close: cleanup,
+                }),
+            };
+        }
+
+        return { type: "bugreport", stream: this.bugReport() };
     }
 }
