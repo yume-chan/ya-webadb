@@ -3,8 +3,9 @@
 
 import type { Adb, AdbSync } from "@yume-chan/adb";
 import { AdbCommandBase, AdbSubprocessShellProtocol } from "@yume-chan/adb";
-import type { ReadableStream } from "@yume-chan/stream-extra";
+import type { AbortSignal, ReadableStream } from "@yume-chan/stream-extra";
 import {
+    AbortController,
     DecodeUtf8Stream,
     PushReadableStream,
     SplitStringStream,
@@ -18,6 +19,16 @@ export interface BugReportCapabilities {
     supportsBugReportZ: boolean;
     supportsBugReportZProgress: boolean;
     supportsBugReportZStream: boolean;
+}
+
+export interface BugReportZOptions {
+    signal?: AbortSignal;
+    /**
+     * A callback that will be called when progress is updated.
+     *
+     * Specify `onProgress` when `supportsBugReportZProgress` is `false` will throw an error.
+     */
+    onProgress?: ((completed: string, total: string) => void) | undefined;
 }
 
 export class BugReport extends AdbCommandBase {
@@ -170,21 +181,19 @@ export class BugReport extends AdbCommandBase {
      * Compare to `bugReportZStream`, this method will write the output to a file on device.
      * You can pull it later using sync protocol.
      *
-     * @param onProgress
-     * A callback that will be called when progress is updated.
-     *
-     * Specify `onProgress` when `supportsBugReportZProgress` is `false` will throw an error.
      * @returns The path to the generated bugreport file on device filesystem.
      */
-    async bugReportZ(
-        onProgress?: (completed: string, total: string) => void,
-    ): Promise<string> {
+    async bugReportZ(options?: BugReportZOptions): Promise<string> {
+        if (options?.signal?.aborted) {
+            throw options?.signal.reason ?? new Error("Aborted");
+        }
+
         if (!this.#supportsBugReportZ) {
             throw new Error("bugreportz is not supported");
         }
 
         const args = ["bugreportz"];
-        if (onProgress) {
+        if (options?.onProgress) {
             if (!this.#supportsBugReportZProgress) {
                 throw new Error("bugreportz progress is not supported");
             }
@@ -193,6 +202,10 @@ export class BugReport extends AdbCommandBase {
 
         const process = await this.adb.subprocess.spawn(args, {
             protocols: [AdbSubprocessShellProtocol],
+        });
+
+        options?.signal?.addEventListener("abort", () => {
+            void process.kill();
         });
 
         let filename: string | undefined;
@@ -207,7 +220,7 @@ export class BugReport extends AdbCommandBase {
                         // `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
                         let match = line.match(BugReport.PROGRESS_REGEX);
                         if (match) {
-                            onProgress?.(match[1]!, match[2]!);
+                            options?.onProgress?.(match[1]!, match[2]!);
                         }
 
                         match = line.match(BugReport.BEGIN_REGEX);
@@ -302,7 +315,9 @@ export class BugReport extends AdbCommandBase {
         if (this.#supportsBugReportZ) {
             let path: string | undefined;
             let sync: AdbSync | undefined;
+            const controller = new AbortController();
             const cleanup = async () => {
+                controller.abort();
                 await sync?.dispose();
                 if (path) {
                     await this.adb.rm(path);
@@ -313,11 +328,12 @@ export class BugReport extends AdbCommandBase {
                 type: "bugreportz",
                 stream: new WrapReadableStream({
                     start: async () => {
-                        path = await this.bugReportZ(
-                            this.#supportsBugReportZProgress
+                        path = await this.bugReportZ({
+                            signal: controller.signal,
+                            onProgress: this.#supportsBugReportZProgress
                                 ? onProgress
                                 : undefined,
-                        );
+                        });
                         sync = await this.adb.sync();
                         return sync.read(path);
                     },
