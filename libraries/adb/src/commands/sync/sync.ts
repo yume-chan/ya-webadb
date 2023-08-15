@@ -86,18 +86,33 @@ export class AdbSync extends AutoDisposable {
             !this.fixedPushMkdir;
     }
 
+    /**
+     * Gets information of a file or folder.
+     *
+     * If `path` points to a symbolic link, the returned information is about the link itself (with `type` being `LinuxFileType.Link`).
+     */
     async lstat(path: string): Promise<AdbSyncStat> {
-        return await adbSyncLstat(this._socket, path, this.supportsStat);
+        return await adbSyncLstat(this._socket, path, this.#supportsStat);
     }
 
+    /**
+     * Gets the information of a file or folder.
+     *
+     * If `path` points to a symbolic link, it will be resolved and the returned information is about the target (with `type` being `LinuxFileType.File` or `LinuxFileType.Directory`).
+     */
     async stat(path: string) {
-        if (!this.supportsStat) {
+        if (!this.#supportsStat) {
             throw new Error("Not supported");
         }
 
         return await adbSyncStat(this._socket, path);
     }
 
+    /**
+     * Checks if `path` is a directory, or a symbolic link to a directory.
+     *
+     * This uses `lstat` internally, thus works on all Android versions.
+     */
     async isDirectory(path: string): Promise<boolean> {
         try {
             await this.lstat(path + "/");

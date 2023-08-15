@@ -285,7 +285,7 @@ Creates an `AdbSync` client. The client can send multiple command in sequence, a
 public async lstat(path: string): Promise<AdbSyncStat>;
 ```
 
-Gets the information of a file or folder. If path is a symbolic link, the returned information is about the link itself.
+Gets the information of a file or folder. If `path` points to a symbolic link, the returned information is about the link itself.
 
 This uses the `STAT` or `LST2` (when supported) sync commands, notice that despite the name of `STAT`, it doesn't resolve symbolic links.
 
@@ -297,7 +297,7 @@ Same as the [`lstat`](https://linux.die.net/man/2/lstat) system call in Linux.
 public async stat(path: string): Promise<AdbSyncStat>;
 ```
 
-Similar to `lstat`, but if path is a symbolic link, the information is about the file it refers to.
+Gets the information of a file or folder. If `path` points to a symbolic link, it will be resolved and the returned information is about the target.
 
 Uses the `STA2` sync command, which requires the `stat_v2` feature flag. Will throw an error if device doesn't support that.
 
@@ -309,7 +309,9 @@ Same as the `stat` system call in Linux.
 public async isDirectory(path: string): Promise<boolean>
 ```
 
-Uses `lstat` method to check if the given path is a directory.
+Checks if `path` is a directory, or a symbolic link to a directory.
+
+This uses `lstat` internally, thus works on all Android versions.
 
 #### `opendir`
 

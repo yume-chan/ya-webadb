@@ -305,8 +305,13 @@ export class AdbPacketDispatcher implements Closeable {
         // It's possible that we haven't received all `CLSE` confirm packets,
         // but it doesn't matter, the next connection can cope with them.
         this.#closed = true;
+
         this.#readAbortController.abort();
-        this.#writer.releaseLock();
+        if (this.options.preserveConnection ?? false) {
+            this.#writer.releaseLock();
+        } else {
+            await this.#writer.close();
+        }
 
         // `pipe().then()` will call `dispose`
     }
