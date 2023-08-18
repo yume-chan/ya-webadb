@@ -40,6 +40,10 @@ export class AdbDaemonWebUsbDeviceManager {
     async requestDevice(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
     ): Promise<AdbDaemonWebUsbDevice | undefined> {
+        if (filters.length === 0) {
+            throw new TypeError("filters must not be empty");
+        }
+
         try {
             const device = await this.#usbManager.requestDevice({
                 filters,
@@ -70,6 +74,10 @@ export class AdbDaemonWebUsbDeviceManager {
     async getDevices(
         filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
     ): Promise<AdbDaemonWebUsbDevice[]> {
+        if (filters.length === 0) {
+            throw new TypeError("filters must not be empty");
+        }
+
         const devices = await this.#usbManager.getDevices();
         return devices
             .filter((device) => {
