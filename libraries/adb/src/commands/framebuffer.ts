@@ -1,5 +1,5 @@
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
-import Struct from "@yume-chan/struct";
+import Struct, { StructEmptyError } from "@yume-chan/struct";
 
 import type { Adb } from "../adb.js";
 
@@ -58,10 +58,38 @@ export type AdbFrameBufferV2 = (typeof AdbFrameBufferV2)["TDeserializeResult"];
  */
 export type AdbFrameBuffer = AdbFrameBufferV1 | AdbFrameBufferV2;
 
+export class AdbFrameBufferError extends Error {
+    constructor(message: string, options?: ErrorOptions) {
+        super(message, options);
+    }
+}
+
+export class AdbFrameBufferUnsupportedVersionError extends AdbFrameBufferError {
+    constructor(version: number) {
+        super(`Unsupported FrameBuffer version ${version}`);
+    }
+}
+
+export class AdbFrameBufferForbiddenError extends AdbFrameBufferError {
+    constructor() {
+        super("FrameBuffer is disabled by current app");
+    }
+}
+
 export async function framebuffer(adb: Adb): Promise<AdbFrameBuffer> {
     const socket = await adb.createSocket("framebuffer:");
     const stream = new BufferedReadableStream(socket.readable);
-    const { version } = await Version.deserialize(stream);
+
+    let version: number;
+    try {
+        ({ version } = await Version.deserialize(stream));
+    } catch (e) {
+        if (e instanceof StructEmptyError) {
+            throw new AdbFrameBufferForbiddenError();
+        }
+        throw e;
+    }
+
     switch (version) {
         case 1:
             // TODO: AdbFrameBuffer: does all v1 responses uses the same color space? Add it so the command returns same format for all versions.
@@ -69,6 +97,6 @@ export async function framebuffer(adb: Adb): Promise<AdbFrameBuffer> {
         case 2:
             return AdbFrameBufferV2.deserialize(stream);
         default:
-            throw new Error("Unsupported FrameBuffer version");
+            throw new AdbFrameBufferUnsupportedVersionError(version);
     }
 }
