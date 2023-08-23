@@ -97,7 +97,7 @@ export default class AdbWebCredentialStore implements AdbCredentialStore {
 
         return {
             buffer: privateKey,
-            name: `${this.#appName}@${window.location.hostname}`,
+            name: `${this.#appName}@${globalThis.location.hostname}`,
         };
     }
 
