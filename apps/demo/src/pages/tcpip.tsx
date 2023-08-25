@@ -77,30 +77,19 @@ class TcpIpState {
             return;
         }
 
-        const serviceListenAddresses = await GLOBAL_STATE.adb.getProp(
-            "service.adb.listen_addrs"
-        );
-        const servicePort = await GLOBAL_STATE.adb.getProp(
-            "service.adb.tcp.port"
-        );
-        const persistPort = await GLOBAL_STATE.adb.getProp(
-            "persist.adb.tcp.port"
-        );
+        const { serviceListenAddresses, servicePort, persistPort } =
+            await GLOBAL_STATE.adb.tcpip.getListenAddresses();
 
         if (signal.aborted) {
             return;
         }
 
         runInAction(() => {
-            this.serviceListenAddresses =
-                serviceListenAddresses !== ""
-                    ? serviceListenAddresses.split(",")
-                    : undefined;
+            this.serviceListenAddresses = serviceListenAddresses;
 
             if (servicePort) {
-                this.servicePortEnabled =
-                    !serviceListenAddresses && servicePort !== "0";
-                this.servicePort = servicePort;
+                this.servicePortEnabled = !serviceListenAddresses;
+                this.servicePort = servicePort.toString();
             } else {
                 this.servicePortEnabled = false;
                 this.servicePort = "5555";
@@ -109,7 +98,7 @@ class TcpIpState {
             if (persistPort) {
                 this.persistPortEnabled =
                     !serviceListenAddresses && !servicePort;
-                this.persistPort = persistPort;
+                this.persistPort = persistPort.toString();
             } else {
                 this.persistPortEnabled = false;
                 this.persistPort = undefined;
@@ -124,7 +113,7 @@ class TcpIpState {
 
         if (state.servicePortEnabled) {
             await GLOBAL_STATE.adb.tcpip.setPort(
-                Number.parseInt(state.servicePort, 10)
+                Number.parseInt(state.servicePort, 10),
             );
         } else {
             await GLOBAL_STATE.adb.tcpip.disable();
@@ -153,7 +142,7 @@ const TcpIp: NextPage = () => {
                 state.servicePortEnabled = !!value;
             });
         },
-        []
+        [],
     );
 
     const handleServicePortChange = useCallback(
@@ -163,7 +152,7 @@ const TcpIp: NextPage = () => {
             }
             runInAction(() => (state.servicePort = value));
         },
-        []
+        [],
     );
 
     return (

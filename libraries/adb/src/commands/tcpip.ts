@@ -1,6 +1,47 @@
 import { AdbCommandBase } from "./base.js";
 
+/**
+ * ADB daemon checks for the following properties in the order of
+ *
+ * * `serviceListenAddresses` (`service.adb.listen_addrs`)
+ * * `servicePort` (`service.adb.tcp.port`)
+ * * `persistPort` (`persist.adb.tcp.port`)
+ *
+ * Once it finds a non-empty value, it will use it and ignore the rest.
+ *
+ * `serviceListenAddresses` and `persistPort` are fixed at build time,
+ * only `servicePort` can be changed using `setPort` and `disable`.
+ * This means if either `serviceListenAddresses` or `persistPort` is non-empty,
+ * ADB over WiFi is always enabled.
+ */
+export interface AdbTcpIpListenAddresses {
+    serviceListenAddresses: string[];
+    servicePort: number | undefined;
+    persistPort: number | undefined;
+}
+
 export class AdbTcpIpCommand extends AdbCommandBase {
+    #parsePort(value: string): number | undefined {
+        if (!value || value === "0") {
+            return undefined;
+        }
+        return Number.parseInt(value, 10);
+    }
+
+    async getListenAddresses(): Promise<AdbTcpIpListenAddresses> {
+        const serviceListenAddresses = await this.adb.getProp(
+            "service.adb.listen_addrs",
+        );
+        const servicePort = await this.adb.getProp("service.adb.tcp.port");
+        const persistPort = await this.adb.getProp("persist.adb.tcp.port");
+
+        return {
+            serviceListenAddresses: serviceListenAddresses.split(","),
+            servicePort: this.#parsePort(servicePort),
+            persistPort: this.#parsePort(persistPort),
+        };
+    }
+
     async setPort(port: number): Promise<string> {
         if (port <= 0) {
             throw new Error(`Invalid port ${port}`);

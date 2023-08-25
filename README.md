@@ -24,10 +24,10 @@ In this mode, this library talks to a Google ADB server, which is either running
 
 ## Compatibility
 
-| Connection                                | Chromium-based Browsers        | Firefox   | Node.js                       |
-| ----------------------------------------- | ------------------------------ | --------- | ----------------------------- |
-| USB cable                                 | Supported using [WebUSB] API   | No        | Supported using `usb` package |
-| Wireless through [WebSocket] <sup>1</sup> | Supported                      | Supported | Possible using `ws` package   |
+| Connection                                | Chromium-based Browsers          | Firefox   | Node.js                       |
+| ----------------------------------------- | -------------------------------- | --------- | ----------------------------- |
+| USB cable                                 | Supported using [WebUSB] API     | No        | Supported using `usb` package |
+| Wireless through [WebSocket] <sup>1</sup> | Supported                        | Supported | Possible using `ws` package   |
 | Wireless through TCP                      | Waiting for [Direct Sockets] API | No        | Possible using `net` module   |
 
 [webusb]: https://wicg.github.io/webusb/
