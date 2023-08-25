@@ -32,7 +32,7 @@
     },
     "dependencies": {
         "@yume-chan/adb": "workspace:^0.0.20",
-        "@yume-chan/adb-server-node-tcp": "workspace:^0.0.19",
+        "@yume-chan/adb-server-node-tcp": "workspace:^0.0.20",
         "@yume-chan/android-bin": "workspace:^0.0.20",
         "@yume-chan/stream-extra": "workspace:^0.0.20",
         "commander": "^10.0.1",

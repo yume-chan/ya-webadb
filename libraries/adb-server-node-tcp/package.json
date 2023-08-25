@@ -1,7 +1,6 @@
 {
     "name": "@yume-chan/adb-server-node-tcp",
-    "private": true,
-    "version": "0.0.19",
+    "version": "0.0.20",
     "description": "ADB server connection for `@yume-chan/adb` using Node.js' `net` module",
     "keywords": [
         "adb",

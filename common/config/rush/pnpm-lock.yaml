@@ -14,7 +14,7 @@ importers:
         specifier: workspace:^0.0.20
         version: link:../../libraries/adb
       '@yume-chan/adb-server-node-tcp':
-        specifier: workspace:^0.0.19
+        specifier: workspace:^0.0.20
         version: link:../../libraries/adb-server-node-tcp
       '@yume-chan/android-bin':
         specifier: workspace:^0.0.20

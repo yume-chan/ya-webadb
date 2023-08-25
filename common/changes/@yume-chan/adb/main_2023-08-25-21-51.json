@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb",
+            "comment": "Add `recursive` and `force` options to `rm` method, allow deleting folders",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb"
+}

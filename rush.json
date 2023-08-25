@@ -503,7 +503,9 @@
         },
         {
             "packageName": "@yume-chan/adb-server-node-tcp",
-            "projectFolder": "libraries/adb-server-node-tcp"
+            "projectFolder": "libraries/adb-server-node-tcp",
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
         },
         {
             "packageName": "@yume-chan/adb-cli",
