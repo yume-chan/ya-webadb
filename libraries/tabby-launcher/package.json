@@ -13,9 +13,9 @@
         "@ng-bootstrap/ng-bootstrap": "^14.1.1",
         "@popperjs/core": "^2.11.6",
         "@types/js-yaml": "^4.0.5",
-        "@yume-chan/adb": "workspace:^0.0.20",
+        "@yume-chan/adb": "workspace:^0.0.21",
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/stream-extra": "workspace:^0.0.20",
+        "@yume-chan/stream-extra": "workspace:^0.0.21",
         "@yume-chan/tabby-tango": "workspace:^0.0.19",
         "buffer": "^6.0.3",
         "comlink": "^4.4.1",
@@ -54,9 +54,9 @@
     "main": "dist/main.js",
     "name": "@yume-chan/tabby-launcher",
     "peerDependencies": {
-        "@yume-chan/adb": "workspace:^0.0.20",
+        "@yume-chan/adb": "workspace:^0.0.21",
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/stream-extra": "workspace:^0.0.20",
+        "@yume-chan/stream-extra": "workspace:^0.0.21",
         "comlink": "^4.4.1"
     },
     "resolutions": {

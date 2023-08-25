@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/b-tree",
-    "version": "0.0.20",
+    "version": "0.0.21",
     "description": "A B-tree implementation in TypeScript",
     "keywords": [
         "data-structure",

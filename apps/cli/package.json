@@ -31,10 +31,10 @@
         "lint": "eslint src/**/*.ts --fix"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.20",
-        "@yume-chan/adb-server-node-tcp": "workspace:^0.0.20",
-        "@yume-chan/android-bin": "workspace:^0.0.20",
-        "@yume-chan/stream-extra": "workspace:^0.0.20",
+        "@yume-chan/adb": "workspace:^0.0.21",
+        "@yume-chan/adb-server-node-tcp": "workspace:^0.0.21",
+        "@yume-chan/android-bin": "workspace:^0.0.21",
+        "@yume-chan/stream-extra": "workspace:^0.0.21",
         "commander": "^10.0.1",
         "source-map-support": "^0.5.21",
         "tslib": "^2.6.0"

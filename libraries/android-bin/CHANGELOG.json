@@ -2,6 +2,36 @@
   "name": "@yume-chan/android-bin",
   "entries": [
     {
+      "version": "0.0.21",
+      "tag": "@yume-chan/android-bin_v0.0.21",
+      "date": "Fri, 25 Aug 2023 14:05:18 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add wrapper for `bu`"
+          },
+          {
+            "comment": "Remove the last `\\n` from `Settings#get`"
+          },
+          {
+            "comment": "Add wrappers for `dumpsys diskstats` and `dumpsys battery`"
+          },
+          {
+            "comment": "Add wrapper for `pm list packages`"
+          },
+          {
+            "comment": "Rewrite `Settings` to use `Cmd` if available"
+          },
+          {
+            "comment": "Add support to stop `bugreport`"
+          },
+          {
+            "comment": "Merge `bugreport` and `bugreportz` wrappers, providing an `automatic` method to choose the best available bugreport method"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.20",
       "tag": "@yume-chan/android-bin_v0.0.20",
       "date": "Mon, 05 Jun 2023 02:51:41 GMT",

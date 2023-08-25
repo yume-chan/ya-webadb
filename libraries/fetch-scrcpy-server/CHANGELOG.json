@@ -1,0 +1,17 @@
+{
+  "name": "@yume-chan/fetch-scrcpy-server",
+  "entries": [
+    {
+      "version": "0.0.21",
+      "tag": "@yume-chan/fetch-scrcpy-server_v0.0.21",
+      "date": "Fri, 25 Aug 2023 14:05:18 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Move the fetching server binary script to `@yume-chan/scrcpy-fetch-server` package"
+          }
+        ]
+      }
+    }
+  ]
+}

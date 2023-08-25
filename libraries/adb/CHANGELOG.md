@@ -1,6 +1,17 @@
 # Change Log - @yume-chan/adb
 
-This log was last generated on Mon, 05 Jun 2023 02:51:41 GMT and should not be manually modified.
+This log was last generated on Fri, 25 Aug 2023 14:05:18 GMT and should not be manually modified.
+
+## 0.0.21
+Fri, 25 Aug 2023 14:05:18 GMT
+
+### Updates
+
+- Change `AdbSync` to throws `AdbSyncError` for errors returned by ADB Daemon
+- Add name for public keys
+- Add typed errors for `framebuffer` command when current app disables screen capture
+- Change `AdbDaemonTransport` class to automatically close the connection, unless the new `preserveConnection` option is `true`
+- Add `recursive` and `force` options to `rm` method, allow deleting folders
 
 ## 0.0.20
 Mon, 05 Jun 2023 02:51:41 GMT

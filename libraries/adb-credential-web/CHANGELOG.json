@@ -2,6 +2,21 @@
   "name": "@yume-chan/adb-credential-web",
   "entries": [
     {
+      "version": "0.0.21",
+      "tag": "@yume-chan/adb-credential-web_v0.0.21",
+      "date": "Fri, 25 Aug 2023 14:05:18 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add name for public keys"
+          },
+          {
+            "comment": "Change to save private keys in IndexedDB, allow usage from Web Workers"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.20",
       "tag": "@yume-chan/adb-credential-web_v0.0.20",
       "date": "Mon, 05 Jun 2023 02:51:41 GMT",

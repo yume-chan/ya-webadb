@@ -1,6 +1,19 @@
 # Change Log - @yume-chan/android-bin
 
-This log was last generated on Mon, 05 Jun 2023 02:51:41 GMT and should not be manually modified.
+This log was last generated on Fri, 25 Aug 2023 14:05:18 GMT and should not be manually modified.
+
+## 0.0.21
+Fri, 25 Aug 2023 14:05:18 GMT
+
+### Updates
+
+- Add wrapper for `bu`
+- Remove the last `\n` from `Settings#get`
+- Add wrappers for `dumpsys diskstats` and `dumpsys battery`
+- Add wrapper for `pm list packages`
+- Rewrite `Settings` to use `Cmd` if available
+- Add support to stop `bugreport`
+- Merge `bugreport` and `bugreportz` wrappers, providing an `automatic` method to choose the best available bugreport method
 
 ## 0.0.20
 Mon, 05 Jun 2023 02:51:41 GMT

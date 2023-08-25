@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/scrcpy-decoder-webcodecs",
-    "version": "0.0.20",
+    "version": "0.0.21",
     "description": "Raw H.264 stream decoder and renderer using WebCodecs API (requires modern browser).",
     "keywords": [
         "adb",
@@ -35,9 +35,9 @@
     },
     "dependencies": {
         "@types/dom-webcodecs": "^0.1.8",
-        "@yume-chan/scrcpy": "workspace:^0.0.20",
-        "@yume-chan/scrcpy-decoder-tinyh264": "workspace:^0.0.20",
-        "@yume-chan/stream-extra": "workspace:^0.0.20",
+        "@yume-chan/scrcpy": "workspace:^0.0.21",
+        "@yume-chan/scrcpy-decoder-tinyh264": "workspace:^0.0.21",
+        "@yume-chan/stream-extra": "workspace:^0.0.21",
         "tslib": "^2.6.0"
     },
     "devDependencies": {
