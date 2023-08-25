@@ -36,7 +36,10 @@ export class AdbTcpIpCommand extends AdbCommandBase {
         const persistPort = await this.adb.getProp("persist.adb.tcp.port");
 
         return {
-            serviceListenAddresses: serviceListenAddresses.split(","),
+            serviceListenAddresses:
+                serviceListenAddresses != ""
+                    ? serviceListenAddresses.split(",")
+                    : [],
             servicePort: this.#parsePort(servicePort),
             persistPort: this.#parsePort(persistPort),
         };
