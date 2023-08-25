@@ -8,11 +8,7 @@ import {
     Stack,
     StackItem,
 } from "@fluentui/react";
-import {
-    BugReport,
-    BugReportZ,
-    BugReportZVersion,
-} from "@yume-chan/android-bin";
+import { BugReport } from "@yume-chan/android-bin";
 import {
     action,
     autorun,
@@ -29,10 +25,6 @@ import { RouteStackProps, saveFile } from "../utils";
 class BugReportState {
     bugReport: BugReport | undefined = undefined;
 
-    bugReportZ: BugReportZ | undefined = undefined;
-
-    bugReportZVersion: BugReportZVersion | undefined = undefined;
-
     bugReportZInProgress = false;
 
     bugReportZProgress: string | undefined = undefined;
@@ -41,7 +33,6 @@ class BugReportState {
 
     constructor() {
         makeAutoObservable(this, {
-            bugReportZVersion: observable.deep,
             generateBugReport: action.bound,
             generateBugReportZStream: action.bound,
             generateBugReportZ: action.bound,
@@ -49,32 +40,30 @@ class BugReportState {
 
         autorun(() => {
             if (GLOBAL_STATE.adb) {
-                runInAction(() => {
-                    this.bugReport = new BugReport(GLOBAL_STATE.adb!);
-                    this.bugReportZ = new BugReportZ(GLOBAL_STATE.adb!);
-
-                    this.bugReportZ.version().then(
-                        action((version) => {
-                            this.bugReportZVersion = version;
-                        })
+                (async () => {
+                    const bugreport = await BugReport.queryCapabilities(
+                        GLOBAL_STATE.adb!,
                     );
-                });
+                    runInAction(() => {
+                        this.bugReport = bugreport;
+                    });
+                })();
             } else {
                 runInAction(() => {
                     this.bugReport = undefined;
-                    this.bugReportZ = undefined;
-                    this.bugReportZVersion = undefined;
                 });
             }
         });
     }
 
     async generateBugReport() {
-        await this.bugReport!.generate().pipeTo(saveFile("bugreport.txt"));
+        await this.bugReport!.bugReport().pipeTo(saveFile("bugreport.txt"));
     }
 
     async generateBugReportZStream() {
-        await this.bugReportZ!.stream().pipeTo(saveFile("bugreport.zip"));
+        await this.bugReport!.bugReportZStream().pipeTo(
+            saveFile("bugreport.zip"),
+        );
     }
 
     async generateBugReportZ() {
@@ -82,14 +71,14 @@ class BugReportState {
             this.bugReportZInProgress = true;
         });
 
-        const filename = await this.bugReportZ!.generate(
-            this.bugReportZVersion!.supportProgress
+        const filename = await this.bugReport!.bugReportZ({
+            onProgress: this.bugReport!.supportsBugReportZProgress
                 ? action((progress, total) => {
                       this.bugReportZProgress = progress;
                       this.bugReportZTotalSize = total;
                   })
-                : undefined
-        );
+                : undefined,
+        });
 
         const sync = await GLOBAL_STATE.adb!.sync();
         await sync.read(filename).pipeTo(saveFile("bugreport.zip"));
@@ -127,7 +116,7 @@ const BugReportPage: NextPage = () => {
 
             <StackItem>
                 <PrimaryButton
-                    disabled={!state.bugReportZVersion?.supportStream}
+                    disabled={!state.bugReport?.supportsBugReportZStream}
                     text="Generate Zipped BugReport (Streaming)"
                     onClick={state.generateBugReportZStream}
                 />
@@ -142,7 +131,7 @@ const BugReportPage: NextPage = () => {
                     <StackItem>
                         <PrimaryButton
                             disabled={
-                                !state.bugReportZVersion ||
+                                !state.bugReport?.supportsBugReportZ ||
                                 state.bugReportZInProgress
                             }
                             text="Generate Zipped BugReport"
@@ -160,8 +149,8 @@ const BugReportPage: NextPage = () => {
                             ) : (
                                 <span>
                                     Generating... Please wait
-                                    {!state.bugReportZVersion!
-                                        .supportProgress &&
+                                    {!state.bugReport!
+                                        .supportsBugReportZProgress &&
                                         " (this device does not support progress)"}
                                 </span>
                             )}
