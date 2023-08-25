@@ -11,16 +11,16 @@ importers:
   ../../apps/cli:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/adb
       '@yume-chan/adb-server-node-tcp':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/adb-server-node-tcp
       '@yume-chan/android-bin':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/android-bin
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/stream-extra
       commander:
         specifier: ^10.0.1
@@ -75,61 +75,61 @@ importers:
         specifier: ^1.5.10
         version: 1.5.10(react@18.2.0)
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/adb
       '@yume-chan/adb-credential-web':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/adb-credential-web
       '@yume-chan/adb-daemon-direct-sockets':
         specifier: workspace:^0.0.9
         version: link:../../libraries/adb-daemon-direct-sockets
       '@yume-chan/adb-daemon-webusb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/adb-daemon-webusb
       '@yume-chan/adb-daemon-ws':
         specifier: workspace:^0.0.9
         version: link:../../libraries/adb-daemon-ws
       '@yume-chan/adb-scrcpy':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/adb-scrcpy
       '@yume-chan/android-bin':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/android-bin
       '@yume-chan/aoa':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/aoa
       '@yume-chan/async':
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/b-tree':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/b-tree
       '@yume-chan/event':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/event
       '@yume-chan/fetch-scrcpy-server':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/fetch-scrcpy-server
       '@yume-chan/pcm-player':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/pcm-player
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/scrcpy
       '@yume-chan/scrcpy-decoder-tinyh264':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/scrcpy-decoder-tinyh264
       '@yume-chan/scrcpy-decoder-webcodecs':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/scrcpy-decoder-webcodecs
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/stream-extra
       '@yume-chan/stream-saver':
         specifier: ^2.0.6
         version: 2.0.6
       '@yume-chan/struct':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../../libraries/struct
       '@yume-chan/tabby-launcher':
         specifier: workspace:^1.0.197-nightly.1
@@ -208,16 +208,16 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/dataview-bigint-polyfill':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../dataview-bigint-polyfill
       '@yume-chan/event':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../event
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../struct
       tslib:
         specifier: ^2.6.0
@@ -257,7 +257,7 @@ importers:
   ../../libraries/adb-credential-web:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../adb
       tslib:
         specifier: ^2.6.0
@@ -282,10 +282,10 @@ importers:
   ../../libraries/adb-daemon-direct-sockets:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       tslib:
         specifier: ^2.6.0
@@ -313,13 +313,13 @@ importers:
         specifier: ^1.0.6
         version: 1.0.6
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../struct
       tslib:
         specifier: ^2.6.0
@@ -344,10 +344,10 @@ importers:
   ../../libraries/adb-daemon-ws:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       tslib:
         specifier: ^2.6.0
@@ -375,22 +375,22 @@ importers:
   ../../libraries/adb-scrcpy:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../adb
       '@yume-chan/async':
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/event':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../event
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../scrcpy
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../struct
       tslib:
         specifier: ^2.6.0
@@ -427,13 +427,13 @@ importers:
   ../../libraries/adb-server-node-tcp:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../struct
       tslib:
         specifier: ^2.6.0
@@ -464,13 +464,13 @@ importers:
   ../../libraries/android-bin:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../struct
       tslib:
         specifier: ^2.6.0
@@ -669,10 +669,10 @@ importers:
   ../../libraries/scrcpy:
     dependencies:
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../struct
       tslib:
         specifier: ^2.6.0
@@ -715,13 +715,13 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/event':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../event
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../scrcpy
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       tinyh264:
         specifier: ^0.0.7
@@ -770,13 +770,13 @@ importers:
         specifier: ^0.1.8
         version: 0.1.8
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../scrcpy
       '@yume-chan/scrcpy-decoder-tinyh264':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../scrcpy-decoder-tinyh264
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       tslib:
         specifier: ^2.6.0
@@ -816,7 +816,7 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/struct':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../struct
       tslib:
         specifier: ^2.6.0
@@ -856,7 +856,7 @@ importers:
   ../../libraries/struct:
     dependencies:
       '@yume-chan/dataview-bigint-polyfill':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../dataview-bigint-polyfill
       tslib:
         specifier: ^2.6.0
@@ -932,13 +932,13 @@ importers:
         specifier: ^4.0.5
         version: 4.0.5
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../adb
       '@yume-chan/async':
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       '@yume-chan/tabby-tango':
         specifier: workspace:^0.0.19
@@ -1089,10 +1089,10 @@ importers:
         specifier: ^1.16.0
         version: 1.16.0
       '@yume-chan/adb':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.20
+        specifier: workspace:^0.0.21
         version: link:../stream-extra
       babel-loader:
         specifier: ^9.1.2
