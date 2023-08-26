@@ -27,25 +27,25 @@ export class ScrcpyControlMessageWriter {
         this.#serializer = new ScrcpyControlMessageSerializer(options);
     }
 
-    async #write(message: Uint8Array) {
+    async write(message: Uint8Array) {
         await ConsumableWritableStream.write(this.#writer, message);
     }
 
     async injectKeyCode(
         message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">,
     ) {
-        await this.#write(this.#serializer.injectKeyCode(message));
+        await this.write(this.#serializer.injectKeyCode(message));
     }
 
     async injectText(text: string) {
-        await this.#write(this.#serializer.injectText(text));
+        await this.write(this.#serializer.injectText(text));
     }
 
     /**
      * `pressure` is a float value between 0 and 1.
      */
     async injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
-        await this.#write(this.#serializer.injectTouch(message));
+        await this.write(this.#serializer.injectTouch(message));
     }
 
     /**
@@ -56,23 +56,23 @@ export class ScrcpyControlMessageWriter {
     ) {
         const data = this.#serializer.injectScroll(message);
         if (data) {
-            await this.#write(data);
+            await this.write(data);
         }
     }
 
     async backOrScreenOn(action: AndroidKeyEventAction) {
         const data = this.#serializer.backOrScreenOn(action);
         if (data) {
-            await this.#write(data);
+            await this.write(data);
         }
     }
 
     async setScreenPowerMode(mode: AndroidScreenPowerMode) {
-        await this.#write(this.#serializer.setScreenPowerMode(mode));
+        await this.write(this.#serializer.setScreenPowerMode(mode));
     }
 
     async rotateDevice() {
-        await this.#write(this.#serializer.rotateDevice());
+        await this.write(this.#serializer.rotateDevice());
     }
 
     releaseLock() {

@@ -45,7 +45,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         maxFps: 0,
         lockVideoOrientation: ScrcpyVideoOrientation1_16.Unlocked,
         tunnelForward: false,
-        crop: undefined,
+        crop: "",
         sendFrameMeta: true,
         control: true,
         displayId: 0,
