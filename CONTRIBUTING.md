@@ -65,8 +65,9 @@ This will create an `out` folder containing exported HTML files and all required
 
 ```sh
 rush version --bump
-export NPM_AUTH_TOKEN=... // Copy NPM auth token from ~/.npmrc
+export NPM_AUTH_TOKEN=... # Copy NPM auth token from ~/.npmrc
 rush publish -p --include-all --set-access-level public
+rush update # Update lock file
 ```
 
 ## FAQ
