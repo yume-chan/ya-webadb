@@ -1,0 +1,31 @@
+name: Suggestion
+description: Suggest a new feature or improvement
+labels:
+  - "type:enhancement"
+title: "[Suggestion] "
+body:
+  - type: checkboxes
+    attributes:
+      label: Pre-issue checklist
+      options:
+        - label: I've searched the issue list but couldn't find the feature I want
+          required: true
+
+  - type: textarea
+    attributes:
+      label: How can Tango be improved?
+      description: Please describe the feature you want in detail.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: How should the API change?
+      description: How do you think the API should change to support your suggestion?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: (Optional) Other information
+      description: If you have any documentations or references about your suggestion, please include them here. These can help us implement your suggestion faster.
