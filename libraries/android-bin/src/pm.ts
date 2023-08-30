@@ -9,7 +9,7 @@ import {
     escapeArg,
 } from "@yume-chan/adb";
 import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
-import { DecodeUtf8Stream, WrapReadableStream } from "@yume-chan/stream-extra";
+import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd.js";
 
@@ -276,7 +276,7 @@ export class PackageManager extends AdbCommandBase {
     async pushAndInstallStream(
         stream: ReadableStream<Consumable<Uint8Array>>,
         options?: Partial<PackageManagerInstallOptions>,
-    ): Promise<ReadableStream<string>> {
+    ): Promise<void> {
         const sync = await this.adb.sync();
 
         const fileName = Math.random().toString().substring(2);
@@ -301,24 +301,30 @@ export class PackageManager extends AdbCommandBase {
             this.adb,
             args.map(escapeArg).join(" "),
         );
-        return new WrapReadableStream({
-            start: () => process.stdout.pipeThrough(new DecodeUtf8Stream()),
-            close: async () => {
-                await this.adb.rm(filePath);
-            },
-        });
+
+        const output = await process.stdout
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new ConcatStringStream())
+            .then((output) => output.trim());
+
+        await this.adb.rm(filePath);
+
+        if (output !== "Success") {
+            throw new Error(output);
+        }
     }
 
     async installStream(
         size: number,
         stream: ReadableStream<Consumable<Uint8Array>>,
         options?: Partial<PackageManagerInstallOptions>,
-    ): Promise<ReadableStream<string>> {
+    ): Promise<void> {
         // Android 7 added both `cmd` command and streaming install support,
         // we can't detect whether `pm` supports streaming install,
         // so we detect `cmd` command support instead.
         if (!this.#cmd.supportsCmd) {
-            return this.pushAndInstallStream(stream, options);
+            await this.pushAndInstallStream(stream, options);
+            return;
         }
 
         const args = this.#buildInstallArguments(options);
@@ -326,8 +332,20 @@ export class PackageManager extends AdbCommandBase {
         args.shift();
         args.push("-S", size.toString());
         const process = await this.#cmd.spawn(false, "package", ...args);
-        await stream.pipeTo(process.stdin);
-        return process.stdout.pipeThrough(new DecodeUtf8Stream());
+
+        const output = process.stdout
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new ConcatStringStream())
+            .then((output) => output.trim());
+
+        await Promise.all([
+            stream.pipeTo(process.stdin),
+            output.then((output) => {
+                if (output !== "Success") {
+                    throw new Error(output);
+                }
+            }),
+        ]);
     }
 
     static parsePackageListItem(
