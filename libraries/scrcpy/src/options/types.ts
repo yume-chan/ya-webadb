@@ -42,6 +42,14 @@ export function toScrcpyOptionValue<T>(value: unknown, empty: T): string | T {
         return empty;
     }
 
+    if (
+        typeof value !== "string" &&
+        typeof value !== "number" &&
+        typeof value !== "boolean"
+    ) {
+        throw new Error(`Invalid option value: ${String(value)}`);
+    }
+
     return String(value);
 }
 

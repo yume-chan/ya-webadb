@@ -30,6 +30,9 @@ export async function* adbSyncPullGenerator(
             yield packet.data;
         }
         done = true;
+    } catch (e) {
+        done = true;
+        throw e;
     } finally {
         if (!done) {
             // sync pull can't be cancelled, so we have to read all data

@@ -27,14 +27,22 @@ const CODEC_OPTION_TYPES: Partial<
 };
 
 export class CodecOptions implements ScrcpyOptionValue {
-    value: Partial<CodecOptionsInit>;
+    options: Partial<CodecOptionsInit>;
 
-    constructor(value: Partial<CodecOptionsInit> = {}) {
-        this.value = value;
+    constructor(options: Partial<CodecOptionsInit> = {}) {
+        for (const [key, value] of Object.entries(options)) {
+            if (typeof value !== "number") {
+                throw new Error(
+                    `Invalid option value for ${key}: ${String(value)}`,
+                );
+            }
+        }
+
+        this.options = options;
     }
 
     toOptionValue(): string | undefined {
-        const entries = Object.entries(this.value).filter(
+        const entries = Object.entries(this.options).filter(
             ([, value]) => value !== undefined,
         );
 
@@ -44,8 +52,15 @@ export class CodecOptions implements ScrcpyOptionValue {
 
         return entries
             .map(([key, value]) => {
+                let result = toDashCase(key);
+
                 const type = CODEC_OPTION_TYPES[key as keyof CodecOptionsInit];
-                return `${toDashCase(key)}${type ? `:${type}` : ""}=${value}`;
+                if (type) {
+                    result += `:${type}`;
+                }
+
+                result += `=${value}`;
+                return result;
             })
             .join(",");
     }
