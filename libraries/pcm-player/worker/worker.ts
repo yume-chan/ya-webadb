@@ -1,17 +1,34 @@
+const SAMPLE_RATE = 48000;
+
 abstract class SourceProcessor<T>
     extends AudioWorkletProcessor
     implements AudioWorkletProcessorImpl
 {
-    #sources: T[] = [];
-    #sourceSampleCount = 0;
+    #chunks: T[] = [];
+    #chunkSampleCounts: number[] = [];
+    #totalSampleCount = 0;
+    #speedUp = false;
 
     constructor() {
         super();
         this.port.onmessage = (event) => {
+            // Throw away old chunks when buffer is exceeding 0.2s
+            while (this.#totalSampleCount > SAMPLE_RATE * 0.2) {
+                this.#chunks.shift();
+                const count = this.#chunkSampleCounts.shift()!;
+                this.#totalSampleCount -= count;
+            }
+
             const data = event.data as ArrayBuffer[];
             const [source, length] = this.createSource(data);
-            this.#sources.push(source);
-            this.#sourceSampleCount += length;
+            this.#chunks.push(source);
+            this.#chunkSampleCounts.push(length);
+            this.#totalSampleCount += length;
+
+            // Speed up when buffer is exceeding 0.1s
+            if (this.#totalSampleCount > SAMPLE_RATE * 0.1) {
+                this.#speedUp = true;
+            }
         };
     }
 
@@ -23,16 +40,18 @@ abstract class SourceProcessor<T>
         const outputLength = outputLeft.length;
         let outputIndex = 0;
 
-        // Resample source catch up with output
-        // TODO: should we limit the minimum and maximum speed?
-        // TODO: this simple resample method changes pitch
-        const sourceIndexStep = this.#sourceSampleCount > 48000 ? 1.02 : 1;
+        // Stop speeding up when buffer is below 0.05s
+        if (this.#speedUp && this.#totalSampleCount < SAMPLE_RATE * 0.05) {
+            this.#speedUp = false;
+        }
+
+        const sourceIndexStep = this.#speedUp ? 1.02 : 1;
         let sourceIndex = 0;
 
-        while (this.#sources.length > 0 && outputIndex < outputLength) {
+        while (this.#chunks.length > 0 && outputIndex < outputLength) {
             const beginSourceIndex = sourceIndex | 0;
 
-            let source: T | undefined = this.#sources[0];
+            let source: T | undefined = this.#chunks[0];
             [source, sourceIndex, outputIndex] = this.copyChunk(
                 sourceIndex,
                 sourceIndexStep,
@@ -40,27 +59,29 @@ abstract class SourceProcessor<T>
                 outputLeft,
                 outputRight,
                 outputLength,
-                outputIndex
+                outputIndex,
             );
 
             const consumedSampleCount = (sourceIndex | 0) - beginSourceIndex;
-            this.#sourceSampleCount -= consumedSampleCount;
+            this.#totalSampleCount -= consumedSampleCount;
             sourceIndex -= consumedSampleCount;
 
             if (source) {
                 // Output full
-                this.#sources[0] = source;
+                this.#chunks[0] = source;
+                this.#chunkSampleCounts[0]! -= consumedSampleCount;
                 return true;
             }
 
-            this.#sources.shift();
+            this.#chunks.shift();
+            this.#chunkSampleCounts.shift();
         }
 
         if (outputIndex < outputLength) {
             console.log(
                 `[Audio] Buffer underflow, inserting silence: ${
                     outputLength - outputIndex
-                } samples`
+                } samples`,
             );
         }
 
@@ -74,7 +95,7 @@ abstract class SourceProcessor<T>
         outputLeft: Float32Array,
         outputRight: Float32Array,
         outputLength: number,
-        outputIndex: number
+        outputIndex: number,
     ): [source: T | undefined, sourceIndex: number, outputIndex: number];
 }
 
@@ -94,7 +115,7 @@ class Int16SourceProcessor
         outputLeft: Float32Array,
         outputRight: Float32Array,
         outputLength: number,
-        outputIndex: number
+        outputIndex: number,
     ): [
         source: Int16Array | undefined,
         sourceIndex: number,
@@ -128,7 +149,7 @@ class Int16SourceProcessor
 
 class Float32SourceProcessor extends SourceProcessor<Float32Array> {
     protected override createSource(
-        data: ArrayBuffer[]
+        data: ArrayBuffer[],
     ): [Float32Array, number] {
         const source = new Float32Array(data[0]!);
         return [source, source.length / 2];
@@ -141,7 +162,7 @@ class Float32SourceProcessor extends SourceProcessor<Float32Array> {
         outputLeft: Float32Array,
         outputRight: Float32Array,
         outputLength: number,
-        outputIndex: number
+        outputIndex: number,
     ): [
         source: Float32Array | undefined,
         sourceIndex: number,
@@ -175,7 +196,7 @@ class Float32SourceProcessor extends SourceProcessor<Float32Array> {
 
 class Float32PlanerSourceProcessor extends SourceProcessor<Float32Array[]> {
     protected override createSource(
-        data: ArrayBuffer[]
+        data: ArrayBuffer[],
     ): [Float32Array[], number] {
         const source = data.map((channel) => new Float32Array(channel));
         return [source, source[0]!.length];
@@ -188,7 +209,7 @@ class Float32PlanerSourceProcessor extends SourceProcessor<Float32Array[]> {
         outputLeft: Float32Array,
         outputRight: Float32Array,
         outputLength: number,
-        outputIndex: number
+        outputIndex: number,
     ): [
         source: Float32Array[] | undefined,
         sourceIndex: number,
@@ -211,7 +232,7 @@ class Float32PlanerSourceProcessor extends SourceProcessor<Float32Array[]> {
                 return [
                     sourceSampleIndex < sourceLength
                         ? source.map((channel) =>
-                              channel.subarray(sourceSampleIndex)
+                              channel.subarray(sourceSampleIndex),
                           )
                         : undefined,
                     sourceIndex,
@@ -228,5 +249,5 @@ registerProcessor("int16-source-processor", Int16SourceProcessor);
 registerProcessor("float32-source-processor", Float32SourceProcessor);
 registerProcessor(
     "float32-planer-source-processor",
-    Float32PlanerSourceProcessor
+    Float32PlanerSourceProcessor,
 );
