@@ -1,6 +1,7 @@
 // cspell:ignore dont
 // cspell:ignore instantapp
 // cspell:ignore apks
+// cspell:ignore versioncode
 
 import type { Adb } from "@yume-chan/adb";
 import {
@@ -9,7 +10,11 @@ import {
     escapeArg,
 } from "@yume-chan/adb";
 import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
-import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
+import {
+    ConcatStringStream,
+    DecodeUtf8Stream,
+    SplitStringStream,
+} from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd.js";
 
@@ -218,6 +223,23 @@ export interface PackageManagerListPackagesResult {
     uid?: number | undefined;
 }
 
+export interface PackageManagerUninstallOptions {
+    keepData: boolean;
+    user: "all" | "current" | number;
+    versionCode: number;
+    splitNames: string[];
+}
+
+const PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP: Record<
+    keyof PackageManagerUninstallOptions,
+    string
+> = {
+    keepData: "-k",
+    user: "--user",
+    versionCode: "--versionCode",
+    splitNames: "",
+};
+
 export class PackageManager extends AdbCommandBase {
     #cmd: Cmd;
 
@@ -297,10 +319,9 @@ export class PackageManager extends AdbCommandBase {
         // so installing a file must use `pm`.
         const args = this.#buildInstallArguments(options);
         args.push(filePath);
-        const process = await AdbSubprocessNoneProtocol.raw(
-            this.adb,
-            args.map(escapeArg).join(" "),
-        );
+        const process = await this.adb.subprocess.spawn(args.map(escapeArg), {
+            protocols: [AdbSubprocessNoneProtocol],
+        });
 
         const output = await process.stdout
             .pipeThrough(new DecodeUtf8Stream())
@@ -347,6 +368,8 @@ export class PackageManager extends AdbCommandBase {
             }),
         ]);
     }
+
+    // TODO: install: support split apk formats (`adb install-multiple`)
 
     static parsePackageListItem(
         line: string,
@@ -399,9 +422,18 @@ export class PackageManager extends AdbCommandBase {
         };
     }
 
-    async listPackages(
+    async #cmdOrSubprocess(args: string[]) {
+        if (this.#cmd.supportsCmd) {
+            args.shift();
+            return await this.#cmd.spawn(false, "package", ...args);
+        }
+
+        return this.adb.subprocess.spawn(args);
+    }
+
+    async *listPackages(
         options?: Partial<PackageManagerListPackagesOptions>,
-    ): Promise<PackageManagerListPackagesResult[]> {
+    ): AsyncGenerator<PackageManagerListPackagesResult, void, void> {
         const args = this.#buildArguments(
             ["list", "packages"],
             options,
@@ -410,12 +442,42 @@ export class PackageManager extends AdbCommandBase {
         if (options?.filter) {
             args.push(options.filter);
         }
-        const output = await this.adb.subprocess.spawnAndWaitLegacy(args);
-        return output
-            .split("\n")
-            .filter((line) => !!line)
-            .map((line) => PackageManager.parsePackageListItem(line));
+
+        const process = await this.#cmdOrSubprocess(args);
+        const reader = process.stdout
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new SplitStringStream("\n"))
+            .getReader();
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                break;
+            }
+            yield PackageManager.parsePackageListItem(value);
+        }
     }
 
-    // TODO: install: support split apk formats (`adb install-multiple`)
+    async uninstall(
+        packageName: string,
+        options?: Partial<PackageManagerUninstallOptions>,
+    ): Promise<void> {
+        const args = this.#buildArguments(
+            ["uninstall"],
+            options,
+            PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP,
+        );
+        args.push(packageName);
+        if (options?.splitNames) {
+            args.push(...options.splitNames);
+        }
+
+        const process = await this.#cmdOrSubprocess(args);
+        const output = await process.stdout
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new ConcatStringStream())
+            .then((output) => output.trim());
+        if (output !== "Success") {
+            throw new Error(output);
+        }
+    }
 }
