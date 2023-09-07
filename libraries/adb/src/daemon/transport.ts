@@ -27,9 +27,14 @@ import { AdbCommand, calculateChecksum } from "./packet.js";
 
 export const ADB_DAEMON_VERSION_OMIT_CHECKSUM = 0x01000001;
 
+export type AdbDaemonConnection = ReadableWritablePair<
+    AdbPacketData,
+    Consumable<AdbPacketInit>
+>;
+
 interface AdbDaemonAuthenticationOptions {
     serial: string;
-    connection: ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>;
+    connection: AdbDaemonConnection;
     credentialStore: AdbCredentialStore;
     authenticators?: AdbAuthenticator[];
     /**
@@ -40,7 +45,7 @@ interface AdbDaemonAuthenticationOptions {
 
 interface AdbDaemonSocketConnectorConstructionOptions {
     serial: string;
-    connection: ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>;
+    connection: AdbDaemonConnection;
     version: number;
     maxPayloadSize: number;
     banner: string;
@@ -94,9 +99,8 @@ export class AdbDaemonTransport implements AdbTransport {
                                 resolver.resolve(decodeUtf8(packet.payload));
                                 break;
                             case AdbCommand.Auth: {
-                                const response = await authProcessor.process(
-                                    packet,
-                                );
+                                const response =
+                                    await authProcessor.process(packet);
                                 await sendPacket(response);
                                 break;
                             }
@@ -193,6 +197,11 @@ export class AdbDaemonTransport implements AdbTransport {
         });
     }
 
+    #connection: AdbDaemonConnection;
+    get connection() {
+        return this.#connection;
+    }
+
     readonly #dispatcher: AdbPacketDispatcher;
 
     #serial: string;
@@ -228,6 +237,7 @@ export class AdbDaemonTransport implements AdbTransport {
         preserveConnection,
     }: AdbDaemonSocketConnectorConstructionOptions) {
         this.#serial = serial;
+        this.#connection = connection;
         this.#banner = AdbBanner.parse(banner);
 
         let calculateChecksum: boolean;

@@ -99,6 +99,11 @@ class Uint8ArrayExactReadable implements ExactReadable {
 export class AdbDaemonWebUsbConnection
     implements ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
 {
+    #device: AdbDaemonWebUsbDevice;
+    get device() {
+        return this.#device;
+    }
+
     #readable: ReadableStream<AdbPacketData>;
     get readable() {
         return this.#readable;
@@ -110,11 +115,13 @@ export class AdbDaemonWebUsbConnection
     }
 
     constructor(
-        device: USBDevice,
+        device: AdbDaemonWebUsbDevice,
         inEndpoint: USBEndpoint,
         outEndpoint: USBEndpoint,
         usbManager: USB,
     ) {
+        this.#device = device;
+
         let closed = false;
 
         const duplex = new DuplexStreamFactory<
@@ -124,7 +131,7 @@ export class AdbDaemonWebUsbConnection
             close: async () => {
                 try {
                     closed = true;
-                    await device.close();
+                    await device.raw.close();
                 } catch {
                     /* device may have already disconnected */
                 }
@@ -139,7 +146,7 @@ export class AdbDaemonWebUsbConnection
         });
 
         function handleUsbDisconnect(e: USBConnectionEvent) {
-            if (e.device === device) {
+            if (e.device === device.raw) {
                 duplex.dispose().catch(unreachable);
             }
         }
@@ -150,37 +157,63 @@ export class AdbDaemonWebUsbConnection
             new ReadableStream<AdbPacketData>({
                 async pull(controller) {
                     try {
-                        // The `length` argument in `transferIn` must not be smaller than what the device sent,
-                        // otherwise it will return `babble` status without any data.
-                        // ADB daemon sends each packet in two parts, the 24-byte header and the payload.
-                        const result = await device.transferIn(
-                            inEndpoint.endpointNumber,
-                            24,
-                        );
-
-                        // TODO: webusb: handle `babble` by discarding the data and receive again
-
-                        // Per spec, the `result.data` always covers the whole `buffer`.
-                        const buffer = new Uint8Array(result.data!.buffer);
-                        const stream = new Uint8ArrayExactReadable(buffer);
-
-                        // Add `payload` field to its type, it's assigned below.
-                        const packet = AdbPacketHeader.deserialize(
-                            stream,
-                        ) as AdbPacketHeader & { payload: Uint8Array };
-                        if (packet.payloadLength !== 0) {
-                            const result = await device.transferIn(
+                        while (true) {
+                            // The `length` argument in `transferIn` must not be smaller than what the device sent,
+                            // otherwise it will return `babble` status without any data.
+                            // ADB daemon sends each packet in two parts, the 24-byte header and the payload.
+                            const result = await device.raw.transferIn(
                                 inEndpoint.endpointNumber,
-                                packet.payloadLength,
+                                24,
                             );
-                            packet.payload = new Uint8Array(
-                                result.data!.buffer,
-                            );
-                        } else {
-                            packet.payload = EMPTY_UINT8_ARRAY;
-                        }
 
-                        controller.enqueue(packet);
+                            // Maximum payload size is 1MB, so reading 1MB data will always success,
+                            // and always discards all lingering data.
+                            // FIXME: Chrome on Windows doesn't support babble status. See the HACK below.
+                            if (result.status === "babble") {
+                                await device.raw.transferIn(
+                                    inEndpoint.endpointNumber,
+                                    1024 * 1024,
+                                );
+                                continue;
+                            }
+
+                            // Per spec, the `result.data` always covers the whole `buffer`.
+                            const buffer = new Uint8Array(result.data!.buffer);
+                            const stream = new Uint8ArrayExactReadable(buffer);
+
+                            // Add `payload` field to its type, it's assigned below.
+                            const packet = AdbPacketHeader.deserialize(
+                                stream,
+                            ) as AdbPacketHeader & { payload: Uint8Array };
+                            if (packet.payloadLength !== 0) {
+                                // HACK: Chrome on Windows doesn't support babble status,
+                                // so maybe we are not actually reading an ADB packet header.
+                                // Currently the maximum payload size is 1MB,
+                                // so if the payload length is larger than that,
+                                // try to discard the data and receive again.
+                                // https://crbug.com/1314358
+                                if (packet.payloadLength > 1024 * 1024) {
+                                    await device.raw.transferIn(
+                                        inEndpoint.endpointNumber,
+                                        1024 * 1024,
+                                    );
+                                    continue;
+                                }
+
+                                const result = await device.raw.transferIn(
+                                    inEndpoint.endpointNumber,
+                                    packet.payloadLength,
+                                );
+                                packet.payload = new Uint8Array(
+                                    result.data!.buffer,
+                                );
+                            } else {
+                                packet.payload = EMPTY_UINT8_ARRAY;
+                            }
+
+                            controller.enqueue(packet);
+                            return;
+                        }
                     } catch (e) {
                         // On Windows, disconnecting the device will cause `NetworkError` to be thrown,
                         // even before the `disconnect` event is fired.
@@ -212,7 +245,7 @@ export class AdbDaemonWebUsbConnection
                 new ConsumableWritableStream({
                     write: async (chunk) => {
                         try {
-                            await device.transferOut(
+                            await device.raw.transferOut(
                                 outEndpoint.endpointNumber,
                                 chunk,
                             );
@@ -225,7 +258,7 @@ export class AdbDaemonWebUsbConnection
                                 zeroMask &&
                                 (chunk.byteLength & zeroMask) === 0
                             ) {
-                                await device.transferOut(
+                                await device.raw.transferOut(
                                     outEndpoint.endpointNumber,
                                     EMPTY_UINT8_ARRAY,
                                 );
@@ -281,9 +314,7 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
      * Claim the device and create a pair of `AdbPacket` streams to the ADB interface.
      * @returns The pair of `AdbPacket` streams.
      */
-    async connect(): Promise<
-        ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
-    > {
+    async connect(): Promise<AdbDaemonWebUsbConnection> {
         if (!this.#raw.opened) {
             await this.#raw.open();
         }
@@ -319,7 +350,7 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
             alternate.endpoints,
         );
         return new AdbDaemonWebUsbConnection(
-            this.#raw,
+            this,
             inEndpoint,
             outEndpoint,
             this.#usbManager,

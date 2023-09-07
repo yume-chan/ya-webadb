@@ -9,3 +9,4 @@ export * from "./logcat.js";
 export * from "./overlay-display.js";
 export * from "./pm.js";
 export * from "./settings.js";
+export * from "./string-format.js";
