@@ -1,3 +1,4 @@
+import type { Consumable, WritableStream } from "@yume-chan/stream-extra";
 import { DuplexStreamFactory, ReadableStream } from "@yume-chan/stream-extra";
 
 import type { Adb, AdbSocket } from "../../../adb.js";
@@ -36,7 +37,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     readonly #duplex: DuplexStreamFactory<Uint8Array, Uint8Array>;
 
     // Legacy shell forwards all data to stdin.
-    get stdin() {
+    get stdin(): WritableStream<Consumable<Uint8Array>> {
         return this.#socket.writable;
     }
 
@@ -44,7 +45,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     /**
      * Legacy shell mixes stdout and stderr.
      */
-    get stdout() {
+    get stdout(): ReadableStream<Uint8Array> {
         return this.#stdout;
     }
 
@@ -52,7 +53,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     /**
      * `stderr` will always be empty.
      */
-    get stderr() {
+    get stderr(): ReadableStream<Uint8Array> {
         return this.#stderr;
     }
 
