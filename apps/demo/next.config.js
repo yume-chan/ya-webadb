@@ -11,7 +11,7 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
     enabled: process.env.ANALYZE === "true",
 });
 
-const basePath = process.env.BASE_PATH ?? "";
+const basePath = process.env.BASE_PATH ?? "/myadb";
 
 const withPwa = require("@yume-chan/next-pwa")({
     dest: "public",
