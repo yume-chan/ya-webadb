@@ -1,3 +1,12 @@
+
+github pages 不能识别下划线开头的文件
+使用sphinx创建的文档，资源文件夹前面会带着下划线，本地使用没有问题，提交到github上面，想使用github pages的时候提示404，原因为github pages的jekyll模版会忽略下划线开头的文件，所以要禁用jekyll 禁用方法就是在项目根目录下添加一个空白文件，命名为：.nojekyll
+
+使用步骤
+1. rush install
+2. rush update
+3. rush rebuild
+
 # Tango
 
 [![GitHub license](https://img.shields.io/github/license/yume-chan/ya-webadb)](https://github.com/yume-chan/ya-webadb/blob/main/LICENSE)
