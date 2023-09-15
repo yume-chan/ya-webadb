@@ -4,11 +4,9 @@
 
 A library and a Web app that allow browsers to interact with Android devices via ADB (Android Debugging Protocol).
 
-All features work on Chrome for Android, use a C-to-C (or OTG) cable or via WebSockify running in Termux (see [compatibility table](#compatibility) below).
+All features work on Chrome for Android, use a C-to-C (or OTG) cable.
 
-[🚀 Web App](https://tango-web-mu.vercel.app/) | [Old demo](https://yume-chan.github.io/ya-webadb)
-
-For USB connection, close Google ADB (Run `adb kill-server` in a terminal or close `adb.exe` from Task Manager) and all programs that may use ADB (e.g. Android Studio, Visual Studio, Godot Editor, etc.) before connecting.
+[🚀 Web App](https://tango-web-mu.vercel.app/) | [Old Demo](https://tango-adb.github.io/old-demo/)
 
 ## Working Modes
 
@@ -18,49 +16,30 @@ In this mode, Google ADB is not required for this library to communicate with An
 
 This mode is suitable for running on end-users' devices where Google ADB is not installed, or on mobile devices where Google ADB is not available.
 
+Before connecting, make sure to close Google ADB (Run `adb kill-server` in a terminal or close `adb.exe` from Task Manager) and all programs that may use ADB (e.g. Android Studio, Visual Studio, Godot Editor, etc.).
+
 ### Google ADB Client Mode
 
 In this mode, this library talks to a Google ADB server, which is either running on the same machine or on a remote machine. This allows other ADB-based tools to work alongside this library.
 
 ## Compatibility
 
-| Connection                                | Chromium-based Browsers          | Firefox   | Node.js                       |
-| ----------------------------------------- | -------------------------------- | --------- | ----------------------------- |
-| USB cable                                 | Supported using [WebUSB] API     | No        | Supported using `usb` package |
-| Wireless through [WebSocket] <sup>1</sup> | Supported                        | Supported | Possible using `ws` package   |
-| Wireless through TCP                      | Waiting for [Direct Sockets] API | No        | Possible using `net` module   |
+| Connection                       | Chromium-based Browsers          | Node.js                       |
+| -------------------------------- | -------------------------------- | ----------------------------- |
+| Direct Connection over USB cable | Supported using [WebUSB] API     | Supported using `usb` package |
+| Direct Connection over TCP       | Waiting for [Direct Sockets] API | Possible using `net` module   |
+| Google ADB client over TCP       | Waiting for [Direct Sockets] API | Supported using `net` module  |
 
 [webusb]: https://wicg.github.io/webusb/
-[websocket]: https://websockets.spec.whatwg.org/
 [direct sockets]: https://wicg.github.io/direct-sockets/
 
-<sup>1</sup> Requires WebSockify softwares, see [instruction](https://github.com/yume-chan/ya-webadb/discussions/245#discussioncomment-384030) for detail.
+## API documentation
 
-## Features
+Currently the API is unstable and the documentation is lacking, but there are three sources you can refer to:
 
--   📁 File Management
-    -   📋 List
-    -   ⬆ Upload
-    -   ⬇ Download
-    -   🗑 Delete
--   📷 Screen Capture
--   📜 Terminal Emulator powered by [Tabby](https://github.com/Eugeny/tabby)
-    -   Tabs and split panes
-    -   Color themes
-    -   Rich configuration
--   ⚙ Enable ADB over WiFi
--   📦 Install APK
--   🎥 [Scrcpy](https://github.com/Genymobile/scrcpy) compatible client
-    -   Screen mirroring
-    -   Audio forwarding (Android >= 11)
-    -   Recording
-    -   Control device with mouse, touch and keyboard
--   🐛 Chrome Remote Debugging that supporting
-    -   Google Chrome (stable, beta, dev, canary)
-    -   Microsoft Edge (stable, beta, dev, canary)
-    -   Opera (stable, beta)
-    -   Vivaldi
--   🔌 Power and reboot to different modes
+-   Each package's `README.md` file
+-   The source code of old demo at https://github.com/tango-adb/old-demo (it's a React app)
+-   The work-in-progress documentation site at https://yume-chan.github.io/unofficial-adb-book/adb/installation
 
 ## Contribute
 
@@ -86,6 +65,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 -   [ADB](https://android.googlesource.com/platform/packages/modules/adb) from Google ([Apache License 2.0](./adb.NOTICE))
 -   [Scrcpy](https://github.com/Genymobile/scrcpy) from Romain Vimont ([Apache License 2.0](https://github.com/Genymobile/scrcpy/blob/master/LICENSE))
--   [Tabby](https://github.com/Eugeny/tabby) from Eugeny ([MIT License](https://github.com/Eugeny/tabby/blob/master/LICENSE))
--   [webm-muxer](https://github.com/Vanilagy/webm-muxer) from Vanilagy ([MIT License](https://github.com/Vanilagy/webm-muxer/blob/main/LICENSE))
 -   [web-streams-polyfill](https://github.com/MattiasBuelens/web-streams-polyfill) from Mattias Buelens ([MIT License](https://github.com/MattiasBuelens/web-streams-polyfill/blob/master/LICENSE))

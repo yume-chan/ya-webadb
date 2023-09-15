@@ -390,12 +390,6 @@
             "versionPolicyName": "adb"
         },
         {
-            "packageName": "@yume-chan/b-tree",
-            "projectFolder": "libraries/b-tree",
-            "shouldPublish": true,
-            "versionPolicyName": "adb"
-        },
-        {
             "packageName": "@yume-chan/dataview-bigint-polyfill",
             "projectFolder": "libraries/dataview-bigint-polyfill",
             "shouldPublish": true,
@@ -418,14 +412,6 @@
             "projectFolder": "libraries/adb-daemon-webusb",
             "shouldPublish": true,
             "versionPolicyName": "adb"
-        },
-        {
-            "packageName": "@yume-chan/adb-daemon-ws",
-            "projectFolder": "libraries/adb-daemon-ws"
-        },
-        {
-            "packageName": "@yume-chan/adb-daemon-direct-sockets",
-            "projectFolder": "libraries/adb-daemon-direct-sockets"
         },
         {
             "packageName": "@yume-chan/adb-credential-web",
@@ -470,10 +456,6 @@
             "versionPolicyName": "adb"
         },
         {
-            "packageName": "demo",
-            "projectFolder": "apps/demo"
-        },
-        {
             "packageName": "@yume-chan/tsconfig",
             "projectFolder": "toolchain/tsconfig"
         },
@@ -492,14 +474,6 @@
             "projectFolder": "libraries/adb-scrcpy",
             "shouldPublish": true,
             "versionPolicyName": "adb"
-        },
-        {
-            "packageName": "@yume-chan/tabby-tango",
-            "projectFolder": "libraries/tabby-tango"
-        },
-        {
-            "packageName": "@yume-chan/tabby-launcher",
-            "projectFolder": "libraries/tabby-launcher"
         },
         {
             "packageName": "@yume-chan/adb-server-node-tcp",
