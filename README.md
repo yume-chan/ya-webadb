@@ -39,7 +39,7 @@ Currently the API is unstable and the documentation is lacking, but there are th
 
 -   Each package's `README.md` file
 -   The source code of old demo at https://github.com/tango-adb/old-demo (it's a React app)
--   The work-in-progress documentation site at https://yume-chan.github.io/unofficial-adb-book/adb/installation
+-   The work-in-progress documentation site at https://tango-adb.github.io/docs/adb/installation
 
 ## Contribute
 
