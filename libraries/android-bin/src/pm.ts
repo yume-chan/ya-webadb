@@ -17,6 +17,9 @@ import {
 } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd.js";
+import type { IntentBuilder } from "./intent.js";
+import type { SingleUserOrAll } from "./utils.js";
+import { buildArguments } from "./utils.js";
 
 export enum PackageManagerInstallLocation {
     Auto,
@@ -101,7 +104,7 @@ export interface PackageManagerInstallOptions {
     /**
      * `--user`
      */
-    userId: number;
+    user: SingleUserOrAll;
     /**
      * `--install-location`
      */
@@ -168,7 +171,7 @@ export const PACKAGE_MANAGER_INSTALL_OPTIONS_MAP: Record<
     instantApp: "--instant",
     full: "--full",
     preload: "--preload",
-    userId: "--user",
+    user: "--user",
     installLocation: "--install-location",
     installReason: "--install-reason",
     forceUuid: "--force-uuid",
@@ -192,7 +195,7 @@ export interface PackageManagerListPackagesOptions {
     listThirdParty: boolean;
     showVersionCode: boolean;
     listApexOnly: boolean;
-    user: "all" | "current" | number;
+    user: SingleUserOrAll;
     uid: number;
     filter: string;
 }
@@ -225,7 +228,7 @@ export interface PackageManagerListPackagesResult {
 
 export interface PackageManagerUninstallOptions {
     keepData: boolean;
-    user: "all" | "current" | number;
+    user: SingleUserOrAll;
     versionCode: number;
     splitNames: string[];
 }
@@ -240,6 +243,17 @@ const PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP: Record<
     splitNames: "",
 };
 
+export interface PackageManagerResolveActivityOptions {
+    user?: SingleUserOrAll;
+    intent: IntentBuilder;
+}
+
+const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
+    Record<keyof PackageManagerResolveActivityOptions, string>
+> = {
+    user: "--user",
+};
+
 export class PackageManager extends AdbCommandBase {
     #cmd: Cmd;
 
@@ -248,38 +262,11 @@ export class PackageManager extends AdbCommandBase {
         this.#cmd = new Cmd(adb);
     }
 
-    #buildArguments<T>(
-        commands: string[],
-        options: Partial<T> | undefined,
-        map: Record<keyof T, string>,
-    ): string[] {
-        const args = ["pm", ...commands];
-        if (options) {
-            for (const [key, value] of Object.entries(options)) {
-                if (value) {
-                    const option = map[key as keyof T];
-                    if (option) {
-                        args.push(option);
-                        switch (typeof value) {
-                            case "number":
-                                args.push(value.toString());
-                                break;
-                            case "string":
-                                args.push(value);
-                                break;
-                        }
-                    }
-                }
-            }
-        }
-        return args;
-    }
-
     #buildInstallArguments(
         options: Partial<PackageManagerInstallOptions> | undefined,
     ): string[] {
-        return this.#buildArguments(
-            ["install"],
+        return buildArguments(
+            ["pm", "install"],
             options,
             PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
         );
@@ -313,7 +300,7 @@ export class PackageManager extends AdbCommandBase {
             await sync.dispose();
         }
 
-        // Starting from Android 7, `pm` is a only wrapper for `cmd package`,
+        // Starting from Android 7, `pm` is only a wrapper for `cmd package`,
         // and `cmd package` launches faster than `pm`.
         // But `cmd package` can't read `/data/local/tmp` folder due to SELinux policy,
         // so installing a file must use `pm`.
@@ -434,8 +421,8 @@ export class PackageManager extends AdbCommandBase {
     async *listPackages(
         options?: Partial<PackageManagerListPackagesOptions>,
     ): AsyncGenerator<PackageManagerListPackagesResult, void, void> {
-        const args = this.#buildArguments(
-            ["list", "packages"],
+        const args = buildArguments(
+            ["pm", "list", "packages"],
             options,
             PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP,
         );
@@ -461,8 +448,8 @@ export class PackageManager extends AdbCommandBase {
         packageName: string,
         options?: Partial<PackageManagerUninstallOptions>,
     ): Promise<void> {
-        const args = this.#buildArguments(
-            ["uninstall"],
+        const args = buildArguments(
+            ["pm", "uninstall"],
             options,
             PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP,
         );
@@ -479,5 +466,29 @@ export class PackageManager extends AdbCommandBase {
         if (output !== "Success") {
             throw new Error(output);
         }
+    }
+
+    async resolveActivity(
+        options: PackageManagerResolveActivityOptions,
+    ): Promise<string | undefined> {
+        let args = buildArguments(
+            ["pm", "resolve-activity", "--components"],
+            options,
+            PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP,
+        );
+
+        args = args.concat(options.intent.build());
+
+        const process = await this.#cmdOrSubprocess(args);
+        const output = await process.stdout
+            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new ConcatStringStream())
+            .then((output) => output.trim());
+
+        if (output === "No activity found") {
+            return undefined;
+        }
+
+        return output;
     }
 }

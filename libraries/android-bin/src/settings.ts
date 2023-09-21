@@ -2,6 +2,7 @@ import type { Adb, AdbSubprocessWaitResult } from "@yume-chan/adb";
 import { AdbCommandBase } from "@yume-chan/adb";
 
 import { Cmd } from "./cmd.js";
+import type { SingleUser } from "./utils.js";
 
 export type SettingsNamespace = "system" | "secure" | "global";
 
@@ -12,7 +13,7 @@ export enum SettingsResetMode {
 }
 
 export interface SettingsOptions {
-    user?: number | "current";
+    user?: SingleUser;
 }
 
 export interface SettingsPutOptions extends SettingsOptions {
