@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 /// <reference types="node" />
 
 import "source-map-support/register.js";
@@ -17,7 +19,7 @@ program
         "-P <port>",
         "port of adb server",
         (value) => Number.parseInt(value, 10),
-        5037
+        5037,
     )
     .configureHelp({
         subcommandTerm(cmd) {
@@ -68,7 +70,7 @@ program
                         appendTransportInfo("device", device.device)
                     }${
                         appendTransportInfo("transport_id", device.transportId.toString())
-                    }`
+                    }`,
                 );
             } else {
                 console.log(`${device.serial}\tdevice`);
@@ -89,15 +91,15 @@ function createDeviceCommand(nameAndArgs: string) {
         .option("-d", "use USB device (error if multiple devices connected)")
         .option(
             "-e",
-            "use TCP/IP device (error if multiple TCP/IP devices available)"
+            "use TCP/IP device (error if multiple TCP/IP devices available)",
         )
         .option(
             "-s <serial>",
             "use device with given serial (overrides $ANDROID_SERIAL)",
-            process.env.ANDROID_SERIAL
+            process.env.ANDROID_SERIAL,
         )
         .option("-t <id>", "use device with given transport id", (value) =>
-            BigInt(value)
+            BigInt(value),
         );
 }
 
@@ -120,7 +122,7 @@ async function createAdb(options: DeviceCommandOptions) {
             ? {
                   transportId: options.t,
               }
-            : undefined
+            : undefined,
     );
     const adb = new Adb(transport);
     return adb;
@@ -129,7 +131,7 @@ async function createAdb(options: DeviceCommandOptions) {
 createDeviceCommand("shell [args...]")
     .usage("[options] [-- <args...>]")
     .description(
-        "run remote shell command (interactive shell if no command given). `--` is required before command name."
+        "run remote shell command (interactive shell if no command given). `--` is required before command name.",
     )
     .configureHelp({ showGlobalOptions: true })
     .action(async (args: string[], options: DeviceCommandOptions) => {
@@ -152,7 +154,7 @@ createDeviceCommand("shell [args...]")
                     write(chunk) {
                         process.stdout.write(chunk);
                     },
-                })
+                }),
             )
             .catch((e) => {
                 console.error(e);
@@ -168,7 +170,7 @@ createDeviceCommand("shell [args...]")
             (e) => {
                 console.error(e);
                 process.exit(1);
-            }
+            },
         );
     });
 
@@ -188,14 +190,14 @@ createDeviceCommand("logcat [args...]")
                 write: (chunk) => {
                     process.stdout.write(chunk);
                 },
-            })
+            }),
         );
     });
 
 createDeviceCommand("reboot [mode]")
     .usage("[bootloader|recovery|sideload|sideload-auto-reboot]")
     .description(
-        "reboot the device; defaults to booting system image but supports bootloader and recovery too. sideload reboots into recovery and automatically starts sideload mode, sideload-auto-reboot is the same but reboots after sideloading."
+        "reboot the device; defaults to booting system image but supports bootloader and recovery too. sideload reboots into recovery and automatically starts sideload mode, sideload-auto-reboot is the same but reboots after sideloading.",
     )
     .configureHelp({ showGlobalOptions: true })
     .action(async (mode: string | undefined, options: DeviceCommandOptions) => {

@@ -1,6 +1,6 @@
 # @yume-chan/fetch-scrcpy-server
 
-A script to download Scrcpy server binary.
+A script to download Scrcpy server binary from official GitHub releases.
 
 ## Usage
 
@@ -18,7 +18,7 @@ The server binary is written to `server.bin` and the version is written to `vers
 
 ## Autorun
 
-Add to `postinstall` script in `package.json`:
+Add to `postinstall` script in your `package.json`:
 
 ```json
 {
@@ -28,13 +28,13 @@ Add to `postinstall` script in `package.json`:
 }
 ```
 
-## Use in code
+## Consume server.bin
 
 ### Webpack/Vite
 
 It works out of the box for Webpack 5 and Vite.
 
-`BIN` is a URL you can use in `fetch` to download.
+`BIN` is a URL you can use in `fetch` to download `server.bin`.
 
 ```js
 import { BIN, VERSION } from "@yume-chan/fetch-scrcpy-server";

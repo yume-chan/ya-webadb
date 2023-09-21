@@ -21,15 +21,15 @@
         "url": "https://github.com/yume-chan/ya-webadb/issues"
     },
     "bin": {
-        "fetch-scrcpy-server": "bin/fetch-server.cjs"
+        "fetch-scrcpy-server": "bin/fetch-server.js"
     },
     "type": "module",
     "main": "index.js",
     "types": "index.d.ts",
     "dependencies": {
-        "gh-release-fetch": "^3.0.2"
+        "gh-release-fetch": "^4.0.3"
     },
     "devDependencies": {
-        "@types/node": "^20.4.0"
+        "@types/node": "^20.6.3"
     }
 }
