@@ -46,7 +46,7 @@ export async function adbSyncReadResponse<T>(
 }
 
 export async function* adbSyncReadResponses<
-    T extends Struct<object, PropertyKey, object, any>,
+    T extends Struct<object, PropertyKey, object, unknown>,
 >(
     stream: AsyncExactReadable,
     id: AdbSyncResponseId,
@@ -66,7 +66,7 @@ export async function* adbSyncReadResponses<
                 await stream.readExactly(type.size);
                 return;
             case id:
-                yield await type.deserialize(stream);
+                yield (await type.deserialize(stream)) as StructValueType<T>;
                 break;
             default:
                 throw new Error(

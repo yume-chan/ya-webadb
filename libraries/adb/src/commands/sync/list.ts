@@ -4,7 +4,11 @@ import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponses } from "./response.js";
 import type { AdbSyncSocket } from "./socket.js";
 import type { AdbSyncStat } from "./stat.js";
-import { AdbSyncLstatResponse, AdbSyncStatResponse } from "./stat.js";
+import {
+    AdbSyncLstatResponse,
+    AdbSyncStatErrorCode,
+    AdbSyncStatResponse,
+} from "./stat.js";
 
 export interface AdbSyncEntry extends AdbSyncStat {
     name: string;
@@ -43,7 +47,7 @@ export async function* adbSyncOpenDirV2(
             // `LST2` can return error codes for failed `lstat` calls.
             // `LIST` just ignores them.
             // But they only contain `name` so still pretty useless.
-            if (item.error !== 0) {
+            if (item.error !== AdbSyncStatErrorCode.SUCCESS) {
                 continue;
             }
             yield item;

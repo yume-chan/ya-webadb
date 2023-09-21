@@ -381,9 +381,8 @@ export class AdbScrcpyClient {
     async #createAudioStream(
         initialStream: ReadableStream<Uint8Array>,
     ): Promise<AdbScrcpyAudioStreamMetadata> {
-        const metadata = await this.#options.parseAudioStreamMetadata(
-            initialStream,
-        );
+        const metadata =
+            await this.#options.parseAudioStreamMetadata(initialStream);
 
         switch (metadata.type) {
             case "disabled":
