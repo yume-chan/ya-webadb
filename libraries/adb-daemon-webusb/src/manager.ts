@@ -2,6 +2,14 @@ import { ADB_DEFAULT_DEVICE_FILTER, AdbDaemonWebUsbDevice } from "./device.js";
 import type { AdbDeviceFilter } from "./utils.js";
 import { findUsbAlternateInterface, isErrorName } from "./utils.js";
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace AdbDaemonWebUsbDeviceManager {
+    export interface RequestDeviceOptions {
+        filters?: AdbDeviceFilter[] | undefined;
+        exclusionFilters?: USBDeviceFilter[] | undefined;
+    }
+}
+
 export class AdbDaemonWebUsbDeviceManager {
     /**
      * Gets the instance of {@link AdbDaemonWebUsbDeviceManager} using browser WebUSB implementation.
@@ -38,17 +46,23 @@ export class AdbDaemonWebUsbDeviceManager {
      * or `undefined` if the user cancelled the device picker.
      */
     async requestDevice(
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
+        options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
     ): Promise<AdbDaemonWebUsbDevice | undefined> {
-        if (filters.length === 0) {
+        if (!options.filters) {
+            options.filters = [ADB_DEFAULT_DEVICE_FILTER];
+        } else if (options.filters.length === 0) {
             throw new TypeError("filters must not be empty");
         }
 
         try {
-            const device = await this.#usbManager.requestDevice({
-                filters,
-            });
-            return new AdbDaemonWebUsbDevice(device, filters, this.#usbManager);
+            const device = await this.#usbManager.requestDevice(
+                options as USBDeviceRequestOptions,
+            );
+            return new AdbDaemonWebUsbDevice(
+                device,
+                options.filters,
+                this.#usbManager,
+            );
         } catch (e) {
             // No device selected
             if (isErrorName(e, "NotFoundError")) {
