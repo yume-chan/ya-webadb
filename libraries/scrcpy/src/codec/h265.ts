@@ -14,6 +14,9 @@
 // cspell: ignore texmc
 // cspell: ignore rbsp
 // cspell: ignore cprms
+// cspell: ignore nalu
+// cspell: ignore sodb
+// cspell: ignore luma
 
 import { NaluSodbBitReader, annexBSplitNalu } from "./nalu.js";
 
@@ -275,9 +278,9 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
     const log2_max_pic_order_cnt_lsb_minus4 =
         reader.decodeExponentialGolombNumber();
 
-    let sps_max_dec_pic_buffering_minus1: number[] | undefined;
-    let sps_max_num_reorder_pics: number[] | undefined;
-    let sps_max_latency_increase_plus1: number[] | undefined;
+    const sps_max_dec_pic_buffering_minus1: number[] = [];
+    const sps_max_num_reorder_pics: number[] = [];
+    const sps_max_latency_increase_plus1: number[] = [];
     const sps_sub_layer_ordering_info_present_flag = !!reader.next();
     for (
         let i = sps_sub_layer_ordering_info_present_flag
@@ -286,17 +289,11 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
         i <= sps_max_sub_layers_minus1;
         i += 1
     ) {
-        sps_max_dec_pic_buffering_minus1 = [];
-        sps_max_num_reorder_pics = [];
-        sps_max_latency_increase_plus1 = [];
-        for (let i = 0; i <= sps_max_sub_layers_minus1; i += 1) {
-            sps_max_dec_pic_buffering_minus1[i] =
-                reader.decodeExponentialGolombNumber();
-            sps_max_num_reorder_pics[i] =
-                reader.decodeExponentialGolombNumber();
-            sps_max_latency_increase_plus1[i] =
-                reader.decodeExponentialGolombNumber();
-        }
+        sps_max_dec_pic_buffering_minus1[i] =
+            reader.decodeExponentialGolombNumber();
+        sps_max_num_reorder_pics[i] = reader.decodeExponentialGolombNumber();
+        sps_max_latency_increase_plus1[i] =
+            reader.decodeExponentialGolombNumber();
     }
 
     const log2_min_luma_coding_block_size_minus3 =
@@ -370,7 +367,10 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
     const vui_parameters_present_flag = !!reader.next();
     let vuiParameters: H265VuiParameters | undefined;
     if (vui_parameters_present_flag) {
-        vuiParameters = h265ParseVuiParameters(reader);
+        vuiParameters = h265ParseVuiParameters(
+            reader,
+            sps_max_sub_layers_minus1,
+        );
     }
 
     const sps_extension_present_flag = !!reader.next();
@@ -897,7 +897,10 @@ export function h265ParseShortTermReferencePictureSet(
 /**
  * E.2.1 VUI parameters syntax
  */
-export function h265ParseVuiParameters(reader: NaluSodbBitReader) {
+export function h265ParseVuiParameters(
+    reader: NaluSodbBitReader,
+    sps_max_sub_layers_minus1: number,
+) {
     const aspect_ratio_info_present_flag = !!reader.next();
     let aspect_ratio_idc: number | undefined;
     let sar_width: number | undefined;
@@ -966,6 +969,7 @@ export function h265ParseVuiParameters(reader: NaluSodbBitReader) {
     let vui_poc_proportional_to_timing_flag: boolean | undefined;
     let vui_num_ticks_poc_diff_one_minus1: number | undefined;
     let vui_hrd_parameters_present_flag: boolean | undefined;
+    let vui_hrd_parameters: H265HrdParameters | undefined;
     if (vui_timing_info_present_flag) {
         vui_num_units_in_tick = reader.read(32);
         vui_time_scale = reader.read(32);
@@ -976,7 +980,11 @@ export function h265ParseVuiParameters(reader: NaluSodbBitReader) {
         }
         vui_hrd_parameters_present_flag = !!reader.next();
         if (vui_hrd_parameters_present_flag) {
-            throw new Error("Not implemented");
+            vui_hrd_parameters = h265ParseHrdParameters(
+                reader,
+                true,
+                sps_max_sub_layers_minus1,
+            );
         }
     }
 
@@ -1037,6 +1045,7 @@ export function h265ParseVuiParameters(reader: NaluSodbBitReader) {
         vui_poc_proportional_to_timing_flag,
         vui_num_ticks_poc_diff_one_minus1,
         vui_hrd_parameters_present_flag,
+        vui_hrd_parameters,
 
         bitstream_restriction_flag,
         tiles_fixed_structure_flag,
