@@ -1,4 +1,14 @@
-const SAMPLE_RATE = 48000;
+const INPUT_HOP_SIZE = 3000;
+const SCALE = 0.9;
+const OUTPUT_HOP_SIZE = (INPUT_HOP_SIZE * SCALE) | 0;
+
+const WINDOW_SIZE = 6000;
+const WINDOW_WEIGHT_TABLE = new Float32Array(WINDOW_SIZE);
+for (let i = 0; i < WINDOW_SIZE / 2; i += 1) {
+    const value = Math.sin((i / WINDOW_SIZE) * Math.PI);
+    WINDOW_WEIGHT_TABLE[i] = value;
+    WINDOW_WEIGHT_TABLE[WINDOW_SIZE - i - 1] = value;
+}
 
 abstract class SourceProcessor<T>
     extends AudioWorkletProcessor
@@ -7,13 +17,16 @@ abstract class SourceProcessor<T>
     #chunks: T[] = [];
     #chunkSampleCounts: number[] = [];
     #totalSampleCount = 0;
+
     #speedUp = false;
+    #readOffset = 0;
+    #inputOffset = 0;
+    #outputOffset = 0;
 
     constructor() {
         super();
         this.port.onmessage = (event) => {
-            // Throw away old chunks when buffer is exceeding 0.2s
-            while (this.#totalSampleCount > SAMPLE_RATE * 0.2) {
+            while (this.#totalSampleCount > 16000) {
                 this.#chunks.shift();
                 const count = this.#chunkSampleCounts.shift()!;
                 this.#totalSampleCount -= count;
@@ -25,9 +38,11 @@ abstract class SourceProcessor<T>
             this.#chunkSampleCounts.push(length);
             this.#totalSampleCount += length;
 
-            // Speed up when buffer is exceeding 0.1s
-            if (this.#totalSampleCount > SAMPLE_RATE * 0.1) {
+            if (!this.#speedUp && this.#totalSampleCount > 8000) {
                 this.#speedUp = true;
+                this.#readOffset = 0;
+                this.#inputOffset = 0;
+                this.#outputOffset = 0;
             }
         };
     }
@@ -35,26 +50,85 @@ abstract class SourceProcessor<T>
     protected abstract createSource(data: ArrayBuffer[]): [T, number];
 
     process(_inputs: Float32Array[][], outputs: Float32Array[][]) {
-        const outputLeft = outputs[0]![0]!;
-        const outputRight = outputs[0]![1]!;
-        const outputLength = outputLeft.length;
-        let outputIndex = 0;
-
         // Stop speeding up when buffer is below 0.05s
-        if (this.#speedUp && this.#totalSampleCount < SAMPLE_RATE * 0.05) {
+        if (this.#speedUp && this.#totalSampleCount < 3000) {
             this.#speedUp = false;
         }
 
-        const sourceIndexStep = this.#speedUp ? 1.02 : 1;
-        let sourceIndex = 0;
+        const outputLeft = outputs[0]![0]!;
+        const outputRight = outputs[0]![1]!;
+        const outputLength = outputLeft.length;
+
+        if (this.#speedUp) {
+            for (let i = 0; i < outputLength; i += 1) {
+                let totalWeight = 0;
+
+                const firstWindow = Math.max(
+                    0,
+                    Math.floor(
+                        (this.#outputOffset - WINDOW_SIZE) / OUTPUT_HOP_SIZE,
+                    ) + 1,
+                );
+
+                let inWindowIndex =
+                    this.#outputOffset - firstWindow * OUTPUT_HOP_SIZE;
+                let inputIndex = firstWindow * INPUT_HOP_SIZE + inWindowIndex;
+
+                while (inputIndex > 0 && inWindowIndex >= 0) {
+                    const [left, right] = this.#read(
+                        inputIndex - this.#readOffset,
+                    );
+
+                    const weight = WINDOW_WEIGHT_TABLE[inWindowIndex]!;
+                    outputLeft[i] += left * weight;
+                    outputRight[i] += right * weight;
+                    totalWeight += weight;
+
+                    inputIndex += INPUT_HOP_SIZE - OUTPUT_HOP_SIZE;
+                    inWindowIndex -= OUTPUT_HOP_SIZE;
+                    inWindowIndex %= WINDOW_SIZE;
+                }
+
+                if (totalWeight > 0) {
+                    outputLeft[i] /= totalWeight;
+                    outputRight[i] /= totalWeight;
+                }
+
+                this.#outputOffset += 1;
+                if (firstWindow > 0) {
+                    this.#outputOffset -= OUTPUT_HOP_SIZE;
+                    this.#readOffset -= INPUT_HOP_SIZE;
+                    this.#inputOffset += (1 - SCALE) * INPUT_HOP_SIZE;
+                }
+            }
+
+            this.#inputOffset += outputLength;
+            const firstChunkSampleCount = this.#chunkSampleCounts[0]!;
+            if (
+                firstChunkSampleCount !== undefined &&
+                this.#inputOffset >= firstChunkSampleCount
+            ) {
+                this.#chunks.shift();
+                this.#chunkSampleCounts.shift();
+                this.#totalSampleCount -= firstChunkSampleCount;
+                this.#readOffset += firstChunkSampleCount;
+                this.#inputOffset -= firstChunkSampleCount;
+            }
+        } else {
+            this.#copyChunks(outputLeft, outputRight);
+        }
+
+        return true;
+    }
+
+    #copyChunks(outputLeft: Float32Array, outputRight: Float32Array) {
+        let outputIndex = 0;
+        const outputLength = outputLeft.length;
 
         while (this.#chunks.length > 0 && outputIndex < outputLength) {
-            const beginSourceIndex = sourceIndex | 0;
-
             let source: T | undefined = this.#chunks[0];
-            [source, sourceIndex, outputIndex] = this.copyChunk(
-                sourceIndex,
-                sourceIndexStep,
+            let consumedSampleCount = 0;
+            [source, consumedSampleCount, outputIndex] = this.copyChunk(
                 source!,
                 outputLeft,
                 outputRight,
@@ -62,15 +136,13 @@ abstract class SourceProcessor<T>
                 outputIndex,
             );
 
-            const consumedSampleCount = (sourceIndex | 0) - beginSourceIndex;
             this.#totalSampleCount -= consumedSampleCount;
-            sourceIndex -= consumedSampleCount;
 
             if (source) {
                 // Output full
                 this.#chunks[0] = source;
                 this.#chunkSampleCounts[0]! -= consumedSampleCount;
-                return true;
+                return;
             }
 
             this.#chunks.shift();
@@ -84,13 +156,24 @@ abstract class SourceProcessor<T>
                 } samples`,
             );
         }
-
-        return true;
     }
 
+    #read(offset: number): [number, number] {
+        for (let i = 0; i < this.#chunks.length; i += 1) {
+            const length = this.#chunkSampleCounts[i]!;
+
+            if (offset < length) {
+                return this.read(this.#chunks[i]!, offset);
+            }
+
+            offset -= length;
+        }
+        return [0, 0];
+    }
+
+    protected abstract read(source: T, offset: number): [number, number];
+
     protected abstract copyChunk(
-        sourceIndex: number,
-        sourceIndexStep: number,
         source: T,
         outputLeft: Float32Array,
         outputRight: Float32Array,
@@ -108,9 +191,14 @@ class Int16SourceProcessor
         return [source, source.length / 2];
     }
 
+    protected override read(
+        source: Int16Array,
+        offset: number,
+    ): [number, number] {
+        return [source[offset * 2]! / 0x8000, source[offset * 2 + 1]! / 0x8000];
+    }
+
     protected override copyChunk(
-        sourceIndex: number,
-        sourceIndexStep: number,
         source: Int16Array,
         outputLeft: Float32Array,
         outputRight: Float32Array,
@@ -122,14 +210,13 @@ class Int16SourceProcessor
         outputIndex: number,
     ] {
         const sourceLength = source.length;
-        let sourceSampleIndex = sourceIndex << 1;
+        let sourceSampleIndex = 0;
 
         while (sourceSampleIndex < sourceLength) {
             outputLeft[outputIndex] = source[sourceSampleIndex]! / 0x8000;
             outputRight[outputIndex] = source[sourceSampleIndex + 1]! / 0x8000;
 
-            sourceIndex += sourceIndexStep;
-            sourceSampleIndex = sourceIndex << 1;
+            sourceSampleIndex += 2;
             outputIndex += 1;
 
             if (outputIndex === outputLength) {
@@ -137,13 +224,13 @@ class Int16SourceProcessor
                     sourceSampleIndex < sourceLength
                         ? source.subarray(sourceSampleIndex)
                         : undefined,
-                    sourceIndex,
+                    sourceSampleIndex / 2,
                     outputIndex,
                 ];
             }
         }
 
-        return [undefined, sourceIndex, outputIndex];
+        return [undefined, sourceSampleIndex / 2, outputIndex];
     }
 }
 
@@ -155,9 +242,14 @@ class Float32SourceProcessor extends SourceProcessor<Float32Array> {
         return [source, source.length / 2];
     }
 
+    protected override read(
+        source: Float32Array,
+        offset: number,
+    ): [number, number] {
+        return [source[offset * 2]!, source[offset * 2 + 1]!];
+    }
+
     protected override copyChunk(
-        sourceIndex: number,
-        sourceIndexStep: number,
         source: Float32Array,
         outputLeft: Float32Array,
         outputRight: Float32Array,
@@ -169,14 +261,13 @@ class Float32SourceProcessor extends SourceProcessor<Float32Array> {
         outputIndex: number,
     ] {
         const sourceLength = source.length;
-        let sourceSampleIndex = sourceIndex << 1;
+        let sourceSampleIndex = 0;
 
         while (sourceSampleIndex < sourceLength) {
             outputLeft[outputIndex] = source[sourceSampleIndex]!;
             outputRight[outputIndex] = source[sourceSampleIndex + 1]!;
 
-            sourceIndex += sourceIndexStep;
-            sourceSampleIndex = sourceIndex << 1;
+            sourceSampleIndex += 2;
             outputIndex += 1;
 
             if (outputIndex === outputLength) {
@@ -184,13 +275,13 @@ class Float32SourceProcessor extends SourceProcessor<Float32Array> {
                     sourceSampleIndex < sourceLength
                         ? source.subarray(sourceSampleIndex)
                         : undefined,
-                    sourceIndex,
+                    sourceSampleIndex / 2,
                     outputIndex,
                 ];
             }
         }
 
-        return [undefined, sourceIndex, outputIndex];
+        return [undefined, sourceSampleIndex / 2, outputIndex];
     }
 }
 
@@ -202,9 +293,14 @@ class Float32PlanerSourceProcessor extends SourceProcessor<Float32Array[]> {
         return [source, source[0]!.length];
     }
 
+    protected override read(
+        source: Float32Array[],
+        offset: number,
+    ): [number, number] {
+        return [source[0]![offset]!, source[1]![offset]!];
+    }
+
     protected override copyChunk(
-        sourceIndex: number,
-        sourceIndexStep: number,
         source: Float32Array[],
         outputLeft: Float32Array,
         outputRight: Float32Array,
@@ -218,14 +314,13 @@ class Float32PlanerSourceProcessor extends SourceProcessor<Float32Array[]> {
         const sourceLeft = source[0]!;
         const sourceRight = source[1]!;
         const sourceLength = sourceLeft.length;
-        let sourceSampleIndex = sourceIndex | 0;
+        let sourceSampleIndex = 0;
 
         while (sourceSampleIndex < sourceLength) {
             outputLeft[outputIndex] = sourceLeft[sourceSampleIndex]!;
             outputRight[outputIndex] = sourceRight[sourceSampleIndex]!;
 
-            sourceIndex += sourceIndexStep;
-            sourceSampleIndex = sourceIndex | 0;
+            sourceSampleIndex += 1;
             outputIndex += 1;
 
             if (outputIndex === outputLength) {
@@ -235,13 +330,13 @@ class Float32PlanerSourceProcessor extends SourceProcessor<Float32Array[]> {
                               channel.subarray(sourceSampleIndex),
                           )
                         : undefined,
-                    sourceIndex,
+                    sourceSampleIndex,
                     outputIndex,
                 ];
             }
         }
 
-        return [undefined, sourceIndex, outputIndex];
+        return [undefined, sourceSampleIndex, outputIndex];
     }
 }
 
