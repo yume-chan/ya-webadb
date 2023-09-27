@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-namespace */
+
 import { AdbCommandBase } from "@yume-chan/adb";
 
 export class DumpSys extends AdbCommandBase {
@@ -47,7 +49,9 @@ export class DumpSys extends AdbCommandBase {
         let scale: number | undefined;
         let voltage: number | undefined;
         let current: number | undefined;
-        for (const line of output) {
+        let status: DumpSys.Battery.Status | undefined;
+        let health: DumpSys.Battery.Health | undefined;
+        for (const line of output.split("\n")) {
             const parts = line.split(":");
             if (parts.length !== 2) {
                 continue;
@@ -75,6 +79,18 @@ export class DumpSys extends AdbCommandBase {
                 case "current now":
                     current = Number.parseInt(parts[1]!.trim(), 10);
                     break;
+                case "status":
+                    status = Number.parseInt(
+                        parts[1]!.trim(),
+                        10,
+                    ) as DumpSys.Battery.Status;
+                    break;
+                case "health":
+                    health = Number.parseInt(
+                        parts[1]!.trim(),
+                        10,
+                    ) as DumpSys.Battery.Health;
+                    break;
             }
         }
 
@@ -86,6 +102,30 @@ export class DumpSys extends AdbCommandBase {
             scale,
             voltage,
             current,
+            status,
+            health,
         };
+    }
+}
+
+export namespace DumpSys {
+    export namespace Battery {
+        export enum Status {
+            Unknown = 1,
+            Charging,
+            Discharging,
+            NotCharging,
+            Full,
+        }
+
+        export enum Health {
+            Unknown = 1,
+            Good,
+            Overheat,
+            Dead,
+            OverVoltage,
+            UnspecifiedFailure,
+            Cold,
+        }
     }
 }
