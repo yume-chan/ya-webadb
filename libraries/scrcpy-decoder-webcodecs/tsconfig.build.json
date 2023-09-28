@@ -5,9 +5,7 @@
             "ESNext",
             "DOM"
         ],
-        "types": [
-            "dom-webcodecs"
-        ]
+        "types": []
     },
     "references": [
         {
@@ -18,6 +16,6 @@
         },
         {
             "path": "../stream-extra/tsconfig.build.json"
-        },
+        }
     ]
 }
