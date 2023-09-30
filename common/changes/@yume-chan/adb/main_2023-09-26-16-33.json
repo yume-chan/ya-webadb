@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/pcm-player",
+            "comment": "Add basic OLA algorithm to speed up playback when buffer is too high",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/pcm-player"
+}
