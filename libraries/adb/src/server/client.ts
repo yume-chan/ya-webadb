@@ -441,7 +441,7 @@ export class AdbServerClient {
     }
 }
 
-async function raceSignal<T>(
+export async function raceSignal<T>(
     callback: () => Promise<T>,
     ...signals: (AbortSignal | undefined)[]
 ): Promise<T> {

@@ -71,6 +71,18 @@ export class ScrcpyControlMessageWriter {
         await this.write(this.#serializer.setScreenPowerMode(mode));
     }
 
+    async expandNotificationPanel() {
+        await this.write(this.#serializer.expandNotificationPanel());
+    }
+
+    async expandSettingPanel() {
+        await this.write(this.#serializer.expandSettingPanel());
+    }
+
+    async collapseNotificationPanel() {
+        await this.write(this.#serializer.collapseNotificationPanel());
+    }
+
     async rotateDevice() {
         await this.write(this.#serializer.rotateDevice());
     }
