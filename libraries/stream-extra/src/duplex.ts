@@ -2,6 +2,7 @@ import { PromiseResolver } from "@yume-chan/async";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
 import type {
+    QueuingStrategy,
     ReadableStream,
     ReadableStreamDefaultController,
     WritableStreamDefaultWriter,
@@ -65,21 +66,27 @@ export class DuplexStreamFactory<R, W> {
         this.#options = options ?? {};
     }
 
-    wrapReadable(readable: ReadableStream<R>): WrapReadableStream<R> {
-        return new WrapReadableStream<R>({
-            start: (controller) => {
-                this.#readableControllers.push(controller);
-                return readable;
+    wrapReadable(
+        readable: ReadableStream<R>,
+        strategy?: QueuingStrategy<R>,
+    ): WrapReadableStream<R> {
+        return new WrapReadableStream<R>(
+            {
+                start: (controller) => {
+                    this.#readableControllers.push(controller);
+                    return readable;
+                },
+                cancel: async () => {
+                    // cancel means the local peer wants to close the connection.
+                    await this.close();
+                },
+                close: async () => {
+                    // stream end means the remote peer closed the connection first.
+                    await this.dispose();
+                },
             },
-            cancel: async () => {
-                // cancel means the local peer wants to close the connection.
-                await this.close();
-            },
-            close: async () => {
-                // stream end means the remote peer closed the connection first.
-                await this.dispose();
-            },
-        });
+            strategy,
+        );
     }
 
     createWritable(stream: WritableStream<W>): WritableStream<W> {

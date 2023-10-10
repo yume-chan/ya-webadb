@@ -108,12 +108,7 @@ export class AdbDaemonSocketController
                 (controller) => {
                     this.#readableController = controller;
                 },
-                {
-                    highWaterMark: options.highWaterMark ?? 16 * 1024,
-                    size(chunk) {
-                        return chunk.byteLength;
-                    },
-                },
+                { highWaterMark: 0 },
             ),
         );
 

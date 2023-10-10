@@ -87,20 +87,8 @@ export class AdbPacketDispatcher implements Closeable {
                                 await this.#handleClose(packet);
                                 break;
                             case AdbCommand.Write:
-                                if (this.#sockets.has(packet.arg1)) {
-                                    await this.#sockets
-                                        .get(packet.arg1)!
-                                        .enqueue(packet.payload);
-                                    await this.sendPacket(
-                                        AdbCommand.OK,
-                                        packet.arg1,
-                                        packet.arg0,
-                                    );
-                                    break;
-                                }
-                                throw new Error(
-                                    `Unknown local socket id: ${packet.arg1}`,
-                                );
+                                await this.#handleWrite(packet);
+                                break;
                             case AdbCommand.Open:
                                 await this.#handleOpen(packet);
                                 break;
@@ -198,6 +186,17 @@ export class AdbPacketDispatcher implements Closeable {
         // TODO: adb: is double closing an socket a catastrophic error?
         // If the client sends two `CLSE` packets for one socket,
         // the device may also respond with two `CLSE` packets.
+    }
+
+    async #handleWrite(packet: AdbPacketData) {
+        const socket = this.#sockets.get(packet.arg1);
+        if (!socket) {
+            throw new Error(`Unknown local socket id: ${packet.arg1}`);
+        }
+
+        await socket.enqueue(packet.payload);
+        await this.sendPacket(AdbCommand.OK, packet.arg1, packet.arg0);
+        return;
     }
 
     addReverseTunnel(service: string, handler: AdbIncomingSocketHandler) {
