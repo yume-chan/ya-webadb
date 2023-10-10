@@ -13,7 +13,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "vite": "^4.3.9",
-        "@yume-chan/fetch-scrcpy-server": "link:../.."
+        "@yume-chan/fetch-scrcpy-server": "link:../..",
+        "vite": "^4.4.11"
     }
 }

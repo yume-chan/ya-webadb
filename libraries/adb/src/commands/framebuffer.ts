@@ -58,7 +58,7 @@ export type AdbFrameBufferV2 = (typeof AdbFrameBufferV2)["TDeserializeResult"];
  */
 export type AdbFrameBuffer = AdbFrameBufferV1 | AdbFrameBufferV2;
 
-export class AdbFrameBufferError extends Error {
+export abstract class AdbFrameBufferError extends Error {
     constructor(message: string, options?: ErrorOptions) {
         super(message, options);
     }

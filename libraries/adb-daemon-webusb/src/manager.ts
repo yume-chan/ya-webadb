@@ -2,7 +2,6 @@ import { ADB_DEFAULT_DEVICE_FILTER, AdbDaemonWebUsbDevice } from "./device.js";
 import type { AdbDeviceFilter } from "./utils.js";
 import { findUsbAlternateInterface, isErrorName } from "./utils.js";
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace AdbDaemonWebUsbDeviceManager {
     export interface RequestDeviceOptions {
         filters?: AdbDeviceFilter[] | undefined;

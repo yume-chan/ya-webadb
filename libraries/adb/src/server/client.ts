@@ -57,10 +57,8 @@ export interface AdbServerSocket extends AdbSocket {
 }
 
 export type AdbServerDeviceSelector =
-    | {
-          serial: string;
-      }
     | { transportId: bigint }
+    | { serial: string }
     | { usb: true }
     | { tcp: true }
     | undefined;

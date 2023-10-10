@@ -27,7 +27,6 @@ export enum AndroidMotionEventButton {
     StylusSecondary = 0x40,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ScrcpyPointerId {
     export const Mouse = -1n;
     export const Finger = -2n;

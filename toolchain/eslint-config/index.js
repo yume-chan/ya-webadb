@@ -42,6 +42,7 @@ module.exports = {
 
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-unsafe-enum-comparison": "off",
+        "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/array-type": "error",
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/no-this-alias": "error",

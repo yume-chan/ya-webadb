@@ -4,7 +4,6 @@ import type {
     Consumable,
     PushReadableStreamController,
     ReadableStream,
-    ReadableWritablePair,
     WritableStream,
 } from "@yume-chan/stream-extra";
 import {
@@ -15,7 +14,7 @@ import {
     pipeFrom,
 } from "@yume-chan/stream-extra";
 
-import type { Closeable } from "../adb.js";
+import type { AdbSocket } from "../adb.js";
 
 import type { AdbPacketDispatcher } from "./dispatcher.js";
 import { AdbCommand } from "./packet.js";
@@ -36,11 +35,7 @@ export interface AdbDaemonSocketConstructionOptions
 }
 
 export class AdbDaemonSocketController
-    implements
-        AdbDaemonSocketInfo,
-        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
-        Closeable,
-        Disposable
+    implements AdbDaemonSocketInfo, AdbSocket, Disposable
 {
     readonly #dispatcher!: AdbPacketDispatcher;
 
@@ -175,11 +170,7 @@ export class AdbDaemonSocketController
  * `socket.writable.abort()`, `socket.writable.getWriter().abort()`,
  * `socket.writable.close()` or `socket.writable.getWriter().close()`.
  */
-export class AdbDaemonSocket
-    implements
-        AdbDaemonSocketInfo,
-        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-{
+export class AdbDaemonSocket implements AdbDaemonSocketInfo, AdbSocket {
     #controller: AdbDaemonSocketController;
 
     get localId(): number {

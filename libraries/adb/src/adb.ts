@@ -15,6 +15,10 @@ import {
 } from "./commands/index.js";
 import type { AdbFeature } from "./features.js";
 
+export interface Closeable {
+    close(): ValueOrPromise<void>;
+}
+
 export interface AdbSocket
     extends ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
         Closeable {
@@ -24,10 +28,6 @@ export interface AdbSocket
 export type AdbIncomingSocketHandler = (
     socket: AdbSocket,
 ) => ValueOrPromise<void>;
-
-export interface Closeable {
-    close(): ValueOrPromise<void>;
-}
 
 export interface AdbTransport extends Closeable {
     readonly serial: string;

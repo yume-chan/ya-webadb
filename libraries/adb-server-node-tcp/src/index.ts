@@ -67,7 +67,7 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
     }
 
     async connect(
-        { unref }: AdbServerConnectionOptions = { unref: false }
+        { unref }: AdbServerConnectionOptions = { unref: false },
     ): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
         const socket = new Socket();
         if (unref) {
@@ -83,7 +83,7 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
 
     async addReverseTunnel(
         handler: AdbIncomingSocketHandler,
-        address?: string
+        address?: string,
     ): Promise<string> {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         const server = new Server(async (socket) => {
@@ -93,7 +93,7 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
                     service: address!,
                     readable: stream.readable,
                     writable: new WrapWritableStream(
-                        stream.writable
+                        stream.writable,
                     ).bePipedThroughFrom(new UnwrapConsumableStream()),
                     close() {
                         socket.end();

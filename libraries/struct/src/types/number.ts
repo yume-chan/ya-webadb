@@ -20,7 +20,6 @@ export interface NumberFieldType {
     ): void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace NumberFieldType {
     export const Uint8: NumberFieldType = {
         signed: false,
