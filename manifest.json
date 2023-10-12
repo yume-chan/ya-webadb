@@ -6,8 +6,8 @@
         "developer"
     ],
     "description": "ADB in your browser",
-    "scope": "/ya-webadb/",
-    "start_url": "/ya-webadb/",
+    "scope": "/",
+    "start_url": "/",
     "background_color": "#ffffff",
     "display": "standalone",
     "icons": [
