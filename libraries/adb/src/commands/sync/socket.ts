@@ -71,6 +71,10 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
         this.#combiner.flush();
         this.#socketLock.notifyOne();
     }
+
+    async close() {
+        await this.#readable.cancel();
+    }
 }
 
 export class AdbSyncSocket {
@@ -94,6 +98,7 @@ export class AdbSyncSocket {
     }
 
     async close() {
+        await this.#locked.close();
         await this.#socket.close();
     }
 }

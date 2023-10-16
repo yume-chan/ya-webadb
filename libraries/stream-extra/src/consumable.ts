@@ -1,6 +1,10 @@
 import { PromiseResolver } from "@yume-chan/async";
 
-import type { QueuingStrategy, WritableStreamDefaultWriter } from "./stream.js";
+import type {
+    QueuingStrategy,
+    WritableStreamDefaultController,
+    WritableStreamDefaultWriter,
+} from "./stream.js";
 import { ReadableStream, TransformStream, WritableStream } from "./stream.js";
 
 interface Task {
@@ -161,8 +165,13 @@ export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
 }
 
 export interface ConsumableWritableStreamSink<T> {
-    start?(): void | PromiseLike<void>;
-    write?(chunk: T): void | PromiseLike<void>;
+    start?(
+        controller: WritableStreamDefaultController,
+    ): void | PromiseLike<void>;
+    write?(
+        chunk: T,
+        controller: WritableStreamDefaultController,
+    ): void | PromiseLike<void>;
     abort?(reason: any): void | PromiseLike<void>;
     close?(): void | PromiseLike<void>;
 }
@@ -196,11 +205,13 @@ export class ConsumableWritableStream<T> extends WritableStream<Consumable<T>> {
 
         super(
             {
-                start() {
-                    return sink.start?.();
+                start(controller) {
+                    return sink.start?.(controller);
                 },
-                async write(chunk) {
-                    await chunk.tryConsume((value) => sink.write?.(value));
+                async write(chunk, controller) {
+                    await chunk.tryConsume(
+                        (value) => sink.write?.(value, controller),
+                    );
                     chunk.consume();
                 },
                 abort(reason) {

@@ -154,7 +154,7 @@ export class BufferedReadableStream implements AsyncExactReadable {
         }
     }
 
-    cancel(reason?: unknown) {
-        return this.reader.cancel(reason);
+    async cancel(reason?: unknown) {
+        await this.reader.cancel(reason);
     }
 }

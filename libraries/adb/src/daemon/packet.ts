@@ -5,7 +5,7 @@ export enum AdbCommand {
     Auth = 0x48545541, // 'AUTH'
     Close = 0x45534c43, // 'CLSE'
     Connect = 0x4e584e43, // 'CNXN'
-    OK = 0x59414b4f, // 'OKAY'
+    Okay = 0x59414b4f, // 'OKAY'
     Open = 0x4e45504f, // 'OPEN'
     Write = 0x45545257, // 'WRTE'
 }
