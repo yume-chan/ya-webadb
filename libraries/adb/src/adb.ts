@@ -22,7 +22,9 @@ export interface Closeable {
 export interface AdbSocket
     extends ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
         Closeable {
-    readonly service: string;
+    get service(): string;
+
+    get closed(): Promise<void>;
 }
 
 export type AdbIncomingSocketHandler = (

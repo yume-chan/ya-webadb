@@ -5,8 +5,8 @@ import type {
     AdbIncomingSocketHandler,
     AdbServerConnection,
     AdbServerConnectionOptions,
+    AdbServerConnector,
 } from "@yume-chan/adb";
-import type { ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
     PushReadableStream,
     UnwrapConsumableStream,
@@ -15,12 +15,21 @@ import {
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
-function nodeSocketToStreamPair(socket: Socket) {
+function nodeSocketToConnection(socket: Socket): AdbServerConnection {
     socket.setNoDelay(true);
+
+    const closed = new Promise<void>((resolve) => {
+        socket.on("close", resolve);
+    });
+
     return {
         readable: new PushReadableStream<Uint8Array>((controller) => {
             // eslint-disable-next-line @typescript-eslint/no-misused-promises
             socket.on("data", async (data) => {
+                if (controller.abortSignal.aborted) {
+                    return;
+                }
+
                 socket.pause();
                 await controller.enqueue(data);
                 socket.resume();
@@ -31,9 +40,6 @@ function nodeSocketToStreamPair(socket: Socket) {
                 } catch (e) {
                     // controller already closed
                 }
-            });
-            controller.abortSignal.addEventListener("abort", () => {
-                socket.end();
             });
         }),
         writable: new WritableStream<Uint8Array>({
@@ -48,16 +54,17 @@ function nodeSocketToStreamPair(socket: Socket) {
                     });
                 });
             },
-            close() {
-                return new Promise<void>((resolve) => {
-                    socket.end(resolve);
-                });
-            },
         }),
+        get closed() {
+            return closed;
+        },
+        close() {
+            socket.end();
+        },
     };
 }
 
-export class AdbServerNodeTcpConnection implements AdbServerConnection {
+export class AdbServerNodeTcpConnector implements AdbServerConnector {
     readonly spec: SocketConnectOpts;
 
     readonly #listeners = new Map<string, Server>();
@@ -68,7 +75,7 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
 
     async connect(
         { unref }: AdbServerConnectionOptions = { unref: false },
-    ): Promise<ReadableWritablePair<Uint8Array, Uint8Array>> {
+    ): Promise<AdbServerConnection> {
         const socket = new Socket();
         if (unref) {
             socket.unref();
@@ -78,7 +85,7 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
             socket.once("connect", resolve);
             socket.once("error", reject);
         });
-        return nodeSocketToStreamPair(socket);
+        return nodeSocketToConnection(socket);
     }
 
     async addReverseTunnel(
@@ -87,16 +94,19 @@ export class AdbServerNodeTcpConnection implements AdbServerConnection {
     ): Promise<string> {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         const server = new Server(async (socket) => {
-            const stream = nodeSocketToStreamPair(socket);
+            const connection = nodeSocketToConnection(socket);
             try {
                 await handler({
                     service: address!,
-                    readable: stream.readable,
+                    readable: connection.readable,
                     writable: new WrapWritableStream(
-                        stream.writable,
+                        connection.writable,
                     ).bePipedThroughFrom(new UnwrapConsumableStream()),
-                    close() {
-                        socket.end();
+                    get closed() {
+                        return connection.closed;
+                    },
+                    async close() {
+                        await connection.close();
                     },
                 });
             } catch {

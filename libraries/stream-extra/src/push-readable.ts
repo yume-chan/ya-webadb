@@ -45,10 +45,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                             if (abortController.signal.aborted) {
                                 // If the stream is already cancelled,
                                 // throw immediately.
-                                throw (
-                                    abortController.signal.reason ??
-                                    new Error("Aborted")
-                                );
+                                throw abortController.signal.reason;
                             }
 
                             if (controller.desiredSize === null) {

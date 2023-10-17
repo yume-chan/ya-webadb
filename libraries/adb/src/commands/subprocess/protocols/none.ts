@@ -1,7 +1,8 @@
 import type { Consumable, WritableStream } from "@yume-chan/stream-extra";
-import { DuplexStreamFactory, ReadableStream } from "@yume-chan/stream-extra";
+import { ReadableStream } from "@yume-chan/stream-extra";
 
 import type { Adb, AdbSocket } from "../../../adb.js";
+import { unreachable } from "../../../utils/index.js";
 
 import type { AdbSubprocessProtocol } from "./types.js";
 
@@ -34,19 +35,16 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
 
     readonly #socket: AdbSocket;
 
-    readonly #duplex: DuplexStreamFactory<Uint8Array, Uint8Array>;
-
     // Legacy shell forwards all data to stdin.
     get stdin(): WritableStream<Consumable<Uint8Array>> {
         return this.#socket.writable;
     }
 
-    #stdout: ReadableStream<Uint8Array>;
     /**
      * Legacy shell mixes stdout and stderr.
      */
     get stdout(): ReadableStream<Uint8Array> {
-        return this.#stdout;
+        return this.#socket.readable;
     }
 
     #stderr: ReadableStream<Uint8Array>;
@@ -65,24 +63,21 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     constructor(socket: AdbSocket) {
         this.#socket = socket;
 
-        // Link `stdout`, `stderr` and `stdin` together,
-        // so closing any of them will close the others.
-        this.#duplex = new DuplexStreamFactory<Uint8Array, Uint8Array>({
-            close: async () => {
-                await this.#socket.close();
+        this.#stderr = new ReadableStream({
+            start: (controller) => {
+                this.#socket.closed
+                    .then(() => controller.close())
+                    .catch(unreachable);
             },
         });
-
-        this.#stdout = this.#duplex.wrapReadable(this.#socket.readable);
-        this.#stderr = this.#duplex.wrapReadable(new ReadableStream());
-        this.#exit = this.#duplex.closed.then(() => 0);
+        this.#exit = socket.closed.then(() => 0);
     }
 
     resize() {
         // Not supported, but don't throw.
     }
 
-    kill() {
-        return this.#duplex.close();
+    async kill() {
+        await this.#socket.close();
     }
 }

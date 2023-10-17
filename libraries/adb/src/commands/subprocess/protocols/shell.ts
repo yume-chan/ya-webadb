@@ -159,6 +159,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
 
         let stdoutController!: PushReadableStreamController<Uint8Array>;
         let stderrController!: PushReadableStreamController<Uint8Array>;
+
         this.#stdout = new PushReadableStream<Uint8Array>((controller) => {
             stdoutController = controller;
         });
@@ -176,10 +177,14 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                                 this.#exit.resolve(chunk.data[0]!);
                                 break;
                             case AdbShellProtocolId.Stdout:
-                                await stdoutController.enqueue(chunk.data);
+                                if (!stdoutController.abortSignal.aborted) {
+                                    await stdoutController.enqueue(chunk.data);
+                                }
                                 break;
                             case AdbShellProtocolId.Stderr:
-                                await stderrController.enqueue(chunk.data);
+                                if (!stderrController.abortSignal.aborted) {
+                                    await stderrController.enqueue(chunk.data);
+                                }
                                 break;
                         }
                     },
