@@ -5,7 +5,7 @@
 import "source-map-support/register.js";
 
 import { Adb, AdbServerClient } from "@yume-chan/adb";
-import { AdbServerNodeTcpConnection } from "@yume-chan/adb-server-node-tcp";
+import { AdbServerNodeTcpConnector } from "@yume-chan/adb-server-node-tcp";
 import {
     ConsumableWritableStream,
     WritableStream,
@@ -33,7 +33,7 @@ program
 
 function createClient() {
     const opts: { H: string; P: number } = program.opts();
-    const connection = new AdbServerNodeTcpConnection({
+    const connection = new AdbServerNodeTcpConnector({
         host: opts.H,
         port: opts.P,
     });
