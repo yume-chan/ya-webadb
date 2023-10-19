@@ -280,8 +280,9 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
         return this.#raw;
     }
 
+    #serial: string;
     get serial(): string {
-        return this.#raw.serialNumber!;
+        return this.#serial;
     }
 
     get name(): string {
@@ -300,6 +301,14 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
         usbManager: USB,
     ) {
         this.#raw = device;
+        if (device.serialNumber) {
+            this.#serial = device.serialNumber;
+        } else {
+            this.#serial =
+                device.vendorId.toString(16).padStart(4, "0") +
+                "x" +
+                device.productId.toString(16).padStart(4, "0");
+        }
         this.#filters = filters;
         this.#usbManager = usbManager;
     }
