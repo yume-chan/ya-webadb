@@ -14,6 +14,9 @@ abstract class SourceProcessor<T>
     extends AudioWorkletProcessor
     implements AudioWorkletProcessorImpl
 {
+    channelCount: number;
+    #readBuffer: Float32Array;
+
     #chunks: T[] = [];
     #chunkSampleCounts: number[] = [];
     #totalSampleCount = 0;
@@ -23,10 +26,15 @@ abstract class SourceProcessor<T>
     #inputOffset = 0;
     #outputOffset = 0;
 
-    constructor() {
+    constructor(options: { outputChannelCount?: number[] }) {
         super();
+
+        this.channelCount = options.outputChannelCount![0]!;
+        this.#readBuffer = new Float32Array(this.channelCount);
+
         this.port.onmessage = (event) => {
             while (this.#totalSampleCount > 16000) {
+                console.log("[Audio] Buffer overflow, dropping samples");
                 this.#chunks.shift();
                 const count = this.#chunkSampleCounts.shift()!;
                 this.#totalSampleCount -= count;
@@ -39,6 +47,7 @@ abstract class SourceProcessor<T>
             this.#totalSampleCount += length;
 
             if (!this.#speedUp && this.#totalSampleCount > 8000) {
+                console.log("[Audio] Speeding up");
                 this.#speedUp = true;
                 this.#readOffset = 0;
                 this.#inputOffset = 0;
@@ -49,15 +58,14 @@ abstract class SourceProcessor<T>
 
     protected abstract createSource(data: ArrayBuffer[]): [T, number];
 
-    process(_inputs: Float32Array[][], outputs: Float32Array[][]) {
+    process(_inputs: Float32Array[][], [outputs]: Float32Array[][]) {
         // Stop speeding up when buffer is below 0.05s
         if (this.#speedUp && this.#totalSampleCount < 3000) {
+            console.log("[Audio] Restoring normal speed");
             this.#speedUp = false;
         }
 
-        const outputLeft = outputs[0]![0]!;
-        const outputRight = outputs[0]![1]!;
-        const outputLength = outputLeft.length;
+        const outputLength = outputs![0]!.length;
 
         if (this.#speedUp) {
             for (let i = 0; i < outputLength; i += 1) {
@@ -75,23 +83,21 @@ abstract class SourceProcessor<T>
                 let inputIndex = firstWindow * INPUT_HOP_SIZE + inWindowIndex;
 
                 while (inputIndex > 0 && inWindowIndex >= 0) {
-                    const [left, right] = this.#read(
-                        inputIndex - this.#readOffset,
-                    );
-
+                    this.#read(inputIndex - this.#readOffset);
                     const weight = WINDOW_WEIGHT_TABLE[inWindowIndex]!;
-                    outputLeft[i] += left * weight;
-                    outputRight[i] += right * weight;
+                    for (let j = 0; j < this.channelCount; j += 1) {
+                        outputs![j]![i] += this.#readBuffer[j]! * weight;
+                    }
                     totalWeight += weight;
 
                     inputIndex += INPUT_HOP_SIZE - OUTPUT_HOP_SIZE;
                     inWindowIndex -= OUTPUT_HOP_SIZE;
-                    inWindowIndex %= WINDOW_SIZE;
                 }
 
                 if (totalWeight > 0) {
-                    outputLeft[i] /= totalWeight;
-                    outputRight[i] /= totalWeight;
+                    for (let j = 0; j < this.channelCount; j += 1) {
+                        outputs![j]![i] /= totalWeight;
+                    }
                 }
 
                 this.#outputOffset += 1;
@@ -115,23 +121,22 @@ abstract class SourceProcessor<T>
                 this.#inputOffset -= firstChunkSampleCount;
             }
         } else {
-            this.#copyChunks(outputLeft, outputRight);
+            this.#copyChunks(outputs!);
         }
 
         return true;
     }
 
-    #copyChunks(outputLeft: Float32Array, outputRight: Float32Array) {
+    #copyChunks(outputs: Float32Array[]) {
         let outputIndex = 0;
-        const outputLength = outputLeft.length;
+        const outputLength = outputs[0]!.length;
 
         while (this.#chunks.length > 0 && outputIndex < outputLength) {
             let source: T | undefined = this.#chunks[0];
             let consumedSampleCount = 0;
             [source, consumedSampleCount, outputIndex] = this.copyChunk(
                 source!,
-                outputLeft,
-                outputRight,
+                outputs,
                 outputLength,
                 outputIndex,
             );
@@ -158,25 +163,30 @@ abstract class SourceProcessor<T>
         }
     }
 
-    #read(offset: number): [number, number] {
+    #read(offset: number) {
         for (let i = 0; i < this.#chunks.length; i += 1) {
             const length = this.#chunkSampleCounts[i]!;
 
             if (offset < length) {
-                return this.read(this.#chunks[i]!, offset);
+                this.read(this.#chunks[i]!, offset, this.#readBuffer);
+                return;
             }
 
             offset -= length;
         }
-        return [0, 0];
+
+        this.#readBuffer.fill(0);
     }
 
-    protected abstract read(source: T, offset: number): [number, number];
+    protected abstract read(
+        source: T,
+        offset: number,
+        target: Float32Array,
+    ): void;
 
     protected abstract copyChunk(
         source: T,
-        outputLeft: Float32Array,
-        outputRight: Float32Array,
+        outputs: Float32Array[],
         outputLength: number,
         outputIndex: number,
     ): [source: T | undefined, sourceIndex: number, outputIndex: number];
@@ -188,20 +198,23 @@ class Int16SourceProcessor
 {
     protected override createSource(data: ArrayBuffer[]): [Int16Array, number] {
         const source = new Int16Array(data[0]!);
-        return [source, source.length / 2];
+        return [source, source.length / this.channelCount];
     }
 
     protected override read(
         source: Int16Array,
         offset: number,
-    ): [number, number] {
-        return [source[offset * 2]! / 0x8000, source[offset * 2 + 1]! / 0x8000];
+        target: Float32Array,
+    ) {
+        const sourceOffset = offset * this.channelCount;
+        for (let i = 0; i < this.channelCount; i += 1) {
+            target[i] = source[sourceOffset + i]! / 0x8000;
+        }
     }
 
     protected override copyChunk(
         source: Int16Array,
-        outputLeft: Float32Array,
-        outputRight: Float32Array,
+        outputs: Float32Array[],
         outputLength: number,
         outputIndex: number,
     ): [
@@ -210,27 +223,27 @@ class Int16SourceProcessor
         outputIndex: number,
     ] {
         const sourceLength = source.length;
-        let sourceSampleIndex = 0;
+        let sourceIndex = 0;
 
-        while (sourceSampleIndex < sourceLength) {
-            outputLeft[outputIndex] = source[sourceSampleIndex]! / 0x8000;
-            outputRight[outputIndex] = source[sourceSampleIndex + 1]! / 0x8000;
-
-            sourceSampleIndex += 2;
+        while (sourceIndex < sourceLength) {
+            for (let i = 0; i < this.channelCount; i += 1) {
+                outputs[i]![outputIndex] = source[sourceIndex]! / 0x8000;
+                sourceIndex += 1;
+            }
             outputIndex += 1;
 
             if (outputIndex === outputLength) {
                 return [
-                    sourceSampleIndex < sourceLength
-                        ? source.subarray(sourceSampleIndex)
+                    sourceIndex < sourceLength
+                        ? source.subarray(sourceIndex)
                         : undefined,
-                    sourceSampleIndex / 2,
+                    sourceIndex / this.channelCount,
                     outputIndex,
                 ];
             }
         }
 
-        return [undefined, sourceSampleIndex / 2, outputIndex];
+        return [undefined, sourceIndex / this.channelCount, outputIndex];
     }
 }
 
@@ -239,20 +252,23 @@ class Float32SourceProcessor extends SourceProcessor<Float32Array> {
         data: ArrayBuffer[],
     ): [Float32Array, number] {
         const source = new Float32Array(data[0]!);
-        return [source, source.length / 2];
+        return [source, source.length / this.channelCount];
     }
 
     protected override read(
         source: Float32Array,
         offset: number,
-    ): [number, number] {
-        return [source[offset * 2]!, source[offset * 2 + 1]!];
+        target: Float32Array,
+    ) {
+        const sourceOffset = offset * this.channelCount;
+        for (let i = 0; i < this.channelCount; i += 1) {
+            target[i] = source[sourceOffset + i]!;
+        }
     }
 
     protected override copyChunk(
         source: Float32Array,
-        outputLeft: Float32Array,
-        outputRight: Float32Array,
+        outputs: Float32Array[],
         outputLength: number,
         outputIndex: number,
     ): [
@@ -261,27 +277,27 @@ class Float32SourceProcessor extends SourceProcessor<Float32Array> {
         outputIndex: number,
     ] {
         const sourceLength = source.length;
-        let sourceSampleIndex = 0;
+        let sourceIndex = 0;
 
-        while (sourceSampleIndex < sourceLength) {
-            outputLeft[outputIndex] = source[sourceSampleIndex]!;
-            outputRight[outputIndex] = source[sourceSampleIndex + 1]!;
-
-            sourceSampleIndex += 2;
+        while (sourceIndex < sourceLength) {
+            for (let i = 0; i < this.channelCount; i += 1) {
+                outputs[i]![outputIndex] = source[sourceIndex]!;
+                sourceIndex += 1;
+            }
             outputIndex += 1;
 
             if (outputIndex === outputLength) {
                 return [
-                    sourceSampleIndex < sourceLength
-                        ? source.subarray(sourceSampleIndex)
+                    sourceIndex < sourceLength
+                        ? source.subarray(sourceIndex)
                         : undefined,
-                    sourceSampleIndex / 2,
+                    sourceIndex / this.channelCount,
                     outputIndex,
                 ];
             }
         }
 
-        return [undefined, sourceSampleIndex / 2, outputIndex];
+        return [undefined, sourceIndex / this.channelCount, outputIndex];
     }
 }
 
@@ -296,14 +312,16 @@ class Float32PlanerSourceProcessor extends SourceProcessor<Float32Array[]> {
     protected override read(
         source: Float32Array[],
         offset: number,
-    ): [number, number] {
-        return [source[0]![offset]!, source[1]![offset]!];
+        target: Float32Array,
+    ) {
+        for (let i = 0; i < target.length; i += 1) {
+            target[i] = source[i]![offset]!;
+        }
     }
 
     protected override copyChunk(
         source: Float32Array[],
-        outputLeft: Float32Array,
-        outputRight: Float32Array,
+        outputs: Float32Array[],
         outputLength: number,
         outputIndex: number,
     ): [
@@ -311,32 +329,28 @@ class Float32PlanerSourceProcessor extends SourceProcessor<Float32Array[]> {
         sourceIndex: number,
         outputIndex: number,
     ] {
-        const sourceLeft = source[0]!;
-        const sourceRight = source[1]!;
-        const sourceLength = sourceLeft.length;
-        let sourceSampleIndex = 0;
+        const sourceLength = source[0]!.length;
+        let sourceIndex = 0;
 
-        while (sourceSampleIndex < sourceLength) {
-            outputLeft[outputIndex] = sourceLeft[sourceSampleIndex]!;
-            outputRight[outputIndex] = sourceRight[sourceSampleIndex]!;
-
-            sourceSampleIndex += 1;
+        while (sourceIndex < sourceLength) {
+            for (let i = 0; i < this.channelCount; i += 1) {
+                outputs[i]![outputIndex] = source[i]![sourceIndex]!;
+            }
+            sourceIndex += 1;
             outputIndex += 1;
 
             if (outputIndex === outputLength) {
                 return [
-                    sourceSampleIndex < sourceLength
-                        ? source.map((channel) =>
-                              channel.subarray(sourceSampleIndex),
-                          )
+                    sourceIndex < sourceLength
+                        ? source.map((channel) => channel.subarray(sourceIndex))
                         : undefined,
-                    sourceSampleIndex,
+                    sourceIndex,
                     outputIndex,
                 ];
             }
         }
 
-        return [undefined, sourceSampleIndex, outputIndex];
+        return [undefined, sourceIndex, outputIndex];
     }
 }
 

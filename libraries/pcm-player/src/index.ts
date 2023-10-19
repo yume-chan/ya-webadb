@@ -2,14 +2,16 @@ export abstract class PcmPlayer<T> {
     protected abstract sourceName: string;
 
     #context: AudioContext;
+    #channelCount: number;
     #worklet: AudioWorkletNode | undefined;
     #buffers: T[] = [];
 
-    constructor(sampleRate: number) {
+    constructor(sampleRate: number, channelCount: number) {
         this.#context = new AudioContext({
             latencyHint: "interactive",
             sampleRate,
         });
+        this.#channelCount = channelCount;
     }
 
     protected abstract feedCore(worklet: AudioWorkletNode, source: T): void;
@@ -31,7 +33,7 @@ export abstract class PcmPlayer<T> {
         this.#worklet = new AudioWorkletNode(this.#context, this.sourceName, {
             numberOfInputs: 0,
             numberOfOutputs: 1,
-            outputChannelCount: [2],
+            outputChannelCount: [this.#channelCount],
         });
         this.#worklet.connect(this.#context.destination);
 
