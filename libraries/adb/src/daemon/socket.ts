@@ -114,7 +114,14 @@ export class AdbDaemonSocketController
             return;
         }
 
-        await this.#readableController.enqueue(data);
+        try {
+            await this.#readableController.enqueue(data);
+        } catch (e) {
+            if (this.#readableController.abortSignal.aborted) {
+                return;
+            }
+            throw e;
+        }
     }
 
     ack() {
