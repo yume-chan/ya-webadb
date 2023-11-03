@@ -7,7 +7,10 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = fileURLToPath(dirname(import.meta.url));
 
-const serverVersion = process.argv[2];
+let serverVersion = process.argv[2];
+if (!serverVersion.startsWith("v")) {
+    serverVersion = "v" + serverVersion;
+}
 if (!serverVersion) {
     console.log("Usage: fetch-scrcpy-server <version>");
     process.exit(1);
@@ -18,15 +21,15 @@ const binFolder = resolve(__dirname, "..");
 
 await fetchVersion({
     repository: "Genymobile/scrcpy",
-    version: `v${serverVersion}`,
-    package: `scrcpy-server-v${serverVersion}`,
+    version: serverVersion,
+    package: `scrcpy-server-${serverVersion}`,
     destination: binFolder,
     extract: false,
 });
 
 await Promise.all([
     fs.rename(
-        resolve(binFolder, `scrcpy-server-v${serverVersion}`),
+        resolve(binFolder, `scrcpy-server-${serverVersion}`),
         resolve(binFolder, "server.bin"),
     ),
     fs.writeFile(
