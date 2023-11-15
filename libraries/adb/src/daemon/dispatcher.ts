@@ -36,6 +36,7 @@ export interface AdbPacketDispatcherOptions {
      * Whether to preserve the connection open after the `AdbPacketDispatcher` is closed.
      */
     preserveConnection?: boolean | undefined;
+    debugSlowRead?: boolean | undefined;
 }
 
 /**
@@ -229,7 +230,7 @@ export class AdbPacketDispatcher implements Closeable {
         let handled = false;
         await Promise.race([
             delay(5000).then(() => {
-                if (!handled) {
+                if (this.options.debugSlowRead && !handled) {
                     throw new Error(
                         `packet for \`${socket.service}\` not handled in 5 seconds`,
                     );

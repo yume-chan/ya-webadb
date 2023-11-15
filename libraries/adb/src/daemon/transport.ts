@@ -41,6 +41,7 @@ interface AdbDaemonAuthenticationOptions {
      * Whether to preserve the connection open after the `AdbDaemonTransport` is closed.
      */
     preserveConnection?: boolean | undefined;
+    debugSlowRead?: boolean | undefined;
 }
 
 interface AdbDaemonSocketConnectorConstructionOptions {
@@ -53,6 +54,7 @@ interface AdbDaemonSocketConnectorConstructionOptions {
      * Whether to preserve the connection open after the `AdbDaemonTransport` is closed.
      */
     preserveConnection?: boolean | undefined;
+    debugSlowRead?: boolean | undefined;
 }
 
 export class AdbDaemonTransport implements AdbTransport {
@@ -69,7 +71,7 @@ export class AdbDaemonTransport implements AdbTransport {
         connection,
         credentialStore,
         authenticators = ADB_DEFAULT_AUTHENTICATORS,
-        preserveConnection,
+        ...options
     }: AdbDaemonAuthenticationOptions): Promise<AdbDaemonTransport> {
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
@@ -193,7 +195,7 @@ export class AdbDaemonTransport implements AdbTransport {
             version,
             maxPayloadSize,
             banner,
-            preserveConnection,
+            ...options,
         });
     }
 
@@ -214,9 +216,8 @@ export class AdbDaemonTransport implements AdbTransport {
         return this.#protocolVersion;
     }
 
-    #maxPayloadSize: number;
     get maxPayloadSize() {
-        return this.#maxPayloadSize;
+        return this.#dispatcher.options.maxPayloadSize;
     }
 
     #banner: AdbBanner;
@@ -232,9 +233,8 @@ export class AdbDaemonTransport implements AdbTransport {
         serial,
         connection,
         version,
-        maxPayloadSize,
         banner,
-        preserveConnection,
+        ...options
     }: AdbDaemonSocketConnectorConstructionOptions) {
         this.#serial = serial;
         this.#connection = connection;
@@ -253,12 +253,10 @@ export class AdbDaemonTransport implements AdbTransport {
         this.#dispatcher = new AdbPacketDispatcher(connection, {
             calculateChecksum,
             appendNullToServiceString,
-            maxPayloadSize,
-            preserveConnection,
+            ...options,
         });
 
         this.#protocolVersion = version;
-        this.#maxPayloadSize = maxPayloadSize;
     }
 
     connect(service: string): ValueOrPromise<AdbSocket> {
