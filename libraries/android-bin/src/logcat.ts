@@ -471,11 +471,12 @@ export class Logcat extends AdbCommandBase {
     }
 
     async clear(ids?: LogId[]) {
-        await this.adb.subprocess.spawnAndWait([
-            "logcat",
-            "-c",
-            ...(ids ? ["-b", Logcat.joinLogId(ids)] : []),
-        ]);
+        const args = ["logcat", "-c"];
+        if (ids && ids.length > 0) {
+            args.push("-b", Logcat.joinLogId(ids));
+        }
+
+        await this.adb.subprocess.spawnAndWait(args);
     }
 
     binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {

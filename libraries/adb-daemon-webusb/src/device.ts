@@ -105,6 +105,14 @@ export class AdbDaemonWebUsbConnection
     }
 
     #inEndpoint: USBEndpoint;
+    get inEndpoint() {
+        return this.#inEndpoint;
+    }
+
+    #outEndpoint: USBEndpoint;
+    get outEndpoint() {
+        return this.#outEndpoint;
+    }
 
     #readable: ReadableStream<AdbPacketData>;
     get readable() {
@@ -124,6 +132,7 @@ export class AdbDaemonWebUsbConnection
     ) {
         this.#device = device;
         this.#inEndpoint = inEndpoint;
+        this.#outEndpoint = outEndpoint;
 
         let closed = false;
 
@@ -313,11 +322,7 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
         this.#usbManager = usbManager;
     }
 
-    /**
-     * Claim the device and create a pair of `AdbPacket` streams to the ADB interface.
-     * @returns The pair of `AdbPacket` streams.
-     */
-    async connect(): Promise<AdbDaemonWebUsbConnection> {
+    async #claimInterface(): Promise<[USBEndpoint, USBEndpoint]> {
         if (!this.#raw.opened) {
             await this.#raw.open();
         }
@@ -352,6 +357,15 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
         const { inEndpoint, outEndpoint } = findUsbEndpoints(
             alternate.endpoints,
         );
+        return [inEndpoint, outEndpoint];
+    }
+
+    /**
+     * Claim the device and create a pair of `AdbPacket` streams to the ADB interface.
+     * @returns The pair of `AdbPacket` streams.
+     */
+    async connect(): Promise<AdbDaemonWebUsbConnection> {
+        const [inEndpoint, outEndpoint] = await this.#claimInterface();
         return new AdbDaemonWebUsbConnection(
             this,
             inEndpoint,
