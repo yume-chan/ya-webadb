@@ -5,6 +5,7 @@ export abstract class PcmPlayer<T> {
     #channelCount: number;
     #worklet: AudioWorkletNode | undefined;
     #buffers: T[] = [];
+    #stopped = false;
 
     constructor(sampleRate: number, channelCount: number) {
         this.#context = new AudioContext({
@@ -17,6 +18,10 @@ export abstract class PcmPlayer<T> {
     protected abstract feedCore(worklet: AudioWorkletNode, source: T): void;
 
     feed(source: T) {
+        if (this.#stopped) {
+            throw new Error("PcmPlayer is stopped");
+        }
+
         if (this.#worklet === undefined) {
             this.#buffers.push(source);
             return;
@@ -29,6 +34,10 @@ export abstract class PcmPlayer<T> {
         await this.#context.audioWorklet.addModule(
             new URL("./worker.js", import.meta.url),
         );
+
+        if (this.#stopped) {
+            return;
+        }
 
         this.#worklet = new AudioWorkletNode(this.#context, this.sourceName, {
             numberOfInputs: 0,
@@ -44,6 +53,11 @@ export abstract class PcmPlayer<T> {
     }
 
     async stop() {
+        if (this.#stopped) {
+            return;
+        }
+        this.#stopped = true;
+
         this.#worklet?.disconnect();
         this.#worklet = undefined;
 
