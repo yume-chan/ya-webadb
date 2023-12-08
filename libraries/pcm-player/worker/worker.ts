@@ -21,6 +21,7 @@ abstract class SourceProcessor<T>
     #chunkSampleCounts: number[] = [];
     #totalSampleCount = 0;
 
+    #starting = true;
     #speedUp = false;
     #readOffset = 0;
     #inputOffset = 0;
@@ -33,8 +34,7 @@ abstract class SourceProcessor<T>
         this.#readBuffer = new Float32Array(this.channelCount);
 
         this.port.onmessage = (event) => {
-            while (this.#totalSampleCount > 16000) {
-                console.log("[Audio] Buffer overflow, dropping samples");
+            while (this.#totalSampleCount > 0.35 * 48000) {
                 this.#chunks.shift();
                 const count = this.#chunkSampleCounts.shift()!;
                 this.#totalSampleCount -= count;
@@ -46,8 +46,7 @@ abstract class SourceProcessor<T>
             this.#chunkSampleCounts.push(length);
             this.#totalSampleCount += length;
 
-            if (!this.#speedUp && this.#totalSampleCount > 8000) {
-                console.log("[Audio] Speeding up");
+            if (!this.#speedUp && this.#totalSampleCount > 0.25 * 48000) {
                 this.#speedUp = true;
                 this.#readOffset = 0;
                 this.#inputOffset = 0;
@@ -59,10 +58,17 @@ abstract class SourceProcessor<T>
     protected abstract createSource(data: ArrayBuffer[]): [T, number];
 
     process(_inputs: Float32Array[][], [outputs]: Float32Array[][]) {
-        // Stop speeding up when buffer is below 0.05s
-        if (this.#speedUp && this.#totalSampleCount < 3000) {
-            console.log("[Audio] Restoring normal speed");
+        if (this.#starting) {
+            if (this.#totalSampleCount < 0.1 * 48000) {
+                return true;
+            } else {
+                this.#starting = false;
+            }
+        }
+
+        if (this.#speedUp && this.#totalSampleCount < 0.15 * 48000) {
             this.#speedUp = false;
+            this.#starting = true;
         }
 
         const outputLength = outputs![0]!.length;
@@ -152,14 +158,6 @@ abstract class SourceProcessor<T>
 
             this.#chunks.shift();
             this.#chunkSampleCounts.shift();
-        }
-
-        if (outputIndex < outputLength) {
-            console.log(
-                `[Audio] Buffer underflow, inserting silence: ${
-                    outputLength - outputIndex
-                } samples`,
-            );
         }
     }
 

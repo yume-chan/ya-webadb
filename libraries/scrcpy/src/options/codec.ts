@@ -37,7 +37,7 @@ export class ScrcpyAudioCodec implements ScrcpyOptionValue {
         "raw",
         0x00_72_61_77,
         "audio/raw",
-        "1",
+        "",
     );
 
     readonly optionValue: string;
