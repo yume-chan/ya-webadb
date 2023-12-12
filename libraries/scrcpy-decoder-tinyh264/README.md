@@ -1,6 +1,6 @@
 # @yume-chan/scrcpy-decoder-tinyh264
 
-Decode and render H.264 streams using TinyH264, the old Android H.264 software decoder (now deprecated and removed), compiled into WebAssembly, and wrapped in Web Worker to prevent blocking the main thread.
+Decode and render H.264 streams using TinyH264, the old Android H.264 software decoder (now deprecated and removed), compiled into WebAssembly and wrapped in a Web Worker.
 
 The video stream will be decoded into YUV frames on CPU, then converted to RGB using a WebGL shader (using GPU). It's slow, but works on most browsers.
 

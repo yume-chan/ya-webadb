@@ -1,7 +1,5 @@
 <p align="center">
-    <a href="https://app.tangoapp.dev">
-        <img alt="Tango" src="https://raw.githubusercontent.com/yume-chan/ya-webadb/main/.github/logo.svg" width="200">
-    </a>
+    <img alt="Tango" src="https://raw.githubusercontent.com/yume-chan/ya-webadb/main/.github/logo.svg" width="200">
 </p>
 
 <h1 align="center">Tango</h1>
@@ -15,10 +13,13 @@
         <img alt="MIT License" src="https://img.shields.io/github/license/yume-chan/ya-webadb">
     </a>
     <a href="https://github.com/yume-chan/ya-webadb/releases">
-        <img alt="GitHub release" src="https://img.shields.io/github/v/release/yume-chan/ya-webadb">
+        <img alt="GitHub release" src="https://img.shields.io/github/v/release/yume-chan/ya-webadb?logo=github">
     </a>
     <a href="https://www.npmjs.com/package/@yume-chan/adb">
         <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/adb?logo=npm">
+    </a>
+    <a href="https://discord.gg/26k3ttC2PN">
+        <img alt="Discord" src="https://img.shields.io/discord/1120215514732564502?logo=discord&logoColor=%23ffffff&label=Discord">
     </a>
 </p>
 
