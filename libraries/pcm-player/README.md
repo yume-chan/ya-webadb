@@ -2,11 +2,12 @@
 
 Play raw audio sample stream using Web Audio API.
 
-Only support stereo audio.
+## Features
 
-TODO:
-
--   [ ] resample audio to compensate for audio buffer underrun
+-   [x] Arbitrary channel count
+-   [x] Arbitrary sample rate
+-   [x] Basic OLA (overlap-add) resampler
+-   [ ] Adjustable buffer size
 
 ## Usage
 

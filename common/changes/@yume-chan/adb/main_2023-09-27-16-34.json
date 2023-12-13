@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb-daemon-webusb",
+            "comment": "`AdbDaemonWebUsbDevice` will generate a fake serial number from vid and pid if the device serial number is empty",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb-daemon-webusb"
+}
