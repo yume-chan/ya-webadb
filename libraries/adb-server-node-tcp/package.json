@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-server-node-tcp",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "description": "ADB server connector for `@yume-chan/adb` using Node.js' `net` module",
     "keywords": [
         "adb",
@@ -32,9 +32,9 @@
         "lint": "eslint src/**/*.ts --fix"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.21",
-        "@yume-chan/stream-extra": "workspace:^0.0.21",
-        "@yume-chan/struct": "workspace:^0.0.21",
+        "@yume-chan/adb": "workspace:^0.0.22",
+        "@yume-chan/stream-extra": "workspace:^0.0.22",
+        "@yume-chan/struct": "workspace:^0.0.22",
         "tslib": "^2.6.2"
     },
     "devDependencies": {

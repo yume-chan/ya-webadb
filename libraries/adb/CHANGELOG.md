@@ -1,6 +1,16 @@
 # Change Log - @yume-chan/adb
 
-This log was last generated on Fri, 25 Aug 2023 14:05:18 GMT and should not be manually modified.
+This log was last generated on Wed, 13 Dec 2023 05:57:27 GMT and should not be manually modified.
+
+## 0.0.22
+Wed, 13 Dec 2023 05:57:27 GMT
+
+### Updates
+
+- Add `getListenAddresses` method to `AdbTcpIpCommand` class for retrieving current ADB over WiFi state
+- Add `debugSlowRead` option to `AdbDaemonTransport` that throws an error when an ADB socket is stalled for 5 seconds
+- Fix `AdbSync#read` stuck when there is an error
+- Fix TypeScript build when using `AdbSubprocessNoneProtocol` without installing `web-streams-polyfill` package
 
 ## 0.0.21
 Fri, 25 Aug 2023 14:05:18 GMT

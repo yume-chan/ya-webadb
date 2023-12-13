@@ -1,6 +1,15 @@
 # Change Log - @yume-chan/scrcpy
 
-This log was last generated on Fri, 25 Aug 2023 14:05:18 GMT and should not be manually modified.
+This log was last generated on Wed, 13 Dec 2023 05:57:27 GMT and should not be manually modified.
+
+## 0.0.22
+Wed, 13 Dec 2023 05:57:27 GMT
+
+### Updates
+
+- Fix parsing `sps_max_dec_pic_buffering_minus1` in H.265 SPS
+- Support parsing `vui_hrd_parameters` in H.265 SPS
+- Add support for Scrcpy 2.2
 
 ## 0.0.21
 Fri, 25 Aug 2023 14:05:18 GMT

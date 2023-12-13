@@ -2,6 +2,27 @@
   "name": "@yume-chan/adb",
   "entries": [
     {
+      "version": "0.0.22",
+      "tag": "@yume-chan/adb_v0.0.22",
+      "date": "Wed, 13 Dec 2023 05:57:27 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add `getListenAddresses` method to `AdbTcpIpCommand` class for retrieving current ADB over WiFi state"
+          },
+          {
+            "comment": "Add `debugSlowRead` option to `AdbDaemonTransport` that throws an error when an ADB socket is stalled for 5 seconds"
+          },
+          {
+            "comment": "Fix `AdbSync#read` stuck when there is an error"
+          },
+          {
+            "comment": "Fix TypeScript build when using `AdbSubprocessNoneProtocol` without installing `web-streams-polyfill` package"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.21",
       "tag": "@yume-chan/adb_v0.0.21",
       "date": "Fri, 25 Aug 2023 14:05:18 GMT",

@@ -2,6 +2,24 @@
   "name": "@yume-chan/adb-daemon-webusb",
   "entries": [
     {
+      "version": "0.0.22",
+      "tag": "@yume-chan/adb-daemon-webusb_v0.0.22",
+      "date": "Wed, 13 Dec 2023 05:57:27 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Check incoming packet size to prevent Chrome from crashing"
+          },
+          {
+            "comment": "Add `exclusionFilters` option to `AdbDaemonWebUsbDeviceManager#requestDevice` method"
+          },
+          {
+            "comment": "`AdbDaemonWebUsbDevice` will generate a fake serial number from vid and pid if the device serial number is empty"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.21",
       "tag": "@yume-chan/adb-daemon-webusb_v0.0.21",
       "date": "Fri, 25 Aug 2023 14:05:18 GMT",

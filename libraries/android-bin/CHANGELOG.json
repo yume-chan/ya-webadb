@@ -2,6 +2,30 @@
   "name": "@yume-chan/android-bin",
   "entries": [
     {
+      "version": "0.0.22",
+      "tag": "@yume-chan/android-bin_v0.0.22",
+      "date": "Wed, 13 Dec 2023 05:57:27 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add wrapper for `pm uninstall`"
+          },
+          {
+            "comment": "Change `PackageManager#listPackages` to return an async generator"
+          },
+          {
+            "comment": "Add wrapper for `am start`"
+          },
+          {
+            "comment": "Add wrapper for `pm resolve-activity`"
+          },
+          {
+            "comment": "Add `status` and `health` fields to `DumpSys#battery`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.21",
       "tag": "@yume-chan/android-bin_v0.0.21",
       "date": "Fri, 25 Aug 2023 14:05:18 GMT",

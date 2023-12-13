@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/stream-extra",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "description": "Extensions to Web Streams API",
     "keywords": [
         "stream",
@@ -33,7 +33,7 @@
     },
     "dependencies": {
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/struct": "workspace:^0.0.21",
+        "@yume-chan/struct": "workspace:^0.0.22",
         "tslib": "^2.6.2",
         "web-streams-polyfill": "^4.0.0-beta.3"
     },

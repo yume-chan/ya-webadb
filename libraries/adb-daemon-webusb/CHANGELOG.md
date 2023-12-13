@@ -1,6 +1,15 @@
 # Change Log - @yume-chan/adb-daemon-webusb
 
-This log was last generated on Fri, 25 Aug 2023 14:05:18 GMT and should not be manually modified.
+This log was last generated on Wed, 13 Dec 2023 05:57:27 GMT and should not be manually modified.
+
+## 0.0.22
+Wed, 13 Dec 2023 05:57:27 GMT
+
+### Updates
+
+- Check incoming packet size to prevent Chrome from crashing
+- Add `exclusionFilters` option to `AdbDaemonWebUsbDeviceManager#requestDevice` method
+- `AdbDaemonWebUsbDevice` will generate a fake serial number from vid and pid if the device serial number is empty
 
 ## 0.0.21
 Fri, 25 Aug 2023 14:05:18 GMT

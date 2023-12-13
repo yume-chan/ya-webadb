@@ -1,6 +1,17 @@
 # Change Log - @yume-chan/android-bin
 
-This log was last generated on Fri, 25 Aug 2023 14:05:18 GMT and should not be manually modified.
+This log was last generated on Wed, 13 Dec 2023 05:57:27 GMT and should not be manually modified.
+
+## 0.0.22
+Wed, 13 Dec 2023 05:57:27 GMT
+
+### Updates
+
+- Add wrapper for `pm uninstall`
+- Change `PackageManager#listPackages` to return an async generator
+- Add wrapper for `am start`
+- Add wrapper for `pm resolve-activity`
+- Add `status` and `health` fields to `DumpSys#battery`
 
 ## 0.0.21
 Fri, 25 Aug 2023 14:05:18 GMT
