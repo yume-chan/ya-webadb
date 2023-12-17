@@ -88,14 +88,14 @@ describe("Struct", () => {
 
             struct.field(field1, fieldDefinition1);
             expect(struct).toHaveProperty("size", 4);
-            expect(fieldDefinition1.getSize).toBeCalledTimes(1);
+            expect(fieldDefinition1.getSize).toHaveBeenCalledTimes(1);
             expect(struct.fields).toEqual([[field1, fieldDefinition1]]);
 
             const field2 = "bar";
             const fieldDefinition2 = new MockFieldDefinition(8);
             struct.field(field2, fieldDefinition2);
             expect(struct).toHaveProperty("size", 12);
-            expect(fieldDefinition2.getSize).toBeCalledTimes(1);
+            expect(fieldDefinition2.getSize).toHaveBeenCalledTimes(1);
             expect(struct.fields).toEqual([
                 [field1, fieldDefinition1],
                 [field2, fieldDefinition2],
@@ -108,7 +108,7 @@ describe("Struct", () => {
             struct.field(fieldName, new MockFieldDefinition(4));
             expect(() =>
                 struct.field(fieldName, new MockFieldDefinition(4)),
-            ).toThrowError();
+            ).toThrow();
         });
     });
 
@@ -298,9 +298,9 @@ describe("Struct", () => {
                 const result = struct.deserialize(stream);
                 expect(result).toEqual({ foo: 2, bar: 16 });
 
-                expect(stream.readExactly).toBeCalledTimes(2);
-                expect(stream.readExactly).nthCalledWith(1, 1);
-                expect(stream.readExactly).nthCalledWith(2, 2);
+                expect(stream.readExactly).toHaveBeenCalledTimes(2);
+                expect(stream.readExactly).toHaveBeenNthCalledWith(1, 1);
+                expect(stream.readExactly).toHaveBeenNthCalledWith(2, 2);
             });
 
             it("should deserialize with dynamic size fields", () => {
@@ -318,9 +318,9 @@ describe("Struct", () => {
                     fooLength: 2,
                     foo: new Uint8Array([3, 4]),
                 });
-                expect(stream.readExactly).toBeCalledTimes(2);
-                expect(stream.readExactly).nthCalledWith(1, 1);
-                expect(stream.readExactly).nthCalledWith(2, 2);
+                expect(stream.readExactly).toHaveBeenCalledTimes(2);
+                expect(stream.readExactly).toHaveBeenNthCalledWith(1, 1);
+                expect(stream.readExactly).toHaveBeenNthCalledWith(2, 2);
             });
         });
 
@@ -412,8 +412,8 @@ describe("Struct", () => {
                 struct.postDeserialize(callback);
 
                 const stream = new MockDeserializationStream();
-                expect(() => struct.deserialize(stream)).toThrowError("mock");
-                expect(callback).toBeCalledTimes(1);
+                expect(() => struct.deserialize(stream)).toThrow("mock");
+                expect(callback).toHaveBeenCalledTimes(1);
             });
 
             it("can replace return value", () => {
@@ -423,8 +423,8 @@ describe("Struct", () => {
 
                 const stream = new MockDeserializationStream();
                 expect(struct.deserialize(stream)).toBe("mock");
-                expect(callback).toBeCalledTimes(1);
-                expect(callback).toBeCalledWith({});
+                expect(callback).toHaveBeenCalledTimes(1);
+                expect(callback).toHaveBeenCalledWith({});
             });
 
             it("can return nothing", () => {
@@ -435,8 +435,8 @@ describe("Struct", () => {
                 const stream = new MockDeserializationStream();
                 const result = struct.deserialize(stream);
 
-                expect(callback).toBeCalledTimes(1);
-                expect(callback).toBeCalledWith(result);
+                expect(callback).toHaveBeenCalledTimes(1);
+                expect(callback).toHaveBeenCalledWith(result);
             });
 
             it("should overwrite callback", () => {
@@ -451,9 +451,9 @@ describe("Struct", () => {
                 const stream = new MockDeserializationStream();
                 struct.deserialize(stream);
 
-                expect(callback1).toBeCalledTimes(0);
-                expect(callback2).toBeCalledTimes(1);
-                expect(callback2).toBeCalledWith({});
+                expect(callback1).toHaveBeenCalledTimes(0);
+                expect(callback2).toHaveBeenCalledTimes(1);
+                expect(callback2).toHaveBeenCalledWith({});
             });
         });
 

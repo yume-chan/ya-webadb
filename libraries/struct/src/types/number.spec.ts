@@ -1,7 +1,7 @@
 import { describe, expect, it, jest, test } from "@jest/globals";
 
-import { StructDefaultOptions, StructValue } from "../basic/index.js";
 import type { ExactReadable } from "../basic/index.js";
+import { StructDefaultOptions, StructValue } from "../basic/index.js";
 
 import { NumberFieldDefinition, NumberFieldType } from "./number.js";
 
@@ -205,8 +205,8 @@ describe("Types", () => {
                     );
 
                     expect(value.get()).toBe(1);
-                    expect(readExactly).toBeCalledTimes(1);
-                    expect(readExactly).lastCalledWith(
+                    expect(readExactly).toHaveBeenCalledTimes(1);
+                    expect(readExactly).toHaveBeenCalledWith(
                         NumberFieldType.Uint8.size,
                     );
                 });
@@ -228,8 +228,8 @@ describe("Types", () => {
                     );
 
                     expect(value.get()).toBe((1 << 8) | 2);
-                    expect(readExactly).toBeCalledTimes(1);
-                    expect(readExactly).lastCalledWith(
+                    expect(readExactly).toHaveBeenCalledTimes(1);
+                    expect(readExactly).toHaveBeenCalledWith(
                         NumberFieldType.Uint16.size,
                     );
                 });
@@ -251,8 +251,8 @@ describe("Types", () => {
                     );
 
                     expect(value.get()).toBe((2 << 8) | 1);
-                    expect(readExactly).toBeCalledTimes(1);
-                    expect(readExactly).lastCalledWith(
+                    expect(readExactly).toHaveBeenCalledTimes(1);
+                    expect(readExactly).toHaveBeenCalledWith(
                         NumberFieldType.Uint16.size,
                     );
                 });

@@ -18,6 +18,7 @@ export class AdbBanner {
         if (pieces.length > 1) {
             const props = pieces[1]!;
             for (const prop of props.split(";")) {
+                // istanbul ignore if
                 if (!prop) {
                     continue;
                 }

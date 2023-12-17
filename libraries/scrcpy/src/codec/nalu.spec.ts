@@ -7,18 +7,20 @@ describe("nalu", () => {
         it("should throw error if no end bit found", () => {
             expect(
                 () => new NaluSodbBitReader(new Uint8Array([0b00000000])),
-            ).toThrowError();
+            ).toThrowErrorMatchingInlineSnapshot(`"Stop bit not found"`);
             expect(
                 () =>
                     new NaluSodbBitReader(
                         new Uint8Array([0b00000000, 0b00000000]),
                     ),
-            ).toThrowError();
+            ).toThrowErrorMatchingInlineSnapshot(`"Stop bit not found"`);
         });
 
         it("should throw error if read after end bit", () => {
             let reader = new NaluSodbBitReader(new Uint8Array([0b10000000]));
-            expect(() => reader.next()).toThrowError();
+            expect(() => reader.next()).toThrowErrorMatchingInlineSnapshot(
+                `"Bit index out of bounds"`,
+            );
 
             reader = new NaluSodbBitReader(
                 new Uint8Array([0b11111111, 0b10000000]),
@@ -26,7 +28,9 @@ describe("nalu", () => {
             for (let i = 0; i < 8; i += 1) {
                 expect(reader.next()).toBe(1);
             }
-            expect(() => reader.next()).toThrowError();
+            expect(() => reader.next()).toThrowErrorMatchingInlineSnapshot(
+                `"Bit index out of bounds"`,
+            );
         });
 
         it("should skip emulation prevent byte", () => {

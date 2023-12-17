@@ -71,12 +71,12 @@ describe("Types", () => {
 
                 mockOriginalFieldValue.size = 0;
                 expect(lengthFieldValue.getSize()).toBe(0);
-                expect(mockOriginalFieldValue.getSize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.getSize).toHaveBeenCalledTimes(1);
 
                 mockOriginalFieldValue.getSize.mockClear();
                 mockOriginalFieldValue.size = 100;
                 expect(lengthFieldValue.getSize()).toBe(100);
-                expect(mockOriginalFieldValue.getSize).toBeCalledTimes(1);
+                expect(mockOriginalFieldValue.getSize).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -94,15 +94,19 @@ describe("Types", () => {
                 mockOriginalFieldValue.value = 0;
                 mockArrayBufferFieldValue.size = 0;
                 expect(lengthFieldValue.get()).toBe(0);
-                expect(mockArrayBufferFieldValue.getSize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
+                expect(mockArrayBufferFieldValue.getSize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
 
                 mockArrayBufferFieldValue.getSize.mockClear();
                 mockOriginalFieldValue.get.mockClear();
                 mockArrayBufferFieldValue.size = 100;
                 expect(lengthFieldValue.get()).toBe(100);
-                expect(mockArrayBufferFieldValue.getSize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
+                expect(mockArrayBufferFieldValue.getSize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
             });
 
             it("should return size of its `arrayBufferField` as string", () => {
@@ -118,15 +122,19 @@ describe("Types", () => {
                 mockOriginalFieldValue.value = "0";
                 mockArrayBufferFieldValue.size = 0;
                 expect(lengthFieldValue.get()).toBe("0");
-                expect(mockArrayBufferFieldValue.getSize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
+                expect(mockArrayBufferFieldValue.getSize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
 
                 mockArrayBufferFieldValue.getSize.mockClear();
                 mockOriginalFieldValue.get.mockClear();
                 mockArrayBufferFieldValue.size = 100;
                 expect(lengthFieldValue.get()).toBe("100");
-                expect(mockArrayBufferFieldValue.getSize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
+                expect(mockArrayBufferFieldValue.getSize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
             });
         });
 
@@ -167,12 +175,14 @@ describe("Types", () => {
                 mockOriginalFieldValue.value = 10;
                 mockArrayBufferFieldValue.size = 0;
                 lengthFieldValue.serialize(dataView, offset);
-                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toReturnWith(10);
-                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toBeCalledWith(0);
-                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.serialize).toBeCalledWith(
+                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toHaveReturnedWith(10);
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(0);
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
                     offset,
                 );
@@ -181,10 +191,12 @@ describe("Types", () => {
                 mockOriginalFieldValue.serialize.mockClear();
                 mockArrayBufferFieldValue.size = 100;
                 lengthFieldValue.serialize(dataView, offset);
-                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toBeCalledWith(100);
-                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.serialize).toBeCalledWith(
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(100);
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
                     offset,
                 );
@@ -206,12 +218,14 @@ describe("Types", () => {
                 mockOriginalFieldValue.value = "10";
                 mockArrayBufferFieldValue.size = 0;
                 lengthFieldValue.serialize(dataView, offset);
-                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toReturnWith("10");
-                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toBeCalledWith("0");
-                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.serialize).toBeCalledWith(
+                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toHaveReturnedWith("10");
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith("0");
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
                     offset,
                 );
@@ -220,10 +234,12 @@ describe("Types", () => {
                 mockOriginalFieldValue.serialize.mockClear();
                 mockArrayBufferFieldValue.size = 100;
                 lengthFieldValue.serialize(dataView, offset);
-                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toBeCalledWith("100");
-                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.serialize).toBeCalledWith(
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith("100");
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
                     offset,
                 );
@@ -249,12 +265,14 @@ describe("Types", () => {
                 mockOriginalFieldValue.value = "10";
                 mockArrayBufferFieldValue.size = 0;
                 lengthFieldValue.serialize(dataView, offset);
-                expect(mockOriginalFieldValue.get).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toReturnWith("10");
-                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toBeCalledWith("0");
-                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.serialize).toBeCalledWith(
+                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
+                expect(mockOriginalFieldValue.get).toHaveReturnedWith("10");
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith("0");
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
                     offset,
                 );
@@ -263,12 +281,14 @@ describe("Types", () => {
                 mockOriginalFieldValue.serialize.mockClear();
                 mockArrayBufferFieldValue.size = 100;
                 lengthFieldValue.serialize(dataView, offset);
-                expect(mockOriginalFieldValue.set).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toBeCalledWith(
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
+                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(
                     (100).toString(radix),
                 );
-                expect(mockOriginalFieldValue.serialize).toBeCalledTimes(1);
-                expect(mockOriginalFieldValue.serialize).toBeCalledWith(
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                    1,
+                );
+                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
                     offset,
                 );
@@ -433,9 +453,9 @@ describe("Types", () => {
                     );
 
                 expect(bufferFieldValue.getSize()).toBe(100);
-                expect(arrayBufferFieldType.toValue).toBeCalledTimes(0);
-                expect(arrayBufferFieldType.toBuffer).toBeCalledTimes(0);
-                expect(arrayBufferFieldType.getSize).toBeCalledTimes(0);
+                expect(arrayBufferFieldType.toValue).toHaveBeenCalledTimes(0);
+                expect(arrayBufferFieldType.toBuffer).toHaveBeenCalledTimes(0);
+                expect(arrayBufferFieldType.getSize).toHaveBeenCalledTimes(0);
             });
 
             it("should call `getSize` of its `type`", () => {
@@ -466,9 +486,9 @@ describe("Types", () => {
 
                 arrayBufferFieldType.size = 100;
                 expect(bufferFieldValue.getSize()).toBe(100);
-                expect(arrayBufferFieldType.toValue).toBeCalledTimes(0);
-                expect(arrayBufferFieldType.toBuffer).toBeCalledTimes(0);
-                expect(arrayBufferFieldType.getSize).toBeCalledTimes(1);
+                expect(arrayBufferFieldType.toValue).toHaveBeenCalledTimes(0);
+                expect(arrayBufferFieldType.toBuffer).toHaveBeenCalledTimes(0);
+                expect(arrayBufferFieldType.getSize).toHaveBeenCalledTimes(1);
                 expect(bufferFieldValue).toHaveProperty("array", undefined);
                 expect(bufferFieldValue).toHaveProperty("length", 100);
             });
@@ -501,9 +521,9 @@ describe("Types", () => {
 
                 arrayBufferFieldType.size = -1;
                 expect(bufferFieldValue.getSize()).toBe(100);
-                expect(arrayBufferFieldType.toValue).toBeCalledTimes(0);
-                expect(arrayBufferFieldType.toBuffer).toBeCalledTimes(1);
-                expect(arrayBufferFieldType.getSize).toBeCalledTimes(1);
+                expect(arrayBufferFieldType.toValue).toHaveBeenCalledTimes(0);
+                expect(arrayBufferFieldType.toBuffer).toHaveBeenCalledTimes(1);
+                expect(arrayBufferFieldType.getSize).toHaveBeenCalledTimes(1);
                 expect(bufferFieldValue).toHaveProperty("array", value);
                 expect(bufferFieldValue).toHaveProperty("length", 100);
             });
@@ -597,12 +617,12 @@ describe("Types", () => {
 
                 originalLengthFieldValue.value = 0;
                 expect(definition["getDeserializeSize"](struct)).toBe(0);
-                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
 
                 originalLengthFieldValue.get.mockClear();
                 originalLengthFieldValue.value = 100;
                 expect(definition["getDeserializeSize"](struct)).toBe(100);
-                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
             });
 
             it("should return value of its `lengthField` as number", () => {
@@ -619,12 +639,12 @@ describe("Types", () => {
 
                 originalLengthFieldValue.value = "0";
                 expect(definition["getDeserializeSize"](struct)).toBe(0);
-                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
 
                 originalLengthFieldValue.get.mockClear();
                 originalLengthFieldValue.value = "100";
                 expect(definition["getDeserializeSize"](struct)).toBe(100);
-                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
             });
 
             it("should return value of its `lengthField` as number with specified radix", () => {
@@ -642,14 +662,14 @@ describe("Types", () => {
 
                 originalLengthFieldValue.value = "0";
                 expect(definition["getDeserializeSize"](struct)).toBe(0);
-                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
 
                 originalLengthFieldValue.get.mockClear();
                 originalLengthFieldValue.value = "100";
                 expect(definition["getDeserializeSize"](struct)).toBe(
                     Number.parseInt("100", radix),
                 );
-                expect(originalLengthFieldValue.get).toBeCalledTimes(1);
+                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
             });
         });
 

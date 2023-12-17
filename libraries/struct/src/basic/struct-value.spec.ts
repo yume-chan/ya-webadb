@@ -61,12 +61,12 @@ describe("StructValue", () => {
             object.set(bar, barValue);
 
             expect(object.value).toHaveProperty(foo, 42);
-            expect(fooGetter).toBeCalledTimes(1);
-            expect(barGetter).toBeCalledTimes(1);
+            expect(fooGetter).toHaveBeenCalledTimes(1);
+            expect(barGetter).toHaveBeenCalledTimes(1);
 
             object.value[foo] = 100;
-            expect(fooSetter).toBeCalledTimes(0);
-            expect(barSetter).toBeCalledTimes(0);
+            expect(fooSetter).toHaveBeenCalledTimes(0);
+            expect(barSetter).toHaveBeenCalledTimes(0);
         });
     });
 

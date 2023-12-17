@@ -104,8 +104,8 @@ describe("Types", () => {
                     context,
                     struct,
                 );
-                expect(context.readExactly).toBeCalledTimes(1);
-                expect(context.readExactly).toBeCalledWith(size);
+                expect(context.readExactly).toHaveBeenCalledTimes(1);
+                expect(context.readExactly).toHaveBeenCalledWith(size);
                 expect(fieldValue).toHaveProperty("array", array);
 
                 expect(fieldValue.get()).toBe(array);
@@ -128,7 +128,7 @@ describe("Types", () => {
                     context,
                     struct,
                 );
-                expect(context.readExactly).toBeCalledTimes(0);
+                expect(context.readExactly).toHaveBeenCalledTimes(0);
                 expect(fieldValue["array"]).toBeInstanceOf(Uint8Array);
                 expect(fieldValue["array"]).toHaveProperty("byteLength", 0);
 

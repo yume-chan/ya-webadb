@@ -18,7 +18,7 @@ describe("Event", () => {
 
             const myAutoDisposable = new MyAutoDisposable(myDisposable);
             myAutoDisposable.dispose();
-            expect(myDisposable.dispose).toBeCalledTimes(1);
+            expect(myDisposable.dispose).toHaveBeenCalledTimes(1);
         });
     });
 });

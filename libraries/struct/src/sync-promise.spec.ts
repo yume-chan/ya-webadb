@@ -39,14 +39,14 @@ describe("SyncPromise", () => {
             const promise = SyncPromise.resolve(
                 SyncPromise.reject(new Error("error")),
             );
-            expect(() => promise.valueOrPromise()).toThrowError("error");
+            expect(() => promise.valueOrPromise()).toThrow("error");
         });
     });
 
     describe(".reject", () => {
         it("should reject with the reason", () => {
             const promise = SyncPromise.reject(new Error("error"));
-            expect(() => promise.valueOrPromise()).toThrowError("error");
+            expect(() => promise.valueOrPromise()).toThrow("error");
         });
     });
 
@@ -85,14 +85,14 @@ describe("SyncPromise", () => {
             const promise = SyncPromise.try(() =>
                 SyncPromise.reject(new Error("error")),
             );
-            expect(() => promise.valueOrPromise()).toThrowError("error");
+            expect(() => promise.valueOrPromise()).toThrow("error");
         });
 
         it("should reject with the error thrown", () => {
             const promise = SyncPromise.try(() => {
                 throw new Error("error");
             });
-            expect(() => promise.valueOrPromise()).toThrowError("error");
+            expect(() => promise.valueOrPromise()).toThrow("error");
         });
     });
 
@@ -104,8 +104,8 @@ describe("SyncPromise", () => {
 
             await delay(0);
 
-            expect(handler).toBeCalledTimes(1);
-            expect(handler).toBeCalledWith(42);
+            expect(handler).toHaveBeenCalledTimes(1);
+            expect(handler).toHaveBeenCalledWith(42);
 
             await expect(result.valueOrPromise()).resolves.toBe("foo");
         });
@@ -117,8 +117,8 @@ describe("SyncPromise", () => {
 
             await delay(0);
 
-            expect(handler).toBeCalledTimes(1);
-            expect(handler).toBeCalledWith(42);
+            expect(handler).toHaveBeenCalledTimes(1);
+            expect(handler).toHaveBeenCalledWith(42);
 
             await expect(result.valueOrPromise()).resolves.toBe("foo");
         });

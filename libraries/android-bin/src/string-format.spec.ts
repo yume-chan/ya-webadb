@@ -14,12 +14,12 @@ describe("StringFormat", () => {
 
         it("should throw if input is empty", () => {
             const reader: Reader = { value: "", position: 0 };
-            expect(() => p.digits().parse(reader)).toThrowError(digitsError);
+            expect(() => p.digits().parse(reader)).toThrow(digitsError);
         });
 
         it("should throw error if not 0-9", () => {
             const reader: Reader = { value: "a", position: 0 };
-            expect(() => p.digits().parse(reader)).toThrowError(digitsError);
+            expect(() => p.digits().parse(reader)).toThrow(digitsError);
         });
     });
 });
