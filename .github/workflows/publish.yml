@@ -22,3 +22,4 @@ jobs:
       - run: node common/scripts/install-run-rush.js publish -p --include-all --set-access-level public
         env:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
