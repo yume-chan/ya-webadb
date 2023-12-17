@@ -38,7 +38,7 @@ const AdbReverseErrorResponse = new Struct()
     .concat(AdbReverseStringResponse)
     .postDeserialize((value) => {
         // https://issuetracker.google.com/issues/37066218
-        // ADB on Android <9 can't create reverse tunnels when connected wirelessly (ADB over WiFi),
+        // ADB on Android <9 can't create reverse tunnels when connected wirelessly (ADB over Wi-Fi),
         // and returns this confusing "more than one device/emulator" error.
         if (value.content === "more than one device/emulator") {
             throw new AdbReverseNotSupportedError();

@@ -6,12 +6,10 @@ import type {
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import {
-    ConsumableTransformStream,
     ConsumableWritableStream,
     PushReadableStream,
     StructDeserializeStream,
     WritableStream,
-    pipeFrom,
 } from "@yume-chan/stream-extra";
 import type { StructValueType } from "@yume-chan/struct";
 import Struct, { placeholder } from "@yume-chan/struct";
@@ -37,67 +35,7 @@ const AdbShellProtocolPacket = new Struct({ littleEndian: true })
     .uint32("length")
     .uint8Array("data", { lengthField: "length" });
 
-type AdbShellProtocolPacketInit = (typeof AdbShellProtocolPacket)["TInit"];
-
 type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
-
-class StdinSerializeStream extends ConsumableTransformStream<
-    Uint8Array,
-    AdbShellProtocolPacketInit
-> {
-    constructor() {
-        super({
-            async transform(chunk, controller) {
-                await controller.enqueue({
-                    id: AdbShellProtocolId.Stdin,
-                    data: chunk,
-                });
-            },
-            flush() {
-                // TODO: AdbShellSubprocessProtocol: support closing stdin
-            },
-        });
-    }
-}
-
-class MultiplexStream<T> {
-    #readable: PushReadableStream<T>;
-    #readableController!: PushReadableStreamController<T>;
-    get readable() {
-        return this.#readable;
-    }
-
-    #activeCount = 0;
-
-    constructor() {
-        this.#readable = new PushReadableStream((controller) => {
-            this.#readableController = controller;
-        });
-    }
-
-    createWriteable() {
-        return new WritableStream<T>({
-            start: () => {
-                this.#activeCount += 1;
-            },
-            write: async (chunk) => {
-                await this.#readableController.enqueue(chunk);
-            },
-            abort: () => {
-                this.#activeCount -= 1;
-                if (this.#activeCount === 0) {
-                    this.#readableController.close();
-                }
-            },
-            close: () => {
-                this.#activeCount -= 1;
-                if (this.#activeCount === 0) {
-                    this.#readableController.close();
-                }
-            },
-        });
-    }
-}
 
 /**
  * Shell v2 a.k.a Shell Protocol
@@ -126,9 +64,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     }
 
     readonly #socket: AdbSocket;
-    #socketWriter: WritableStreamDefaultWriter<
-        Consumable<AdbShellProtocolPacketInit>
-    >;
+    #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
 
     #stdin: WritableStream<Consumable<Uint8Array>>;
     get stdin() {
@@ -207,39 +143,33 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                 },
             );
 
-        const multiplexer = new MultiplexStream<
-            Consumable<AdbShellProtocolPacketInit>
-        >();
-        void multiplexer.readable
-            .pipeThrough(
-                new ConsumableTransformStream({
-                    async transform(chunk, controller) {
-                        await controller.enqueue(
-                            AdbShellProtocolPacket.serialize(chunk),
-                        );
-                    },
-                }),
-            )
-            .pipeTo(socket.writable);
+        this.#writer = this.#socket.writable.getWriter();
 
-        this.#stdin = pipeFrom(
-            multiplexer.createWriteable(),
-            new StdinSerializeStream(),
-        );
-
-        this.#socketWriter = multiplexer.createWriteable().getWriter();
+        this.#stdin = new WritableStream<Consumable<Uint8Array>>({
+            write: async (chunk) => {
+                await ConsumableWritableStream.write(
+                    this.#writer,
+                    AdbShellProtocolPacket.serialize({
+                        id: AdbShellProtocolId.Stdin,
+                        data: chunk.value,
+                    }),
+                );
+                chunk.consume();
+            },
+        });
     }
 
     async resize(rows: number, cols: number) {
-        await ConsumableWritableStream.write(this.#socketWriter, {
-            id: AdbShellProtocolId.WindowSizeChange,
-            data: encodeUtf8(
+        await ConsumableWritableStream.write(
+            this.#writer,
+            AdbShellProtocolPacket.serialize({
+                id: AdbShellProtocolId.WindowSizeChange,
                 // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
                 // However, according to https://linux.die.net/man/4/tty_ioctl
                 // `x_pixels` and `y_pixels` are unused, so always sending `0` should be fine.
-                `${rows}x${cols},0x0\0`,
-            ),
-        });
+                data: encodeUtf8(`${rows}x${cols},0x0\0`),
+            }),
+        );
     }
 
     kill() {
