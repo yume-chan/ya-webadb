@@ -1,16 +1,17 @@
-import type { Adb } from "@yume-chan/adb";
+import type { Adb, AdbSocket } from "@yume-chan/adb";
 import { AdbReverseNotSupportedError, NOOP } from "@yume-chan/adb";
 import { delay } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
     Consumable,
+    PushReadableStreamController,
     ReadableStream,
     ReadableStreamDefaultReader,
     ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
-    TransformStream,
+    PushReadableStream,
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
@@ -156,16 +157,15 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
             // Ignore other errors when unbinding
         });
 
-        const queue = new TransformStream<
-            ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
-            ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-        >();
-        this.#streams = queue.readable.getReader();
-        const writer = queue.writable.getWriter();
+        let queueController: PushReadableStreamController<AdbSocket>;
+        const queue = new PushReadableStream<AdbSocket>((controller) => {
+            queueController = controller;
+        });
+        this.#streams = queue.getReader();
         this.#address = await this.adb.reverse.add(
             this.socketName,
-            (socket) => {
-                void writer.write(socket);
+            async (socket) => {
+                await queueController.enqueue(socket);
             },
         );
     }
