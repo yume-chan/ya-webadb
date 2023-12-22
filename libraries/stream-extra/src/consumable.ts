@@ -47,7 +47,7 @@ export class Consumable<T> {
         this.#resolver.resolve();
     }
 
-    error(error: any) {
+    error(error: unknown) {
         this.#resolver.reject(error);
     }
 
@@ -55,7 +55,7 @@ export class Consumable<T> {
         try {
             // eslint-disable-next-line @typescript-eslint/await-thenable
             const result = await this.#task.run(() => callback(this.value));
-            this.consume();
+            this.#resolver.resolve();
             return result;
         } catch (e) {
             this.#resolver.reject(e);
@@ -212,7 +212,6 @@ export class ConsumableWritableStream<T> extends WritableStream<Consumable<T>> {
                     await chunk.tryConsume(
                         (value) => sink.write?.(value, controller),
                     );
-                    chunk.consume();
                 },
                 abort(reason) {
                     return sink.abort?.(reason);
