@@ -1,6 +1,10 @@
 import { ADB_DEFAULT_DEVICE_FILTER, AdbDaemonWebUsbDevice } from "./device.js";
 import type { AdbDeviceFilter } from "./utils.js";
-import { findUsbAlternateInterface, isErrorName } from "./utils.js";
+import {
+    findUsbAlternateInterface,
+    getSerialNumber,
+    isErrorName,
+} from "./utils.js";
 
 export namespace AdbDaemonWebUsbDeviceManager {
     export interface RequestDeviceOptions {
@@ -109,7 +113,7 @@ export class AdbDaemonWebUsbDeviceManager {
                     }
                     if (
                         "serialNumber" in filter &&
-                        device.serialNumber !== filter.serialNumber
+                        getSerialNumber(device) !== filter.serialNumber
                     ) {
                         continue;
                     }

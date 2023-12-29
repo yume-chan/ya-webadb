@@ -23,7 +23,11 @@ import type { ExactReadable } from "@yume-chan/struct";
 import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
 import type { AdbDeviceFilter } from "./utils.js";
-import { findUsbAlternateInterface, isErrorName } from "./utils.js";
+import {
+    findUsbAlternateInterface,
+    getSerialNumber,
+    isErrorName,
+} from "./utils.js";
 
 /**
  * The default filter for ADB devices, as defined by Google.
@@ -310,14 +314,7 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
         usbManager: USB,
     ) {
         this.#raw = device;
-        if (device.serialNumber) {
-            this.#serial = device.serialNumber;
-        } else {
-            this.#serial =
-                device.vendorId.toString(16).padStart(4, "0") +
-                "x" +
-                device.productId.toString(16).padStart(4, "0");
-        }
+        this.#serial = getSerialNumber(device);
         this.#filters = filters;
         this.#usbManager = usbManager;
     }

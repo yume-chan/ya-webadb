@@ -44,3 +44,15 @@ export function findUsbAlternateInterface(
 
     throw new Error("No matched alternate interface found");
 }
+
+function padNumber(value: number) {
+    return value.toString(16).padStart(4, "0");
+}
+
+export function getSerialNumber(device: USBDevice) {
+    if (device.serialNumber) {
+        return device.serialNumber;
+    }
+
+    return padNumber(device.vendorId) + "x" + padNumber(device.productId);
+}
