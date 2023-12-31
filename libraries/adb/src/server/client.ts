@@ -18,6 +18,7 @@ import type {
 } from "@yume-chan/struct";
 import {
     BigIntFieldType,
+    EMPTY_UINT8_ARRAY,
     SyncPromise,
     decodeUtf8,
     encodeUtf8,
@@ -92,7 +93,11 @@ export class AdbServerClient {
         return SyncPromise.try(() => stream.readExactly(4))
             .then((buffer) => {
                 const length = hexToNumber(buffer);
-                return stream.readExactly(length);
+                if (length === 0) {
+                    return EMPTY_UINT8_ARRAY;
+                } else {
+                    return stream.readExactly(length);
+                }
             })
             .then((valueBuffer) => {
                 return decodeUtf8(valueBuffer);

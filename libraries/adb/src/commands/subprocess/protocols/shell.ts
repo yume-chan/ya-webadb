@@ -89,13 +89,8 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     constructor(socket: AdbSocket) {
         this.#socket = socket;
 
-        // Check this image to help you understand the stream graph
-        // cspell: disable-next-line
-        // https://www.plantuml.com/plantuml/png/bL91QiCm4Bpx5SAdv90lb1JISmiw5XzaQKf5PIkiLZIqzEyLSg8ks13gYtOykpFhiOw93N6UGjVDqK7rZsxKqNw0U_NTgVAy4empOy2mm4_olC0VEVEE47GUpnGjKdgXoD76q4GIEpyFhOwP_m28hW0NNzxNUig1_JdW0bA7muFIJDco1daJ_1SAX9bgvoPJPyIkSekhNYctvIGXrCH6tIsPL5fs-s6J5yc9BpWXhKtNdF2LgVYPGM_6GlMwfhWUsIt4lbScANrwlgVVUifPSVi__t44qStnwPvZwobdSmHHlL57p2vFuHS0
-
         let stdoutController!: PushReadableStreamController<Uint8Array>;
         let stderrController!: PushReadableStreamController<Uint8Array>;
-
         this.#stdout = new PushReadableStream<Uint8Array>((controller) => {
             stdoutController = controller;
         });
