@@ -35,7 +35,7 @@
     },
     "devDependencies": {
         "@jest/globals": "^30.0.0-alpha.2",
-        "@types/audioworklet": "^0.0.52",
+        "@types/audioworklet": "^0.0.53",
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "cross-env": "^7.0.3",
