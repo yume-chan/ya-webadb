@@ -1,4 +1,4 @@
-import type { Disposable } from "@yume-chan/event";
+import type { Disposable, Event } from "@yume-chan/event";
 import type {
     ScrcpyMediaStreamPacket,
     ScrcpyVideoCodecId,
@@ -12,6 +12,7 @@ export interface ScrcpyVideoDecoderCapability {
 
 export interface ScrcpyVideoDecoder extends Disposable {
     readonly renderer: HTMLElement;
+    readonly sizeChanged: Event<{ width: number; height: number }>;
     readonly frameRendered: number;
     readonly frameSkipped: number;
     readonly writable: WritableStream<ScrcpyMediaStreamPacket>;

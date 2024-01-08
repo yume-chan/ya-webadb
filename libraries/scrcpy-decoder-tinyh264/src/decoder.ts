@@ -1,4 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
+import { EventEmitter } from "@yume-chan/event";
 import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
 import {
     AndroidAvcLevel,
@@ -49,6 +50,11 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
     #renderer: HTMLCanvasElement;
     get renderer() {
         return this.#renderer;
+    }
+
+    #sizeChanged = new EventEmitter<{ width: number; height: number }>();
+    get sizeChanged() {
+        return this.#sizeChanged.event;
     }
 
     #frameRendered = 0;
@@ -112,6 +118,10 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             cropLeft,
             cropTop,
         } = h264ParseConfiguration(data);
+        this.#sizeChanged.fire({
+            width: croppedWidth,
+            height: croppedHeight,
+        });
 
         // H.264 Baseline profile only supports YUV 420 pixel format
         const chromaWidth = encodedWidth / 2;

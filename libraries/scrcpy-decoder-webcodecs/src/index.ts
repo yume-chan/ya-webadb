@@ -1,3 +1,4 @@
+import { EventEmitter } from "@yume-chan/event";
 import type {
     ScrcpyMediaStreamDataPacket,
     ScrcpyMediaStreamPacket,
@@ -60,6 +61,11 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
     #frameSkipped = 0;
     get frameSkipped() {
         return this.#frameSkipped;
+    }
+
+    #sizeChanged = new EventEmitter<{ width: number; height: number }>();
+    get sizeChanged() {
+        return this.#sizeChanged.event;
     }
 
     #context: CanvasRenderingContext2D;
@@ -132,6 +138,10 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
 
                 this.#renderer.width = croppedWidth;
                 this.#renderer.height = croppedHeight;
+                this.#sizeChanged.fire({
+                    width: croppedWidth,
+                    height: croppedHeight,
+                });
 
                 // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
                 // ISO Base Media File Format Name Space

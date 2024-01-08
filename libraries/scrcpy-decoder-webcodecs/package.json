@@ -34,6 +34,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
+        "@yume-chan/event": "workspace:^0.0.22",
         "@yume-chan/scrcpy": "workspace:^0.0.22",
         "@yume-chan/scrcpy-decoder-tinyh264": "workspace:^0.0.22",
         "@yume-chan/stream-extra": "workspace:^0.0.22",
