@@ -235,41 +235,43 @@ export class HidKeyboard {
             0x05, 0x01, // Usage Page (Generic Desktop)
             0x09, 0x06, // Usage (Keyboard)
             0xa1, 0x01, // Collection (Application)
-            0x05, 0x07, //    Usage Page (Keyboard)
-            0x19, 0xe0, //    Usage Minimum (Keyboard Left Control)
-            0x29, 0xe7, //    Usage Maximum (Keyboard Right GUI)
-            0x15, 0x00, //    Logical Minimum (0)
-            0x25, 0x01, //    Logical Maximum (1)
-            0x75, 0x01, //    Report Size (1)
-            0x95, 0x08, //    Report Count (8)
-            0x81, 0x02, //    Input (Data, Variable, Absolute)
+            0x05, 0x07, //   Usage Page (Keyboard)
+            0x19, 0xe0, //   Usage Minimum (Keyboard Left Control)
+            0x29, 0xe7, //   Usage Maximum (Keyboard Right GUI)
+            0x15, 0x00, //   Logical Minimum (0)
+            0x25, 0x01, //   Logical Maximum (1)
+            0x75, 0x01, //   Report Size (1)
+            0x95, 0x08, //   Report Count (8)
+            0x81, 0x02, //   Input (Data, Variable, Absolute)
 
-            0x75, 0x08, //    Report Size (8)
-            0x95, 0x01, //    Report Count (1)
-            0x81, 0x01, //    Input (Constant)
+            0x75, 0x08, //   Report Size (8)
+            0x95, 0x01, //   Report Count (1)
+            0x81, 0x01, //   Input (Constant)
 
-            0x05, 0x08, //    Usage Page (LEDs)
-            0x19, 0x01, //    Usage Minimum (Num Lock)
-            0x29, 0x05, //    Usage Maximum (Kana)
-            0x75, 0x01, //    Report Size (1)
-            0x95, 0x05, //    Report Count (5)
-            0x91, 0x02, //    Output (Data, Variable, Absolute)
+            0x05, 0x08, //   Usage Page (LEDs)
+            0x19, 0x01, //   Usage Minimum (Num Lock)
+            0x29, 0x05, //   Usage Maximum (Kana)
+            0x75, 0x01, //   Report Size (1)
+            0x95, 0x05, //   Report Count (5)
+            0x91, 0x02, //   Output (Data, Variable, Absolute)
 
-            0x75, 0x03, //    Report Size (3)
-            0x95, 0x01, //    Report Count (1)
-            0x91, 0x01, //    Output (Constant)
+            0x75, 0x03, //   Report Size (3)
+            0x95, 0x01, //   Report Count (1)
+            0x91, 0x01, //   Output (Constant)
 
-            0x05, 0x07, //    Usage Page (Keyboard)
-            0x19, 0x00, //    Usage Minimum (Reserved (no event indicated))
-            0x29, 0xdd, //    Usage Maximum (Keyboard Application)
-            0x15, 0x00, //    Logical Minimum (0)
-            0x25, 0xdd, //    Logical Maximum (221)
-            0x75, 0x08, //    Report Size (8)
-            0x95, 0x06, //    Report Count (6)
-            0x81, 0x00, //    Input (Data, Array)
-            0xc0        // End Collection
-        ]
+            0x05, 0x07, //   Usage Page (Keyboard)
+            0x19, 0x00, //   Usage Minimum (Reserved (no event indicated))
+            0x29, 0xdd, //   Usage Maximum (Keyboard Application)
+            0x15, 0x00, //   Logical Minimum (0)
+            0x25, 0xdd, //   Logical Maximum (221)
+            0x75, 0x08, //   Report Size (8)
+            0x95, 0x06, //   Report Count (6)
+            0x81, 0x00, //   Input (Data, Array)
+            0xc0,       // End Collection
+        ],
     );
+
+    static readonly REPORT_SIZE = 8;
 
     #modifiers = 0;
     #keys: Set<HidKeyCode> = new Set();
@@ -295,17 +297,15 @@ export class HidKeyboard {
         this.#keys.clear();
     }
 
-    serializeInputReport() {
-        const buffer = new Uint8Array(8);
-        buffer[0] = this.#modifiers;
+    updateReport(report: Uint8Array) {
+        report[0] = this.#modifiers;
         let i = 2;
         for (const key of this.#keys) {
-            buffer[i] = key;
+            report[i] = key;
             i += 1;
             if (i >= 8) {
                 break;
             }
         }
-        return buffer;
     }
 }
