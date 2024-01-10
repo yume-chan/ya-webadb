@@ -301,11 +301,14 @@ export class HidKeyboard {
         report[0] = this.#modifiers;
         let i = 2;
         for (const key of this.#keys) {
-            report[i] = key;
-            i += 1;
-            if (i >= 8) {
+            if (i >= report.length) {
                 break;
             }
+            report[i] = key;
+            i += 1;
+        }
+        for (; i < report.length; i += 1) {
+            report[i] = 0;
         }
     }
 }
