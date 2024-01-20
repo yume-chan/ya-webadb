@@ -14,6 +14,6 @@
     "license": "ISC",
     "dependencies": {
         "@yume-chan/fetch-scrcpy-server": "link:../..",
-        "vite": "^4.4.12"
+        "vite": "^4.5.2"
     }
 }

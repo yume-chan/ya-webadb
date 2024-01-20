@@ -9,8 +9,8 @@ dependencies:
     specifier: link:../..
     version: link:../..
   vite:
-    specifier: ^4.4.12
-    version: 4.4.12
+    specifier: ^4.5.2
+    version: 4.5.2
 
 packages:
 
@@ -282,8 +282,8 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: false
 
-  /vite@4.4.12:
-    resolution: {integrity: sha512-KtPlUbWfxzGVul8Nut8Gw2Qe8sBzWY+8QVc5SL8iRFnpnrcoCaNlzO40c1R6hPmcdTwIPEDkq0Y9+27a5tVbdQ==}
+  /vite@4.5.2:
+    resolution: {integrity: sha512-tBCZBNSBbHQkaGyhGCDUGqeo2ph8Fstyp6FMSvTtsXeZSPpSMGlviAOav2hxVTqFcx8Hj/twtWKsMJXNY0xI8w==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
     peerDependencies:
