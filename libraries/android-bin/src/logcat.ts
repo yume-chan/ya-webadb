@@ -384,7 +384,7 @@ export interface LogSize {
 
 export class Logcat extends AdbCommandBase {
     static logIdToName(id: LogId): string {
-        return LogId[id]!;
+        return LogId[id];
     }
 
     static logNameToId(name: string): LogId {

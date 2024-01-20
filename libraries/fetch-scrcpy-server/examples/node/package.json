@@ -14,6 +14,6 @@
         "@yume-chan/fetch-scrcpy-server": "link:../.."
     },
     "devDependencies": {
-        "@types/node": "^20.8.4"
+        "@types/node": "^20.11.5"
     }
 }

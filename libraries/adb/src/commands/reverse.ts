@@ -81,7 +81,7 @@ export class AdbReverseCommand extends AutoDisposable {
         const stream = await this.createBufferedStream("reverse:list-forward");
 
         const response = await AdbReverseStringResponse.deserialize(stream);
-        return response.content!.split("\n").map((line) => {
+        return response.content.split("\n").map((line) => {
             const [deviceSerial, localName, remoteName] = line.split(" ") as [
                 string,
                 string,

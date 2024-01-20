@@ -2,14 +2,14 @@
     "name": "@yume-chan/eslint-config",
     "version": "1.0.0",
     "dependencies": {
-        "@rushstack/eslint-patch": "^1.6.1",
-        "@typescript-eslint/eslint-plugin": "^6.18.1",
-        "@typescript-eslint/parser": "^6.18.1",
+        "@rushstack/eslint-patch": "^1.7.0",
+        "@typescript-eslint/eslint-plugin": "^6.19.0",
+        "@typescript-eslint/parser": "^6.19.0",
         "eslint": "^8.56.0",
         "eslint-plugin-import": "^2.29.1",
         "typescript": "^5.3.3"
     },
     "devDependencies": {
-        "prettier": "^3.1.1"
+        "prettier": "^3.2.4"
     }
 }

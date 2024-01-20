@@ -209,8 +209,8 @@ export class ConsumableWritableStream<T> extends WritableStream<Consumable<T>> {
                     return sink.start?.(controller);
                 },
                 async write(chunk, controller) {
-                    await chunk.tryConsume(
-                        (value) => sink.write?.(value, controller),
+                    await chunk.tryConsume((value) =>
+                        sink.write?.(value, controller),
                     );
                 },
                 abort(reason) {
@@ -264,9 +264,8 @@ export class ConsumableTransformStream<I, O> extends TransformStream<
                 await transformer.start?.(wrappedController);
             },
             async transform(chunk) {
-                await chunk.tryConsume(
-                    (value) =>
-                        transformer.transform?.(value, wrappedController!),
+                await chunk.tryConsume((value) =>
+                    transformer.transform?.(value, wrappedController!),
                 );
                 chunk.consume();
             },

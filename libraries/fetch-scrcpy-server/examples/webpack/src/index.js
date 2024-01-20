@@ -1,6 +1,9 @@
 import { BIN, VERSION } from "@yume-chan/fetch-scrcpy-server";
 
-console.log(VERSION);
+const output = document.getElementById("output");
+output.textContent += VERSION + "\n";
 fetch(BIN)
     .then((res) => res.arrayBuffer())
-    .then(console.log);
+    .then((buffer) => {
+        output.textContent += "length: " + buffer.byteLength + " bytes\n";
+    });

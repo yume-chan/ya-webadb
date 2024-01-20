@@ -43,7 +43,7 @@
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "eslint": "^8.56.0",
         "jest": "^30.0.0-alpha.2",
-        "prettier": "^3.1.1",
+        "prettier": "^3.2.4",
         "typescript": "^5.3.3"
     }
 }
