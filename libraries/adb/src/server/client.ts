@@ -27,7 +27,7 @@ import {
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import type { AdbFeature } from "../features.js";
-import { NOOP, hexToNumber, numberToHex } from "../utils/index.js";
+import { NOOP, hexToNumber, numberToHex, unreachable } from "../utils/index.js";
 
 import { AdbServerTransport } from "./transport.js";
 
@@ -214,61 +214,89 @@ export class AdbServerClient {
         }
     }
 
+    parseDeviceList(value: string): AdbServerDevice[] {
+        const devices: AdbServerDevice[] = [];
+        for (const line of value.split("\n")) {
+            if (!line) {
+                continue;
+            }
+
+            const parts = line.split(" ").filter(Boolean);
+            const serial = parts[0]!;
+            const status = parts[1]!;
+            if (status !== "device") {
+                continue;
+            }
+
+            let product: string | undefined;
+            let model: string | undefined;
+            let device: string | undefined;
+            let transportId: bigint | undefined;
+            for (let i = 2; i < parts.length; i += 1) {
+                const [key, value] = parts[i]!.split(":");
+                switch (key) {
+                    case "product":
+                        product = value;
+                        break;
+                    case "model":
+                        model = value;
+                        break;
+                    case "device":
+                        device = value;
+                        break;
+                    case "transport_id":
+                        transportId = BigInt(value!);
+                        break;
+                }
+            }
+            if (!transportId) {
+                throw new Error(`No transport id for device ${serial}`);
+            }
+            devices.push({
+                serial,
+                product,
+                model,
+                device,
+                transportId,
+            });
+        }
+        return devices;
+    }
+
     async getDevices(): Promise<AdbServerDevice[]> {
         const connection = await this.connect("host:devices-l");
         const readable = new BufferedReadableStream(connection.readable);
         try {
-            const devices: AdbServerDevice[] = [];
             const response = await AdbServerClient.readString(readable);
-            for (const line of response.split("\n")) {
-                if (!line) {
-                    continue;
-                }
-
-                const parts = line.split(" ").filter(Boolean);
-                const serial = parts[0]!;
-                const status = parts[1]!;
-                if (status !== "device") {
-                    continue;
-                }
-
-                let product: string | undefined;
-                let model: string | undefined;
-                let device: string | undefined;
-                let transportId: bigint | undefined;
-                for (let i = 2; i < parts.length; i += 1) {
-                    const [key, value] = parts[i]!.split(":");
-                    switch (key) {
-                        case "product":
-                            product = value;
-                            break;
-                        case "model":
-                            model = value;
-                            break;
-                        case "device":
-                            device = value;
-                            break;
-                        case "transport_id":
-                            transportId = BigInt(value!);
-                            break;
-                    }
-                }
-                if (!transportId) {
-                    throw new Error(`No transport id for device ${serial}`);
-                }
-                devices.push({
-                    serial,
-                    product,
-                    model,
-                    device,
-                    transportId,
-                });
-            }
-            return devices;
+            return this.parseDeviceList(response);
         } finally {
             connection.writable.close().catch(NOOP);
             readable.cancel().catch(NOOP);
         }
+    }
+
+    async trackDevices(
+        callback: (devices: AdbServerDevice[]) => void,
+    ): Promise<() => void> {
+        const connection = await this.connect("host:track-devices-l");
+        const readable = new BufferedReadableStream(connection.readable);
+        let running = true;
+        (async () => {
+            try {
+                while (running) {
+                    const response = await AdbServerClient.readString(readable);
+                    const devices = this.parseDeviceList(response);
+                    callback(devices);
+                }
+            } catch {
+                // ignore
+            }
+        })().catch(unreachable);
+        return () => {
+            running = false;
+            readable.cancel().catch(NOOP);
+            Promise.resolve(connection.close()).catch(NOOP);
+        };
     }
 
     formatDeviceService(device: AdbServerDeviceSelector, command: string) {
