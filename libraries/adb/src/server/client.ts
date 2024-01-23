@@ -457,9 +457,12 @@ export class AdbServerClient {
             `wait-for-${type}-${state}`,
         );
 
-        // `connect` resolves when server writes `OKAY`,
-        // but for this command the server writes `OKAY` after the condition is met.
-        await this.connect(service, options);
+        const socket = await this.connect(service, options);
+        const readable = new BufferedReadableStream(socket.readable);
+        await AdbServerClient.readOkay(readable);
+
+        await readable.cancel();
+        await socket.close();
     }
 
     async createTransport(
