@@ -7,55 +7,57 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = fileURLToPath(dirname(import.meta.url));
 
-let serverVersion = process.argv[2];
-if (!serverVersion.startsWith("v")) {
-    serverVersion = "v" + serverVersion;
-}
-if (!serverVersion) {
+const version = process.argv[2];
+if (!version) {
     console.log("Usage: fetch-scrcpy-server <version>");
     process.exit(1);
 }
 
-console.log(`Downloading Scrcpy server binary version ${serverVersion}...`);
+let downloadVersion = version;
+if (!downloadVersion.startsWith("v")) {
+    downloadVersion = "v" + version;
+}
+
+console.log(`Downloading Scrcpy server binary version ${downloadVersion}...`);
 const binFolder = resolve(__dirname, "..");
 
 await fetchVersion({
     repository: "Genymobile/scrcpy",
-    version: serverVersion,
-    package: `scrcpy-server-${serverVersion}`,
+    version: downloadVersion,
+    package: `scrcpy-server-${downloadVersion}`,
     destination: binFolder,
     extract: false,
 });
 
 await Promise.all([
     fs.rename(
-        resolve(binFolder, `scrcpy-server-${serverVersion}`),
+        resolve(binFolder, `scrcpy-server-${downloadVersion}`),
         resolve(binFolder, "server.bin"),
     ),
     fs.writeFile(
         resolve(binFolder, "index.js"),
         `
-export const VERSION ='${serverVersion}';
+export const VERSION = '${version}';
 export const BIN = new URL('./server.bin', import.meta.url);
     `,
     ),
     fs.writeFile(
         resolve(binFolder, "index.d.ts"),
         `
-export const VERSION: '${serverVersion}';
+export const VERSION: '${version}';
 export const BIN: URL;
     `,
     ),
     fs.writeFile(
         resolve(binFolder, "version.js"),
         `
-export const VERSION ='${serverVersion}';
+export const VERSION = '${version}';
     `,
     ),
     fs.writeFile(
         resolve(binFolder, "version.d.ts"),
         `
-export const VERSION: '${serverVersion}';
+export const VERSION: '${version}';
     `,
     ),
 ]);
