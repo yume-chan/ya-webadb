@@ -1,5 +1,5 @@
 // The order follows
-// https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/transport.cpp#1252
+// https://cs.android.com/android/platform/superproject/+/master:packages/modules/adb/transport.cpp;l=77;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
 export enum AdbFeature {
     ShellV2 = "shell_v2",
     Cmd = "cmd",
@@ -9,4 +9,5 @@ export enum AdbFeature {
     Abb = "abb",
     AbbExec = "abb_exec",
     SendReceiveV2 = "sendrecv_v2",
+    DelayedAck = "delayed_ack",
 }

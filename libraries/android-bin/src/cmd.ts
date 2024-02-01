@@ -35,10 +35,10 @@ export class Cmd extends AdbCommandBase {
 
     constructor(adb: Adb) {
         super(adb);
-        this.#supportsShellV2 = adb.supportsFeature(AdbFeature.ShellV2);
-        this.#supportsCmd = adb.supportsFeature(AdbFeature.Cmd);
-        this.#supportsAbb = adb.supportsFeature(AdbFeature.Abb);
-        this.#supportsAbbExec = adb.supportsFeature(AdbFeature.AbbExec);
+        this.#supportsShellV2 = adb.canUseFeature(AdbFeature.ShellV2);
+        this.#supportsCmd = adb.canUseFeature(AdbFeature.Cmd);
+        this.#supportsAbb = adb.canUseFeature(AdbFeature.Abb);
+        this.#supportsAbbExec = adb.canUseFeature(AdbFeature.AbbExec);
     }
 
     async spawn(

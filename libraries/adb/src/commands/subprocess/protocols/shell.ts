@@ -47,7 +47,7 @@ type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
  */
 export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     static isSupported(adb: Adb) {
-        return adb.supportsFeature(AdbFeature.ShellV2);
+        return adb.canUseFeature(AdbFeature.ShellV2);
     }
 
     static async pty(adb: Adb, command: string) {

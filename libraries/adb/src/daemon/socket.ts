@@ -49,7 +49,6 @@ export class AdbDaemonSocketController
         return this.#readable;
     }
 
-    #writePromise: PromiseResolver<void> | undefined;
     #writableController!: WritableStreamDefaultController;
     readonly writable: WritableStream<Consumable<Uint8Array>>;
 
@@ -63,6 +62,23 @@ export class AdbDaemonSocketController
     #socket: AdbDaemonSocket;
     get socket() {
         return this.#socket;
+    }
+
+    #availableWriteBytesChanged: PromiseResolver<void> | undefined;
+    /**
+     * When delayed ack is disabled, can be `Infinity` if the socket is ready to write.
+     * Exactly one packet can be written no matter how large it is. Or `-1` if the socket
+     * is waiting for ack.
+     *
+     * When delayed ack is enabled, a non-negative finite number indicates the number of
+     * bytes that can be written to the socket before receiving an ack.
+     */
+    #availableWriteBytes = 0;
+    /**
+     * Gets the number of bytes that can be written to the socket without blocking.
+     */
+    public get availableWriteBytes() {
+        return this.#availableWriteBytes;
     }
 
     constructor(options: AdbDaemonSocketConstructionOptions) {
@@ -88,17 +104,30 @@ export class AdbDaemonSocketController
                     start < size;
                     start = end, end += chunkSize
                 ) {
-                    this.#writePromise = new PromiseResolver();
+                    const chunk = data.subarray(start, end);
+                    const length = chunk.byteLength;
+                    while (this.#availableWriteBytes < length) {
+                        // Only one lock is required because Web Streams API guarantees
+                        // that `write` is not reentrant.
+                        this.#availableWriteBytesChanged =
+                            new PromiseResolver();
+                        await raceSignal(
+                            () => this.#availableWriteBytesChanged!.promise,
+                            controller.signal,
+                        );
+                    }
+
+                    if (this.#availableWriteBytes === Infinity) {
+                        this.#availableWriteBytes = -1;
+                    } else {
+                        this.#availableWriteBytes -= length;
+                    }
+
                     await this.#dispatcher.sendPacket(
                         AdbCommand.Write,
                         this.localId,
                         this.remoteId,
-                        data.subarray(start, end),
-                    );
-                    // Wait for ack packet
-                    await raceSignal(
-                        () => this.#writePromise!.promise,
-                        controller.signal,
+                        chunk,
                     );
                 }
             },
@@ -124,8 +153,9 @@ export class AdbDaemonSocketController
         }
     }
 
-    ack() {
-        this.#writePromise?.resolve();
+    public ack(bytes: number) {
+        this.#availableWriteBytes += bytes;
+        this.#availableWriteBytesChanged?.resolve();
     }
 
     async close(): Promise<void> {
@@ -133,6 +163,8 @@ export class AdbDaemonSocketController
             return;
         }
         this.#closed = true;
+
+        this.#availableWriteBytesChanged?.reject(new Error("Socket closed"));
 
         try {
             this.#writableController.error(new Error("Socket closed"));

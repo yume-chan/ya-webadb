@@ -40,6 +40,8 @@ export interface AdbTransport extends Closeable {
 
     readonly disconnected: Promise<void>;
 
+    readonly clientFeatures: readonly AdbFeature[];
+
     connect(service: string): ValueOrPromise<AdbSocket>;
 
     addReverseTunnel(
@@ -71,6 +73,14 @@ export class Adb implements Closeable {
         return this.transport.disconnected;
     }
 
+    public get clientFeatures() {
+        return this.transport.clientFeatures;
+    }
+
+    public get deviceFeatures() {
+        return this.banner.features;
+    }
+
     readonly subprocess: AdbSubprocess;
     readonly power: AdbPower;
     readonly reverse: AdbReverseCommand;
@@ -85,8 +95,11 @@ export class Adb implements Closeable {
         this.tcpip = new AdbTcpIpCommand(this);
     }
 
-    supportsFeature(feature: AdbFeature): boolean {
-        return this.banner.features.includes(feature);
+    canUseFeature(feature: AdbFeature): boolean {
+        return (
+            this.clientFeatures.includes(feature) &&
+            this.deviceFeatures.includes(feature)
+        );
     }
 
     async createSocket(service: string): Promise<AdbSocket> {
