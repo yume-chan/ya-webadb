@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yume-chan/aoa",
+      "comment": "Remove `HidKeyboard.serializeInputReport`",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yume-chan/aoa"
+}

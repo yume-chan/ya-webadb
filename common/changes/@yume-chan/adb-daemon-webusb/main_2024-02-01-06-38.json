@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yume-chan/adb-daemon-webusb",
+      "comment": "Fix a bug where in `AdbDaemonWebUsbDeviceManager.getDevices`, `filters.serialNumber` option doesn't match against auto-generated serial number (if the device doesn't have serial number)",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yume-chan/adb-daemon-webusb"
+}
