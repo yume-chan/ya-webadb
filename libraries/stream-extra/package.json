@@ -35,7 +35,7 @@
         "@yume-chan/async": "^2.2.0",
         "@yume-chan/struct": "workspace:^0.0.22",
         "tslib": "^2.6.2",
-        "web-streams-polyfill": "^3.3.2"
+        "web-streams-polyfill": "^3.3.3"
     },
     "devDependencies": {
         "@jest/globals": "^30.0.0-alpha.2",
@@ -44,8 +44,8 @@
         "cross-env": "^7.0.3",
         "eslint": "^8.56.0",
         "jest": "^30.0.0-alpha.2",
-        "prettier": "^3.2.4",
-        "ts-jest": "^29.1.1",
+        "prettier": "^3.2.5",
+        "ts-jest": "^29.1.2",
         "typescript": "^5.3.3"
     }
 }

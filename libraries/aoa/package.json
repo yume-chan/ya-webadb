@@ -31,7 +31,8 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@types/w3c-web-usb": "^1.0.10"
+        "@types/w3c-web-usb": "^1.0.10",
+        "tslib": "^2.6.2"
     },
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^1.0.0",

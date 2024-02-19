@@ -38,17 +38,17 @@
         "@yume-chan/adb-server-node-tcp": "workspace:^0.0.22",
         "@yume-chan/android-bin": "workspace:^0.0.22",
         "@yume-chan/stream-extra": "workspace:^0.0.22",
-        "commander": "^11.1.0",
+        "commander": "^12.0.0",
         "source-map-support": "^0.5.21",
         "tslib": "^2.6.2"
     },
     "devDependencies": {
-        "@types/node": "^20.11.5",
+        "@types/node": "^20.11.19",
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "eslint": "^8.56.0",
         "jest": "^30.0.0-alpha.2",
-        "prettier": "^3.2.4",
+        "prettier": "^3.2.5",
         "typescript": "^5.3.3"
     }
 }
