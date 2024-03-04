@@ -56,7 +56,7 @@ export class WrapWritableStream<T> extends WritableStream<T> {
             },
             abort: async (reason) => {
                 await this.#writer.abort(reason);
-                if ("close" in wrapper) {
+                if (wrapper !== this.writable && "close" in wrapper) {
                     await wrapper.close?.();
                 }
             },
@@ -66,7 +66,7 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 // closing the outer stream first will make the inner stream incapable of
                 // sending data in its `close` handler.
                 await this.#writer.close();
-                if ("close" in wrapper) {
+                if (wrapper !== this.writable && "close" in wrapper) {
                     await wrapper.close?.();
                 }
             },
