@@ -13,19 +13,19 @@ export interface WritableStreamWrapper<T> {
 }
 
 async function getWrappedWritableStream<T>(
-    wrapper:
+    start:
         | WritableStream<T>
         | WrapWritableStreamStart<T>
         | WritableStreamWrapper<T>,
 ) {
-    if ("start" in wrapper) {
-        return await wrapper.start();
-    } else if (typeof wrapper === "function") {
-        return await wrapper();
+    if ("start" in start) {
+        return await start.start();
+    } else if (typeof start === "function") {
+        return await start();
     } else {
         // Can't use `wrapper instanceof WritableStream`
         // Because we want to be compatible with any WritableStream-like objects
-        return wrapper;
+        return start;
     }
 }
 
@@ -35,7 +35,7 @@ export class WrapWritableStream<T> extends WritableStream<T> {
     #writer!: WritableStreamDefaultWriter<T>;
 
     constructor(
-        wrapper:
+        start:
             | WritableStream<T>
             | WrapWritableStreamStart<T>
             | WritableStreamWrapper<T>,
@@ -48,7 +48,7 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 // Queue a microtask to avoid this.
                 await Promise.resolve();
 
-                this.writable = await getWrappedWritableStream(wrapper);
+                this.writable = await getWrappedWritableStream(start);
                 this.#writer = this.writable.getWriter();
             },
             write: async (chunk) => {
@@ -56,8 +56,8 @@ export class WrapWritableStream<T> extends WritableStream<T> {
             },
             abort: async (reason) => {
                 await this.#writer.abort(reason);
-                if (wrapper !== this.writable && "close" in wrapper) {
-                    await wrapper.close?.();
+                if (start !== this.writable && "close" in start) {
+                    await start.close?.();
                 }
             },
             close: async () => {
@@ -66,8 +66,8 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 // closing the outer stream first will make the inner stream incapable of
                 // sending data in its `close` handler.
                 await this.#writer.close();
-                if (wrapper !== this.writable && "close" in wrapper) {
-                    await wrapper.close?.();
+                if (start !== this.writable && "close" in start) {
+                    await start.close?.();
                 }
             },
         });

@@ -1,6 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
+    AbortSignal,
     Consumable,
     PushReadableStreamController,
     ReadableStream,
@@ -13,7 +14,6 @@ import {
 } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../adb.js";
-import { raceSignal } from "../server/index.js";
 
 import type { AdbPacketDispatcher } from "./dispatcher.js";
 import { AdbCommand } from "./packet.js";
@@ -105,35 +105,40 @@ export class AdbDaemonSocketController
                     start = end, end += chunkSize
                 ) {
                     const chunk = data.subarray(start, end);
-                    const length = chunk.byteLength;
-                    while (this.#availableWriteBytes < length) {
-                        // Only one lock is required because Web Streams API guarantees
-                        // that `write` is not reentrant.
-                        this.#availableWriteBytesChanged =
-                            new PromiseResolver();
-                        await raceSignal(
-                            () => this.#availableWriteBytesChanged!.promise,
-                            controller.signal,
-                        );
-                    }
-
-                    if (this.#availableWriteBytes === Infinity) {
-                        this.#availableWriteBytes = -1;
-                    } else {
-                        this.#availableWriteBytes -= length;
-                    }
-
-                    await this.#dispatcher.sendPacket(
-                        AdbCommand.Write,
-                        this.localId,
-                        this.remoteId,
-                        chunk,
-                    );
+                    await this.#writeChunk(chunk, controller.signal);
                 }
             },
         });
 
         this.#socket = new AdbDaemonSocket(this);
+    }
+
+    async #writeChunk(data: Uint8Array, signal: AbortSignal) {
+        const length = data.byteLength;
+        while (this.#availableWriteBytes < length) {
+            // Only one lock is required because Web Streams API guarantees
+            // that `write` is not reentrant.
+            const resolver = new PromiseResolver<void>();
+            signal.addEventListener("abort", () => {
+                resolver.reject(signal.reason);
+            });
+
+            this.#availableWriteBytesChanged = resolver;
+            await resolver.promise;
+        }
+
+        if (this.#availableWriteBytes === Infinity) {
+            this.#availableWriteBytes = -1;
+        } else {
+            this.#availableWriteBytes -= length;
+        }
+
+        await this.#dispatcher.sendPacket(
+            AdbCommand.Write,
+            this.localId,
+            this.remoteId,
+            data,
+        );
     }
 
     async enqueue(data: Uint8Array) {

@@ -214,9 +214,10 @@ export class AdbPacketDispatcher implements Closeable {
 
         const socket = this.#sockets.get(packet.arg1);
         if (socket) {
-            // When delayed ack is enabled, device has received `ackBytes` from the socket.
-            // When delayed ack is disabled, device has received last `WRTE` packet from the socket,
-            // `ackBytes` is `Infinity` in this case.
+            // When delayed ack is enabled, `ackBytes` is a positive number represents
+            // how many bytes the device has received from this socket.
+            // When delayed ack is disabled, `ackBytes` is always `Infinity` represents
+            // the device has received last `WRTE` packet from the socket.
             socket.ack(ackBytes);
             return;
         }
@@ -332,7 +333,7 @@ export class AdbPacketDispatcher implements Closeable {
             service,
         );
 
-        // Fulfilled by `handleOk`
+        // Fulfilled by `handleOkay`
         const { remoteId, availableWriteBytes } = await initializer;
         const controller = new AdbDaemonSocketController({
             dispatcher: this,
