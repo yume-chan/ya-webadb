@@ -3,8 +3,8 @@ import {
     ReadableStream as ReadableStreamPolyfill,
     TransformStream as TransformStreamPolyfill,
     WritableStream as WritableStreamPolyfill,
-} from "web-streams-polyfill/ponyfill";
-export * from "web-streams-polyfill/ponyfill";
+} from "web-streams-polyfill";
+export * from "web-streams-polyfill";
 
 /** A controller object that allows you to abort one or more DOM requests as and when desired. */
 export interface AbortController {
