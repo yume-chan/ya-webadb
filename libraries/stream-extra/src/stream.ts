@@ -1,10 +1,11 @@
-import type { AbortSignal } from "web-streams-polyfill";
-import {
-    ReadableStream as ReadableStreamPolyfill,
-    TransformStream as TransformStreamPolyfill,
-    WritableStream as WritableStreamPolyfill,
-} from "web-streams-polyfill";
-export * from "web-streams-polyfill";
+import type {
+    AbortSignal,
+    ReadableStream as ReadableStreamType,
+    TransformStream as TransformStreamType,
+    WritableStream as WritableStreamType,
+} from "./types.js";
+
+export * from "./types.js";
 
 /** A controller object that allows you to abort one or more DOM requests as and when desired. */
 export interface AbortController {
@@ -26,26 +27,20 @@ interface AbortControllerConstructor {
 
 interface GlobalExtension {
     AbortController: AbortControllerConstructor;
-    ReadableStream: typeof ReadableStreamPolyfill;
-    WritableStream: typeof WritableStreamPolyfill;
-    TransformStream: typeof TransformStreamPolyfill;
+    ReadableStream: typeof ReadableStreamType;
+    WritableStream: typeof WritableStreamType;
+    TransformStream: typeof TransformStreamType;
 }
 
-const GLOBAL = globalThis as unknown as GlobalExtension;
+const Global = globalThis as unknown as GlobalExtension;
 
-export const AbortController = GLOBAL.AbortController;
+export const AbortController = Global.AbortController;
 
-export type ReadableStream<R = any> = ReadableStreamPolyfill<R>;
-export let ReadableStream = ReadableStreamPolyfill;
+export type ReadableStream<T = any> = ReadableStreamType<T>;
+export const ReadableStream = Global.ReadableStream;
 
-export type WritableStream<W = any> = WritableStreamPolyfill<W>;
-export let WritableStream = WritableStreamPolyfill;
+export type WritableStream<T = any> = WritableStreamType<T>;
+export const WritableStream = Global.WritableStream;
 
-export type TransformStream<I = any, O = any> = TransformStreamPolyfill<I, O>;
-export let TransformStream = TransformStreamPolyfill;
-
-if (GLOBAL.ReadableStream && GLOBAL.WritableStream && GLOBAL.TransformStream) {
-    ReadableStream = GLOBAL.ReadableStream;
-    WritableStream = GLOBAL.WritableStream;
-    TransformStream = GLOBAL.TransformStream;
-}
+export type TransformStream<I = any, O = any> = TransformStreamType<I, O>;
+export const TransformStream = Global.TransformStream;
