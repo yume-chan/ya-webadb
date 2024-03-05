@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/adb",
-            "comment": "Add AdbServerClient.trackDevices, which runs a callback function whenever device list changes",
+            "comment": "Add `AdbServerClient.trackDevices`, which runs a callback function whenever device list changes",
             "type": "none"
         }
     ],

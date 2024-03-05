@@ -1,10 +1,10 @@
 {
-  "changes": [
-    {
-      "packageName": "@yume-chan/scrcpy-decoder-webcodecs",
-      "comment": "Add a `sizeChanged` event",
-      "type": "none"
-    }
-  ],
-  "packageName": "@yume-chan/scrcpy-decoder-webcodecs"
+    "changes": [
+        {
+            "packageName": "@yume-chan/scrcpy-decoder-webcodecs",
+            "comment": "Add `sizeChanged` event",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/scrcpy-decoder-webcodecs"
 }
