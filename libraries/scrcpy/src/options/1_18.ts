@@ -125,7 +125,7 @@ export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
     override parseEncoder(line: string): ScrcpyEncoder | undefined {
         return ScrcpyOptions1_17.parseEncoder(
             line,
-            /\s+scrcpy --encoder '(.*?)'/,
+            /^\s+scrcpy --encoder '([^']+)'$/,
         );
     }
 
