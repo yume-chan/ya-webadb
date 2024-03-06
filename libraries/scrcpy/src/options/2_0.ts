@@ -155,7 +155,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
 
     override parseEncoder(line: string): ScrcpyEncoder | undefined {
         let match = line.match(
-            /\s+--video-codec=(.*)\s+--video-encoder='(.*)'/,
+            /^\s+--video-codec=(\S+)\s+--video-encoder='([^']+)'$/,
         );
         if (match) {
             return {
@@ -165,7 +165,9 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
             };
         }
 
-        match = line.match(/\s+--audio-codec=(.*)\s+--audio-encoder='(.*)'/);
+        match = line.match(
+            /^\s+--audio-codec=(\S+)\s+--audio-encoder='([^']+)'$/,
+        );
         if (match) {
             return {
                 type: "audio",
@@ -178,7 +180,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     }
 
     override parseDisplay(line: string): ScrcpyDisplay | undefined {
-        const match = line.match(/\s+--display=(\d+)\s+\((.*?)\)/);
+        const match = line.match(/^\s+--display=(\d+)\s+\(([^)]+)\)$/);
         if (match) {
             const display: ScrcpyDisplay = {
                 id: Number.parseInt(match[1]!, 10),

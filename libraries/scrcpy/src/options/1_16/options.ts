@@ -128,8 +128,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
     }
 
     parseDisplay(line: string): ScrcpyDisplay | undefined {
-        const displayIdRegex = /\s+scrcpy --display (\d+)/;
-        const match = line.match(displayIdRegex);
+        const match = line.match(/^\s+scrcpy --display (\d+)$/);
         if (match) {
             return {
                 id: Number.parseInt(match[1]!, 10),

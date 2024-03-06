@@ -49,7 +49,7 @@ export class ScrcpyOptions2_2 extends ScrcpyOptionsBase<
     }
 
     override parseDisplay(line: string): ScrcpyDisplay | undefined {
-        const match = line.match(/\s+--display-id=(\d+)\s+\((.*?)\)/);
+        const match = line.match(/^\s+--display-id=(\d+)\s+\(([^)]+)\)$/);
         if (match) {
             const display: ScrcpyDisplay = {
                 id: Number.parseInt(match[1]!, 10),

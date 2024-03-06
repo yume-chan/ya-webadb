@@ -366,8 +366,6 @@ export class PackageManager extends AdbCommandBase {
         ]);
     }
 
-    // TODO: install: support split apk formats (`adb install-multiple`)
-
     static parsePackageListItem(
         line: string,
     ): PackageManagerListPackagesResult {
@@ -502,6 +500,16 @@ export class PackageManager extends AdbCommandBase {
         return output;
     }
 
+    /**
+     * Creates a new install session.
+     *
+     * Install sessions are used to install apps with multiple splits, but it can also be used to install a single apk.
+     *
+     * Install sessions was added in Android 5.0 (API level 21).
+     *
+     * @param options Options for the install session
+     * @returns ID of the new install session
+     */
     async sessionCreate(options?: Partial<PackageManagerInstallOptions>) {
         const args = this.#buildInstallArguments("install-create", options);
 
@@ -542,8 +550,6 @@ export class PackageManager extends AdbCommandBase {
         size: number,
         stream: ReadableStream<Consumable<Uint8Array>>,
     ) {
-        // `pm install-write` supports streaming from stdin from at least Android 5
-        // So assume it always works
         const args: string[] = [
             "pm",
             "install-write",
