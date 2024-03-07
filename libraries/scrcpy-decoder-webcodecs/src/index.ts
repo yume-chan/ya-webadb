@@ -68,7 +68,7 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
         return this.#sizeChanged.event;
     }
 
-    #context: CanvasRenderingContext2D;
+    #context: ImageBitmapRenderingContext;
     #decoder: VideoDecoder;
     #config: Uint8Array | undefined;
 
@@ -80,27 +80,43 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
 
         this.#renderer = document.createElement("canvas");
 
-        this.#context = this.#renderer.getContext("2d")!;
+        this.#context = this.#renderer.getContext("bitmaprenderer", {
+            alpha: false,
+        })!;
         this.#decoder = new VideoDecoder({
             output: (frame) => {
-                if (this.#currentFrameRendered) {
-                    this.#frameSkipped += 1;
-                } else {
-                    this.#currentFrameRendered = true;
-                    this.#frameRendered += 1;
-                }
+                createImageBitmap(frame)
+                    .then((bitmap) => {
+                        if (this.#currentFrameRendered) {
+                            this.#frameRendered += 1;
+                        } else {
+                            this.#frameSkipped += 1;
+                        }
+                        this.#currentFrameRendered = false;
 
-                // PERF: H.264 renderer may draw multiple frames in one vertical sync interval to minimize latency.
-                // When multiple frames are drawn in one vertical sync interval,
-                // only the last one is visible to users.
-                // But this ensures users can always see the most up-to-date screen.
-                // This is also the behavior of official Scrcpy client.
-                // https://github.com/Genymobile/scrcpy/issues/3679
-                this.#context.drawImage(frame, 0, 0);
-                frame.close();
+                        // PERF: H.264 renderer may draw multiple frames in one vertical sync interval to minimize latency.
+                        // When multiple frames are drawn in one vertical sync interval,
+                        // only the last one is visible to users.
+                        // But this ensures users can always see the most up-to-date screen.
+                        // This is also the behavior of official Scrcpy client.
+                        // https://github.com/Genymobile/scrcpy/issues/3679
+                        this.#context.transferFromImageBitmap(bitmap);
+                        frame.close();
+                    })
+                    .catch((e) => {
+                        console.warn(
+                            "[@yume-chan/scrcpy-decoder-webcodecs]",
+                            "createImageBitmap error",
+                            e,
+                        );
+                    });
             },
             error(e) {
-                void e;
+                console.warn(
+                    "[@yume-chan/scrcpy-decoder-webcodecs]",
+                    "VideoDecoder error",
+                    e,
+                );
             },
         });
 
@@ -121,7 +137,7 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
     }
 
     #onFramePresented = () => {
-        this.#currentFrameRendered = false;
+        this.#currentFrameRendered = true;
         this.#animationFrameId = requestAnimationFrame(this.#onFramePresented);
     };
 
@@ -168,6 +184,10 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
 
                 this.#renderer.width = croppedWidth;
                 this.#renderer.height = croppedHeight;
+                this.#sizeChanged.fire({
+                    width: croppedWidth,
+                    height: croppedHeight,
+                });
 
                 const codec = [
                     "hev1",
