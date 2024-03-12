@@ -28,8 +28,14 @@ void main(void) {
 
     constructor(canvas: HTMLCanvasElement) {
         const gl =
-            canvas.getContext("webgl2", { alpha: false }) ||
-            canvas.getContext("webgl", { alpha: false });
+            canvas.getContext("webgl2", {
+                alpha: false,
+                failIfMajorPerformanceCaveat: true,
+            }) ||
+            canvas.getContext("webgl", {
+                alpha: false,
+                failIfMajorPerformanceCaveat: true,
+            });
         if (!gl) {
             throw new Error("WebGL not supported");
         }
