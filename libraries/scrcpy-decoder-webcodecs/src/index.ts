@@ -14,6 +14,10 @@ import type {
 } from "@yume-chan/scrcpy-decoder-tinyh264";
 import { WritableStream } from "@yume-chan/stream-extra";
 
+import { BitmapFrameRenderer } from "./bitmap.js";
+import type { FrameRenderer } from "./renderer.js";
+import { WebGLFrameRenderer } from "./webgl.js";
+
 function toHex(value: number) {
     return value.toString(16).padStart(2, "0").toUpperCase();
 }
@@ -48,9 +52,9 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
         return this.#writable;
     }
 
-    #renderer: HTMLCanvasElement;
+    #canvas: HTMLCanvasElement;
     get renderer() {
-        return this.#renderer;
+        return this.#canvas;
     }
 
     #frameRendered = 0;
@@ -68,9 +72,9 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
         return this.#sizeChanged.event;
     }
 
-    #context: ImageBitmapRenderingContext;
     #decoder: VideoDecoder;
     #config: Uint8Array | undefined;
+    #renderer: FrameRenderer;
 
     #currentFrameRendered = false;
     #animationFrameId = 0;
@@ -78,38 +82,30 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
     constructor(codec: ScrcpyVideoCodecId) {
         this.#codec = codec;
 
-        this.#renderer = document.createElement("canvas");
+        this.#canvas = document.createElement("canvas");
 
-        this.#context = this.#renderer.getContext("bitmaprenderer", {
-            alpha: false,
-        })!;
+        try {
+            this.#renderer = new WebGLFrameRenderer(this.#canvas);
+        } catch {
+            this.#renderer = new BitmapFrameRenderer(this.#canvas);
+        }
+
         this.#decoder = new VideoDecoder({
             output: (frame) => {
-                createImageBitmap(frame)
-                    .then((bitmap) => {
-                        if (this.#currentFrameRendered) {
-                            this.#frameRendered += 1;
-                        } else {
-                            this.#frameSkipped += 1;
-                        }
-                        this.#currentFrameRendered = false;
+                if (this.#currentFrameRendered) {
+                    this.#frameRendered += 1;
+                } else {
+                    this.#frameSkipped += 1;
+                }
+                this.#currentFrameRendered = false;
 
-                        // PERF: H.264 renderer may draw multiple frames in one vertical sync interval to minimize latency.
-                        // When multiple frames are drawn in one vertical sync interval,
-                        // only the last one is visible to users.
-                        // But this ensures users can always see the most up-to-date screen.
-                        // This is also the behavior of official Scrcpy client.
-                        // https://github.com/Genymobile/scrcpy/issues/3679
-                        this.#context.transferFromImageBitmap(bitmap);
-                        frame.close();
-                    })
-                    .catch((e) => {
-                        console.warn(
-                            "[@yume-chan/scrcpy-decoder-webcodecs]",
-                            "createImageBitmap error",
-                            e,
-                        );
-                    });
+                // PERF: H.264 renderer may draw multiple frames in one vertical sync interval to minimize latency.
+                // When multiple frames are drawn in one vertical sync interval,
+                // only the last one is visible to users.
+                // But this ensures users can always see the most up-to-date screen.
+                // This is also the behavior of official Scrcpy client.
+                // https://github.com/Genymobile/scrcpy/issues/3679
+                this.#renderer.draw(frame);
             },
             error(e) {
                 console.warn(
@@ -152,8 +148,8 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                     croppedHeight,
                 } = h264ParseConfiguration(data);
 
-                this.#renderer.width = croppedWidth;
-                this.#renderer.height = croppedHeight;
+                this.#canvas.width = croppedWidth;
+                this.#canvas.height = croppedHeight;
                 this.#sizeChanged.fire({
                     width: croppedWidth,
                     height: croppedHeight,
@@ -182,8 +178,8 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                     croppedHeight,
                 } = h265ParseConfiguration(data);
 
-                this.#renderer.width = croppedWidth;
-                this.#renderer.height = croppedHeight;
+                this.#canvas.width = croppedWidth;
+                this.#canvas.height = croppedHeight;
                 this.#sizeChanged.fire({
                     width: croppedWidth,
                     height: croppedHeight,
