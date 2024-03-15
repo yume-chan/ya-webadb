@@ -5,19 +5,19 @@ import {
     setBigUint64,
 } from "./pure.js";
 
-if (!("getBigInt64" in DataView)) {
+if (!Object.prototype.hasOwnProperty.call(DataView.prototype, "getBigInt64")) {
     DataView.prototype.getBigInt64 = function (byteOffset, littleEndian) {
         return getBigInt64(this, byteOffset, littleEndian);
     };
 }
 
-if (!("getBigUint64" in DataView)) {
+if (!Object.prototype.hasOwnProperty.call(DataView.prototype, "getBigUint64")) {
     DataView.prototype.getBigUint64 = function (byteOffset, littleEndian) {
         return getBigUint64(this, byteOffset, littleEndian);
     };
 }
 
-if (!("setBigInt64" in DataView)) {
+if (!Object.prototype.hasOwnProperty.call(DataView.prototype, "setBigInt64")) {
     DataView.prototype.setBigInt64 = function (
         byteOffset,
         value,
@@ -27,7 +27,7 @@ if (!("setBigInt64" in DataView)) {
     };
 }
 
-if (!("setBigUint64" in DataView)) {
+if (!Object.prototype.hasOwnProperty.call(DataView.prototype, "setBigUint64")) {
     DataView.prototype.setBigUint64 = function (
         byteOffset,
         value,
