@@ -44,14 +44,14 @@
         "yuv-canvas": "^1.2.11"
     },
     "devDependencies": {
-        "@jest/globals": "^30.0.0-alpha.2",
+        "@jest/globals": "^30.0.0-alpha.3",
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "cross-env": "^7.0.3",
         "eslint": "^8.57.0",
-        "jest": "^30.0.0-alpha.2",
+        "jest": "^30.0.0-alpha.3",
         "prettier": "^3.2.5",
         "ts-jest": "^29.1.2",
-        "typescript": "^5.3.3"
+        "typescript": "^5.4.2"
     }
 }

@@ -3,11 +3,11 @@
     "version": "1.0.0",
     "dependencies": {
         "@rushstack/eslint-patch": "^1.7.2",
-        "@typescript-eslint/eslint-plugin": "^7.1.1",
-        "@typescript-eslint/parser": "^7.1.1",
+        "@typescript-eslint/eslint-plugin": "^7.2.0",
+        "@typescript-eslint/parser": "^7.2.0",
         "eslint": "^8.57.0",
         "eslint-plugin-import": "^2.29.1",
-        "typescript": "^5.3.3"
+        "typescript": "^5.4.2"
     },
     "devDependencies": {
         "prettier": "^3.2.5"
