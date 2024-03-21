@@ -2,6 +2,18 @@
   "name": "@yume-chan/adb-daemon-webusb",
   "entries": [
     {
+      "version": "0.0.23",
+      "tag": "@yume-chan/adb-daemon-webusb_v0.0.23",
+      "date": "Thu, 21 Mar 2024 03:15:10 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Fix `AdbDaemonWebUsbDeviceManager.getDevices` doesn't match auto-generated serial number against `filters.serialNumber` (if the device doesn't have a serial number)"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.22",
       "tag": "@yume-chan/adb-daemon-webusb_v0.0.22",
       "date": "Wed, 13 Dec 2023 05:57:27 GMT",

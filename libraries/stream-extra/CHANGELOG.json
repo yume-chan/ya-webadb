@@ -2,6 +2,24 @@
   "name": "@yume-chan/stream-extra",
   "entries": [
     {
+      "version": "0.0.23",
+      "tag": "@yume-chan/stream-extra_v0.0.23",
+      "date": "Thu, 21 Mar 2024 03:15:10 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Fix `ConsumableWritableStream.write` calls `chunk.consume` twice. (doesn't cause any issue)"
+          },
+          {
+            "comment": "Fix `WrapWritableStream` might close the inner stream twice. (and throw an error)"
+          },
+          {
+            "comment": "Remove web-streams-polyfill dependency. The runtime must have global stream implementations (or you can add a polyfill yourself)."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.22",
       "tag": "@yume-chan/stream-extra_v0.0.22",
       "date": "Wed, 13 Dec 2023 05:57:27 GMT",

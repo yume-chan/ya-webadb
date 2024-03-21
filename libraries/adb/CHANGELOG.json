@@ -2,6 +2,24 @@
   "name": "@yume-chan/adb",
   "entries": [
     {
+      "version": "0.0.23",
+      "tag": "@yume-chan/adb_v0.0.23",
+      "date": "Thu, 21 Mar 2024 03:15:10 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Refactor `AdbSubprocessShellProtocol` (this shouldn't affect usage)"
+          },
+          {
+            "comment": "Add `AdbServerClient.trackDevices`, which runs a callback function whenever device list changes"
+          },
+          {
+            "comment": "Add support for delayed ack on Android 14"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.22",
       "tag": "@yume-chan/adb_v0.0.22",
       "date": "Wed, 13 Dec 2023 05:57:27 GMT",

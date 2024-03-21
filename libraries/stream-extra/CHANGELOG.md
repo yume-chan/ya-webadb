@@ -1,6 +1,15 @@
 # Change Log - @yume-chan/stream-extra
 
-This log was last generated on Wed, 13 Dec 2023 05:57:27 GMT and should not be manually modified.
+This log was last generated on Thu, 21 Mar 2024 03:15:10 GMT and should not be manually modified.
+
+## 0.0.23
+Thu, 21 Mar 2024 03:15:10 GMT
+
+### Updates
+
+- Fix `ConsumableWritableStream.write` calls `chunk.consume` twice. (doesn't cause any issue)
+- Fix `WrapWritableStream` might close the inner stream twice. (and throw an error)
+- Remove web-streams-polyfill dependency. The runtime must have global stream implementations (or you can add a polyfill yourself).
 
 ## 0.0.22
 Wed, 13 Dec 2023 05:57:27 GMT

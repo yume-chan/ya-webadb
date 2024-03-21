@@ -1,6 +1,11 @@
 # Change Log - @yume-chan/dataview-bigint-polyfill
 
-This log was last generated on Wed, 13 Dec 2023 05:57:27 GMT and should not be manually modified.
+This log was last generated on Thu, 21 Mar 2024 03:15:10 GMT and should not be manually modified.
+
+## 0.0.23
+Thu, 21 Mar 2024 03:15:10 GMT
+
+_Version update only_
 
 ## 0.0.22
 Wed, 13 Dec 2023 05:57:27 GMT

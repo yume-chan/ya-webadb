@@ -2,6 +2,18 @@
   "name": "@yume-chan/aoa",
   "entries": [
     {
+      "version": "0.0.23",
+      "tag": "@yume-chan/aoa_v0.0.23",
+      "date": "Thu, 21 Mar 2024 03:15:10 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Replace `HidKeyboard.serializeInputReport` with `updateReport`, allowing to reuse the buffer"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.22",
       "tag": "@yume-chan/aoa_v0.0.22",
       "date": "Wed, 13 Dec 2023 05:57:27 GMT",

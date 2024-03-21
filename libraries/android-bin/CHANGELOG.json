@@ -2,6 +2,18 @@
   "name": "@yume-chan/android-bin",
   "entries": [
     {
+      "version": "0.0.23",
+      "tag": "@yume-chan/android-bin_v0.0.23",
+      "date": "Thu, 21 Mar 2024 03:15:10 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add support for pm install session"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.22",
       "tag": "@yume-chan/android-bin_v0.0.22",
       "date": "Wed, 13 Dec 2023 05:57:27 GMT",

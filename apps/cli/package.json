@@ -34,10 +34,10 @@
         "tango-cli": "esm/index.js"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.22",
-        "@yume-chan/adb-server-node-tcp": "workspace:^0.0.22",
-        "@yume-chan/android-bin": "workspace:^0.0.22",
-        "@yume-chan/stream-extra": "workspace:^0.0.22",
+        "@yume-chan/adb": "workspace:^0.0.23",
+        "@yume-chan/adb-server-node-tcp": "workspace:^0.0.23",
+        "@yume-chan/android-bin": "workspace:^0.0.23",
+        "@yume-chan/stream-extra": "workspace:^0.0.23",
         "commander": "^12.0.0",
         "source-map-support": "^0.5.21",
         "tslib": "^2.6.2"

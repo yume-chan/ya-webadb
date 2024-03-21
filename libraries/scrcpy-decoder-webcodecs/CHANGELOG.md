@@ -1,6 +1,14 @@
 # Change Log - @yume-chan/scrcpy-decoder-webcodecs
 
-This log was last generated on Wed, 13 Dec 2023 05:57:27 GMT and should not be manually modified.
+This log was last generated on Thu, 21 Mar 2024 03:15:10 GMT and should not be manually modified.
+
+## 0.0.23
+Thu, 21 Mar 2024 03:15:10 GMT
+
+### Updates
+
+- Add `sizeChanged` event
+- Add WebGL and Bitmap based video renderers, which are 1.5 to 3 times faster on Android devices
 
 ## 0.0.22
 Wed, 13 Dec 2023 05:57:27 GMT

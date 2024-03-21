@@ -1,6 +1,15 @@
 # Change Log - @yume-chan/adb
 
-This log was last generated on Wed, 13 Dec 2023 05:57:27 GMT and should not be manually modified.
+This log was last generated on Thu, 21 Mar 2024 03:15:10 GMT and should not be manually modified.
+
+## 0.0.23
+Thu, 21 Mar 2024 03:15:10 GMT
+
+### Updates
+
+- Refactor `AdbSubprocessShellProtocol` (this shouldn't affect usage)
+- Add `AdbServerClient.trackDevices`, which runs a callback function whenever device list changes
+- Add support for delayed ack on Android 14
 
 ## 0.0.22
 Wed, 13 Dec 2023 05:57:27 GMT

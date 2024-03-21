@@ -2,6 +2,12 @@
   "name": "@yume-chan/adb-scrcpy",
   "entries": [
     {
+      "version": "0.0.23",
+      "tag": "@yume-chan/adb-scrcpy_v0.0.23",
+      "date": "Thu, 21 Mar 2024 03:15:10 GMT",
+      "comments": {}
+    },
+    {
       "version": "0.0.22",
       "tag": "@yume-chan/adb-scrcpy_v0.0.22",
       "date": "Wed, 13 Dec 2023 05:57:27 GMT",
