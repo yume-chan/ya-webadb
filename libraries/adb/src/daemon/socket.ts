@@ -74,12 +74,6 @@ export class AdbDaemonSocketController
      * bytes that can be written to the socket before receiving an ack.
      */
     #availableWriteBytes = 0;
-    /**
-     * Gets the number of bytes that can be written to the socket without blocking.
-     */
-    public get availableWriteBytes() {
-        return this.#availableWriteBytes;
-    }
 
     constructor(options: AdbDaemonSocketConstructionOptions) {
         this.#dispatcher = options.dispatcher;

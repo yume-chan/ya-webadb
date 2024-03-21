@@ -1,10 +1,10 @@
 {
-  "changes": [
-    {
-      "packageName": "@yume-chan/aoa",
-      "comment": "Remove `HidKeyboard.serializeInputReport`",
-      "type": "none"
-    }
-  ],
-  "packageName": "@yume-chan/aoa"
+    "changes": [
+        {
+            "packageName": "@yume-chan/aoa",
+            "comment": "Replace `HidKeyboard.serializeInputReport` with `updateReport`, allowing to reuse the buffer",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/aoa"
 }

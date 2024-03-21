@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/android-bin",
+            "comment": "Add support for pm install session",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/android-bin"
+}

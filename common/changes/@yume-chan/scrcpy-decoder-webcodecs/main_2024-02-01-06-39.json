@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/scrcpy-decoder-webcodecs",
+            "comment": "Add WebGL and Bitmap based video renderers, which are 1.5 to 3 times faster on Android devices",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/scrcpy-decoder-webcodecs"
+}

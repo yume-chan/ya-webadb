@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/fetch-scrcpy-server",
-            "comment": "Fix the generated `VERSION` constant incorrectly having a `v` character at the beginning",
+            "comment": "Fix the generated `VERSION` constant incorrectly having a `v` character prefixed",
             "type": "none"
         }
     ],
