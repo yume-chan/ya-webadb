@@ -2,6 +2,10 @@ export abstract class PcmPlayer<T> {
     protected abstract sourceName: string;
 
     #context: AudioContext;
+    get outputLatency() {
+        return this.#context.outputLatency;
+    }
+
     #channelCount: number;
     #worklet: AudioWorkletNode | undefined;
     #buffers: T[] = [];

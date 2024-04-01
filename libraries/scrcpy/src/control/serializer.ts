@@ -10,6 +10,7 @@ import type { ScrcpyInjectScrollControlMessage } from "./inject-scroll.js";
 import { ScrcpyInjectTextControlMessage } from "./inject-text.js";
 import type { ScrcpyInjectTouchControlMessage } from "./inject-touch.js";
 import { ScrcpyRotateDeviceControlMessage } from "./rotate-device.js";
+import type { ScrcpySetClipboardControlMessage } from "./set-clipboard.js";
 import type { AndroidScreenPowerMode } from "./set-screen-power-mode.js";
 import { ScrcpySetScreenPowerModeControlMessage } from "./set-screen-power-mode.js";
 import {
@@ -111,6 +112,13 @@ export class ScrcpyControlMessageSerializer {
     rotateDevice() {
         return ScrcpyRotateDeviceControlMessage.serialize({
             type: this.#typeValues.get(ScrcpyControlMessageType.RotateDevice),
+        });
+    }
+
+    setClipboard(message: Omit<ScrcpySetClipboardControlMessage, "type">) {
+        return this.#options.serializeSetClipboardControlMessage({
+            ...message,
+            type: this.#typeValues.get(ScrcpyControlMessageType.SetClipboard),
         });
     }
 }

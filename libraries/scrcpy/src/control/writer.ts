@@ -13,6 +13,7 @@ import type {
 import type { ScrcpyInjectScrollControlMessage } from "./inject-scroll.js";
 import type { ScrcpyInjectTouchControlMessage } from "./inject-touch.js";
 import { ScrcpyControlMessageSerializer } from "./serializer.js";
+import type { ScrcpySetClipboardControlMessage } from "./set-clipboard.js";
 import type { AndroidScreenPowerMode } from "./set-screen-power-mode.js";
 
 export class ScrcpyControlMessageWriter {
@@ -85,6 +86,12 @@ export class ScrcpyControlMessageWriter {
 
     async rotateDevice() {
         await this.write(this.#serializer.rotateDevice());
+    }
+
+    async setClipboard(
+        message: Omit<ScrcpySetClipboardControlMessage, "type">,
+    ) {
+        await this.write(this.#serializer.setClipboard(message));
     }
 
     releaseLock() {
