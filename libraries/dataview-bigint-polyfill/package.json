@@ -44,6 +44,6 @@
         "eslint": "^8.57.0",
         "jest": "^30.0.0-alpha.3",
         "prettier": "^3.2.5",
-        "typescript": "^5.4.2"
+        "typescript": "^5.4.4"
     }
 }
