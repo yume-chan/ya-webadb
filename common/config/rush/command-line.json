@@ -177,7 +177,7 @@
         {
             "commandKind": "bulk",
             "name": "test",
-            "summary": "Run Jest tests in each projects",
+            "summary": "Run tests in each projects",
             "ignoreMissingScript": true,
             "allowWarningsInSuccessfulBuild": true,
             "enableParallelism": true,

@@ -1,4 +1,6 @@
-import { describe, expect, it } from "@jest/globals";
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { ScrcpyControlMessageType } from "../../control/index.js";
 
@@ -17,7 +19,7 @@ describe("ScrcpyScrollController1_22", () => {
             scrollY: 1.5,
             buttons: 0,
         });
-        expect(message).toBeInstanceOf(Uint8Array);
-        expect(message).toHaveProperty("byteLength", 25);
+        assert(message instanceof Uint8Array);
+        assert.strictEqual(message.byteLength, 25);
     });
 });

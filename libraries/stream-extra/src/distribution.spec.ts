@@ -1,4 +1,6 @@
-import { describe, expect, it, jest } from "@jest/globals";
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import {
     ConsumableReadableStream,
@@ -16,7 +18,7 @@ async function testInputOutput(
     inputLengths: number[],
     outputLengths: number[],
 ) {
-    const write = jest.fn((chunk: Uint8Array) => {
+    const write = mock.fn((chunk: Uint8Array) => {
         void chunk;
     });
     await new ConsumableReadableStream<Uint8Array>({
@@ -39,13 +41,12 @@ async function testInputOutput(
                 },
             }),
         );
-
-    expect(write).toHaveBeenCalledTimes(outputLengths.length);
+    assert.strictEqual(write.mock.calls.length, outputLengths.length);
     let offset = 0;
     for (let i = 0; i < outputLengths.length; i += 1) {
         const end = offset + outputLengths[i]!;
-        expect(write).toHaveBeenNthCalledWith(
-            i + 1,
+        assert.deepStrictEqual(
+            write.mock.calls[i]!.arguments[0],
             TestData.subarray(offset, end),
         );
         offset = end;

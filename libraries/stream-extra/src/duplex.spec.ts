@@ -1,4 +1,5 @@
-import { describe, it } from "@jest/globals";
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import { describe, it } from "node:test";
 
 import { DuplexStreamFactory } from "./duplex.js";
 import { ReadableStream } from "./stream.js";

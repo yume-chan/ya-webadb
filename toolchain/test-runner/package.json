@@ -1,0 +1,16 @@
+{
+    "name": "@yume-chan/test-runner",
+    "version": "1.0.0",
+    "type": "module",
+    "bin": {
+        "test": "wrapper.js"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "@types/node": "^20.12.4",
+        "@swc/core": "^1.4.12",
+        "@swc-node/register": "^1.9.0",
+        "@swc-node/sourcemap-support": "^0.5.0",
+        "typescript": "^5.4.4"
+    }
+}

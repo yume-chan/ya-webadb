@@ -1,4 +1,7 @@
-import { describe, expect, it } from "@jest/globals";
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import assert from "node:assert";
+import { describe, it } from "node:test";
+
 import { EMPTY_UINT8_ARRAY, encodeUtf8 } from "@yume-chan/struct";
 
 import type { AdbCredentialStore } from "./auth.js";
@@ -131,7 +134,7 @@ describe("auth", () => {
                 results.push(result);
             }
 
-            expect(results).toStrictEqual([
+            assert.deepStrictEqual(results, [
                 {
                     command: AdbCommand.Auth,
                     arg0: AdbAuthType.PublicKey,
@@ -163,7 +166,7 @@ describe("auth", () => {
                 results.push(result);
             }
 
-            expect(results).toStrictEqual([
+            assert.deepStrictEqual(results, [
                 {
                     command: AdbCommand.Auth,
                     arg0: AdbAuthType.PublicKey,
