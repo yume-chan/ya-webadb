@@ -76,13 +76,13 @@ export interface ScrcpyOptionsInit2_0
     videoCodec?: "h264" | "h265" | "av1";
     videoBitRate?: number;
     videoCodecOptions?: CodecOptions;
-    videoEncoder?: string;
+    videoEncoder?: string | undefined;
 
     audio?: boolean;
     audioCodec?: "opus" | "aac" | "raw";
     audioBitRate?: number;
     audioCodecOptions?: CodecOptions;
-    audioEncoder?: string;
+    audioEncoder?: string | undefined;
 
     listEncoders?: boolean;
     listDisplays?: boolean;
@@ -117,13 +117,13 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
         videoCodec: "h264",
         videoBitRate: 8000000,
         videoCodecOptions: new CodecOptions(),
-        videoEncoder: "",
+        videoEncoder: undefined,
 
         audio: true,
         audioCodec: "opus",
         audioBitRate: 128000,
         audioCodecOptions: new CodecOptions(),
-        audioEncoder: "",
+        audioEncoder: undefined,
 
         listEncoders: false,
         listDisplays: false,
