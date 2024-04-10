@@ -98,7 +98,9 @@ type TinyH264Message =
 
 export function createTinyH264Wrapper(): Promise<TinyH264Wrapper> {
     if (!worker) {
-        worker = new Worker(new URL("./worker.js", import.meta.url));
+        worker = new Worker(new URL("./worker.js", import.meta.url), {
+            type: "module",
+        });
         worker.addEventListener(
             "message",
             ({ data }: MessageEvent<TinyH264Message>) => {
