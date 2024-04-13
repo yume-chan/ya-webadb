@@ -19,7 +19,7 @@ export declare interface AbortSignal {
     /**
      * If aborted, returns the reason for aborting.
      */
-    readonly reason?: any;
+    readonly reason?: unknown;
     /**
      * Add an event listener to be triggered when this signal becomes aborted.
      */
@@ -54,7 +54,7 @@ export declare class ByteLengthQueuingStrategy
  *
  * @public
  */
-export declare class CountQueuingStrategy implements QueuingStrategy<any> {
+export declare class CountQueuingStrategy implements QueuingStrategy<unknown> {
     constructor(options: QueuingStrategyInit);
     /**
      * Returns the high water mark provided to the constructor.
@@ -64,7 +64,7 @@ export declare class CountQueuingStrategy implements QueuingStrategy<any> {
      * Measures the size of `chunk` by always returning 1.
      * This ensures that the total queue size is a count of the number of chunks in the queue.
      */
-    get size(): (chunk: any) => 1;
+    get size(): (chunk: unknown) => 1;
 }
 
 /**
@@ -72,7 +72,7 @@ export declare class CountQueuingStrategy implements QueuingStrategy<any> {
  *
  * @public
  */
-export declare interface QueuingStrategy<T = any> {
+export declare interface QueuingStrategy<T> {
     /**
      * A non-negative number indicating the high water mark of the stream using this queuing strategy.
      */
@@ -97,7 +97,7 @@ export declare interface QueuingStrategyInit {
  * {@inheritDoc QueuingStrategy.size}
  * @public
  */
-export declare type QueuingStrategySizeCallback<T = any> = (chunk: T) => number;
+export declare type QueuingStrategySizeCallback<T> = (chunk: T) => number;
 
 /**
  * Allows control of a {@link ReadableStream | readable byte stream}'s state and internal queue.
@@ -128,7 +128,7 @@ export declare class ReadableByteStreamController {
     /**
      * Errors the controlled readable stream, making all future interactions with it fail with the given error `e`.
      */
-    error(e?: any): void;
+    error(e?: unknown): void;
 }
 
 /**
@@ -136,7 +136,7 @@ export declare class ReadableByteStreamController {
  *
  * @public
  */
-export declare class ReadableStream<R = any> implements AsyncIterable<R> {
+export declare class ReadableStream<R> implements AsyncIterable<R> {
     constructor(
         underlyingSource: UnderlyingByteSource,
         strategy?: {
@@ -158,7 +158,7 @@ export declare class ReadableStream<R = any> implements AsyncIterable<R> {
      * The supplied `reason` argument will be given to the underlying source's {@link UnderlyingSource.cancel | cancel()}
      * method, which might or might not use it.
      */
-    cancel(reason?: any): Promise<void>;
+    cancel(reason?: unknown): Promise<void>;
     /**
      * Creates a {@link ReadableStreamBYOBReader} and locks the stream to the new reader.
      *
@@ -185,7 +185,7 @@ export declare class ReadableStream<R = any> implements AsyncIterable<R> {
      *
      * Piping a stream will lock it for the duration of the pipe, preventing any other consumer from acquiring a reader.
      */
-    pipeThrough<RS extends ReadableStream>(
+    pipeThrough<RS extends ReadableStream<unknown>>(
         transform: {
             readable: RS;
             writable: WritableStream<R>;
@@ -254,7 +254,7 @@ export declare class ReadableStream<R = any> implements AsyncIterable<R> {
 export declare interface ReadableStreamAsyncIterator<R>
     extends AsyncIterableIterator<R> {
     next(): Promise<IteratorResult<R, undefined>>;
-    return(value?: any): Promise<IteratorResult<any>>;
+    return(value?: R): Promise<IteratorResult<R>>;
 }
 
 /**
@@ -272,7 +272,7 @@ export declare class ReadableStreamBYOBReader {
     /**
      * If the reader is active, behaves the same as {@link ReadableStream.cancel | stream.cancel(reason)}.
      */
-    cancel(reason?: any): Promise<void>;
+    cancel(reason?: unknown): Promise<void>;
     /**
      * Attempts to reads bytes into view, and returns a promise resolved with the result.
      *
@@ -372,7 +372,7 @@ export declare class ReadableStreamDefaultController<R> {
     /**
      * Errors the controlled readable stream, making all future interactions with it fail with the given error `e`.
      */
-    error(e?: any): void;
+    error(e?: unknown): void;
 }
 
 /**
@@ -380,7 +380,7 @@ export declare class ReadableStreamDefaultController<R> {
  *
  * @public
  */
-export declare class ReadableStreamDefaultReader<R = any> {
+export declare class ReadableStreamDefaultReader<R> {
     constructor(stream: ReadableStream<R>);
     /**
      * Returns a promise that will be fulfilled when the stream becomes closed,
@@ -390,7 +390,7 @@ export declare class ReadableStreamDefaultReader<R = any> {
     /**
      * If the reader is active, behaves the same as {@link ReadableStream.cancel | stream.cancel(reason)}.
      */
-    cancel(reason?: any): Promise<void>;
+    cancel(reason?: unknown): Promise<void>;
     /**
      * Returns a promise that allows access to the next chunk from the stream's internal queue, if available.
      *
@@ -414,9 +414,9 @@ export declare class ReadableStreamDefaultReader<R = any> {
  *
  * @public
  */
-export declare interface ReadableStreamDefaultReaderLike<R = any> {
+export declare interface ReadableStreamDefaultReaderLike<R> {
     readonly closed: Promise<undefined>;
-    cancel(reason?: any): Promise<void>;
+    cancel(reason?: unknown): Promise<void>;
     read(): Promise<ReadableStreamDefaultReadResult<R>>;
     releaseLock(): void;
 }
@@ -450,7 +450,7 @@ export declare interface ReadableStreamIteratorOptions {
  *
  * @public
  */
-export declare interface ReadableStreamLike<R = any> {
+export declare interface ReadableStreamLike<R> {
     readonly locked: boolean;
     getReader(): ReadableStreamDefaultReaderLike<R>;
 }
@@ -498,7 +498,7 @@ export declare interface StreamPipeOptions {
  *
  * @public
  */
-export declare interface Transformer<I = any, O = any> {
+export declare interface Transformer<I, O> {
     /**
      * A function that is called immediately during creation of the {@link TransformStream}.
      */
@@ -522,7 +522,7 @@ export declare interface Transformer<I = any, O = any> {
 
 /** @public */
 export declare type TransformerCancelCallback = (
-    reason: any,
+    reason: unknown,
 ) => void | PromiseLike<void>;
 
 /** @public */
@@ -549,7 +549,7 @@ export declare type TransformerTransformCallback<I, O> = (
  *
  * @public
  */
-export declare class TransformStream<I = any, O = any> {
+export declare class TransformStream<I, O> {
     constructor(
         transformer?: Transformer<I, O>,
         writableStrategy?: QueuingStrategy<I>,
@@ -584,7 +584,7 @@ export declare class TransformStreamDefaultController<O> {
      * Errors both the readable side and the writable side of the controlled transform stream, making all future
      * interactions with it fail with the given error `e`. Any chunks queued for transformation will be discarded.
      */
-    error(reason?: any): void;
+    error(reason?: unknown): void;
     /**
      * Closes the readable side and errors the writable side of the controlled transform stream. This is useful when the
      * transformer only needs to consume a portion of the chunks written to the writable side.
@@ -643,7 +643,7 @@ export declare type UnderlyingByteSourceStartCallback = (
  *
  * @public
  */
-export declare interface UnderlyingSink<W = any> {
+export declare interface UnderlyingSink<W> {
     /**
      * A function that is called immediately during creation of the {@link WritableStream}.
      */
@@ -684,7 +684,7 @@ export declare interface UnderlyingSink<W = any> {
 
 /** @public */
 export declare type UnderlyingSinkAbortCallback = (
-    reason: any,
+    reason: unknown,
 ) => void | PromiseLike<void>;
 
 /** @public */
@@ -707,7 +707,7 @@ export declare type UnderlyingSinkWriteCallback<W> = (
  *
  * @public
  */
-export declare interface UnderlyingSource<R = any> {
+export declare interface UnderlyingSource<R> {
     /**
      * A function that is called immediately during creation of the {@link ReadableStream}.
      */
@@ -731,7 +731,7 @@ export declare interface UnderlyingSource<R = any> {
 
 /** @public */
 export declare type UnderlyingSourceCancelCallback = (
-    reason: any,
+    reason: unknown,
 ) => void | PromiseLike<void>;
 
 /** @public */
@@ -749,7 +749,7 @@ export declare type UnderlyingSourceStartCallback<R> = (
  *
  * @public
  */
-export declare class WritableStream<W = any> {
+export declare class WritableStream<W> {
     constructor(
         underlyingSink?: UnderlyingSink<W>,
         strategy?: QueuingStrategy<W>,
@@ -767,7 +767,7 @@ export declare class WritableStream<W = any> {
      * that there was an error doing so. Additionally, it will reject with a `TypeError` (without attempting to cancel
      * the stream) if the stream is currently locked.
      */
-    abort(reason?: any): Promise<void>;
+    abort(reason?: unknown): Promise<void>;
     /**
      * Closes the stream. The underlying sink will finish processing any previously-written chunks, before invoking its
      * close behavior. During this time any further attempts to write will fail (without erroring the stream).
@@ -802,7 +802,7 @@ export declare class WritableStreamDefaultController {
      *  This property has been removed from the specification, see https://github.com/whatwg/streams/pull/1177.
      *  Use {@link WritableStreamDefaultController.signal}'s `reason` instead.
      */
-    get abortReason(): any;
+    get abortReason(): unknown;
     /**
      * An `AbortSignal` that can be used to abort the pending write or close operation when the stream is aborted.
      */
@@ -814,7 +814,7 @@ export declare class WritableStreamDefaultController {
      * sink's methods. However, it can be useful for suddenly shutting down a stream in response to an event outside the
      * normal lifecycle of interactions with the underlying sink.
      */
-    error(e?: any): void;
+    error(e?: unknown): void;
 }
 
 /**
@@ -822,7 +822,7 @@ export declare class WritableStreamDefaultController {
  *
  * @public
  */
-export declare class WritableStreamDefaultWriter<W = any> {
+export declare class WritableStreamDefaultWriter<W> {
     constructor(stream: WritableStream<W>);
     /**
      * Returns a promise that will be fulfilled when the stream becomes closed, or rejected if the stream ever errors or
@@ -850,7 +850,7 @@ export declare class WritableStreamDefaultWriter<W = any> {
     /**
      * If the reader is active, behaves the same as {@link WritableStream.abort | stream.abort(reason)}.
      */
-    abort(reason?: any): Promise<void>;
+    abort(reason?: unknown): Promise<void>;
     /**
      * If the reader is active, behaves the same as {@link WritableStream.close | stream.close()}.
      */

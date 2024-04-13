@@ -111,18 +111,18 @@ async function createAdb(options: DeviceCommandOptions) {
                   usb: true,
               }
             : options.e
-            ? {
-                  tcp: true,
-              }
-            : options.s !== undefined
-            ? {
-                  serial: options.s,
-              }
-            : options.t !== undefined
-            ? {
-                  transportId: options.t,
-              }
-            : undefined,
+              ? {
+                    tcp: true,
+                }
+              : options.s !== undefined
+                ? {
+                      serial: options.s,
+                  }
+                : options.t !== undefined
+                  ? {
+                        transportId: options.t,
+                    }
+                  : undefined,
     );
     const adb = new Adb(transport);
     return adb;

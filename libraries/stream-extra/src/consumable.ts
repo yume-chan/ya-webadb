@@ -100,7 +100,7 @@ export class UnwrapConsumableStream<T> extends TransformStream<
 export interface ConsumableReadableStreamController<T> {
     enqueue(chunk: T): Promise<void>;
     close(): void;
-    error(reason: any): void;
+    error(reason: unknown): void;
 }
 
 export interface ConsumableReadableStreamSource<T> {
@@ -110,7 +110,7 @@ export interface ConsumableReadableStreamSource<T> {
     pull?(
         controller: ConsumableReadableStreamController<T>,
     ): void | PromiseLike<void>;
-    cancel?(reason: any): void | PromiseLike<void>;
+    cancel?(reason: unknown): void | PromiseLike<void>;
 }
 
 export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
@@ -172,7 +172,7 @@ export interface ConsumableWritableStreamSink<T> {
         chunk: T,
         controller: WritableStreamDefaultController,
     ): void | PromiseLike<void>;
-    abort?(reason: any): void | PromiseLike<void>;
+    abort?(reason: unknown): void | PromiseLike<void>;
     close?(): void | PromiseLike<void>;
 }
 

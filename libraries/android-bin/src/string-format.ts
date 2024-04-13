@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 export class ParseError extends Error {
     #expected: string[];
 

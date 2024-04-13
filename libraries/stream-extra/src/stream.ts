@@ -17,7 +17,7 @@ export interface AbortController {
     /**
      * Invoking this method will set this object's AbortSignal's aborted flag and signal to any observers that the associated activity is to be aborted.
      */
-    abort(reason?: any): void;
+    abort(reason?: unknown): void;
 }
 
 interface AbortControllerConstructor {
@@ -36,11 +36,11 @@ const Global = globalThis as unknown as GlobalExtension;
 
 export const AbortController = Global.AbortController;
 
-export type ReadableStream<T = any> = ReadableStreamType<T>;
+export type ReadableStream<T> = ReadableStreamType<T>;
 export const ReadableStream = Global.ReadableStream;
 
-export type WritableStream<T = any> = WritableStreamType<T>;
+export type WritableStream<T> = WritableStreamType<T>;
 export const WritableStream = Global.WritableStream;
 
-export type TransformStream<I = any, O = any> = TransformStreamType<I, O>;
+export type TransformStream<I, O> = TransformStreamType<I, O>;
 export const TransformStream = Global.TransformStream;
