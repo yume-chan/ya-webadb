@@ -101,20 +101,20 @@ export class BigIntFieldDefinition<
                     array.byteLength,
                 );
                 const value = this.type.getter(view, 0, options.littleEndian);
-                return this.create(options, struct, value as any);
+                return this.create(options, struct, value as never);
             })
             .valueOrPromise();
     }
 }
 
 export class BigIntFieldValue<
-    TDefinition extends BigIntFieldDefinition<BigIntFieldType, any>,
+    TDefinition extends BigIntFieldDefinition<BigIntFieldType, unknown>,
 > extends StructFieldValue<TDefinition> {
     serialize(dataView: DataView, offset: number): void {
         this.definition.type.setter(
             dataView,
             offset,
-            this.value,
+            this.value as never,
             this.options.littleEndian,
         );
     }

@@ -1,6 +1,17 @@
+import type { StructFieldDefinition } from "./definition.js";
 import type { StructFieldValue } from "./field-value.js";
 
 export const STRUCT_VALUE_SYMBOL = Symbol("struct-value");
+
+export function isStructValueInit(
+    value: unknown,
+): value is { [STRUCT_VALUE_SYMBOL]: StructValue } {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        STRUCT_VALUE_SYMBOL in value
+    );
+}
 
 /**
  * A struct value is a map between keys in a struct and their field values.
@@ -8,7 +19,7 @@ export const STRUCT_VALUE_SYMBOL = Symbol("struct-value");
 export class StructValue {
     /** @internal */ readonly fieldValues: Record<
         PropertyKey,
-        StructFieldValue
+        StructFieldValue<StructFieldDefinition<unknown, unknown, PropertyKey>>
     > = {};
 
     /**
@@ -35,7 +46,12 @@ export class StructValue {
      * @param name The field name
      * @param fieldValue The associated `StructFieldValue`
      */
-    set(name: PropertyKey, fieldValue: StructFieldValue): void {
+    set(
+        name: PropertyKey,
+        fieldValue: StructFieldValue<
+            StructFieldDefinition<unknown, unknown, PropertyKey>
+        >,
+    ): void {
         this.fieldValues[name] = fieldValue;
 
         // PERF: `Object.defineProperty` is slow
@@ -61,7 +77,9 @@ export class StructValue {
      *
      * @param name The field name
      */
-    get(name: PropertyKey): StructFieldValue {
+    get(
+        name: PropertyKey,
+    ): StructFieldValue<StructFieldDefinition<unknown, unknown, PropertyKey>> {
         return this.fieldValues[name]!;
     }
 }

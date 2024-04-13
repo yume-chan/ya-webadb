@@ -152,7 +152,7 @@ abstract class SourceProcessor<T>
             if (source) {
                 // Output full
                 this.#chunks[0] = source;
-                this.#chunkSampleCounts[0]! -= consumedSampleCount;
+                this.#chunkSampleCounts[0] -= consumedSampleCount;
                 return;
             }
 

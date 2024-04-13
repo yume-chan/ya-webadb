@@ -9,11 +9,7 @@ import type { StructValue } from "./struct-value.js";
  * helpful for the serialization process.
  */
 export abstract class StructFieldValue<
-    TDefinition extends StructFieldDefinition<
-        any,
-        any,
-        any
-    > = StructFieldDefinition<any, any, any>,
+    TDefinition extends StructFieldDefinition<unknown, unknown, PropertyKey>,
 > {
     /** Gets the definition associated with this runtime value */
     readonly definition: TDefinition;
@@ -58,7 +54,7 @@ export abstract class StructFieldValue<
      * When implemented in derived classes, reads current field's value.
      */
     get(): TDefinition["TValue"] {
-        return this.value;
+        return this.value as never;
     }
 
     /**

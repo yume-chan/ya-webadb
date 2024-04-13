@@ -19,7 +19,7 @@ function testEndian(
                 `set${type.signed ? "I" : "Ui"}nt${
                     type.size * 8
                 }` as keyof DataView
-            ] as any
+            ] as (offset: number, value: number, littleEndian: boolean) => void
         )(0, min, littleEndian);
         const output = type.deserialize(new Uint8Array(buffer), littleEndian);
         expect(output).toBe(min);
@@ -34,7 +34,7 @@ function testEndian(
                 `set${type.signed ? "I" : "Ui"}nt${
                     type.size * 8
                 }` as keyof DataView
-            ] as any
+            ] as (offset: number, value: number, littleEndian: boolean) => void
         )(0, input, littleEndian);
         const output = type.deserialize(new Uint8Array(buffer), littleEndian);
         expect(output).toBe(input);
@@ -48,7 +48,7 @@ function testEndian(
                 `set${type.signed ? "I" : "Ui"}nt${
                     type.size * 8
                 }` as keyof DataView
-            ] as any
+            ] as (offset: number, value: number, littleEndian: boolean) => void
         )(0, max, littleEndian);
         const output = type.deserialize(new Uint8Array(buffer), littleEndian);
         expect(output).toBe(max);

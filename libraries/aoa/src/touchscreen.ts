@@ -32,7 +32,7 @@ const FINGER_DESCRIPTOR = new Uint8Array(
         0x95, 0x02,       //         Report Count (2)
         0x81, 0x02,       //         Input (Data, Variable, Absolute)
         0xc0,             //     End Collection
-    ]
+    ],
 );
 
 const DESCRIPTOR_HEAD = new Uint8Array(
@@ -51,7 +51,7 @@ const DESCRIPTOR_HEAD = new Uint8Array(
         0x75, 0x08, //     Report Size (8)
         0x95, 0x01, //     Report Count (1)
         0x81, 0x02, //     Input (Data, Variable, Absolute)
-    ]
+    ],
 );
 
 const DESCRIPTOR_TAIL = new Uint8Array([
@@ -61,7 +61,7 @@ const DESCRIPTOR_TAIL = new Uint8Array([
 const DESCRIPTOR = new Uint8Array(
     DESCRIPTOR_HEAD.length +
         FINGER_DESCRIPTOR.length * 10 +
-        DESCRIPTOR_TAIL.length
+        DESCRIPTOR_TAIL.length,
 );
 let offset = 0;
 DESCRIPTOR.set(DESCRIPTOR_HEAD, offset);

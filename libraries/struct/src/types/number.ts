@@ -153,20 +153,20 @@ export class NumberFieldDefinition<
                     array,
                     options.littleEndian,
                 );
-                return this.create(options, struct, value as any);
+                return this.create(options, struct, value as never);
             })
             .valueOrPromise();
     }
 }
 
 export class NumberFieldValue<
-    TDefinition extends NumberFieldDefinition<NumberFieldType, any>,
+    TDefinition extends NumberFieldDefinition<NumberFieldType, unknown>,
 > extends StructFieldValue<TDefinition> {
     serialize(dataView: DataView, offset: number): void {
         this.definition.type.serialize(
             dataView,
             offset,
-            this.value,
+            this.value as never,
             this.options.littleEndian,
         );
     }

@@ -9,7 +9,7 @@ export async function aoaGetProtocol(device: USBDevice) {
             value: 0,
             index: 0,
         },
-        2
+        2,
     );
     const version = result.data!.getUint16(0, true);
     return version;
@@ -28,6 +28,6 @@ export async function aoaStartAccessory(device: USBDevice) {
             value: 0,
             index: 0,
         },
-        new ArrayBuffer(0)
+        new ArrayBuffer(0),
     );
 }

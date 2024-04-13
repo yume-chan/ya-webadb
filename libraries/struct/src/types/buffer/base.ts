@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
     AsyncExactReadable,
     ExactReadable,
@@ -102,6 +103,7 @@ export abstract class BufferLikeFieldDefinition<
     TTypeScriptType = TType["TTypeScriptType"],
 > extends StructFieldDefinition<TOptions, TTypeScriptType, TOmitInitKey> {
     readonly type: TType;
+    readonly TTypeScriptType!: TTypeScriptType;
 
     constructor(type: TType, options: TOptions) {
         super(options);
@@ -119,7 +121,7 @@ export abstract class BufferLikeFieldDefinition<
     create(
         options: Readonly<StructOptions>,
         struct: StructValue,
-        value: TType["TTypeScriptType"],
+        value: TTypeScriptType,
         array?: Uint8Array,
     ): BufferLikeFieldValue<this> {
         return new BufferLikeFieldValue(this, options, struct, value, array);
@@ -149,7 +151,7 @@ export abstract class BufferLikeFieldDefinition<
             }
         })
             .then((array) => {
-                const value = this.type.toValue(array);
+                const value = this.type.toValue(array) as TTypeScriptType;
                 return this.create(options, struct, value, array);
             })
             .valueOrPromise();
@@ -158,7 +160,8 @@ export abstract class BufferLikeFieldDefinition<
 
 export class BufferLikeFieldValue<
     TDefinition extends BufferLikeFieldDefinition<
-        BufferFieldSubType<unknown, unknown>,
+        BufferFieldSubType<any, any>,
+        any,
         any,
         any
     >,
@@ -169,7 +172,7 @@ export class BufferLikeFieldValue<
         definition: TDefinition,
         options: Readonly<StructOptions>,
         struct: StructValue,
-        value: TDefinition["TValue"],
+        value: TDefinition["TTypeScriptType"],
         array?: Uint8Array,
     ) {
         super(definition, options, struct, value);

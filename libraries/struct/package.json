@@ -30,7 +30,7 @@
         "build": "tsc -b tsconfig.build.json",
         "build:watch": "tsc -b tsconfig.build.json",
         "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" TS_JEST_DISABLE_VER_CHECKER=true jest --coverage",
-        "lint": "eslint src/**/*.ts --fix && prettier src/**/*.ts --write --tab-width 4",
+        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
@@ -42,10 +42,9 @@
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "cross-env": "^7.0.3",
-        "eslint": "^8.57.0",
         "jest": "^30.0.0-alpha.3",
         "prettier": "^3.2.5",
         "ts-jest": "^29.1.2",
-        "typescript": "^5.4.4"
+        "typescript": "^5.4.5"
     }
 }

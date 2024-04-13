@@ -5,7 +5,7 @@ export interface SyncPromise<T> {
             | null
             | undefined,
         onrejected?:
-            | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+            | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
             | null
             | undefined,
     ): SyncPromise<TResult1 | TResult2>;
@@ -14,7 +14,7 @@ export interface SyncPromise<T> {
 }
 
 interface SyncPromiseStatic {
-    reject<T = never>(reason?: any): SyncPromise<T>;
+    reject<T = never>(reason?: unknown): SyncPromise<T>;
 
     resolve(): SyncPromise<void>;
     resolve<T>(value: T | PromiseLike<T>): SyncPromise<T>;
@@ -23,7 +23,7 @@ interface SyncPromiseStatic {
 }
 
 export const SyncPromise: SyncPromiseStatic = {
-    reject<T = never>(reason?: any): SyncPromise<T> {
+    reject<T = never>(reason?: unknown): SyncPromise<T> {
         return new RejectedSyncPromise(reason);
     },
     resolve<T>(value?: T | PromiseLike<T>): SyncPromise<T> {
@@ -67,7 +67,7 @@ class PendingSyncPromise<T> implements SyncPromise<T> {
             | null
             | undefined,
         onrejected?:
-            | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+            | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
             | null
             | undefined,
     ) {
@@ -95,7 +95,7 @@ class ResolvedSyncPromise<T> implements SyncPromise<T> {
             | undefined,
     ) {
         if (!onfulfilled) {
-            return this as any;
+            return this as never;
         }
         return SyncPromise.try(() => onfulfilled(this.#value));
     }
@@ -106,9 +106,9 @@ class ResolvedSyncPromise<T> implements SyncPromise<T> {
 }
 
 class RejectedSyncPromise<T> implements SyncPromise<T> {
-    #reason: any;
+    #reason: unknown;
 
-    constructor(reason: any) {
+    constructor(reason: unknown) {
         this.#reason = reason;
     }
 
@@ -118,12 +118,12 @@ class RejectedSyncPromise<T> implements SyncPromise<T> {
             | null
             | undefined,
         onrejected?:
-            | ((reason: any) => TResult2 | PromiseLike<TResult2>)
+            | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
             | null
             | undefined,
     ) {
         if (!onrejected) {
-            return this as any;
+            return this as never;
         }
         return SyncPromise.try(() => onrejected(this.#reason));
     }

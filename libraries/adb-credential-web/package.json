@@ -26,7 +26,7 @@
     "scripts": {
         "build": "tsc -b tsconfig.build.json",
         "build:watch": "tsc -b tsconfig.build.json",
-        "lint": "eslint src/**/*.ts --fix && prettier src/**/*.ts --write --tab-width 4",
+        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
@@ -36,8 +36,7 @@
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
-        "eslint": "^8.57.0",
         "prettier": "^3.2.5",
-        "typescript": "^5.4.4"
+        "typescript": "^5.4.5"
     }
 }

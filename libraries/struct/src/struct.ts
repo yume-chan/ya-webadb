@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
     AsyncExactReadable,
     ExactReadable,
@@ -10,6 +11,7 @@ import {
     STRUCT_VALUE_SYMBOL,
     StructDefaultOptions,
     StructValue,
+    isStructValueInit,
 } from "./basic/index.js";
 import { SyncPromise } from "./sync-promise.js";
 import type {
@@ -50,7 +52,7 @@ type AddFieldDescriptor<
     TExtra extends object,
     TPostDeserialized,
     TFieldName extends PropertyKey,
-    TDefinition extends StructFieldDefinition<any, any, any>,
+    TDefinition extends StructFieldDefinition<unknown, unknown, PropertyKey>,
 > = Identity<
     Struct<
         // Merge two types
@@ -83,7 +85,7 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends BufferFieldSubType<any, any>,
+        TType extends BufferFieldSubType<unknown, unknown>,
         TTypeScriptType = TType["TTypeScriptType"],
     >(
         name: TName,
@@ -107,7 +109,7 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends BufferFieldSubType<any, any>,
+        TType extends BufferFieldSubType<unknown, unknown>,
         TOptions extends VariableLengthBufferLikeFieldOptions<TFields>,
         TTypeScriptType = TType["TTypeScriptType"],
     >(
@@ -133,7 +135,7 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
     TOmitInitKey extends PropertyKey,
     TExtra extends object,
     TPostDeserialized,
-    TType extends BufferFieldSubType<any, any>,
+    TType extends BufferFieldSubType<unknown, unknown>,
 > {
     <TName extends PropertyKey, TTypeScriptType = TType["TTypeScriptType"]>(
         name: TName,
@@ -154,10 +156,9 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
 
     <
         TName extends PropertyKey,
-        TLengthField extends LengthField<TFields>,
         TOptions extends VariableLengthBufferLikeFieldOptions<
             TFields,
-            TLengthField
+            LengthField<TFields>
         >,
         TTypeScriptType = TType["TTypeScriptType"],
     >(
@@ -212,6 +213,20 @@ export class StructEmptyError extends StructDeserializeError {
     }
 }
 
+interface StructDefinition<
+    TFields extends object,
+    TOmitInitKey extends PropertyKey,
+    TExtra extends object,
+> {
+    readonly TFields: TFields;
+
+    readonly TOmitInitKey: TOmitInitKey;
+
+    readonly TExtra: TExtra;
+
+    readonly TInit: Evaluate<Omit<TFields, TOmitInitKey>>;
+}
+
 export class Struct<
     TFields extends object = Record<never, never>,
     TOmitInitKey extends PropertyKey = never,
@@ -248,18 +263,18 @@ export class Struct<
 
     #fields: [
         name: PropertyKey,
-        definition: StructFieldDefinition<any, any, any>,
+        definition: StructFieldDefinition<unknown, unknown, PropertyKey>,
     ][] = [];
     get fields(): readonly [
         name: PropertyKey,
-        definition: StructFieldDefinition<any, any, any>,
+        definition: StructFieldDefinition<unknown, unknown, PropertyKey>,
     ][] {
         return this.#fields;
     }
 
     #extra: Record<PropertyKey, unknown> = {};
 
-    #postDeserialized?: StructPostDeserialized<any, any> | undefined;
+    #postDeserialized?: StructPostDeserialized<TFields, unknown> | undefined;
 
     constructor(options?: Partial<Readonly<StructOptions>>) {
         this.options = { ...StructDefaultOptions, ...options };
@@ -270,7 +285,11 @@ export class Struct<
      */
     field<
         TName extends PropertyKey,
-        TDefinition extends StructFieldDefinition<any, any, any>,
+        TDefinition extends StructFieldDefinition<
+            unknown,
+            unknown,
+            PropertyKey
+        >,
     >(
         name: TName,
         definition: TDefinition,
@@ -298,13 +317,15 @@ export class Struct<
         this.#size += size;
 
         // Force cast `this` to another type
-        return this as any;
+        return this as never;
     }
 
     /**
      * Merges (flats) another `Struct`'s fields and extra fields into this one.
+     *
+     * `other`'s `postDeserialize` will be ignored.
      */
-    concat<TOther extends Struct<any, any, any, any>>(
+    concat<TOther extends StructDefinition<object, PropertyKey, object>>(
         other: TOther,
     ): Struct<
         TFields & TOther["TFields"],
@@ -312,6 +333,10 @@ export class Struct<
         TExtra & TOther["TExtra"],
         TPostDeserialized
     > {
+        if (!(other instanceof Struct)) {
+            throw new Error("The other value must be a `Struct` instance");
+        }
+
         for (const field of other.#fields) {
             this.#fields.push(field);
         }
@@ -320,7 +345,7 @@ export class Struct<
             this.#extra,
             Object.getOwnPropertyDescriptors(other.#extra),
         );
-        return this as any;
+        return this as never;
     }
 
     #number<
@@ -440,17 +465,17 @@ export class Struct<
         options:
             | FixedLengthBufferLikeFieldOptions
             | VariableLengthBufferLikeFieldOptions,
-    ): any => {
+    ): never => {
         if ("length" in options) {
             return this.field(
                 name,
                 new FixedLengthBufferLikeFieldDefinition(type, options),
-            );
+            ) as never;
         } else {
             return this.field(
                 name,
                 new VariableLengthBufferLikeFieldDefinition(type, options),
-            );
+            ) as never;
         }
     };
 
@@ -460,13 +485,17 @@ export class Struct<
         TExtra,
         TPostDeserialized,
         Uint8ArrayBufferFieldSubType
-    > = (name: PropertyKey, options: any, typeScriptType: any): any => {
+    > = (
+        name: PropertyKey,
+        options: unknown,
+        typeScriptType: unknown,
+    ): never => {
         return this.#arrayBufferLike(
             name,
             Uint8ArrayBufferFieldSubType.Instance,
-            options,
+            options as never,
             typeScriptType,
-        );
+        ) as never;
     };
 
     string: BoundArrayBufferLikeFieldDefinitionCreator<
@@ -475,13 +504,17 @@ export class Struct<
         TExtra,
         TPostDeserialized,
         StringBufferFieldSubType
-    > = (name: PropertyKey, options: any, typeScriptType: any): any => {
+    > = (
+        name: PropertyKey,
+        options: unknown,
+        typeScriptType: unknown,
+    ): never => {
         return this.#arrayBufferLike(
             name,
             StringBufferFieldSubType.Instance,
-            options,
+            options as never,
             typeScriptType,
-        );
+        ) as never;
     };
 
     /**
@@ -507,7 +540,7 @@ export class Struct<
             this.#extra,
             Object.getOwnPropertyDescriptors(value),
         );
-        return this as any;
+        return this as never;
     }
 
     /**
@@ -537,9 +570,9 @@ export class Struct<
     postDeserialize<TPostSerialize>(
         callback?: StructPostDeserialized<TFields, TPostSerialize>,
     ): Struct<TFields, TOmitInitKey, TExtra, TPostSerialize>;
-    postDeserialize(callback?: StructPostDeserialized<TFields, any>) {
+    postDeserialize(callback?: StructPostDeserialized<TFields, unknown>) {
         this.#postDeserialized = callback;
-        return this as any;
+        return this as never;
     }
 
     /**
@@ -590,15 +623,18 @@ export class Struct<
 
                 // Run `postDeserialized`
                 if (this.#postDeserialized) {
-                    const override = this.#postDeserialized.call(value, value);
+                    const override = this.#postDeserialized.call(
+                        value as TFields,
+                        value as TFields,
+                    );
                     // If it returns a new value, use that as result
                     // Otherwise it only inspects/mutates the object in place.
                     if (override !== undefined) {
-                        return override;
+                        return override as never;
                     }
                 }
 
-                return value;
+                return value as never;
             })
             .valueOrPromise();
     }
@@ -613,8 +649,8 @@ export class Struct<
         output?: Uint8Array,
     ): Uint8Array | number {
         let structValue: StructValue;
-        if (STRUCT_VALUE_SYMBOL in init) {
-            structValue = (init as any)[STRUCT_VALUE_SYMBOL];
+        if (isStructValueInit(init)) {
+            structValue = init[STRUCT_VALUE_SYMBOL];
             for (const [key, value] of Object.entries(init)) {
                 const fieldValue = structValue.get(key);
                 if (fieldValue) {
@@ -627,14 +663,17 @@ export class Struct<
                 const fieldValue = definition.create(
                     this.options,
                     structValue,
-                    (init as any)[name],
+                    (init as Record<PropertyKey, unknown>)[name],
                 );
                 structValue.set(name, fieldValue);
             }
         }
 
         let structSize = 0;
-        const fieldsInfo: { fieldValue: StructFieldValue; size: number }[] = [];
+        const fieldsInfo: {
+            fieldValue: StructFieldValue<any>;
+            size: number;
+        }[] = [];
 
         for (const [name] of this.#fields) {
             const fieldValue = structValue.get(name);

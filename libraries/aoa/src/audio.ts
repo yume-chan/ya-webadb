@@ -34,7 +34,7 @@ export async function aoaSetAudioMode(device: USBDevice, mode: AoaAudioMode) {
             value: mode,
             index: 0,
         },
-        new ArrayBuffer(0)
+        new ArrayBuffer(0),
     );
 }
 
@@ -78,7 +78,7 @@ export function aoaGetAudioStream(device: USBDevice) {
                 configuration.configurationValue
             ) {
                 await device.selectConfiguration(
-                    configuration.configurationValue
+                    configuration.configurationValue,
                 );
             }
 
@@ -92,14 +92,14 @@ export function aoaGetAudioStream(device: USBDevice) {
             ) {
                 await device.selectAlternateInterface(
                     interface_.interfaceNumber,
-                    alternate.alternateSetting
+                    alternate.alternateSetting,
                 );
             }
 
             const endpoint = alternate.endpoints.find(
                 (endpoint) =>
                     endpoint.type === "isochronous" &&
-                    endpoint.direction === "in"
+                    endpoint.direction === "in",
             );
             if (!endpoint) {
                 throw new Error("No matched endpoint found");
@@ -116,7 +116,7 @@ export function aoaGetAudioStream(device: USBDevice) {
                 const array = new Uint8Array(
                     data.buffer,
                     data.byteOffset,
-                    data.byteLength
+                    data.byteLength,
                 );
                 controller.enqueue(array);
             }

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import type {
     StructFieldDefinition,
     StructOptions,
@@ -12,7 +15,7 @@ import { BufferLikeFieldDefinition, BufferLikeFieldValue } from "./base.js";
 export type LengthField<TFields> = KeysOfType<TFields, number | string>;
 
 export interface VariableLengthBufferLikeFieldOptions<
-    TFields = object,
+    TFields extends object = object,
     TLengthField extends LengthField<TFields> = any,
 > {
     /**
@@ -92,7 +95,7 @@ export class VariableLengthBufferLikeStructFieldValue<
         }
 
         // Patch the associated length field.
-        const lengthField = this.definition.options.lengthField;
+        const lengthField = this.definition.options.lengthField as PropertyKey;
 
         const originalValue = struct.get(lengthField);
         this.lengthFieldValue = new VariableLengthBufferLikeFieldLengthValue(
@@ -123,16 +126,26 @@ export class VariableLengthBufferLikeStructFieldValue<
 
 // Not using `VariableLengthBufferLikeStructFieldValue` directly makes writing tests much easier...
 type VariableLengthBufferLikeFieldValueLike = StructFieldValue<
-    StructFieldDefinition<VariableLengthBufferLikeFieldOptions, any, any>
+    StructFieldDefinition<
+        VariableLengthBufferLikeFieldOptions<any, any>,
+        any,
+        any
+    >
 >;
 
-export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue {
-    protected originalField: StructFieldValue;
+export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue<
+    StructFieldDefinition<unknown, unknown, PropertyKey>
+> {
+    protected originalField: StructFieldValue<
+        StructFieldDefinition<unknown, unknown, PropertyKey>
+    >;
 
     protected bufferField: VariableLengthBufferLikeFieldValueLike;
 
     constructor(
-        originalField: StructFieldValue,
+        originalField: StructFieldValue<
+            StructFieldDefinition<unknown, unknown, PropertyKey>
+        >,
         arrayBufferField: VariableLengthBufferLikeFieldValueLike,
     ) {
         super(

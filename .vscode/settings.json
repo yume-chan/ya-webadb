@@ -98,8 +98,14 @@
     "typescript.preferences.quoteStyle": "single",
     "typescript.format.semicolons": "insert",
     "editor.formatOnSave": true,
+    "eslint.nodePath": "./toolchain/eslint-config/node_modules/eslint",
+    "eslint.options": {
+        "overrideConfigFile": "./node_modules/@yume-chan/eslint-config/eslint.config.js"
+    },
     "eslint.workingDirectories": [
-        "libraries/*",
+        {
+            "pattern": "libraries/*",
+        }
     ],
     "[javascript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"

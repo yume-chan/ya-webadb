@@ -39,7 +39,7 @@ export class HidMouse {
             0x81, 0x06,       //         Input (Data, Variable, Relative)
             0xc0,             //     End Collection
             0xc0,             // End Collection
-        ]
+        ],
     );
 
     static serializeInputReport(
@@ -47,7 +47,7 @@ export class HidMouse {
         movementY: number,
         buttons: number,
         scrollX: number,
-        scrollY: number
+        scrollY: number,
     ): Uint8Array {
         return new Uint8Array([
             buttons,

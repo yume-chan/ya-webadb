@@ -1,5 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
+import type { StructFieldDefinition } from "./definition.js";
+import type { StructFieldValue } from "./field-value.js";
 import { StructValue } from "./struct-value.js";
 
 describe("StructValue", () => {
@@ -26,7 +28,9 @@ describe("StructValue", () => {
                 get() {
                     return 42;
                 },
-            } as any;
+            } as StructFieldValue<
+                StructFieldDefinition<unknown, unknown, PropertyKey>
+            >;
             object.set(foo, fooValue);
 
             const bar = "bar";
@@ -34,7 +38,9 @@ describe("StructValue", () => {
                 get() {
                     return "foo";
                 },
-            } as any;
+            } as StructFieldValue<
+                StructFieldDefinition<unknown, unknown, PropertyKey>
+            >;
             object.set(bar, barValue);
 
             expect(object.fieldValues[foo]).toBe(fooValue);
@@ -49,15 +55,25 @@ describe("StructValue", () => {
             const fooSetter = jest.fn((value: number) => {
                 void value;
             });
-            const fooValue = { get: fooGetter, set: fooSetter } as any;
+            const fooValue = {
+                get: fooGetter,
+                set: fooSetter,
+            } as unknown as StructFieldValue<
+                StructFieldDefinition<unknown, unknown, PropertyKey>
+            >;
             object.set(foo, fooValue);
 
             const bar = "bar";
             const barGetter = jest.fn(() => true);
-            const barSetter = jest.fn((value: number) => {
+            const barSetter = jest.fn((value: boolean) => {
                 void value;
             });
-            const barValue = { get: barGetter, set: barSetter } as any;
+            const barValue = {
+                get: barGetter,
+                set: barSetter,
+            } as unknown as StructFieldValue<
+                StructFieldDefinition<unknown, unknown, PropertyKey>
+            >;
             object.set(bar, barValue);
 
             expect(object.value).toHaveProperty(foo, 42);
@@ -79,7 +95,9 @@ describe("StructValue", () => {
                 get() {
                     return "foo";
                 },
-            } as any;
+            } as StructFieldValue<
+                StructFieldDefinition<unknown, unknown, PropertyKey>
+            >;
             object.set(foo, fooValue);
 
             expect(object.get(foo)).toBe(fooValue);

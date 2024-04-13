@@ -3,7 +3,7 @@ import { AoaRequestType } from "./type.js";
 export async function aoaHidRegister(
     device: USBDevice,
     accessoryId: number,
-    reportDescriptorSize: number
+    reportDescriptorSize: number,
 ) {
     await device.controlTransferOut(
         {
@@ -13,14 +13,14 @@ export async function aoaHidRegister(
             value: accessoryId,
             index: reportDescriptorSize,
         },
-        new ArrayBuffer(0)
+        new ArrayBuffer(0),
     );
 }
 
 export async function aoaHidSetReportDescriptor(
     device: USBDevice,
     accessoryId: number,
-    reportDescriptor: Uint8Array
+    reportDescriptor: Uint8Array,
 ) {
     await device.controlTransferOut(
         {
@@ -30,7 +30,7 @@ export async function aoaHidSetReportDescriptor(
             value: accessoryId,
             index: 0,
         },
-        reportDescriptor
+        reportDescriptor,
     );
 }
 
@@ -43,14 +43,14 @@ export async function aoaHidUnregister(device: USBDevice, accessoryId: number) {
             value: accessoryId,
             index: 0,
         },
-        new ArrayBuffer(0)
+        new ArrayBuffer(0),
     );
 }
 
 export async function aoaHidSendInputReport(
     device: USBDevice,
     accessoryId: number,
-    event: Uint8Array
+    event: Uint8Array,
 ) {
     await device.controlTransferOut(
         {
@@ -60,7 +60,7 @@ export async function aoaHidSendInputReport(
             value: accessoryId,
             index: 0,
         },
-        event
+        event,
     );
 }
 
@@ -80,7 +80,7 @@ export class AoaHidDevice {
     static async register(
         device: USBDevice,
         accessoryId: number,
-        reportDescriptor: Uint8Array
+        reportDescriptor: Uint8Array,
     ) {
         await aoaHidRegister(device, accessoryId, reportDescriptor.length);
         await aoaHidSetReportDescriptor(device, accessoryId, reportDescriptor);

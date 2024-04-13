@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from "@jest/globals";
 
 import type { ValueOrPromise } from "../utils.js";
@@ -11,7 +12,7 @@ import type { StructValue } from "./struct-value.js";
 describe("StructFieldValue", () => {
     describe(".constructor", () => {
         it("should save parameters", () => {
-            class MockStructFieldValue extends StructFieldValue {
+            class MockStructFieldValue extends StructFieldValue<never> {
                 serialize(dataView: DataView, offset: number): void {
                     void dataView;
                     void offset;
@@ -19,16 +20,16 @@ describe("StructFieldValue", () => {
                 }
             }
 
-            const definition = {} as any;
-            const options = {} as any;
-            const struct = {} as any;
-            const value = {} as any;
+            const definition = {};
+            const options = {};
+            const struct = {};
+            const value = {};
 
             const fieldValue = new MockStructFieldValue(
-                definition,
-                options,
-                struct,
-                value,
+                definition as never,
+                options as never,
+                struct as never,
+                value as never,
             );
             expect(fieldValue).toHaveProperty("definition", definition);
             expect(fieldValue).toHaveProperty("options", options);
@@ -76,7 +77,7 @@ describe("StructFieldValue", () => {
                 }
             }
 
-            class MockStructFieldValue extends StructFieldValue {
+            class MockStructFieldValue extends StructFieldValue<any> {
                 serialize(dataView: DataView, offset: number): void {
                     void dataView;
                     void offset;
@@ -87,9 +88,9 @@ describe("StructFieldValue", () => {
             const fieldDefinition = new MockFieldDefinition();
             const fieldValue = new MockStructFieldValue(
                 fieldDefinition,
-                undefined as any,
-                undefined as any,
-                undefined as any,
+                undefined as never,
+                undefined as never,
+                undefined as never,
             );
             expect(fieldValue.getSize()).toBe(42);
         });
@@ -97,7 +98,7 @@ describe("StructFieldValue", () => {
 
     describe("#set", () => {
         it("should update its internal value", () => {
-            class MockStructFieldValue extends StructFieldValue {
+            class MockStructFieldValue extends StructFieldValue<any> {
                 serialize(dataView: DataView, offset: number): void {
                     void dataView;
                     void offset;
@@ -106,10 +107,10 @@ describe("StructFieldValue", () => {
             }
 
             const fieldValue = new MockStructFieldValue(
-                undefined as any,
-                undefined as any,
-                undefined as any,
-                undefined as any,
+                undefined as never,
+                undefined as never,
+                undefined as never,
+                undefined as never,
             );
             fieldValue.set(1);
             expect(fieldValue.get()).toBe(1);

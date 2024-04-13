@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, expect, it, jest } from "@jest/globals";
 
 import {
@@ -15,9 +19,10 @@ import {
     VariableLengthBufferLikeFieldDefinition,
     VariableLengthBufferLikeFieldLengthValue,
     VariableLengthBufferLikeStructFieldValue,
+    type VariableLengthBufferLikeFieldOptions,
 } from "./variable-length.js";
 
-class MockLengthFieldValue extends StructFieldValue {
+class MockLengthFieldValue extends StructFieldValue<any> {
     constructor() {
         super({} as any, {} as any, {} as any, {});
     }
@@ -42,7 +47,13 @@ class MockLengthFieldValue extends StructFieldValue {
 
 describe("Types", () => {
     describe("VariableLengthBufferLikeFieldLengthValue", () => {
-        class MockBufferLikeFieldValue extends StructFieldValue {
+        class MockBufferLikeFieldValue extends StructFieldValue<
+            VariableLengthBufferLikeFieldDefinition<
+                any,
+                VariableLengthBufferLikeFieldOptions<any, any>,
+                any
+            >
+        > {
             constructor() {
                 super({ options: {} } as any, {} as any, {} as any, {});
             }
@@ -153,7 +164,7 @@ describe("Types", () => {
                 mockArrayBufferFieldValue.size = 0;
                 expect(lengthFieldValue.get()).toBe(0);
 
-                (lengthFieldValue as StructFieldValue).set(100);
+                (lengthFieldValue as StructFieldValue<any>).set(100);
                 expect(lengthFieldValue.get()).toBe(0);
             });
         });
