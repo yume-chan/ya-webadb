@@ -1,5 +1,5 @@
 export * from "./back-or-screen-on.js";
-export * from "./basic.js";
+export * from "./empty.js";
 export * from "./hover-helper.js";
 export * from "./inject-keycode.js";
 export * from "./inject-scroll.js";

@@ -3,7 +3,7 @@ import type {
     ScrcpyScrollController,
 } from "../options/index.js";
 
-import { BasicControlMessage } from "./basic.js";
+import { EmptyControlMessage } from "./empty.js";
 import type { AndroidKeyEventAction } from "./inject-keycode.js";
 import { ScrcpyInjectKeyCodeControlMessage } from "./inject-keycode.js";
 import type { ScrcpyInjectScrollControlMessage } from "./inject-scroll.js";
@@ -86,7 +86,7 @@ export class ScrcpyControlMessageSerializer {
     }
 
     expandNotificationPanel() {
-        return BasicControlMessage.serialize({
+        return EmptyControlMessage.serialize({
             type: this.#typeValues.get(
                 ScrcpyControlMessageType.ExpandNotificationPanel,
             ),
@@ -94,7 +94,7 @@ export class ScrcpyControlMessageSerializer {
     }
 
     expandSettingPanel() {
-        return BasicControlMessage.serialize({
+        return EmptyControlMessage.serialize({
             type: this.#typeValues.get(
                 ScrcpyControlMessageType.ExpandSettingPanel,
             ),
@@ -102,7 +102,7 @@ export class ScrcpyControlMessageSerializer {
     }
 
     collapseNotificationPanel() {
-        return BasicControlMessage.serialize({
+        return EmptyControlMessage.serialize({
             type: this.#typeValues.get(
                 ScrcpyControlMessageType.CollapseNotificationPanel,
             ),

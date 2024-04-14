@@ -1,6 +1,6 @@
-import { BasicControlMessage } from "./basic.js";
+import { EmptyControlMessage } from "./empty.js";
 
-export const ScrcpyRotateDeviceControlMessage = BasicControlMessage;
+export const ScrcpyRotateDeviceControlMessage = EmptyControlMessage;
 
 export type ScrcpyRotateDeviceControlMessage =
     (typeof ScrcpyRotateDeviceControlMessage)["TInit"];

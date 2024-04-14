@@ -2,7 +2,7 @@ import Struct, { placeholder } from "@yume-chan/struct";
 
 import type { AndroidMotionEventAction } from "../../control/index.js";
 import {
-    BasicControlMessage,
+    EmptyControlMessage,
     ScrcpyControlMessageType,
 } from "../../control/index.js";
 
@@ -44,7 +44,7 @@ export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
 export type ScrcpyInjectTouchControlMessage1_16 =
     (typeof ScrcpyInjectTouchControlMessage1_16)["TInit"];
 
-export const ScrcpyBackOrScreenOnControlMessage1_16 = BasicControlMessage;
+export const ScrcpyBackOrScreenOnControlMessage1_16 = EmptyControlMessage;
 
 export const ScrcpySetClipboardControlMessage1_15 = new Struct()
     .uint8("type")
