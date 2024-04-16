@@ -180,8 +180,8 @@ export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue<
         // It will always be in sync with the buffer size
     }
 
-    serialize(dataView: DataView, offset: number) {
+    serialize(dataView: DataView, array: Uint8Array, offset: number) {
         this.originalField.set(this.get());
-        this.originalField.serialize(dataView, offset);
+        this.originalField.serialize(dataView, array, offset);
     }
 }

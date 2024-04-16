@@ -97,10 +97,7 @@ export enum AdbSyncSendV2Flags {
      * 4
      */
     Zstd = 1 << 2,
-    /**
-     * 0x80000000
-     */
-    DryRun = (1 << 31) >>> 0,
+    DryRun = 0x80000000,
 }
 
 export interface AdbSyncPushV2Options extends AdbSyncPushV1Options {

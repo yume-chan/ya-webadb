@@ -4,13 +4,17 @@ import {
     delay,
 } from "@yume-chan/async";
 import {
+    getUint32BigEndian,
+    setUint32LittleEndian,
+} from "@yume-chan/no-data-view";
+import {
     AbortController,
     Consumable,
     WritableStream,
     type ReadableWritablePair,
     type WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
-import { EMPTY_UINT8_ARRAY, NumberFieldType } from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { decodeUtf8, encodeUtf8 } from "../utils/index.js";
@@ -189,7 +193,7 @@ export class AdbPacketDispatcher implements Closeable {
                     "Invalid OKAY packet. Payload size should be 4",
                 );
             }
-            ackBytes = NumberFieldType.Uint32.deserialize(packet.payload, true);
+            ackBytes = getUint32BigEndian(packet.payload, 0);
         } else {
             if (packet.payload.byteLength !== 0) {
                 throw new Error(
@@ -228,10 +232,7 @@ export class AdbPacketDispatcher implements Closeable {
         let payload: Uint8Array;
         if (this.options.initialDelayedAckBytes !== 0) {
             payload = new Uint8Array(4);
-            payload[0] = ackBytes & 0xff;
-            payload[1] = (ackBytes >> 8) & 0xff;
-            payload[2] = (ackBytes >> 16) & 0xff;
-            payload[3] = (ackBytes >> 24) & 0xff;
+            setUint32LittleEndian(payload, 0, ackBytes);
         } else {
             payload = EMPTY_UINT8_ARRAY;
         }

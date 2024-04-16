@@ -1,3 +1,9 @@
+import {
+    getInt16,
+    getInt32,
+    getUint16,
+    getUint32,
+} from "@yume-chan/no-data-view";
 import type {
     AsyncExactReadable,
     ExactReadable,
@@ -51,9 +57,7 @@ export namespace NumberFieldType {
             // PERF: Creating many `DataView`s over small buffers is 90% slower
             // than this. Even if the `DataView` is cached, `DataView#getUint16`
             // is still 1% slower than this.
-            const a = (array[1]! << 8) | array[0]!;
-            const b = (array[0]! << 8) | array[1]!;
-            return littleEndian ? a : b;
+            return getUint16(array, 0, littleEndian);
         },
         serialize(dataView, offset, value, littleEndian) {
             dataView.setUint16(offset, value, littleEndian);
@@ -64,8 +68,7 @@ export namespace NumberFieldType {
         signed: true,
         size: 2,
         deserialize(array, littleEndian) {
-            const value = Uint16.deserialize(array, littleEndian);
-            return (value << 16) >> 16;
+            return getInt16(array, 0, littleEndian);
         },
         serialize(dataView, offset, value, littleEndian) {
             dataView.setInt16(offset, value, littleEndian);
@@ -76,8 +79,7 @@ export namespace NumberFieldType {
         signed: false,
         size: 4,
         deserialize(array, littleEndian) {
-            const value = Int32.deserialize(array, littleEndian);
-            return value >>> 0;
+            return getUint32(array, 0, littleEndian);
         },
         serialize(dataView, offset, value, littleEndian) {
             dataView.setUint32(offset, value, littleEndian);
@@ -88,17 +90,7 @@ export namespace NumberFieldType {
         signed: true,
         size: 4,
         deserialize(array, littleEndian) {
-            const a =
-                (array[3]! << 24) |
-                (array[2]! << 16) |
-                (array[1]! << 8) |
-                array[0]!;
-            const b =
-                (array[0]! << 24) |
-                (array[1]! << 16) |
-                (array[2]! << 8) |
-                array[3]!;
-            return littleEndian ? a : b;
+            return getInt32(array, 0, littleEndian);
         },
         serialize(dataView, offset, value, littleEndian) {
             dataView.setInt32(offset, value, littleEndian);
@@ -162,7 +154,7 @@ export class NumberFieldDefinition<
 export class NumberFieldValue<
     TDefinition extends NumberFieldDefinition<NumberFieldType, unknown>,
 > extends StructFieldValue<TDefinition> {
-    serialize(dataView: DataView, offset: number): void {
+    serialize(dataView: DataView, array: Uint8Array, offset: number): void {
         this.definition.type.serialize(
             dataView,
             offset,

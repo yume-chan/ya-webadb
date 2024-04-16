@@ -5,7 +5,7 @@ import {
     TransformStream,
 } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable, ValueOrPromise } from "@yume-chan/struct";
-import { NumberFieldType, decodeUtf8 } from "@yume-chan/struct";
+import { decodeUtf8 } from "@yume-chan/struct";
 
 import type {
     ScrcpyBackOrScreenOnControlMessage,
@@ -23,6 +23,10 @@ import { ScrcpyVideoCodecId } from "../codec.js";
 import type { ScrcpyDisplay, ScrcpyEncoder, ScrcpyOptions } from "../types.js";
 import { toScrcpyOptionValue } from "../types.js";
 
+import {
+    getUint16BigEndian,
+    getUint32BigEndian,
+} from "@yume-chan/no-data-view";
 import { CodecOptions } from "./codec-options.js";
 import type { ScrcpyOptionsInit1_16 } from "./init.js";
 import { ScrcpyLogLevel1_16, ScrcpyVideoOrientation1_16 } from "./init.js";
@@ -84,13 +88,13 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
     }
 
     static async parseUint16BE(stream: AsyncExactReadable): Promise<number> {
-        const buffer = await stream.readExactly(NumberFieldType.Uint16.size);
-        return NumberFieldType.Uint16.deserialize(buffer, false);
+        const buffer = await stream.readExactly(2);
+        return getUint16BigEndian(buffer, 0);
     }
 
     static async parseUint32BE(stream: AsyncExactReadable): Promise<number> {
-        const buffer = await stream.readExactly(NumberFieldType.Uint32.size);
-        return NumberFieldType.Uint32.deserialize(buffer, false);
+        const buffer = await stream.readExactly(4);
+        return getUint32BigEndian(buffer, 0);
     }
 
     value: Required<ScrcpyOptionsInit1_16>;

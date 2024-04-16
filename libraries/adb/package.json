@@ -35,9 +35,9 @@
         "@yume-chan/async": "^2.2.0",
         "@yume-chan/dataview-bigint-polyfill": "workspace:^0.0.23",
         "@yume-chan/event": "workspace:^0.0.23",
+        "@yume-chan/no-data-view": "workspace:^0.0.23",
         "@yume-chan/stream-extra": "workspace:^0.0.23",
-        "@yume-chan/struct": "workspace:^0.0.23",
-        "tslib": "^2.6.2"
+        "@yume-chan/struct": "workspace:^0.0.23"
     },
     "devDependencies": {
         "@jest/globals": "^30.0.0-alpha.3",

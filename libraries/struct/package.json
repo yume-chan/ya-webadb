@@ -34,8 +34,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/dataview-bigint-polyfill": "workspace:^0.0.23",
-        "tslib": "^2.6.2"
+        "@yume-chan/no-data-view": "workspace:^0.0.23"
     },
     "devDependencies": {
         "@jest/globals": "^30.0.0-alpha.3",

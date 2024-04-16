@@ -1,0 +1,45 @@
+{
+    "name": "@yume-chan/no-data-view",
+    "version": "0.0.23",
+    "description": "Plain methods to avoid creating `DataView`s",
+    "keywords": [],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/no-data-view#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "packages/no-data-view"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "scripts": {
+        "benchmark": "node benchmark.js",
+        "build": "tsc -b tsconfig.build.json",
+        "build:watch": "tsc -b tsconfig.build.json",
+        "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" TS_JEST_DISABLE_VER_CHECKER=true jest --coverage",
+        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "@types/node": "^20.12.7",
+        "@jest/globals": "^30.0.0-alpha.3",
+        "@yume-chan/eslint-config": "workspace:^1.0.0",
+        "@yume-chan/tsconfig": "workspace:^1.0.0",
+        "cross-env": "^7.0.3",
+        "jest": "^30.0.0-alpha.3",
+        "prettier": "^3.2.5",
+        "ts-jest": "^29.1.2",
+        "tinybench": "^2.7.0",
+        "typescript": "^5.4.5"
+    }
+}

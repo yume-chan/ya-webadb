@@ -39,7 +39,6 @@
         "@yume-chan/scrcpy": "workspace:^0.0.23",
         "@yume-chan/stream-extra": "workspace:^0.0.23",
         "tinyh264": "^0.0.7",
-        "tslib": "^2.6.2",
         "yuv-buffer": "^1.0.0",
         "yuv-canvas": "^1.2.11"
     },

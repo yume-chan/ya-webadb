@@ -438,6 +438,12 @@
             "versionPolicyName": "adb"
         },
         {
+            "packageName": "@yume-chan/no-data-view",
+            "projectFolder": "libraries/no-data-view",
+            "shouldPublish": true,
+            "versionPolicyName": "adb"
+        },
+        {
             "packageName": "@yume-chan/scrcpy-decoder-tinyh264",
             "projectFolder": "libraries/scrcpy-decoder-tinyh264",
             "shouldPublish": true,

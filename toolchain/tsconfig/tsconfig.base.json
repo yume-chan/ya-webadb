@@ -16,7 +16,7 @@
         "stripInternal": true,
         // "jsx": "preserve",                     /* Specify JSX code generation: 'preserve', 'react-native', or 'react'. */
         // "noEmit": true,                        /* Do not emit outputs. */
-        "importHelpers": true, //                 /* Import emit helpers from 'tslib'. */
+        // "importHelpers": true, //                 /* Import emit helpers from 'tslib'. */
         "skipLibCheck": true, //                  /* Skip type checking of all declaration files (*.d.ts). */
         /* Strict Type-Checking Options */
         "strict": true, //                        /* Enable all strict type-checking options. */

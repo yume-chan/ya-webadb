@@ -8,6 +8,7 @@ import {
     h264ParseConfiguration,
     h265ParseConfiguration,
 } from "@yume-chan/scrcpy";
+import { getUint32LittleEndian } from "@yume-chan/no-data-view";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
@@ -20,15 +21,6 @@ import { WebGLFrameRenderer } from "./webgl.js";
 
 function toHex(value: number) {
     return value.toString(16).padStart(2, "0").toUpperCase();
-}
-
-function toUint32Le(data: Uint8Array, offset: number) {
-    return (
-        data[offset]! |
-        (data[offset + 1]! << 8) |
-        (data[offset + 2]! << 16) |
-        (data[offset + 3]! << 24)
-    );
 }
 
 export class WebCodecsDecoder implements ScrcpyVideoDecoder {
@@ -137,74 +129,83 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
         this.#animationFrameId = requestAnimationFrame(this.#onFramePresented);
     };
 
+    #configureH264(data: Uint8Array) {
+        const {
+            profileIndex,
+            constraintSet,
+            levelIndex,
+            croppedWidth,
+            croppedHeight,
+        } = h264ParseConfiguration(data);
+
+        this.#canvas.width = croppedWidth;
+        this.#canvas.height = croppedHeight;
+        this.#sizeChanged.fire({
+            width: croppedWidth,
+            height: croppedHeight,
+        });
+
+        // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
+        // ISO Base Media File Format Name Space
+        const codec =
+            "avc1." +
+            toHex(profileIndex) +
+            toHex(constraintSet) +
+            toHex(levelIndex);
+        this.#decoder.configure({
+            codec: codec,
+            optimizeForLatency: true,
+        });
+    }
+
+    #configureH265(data: Uint8Array) {
+        const {
+            generalProfileSpace,
+            generalProfileIndex,
+            generalProfileCompatibilitySet,
+            generalTierFlag,
+            generalLevelIndex,
+            generalConstraintSet,
+            croppedWidth,
+            croppedHeight,
+        } = h265ParseConfiguration(data);
+
+        this.#canvas.width = croppedWidth;
+        this.#canvas.height = croppedHeight;
+        this.#sizeChanged.fire({
+            width: croppedWidth,
+            height: croppedHeight,
+        });
+
+        const codec = [
+            "hev1",
+            ["", "A", "B", "C"][generalProfileSpace]! +
+                generalProfileIndex.toString(),
+            getUint32LittleEndian(generalProfileCompatibilitySet, 0).toString(
+                16,
+            ),
+            (generalTierFlag ? "H" : "L") + generalLevelIndex.toString(),
+            getUint32LittleEndian(generalConstraintSet, 0)
+                .toString(16)
+                .toUpperCase(),
+            getUint32LittleEndian(generalConstraintSet, 4)
+                .toString(16)
+                .toUpperCase(),
+        ].join(".");
+        this.#decoder.configure({
+            codec,
+            optimizeForLatency: true,
+        });
+    }
+
     #configure(data: Uint8Array) {
         switch (this.#codec) {
-            case ScrcpyVideoCodecId.H264: {
-                const {
-                    profileIndex,
-                    constraintSet,
-                    levelIndex,
-                    croppedWidth,
-                    croppedHeight,
-                } = h264ParseConfiguration(data);
-
-                this.#canvas.width = croppedWidth;
-                this.#canvas.height = croppedHeight;
-                this.#sizeChanged.fire({
-                    width: croppedWidth,
-                    height: croppedHeight,
-                });
-
-                // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
-                // ISO Base Media File Format Name Space
-                const codec = `avc1.${[profileIndex, constraintSet, levelIndex]
-                    .map(toHex)
-                    .join("")}`;
-                this.#decoder.configure({
-                    codec: codec,
-                    optimizeForLatency: true,
-                });
+            case ScrcpyVideoCodecId.H264:
+                this.#configureH264(data);
                 break;
-            }
-            case ScrcpyVideoCodecId.H265: {
-                const {
-                    generalProfileSpace,
-                    generalProfileIndex,
-                    generalProfileCompatibilitySet,
-                    generalTierFlag,
-                    generalLevelIndex,
-                    generalConstraintSet,
-                    croppedWidth,
-                    croppedHeight,
-                } = h265ParseConfiguration(data);
-
-                this.#canvas.width = croppedWidth;
-                this.#canvas.height = croppedHeight;
-                this.#sizeChanged.fire({
-                    width: croppedWidth,
-                    height: croppedHeight,
-                });
-
-                const codec = [
-                    "hev1",
-                    ["", "A", "B", "C"][generalProfileSpace]! +
-                        generalProfileIndex.toString(),
-                    toUint32Le(generalProfileCompatibilitySet, 0).toString(16),
-                    (generalTierFlag ? "H" : "L") +
-                        generalLevelIndex.toString(),
-                    toUint32Le(generalConstraintSet, 0)
-                        .toString(16)
-                        .toUpperCase(),
-                    toUint32Le(generalConstraintSet, 4)
-                        .toString(16)
-                        .toUpperCase(),
-                ].join(".");
-                this.#decoder.configure({
-                    codec,
-                    optimizeForLatency: true,
-                });
+            case ScrcpyVideoCodecId.H265:
+                this.#configureH265(data);
                 break;
-            }
         }
         this.#config = data;
     }

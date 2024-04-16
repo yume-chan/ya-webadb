@@ -30,8 +30,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.23",
-        "tslib": "^2.6.2"
+        "@yume-chan/adb": "workspace:^0.0.23"
     },
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^1.0.0",

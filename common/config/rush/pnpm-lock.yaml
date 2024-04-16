@@ -62,15 +62,15 @@ importers:
       '@yume-chan/event':
         specifier: workspace:^0.0.23
         version: link:../event
+      '@yume-chan/no-data-view':
+        specifier: workspace:^0.0.23
+        version: link:../no-data-view
       '@yume-chan/stream-extra':
         specifier: workspace:^0.0.23
         version: link:../stream-extra
       '@yume-chan/struct':
         specifier: workspace:^0.0.23
         version: link:../struct
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@jest/globals':
         specifier: ^30.0.0-alpha.3
@@ -105,9 +105,6 @@ importers:
       '@yume-chan/adb':
         specifier: workspace:^0.0.23
         version: link:../adb
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
@@ -136,9 +133,6 @@ importers:
       '@yume-chan/struct':
         specifier: workspace:^0.0.23
         version: link:../struct
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
@@ -173,9 +167,6 @@ importers:
       '@yume-chan/struct':
         specifier: workspace:^0.0.23
         version: link:../struct
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@jest/globals':
         specifier: ^30.0.0-alpha.3
@@ -213,9 +204,6 @@ importers:
       '@yume-chan/struct':
         specifier: workspace:^0.0.23
         version: link:../struct
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@types/node':
         specifier: ^20.12.7
@@ -247,9 +235,6 @@ importers:
       '@yume-chan/struct':
         specifier: workspace:^0.0.23
         version: link:../struct
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@jest/globals':
         specifier: ^30.0.0-alpha.3
@@ -281,9 +266,6 @@ importers:
       '@types/w3c-web-usb':
         specifier: ^1.0.10
         version: 1.0.10
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
@@ -296,10 +278,6 @@ importers:
         version: 5.4.5
 
   ../../libraries/dataview-bigint-polyfill:
-    dependencies:
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
@@ -322,9 +300,6 @@ importers:
       '@yume-chan/async':
         specifier: ^2.2.0
         version: 2.2.0
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@jest/globals':
         specifier: ^30.0.0-alpha.3
@@ -361,11 +336,40 @@ importers:
         specifier: ^20.12.7
         version: 20.12.7
 
+  ../../libraries/no-data-view:
+    devDependencies:
+      '@jest/globals':
+        specifier: ^30.0.0-alpha.3
+        version: 30.0.0-alpha.3
+      '@types/node':
+        specifier: ^20.12.7
+        version: 20.12.7
+      '@yume-chan/eslint-config':
+        specifier: workspace:^1.0.0
+        version: link:../../toolchain/eslint-config
+      '@yume-chan/tsconfig':
+        specifier: workspace:^1.0.0
+        version: link:../../toolchain/tsconfig
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      jest:
+        specifier: ^30.0.0-alpha.3
+        version: 30.0.0-alpha.3(@types/node@20.12.7)
+      prettier:
+        specifier: ^3.2.5
+        version: 3.2.5
+      tinybench:
+        specifier: ^2.7.0
+        version: 2.7.0
+      ts-jest:
+        specifier: ^29.1.2
+        version: 29.1.2(jest@30.0.0-alpha.3)(typescript@5.4.5)
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
   ../../libraries/pcm-player:
-    dependencies:
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@jest/globals':
         specifier: ^30.0.0-alpha.3
@@ -397,6 +401,9 @@ importers:
 
   ../../libraries/scrcpy:
     dependencies:
+      '@yume-chan/no-data-view':
+        specifier: workspace:^0.0.23
+        version: link:../no-data-view
       '@yume-chan/stream-extra':
         specifier: workspace:^0.0.23
         version: link:../stream-extra
@@ -449,9 +456,6 @@ importers:
       tinyh264:
         specifier: ^0.0.7
         version: 0.0.7
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
       yuv-buffer:
         specifier: ^1.0.0
         version: 1.0.0
@@ -489,6 +493,9 @@ importers:
       '@yume-chan/event':
         specifier: workspace:^0.0.23
         version: link:../event
+      '@yume-chan/no-data-view':
+        specifier: workspace:^0.0.23
+        version: link:../no-data-view
       '@yume-chan/scrcpy':
         specifier: workspace:^0.0.23
         version: link:../scrcpy
@@ -498,9 +505,6 @@ importers:
       '@yume-chan/stream-extra':
         specifier: workspace:^0.0.23
         version: link:../stream-extra
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@jest/globals':
         specifier: ^30.0.0-alpha.3
@@ -535,9 +539,6 @@ importers:
       '@yume-chan/struct':
         specifier: workspace:^0.0.23
         version: link:../struct
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
     devDependencies:
       '@jest/globals':
         specifier: ^30.0.0-alpha.3
@@ -566,12 +567,9 @@ importers:
 
   ../../libraries/struct:
     dependencies:
-      '@yume-chan/dataview-bigint-polyfill':
+      '@yume-chan/no-data-view':
         specifier: workspace:^0.0.23
-        version: link:../dataview-bigint-polyfill
-      tslib:
-        specifier: ^2.6.2
-        version: 2.6.2
+        version: link:../no-data-view
     devDependencies:
       '@jest/globals':
         specifier: ^30.0.0-alpha.3
@@ -4570,6 +4568,10 @@ packages:
   /through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
     dev: false
+
+  /tinybench@2.7.0:
+    resolution: {integrity: sha512-Qgayeb106x2o4hNzNjsZEfFziw8IbKqtbXBjVh7VIZfBxfD5M4gWtpyx5+YTae2gJ6Y6Dz/KLepiv16RFeQWNA==}
+    dev: true
 
   /tinyh264@0.0.7:
     resolution: {integrity: sha512-etkBRgYkSFBdAi2Cqk4sZgi+xWs/vhzNgvjO3z2i4WILeEmORiNqxuQ4URJatrWQ9LPNV3WPWAtzsh/LA/XL/g==}

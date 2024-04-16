@@ -1,7 +1,8 @@
 import {
-    getBigUint64,
-    setBigUint64,
-} from "@yume-chan/dataview-bigint-polyfill/esm/fallback.js";
+    getUint64BigEndian,
+    setInt64BigEndian,
+    setInt64LittleEndian,
+} from "@yume-chan/no-data-view";
 
 /**
  * Gets the `BigInt` value at the specified byte offset and length from the start of the view. There is
@@ -11,7 +12,7 @@ import {
  * @param byteOffset The place in the buffer at which the value should be retrieved.
  */
 export function getBigUint(
-    dataView: DataView,
+    array: Uint8Array,
     byteOffset: number,
     length: number,
 ): bigint {
@@ -22,8 +23,8 @@ export function getBigUint(
 
     for (let i = byteOffset; i < byteOffset + length; i += 8) {
         result <<= 64n;
-        const value = getBigUint64(dataView, i, false);
-        result += value;
+        const value = getUint64BigEndian(array, i);
+        result |= value;
     }
 
     return result;
@@ -37,7 +38,7 @@ export function getBigUint(
  * otherwise a little-endian value should be written.
  */
 export function setBigUint(
-    dataView: DataView,
+    array: Uint8Array,
     byteOffset: number,
     value: bigint,
     littleEndian?: boolean,
@@ -46,7 +47,7 @@ export function setBigUint(
 
     if (littleEndian) {
         while (value > 0n) {
-            setBigUint64(dataView, byteOffset, value, true);
+            setInt64LittleEndian(array, byteOffset, value);
             byteOffset += 8;
             value >>= 64n;
         }
@@ -60,7 +61,7 @@ export function setBigUint(
         }
 
         for (let i = uint64Array.length - 1; i >= 0; i -= 1) {
-            setBigUint64(dataView, byteOffset, uint64Array[i]!, false);
+            setInt64BigEndian(array, byteOffset, uint64Array[i]!);
             byteOffset += 8;
         }
     }
@@ -95,9 +96,8 @@ const RsaPrivateKeyDOffset = 303;
 const RsaPrivateKeyDLength = 2048 / 8;
 
 export function rsaParsePrivateKey(key: Uint8Array): [n: bigint, d: bigint] {
-    const view = new DataView(key.buffer, key.byteOffset, key.byteLength);
-    const n = getBigUint(view, RsaPrivateKeyNOffset, RsaPrivateKeyNLength);
-    const d = getBigUint(view, RsaPrivateKeyDOffset, RsaPrivateKeyDLength);
+    const n = getBigUint(key, RsaPrivateKeyNOffset, RsaPrivateKeyNLength);
+    const d = getBigUint(key, RsaPrivateKeyDOffset, RsaPrivateKeyDLength);
     return [n, d];
 }
 
@@ -193,12 +193,12 @@ export function adbGeneratePublicKey(
     outputOffset += 4;
 
     // Write n
-    setBigUint(outputView, outputOffset, n, true);
+    setBigUint(output, outputOffset, n, true);
     outputOffset += 256;
 
     // Calculate rr = (2^(rsa_size)) ^ 2 mod n
     const rr = 2n ** 4096n % n;
-    outputOffset += setBigUint(outputView, outputOffset, rr, true);
+    outputOffset += setBigUint(output, outputOffset, rr, true);
 
     // exponent
     outputView.setUint32(outputOffset, 65537, true);
@@ -305,12 +305,11 @@ export function rsaSign(privateKey: Uint8Array, data: Uint8Array): Uint8Array {
 
     // Encryption
     // signature = padded ** d % n
-    const view = new DataView(padded.buffer);
-    const signature = powMod(getBigUint(view, 0, view.byteLength), d, n);
+    const signature = powMod(getBigUint(padded, 0, padded.length), d, n);
 
     // `padded` is not used anymore,
     // re-use the buffer to store the result
-    setBigUint(view, 0, signature, false);
+    setBigUint(padded, 0, signature, false);
 
     return padded;
 }

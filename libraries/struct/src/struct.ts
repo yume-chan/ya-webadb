@@ -697,7 +697,7 @@ export class Struct<
         );
         let offset = 0;
         for (const { fieldValue, size } of fieldsInfo) {
-            fieldValue.serialize(dataView, offset);
+            fieldValue.serialize(dataView, output, offset);
             offset += size;
         }
 

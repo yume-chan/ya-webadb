@@ -67,5 +67,9 @@ export abstract class StructFieldValue<
     /**
      * When implemented in derived classes, serializes this field into `dataView` at `offset`
      */
-    abstract serialize(dataView: DataView, offset: number): void;
+    abstract serialize(
+        dataView: DataView,
+        array: Uint8Array,
+        offset: number,
+    ): void;
 }

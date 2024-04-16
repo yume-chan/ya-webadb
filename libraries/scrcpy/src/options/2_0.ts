@@ -4,13 +4,14 @@ import {
     PushReadableStream,
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
-import Struct, { NumberFieldType, placeholder } from "@yume-chan/struct";
+import Struct, { placeholder } from "@yume-chan/struct";
 
 import type {
     AndroidMotionEventAction,
     ScrcpyInjectTouchControlMessage,
 } from "../control/index.js";
 
+import { getUint32BigEndian } from "@yume-chan/no-data-view";
 import {
     CodecOptions,
     ScrcpyFloatToUint16FieldDefinition,
@@ -256,14 +257,9 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
         return (async (): Promise<ScrcpyAudioStreamMetadata> => {
             const buffered = new BufferedReadableStream(stream);
-            const buffer = await buffered.readExactly(
-                NumberFieldType.Uint32.size,
-            );
+            const buffer = await buffered.readExactly(4);
 
-            const codecMetadataValue = NumberFieldType.Uint32.deserialize(
-                buffer,
-                false,
-            );
+            const codecMetadataValue = getUint32BigEndian(buffer, 0);
             // Server will send `0x00_00_00_00` and `0x00_00_00_01` even if `sendCodecMeta` is false
             switch (codecMetadataValue) {
                 case 0x00_00_00_00:

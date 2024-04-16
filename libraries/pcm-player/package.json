@@ -29,9 +29,7 @@
         "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
         "prepublishOnly": "npm run build"
     },
-    "dependencies": {
-        "tslib": "^2.6.2"
-    },
+    "dependencies": {},
     "devDependencies": {
         "@jest/globals": "^30.0.0-alpha.3",
         "@types/audioworklet": "^0.0.54",

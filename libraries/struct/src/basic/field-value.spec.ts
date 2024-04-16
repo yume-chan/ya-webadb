@@ -13,8 +13,13 @@ describe("StructFieldValue", () => {
     describe(".constructor", () => {
         it("should save parameters", () => {
             class MockStructFieldValue extends StructFieldValue<never> {
-                serialize(dataView: DataView, offset: number): void {
+                serialize(
+                    dataView: DataView,
+                    array: Uint8Array,
+                    offset: number,
+                ): void {
                     void dataView;
+                    void array;
                     void offset;
                     throw new Error("Method not implemented.");
                 }
@@ -78,8 +83,13 @@ describe("StructFieldValue", () => {
             }
 
             class MockStructFieldValue extends StructFieldValue<any> {
-                serialize(dataView: DataView, offset: number): void {
+                serialize(
+                    dataView: DataView,
+                    array: Uint8Array,
+                    offset: number,
+                ): void {
                     void dataView;
+                    void array;
                     void offset;
                     throw new Error("Method not implemented.");
                 }
@@ -99,8 +109,13 @@ describe("StructFieldValue", () => {
     describe("#set", () => {
         it("should update its internal value", () => {
             class MockStructFieldValue extends StructFieldValue<any> {
-                serialize(dataView: DataView, offset: number): void {
+                serialize(
+                    dataView: DataView,
+                    array: Uint8Array,
+                    offset: number,
+                ): void {
                     void dataView;
+                    void array;
                     void offset;
                     throw new Error("Method not implemented.");
                 }

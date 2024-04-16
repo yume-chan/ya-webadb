@@ -39,10 +39,12 @@ class MockLengthFieldValue extends StructFieldValue<any> {
         void value;
     });
 
-    serialize = jest.fn((dataView: DataView, offset: number): void => {
-        void dataView;
-        void offset;
-    });
+    serialize = jest.fn(
+        (dataView: DataView, array: Uint8Array, offset: number): void => {
+            void dataView;
+            void offset;
+        },
+    );
 }
 
 describe("Types", () => {
@@ -62,8 +64,13 @@ describe("Types", () => {
 
             override getSize = jest.fn(() => this.size);
 
-            serialize(dataView: DataView, offset: number): void {
+            serialize(
+                dataView: DataView,
+                array: Uint8Array,
+                offset: number,
+            ): void {
                 void dataView;
+                void array;
                 void offset;
                 throw new Error("Method not implemented.");
             }
@@ -181,11 +188,12 @@ describe("Types", () => {
                     );
 
                 const dataView = 0 as any;
+                const array = 2 as any;
                 const offset = 1 as any;
 
                 mockOriginalFieldValue.value = 10;
                 mockArrayBufferFieldValue.size = 0;
-                lengthFieldValue.serialize(dataView, offset);
+                lengthFieldValue.serialize(dataView, array, offset);
                 expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.get).toHaveReturnedWith(10);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
@@ -195,13 +203,14 @@ describe("Types", () => {
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
+                    array,
                     offset,
                 );
 
                 mockOriginalFieldValue.set.mockClear();
                 mockOriginalFieldValue.serialize.mockClear();
                 mockArrayBufferFieldValue.size = 100;
-                lengthFieldValue.serialize(dataView, offset);
+                lengthFieldValue.serialize(dataView, array, offset);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(100);
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
@@ -209,6 +218,7 @@ describe("Types", () => {
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
+                    array,
                     offset,
                 );
             });
@@ -224,11 +234,12 @@ describe("Types", () => {
                     );
 
                 const dataView = 0 as any;
+                const array = 2 as any;
                 const offset = 1 as any;
 
                 mockOriginalFieldValue.value = "10";
                 mockArrayBufferFieldValue.size = 0;
-                lengthFieldValue.serialize(dataView, offset);
+                lengthFieldValue.serialize(dataView, array, offset);
                 expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.get).toHaveReturnedWith("10");
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
@@ -238,13 +249,14 @@ describe("Types", () => {
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
+                    array,
                     offset,
                 );
 
                 mockOriginalFieldValue.set.mockClear();
                 mockOriginalFieldValue.serialize.mockClear();
                 mockArrayBufferFieldValue.size = 100;
-                lengthFieldValue.serialize(dataView, offset);
+                lengthFieldValue.serialize(dataView, array, offset);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledWith("100");
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
@@ -252,6 +264,7 @@ describe("Types", () => {
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
+                    array,
                     offset,
                 );
             });
@@ -271,11 +284,12 @@ describe("Types", () => {
                     radix;
 
                 const dataView = 0 as any;
+                const array = 2 as any;
                 const offset = 1 as any;
 
                 mockOriginalFieldValue.value = "10";
                 mockArrayBufferFieldValue.size = 0;
-                lengthFieldValue.serialize(dataView, offset);
+                lengthFieldValue.serialize(dataView, array, offset);
                 expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.get).toHaveReturnedWith("10");
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
@@ -285,13 +299,14 @@ describe("Types", () => {
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
+                    array,
                     offset,
                 );
 
                 mockOriginalFieldValue.set.mockClear();
                 mockOriginalFieldValue.serialize.mockClear();
                 mockArrayBufferFieldValue.size = 100;
-                lengthFieldValue.serialize(dataView, offset);
+                lengthFieldValue.serialize(dataView, array, offset);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(
                     (100).toString(radix),
@@ -301,6 +316,7 @@ describe("Types", () => {
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
                     dataView,
+                    array,
                     offset,
                 );
             });

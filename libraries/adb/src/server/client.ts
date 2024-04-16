@@ -17,7 +17,6 @@ import type {
     ValueOrPromise,
 } from "@yume-chan/struct";
 import {
-    BigIntFieldType,
     EMPTY_UINT8_ARRAY,
     SyncPromise,
     decodeUtf8,
@@ -29,6 +28,7 @@ import { AdbBanner } from "../banner.js";
 import type { AdbFeature } from "../features.js";
 import { NOOP, hexToNumber, numberToHex, unreachable } from "../utils/index.js";
 
+import { getUint64LittleEndian } from "@yume-chan/no-data-view";
 import { AdbServerTransport } from "./transport.js";
 
 export interface AdbServerConnectionOptions {
@@ -391,13 +391,7 @@ export class AdbServerClient {
         try {
             if (transportId === undefined) {
                 const array = await readable.readExactly(8);
-                // TODO: switch to a more performant algorithm.
-                const dataView = new DataView(
-                    array.buffer,
-                    array.byteOffset,
-                    array.byteLength,
-                );
-                transportId = BigIntFieldType.Uint64.getter(dataView, 0, true);
+                transportId = getUint64LittleEndian(array, 0);
             }
 
             await AdbServerClient.readOkay(readable);

@@ -316,7 +316,7 @@ describe("Types", () => {
 
                     const array = new Uint8Array(10);
                     const dataView = new DataView(array.buffer);
-                    value.serialize(dataView, 2);
+                    value.serialize(dataView, array, 2);
 
                     expect(Array.from(array)).toEqual([
                         0, 0, 42, 0, 0, 0, 0, 0, 0, 0,

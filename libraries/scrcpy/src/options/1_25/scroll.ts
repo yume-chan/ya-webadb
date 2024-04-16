@@ -1,7 +1,6 @@
-import Struct, {
-    NumberFieldDefinition,
-    NumberFieldType,
-} from "@yume-chan/struct";
+import { getInt16 } from "@yume-chan/no-data-view";
+import type { NumberFieldType } from "@yume-chan/struct";
+import Struct, { NumberFieldDefinition } from "@yume-chan/struct";
 
 import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
 import { ScrcpyControlMessageType } from "../../control/index.js";
@@ -12,7 +11,7 @@ export const ScrcpyFloatToInt16NumberType: NumberFieldType = {
     size: 2,
     signed: true,
     deserialize(array, littleEndian) {
-        const value = NumberFieldType.Int16.deserialize(array, littleEndian);
+        const value = getInt16(array, 0, littleEndian);
         // https://github.com/Genymobile/scrcpy/blob/1f138aef41de651668043b32c4effc2d4adbfc44/server/src/main/java/com/genymobile/scrcpy/Binary.java#L34
         return value === 0x7fff ? 1 : value / 0x8000;
     },
@@ -20,7 +19,7 @@ export const ScrcpyFloatToInt16NumberType: NumberFieldType = {
         // https://github.com/Genymobile/scrcpy/blob/1f138aef41de651668043b32c4effc2d4adbfc44/app/src/util/binary.h#L65
         value = clamp(value, -1, 1);
         value = value === 1 ? 0x7fff : value * 0x8000;
-        NumberFieldType.Int16.serialize(dataView, offset, value, littleEndian);
+        dataView.setInt16(offset, value, littleEndian);
     },
 };
 

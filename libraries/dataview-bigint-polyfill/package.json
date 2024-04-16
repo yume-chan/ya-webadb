@@ -35,9 +35,7 @@
         "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
         "prepublishOnly": "npm run build"
     },
-    "dependencies": {
-        "tslib": "^2.6.2"
-    },
+    "dependencies": {},
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",

@@ -34,8 +34,7 @@
     "dependencies": {
         "@yume-chan/adb": "workspace:^0.0.23",
         "@yume-chan/stream-extra": "workspace:^0.0.23",
-        "@yume-chan/struct": "workspace:^0.0.23",
-        "tslib": "^2.6.2"
+        "@yume-chan/struct": "workspace:^0.0.23"
     },
     "devDependencies": {
         "@jest/globals": "^30.0.0-alpha.3",
