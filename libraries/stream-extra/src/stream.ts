@@ -36,10 +36,10 @@ const Global = globalThis as unknown as GlobalExtension;
 
 export const AbortController = Global.AbortController;
 
-export type ReadableStream<T> = ReadableStreamType<T>;
+export type ReadableStream<out T> = ReadableStreamType<T>;
 export const ReadableStream = Global.ReadableStream;
 
-export type WritableStream<T> = WritableStreamType<T>;
+export type WritableStream<in T> = WritableStreamType<T>;
 export const WritableStream = Global.WritableStream;
 
 export type TransformStream<I, O> = TransformStreamType<I, O>;

@@ -1,8 +1,7 @@
-import type {
+import {
     Consumable,
-    WritableStreamDefaultWriter,
+    type WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
-import { ConsumableWritableStream } from "@yume-chan/stream-extra";
 
 import type { ScrcpyOptions } from "../options/index.js";
 
@@ -29,7 +28,7 @@ export class ScrcpyControlMessageWriter {
     }
 
     async write(message: Uint8Array) {
-        await ConsumableWritableStream.write(this.#writer, message);
+        await Consumable.WritableStream.write(this.#writer, message);
     }
 
     async injectKeyCode(

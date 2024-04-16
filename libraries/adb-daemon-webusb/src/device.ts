@@ -14,8 +14,8 @@ import type {
     WritableStream,
 } from "@yume-chan/stream-extra";
 import {
-    ConsumableWritableStream,
     DuplexStreamFactory,
+    MaybeConsumable,
     ReadableStream,
     pipeFrom,
 } from "@yume-chan/stream-extra";
@@ -188,7 +188,7 @@ export class AdbDaemonWebUsbConnection
         const zeroMask = outEndpoint.packetSize - 1;
         this.#writable = pipeFrom(
             duplex.createWritable(
-                new ConsumableWritableStream({
+                new MaybeConsumable.WritableStream({
                     write: async (chunk) => {
                         try {
                             await device.raw.transferOut(

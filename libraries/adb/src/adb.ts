@@ -1,4 +1,7 @@
-import type { Consumable, ReadableWritablePair } from "@yume-chan/stream-extra";
+import type {
+    MaybeConsumable,
+    ReadableWritablePair,
+} from "@yume-chan/stream-extra";
 import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
@@ -20,7 +23,7 @@ export interface Closeable {
 }
 
 export interface AdbSocket
-    extends ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>,
+    extends ReadableWritablePair<Uint8Array, MaybeConsumable<Uint8Array>>,
         Closeable {
     get service(): string;
 

@@ -5,7 +5,10 @@ import type {
     WritableStreamDefaultController,
     WritableStreamDefaultWriter,
 } from "./stream.js";
-import { ReadableStream, TransformStream, WritableStream } from "./stream.js";
+import {
+    WritableStream as NativeWritableStream,
+    ReadableStream,
+} from "./stream.js";
 
 interface Task {
     run<T>(callback: () => T): T;
@@ -29,6 +32,10 @@ const createTask: Console["createTask"] =
         },
     }));
 
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+    return typeof value === "object" && value !== null && "then" in value;
+}
+
 export class Consumable<T> {
     readonly #task: Task;
     readonly #resolver: PromiseResolver<void>;
@@ -51,11 +58,23 @@ export class Consumable<T> {
         this.#resolver.reject(error);
     }
 
-    async tryConsume<U>(callback: (value: T) => U) {
+    tryConsume<U>(callback: (value: T) => U) {
         try {
-            // eslint-disable-next-line @typescript-eslint/await-thenable
-            const result = await this.#task.run(() => callback(this.value));
-            this.#resolver.resolve();
+            let result = this.#task.run(() => callback(this.value));
+            if (isPromiseLike(result)) {
+                result = result.then(
+                    (value) => {
+                        this.#resolver.resolve();
+                        return value;
+                    },
+                    (e) => {
+                        this.#resolver.reject(e);
+                        throw e;
+                    },
+                ) as U;
+            } else {
+                this.#resolver.resolve();
+            }
             return result;
         } catch (e) {
             this.#resolver.reject(e);
@@ -64,36 +83,70 @@ export class Consumable<T> {
     }
 }
 
-async function enqueue<T>(
-    controller: { enqueue: (chunk: Consumable<T>) => void },
-    chunk: T,
-) {
-    const output = new Consumable(chunk);
-    controller.enqueue(output);
-    await output.consumed;
-}
-
-export class WrapConsumableStream<T> extends TransformStream<T, Consumable<T>> {
-    constructor() {
-        super({
-            async transform(chunk, controller) {
-                await enqueue(controller, chunk);
-            },
-        });
+export namespace Consumable {
+    export interface WritableStreamSink<in T> {
+        start?(
+            controller: WritableStreamDefaultController,
+        ): void | PromiseLike<void>;
+        write?(
+            chunk: T,
+            controller: WritableStreamDefaultController,
+        ): void | PromiseLike<void>;
+        abort?(reason: unknown): void | PromiseLike<void>;
+        close?(): void | PromiseLike<void>;
     }
-}
 
-export class UnwrapConsumableStream<T> extends TransformStream<
-    Consumable<T>,
-    T
-> {
-    constructor() {
-        super({
-            transform(chunk, controller) {
-                controller.enqueue(chunk.value);
-                chunk.consume();
-            },
-        });
+    export class WritableStream<in T> extends NativeWritableStream<
+        Consumable<T>
+    > {
+        static async write<T>(
+            writer: WritableStreamDefaultWriter<Consumable<T>>,
+            value: T,
+        ) {
+            const consumable = new Consumable(value);
+            await writer.write(consumable);
+            await consumable.consumed;
+        }
+
+        constructor(
+            sink: WritableStreamSink<T>,
+            strategy?: QueuingStrategy<T>,
+        ) {
+            let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
+            if (strategy) {
+                wrappedStrategy = {};
+                if ("highWaterMark" in strategy) {
+                    wrappedStrategy.highWaterMark = strategy.highWaterMark;
+                }
+                if ("size" in strategy) {
+                    wrappedStrategy.size = (chunk) => {
+                        return strategy.size!(
+                            chunk instanceof Consumable ? chunk.value : chunk,
+                        );
+                    };
+                }
+            }
+
+            super(
+                {
+                    start(controller) {
+                        return sink.start?.(controller);
+                    },
+                    async write(chunk, controller) {
+                        await chunk.tryConsume((chunk) =>
+                            sink.write?.(chunk, controller),
+                        );
+                    },
+                    abort(reason) {
+                        return sink.abort?.(reason);
+                    },
+                    close() {
+                        return sink.close?.();
+                    },
+                },
+                wrappedStrategy,
+            );
+        }
     }
 }
 
@@ -114,6 +167,15 @@ export interface ConsumableReadableStreamSource<T> {
 }
 
 export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
+    static async enqueue<T>(
+        controller: { enqueue: (chunk: Consumable<T>) => void },
+        chunk: T,
+    ) {
+        const output = new Consumable(chunk);
+        controller.enqueue(output);
+        await output.consumed;
+    }
+
     constructor(
         source: ConsumableReadableStreamSource<T>,
         strategy?: QueuingStrategy<T>,
@@ -140,7 +202,10 @@ export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
                 async start(controller) {
                     wrappedController = {
                         async enqueue(chunk) {
-                            await enqueue(controller, chunk);
+                            await ConsumableReadableStream.enqueue(
+                                controller,
+                                chunk,
+                            );
                         },
                         close() {
                             controller.close();
@@ -161,131 +226,5 @@ export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
             },
             wrappedStrategy,
         );
-    }
-}
-
-export interface ConsumableWritableStreamSink<T> {
-    start?(
-        controller: WritableStreamDefaultController,
-    ): void | PromiseLike<void>;
-    write?(
-        chunk: T,
-        controller: WritableStreamDefaultController,
-    ): void | PromiseLike<void>;
-    abort?(reason: unknown): void | PromiseLike<void>;
-    close?(): void | PromiseLike<void>;
-}
-
-export class ConsumableWritableStream<T> extends WritableStream<Consumable<T>> {
-    static async write<T>(
-        writer: WritableStreamDefaultWriter<Consumable<T>>,
-        value: T,
-    ) {
-        const consumable = new Consumable(value);
-        await writer.write(consumable);
-        await consumable.consumed;
-    }
-
-    constructor(
-        sink: ConsumableWritableStreamSink<T>,
-        strategy?: QueuingStrategy<T>,
-    ) {
-        let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
-        if (strategy) {
-            wrappedStrategy = {};
-            if ("highWaterMark" in strategy) {
-                wrappedStrategy.highWaterMark = strategy.highWaterMark;
-            }
-            if ("size" in strategy) {
-                wrappedStrategy.size = (chunk) => {
-                    return strategy.size!(chunk.value);
-                };
-            }
-        }
-
-        super(
-            {
-                start(controller) {
-                    return sink.start?.(controller);
-                },
-                async write(chunk, controller) {
-                    await chunk.tryConsume((value) =>
-                        sink.write?.(value, controller),
-                    );
-                },
-                abort(reason) {
-                    return sink.abort?.(reason);
-                },
-                close() {
-                    return sink.close?.();
-                },
-            },
-            wrappedStrategy,
-        );
-    }
-}
-
-export interface ConsumableTransformer<I, O> {
-    start?(
-        controller: ConsumableReadableStreamController<O>,
-    ): void | PromiseLike<void>;
-    transform?(
-        chunk: I,
-        controller: ConsumableReadableStreamController<O>,
-    ): void | PromiseLike<void>;
-    flush?(
-        controller: ConsumableReadableStreamController<O>,
-    ): void | PromiseLike<void>;
-}
-
-export class ConsumableTransformStream<I, O> extends TransformStream<
-    Consumable<I>,
-    Consumable<O>
-> {
-    constructor(transformer: ConsumableTransformer<I, O>) {
-        let wrappedController:
-            | ConsumableReadableStreamController<O>
-            | undefined;
-
-        super({
-            async start(controller) {
-                wrappedController = {
-                    async enqueue(chunk) {
-                        await enqueue(controller, chunk);
-                    },
-                    close() {
-                        controller.terminate();
-                    },
-                    error(reason) {
-                        controller.error(reason);
-                    },
-                };
-
-                await transformer.start?.(wrappedController);
-            },
-            async transform(chunk) {
-                await chunk.tryConsume((value) =>
-                    transformer.transform?.(value, wrappedController!),
-                );
-                chunk.consume();
-            },
-            async flush() {
-                await transformer.flush?.(wrappedController!);
-            },
-        });
-    }
-}
-
-export class ConsumableInspectStream<T> extends TransformStream<
-    Consumable<T>,
-    Consumable<T>
-> {
-    constructor(callback: (value: T) => void) {
-        super({
-            transform(chunk, controller) {
-                callback(chunk.value);
-                controller.enqueue(chunk);
-            },
-        });
     }
 }

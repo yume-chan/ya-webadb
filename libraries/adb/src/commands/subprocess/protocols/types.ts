@@ -1,5 +1,5 @@
 import type {
-    Consumable,
+    MaybeConsumable,
     ReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
@@ -11,7 +11,7 @@ export interface AdbSubprocessProtocol {
     /**
      * A WritableStream that writes to the `stdin` stream.
      */
-    readonly stdin: WritableStream<Consumable<Uint8Array>>;
+    readonly stdin: WritableStream<MaybeConsumable<Uint8Array>>;
 
     /**
      * The `stdout` stream of the process.

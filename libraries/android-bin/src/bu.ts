@@ -1,5 +1,5 @@
 import { AdbCommandBase } from "@yume-chan/adb";
-import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
+import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
 
 export interface AdbBackupOptions {
@@ -15,7 +15,7 @@ export interface AdbBackupOptions {
 
 export interface AdbRestoreOptions {
     user: number;
-    file: ReadableStream<Consumable<Uint8Array>>;
+    file: ReadableStream<MaybeConsumable<Uint8Array>>;
 }
 
 export class AdbBackup extends AdbCommandBase {

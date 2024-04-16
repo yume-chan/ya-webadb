@@ -85,7 +85,7 @@ export class HidTouchScreen {
 
     static readonly DESCRIPTOR = DESCRIPTOR;
 
-    #fingers: Map<number, Finger> = new Map();
+    #fingers = new Map<number, Finger>();
 
     down(id: number, x: number, y: number) {
         if (this.#fingers.size >= 10) {

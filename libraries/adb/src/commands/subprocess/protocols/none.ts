@@ -1,4 +1,4 @@
-import type { Consumable, WritableStream } from "@yume-chan/stream-extra";
+import type { MaybeConsumable, WritableStream } from "@yume-chan/stream-extra";
 import { ReadableStream } from "@yume-chan/stream-extra";
 
 import type { Adb, AdbSocket } from "../../../adb.js";
@@ -36,7 +36,7 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
     readonly #socket: AdbSocket;
 
     // Legacy shell forwards all data to stdin.
-    get stdin(): WritableStream<Consumable<Uint8Array>> {
+    get stdin(): WritableStream<MaybeConsumable<Uint8Array>> {
         return this.#socket.writable;
     }
 

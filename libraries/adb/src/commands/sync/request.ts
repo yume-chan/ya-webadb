@@ -19,10 +19,6 @@ export const AdbSyncNumberRequest = new Struct({ littleEndian: true })
     .string("id", { length: 4 })
     .uint32("arg");
 
-export const AdbSyncDataRequest = new Struct({ littleEndian: true })
-    .concat(AdbSyncNumberRequest)
-    .uint8Array("data", { lengthField: "arg" });
-
 export interface AdbSyncWritable {
     write(buffer: Uint8Array): Promise<void>;
 }
@@ -33,22 +29,21 @@ export async function adbSyncWriteRequest(
     value: number | string | Uint8Array,
 ): Promise<void> {
     if (typeof value === "number") {
-        const buffer = AdbSyncNumberRequest.serialize({
-            id,
-            arg: value,
-        });
-        await writable.write(buffer);
-    } else if (typeof value === "string") {
-        // Let `writable` buffer writes
-        const buffer = encodeUtf8(value);
         await writable.write(
-            AdbSyncNumberRequest.serialize({ id, arg: buffer.byteLength }),
+            AdbSyncNumberRequest.serialize({ id, arg: value }),
         );
-        await writable.write(buffer);
-    } else {
-        await writable.write(
-            AdbSyncNumberRequest.serialize({ id, arg: value.byteLength }),
-        );
-        await writable.write(value);
+        return;
     }
+
+    if (typeof value === "string") {
+        value = encodeUtf8(value);
+    }
+
+    // `writable` will copy inputs to an internal buffer,
+    // so we write header and `buffer` separately,
+    // to avoid an extra copy.
+    await writable.write(
+        AdbSyncNumberRequest.serialize({ id, arg: value.byteLength }),
+    );
+    await writable.write(value);
 }

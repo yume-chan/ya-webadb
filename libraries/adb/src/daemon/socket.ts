@@ -1,16 +1,13 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
-import type {
-    AbortSignal,
-    Consumable,
-    PushReadableStreamController,
-    ReadableStream,
-    WritableStream,
-    WritableStreamDefaultController,
-} from "@yume-chan/stream-extra";
 import {
-    ConsumableWritableStream,
+    MaybeConsumable,
     PushReadableStream,
+    type AbortSignal,
+    type PushReadableStreamController,
+    type ReadableStream,
+    type WritableStream,
+    type WritableStreamDefaultController,
 } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../adb.js";
@@ -50,7 +47,7 @@ export class AdbDaemonSocketController
     }
 
     #writableController!: WritableStreamDefaultController;
-    readonly writable: WritableStream<Consumable<Uint8Array>>;
+    readonly writable: WritableStream<MaybeConsumable<Uint8Array>>;
 
     #closed = false;
 
@@ -86,7 +83,7 @@ export class AdbDaemonSocketController
             this.#readableController = controller;
         });
 
-        this.writable = new ConsumableWritableStream<Uint8Array>({
+        this.writable = new MaybeConsumable.WritableStream<Uint8Array>({
             start: (controller) => {
                 this.#writableController = controller;
             },
@@ -216,7 +213,7 @@ export class AdbDaemonSocket implements AdbDaemonSocketInfo, AdbSocket {
     get readable(): ReadableStream<Uint8Array> {
         return this.#controller.readable;
     }
-    get writable(): WritableStream<Consumable<Uint8Array>> {
+    get writable(): WritableStream<MaybeConsumable<Uint8Array>> {
         return this.#controller.writable;
     }
 

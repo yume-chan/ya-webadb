@@ -1,4 +1,6 @@
-import { ConsumableTransformStream } from "./consumable.js";
+import { ConsumableReadableStream } from "./consumable.js";
+import { MaybeConsumable } from "./maybe-consumable.js";
+import { TransformStream } from "./stream.js";
 
 /**
  * Splits or combines buffers to specified size.
@@ -77,34 +79,42 @@ export class BufferCombiner {
     }
 }
 
-export class DistributionStream extends ConsumableTransformStream<
-    Uint8Array,
-    Uint8Array
+export class DistributionStream extends TransformStream<
+    MaybeConsumable<Uint8Array>,
+    MaybeConsumable<Uint8Array>
 > {
     constructor(size: number, combine = false) {
         const combiner = combine ? new BufferCombiner(size) : undefined;
         super({
             async transform(chunk, controller) {
-                if (combiner) {
-                    for (const buffer of combiner.push(chunk)) {
-                        await controller.enqueue(buffer);
+                await MaybeConsumable.tryConsume(chunk, async (chunk) => {
+                    if (combiner) {
+                        for (const buffer of combiner.push(chunk)) {
+                            await ConsumableReadableStream.enqueue(
+                                controller,
+                                buffer,
+                            );
+                        }
+                    } else {
+                        let offset = 0;
+                        let available = chunk.byteLength;
+                        while (available > 0) {
+                            const end = offset + size;
+                            await ConsumableReadableStream.enqueue(
+                                controller,
+                                chunk.subarray(offset, end),
+                            );
+                            offset = end;
+                            available -= size;
+                        }
                     }
-                } else {
-                    let offset = 0;
-                    let available = chunk.byteLength;
-                    while (available > 0) {
-                        const end = offset + size;
-                        await controller.enqueue(chunk.subarray(offset, end));
-                        offset = end;
-                        available -= size;
-                    }
-                }
+                });
             },
-            async flush(controller) {
+            flush(controller) {
                 if (combiner) {
                     const data = combiner.flush();
                     if (data) {
-                        await controller.enqueue(data);
+                        controller.enqueue(data);
                     }
                 }
             },

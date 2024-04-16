@@ -136,7 +136,7 @@ export declare class ReadableByteStreamController {
  *
  * @public
  */
-export declare class ReadableStream<R> implements AsyncIterable<R> {
+export declare class ReadableStream<out R> implements AsyncIterable<R> {
     constructor(
         underlyingSource: UnderlyingByteSource,
         strategy?: {
@@ -380,7 +380,7 @@ export declare class ReadableStreamDefaultController<R> {
  *
  * @public
  */
-export declare class ReadableStreamDefaultReader<R> {
+export declare class ReadableStreamDefaultReader<out R> {
     constructor(stream: ReadableStream<R>);
     /**
      * Returns a promise that will be fulfilled when the stream becomes closed,
@@ -446,7 +446,7 @@ export declare interface ReadableStreamIteratorOptions {
 }
 
 /**
- * A common interface for a `ReadadableStream` implementation.
+ * A common interface for a `ReadableStream` implementation.
  *
  * @public
  */
@@ -643,7 +643,7 @@ export declare type UnderlyingByteSourceStartCallback = (
  *
  * @public
  */
-export declare interface UnderlyingSink<W> {
+export declare interface UnderlyingSink<in W> {
     /**
      * A function that is called immediately during creation of the {@link WritableStream}.
      */
@@ -749,7 +749,7 @@ export declare type UnderlyingSourceStartCallback<R> = (
  *
  * @public
  */
-export declare class WritableStream<W> {
+export declare class WritableStream<in W> {
     constructor(
         underlyingSink?: UnderlyingSink<W>,
         strategy?: QueuingStrategy<W>,
@@ -822,7 +822,7 @@ export declare class WritableStreamDefaultController {
  *
  * @public
  */
-export declare class WritableStreamDefaultWriter<W> {
+export declare class WritableStreamDefaultWriter<in W> {
     constructor(stream: WritableStream<W>);
     /**
      * Returns a promise that will be fulfilled when the stream becomes closed, or rejected if the stream ever errors or

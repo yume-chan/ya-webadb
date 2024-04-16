@@ -1,10 +1,8 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
-import {
-    ConsumableReadableStream,
-    ConsumableWritableStream,
-} from "./consumable.js";
+import { ConsumableReadableStream } from "./consumable.js";
 import { DistributionStream } from "./distribution.js";
+import { MaybeConsumable } from "./maybe-consumable.js";
 
 const TestData = new Uint8Array(50);
 for (let i = 0; i < 50; i += 1) {
@@ -32,7 +30,7 @@ async function testInputOutput(
     })
         .pipeThrough(new DistributionStream(10, combine || undefined))
         .pipeTo(
-            new ConsumableWritableStream({
+            new MaybeConsumable.WritableStream({
                 write(chunk) {
                     // chunk will be reused, so we need to copy it
                     write(chunk.slice());

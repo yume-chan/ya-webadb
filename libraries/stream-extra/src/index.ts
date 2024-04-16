@@ -6,6 +6,7 @@ export * from "./decode-utf8.js";
 export * from "./distribution.js";
 export * from "./duplex.js";
 export * from "./inspect.js";
+export * from "./maybe-consumable.js";
 export * from "./pipe-from.js";
 export * from "./push-readable.js";
 export * from "./split-string.js";

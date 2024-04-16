@@ -23,6 +23,7 @@ import {
 } from "@yume-chan/scrcpy";
 import type {
     Consumable,
+    MaybeConsumable,
     ReadableStream,
     ReadableWritablePair,
 } from "@yume-chan/stream-extra";
@@ -100,7 +101,7 @@ export type AdbScrcpyAudioStreamMetadata =
 export class AdbScrcpyClient {
     static async pushServer(
         adb: Adb,
-        file: ReadableStream<Consumable<Uint8Array>>,
+        file: ReadableStream<MaybeConsumable<Uint8Array>>,
         filename = DEFAULT_SERVER_PATH,
     ) {
         const sync = await adb.sync();

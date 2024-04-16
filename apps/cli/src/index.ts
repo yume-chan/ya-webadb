@@ -6,10 +6,7 @@ import "source-map-support/register.js";
 
 import { Adb, AdbServerClient } from "@yume-chan/adb";
 import { AdbServerNodeTcpConnector } from "@yume-chan/adb-server-node-tcp";
-import {
-    ConsumableWritableStream,
-    WritableStream,
-} from "@yume-chan/stream-extra";
+import { WritableStream } from "@yume-chan/stream-extra";
 import { program } from "commander";
 
 program
@@ -142,7 +139,7 @@ createDeviceCommand("shell [args...]")
 
         process.stdin.setRawMode(true);
         process.stdin.on("data", (data: Uint8Array) => {
-            ConsumableWritableStream.write(stdinWriter, data).catch((e) => {
+            stdinWriter.write(data).catch((e) => {
                 console.error(e);
                 process.exit(1);
             });

@@ -5,7 +5,7 @@
 
 import type { Adb } from "@yume-chan/adb";
 import { AdbCommandBase, escapeArg } from "@yume-chan/adb";
-import type { Consumable, ReadableStream } from "@yume-chan/stream-extra";
+import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 import {
     ConcatStringStream,
     DecodeUtf8Stream,
@@ -295,7 +295,7 @@ export class PackageManager extends AdbCommandBase {
     }
 
     async pushAndInstallStream(
-        stream: ReadableStream<Consumable<Uint8Array>>,
+        stream: ReadableStream<MaybeConsumable<Uint8Array>>,
         options?: Partial<PackageManagerInstallOptions>,
     ): Promise<void> {
         const sync = await this.adb.sync();
@@ -334,7 +334,7 @@ export class PackageManager extends AdbCommandBase {
 
     async installStream(
         size: number,
-        stream: ReadableStream<Consumable<Uint8Array>>,
+        stream: ReadableStream<MaybeConsumable<Uint8Array>>,
         options?: Partial<PackageManagerInstallOptions>,
     ): Promise<void> {
         // Android 7 added both `cmd` command and streaming install support,
@@ -548,7 +548,7 @@ export class PackageManager extends AdbCommandBase {
         sessionId: number,
         splitName: string,
         size: number,
-        stream: ReadableStream<Consumable<Uint8Array>>,
+        stream: ReadableStream<MaybeConsumable<Uint8Array>>,
     ) {
         const args: string[] = [
             "pm",
@@ -625,7 +625,7 @@ export class PackageManagerInstallSession {
     addSplitStream(
         splitName: string,
         size: number,
-        stream: ReadableStream<Consumable<Uint8Array>>,
+        stream: ReadableStream<MaybeConsumable<Uint8Array>>,
     ) {
         return this.#packageManager.sessionAddSplitStream(
             this.#id,

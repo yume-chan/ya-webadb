@@ -275,7 +275,7 @@ export class Struct<
 
     #extra: Record<PropertyKey, unknown> = {};
 
-    #postDeserialized?: StructPostDeserialized<TFields, unknown> | undefined;
+    #postDeserialized?: StructPostDeserialized<never, unknown> | undefined;
 
     constructor(options?: Partial<Readonly<StructOptions>>) {
         this.options = { ...StructDefaultOptions, ...options };
@@ -625,8 +625,8 @@ export class Struct<
                 // Run `postDeserialized`
                 if (this.#postDeserialized) {
                     const override = this.#postDeserialized.call(
-                        value as TFields,
-                        value as TFields,
+                        value as never,
+                        value as never,
                     );
                     // If it returns a new value, use that as result
                     // Otherwise it only inspects/mutates the object in place.
@@ -640,15 +640,16 @@ export class Struct<
             .valueOrPromise();
     }
 
-    serialize(init: Evaluate<Omit<TFields, TOmitInitKey>>): Uint8Array;
-    serialize(
-        init: Evaluate<Omit<TFields, TOmitInitKey>>,
-        output: Uint8Array,
-    ): number;
+    /**
+     * Serialize a struct value to a buffer.
+     * @param init Fields of the struct
+     * @param output The buffer to serialize the struct to. It must be large enough to hold the entire struct. If not provided, a new buffer will be created.
+     * @returns A view of `output` that contains the serialized struct, or a new buffer if `output` is not provided.
+     */
     serialize(
         init: Evaluate<Omit<TFields, TOmitInitKey>>,
         output?: Uint8Array,
-    ): Uint8Array | number {
+    ): Uint8Array {
         let structValue: StructValue;
         if (isStructValueInit(init)) {
             structValue = init[STRUCT_VALUE_SYMBOL];
@@ -683,10 +684,10 @@ export class Struct<
             structSize += size;
         }
 
-        let outputType = "number";
         if (!output) {
             output = new Uint8Array(structSize);
-            outputType = "Uint8Array";
+        } else if (output.length < structSize) {
+            throw new Error("Output buffer is too small");
         }
 
         const dataView = new DataView(
@@ -700,8 +701,8 @@ export class Struct<
             offset += size;
         }
 
-        if (outputType === "number") {
-            return structSize;
+        if (output.length !== structSize) {
+            return output.subarray(0, structSize);
         } else {
             return output;
         }

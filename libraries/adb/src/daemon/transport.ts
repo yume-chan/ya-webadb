@@ -1,9 +1,9 @@
 import { PromiseResolver } from "@yume-chan/async";
-import type { Consumable, ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
     AbortController,
-    ConsumableWritableStream,
+    Consumable,
     WritableStream,
+    type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 import { decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
@@ -187,7 +187,10 @@ export class AdbDaemonTransport implements AdbTransport {
             // Because we don't know if the device needs it or not.
             (init as AdbPacketInit).checksum = calculateChecksum(init.payload);
             (init as AdbPacketInit).magic = init.command ^ 0xffffffff;
-            await ConsumableWritableStream.write(writer, init as AdbPacketInit);
+            await Consumable.WritableStream.write(
+                writer,
+                init as AdbPacketInit,
+            );
         }
 
         const actualFeatures = features.slice();

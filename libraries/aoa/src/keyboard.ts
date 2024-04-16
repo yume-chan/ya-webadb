@@ -274,7 +274,7 @@ export class HidKeyboard {
     static readonly REPORT_SIZE = 8;
 
     #modifiers = 0;
-    #keys: Set<HidKeyCode> = new Set();
+    #keys = new Set<HidKeyCode>();
 
     down(key: HidKeyCode) {
         if (key >= HidKeyCode.ControlLeft && key <= HidKeyCode.MetaRight) {

@@ -1,11 +1,11 @@
 import type {
-    Consumable,
+    MaybeConsumable,
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import {
     BufferCombiner,
     BufferedReadableStream,
-    ConsumableWritableStream,
+    Consumable,
 } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable } from "@yume-chan/struct";
 
@@ -13,7 +13,7 @@ import type { AdbSocket } from "../../adb.js";
 import { AutoResetEvent } from "../../utils/index.js";
 
 export class AdbSyncSocketLocked implements AsyncExactReadable {
-    readonly #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
+    readonly #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
     readonly #readable: BufferedReadableStream;
     readonly #socketLock: AutoResetEvent;
     readonly #writeLock = new AutoResetEvent();
@@ -24,7 +24,7 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
     }
 
     constructor(
-        writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
+        writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>,
         readable: BufferedReadableStream,
         bufferSize: number,
         lock: AutoResetEvent,
@@ -35,8 +35,8 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
         this.#combiner = new BufferCombiner(bufferSize);
     }
 
-    async #writeInnerStream(buffer: Uint8Array) {
-        await ConsumableWritableStream.write(this.#writer, buffer);
+    async #writeConsumable(buffer: Uint8Array) {
+        await Consumable.WritableStream.write(this.#writer, buffer);
     }
 
     async flush() {
@@ -44,7 +44,7 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
             await this.#writeLock.wait();
             const buffer = this.#combiner.flush();
             if (buffer) {
-                await this.#writeInnerStream(buffer);
+                await this.#writeConsumable(buffer);
             }
         } finally {
             this.#writeLock.notifyOne();
@@ -55,7 +55,7 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
         try {
             await this.#writeLock.wait();
             for (const buffer of this.#combiner.push(data)) {
-                await this.#writeInnerStream(buffer);
+                await this.#writeConsumable(buffer);
             }
         } finally {
             this.#writeLock.notifyOne();

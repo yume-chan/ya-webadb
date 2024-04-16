@@ -3,15 +3,12 @@ import {
     PromiseResolver,
     delay,
 } from "@yume-chan/async";
-import type {
-    Consumable,
-    ReadableWritablePair,
-    WritableStreamDefaultWriter,
-} from "@yume-chan/stream-extra";
 import {
     AbortController,
-    ConsumableWritableStream,
+    Consumable,
     WritableStream,
+    type ReadableWritablePair,
+    type WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import { EMPTY_UINT8_ARRAY, NumberFieldType } from "@yume-chan/struct";
 
@@ -231,7 +228,10 @@ export class AdbPacketDispatcher implements Closeable {
         let payload: Uint8Array;
         if (this.options.initialDelayedAckBytes !== 0) {
             payload = new Uint8Array(4);
-            new DataView(payload.buffer).setUint32(0, ackBytes, true);
+            payload[0] = ackBytes & 0xff;
+            payload[1] = (ackBytes >> 8) & 0xff;
+            payload[2] = (ackBytes >> 16) & 0xff;
+            payload[3] = (ackBytes >> 24) & 0xff;
         } else {
             payload = EMPTY_UINT8_ARRAY;
         }
@@ -374,7 +374,7 @@ export class AdbPacketDispatcher implements Closeable {
             throw new Error("payload too large");
         }
 
-        await ConsumableWritableStream.write(this.#writer, {
+        await Consumable.WritableStream.write(this.#writer, {
             command,
             arg0,
             arg1,

@@ -1,17 +1,11 @@
 /// <reference types="node" />
 
 import eslint from "@eslint/js";
-import { existsSync } from "fs";
-import { resolve } from "path";
+import { dirname, resolve } from "path";
 import tslint from "typescript-eslint";
+import { fileURLToPath } from "url";
 
-const cwd = process.cwd();
-const project = [];
-if (existsSync(resolve(cwd, "tsconfig.test.json"))) {
-    project.push("./tsconfig.test.json");
-} else {
-    project.push("./tsconfig.build.json");
-}
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 export default tslint.config(
     eslint.configs.recommended,
@@ -22,8 +16,12 @@ export default tslint.config(
     {
         languageOptions: {
             parserOptions: {
-                tsconfigRootDir: cwd,
-                project: project,
+                tsconfigRootDir: root,
+                project: [
+                    "libraries/*/tsconfig.test.json",
+                    "libraries/*/tsconfig.build.json",
+                    "apps/*/tsconfig.build.json",
+                ],
             },
         },
         rules: {
@@ -67,15 +65,12 @@ export default tslint.config(
             "@typescript-eslint/no-namespace": "off",
             "@typescript-eslint/array-type": "error",
             "@typescript-eslint/consistent-type-definitions": "error",
+            "@typescript-eslint/consistent-generic-constructors": "error",
+            "@typescript-eslint/consistent-indexed-object-style": "error",
             "@typescript-eslint/no-this-alias": "error",
-            "@typescript-eslint/consistent-type-imports": [
-                "error",
-                {
-                    prefer: "type-imports",
-                    disallowTypeAnnotations: true,
-                    fixStyle: "inline-type-imports",
-                },
-            ],
+            "@typescript-eslint/consistent-type-imports": "error",
+
+            "@typescript-eslint/no-import-type-side-effects": "error",
         },
     },
 );

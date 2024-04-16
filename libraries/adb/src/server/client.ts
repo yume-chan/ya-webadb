@@ -8,7 +8,7 @@ import type {
 } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
-    UnwrapConsumableStream,
+    MaybeConsumable,
     WrapWritableStream,
 } from "@yume-chan/stream-extra";
 import type {
@@ -408,7 +408,7 @@ export class AdbServerClient {
                 readable: readable.release(),
                 writable: new WrapWritableStream(
                     connection.writable,
-                ).bePipedThroughFrom(new UnwrapConsumableStream()),
+                ).bePipedThroughFrom(new MaybeConsumable.UnwrapStream()),
                 get closed() {
                     return connection.closed;
                 },

@@ -1,15 +1,12 @@
 import { PromiseResolver } from "@yume-chan/async";
-import type {
-    Consumable,
-    PushReadableStreamController,
-    ReadableStream,
-    WritableStreamDefaultWriter,
-} from "@yume-chan/stream-extra";
 import {
-    ConsumableWritableStream,
+    MaybeConsumable,
     PushReadableStream,
     StructDeserializeStream,
     WritableStream,
+    type PushReadableStreamController,
+    type ReadableStream,
+    type WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import type { StructValueType } from "@yume-chan/struct";
 import Struct, { placeholder } from "@yume-chan/struct";
@@ -64,9 +61,9 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
     }
 
     readonly #socket: AdbSocket;
-    #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
+    #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
 
-    #stdin: WritableStream<Consumable<Uint8Array>>;
+    #stdin: WritableStream<MaybeConsumable<Uint8Array>>;
     get stdin() {
         return this.#stdin;
     }
@@ -140,23 +137,22 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
 
         this.#writer = this.#socket.writable.getWriter();
 
-        this.#stdin = new WritableStream<Consumable<Uint8Array>>({
+        this.#stdin = new MaybeConsumable.WritableStream<Uint8Array>({
             write: async (chunk) => {
-                await ConsumableWritableStream.write(
-                    this.#writer,
-                    AdbShellProtocolPacket.serialize({
-                        id: AdbShellProtocolId.Stdin,
-                        data: chunk.value,
-                    }),
-                );
-                chunk.consume();
+                await MaybeConsumable.tryConsume(chunk, async (chunk) => {
+                    await this.#writer.write(
+                        AdbShellProtocolPacket.serialize({
+                            id: AdbShellProtocolId.Stdin,
+                            data: chunk,
+                        }),
+                    );
+                });
             },
         });
     }
 
     async resize(rows: number, cols: number) {
-        await ConsumableWritableStream.write(
-            this.#writer,
+        await this.#writer.write(
             AdbShellProtocolPacket.serialize({
                 id: AdbShellProtocolId.WindowSizeChange,
                 // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`

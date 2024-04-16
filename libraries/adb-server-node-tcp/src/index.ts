@@ -8,8 +8,8 @@ import type {
     AdbServerConnector,
 } from "@yume-chan/adb";
 import {
+    MaybeConsumable,
     PushReadableStream,
-    UnwrapConsumableStream,
     WrapWritableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
@@ -101,7 +101,7 @@ export class AdbServerNodeTcpConnector implements AdbServerConnector {
                     readable: connection.readable,
                     writable: new WrapWritableStream(
                         connection.writable,
-                    ).bePipedThroughFrom(new UnwrapConsumableStream()),
+                    ).bePipedThroughFrom(new MaybeConsumable.UnwrapStream()),
                     get closed() {
                         return connection.closed;
                     },

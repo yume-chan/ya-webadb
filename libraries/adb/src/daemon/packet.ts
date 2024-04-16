@@ -1,4 +1,8 @@
-import { ConsumableTransformStream } from "@yume-chan/stream-extra";
+import type { Consumable } from "@yume-chan/stream-extra";
+import {
+    ConsumableReadableStream,
+    TransformStream,
+} from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
 export enum AdbCommand {
@@ -49,26 +53,33 @@ export function calculateChecksum(payload: Uint8Array): number {
     return payload.reduce((result, item) => result + item, 0);
 }
 
-export class AdbPacketSerializeStream extends ConsumableTransformStream<
-    AdbPacketInit,
-    Uint8Array
+export class AdbPacketSerializeStream extends TransformStream<
+    Consumable<AdbPacketInit>,
+    Consumable<Uint8Array>
 > {
     constructor() {
         const headerBuffer = new Uint8Array(AdbPacketHeader.size);
         super({
             transform: async (chunk, controller) => {
-                const init = chunk as AdbPacketInit & AdbPacketHeaderInit;
-                init.payloadLength = init.payload.byteLength;
+                await chunk.tryConsume(async (chunk) => {
+                    const init = chunk as AdbPacketInit & AdbPacketHeaderInit;
+                    init.payloadLength = init.payload.byteLength;
 
-                AdbPacketHeader.serialize(init, headerBuffer);
-                await controller.enqueue(headerBuffer);
+                    await ConsumableReadableStream.enqueue(
+                        controller,
+                        AdbPacketHeader.serialize(init, headerBuffer),
+                    );
 
-                if (init.payload.byteLength) {
-                    // USB protocol preserves packet boundaries,
-                    // so we must write payload separately as native ADB does,
-                    // otherwise the read operation on device will fail.
-                    await controller.enqueue(init.payload);
-                }
+                    if (init.payload.byteLength) {
+                        // USB protocol preserves packet boundaries,
+                        // so we must write payload separately as native ADB does,
+                        // otherwise the read operation on device will fail.
+                        await ConsumableReadableStream.enqueue(
+                            controller,
+                            init.payload,
+                        );
+                    }
+                });
             },
         });
     }
