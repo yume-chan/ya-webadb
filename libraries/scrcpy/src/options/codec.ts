@@ -33,6 +33,12 @@ export class ScrcpyAudioCodec implements ScrcpyOptionValue {
         "audio/aac",
         "mp4a.66",
     );
+    static readonly FLAC = new ScrcpyAudioCodec(
+        "flac",
+        0x66_6c_61_63,
+        "audio/flac",
+        "flac",
+    );
     static readonly RAW = new ScrcpyAudioCodec(
         "raw",
         0x00_72_61_77,

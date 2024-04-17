@@ -1,14 +1,13 @@
 import { EventEmitter } from "@yume-chan/event";
-import type {
-    ScrcpyMediaStreamDataPacket,
-    ScrcpyMediaStreamPacket,
-} from "@yume-chan/scrcpy";
+import { getUint32LittleEndian } from "@yume-chan/no-data-view";
 import {
+    Av1,
     ScrcpyVideoCodecId,
     h264ParseConfiguration,
     h265ParseConfiguration,
+    type ScrcpyMediaStreamDataPacket,
+    type ScrcpyMediaStreamPacket,
 } from "@yume-chan/scrcpy";
-import { getUint32LittleEndian } from "@yume-chan/no-data-view";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
@@ -19,11 +18,19 @@ import { BitmapFrameRenderer } from "./bitmap.js";
 import type { FrameRenderer } from "./renderer.js";
 import { WebGLFrameRenderer } from "./webgl.js";
 
-function toHex(value: number) {
-    return value.toString(16).padStart(2, "0").toUpperCase();
+function hexDigits(value: number) {
+    return value.toString(16).toUpperCase();
 }
 
-export class WebCodecsDecoder implements ScrcpyVideoDecoder {
+function hexTwoDigits(value: number) {
+    return value.toString(16).toUpperCase().padStart(2, "0");
+}
+
+function decimalTwoDigits(value: number) {
+    return value.toString(10).padStart(2, "0");
+}
+
+export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     static isSupported() {
         return typeof globalThis.VideoDecoder !== "undefined";
     }
@@ -149,9 +156,9 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
         // ISO Base Media File Format Name Space
         const codec =
             "avc1." +
-            toHex(profileIndex) +
-            toHex(constraintSet) +
-            toHex(levelIndex);
+            hexTwoDigits(profileIndex) +
+            hexTwoDigits(constraintSet) +
+            hexTwoDigits(levelIndex);
         this.#decoder.configure({
             codec: codec,
             optimizeForLatency: true,
@@ -181,16 +188,57 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
             "hev1",
             ["", "A", "B", "C"][generalProfileSpace]! +
                 generalProfileIndex.toString(),
-            getUint32LittleEndian(generalProfileCompatibilitySet, 0).toString(
-                16,
-            ),
+            hexDigits(getUint32LittleEndian(generalProfileCompatibilitySet, 0)),
             (generalTierFlag ? "H" : "L") + generalLevelIndex.toString(),
-            getUint32LittleEndian(generalConstraintSet, 0)
-                .toString(16)
-                .toUpperCase(),
-            getUint32LittleEndian(generalConstraintSet, 4)
-                .toString(16)
-                .toUpperCase(),
+            ...Array.from(generalConstraintSet, hexDigits),
+        ].join(".");
+        this.#decoder.configure({
+            codec,
+            optimizeForLatency: true,
+        });
+    }
+
+    #configureAv1(data: Uint8Array) {
+        let sequenceHeader: Av1.SequenceHeaderObu | undefined;
+        const av1 = new Av1(data);
+        for (const obu of av1.bitstream()) {
+            if (obu.sequence_header_obu) {
+                sequenceHeader = obu.sequence_header_obu;
+            }
+        }
+        if (!sequenceHeader) {
+            throw new Error("No sequence header found");
+        }
+
+        const {
+            seq_profile: seqProfile,
+            seq_level_idx: [seqLevelIdx = 0],
+            color_config: {
+                BitDepth,
+                mono_chrome: monoChrome,
+                subsampling_x: subsamplingX,
+                subsampling_y: subsamplingY,
+                chroma_sample_position: chromaSamplePosition,
+                color_primaries: colorPrimaries,
+                transfer_characteristics: transferCharacteristics,
+                matrix_coefficients: matrixCoefficients,
+                color_range: colorRange,
+            },
+        } = sequenceHeader;
+        const codec = [
+            "av01",
+            seqProfile.toString(16),
+            decimalTwoDigits(seqLevelIdx) +
+                (sequenceHeader.seq_tier[0] ? "H" : "M"),
+            decimalTwoDigits(BitDepth),
+            monoChrome ? "1" : "0",
+            (subsamplingX ? "1" : "0") +
+                (subsamplingY ? "1" : "0") +
+                chromaSamplePosition.toString(),
+            decimalTwoDigits(colorPrimaries),
+            decimalTwoDigits(transferCharacteristics),
+            decimalTwoDigits(matrixCoefficients),
+            colorRange ? "1" : "0",
         ].join(".");
         this.#decoder.configure({
             codec,
@@ -205,6 +253,9 @@ export class WebCodecsDecoder implements ScrcpyVideoDecoder {
                 break;
             case ScrcpyVideoCodecId.H265:
                 this.#configureH265(data);
+                break;
+            case ScrcpyVideoCodecId.AV1:
+                this.#configureAv1(data);
                 break;
         }
         this.#config = data;

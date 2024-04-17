@@ -232,12 +232,15 @@ export function naluRemoveEmulation(buffer: Uint8Array) {
 
 export class NaluSodbBitReader {
     readonly #nalu: Uint8Array;
+    // logical length is `#byteLength * 8 + (7 - #stopBitIndex)`
     readonly #byteLength: number;
     readonly #stopBitIndex: number;
 
     #zeroCount = 0;
-    #bytePosition = -1;
-    #bitPosition = -1;
+
+    // logical position is `#bytePosition * 8 + (7 - #bitPosition)`
+    #bytePosition = 0;
+    #bitPosition = 7;
     #byte = 0;
 
     get byteLength() {
@@ -258,8 +261,8 @@ export class NaluSodbBitReader {
 
     get ended() {
         return (
-            this.#bytePosition === this.#byteLength &&
-            this.#bitPosition === this.#stopBitIndex
+            this.#bytePosition >= this.#byteLength &&
+            this.#bitPosition <= this.#stopBitIndex
         );
     }
 
@@ -276,7 +279,7 @@ export class NaluSodbBitReader {
                 if (((byte >> j) & 1) === 1) {
                     this.#byteLength = i;
                     this.#stopBitIndex = j;
-                    this.#readByte();
+                    this.#loadByte();
                     return;
                 }
             }
@@ -285,15 +288,20 @@ export class NaluSodbBitReader {
         throw new Error("Stop bit not found");
     }
 
-    #readByte() {
+    #loadByte() {
         this.#byte = this.#nalu[this.#bytePosition]!;
+
+        // If the current sequence is `0x000003`, skip to the next byte.
+        // `annexBSplitNalu` had validated the input, so don't need to check here.
         if (this.#zeroCount === 2 && this.#byte === 3) {
             this.#zeroCount = 0;
             this.#bytePosition += 1;
-            this.#readByte();
+            this.#loadByte();
             return;
         }
 
+        // `0x00000301` becomes `0x000001`, so only the `0x03` byte needs to be skipped
+        // The `0x00` bytes are still returned as-is
         if (this.#byte === 0) {
             this.#zeroCount += 1;
         } else {
@@ -302,18 +310,19 @@ export class NaluSodbBitReader {
     }
 
     next() {
-        if (this.#bitPosition === -1) {
-            this.#bitPosition = 7;
-            this.#bytePosition += 1;
-            this.#readByte();
-        }
-
         if (this.ended) {
             throw new Error("Bit index out of bounds");
         }
 
         const value = (this.#byte >> this.#bitPosition) & 1;
+
         this.#bitPosition -= 1;
+        if (this.#bitPosition < 0) {
+            this.#bytePosition += 1;
+            this.#bitPosition = 7;
+            this.#loadByte();
+        }
+
         return value;
     }
 
@@ -329,10 +338,36 @@ export class NaluSodbBitReader {
         return result;
     }
 
-    skip(length: number) {
-        for (let i = 0; i < length; i += 1) {
-            this.next();
+    #ensurePositionValid() {
+        if (
+            this.#bytePosition >= this.#byteLength &&
+            this.#bitPosition < this.#stopBitIndex
+        ) {
+            throw new Error("Bit index out of bounds");
         }
+    }
+
+    skip(length: number) {
+        if (length <= this.#bitPosition + 1) {
+            this.#bitPosition -= length;
+            this.#ensurePositionValid();
+            return;
+        }
+
+        length -= this.#bitPosition + 1;
+        this.#bytePosition += 1;
+        this.#bitPosition = 7;
+        this.#loadByte();
+        this.#ensurePositionValid();
+
+        for (; length >= 8; length -= 8) {
+            this.#bytePosition += 1;
+            this.#loadByte();
+            this.#ensurePositionValid();
+        }
+
+        this.#bitPosition = 7 - length;
+        this.#ensurePositionValid();
     }
 
     decodeExponentialGolombNumber(): number {

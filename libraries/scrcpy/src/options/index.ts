@@ -9,6 +9,7 @@ export * from "./1_25/index.js";
 export * from "./2_0.js";
 export * from "./2_1.js";
 export * from "./2_2.js";
+export * from "./2_3.js";
 export * from "./codec.js";
 export * from "./latest.js";
 export * from "./types.js";

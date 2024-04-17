@@ -80,7 +80,7 @@ export interface ScrcpyOptionsInit2_0
     videoEncoder?: string | undefined;
 
     audio?: boolean;
-    audioCodec?: "opus" | "aac" | "raw";
+    audioCodec?: "raw" | "opus" | "aac";
     audioBitRate?: number;
     audioCodecOptions?: CodecOptions;
     audioEncoder?: string | undefined;
@@ -90,7 +90,7 @@ export interface ScrcpyOptionsInit2_0
     sendCodecMeta?: boolean;
 }
 
-function omit<T extends object, K extends keyof T>(
+export function omit<T extends object, K extends keyof T>(
     obj: T,
     keys: K[],
 ): Omit<T, K> {
