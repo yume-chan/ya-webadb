@@ -9,6 +9,10 @@ import {
 export type MaybeConsumable<T> = T | Consumable<T>;
 
 export namespace MaybeConsumable {
+    export function getValue<T>(value: MaybeConsumable<T>): T {
+        return value instanceof Consumable ? value.value : value;
+    }
+
     export function tryConsume<T, R>(
         value: T,
         callback: (value: T extends Consumable<infer U> ? U : T) => R,
