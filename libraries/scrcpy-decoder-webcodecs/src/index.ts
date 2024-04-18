@@ -12,7 +12,10 @@ import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
-import { WritableStream } from "@yume-chan/stream-extra";
+import {
+    WritableStream,
+    type WritableStreamDefaultController,
+} from "@yume-chan/stream-extra";
 
 import { BitmapFrameRenderer } from "./bitmap.js";
 import type { FrameRenderer } from "./renderer.js";
@@ -98,6 +101,18 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 }
                 this.#currentFrameRendered = false;
 
+                if (
+                    frame.displayWidth !== this.#canvas.width ||
+                    frame.displayHeight !== this.#canvas.height
+                ) {
+                    this.#canvas.width = frame.displayWidth;
+                    this.#canvas.height = frame.displayHeight;
+                    this.#sizeChanged.fire({
+                        width: frame.displayWidth,
+                        height: frame.displayHeight,
+                    });
+                }
+
                 // PERF: H.264 renderer may draw multiple frames in one vertical sync interval to minimize latency.
                 // When multiple frames are drawn in one vertical sync interval,
                 // only the last one is visible to users.
@@ -107,16 +122,44 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 this.#renderer.draw(frame);
             },
             error(e) {
-                console.warn(
-                    "[@yume-chan/scrcpy-decoder-webcodecs]",
-                    "VideoDecoder error",
-                    e,
-                );
+                if (controller) {
+                    try {
+                        controller.error(e);
+                    } catch {}
+                } else {
+                    error = e;
+                }
             },
         });
 
+        let error: Error | undefined;
+        let controller: WritableStreamDefaultController | undefined;
         this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
-            write: (packet) => {
+            start: (_controller) => {
+                if (error) {
+                    _controller.error(error);
+                } else {
+                    controller = _controller;
+                }
+            },
+            write: (packet, _controller) => {
+                if (this.#codec === ScrcpyVideoCodecId.AV1) {
+                    if (packet.type === "configuration") {
+                        return;
+                    }
+
+                    this.#configureAv1(packet.data);
+                    this.#decoder.decode(
+                        new EncodedVideoChunk({
+                            // Treat `undefined` as `key`, otherwise won't decode.
+                            type: packet.keyframe === false ? "delta" : "key",
+                            timestamp: 0,
+                            data: packet.data,
+                        }),
+                    );
+                    return;
+                }
+
                 switch (packet.type) {
                     case "configuration":
                         this.#configure(packet.data);
@@ -199,32 +242,53 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     #configureAv1(data: Uint8Array) {
-        let sequenceHeader: Av1.SequenceHeaderObu | undefined;
-        const av1 = new Av1(data);
-        for (const obu of av1.bitstream()) {
-            if (obu.sequence_header_obu) {
-                sequenceHeader = obu.sequence_header_obu;
-            }
-        }
+        const parser = new Av1(data);
+        const sequenceHeader = parser.searchSequenceHeaderObu();
+
         if (!sequenceHeader) {
-            throw new Error("No sequence header found");
+            return;
         }
 
         const {
             seq_profile: seqProfile,
             seq_level_idx: [seqLevelIdx = 0],
+            max_frame_width_minus_1,
+            max_frame_height_minus_1,
             color_config: {
                 BitDepth,
                 mono_chrome: monoChrome,
                 subsampling_x: subsamplingX,
                 subsampling_y: subsamplingY,
                 chroma_sample_position: chromaSamplePosition,
+                color_description_present_flag,
+            },
+        } = sequenceHeader;
+
+        let colorPrimaries: Av1.ColorPrimaries;
+        let transferCharacteristics: Av1.TransferCharacteristics;
+        let matrixCoefficients: Av1.MatrixCoefficients;
+        let colorRange: boolean;
+        if (color_description_present_flag) {
+            ({
                 color_primaries: colorPrimaries,
                 transfer_characteristics: transferCharacteristics,
                 matrix_coefficients: matrixCoefficients,
                 color_range: colorRange,
-            },
-        } = sequenceHeader;
+            } = sequenceHeader.color_config);
+        } else {
+            colorPrimaries = Av1.ColorPrimaries.Bt709;
+            transferCharacteristics = Av1.TransferCharacteristics.Bt709;
+            matrixCoefficients = Av1.MatrixCoefficients.Bt709;
+            colorRange = false;
+        }
+
+        const width = max_frame_width_minus_1 + 1;
+        const height = max_frame_height_minus_1 + 1;
+
+        this.#canvas.width = width;
+        this.#canvas.height = height;
+        this.#sizeChanged.fire({ width, height });
+
         const codec = [
             "av01",
             seqProfile.toString(16),
@@ -250,15 +314,16 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         switch (this.#codec) {
             case ScrcpyVideoCodecId.H264:
                 this.#configureH264(data);
+                this.#config = data;
                 break;
             case ScrcpyVideoCodecId.H265:
                 this.#configureH265(data);
+                this.#config = data;
                 break;
             case ScrcpyVideoCodecId.AV1:
-                this.#configureAv1(data);
+                // AV1 configuration is in normal stream
                 break;
         }
-        this.#config = data;
     }
 
     #decode(packet: ScrcpyMediaStreamDataPacket) {

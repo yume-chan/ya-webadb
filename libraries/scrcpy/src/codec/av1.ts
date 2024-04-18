@@ -81,14 +81,22 @@ class BitReader {
     }
 
     skip(n: number) {
+        if (n <= this.#bitPosition + 1) {
+            this.#bytePosition += 1;
+            this.#bitPosition = 7;
+            this.#byte = this.#data[this.#bytePosition]!;
+            return;
+        }
+
+        n -= this.#bitPosition + 1;
+        this.#bytePosition += 1;
+
         const bytes = (n / 8) | 0;
         if (bytes > 0) {
             this.#bytePosition += bytes;
             n -= bytes * 8;
         }
 
-        n -= this.#bitPosition + 1;
-        this.#bytePosition += 1;
         this.#bitPosition = 7 - n;
         this.#byte = this.#data[this.#bytePosition]!;
     }
@@ -151,7 +159,7 @@ export class Av1 extends BitReader {
         return value;
     }
 
-    *bitstream(): Generator<Av1.OpenBitstreamUnit, void, void> {
+    *annexBBitstream(): Generator<Av1.OpenBitstreamUnit, void, void> {
         while (!this.ended) {
             const temporal_unit_size = this.leb128();
             yield* this.temporalUnit(temporal_unit_size);
@@ -181,13 +189,15 @@ export class Av1 extends BitReader {
 
     #OperatingPointIdc = 0;
 
-    openBitstreamUnit(sz: bigint) {
+    openBitstreamUnit(sz?: bigint) {
         const obu_header = this.obuHeader();
         let obu_size: bigint;
         if (obu_header.obu_has_size_field) {
             obu_size = this.leb128();
-        } else {
+        } else if (sz !== undefined) {
             obu_size = sz - 1n - (obu_header.obu_extension_flag ? 1n : 0n);
+        } else {
+            throw new Error("obu_has_size_field must be true");
         }
 
         const startPosition = this.getPosition();
@@ -227,14 +237,13 @@ export class Av1 extends BitReader {
             (startPosition[1] - currentPosition[1]);
 
         if (
-            obu_size > 0 &&
+            obu_size > 0 /* &&
             obu_header.obu_type !== Av1.ObuType.TileGroup &&
             obu_header.obu_type !== Av1.ObuType.TileList &&
-            obu_header.obu_type !== Av1.ObuType.Frame
+            obu_header.obu_type !== Av1.ObuType.Frame */
         ) {
             this.skip(Number(obu_size) * 8 - payloadBits);
         }
-
         return {
             obu_header,
             obu_size,
@@ -462,6 +471,19 @@ export class Av1 extends BitReader {
             color_config,
             film_grain_params_present,
         };
+    }
+
+    searchSequenceHeaderObu() {
+        while (!this.ended) {
+            const obu = this.openBitstreamUnit();
+            if (!obu) {
+                continue;
+            }
+            if (obu.sequence_header_obu) {
+                return obu.sequence_header_obu;
+            }
+        }
+        return undefined;
     }
 
     timingInfo() {

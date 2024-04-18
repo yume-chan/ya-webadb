@@ -14,6 +14,7 @@ import type {
     ScrcpyVideoStreamMetadata,
 } from "@yume-chan/scrcpy";
 import {
+    Av1,
     DEFAULT_SERVER_PATH,
     ScrcpyControlMessageWriter,
     ScrcpyDeviceMessageDeserializeStream,
@@ -344,6 +345,37 @@ export class AdbScrcpyClient {
         }
     }
 
+    #configureH264(data: Uint8Array) {
+        const { croppedWidth, croppedHeight } = h264ParseConfiguration(data);
+
+        this.#screenWidth = croppedWidth;
+        this.#screenHeight = croppedHeight;
+    }
+
+    #configureH265(data: Uint8Array) {
+        const { croppedWidth, croppedHeight } = h265ParseConfiguration(data);
+
+        this.#screenWidth = croppedWidth;
+        this.#screenHeight = croppedHeight;
+    }
+
+    #configureAv1(data: Uint8Array) {
+        const parser = new Av1(data);
+        const sequenceHeader = parser.searchSequenceHeaderObu();
+        if (!sequenceHeader) {
+            return;
+        }
+
+        const { max_frame_width_minus_1, max_frame_height_minus_1 } =
+            sequenceHeader;
+
+        const width = max_frame_width_minus_1 + 1;
+        const height = max_frame_height_minus_1 + 1;
+
+        this.#screenWidth = width;
+        this.#screenHeight = height;
+    }
+
     async #createVideoStream(initialStream: ReadableStream<Uint8Array>) {
         const { stream, metadata } =
             await this.#options.parseVideoStreamMetadata(initialStream);
@@ -355,23 +387,18 @@ export class AdbScrcpyClient {
                     new InspectStream((packet) => {
                         if (packet.type === "configuration") {
                             switch (metadata.codec) {
-                                case ScrcpyVideoCodecId.H264: {
-                                    const { croppedWidth, croppedHeight } =
-                                        h264ParseConfiguration(packet.data);
-
-                                    this.#screenWidth = croppedWidth;
-                                    this.#screenHeight = croppedHeight;
+                                case ScrcpyVideoCodecId.H264:
+                                    this.#configureH264(packet.data);
                                     break;
-                                }
-                                case ScrcpyVideoCodecId.H265: {
-                                    const { croppedWidth, croppedHeight } =
-                                        h265ParseConfiguration(packet.data);
-
-                                    this.#screenWidth = croppedWidth;
-                                    this.#screenHeight = croppedHeight;
+                                case ScrcpyVideoCodecId.H265:
+                                    this.#configureH265(packet.data);
                                     break;
-                                }
+                                case ScrcpyVideoCodecId.AV1:
+                                    // AV1 configuration is in normal stream
+                                    break;
                             }
+                        } else if (metadata.codec === ScrcpyVideoCodecId.AV1) {
+                            this.#configureAv1(packet.data);
                         }
                     }),
                 ),
