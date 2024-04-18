@@ -125,7 +125,10 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 if (controller) {
                     try {
                         controller.error(e);
-                    } catch {}
+                    } catch {
+                        // ignore
+                        // `controller` may already in error state
+                    }
                 } else {
                     error = e;
                 }
@@ -142,7 +145,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                     controller = _controller;
                 }
             },
-            write: (packet, _controller) => {
+            write: (packet) => {
                 if (this.#codec === ScrcpyVideoCodecId.AV1) {
                     if (packet.type === "configuration") {
                         return;
