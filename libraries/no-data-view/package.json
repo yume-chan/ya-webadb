@@ -29,17 +29,16 @@
         "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
         "prepublishOnly": "npm run build"
     },
-    "dependencies": {},
     "devDependencies": {
-        "@types/node": "^20.12.7",
         "@jest/globals": "^30.0.0-alpha.3",
+        "@types/node": "^20.12.7",
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "cross-env": "^7.0.3",
         "jest": "^30.0.0-alpha.3",
         "prettier": "^3.2.5",
+        "tinybench": "^2.8.0",
         "ts-jest": "^29.1.2",
-        "tinybench": "^2.7.0",
         "typescript": "^5.4.5"
     }
 }

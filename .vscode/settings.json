@@ -11,8 +11,6 @@
         "Bitstream",
         "bootloader",
         "brotli",
-        "Callout",
-        "Cascadia",
         "CLSE",
         "CNXN",
         "colour",
@@ -28,12 +26,10 @@
         "entrypoints",
         "fflate",
         "flac",
-        "fluentui",
         "genymobile",
         "Genymobile's",
         "getprop",
         "Golomb",
-        "griffel",
         "keyof",
         "laggy",
         "localabstract",
@@ -41,7 +37,6 @@
         "lstat",
         "luma",
         "Matroska",
-        "mitm",
         "muxer",
         "Muxing",
         "Nalu",
@@ -55,7 +50,6 @@
         "sideload",
         "sideloading",
         "Sodb",
-        "streamsaver",
         "struct",
         "struct's",
         "subsampling",
@@ -63,7 +57,6 @@
         "tinyh",
         "transferables",
         "tsbuildinfo",
-        "typeof",
         "undici",
         "versioncode",
         "webadb",
@@ -120,5 +113,9 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "explorer.sortOrder": "mixed",
-    "prettier.prettierPath": "./common/temp/node_modules/prettier/index.cjs"
+    "prettier.prettierPath": "./common/temp/node_modules/prettier/index.cjs",
+    "cSpell.numSuggestions": 4,
+    "cSpell.ignoreRegExpList": [
+        "0x[0-9a-f]+"
+    ]
 }
