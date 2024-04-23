@@ -108,7 +108,7 @@ describe("setUint32", () => {
         });
     });
 
-    describe("little endian", () => {
+    describe("big endian", () => {
         it("should work for minimal value", () => {
             const expected = new Uint8Array(4);
             new DataView(expected.buffer).setUint32(0, 0, false);

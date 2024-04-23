@@ -83,7 +83,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
             command: AdbCommand.Auth,
             arg0: AdbAuthType.Signature,
             arg1: 0,
-            payload: new Uint8Array(signature),
+            payload: signature,
         };
     }
 };

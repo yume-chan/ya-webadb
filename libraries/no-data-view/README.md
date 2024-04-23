@@ -24,12 +24,39 @@ Check the [benchmark](./benchmark.md) for more details.
 
 Assign a negative number to a `Uint8Array` will treat it as an unsigned number, so there is no need to provide a `setInt8` method.
 
+(Assigning a number to `Uint8Array` directly translates to byte storing CPU instruction so it's very fast)
+
+In fact, `setIntXX` and `setUintXX` is the same method, they are both provided only for consistency.
+
 ```ts
-import { getInt8 } from '@yume-chan/no-data-view';
+import { getInt8 } from "@yume-chan/no-data-view";
 
 const array = new Uint8Array(1);
 array[0] = -1;
 console.log(array[0]); // 255
 console.log(new Int8Array(array.buffer)[0]); // -1
 console.log(getInt8(array, 0)); // -1
+```
+
+## Why `setIntXX` doesn't need `& 0xFF`?
+
+Similarly, `Uint8Array` only stores the lowest 8 bits of a number, so there is no need to mask the number.
+
+```ts
+const array = new Uint8Array(2);
+array[0] = 0x1234;
+console.log(array[0]); // 52 (0x34)
+console.log(array[1]); // 0
+```
+
+## But why `setBigUint64` have `& 0xFFn`?
+
+Because `BigInt` can contain a super huge value, that even when shifted to the right, is still not representable by `Number`. So they must be masked with `0xFFn` before converting to `Number`.
+
+(Converting between `BigInt` and `Number` has very little performance impact, because they only need one number extension or truncation CPU instruction)
+
+```ts
+const value = (BigInt(Number.MAX_SAFE_INTEGER) + 2n) << 8n;
+console.log((value >> 8n) & 0xffn); // 1n
+console.log(Number(value >> 8n) & 0xff); // 0
 ```

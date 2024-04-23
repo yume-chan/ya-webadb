@@ -117,14 +117,27 @@ describe("setInt64", () => {
 
         it("should work for middle value", () => {
             const expected = new Uint8Array(8);
-            new DataView(expected.buffer).setBigInt64(0, 0n, true);
+            new DataView(expected.buffer).setBigInt64(
+                0,
+                0xedcb_a987_6543_2100n,
+                true,
+            );
             const actual = new Uint8Array(8);
-            setInt64LittleEndian(actual, 0, 0n);
+            setInt64LittleEndian(actual, 0, 0xedcb_a987_6543_2100n);
+            expect(actual).toEqual(expected);
+        });
+
+        it("should work for super-large value", () => {
+            const value = BigInt(Number.MAX_SAFE_INTEGER) + 1n;
+            const expected = new Uint8Array(8);
+            new DataView(expected.buffer).setBigInt64(0, value, true);
+            const actual = new Uint8Array(8);
+            setInt64LittleEndian(actual, 0, value);
             expect(actual).toEqual(expected);
         });
     });
 
-    describe("little endian", () => {
+    describe("big endian", () => {
         it("should work for minimal value", () => {
             const expected = new Uint8Array(8);
             new DataView(expected.buffer).setBigInt64(
@@ -151,9 +164,22 @@ describe("setInt64", () => {
 
         it("should work for middle value", () => {
             const expected = new Uint8Array(8);
-            new DataView(expected.buffer).setBigInt64(0, 0n, false);
+            new DataView(expected.buffer).setBigInt64(
+                0,
+                0xedcb_a987_6543_2100n,
+                false,
+            );
             const actual = new Uint8Array(8);
-            setInt64BigEndian(actual, 0, 0n);
+            setInt64BigEndian(actual, 0, 0xedcb_a987_6543_2100n);
+            expect(actual).toEqual(expected);
+        });
+
+        it("should work for super-large value", () => {
+            const value = BigInt(Number.MAX_SAFE_INTEGER) + 1n;
+            const expected = new Uint8Array(8);
+            new DataView(expected.buffer).setBigInt64(0, value, false);
+            const actual = new Uint8Array(8);
+            setInt64BigEndian(actual, 0, value);
             expect(actual).toEqual(expected);
         });
     });

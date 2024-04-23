@@ -108,7 +108,7 @@ describe("setUint16", () => {
         });
     });
 
-    describe("little endian", () => {
+    describe("big endian", () => {
         it("should work for minimal value", () => {
             const expected = new Uint8Array(2);
             new DataView(expected.buffer).setUint16(0, 0, false);
