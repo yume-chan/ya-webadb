@@ -24,8 +24,8 @@ export function setInt16LittleEndian(
     offset: number,
     value: number,
 ): void {
-    buffer[offset] = value & 0xff;
-    buffer[offset + 1] = (value >> 8) & 0xff;
+    buffer[offset] = value;
+    buffer[offset + 1] = value >> 8;
 }
 
 export function setInt16BigEndian(
@@ -33,8 +33,8 @@ export function setInt16BigEndian(
     offset: number,
     value: number,
 ): void {
-    buffer[offset] = (value >> 8) & 0xff;
-    buffer[offset + 1] = value & 0xff;
+    buffer[offset] = value >> 8;
+    buffer[offset + 1] = value;
 }
 
 export function setInt16(
@@ -44,10 +44,10 @@ export function setInt16(
     littleEndian: boolean,
 ): void {
     if (littleEndian) {
-        buffer[offset] = value & 0xff;
-        buffer[offset + 1] = (value >> 8) & 0xff;
+        buffer[offset] = value;
+        buffer[offset + 1] = value >> 8;
     } else {
-        buffer[offset] = (value >> 8) & 0xff;
-        buffer[offset + 1] = value & 0xff;
+        buffer[offset] = value >> 8;
+        buffer[offset + 1] = value;
     }
 }

@@ -4,6 +4,9 @@ import {
     getUint16,
     getUint16BigEndian,
     getUint16LittleEndian,
+    setUint16,
+    setUint16BigEndian,
+    setUint16LittleEndian,
 } from "./uint16.js";
 
 describe("getUint16", () => {
@@ -75,5 +78,72 @@ describe("getUint16", () => {
         expect(getUint16(array, 0, true)).toBe(
             new DataView(array.buffer).getUint16(0, true),
         );
+    });
+});
+
+describe("setUint16", () => {
+    describe("little endian", () => {
+        it("should work for minimal value", () => {
+            const expected = new Uint8Array(2);
+            new DataView(expected.buffer).setUint16(0, 0, true);
+            const actual = new Uint8Array(2);
+            setUint16LittleEndian(actual, 0, 0);
+            expect(actual).toEqual(expected);
+        });
+
+        it("should work for maximal value", () => {
+            const expected = new Uint8Array(2);
+            new DataView(expected.buffer).setUint16(0, 0xffff, true);
+            const actual = new Uint8Array(2);
+            setUint16LittleEndian(actual, 0, 0xffff);
+            expect(actual).toEqual(expected);
+        });
+
+        it("should work for middle value", () => {
+            const expected = new Uint8Array(2);
+            new DataView(expected.buffer).setUint16(0, 0x8000, true);
+            const actual = new Uint8Array(2);
+            setUint16LittleEndian(actual, 0, 0x8000);
+            expect(actual).toEqual(expected);
+        });
+    });
+
+    describe("little endian", () => {
+        it("should work for minimal value", () => {
+            const expected = new Uint8Array(2);
+            new DataView(expected.buffer).setUint16(0, 0, false);
+            const actual = new Uint8Array(2);
+            setUint16BigEndian(actual, 0, 0);
+            expect(actual).toEqual(expected);
+        });
+
+        it("should work for maximal value", () => {
+            const expected = new Uint8Array(2);
+            new DataView(expected.buffer).setUint16(0, 0xffff, false);
+            const actual = new Uint8Array(2);
+            setUint16BigEndian(actual, 0, 0xffff);
+            expect(actual).toEqual(expected);
+        });
+
+        it("should work for middle value", () => {
+            const expected = new Uint8Array(2);
+            new DataView(expected.buffer).setUint16(0, 0x8000, false);
+            const actual = new Uint8Array(2);
+            setUint16BigEndian(actual, 0, 0x8000);
+            expect(actual).toEqual(expected);
+        });
+    });
+
+    it("should work for selected endianness", () => {
+        const expected = new Uint8Array(2);
+        const actual = new Uint8Array(2);
+
+        new DataView(expected.buffer).setUint16(0, 0xffff, false);
+        setUint16(actual, 0, 0xffff, false);
+        expect(actual).toEqual(expected);
+
+        new DataView(expected.buffer).setUint16(0, 0xffff, true);
+        setUint16(actual, 0, 0xffff, true);
+        expect(actual).toEqual(expected);
     });
 });

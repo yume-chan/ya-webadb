@@ -44,10 +44,10 @@ export function setUint32LittleEndian(
     offset: number,
     value: number,
 ): void {
-    buffer[offset] = value & 0xff;
-    buffer[offset + 1] = (value >> 8) & 0xff;
-    buffer[offset + 2] = (value >> 16) & 0xff;
-    buffer[offset + 3] = (value >> 24) & 0xff;
+    buffer[offset] = value;
+    buffer[offset + 1] = value >> 8;
+    buffer[offset + 2] = value >> 16;
+    buffer[offset + 3] = value >> 24;
 }
 
 export function setUint32BigEndian(
@@ -55,10 +55,10 @@ export function setUint32BigEndian(
     offset: number,
     value: number,
 ): void {
-    buffer[offset] = (value >> 24) & 0xff;
-    buffer[offset + 1] = (value >> 16) & 0xff;
-    buffer[offset + 2] = (value >> 8) & 0xff;
-    buffer[offset + 3] = value & 0xff;
+    buffer[offset] = value >> 24;
+    buffer[offset + 1] = value >> 16;
+    buffer[offset + 2] = value >> 8;
+    buffer[offset + 3] = value;
 }
 
 export function setUint32(
@@ -68,14 +68,14 @@ export function setUint32(
     littleEndian: boolean,
 ): void {
     if (littleEndian) {
-        buffer[offset] = value & 0xff;
-        buffer[offset + 1] = (value >> 8) & 0xff;
-        buffer[offset + 2] = (value >> 16) & 0xff;
-        buffer[offset + 3] = (value >> 24) & 0xff;
+        buffer[offset] = value;
+        buffer[offset + 1] = value >> 8;
+        buffer[offset + 2] = value >> 16;
+        buffer[offset + 3] = value >> 24;
     } else {
-        buffer[offset] = (value >> 24) & 0xff;
-        buffer[offset + 1] = (value >> 16) & 0xff;
-        buffer[offset + 2] = (value >> 8) & 0xff;
-        buffer[offset + 3] = value & 0xff;
+        buffer[offset] = value >> 24;
+        buffer[offset + 1] = value >> 16;
+        buffer[offset + 2] = value >> 8;
+        buffer[offset + 3] = value;
     }
 }

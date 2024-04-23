@@ -19,3 +19,17 @@ Because they are very basic number operations, the performance between a JavaScr
 (Except for `getBigUint64` and `setBigUint64`, Chrome uses an inefficient implementation, so this JavaScript implementation is even faster than the native one).
 
 Check the [benchmark](./benchmark.md) for more details.
+
+## Why there is no `setInt8`?
+
+Assign a negative number to a `Uint8Array` will treat it as an unsigned number, so there is no need to provide a `setInt8` method.
+
+```ts
+import { getInt8 } from '@yume-chan/no-data-view';
+
+const array = new Uint8Array(1);
+array[0] = -1;
+console.log(array[0]); // 255
+console.log(new Int8Array(array.buffer)[0]); // -1
+console.log(getInt8(array, 0)); // -1
+```
