@@ -56,9 +56,6 @@ importers:
       '@yume-chan/async':
         specifier: ^2.2.0
         version: 2.2.0
-      '@yume-chan/dataview-bigint-polyfill':
-        specifier: workspace:^0.0.23
-        version: link:../dataview-bigint-polyfill
       '@yume-chan/event':
         specifier: workspace:^0.0.23
         version: link:../event
@@ -273,24 +270,6 @@ importers:
       '@yume-chan/tsconfig':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/tsconfig
-      typescript:
-        specifier: ^5.4.5
-        version: 5.4.5
-
-  ../../libraries/dataview-bigint-polyfill:
-    devDependencies:
-      '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
-        version: link:../../toolchain/eslint-config
-      '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
-        version: link:../../toolchain/tsconfig
-      jest:
-        specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
-      prettier:
-        specifier: ^3.2.5
-        version: 3.2.5
       typescript:
         specifier: ^5.4.5
         version: 5.4.5

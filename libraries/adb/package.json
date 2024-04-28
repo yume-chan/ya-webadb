@@ -33,7 +33,6 @@
     },
     "dependencies": {
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/dataview-bigint-polyfill": "workspace:^0.0.23",
         "@yume-chan/event": "workspace:^0.0.23",
         "@yume-chan/no-data-view": "workspace:^0.0.23",
         "@yume-chan/stream-extra": "workspace:^0.0.23",
