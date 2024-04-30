@@ -4,7 +4,7 @@ import {
     delay,
 } from "@yume-chan/async";
 import {
-    getUint32BigEndian,
+    getUint32LittleEndian,
     setUint32LittleEndian,
 } from "@yume-chan/no-data-view";
 import {
@@ -193,7 +193,7 @@ export class AdbPacketDispatcher implements Closeable {
                     "Invalid OKAY packet. Payload size should be 4",
                 );
             }
-            ackBytes = getUint32BigEndian(packet.payload, 0);
+            ackBytes = getUint32LittleEndian(packet.payload, 0);
         } else {
             if (packet.payload.byteLength !== 0) {
                 throw new Error(

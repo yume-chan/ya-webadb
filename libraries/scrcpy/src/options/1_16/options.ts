@@ -1,3 +1,7 @@
+import {
+    getUint16BigEndian,
+    getUint32BigEndian,
+} from "@yume-chan/no-data-view";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
@@ -23,10 +27,6 @@ import { ScrcpyVideoCodecId } from "../codec.js";
 import type { ScrcpyDisplay, ScrcpyEncoder, ScrcpyOptions } from "../types.js";
 import { toScrcpyOptionValue } from "../types.js";
 
-import {
-    getUint16BigEndian,
-    getUint32BigEndian,
-} from "@yume-chan/no-data-view";
 import { CodecOptions } from "./codec-options.js";
 import type { ScrcpyOptionsInit1_16 } from "./init.js";
 import { ScrcpyLogLevel1_16, ScrcpyVideoOrientation1_16 } from "./init.js";

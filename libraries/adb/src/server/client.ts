@@ -1,6 +1,7 @@
 // cspell:ignore tport
 
 import { PromiseResolver } from "@yume-chan/async";
+import { getUint64LittleEndian } from "@yume-chan/no-data-view";
 import type {
     AbortSignal,
     ReadableWritablePair,
@@ -28,7 +29,6 @@ import { AdbBanner } from "../banner.js";
 import type { AdbFeature } from "../features.js";
 import { NOOP, hexToNumber, numberToHex, unreachable } from "../utils/index.js";
 
-import { getUint64LittleEndian } from "@yume-chan/no-data-view";
 import { AdbServerTransport } from "./transport.js";
 
 export interface AdbServerConnectionOptions {

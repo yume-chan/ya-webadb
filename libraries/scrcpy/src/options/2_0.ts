@@ -1,3 +1,4 @@
+import { getUint32BigEndian } from "@yume-chan/no-data-view";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
@@ -11,7 +12,6 @@ import type {
     ScrcpyInjectTouchControlMessage,
 } from "../control/index.js";
 
-import { getUint32BigEndian } from "@yume-chan/no-data-view";
 import {
     CodecOptions,
     ScrcpyFloatToUint16FieldDefinition,

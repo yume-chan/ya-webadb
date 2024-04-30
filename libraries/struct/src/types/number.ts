@@ -4,6 +4,7 @@ import {
     getUint16,
     getUint32,
 } from "@yume-chan/no-data-view";
+
 import type {
     AsyncExactReadable,
     ExactReadable,
