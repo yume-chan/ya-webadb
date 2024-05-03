@@ -81,13 +81,23 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     #currentFrameRendered = false;
     #animationFrameId = 0;
 
-    constructor(codec: ScrcpyVideoCodecId) {
+    /**
+     * Create a new WebCodecs video decoder.
+     * @param codec The video codec to decode
+     * @param enableCapture
+     * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
+     * Enable this option may reduce performance.
+     */
+    constructor(codec: ScrcpyVideoCodecId, enableCapture: boolean) {
         this.#codec = codec;
 
         this.#canvas = document.createElement("canvas");
 
         try {
-            this.#renderer = new WebGLFrameRenderer(this.#canvas);
+            this.#renderer = new WebGLFrameRenderer(
+                this.#canvas,
+                enableCapture,
+            );
         } catch {
             this.#renderer = new BitmapFrameRenderer(this.#canvas);
         }

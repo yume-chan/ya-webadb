@@ -26,15 +26,24 @@ void main(void) {
 
     #context: WebGLRenderingContext;
 
-    constructor(canvas: HTMLCanvasElement) {
+    /**
+     * Create a new WebGL frame renderer.
+     * @param canvas The canvas to render frames to.
+     * @param enableCapture
+     * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
+     * Enable this option may reduce performance.
+     */
+    constructor(canvas: HTMLCanvasElement, enableCapture: boolean) {
         const gl =
             canvas.getContext("webgl2", {
                 alpha: false,
                 failIfMajorPerformanceCaveat: true,
+                preserveDrawingBuffer: enableCapture,
             }) ||
             canvas.getContext("webgl", {
                 alpha: false,
                 failIfMajorPerformanceCaveat: true,
+                preserveDrawingBuffer: enableCapture,
             });
         if (!gl) {
             throw new Error("WebGL not supported");
