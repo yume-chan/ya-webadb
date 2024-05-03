@@ -380,6 +380,9 @@ importers:
 
   ../../libraries/scrcpy:
     dependencies:
+      '@yume-chan/async':
+        specifier: ^2.2.0
+        version: 2.2.0
       '@yume-chan/no-data-view':
         specifier: workspace:^0.0.23
         version: link:../no-data-view
@@ -619,7 +622,7 @@ packages:
     dependencies:
       '@babel/highlight': 7.24.5
       picocolors: 1.0.0
-  dev: true
+    dev: true
 
   /@babel/compat-data@7.24.4:
     resolution: {integrity: sha512-vg8Gih2MLK+kOkHJp4gBEIkyaIi00jgWot2D9QOmmfLC8jINSOzmCLta6Bvz/JSBCqnegV0L80jhxkol5GWNfQ==}

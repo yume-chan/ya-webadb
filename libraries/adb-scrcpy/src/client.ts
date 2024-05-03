@@ -7,7 +7,6 @@ import type {
     ScrcpyAudioStreamDisabledMetadata,
     ScrcpyAudioStreamErroredMetadata,
     ScrcpyAudioStreamSuccessMetadata,
-    ScrcpyDeviceMessage,
     ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
@@ -17,7 +16,6 @@ import {
     Av1,
     DEFAULT_SERVER_PATH,
     ScrcpyControlMessageWriter,
-    ScrcpyDeviceMessageDeserializeStream,
     ScrcpyVideoCodecId,
     h264ParseConfiguration,
     h265ParseConfiguration,
@@ -30,6 +28,7 @@ import type {
 } from "@yume-chan/stream-extra";
 import {
     AbortController,
+    BufferedReadableStream,
     DecodeUtf8Stream,
     InspectStream,
     PushReadableStream,
@@ -290,28 +289,15 @@ export class AdbScrcpyClient {
         return this.#audioStream;
     }
 
-    #controlMessageWriter: ScrcpyControlMessageWriter | undefined;
+    #controller: ScrcpyControlMessageWriter | undefined;
     /**
      * Gets the control message writer.
      *
      * On server version 1.22 and above, it will be `undefined` if
      * control is disabled by `options.control: false`.
      */
-    get controlMessageWriter() {
-        return this.#controlMessageWriter;
-    }
-
-    #deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined;
-    /**
-     * Gets the device message stream.
-     *
-     * On server version 1.22 and above, it will be `undefined` if
-     * control is disabled by `options.control: false`.
-     *
-     * Note: it must be consumed to prevent the connection from being blocked.
-     */
-    get deviceMessageStream() {
-        return this.#deviceMessageStream;
+    get controller() {
+        return this.#controller;
     }
 
     constructor({
@@ -335,13 +321,25 @@ export class AdbScrcpyClient {
             : undefined;
 
         if (controlStream) {
-            this.#controlMessageWriter = new ScrcpyControlMessageWriter(
+            this.#controller = new ScrcpyControlMessageWriter(
                 controlStream.writable.getWriter(),
                 options,
             );
-            this.#deviceMessageStream = controlStream.readable.pipeThrough(
-                new ScrcpyDeviceMessageDeserializeStream(),
-            );
+
+            this.#parseDeviceMessages(controlStream.readable).catch(() => {});
+        }
+    }
+
+    async #parseDeviceMessages(controlStream: ReadableStream<Uint8Array>) {
+        const buffered = new BufferedReadableStream(controlStream);
+        while (true) {
+            const type = await buffered.readExactly(1);
+            if (!(await this.#options.parseDeviceMessage(type[0]!, buffered))) {
+                buffered
+                    .cancel(new Error(`Unknown device message type ${type[0]}`))
+                    .catch(() => {});
+                break;
+            }
         }
     }
 

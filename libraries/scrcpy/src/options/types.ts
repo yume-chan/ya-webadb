@@ -1,5 +1,5 @@
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { AsyncExactReadable, ValueOrPromise } from "@yume-chan/struct";
 
 import type {
     ScrcpyBackOrScreenOnControlMessage,
@@ -71,6 +71,8 @@ export interface ScrcpyOptions<T extends object> {
 
     readonly value: Required<T>;
 
+    get clipboard(): ReadableStream<string>;
+
     serialize(): string[];
 
     /**
@@ -111,6 +113,11 @@ export interface ScrcpyOptions<T extends object> {
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyAudioStreamMetadata>;
 
+    parseDeviceMessage(
+        id: number,
+        stream: AsyncExactReadable,
+    ): Promise<boolean>;
+
     createMediaStreamTransformer(): TransformStream<
         Uint8Array,
         ScrcpyMediaStreamPacket
@@ -126,7 +133,7 @@ export interface ScrcpyOptions<T extends object> {
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
-    ): Uint8Array;
+    ): [Uint8Array, Promise<void> | undefined];
 
     createScrollController(): ScrcpyScrollController;
 }
@@ -145,6 +152,10 @@ export abstract class ScrcpyOptionsBase<
     }
 
     readonly value: Required<T>;
+
+    get clipboard(): ReadableStream<string> {
+        return this._base.clipboard;
+    }
 
     constructor(base: B, value: Required<T>) {
         this._base = base;
@@ -200,6 +211,13 @@ export abstract class ScrcpyOptionsBase<
         return this._base.parseAudioStreamMetadata(stream);
     }
 
+    parseDeviceMessage(
+        id: number,
+        stream: AsyncExactReadable,
+    ): Promise<boolean> {
+        return this._base.parseDeviceMessage(id, stream);
+    }
+
     createMediaStreamTransformer(): TransformStream<
         Uint8Array,
         ScrcpyMediaStreamPacket
@@ -221,7 +239,7 @@ export abstract class ScrcpyOptionsBase<
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
-    ): Uint8Array {
+    ): [Uint8Array, Promise<void> | undefined] {
         return this._base.serializeSetClipboardControlMessage(message);
     }
 

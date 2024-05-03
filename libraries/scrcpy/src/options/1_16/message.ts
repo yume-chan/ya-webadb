@@ -53,3 +53,7 @@ export const ScrcpySetClipboardControlMessage1_15 = new Struct()
 
 export type ScrcpySetClipboardControlMessage1_15 =
     (typeof ScrcpySetClipboardControlMessage1_15)["TInit"];
+
+export const ScrcpyClipboardDeviceMessage = new Struct()
+    .uint32("length")
+    .string("content", { lengthField: "length" });

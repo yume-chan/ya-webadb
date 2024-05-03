@@ -2,9 +2,13 @@ import {
     getUint16BigEndian,
     getUint32BigEndian,
 } from "@yume-chan/no-data-view";
-import type { ReadableStream } from "@yume-chan/stream-extra";
+import type {
+    PushReadableStreamController,
+    ReadableStream,
+} from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
+    PushReadableStream,
     StructDeserializeStream,
     TransformStream,
 } from "@yume-chan/stream-extra";
@@ -34,6 +38,7 @@ import {
     SCRCPY_CONTROL_MESSAGE_TYPES_1_16,
     SCRCPY_MEDIA_PACKET_FLAG_CONFIG,
     ScrcpyBackOrScreenOnControlMessage1_16,
+    ScrcpyClipboardDeviceMessage,
     ScrcpyInjectTouchControlMessage1_16,
     ScrcpyMediaStreamRawPacket,
     ScrcpySetClipboardControlMessage1_15,
@@ -105,8 +110,17 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
     readonly controlMessageTypes: readonly ScrcpyControlMessageType[] =
         SCRCPY_CONTROL_MESSAGE_TYPES_1_16;
 
+    #clipboardController!: PushReadableStreamController<string>;
+    #clipboard: ReadableStream<string>;
+    get clipboard() {
+        return this.#clipboard;
+    }
+
     constructor(init: ScrcpyOptionsInit1_16) {
         this.value = { ...ScrcpyOptions1_16.DEFAULTS, ...init };
+        this.#clipboard = new PushReadableStream<string>((controller) => {
+            this.#clipboardController = controller;
+        });
     }
 
     serialize(): string[] {
@@ -161,6 +175,22 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     parseAudioStreamMetadata(): never {
         throw new Error("Not supported");
+    }
+
+    async parseDeviceMessage(
+        id: number,
+        stream: AsyncExactReadable,
+    ): Promise<boolean> {
+        switch (id) {
+            case 0: {
+                const message =
+                    await ScrcpyClipboardDeviceMessage.deserialize(stream);
+                await this.#clipboardController.enqueue(message.content);
+                return true;
+            }
+            default:
+                return false;
+        }
     }
 
     createMediaStreamTransformer(): TransformStream<
@@ -224,8 +254,11 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
-    ): Uint8Array {
-        return ScrcpySetClipboardControlMessage1_15.serialize(message);
+    ): [Uint8Array, Promise<void> | undefined] {
+        return [
+            ScrcpySetClipboardControlMessage1_15.serialize(message),
+            undefined,
+        ];
     }
 
     createScrollController(): ScrcpyScrollController {

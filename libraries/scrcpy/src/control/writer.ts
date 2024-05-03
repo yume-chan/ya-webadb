@@ -90,7 +90,9 @@ export class ScrcpyControlMessageWriter {
     async setClipboard(
         message: Omit<ScrcpySetClipboardControlMessage, "type">,
     ) {
-        await this.write(this.#serializer.setClipboard(message));
+        const [data, promise] = this.#serializer.setClipboard(message);
+        await this.write(data);
+        await promise;
     }
 
     releaseLock() {
