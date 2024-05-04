@@ -344,8 +344,11 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             return;
         }
 
-        // WebCodecs requires configuration data to be with the first frame.
+        // For H.264 and H.265, when the stream is in Annex B format
+        // (which Scrcpy uses, as Android MediaCodec produces),
+        // configuration data needs to be combined with the first frame data.
         // https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
+        // AV1 doesn't need to do this, the handling code also doesn't set `#config`.
         let data: Uint8Array;
         if (this.#config !== undefined) {
             data = new Uint8Array(

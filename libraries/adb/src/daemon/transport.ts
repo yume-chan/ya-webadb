@@ -56,26 +56,52 @@ export type AdbDaemonConnection = ReadableWritablePair<
     Consumable<AdbPacketInit>
 >;
 
-interface AdbDaemonAuthenticationOptions {
+export interface AdbDaemonAuthenticationOptions {
     serial: string;
     connection: AdbDaemonConnection;
     credentialStore: AdbCredentialStore;
     authenticators?: AdbAuthenticator[];
     features?: readonly AdbFeature[];
+
     /**
      * The number of bytes the device can send before receiving an ack packet.
+     * Using delayed ack can improve the throughput,
+     * especially when the device is connected over Wi-Fi (so the latency is higher).
      *
      * Set to 0 or any negative value to disable delayed ack in handshake.
      * Otherwise the value must be in the range of unsigned 32-bit integer.
      *
-     * Delayed ack requires Android 14, this option is ignored on older versions.
+     * Delayed ack was added in Android 14,
+     * this option will be ignored when the device doesn't support it.
+     *
+     * @default ADB_DAEMON_DEFAULT_INITIAL_PAYLOAD_SIZE
      */
     initialDelayedAckBytes?: number;
+
     /**
-     * Whether to preserve the connection open after the `AdbDaemonTransport` is closed.
+     * Whether to keep the `connection` open (don't call `writable.close` and `readable.cancel`)
+     * when `AdbDaemonTransport.close` is called.
+     *
+     * Note that when `authenticate` fails,
+     * no matter which value this option has,
+     * the `connection` is always kept open, so it can be used in another `authenticate` call.
+     *
+     * @default false
      */
     preserveConnection?: boolean | undefined;
-    debugSlowRead?: boolean | undefined;
+
+    /**
+     * When set, the transport will throw an error when
+     * one of the socket readable stalls for this amount of milliseconds.
+     *
+     * Because ADB is a multiplexed protocol, blocking one socket will also block all other sockets.
+     * It's important to always read from all sockets to prevent stalling.
+     *
+     * This option is helpful to detect bugs in the client code.
+     *
+     * @default undefined
+     */
+    readTimeLimit?: number | undefined;
 }
 
 interface AdbDaemonSocketConnectorConstructionOptions {
@@ -85,20 +111,39 @@ interface AdbDaemonSocketConnectorConstructionOptions {
     maxPayloadSize: number;
     banner: string;
     features?: readonly AdbFeature[];
+
     /**
      * The number of bytes the device can send before receiving an ack packet.
+     * Using delayed ack can improve the throughput,
+     * especially when the device is connected over Wi-Fi (so the latency is higher).
      *
-     * Set to 0 or any negative value to disable delayed ack in handshake.
-     * Otherwise the value must be in the range of unsigned 32-bit integer.
-     *
-     * Delayed ack requires Android 14, this option is ignored on older versions.
+     * When `features` doesn't include `AdbFeature.DelayedAck`, it must be set to 0. Otherwise,
+     * the value must be in the range of unsigned 32-bit integer. If the device enabled
+     * delayed ack but the client didn't, the device will throw an error when the client sends
+     * the first data packet. And vice versa.
      */
-    initialDelayedAckBytes?: number;
+    initialDelayedAckBytes: number;
+
     /**
-     * Whether to preserve the connection open after the `AdbDaemonTransport` is closed.
+     * Whether to keep the `connection` open (don't call `writable.close` and `readable.cancel`)
+     * when `AdbDaemonTransport.close` is called.
+     *
+     * @default false
      */
     preserveConnection?: boolean | undefined;
-    debugSlowRead?: boolean | undefined;
+
+    /**
+     * When set, the transport will throw an error when
+     * one of the socket readable stalls for this amount of milliseconds.
+     *
+     * Because ADB is a multiplexed protocol, blocking one socket will also block all other sockets.
+     * It's important to always read from all sockets to prevent stalling.
+     *
+     * This option is helpful to detect bugs in the client code.
+     *
+     * @default undefined
+     */
+    readTimeLimit?: number | undefined;
 }
 
 export class AdbDaemonTransport implements AdbTransport {
@@ -106,9 +151,9 @@ export class AdbDaemonTransport implements AdbTransport {
      * Authenticates the connection and creates an `AdbDaemonTransport` instance
      * that can be used by `Adb` class.
      *
-     * If an authentication process failed, it's possible to call `authenticate` again
-     * on the same connection. Because every time the device receives a `CNXN` packet,
-     * it resets all internal state, and starts a new authentication process.
+     * If an authentication process failed,
+     * no matter which value the `preserveConnection` option has,
+     * the `connection` is always kept open, so it can be used in another `authenticate` call.
      */
     static async authenticate({
         serial,
@@ -278,7 +323,7 @@ export class AdbDaemonTransport implements AdbTransport {
         version,
         banner,
         features = ADB_DAEMON_DEFAULT_FEATURES,
-        initialDelayedAckBytes = ADB_DAEMON_DEFAULT_INITIAL_PAYLOAD_SIZE,
+        initialDelayedAckBytes,
         ...options
     }: AdbDaemonSocketConnectorConstructionOptions) {
         this.#serial = serial;

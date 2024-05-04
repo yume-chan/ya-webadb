@@ -7,30 +7,9 @@ import type {
 } from "./stream.js";
 import {
     WritableStream as NativeWritableStream,
-    ReadableStream,
+    ReadableStream as NativeReadableStream,
 } from "./stream.js";
-
-interface Task {
-    run<T>(callback: () => T): T;
-}
-
-interface Console {
-    createTask(name: string): Task;
-}
-
-interface GlobalExtension {
-    console: Console;
-}
-
-// `createTask` allows browser DevTools to track the call stack across async boundaries.
-const { console } = globalThis as unknown as GlobalExtension;
-const createTask: Console["createTask"] =
-    console.createTask?.bind(console) ??
-    (() => ({
-        run(callback) {
-            return callback();
-        },
-    }));
+import { createTask, type Task } from "./task.js";
 
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
     return typeof value === "object" && value !== null && "then" in value;
@@ -148,83 +127,78 @@ export namespace Consumable {
             );
         }
     }
-}
 
-export interface ConsumableReadableStreamController<T> {
-    enqueue(chunk: T): Promise<void>;
-    close(): void;
-    error(reason: unknown): void;
-}
-
-export interface ConsumableReadableStreamSource<T> {
-    start?(
-        controller: ConsumableReadableStreamController<T>,
-    ): void | PromiseLike<void>;
-    pull?(
-        controller: ConsumableReadableStreamController<T>,
-    ): void | PromiseLike<void>;
-    cancel?(reason: unknown): void | PromiseLike<void>;
-}
-
-export class ConsumableReadableStream<T> extends ReadableStream<Consumable<T>> {
-    static async enqueue<T>(
-        controller: { enqueue: (chunk: Consumable<T>) => void },
-        chunk: T,
-    ) {
-        const output = new Consumable(chunk);
-        controller.enqueue(output);
-        await output.consumed;
+    export interface ReadableStreamController<T> {
+        enqueue(chunk: T): Promise<void>;
+        close(): void;
+        error(reason: unknown): void;
     }
 
-    constructor(
-        source: ConsumableReadableStreamSource<T>,
-        strategy?: QueuingStrategy<T>,
-    ) {
-        let wrappedController:
-            | ConsumableReadableStreamController<T>
-            | undefined;
+    export interface ReadableStreamSource<T> {
+        start?(
+            controller: ReadableStreamController<T>,
+        ): void | PromiseLike<void>;
+        pull?(
+            controller: ReadableStreamController<T>,
+        ): void | PromiseLike<void>;
+        cancel?(reason: unknown): void | PromiseLike<void>;
+    }
 
-        let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
-        if (strategy) {
-            wrappedStrategy = {};
-            if ("highWaterMark" in strategy) {
-                wrappedStrategy.highWaterMark = strategy.highWaterMark;
-            }
-            if ("size" in strategy) {
-                wrappedStrategy.size = (chunk) => {
-                    return strategy.size!(chunk.value);
-                };
-            }
+    export class ReadableStream<T> extends NativeReadableStream<Consumable<T>> {
+        static async enqueue<T>(
+            controller: { enqueue: (chunk: Consumable<T>) => void },
+            chunk: T,
+        ) {
+            const output = new Consumable(chunk);
+            controller.enqueue(output);
+            await output.consumed;
         }
 
-        super(
-            {
-                async start(controller) {
-                    wrappedController = {
-                        async enqueue(chunk) {
-                            await ConsumableReadableStream.enqueue(
-                                controller,
-                                chunk,
-                            );
-                        },
-                        close() {
-                            controller.close();
-                        },
-                        error(reason) {
-                            controller.error(reason);
-                        },
-                    };
+        constructor(
+            source: ReadableStreamSource<T>,
+            strategy?: QueuingStrategy<T>,
+        ) {
+            let wrappedController: ReadableStreamController<T> | undefined;
 
-                    await source.start?.(wrappedController);
+            let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
+            if (strategy) {
+                wrappedStrategy = {};
+                if ("highWaterMark" in strategy) {
+                    wrappedStrategy.highWaterMark = strategy.highWaterMark;
+                }
+                if ("size" in strategy) {
+                    wrappedStrategy.size = (chunk) => {
+                        return strategy.size!(chunk.value);
+                    };
+                }
+            }
+
+            super(
+                {
+                    async start(controller) {
+                        wrappedController = {
+                            async enqueue(chunk) {
+                                await ReadableStream.enqueue(controller, chunk);
+                            },
+                            close() {
+                                controller.close();
+                            },
+                            error(reason) {
+                                controller.error(reason);
+                            },
+                        };
+
+                        await source.start?.(wrappedController);
+                    },
+                    async pull() {
+                        await source.pull?.(wrappedController!);
+                    },
+                    async cancel(reason) {
+                        await source.cancel?.(reason);
+                    },
                 },
-                async pull() {
-                    await source.pull?.(wrappedController!);
-                },
-                async cancel(reason) {
-                    await source.cancel?.(reason);
-                },
-            },
-            wrappedStrategy,
-        );
+                wrappedStrategy,
+            );
+        }
     }
 }

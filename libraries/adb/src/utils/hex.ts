@@ -36,23 +36,25 @@ export function hexToNumber(data: Uint8Array): number {
     return result;
 }
 
-export function numberToHex(value: number) {
-    const result = new Uint8Array(4);
-    let index = 3;
-    while (index >= 0 && value > 0) {
+export function write4HexDigits(
+    buffer: Uint8Array,
+    index: number,
+    value: number,
+) {
+    const start = index;
+    index += 3;
+    while (index >= start && value > 0) {
         const digit = value & 0xf;
         value >>= 4;
         if (digit < 10) {
-            result[index] = digit + 48;
+            buffer[index] = digit + 48; // '0'
         } else {
-            result[index] = digit + 87;
+            buffer[index] = digit + 87; // 'a' - 10
         }
         index -= 1;
     }
-    while (index >= 0) {
-        // '0'
-        result[index] = 48;
+    while (index >= start) {
+        buffer[index] = 48; // '0'
         index -= 1;
     }
-    return result;
 }

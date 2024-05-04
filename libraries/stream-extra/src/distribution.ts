@@ -1,4 +1,4 @@
-import { ConsumableReadableStream } from "./consumable.js";
+import { Consumable } from "./consumable.js";
 import { MaybeConsumable } from "./maybe-consumable.js";
 import { TransformStream } from "./stream.js";
 
@@ -90,7 +90,7 @@ export class DistributionStream extends TransformStream<
                 await MaybeConsumable.tryConsume(chunk, async (chunk) => {
                     if (combiner) {
                         for (const buffer of combiner.push(chunk)) {
-                            await ConsumableReadableStream.enqueue(
+                            await Consumable.ReadableStream.enqueue(
                                 controller,
                                 buffer,
                             );
@@ -100,7 +100,7 @@ export class DistributionStream extends TransformStream<
                         let available = chunk.byteLength;
                         while (available > 0) {
                             const end = offset + size;
-                            await ConsumableReadableStream.enqueue(
+                            await Consumable.ReadableStream.enqueue(
                                 controller,
                                 chunk.subarray(offset, end),
                             );

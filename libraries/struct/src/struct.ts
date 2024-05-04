@@ -16,19 +16,19 @@ import {
 } from "./basic/index.js";
 import { SyncPromise } from "./sync-promise.js";
 import type {
-    BufferFieldSubType,
+    BufferFieldConverter,
     FixedLengthBufferLikeFieldOptions,
     LengthField,
     VariableLengthBufferLikeFieldOptions,
 } from "./types/index.js";
 import {
     BigIntFieldDefinition,
-    BigIntFieldType,
+    BigIntFieldVariant,
     FixedLengthBufferLikeFieldDefinition,
     NumberFieldDefinition,
-    NumberFieldType,
-    StringBufferFieldSubType,
-    Uint8ArrayBufferFieldSubType,
+    NumberFieldVariant,
+    StringBufferFieldConverter,
+    Uint8ArrayBufferFieldConverter,
     VariableLengthBufferLikeFieldDefinition,
 } from "./types/index.js";
 import type { Evaluate, Identity, Overwrite, ValueOrPromise } from "./utils.js";
@@ -86,7 +86,7 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends BufferFieldSubType<unknown, unknown>,
+        TType extends BufferFieldConverter<unknown, unknown>,
         TTypeScriptType = TType["TTypeScriptType"],
     >(
         name: TName,
@@ -110,7 +110,7 @@ interface ArrayBufferLikeFieldCreator<
      */
     <
         TName extends PropertyKey,
-        TType extends BufferFieldSubType<unknown, unknown>,
+        TType extends BufferFieldConverter<unknown, unknown>,
         TOptions extends VariableLengthBufferLikeFieldOptions<TFields>,
         TTypeScriptType = TType["TTypeScriptType"],
     >(
@@ -136,7 +136,7 @@ interface BoundArrayBufferLikeFieldDefinitionCreator<
     TOmitInitKey extends PropertyKey,
     TExtra extends object,
     TPostDeserialized,
-    TType extends BufferFieldSubType<unknown, unknown>,
+    TType extends BufferFieldConverter<unknown, unknown>,
 > {
     <TName extends PropertyKey, TTypeScriptType = TType["TTypeScriptType"]>(
         name: TName,
@@ -351,7 +351,7 @@ export class Struct<
 
     #number<
         TName extends PropertyKey,
-        TType extends NumberFieldType = NumberFieldType,
+        TType extends NumberFieldVariant = NumberFieldVariant,
         TTypeScriptType = number,
     >(name: TName, type: TType, typeScriptType?: TTypeScriptType) {
         return this.field(
@@ -367,7 +367,7 @@ export class Struct<
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.#number(name, NumberFieldType.Int8, typeScriptType);
+        return this.#number(name, NumberFieldVariant.Int8, typeScriptType);
     }
 
     /**
@@ -377,7 +377,7 @@ export class Struct<
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.#number(name, NumberFieldType.Uint8, typeScriptType);
+        return this.#number(name, NumberFieldVariant.Uint8, typeScriptType);
     }
 
     /**
@@ -387,7 +387,7 @@ export class Struct<
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.#number(name, NumberFieldType.Int16, typeScriptType);
+        return this.#number(name, NumberFieldVariant.Int16, typeScriptType);
     }
 
     /**
@@ -397,7 +397,7 @@ export class Struct<
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.#number(name, NumberFieldType.Uint16, typeScriptType);
+        return this.#number(name, NumberFieldVariant.Uint16, typeScriptType);
     }
 
     /**
@@ -407,7 +407,7 @@ export class Struct<
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.#number(name, NumberFieldType.Int32, typeScriptType);
+        return this.#number(name, NumberFieldVariant.Int32, typeScriptType);
     }
 
     /**
@@ -417,12 +417,12 @@ export class Struct<
         name: TName,
         typeScriptType?: TTypeScriptType,
     ) {
-        return this.#number(name, NumberFieldType.Uint32, typeScriptType);
+        return this.#number(name, NumberFieldVariant.Uint32, typeScriptType);
     }
 
     #bigint<
         TName extends PropertyKey,
-        TType extends BigIntFieldType = BigIntFieldType,
+        TType extends BigIntFieldVariant = BigIntFieldVariant,
         TTypeScriptType = TType["TTypeScriptType"],
     >(name: TName, type: TType, typeScriptType?: TTypeScriptType) {
         return this.field(
@@ -438,9 +438,9 @@ export class Struct<
      */
     int64<
         TName extends PropertyKey,
-        TTypeScriptType = BigIntFieldType["TTypeScriptType"],
+        TTypeScriptType = BigIntFieldVariant["TTypeScriptType"],
     >(name: TName, typeScriptType?: TTypeScriptType) {
-        return this.#bigint(name, BigIntFieldType.Int64, typeScriptType);
+        return this.#bigint(name, BigIntFieldVariant.Int64, typeScriptType);
     }
 
     /**
@@ -450,9 +450,9 @@ export class Struct<
      */
     uint64<
         TName extends PropertyKey,
-        TTypeScriptType = BigIntFieldType["TTypeScriptType"],
+        TTypeScriptType = BigIntFieldVariant["TTypeScriptType"],
     >(name: TName, typeScriptType?: TTypeScriptType) {
-        return this.#bigint(name, BigIntFieldType.Uint64, typeScriptType);
+        return this.#bigint(name, BigIntFieldVariant.Uint64, typeScriptType);
     }
 
     #arrayBufferLike: ArrayBufferLikeFieldCreator<
@@ -462,7 +462,7 @@ export class Struct<
         TPostDeserialized
     > = (
         name: PropertyKey,
-        type: BufferFieldSubType,
+        type: BufferFieldConverter,
         options:
             | FixedLengthBufferLikeFieldOptions
             | VariableLengthBufferLikeFieldOptions,
@@ -485,7 +485,7 @@ export class Struct<
         TOmitInitKey,
         TExtra,
         TPostDeserialized,
-        Uint8ArrayBufferFieldSubType
+        Uint8ArrayBufferFieldConverter
     > = (
         name: PropertyKey,
         options: unknown,
@@ -493,7 +493,7 @@ export class Struct<
     ): never => {
         return this.#arrayBufferLike(
             name,
-            Uint8ArrayBufferFieldSubType.Instance,
+            Uint8ArrayBufferFieldConverter.Instance,
             options as never,
             typeScriptType,
         ) as never;
@@ -504,7 +504,7 @@ export class Struct<
         TOmitInitKey,
         TExtra,
         TPostDeserialized,
-        StringBufferFieldSubType
+        StringBufferFieldConverter
     > = (
         name: PropertyKey,
         options: unknown,
@@ -512,7 +512,7 @@ export class Struct<
     ): never => {
         return this.#arrayBufferLike(
             name,
-            StringBufferFieldSubType.Instance,
+            StringBufferFieldConverter.Instance,
             options as never,
             typeScriptType,
         ) as never;

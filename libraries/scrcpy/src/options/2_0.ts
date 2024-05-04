@@ -14,8 +14,8 @@ import type {
 
 import {
     CodecOptions,
-    ScrcpyFloatToUint16FieldDefinition,
     ScrcpyOptions1_16,
+    ScrcpyUnsignedFloatFieldDefinition,
 } from "./1_16/index.js";
 import { ScrcpyOptions1_21 } from "./1_21.js";
 import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
@@ -38,7 +38,7 @@ export const ScrcpyInjectTouchControlMessage2_0 = new Struct()
     .uint32("pointerY")
     .uint16("screenWidth")
     .uint16("screenHeight")
-    .field("pressure", ScrcpyFloatToUint16FieldDefinition)
+    .field("pressure", ScrcpyUnsignedFloatFieldDefinition)
     .uint32("actionButton")
     .uint32("buttons");
 
@@ -107,6 +107,58 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     ScrcpyOptionsInit2_0,
     ScrcpyOptions1_25
 > {
+    static async parseAudioMetadata(
+        stream: ReadableStream<Uint8Array>,
+        sendCodecMeta: boolean,
+        mapMetadata: (value: number) => ScrcpyAudioCodec,
+        getOptionCodec: () => ScrcpyAudioCodec,
+    ): Promise<ScrcpyAudioStreamMetadata> {
+        const buffered = new BufferedReadableStream(stream);
+
+        const buffer = await buffered.readExactly(4);
+        // Treat it as a 32-bit number for simpler comparisons
+        const codecMetadataValue = getUint32BigEndian(buffer, 0);
+        // Server will send `0x00_00_00_00` and `0x00_00_00_01` even if `sendCodecMeta` is false
+        switch (codecMetadataValue) {
+            case 0x00_00_00_00:
+                return {
+                    type: "disabled",
+                };
+            case 0x00_00_00_01:
+                return {
+                    type: "errored",
+                };
+        }
+
+        if (sendCodecMeta) {
+            return {
+                type: "success",
+                codec: mapMetadata(codecMetadataValue),
+                stream: buffered.release(),
+            };
+        }
+
+        return {
+            type: "success",
+            // Infer codec from `audioCodec` option
+            codec: getOptionCodec(),
+            stream: new PushReadableStream<Uint8Array>(async (controller) => {
+                // Put the first 4 bytes back
+                await controller.enqueue(buffer);
+
+                const stream = buffered.release();
+                const reader = stream.getReader();
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        break;
+                    }
+                    await controller.enqueue(value);
+                }
+            }),
+        };
+    }
+
     static readonly DEFAULTS = {
         ...omit(ScrcpyOptions1_24.DEFAULTS, [
             "bitRate",
@@ -255,81 +307,34 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     override parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
-        return (async (): Promise<ScrcpyAudioStreamMetadata> => {
-            const buffered = new BufferedReadableStream(stream);
-            const buffer = await buffered.readExactly(4);
-
-            const codecMetadataValue = getUint32BigEndian(buffer, 0);
-            // Server will send `0x00_00_00_00` and `0x00_00_00_01` even if `sendCodecMeta` is false
-            switch (codecMetadataValue) {
-                case 0x00_00_00_00:
-                    return {
-                        type: "disabled",
-                    };
-                case 0x00_00_00_01:
-                    return {
-                        type: "errored",
-                    };
-            }
-
-            if (this.value.sendCodecMeta) {
-                let codec: ScrcpyAudioCodec;
-                switch (codecMetadataValue) {
-                    case ScrcpyAudioCodec.OPUS.metadataValue:
-                        codec = ScrcpyAudioCodec.OPUS;
-                        break;
-                    case ScrcpyAudioCodec.AAC.metadataValue:
-                        codec = ScrcpyAudioCodec.AAC;
-                        break;
+        return ScrcpyOptions2_0.parseAudioMetadata(
+            stream,
+            this.value.sendCodecMeta,
+            (value) => {
+                switch (value) {
                     case ScrcpyAudioCodec.RAW.metadataValue:
-                        codec = ScrcpyAudioCodec.RAW;
-                        break;
+                        return ScrcpyAudioCodec.RAW;
+                    case ScrcpyAudioCodec.OPUS.metadataValue:
+                        return ScrcpyAudioCodec.OPUS;
+                    case ScrcpyAudioCodec.AAC.metadataValue:
+                        return ScrcpyAudioCodec.AAC;
                     default:
                         throw new Error(
-                            `Unknown audio codec metadata value: ${codecMetadataValue}`,
+                            `Unknown audio codec metadata value: ${value}`,
                         );
                 }
-                return {
-                    type: "success",
-                    codec,
-                    stream: buffered.release(),
-                };
-            }
-
-            // Infer codec from `audioCodec` option
-            let codec: ScrcpyAudioCodec;
-            switch (this.value.audioCodec) {
-                case "opus":
-                    codec = ScrcpyAudioCodec.OPUS;
-                    break;
-                case "aac":
-                    codec = ScrcpyAudioCodec.AAC;
-                    break;
-                case "raw":
-                    codec = ScrcpyAudioCodec.RAW;
-                    break;
-            }
-            return {
-                type: "success",
-                codec,
-                stream: new PushReadableStream<Uint8Array>(
-                    async (controller) => {
-                        // Put the first 4 bytes back
-                        await controller.enqueue(buffer);
-
-                        const stream = buffered.release();
-                        const reader = stream.getReader();
-                        while (true) {
-                            const { done, value } = await reader.read();
-                            if (done) {
-                                break;
-                            }
-                            await controller.enqueue(value);
-                        }
-                    },
-                ),
-            };
-        })();
+            },
+            () => {
+                switch (this.value.audioCodec) {
+                    case "raw":
+                        return ScrcpyAudioCodec.RAW;
+                    case "opus":
+                        return ScrcpyAudioCodec.OPUS;
+                    case "aac":
+                        return ScrcpyAudioCodec.AAC;
+                }
+            },
+        );
     }
 
     override serializeInjectTouchControlMessage(

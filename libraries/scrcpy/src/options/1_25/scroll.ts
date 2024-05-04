@@ -1,5 +1,5 @@
 import { getInt16 } from "@yume-chan/no-data-view";
-import type { NumberFieldType } from "@yume-chan/struct";
+import type { NumberFieldVariant } from "@yume-chan/struct";
 import Struct, { NumberFieldDefinition } from "@yume-chan/struct";
 
 import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
@@ -7,7 +7,7 @@ import { ScrcpyControlMessageType } from "../../control/index.js";
 import type { ScrcpyScrollController } from "../1_16/index.js";
 import { clamp } from "../1_16/index.js";
 
-export const ScrcpyFloatToInt16NumberType: NumberFieldType = {
+export const ScrcpySignedFloatNumberVariant: NumberFieldVariant = {
     size: 2,
     signed: true,
     deserialize(array, littleEndian) {
@@ -23,8 +23,8 @@ export const ScrcpyFloatToInt16NumberType: NumberFieldType = {
     },
 };
 
-const ScrcpyFloatToInt16FieldDefinition = new NumberFieldDefinition(
-    ScrcpyFloatToInt16NumberType,
+const ScrcpySignedFloatFieldDefinition = new NumberFieldDefinition(
+    ScrcpySignedFloatNumberVariant,
 );
 
 export const ScrcpyInjectScrollControlMessage1_25 = new Struct()
@@ -33,8 +33,8 @@ export const ScrcpyInjectScrollControlMessage1_25 = new Struct()
     .uint32("pointerY")
     .uint16("screenWidth")
     .uint16("screenHeight")
-    .field("scrollX", ScrcpyFloatToInt16FieldDefinition)
-    .field("scrollY", ScrcpyFloatToInt16FieldDefinition)
+    .field("scrollX", ScrcpySignedFloatFieldDefinition)
+    .field("scrollY", ScrcpySignedFloatFieldDefinition)
     .int32("buttons");
 
 export type ScrcpyInjectScrollControlMessage1_25 =

@@ -13,11 +13,11 @@ import type { ValueOrPromise } from "./utils.js";
 
 import {
     BigIntFieldDefinition,
-    BigIntFieldType,
-    BufferFieldSubType,
+    BigIntFieldVariant,
+    BufferFieldConverter,
     FixedLengthBufferLikeFieldDefinition,
     NumberFieldDefinition,
-    NumberFieldType,
+    NumberFieldVariant,
     VariableLengthBufferLikeFieldDefinition,
 } from "./index.js";
 
@@ -120,7 +120,7 @@ describe("Struct", () => {
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.type).toBe(NumberFieldType.Int8);
+            expect(definition.variant).toBe(NumberFieldVariant.Int8);
         });
 
         it("`uint8` should append an `uint8` field", () => {
@@ -130,7 +130,7 @@ describe("Struct", () => {
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.type).toBe(NumberFieldType.Uint8);
+            expect(definition.variant).toBe(NumberFieldVariant.Uint8);
         });
 
         it("`int16` should append an `int16` field", () => {
@@ -140,7 +140,7 @@ describe("Struct", () => {
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.type).toBe(NumberFieldType.Int16);
+            expect(definition.variant).toBe(NumberFieldVariant.Int16);
         });
 
         it("`uint16` should append an `uint16` field", () => {
@@ -150,7 +150,7 @@ describe("Struct", () => {
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.type).toBe(NumberFieldType.Uint16);
+            expect(definition.variant).toBe(NumberFieldVariant.Uint16);
         });
 
         it("`int32` should append an `int32` field", () => {
@@ -160,7 +160,7 @@ describe("Struct", () => {
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.type).toBe(NumberFieldType.Int32);
+            expect(definition.variant).toBe(NumberFieldVariant.Int32);
         });
 
         it("`uint32` should append an `uint32` field", () => {
@@ -170,7 +170,7 @@ describe("Struct", () => {
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
             expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.type).toBe(NumberFieldType.Uint32);
+            expect(definition.variant).toBe(NumberFieldVariant.Uint32);
         });
 
         it("`int64` should append an `int64` field", () => {
@@ -180,7 +180,7 @@ describe("Struct", () => {
 
             const definition = struct.fields[0]![1] as BigIntFieldDefinition;
             expect(definition).toBeInstanceOf(BigIntFieldDefinition);
-            expect(definition.type).toBe(BigIntFieldType.Int64);
+            expect(definition.variant).toBe(BigIntFieldVariant.Int64);
         });
 
         it("`uint64` should append an `uint64` field", () => {
@@ -190,7 +190,7 @@ describe("Struct", () => {
 
             const definition = struct.fields[0]![1] as BigIntFieldDefinition;
             expect(definition).toBeInstanceOf(BigIntFieldDefinition);
-            expect(definition.type).toBe(BigIntFieldType.Uint64);
+            expect(definition.variant).toBe(BigIntFieldVariant.Uint64);
         });
 
         describe("#uint8ArrayLike", () => {
@@ -205,7 +205,9 @@ describe("Struct", () => {
                     expect(definition).toBeInstanceOf(
                         FixedLengthBufferLikeFieldDefinition,
                     );
-                    expect(definition.type).toBeInstanceOf(BufferFieldSubType);
+                    expect(definition.converter).toBeInstanceOf(
+                        BufferFieldConverter,
+                    );
                     expect(definition.options.length).toBe(10);
                 });
 
@@ -219,7 +221,9 @@ describe("Struct", () => {
                     expect(definition).toBeInstanceOf(
                         FixedLengthBufferLikeFieldDefinition,
                     );
-                    expect(definition.type).toBeInstanceOf(BufferFieldSubType);
+                    expect(definition.converter).toBeInstanceOf(
+                        BufferFieldConverter,
+                    );
                     expect(definition.options.length).toBe(10);
                 });
             });
@@ -237,7 +241,9 @@ describe("Struct", () => {
                     expect(definition).toBeInstanceOf(
                         VariableLengthBufferLikeFieldDefinition,
                     );
-                    expect(definition.type).toBeInstanceOf(BufferFieldSubType);
+                    expect(definition.converter).toBeInstanceOf(
+                        BufferFieldConverter,
+                    );
                     expect(definition.options.lengthField).toBe("barLength");
                 });
 
@@ -253,7 +259,9 @@ describe("Struct", () => {
                     expect(definition).toBeInstanceOf(
                         VariableLengthBufferLikeFieldDefinition,
                     );
-                    expect(definition.type).toBeInstanceOf(BufferFieldSubType);
+                    expect(definition.converter).toBeInstanceOf(
+                        BufferFieldConverter,
+                    );
                     expect(definition.options.lengthField).toBe("barLength");
                 });
             });
@@ -270,19 +278,31 @@ describe("Struct", () => {
 
                 const field0 = struct.fields[0]!;
                 expect(field0).toHaveProperty("0", "int8");
-                expect(field0[1]).toHaveProperty("type", NumberFieldType.Int8);
+                expect(field0[1]).toHaveProperty(
+                    "variant",
+                    NumberFieldVariant.Int8,
+                );
 
                 const field1 = struct.fields[1]!;
                 expect(field1).toHaveProperty("0", "int16");
-                expect(field1[1]).toHaveProperty("type", NumberFieldType.Int16);
+                expect(field1[1]).toHaveProperty(
+                    "variant",
+                    NumberFieldVariant.Int16,
+                );
 
                 const field2 = struct.fields[2]!;
                 expect(field2).toHaveProperty("0", "int32");
-                expect(field2[1]).toHaveProperty("type", NumberFieldType.Int32);
+                expect(field2[1]).toHaveProperty(
+                    "variant",
+                    NumberFieldVariant.Int32,
+                );
 
                 const field3 = struct.fields[3]!;
                 expect(field3).toHaveProperty("0", "int64");
-                expect(field3[1]).toHaveProperty("type", BigIntFieldType.Int64);
+                expect(field3[1]).toHaveProperty(
+                    "variant",
+                    BigIntFieldVariant.Int64,
+                );
             });
         });
 

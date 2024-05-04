@@ -3,12 +3,12 @@ import { describe, expect, it, jest } from "@jest/globals";
 import type { ExactReadable } from "../../basic/index.js";
 import { StructDefaultOptions, StructValue } from "../../basic/index.js";
 
-import type { BufferFieldSubType } from "./base.js";
+import type { BufferFieldConverter } from "./base.js";
 import {
     BufferLikeFieldDefinition,
     EMPTY_UINT8_ARRAY,
-    StringBufferFieldSubType,
-    Uint8ArrayBufferFieldSubType,
+    StringBufferFieldConverter,
+    Uint8ArrayBufferFieldConverter,
 } from "./base.js";
 
 class MockDeserializationStream implements ExactReadable {
@@ -23,37 +23,37 @@ describe("Types", () => {
     describe("Buffer", () => {
         describe("Uint8ArrayBufferFieldSubType", () => {
             it("should have a static instance", () => {
-                expect(Uint8ArrayBufferFieldSubType.Instance).toBeInstanceOf(
-                    Uint8ArrayBufferFieldSubType,
+                expect(Uint8ArrayBufferFieldConverter.Instance).toBeInstanceOf(
+                    Uint8ArrayBufferFieldConverter,
                 );
             });
 
             it("`#toBuffer` should return the same `Uint8Array`", () => {
                 const array = new Uint8Array(10);
                 expect(
-                    Uint8ArrayBufferFieldSubType.Instance.toBuffer(array),
+                    Uint8ArrayBufferFieldConverter.Instance.toBuffer(array),
                 ).toBe(array);
             });
 
             it("`#fromBuffer` should return the same `Uint8Array`", () => {
                 const buffer = new Uint8Array(10);
                 expect(
-                    Uint8ArrayBufferFieldSubType.Instance.toValue(buffer),
+                    Uint8ArrayBufferFieldConverter.Instance.toValue(buffer),
                 ).toBe(buffer);
             });
 
             it("`#getSize` should return the `byteLength` of the `Uint8Array`", () => {
                 const array = new Uint8Array(10);
                 expect(
-                    Uint8ArrayBufferFieldSubType.Instance.getSize(array),
+                    Uint8ArrayBufferFieldConverter.Instance.getSize(array),
                 ).toBe(10);
             });
         });
 
         describe("StringBufferFieldSubType", () => {
             it("should have a static instance", () => {
-                expect(StringBufferFieldSubType.Instance).toBeInstanceOf(
-                    StringBufferFieldSubType,
+                expect(StringBufferFieldConverter.Instance).toBeInstanceOf(
+                    StringBufferFieldConverter,
                 );
             });
 
@@ -61,25 +61,27 @@ describe("Types", () => {
                 const text = "foo";
                 const array = new Uint8Array(Buffer.from(text, "utf-8"));
                 expect(
-                    StringBufferFieldSubType.Instance.toBuffer(text),
+                    StringBufferFieldConverter.Instance.toBuffer(text),
                 ).toEqual(array);
             });
 
             it("`#fromBuffer` should return the encoded ArrayBuffer", () => {
                 const text = "foo";
                 const array = new Uint8Array(Buffer.from(text, "utf-8"));
-                expect(StringBufferFieldSubType.Instance.toValue(array)).toBe(
+                expect(StringBufferFieldConverter.Instance.toValue(array)).toBe(
                     text,
                 );
             });
 
             it("`#getSize` should return -1", () => {
-                expect(StringBufferFieldSubType.Instance.getSize()).toBe(-1);
+                expect(StringBufferFieldConverter.Instance.getSize()).toBe(
+                    undefined,
+                );
             });
         });
 
         class MockArrayBufferFieldDefinition<
-            TType extends BufferFieldSubType,
+            TType extends BufferFieldConverter,
         > extends BufferLikeFieldDefinition<TType, number> {
             getSize(): number {
                 return this.options;
@@ -90,7 +92,7 @@ describe("Types", () => {
             it("should work with `Uint8ArrayBufferFieldSubType`", () => {
                 const size = 10;
                 const definition = new MockArrayBufferFieldDefinition(
-                    Uint8ArrayBufferFieldSubType.Instance,
+                    Uint8ArrayBufferFieldConverter.Instance,
                     size,
                 );
 
@@ -114,7 +116,7 @@ describe("Types", () => {
             it("should work when `#getSize` returns `0`", () => {
                 const size = 0;
                 const definition = new MockArrayBufferFieldDefinition(
-                    Uint8ArrayBufferFieldSubType.Instance,
+                    Uint8ArrayBufferFieldConverter.Instance,
                     size,
                 );
 
@@ -143,7 +145,7 @@ describe("Types", () => {
                 it("should clear `array` field", () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(
-                        Uint8ArrayBufferFieldSubType.Instance,
+                        Uint8ArrayBufferFieldConverter.Instance,
                         size,
                     );
 
@@ -169,7 +171,7 @@ describe("Types", () => {
                 it("should be able to serialize with cached `array`", () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(
-                        Uint8ArrayBufferFieldSubType.Instance,
+                        Uint8ArrayBufferFieldConverter.Instance,
                         size,
                     );
 
@@ -197,7 +199,7 @@ describe("Types", () => {
                 it("should be able to serialize a modified value", () => {
                     const size = 0;
                     const definition = new MockArrayBufferFieldDefinition(
-                        Uint8ArrayBufferFieldSubType.Instance,
+                        Uint8ArrayBufferFieldConverter.Instance,
                         size,
                     );
 

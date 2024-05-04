@@ -6,7 +6,7 @@ import {
     ScrcpyControlMessageType,
 } from "../../control/index.js";
 
-import { ScrcpyFloatToUint16FieldDefinition } from "./float-to-uint16.js";
+import { ScrcpyUnsignedFloatFieldDefinition } from "./float.js";
 
 export const SCRCPY_CONTROL_MESSAGE_TYPES_1_16: readonly ScrcpyControlMessageType[] =
     [
@@ -38,7 +38,7 @@ export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
     .uint32("pointerY")
     .uint16("screenWidth")
     .uint16("screenHeight")
-    .field("pressure", ScrcpyFloatToUint16FieldDefinition)
+    .field("pressure", ScrcpyUnsignedFloatFieldDefinition)
     .uint32("buttons");
 
 export type ScrcpyInjectTouchControlMessage1_16 =

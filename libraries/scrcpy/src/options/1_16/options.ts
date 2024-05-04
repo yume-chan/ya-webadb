@@ -83,13 +83,20 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         return order.map((key) => toScrcpyOptionValue(options[key], "-"));
     }
 
+    /**
+     * Parse a fixed-length, null-terminated string.
+     * @param stream The stream to read from
+     * @param maxLength The maximum length of the string, including the null terminator, in bytes
+     * @returns The parsed string, without the null terminator
+     */
     static async parseCString(
         stream: AsyncExactReadable,
         maxLength: number,
     ): Promise<string> {
-        let result = decodeUtf8(await stream.readExactly(maxLength));
-        result = result.substring(0, result.indexOf("\0"));
-        return result;
+        const buffer = await stream.readExactly(maxLength);
+        // If null terminator is not found, `subarray(0, -1)` will remove the last byte
+        // But since it's a invalid case, it's fine
+        return decodeUtf8(buffer.subarray(0, buffer.indexOf(0)));
     }
 
     static async parseUint16BE(stream: AsyncExactReadable): Promise<number> {

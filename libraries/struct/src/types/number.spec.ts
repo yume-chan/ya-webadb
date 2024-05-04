@@ -3,10 +3,10 @@ import { describe, expect, it, jest, test } from "@jest/globals";
 import type { ExactReadable } from "../basic/index.js";
 import { StructDefaultOptions, StructValue } from "../basic/index.js";
 
-import { NumberFieldDefinition, NumberFieldType } from "./number.js";
+import { NumberFieldDefinition, NumberFieldVariant } from "./number.js";
 
 function testEndian(
-    type: NumberFieldType,
+    type: NumberFieldVariant,
     min: number,
     max: number,
     littleEndian: boolean,
@@ -55,7 +55,7 @@ function testEndian(
     });
 }
 
-function testDeserialize(type: NumberFieldType) {
+function testDeserialize(type: NumberFieldVariant) {
     if (type.size === 1) {
         if (type.signed) {
             const MIN = -(2 ** (type.size * 8 - 1));
@@ -89,65 +89,65 @@ function testDeserialize(type: NumberFieldType) {
 
 describe("Types", () => {
     describe("Number", () => {
-        describe("NumberFieldType", () => {
+        describe("NumberFieldVariant", () => {
             describe("Int8", () => {
                 const key = "Int8";
 
                 test("basic", () => {
-                    expect(NumberFieldType[key]).toHaveProperty("size", 1);
+                    expect(NumberFieldVariant[key]).toHaveProperty("size", 1);
                 });
 
-                testDeserialize(NumberFieldType[key]);
+                testDeserialize(NumberFieldVariant[key]);
             });
 
             describe("Uint8", () => {
                 const key = "Uint8";
 
                 test("basic", () => {
-                    expect(NumberFieldType[key]).toHaveProperty("size", 1);
+                    expect(NumberFieldVariant[key]).toHaveProperty("size", 1);
                 });
 
-                testDeserialize(NumberFieldType[key]);
+                testDeserialize(NumberFieldVariant[key]);
             });
 
             describe("Int16", () => {
                 const key = "Int16";
 
                 test("basic", () => {
-                    expect(NumberFieldType[key]).toHaveProperty("size", 2);
+                    expect(NumberFieldVariant[key]).toHaveProperty("size", 2);
                 });
 
-                testDeserialize(NumberFieldType[key]);
+                testDeserialize(NumberFieldVariant[key]);
             });
 
             describe("Uint16", () => {
                 const key = "Uint16";
 
                 test("basic", () => {
-                    expect(NumberFieldType[key]).toHaveProperty("size", 2);
+                    expect(NumberFieldVariant[key]).toHaveProperty("size", 2);
                 });
 
-                testDeserialize(NumberFieldType[key]);
+                testDeserialize(NumberFieldVariant[key]);
             });
 
             describe("Int32", () => {
                 const key = "Int32";
 
                 test("basic", () => {
-                    expect(NumberFieldType[key]).toHaveProperty("size", 4);
+                    expect(NumberFieldVariant[key]).toHaveProperty("size", 4);
                 });
 
-                testDeserialize(NumberFieldType[key]);
+                testDeserialize(NumberFieldVariant[key]);
             });
 
             describe("Uint32", () => {
                 const key = "Uint32";
 
                 test("basic", () => {
-                    expect(NumberFieldType[key]).toHaveProperty("size", 4);
+                    expect(NumberFieldVariant[key]).toHaveProperty("size", 4);
                 });
 
-                testDeserialize(NumberFieldType[key]);
+                testDeserialize(NumberFieldVariant[key]);
             });
         });
 
@@ -156,32 +156,32 @@ describe("Types", () => {
                 it("should return size of its type", () => {
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Int8,
+                            NumberFieldVariant.Int8,
                         ).getSize(),
                     ).toBe(1);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Uint8,
+                            NumberFieldVariant.Uint8,
                         ).getSize(),
                     ).toBe(1);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Int16,
+                            NumberFieldVariant.Int16,
                         ).getSize(),
                     ).toBe(2);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Uint16,
+                            NumberFieldVariant.Uint16,
                         ).getSize(),
                     ).toBe(2);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Int32,
+                            NumberFieldVariant.Int32,
                         ).getSize(),
                     ).toBe(4);
                     expect(
                         new NumberFieldDefinition(
-                            NumberFieldType.Uint32,
+                            NumberFieldVariant.Uint32,
                         ).getSize(),
                     ).toBe(4);
                 });
@@ -195,7 +195,7 @@ describe("Types", () => {
                     const stream: ExactReadable = { position: 0, readExactly };
 
                     const definition = new NumberFieldDefinition(
-                        NumberFieldType.Uint8,
+                        NumberFieldVariant.Uint8,
                     );
                     const struct = new StructValue({});
                     const value = definition.deserialize(
@@ -207,7 +207,7 @@ describe("Types", () => {
                     expect(value.get()).toBe(1);
                     expect(readExactly).toHaveBeenCalledTimes(1);
                     expect(readExactly).toHaveBeenCalledWith(
-                        NumberFieldType.Uint8.size,
+                        NumberFieldVariant.Uint8.size,
                     );
                 });
 
@@ -218,7 +218,7 @@ describe("Types", () => {
                     const stream: ExactReadable = { position: 0, readExactly };
 
                     const definition = new NumberFieldDefinition(
-                        NumberFieldType.Uint16,
+                        NumberFieldVariant.Uint16,
                     );
                     const struct = new StructValue({});
                     const value = definition.deserialize(
@@ -230,7 +230,7 @@ describe("Types", () => {
                     expect(value.get()).toBe((1 << 8) | 2);
                     expect(readExactly).toHaveBeenCalledTimes(1);
                     expect(readExactly).toHaveBeenCalledWith(
-                        NumberFieldType.Uint16.size,
+                        NumberFieldVariant.Uint16.size,
                     );
                 });
 
@@ -241,7 +241,7 @@ describe("Types", () => {
                     const stream: ExactReadable = { position: 0, readExactly };
 
                     const definition = new NumberFieldDefinition(
-                        NumberFieldType.Uint16,
+                        NumberFieldVariant.Uint16,
                     );
                     const struct = new StructValue({});
                     const value = definition.deserialize(
@@ -253,7 +253,7 @@ describe("Types", () => {
                     expect(value.get()).toBe((2 << 8) | 1);
                     expect(readExactly).toHaveBeenCalledTimes(1);
                     expect(readExactly).toHaveBeenCalledWith(
-                        NumberFieldType.Uint16.size,
+                        NumberFieldVariant.Uint16.size,
                     );
                 });
             });
@@ -265,37 +265,37 @@ describe("Types", () => {
                     const struct = new StructValue({});
 
                     expect(
-                        new NumberFieldDefinition(NumberFieldType.Int8)
+                        new NumberFieldDefinition(NumberFieldVariant.Int8)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
                     ).toBe(1);
 
                     expect(
-                        new NumberFieldDefinition(NumberFieldType.Uint8)
+                        new NumberFieldDefinition(NumberFieldVariant.Uint8)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
                     ).toBe(1);
 
                     expect(
-                        new NumberFieldDefinition(NumberFieldType.Int16)
+                        new NumberFieldDefinition(NumberFieldVariant.Int16)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
                     ).toBe(2);
 
                     expect(
-                        new NumberFieldDefinition(NumberFieldType.Uint16)
+                        new NumberFieldDefinition(NumberFieldVariant.Uint16)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
                     ).toBe(2);
 
                     expect(
-                        new NumberFieldDefinition(NumberFieldType.Int32)
+                        new NumberFieldDefinition(NumberFieldVariant.Int32)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
                     ).toBe(4);
 
                     expect(
-                        new NumberFieldDefinition(NumberFieldType.Uint32)
+                        new NumberFieldDefinition(NumberFieldVariant.Uint32)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
                     ).toBe(4);
@@ -305,7 +305,7 @@ describe("Types", () => {
             describe("#serialize", () => {
                 it("should serialize uint8", () => {
                     const definition = new NumberFieldDefinition(
-                        NumberFieldType.Int8,
+                        NumberFieldVariant.Int8,
                     );
                     const struct = new StructValue({});
                     const value = definition.create(

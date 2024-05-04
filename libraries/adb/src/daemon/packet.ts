@@ -1,8 +1,4 @@
-import type { Consumable } from "@yume-chan/stream-extra";
-import {
-    ConsumableReadableStream,
-    TransformStream,
-} from "@yume-chan/stream-extra";
+import { Consumable, TransformStream } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
 export enum AdbCommand {
@@ -65,7 +61,7 @@ export class AdbPacketSerializeStream extends TransformStream<
                     const init = chunk as AdbPacketInit & AdbPacketHeaderInit;
                     init.payloadLength = init.payload.byteLength;
 
-                    await ConsumableReadableStream.enqueue(
+                    await Consumable.ReadableStream.enqueue(
                         controller,
                         AdbPacketHeader.serialize(init, headerBuffer),
                     );
@@ -74,7 +70,7 @@ export class AdbPacketSerializeStream extends TransformStream<
                         // USB protocol preserves packet boundaries,
                         // so we must write payload separately as native ADB does,
                         // otherwise the read operation on device will fail.
-                        await ConsumableReadableStream.enqueue(
+                        await Consumable.ReadableStream.enqueue(
                             controller,
                             init.payload,
                         );

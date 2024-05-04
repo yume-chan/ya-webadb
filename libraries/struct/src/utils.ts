@@ -88,5 +88,7 @@ export function encodeUtf8(input: string): Uint8Array {
 }
 
 export function decodeUtf8(buffer: ArrayBufferView | ArrayBuffer): string {
+    // `TextDecoder` has internal states in stream mode,
+    // but we don't use stream mode here, so it's safe to reuse the instance
     return Utf8Decoder.decode(buffer);
 }

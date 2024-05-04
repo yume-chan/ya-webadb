@@ -11,9 +11,9 @@ import {
 } from "../../basic/index.js";
 
 import {
-    BufferFieldSubType,
+    BufferFieldConverter,
     EMPTY_UINT8_ARRAY,
-    Uint8ArrayBufferFieldSubType,
+    Uint8ArrayBufferFieldConverter,
 } from "./base.js";
 import {
     VariableLengthBufferLikeFieldDefinition,
@@ -334,7 +334,7 @@ describe("Types", () => {
 
                 const arrayBufferFieldDefinition =
                     new VariableLengthBufferLikeFieldDefinition(
-                        Uint8ArrayBufferFieldSubType.Instance,
+                        Uint8ArrayBufferFieldConverter.Instance,
                         { lengthField },
                     );
 
@@ -371,7 +371,7 @@ describe("Types", () => {
 
                 const arrayBufferFieldDefinition =
                     new VariableLengthBufferLikeFieldDefinition(
-                        Uint8ArrayBufferFieldSubType.Instance,
+                        Uint8ArrayBufferFieldConverter.Instance,
                         { lengthField },
                     );
 
@@ -409,7 +409,7 @@ describe("Types", () => {
 
                 const arrayBufferFieldDefinition =
                     new VariableLengthBufferLikeFieldDefinition(
-                        Uint8ArrayBufferFieldSubType.Instance,
+                        Uint8ArrayBufferFieldConverter.Instance,
                         { lengthField },
                     );
 
@@ -433,7 +433,7 @@ describe("Types", () => {
         });
 
         describe("#getSize", () => {
-            class MockArrayBufferFieldType extends BufferFieldSubType<Uint8Array> {
+            class MockArrayBufferFieldType extends BufferFieldConverter<Uint8Array> {
                 override toBuffer = jest.fn((value: Uint8Array): Uint8Array => {
                     return value;
                 });
@@ -444,12 +444,14 @@ describe("Types", () => {
                     },
                 );
 
-                size = 0;
+                size: number | undefined = 0;
 
-                override getSize = jest.fn((value: Uint8Array): number => {
-                    void value;
-                    return this.size;
-                });
+                override getSize = jest.fn(
+                    (value: Uint8Array): number | undefined => {
+                        void value;
+                        return this.size;
+                    },
+                );
             }
 
             it("should return cached size if exist", () => {
@@ -546,7 +548,7 @@ describe("Types", () => {
                         value,
                     );
 
-                arrayBufferFieldType.size = -1;
+                arrayBufferFieldType.size = undefined;
                 expect(bufferFieldValue.getSize()).toBe(100);
                 expect(arrayBufferFieldType.toValue).toHaveBeenCalledTimes(0);
                 expect(arrayBufferFieldType.toBuffer).toHaveBeenCalledTimes(1);
@@ -566,7 +568,7 @@ describe("Types", () => {
 
                 const arrayBufferFieldDefinition =
                     new VariableLengthBufferLikeFieldDefinition(
-                        Uint8ArrayBufferFieldSubType.Instance,
+                        Uint8ArrayBufferFieldConverter.Instance,
                         { lengthField },
                     );
 
@@ -596,7 +598,7 @@ describe("Types", () => {
 
                 const arrayBufferFieldDefinition =
                     new VariableLengthBufferLikeFieldDefinition(
-                        Uint8ArrayBufferFieldSubType.Instance,
+                        Uint8ArrayBufferFieldConverter.Instance,
                         { lengthField },
                     );
 
@@ -622,7 +624,7 @@ describe("Types", () => {
         describe("#getSize", () => {
             it("should always return `0`", () => {
                 const definition = new VariableLengthBufferLikeFieldDefinition(
-                    Uint8ArrayBufferFieldSubType.Instance,
+                    Uint8ArrayBufferFieldConverter.Instance,
                     { lengthField: "foo" },
                 );
                 expect(definition.getSize()).toBe(0);
@@ -638,7 +640,7 @@ describe("Types", () => {
                 struct.set(lengthField, originalLengthFieldValue);
 
                 const definition = new VariableLengthBufferLikeFieldDefinition(
-                    Uint8ArrayBufferFieldSubType.Instance,
+                    Uint8ArrayBufferFieldConverter.Instance,
                     { lengthField },
                 );
 
@@ -660,7 +662,7 @@ describe("Types", () => {
                 struct.set(lengthField, originalLengthFieldValue);
 
                 const definition = new VariableLengthBufferLikeFieldDefinition(
-                    Uint8ArrayBufferFieldSubType.Instance,
+                    Uint8ArrayBufferFieldConverter.Instance,
                     { lengthField },
                 );
 
@@ -683,7 +685,7 @@ describe("Types", () => {
 
                 const radix = 8;
                 const definition = new VariableLengthBufferLikeFieldDefinition(
-                    Uint8ArrayBufferFieldSubType.Instance,
+                    Uint8ArrayBufferFieldConverter.Instance,
                     { lengthField, lengthFieldRadix: radix },
                 );
 
@@ -709,7 +711,7 @@ describe("Types", () => {
                 struct.set(lengthField, originalLengthFieldValue);
 
                 const definition = new VariableLengthBufferLikeFieldDefinition(
-                    Uint8ArrayBufferFieldSubType.Instance,
+                    Uint8ArrayBufferFieldConverter.Instance,
                     { lengthField },
                 );
 
@@ -742,7 +744,7 @@ describe("Types", () => {
                 struct.set(lengthField, originalLengthFieldValue);
 
                 const definition = new VariableLengthBufferLikeFieldDefinition(
-                    Uint8ArrayBufferFieldSubType.Instance,
+                    Uint8ArrayBufferFieldConverter.Instance,
                     { lengthField },
                 );
 

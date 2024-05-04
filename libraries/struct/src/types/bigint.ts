@@ -14,53 +14,57 @@ import { StructFieldDefinition, StructFieldValue } from "../basic/index.js";
 import { SyncPromise } from "../sync-promise.js";
 import type { ValueOrPromise } from "../utils.js";
 
-type GetBigInt64 = (
+export type BigIntDeserializer = (
     array: Uint8Array,
     byteOffset: number,
     littleEndian: boolean,
 ) => bigint;
 
-type SetBigInt64 = (
+export type BigIntSerializer = (
     array: Uint8Array,
     byteOffset: number,
     value: bigint,
     littleEndian: boolean,
 ) => void;
 
-export class BigIntFieldType {
+export class BigIntFieldVariant {
     readonly TTypeScriptType!: bigint;
 
     readonly size: number;
 
-    readonly getter: GetBigInt64;
+    readonly deserialize: BigIntDeserializer;
 
-    readonly setter: SetBigInt64;
+    readonly serialize: BigIntSerializer;
 
-    constructor(size: number, getter: GetBigInt64, setter: SetBigInt64) {
+    constructor(
+        size: number,
+        deserialize: BigIntDeserializer,
+        serialize: BigIntSerializer,
+    ) {
         this.size = size;
-        this.getter = getter;
-        this.setter = setter;
+        this.deserialize = deserialize;
+        this.serialize = serialize;
     }
 
-    static readonly Int64 = new BigIntFieldType(8, getInt64, setInt64);
+    static readonly Int64 = new BigIntFieldVariant(8, getInt64, setInt64);
 
-    static readonly Uint64 = new BigIntFieldType(8, getUint64, setUint64);
+    static readonly Uint64 = new BigIntFieldVariant(8, getUint64, setUint64);
 }
 
 export class BigIntFieldDefinition<
-    TType extends BigIntFieldType = BigIntFieldType,
-    TTypeScriptType = TType["TTypeScriptType"],
+    TVariant extends BigIntFieldVariant = BigIntFieldVariant,
+    TTypeScriptType = TVariant["TTypeScriptType"],
 > extends StructFieldDefinition<void, TTypeScriptType> {
-    readonly type: TType;
+    readonly variant: TVariant;
 
-    constructor(type: TType, typescriptType?: TTypeScriptType) {
+    constructor(variant: TVariant, typescriptType?: TTypeScriptType) {
         void typescriptType;
         super();
-        this.type = type;
+        this.variant = variant;
     }
 
     getSize(): number {
-        return this.type.size;
+        return this.variant.size;
     }
 
     create(
@@ -90,7 +94,11 @@ export class BigIntFieldDefinition<
             return stream.readExactly(this.getSize());
         })
             .then((array) => {
-                const value = this.type.getter(array, 0, options.littleEndian);
+                const value = this.variant.deserialize(
+                    array,
+                    0,
+                    options.littleEndian,
+                );
                 return this.create(options, struct, value as never);
             })
             .valueOrPromise();
@@ -98,14 +106,14 @@ export class BigIntFieldDefinition<
 }
 
 export class BigIntFieldValue<
-    TDefinition extends BigIntFieldDefinition<BigIntFieldType, unknown>,
+    TDefinition extends BigIntFieldDefinition<BigIntFieldVariant, unknown>,
 > extends StructFieldValue<TDefinition> {
     override serialize(
         dataView: DataView,
         array: Uint8Array,
         offset: number,
     ): void {
-        this.definition.type.setter(
+        this.definition.variant.serialize(
             array,
             offset,
             this.value as never,

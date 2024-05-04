@@ -2,10 +2,10 @@
 
 import { AutoDisposable } from "@yume-chan/event";
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
-import Struct, { ExactReadableEndedError } from "@yume-chan/struct";
+import Struct, { ExactReadableEndedError, encodeUtf8 } from "@yume-chan/struct";
 
 import type { Adb, AdbIncomingSocketHandler } from "../adb.js";
-import { decodeUtf8, hexToNumber } from "../utils/index.js";
+import { hexToNumber } from "../utils/index.js";
 
 export interface AdbForwardListener {
     deviceSerial: string;
@@ -47,10 +47,20 @@ const AdbReverseErrorResponse = new Struct()
         }
     });
 
-async function readString(stream: BufferedReadableStream, length: number) {
-    const buffer = await stream.readExactly(length);
-    return decodeUtf8(buffer);
+// Like `hexToNumber`, it's much faster than first converting `buffer` to a string
+function decimalToNumber(buffer: Uint8Array) {
+    let value = 0;
+    for (const byte of buffer) {
+        // Like `parseInt`, return when it encounters a non-digit character
+        if (byte < 48 || byte > 57) {
+            return value;
+        }
+        value = value * 10 + byte - 48;
+    }
+    return value;
 }
+
+const OKAY = encodeUtf8("OKAY");
 
 export class AdbReverseCommand extends AutoDisposable {
     protected adb: Adb;
@@ -70,10 +80,14 @@ export class AdbReverseCommand extends AutoDisposable {
 
     protected async sendRequest(service: string) {
         const stream = await this.createBufferedStream(service);
-        const success = (await readString(stream, 4)) === "OKAY";
-        if (!success) {
-            await AdbReverseErrorResponse.deserialize(stream);
+
+        const response = await stream.readExactly(4);
+        for (let i = 0; i < 4; i += 1) {
+            if (response[i] !== OKAY[i]) {
+                await AdbReverseErrorResponse.deserialize(stream);
+            }
         }
+
         return stream;
     }
 
@@ -110,8 +124,8 @@ export class AdbReverseCommand extends AutoDisposable {
             const position = stream.position;
             try {
                 const length = hexToNumber(await stream.readExactly(4));
-                const port = await readString(stream, length);
-                deviceAddress = `tcp:${Number.parseInt(port, 10)}`;
+                const port = decimalToNumber(await stream.readExactly(length));
+                deviceAddress = `tcp:${port}`;
             } catch (e) {
                 if (
                     e instanceof ExactReadableEndedError &&

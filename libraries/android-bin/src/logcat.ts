@@ -353,6 +353,7 @@ export async function deserializeAndroidLogEntry(
 ): Promise<AndroidLogEntry> {
     const entry = (await LoggerEntry.deserialize(stream)) as AndroidLogEntry;
     if (entry.headerSize !== LoggerEntry.size) {
+        // Skip unknown fields
         await stream.readExactly(entry.headerSize - LoggerEntry.size);
     }
 

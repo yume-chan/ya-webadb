@@ -139,14 +139,12 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
 
         this.#stdin = new MaybeConsumable.WritableStream<Uint8Array>({
             write: async (chunk) => {
-                await MaybeConsumable.tryConsume(chunk, async (chunk) => {
-                    await this.#writer.write(
-                        AdbShellProtocolPacket.serialize({
-                            id: AdbShellProtocolId.Stdin,
-                            data: chunk,
-                        }),
-                    );
-                });
+                await this.#writer.write(
+                    AdbShellProtocolPacket.serialize({
+                        id: AdbShellProtocolId.Stdin,
+                        data: chunk,
+                    }),
+                );
             },
         });
     }

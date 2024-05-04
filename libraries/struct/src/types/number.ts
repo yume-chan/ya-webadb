@@ -15,7 +15,7 @@ import { StructFieldDefinition, StructFieldValue } from "../basic/index.js";
 import { SyncPromise } from "../sync-promise.js";
 import type { ValueOrPromise } from "../utils.js";
 
-export interface NumberFieldType {
+export interface NumberFieldVariant {
     signed: boolean;
     size: number;
     deserialize(array: Uint8Array, littleEndian: boolean): number;
@@ -27,8 +27,8 @@ export interface NumberFieldType {
     ): void;
 }
 
-export namespace NumberFieldType {
-    export const Uint8: NumberFieldType = {
+export namespace NumberFieldVariant {
+    export const Uint8: NumberFieldVariant = {
         signed: false,
         size: 1,
         deserialize(array) {
@@ -39,7 +39,7 @@ export namespace NumberFieldType {
         },
     };
 
-    export const Int8: NumberFieldType = {
+    export const Int8: NumberFieldVariant = {
         signed: true,
         size: 1,
         deserialize(array) {
@@ -51,7 +51,7 @@ export namespace NumberFieldType {
         },
     };
 
-    export const Uint16: NumberFieldType = {
+    export const Uint16: NumberFieldVariant = {
         signed: false,
         size: 2,
         deserialize(array, littleEndian) {
@@ -65,7 +65,7 @@ export namespace NumberFieldType {
         },
     };
 
-    export const Int16: NumberFieldType = {
+    export const Int16: NumberFieldVariant = {
         signed: true,
         size: 2,
         deserialize(array, littleEndian) {
@@ -76,7 +76,7 @@ export namespace NumberFieldType {
         },
     };
 
-    export const Uint32: NumberFieldType = {
+    export const Uint32: NumberFieldVariant = {
         signed: false,
         size: 4,
         deserialize(array, littleEndian) {
@@ -87,7 +87,7 @@ export namespace NumberFieldType {
         },
     };
 
-    export const Int32: NumberFieldType = {
+    export const Int32: NumberFieldVariant = {
         signed: true,
         size: 4,
         deserialize(array, littleEndian) {
@@ -100,19 +100,19 @@ export namespace NumberFieldType {
 }
 
 export class NumberFieldDefinition<
-    TType extends NumberFieldType = NumberFieldType,
+    TVariant extends NumberFieldVariant = NumberFieldVariant,
     TTypeScriptType = number,
 > extends StructFieldDefinition<void, TTypeScriptType> {
-    readonly type: TType;
+    readonly variant: TVariant;
 
-    constructor(type: TType, typescriptType?: TTypeScriptType) {
+    constructor(variant: TVariant, typescriptType?: TTypeScriptType) {
         void typescriptType;
         super();
-        this.type = type;
+        this.variant = variant;
     }
 
     getSize(): number {
-        return this.type.size;
+        return this.variant.size;
     }
 
     create(
@@ -142,7 +142,7 @@ export class NumberFieldDefinition<
             return stream.readExactly(this.getSize());
         })
             .then((array) => {
-                const value = this.type.deserialize(
+                const value = this.variant.deserialize(
                     array,
                     options.littleEndian,
                 );
@@ -153,10 +153,10 @@ export class NumberFieldDefinition<
 }
 
 export class NumberFieldValue<
-    TDefinition extends NumberFieldDefinition<NumberFieldType, unknown>,
+    TDefinition extends NumberFieldDefinition<NumberFieldVariant, unknown>,
 > extends StructFieldValue<TDefinition> {
     serialize(dataView: DataView, array: Uint8Array, offset: number): void {
-        this.definition.type.serialize(
+        this.definition.variant.serialize(
             dataView,
             offset,
             this.value as never,

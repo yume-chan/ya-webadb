@@ -9,7 +9,7 @@ import type {
 import { StructFieldValue } from "../../basic/index.js";
 import type { KeysOfType } from "../../utils.js";
 
-import type { BufferFieldSubType } from "./base.js";
+import type { BufferFieldConverter } from "./base.js";
 import { BufferLikeFieldDefinition, BufferLikeFieldValue } from "./base.js";
 
 export type LengthField<TFields> = KeysOfType<TFields, number | string>;
@@ -35,12 +35,12 @@ export interface VariableLengthBufferLikeFieldOptions<
 }
 
 export class VariableLengthBufferLikeFieldDefinition<
-    TType extends BufferFieldSubType = BufferFieldSubType,
+    TConverter extends BufferFieldConverter = BufferFieldConverter,
     TOptions extends
         VariableLengthBufferLikeFieldOptions = VariableLengthBufferLikeFieldOptions,
-    TTypeScriptType = TType["TTypeScriptType"],
+    TTypeScriptType = TConverter["TTypeScriptType"],
 > extends BufferLikeFieldDefinition<
-    TType,
+    TConverter,
     TOptions,
     TOptions["lengthField"],
     TTypeScriptType
@@ -106,14 +106,24 @@ export class VariableLengthBufferLikeStructFieldValue<
     }
 
     override getSize() {
-        if (this.length === undefined) {
-            this.length = this.definition.type.getSize(this.value);
-            if (this.length === -1) {
-                this.array = this.definition.type.toBuffer(this.value);
-                this.length = this.array.byteLength;
-            }
+        if (this.length !== undefined) {
+            // Have cached length
+            return this.length;
         }
 
+        this.length = this.definition.converter.getSize(this.value);
+        if (this.length !== undefined) {
+            if (this.length < 0) {
+                throw new Error("Invalid length");
+            }
+
+            // The converter knows the size
+            return this.length;
+        }
+
+        // The converter doesn't know the size, so we need to convert to buffer first
+        this.array = this.definition.converter.toBuffer(this.value);
+        this.length = this.array.byteLength;
         return this.length;
     }
 

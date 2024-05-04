@@ -1,4 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
+import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
 import type { ReadableStreamDefaultController } from "./stream.js";
 import { ReadableStream, WritableStream } from "./stream.js";
@@ -83,7 +84,8 @@ export interface ConcatBufferReadableStream
  * If you want to decode the result as string,
  * prefer `.pipeThrough(new DecodeUtf8Stream()).pipeThrough(new ConcatStringStream())`,
  * than `.pipeThough(new ConcatBufferStream()).pipeThrough(new DecodeUtf8Stream())`,
- * because concatenating strings is faster than concatenating `Uint8Array`s.
+ * because of JavaScript engine optimizations,
+ * concatenating strings is faster than concatenating `Uint8Array`s.
  */
 export class ConcatBufferStream {
     #segments: Uint8Array[] = [];
@@ -99,7 +101,7 @@ export class ConcatBufferStream {
             let offset = 0;
             switch (this.#segments.length) {
                 case 0:
-                    result = new Uint8Array(0);
+                    result = EMPTY_UINT8_ARRAY;
                     break;
                 case 1:
                     result = this.#segments[0]!;

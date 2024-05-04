@@ -1,5 +1,5 @@
 import { getUint16 } from "@yume-chan/no-data-view";
-import type { NumberFieldType } from "@yume-chan/struct";
+import type { NumberFieldVariant } from "@yume-chan/struct";
 import { NumberFieldDefinition } from "@yume-chan/struct";
 
 export function clamp(value: number, min: number, max: number): number {
@@ -14,7 +14,7 @@ export function clamp(value: number, min: number, max: number): number {
     return value;
 }
 
-export const ScrcpyFloatToUint16NumberType: NumberFieldType = {
+export const ScrcpyUnsignedFloatNumberVariant: NumberFieldVariant = {
     size: 2,
     signed: false,
     deserialize(array, littleEndian) {
@@ -30,6 +30,6 @@ export const ScrcpyFloatToUint16NumberType: NumberFieldType = {
     },
 };
 
-export const ScrcpyFloatToUint16FieldDefinition = new NumberFieldDefinition(
-    ScrcpyFloatToUint16NumberType,
+export const ScrcpyUnsignedFloatFieldDefinition = new NumberFieldDefinition(
+    ScrcpyUnsignedFloatNumberVariant,
 );

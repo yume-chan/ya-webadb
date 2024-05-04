@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 
-import { ConsumableReadableStream } from "./consumable.js";
+import { Consumable } from "./consumable.js";
 import { DistributionStream } from "./distribution.js";
 import { MaybeConsumable } from "./maybe-consumable.js";
 
@@ -17,7 +17,7 @@ async function testInputOutput(
     const write = jest.fn((chunk: Uint8Array) => {
         void chunk;
     });
-    await new ConsumableReadableStream<Uint8Array>({
+    await new Consumable.ReadableStream<Uint8Array>({
         async start(controller) {
             let offset = 0;
             for (const length of inputLengths) {

@@ -9,6 +9,7 @@ import {
     type WritableStream,
     type WritableStreamDefaultController,
 } from "@yume-chan/stream-extra";
+import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
 import type { AdbSocket } from "../adb.js";
 
@@ -23,11 +24,15 @@ export interface AdbDaemonSocketInfo {
     service: string;
 }
 
-export interface AdbDaemonSocketConstructionOptions
-    extends AdbDaemonSocketInfo {
+export interface AdbDaemonSocketInit extends AdbDaemonSocketInfo {
     dispatcher: AdbPacketDispatcher;
 
     highWaterMark?: number | undefined;
+
+    /**
+     * The initial delayed ack byte count, or `Infinity` if delayed ack is disabled.
+     */
+    availableWriteBytes: number;
 }
 
 export class AdbDaemonSocketController
@@ -72,7 +77,7 @@ export class AdbDaemonSocketController
      */
     #availableWriteBytes = 0;
 
-    constructor(options: AdbDaemonSocketConstructionOptions) {
+    constructor(options: AdbDaemonSocketInit) {
         this.#dispatcher = options.dispatcher;
         this.localId = options.localId;
         this.remoteId = options.remoteId;
@@ -102,6 +107,7 @@ export class AdbDaemonSocketController
         });
 
         this.#socket = new AdbDaemonSocket(this);
+        this.#availableWriteBytes = options.availableWriteBytes;
     }
 
     async #writeChunk(data: Uint8Array, signal: AbortSignal) {
@@ -172,6 +178,7 @@ export class AdbDaemonSocketController
             AdbCommand.Close,
             this.localId,
             this.remoteId,
+            EMPTY_UINT8_ARRAY,
         );
     }
 

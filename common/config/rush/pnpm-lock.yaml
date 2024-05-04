@@ -33,8 +33,8 @@ importers:
         version: 2.6.2
     devDependencies:
       '@types/node':
-        specifier: ^20.12.7
-        version: 20.12.7
+        specifier: ^20.12.8
+        version: 20.12.8
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -43,7 +43,7 @@ importers:
         version: link:../../toolchain/tsconfig
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -73,8 +73,8 @@ importers:
         specifier: ^30.0.0-alpha.3
         version: 30.0.0-alpha.3
       '@types/node':
-        specifier: ^20.12.7
-        version: 20.12.7
+        specifier: ^20.12.8
+        version: 20.12.8
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -86,7 +86,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -179,7 +179,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -203,8 +203,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^20.12.7
-        version: 20.12.7
+        specifier: ^20.12.8
+        version: 20.12.8
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -213,7 +213,7 @@ importers:
         version: link:../../toolchain/tsconfig
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -247,7 +247,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -294,7 +294,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -312,8 +312,8 @@ importers:
         version: 4.0.3
     devDependencies:
       '@types/node':
-        specifier: ^20.12.7
-        version: 20.12.7
+        specifier: ^20.12.8
+        version: 20.12.8
 
   ../../libraries/no-data-view:
     devDependencies:
@@ -321,8 +321,8 @@ importers:
         specifier: ^30.0.0-alpha.3
         version: 30.0.0-alpha.3
       '@types/node':
-        specifier: ^20.12.7
-        version: 20.12.7
+        specifier: ^20.12.8
+        version: 20.12.8
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -334,7 +334,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -367,7 +367,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -410,7 +410,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -459,7 +459,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -502,7 +502,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -536,7 +536,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -567,7 +567,7 @@ importers:
         version: 7.0.3
       jest:
         specifier: ^30.0.0-alpha.3
-        version: 30.0.0-alpha.3(@types/node@20.12.7)
+        version: 30.0.0-alpha.3(@types/node@20.12.8)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -581,20 +581,20 @@ importers:
   ../../toolchain/eslint-config:
     dependencies:
       '@eslint/js':
-        specifier: ^9.1.1
-        version: 9.1.1
+        specifier: ^9.2.0
+        version: 9.2.0
       '@types/node':
-        specifier: ^20.12.7
-        version: 20.12.7
+        specifier: ^20.12.8
+        version: 20.12.8
       eslint:
-        specifier: ^9.1.1
-        version: 9.1.1
+        specifier: ^9.2.0
+        version: 9.2.0
       typescript:
         specifier: ^5.4.5
         version: 5.4.5
       typescript-eslint:
         specifier: ^7.8.0
-        version: 7.8.0(eslint@9.1.1)(typescript@5.4.5)
+        version: 7.8.0(eslint@9.2.0)(typescript@5.4.5)
     devDependencies:
       prettier:
         specifier: ^3.2.5
@@ -944,13 +944,13 @@ packages:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
 
-  /@eslint-community/eslint-utils@4.4.0(eslint@9.1.1):
+  /@eslint-community/eslint-utils@4.4.0(eslint@9.2.0):
     resolution: {integrity: sha512-1/sA4dwrzBAyeUoQ6oxahHKmrZvsnLCg4RfxW3ZFGGmQkSNQPFNLV9CUEFQP1x9EYXHTo5p6xdhZM1Ne9p/AfA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
     dependencies:
-      eslint: 9.1.1
+      eslint: 9.2.0
       eslint-visitor-keys: 3.4.3
     dev: false
 
@@ -976,8 +976,8 @@ packages:
       - supports-color
     dev: false
 
-  /@eslint/js@9.1.1:
-    resolution: {integrity: sha512-5WoDz3Y19Bg2BnErkZTp0en+c/i9PvgFS7MBe1+m60HjFr0hrphlAGp4yzI7pxpt4xShln4ZyYp4neJm8hmOkQ==}
+  /@eslint/js@9.2.0:
+    resolution: {integrity: sha512-ESiIudvhoYni+MdsI8oD7skpprZ89qKocwRM2KEvhhBJ9nl5MRh7BXU5GTod7Mdygq+AUl+QzId6iWJKR/wABA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     dev: false
 
@@ -1039,7 +1039,7 @@ packages:
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
     dependencies:
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       chalk: 4.1.2
       jest-message-util: 30.0.0-alpha.3
       jest-util: 30.0.0-alpha.3
@@ -1060,14 +1060,14 @@ packages:
       '@jest/test-result': 30.0.0-alpha.3
       '@jest/transform': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       ci-info: 4.0.0
       exit: 0.1.2
       graceful-fs: 4.2.11
       jest-changed-files: 30.0.0-alpha.3
-      jest-config: 30.0.0-alpha.3(@types/node@20.12.7)
+      jest-config: 30.0.0-alpha.3(@types/node@20.12.8)
       jest-haste-map: 30.0.0-alpha.3
       jest-message-util: 30.0.0-alpha.3
       jest-regex-util: 30.0.0-alpha.3
@@ -1095,7 +1095,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       jest-mock: 30.0.0-alpha.3
     dev: true
 
@@ -1122,7 +1122,7 @@ packages:
     dependencies:
       '@jest/types': 30.0.0-alpha.3
       '@sinonjs/fake-timers': 11.2.2
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       jest-message-util: 30.0.0-alpha.3
       jest-mock: 30.0.0-alpha.3
       jest-util: 30.0.0-alpha.3
@@ -1155,7 +1155,7 @@ packages:
       '@jest/transform': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
       '@jridgewell/trace-mapping': 0.3.25
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       chalk: 4.1.2
       collect-v8-coverage: 1.0.2
       exit: 0.1.2
@@ -1250,7 +1250,7 @@ packages:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       '@types/yargs': 17.0.32
       chalk: 4.1.2
     dev: true
@@ -1262,7 +1262,7 @@ packages:
       '@jest/schemas': 30.0.0-alpha.3
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       '@types/yargs': 17.0.32
       chalk: 4.1.2
     dev: true
@@ -1423,8 +1423,8 @@ packages:
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
     dev: false
 
-  /@types/node@20.12.7:
-    resolution: {integrity: sha512-wq0cICSkRLVaf3UGLMGItu/PtdY7oaXaI/RVU+xliKVOtRna3PRY57ZDfztpDL0n11vfymMUnXv8QwYCO7L1wg==}
+  /@types/node@20.12.8:
+    resolution: {integrity: sha512-NU0rJLJnshZWdE/097cdCBbyW1h4hEg0xpovcoAQYHl8dnEyp/NAOiE45pvc+Bd1Dt+2r94v2eGFpQJ4R7g+2w==}
     dependencies:
       undici-types: 5.26.5
 
@@ -1450,7 +1450,7 @@ packages:
       '@types/yargs-parser': 21.0.3
     dev: true
 
-  /@typescript-eslint/eslint-plugin@7.8.0(@typescript-eslint/parser@7.8.0)(eslint@9.1.1)(typescript@5.4.5):
+  /@typescript-eslint/eslint-plugin@7.8.0(@typescript-eslint/parser@7.8.0)(eslint@9.2.0)(typescript@5.4.5):
     resolution: {integrity: sha512-gFTT+ezJmkwutUPmB0skOj3GZJtlEGnlssems4AjkVweUPGj7jRwwqg0Hhg7++kPGJqKtTYx+R05Ftww372aIg==}
     engines: {node: ^18.18.0 || >=20.0.0}
     peerDependencies:
@@ -1462,13 +1462,13 @@ packages:
         optional: true
     dependencies:
       '@eslint-community/regexpp': 4.10.0
-      '@typescript-eslint/parser': 7.8.0(eslint@9.1.1)(typescript@5.4.5)
+      '@typescript-eslint/parser': 7.8.0(eslint@9.2.0)(typescript@5.4.5)
       '@typescript-eslint/scope-manager': 7.8.0
-      '@typescript-eslint/type-utils': 7.8.0(eslint@9.1.1)(typescript@5.4.5)
-      '@typescript-eslint/utils': 7.8.0(eslint@9.1.1)(typescript@5.4.5)
+      '@typescript-eslint/type-utils': 7.8.0(eslint@9.2.0)(typescript@5.4.5)
+      '@typescript-eslint/utils': 7.8.0(eslint@9.2.0)(typescript@5.4.5)
       '@typescript-eslint/visitor-keys': 7.8.0
       debug: 4.3.4
-      eslint: 9.1.1
+      eslint: 9.2.0
       graphemer: 1.4.0
       ignore: 5.3.1
       natural-compare: 1.4.0
@@ -1479,7 +1479,7 @@ packages:
       - supports-color
     dev: false
 
-  /@typescript-eslint/parser@7.8.0(eslint@9.1.1)(typescript@5.4.5):
+  /@typescript-eslint/parser@7.8.0(eslint@9.2.0)(typescript@5.4.5):
     resolution: {integrity: sha512-KgKQly1pv0l4ltcftP59uQZCi4HUYswCLbTqVZEJu7uLX8CTLyswqMLqLN+2QFz4jCptqWVV4SB7vdxcH2+0kQ==}
     engines: {node: ^18.18.0 || >=20.0.0}
     peerDependencies:
@@ -1494,7 +1494,7 @@ packages:
       '@typescript-eslint/typescript-estree': 7.8.0(typescript@5.4.5)
       '@typescript-eslint/visitor-keys': 7.8.0
       debug: 4.3.4
-      eslint: 9.1.1
+      eslint: 9.2.0
       typescript: 5.4.5
     transitivePeerDependencies:
       - supports-color
@@ -1508,7 +1508,7 @@ packages:
       '@typescript-eslint/visitor-keys': 7.8.0
     dev: false
 
-  /@typescript-eslint/type-utils@7.8.0(eslint@9.1.1)(typescript@5.4.5):
+  /@typescript-eslint/type-utils@7.8.0(eslint@9.2.0)(typescript@5.4.5):
     resolution: {integrity: sha512-H70R3AefQDQpz9mGv13Uhi121FNMh+WEaRqcXTX09YEDky21km4dV1ZXJIp8QjXc4ZaVkXVdohvWDzbnbHDS+A==}
     engines: {node: ^18.18.0 || >=20.0.0}
     peerDependencies:
@@ -1519,9 +1519,9 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/typescript-estree': 7.8.0(typescript@5.4.5)
-      '@typescript-eslint/utils': 7.8.0(eslint@9.1.1)(typescript@5.4.5)
+      '@typescript-eslint/utils': 7.8.0(eslint@9.2.0)(typescript@5.4.5)
       debug: 4.3.4
-      eslint: 9.1.1
+      eslint: 9.2.0
       ts-api-utils: 1.3.0(typescript@5.4.5)
       typescript: 5.4.5
     transitivePeerDependencies:
@@ -1555,19 +1555,19 @@ packages:
       - supports-color
     dev: false
 
-  /@typescript-eslint/utils@7.8.0(eslint@9.1.1)(typescript@5.4.5):
+  /@typescript-eslint/utils@7.8.0(eslint@9.2.0)(typescript@5.4.5):
     resolution: {integrity: sha512-L0yFqOCflVqXxiZyXrDr80lnahQfSOfc9ELAAZ75sqicqp2i36kEZZGuUymHNFoYOqxRT05up760b4iGsl02nQ==}
     engines: {node: ^18.18.0 || >=20.0.0}
     peerDependencies:
       eslint: ^8.56.0
     dependencies:
-      '@eslint-community/eslint-utils': 4.4.0(eslint@9.1.1)
+      '@eslint-community/eslint-utils': 4.4.0(eslint@9.2.0)
       '@types/json-schema': 7.0.15
       '@types/semver': 7.5.8
       '@typescript-eslint/scope-manager': 7.8.0
       '@typescript-eslint/types': 7.8.0
       '@typescript-eslint/typescript-estree': 7.8.0(typescript@5.4.5)
-      eslint: 9.1.1
+      eslint: 9.2.0
       semver: 7.6.0
     transitivePeerDependencies:
       - supports-color
@@ -2171,15 +2171,15 @@ packages:
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     dev: false
 
-  /eslint@9.1.1:
-    resolution: {integrity: sha512-b4cRQ0BeZcSEzPpY2PjFY70VbO32K7BStTGtBsnIGdTSEEQzBi8hPBcGQmTG2zUvFr9uLe0TK42bw8YszuHEqg==}
+  /eslint@9.2.0:
+    resolution: {integrity: sha512-0n/I88vZpCOzO+PQpt0lbsqmn9AsnsJAQseIqhZFI8ibQT0U1AkEKRxA3EVMos0BoHSXDQvCXY25TUjB5tr8Og==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     hasBin: true
     dependencies:
-      '@eslint-community/eslint-utils': 4.4.0(eslint@9.1.1)
+      '@eslint-community/eslint-utils': 4.4.0(eslint@9.2.0)
       '@eslint-community/regexpp': 4.10.0
       '@eslint/eslintrc': 3.0.2
-      '@eslint/js': 9.1.1
+      '@eslint/js': 9.2.0
       '@humanwhocodes/config-array': 0.13.0
       '@humanwhocodes/module-importer': 1.0.1
       '@humanwhocodes/retry': 0.2.3
@@ -2794,7 +2794,7 @@ packages:
       '@jest/expect': 30.0.0-alpha.3
       '@jest/test-result': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       chalk: 4.1.2
       co: 4.6.0
       dedent: 1.5.3
@@ -2815,7 +2815,7 @@ packages:
       - supports-color
     dev: true
 
-  /jest-cli@30.0.0-alpha.3(@types/node@20.12.7):
+  /jest-cli@30.0.0-alpha.3(@types/node@20.12.8):
     resolution: {integrity: sha512-z1aQDxDe0VeDSEUeMr9MrfI5cc2SSCiKtG0Rt3XDfTgWrzyoakVds/9QMkkpNKHryCBzZZKOMe5W2uy7qM4WOA==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
     hasBin: true
@@ -2831,7 +2831,7 @@ packages:
       chalk: 4.1.2
       exit: 0.1.2
       import-local: 3.1.0
-      jest-config: 30.0.0-alpha.3(@types/node@20.12.7)
+      jest-config: 30.0.0-alpha.3(@types/node@20.12.8)
       jest-util: 30.0.0-alpha.3
       jest-validate: 30.0.0-alpha.3
       yargs: 17.7.2
@@ -2842,7 +2842,7 @@ packages:
       - ts-node
     dev: true
 
-  /jest-config@30.0.0-alpha.3(@types/node@20.12.7):
+  /jest-config@30.0.0-alpha.3(@types/node@20.12.8):
     resolution: {integrity: sha512-3eqS6gcsaPtcpU/VVlkLx1se1JiH18uh1Xg+oOf6FhlLDvAT5h6+dvWa2IpyucCN46dHHEw3E85qfjogq4XLtw==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
     peerDependencies:
@@ -2857,7 +2857,7 @@ packages:
       '@babel/core': 7.24.5
       '@jest/test-sequencer': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       babel-jest: 30.0.0-alpha.3(@babel/core@7.24.5)
       chalk: 4.1.2
       ci-info: 4.0.0
@@ -2917,7 +2917,7 @@ packages:
       '@jest/environment': 30.0.0-alpha.3
       '@jest/fake-timers': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       jest-mock: 30.0.0-alpha.3
       jest-util: 30.0.0-alpha.3
     dev: true
@@ -2932,7 +2932,7 @@ packages:
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
     dependencies:
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       anymatch: 3.1.3
       fb-watchman: 2.0.2
       graceful-fs: 4.2.11
@@ -2983,7 +2983,7 @@ packages:
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
     dependencies:
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       jest-util: 30.0.0-alpha.3
     dev: true
 
@@ -3038,7 +3038,7 @@ packages:
       '@jest/test-result': 30.0.0-alpha.3
       '@jest/transform': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       chalk: 4.1.2
       emittery: 0.13.1
       graceful-fs: 4.2.11
@@ -3069,7 +3069,7 @@ packages:
       '@jest/test-result': 30.0.0-alpha.3
       '@jest/transform': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       chalk: 4.1.2
       cjs-module-lexer: 1.3.1
       collect-v8-coverage: 1.0.2
@@ -3122,7 +3122,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       chalk: 4.1.2
       ci-info: 3.9.0
       graceful-fs: 4.2.11
@@ -3134,7 +3134,7 @@ packages:
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
     dependencies:
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       chalk: 4.1.2
       ci-info: 4.0.0
       graceful-fs: 4.2.11
@@ -3159,7 +3159,7 @@ packages:
     dependencies:
       '@jest/test-result': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.13.1
@@ -3171,13 +3171,13 @@ packages:
     resolution: {integrity: sha512-8lS9LxbEjOyBRz0Pdi6m3HYJ3feIi1tv0u7oqxjXvB1lMksq+IcSxaPTCcvJbIqt3WAFFYQnDs5I3NkJiEG5Ow==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
     dependencies:
-      '@types/node': 20.12.7
+      '@types/node': 20.12.8
       jest-util: 30.0.0-alpha.3
       merge-stream: 2.0.0
       supports-color: 8.1.1
     dev: true
 
-  /jest@30.0.0-alpha.3(@types/node@20.12.7):
+  /jest@30.0.0-alpha.3(@types/node@20.12.8):
     resolution: {integrity: sha512-oJndFRnG1Xsc1ybac44hGGj7+O4nT9losg8+8YDjNwDAXbYwvzyRgmCiPo6L/BROiAD8Z9qGgFRsFuGdpmQuFw==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
     hasBin: true
@@ -3190,7 +3190,7 @@ packages:
       '@jest/core': 30.0.0-alpha.3
       '@jest/types': 30.0.0-alpha.3
       import-local: 3.1.0
-      jest-cli: 30.0.0-alpha.3(@types/node@20.12.7)
+      jest-cli: 30.0.0-alpha.3(@types/node@20.12.8)
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -4017,7 +4017,7 @@ packages:
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 30.0.0-alpha.3(@types/node@20.12.7)
+      jest: 30.0.0-alpha.3(@types/node@20.12.8)
       jest-util: 29.7.0
       json5: 2.2.3
       lodash.memoize: 4.1.2
@@ -4047,7 +4047,7 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /typescript-eslint@7.8.0(eslint@9.1.1)(typescript@5.4.5):
+  /typescript-eslint@7.8.0(eslint@9.2.0)(typescript@5.4.5):
     resolution: {integrity: sha512-sheFG+/D8N/L7gC3WT0Q8sB97Nm573Yfr+vZFzl/4nBdYcmviBPtwGSX9TJ7wpVg28ocerKVOt+k2eGmHzcgVA==}
     engines: {node: ^18.18.0 || >=20.0.0}
     peerDependencies:
@@ -4057,10 +4057,10 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/eslint-plugin': 7.8.0(@typescript-eslint/parser@7.8.0)(eslint@9.1.1)(typescript@5.4.5)
-      '@typescript-eslint/parser': 7.8.0(eslint@9.1.1)(typescript@5.4.5)
-      '@typescript-eslint/utils': 7.8.0(eslint@9.1.1)(typescript@5.4.5)
-      eslint: 9.1.1
+      '@typescript-eslint/eslint-plugin': 7.8.0(@typescript-eslint/parser@7.8.0)(eslint@9.2.0)(typescript@5.4.5)
+      '@typescript-eslint/parser': 7.8.0(eslint@9.2.0)(typescript@5.4.5)
+      '@typescript-eslint/utils': 7.8.0(eslint@9.2.0)(typescript@5.4.5)
+      eslint: 9.2.0
       typescript: 5.4.5
     transitivePeerDependencies:
       - supports-color

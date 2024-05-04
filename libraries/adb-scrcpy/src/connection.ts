@@ -94,6 +94,15 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
                     const buffered = new BufferedReadableStream(
                         stream.readable,
                     );
+                    // Skip the dummy byte
+                    // Google ADB forward tunnel listens on a socket on the computer,
+                    // when a client connects to that socket, Google ADB will forward
+                    // the connection to the socket on the device.
+                    // However, connecting to that socket will always succeed immediately,
+                    // which doesn't mean that Google ADB has connected to
+                    // the socket on the device.
+                    // Thus Scrcpy server sends a dummy byte to the socket, to let the client
+                    // know that the connection is truly established.
                     await buffered.readExactly(1);
                     return {
                         readable: buffered.release(),

@@ -27,7 +27,12 @@ import {
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import type { AdbFeature } from "../features.js";
-import { NOOP, hexToNumber, numberToHex, unreachable } from "../utils/index.js";
+import {
+    NOOP,
+    hexToNumber,
+    unreachable,
+    write4HexDigits,
+} from "../utils/index.js";
 
 import { AdbServerTransport } from "./transport.js";
 
@@ -76,6 +81,23 @@ export interface AdbServerDevice {
     transportId: bigint;
 }
 
+function sequenceEqual(a: Uint8Array, b: Uint8Array): boolean {
+    if (a.length !== b.length) {
+        return false;
+    }
+
+    for (let i = 0; i < a.length; i += 1) {
+        if (a[i] !== b[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+const OKAY = encodeUtf8("OKAY");
+const FAIL = encodeUtf8("FAIL");
+
 export class AdbServerClient {
     static readonly VERSION = 41;
 
@@ -99,8 +121,27 @@ export class AdbServerClient {
                     return stream.readExactly(length);
                 }
             })
-            .then((valueBuffer) => {
-                return decodeUtf8(valueBuffer);
+            .then((buffer) => {
+                // TODO: Investigate using stream mode `TextDecoder` for long strings.
+                // Because concatenating strings uses rope data structure,
+                // which only points to the original strings and doesn't copy the data,
+                // it's more efficient than concatenating `Uint8Array`s.
+                //
+                // ```
+                // const decoder = new TextDecoder();
+                // let result = '';
+                // for await (const chunk of stream.iterateExactly(length)) {
+                //     result += decoder.decode(chunk, { stream: true });
+                // }
+                // result += decoder.decode();
+                // return result;
+                // ```
+                //
+                // Although, it will be super complex to use `SyncPromise` with async iterator,
+                // `stream.iterateExactly` need to return an
+                // `Iterator<Uint8Array | Promise<Uint8Array>>` instead of a true async iterator.
+                // Maybe `SyncPromise` should support async iterators directly.
+                return decodeUtf8(buffer);
             })
             .valueOrPromise();
     }
@@ -109,27 +150,29 @@ export class AdbServerClient {
         writer: WritableStreamDefaultWriter<Uint8Array>,
         value: string,
     ): Promise<void> {
-        const valueBuffer = encodeUtf8(value);
-        const buffer = new Uint8Array(4 + valueBuffer.length);
-        buffer.set(numberToHex(valueBuffer.length));
-        buffer.set(valueBuffer, 4);
+        // TODO: investigate using `encodeUtf8("0000" + value)` then modifying the length
+        // That way allocates a new string (hopefully only a rope) instead of a new buffer
+        const encoded = encodeUtf8(value);
+        const buffer = new Uint8Array(4 + encoded.length);
+        write4HexDigits(buffer, 0, encoded.length);
+        buffer.set(encoded, 4);
         await writer.write(buffer);
     }
 
     static async readOkay(
         stream: ExactReadable | AsyncExactReadable,
     ): Promise<void> {
-        const response = decodeUtf8(await stream.readExactly(4));
-        if (response === "OKAY") {
+        const response = await stream.readExactly(4);
+        if (sequenceEqual(response, OKAY)) {
             return;
         }
 
-        if (response === "FAIL") {
+        if (sequenceEqual(response, FAIL)) {
             const reason = await AdbServerClient.readString(stream);
             throw new Error(reason);
         }
 
-        throw new Error(`Unexpected response: ${response}`);
+        throw new Error(`Unexpected response: ${decodeUtf8(response)}`);
     }
 
     async connect(

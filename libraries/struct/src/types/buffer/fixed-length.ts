@@ -1,4 +1,4 @@
-import type { BufferFieldSubType } from "./base.js";
+import type { BufferFieldConverter } from "./base.js";
 import { BufferLikeFieldDefinition } from "./base.js";
 
 export interface FixedLengthBufferLikeFieldOptions {
@@ -6,11 +6,16 @@ export interface FixedLengthBufferLikeFieldOptions {
 }
 
 export class FixedLengthBufferLikeFieldDefinition<
-    TType extends BufferFieldSubType = BufferFieldSubType,
+    TConverter extends BufferFieldConverter = BufferFieldConverter,
     TOptions extends
         FixedLengthBufferLikeFieldOptions = FixedLengthBufferLikeFieldOptions,
-    TTypeScriptType = TType["TTypeScriptType"],
-> extends BufferLikeFieldDefinition<TType, TOptions, never, TTypeScriptType> {
+    TTypeScriptType = TConverter["TTypeScriptType"],
+> extends BufferLikeFieldDefinition<
+    TConverter,
+    TOptions,
+    never,
+    TTypeScriptType
+> {
     getSize(): number {
         return this.options.length;
     }
