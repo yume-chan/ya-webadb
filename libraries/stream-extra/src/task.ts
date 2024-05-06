@@ -11,9 +11,9 @@ interface GlobalExtension {
 }
 
 // `createTask` allows browser DevTools to track the call stack across async boundaries.
-const global = globalThis as unknown as GlobalExtension;
+const { console } = globalThis as unknown as GlobalExtension;
 export const createTask: (name: string) => Task =
-    global.console?.createTask?.bind(global.console) ??
+    console?.createTask?.bind(console) ??
     (() => ({
         run(callback) {
             return callback();
