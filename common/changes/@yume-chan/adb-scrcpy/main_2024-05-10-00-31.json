@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yume-chan/adb-scrcpy",
+      "comment": "Rename `AdbScrcpyClient#controlMessageWriter` to `controller`",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yume-chan/adb-scrcpy"
+}

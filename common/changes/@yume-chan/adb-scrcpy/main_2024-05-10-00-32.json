@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb-scrcpy",
+            "comment": "Removed `AdbScrcpyClient#deviceMessageStream`. Use `ScrcpyOptions#clipboard` to watch clipboard changes.",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb-scrcpy"
+}

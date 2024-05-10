@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@yume-chan/pcm-player",
+      "comment": "Expose `outputLatency` from `AudioContext`",
+      "type": "none"
+    }
+  ],
+  "packageName": "@yume-chan/pcm-player"
+}
