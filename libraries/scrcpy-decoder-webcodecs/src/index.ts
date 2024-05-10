@@ -111,24 +111,13 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 }
                 this.#currentFrameRendered = false;
 
-                if (
-                    frame.displayWidth !== this.#canvas.width ||
-                    frame.displayHeight !== this.#canvas.height
-                ) {
-                    this.#canvas.width = frame.displayWidth;
-                    this.#canvas.height = frame.displayHeight;
-                    this.#sizeChanged.fire({
-                        width: frame.displayWidth,
-                        height: frame.displayHeight,
-                    });
-                }
-
                 // PERF: H.264 renderer may draw multiple frames in one vertical sync interval to minimize latency.
                 // When multiple frames are drawn in one vertical sync interval,
                 // only the last one is visible to users.
                 // But this ensures users can always see the most up-to-date screen.
                 // This is also the behavior of official Scrcpy client.
                 // https://github.com/Genymobile/scrcpy/issues/3679
+                this.#updateSize(frame.displayWidth, frame.displayHeight);
                 this.#renderer.draw(frame);
             },
             error(e) {
@@ -164,7 +153,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                     this.#configureAv1(packet.data);
                     this.#decoder.decode(
                         new EncodedVideoChunk({
-                            // Treat `undefined` as `key`, otherwise won't decode.
+                            // Treat `undefined` as `key`, otherwise it won't decode.
                             type: packet.keyframe === false ? "delta" : "key",
                             timestamp: 0,
                             data: packet.data,
@@ -187,6 +176,17 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         this.#onFramePresented();
     }
 
+    #updateSize(width: number, height: number) {
+        if (width !== this.#canvas.width || height !== this.#canvas.height) {
+            this.#canvas.width = width;
+            this.#canvas.height = height;
+            this.#sizeChanged.fire({
+                width: width,
+                height: height,
+            });
+        }
+    }
+
     #onFramePresented = () => {
         this.#currentFrameRendered = true;
         this.#animationFrameId = requestAnimationFrame(this.#onFramePresented);
@@ -201,12 +201,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             croppedHeight,
         } = h264ParseConfiguration(data);
 
-        this.#canvas.width = croppedWidth;
-        this.#canvas.height = croppedHeight;
-        this.#sizeChanged.fire({
-            width: croppedWidth,
-            height: croppedHeight,
-        });
+        this.#updateSize(croppedWidth, croppedHeight);
 
         // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
         // ISO Base Media File Format Name Space
@@ -233,12 +228,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             croppedHeight,
         } = h265ParseConfiguration(data);
 
-        this.#canvas.width = croppedWidth;
-        this.#canvas.height = croppedHeight;
-        this.#sizeChanged.fire({
-            width: croppedWidth,
-            height: croppedHeight,
-        });
+        this.#updateSize(croppedWidth, croppedHeight);
 
         const codec = [
             "hev1",
@@ -298,9 +288,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         const width = max_frame_width_minus_1 + 1;
         const height = max_frame_height_minus_1 + 1;
 
-        this.#canvas.width = width;
-        this.#canvas.height = height;
-        this.#sizeChanged.fire({ width, height });
+        this.#updateSize(width, height);
 
         const codec = [
             "av01",
