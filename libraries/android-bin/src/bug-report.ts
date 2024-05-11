@@ -6,9 +6,9 @@ import { AdbCommandBase, AdbSubprocessShellProtocol } from "@yume-chan/adb";
 import type { AbortSignal, ReadableStream } from "@yume-chan/stream-extra";
 import {
     AbortController,
-    DecodeUtf8Stream,
     PushReadableStream,
     SplitStringStream,
+    TextDecoderStream,
     WrapReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
@@ -212,7 +212,7 @@ export class BugReport extends AdbCommandBase {
         let error: string | undefined;
 
         await process.stdout
-            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new TextDecoderStream())
             .pipeThrough(new SplitStringStream("\n"))
             .pipeTo(
                 new WritableStream<string>({
@@ -278,7 +278,7 @@ export class BugReport extends AdbCommandBase {
                     controller.error(e);
                 });
             process.stderr
-                .pipeThrough(new DecodeUtf8Stream())
+                .pipeThrough(new TextDecoderStream())
                 .pipeTo(
                     new WritableStream({
                         write(chunk) {

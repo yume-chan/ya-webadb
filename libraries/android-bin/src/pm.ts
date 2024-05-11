@@ -8,8 +8,8 @@ import { AdbCommandBase, escapeArg } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 import {
     ConcatStringStream,
-    DecodeUtf8Stream,
     SplitStringStream,
+    TextDecoderStream,
 } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd.js";
@@ -352,7 +352,7 @@ export class PackageManager extends AdbCommandBase {
         const process = await this.#cmd.spawn(false, "package", ...args);
 
         const output = process.stdout
-            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());
 
@@ -440,7 +440,7 @@ export class PackageManager extends AdbCommandBase {
 
         const process = await this.#cmdOrSubprocess(args);
         const reader = process.stdout
-            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new TextDecoderStream())
             .pipeThrough(new SplitStringStream("\n"))
             .getReader();
         while (true) {
@@ -468,7 +468,7 @@ export class PackageManager extends AdbCommandBase {
 
         const process = await this.#cmdOrSubprocess(args);
         const output = await process.stdout
-            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());
         if (output !== "Success") {
@@ -489,7 +489,7 @@ export class PackageManager extends AdbCommandBase {
 
         const process = await this.#cmdOrSubprocess(args);
         const output = await process.stdout
-            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());
 
@@ -515,7 +515,7 @@ export class PackageManager extends AdbCommandBase {
 
         const process = await this.#cmdOrSubprocess(args);
         const output = await process.stdout
-            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());
 
@@ -562,7 +562,7 @@ export class PackageManager extends AdbCommandBase {
 
         const process = await this.#cmdOrSubprocess(args);
         const output = process.stdout
-            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());
 

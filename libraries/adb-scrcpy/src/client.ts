@@ -29,10 +29,10 @@ import type {
 import {
     AbortController,
     BufferedReadableStream,
-    DecodeUtf8Stream,
     InspectStream,
     PushReadableStream,
     SplitStringStream,
+    TextDecoderStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
 
@@ -158,7 +158,7 @@ export class AdbScrcpyClient {
             );
 
             const stdout = process.stdout
-                .pipeThrough(new DecodeUtf8Stream())
+                .pipeThrough(new TextDecoderStream())
                 .pipeThrough(new SplitStringStream("\n"));
 
             // Must read all streams, otherwise the whole connection will be blocked.

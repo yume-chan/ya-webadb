@@ -1,6 +1,6 @@
 import { AdbCommandBase } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
-import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
+import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 export interface AdbBackupOptions {
     user: number;
@@ -71,7 +71,7 @@ export class AdbBackup extends AdbCommandBase {
         const process = await this.adb.subprocess.spawn(args);
         const [output] = await Promise.all([
             process.stdout
-                .pipeThrough(new DecodeUtf8Stream())
+                .pipeThrough(new TextDecoderStream())
                 .pipeThrough(new ConcatStringStream()),
             options.file.pipeTo(process.stdin),
         ]);

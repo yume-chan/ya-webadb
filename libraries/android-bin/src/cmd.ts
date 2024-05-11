@@ -10,7 +10,7 @@ import {
     AdbSubprocessNoneProtocol,
     AdbSubprocessShellProtocol,
 } from "@yume-chan/adb";
-import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
+import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 export class Cmd extends AdbCommandBase {
     #supportsShellV2: boolean;
@@ -84,10 +84,10 @@ export class Cmd extends AdbCommandBase {
 
         const [stdout, stderr, exitCode] = await Promise.all([
             process.stdout
-                .pipeThrough(new DecodeUtf8Stream())
+                .pipeThrough(new TextDecoderStream())
                 .pipeThrough(new ConcatStringStream()),
             process.stderr
-                .pipeThrough(new DecodeUtf8Stream())
+                .pipeThrough(new TextDecoderStream())
                 .pipeThrough(new ConcatStringStream()),
             process.exit,
         ]);

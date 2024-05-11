@@ -1,4 +1,4 @@
-import { ConcatStringStream, DecodeUtf8Stream } from "@yume-chan/stream-extra";
+import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 import { AdbCommandBase } from "../base.js";
 
@@ -112,10 +112,10 @@ export class AdbSubprocess extends AdbCommandBase {
 
         const [stdout, stderr, exitCode] = await Promise.all([
             process.stdout
-                .pipeThrough(new DecodeUtf8Stream())
+                .pipeThrough(new TextDecoderStream())
                 .pipeThrough(new ConcatStringStream()),
             process.stderr
-                .pipeThrough(new DecodeUtf8Stream())
+                .pipeThrough(new TextDecoderStream())
                 .pipeThrough(new ConcatStringStream()),
             process.exit,
         ]);

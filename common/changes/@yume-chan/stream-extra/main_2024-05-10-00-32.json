@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/stream-extra",
+            "comment": "Re-export global `TextDecoderStream` instead of implementing our own one which doesn't work correctly in stream mode",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/stream-extra"
+}

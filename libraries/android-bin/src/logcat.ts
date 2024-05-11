@@ -5,8 +5,8 @@ import { AdbCommandBase, AdbSubprocessNoneProtocol } from "@yume-chan/adb";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     BufferedTransformStream,
-    DecodeUtf8Stream,
     SplitStringStream,
+    TextDecoderStream,
     WrapReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
@@ -421,7 +421,7 @@ export class Logcat extends AdbCommandBase {
 
         const result: LogSize[] = [];
         await stdout
-            .pipeThrough(new DecodeUtf8Stream())
+            .pipeThrough(new TextDecoderStream())
             .pipeThrough(new SplitStringStream("\n"))
             .pipeTo(
                 new WritableStream({

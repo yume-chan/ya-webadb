@@ -82,8 +82,8 @@ export interface ConcatBufferReadableStream
  * A `TransformStream` that concatenates `Uint8Array`s.
  *
  * If you want to decode the result as string,
- * prefer `.pipeThrough(new DecodeUtf8Stream()).pipeThrough(new ConcatStringStream())`,
- * than `.pipeThough(new ConcatBufferStream()).pipeThrough(new DecodeUtf8Stream())`,
+ * prefer `.pipeThrough(new TextDecoderStream()).pipeThrough(new ConcatStringStream())`,
+ * than `.pipeThough(new ConcatBufferStream()).pipeThrough(new TextDecoderStream())`,
  * because of JavaScript engine optimizations,
  * concatenating strings is faster than concatenating `Uint8Array`s.
  */
