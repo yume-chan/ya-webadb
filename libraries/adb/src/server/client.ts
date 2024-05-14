@@ -75,6 +75,7 @@ export type AdbServerDeviceSelector =
 
 export interface AdbServerDevice {
     serial: string;
+    authenticating: boolean;
     product?: string | undefined;
     model?: string | undefined;
     device?: string | undefined;
@@ -267,7 +268,7 @@ export class AdbServerClient {
             const parts = line.split(" ").filter(Boolean);
             const serial = parts[0]!;
             const status = parts[1]!;
-            if (status !== "device") {
+            if (status !== "device" && status !== "unauthorized") {
                 continue;
             }
 
@@ -297,6 +298,7 @@ export class AdbServerClient {
             }
             devices.push({
                 serial,
+                authenticating: status === "unauthorized",
                 product,
                 model,
                 device,
