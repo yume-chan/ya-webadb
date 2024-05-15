@@ -176,7 +176,7 @@ export class AdbServerClient {
         throw new Error(`Unexpected response: ${decodeUtf8(response)}`);
     }
 
-    async connect(
+    async createConnection(
         request: string,
         options?: AdbServerConnectionOptions,
     ): Promise<AdbServerConnection> {
@@ -219,7 +219,7 @@ export class AdbServerClient {
     }
 
     async getVersion(): Promise<number> {
-        const connection = await this.connect("host:version");
+        const connection = await this.createConnection("host:version");
         const readable = new BufferedReadableStream(connection.readable);
         try {
             const length = hexToNumber(await readable.readExactly(4));
@@ -241,17 +241,55 @@ export class AdbServerClient {
     }
 
     async killServer(): Promise<void> {
-        const connection = await this.connect("host:kill");
+        const connection = await this.createConnection("host:kill");
         connection.writable.close().catch(NOOP);
         connection.readable.cancel().catch(NOOP);
     }
 
     async getServerFeatures(): Promise<AdbFeature[]> {
-        const connection = await this.connect("host:host-features");
+        const connection = await this.createConnection("host:host-features");
         const readable = new BufferedReadableStream(connection.readable);
         try {
             const response = await AdbServerClient.readString(readable);
             return response.split(",") as AdbFeature[];
+        } finally {
+            connection.writable.close().catch(NOOP);
+            readable.cancel().catch(NOOP);
+        }
+    }
+
+    async pairDevice(address: string, code: string): Promise<void> {
+        const connection = await this.createConnection(
+            `host:pair:${code}:${address}`,
+        );
+        const readable = new BufferedReadableStream(connection.readable);
+        try {
+            const response = await AdbServerClient.readString(readable);
+            if (!response.startsWith("Successfully paired to")) {
+                throw new AdbServerClient.UnauthorizedError(response);
+            }
+        } finally {
+            connection.writable.close().catch(NOOP);
+            readable.cancel().catch(NOOP);
+        }
+    }
+
+    async connectDevice(address: string): Promise<void> {
+        const connection = await this.createConnection(
+            `host:connect:${address}`,
+        );
+        const readable = new BufferedReadableStream(connection.readable);
+        try {
+            const response = await AdbServerClient.readString(readable);
+            if (response === `already connected to ${address}`) {
+                throw new AdbServerClient.AlreadyConnectedError(response);
+            }
+            if (response === `failed to connect to ${address}`) {
+                throw new AdbServerClient.UnauthorizedError(response);
+            }
+            if (response !== `connected to ${address}`) {
+                throw new AdbServerClient.NetworkError(response);
+            }
         } finally {
             connection.writable.close().catch(NOOP);
             readable.cancel().catch(NOOP);
@@ -309,7 +347,7 @@ export class AdbServerClient {
     }
 
     async getDevices(): Promise<AdbServerDevice[]> {
-        const connection = await this.connect("host:devices-l");
+        const connection = await this.createConnection("host:devices-l");
         const readable = new BufferedReadableStream(connection.readable);
         try {
             const response = await AdbServerClient.readString(readable);
@@ -323,7 +361,7 @@ export class AdbServerClient {
     async trackDevices(
         callback: (devices: AdbServerDevice[]) => void,
     ): Promise<() => void> {
-        const connection = await this.connect("host:track-devices-l");
+        const connection = await this.createConnection("host:track-devices-l");
         const readable = new BufferedReadableStream(connection.readable);
         let running = true;
         (async () => {
@@ -380,7 +418,10 @@ export class AdbServerClient {
         // Also, if the command is about a device, but didn't specify a selector,
         // it will be executed against the device selected previously by `connectDevice`.
         // Using this method, we can get the transport ID and device features in one connection.
-        const socket = await this.connectDevice(device, "host:features");
+        const socket = await this.createDeviceConnection(
+            device,
+            "host:features",
+        );
         try {
             const readable = new BufferedReadableStream(socket.readable);
             const featuresString = await AdbServerClient.readString(readable);
@@ -397,7 +438,7 @@ export class AdbServerClient {
      * @param service The service to forward
      * @returns An `AdbServerSocket` that can be used to communicate with the service
      */
-    async connectDevice(
+    async createDeviceConnection(
         device: AdbServerDeviceSelector,
         service: string,
     ): Promise<AdbServerSocket> {
@@ -420,7 +461,7 @@ export class AdbServerClient {
             throw new Error("Invalid device selector");
         }
 
-        const connection = await this.connect(switchService);
+        const connection = await this.createConnection(switchService);
 
         try {
             const writer = connection.writable.getWriter();
@@ -496,7 +537,7 @@ export class AdbServerClient {
             `wait-for-${type}-${state}`,
         );
 
-        const socket = await this.connect(service, options);
+        const socket = await this.createConnection(service, options);
         const readable = new BufferedReadableStream(socket.readable);
         await AdbServerClient.readOkay(readable);
 
@@ -557,6 +598,29 @@ export async function raceSignal<T>(
                 continue;
             }
             signal.removeEventListener("abort", abort);
+        }
+    }
+}
+
+export namespace AdbServerClient {
+    export class NetworkError extends Error {
+        constructor(message: string) {
+            super(message);
+            this.name = "ConnectionFailedError";
+        }
+    }
+
+    export class UnauthorizedError extends Error {
+        constructor(message: string) {
+            super(message);
+            this.name = "UnauthorizedError";
+        }
+    }
+
+    export class AlreadyConnectedError extends Error {
+        constructor(message: string) {
+            super(message);
+            this.name = "AlreadyConnectedError";
         }
     }
 }

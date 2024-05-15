@@ -75,7 +75,7 @@ export class AdbServerTransport implements AdbTransport {
     }
 
     async connect(service: string): Promise<AdbSocket> {
-        return await this.#client.connectDevice(
+        return await this.#client.createDeviceConnection(
             {
                 transportId: this.transportId,
             },
