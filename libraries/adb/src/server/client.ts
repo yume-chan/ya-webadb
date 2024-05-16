@@ -27,12 +27,7 @@ import {
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import type { AdbFeature } from "../features.js";
-import {
-    NOOP,
-    hexToNumber,
-    unreachable,
-    write4HexDigits,
-} from "../utils/index.js";
+import { NOOP, hexToNumber, write4HexDigits } from "../utils/index.js";
 
 import { AdbServerTransport } from "./transport.js";
 
@@ -264,10 +259,14 @@ export class AdbServerClient {
         );
         const readable = new BufferedReadableStream(connection.readable);
         try {
-            const response = await AdbServerClient.readString(readable);
-            if (!response.startsWith("Successfully paired to")) {
-                throw new AdbServerClient.UnauthorizedError(response);
+            const response = await readable.readExactly(4);
+            // `response` is either `FAIL`, or 4 hex digits for length of the string
+            if (sequenceEqual(response, FAIL)) {
+                throw new Error(await AdbServerClient.readString(readable));
             }
+            const length = hexToNumber(response);
+            // Ignore the string because it's always `Successful ...`
+            await readable.readExactly(length);
         } finally {
             connection.writable.close().catch(NOOP);
             readable.cancel().catch(NOOP);
@@ -284,12 +283,28 @@ export class AdbServerClient {
             if (response === `already connected to ${address}`) {
                 throw new AdbServerClient.AlreadyConnectedError(response);
             }
-            if (response === `failed to connect to ${address}`) {
+            if (
+                response === `failed to connect to ${address}` || // `adb pair` mode not authorized
+                response === `failed to authenticate to ${address}` // `adb tcpip` mode not authorized
+            ) {
                 throw new AdbServerClient.UnauthorizedError(response);
             }
             if (response !== `connected to ${address}`) {
                 throw new AdbServerClient.NetworkError(response);
             }
+        } finally {
+            connection.writable.close().catch(NOOP);
+            readable.cancel().catch(NOOP);
+        }
+    }
+
+    async disconnectDevice(address: string): Promise<void> {
+        const connection = await this.createConnection(
+            `host:disconnect:${address}`,
+        );
+        const readable = new BufferedReadableStream(connection.readable);
+        try {
+            await AdbServerClient.readString(readable);
         } finally {
             connection.writable.close().catch(NOOP);
             readable.cancel().catch(NOOP);
@@ -358,28 +373,39 @@ export class AdbServerClient {
         }
     }
 
-    async trackDevices(
-        callback: (devices: AdbServerDevice[]) => void,
-    ): Promise<() => void> {
+    /**
+     * Track the device list.
+     *
+     * @param signal An optional `AbortSignal` to stop tracking
+     *
+     * When `signal` is aborted, `trackDevices` will return normally, instead of throwing `signal.reason`.
+     */
+    async *trackDevices(
+        signal?: AbortSignal,
+    ): AsyncGenerator<AdbServerDevice[], void, void> {
         const connection = await this.createConnection("host:track-devices-l");
         const readable = new BufferedReadableStream(connection.readable);
-        let running = true;
-        (async () => {
+        try {
+            while (true) {
+                const response = await raceSignal(
+                    () => AdbServerClient.readString(readable),
+                    signal,
+                );
+                const devices = this.parseDeviceList(response);
+                yield devices;
+            }
+        } catch (e) {
+            if (e === signal?.reason) {
+                return;
+            }
+        } finally {
+            readable.cancel().catch(NOOP);
             try {
-                while (running) {
-                    const response = await AdbServerClient.readString(readable);
-                    const devices = this.parseDeviceList(response);
-                    callback(devices);
-                }
+                await connection.close();
             } catch {
                 // ignore
             }
-        })().catch(unreachable);
-        return () => {
-            running = false;
-            readable.cancel().catch(NOOP);
-            Promise.resolve(connection.close()).catch(NOOP);
-        };
+        }
     }
 
     formatDeviceService(device: AdbServerDeviceSelector, command: string) {
@@ -399,6 +425,22 @@ export class AdbServerClient {
             return `host-local:${command}`;
         }
         throw new Error("Invalid device selector");
+    }
+
+    async reconnectDevice(device: AdbServerDeviceSelector | "offline") {
+        const connection = await this.createConnection(
+            device === "offline"
+                ? "host:reconnect-offline"
+                : this.formatDeviceService(device, "reconnect"),
+        );
+        const readable = new BufferedReadableStream(connection.readable);
+        try {
+            const response = await AdbServerClient.readString(readable);
+            return this.parseDeviceList(response);
+        } finally {
+            connection.writable.close().catch(NOOP);
+            readable.cancel().catch(NOOP);
+        }
     }
 
     /**
@@ -572,7 +614,7 @@ export class AdbServerClient {
 }
 
 export async function raceSignal<T>(
-    callback: () => Promise<T>,
+    callback: () => PromiseLike<T>,
     ...signals: (AbortSignal | undefined)[]
 ): Promise<T> {
     const abortPromise = new PromiseResolver<never>();
