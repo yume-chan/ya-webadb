@@ -41,6 +41,18 @@ export class Cmd extends AdbCommandBase {
         this.#supportsAbbExec = adb.canUseFeature(AdbFeature.AbbExec);
     }
 
+    /**
+     * Spawn a new `cmd` command. It will use ADB's `abb` command if available.
+     *
+     * @param shellProtocol
+     * Whether to use shell protocol. If `true`, `stdout` and `stderr` will be separated.
+     *
+     * `cmd` doesn't use PTY, so even when shell protocol is used,
+     * resizing terminal size and closing `stdin` are not supported.
+     * @param command The command to run.
+     * @param args The arguments to pass to the command.
+     * @returns An `AdbSubprocessProtocol` that provides output streams.
+     */
     async spawn(
         shellProtocol: boolean,
         command: string,

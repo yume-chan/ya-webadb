@@ -273,7 +273,10 @@ export class PackageManager extends AdbCommandBase {
             PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
         );
         if (!options?.skipExisting) {
-            // Compatibility with old versions of pm
+            // Today `pm` defaults to replace existing application (`-r` will be ignored),
+            // but old versions defaults to skip existing application (like `-R`, but obviously
+            // they didn't have this switch and ignores it if present).
+            // If `skipExisting` is not set, add `-r` to ensure compatibility with old versions.
             args.push("-r");
         }
         return args;
@@ -312,10 +315,15 @@ export class PackageManager extends AdbCommandBase {
             await sync.dispose();
         }
 
-        // Starting from Android 7, `pm` is only a wrapper for `cmd package`,
-        // and `cmd package` launches faster than `pm`.
-        // But `cmd package` can't read `/data/local/tmp` folder due to SELinux policy,
-        // so installing a file must use `pm`.
+        // Starting from Android 7, `pm` becomes a wrapper to `cmd package`.
+        // The benefit of `cmd package` is it starts faster than the old `pm`,
+        // because it connects to the already running `system` process,
+        // instead of initializing all system components from scratch.
+        //
+        // But launching `cmd package` directly causes it to not be able to
+        // read files in `/data/local/tmp` (and many other places) due to SELinux policies,
+        // so installing files must still use `pm`.
+        // (the starting executable file decides which SELinux policies to apply)
         const args = this.#buildInstallArguments("install", options);
         args.push(filePath);
 
@@ -338,15 +346,18 @@ export class PackageManager extends AdbCommandBase {
         options?: Partial<PackageManagerInstallOptions>,
     ): Promise<void> {
         // Android 7 added both `cmd` command and streaming install support,
-        // we can't detect whether `pm` supports streaming install,
-        // so we detect `cmd` command support instead.
+        // It's hard to detect whether `pm` supports streaming install (unless actually trying),
+        // so check for whether `cmd` is supported,
+        // and assume `pm` streaming install support status is same as that.
         if (!this.#cmd.supportsCmd) {
+            // Fall back to push file then install
             await this.pushAndInstallStream(stream, options);
             return;
         }
 
         const args = this.#buildInstallArguments("install", options);
-        // Remove `pm` from args, final command will starts with `cmd package install`
+        // Remove `pm` from args, `Cmd#spawn` will prepend `cmd <command>` so the final args
+        // will be `cmd package install <args>`
         args.shift();
         args.push("-S", size.toString());
         const process = await this.#cmd.spawn(false, "package", ...args);
@@ -377,7 +388,7 @@ export class PackageManager extends AdbCommandBase {
         let installer: string | undefined;
         let uid: number | undefined;
 
-        // Parse backwards
+        // The output format is easier to parse backwards
         let index = line.indexOf(" uid:");
         if (index !== -1) {
             uid = Number.parseInt(line.substring(index + " uid:".length), 10);
@@ -399,7 +410,9 @@ export class PackageManager extends AdbCommandBase {
             line = line.substring(0, index);
         }
 
-        // `sourceDir` may contain `=` so use `lastIndexOf`
+        // `sourceDir` may contain `=` characters
+        // (because in newer Android versions it's a base64 string of encrypted package name),
+        // so use `lastIndexOf`
         index = line.lastIndexOf("=");
         if (index !== -1) {
             sourceDir = line.substring(0, index);
@@ -441,6 +454,9 @@ export class PackageManager extends AdbCommandBase {
         const process = await this.#cmdOrSubprocess(args);
         const reader = process.stdout
             .pipeThrough(new TextDecoderStream())
+            // FIXME: `SplitStringStream` will throw away some data
+            // if it doesn't end with a separator. So each chunk of data
+            // must contain several complete lines.
             .pipeThrough(new SplitStringStream("\n"))
             .getReader();
         while (true) {
