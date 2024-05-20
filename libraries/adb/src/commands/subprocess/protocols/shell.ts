@@ -1,12 +1,14 @@
 import { PromiseResolver } from "@yume-chan/async";
+import type {
+    PushReadableStreamController,
+    ReadableStream,
+    WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 import {
     MaybeConsumable,
     PushReadableStream,
     StructDeserializeStream,
     WritableStream,
-    type PushReadableStreamController,
-    type ReadableStream,
-    type WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import type { StructValueType } from "@yume-chan/struct";
 import Struct, { placeholder } from "@yume-chan/struct";

@@ -7,12 +7,14 @@ import {
     getUint32LittleEndian,
     setUint32LittleEndian,
 } from "@yume-chan/no-data-view";
+import type {
+    ReadableWritablePair,
+    WritableStreamDefaultWriter,
+} from "@yume-chan/stream-extra";
 import {
     AbortController,
     Consumable,
     WritableStream,
-    type ReadableWritablePair,
-    type WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 

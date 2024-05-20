@@ -15,11 +15,11 @@ import {
     EMPTY_UINT8_ARRAY,
     Uint8ArrayBufferFieldConverter,
 } from "./base.js";
+import type { VariableLengthBufferLikeFieldOptions } from "./variable-length.js";
 import {
     VariableLengthBufferLikeFieldDefinition,
     VariableLengthBufferLikeFieldLengthValue,
     VariableLengthBufferLikeStructFieldValue,
-    type VariableLengthBufferLikeFieldOptions,
 } from "./variable-length.js";
 
 class MockLengthFieldValue extends StructFieldValue<any> {

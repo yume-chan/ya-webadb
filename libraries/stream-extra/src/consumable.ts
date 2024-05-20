@@ -6,10 +6,11 @@ import type {
     WritableStreamDefaultWriter,
 } from "./stream.js";
 import {
-    WritableStream as NativeWritableStream,
     ReadableStream as NativeReadableStream,
+    WritableStream as NativeWritableStream,
 } from "./stream.js";
-import { createTask, type Task } from "./task.js";
+import type { Task } from "./task.js";
+import { createTask } from "./task.js";
 
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
     return typeof value === "object" && value !== null && "then" in value;

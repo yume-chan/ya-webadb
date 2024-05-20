@@ -1,9 +1,11 @@
 import { Consumable } from "./consumable.js";
-import type { WritableStreamDefaultController } from "./stream.js";
+import type {
+    QueuingStrategy,
+    WritableStreamDefaultController,
+} from "./stream.js";
 import {
     WritableStream as NativeWritableStream,
     TransformStream,
-    type QueuingStrategy,
 } from "./stream.js";
 
 export type MaybeConsumable<T> = T | Consumable<T>;

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
+
 import { decodeBase64 } from "../utils/base64.js";
+
 import { adbGeneratePublicKey, modInverse } from "./crypto.js";
 
 describe("modInverse", () => {

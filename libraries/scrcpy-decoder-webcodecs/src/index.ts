@@ -1,21 +1,21 @@
 import { EventEmitter } from "@yume-chan/event";
 import { getUint32LittleEndian } from "@yume-chan/no-data-view";
+import type {
+    ScrcpyMediaStreamDataPacket,
+    ScrcpyMediaStreamPacket,
+} from "@yume-chan/scrcpy";
 import {
     Av1,
     ScrcpyVideoCodecId,
     h264ParseConfiguration,
     h265ParseConfiguration,
-    type ScrcpyMediaStreamDataPacket,
-    type ScrcpyMediaStreamPacket,
 } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
-import {
-    WritableStream,
-    type WritableStreamDefaultController,
-} from "@yume-chan/stream-extra";
+import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
+import { WritableStream } from "@yume-chan/stream-extra";
 
 import { BitmapFrameRenderer } from "./bitmap.js";
 import type { FrameRenderer } from "./renderer.js";

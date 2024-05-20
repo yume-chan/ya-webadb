@@ -1,9 +1,9 @@
 import { PromiseResolver } from "@yume-chan/async";
+import type { ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
     AbortController,
     Consumable,
     WritableStream,
-    type ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 import { decodeUtf8, encodeUtf8 } from "@yume-chan/struct";

@@ -1,8 +1,8 @@
+import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     AbortController,
     DistributionStream,
     MaybeConsumable,
-    type ReadableStream,
 } from "@yume-chan/stream-extra";
 import Struct, { placeholder } from "@yume-chan/struct";
 

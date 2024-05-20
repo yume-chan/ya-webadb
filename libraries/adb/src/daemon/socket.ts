@@ -1,14 +1,13 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
-import {
-    MaybeConsumable,
-    PushReadableStream,
-    type AbortSignal,
-    type PushReadableStreamController,
-    type ReadableStream,
-    type WritableStream,
-    type WritableStreamDefaultController,
+import type {
+    AbortSignal,
+    PushReadableStreamController,
+    ReadableStream,
+    WritableStream,
+    WritableStreamDefaultController,
 } from "@yume-chan/stream-extra";
+import { MaybeConsumable, PushReadableStream } from "@yume-chan/stream-extra";
 import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
 import type { AdbSocket } from "../adb.js";

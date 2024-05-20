@@ -1,10 +1,13 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
+import type { ValueOrPromise } from "@yume-chan/struct";
+
 import { ScrcpyOptions1_21 } from "./1_21.js";
 import { ScrcpyOptions2_0, omit } from "./2_0.js";
-import { ScrcpyOptions2_2, type ScrcpyOptionsInit2_2 } from "./2_2.js";
+import type { ScrcpyOptionsInit2_2 } from "./2_2.js";
+import { ScrcpyOptions2_2 } from "./2_2.js";
+import type { ScrcpyAudioStreamMetadata } from "./codec.js";
+import { ScrcpyAudioCodec } from "./codec.js";
 import { ScrcpyOptionsBase } from "./types.js";
-import type { ValueOrPromise } from "@yume-chan/struct";
-import { ScrcpyAudioCodec, type ScrcpyAudioStreamMetadata } from "./codec.js";
 
 export interface ScrcpyOptionsInit2_3
     extends Omit<ScrcpyOptionsInit2_2, "audioCodec"> {

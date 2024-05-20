@@ -1,4 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
+
 import { getInt8 } from "./int8.js";
 
 describe("getInt8", () => {

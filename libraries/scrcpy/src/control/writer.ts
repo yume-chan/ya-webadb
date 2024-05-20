@@ -1,7 +1,5 @@
-import {
-    Consumable,
-    type WritableStreamDefaultWriter,
-} from "@yume-chan/stream-extra";
+import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
+import { Consumable } from "@yume-chan/stream-extra";
 
 import type { ScrcpyOptions } from "../options/index.js";
 

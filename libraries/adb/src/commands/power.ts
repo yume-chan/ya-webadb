@@ -40,11 +40,13 @@ export class AdbPower extends AdbCommandBase {
     }
 
     powerButton(longPress = false) {
-        return this.adb.subprocess.spawnAndWaitLegacy([
-            "input",
-            "keyevent",
-            longPress ? "--longpress POWER" : "POWER",
-        ]);
+        const args = ["input", "keyevent"];
+        if (longPress) {
+            args.push("--longpress");
+        }
+        args.push("POWER");
+
+        return this.adb.subprocess.spawnAndWaitLegacy(args);
     }
 
     /**
