@@ -1,12 +1,7 @@
 import type { AddressInfo, SocketConnectOpts } from "net";
 import { Server, Socket } from "net";
 
-import type {
-    AdbIncomingSocketHandler,
-    AdbServerConnection,
-    AdbServerConnectionOptions,
-    AdbServerConnector,
-} from "@yume-chan/adb";
+import type { AdbIncomingSocketHandler, AdbServerClient } from "@yume-chan/adb";
 import {
     MaybeConsumable,
     PushReadableStream,
@@ -15,7 +10,9 @@ import {
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
-function nodeSocketToConnection(socket: Socket): AdbServerConnection {
+function nodeSocketToConnection(
+    socket: Socket,
+): AdbServerClient.ServerConnection {
     socket.setNoDelay(true);
 
     const closed = new Promise<void>((resolve) => {
@@ -64,7 +61,9 @@ function nodeSocketToConnection(socket: Socket): AdbServerConnection {
     };
 }
 
-export class AdbServerNodeTcpConnector implements AdbServerConnector {
+export class AdbServerNodeTcpConnector
+    implements AdbServerClient.ServerConnector
+{
     readonly spec: SocketConnectOpts;
 
     readonly #listeners = new Map<string, Server>();
@@ -74,8 +73,8 @@ export class AdbServerNodeTcpConnector implements AdbServerConnector {
     }
 
     async connect(
-        { unref }: AdbServerConnectionOptions = { unref: false },
-    ): Promise<AdbServerConnection> {
+        { unref }: AdbServerClient.ServerConnectionOptions = { unref: false },
+    ): Promise<AdbServerClient.ServerConnection> {
         const socket = new Socket();
         if (unref) {
             socket.unref();

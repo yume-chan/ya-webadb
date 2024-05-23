@@ -27,52 +27,6 @@ import { NOOP, hexToNumber, write4HexDigits } from "../utils/index.js";
 
 import { AdbServerTransport } from "./transport.js";
 
-export interface AdbServerConnectionOptions {
-    unref?: boolean | undefined;
-    signal?: AbortSignal | undefined;
-}
-
-export interface AdbServerConnection
-    extends ReadableWritablePair<Uint8Array, Uint8Array>,
-        Closeable {
-    get closed(): Promise<void>;
-}
-
-export interface AdbServerConnector {
-    connect(
-        options?: AdbServerConnectionOptions,
-    ): ValueOrPromise<AdbServerConnection>;
-
-    addReverseTunnel(
-        handler: AdbIncomingSocketHandler,
-        address?: string,
-    ): ValueOrPromise<string>;
-
-    removeReverseTunnel(address: string): ValueOrPromise<void>;
-
-    clearReverseTunnels(): ValueOrPromise<void>;
-}
-
-export interface AdbServerSocket extends AdbSocket {
-    transportId: bigint;
-}
-
-export type AdbServerDeviceSelector =
-    | { transportId: bigint }
-    | { serial: string }
-    | { usb: true }
-    | { tcp: true }
-    | undefined;
-
-export interface AdbServerDevice {
-    serial: string;
-    authenticating: boolean;
-    product?: string | undefined;
-    model?: string | undefined;
-    device?: string | undefined;
-    transportId: bigint;
-}
-
 function sequenceEqual(a: Uint8Array, b: Uint8Array): boolean {
     if (a.length !== b.length) {
         return false;
@@ -91,11 +45,11 @@ const OKAY = encodeUtf8("OKAY");
 const FAIL = encodeUtf8("FAIL");
 
 class AdbServerStream {
-    #connection: AdbServerConnection;
+    #connection: AdbServerClient.ServerConnection;
     #buffered: BufferedReadableStream;
     #writer: WritableStreamDefaultWriter<Uint8Array>;
 
-    constructor(connection: AdbServerConnection) {
+    constructor(connection: AdbServerClient.ServerConnection) {
         this.#connection = connection;
         this.#buffered = new BufferedReadableStream(connection.readable);
         this.#writer = connection.writable.getWriter();
@@ -191,15 +145,15 @@ class AdbServerStream {
 export class AdbServerClient {
     static readonly VERSION = 41;
 
-    readonly connection: AdbServerConnector;
+    readonly connection: AdbServerClient.ServerConnector;
 
-    constructor(connection: AdbServerConnector) {
+    constructor(connection: AdbServerClient.ServerConnector) {
         this.connection = connection;
     }
 
     async createConnection(
         request: string,
-        options?: AdbServerConnectionOptions,
+        options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<AdbServerStream> {
         const connection = await this.connection.connect(options);
         const stream = new AdbServerStream(connection);
@@ -326,8 +280,8 @@ export class AdbServerClient {
         }
     }
 
-    parseDeviceList(value: string): AdbServerDevice[] {
-        const devices: AdbServerDevice[] = [];
+    parseDeviceList(value: string): AdbServerClient.Device[] {
+        const devices: AdbServerClient.Device[] = [];
         for (const line of value.split("\n")) {
             if (!line) {
                 continue;
@@ -379,7 +333,7 @@ export class AdbServerClient {
     /**
      * `adb devices -l`
      */
-    async getDevices(): Promise<AdbServerDevice[]> {
+    async getDevices(): Promise<AdbServerClient.Device[]> {
         const connection = await this.createConnection("host:devices-l");
         try {
             const response = await connection.readString();
@@ -398,7 +352,7 @@ export class AdbServerClient {
      */
     async *trackDevices(
         signal?: AbortSignal,
-    ): AsyncGenerator<AdbServerDevice[], void, void> {
+    ): AsyncGenerator<AdbServerClient.Device[], void, void> {
         const connection = await this.createConnection("host:track-devices-l");
         try {
             while (true) {
@@ -418,7 +372,40 @@ export class AdbServerClient {
         }
     }
 
-    formatDeviceService(device: AdbServerDeviceSelector, command: string) {
+    async mDnsCheck() {
+        const connection = await this.createConnection("host:mdns:check");
+        try {
+            const response = await connection.readString();
+            return !response.startsWith("ERROR:");
+        } finally {
+            await connection.dispose();
+        }
+    }
+
+    async mDnsGetServices() {
+        const connection = await this.createConnection("host:mdns:services");
+        try {
+            const response = await connection.readString();
+            return response
+                .split("\n")
+                .filter(Boolean)
+                .map((line) => {
+                    const parts = line.split("\t");
+                    return {
+                        name: parts[0]!,
+                        service: parts[1]!,
+                        address: parts[2]!,
+                    };
+                });
+        } finally {
+            await connection.dispose();
+        }
+    }
+
+    formatDeviceService(
+        device: AdbServerClient.DeviceSelector,
+        command: string,
+    ) {
         if (!device) {
             return `host:${command}`;
         }
@@ -440,7 +427,7 @@ export class AdbServerClient {
     /**
      * `adb -s <device> reconnect` or `adb reconnect offline`
      */
-    async reconnectDevice(device: AdbServerDeviceSelector | "offline") {
+    async reconnectDevice(device: AdbServerClient.DeviceSelector | "offline") {
         const connection = await this.createConnection(
             device === "offline"
                 ? "host:reconnect-offline"
@@ -461,7 +448,7 @@ export class AdbServerClient {
      * @returns The transport ID of the selected device, and the features supported by the device.
      */
     async getDeviceFeatures(
-        device: AdbServerDeviceSelector,
+        device: AdbServerClient.DeviceSelector,
     ): Promise<{ transportId: bigint; features: AdbFeature[] }> {
         // On paper, `host:features` is a host service (device features are cached in host),
         // so it shouldn't use `createDeviceConnection`,
@@ -483,7 +470,7 @@ export class AdbServerClient {
             device,
             "host:features",
         );
-        // Luckily `AdbServerSocket` is compatible with `AdbServerConnection`
+        // Luckily `AdbServerClient.Socket` is compatible with `AdbServerClient.ServerConnection`
         const stream = new AdbServerStream(connection);
         try {
             const featuresString = await stream.readString();
@@ -498,12 +485,12 @@ export class AdbServerClient {
      * Creates a connection that will forward the service to device.
      * @param device The device selector
      * @param service The service to forward
-     * @returns An `AdbServerSocket` that can be used to communicate with the service
+     * @returns An `AdbServerClient.Socket` that can be used to communicate with the service
      */
     async createDeviceConnection(
-        device: AdbServerDeviceSelector,
+        device: AdbServerClient.DeviceSelector,
         service: string,
-    ): Promise<AdbServerSocket> {
+    ): Promise<AdbServerClient.Socket> {
         await this.validateVersion();
 
         let switchService: string;
@@ -573,9 +560,9 @@ export class AdbServerClient {
      * @returns A promise that resolves when the condition is met.
      */
     async waitFor(
-        device: AdbServerDeviceSelector,
+        device: AdbServerClient.DeviceSelector,
         state: "device" | "disconnect",
-        options?: AdbServerConnectionOptions,
+        options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<void> {
         let type: string;
         if (!device) {
@@ -608,7 +595,7 @@ export class AdbServerClient {
     }
 
     async createTransport(
-        device: AdbServerDeviceSelector,
+        device: AdbServerClient.DeviceSelector,
     ): Promise<AdbServerTransport> {
         const { transportId, features } = await this.getDeviceFeatures(device);
 
@@ -665,6 +652,52 @@ export async function raceSignal<T>(
 }
 
 export namespace AdbServerClient {
+    export interface ServerConnectionOptions {
+        unref?: boolean | undefined;
+        signal?: AbortSignal | undefined;
+    }
+
+    export interface ServerConnection
+        extends ReadableWritablePair<Uint8Array, Uint8Array>,
+            Closeable {
+        get closed(): Promise<void>;
+    }
+
+    export interface ServerConnector {
+        connect(
+            options?: ServerConnectionOptions,
+        ): ValueOrPromise<ServerConnection>;
+
+        addReverseTunnel(
+            handler: AdbIncomingSocketHandler,
+            address?: string,
+        ): ValueOrPromise<string>;
+
+        removeReverseTunnel(address: string): ValueOrPromise<void>;
+
+        clearReverseTunnels(): ValueOrPromise<void>;
+    }
+
+    export interface Socket extends AdbSocket {
+        transportId: bigint;
+    }
+
+    export type DeviceSelector =
+        | { transportId: bigint }
+        | { serial: string }
+        | { usb: true }
+        | { tcp: true }
+        | undefined;
+
+    export interface Device {
+        serial: string;
+        authenticating: boolean;
+        product?: string | undefined;
+        model?: string | undefined;
+        device?: string | undefined;
+        transportId: bigint;
+    }
+
     export class NetworkError extends Error {
         constructor(message: string) {
             super(message);
