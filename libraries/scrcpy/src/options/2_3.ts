@@ -2,22 +2,19 @@ import type { ReadableStream } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
 import { ScrcpyOptions1_21 } from "./1_21.js";
-import { ScrcpyOptions2_0, omit } from "./2_0.js";
+import { ScrcpyOptions2_0 } from "./2_0.js";
 import type { ScrcpyOptionsInit2_2 } from "./2_2.js";
 import { ScrcpyOptions2_2 } from "./2_2.js";
 import type { ScrcpyAudioStreamMetadata } from "./codec.js";
 import { ScrcpyAudioCodec } from "./codec.js";
-import { ScrcpyOptionsBase } from "./types.js";
+import { ScrcpyOptions } from "./types.js";
 
 export interface ScrcpyOptionsInit2_3
     extends Omit<ScrcpyOptionsInit2_2, "audioCodec"> {
     audioCodec?: "raw" | "opus" | "aac" | "flac";
 }
 
-export class ScrcpyOptions2_3 extends ScrcpyOptionsBase<
-    ScrcpyOptionsInit2_3,
-    ScrcpyOptions2_2
-> {
+export class ScrcpyOptions2_3 extends ScrcpyOptions<ScrcpyOptionsInit2_3> {
     static readonly DEFAULTS = {
         ...ScrcpyOptions2_2.DEFAULTS,
     } as const satisfies Required<ScrcpyOptionsInit2_3>;
@@ -27,10 +24,7 @@ export class ScrcpyOptions2_3 extends ScrcpyOptionsBase<
     }
 
     constructor(init: ScrcpyOptionsInit2_3) {
-        super(new ScrcpyOptions2_2(omit(init, ["audioCodec"])), {
-            ...ScrcpyOptions2_3.DEFAULTS,
-            ...init,
-        });
+        super(ScrcpyOptions2_2, init, ScrcpyOptions2_3.DEFAULTS);
     }
 
     override serialize(): string[] {

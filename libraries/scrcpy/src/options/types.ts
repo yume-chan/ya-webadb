@@ -64,131 +64,73 @@ export interface ScrcpyDisplay {
     resolution?: string;
 }
 
-export interface ScrcpyOptions<T extends object> {
-    readonly defaults: Required<T>;
+const SkipDefaultMark = Symbol("SkipDefault");
 
-    readonly controlMessageTypes: readonly ScrcpyControlMessageType[];
-
-    readonly value: Required<T>;
-
-    get clipboard(): ReadableStream<string>;
-
-    serialize(): string[];
-
-    /**
-     * Set the essential options to let Scrcpy server print out available encoders.
-     */
-    setListEncoders(): void;
-
-    /**
-     * Set the essential options to let Scrcpy server print out available displays.
-     */
-    setListDisplays(): void;
-
-    /**
-     * Parse encoder information from Scrcpy server output
-     * @param line One line of Scrcpy server output
-     */
-    parseEncoder(line: string): ScrcpyEncoder | undefined;
-
-    /**
-     * Parse display information from Scrcpy server output
-     * @param line One line of Scrcpy server output
-     */
-    parseDisplay(line: string): ScrcpyDisplay | undefined;
-
-    /**
-     * Parse the device metadata from video stream according to the current version and options.
-     * @param stream The video stream.
-     * @returns
-     * A tuple of the video stream and the metadata.
-     *
-     * The returned video stream may be different from the input stream, and should be used for further processing.
-     */
-    parseVideoStreamMetadata(
-        stream: ReadableStream<Uint8Array>,
-    ): ValueOrPromise<ScrcpyVideoStream>;
-
-    parseAudioStreamMetadata(
-        stream: ReadableStream<Uint8Array>,
-    ): ValueOrPromise<ScrcpyAudioStreamMetadata>;
-
-    parseDeviceMessage(
-        id: number,
-        stream: AsyncExactReadable,
-    ): Promise<boolean>;
-
-    createMediaStreamTransformer(): TransformStream<
-        Uint8Array,
-        ScrcpyMediaStreamPacket
-    >;
-
-    serializeInjectTouchControlMessage(
-        message: ScrcpyInjectTouchControlMessage,
-    ): Uint8Array;
-
-    serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage,
-    ): Uint8Array | undefined;
-
-    serializeSetClipboardControlMessage(
-        message: ScrcpySetClipboardControlMessage,
-    ): [Uint8Array, Promise<void> | undefined];
-
-    createScrollController(): ScrcpyScrollController;
-}
-
-export abstract class ScrcpyOptionsBase<
-    T extends object,
-    B extends ScrcpyOptions<object>,
-> implements ScrcpyOptions<T>
-{
-    protected _base: B;
+export abstract class ScrcpyOptions<T extends object> {
+    #base!: ScrcpyOptions<object>;
 
     abstract get defaults(): Required<T>;
 
     get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
-        return this._base.controlMessageTypes;
+        return this.#base.controlMessageTypes;
     }
 
     readonly value: Required<T>;
 
     get clipboard(): ReadableStream<string> {
-        return this._base.clipboard;
+        return this.#base.clipboard;
     }
 
-    constructor(base: B, value: Required<T>) {
-        this._base = base;
-        this.value = value;
-        this.#setValue();
-    }
+    constructor(
+        base: (new (value: never) => ScrcpyOptions<object>) | undefined,
+        value: T,
+        defaults: Required<T>,
+    ) {
+        if (!(SkipDefaultMark in value)) {
+            value = {
+                ...defaults,
+                ...value,
+                [SkipDefaultMark]: true,
+            } as Required<T>;
+        }
 
-    #setValue() {
-        // Share `value` with `_base` class,
-        // so updating `_base.value` in `_base.setListEncoders()`/
-        // `_base.setListDisplays()` will also update `this.value`.
-        Object.assign(this._base, { value: this.value });
-        if (this._base instanceof ScrcpyOptionsBase) {
-            this._base.#setValue();
+        this.value = value as Required<T>;
+
+        if (base !== undefined) {
+            this.#base = new base(value as never);
         }
     }
 
     abstract serialize(): string[];
 
+    /**
+     * Set the essential options to let Scrcpy server print out available encoders.
+     */
     setListEncoders(): void {
-        this._base.setListEncoders();
+        this.#base.setListEncoders();
     }
 
+    /**
+     * Set the essential options to let Scrcpy server print out available displays.
+     */
     setListDisplays(): void {
-        this._base.setListDisplays();
+        this.#base.setListDisplays();
     }
 
+    /**
+     * Parse encoder information from Scrcpy server output
+     * @param line One line of Scrcpy server output
+     */
     parseEncoder(line: string): ScrcpyEncoder | undefined {
-        return this._base.parseEncoder(line);
+        return this.#base.parseEncoder(line);
     }
 
+    /**
+     * Parse display information from Scrcpy server output
+     * @param line One line of Scrcpy server output
+     */
     parseDisplay(line: string): ScrcpyDisplay | undefined {
-        return this._base.parseDisplay(line);
+        return this.#base.parseDisplay(line);
     }
 
     /**
@@ -202,48 +144,48 @@ export abstract class ScrcpyOptionsBase<
     parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream> {
-        return this._base.parseVideoStreamMetadata(stream);
+        return this.#base.parseVideoStreamMetadata(stream);
     }
 
     parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
-        return this._base.parseAudioStreamMetadata(stream);
+        return this.#base.parseAudioStreamMetadata(stream);
     }
 
     parseDeviceMessage(
         id: number,
         stream: AsyncExactReadable,
     ): Promise<boolean> {
-        return this._base.parseDeviceMessage(id, stream);
+        return this.#base.parseDeviceMessage(id, stream);
     }
 
     createMediaStreamTransformer(): TransformStream<
         Uint8Array,
         ScrcpyMediaStreamPacket
     > {
-        return this._base.createMediaStreamTransformer();
+        return this.#base.createMediaStreamTransformer();
     }
 
     serializeInjectTouchControlMessage(
         message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array {
-        return this._base.serializeInjectTouchControlMessage(message);
+        return this.#base.serializeInjectTouchControlMessage(message);
     }
 
     serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnControlMessage,
     ): Uint8Array | undefined {
-        return this._base.serializeBackOrScreenOnControlMessage(message);
+        return this.#base.serializeBackOrScreenOnControlMessage(message);
     }
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): [Uint8Array, Promise<void> | undefined] {
-        return this._base.serializeSetClipboardControlMessage(message);
+        return this.#base.serializeSetClipboardControlMessage(message);
     }
 
     createScrollController(): ScrcpyScrollController {
-        return this._base.createScrollController();
+        return this.#base.createScrollController();
     }
 }

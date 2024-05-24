@@ -1,16 +1,13 @@
 import type { ScrcpyOptionsInit1_16 } from "./1_16/index.js";
 import { ScrcpyOptions1_16 } from "./1_16/index.js";
 import type { ScrcpyEncoder } from "./types.js";
-import { ScrcpyOptionsBase } from "./types.js";
+import { ScrcpyOptions } from "./types.js";
 
 export interface ScrcpyOptionsInit1_17 extends ScrcpyOptionsInit1_16 {
     encoderName?: string | undefined;
 }
 
-export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
-    ScrcpyOptionsInit1_17,
-    ScrcpyOptions1_16
-> {
+export class ScrcpyOptions1_17 extends ScrcpyOptions<ScrcpyOptionsInit1_17> {
     static readonly DEFAULTS = {
         ...ScrcpyOptions1_16.DEFAULTS,
         encoderName: undefined,
@@ -37,10 +34,7 @@ export class ScrcpyOptions1_17 extends ScrcpyOptionsBase<
     }
 
     constructor(init: ScrcpyOptionsInit1_17) {
-        super(new ScrcpyOptions1_16(init), {
-            ...ScrcpyOptions1_17.DEFAULTS,
-            ...init,
-        });
+        super(ScrcpyOptions1_16, init, ScrcpyOptions1_17.DEFAULTS);
     }
 
     override serialize(): string[] {

@@ -5,15 +5,12 @@ import type { ScrcpyScrollController } from "../1_16/index.js";
 import { ScrcpyOptions1_21 } from "../1_21.js";
 import type { ScrcpyVideoStream } from "../codec.js";
 import { ScrcpyVideoCodecId } from "../codec.js";
-import { ScrcpyOptionsBase } from "../types.js";
+import { ScrcpyOptions } from "../types.js";
 
 import type { ScrcpyOptionsInit1_22 } from "./init.js";
 import { ScrcpyScrollController1_22 } from "./scroll.js";
 
-export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
-    ScrcpyOptionsInit1_22,
-    ScrcpyOptions1_21
-> {
+export class ScrcpyOptions1_22 extends ScrcpyOptions<ScrcpyOptionsInit1_22> {
     static readonly DEFAULTS = {
         ...ScrcpyOptions1_21.DEFAULTS,
         downsizeOnError: true,
@@ -26,10 +23,7 @@ export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
     }
 
     constructor(init: ScrcpyOptionsInit1_22) {
-        super(new ScrcpyOptions1_21(init), {
-            ...ScrcpyOptions1_22.DEFAULTS,
-            ...init,
-        });
+        super(ScrcpyOptions1_21, init, ScrcpyOptions1_22.DEFAULTS);
     }
 
     override parseVideoStreamMetadata(
@@ -38,7 +32,7 @@ export class ScrcpyOptions1_22 extends ScrcpyOptionsBase<
         if (!this.value.sendDeviceMeta) {
             return { stream, metadata: { codec: ScrcpyVideoCodecId.H264 } };
         } else {
-            return this._base.parseVideoStreamMetadata(stream);
+            return super.parseVideoStreamMetadata(stream);
         }
     }
 

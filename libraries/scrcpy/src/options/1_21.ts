@@ -8,7 +8,7 @@ import type { ScrcpySetClipboardControlMessage } from "../control/index.js";
 
 import type { ScrcpyOptionsInit1_18 } from "./1_18.js";
 import { ScrcpyOptions1_18 } from "./1_18.js";
-import { ScrcpyOptionsBase, toScrcpyOptionValue } from "./types.js";
+import { ScrcpyOptions, toScrcpyOptionValue } from "./types.js";
 
 export const ScrcpyAckClipboardDeviceMessage = new Struct().uint64("sequence");
 
@@ -30,10 +30,7 @@ export const ScrcpySetClipboardControlMessage1_21 = new Struct()
 export type ScrcpySetClipboardControlMessage1_21 =
     (typeof ScrcpySetClipboardControlMessage1_21)["TInit"];
 
-export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
-    ScrcpyOptionsInit1_21,
-    ScrcpyOptions1_18
-> {
+export class ScrcpyOptions1_21 extends ScrcpyOptions<ScrcpyOptionsInit1_21> {
     static readonly DEFAULTS = {
         ...ScrcpyOptions1_18.DEFAULTS,
         clipboardAutosync: true,
@@ -71,10 +68,7 @@ export class ScrcpyOptions1_21 extends ScrcpyOptionsBase<
     #clipboardAck = new Map<bigint, PromiseResolver<void>>();
 
     constructor(init: ScrcpyOptionsInit1_21) {
-        super(new ScrcpyOptions1_18(init), {
-            ...ScrcpyOptions1_21.DEFAULTS,
-            ...init,
-        });
+        super(ScrcpyOptions1_18, init, ScrcpyOptions1_21.DEFAULTS);
     }
 
     override async parseDeviceMessage(

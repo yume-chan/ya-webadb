@@ -2,7 +2,7 @@ import { ScrcpyOptions1_21 } from "./1_21.js";
 import type { ScrcpyOptionsInit2_1 } from "./2_1.js";
 import { ScrcpyOptions2_1 } from "./2_1.js";
 import type { ScrcpyDisplay } from "./types.js";
-import { ScrcpyOptionsBase } from "./types.js";
+import { ScrcpyOptions } from "./types.js";
 
 export interface ScrcpyOptionsInit2_2
     extends Omit<ScrcpyOptionsInit2_1, "display"> {
@@ -19,10 +19,7 @@ export interface ScrcpyOptionsInit2_2
     listCameraSizes?: boolean;
 }
 
-export class ScrcpyOptions2_2 extends ScrcpyOptionsBase<
-    ScrcpyOptionsInit2_2,
-    ScrcpyOptions2_1
-> {
+export class ScrcpyOptions2_2 extends ScrcpyOptions<ScrcpyOptionsInit2_2> {
     static readonly DEFAULTS = {
         ...ScrcpyOptions2_1.DEFAULTS,
         videoSource: "display",
@@ -42,10 +39,7 @@ export class ScrcpyOptions2_2 extends ScrcpyOptionsBase<
     }
 
     constructor(init: ScrcpyOptionsInit2_2) {
-        super(new ScrcpyOptions2_1(init), {
-            ...ScrcpyOptions2_2.DEFAULTS,
-            ...init,
-        });
+        super(ScrcpyOptions2_1, init, ScrcpyOptions2_2.DEFAULTS);
     }
 
     override parseDisplay(line: string): ScrcpyDisplay | undefined {

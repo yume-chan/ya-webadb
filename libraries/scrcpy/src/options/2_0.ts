@@ -28,7 +28,7 @@ import type {
     ScrcpyEncoder,
     ScrcpyOptionValue,
 } from "./types.js";
-import { ScrcpyOptionsBase } from "./types.js";
+import { ScrcpyOptions } from "./types.js";
 
 export const ScrcpyInjectTouchControlMessage2_0 = new Struct()
     .uint8("type")
@@ -103,10 +103,7 @@ export function omit<T extends object, K extends keyof T>(
     return result as Omit<T, K>;
 }
 
-export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
-    ScrcpyOptionsInit2_0,
-    ScrcpyOptions1_25
-> {
+export class ScrcpyOptions2_0 extends ScrcpyOptions<ScrcpyOptionsInit2_0> {
     static async parseAudioMetadata(
         stream: ReadableStream<Uint8Array>,
         sendCodecMeta: boolean,
@@ -188,10 +185,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptionsBase<
     }
 
     constructor(init: ScrcpyOptionsInit2_0) {
-        super(new ScrcpyOptions1_25(init), {
-            ...ScrcpyOptions2_0.DEFAULTS,
-            ...init,
-        });
+        super(ScrcpyOptions1_25, init, ScrcpyOptions2_0.DEFAULTS);
     }
 
     override serialize(): string[] {

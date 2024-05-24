@@ -9,9 +9,9 @@ import type { AdbScrcpyConnection } from "../connection.js";
 
 import { AdbScrcpyOptions1_16 } from "./1_16.js";
 import { AdbScrcpyOptions2_0 } from "./2_0.js";
-import { AdbScrcpyOptionsBase } from "./types.js";
+import { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyOptions2_1 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit2_1> {
+export class AdbScrcpyOptions2_1 extends AdbScrcpyOptions<ScrcpyOptionsInit2_1> {
     override async getEncoders(
         adb: Adb,
         path: string,

@@ -9,10 +9,9 @@ import { AdbScrcpyClient, AdbScrcpyExitedError } from "../client.js";
 import type { AdbScrcpyConnection } from "../connection.js";
 
 import { AdbScrcpyOptions1_16 } from "./1_16.js";
-import type { AdbScrcpyOptions } from "./types.js";
-import { AdbScrcpyOptionsBase } from "./types.js";
+import { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyOptions2_0 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit2_0> {
+export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<ScrcpyOptionsInit2_0> {
     static async getEncoders(
         adb: Adb,
         path: string,
@@ -69,7 +68,7 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit2
             adb,
             {
                 scid: this.value.scid.value,
-                video: true,
+                video: true, // Always enabled
                 audio: this.value.audio,
                 control: this.value.control,
                 sendDummyByte: this.value.sendDummyByte,

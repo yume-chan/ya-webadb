@@ -28,8 +28,8 @@ import type {
     ScrcpyVideoStreamMetadata,
 } from "../codec.js";
 import { ScrcpyVideoCodecId } from "../codec.js";
-import type { ScrcpyDisplay, ScrcpyEncoder, ScrcpyOptions } from "../types.js";
-import { toScrcpyOptionValue } from "../types.js";
+import type { ScrcpyDisplay, ScrcpyEncoder } from "../types.js";
+import { ScrcpyOptions, toScrcpyOptionValue } from "../types.js";
 
 import { CodecOptions } from "./codec-options.js";
 import type { ScrcpyOptionsInit1_16 } from "./init.js";
@@ -46,7 +46,7 @@ import {
 import type { ScrcpyScrollController } from "./scroll.js";
 import { ScrcpyScrollController1_16 } from "./scroll.js";
 
-export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
+export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
     static readonly DEFAULTS = {
         logLevel: ScrcpyLogLevel1_16.Debug,
         maxSize: 0,
@@ -109,22 +109,21 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         return getUint32BigEndian(buffer, 0);
     }
 
-    value: Required<ScrcpyOptionsInit1_16>;
-
     readonly defaults: Required<ScrcpyOptionsInit1_16> =
         ScrcpyOptions1_16.DEFAULTS;
 
-    readonly controlMessageTypes: readonly ScrcpyControlMessageType[] =
-        SCRCPY_CONTROL_MESSAGE_TYPES_1_16;
+    override get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
+        return SCRCPY_CONTROL_MESSAGE_TYPES_1_16;
+    }
 
     #clipboardController!: PushReadableStreamController<string>;
     #clipboard: ReadableStream<string>;
-    get clipboard() {
+    override get clipboard() {
         return this.#clipboard;
     }
 
     constructor(init: ScrcpyOptionsInit1_16) {
-        this.value = { ...ScrcpyOptions1_16.DEFAULTS, ...init };
+        super(undefined, init, ScrcpyOptions1_16.DEFAULTS);
         this.#clipboard = new PushReadableStream<string>((controller) => {
             this.#clipboardController = controller;
         });
@@ -137,22 +136,22 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         );
     }
 
-    setListEncoders(): void {
+    override setListEncoders(): void {
         throw new Error("Not supported");
     }
 
-    setListDisplays(): void {
+    override setListDisplays(): void {
         // Set to an invalid value
         // Server will print valid values before crashing
         // (server will crash before opening sockets)
         this.value.displayId = -1;
     }
 
-    parseEncoder(): ScrcpyEncoder | undefined {
+    override parseEncoder(): ScrcpyEncoder | undefined {
         throw new Error("Not supported");
     }
 
-    parseDisplay(line: string): ScrcpyDisplay | undefined {
+    override parseDisplay(line: string): ScrcpyDisplay | undefined {
         const match = line.match(/^\s+scrcpy --display (\d+)$/);
         if (match) {
             return {
@@ -162,7 +161,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         return undefined;
     }
 
-    parseVideoStreamMetadata(
+    override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): ValueOrPromise<ScrcpyVideoStream> {
         return (async () => {
@@ -180,11 +179,11 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         })();
     }
 
-    parseAudioStreamMetadata(): never {
+    override parseAudioStreamMetadata(): never {
         throw new Error("Not supported");
     }
 
-    async parseDeviceMessage(
+    override async parseDeviceMessage(
         id: number,
         stream: AsyncExactReadable,
     ): Promise<boolean> {
@@ -200,7 +199,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         }
     }
 
-    createMediaStreamTransformer(): TransformStream<
+    override createMediaStreamTransformer(): TransformStream<
         Uint8Array,
         ScrcpyMediaStreamPacket
     > {
@@ -243,13 +242,13 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         };
     }
 
-    serializeInjectTouchControlMessage(
+    override serializeInjectTouchControlMessage(
         message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array {
         return ScrcpyInjectTouchControlMessage1_16.serialize(message);
     }
 
-    serializeBackOrScreenOnControlMessage(
+    override serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnControlMessage,
     ) {
         if (message.action === AndroidKeyEventAction.Down) {
@@ -259,7 +258,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         return undefined;
     }
 
-    serializeSetClipboardControlMessage(
+    override serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): [Uint8Array, Promise<void> | undefined] {
         return [
@@ -268,7 +267,7 @@ export class ScrcpyOptions1_16 implements ScrcpyOptions<ScrcpyOptionsInit1_16> {
         ];
     }
 
-    createScrollController(): ScrcpyScrollController {
+    override createScrollController(): ScrcpyScrollController {
         return new ScrcpyScrollController1_16();
     }
 }

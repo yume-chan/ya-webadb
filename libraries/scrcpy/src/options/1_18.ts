@@ -9,14 +9,12 @@ import { ScrcpyControlMessageType } from "../control/index.js";
 import {
     SCRCPY_CONTROL_MESSAGE_TYPES_1_16,
     ScrcpyBackOrScreenOnControlMessage1_16,
-    ScrcpyLogLevel1_16,
     ScrcpyOptions1_16,
-    ScrcpyVideoOrientation1_16,
 } from "./1_16/index.js";
 import type { ScrcpyOptionsInit1_17 } from "./1_17.js";
 import { ScrcpyOptions1_17 } from "./1_17.js";
 import type { ScrcpyEncoder } from "./types.js";
-import { ScrcpyOptionsBase } from "./types.js";
+import { ScrcpyOptions } from "./types.js";
 
 export enum ScrcpyLogLevel1_18 {
     Verbose = "verbose",
@@ -59,29 +57,7 @@ SCRCPY_CONTROL_MESSAGE_TYPES_1_18.splice(
     ScrcpyControlMessageType.ExpandSettingPanel,
 );
 
-const LOG_LEVEL_MAP = {
-    [ScrcpyLogLevel1_18.Verbose]: ScrcpyLogLevel1_16.Debug,
-    [ScrcpyLogLevel1_18.Debug]: ScrcpyLogLevel1_16.Debug,
-    [ScrcpyLogLevel1_18.Info]: ScrcpyLogLevel1_16.Info,
-    [ScrcpyLogLevel1_18.Warn]: ScrcpyLogLevel1_16.Warn,
-    [ScrcpyLogLevel1_18.Error]: ScrcpyLogLevel1_16.Error,
-};
-
-const VIDEO_ORIENTATION_MAP = {
-    [ScrcpyVideoOrientation1_18.Initial]: ScrcpyVideoOrientation1_16.Unlocked,
-    [ScrcpyVideoOrientation1_18.Unlocked]: ScrcpyVideoOrientation1_16.Unlocked,
-    [ScrcpyVideoOrientation1_18.Portrait]: ScrcpyVideoOrientation1_16.Portrait,
-    [ScrcpyVideoOrientation1_18.Landscape]:
-        ScrcpyVideoOrientation1_16.Landscape,
-    [ScrcpyVideoOrientation1_18.PortraitFlipped]:
-        ScrcpyVideoOrientation1_16.PortraitFlipped,
-    [ScrcpyVideoOrientation1_18.LandscapeFlipped]:
-        ScrcpyVideoOrientation1_16.LandscapeFlipped,
-};
-export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
-    ScrcpyOptionsInit1_18,
-    ScrcpyOptions1_17
-> {
+export class ScrcpyOptions1_18 extends ScrcpyOptions<ScrcpyOptionsInit1_18> {
     static readonly DEFAULTS = {
         ...ScrcpyOptions1_17.DEFAULTS,
         logLevel: ScrcpyLogLevel1_18.Debug,
@@ -103,16 +79,7 @@ export class ScrcpyOptions1_18 extends ScrcpyOptionsBase<
     }
 
     constructor(init: ScrcpyOptionsInit1_18) {
-        const value = { ...ScrcpyOptions1_18.DEFAULTS, ...init };
-        super(
-            new ScrcpyOptions1_17({
-                ...init,
-                logLevel: LOG_LEVEL_MAP[value.logLevel],
-                lockVideoOrientation:
-                    VIDEO_ORIENTATION_MAP[value.lockVideoOrientation],
-            }),
-            value,
-        );
+        super(ScrcpyOptions1_17, init, ScrcpyOptions1_18.DEFAULTS);
     }
 
     override serialize(): string[] {

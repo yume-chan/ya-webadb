@@ -16,10 +16,9 @@ import {
     AdbScrcpyReverseConnection,
 } from "../connection.js";
 
-import type { AdbScrcpyOptions } from "./types.js";
-import { AdbScrcpyOptionsBase } from "./types.js";
+import { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit1_16> {
+export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<ScrcpyOptionsInit1_16> {
     static createConnection(
         adb: Adb,
         connectionOptions: AdbScrcpyConnectionOptions,
@@ -110,13 +109,11 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         return AdbScrcpyOptions1_16.createConnection(
             adb,
             {
-                scid: -1,
-                video: true,
-                audio: false,
-                // Old versions always have control stream no matter what the option is
-                // Pass `control: false` to `Connection` will disable the control stream
-                control: true,
-                sendDummyByte: true,
+                scid: -1, // Not Supported
+                video: true, // Always enabled
+                audio: false, // Not Supported
+                control: true, // Always enabled even when `--no-control` is specified
+                sendDummyByte: true, // Always enabled
             },
             this.tunnelForwardOverride || this.value.tunnelForward,
         );

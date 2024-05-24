@@ -8,9 +8,9 @@ import type {
 import type { AdbScrcpyConnection } from "../connection.js";
 
 import { AdbScrcpyOptions1_16 } from "./1_16.js";
-import { AdbScrcpyOptionsBase } from "./types.js";
+import { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyOptions1_22 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit1_22> {
+export class AdbScrcpyOptions1_22 extends AdbScrcpyOptions<ScrcpyOptionsInit1_22> {
     override getEncoders(
         adb: Adb,
         path: string,
@@ -31,9 +31,9 @@ export class AdbScrcpyOptions1_22 extends AdbScrcpyOptionsBase<ScrcpyOptionsInit
         return AdbScrcpyOptions1_16.createConnection(
             adb,
             {
-                scid: -1,
-                video: true,
-                audio: false,
+                scid: -1, // Not Supported
+                video: true, // Always enabled
+                audio: false, // Not Supported
                 control: this.value.control,
                 sendDummyByte: this.value.sendDummyByte,
             },
