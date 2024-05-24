@@ -29,7 +29,6 @@ export const AdbSyncLstatResponse = new Struct({ littleEndian: true })
     .int32("size")
     .int32("mtime")
     .extra({
-        id: AdbSyncResponseId.Lstat as const,
         get type() {
             return (this.mode >> 12) as LinuxFileType;
         },
@@ -83,7 +82,6 @@ export const AdbSyncStatResponse = new Struct({ littleEndian: true })
     .uint64("mtime")
     .uint64("ctime")
     .extra({
-        id: AdbSyncResponseId.Stat as const,
         get type() {
             return (this.mode >> 12) as LinuxFileType;
         },

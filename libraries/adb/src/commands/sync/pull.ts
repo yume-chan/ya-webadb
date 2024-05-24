@@ -8,8 +8,7 @@ import type { AdbSyncSocket } from "./socket.js";
 
 export const AdbSyncDataResponse = new Struct({ littleEndian: true })
     .uint32("dataLength")
-    .uint8Array("data", { lengthField: "dataLength" })
-    .extra({ id: AdbSyncResponseId.Data as const });
+    .uint8Array("data", { lengthField: "dataLength" });
 
 export type AdbSyncDataResponse =
     (typeof AdbSyncDataResponse)["TDeserializeResult"];
@@ -52,6 +51,7 @@ export function adbSyncPull(
     socket: AdbSyncSocket,
     path: string,
 ): ReadableStream<Uint8Array> {
+    // TODO: use `ReadableStream.from` when it's supported
     return new PushReadableStream(async (controller) => {
         for await (const data of adbSyncPullGenerator(socket, path)) {
             await controller.enqueue(data);

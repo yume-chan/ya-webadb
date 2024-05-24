@@ -273,10 +273,17 @@ export class PackageManager extends AdbCommandBase {
             PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
         );
         if (!options?.skipExisting) {
-            // Today `pm` defaults to replace existing application (`-r` will be ignored),
-            // but old versions defaults to skip existing application (like `-R`, but obviously
-            // they didn't have this switch and ignores it if present).
-            // If `skipExisting` is not set, add `-r` to ensure compatibility with old versions.
+            /*
+             * | behavior             | previous version     | modern version       |
+             * | -------------------- | -------------------- | -------------------- |
+             * | replace existing app | requires `-r`        | default behavior [1] |
+             * | skip existing app    | default behavior [2] | requires `-R`        |
+             *
+             * [1]: `-r` recognized but ignored)
+             * [2]: `-R` not recognized but ignored
+             *
+             * So add `-r` when `skipExisting` is `false` for compatibility.
+             */
             args.push("-r");
         }
         return args;

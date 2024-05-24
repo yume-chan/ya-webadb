@@ -9,6 +9,7 @@ import type { AdbSyncEntry } from "./list.js";
 import { adbSyncOpenDir } from "./list.js";
 import { adbSyncPull } from "./pull.js";
 import { adbSyncPush } from "./push.js";
+import type { AdbSyncSocketLocked } from "./socket.js";
 import { AdbSyncSocket } from "./socket.js";
 import type { AdbSyncStat, LinuxFileType } from "./stat.js";
 import { adbSyncLstat, adbSyncStat } from "./stat.js";
@@ -150,7 +151,7 @@ export class AdbSync extends AutoDisposable {
      */
     async write(options: AdbSyncWriteOptions): Promise<void> {
         if (this.needPushMkdirWorkaround) {
-            // It may fail if the path is already existed.
+            // It may fail if `filename` already exists.
             // Ignore the result.
             // TODO: sync: test push mkdir workaround (need an Android 8 device)
             await this._adb.subprocess.spawnAndWait([
@@ -165,6 +166,10 @@ export class AdbSync extends AutoDisposable {
             socket: this._socket,
             ...options,
         });
+    }
+
+    lockSocket(): Promise<AdbSyncSocketLocked> {
+        return this._socket.lock();
     }
 
     override async dispose() {

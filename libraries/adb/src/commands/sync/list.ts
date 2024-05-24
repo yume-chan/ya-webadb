@@ -17,8 +17,7 @@ export interface AdbSyncEntry extends AdbSyncStat {
 export const AdbSyncEntryResponse = new Struct({ littleEndian: true })
     .concat(AdbSyncLstatResponse)
     .uint32("nameLength")
-    .string("name", { lengthField: "nameLength" })
-    .extra({ id: AdbSyncResponseId.Entry as const });
+    .string("name", { lengthField: "nameLength" });
 
 export type AdbSyncEntryResponse =
     (typeof AdbSyncEntryResponse)["TDeserializeResult"];
@@ -26,8 +25,7 @@ export type AdbSyncEntryResponse =
 export const AdbSyncEntry2Response = new Struct({ littleEndian: true })
     .concat(AdbSyncStatResponse)
     .uint32("nameLength")
-    .string("name", { lengthField: "nameLength" })
-    .extra({ id: AdbSyncResponseId.Entry2 as const });
+    .string("name", { lengthField: "nameLength" });
 
 export type AdbSyncEntry2Response =
     (typeof AdbSyncEntry2Response)["TDeserializeResult"];
