@@ -11,7 +11,14 @@ import type { AdbScrcpyConnection } from "../connection.js";
 import { AdbScrcpyOptions1_16 } from "./1_16.js";
 import { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<ScrcpyOptionsInit2_0> {
+export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
+    // Only pick options that are used in this class,
+    // so changes in `ScrcpyOptionsInitX_XX` won't affect type assignability with this class
+    Pick<
+        ScrcpyOptionsInit2_0,
+        "tunnelForward" | "control" | "sendDummyByte" | "scid" | "audio"
+    >
+> {
     static async getEncoders(
         adb: Adb,
         path: string,

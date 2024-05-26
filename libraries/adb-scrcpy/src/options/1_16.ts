@@ -18,7 +18,11 @@ import {
 
 import { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<ScrcpyOptionsInit1_16> {
+export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
+    // Only pick options that are used in this class,
+    // so changes in `ScrcpyOptionsInitX_XX` won't affect type assignability with this class
+    Pick<ScrcpyOptionsInit1_16, "tunnelForward">
+> {
     static createConnection(
         adb: Adb,
         connectionOptions: AdbScrcpyConnectionOptions,
