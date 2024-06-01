@@ -1,6 +1,7 @@
 import {
     getInt16,
     getInt32,
+    getInt8,
     getUint16,
     getUint32,
 } from "@yume-chan/no-data-view";
@@ -43,8 +44,7 @@ export namespace NumberFieldVariant {
         signed: true,
         size: 1,
         deserialize(array) {
-            const value = Uint8.deserialize(array, false);
-            return (value << 24) >> 24;
+            return getInt8(array, 0);
         },
         serialize(dataView, offset, value) {
             dataView.setInt8(offset, value);

@@ -260,11 +260,8 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     override serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
-    ): [Uint8Array, Promise<void> | undefined] {
-        return [
-            ScrcpySetClipboardControlMessage1_15.serialize(message),
-            undefined,
-        ];
+    ): Uint8Array {
+        return ScrcpySetClipboardControlMessage1_15.serialize(message);
     }
 
     override createScrollController(): ScrcpyScrollController {

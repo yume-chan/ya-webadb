@@ -110,7 +110,7 @@ export class AdbDaemonSocketController
     }
 
     async #writeChunk(data: Uint8Array, signal: AbortSignal) {
-        const length = data.byteLength;
+        const length = data.length;
         while (this.#availableWriteBytes < length) {
             // Only one lock is required because Web Streams API guarantees
             // that `write` is not reentrant.

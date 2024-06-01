@@ -42,7 +42,7 @@ export function findUsbAlternateInterface(
         }
     }
 
-    throw new Error("No matched alternate interface found");
+    throw new TypeError("No matched alternate interface found");
 }
 
 function padNumber(value: number) {

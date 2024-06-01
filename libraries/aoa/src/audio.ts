@@ -58,7 +58,7 @@ function findAudioStreamingInterface(device: USBDevice) {
         }
     }
 
-    throw new Error("No matched alternate interface found");
+    throw new TypeError("No matched alternate interface found");
 }
 
 /**
@@ -102,7 +102,7 @@ export function aoaGetAudioStream(device: USBDevice) {
                     endpoint.direction === "in",
             );
             if (!endpoint) {
-                throw new Error("No matched endpoint found");
+                throw new TypeError("No matched endpoint found");
             }
 
             endpointNumber = endpoint.endpointNumber;

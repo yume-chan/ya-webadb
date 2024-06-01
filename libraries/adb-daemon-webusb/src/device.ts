@@ -45,7 +45,7 @@ export const ADB_DEFAULT_DEVICE_FILTER = {
  */
 function findUsbEndpoints(endpoints: USBEndpoint[]) {
     if (endpoints.length === 0) {
-        throw new Error("No endpoints given");
+        throw new TypeError("No endpoints given");
     }
 
     let inEndpoint: USBEndpoint | undefined;
@@ -69,10 +69,10 @@ function findUsbEndpoints(endpoints: USBEndpoint[]) {
     }
 
     if (!inEndpoint) {
-        throw new Error("No input endpoint found.");
+        throw new TypeError("No input endpoint found.");
     }
     if (!outEndpoint) {
-        throw new Error("No output endpoint found.");
+        throw new TypeError("No output endpoint found.");
     }
     throw new Error("unreachable");
 }
@@ -200,10 +200,7 @@ export class AdbDaemonWebUsbConnection
                             // If the payload size is a multiple of the packet size,
                             // we need to send an empty packet to indicate the end,
                             // so the OS will send it to the device immediately.
-                            if (
-                                zeroMask &&
-                                (chunk.byteLength & zeroMask) === 0
-                            ) {
+                            if (zeroMask && (chunk.length & zeroMask) === 0) {
                                 await device.raw.transferOut(
                                     outEndpoint.endpointNumber,
                                     EMPTY_UINT8_ARRAY,

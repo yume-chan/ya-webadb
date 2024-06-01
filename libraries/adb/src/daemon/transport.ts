@@ -215,11 +215,10 @@ export class AdbDaemonTransport implements AdbTransport {
             )
             .then(
                 () => {
-                    if (resolver.state === "running") {
-                        resolver.reject(
-                            new Error("Connection closed unexpectedly"),
-                        );
-                    }
+                    // If `resolver` is already settled, call `reject` won't do anything.
+                    resolver.reject(
+                        new Error("Connection closed unexpectedly"),
+                    );
                 },
                 (e) => {
                     resolver.reject(e);
@@ -333,7 +332,7 @@ export class AdbDaemonTransport implements AdbTransport {
 
         if (features.includes(AdbFeature.DelayedAck)) {
             if (initialDelayedAckBytes <= 0) {
-                throw new Error(
+                throw new TypeError(
                     "`initialDelayedAckBytes` must be greater than 0 when DelayedAck feature is enabled.",
                 );
             }

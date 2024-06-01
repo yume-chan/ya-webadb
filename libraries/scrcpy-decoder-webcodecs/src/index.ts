@@ -339,11 +339,9 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         // AV1 doesn't need to do this, the handling code also doesn't set `#config`.
         let data: Uint8Array;
         if (this.#config !== undefined) {
-            data = new Uint8Array(
-                this.#config.byteLength + packet.data.byteLength,
-            );
+            data = new Uint8Array(this.#config.length + packet.data.length);
             data.set(this.#config, 0);
-            data.set(packet.data, this.#config.byteLength);
+            data.set(packet.data, this.#config.length);
             this.#config = undefined;
         } else {
             data = packet.data;

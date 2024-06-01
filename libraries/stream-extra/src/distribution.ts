@@ -27,7 +27,7 @@ export class BufferCombiner {
      */
     *push(data: Uint8Array): Generator<Uint8Array, void, void> {
         let offset = 0;
-        let available = data.byteLength;
+        let available = data.length;
 
         if (this.#offset !== 0) {
             if (available >= this.#available) {
@@ -97,7 +97,7 @@ export class DistributionStream extends TransformStream<
                         }
                     } else {
                         let offset = 0;
-                        let available = chunk.byteLength;
+                        let available = chunk.length;
                         while (available > 0) {
                             const end = offset + size;
                             await Consumable.ReadableStream.enqueue(

@@ -1,0 +1,10 @@
+{
+    "changes": [
+        {
+            "packageName": "@yume-chan/adb",
+            "comment": "Group `AdbServerClient` related types into the `AdbServerClient` namespace. In future, more types will be moved to namespaces.",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/adb"
+}

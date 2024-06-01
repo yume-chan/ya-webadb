@@ -47,7 +47,7 @@ export function toScrcpyOptionValue<T>(value: unknown, empty: T): string | T {
         typeof value !== "number" &&
         typeof value !== "boolean"
     ) {
-        throw new Error(`Invalid option value: ${String(value)}`);
+        throw new TypeError(`Invalid option value: ${String(value)}`);
     }
 
     return String(value);
@@ -81,12 +81,30 @@ export abstract class ScrcpyOptions<T extends object> {
         return this.#base.clipboard;
     }
 
+    /**
+     * Creates a new instance of `ScrcpyOptions`, delegating all methods to the `Base` class.
+     * The derived class can override the methods to provide different behaviors.
+     * In those override methods, the derived class can call `super.currentMethodName()` to
+     * include the behavior of the `Base` class.
+     *
+     * Because `Base` is another derived class of `ScrcpyOptions`, its constructor might
+     * call this constructor with another `Base` class, forming a chain of classes, but without
+     * direct derivation to avoid type incompatibility when options are changed.
+     *
+     * When the `Base` class is constructed, its `value` field will be the same object as `value`,
+     * so the `setListXXX` methods in `Base` will modify `this.value`.
+     *
+     * @param Base The base class's constructor
+     * @param value The options value
+     * @param defaults The default option values
+     */
     constructor(
-        base: (new (value: never) => ScrcpyOptions<object>) | undefined,
+        Base: (new (value: never) => ScrcpyOptions<object>) | undefined,
         value: T,
         defaults: Required<T>,
     ) {
         if (!(SkipDefaultMark in value)) {
+            // Only combine the default values when the outermost class is constructed
             value = {
                 ...defaults,
                 ...value,
@@ -96,8 +114,16 @@ export abstract class ScrcpyOptions<T extends object> {
 
         this.value = value as Required<T>;
 
-        if (base !== undefined) {
-            this.#base = new base(value as never);
+        if (Base !== undefined) {
+            // `value` might be incompatible with `Base`,
+            // but the derive class must ensure the incompatible values are not used by base class,
+            // and only the `setListXXX` methods in base class will modify the value,
+            // which is common to all versions.
+            //
+            // `Base` is a derived class of `ScrcpyOptions`, its constructor will call
+            // this constructor with `value`, which contains `SkipDefaultMark`,
+            // so `Base#value` will be the same object as `value`.
+            this.#base = new Base(value as never);
         }
     }
 
@@ -179,9 +205,14 @@ export abstract class ScrcpyOptions<T extends object> {
         return this.#base.serializeBackOrScreenOnControlMessage(message);
     }
 
+    /**
+     * Convert a clipboard control message to binary data
+     * @param message The clipboard control message
+     * @returns A `Uint8Array` containing the binary data, or a tuple of the binary data and a promise that resolves when the clipboard is updated on the device
+     */
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
-    ): [Uint8Array, Promise<void> | undefined] {
+    ): Uint8Array | [Uint8Array, Promise<void>] {
         return this.#base.serializeSetClipboardControlMessage(message);
     }
 

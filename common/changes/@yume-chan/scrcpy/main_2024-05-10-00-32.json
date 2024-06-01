@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/scrcpy",
-            "comment": "Add AV1 metadata parser `Av1`",
+            "comment": "Move clipboard stream to `ScrcpyOptions#clipboard`",
             "type": "none"
         }
     ],

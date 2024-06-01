@@ -16,10 +16,9 @@ import {
     Consumable,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
+import { EMPTY_UINT8_ARRAY, decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
 
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
-import { decodeUtf8, encodeUtf8 } from "../utils/index.js";
 
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 import { AdbCommand, calculateChecksum } from "./packet.js";
@@ -219,14 +218,14 @@ export class AdbPacketDispatcher implements Closeable {
     #handleOkay(packet: AdbPacketData) {
         let ackBytes: number;
         if (this.options.initialDelayedAckBytes !== 0) {
-            if (packet.payload.byteLength !== 4) {
+            if (packet.payload.length !== 4) {
                 throw new Error(
                     "Invalid OKAY packet. Payload size should be 4",
                 );
             }
             ackBytes = getUint32LittleEndian(packet.payload, 0);
         } else {
-            if (packet.payload.byteLength !== 0) {
+            if (packet.payload.length !== 0) {
                 throw new Error(
                     "Invalid OKAY packet. Payload size should be 0",
                 );
@@ -429,8 +428,8 @@ export class AdbPacketDispatcher implements Closeable {
             payload = encodeUtf8(payload);
         }
 
-        if (payload.byteLength > this.options.maxPayloadSize) {
-            throw new Error("payload too large");
+        if (payload.length > this.options.maxPayloadSize) {
+            throw new TypeError("payload too large");
         }
 
         await Consumable.WritableStream.write(this.#writer, {

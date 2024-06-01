@@ -97,12 +97,9 @@ export class ScrcpyOptions1_21 extends ScrcpyOptions<ScrcpyOptionsInit1_21> {
 
     override serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
-    ): [Uint8Array, Promise<void> | undefined] {
+    ): Uint8Array | [Uint8Array, Promise<void>] {
         if (message.sequence === 0n) {
-            return [
-                ScrcpySetClipboardControlMessage1_21.serialize(message),
-                undefined,
-            ];
+            return ScrcpySetClipboardControlMessage1_21.serialize(message);
         }
 
         const resolver = new PromiseResolver<void>();

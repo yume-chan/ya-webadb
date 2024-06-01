@@ -335,7 +335,7 @@ export class Struct<
         TPostDeserialized
     > {
         if (!(other instanceof Struct)) {
-            throw new Error("The other value must be a `Struct` instance");
+            throw new TypeError("The other value must be a `Struct` instance");
         }
 
         for (const field of other.#fields) {
@@ -687,7 +687,7 @@ export class Struct<
         if (!output) {
             output = new Uint8Array(structSize);
         } else if (output.length < structSize) {
-            throw new Error("Output buffer is too small");
+            throw new TypeError("Output buffer is too small");
         }
 
         const dataView = new DataView(

@@ -66,7 +66,7 @@ export function encodeBase64(
         return output;
     } else {
         if (output.length < outputLength) {
-            throw new Error("output buffer is too small");
+            throw new TypeError("output buffer is too small");
         }
 
         output = output.subarray(0, outputLength);
@@ -124,7 +124,7 @@ export function encodeBase64(
             // Input is in the middle of output,
             // It's not possible to read either the first or the last three bytes
             // before they are overwritten by the output.
-            throw new Error("input and output cannot overlap");
+            throw new TypeError("input and output cannot overlap");
         }
 
         return outputLength;

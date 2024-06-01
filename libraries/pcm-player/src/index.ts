@@ -21,6 +21,11 @@ export abstract class PcmPlayer<T> {
 
     protected abstract feedCore(worklet: AudioWorkletNode, source: T): void;
 
+    /**
+     * Feed the samples to the player.
+     * @param source An array of samples. It will be transferred if it's an `ArrayBuffer`,
+     * or an `ArrayBufferView` that covers the whole `ArrayBuffer`. Otherwise, it will be copied.
+     */
     feed(source: T) {
         if (this.#stopped) {
             throw new Error("PcmPlayer is stopped");

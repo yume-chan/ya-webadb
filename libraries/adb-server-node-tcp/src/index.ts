@@ -120,7 +120,7 @@ export class AdbServerNodeTcpConnector
             } else if (url.protocol === "unix:") {
                 server.listen(url.pathname);
             } else {
-                throw new Error(`Unsupported protocol ${url.protocol}`);
+                throw new TypeError(`Unsupported protocol ${url.protocol}`);
             }
         } else {
             server.listen();

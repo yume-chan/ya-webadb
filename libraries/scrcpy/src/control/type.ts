@@ -34,7 +34,7 @@ export class ScrcpyControlMessageTypeValue {
     get(type: ScrcpyControlMessageType): number {
         const value = this.#types.indexOf(type);
         if (value === -1) {
-            throw new Error("Not supported");
+            throw new TypeError("Invalid or unsupported control message type");
         }
         return value;
     }

@@ -59,14 +59,14 @@ export class AdbPacketSerializeStream extends TransformStream<
             transform: async (chunk, controller) => {
                 await chunk.tryConsume(async (chunk) => {
                     const init = chunk as AdbPacketInit & AdbPacketHeaderInit;
-                    init.payloadLength = init.payload.byteLength;
+                    init.payloadLength = init.payload.length;
 
                     await Consumable.ReadableStream.enqueue(
                         controller,
                         AdbPacketHeader.serialize(init, headerBuffer),
                     );
 
-                    if (init.payload.byteLength) {
+                    if (init.payloadLength) {
                         // USB protocol preserves packet boundaries,
                         // so we must write payload separately as native ADB does,
                         // otherwise the read operation on device will fail.

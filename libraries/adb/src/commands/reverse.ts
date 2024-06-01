@@ -5,7 +5,7 @@ import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import Struct, { ExactReadableEndedError, encodeUtf8 } from "@yume-chan/struct";
 
 import type { Adb, AdbIncomingSocketHandler } from "../adb.js";
-import { hexToNumber } from "../utils/index.js";
+import { hexToNumber, sequenceEqual } from "../utils/index.js";
 
 export interface AdbForwardListener {
     deviceSerial: string;
@@ -82,10 +82,8 @@ export class AdbReverseCommand extends AutoDisposable {
         const stream = await this.createBufferedStream(service);
 
         const response = await stream.readExactly(4);
-        for (let i = 0; i < 4; i += 1) {
-            if (response[i] !== OKAY[i]) {
-                await AdbReverseErrorResponse.deserialize(stream);
-            }
+        if (!sequenceEqual(response, OKAY)) {
+            await AdbReverseErrorResponse.deserialize(stream);
         }
 
         return stream;

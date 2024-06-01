@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/stream-extra",
-            "comment": "Re-export global `TextDecoderStream` to replace `DecodeUtf8Stream` which doesn't work correctly in stream mode",
+            "comment": "Move `Consumable` related types to the `Consumable` namespace. In future, more types will be moved to namespaces.",
             "type": "none"
         }
     ],

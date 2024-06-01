@@ -175,8 +175,8 @@ export function adbGeneratePublicKey(
         output = new Uint8Array(outputLength);
         outputType = "Uint8Array";
     } else {
-        if (output.byteLength < outputLength) {
-            throw new Error("output buffer is too small");
+        if (output.length < outputLength) {
+            throw new TypeError("output buffer is too small");
         }
 
         outputType = "number";
@@ -185,7 +185,7 @@ export function adbGeneratePublicKey(
     const outputView = new DataView(
         output.buffer,
         output.byteOffset,
-        output.byteLength,
+        output.length,
     );
     let outputOffset = 0;
 

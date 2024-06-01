@@ -88,9 +88,13 @@ export class ScrcpyControlMessageWriter {
     async setClipboard(
         message: Omit<ScrcpySetClipboardControlMessage, "type">,
     ) {
-        const [data, promise] = this.#serializer.setClipboard(message);
-        await this.write(data);
-        await promise;
+        const result = this.#serializer.setClipboard(message);
+        if (result instanceof Uint8Array) {
+            await this.write(result);
+        } else {
+            await this.write(result[0]);
+            await result[1];
+        }
     }
 
     releaseLock() {

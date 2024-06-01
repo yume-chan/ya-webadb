@@ -4,9 +4,7 @@ import type {
     StructLike,
     StructValueType,
 } from "@yume-chan/struct";
-import Struct from "@yume-chan/struct";
-
-import { decodeUtf8 } from "../../utils/index.js";
+import Struct, { decodeUtf8 } from "@yume-chan/struct";
 
 function encodeAsciiUnchecked(value: string): Uint8Array {
     const result = new Uint8Array(value.length);

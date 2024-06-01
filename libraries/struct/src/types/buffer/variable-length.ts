@@ -91,7 +91,7 @@ export class VariableLengthBufferLikeStructFieldValue<
         super(definition, options, struct, value, array);
 
         if (array) {
-            this.length = array.byteLength;
+            this.length = array.length;
         }
 
         // Patch the associated length field.
@@ -105,25 +105,26 @@ export class VariableLengthBufferLikeStructFieldValue<
         struct.set(lengthField, this.lengthFieldValue);
     }
 
-    override getSize() {
-        if (this.length !== undefined) {
-            // Have cached length
-            return this.length;
+    #tryGetSize() {
+        const length = this.definition.converter.getSize(this.value);
+        if (length !== undefined && length < 0) {
+            throw new Error("Invalid length");
+        }
+        return length;
+    }
+
+    override getSize(): number {
+        if (this.length === undefined) {
+            // first try to get the size from the converter
+            this.length = this.#tryGetSize();
         }
 
-        this.length = this.definition.converter.getSize(this.value);
-        if (this.length !== undefined) {
-            if (this.length < 0) {
-                throw new Error("Invalid length");
-            }
-
-            // The converter knows the size
-            return this.length;
+        if (this.length === undefined) {
+            // The converter doesn't know the size, so convert the value to a buffer to get its size
+            this.array = this.definition.converter.toBuffer(this.value);
+            this.length = this.array.length;
         }
 
-        // The converter doesn't know the size, so we need to convert to buffer first
-        this.array = this.definition.converter.toBuffer(this.value);
-        this.length = this.array.byteLength;
         return this.length;
     }
 
@@ -146,39 +147,39 @@ type VariableLengthBufferLikeFieldValueLike = StructFieldValue<
 export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue<
     StructFieldDefinition<unknown, unknown, PropertyKey>
 > {
-    protected originalField: StructFieldValue<
+    protected originalValue: StructFieldValue<
         StructFieldDefinition<unknown, unknown, PropertyKey>
     >;
 
-    protected bufferField: VariableLengthBufferLikeFieldValueLike;
+    protected bufferValue: VariableLengthBufferLikeFieldValueLike;
 
     constructor(
-        originalField: StructFieldValue<
+        originalValue: StructFieldValue<
             StructFieldDefinition<unknown, unknown, PropertyKey>
         >,
-        arrayBufferField: VariableLengthBufferLikeFieldValueLike,
+        bufferValue: VariableLengthBufferLikeFieldValueLike,
     ) {
         super(
-            originalField.definition,
-            originalField.options,
-            originalField.struct,
+            originalValue.definition,
+            originalValue.options,
+            originalValue.struct,
             0,
         );
-        this.originalField = originalField;
-        this.bufferField = arrayBufferField;
+        this.originalValue = originalValue;
+        this.bufferValue = bufferValue;
     }
 
     override getSize() {
-        return this.originalField.getSize();
+        return this.originalValue.getSize();
     }
 
     override get() {
-        let value: string | number = this.bufferField.getSize();
+        let value: string | number = this.bufferValue.getSize();
 
-        const originalValue = this.originalField.get();
+        const originalValue = this.originalValue.get();
         if (typeof originalValue === "string") {
             value = value.toString(
-                this.bufferField.definition.options.lengthFieldRadix ?? 10,
+                this.bufferValue.definition.options.lengthFieldRadix ?? 10,
             );
         }
 
@@ -191,7 +192,7 @@ export class VariableLengthBufferLikeFieldLengthValue extends StructFieldValue<
     }
 
     serialize(dataView: DataView, array: Uint8Array, offset: number) {
-        this.originalField.set(this.get());
-        this.originalField.serialize(dataView, array, offset);
+        this.originalValue.set(this.get());
+        this.originalValue.serialize(dataView, array, offset);
     }
 }

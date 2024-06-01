@@ -202,13 +202,16 @@ export class NaluSodbBitReader {
         return result;
     }
 
+    /**
+     * Throws an error if the current position is invalid for `skip`.
+     *
+     * Usually it will throw if `ended` is `true`,
+     * except when the bit position is at the stop bit,
+     * in which case `ended` will be `true`, but it won't throw.
+     * `skip` can skip all remaining bits, and stop at the end position.
+     * The next `next` call will throw since there is no more bits to read.
+     */
     #checkSkipPosition() {
-        // This is different from `ended`,
-        // as it allows the bit position to be at the stop bit.
-        // In this case, there is no more bits to read, `ended` is `true`,
-        // and the next `next` call will throw an error.
-        // However, it's still a valid position for `skip`, which can skip all remaining bits,
-        // and stop at the end position.
         if (
             this.#bytePosition >= this.#byteLength &&
             this.#bitPosition < this.#stopBitIndex

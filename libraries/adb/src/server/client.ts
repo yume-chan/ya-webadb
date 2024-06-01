@@ -23,23 +23,14 @@ import {
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import type { AdbFeature } from "../features.js";
-import { NOOP, hexToNumber, write4HexDigits } from "../utils/index.js";
+import {
+    NOOP,
+    hexToNumber,
+    sequenceEqual,
+    write4HexDigits,
+} from "../utils/index.js";
 
 import { AdbServerTransport } from "./transport.js";
-
-function sequenceEqual(a: Uint8Array, b: Uint8Array): boolean {
-    if (a.length !== b.length) {
-        return false;
-    }
-
-    for (let i = 0; i < a.length; i += 1) {
-        if (a[i] !== b[i]) {
-            return false;
-        }
-    }
-
-    return true;
-}
 
 const OKAY = encodeUtf8("OKAY");
 const FAIL = encodeUtf8("FAIL");
@@ -108,8 +99,8 @@ class AdbServerStream {
         const response = await this.readExactly(4);
         if (sequenceEqual(response, OKAY)) {
             // `OKAY` is followed by data length and data
-            // But different services want to read the data differently
-            // So we don't read the data here
+            // But different services want to parse the data differently
+            // So don't read the data here
             return;
         }
 
@@ -421,7 +412,7 @@ export class AdbServerClient {
         if ("tcp" in device) {
             return `host-local:${command}`;
         }
-        throw new Error("Invalid device selector");
+        throw new TypeError("Invalid device selector");
     }
 
     /**
@@ -507,7 +498,7 @@ export class AdbServerClient {
         } else if ("tcp" in device) {
             switchService = `host:tport:local`;
         } else {
-            throw new Error("Invalid device selector");
+            throw new TypeError("Invalid device selector");
         }
 
         const connection = await this.createConnection(switchService);
@@ -576,7 +567,7 @@ export class AdbServerClient {
         } else if ("tcp" in device) {
             type = "local";
         } else {
-            throw new Error("Invalid device selector");
+            throw new TypeError("Invalid device selector");
         }
 
         // `waitFor` can't use `connectDevice`, because the device

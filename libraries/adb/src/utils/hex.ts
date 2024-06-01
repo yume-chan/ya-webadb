@@ -1,6 +1,6 @@
 function hexCharToNumber(char: number) {
     if (char < 48) {
-        throw new Error(`Invalid hex char ${char}`);
+        throw new TypeError(`Invalid hex char ${char}`);
     }
     if (char < 58) {
         // 0-9
@@ -8,7 +8,7 @@ function hexCharToNumber(char: number) {
     }
 
     if (char < 65) {
-        throw new Error(`Invalid hex char ${char}`);
+        throw new TypeError(`Invalid hex char ${char}`);
     }
     if (char < 71) {
         // A-F
@@ -16,14 +16,14 @@ function hexCharToNumber(char: number) {
     }
 
     if (char < 97) {
-        throw new Error(`Invalid hex char ${char}`);
+        throw new TypeError(`Invalid hex char ${char}`);
     }
     if (char < 103) {
         // a-f
         return char - 87;
     }
 
-    throw new Error(`Invalid hex char ${char}`);
+    throw new TypeError(`Invalid hex char ${char}`);
 }
 
 // It's 22x faster than converting `data` to string then `Number.parseInt`

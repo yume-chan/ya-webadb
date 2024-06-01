@@ -47,7 +47,7 @@ export class AdbTcpIpCommand extends AdbCommandBase {
 
     async setPort(port: number): Promise<string> {
         if (port <= 0) {
-            throw new Error(`Invalid port ${port}`);
+            throw new TypeError(`Invalid port ${port}`);
         }
 
         const output = await this.adb.createSocketAndWait(`tcpip:${port}`);

@@ -48,7 +48,7 @@ export async function adbSyncWriteRequest(
     // `writable` is buffered, it copies inputs to an internal buffer,
     // so don't concatenate headers and data here, that will be an unnecessary copy.
     await writable.write(
-        AdbSyncNumberRequest.serialize({ id, arg: value.byteLength }),
+        AdbSyncNumberRequest.serialize({ id, arg: value.length }),
     );
     await writable.write(value);
 }

@@ -1,10 +1,10 @@
 {
-  "changes": [
-    {
-      "packageName": "@yume-chan/stream-extra",
-      "comment": "Add `MaybeConsumable` and helpers",
-      "type": "none"
-    }
-  ],
-  "packageName": "@yume-chan/stream-extra"
+    "changes": [
+        {
+            "packageName": "@yume-chan/stream-extra",
+            "comment": "Add `MaybeConsumable` type. It's also a namespace containing related types.",
+            "type": "none"
+        }
+    ],
+    "packageName": "@yume-chan/stream-extra"
 }

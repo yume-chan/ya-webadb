@@ -80,15 +80,15 @@ interface GlobalExtension {
 
 const { TextEncoder, TextDecoder } = globalThis as unknown as GlobalExtension;
 
-const Utf8Encoder = new TextEncoder();
-const Utf8Decoder = new TextDecoder();
+const SharedEncoder = new TextEncoder();
+const SharedDecoder = new TextDecoder();
 
 export function encodeUtf8(input: string): Uint8Array {
-    return Utf8Encoder.encode(input);
+    return SharedEncoder.encode(input);
 }
 
 export function decodeUtf8(buffer: ArrayBufferView | ArrayBuffer): string {
     // `TextDecoder` has internal states in stream mode,
-    // but we don't use stream mode here, so it's safe to reuse the instance
-    return Utf8Decoder.decode(buffer);
+    // but this method is not for stream mode, so the instance can be reused
+    return SharedDecoder.decode(buffer);
 }

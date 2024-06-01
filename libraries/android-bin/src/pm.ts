@@ -395,7 +395,7 @@ export class PackageManager extends AdbCommandBase {
         let installer: string | undefined;
         let uid: number | undefined;
 
-        // The output format is easier to parse backwards
+        // The output format is easier to parse in backwards
         let index = line.indexOf(" uid:");
         if (index !== -1) {
             uid = Number.parseInt(line.substring(index + " uid:".length), 10);
