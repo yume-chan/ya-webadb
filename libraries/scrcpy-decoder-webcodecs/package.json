@@ -45,7 +45,7 @@
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "cross-env": "^7.0.3",
         "jest": "^30.0.0-alpha.4",
-        "prettier": "^3.3.0",
+        "prettier": "^3.3.1",
         "ts-jest": "^29.1.4",
         "typescript": "^5.4.5"
     }
