@@ -136,17 +136,20 @@ class AdbServerStream {
 export class AdbServerClient {
     static readonly VERSION = 41;
 
-    readonly connection: AdbServerClient.ServerConnector;
+    readonly connector: AdbServerClient.ServerConnector;
+
+    readonly wireless = new AdbServerClient.WirelessCommands(this);
+    readonly mDns = new AdbServerClient.MDnsCommands(this);
 
     constructor(connection: AdbServerClient.ServerConnector) {
-        this.connection = connection;
+        this.connector = connection;
     }
 
     async createConnection(
         request: string,
         options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<AdbServerStream> {
-        const connection = await this.connection.connect(options);
+        const connection = await this.connector.connect(options);
         const stream = new AdbServerStream(connection);
 
         try {
@@ -206,66 +209,6 @@ export class AdbServerClient {
         try {
             const response = await connection.readString();
             return response.split(",") as AdbFeature[];
-        } finally {
-            await connection.dispose();
-        }
-    }
-
-    /**
-     * `adb pair <password> <address>`
-     */
-    async pairDevice(address: string, password: string): Promise<void> {
-        const connection = await this.createConnection(
-            `host:pair:${password}:${address}`,
-        );
-        try {
-            const response = await connection.readExactly(4);
-            // `response` is either `FAIL`, or 4 hex digits for length of the string
-            if (sequenceEqual(response, FAIL)) {
-                throw new Error(await connection.readString());
-            }
-            const length = hexToNumber(response);
-            // Ignore the string because it's always `Successful ...`
-            await connection.readExactly(length);
-        } finally {
-            await connection.dispose();
-        }
-    }
-
-    /**
-     * `adb connect <address>`
-     */
-    async connectDevice(address: string): Promise<void> {
-        const connection = await this.createConnection(
-            `host:connect:${address}`,
-        );
-        try {
-            const response = await connection.readString();
-            switch (response) {
-                case `already connected to ${address}`:
-                    throw new AdbServerClient.AlreadyConnectedError(response);
-                case `failed to connect to ${address}`: // `adb pair` mode not authorized
-                case `failed to authenticate to ${address}`: // `adb tcpip` mode not authorized
-                    throw new AdbServerClient.UnauthorizedError(response);
-                case `connected to ${address}`:
-                    return;
-                default:
-                    throw new AdbServerClient.NetworkError(response);
-            }
-        } finally {
-            await connection.dispose();
-        }
-    }
-
-    /**
-     * `adb disconnect <address>`
-     */
-    async disconnectDevice(address: string): Promise<void> {
-        const connection = await this.createConnection(
-            `host:disconnect:${address}`,
-        );
-        try {
-            await connection.readString();
         } finally {
             await connection.dispose();
         }
@@ -358,36 +301,6 @@ export class AdbServerClient {
             if (e === signal?.reason) {
                 return;
             }
-        } finally {
-            await connection.dispose();
-        }
-    }
-
-    async mDnsCheck() {
-        const connection = await this.createConnection("host:mdns:check");
-        try {
-            const response = await connection.readString();
-            return !response.startsWith("ERROR:");
-        } finally {
-            await connection.dispose();
-        }
-    }
-
-    async mDnsGetServices() {
-        const connection = await this.createConnection("host:mdns:services");
-        try {
-            const response = await connection.readString();
-            return response
-                .split("\n")
-                .filter(Boolean)
-                .map((line) => {
-                    const parts = line.split("\t");
-                    return {
-                        name: parts[0]!,
-                        service: parts[1]!,
-                        address: parts[2]!,
-                    };
-                });
         } finally {
             await connection.dispose();
         }
@@ -692,7 +605,7 @@ export namespace AdbServerClient {
     export class NetworkError extends Error {
         constructor(message: string) {
             super(message);
-            this.name = "ConnectionFailedError";
+            this.name = "NetworkError";
         }
     }
 
@@ -707,6 +620,116 @@ export namespace AdbServerClient {
         constructor(message: string) {
             super(message);
             this.name = "AlreadyConnectedError";
+        }
+    }
+
+    export class WirelessCommands {
+        #client: AdbServerClient;
+
+        constructor(client: AdbServerClient) {
+            this.#client = client;
+        }
+
+        /**
+         * `adb pair <password> <address>`
+         */
+        async pair(address: string, password: string): Promise<void> {
+            const connection = await this.#client.createConnection(
+                `host:pair:${password}:${address}`,
+            );
+            try {
+                const response = await connection.readExactly(4);
+                // `response` is either `FAIL`, or 4 hex digits for length of the string
+                if (sequenceEqual(response, FAIL)) {
+                    throw new Error(await connection.readString());
+                }
+                const length = hexToNumber(response);
+                // Ignore the string as it's always `Successful ...`
+                await connection.readExactly(length);
+            } finally {
+                await connection.dispose();
+            }
+        }
+
+        /**
+         * `adb connect <address>`
+         */
+        async connect(address: string): Promise<void> {
+            const connection = await this.#client.createConnection(
+                `host:connect:${address}`,
+            );
+            try {
+                const response = await connection.readString();
+                switch (response) {
+                    case `already connected to ${address}`:
+                        throw new AdbServerClient.AlreadyConnectedError(
+                            response,
+                        );
+                    case `failed to connect to ${address}`: // `adb pair` mode not authorized
+                    case `failed to authenticate to ${address}`: // `adb tcpip` mode not authorized
+                        throw new AdbServerClient.UnauthorizedError(response);
+                    case `connected to ${address}`:
+                        return;
+                    default:
+                        throw new AdbServerClient.NetworkError(response);
+                }
+            } finally {
+                await connection.dispose();
+            }
+        }
+
+        /**
+         * `adb disconnect <address>`
+         */
+        async disconnect(address: string): Promise<void> {
+            const connection = await this.#client.createConnection(
+                `host:disconnect:${address}`,
+            );
+            try {
+                await connection.readString();
+            } finally {
+                await connection.dispose();
+            }
+        }
+    }
+
+    export class MDnsCommands {
+        #client: AdbServerClient;
+
+        constructor(client: AdbServerClient) {
+            this.#client = client;
+        }
+
+        async check() {
+            const connection =
+                await this.#client.createConnection("host:mdns:check");
+            try {
+                const response = await connection.readString();
+                return !response.startsWith("ERROR:");
+            } finally {
+                await connection.dispose();
+            }
+        }
+
+        async getServices() {
+            const connection =
+                await this.#client.createConnection("host:mdns:services");
+            try {
+                const response = await connection.readString();
+                return response
+                    .split("\n")
+                    .filter(Boolean)
+                    .map((line) => {
+                        const parts = line.split("\t");
+                        return {
+                            name: parts[0]!,
+                            service: parts[1]!,
+                            address: parts[2]!,
+                        };
+                    });
+            } finally {
+                await connection.dispose();
+            }
         }
     }
 }

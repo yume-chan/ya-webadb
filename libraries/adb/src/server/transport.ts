@@ -87,15 +87,15 @@ export class AdbServerTransport implements AdbTransport {
         handler: AdbIncomingSocketHandler,
         address?: string,
     ): Promise<string> {
-        return await this.#client.connection.addReverseTunnel(handler, address);
+        return await this.#client.connector.addReverseTunnel(handler, address);
     }
 
     async removeReverseTunnel(address: string): Promise<void> {
-        await this.#client.connection.removeReverseTunnel(address);
+        await this.#client.connector.removeReverseTunnel(address);
     }
 
     async clearReverseTunnels(): Promise<void> {
-        await this.#client.connection.clearReverseTunnels();
+        await this.#client.connector.clearReverseTunnels();
     }
 
     close(): ValueOrPromise<void> {
