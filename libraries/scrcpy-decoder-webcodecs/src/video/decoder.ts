@@ -1,15 +1,6 @@
 import { EventEmitter } from "@yume-chan/event";
-import { getUint32LittleEndian } from "@yume-chan/no-data-view";
-import type {
-    ScrcpyMediaStreamDataPacket,
-    ScrcpyMediaStreamPacket,
-} from "@yume-chan/scrcpy";
-import {
-    Av1,
-    ScrcpyVideoCodecId,
-    h264ParseConfiguration,
-    h265ParseConfiguration,
-} from "@yume-chan/scrcpy";
+import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
+import { ScrcpyVideoCodecId } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
@@ -17,21 +8,10 @@ import type {
 import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 
-import { BitmapFrameRenderer } from "./bitmap.js";
-import type { FrameRenderer } from "./renderer.js";
-import { WebGLFrameRenderer } from "./webgl.js";
-
-function hexDigits(value: number) {
-    return value.toString(16).toUpperCase();
-}
-
-function hexTwoDigits(value: number) {
-    return value.toString(16).toUpperCase().padStart(2, "0");
-}
-
-function decimalTwoDigits(value: number) {
-    return value.toString(10).padStart(2, "0");
-}
+import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
+import type { CodecDecoder } from "./codec/type.js";
+import type { FrameRenderer } from "./render/index.js";
+import { BitmapFrameRenderer, WebGLFrameRenderer } from "./render/index.js";
 
 export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     static isSupported() {
@@ -49,6 +29,8 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#codec;
     }
 
+    #codecDecoder: CodecDecoder;
+
     #writable: WritableStream<ScrcpyMediaStreamPacket>;
     get writable() {
         return this.#writable;
@@ -60,12 +42,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     #frameRendered = 0;
-    get frameRendered() {
+    get framesRendered() {
         return this.#frameRendered;
     }
 
     #frameSkipped = 0;
-    get frameSkipped() {
+    get framesSkipped() {
         return this.#frameSkipped;
     }
 
@@ -75,7 +57,6 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     #decoder: VideoDecoder;
-    #config: Uint8Array | undefined;
     #renderer: FrameRenderer;
 
     #currentFrameRendered = false;
@@ -111,7 +92,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 }
                 this.#currentFrameRendered = false;
 
-                // PERF: H.264 renderer may draw multiple frames in one vertical sync interval to minimize latency.
+                // PERF: Draw every frame to minimize latency at cost of performance.
                 // When multiple frames are drawn in one vertical sync interval,
                 // only the last one is visible to users.
                 // But this ensures users can always see the most up-to-date screen.
@@ -134,6 +115,27 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             },
         });
 
+        switch (this.#codec) {
+            case ScrcpyVideoCodecId.H264:
+                this.#codecDecoder = new H264Decoder(
+                    this.#decoder,
+                    this.#updateSize,
+                );
+                break;
+            case ScrcpyVideoCodecId.H265:
+                this.#codecDecoder = new H265Decoder(
+                    this.#decoder,
+                    this.#updateSize,
+                );
+                break;
+            case ScrcpyVideoCodecId.AV1:
+                this.#codecDecoder = new Av1Codec(
+                    this.#decoder,
+                    this.#updateSize,
+                );
+                break;
+        }
+
         let error: Error | undefined;
         let controller: WritableStreamDefaultController | undefined;
         this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
@@ -145,38 +147,14 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 }
             },
             write: (packet) => {
-                if (this.#codec === ScrcpyVideoCodecId.AV1) {
-                    if (packet.type === "configuration") {
-                        return;
-                    }
-
-                    this.#configureAv1(packet.data);
-                    this.#decoder.decode(
-                        new EncodedVideoChunk({
-                            // Treat `undefined` as `key`, otherwise it won't decode.
-                            type: packet.keyframe === false ? "delta" : "key",
-                            timestamp: 0,
-                            data: packet.data,
-                        }),
-                    );
-                    return;
-                }
-
-                switch (packet.type) {
-                    case "configuration":
-                        this.#configure(packet.data);
-                        break;
-                    case "data":
-                        this.#decode(packet);
-                        break;
-                }
+                this.#codecDecoder.decode(packet);
             },
         });
 
         this.#onFramePresented();
     }
 
-    #updateSize(width: number, height: number) {
+    #updateSize = (width: number, height: number) => {
         if (width !== this.#canvas.width || height !== this.#canvas.height) {
             this.#canvas.width = width;
             this.#canvas.height = height;
@@ -185,177 +163,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 height: height,
             });
         }
-    }
+    };
 
     #onFramePresented = () => {
         this.#currentFrameRendered = true;
         this.#animationFrameId = requestAnimationFrame(this.#onFramePresented);
     };
-
-    #configureH264(data: Uint8Array) {
-        const {
-            profileIndex,
-            constraintSet,
-            levelIndex,
-            croppedWidth,
-            croppedHeight,
-        } = h264ParseConfiguration(data);
-
-        this.#updateSize(croppedWidth, croppedHeight);
-
-        // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
-        // ISO Base Media File Format Name Space
-        const codec =
-            "avc1." +
-            hexTwoDigits(profileIndex) +
-            hexTwoDigits(constraintSet) +
-            hexTwoDigits(levelIndex);
-        this.#decoder.configure({
-            codec: codec,
-            optimizeForLatency: true,
-        });
-    }
-
-    #configureH265(data: Uint8Array) {
-        const {
-            generalProfileSpace,
-            generalProfileIndex,
-            generalProfileCompatibilitySet,
-            generalTierFlag,
-            generalLevelIndex,
-            generalConstraintSet,
-            croppedWidth,
-            croppedHeight,
-        } = h265ParseConfiguration(data);
-
-        this.#updateSize(croppedWidth, croppedHeight);
-
-        const codec = [
-            "hev1",
-            ["", "A", "B", "C"][generalProfileSpace]! +
-                generalProfileIndex.toString(),
-            hexDigits(getUint32LittleEndian(generalProfileCompatibilitySet, 0)),
-            (generalTierFlag ? "H" : "L") + generalLevelIndex.toString(),
-            ...Array.from(generalConstraintSet, hexDigits),
-        ].join(".");
-        this.#decoder.configure({
-            codec,
-            optimizeForLatency: true,
-        });
-    }
-
-    #configureAv1(data: Uint8Array) {
-        const parser = new Av1(data);
-        const sequenceHeader = parser.searchSequenceHeaderObu();
-
-        if (!sequenceHeader) {
-            return;
-        }
-
-        const {
-            seq_profile: seqProfile,
-            seq_level_idx: [seqLevelIdx = 0],
-            max_frame_width_minus_1,
-            max_frame_height_minus_1,
-            color_config: {
-                BitDepth,
-                mono_chrome: monoChrome,
-                subsampling_x: subsamplingX,
-                subsampling_y: subsamplingY,
-                chroma_sample_position: chromaSamplePosition,
-                color_description_present_flag,
-            },
-        } = sequenceHeader;
-
-        let colorPrimaries: Av1.ColorPrimaries;
-        let transferCharacteristics: Av1.TransferCharacteristics;
-        let matrixCoefficients: Av1.MatrixCoefficients;
-        let colorRange: boolean;
-        if (color_description_present_flag) {
-            ({
-                color_primaries: colorPrimaries,
-                transfer_characteristics: transferCharacteristics,
-                matrix_coefficients: matrixCoefficients,
-                color_range: colorRange,
-            } = sequenceHeader.color_config);
-        } else {
-            colorPrimaries = Av1.ColorPrimaries.Bt709;
-            transferCharacteristics = Av1.TransferCharacteristics.Bt709;
-            matrixCoefficients = Av1.MatrixCoefficients.Bt709;
-            colorRange = false;
-        }
-
-        const width = max_frame_width_minus_1 + 1;
-        const height = max_frame_height_minus_1 + 1;
-
-        this.#updateSize(width, height);
-
-        const codec = [
-            "av01",
-            seqProfile.toString(16),
-            decimalTwoDigits(seqLevelIdx) +
-                (sequenceHeader.seq_tier[0] ? "H" : "M"),
-            decimalTwoDigits(BitDepth),
-            monoChrome ? "1" : "0",
-            (subsamplingX ? "1" : "0") +
-                (subsamplingY ? "1" : "0") +
-                chromaSamplePosition.toString(),
-            decimalTwoDigits(colorPrimaries),
-            decimalTwoDigits(transferCharacteristics),
-            decimalTwoDigits(matrixCoefficients),
-            colorRange ? "1" : "0",
-        ].join(".");
-        this.#decoder.configure({
-            codec,
-            optimizeForLatency: true,
-        });
-    }
-
-    #configure(data: Uint8Array) {
-        switch (this.#codec) {
-            case ScrcpyVideoCodecId.H264:
-                this.#configureH264(data);
-                this.#config = data;
-                break;
-            case ScrcpyVideoCodecId.H265:
-                this.#configureH265(data);
-                this.#config = data;
-                break;
-            case ScrcpyVideoCodecId.AV1:
-                // AV1 configuration is in normal stream
-                break;
-        }
-    }
-
-    #decode(packet: ScrcpyMediaStreamDataPacket) {
-        if (this.#decoder.state !== "configured") {
-            return;
-        }
-
-        // For H.264 and H.265, when the stream is in Annex B format
-        // (which Scrcpy uses, as Android MediaCodec produces),
-        // configuration data needs to be combined with the first frame data.
-        // https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
-        // AV1 doesn't need to do this, the handling code also doesn't set `#config`.
-        let data: Uint8Array;
-        if (this.#config !== undefined) {
-            data = new Uint8Array(this.#config.length + packet.data.length);
-            data.set(this.#config, 0);
-            data.set(packet.data, this.#config.length);
-            this.#config = undefined;
-        } else {
-            data = packet.data;
-        }
-
-        this.#decoder.decode(
-            new EncodedVideoChunk({
-                // Treat `undefined` as `key`, otherwise won't decode.
-                type: packet.keyframe === false ? "delta" : "key",
-                timestamp: 0,
-                data,
-            }),
-        );
-    }
 
     dispose() {
         cancelAnimationFrame(this.#animationFrameId);

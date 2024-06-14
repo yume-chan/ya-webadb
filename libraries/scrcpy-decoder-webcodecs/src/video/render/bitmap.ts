@@ -1,4 +1,4 @@
-import type { FrameRenderer } from "./renderer.js";
+import type { FrameRenderer } from "./type.js";
 
 export class BitmapFrameRenderer implements FrameRenderer {
     #context: ImageBitmapRenderingContext;

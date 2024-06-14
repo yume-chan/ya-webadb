@@ -16,6 +16,8 @@ const child = spawn(
     eslint,
     ["--config", resolve(__dirname, "eslint.config.js"), "--fix", "."],
     {
+        // https://github.com/nodejs/node/issues/52554
+        shell: true,
         stdio: "inherit",
     },
 );
