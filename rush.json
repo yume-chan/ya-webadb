@@ -24,9 +24,7 @@
      * Specify one of: "pnpmVersion", "npmVersion", or "yarnVersion".  See the Rush documentation
      * for details about these alternatives.
      */
-    "pnpmVersion": "9.1.4",
-    // "npmVersion": "6.14.15",
-    // "yarnVersion": "1.9.4",
+    "pnpmVersion": "9.2.0",
     /**
      * Older releases of the Node.js engine may be missing features required by your system.
      * Other releases may have bugs.  In particular, the "latest" version will not be a
