@@ -58,12 +58,12 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
     }
 
     #frameRendered = 0;
-    get frameRendered() {
+    get framesRendered() {
         return this.#frameRendered;
     }
 
     #frameSkipped = 0;
-    get frameSkipped() {
+    get framesSkipped() {
         return this.#frameSkipped;
     }
 
