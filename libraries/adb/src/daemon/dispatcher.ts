@@ -286,7 +286,11 @@ export class AdbPacketDispatcher implements Closeable {
 
         const remoteId = packet.arg0;
         let availableWriteBytes = packet.arg1;
-        const service = decodeUtf8(packet.payload);
+        let service = decodeUtf8(packet.payload);
+        // ADB Daemon still adds a null character to the service string
+        if (service.endsWith("\0")) {
+            service = service.substring(0, service.length - 1);
+        }
 
         // Check remote delayed ack enablement is consistent with local
         if (this.options.initialDelayedAckBytes === 0) {
