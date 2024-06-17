@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/adb",
-            "comment": "Group `AdbServerClient`-relating types into `AdbServerClient` namespace. In future, more types will be moved to namespaces.",
+            "comment": "Fix `Adb#reverse#list()` returning an extra empty object.",
             "type": "none"
         }
     ],

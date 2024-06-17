@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/adb",
-            "comment": "Rename `debugSlowRead` option to `readTimeLimit`. Allow users to specify a timeout for read operations. The default value is still infinity.",
+            "comment": "Rename `AdbDaemonTransport`'s `debugSlowRead` option to `readTimeLimit`. Allow users to specify a custom timeout for read operations. It's still disabled by default.",
             "type": "none"
         }
     ],

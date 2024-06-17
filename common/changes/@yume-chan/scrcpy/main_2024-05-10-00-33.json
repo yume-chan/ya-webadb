@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/scrcpy",
-            "comment": "Add support for `setClipboard` to wait for the clipboard to be updated (when `sequence` is not 0)",
+            "comment": "Make `ScrcpyControlMessageWriter#setClipboard` wait for the clipboard to be updated on device (when `sequence` is not 0)",
             "type": "none"
         }
     ],

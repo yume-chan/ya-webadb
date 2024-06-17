@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/adb-scrcpy",
-            "comment": "Remove `AdbScrcpyClient#deviceMessageStream`. Use `ScrcpyOptions#clipboard` to watch clipboard changes.",
+            "comment": "Allow `AdbScrcpyClient#pushServer` to accept `ReadableStream<Uint8Array>` as input",
             "type": "none"
         }
     ],

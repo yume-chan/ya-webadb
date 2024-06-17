@@ -2,7 +2,7 @@
     "changes": [
         {
             "packageName": "@yume-chan/adb-scrcpy",
-            "comment": "Remove `AdbScrcpyClient#deviceMessageStream`. Use `ScrcpyOptions#clipboard` to watch clipboard changes.",
+            "comment": "Add AV1 video size parsing support",
             "type": "none"
         }
     ],
