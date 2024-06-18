@@ -2,6 +2,30 @@
   "name": "@yume-chan/adb-scrcpy",
   "entries": [
     {
+      "version": "0.0.24",
+      "tag": "@yume-chan/adb-scrcpy_v0.0.24",
+      "date": "Tue, 18 Jun 2024 02:49:43 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Rename `AdbScrcpyClient#controlMessageWriter` to `controller`"
+          },
+          {
+            "comment": "Remove `AdbScrcpyClient#deviceMessageStream`. Use `ScrcpyOptions#clipboard` to watch clipboard changes."
+          },
+          {
+            "comment": "Allow `AdbScrcpyClient#pushServer` to accept `ReadableStream<Uint8Array>` as input"
+          },
+          {
+            "comment": "Add AV1 video size parsing support"
+          },
+          {
+            "comment": "Loosen type parameter constraints on `AdbScrcpyOptionsX_XX` classes, allow them to accept more option types"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.23",
       "tag": "@yume-chan/adb-scrcpy_v0.0.23",
       "date": "Thu, 21 Mar 2024 03:15:10 GMT",

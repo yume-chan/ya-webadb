@@ -2,6 +2,12 @@
   "name": "@yume-chan/adb-server-node-tcp",
   "entries": [
     {
+      "version": "0.0.24",
+      "tag": "@yume-chan/adb-server-node-tcp_v0.0.24",
+      "date": "Tue, 18 Jun 2024 02:49:43 GMT",
+      "comments": {}
+    },
+    {
       "version": "0.0.23",
       "tag": "@yume-chan/adb-server-node-tcp_v0.0.23",
       "date": "Thu, 21 Mar 2024 03:15:10 GMT",

@@ -1,6 +1,14 @@
 # Change Log - @yume-chan/scrcpy-decoder-tinyh264
 
-This log was last generated on Thu, 21 Mar 2024 03:15:10 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Jun 2024 02:49:43 GMT and should not be manually modified.
+
+## 0.0.24
+Tue, 18 Jun 2024 02:49:43 GMT
+
+### Updates
+
+- Fix worker constructor parameters
+- Rename `frameRendered` and `frameSkipped` to `framesRendered` and `framesSkipped`
 
 ## 0.0.23
 Thu, 21 Mar 2024 03:15:10 GMT

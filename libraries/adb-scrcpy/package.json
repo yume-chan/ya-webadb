@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-scrcpy",
-    "version": "0.0.23",
+    "version": "0.0.24",
     "description": "Use `@yume-chan/adb` to bootstrap `@yume-chan/scrcpy`.",
     "keywords": [
         "adb",
@@ -32,12 +32,12 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.23",
+        "@yume-chan/adb": "workspace:^0.0.24",
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/event": "workspace:^0.0.23",
-        "@yume-chan/scrcpy": "workspace:^0.0.23",
-        "@yume-chan/stream-extra": "workspace:^0.0.23",
-        "@yume-chan/struct": "workspace:^0.0.23"
+        "@yume-chan/event": "workspace:^0.0.24",
+        "@yume-chan/scrcpy": "workspace:^0.0.24",
+        "@yume-chan/stream-extra": "workspace:^0.0.24",
+        "@yume-chan/struct": "workspace:^0.0.24"
     },
     "devDependencies": {
         "@jest/globals": "^30.0.0-alpha.4",

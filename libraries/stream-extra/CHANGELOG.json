@@ -2,6 +2,24 @@
   "name": "@yume-chan/stream-extra",
   "entries": [
     {
+      "version": "0.0.24",
+      "tag": "@yume-chan/stream-extra_v0.0.24",
+      "date": "Tue, 18 Jun 2024 02:49:43 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add `MaybeConsumable` type. It's also a namespace containing related types."
+          },
+          {
+            "comment": "Re-export global `TextDecoderStream` to replace `DecodeUtf8Stream` which doesn't work correctly in stream mode"
+          },
+          {
+            "comment": "Move `Consumable` related types to the `Consumable` namespace. In future, more types will be moved to namespaces."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.23",
       "tag": "@yume-chan/stream-extra_v0.0.23",
       "date": "Thu, 21 Mar 2024 03:15:10 GMT",

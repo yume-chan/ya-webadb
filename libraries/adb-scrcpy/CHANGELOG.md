@@ -1,6 +1,17 @@
 # Change Log - @yume-chan/adb-scrcpy
 
-This log was last generated on Thu, 21 Mar 2024 03:15:10 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Jun 2024 02:49:43 GMT and should not be manually modified.
+
+## 0.0.24
+Tue, 18 Jun 2024 02:49:43 GMT
+
+### Updates
+
+- Rename `AdbScrcpyClient#controlMessageWriter` to `controller`
+- Remove `AdbScrcpyClient#deviceMessageStream`. Use `ScrcpyOptions#clipboard` to watch clipboard changes.
+- Allow `AdbScrcpyClient#pushServer` to accept `ReadableStream<Uint8Array>` as input
+- Add AV1 video size parsing support
+- Loosen type parameter constraints on `AdbScrcpyOptionsX_XX` classes, allow them to accept more option types
 
 ## 0.0.23
 Thu, 21 Mar 2024 03:15:10 GMT

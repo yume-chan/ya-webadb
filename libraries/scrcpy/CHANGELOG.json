@@ -2,6 +2,27 @@
   "name": "@yume-chan/scrcpy",
   "entries": [
     {
+      "version": "0.0.24",
+      "tag": "@yume-chan/scrcpy_v0.0.24",
+      "date": "Tue, 18 Jun 2024 02:49:43 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Add AV1 metadata parser `Av1`"
+          },
+          {
+            "comment": "Move clipboard stream to `ScrcpyOptions#clipboard`"
+          },
+          {
+            "comment": "Make `ScrcpyControlMessageWriter#setClipboard` wait for the clipboard to be updated on device (when `sequence` is not 0)"
+          },
+          {
+            "comment": "Add options class for version 2.3"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.23",
       "tag": "@yume-chan/scrcpy_v0.0.23",
       "date": "Thu, 21 Mar 2024 03:15:10 GMT",

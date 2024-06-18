@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-credential-web",
-    "version": "0.0.23",
+    "version": "0.0.24",
     "description": "Credential Store for `@yume-chan/adb` using WebCrypto and IndexedDB APIs.",
     "keywords": [
         "adb"
@@ -30,7 +30,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.23"
+        "@yume-chan/adb": "workspace:^0.0.24"
     },
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^1.0.0",

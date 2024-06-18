@@ -2,6 +2,39 @@
   "name": "@yume-chan/adb",
   "entries": [
     {
+      "version": "0.0.24",
+      "tag": "@yume-chan/adb_v0.0.24",
+      "date": "Tue, 18 Jun 2024 02:49:43 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Allow streams to accept both `Uint8Array` and `Consumable<Uint8Array>` as inputs"
+          },
+          {
+            "comment": "Rename `AdbDaemonTransport`'s `debugSlowRead` option to `readTimeLimit`. Allow users to specify a custom timeout for read operations. It's still disabled by default."
+          },
+          {
+            "comment": "Include unauthorized devices in `AdbServerClient#getDevices()` and `AdbServerClient#trackDevices()`. You need to filter them out if you don't need them."
+          },
+          {
+            "comment": "Add more methods to `AdbServerClient`"
+          },
+          {
+            "comment": "Group `AdbServerClient`-relating types into namespace. In future, more types will be moved to namespaces."
+          },
+          {
+            "comment": "Fix `Adb#reverse#list()` returning an extra empty object."
+          },
+          {
+            "comment": "Fix reverse tunnel handler not invoked."
+          },
+          {
+            "comment": "Fix too many event listener warning in Node.js."
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.23",
       "tag": "@yume-chan/adb_v0.0.23",
       "date": "Thu, 21 Mar 2024 03:15:10 GMT",

@@ -1,6 +1,15 @@
 # Change Log - @yume-chan/stream-extra
 
-This log was last generated on Thu, 21 Mar 2024 03:15:10 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Jun 2024 02:49:43 GMT and should not be manually modified.
+
+## 0.0.24
+Tue, 18 Jun 2024 02:49:43 GMT
+
+### Updates
+
+- Add `MaybeConsumable` type. It's also a namespace containing related types.
+- Re-export global `TextDecoderStream` to replace `DecodeUtf8Stream` which doesn't work correctly in stream mode
+- Move `Consumable` related types to the `Consumable` namespace. In future, more types will be moved to namespaces.
 
 ## 0.0.23
 Thu, 21 Mar 2024 03:15:10 GMT

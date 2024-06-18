@@ -2,6 +2,21 @@
   "name": "@yume-chan/scrcpy-decoder-tinyh264",
   "entries": [
     {
+      "version": "0.0.24",
+      "tag": "@yume-chan/scrcpy-decoder-tinyh264_v0.0.24",
+      "date": "Tue, 18 Jun 2024 02:49:43 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Fix worker constructor parameters"
+          },
+          {
+            "comment": "Rename `frameRendered` and `frameSkipped` to `framesRendered` and `framesSkipped`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.23",
       "tag": "@yume-chan/scrcpy-decoder-tinyh264_v0.0.23",
       "date": "Thu, 21 Mar 2024 03:15:10 GMT",

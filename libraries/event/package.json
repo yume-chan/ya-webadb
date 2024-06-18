@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/event",
-    "version": "0.0.23",
+    "version": "0.0.24",
     "description": "Event/EventEmitter",
     "keywords": [
         "event",

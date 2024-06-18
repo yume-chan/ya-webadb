@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/aoa",
-    "version": "0.0.23",
+    "version": "0.0.24",
     "description": "TypeScript implementation of Android Open Accessory protocol.",
     "keywords": [
         "adb",

@@ -1,6 +1,20 @@
 # Change Log - @yume-chan/adb
 
-This log was last generated on Thu, 21 Mar 2024 03:15:10 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Jun 2024 02:49:43 GMT and should not be manually modified.
+
+## 0.0.24
+Tue, 18 Jun 2024 02:49:43 GMT
+
+### Updates
+
+- Allow streams to accept both `Uint8Array` and `Consumable<Uint8Array>` as inputs
+- Rename `AdbDaemonTransport`'s `debugSlowRead` option to `readTimeLimit`. Allow users to specify a custom timeout for read operations. It's still disabled by default.
+- Include unauthorized devices in `AdbServerClient#getDevices()` and `AdbServerClient#trackDevices()`. You need to filter them out if you don't need them.
+- Add more methods to `AdbServerClient`
+- Group `AdbServerClient`-relating types into namespace. In future, more types will be moved to namespaces.
+- Fix `Adb#reverse#list()` returning an extra empty object.
+- Fix reverse tunnel handler not invoked.
+- Fix too many event listener warning in Node.js.
 
 ## 0.0.23
 Thu, 21 Mar 2024 03:15:10 GMT

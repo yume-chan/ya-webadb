@@ -2,6 +2,21 @@
   "name": "@yume-chan/android-bin",
   "entries": [
     {
+      "version": "0.0.24",
+      "tag": "@yume-chan/android-bin_v0.0.24",
+      "date": "Tue, 18 Jun 2024 02:49:43 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Allow streams to accept both `Uint8Array` and `Consumable<Uint8Array>` as inputs"
+          },
+          {
+            "comment": "Add all supported fields to `DumpSys.Battery.Info`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.23",
       "tag": "@yume-chan/android-bin_v0.0.23",
       "date": "Thu, 21 Mar 2024 03:15:10 GMT",

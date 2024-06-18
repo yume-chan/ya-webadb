@@ -2,6 +2,18 @@
   "name": "@yume-chan/pcm-player",
   "entries": [
     {
+      "version": "0.0.24",
+      "tag": "@yume-chan/pcm-player_v0.0.24",
+      "date": "Tue, 18 Jun 2024 02:49:43 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Expose `outputLatency` from `AudioContext`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.0.23",
       "tag": "@yume-chan/pcm-player_v0.0.23",
       "date": "Thu, 21 Mar 2024 03:15:10 GMT",

@@ -1,0 +1,17 @@
+{
+  "name": "@yume-chan/no-data-view",
+  "entries": [
+    {
+      "version": "0.0.24",
+      "tag": "@yume-chan/no-data-view_v0.0.24",
+      "date": "Tue, 18 Jun 2024 02:49:43 GMT",
+      "comments": {
+        "none": [
+          {
+            "comment": "Create package"
+          }
+        ]
+      }
+    }
+  ]
+}

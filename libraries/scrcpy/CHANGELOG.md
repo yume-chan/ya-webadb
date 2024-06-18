@@ -1,6 +1,16 @@
 # Change Log - @yume-chan/scrcpy
 
-This log was last generated on Thu, 21 Mar 2024 03:15:10 GMT and should not be manually modified.
+This log was last generated on Tue, 18 Jun 2024 02:49:43 GMT and should not be manually modified.
+
+## 0.0.24
+Tue, 18 Jun 2024 02:49:43 GMT
+
+### Updates
+
+- Add AV1 metadata parser `Av1`
+- Move clipboard stream to `ScrcpyOptions#clipboard`
+- Make `ScrcpyControlMessageWriter#setClipboard` wait for the clipboard to be updated on device (when `sequence` is not 0)
+- Add options class for version 2.3
 
 ## 0.0.23
 Thu, 21 Mar 2024 03:15:10 GMT
