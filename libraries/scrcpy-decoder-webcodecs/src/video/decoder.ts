@@ -36,7 +36,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#writable;
     }
 
-    #canvas: HTMLCanvasElement;
+    #canvas: HTMLCanvasElement | OffscreenCanvas;
     get renderer() {
         return this.#canvas;
     }
@@ -68,11 +68,20 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
      * @param enableCapture
      * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
      * Enable this option may reduce performance.
+     * @param canvas Optional render target cavas element or offscreen canvas
      */
-    constructor(codec: ScrcpyVideoCodecId, enableCapture: boolean) {
+    constructor(codec: ScrcpyVideoCodecId, enableCapture: boolean, canvas?: HTMLCanvasElement | OffscreenCanvas) {
         this.#codec = codec;
 
-        this.#canvas = document.createElement("canvas");
+        if (canvas) {
+            this.#canvas = canvas
+        } else if (typeof document !== 'undefined') {
+            this.#canvas = document.createElement("canvas");
+        } else if (typeof OffscreenCanvas !== 'undefined') {
+            this.#canvas = new OffscreenCanvas(0, 0);
+        } else {
+            throw new Error('no canvas input found nor any canvas can be created');
+        }
 
         try {
             this.#renderer = new WebGLFrameRenderer(
