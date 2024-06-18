@@ -11,7 +11,7 @@ export interface ScrcpyVideoDecoderCapability {
 }
 
 export interface ScrcpyVideoDecoder extends Disposable {
-    readonly renderer: HTMLElement;
+    readonly renderer: HTMLElement | OffscreenCanvas;
     readonly sizeChanged: Event<{ width: number; height: number }>;
     readonly framesRendered: number;
     readonly framesSkipped: number;

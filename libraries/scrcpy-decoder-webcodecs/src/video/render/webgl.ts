@@ -33,7 +33,7 @@ export class WebGLFrameRenderer implements FrameRenderer {
      * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
      * Enable this option may reduce performance.
      */
-    constructor(canvas: HTMLCanvasElement, enableCapture: boolean) {
+    constructor(canvas: HTMLCanvasElement | OffscreenCanvas, enableCapture: boolean) {
         const gl =
             canvas.getContext("webgl2", {
                 alpha: false,

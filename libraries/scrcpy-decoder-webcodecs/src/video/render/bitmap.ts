@@ -3,7 +3,7 @@ import type { FrameRenderer } from "./type.js";
 export class BitmapFrameRenderer implements FrameRenderer {
     #context: ImageBitmapRenderingContext;
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement | OffscreenCanvas) {
         this.#context = canvas.getContext("bitmaprenderer", { alpha: false })!;
     }
 
