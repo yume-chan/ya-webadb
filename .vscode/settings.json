@@ -118,5 +118,6 @@
     "cSpell.numSuggestions": 4,
     "cSpell.ignoreRegExpList": [
         "0x[0-9a-f_]+"
-    ]
+    ],
+    "typescript.tsdk": "libraries/adb/node_modules/typescript/lib",
 }

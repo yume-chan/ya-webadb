@@ -7,12 +7,12 @@
         "run-eslint": "run-eslint.js"
     },
     "dependencies": {
-        "@eslint/js": "^9.4.0",
-        "@types/node": "^20.14.2",
-        "eslint": "^9.4.0",
+        "@eslint/js": "^9.5.0",
+        "@types/node": "^20.14.8",
+        "eslint": "^9.5.0",
         "eslint-plugin-import-x": "^0.5.1",
-        "typescript": "^5.4.5",
-        "typescript-eslint": "^7.13.0"
+        "typescript": "^5.5.2",
+        "typescript-eslint": "^7.13.1"
     },
     "devDependencies": {
         "prettier": "^3.3.2"

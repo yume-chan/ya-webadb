@@ -57,7 +57,7 @@ abstract class SourceProcessor<T>
 
     protected abstract createSource(data: ArrayBuffer[]): [T, number];
 
-    process(_inputs: Float32Array[][], [outputs]: Float32Array[][]) {
+    process(_inputs: Float32Array[][], [outputs]: [Float32Array[]]) {
         if (this.#starting) {
             if (this.#totalSampleCount < 0.1 * 48000) {
                 return true;
@@ -71,7 +71,7 @@ abstract class SourceProcessor<T>
             this.#starting = true;
         }
 
-        const outputLength = outputs![0]!.length;
+        const outputLength = outputs[0]!.length;
 
         if (this.#speedUp) {
             for (let i = 0; i < outputLength; i += 1) {
@@ -92,7 +92,7 @@ abstract class SourceProcessor<T>
                     this.#read(inputIndex - this.#readOffset);
                     const weight = WINDOW_WEIGHT_TABLE[inWindowIndex]!;
                     for (let j = 0; j < this.channelCount; j += 1) {
-                        outputs![j]![i] += this.#readBuffer[j]! * weight;
+                        outputs[j]![i]! += this.#readBuffer[j]! * weight;
                     }
                     totalWeight += weight;
 
@@ -102,7 +102,7 @@ abstract class SourceProcessor<T>
 
                 if (totalWeight > 0) {
                     for (let j = 0; j < this.channelCount; j += 1) {
-                        outputs![j]![i] /= totalWeight;
+                        outputs[j]![i]! /= totalWeight;
                     }
                 }
 
@@ -127,7 +127,7 @@ abstract class SourceProcessor<T>
                 this.#inputOffset -= firstChunkSampleCount;
             }
         } else {
-            this.#copyChunks(outputs!);
+            this.#copyChunks(outputs);
         }
 
         return true;
@@ -152,7 +152,7 @@ abstract class SourceProcessor<T>
             if (source) {
                 // Output full
                 this.#chunks[0] = source;
-                this.#chunkSampleCounts[0] -= consumedSampleCount;
+                this.#chunkSampleCounts[0]! -= consumedSampleCount;
                 return;
             }
 

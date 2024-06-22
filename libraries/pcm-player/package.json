@@ -37,7 +37,7 @@
         "cross-env": "^7.0.3",
         "jest": "^30.0.0-alpha.4",
         "prettier": "^3.3.2",
-        "ts-jest": "^29.1.4",
-        "typescript": "^5.4.5"
+        "ts-jest": "^29.1.5",
+        "typescript": "^5.5.2"
     }
 }
