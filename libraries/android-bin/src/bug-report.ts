@@ -32,15 +32,15 @@ export interface BugReportZOptions {
 }
 
 export class BugReport extends AdbCommandBase {
-    static VERSION_REGEX = /(\d+)\.(\d+)/;
+    static VERSION_REGEX: RegExp = /(\d+)\.(\d+)/;
 
-    static BEGIN_REGEX = /BEGIN:(.*)/;
+    static BEGIN_REGEX: RegExp = /BEGIN:(.*)/;
 
-    static PROGRESS_REGEX = /PROGRESS:(.*)\/(.*)/;
+    static PROGRESS_REGEX: RegExp = /PROGRESS:(.*)\/(.*)/;
 
-    static OK_REGEX = /OK:(.*)/;
+    static OK_REGEX: RegExp = /OK:(.*)/;
 
-    static FAIL_REGEX = /FAIL:(.*)/;
+    static FAIL_REGEX: RegExp = /FAIL:(.*)/;
 
     /**
      * Queries the device's bugreport capabilities.
@@ -101,7 +101,7 @@ export class BugReport extends AdbCommandBase {
      *
      * Should be `true` for Android version <= 11.
      */
-    get supportsBugReport() {
+    get supportsBugReport(): boolean {
         return this.#supportsBugReport;
     }
 
@@ -111,7 +111,7 @@ export class BugReport extends AdbCommandBase {
      *
      * Will be `undefined` if BugReportZ is not supported.
      */
-    get bugReportZVersion() {
+    get bugReportZVersion(): string | undefined {
         return this.#bugReportZVersion;
     }
 
@@ -121,7 +121,7 @@ export class BugReport extends AdbCommandBase {
      *
      * Should be `true` for Android version >= 7.
      */
-    get supportsBugReportZ() {
+    get supportsBugReportZ(): boolean {
         return this.#supportsBugReportZ;
     }
 
@@ -131,7 +131,7 @@ export class BugReport extends AdbCommandBase {
      *
      * Should be `true` for Android version >= 8.
      */
-    get supportsBugReportZProgress() {
+    get supportsBugReportZProgress(): boolean {
         return this.#supportsBugReportZProgress;
     }
 
@@ -141,7 +141,7 @@ export class BugReport extends AdbCommandBase {
      *
      * Should be `true` for Android version >= 12.
      */
-    get supportsBugReportZStream() {
+    get supportsBugReportZStream(): boolean {
         return this.#supportsBugReportZStream;
     }
 

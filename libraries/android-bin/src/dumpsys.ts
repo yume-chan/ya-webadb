@@ -65,7 +65,7 @@ export class DumpSys extends AdbCommandBase {
         };
     }
 
-    async battery() {
+    async battery(): Promise<DumpSys.Battery.Info> {
         const output = await this.adb.subprocess.spawnAndWaitLegacy([
             "dumpsys",
             "battery",

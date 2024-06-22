@@ -27,7 +27,7 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
     ): Promise<ScrcpyEncoder[]> {
         try {
             // Similar to `AdbScrcpyOptions1_16.getDisplays`,
-            // server start process won't complete and `start `will throw
+            // server start procedure won't complete and `start `will throw
             const client = await AdbScrcpyClient.start(
                 adb,
                 path,

@@ -66,7 +66,7 @@ export class Settings extends AdbCommandBase {
         namespace: SettingsNamespace,
         key: string,
         options?: SettingsOptions,
-    ) {
+    ): Promise<string> {
         const output = await this.base("get", namespace, options, key);
         // Remove last \n
         return output.substring(0, output.length - 1);

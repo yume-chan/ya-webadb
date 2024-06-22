@@ -41,7 +41,9 @@ export class ActivityManager extends AdbCommandBase {
         return this.adb.subprocess.spawn(args);
     }
 
-    async startActivity(options: ActivityManagerStartActivityOptions) {
+    async startActivity(
+        options: ActivityManagerStartActivityOptions,
+    ): Promise<void> {
         let args = buildArguments(
             ["am", "start-activity", "-W"],
             options,

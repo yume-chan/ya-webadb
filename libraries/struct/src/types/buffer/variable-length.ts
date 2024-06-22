@@ -81,6 +81,7 @@ export class VariableLengthBufferLikeStructFieldValue<
 
     protected lengthFieldValue: VariableLengthBufferLikeFieldLengthValue;
 
+    // eslint-disable-next-line max-params
     constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,

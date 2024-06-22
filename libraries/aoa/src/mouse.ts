@@ -42,19 +42,19 @@ export class HidMouse {
         ],
     );
 
-    static serializeInputReport(
-        movementX: number,
-        movementY: number,
-        buttons: number,
-        scrollX: number,
-        scrollY: number,
-    ): Uint8Array {
+    static serializeInputReport(report: {
+        movementX?: number;
+        movementY?: number;
+        buttons?: number;
+        scrollX?: number;
+        scrollY?: number;
+    }): Uint8Array {
         return new Uint8Array([
-            buttons,
-            movementX,
-            movementY,
-            scrollY,
-            scrollX,
+            report.buttons ?? 0,
+            report.movementX ?? 0,
+            report.movementY ?? 0,
+            report.scrollY ?? 0,
+            report.scrollX ?? 0,
         ]);
     }
 }

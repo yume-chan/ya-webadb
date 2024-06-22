@@ -533,7 +533,9 @@ export class PackageManager extends AdbCommandBase {
      * @param options Options for the install session
      * @returns ID of the new install session
      */
-    async sessionCreate(options?: Partial<PackageManagerInstallOptions>) {
+    async sessionCreate(
+        options?: Partial<PackageManagerInstallOptions>,
+    ): Promise<number> {
         const args = this.#buildInstallArguments("install-create", options);
 
         const process = await this.#cmdOrSubprocess(args);
@@ -550,7 +552,11 @@ export class PackageManager extends AdbCommandBase {
         return Number.parseInt(sessionIdString[1]!, 10);
     }
 
-    async sessionAddSplit(sessionId: number, splitName: string, path: string) {
+    async sessionAddSplit(
+        sessionId: number,
+        splitName: string,
+        path: string,
+    ): Promise<void> {
         const args: string[] = [
             "pm",
             "install-write",
@@ -572,7 +578,7 @@ export class PackageManager extends AdbCommandBase {
         splitName: string,
         size: number,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
-    ) {
+    ): Promise<void> {
         const args: string[] = [
             "pm",
             "install-write",
@@ -599,7 +605,7 @@ export class PackageManager extends AdbCommandBase {
         ]);
     }
 
-    async sessionCommit(sessionId: number) {
+    async sessionCommit(sessionId: number): Promise<void> {
         const args: string[] = ["pm", "install-commit", sessionId.toString()];
         const output = await this.adb.subprocess
             .spawnAndWaitLegacy(args)
@@ -609,7 +615,7 @@ export class PackageManager extends AdbCommandBase {
         }
     }
 
-    async sessionAbandon(sessionId: number) {
+    async sessionAbandon(sessionId: number): Promise<void> {
         const args: string[] = ["pm", "install-abandon", sessionId.toString()];
         const output = await this.adb.subprocess
             .spawnAndWaitLegacy(args)
@@ -624,7 +630,7 @@ export class PackageManagerInstallSession {
     static async create(
         packageManager: PackageManager,
         options?: Partial<PackageManagerInstallOptions>,
-    ) {
+    ): Promise<PackageManagerInstallSession> {
         const id = await packageManager.sessionCreate(options);
         return new PackageManagerInstallSession(packageManager, id);
     }
@@ -632,7 +638,7 @@ export class PackageManagerInstallSession {
     #packageManager: PackageManager;
 
     #id: number;
-    get id() {
+    get id(): number {
         return this.#id;
     }
 
@@ -641,7 +647,7 @@ export class PackageManagerInstallSession {
         this.#id = id;
     }
 
-    addSplit(splitName: string, path: string) {
+    addSplit(splitName: string, path: string): Promise<void> {
         return this.#packageManager.sessionAddSplit(this.#id, splitName, path);
     }
 
@@ -649,7 +655,7 @@ export class PackageManagerInstallSession {
         splitName: string,
         size: number,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
-    ) {
+    ): Promise<void> {
         return this.#packageManager.sessionAddSplitStream(
             this.#id,
             splitName,
@@ -658,11 +664,11 @@ export class PackageManagerInstallSession {
         );
     }
 
-    commit() {
+    commit(): Promise<void> {
         return this.#packageManager.sessionCommit(this.#id);
     }
 
-    abandon() {
+    abandon(): Promise<void> {
         return this.#packageManager.sessionAbandon(this.#id);
     }
 }

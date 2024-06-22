@@ -36,7 +36,7 @@ export class OverlayDisplay extends AdbCommandBase {
                         p.literal("/"),
                         { name: "density", format: p.digits() },
                     ),
-                    1,
+                    { min: 1 },
                 ),
             },
             {
@@ -81,7 +81,7 @@ export class OverlayDisplay extends AdbCommandBase {
         }));
     }
 
-    async set(devices: OverlayDisplayDevice[]) {
+    async set(devices: OverlayDisplayDevice[]): Promise<void> {
         await this.#settings.put(
             "global",
             OverlayDisplay.SETTING_KEY,

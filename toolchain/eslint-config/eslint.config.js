@@ -25,6 +25,12 @@ export default tslint.config(
                     maxBOF: 0,
                 },
             ],
+            "max-params": [
+                "error",
+                {
+                    max: 4,
+                },
+            ],
         },
     },
     ...tslint.configs.recommendedTypeChecked,

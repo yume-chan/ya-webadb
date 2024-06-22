@@ -70,17 +70,23 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
      * Enable this option may reduce performance.
      * @param canvas Optional render target cavas element or offscreen canvas
      */
-    constructor(codec: ScrcpyVideoCodecId, enableCapture: boolean, canvas?: HTMLCanvasElement | OffscreenCanvas) {
+    constructor(
+        codec: ScrcpyVideoCodecId,
+        enableCapture: boolean,
+        canvas?: HTMLCanvasElement | OffscreenCanvas,
+    ) {
         this.#codec = codec;
 
         if (canvas) {
-            this.#canvas = canvas
-        } else if (typeof document !== 'undefined') {
+            this.#canvas = canvas;
+        } else if (typeof document !== "undefined") {
             this.#canvas = document.createElement("canvas");
-        } else if (typeof OffscreenCanvas !== 'undefined') {
+        } else if (typeof OffscreenCanvas !== "undefined") {
             this.#canvas = new OffscreenCanvas(0, 0);
         } else {
-            throw new Error('no canvas input found nor any canvas can be created');
+            throw new Error(
+                "no canvas input found nor any canvas can be created",
+            );
         }
 
         try {

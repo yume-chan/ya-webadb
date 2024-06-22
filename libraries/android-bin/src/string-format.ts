@@ -103,8 +103,7 @@ export const p = {
     separated: <T>(
         separator: string,
         format: Format<T>,
-        min = 0,
-        max = Infinity,
+        { min = 0, max = Infinity }: { min?: number; max?: number } = {},
     ): Format<T[]> => ({
         parse(reader: Reader) {
             const result: T[] = [];

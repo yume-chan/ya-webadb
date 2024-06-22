@@ -169,6 +169,7 @@ export class BufferLikeFieldValue<
 > extends StructFieldValue<TDefinition> {
     protected array: Uint8Array | undefined;
 
+    // eslint-disable-next-line max-params
     constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,

@@ -14,22 +14,22 @@ import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 export class Cmd extends AdbCommandBase {
     #supportsShellV2: boolean;
-    get supportsShellV2() {
+    get supportsShellV2(): boolean {
         return this.#supportsShellV2;
     }
 
     #supportsCmd: boolean;
-    get supportsCmd() {
+    get supportsCmd(): boolean {
         return this.#supportsCmd;
     }
 
     #supportsAbb: boolean;
-    get supportsAbb() {
+    get supportsAbb(): boolean {
         return this.#supportsAbb;
     }
 
     #supportsAbbExec: boolean;
-    get supportsAbbExec() {
+    get supportsAbbExec(): boolean {
         return this.#supportsAbbExec;
     }
 

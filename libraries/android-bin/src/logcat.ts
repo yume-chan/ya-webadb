@@ -404,12 +404,12 @@ export class Logcat extends AdbCommandBase {
 
     // TODO: logcat: Support output format before Android 10
     // ref https://android-review.googlesource.com/c/platform/system/core/+/748128
-    static readonly LOG_SIZE_REGEX_10 =
+    static readonly LOG_SIZE_REGEX_10: RegExp =
         /(.*): ring buffer is (.*) (.*)B \((.*) (.*)B consumed\), max entry is (.*) B, max payload is (.*) B/;
 
     // Android 11 added `readable` part
     // ref https://android-review.googlesource.com/c/platform/system/core/+/1390940
-    static readonly LOG_SIZE_REGEX_11 =
+    static readonly LOG_SIZE_REGEX_11: RegExp =
         /(.*): ring buffer is (.*) (.*)B \((.*) (.*)B consumed, (.*) (.*)B readable\), max entry is (.*) B, max payload is (.*) B/;
 
     async getLogSize(ids?: LogId[]): Promise<LogSize[]> {
@@ -471,7 +471,7 @@ export class Logcat extends AdbCommandBase {
         return result;
     }
 
-    async clear(ids?: LogId[]) {
+    async clear(ids?: LogId[]): Promise<void> {
         const args = ["logcat", "-c"];
         if (ids && ids.length > 0) {
             args.push("-b", Logcat.joinLogId(ids));
