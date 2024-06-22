@@ -71,23 +71,34 @@ export class ScrcpyOptions1_21 extends ScrcpyOptions<ScrcpyOptionsInit1_21> {
         super(ScrcpyOptions1_18, init, ScrcpyOptions1_21.DEFAULTS);
     }
 
+    async #parseAckClipboardMessage(stream: AsyncExactReadable) {
+        const message =
+            await ScrcpyAckClipboardDeviceMessage.deserialize(stream);
+        const resolver = this.#clipboardAck.get(message.sequence);
+        if (resolver) {
+            resolver.resolve();
+            this.#clipboardAck.delete(message.sequence);
+        }
+    }
+
+    #deviceMessageError: unknown;
+
     override async parseDeviceMessage(
         id: number,
         stream: AsyncExactReadable,
-    ): Promise<boolean> {
-        switch (id) {
-            case 1: {
-                const message =
-                    await ScrcpyAckClipboardDeviceMessage.deserialize(stream);
-                const resolver = this.#clipboardAck.get(message.sequence);
-                if (resolver) {
-                    resolver.resolve();
-                    this.#clipboardAck.delete(message.sequence);
-                }
-                return true;
+    ): Promise<void> {
+        try {
+            switch (id) {
+                case 1:
+                    await this.#parseAckClipboardMessage(stream);
+                    break;
+                default:
+                    await super.parseDeviceMessage(id, stream);
+                    break;
             }
-            default:
-                return await super.parseDeviceMessage(id, stream);
+        } catch (e) {
+            this.#deviceMessageError = e;
+            throw e;
         }
     }
 
@@ -100,6 +111,10 @@ export class ScrcpyOptions1_21 extends ScrcpyOptions<ScrcpyOptionsInit1_21> {
     ): Uint8Array | [Uint8Array, Promise<void>] {
         if (message.sequence === 0n) {
             return ScrcpySetClipboardControlMessage1_21.serialize(message);
+        }
+
+        if (this.#deviceMessageError) {
+            throw this.#deviceMessageError;
         }
 
         const resolver = new PromiseResolver<void>();

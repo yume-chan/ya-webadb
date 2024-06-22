@@ -183,19 +183,33 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
         throw new Error("Not supported");
     }
 
+    async #parseClipboardMessage(stream: AsyncExactReadable) {
+        const message = await ScrcpyClipboardDeviceMessage.deserialize(stream);
+        // Allow `clipboard.cancel()` to discard messages
+        if (!this.#clipboardController.abortSignal.aborted) {
+            await this.#clipboardController.enqueue(message.content);
+        }
+    }
+
     override async parseDeviceMessage(
         id: number,
         stream: AsyncExactReadable,
-    ): Promise<boolean> {
-        switch (id) {
-            case 0: {
-                const message =
-                    await ScrcpyClipboardDeviceMessage.deserialize(stream);
-                await this.#clipboardController.enqueue(message.content);
-                return true;
+    ): Promise<void> {
+        try {
+            switch (id) {
+                case 0:
+                    await this.#parseClipboardMessage(stream);
+                    break;
+                default:
+                    throw new Error(`Unknown device message type ${id}`);
             }
-            default:
-                return false;
+        } catch (e) {
+            try {
+                this.#clipboardController.error(e);
+            } catch {
+                // The stream is already errored
+            }
+            throw e;
         }
     }
 

@@ -179,10 +179,7 @@ export abstract class ScrcpyOptions<T extends object> {
         return this.#base.parseAudioStreamMetadata(stream);
     }
 
-    parseDeviceMessage(
-        id: number,
-        stream: AsyncExactReadable,
-    ): Promise<boolean> {
+    parseDeviceMessage(id: number, stream: AsyncExactReadable): Promise<void> {
         return this.#base.parseDeviceMessage(id, stream);
     }
 

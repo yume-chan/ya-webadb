@@ -332,14 +332,13 @@ export class AdbScrcpyClient {
 
     async #parseDeviceMessages(controlStream: ReadableStream<Uint8Array>) {
         const buffered = new BufferedReadableStream(controlStream);
-        while (true) {
-            const [type] = await buffered.readExactly(1);
-            if (!(await this.#options.parseDeviceMessage(type!, buffered))) {
-                buffered
-                    .cancel(new Error(`Unknown device message type ${type!}`))
-                    .catch(() => {});
-                break;
+        try {
+            while (true) {
+                const [type] = await buffered.readExactly(1);
+                await this.#options.parseDeviceMessage(type!, buffered);
             }
+        } catch (e) {
+            buffered.cancel(e).catch(() => {});
         }
     }
 
