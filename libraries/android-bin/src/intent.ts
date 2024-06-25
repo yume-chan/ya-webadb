@@ -5,6 +5,7 @@ export class IntentBuilder {
     #component: string | undefined;
     #data: string | undefined;
     #type: string | undefined;
+    #stringExtras: Map<string, string> = new Map<string, string>();
 
     setAction(action: string): this {
         this.#action = action;
@@ -28,6 +29,11 @@ export class IntentBuilder {
 
     setData(data: string): this {
         this.#data = data;
+        return this;
+    }
+
+    addStringExtra(key: string, value: string): this {
+        this.#stringExtras.set(key, value);
         return this;
     }
 
@@ -57,6 +63,10 @@ export class IntentBuilder {
         if (this.#type) {
             result.push("-t", this.#type);
         }
+
+        this.#stringExtras.forEach((value, key) => {
+            result.push("--es", key, value);
+        });
 
         return result;
     }
