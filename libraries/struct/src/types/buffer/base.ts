@@ -59,15 +59,15 @@ export class Uint8ArrayBufferFieldConverter<
         super();
     }
 
-    toBuffer(value: Uint8Array): Uint8Array {
+    override toBuffer(value: Uint8Array): Uint8Array {
         return value;
     }
 
-    toValue(buffer: Uint8Array): Uint8Array {
+    override toValue(buffer: Uint8Array): Uint8Array {
         return buffer;
     }
 
-    getSize(value: Uint8Array): number {
+    override getSize(value: Uint8Array): number {
         return value.length;
     }
 }
@@ -78,15 +78,15 @@ export class StringBufferFieldConverter<
 > extends BufferFieldConverter<string, TTypeScriptType> {
     static readonly Instance = new StringBufferFieldConverter();
 
-    toBuffer(value: string): Uint8Array {
+    override toBuffer(value: string): Uint8Array {
         return encodeUtf8(value);
     }
 
-    toValue(array: Uint8Array): string {
+    override toValue(array: Uint8Array): string {
         return decodeUtf8(array);
     }
 
-    getSize(): number | undefined {
+    override getSize(): number | undefined {
         // See the note in `BufferFieldConverter.getSize`
         return undefined;
     }
@@ -169,7 +169,7 @@ export class BufferLikeFieldValue<
 > extends StructFieldValue<TDefinition> {
     protected array: Uint8Array | undefined;
 
-    // eslint-disable-next-line max-params
+    // eslint-disable-next-line @typescript-eslint/max-params
     constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,
@@ -188,11 +188,7 @@ export class BufferLikeFieldValue<
         this.array = undefined;
     }
 
-    override serialize(
-        dataView: DataView,
-        array: Uint8Array,
-        offset: number,
-    ): void {
+    override serialize(_: DataView, array: Uint8Array, offset: number): void {
         this.array ??= this.definition.converter.toBuffer(this.value);
         array.set(this.array, offset);
     }

@@ -15,10 +15,10 @@ describe("StructFieldDefinition", () => {
                 constructor(options: number) {
                     super(options);
                 }
-                getSize(): number {
+                override getSize(): number {
                     throw new Error("Method not implemented.");
                 }
-                create(
+                override create(
                     options: Readonly<StructOptions>,
                     struct: StructValue,
                     value: unknown,
@@ -38,7 +38,7 @@ describe("StructFieldDefinition", () => {
                     stream: AsyncExactReadable,
                     struct: StructValue,
                 ): Promise<StructFieldValue<this>>;
-                deserialize(
+                override deserialize(
                     options: Readonly<StructOptions>,
                     stream: ExactReadable | AsyncExactReadable,
                     struct: StructValue,

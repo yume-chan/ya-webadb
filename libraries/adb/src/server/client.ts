@@ -136,6 +136,78 @@ class AdbServerStream {
 export class AdbServerClient {
     static readonly VERSION = 41;
 
+    static parseDeviceList(value: string): AdbServerClient.Device[] {
+        const devices: AdbServerClient.Device[] = [];
+        for (const line of value.split("\n")) {
+            if (!line) {
+                continue;
+            }
+
+            const parts = line.split(" ").filter(Boolean);
+            const serial = parts[0]!;
+            const status = parts[1]!;
+            if (status !== "device" && status !== "unauthorized") {
+                continue;
+            }
+
+            let product: string | undefined;
+            let model: string | undefined;
+            let device: string | undefined;
+            let transportId: bigint | undefined;
+            for (let i = 2; i < parts.length; i += 1) {
+                const [key, value] = parts[i]!.split(":");
+                switch (key) {
+                    case "product":
+                        product = value;
+                        break;
+                    case "model":
+                        model = value;
+                        break;
+                    case "device":
+                        device = value;
+                        break;
+                    case "transport_id":
+                        transportId = BigInt(value!);
+                        break;
+                }
+            }
+            if (!transportId) {
+                throw new Error(`No transport id for device ${serial}`);
+            }
+            devices.push({
+                serial,
+                authenticating: status === "unauthorized",
+                product,
+                model,
+                device,
+                transportId,
+            });
+        }
+        return devices;
+    }
+
+    static formatDeviceService(
+        device: AdbServerClient.DeviceSelector,
+        command: string,
+    ) {
+        if (!device) {
+            return `host:${command}`;
+        }
+        if ("transportId" in device) {
+            return `host-transport-id:${device.transportId}:${command}`;
+        }
+        if ("serial" in device) {
+            return `host-serial:${device.serial}:${command}`;
+        }
+        if ("usb" in device) {
+            return `host-usb:${command}`;
+        }
+        if ("tcp" in device) {
+            return `host-local:${command}`;
+        }
+        throw new TypeError("Invalid device selector");
+    }
+
     readonly connector: AdbServerClient.ServerConnector;
 
     readonly wireless = new AdbServerClient.WirelessCommands(this);
@@ -214,56 +286,6 @@ export class AdbServerClient {
         }
     }
 
-    parseDeviceList(value: string): AdbServerClient.Device[] {
-        const devices: AdbServerClient.Device[] = [];
-        for (const line of value.split("\n")) {
-            if (!line) {
-                continue;
-            }
-
-            const parts = line.split(" ").filter(Boolean);
-            const serial = parts[0]!;
-            const status = parts[1]!;
-            if (status !== "device" && status !== "unauthorized") {
-                continue;
-            }
-
-            let product: string | undefined;
-            let model: string | undefined;
-            let device: string | undefined;
-            let transportId: bigint | undefined;
-            for (let i = 2; i < parts.length; i += 1) {
-                const [key, value] = parts[i]!.split(":");
-                switch (key) {
-                    case "product":
-                        product = value;
-                        break;
-                    case "model":
-                        model = value;
-                        break;
-                    case "device":
-                        device = value;
-                        break;
-                    case "transport_id":
-                        transportId = BigInt(value!);
-                        break;
-                }
-            }
-            if (!transportId) {
-                throw new Error(`No transport id for device ${serial}`);
-            }
-            devices.push({
-                serial,
-                authenticating: status === "unauthorized",
-                product,
-                model,
-                device,
-                transportId,
-            });
-        }
-        return devices;
-    }
-
     /**
      * `adb devices -l`
      */
@@ -271,7 +293,7 @@ export class AdbServerClient {
         const connection = await this.createConnection("host:devices-l");
         try {
             const response = await connection.readString();
-            return this.parseDeviceList(response);
+            return AdbServerClient.parseDeviceList(response);
         } finally {
             await connection.dispose();
         }
@@ -294,7 +316,7 @@ export class AdbServerClient {
                     async () => await connection.readString(),
                     signal,
                 );
-                const devices = this.parseDeviceList(response);
+                const devices = AdbServerClient.parseDeviceList(response);
                 yield devices;
             }
         } catch (e) {
@@ -306,28 +328,6 @@ export class AdbServerClient {
         }
     }
 
-    formatDeviceService(
-        device: AdbServerClient.DeviceSelector,
-        command: string,
-    ) {
-        if (!device) {
-            return `host:${command}`;
-        }
-        if ("transportId" in device) {
-            return `host-transport-id:${device.transportId}:${command}`;
-        }
-        if ("serial" in device) {
-            return `host-serial:${device.serial}:${command}`;
-        }
-        if ("usb" in device) {
-            return `host-usb:${command}`;
-        }
-        if ("tcp" in device) {
-            return `host-local:${command}`;
-        }
-        throw new TypeError("Invalid device selector");
-    }
-
     /**
      * `adb -s <device> reconnect` or `adb reconnect offline`
      */
@@ -335,7 +335,7 @@ export class AdbServerClient {
         const connection = await this.createConnection(
             device === "offline"
                 ? "host:reconnect-offline"
-                : this.formatDeviceService(device, "reconnect"),
+                : AdbServerClient.formatDeviceService(device, "reconnect"),
         );
         try {
             await connection.readString();
@@ -485,7 +485,7 @@ export class AdbServerClient {
 
         // `waitFor` can't use `connectDevice`, because the device
         // might not be available yet.
-        const service = this.formatDeviceService(
+        const service = AdbServerClient.formatDeviceService(
             device,
             `wait-for-${type}-${state}`,
         );

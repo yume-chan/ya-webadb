@@ -155,7 +155,7 @@ export class NumberFieldDefinition<
 export class NumberFieldValue<
     TDefinition extends NumberFieldDefinition<NumberFieldVariant, unknown>,
 > extends StructFieldValue<TDefinition> {
-    serialize(dataView: DataView, array: Uint8Array, offset: number): void {
+    serialize(dataView: DataView, _: Uint8Array, offset: number): void {
         this.definition.variant.serialize(
             dataView,
             offset,

@@ -48,7 +48,7 @@ describe("Struct", () => {
                 return this.options;
             });
 
-            create(
+            override create(
                 options: Readonly<StructOptions>,
                 struct: StructValue,
                 value: unknown,

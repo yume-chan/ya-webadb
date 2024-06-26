@@ -255,38 +255,38 @@ const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
     user: "--user",
 };
 
+function buildInstallArguments(
+    command: string,
+    options: Partial<PackageManagerInstallOptions> | undefined,
+): string[] {
+    const args = buildArguments(
+        ["pm", command],
+        options,
+        PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
+    );
+    if (!options?.skipExisting) {
+        /*
+         * | behavior             | previous version     | modern version       |
+         * | -------------------- | -------------------- | -------------------- |
+         * | replace existing app | requires `-r`        | default behavior [1] |
+         * | skip existing app    | default behavior [2] | requires `-R`        |
+         *
+         * [1]: `-r` recognized but ignored
+         * [2]: `-R` not recognized but ignored
+         *
+         * So add `-r` when `skipExisting` is `false` for compatibility.
+         */
+        args.push("-r");
+    }
+    return args;
+}
+
 export class PackageManager extends AdbCommandBase {
     #cmd: Cmd;
 
     constructor(adb: Adb) {
         super(adb);
         this.#cmd = new Cmd(adb);
-    }
-
-    #buildInstallArguments(
-        command: string,
-        options: Partial<PackageManagerInstallOptions> | undefined,
-    ): string[] {
-        const args = buildArguments(
-            ["pm", command],
-            options,
-            PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
-        );
-        if (!options?.skipExisting) {
-            /*
-             * | behavior             | previous version     | modern version       |
-             * | -------------------- | -------------------- | -------------------- |
-             * | replace existing app | requires `-r`        | default behavior [1] |
-             * | skip existing app    | default behavior [2] | requires `-R`        |
-             *
-             * [1]: `-r` recognized but ignored)
-             * [2]: `-R` not recognized but ignored
-             *
-             * So add `-r` when `skipExisting` is `false` for compatibility.
-             */
-            args.push("-r");
-        }
-        return args;
     }
 
     /**
@@ -298,7 +298,7 @@ export class PackageManager extends AdbCommandBase {
         apks: string[],
         options?: Partial<PackageManagerInstallOptions>,
     ): Promise<string> {
-        const args = this.#buildInstallArguments("install", options);
+        const args = buildInstallArguments("install", options);
         // WIP: old version of pm doesn't support multiple apks
         args.push(...apks);
         return await this.adb.subprocess.spawnAndWaitLegacy(args);
@@ -331,7 +331,7 @@ export class PackageManager extends AdbCommandBase {
         // read files in `/data/local/tmp` (and many other places) due to SELinux policies,
         // so installing files must still use `pm`.
         // (the starting executable file decides which SELinux policies to apply)
-        const args = this.#buildInstallArguments("install", options);
+        const args = buildInstallArguments("install", options);
         args.push(filePath);
 
         try {
@@ -362,7 +362,7 @@ export class PackageManager extends AdbCommandBase {
             return;
         }
 
-        const args = this.#buildInstallArguments("install", options);
+        const args = buildInstallArguments("install", options);
         // Remove `pm` from args, `Cmd#spawn` will prepend `cmd <command>` so the final args
         // will be `cmd package install <args>`
         args.shift();
@@ -536,7 +536,7 @@ export class PackageManager extends AdbCommandBase {
     async sessionCreate(
         options?: Partial<PackageManagerInstallOptions>,
     ): Promise<number> {
-        const args = this.#buildInstallArguments("install-create", options);
+        const args = buildInstallArguments("install-create", options);
 
         const process = await this.#cmdOrSubprocess(args);
         const output = await process.stdout

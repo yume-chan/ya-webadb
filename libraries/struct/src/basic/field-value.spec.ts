@@ -13,7 +13,7 @@ describe("StructFieldValue", () => {
     describe(".constructor", () => {
         it("should save parameters", () => {
             class MockStructFieldValue extends StructFieldValue<never> {
-                serialize(
+                override serialize(
                     dataView: DataView,
                     array: Uint8Array,
                     offset: number,
@@ -46,10 +46,10 @@ describe("StructFieldValue", () => {
     describe("#getSize", () => {
         it("should return same value as definition's", () => {
             class MockFieldDefinition extends StructFieldDefinition {
-                getSize(): number {
+                override getSize(): number {
                     return 42;
                 }
-                create(
+                override create(
                     options: Readonly<StructOptions>,
                     struct: StructValue,
                     value: unknown,
@@ -83,7 +83,7 @@ describe("StructFieldValue", () => {
             }
 
             class MockStructFieldValue extends StructFieldValue<any> {
-                serialize(
+                override serialize(
                     dataView: DataView,
                     array: Uint8Array,
                     offset: number,
@@ -109,7 +109,7 @@ describe("StructFieldValue", () => {
     describe("#set", () => {
         it("should update its internal value", () => {
             class MockStructFieldValue extends StructFieldValue<any> {
-                serialize(
+                override serialize(
                     dataView: DataView,
                     array: Uint8Array,
                     offset: number,

@@ -109,11 +109,7 @@ export class BigIntFieldDefinition<
 export class BigIntFieldValue<
     TDefinition extends BigIntFieldDefinition<BigIntFieldVariant, unknown>,
 > extends StructFieldValue<TDefinition> {
-    override serialize(
-        dataView: DataView,
-        array: Uint8Array,
-        offset: number,
-    ): void {
+    override serialize(_: DataView, array: Uint8Array, offset: number): void {
         this.definition.variant.serialize(
             array,
             offset,

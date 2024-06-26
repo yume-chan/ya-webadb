@@ -45,7 +45,7 @@ export class VariableLengthBufferLikeFieldDefinition<
     TOptions["lengthField"],
     TTypeScriptType
 > {
-    getSize(): number {
+    override getSize(): number {
         return 0;
     }
 
@@ -81,7 +81,7 @@ export class VariableLengthBufferLikeStructFieldValue<
 
     protected lengthFieldValue: VariableLengthBufferLikeFieldLengthValue;
 
-    // eslint-disable-next-line max-params
+    // eslint-disable-next-line @typescript-eslint/max-params
     constructor(
         definition: TDefinition,
         options: Readonly<StructOptions>,

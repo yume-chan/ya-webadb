@@ -40,7 +40,7 @@ class MockLengthFieldValue extends StructFieldValue<any> {
     });
 
     serialize = jest.fn(
-        (dataView: DataView, array: Uint8Array, offset: number): void => {
+        (dataView: DataView, _: Uint8Array, offset: number): void => {
             void dataView;
             void offset;
         },
@@ -64,7 +64,7 @@ describe("Types", () => {
 
             override getSize = jest.fn(() => this.size);
 
-            serialize(
+            override serialize(
                 dataView: DataView,
                 array: Uint8Array,
                 offset: number,

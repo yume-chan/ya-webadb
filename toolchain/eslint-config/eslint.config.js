@@ -25,12 +25,6 @@ export default tslint.config(
                     maxBOF: 0,
                 },
             ],
-            "max-params": [
-                "error",
-                {
-                    max: 4,
-                },
-            ],
         },
     },
     ...tslint.configs.recommendedTypeChecked,
@@ -56,6 +50,17 @@ export default tslint.config(
             "@typescript-eslint/no-this-alias": "error",
             "@typescript-eslint/consistent-type-imports": "error",
             "@typescript-eslint/no-import-type-side-effects": "error",
+            // causes too much false positive (with interface), only check periodically
+            // "@typescript-eslint/class-methods-use-this": [
+            //     "error",
+            //     { ignoreOverrideMethods: true },
+            // ],
+            "@typescript-eslint/max-params": [
+                "error",
+                {
+                    max: 4,
+                },
+            ],
         },
     },
     {

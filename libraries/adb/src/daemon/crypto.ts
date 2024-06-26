@@ -38,7 +38,8 @@ export function getBigUint(
  * @param littleEndian If `false` or `undefined`, a big-endian value should be written,
  * otherwise a little-endian value should be written.
  */
-// eslint-disable-next-line max-params
+
+// eslint-disable-next-line @typescript-eslint/max-params
 export function setBigUint(
     array: Uint8Array,
     byteOffset: number,
