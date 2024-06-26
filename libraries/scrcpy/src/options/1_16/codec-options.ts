@@ -5,14 +5,14 @@ import type { ScrcpyOptionValue } from "../types.js";
  * please file an issue on GitHub.
  */
 export interface CodecOptionsInit {
-    profile: number;
-    level: number;
+    profile?: number | undefined;
+    level?: number | undefined;
 
-    iFrameInterval: number;
-    maxBframes: number;
-    repeatPreviousFrameAfter: number;
-    maxPtsGapToEncoder: number;
-    intraRefreshPeriod: number;
+    iFrameInterval?: number | undefined;
+    maxBframes?: number | undefined;
+    repeatPreviousFrameAfter?: number | undefined;
+    maxPtsGapToEncoder?: number | undefined;
+    intraRefreshPeriod?: number | undefined;
 }
 
 function toDashCase(input: string) {
@@ -27,10 +27,14 @@ const CODEC_OPTION_TYPES: Partial<
 };
 
 export class CodecOptions implements ScrcpyOptionValue {
-    options: Partial<CodecOptionsInit>;
+    options: CodecOptionsInit;
 
-    constructor(options: Partial<CodecOptionsInit> = {}) {
+    constructor(options: CodecOptionsInit = {}) {
         for (const [key, value] of Object.entries(options)) {
+            if (value === undefined) {
+                continue;
+            }
+
             if (typeof value !== "number") {
                 throw new Error(
                     `Invalid option value for ${key}: ${String(value)}`,
