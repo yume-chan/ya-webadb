@@ -1,6 +1,6 @@
-import type { FrameRenderer } from "./type.js";
+import type { FrameSink } from "./type.js";
 
-export class BitmapFrameRenderer implements FrameRenderer {
+export class BitmapFrameSink implements FrameSink {
     #context: ImageBitmapRenderingContext;
 
     constructor(canvas: HTMLCanvasElement | OffscreenCanvas) {

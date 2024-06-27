@@ -1,6 +1,6 @@
-import type { FrameRenderer } from "./type.js";
+import type { FrameSink } from "./type.js";
 
-export class WebGLFrameRenderer implements FrameRenderer {
+export class WebGLFrameSink implements FrameSink {
     static vertexShaderSource = `
         attribute vec2 xy;
 
@@ -37,34 +37,33 @@ export class WebGLFrameRenderer implements FrameRenderer {
         canvas: HTMLCanvasElement | OffscreenCanvas,
         enableCapture: boolean,
     ) {
+        const attributes: WebGLContextAttributes = {
+            // Low-power GPU should be enough for video rendering.
+            powerPreference: "low-power",
+            alpha: false,
+            // Disallow software rendering.
+            // Other rendering methods are faster than software-based WebGL.
+            failIfMajorPerformanceCaveat: true,
+            preserveDrawingBuffer: enableCapture,
+        };
+
         const gl =
-            canvas.getContext("webgl2", {
-                alpha: false,
-                failIfMajorPerformanceCaveat: true,
-                preserveDrawingBuffer: enableCapture,
-            }) ||
-            canvas.getContext("webgl", {
-                alpha: false,
-                failIfMajorPerformanceCaveat: true,
-                preserveDrawingBuffer: enableCapture,
-            });
+            canvas.getContext("webgl2", attributes) ||
+            canvas.getContext("webgl", attributes);
         if (!gl) {
             throw new Error("WebGL not supported");
         }
         this.#context = gl;
 
         const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
-        gl.shaderSource(vertexShader, WebGLFrameRenderer.vertexShaderSource);
+        gl.shaderSource(vertexShader, WebGLFrameSink.vertexShaderSource);
         gl.compileShader(vertexShader);
         if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
             throw new Error(gl.getShaderInfoLog(vertexShader)!);
         }
 
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-        gl.shaderSource(
-            fragmentShader,
-            WebGLFrameRenderer.fragmentShaderSource,
-        );
+        gl.shaderSource(fragmentShader, WebGLFrameSink.fragmentShaderSource);
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
             throw new Error(gl.getShaderInfoLog(fragmentShader)!);

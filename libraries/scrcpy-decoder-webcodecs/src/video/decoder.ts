@@ -4,14 +4,29 @@ import { ScrcpyVideoCodecId } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
+    TinyH264DecoderInit,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
+import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
 import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 
 import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
 import type { CodecDecoder } from "./codec/type.js";
-import type { FrameRenderer } from "./render/index.js";
-import { BitmapFrameRenderer, WebGLFrameRenderer } from "./render/index.js";
+import type { FrameSink } from "./render/index.js";
+import { BitmapFrameSink, WebGLFrameSink } from "./render/index.js";
+
+export interface WebCodecsVideoDecoderInit extends TinyH264DecoderInit {
+    /**
+     * The video codec to decode
+     */
+    codec: ScrcpyVideoCodecId;
+
+    /**
+     * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
+     * Enable this option may reduce performance.
+     */
+    enableCapture?: boolean | undefined;
+}
 
 export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     static isSupported() {
@@ -36,9 +51,9 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#writable;
     }
 
-    #canvas: HTMLCanvasElement | OffscreenCanvas;
+    #renderer: HTMLCanvasElement | OffscreenCanvas;
     get renderer() {
-        return this.#canvas;
+        return this.#renderer;
     }
 
     #frameRendered = 0;
@@ -57,45 +72,30 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     #decoder: VideoDecoder;
-    #renderer: FrameRenderer;
+    #frameSink: FrameSink;
 
     #currentFrameRendered = false;
     #animationFrameId = 0;
 
     /**
      * Create a new WebCodecs video decoder.
-     * @param codec The video codec to decode
-     * @param enableCapture
-     * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
-     * Enable this option may reduce performance.
-     * @param canvas Optional render target cavas element or offscreen canvas
      */
-    constructor(
-        codec: ScrcpyVideoCodecId,
-        enableCapture: boolean,
-        canvas?: HTMLCanvasElement | OffscreenCanvas,
-    ) {
+    constructor({ codec, canvas, enableCapture }: WebCodecsVideoDecoderInit) {
         this.#codec = codec;
 
         if (canvas) {
-            this.#canvas = canvas;
-        } else if (typeof document !== "undefined") {
-            this.#canvas = document.createElement("canvas");
-        } else if (typeof OffscreenCanvas !== "undefined") {
-            this.#canvas = new OffscreenCanvas(0, 0);
+            this.#renderer = canvas;
         } else {
-            throw new Error(
-                "no canvas input found nor any canvas can be created",
-            );
+            this.#renderer = createCanvas();
         }
 
         try {
-            this.#renderer = new WebGLFrameRenderer(
-                this.#canvas,
-                enableCapture,
+            this.#frameSink = new WebGLFrameSink(
+                this.#renderer,
+                !!enableCapture,
             );
         } catch {
-            this.#renderer = new BitmapFrameRenderer(this.#canvas);
+            this.#frameSink = new BitmapFrameSink(this.#renderer);
         }
 
         this.#decoder = new VideoDecoder({
@@ -114,7 +114,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 // This is also the behavior of official Scrcpy client.
                 // https://github.com/Genymobile/scrcpy/issues/3679
                 this.#updateSize(frame.displayWidth, frame.displayHeight);
-                this.#renderer.draw(frame);
+                this.#frameSink.draw(frame);
             },
             error(e) {
                 if (controller) {
@@ -170,9 +170,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     #updateSize = (width: number, height: number) => {
-        if (width !== this.#canvas.width || height !== this.#canvas.height) {
-            this.#canvas.width = width;
-            this.#canvas.height = height;
+        if (
+            width !== this.#renderer.width ||
+            height !== this.#renderer.height
+        ) {
+            this.#renderer.width = width;
+            this.#renderer.height = height;
             this.#sizeChanged.fire({
                 width: width,
                 height: height,

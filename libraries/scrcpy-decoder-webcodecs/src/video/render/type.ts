@@ -1,3 +1,3 @@
-export interface FrameRenderer {
+export interface FrameSink {
     draw(frame: VideoFrame): void;
 }
