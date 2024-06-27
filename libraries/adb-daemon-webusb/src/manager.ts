@@ -1,5 +1,4 @@
-import { ADB_DEFAULT_DEVICE_FILTER, AdbDaemonWebUsbDevice } from "./device.js";
-import type { AdbDeviceFilter } from "./utils.js";
+import { AdbDaemonWebUsbDevice, toAdbDeviceFilters } from "./device.js";
 import {
     findUsbAlternateInterface,
     getSerialNumber,
@@ -8,7 +7,7 @@ import {
 
 export namespace AdbDaemonWebUsbDeviceManager {
     export interface RequestDeviceOptions {
-        filters?: AdbDeviceFilter[] | undefined;
+        filters?: USBDeviceFilter[] | undefined;
         exclusionFilters?: USBDeviceFilter[] | undefined;
     }
 }
@@ -44,28 +43,21 @@ export class AdbDaemonWebUsbDeviceManager {
      * It must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface,
      * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
      *
-     * Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
+     * Defaults to {@link ADB_DEFAULT_INTERFACE_FILTER}.
      * @returns An {@link AdbDaemonWebUsbDevice} instance if the user selected a device,
      * or `undefined` if the user cancelled the device picker.
      */
     async requestDevice(
         options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
     ): Promise<AdbDaemonWebUsbDevice | undefined> {
-        if (!options.filters) {
-            options.filters = [ADB_DEFAULT_DEVICE_FILTER];
-        } else if (options.filters.length === 0) {
-            throw new TypeError("filters must not be empty");
-        }
+        const filters = toAdbDeviceFilters(options.filters);
 
         try {
-            const device = await this.#usbManager.requestDevice(
-                options as USBDeviceRequestOptions,
-            );
-            return new AdbDaemonWebUsbDevice(
-                device,
-                options.filters,
-                this.#usbManager,
-            );
+            const device = await this.#usbManager.requestDevice({
+                filters,
+                exclusionFilters: options.exclusionFilters,
+            });
+            return new AdbDaemonWebUsbDevice(device, filters, this.#usbManager);
         } catch (e) {
             // No device selected
             if (isErrorName(e, "NotFoundError")) {
@@ -85,34 +77,35 @@ export class AdbDaemonWebUsbDeviceManager {
      * It must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface,
      * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the device list.
      *
-     * Defaults to {@link ADB_DEFAULT_DEVICE_FILTER}.
+     * Defaults to {@link ADB_DEFAULT_INTERFACE_FILTER}.
      * @returns An array of {@link AdbDaemonWebUsbDevice} instances for all connected and authenticated devices.
      */
+    getDevices(
+        filters?: USBDeviceFilter[] | undefined,
+    ): Promise<AdbDaemonWebUsbDevice[]>;
     async getDevices(
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
+        filters_: USBDeviceFilter[] | undefined,
     ): Promise<AdbDaemonWebUsbDevice[]> {
-        if (filters.length === 0) {
-            throw new TypeError("filters must not be empty");
-        }
+        const filters = toAdbDeviceFilters(filters_);
 
         const devices = await this.#usbManager.getDevices();
         return devices
             .filter((device) => {
                 for (const filter of filters) {
                     if (
-                        "vendorId" in filter &&
+                        filter.vendorId !== undefined &&
                         device.vendorId !== filter.vendorId
                     ) {
                         continue;
                     }
                     if (
-                        "productId" in filter &&
+                        filter.productId !== undefined &&
                         device.productId !== filter.productId
                     ) {
                         continue;
                     }
                     if (
-                        "serialNumber" in filter &&
+                        filter.serialNumber !== undefined &&
                         getSerialNumber(device) !== filter.serialNumber
                     ) {
                         continue;

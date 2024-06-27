@@ -27,9 +27,9 @@
     "scripts": {
         "build": "tsc -b tsconfig.build.json",
         "build:watch": "tsc -b tsconfig.build.json",
-        "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" TS_JEST_DISABLE_VER_CHECKER=true jest --coverage",
         "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "npm run build",
+        "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" TS_JEST_DISABLE_VER_CHECKER=true jest --coverage"
     },
     "dependencies": {
         "@yume-chan/async": "^2.2.0",

@@ -7,18 +7,22 @@ export function isErrorName(e: unknown, name: string): boolean {
     );
 }
 
+export type PickNonNullable<T, K extends keyof T> = {
+    [P in K]-?: NonNullable<T[P]>;
+};
+
 /**
  * `classCode`, `subclassCode` and `protocolCode` are required
  * for selecting correct USB configuration and interface.
  */
-export type AdbDeviceFilter = USBDeviceFilter &
-    Required<
-        Pick<USBDeviceFilter, "classCode" | "subclassCode" | "protocolCode">
-    >;
+export type UsbInterfaceFilter = PickNonNullable<
+    USBDeviceFilter,
+    "classCode" | "subclassCode" | "protocolCode"
+>;
 
 function alternateMatchesFilter(
     alternate: USBAlternateInterface,
-    filters: AdbDeviceFilter[],
+    filters: UsbInterfaceFilter[],
 ) {
     return filters.some(
         (filter) =>
@@ -30,7 +34,7 @@ function alternateMatchesFilter(
 
 export function findUsbAlternateInterface(
     device: USBDevice,
-    filters: AdbDeviceFilter[],
+    filters: UsbInterfaceFilter[],
 ) {
     for (const configuration of device.configurations) {
         for (const interface_ of configuration.interfaces) {
@@ -55,4 +59,43 @@ export function getSerialNumber(device: USBDevice) {
     }
 
     return padNumber(device.vendorId) + "x" + padNumber(device.productId);
+}
+
+/**
+ * Find the first pair of input and output endpoints from an alternate interface.
+ *
+ * ADB interface only has two endpoints, one for input and one for output.
+ */
+export function findUsbEndpoints(endpoints: USBEndpoint[]) {
+    if (endpoints.length === 0) {
+        throw new TypeError("No endpoints given");
+    }
+
+    let inEndpoint: USBEndpoint | undefined;
+    let outEndpoint: USBEndpoint | undefined;
+
+    for (const endpoint of endpoints) {
+        switch (endpoint.direction) {
+            case "in":
+                inEndpoint = endpoint;
+                if (outEndpoint) {
+                    return { inEndpoint, outEndpoint };
+                }
+                break;
+            case "out":
+                outEndpoint = endpoint;
+                if (inEndpoint) {
+                    return { inEndpoint, outEndpoint };
+                }
+                break;
+        }
+    }
+
+    if (!inEndpoint) {
+        throw new TypeError("No input endpoint found.");
+    }
+    if (!outEndpoint) {
+        throw new TypeError("No output endpoint found.");
+    }
+    throw new Error("unreachable");
 }

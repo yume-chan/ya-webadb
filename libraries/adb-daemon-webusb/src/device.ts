@@ -22,9 +22,10 @@ import {
 import type { ExactReadable } from "@yume-chan/struct";
 import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
 
-import type { AdbDeviceFilter } from "./utils.js";
+import type { UsbInterfaceFilter } from "./utils.js";
 import {
     findUsbAlternateInterface,
+    findUsbEndpoints,
     getSerialNumber,
     isErrorName,
 } from "./utils.js";
@@ -32,49 +33,30 @@ import {
 /**
  * The default filter for ADB devices, as defined by Google.
  */
-export const ADB_DEFAULT_DEVICE_FILTER = {
+export const ADB_DEFAULT_INTERFACE_FILTER = {
     classCode: 0xff,
     subclassCode: 0x42,
     protocolCode: 1,
-} as const satisfies AdbDeviceFilter;
+} as const satisfies UsbInterfaceFilter;
 
-/**
- * Find the first pair of input and output endpoints from an alternate interface.
- *
- * ADB interface only has two endpoints, one for input and one for output.
- */
-function findUsbEndpoints(endpoints: USBEndpoint[]) {
-    if (endpoints.length === 0) {
-        throw new TypeError("No endpoints given");
+export function toAdbDeviceFilters(
+    filters: USBDeviceFilter[] | undefined,
+): (USBDeviceFilter & UsbInterfaceFilter)[] {
+    if (!filters || filters.length === 0) {
+        return [ADB_DEFAULT_INTERFACE_FILTER];
+    } else {
+        return filters.map((filter) => ({
+            ...filter,
+            classCode:
+                filter.classCode ?? ADB_DEFAULT_INTERFACE_FILTER.classCode,
+            subclassCode:
+                filter.subclassCode ??
+                ADB_DEFAULT_INTERFACE_FILTER.subclassCode,
+            protocolCode:
+                filter.protocolCode ??
+                ADB_DEFAULT_INTERFACE_FILTER.protocolCode,
+        }));
     }
-
-    let inEndpoint: USBEndpoint | undefined;
-    let outEndpoint: USBEndpoint | undefined;
-
-    for (const endpoint of endpoints) {
-        switch (endpoint.direction) {
-            case "in":
-                inEndpoint = endpoint;
-                if (outEndpoint) {
-                    return { inEndpoint, outEndpoint };
-                }
-                break;
-            case "out":
-                outEndpoint = endpoint;
-                if (inEndpoint) {
-                    return { inEndpoint, outEndpoint };
-                }
-                break;
-        }
-    }
-
-    if (!inEndpoint) {
-        throw new TypeError("No input endpoint found.");
-    }
-    if (!outEndpoint) {
-        throw new TypeError("No output endpoint found.");
-    }
-    throw new Error("unreachable");
 }
 
 class Uint8ArrayExactReadable implements ExactReadable {
@@ -282,7 +264,7 @@ export class AdbDaemonWebUsbConnection
 }
 
 export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
-    #filters: AdbDeviceFilter[];
+    #filters: UsbInterfaceFilter[];
     #usbManager: USB;
 
     #raw: USBDevice;
@@ -307,7 +289,7 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
      */
     constructor(
         device: USBDevice,
-        filters: AdbDeviceFilter[] = [ADB_DEFAULT_DEVICE_FILTER],
+        filters: UsbInterfaceFilter[],
         usbManager: USB,
     ) {
         this.#raw = device;

@@ -15,8 +15,11 @@
     <a href="https://github.com/yume-chan/ya-webadb/releases">
         <img alt="GitHub release" src="https://img.shields.io/github/v/release/yume-chan/ya-webadb?logo=github">
     </a>
+    <a href="https://bundlephobia.com/package/@yume-chan/adb-credential-web">
+        <img alt="Package Size" src="https://img.shields.io/bundlephobia/minzip/%40yume-chan%2Fadb-credential-web">
+    </a>
     <a href="https://www.npmjs.com/package/@yume-chan/adb">
-        <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/adb?logo=npm">
+        <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/adb-credential-web?logo=npm">
     </a>
     <a href="https://discord.gg/26k3ttC2PN">
         <img alt="Discord" src="https://img.shields.io/discord/1120215514732564502?logo=discord&logoColor=%23ffffff&label=Discord">

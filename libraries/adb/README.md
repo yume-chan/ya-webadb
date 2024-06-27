@@ -15,6 +15,9 @@
     <a href="https://github.com/yume-chan/ya-webadb/releases">
         <img alt="GitHub release" src="https://img.shields.io/github/v/release/yume-chan/ya-webadb?logo=github">
     </a>
+    <a href="https://bundlephobia.com/package/@yume-chan/adb">
+        <img alt="Package Size" src="https://img.shields.io/bundlephobia/minzip/%40yume-chan%2Fadb">
+    </a>
     <a href="https://www.npmjs.com/package/@yume-chan/adb">
         <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/adb?logo=npm">
     </a>
