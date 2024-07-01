@@ -1,7 +1,7 @@
 {
     "name": "@yume-chan/scrcpy",
     "version": "0.0.24",
-    "description": "TypeScript implementation of Scrcpy.",
+    "description": "TypeScript implementation of Scrcpy client.",
     "keywords": [
         "adb",
         "android-phone",
