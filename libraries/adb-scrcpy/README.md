@@ -1,178 +1,49 @@
-# @yume-chan/adb-scrcpy
+<p align="center">
+    <img alt="Tango" src="https://raw.githubusercontent.com/yume-chan/ya-webadb/main/.github/logo.svg" width="200">
+</p>
 
-Use `@yume-chan/adb` to bootstrap `@yume-chan/scrcpy`.
+<h1 align="center">@yume-chan/adb-scrcpy</h1>
 
-**WARNING:** The public API is UNSTABLE. Open a GitHub discussion if you have any questions.
+<p align="center">
+    Use `@yume-chan/adb` to bootstrap `@yume-chan/scrcpy`.
+</p>
 
--   [Prerequisites](#prerequisites)
--   [Server versions](#server-versions)
-    -   [Push server binary](#push-server-binary)
-    -   [Start server on device](#start-server-on-device)
--   [Always read all streams](#always-read-all-streams)
+<p align="center">
+    <a href="https://github.com/yume-chan/ya-webadb/blob/main/LICENSE">
+        <img alt="MIT License" src="https://img.shields.io/github/license/yume-chan/ya-webadb">
+    </a>
+    <a href="https://github.com/yume-chan/ya-webadb/releases">
+        <img alt="GitHub release" src="https://img.shields.io/github/v/release/yume-chan/ya-webadb?logo=github">
+    </a>
+    <a href="https://bundlephobia.com/package/@yume-chan/adb-scrcpy">
+        <img alt="Package Size" src="https://img.shields.io/bundlephobia/minzip/%40yume-chan%2Fadb-scrcpy">
+    </a>
+    <a href="https://www.npmjs.com/package/@yume-chan/adb-scrcpy">
+        <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/adb-scrcpy?logo=npm">
+    </a>
+    <a href="https://discord.gg/26k3ttC2PN">
+        <img alt="Discord" src="https://img.shields.io/discord/1120215514732564502?logo=discord&logoColor=%23ffffff&label=Discord">
+    </a>
+</p>
 
-## Prerequisites
+This package is part of [Tango ADB](https://github.com/yume-chan/ya-webadb). Generally you need multiple packages to build a complete ADB client that can run on Web browsers and Node.js. Read the documentation for more information.
 
-See `@yume-chan/scrcpy`'s README for introduction and prerequisites.
+## Documentation
 
-## Server versions
+Check the latest documentation at https://tango-adb.github.io/docs/
 
-Similar to `@yume-chan/scrcpy`, this package supports multiple Scrcpy versions, but requires correct options for each version.
+## Sponsors
 
-| Version   | Type                   |
-| --------- | ---------------------- |
-| 1.16~1.21 | `AdbScrcpyOptions1_16` |
-| 1.22~1.25 | `AdbScrcpyOptions1_22` |
-| 2.0       | `AdbScrcpyOptions2_0`  |
-| 2.1       | `AdbScrcpyOptions2_1`  |
+[Become a backer](https://opencollective.com/ya-webadb) and get your image on our README on Github with a link to your site.
 
-### Push server binary
-
-The `AdbSync#write()` method can be used to push files to the device. Read more at `@yume-chan/adb`'s documentation (https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb#readme).
-
-This package also provides the `AdbScrcpyClient.pushServer()` static method as a shortcut, plus it will automatically close the `AdbSync` object on completion.
-
-Example using a `ReadableStream`:
-
-```ts
-import { WrapReadableStream } from "@yume-chan/adb";
-import { AdbScrcpyClient } from "@yume-chan/scrcpy";
-import {
-    WrapReadableStream,
-    WrapConsumableStream,
-} from "@yume-chan/stream-extra";
-
-const response = await fetch(SCRCPY_SERVER_URL);
-await AdbScrcpyClient.pushServer(
-    adb,
-    new WrapReadableStream(response.body).pipeThrough(
-        new WrapConsumableStream()
-    )
-);
-```
-
-Example using an `ArrayBuffer`:
-
-```ts
-import { AdbScrcpyClient } from "@yume-chan/scrcpy";
-import { Consumable, ReadableStream } from "@yume-chan/stream-extra";
-
-await AdbScrcpyClient.pushServer(
-    adb,
-    new ReadableStream<Consumable<Uint8Array>>({
-        start(controller) {
-            controller.enqueue(new Consumable(serverBuffer));
-            controller.close();
-        },
-    })
-);
-```
-
-### Start server on device
-
-To start the server, use the `AdbScrcpyClient.start()` method. It automatically sets up port forwarding, launches the server, and connects to it.
-
-```js
-import {
-    AdbScrcpyClient,
-    AdbScrcpyOptions2_1,
-    DEFAULT_SERVER_PATH,
-    ScrcpyOptions2_1,
-} from "@yume-chan/scrcpy";
-import SCRCPY_SERVER_VERSION from "@yume-chan/scrcpy/bin/version.js";
-
-const client: AdbScrcpyClient = await AdbScrcpyClient.start(
-    adb,
-    DEFAULT_SERVER_PATH,
-    // If server binary was downloaded manually, must provide the correct version
-    SCRCPY_SERVER_VERSION,
-    new AdbScrcpyOptions2_1(
-        ScrcpyOptions2_1({
-            // options
-        })
-    )
-);
-
-const stdout: ReadableStream<string> = client.stdout;
-
-// `undefined` if `video: false` option was given
-if (client.videoSteam) {
-    const { metadata: videoMetadata, stream: videoPacketStream } =
-        await client.videoStream;
-}
-
-// `undefined` if `audio: false` option was given
-if (client.audioStream) {
-    const metadata = await client.audioStream;
-    switch (metadata.type) {
-        case "disabled":
-            // Audio not supported by device
-            break;
-        case "errored":
-            // Other error when initializing audio
-            break;
-        case "success":
-            // Audio packets in the codec specified in options
-            const audioPacketStream: ReadableStream<ScrcpyMediaStreamPacket> =
-                metadata.stream;
-            break;
-    }
-}
-
-// `undefined` if `control: false` option was given
-const controlMessageWriter: ScrcpyControlMessageWriter | undefined =
-    client.controlMessageWriter;
-const deviceMessageStream: ReadableStream<ScrcpyDeviceMessage> | undefined =
-    client.deviceMessageStream;
-
-// to stop the server
-client.close();
-```
-
-## Always read all streams
-
-In Web Streams API, pipes will block its upstream when downstream's queue is full (back-pressure mechanism). If multiple streams are separated from the same source (for example, all Scrcpy streams are from the same USB or TCP connection), blocking one stream means blocking all of them, so it's important to always read from all streams, even if you don't care about their data.
-
-```ts
-stdout
-    .pipeTo(
-        new WritableStream<string>({
-            write: (line) => {
-                // Handle or ignore the stdout line
-            },
-        })
-    )
-    .catch(() => {})
-    .then(() => {
-        // Handle server exit
-    });
-
-videoPacketStream
-    .pipeTo(
-        new WritableStream<ScrcpyMediaStreamPacket>({
-            write: (packet) => {
-                // Handle or ignore the video packet
-            },
-        })
-    )
-    .catch(() => {});
-
-audioPacketStream
-    .pipeTo(
-        new WritableStream<ScrcpyMediaStreamPacket>({
-            write: (packet) => {
-                // Handle or ignore the audio packet
-            },
-        })
-    )
-    .catch(() => {});
-
-deviceMessageStream
-    .pipeTo(
-        new WritableStream<ScrcpyDeviceMessage>({
-            write: (message) => {
-                // Handle or ignore the device message
-            },
-        })
-    )
-    .catch(() => {});
-```
+<a href="https://opencollective.com/ya-webadb/backer/0/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/0/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/1/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/1/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/2/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/2/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/3/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/3/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/4/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/4/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/5/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/5/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/6/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/6/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/7/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/7/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/8/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/8/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/9/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/9/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/10/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/10/avatar.svg?requireActive=false"></a>

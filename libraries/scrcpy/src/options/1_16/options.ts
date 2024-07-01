@@ -213,6 +213,18 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
         }
     }
 
+    override endDeviceMessageStream(e?: unknown): void {
+        try {
+            if (e) {
+                this.#clipboardController.error(e);
+            } else {
+                this.#clipboardController.close();
+            }
+        } catch {
+            // The stream is already errored
+        }
+    }
+
     override createMediaStreamTransformer(): TransformStream<
         Uint8Array,
         ScrcpyMediaStreamPacket

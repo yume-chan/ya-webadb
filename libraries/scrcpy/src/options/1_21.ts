@@ -102,6 +102,12 @@ export class ScrcpyOptions1_21 extends ScrcpyOptions<ScrcpyOptionsInit1_21> {
         }
     }
 
+    override async endDeviceMessageStream(e?: unknown): Promise<void> {
+        await super.endDeviceMessageStream(e);
+        this.#deviceMessageError ??=
+            e ?? new Error("Device message stream ended");
+    }
+
     override serialize(): string[] {
         return ScrcpyOptions1_21.serialize(this.value, this.defaults);
     }

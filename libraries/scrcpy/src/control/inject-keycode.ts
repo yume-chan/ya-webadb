@@ -7,21 +7,21 @@ export enum AndroidKeyEventAction {
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/view/KeyEvent.java;l=993;drc=95c1165bb895dd844e1793460710f7163dd330a3
 export enum AndroidKeyEventMeta {
-    AltOn = 0x02,
-    AltLeftOn = 0x10,
-    AltRightOn = 0x20,
-    ShiftOn = 0x01,
-    ShiftLeftOn = 0x40,
-    ShiftRightOn = 0x80,
-    CtrlOn = 0x1000,
-    CtrlLeftOn = 0x2000,
-    CtrlRightOn = 0x4000,
-    MetaOn = 0x10000,
-    MetaLeftOn = 0x20000,
-    MetaRightOn = 0x40000,
-    CapsLockOn = 0x100000,
-    NumLockOn = 0x200000,
-    ScrollLockOn = 0x400000,
+    Alt = 0x02,
+    AltLeft = 0x10,
+    AltRight = 0x20,
+    Shift = 0x01,
+    ShiftLeft = 0x40,
+    ShiftRight = 0x80,
+    Ctrl = 0x1000,
+    CtrlLeft = 0x2000,
+    CtrlRight = 0x4000,
+    Meta = 0x10000,
+    MetaLeft = 0x20000,
+    MetaRight = 0x40000,
+    CapsLock = 0x100000,
+    NumLock = 0x200000,
+    ScrollLock = 0x400000,
 }
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/view/KeyEvent.java;l=97;drc=95c1165bb895dd844e1793460710f7163dd330a3
@@ -207,9 +207,9 @@ export enum AndroidKeyCode {
 export const ScrcpyInjectKeyCodeControlMessage = new Struct()
     .uint8("type")
     .uint8("action", placeholder<AndroidKeyEventAction>())
-    .uint32("keyCode")
+    .uint32("keyCode", placeholder<AndroidKeyCode>())
     .uint32("repeat")
-    .uint32("metaState");
+    .uint32("metaState", placeholder<AndroidKeyEventMeta>());
 
 export type ScrcpyInjectKeyCodeControlMessage =
     (typeof ScrcpyInjectKeyCodeControlMessage)["TInit"];

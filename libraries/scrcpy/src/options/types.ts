@@ -183,6 +183,10 @@ export abstract class ScrcpyOptions<T extends object> {
         return this.#base.parseDeviceMessage(id, stream);
     }
 
+    endDeviceMessageStream(e?: unknown): ValueOrPromise<void> {
+        return this.#base.endDeviceMessageStream(e);
+    }
+
     createMediaStreamTransformer(): TransformStream<
         Uint8Array,
         ScrcpyMediaStreamPacket

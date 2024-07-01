@@ -1,60 +1,46 @@
-# @yume-chan/fetch-scrcpy-server
+<p align="center">
+    <img alt="Tango" src="https://raw.githubusercontent.com/yume-chan/ya-webadb/main/.github/logo.svg" width="200">
+</p>
 
-A script to download Scrcpy server binary from official GitHub releases.
+<h1 align="center">@yume-chan/fetch-scrcpy-server</h1>
 
-## Usage
+<p align="center">
+    A script to download Scrcpy server binary.
+</p>
 
-```shell
-fetch-scrcpy-server <version>
-```
+<p align="center">
+    <a href="https://github.com/yume-chan/ya-webadb/blob/main/LICENSE">
+        <img alt="MIT License" src="https://img.shields.io/github/license/yume-chan/ya-webadb">
+    </a>
+    <a href="https://github.com/yume-chan/ya-webadb/releases">
+        <img alt="GitHub release" src="https://img.shields.io/github/v/release/yume-chan/ya-webadb?logo=github">
+    </a>
+    <a href="https://www.npmjs.com/package/@yume-chan/fetch-scrcpy-server">
+        <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/fetch-scrcpy-server?logo=npm">
+    </a>
+    <a href="https://discord.gg/26k3ttC2PN">
+        <img alt="Discord" src="https://img.shields.io/discord/1120215514732564502?logo=discord&logoColor=%23ffffff&label=Discord">
+    </a>
+</p>
 
-For example:
+This package is part of [Tango ADB](https://github.com/yume-chan/ya-webadb). Generally you need multiple packages to build a complete ADB client that can run on Web browsers and Node.js. Read the documentation for more information.
 
-```shell
-fetch-scrcpy-server 2.1
-```
+## Documentation
 
-The server binary is written to `server.bin` and the version is written to `version.js` in this package's root.
+Check the latest documentation at https://tango-adb.github.io/docs/
 
-## Autorun
+## Sponsors
 
-Add to `postinstall` script in your `package.json`:
+[Become a backer](https://opencollective.com/ya-webadb) and get your image on our README on Github with a link to your site.
 
-```json
-{
-    "scripts": {
-        "postinstall": "fetch-scrcpy-server 2.1"
-    }
-}
-```
-
-## Consume server.bin
-
-### Webpack/Vite
-
-It works out of the box for Webpack 5 and Vite.
-
-`BIN` is a URL you can use in `fetch` to download `server.bin`.
-
-```js
-import { BIN, VERSION } from "@yume-chan/fetch-scrcpy-server";
-
-console.log(VERSION); // 2.1
-fetch(BIN)
-    .then((res) => res.arrayBuffer())
-    .then(console.log); // <ArrayBuffer ...>
-```
-
-### Node.js
-
-This package is in ES Module format, so it needs to be imported in another ES Module, or using `createRequire`.
-
-`BIN` is a URL to a local file, you can use `fs.readFile` to read it.
-
-```js
-import { BIN, VERSION } from "@yume-chan/fetch-scrcpy-server";
-import fs from "fs/promises";
-
-console.log(VERSION); // 2.1
-fs.readFile(BIN).then(console.log); // <Buffer ...>
-```
+<a href="https://opencollective.com/ya-webadb/backer/0/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/0/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/1/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/1/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/2/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/2/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/3/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/3/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/4/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/4/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/5/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/5/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/6/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/6/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/7/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/7/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/8/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/8/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/9/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/9/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/10/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/10/avatar.svg?requireActive=false"></a>
