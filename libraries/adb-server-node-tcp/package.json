@@ -42,6 +42,6 @@
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "jest": "^30.0.0-alpha.4",
         "prettier": "^3.3.2",
-        "typescript": "^5.5.2"
+        "typescript": "^5.5.3"
     }
 }
