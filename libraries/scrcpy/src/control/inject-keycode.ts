@@ -7,6 +7,7 @@ export enum AndroidKeyEventAction {
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/view/KeyEvent.java;l=993;drc=95c1165bb895dd844e1793460710f7163dd330a3
 export enum AndroidKeyEventMeta {
+    None = 0,
     Alt = 0x02,
     AltLeft = 0x10,
     AltRight = 0x20,
