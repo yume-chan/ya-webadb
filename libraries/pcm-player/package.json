@@ -23,6 +23,7 @@
     "type": "module",
     "main": "esm/index.js",
     "types": "esm/index.d.ts",
+    "sideEffects": false,
     "scripts": {
         "build": "tsc -b tsconfig.dom.json && tsc -b tsconfig.worker.json",
         "build:watch": "tsc -b tsconfig.dom.json && tsc -b tsconfig.worker.json",

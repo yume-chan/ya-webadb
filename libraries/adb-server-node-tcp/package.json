@@ -26,6 +26,7 @@
     "type": "module",
     "main": "esm/index.js",
     "types": "esm/index.d.ts",
+    "sideEffects": false,
     "scripts": {
         "build": "tsc -b tsconfig.build.json",
         "build:watch": "tsc -b tsconfig.build.json",

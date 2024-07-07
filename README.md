@@ -29,7 +29,7 @@ Try it out at https://app.tangoapp.dev
 
 ## Documentation
 
-Check the latest documentation at https://tango-adb.github.io/docs/
+Check the latest documentation at https://docs.tangoapp.dev/
 
 ## Contribute
 

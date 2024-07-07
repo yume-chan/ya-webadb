@@ -1,29 +1,49 @@
-# @yume-chan/scrcpy-decoder-webcodecs
+<p align="center">
+    <img alt="Tango" src="https://raw.githubusercontent.com/yume-chan/ya-webadb/main/.github/logo.svg" width="200">
+</p>
 
-Decode and render H.264 streams using the [WebCodecs API](https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API).
+<h1 align="center">@yume-chan/scrcpy-decoder-webcodecs</h1>
 
-It has no dependencies and high performance, but is only available on recent versions of Chrome.
+<p align="center">
+    Raw H.264 stream decoder and renderer using WebCodecs API (requires modern browser).
+</p>
 
-**WARNING:** The public API is UNSTABLE. Open a GitHub discussion if you have any questions.
+<p align="center">
+    <a href="https://github.com/yume-chan/ya-webadb/blob/main/LICENSE">
+        <img alt="MIT License" src="https://img.shields.io/github/license/yume-chan/ya-webadb">
+    </a>
+    <a href="https://github.com/yume-chan/ya-webadb/releases">
+        <img alt="GitHub release" src="https://img.shields.io/github/v/release/yume-chan/ya-webadb?logo=github">
+    </a>
+    <a href="https://bundlephobia.com/package/@yume-chan/scrcpy-decoder-webcodecs">
+        <img alt="Package Size" src="https://img.shields.io/bundlephobia/minzip/%40yume-chan%2Fscrcpy-decoder-webcodecs">
+    </a>
+    <a href="https://www.npmjs.com/package/@yume-chan/scrcpy-decoder-webcodecs">
+        <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/scrcpy-decoder-webcodecs?logo=npm">
+    </a>
+    <a href="https://discord.gg/26k3ttC2PN">
+        <img alt="Discord" src="https://img.shields.io/discord/1120215514732564502?logo=discord&logoColor=%23ffffff&label=Discord">
+    </a>
+</p>
 
--   [Compatibility](#compatibility)
--   [Usage](#usage)
+This package is part of [Tango ADB](https://github.com/yume-chan/ya-webadb). Generally you need multiple packages to build a complete ADB client that can run on Web browsers and Node.js. Read the documentation for more information.
 
-## Compatibility
+## Documentation
 
-| Chrome | Firefox | Safari | Performance                     | Supported H.264 profile/level |
-| ------ | ------- | ------ | ------------------------------- | ----------------------------- |
-| 94     | No      | No     | High with hardware acceleration | High level 5                  |
+Check the latest documentation at https://docs.tangoapp.dev/scrcpy/video/web-codecs/
 
-## Usage
+## Sponsors
 
-It draws frames onto `decoder.renderer` (a `<canvas>` element), you can insert it anywhere you want to display the video.
+[Become a backer](https://opencollective.com/ya-webadb) and get your image on our README on Github with a link to your site.
 
-```ts
-const decoder = new WebCodecsDecoder();
-document.body.appendChild(decoder.renderer);
-
-videoPacketStream // from `@yume-chan/scrcpy`
-    .pipeTo(decoder.writable)
-    .catch(() => {});
-```
+<a href="https://opencollective.com/ya-webadb/backer/0/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/0/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/1/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/1/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/2/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/2/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/3/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/3/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/4/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/4/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/5/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/5/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/6/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/6/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/7/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/7/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/8/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/8/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/9/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/9/avatar.svg?requireActive=false"></a>
+<a href="https://opencollective.com/ya-webadb/backer/10/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/10/avatar.svg?requireActive=false"></a>
