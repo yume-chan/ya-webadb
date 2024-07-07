@@ -1,7 +1,7 @@
 coverage:
   status:
     project:
-      default: off
+      default: false
       struct:
         target: 80%
         flags:

@@ -1,6 +1,7 @@
 {
     "name": "@yume-chan/tsconfig",
     "version": "1.0.0",
+    "private": true,
     "devDependencies": {
         "prettier": "^3.3.2"
     }
