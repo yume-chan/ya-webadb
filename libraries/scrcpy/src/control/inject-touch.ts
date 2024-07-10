@@ -18,6 +18,7 @@ export enum AndroidMotionEventAction {
 }
 
 export enum AndroidMotionEventButton {
+    None,
     Primary = 0x01,
     Secondary = 0x02,
     Tertiary = 0x04,
