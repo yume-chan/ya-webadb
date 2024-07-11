@@ -190,8 +190,7 @@ describe("Types", () => {
                     );
 
                     const targetArray = new Uint8Array(size);
-                    const targetView = new DataView(targetArray.buffer);
-                    fieldValue.serialize(targetView, targetArray, 0);
+                    fieldValue.serialize(targetArray, 0);
 
                     expect(targetArray).toEqual(sourceArray);
                 });
@@ -220,8 +219,7 @@ describe("Types", () => {
                     fieldValue.set(sourceArray);
 
                     const targetArray = new Uint8Array(size);
-                    const targetView = new DataView(targetArray.buffer);
-                    fieldValue.serialize(targetView, targetArray, 0);
+                    fieldValue.serialize(targetArray, 0);
 
                     expect(targetArray).toEqual(sourceArray);
                 });

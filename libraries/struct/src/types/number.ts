@@ -4,6 +4,10 @@ import {
     getInt8,
     getUint16,
     getUint32,
+    setInt16,
+    setInt32,
+    setUint16,
+    setUint32,
 } from "@yume-chan/no-data-view";
 
 import type {
@@ -21,7 +25,7 @@ export interface NumberFieldVariant {
     size: number;
     deserialize(array: Uint8Array, littleEndian: boolean): number;
     serialize(
-        dataView: DataView,
+        array: Uint8Array,
         offset: number,
         value: number,
         littleEndian: boolean,
@@ -35,8 +39,8 @@ export namespace NumberFieldVariant {
         deserialize(array) {
             return array[0]!;
         },
-        serialize(dataView, offset, value) {
-            dataView.setUint8(offset, value);
+        serialize(array, offset, value) {
+            array[offset] = value;
         },
     };
 
@@ -46,8 +50,8 @@ export namespace NumberFieldVariant {
         deserialize(array) {
             return getInt8(array, 0);
         },
-        serialize(dataView, offset, value) {
-            dataView.setInt8(offset, value);
+        serialize(array, offset, value) {
+            array[offset] = value;
         },
     };
 
@@ -55,14 +59,9 @@ export namespace NumberFieldVariant {
         signed: false,
         size: 2,
         deserialize(array, littleEndian) {
-            // PERF: Creating many `DataView`s over small buffers is 90% slower
-            // than this. Even if the `DataView` is cached, `DataView#getUint16`
-            // is still 1% slower than this.
             return getUint16(array, 0, littleEndian);
         },
-        serialize(dataView, offset, value, littleEndian) {
-            dataView.setUint16(offset, value, littleEndian);
-        },
+        serialize: setUint16,
     };
 
     export const Int16: NumberFieldVariant = {
@@ -71,9 +70,7 @@ export namespace NumberFieldVariant {
         deserialize(array, littleEndian) {
             return getInt16(array, 0, littleEndian);
         },
-        serialize(dataView, offset, value, littleEndian) {
-            dataView.setInt16(offset, value, littleEndian);
-        },
+        serialize: setInt16,
     };
 
     export const Uint32: NumberFieldVariant = {
@@ -82,9 +79,7 @@ export namespace NumberFieldVariant {
         deserialize(array, littleEndian) {
             return getUint32(array, 0, littleEndian);
         },
-        serialize(dataView, offset, value, littleEndian) {
-            dataView.setUint32(offset, value, littleEndian);
-        },
+        serialize: setUint32,
     };
 
     export const Int32: NumberFieldVariant = {
@@ -93,9 +88,7 @@ export namespace NumberFieldVariant {
         deserialize(array, littleEndian) {
             return getInt32(array, 0, littleEndian);
         },
-        serialize(dataView, offset, value, littleEndian) {
-            dataView.setInt32(offset, value, littleEndian);
-        },
+        serialize: setInt32,
     };
 }
 
@@ -155,9 +148,9 @@ export class NumberFieldDefinition<
 export class NumberFieldValue<
     TDefinition extends NumberFieldDefinition<NumberFieldVariant, unknown>,
 > extends StructFieldValue<TDefinition> {
-    serialize(dataView: DataView, _: Uint8Array, offset: number): void {
+    serialize(array: Uint8Array, offset: number): void {
         this.definition.variant.serialize(
-            dataView,
+            array,
             offset,
             this.value as never,
             this.options.littleEndian,

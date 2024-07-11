@@ -39,12 +39,10 @@ class MockLengthFieldValue extends StructFieldValue<any> {
         void value;
     });
 
-    serialize = jest.fn(
-        (dataView: DataView, _: Uint8Array, offset: number): void => {
-            void dataView;
-            void offset;
-        },
-    );
+    serialize = jest.fn((array: Uint8Array, offset: number): void => {
+        void array;
+        void offset;
+    });
 }
 
 describe("Types", () => {
@@ -64,12 +62,7 @@ describe("Types", () => {
 
             override getSize = jest.fn(() => this.size);
 
-            override serialize(
-                dataView: DataView,
-                array: Uint8Array,
-                offset: number,
-            ): void {
-                void dataView;
+            override serialize(array: Uint8Array, offset: number): void {
                 void array;
                 void offset;
                 throw new Error("Method not implemented.");
@@ -174,13 +167,12 @@ describe("Types", () => {
                         mockBufferFieldValue,
                     );
 
-                const dataView = {} as any;
                 const array = {} as any;
                 const offset = {} as any;
 
                 mockOriginalFieldValue.value = 10;
                 mockBufferFieldValue.size = 0;
-                lengthFieldValue.serialize(dataView, array, offset);
+                lengthFieldValue.serialize(array, offset);
                 expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.get).toHaveReturnedWith(10);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
@@ -189,7 +181,6 @@ describe("Types", () => {
                     1,
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    dataView,
                     array,
                     offset,
                 );
@@ -197,14 +188,13 @@ describe("Types", () => {
                 mockOriginalFieldValue.set.mockClear();
                 mockOriginalFieldValue.serialize.mockClear();
                 mockBufferFieldValue.size = 100;
-                lengthFieldValue.serialize(dataView, array, offset);
+                lengthFieldValue.serialize(array, offset);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(100);
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
                     1,
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    dataView,
                     array,
                     offset,
                 );
@@ -219,13 +209,12 @@ describe("Types", () => {
                         mockBufferFieldValue,
                     );
 
-                const dataView = {} as any;
                 const array = {} as any;
                 const offset = {} as any;
 
                 mockOriginalFieldValue.value = "10";
                 mockBufferFieldValue.size = 0;
-                lengthFieldValue.serialize(dataView, array, offset);
+                lengthFieldValue.serialize(array, offset);
                 expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.get).toHaveReturnedWith("10");
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
@@ -234,7 +223,6 @@ describe("Types", () => {
                     1,
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    dataView,
                     array,
                     offset,
                 );
@@ -242,14 +230,13 @@ describe("Types", () => {
                 mockOriginalFieldValue.set.mockClear();
                 mockOriginalFieldValue.serialize.mockClear();
                 mockBufferFieldValue.size = 100;
-                lengthFieldValue.serialize(dataView, array, offset);
+                lengthFieldValue.serialize(array, offset);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledWith("100");
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
                     1,
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    dataView,
                     array,
                     offset,
                 );
@@ -268,13 +255,12 @@ describe("Types", () => {
                 mockBufferFieldValue.definition.options.lengthFieldRadix =
                     radix;
 
-                const dataView = {} as any;
                 const array = {} as any;
                 const offset = {} as any;
 
                 mockOriginalFieldValue.value = "10";
                 mockBufferFieldValue.size = 0;
-                lengthFieldValue.serialize(dataView, array, offset);
+                lengthFieldValue.serialize(array, offset);
                 expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.get).toHaveReturnedWith("10");
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
@@ -283,7 +269,6 @@ describe("Types", () => {
                     1,
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    dataView,
                     array,
                     offset,
                 );
@@ -291,7 +276,7 @@ describe("Types", () => {
                 mockOriginalFieldValue.set.mockClear();
                 mockOriginalFieldValue.serialize.mockClear();
                 mockBufferFieldValue.size = 100;
-                lengthFieldValue.serialize(dataView, array, offset);
+                lengthFieldValue.serialize(array, offset);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
                 expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(
                     (100).toString(radix),
@@ -300,7 +285,6 @@ describe("Types", () => {
                     1,
                 );
                 expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    dataView,
                     array,
                     offset,
                 );

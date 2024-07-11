@@ -9,24 +9,24 @@ import {
 
 describe("ScrcpyFloatToInt16NumberType", () => {
     it("should serialize", () => {
-        const dataView = new DataView(new ArrayBuffer(2));
-        ScrcpySignedFloatNumberVariant.serialize(dataView, 0, -1, true);
-        expect(dataView.getInt16(0, true)).toBe(-0x8000);
+        const array = new Uint8Array(2);
+        ScrcpySignedFloatNumberVariant.serialize(array, 0, -1, true);
+        expect(new DataView(array.buffer).getInt16(0, true)).toBe(-0x8000);
 
-        ScrcpySignedFloatNumberVariant.serialize(dataView, 0, 0, true);
-        expect(dataView.getInt16(0, true)).toBe(0);
+        ScrcpySignedFloatNumberVariant.serialize(array, 0, 0, true);
+        expect(new DataView(array.buffer).getInt16(0, true)).toBe(0);
 
-        ScrcpySignedFloatNumberVariant.serialize(dataView, 0, 1, true);
-        expect(dataView.getInt16(0, true)).toBe(0x7fff);
+        ScrcpySignedFloatNumberVariant.serialize(array, 0, 1, true);
+        expect(new DataView(array.buffer).getInt16(0, true)).toBe(0x7fff);
     });
 
     it("should clamp input values", () => {
-        const dataView = new DataView(new ArrayBuffer(2));
-        ScrcpySignedFloatNumberVariant.serialize(dataView, 0, -2, true);
-        expect(dataView.getInt16(0, true)).toBe(-0x8000);
+        const array = new Uint8Array(2);
+        ScrcpySignedFloatNumberVariant.serialize(array, 0, -2, true);
+        expect(new DataView(array.buffer).getInt16(0, true)).toBe(-0x8000);
 
-        ScrcpySignedFloatNumberVariant.serialize(dataView, 0, 2, true);
-        expect(dataView.getInt16(0, true)).toBe(0x7fff);
+        ScrcpySignedFloatNumberVariant.serialize(array, 0, 2, true);
+        expect(new DataView(array.buffer).getInt16(0, true)).toBe(0x7fff);
     });
 
     it("should deserialize", () => {

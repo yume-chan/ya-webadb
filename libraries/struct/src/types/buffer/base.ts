@@ -188,7 +188,7 @@ export class BufferLikeFieldValue<
         this.array = undefined;
     }
 
-    override serialize(_: DataView, array: Uint8Array, offset: number): void {
+    override serialize(array: Uint8Array, offset: number): void {
         this.array ??= this.definition.converter.toBuffer(this.value);
         array.set(this.array, offset);
     }

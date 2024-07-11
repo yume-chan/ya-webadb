@@ -1,4 +1,4 @@
-import { getUint16 } from "@yume-chan/no-data-view";
+import { getUint16, setUint16 } from "@yume-chan/no-data-view";
 import type { NumberFieldVariant } from "@yume-chan/struct";
 import { NumberFieldDefinition } from "@yume-chan/struct";
 
@@ -22,11 +22,11 @@ export const ScrcpyUnsignedFloatNumberVariant: NumberFieldVariant = {
         // https://github.com/Genymobile/scrcpy/blob/1f138aef41de651668043b32c4effc2d4adbfc44/server/src/main/java/com/genymobile/scrcpy/Binary.java#L22
         return value === 0xffff ? 1 : value / 0x10000;
     },
-    serialize(dataView, offset, value, littleEndian) {
+    serialize(array, offset, value, littleEndian) {
         // https://github.com/Genymobile/scrcpy/blob/1f138aef41de651668043b32c4effc2d4adbfc44/app/src/util/binary.h#L51
         value = clamp(value, -1, 1);
         value = value === 1 ? 0xffff : value * 0x10000;
-        dataView.setUint16(offset, value, littleEndian);
+        setUint16(array, offset, value, littleEndian);
     },
 };
 

@@ -690,14 +690,9 @@ export class Struct<
             throw new TypeError("Output buffer is too small");
         }
 
-        const dataView = new DataView(
-            output.buffer,
-            output.byteOffset,
-            output.byteLength,
-        );
         let offset = 0;
         for (const { fieldValue, size } of fieldsInfo) {
-            fieldValue.serialize(dataView, output, offset);
+            fieldValue.serialize(output, offset);
             offset += size;
         }
 

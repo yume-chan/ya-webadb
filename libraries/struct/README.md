@@ -93,7 +93,6 @@ Some features can be polyfilled to support older runtimes, but this library does
 | [`Promise`][mdn_promise]         | 32     | 12   | 29      | No                | 8      | 0.12    |
 | [`ArrayBuffer`][mdn_arraybuffer] | 7      | 12   | 4       | 10                | 5.1    | 0.10    |
 | [`Uint8Array`][mdn_uint8array]   | 7      | 12   | 4       | 10                | 5.1    | 0.10    |
-| [`DataView`][mdn_dataview]       | 9      | 12   | 15      | 10                | 5.1    | 0.10    |
 | _Overall_                        | 32     | 12   | 29      | No                | 8      | 0.12    |
 
 ### [`int64`/`uint64`](#int64uint64-1)
@@ -115,9 +114,7 @@ Some features can be polyfilled to support older runtimes, but this library does
 [mdn_promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
 [mdn_arraybuffer]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
 [mdn_uint8array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array
-[mdn_dataview]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
 [mdn_bigint]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
-[mdn_dataview]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
 [mdn_textencoder]: https://developer.mozilla.org/en-US/docs/Web/API/TextEncoder
 
 ## API
@@ -169,7 +166,7 @@ class Struct<
     TFields extends object = {},
     TOmitInitKey extends string | number | symbol = never,
     TExtra extends object = {},
-    TPostDeserialized = undefined
+    TPostDeserialized = undefined,
 > {
     public constructor(options: Partial<StructOptions> = StructDefaultOptions);
 }
@@ -640,7 +637,7 @@ struct.field("foo", new NumberFieldDefinition(NumberFieldType.Int8));
 abstract class StructFieldDefinition<
     TOptions = void,
     TValue = unknown,
-    TOmitInitKey extends PropertyKey = never
+    TOmitInitKey extends PropertyKey = never,
 > {
     public readonly options: TOptions;
 
@@ -742,9 +739,9 @@ If one needs to manipulate other states when getting/setting values, they can ov
 
 ```ts
 abstract serialize(
-    dataView: DataView,
+    array: Uint8Array,
     offset: number
 ): void;
 ```
 
-Derived classes must implement this method to serialize current value into `dataView`, from `offset`. It must not write more bytes than what its `getSize` returned.
+Derived classes must implement this method to serialize current value into `array`, from `offset`. It must not write more bytes than what its `getSize` returned.
