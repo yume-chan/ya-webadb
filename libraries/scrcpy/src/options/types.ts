@@ -115,9 +115,10 @@ export abstract class ScrcpyOptions<T extends object> {
         this.value = value as Required<T>;
 
         if (Base !== undefined) {
-            // `value` might be incompatible with `Base`,
-            // but the derive class must ensure the incompatible values are not used by base class,
-            // and only the `setListXXX` methods in base class will modify the value,
+            // `value` can be incompatible with `Base`,
+            // as long as the derived class handles the incompatibility,
+            // (and ensure the incompatible values are not used in `Base`).
+            // On other hand, only the `setListXXX` methods in `Base` will modify `value`,
             // which is common to all versions.
             //
             // `Base` is a derived class of `ScrcpyOptions`, its constructor will call
@@ -219,5 +220,34 @@ export abstract class ScrcpyOptions<T extends object> {
 
     createScrollController(): ScrcpyScrollController {
         return this.#base.createScrollController();
+    }
+}
+
+/**
+ * Blanket implementation of unsupported features in ScrcpyOptions1_16
+ */
+export class ScrcpyOptions0_00 extends ScrcpyOptions<never> {
+    get defaults(): Required<never> {
+        throw new Error("Not supported");
+    }
+
+    serialize(): string[] {
+        throw new Error("Not supported");
+    }
+
+    constructor(init: never) {
+        super(undefined, init, {} as never);
+    }
+
+    override setListEncoders(): void {
+        throw new Error("Not supported");
+    }
+
+    override parseEncoder(): ScrcpyEncoder | undefined {
+        throw new Error("Not supported");
+    }
+
+    override parseDeviceMessage(id: number): Promise<void> {
+        throw new Error(`Unknown device message type ${id}`);
     }
 }

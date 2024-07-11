@@ -142,9 +142,9 @@ export class BufferedReadableStream implements AsyncExactReadable {
                     const { done, value } = await this.reader.read();
                     if (done) {
                         return;
-                    } else {
-                        await controller.enqueue(value);
                     }
+
+                    await controller.enqueue(value);
                 }
             });
         } else {

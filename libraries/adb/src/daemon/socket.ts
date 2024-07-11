@@ -138,20 +138,7 @@ export class AdbDaemonSocketController
     }
 
     async enqueue(data: Uint8Array) {
-        // Consumers can `cancel` the `readable` if they are not interested in future data.
-        // Throw away the data if that happens.
-        if (this.#readableController.abortSignal.aborted) {
-            return;
-        }
-
-        try {
-            await this.#readableController.enqueue(data);
-        } catch (e) {
-            if (this.#readableController.abortSignal.aborted) {
-                return;
-            }
-            throw e;
-        }
+        await this.#readableController.enqueue(data);
     }
 
     public ack(bytes: number) {
@@ -182,23 +169,13 @@ export class AdbDaemonSocketController
     }
 
     dispose() {
-        try {
-            this.#readableController.close();
-        } catch {
-            // ignore
-        }
-
+        this.#readableController.close();
         this.#closedPromise.resolve();
     }
 }
 
 /**
  * A duplex stream representing a socket to ADB daemon.
- *
- * To close it, call either `socket.close()`,
- * `socket.readable.cancel()`, `socket.readable.getReader().cancel()`,
- * `socket.writable.abort()`, `socket.writable.getWriter().abort()`,
- * `socket.writable.close()` or `socket.writable.getWriter().close()`.
  */
 export class AdbDaemonSocket implements AdbDaemonSocketInfo, AdbSocket {
     #controller: AdbDaemonSocketController;

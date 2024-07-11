@@ -28,8 +28,8 @@ export enum AdbShellProtocolId {
     WindowSizeChange,
 }
 
-// This packet format is used in both direction.
-const AdbShellProtocolPacket = new Struct({ littleEndian: true })
+// This packet format is used in both directions.
+export const AdbShellProtocolPacket = new Struct({ littleEndian: true })
     .uint8("id", placeholder<AdbShellProtocolId>())
     .uint32("length")
     .uint8Array("data", { lengthField: "length" });
@@ -107,14 +107,10 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                                 this.#exit.resolve(chunk.data[0]!);
                                 break;
                             case AdbShellProtocolId.Stdout:
-                                if (!stdoutController.abortSignal.aborted) {
-                                    await stdoutController.enqueue(chunk.data);
-                                }
+                                await stdoutController.enqueue(chunk.data);
                                 break;
                             case AdbShellProtocolId.Stderr:
-                                if (!stderrController.abortSignal.aborted) {
-                                    await stderrController.enqueue(chunk.data);
-                                }
+                                await stderrController.enqueue(chunk.data);
                                 break;
                         }
                     },

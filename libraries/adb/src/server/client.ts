@@ -125,11 +125,7 @@ class AdbServerStream {
     async dispose() {
         await this.#buffered.cancel().catch(NOOP);
         await this.#writer.close().catch(NOOP);
-        try {
-            await this.#connection.close();
-        } catch {
-            // ignore
-        }
+        await this.#connection.close();
     }
 }
 

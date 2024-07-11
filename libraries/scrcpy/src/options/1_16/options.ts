@@ -28,8 +28,12 @@ import type {
     ScrcpyVideoStreamMetadata,
 } from "../codec.js";
 import { ScrcpyVideoCodecId } from "../codec.js";
-import type { ScrcpyDisplay, ScrcpyEncoder } from "../types.js";
-import { ScrcpyOptions, toScrcpyOptionValue } from "../types.js";
+import type { ScrcpyDisplay } from "../types.js";
+import {
+    ScrcpyOptions,
+    ScrcpyOptions0_00,
+    toScrcpyOptionValue,
+} from "../types.js";
 
 import { CodecOptions } from "./codec-options.js";
 import type { ScrcpyOptionsInit1_16 } from "./init.js";
@@ -123,7 +127,7 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
     }
 
     constructor(init: ScrcpyOptionsInit1_16) {
-        super(undefined, init, ScrcpyOptions1_16.DEFAULTS);
+        super(ScrcpyOptions0_00, init, ScrcpyOptions1_16.DEFAULTS);
         this.#clipboard = new PushReadableStream<string>((controller) => {
             this.#clipboardController = controller;
         });
@@ -136,19 +140,11 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
         );
     }
 
-    override setListEncoders(): void {
-        throw new Error("Not supported");
-    }
-
     override setListDisplays(): void {
         // Set to an invalid value
         // Server will print valid values before crashing
         // (server will crash before opening sockets)
         this.value.displayId = -1;
-    }
-
-    override parseEncoder(): ScrcpyEncoder | undefined {
-        throw new Error("Not supported");
     }
 
     override parseDisplay(line: string): ScrcpyDisplay | undefined {
@@ -185,43 +181,28 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     async #parseClipboardMessage(stream: AsyncExactReadable) {
         const message = await ScrcpyClipboardDeviceMessage.deserialize(stream);
-        // Allow `clipboard.cancel()` to discard messages
-        if (!this.#clipboardController.abortSignal.aborted) {
-            await this.#clipboardController.enqueue(message.content);
-        }
+        await this.#clipboardController.enqueue(message.content);
     }
 
     override async parseDeviceMessage(
         id: number,
         stream: AsyncExactReadable,
     ): Promise<void> {
-        try {
-            switch (id) {
-                case 0:
-                    await this.#parseClipboardMessage(stream);
-                    break;
-                default:
-                    throw new Error(`Unknown device message type ${id}`);
-            }
-        } catch (e) {
-            try {
-                this.#clipboardController.error(e);
-            } catch {
-                // The stream is already errored
-            }
-            throw e;
+        switch (id) {
+            case 0:
+                await this.#parseClipboardMessage(stream);
+                break;
+            default:
+                await super.parseDeviceMessage(id, stream);
+                break;
         }
     }
 
     override endDeviceMessageStream(e?: unknown): void {
-        try {
-            if (e) {
-                this.#clipboardController.error(e);
-            } else {
-                this.#clipboardController.close();
-            }
-        } catch {
-            // The stream is already errored
+        if (e) {
+            this.#clipboardController.error(e);
+        } else {
+            this.#clipboardController.close();
         }
     }
 
