@@ -1,11 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 import { PromiseResolver } from "@yume-chan/async";
-import {
-    ReadableStream,
-    type ReadableStreamDefaultController,
-    WritableStream,
-} from "@yume-chan/stream-extra";
-import { type AdbSocket } from "../../../adb.js";
+import type { ReadableStreamDefaultController } from "@yume-chan/stream-extra";
+import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
+
+import type { AdbSocket } from "../../../adb.js";
+
 import {
     AdbShellProtocolId,
     AdbShellProtocolPacket,
@@ -85,7 +84,7 @@ describe("AdbSubprocessShellProtocol", () => {
             const stdoutReader = process.stdout.getReader();
             const stderrReader = process.stderr.getReader();
 
-            stdoutReader.cancel();
+            await stdoutReader.cancel();
             closed.resolve();
 
             await expect(stderrReader.read()).resolves.toEqual({
@@ -102,17 +101,15 @@ describe("AdbSubprocessShellProtocol", () => {
     describe("`socket` close", () => {
         describe("with `exit` message", () => {
             it("should close `stdout`, `stderr` and resolve `exit`", async () => {
-                const [socket, closed] = createMockSocket(
-                    async (controller) => {
-                        controller.enqueue(
-                            AdbShellProtocolPacket.serialize({
-                                id: AdbShellProtocolId.Exit,
-                                data: new Uint8Array([42]),
-                            }),
-                        );
-                        controller.close();
-                    },
-                );
+                const [socket, closed] = createMockSocket((controller) => {
+                    controller.enqueue(
+                        AdbShellProtocolPacket.serialize({
+                            id: AdbShellProtocolId.Exit,
+                            data: new Uint8Array([42]),
+                        }),
+                    );
+                    controller.close();
+                });
 
                 const process = new AdbSubprocessShellProtocol(socket);
                 const stdoutReader = process.stdout.getReader();
@@ -175,7 +172,7 @@ describe("AdbSubprocessShellProtocol", () => {
 
     describe("`socket.readable` invalid data", () => {
         it("should error `stdout`, `stderr` and reject `exit`", async () => {
-            const [socket, closed] = createMockSocket(async (controller) => {
+            const [socket, closed] = createMockSocket((controller) => {
                 controller.enqueue(new Uint8Array([7, 8, 9]));
                 controller.close();
             });
