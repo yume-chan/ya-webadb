@@ -15,16 +15,16 @@ importers:
   apps/cli:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../../libraries/adb
       '@yume-chan/adb-server-node-tcp':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../../libraries/adb-server-node-tcp
       '@yume-chan/android-bin':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../../libraries/android-bin
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../../libraries/stream-extra
       commander:
         specifier: ^12.1.0
@@ -58,16 +58,16 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/event':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../event
       '@yume-chan/no-data-view':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../no-data-view
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../struct
     devDependencies:
       '@jest/globals':
@@ -101,7 +101,7 @@ importers:
   libraries/adb-credential-web:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../adb
     devDependencies:
       '@yume-chan/eslint-config':
@@ -123,13 +123,13 @@ importers:
         specifier: ^1.0.10
         version: 1.0.10
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../struct
     devDependencies:
       '@jest/globals':
@@ -163,22 +163,22 @@ importers:
   libraries/adb-scrcpy:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../adb
       '@yume-chan/async':
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/event':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../event
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../scrcpy
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../struct
     devDependencies:
       '@jest/globals':
@@ -209,13 +209,13 @@ importers:
   libraries/adb-server-node-tcp:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../struct
     devDependencies:
       '@types/node':
@@ -240,13 +240,13 @@ importers:
   libraries/android-bin:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../struct
     devDependencies:
       '@jest/globals':
@@ -403,13 +403,13 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/no-data-view':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../no-data-view
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../struct
     devDependencies:
       '@jest/globals':
@@ -443,13 +443,13 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/event':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../event
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../scrcpy
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../stream-extra
       tinyh264:
         specifier: ^0.0.7
@@ -489,19 +489,19 @@ importers:
   libraries/scrcpy-decoder-webcodecs:
     dependencies:
       '@yume-chan/event':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../event
       '@yume-chan/no-data-view':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../no-data-view
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../scrcpy
       '@yume-chan/scrcpy-decoder-tinyh264':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../scrcpy-decoder-tinyh264
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../stream-extra
     devDependencies:
       '@jest/globals':
@@ -535,7 +535,7 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../struct
     devDependencies:
       '@jest/globals':
@@ -566,7 +566,7 @@ importers:
   libraries/struct:
     dependencies:
       '@yume-chan/no-data-view':
-        specifier: workspace:^0.0.24
+        specifier: workspace:0.0.0-20240714132542
         version: link:../no-data-view
     devDependencies:
       '@jest/globals':

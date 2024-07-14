@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/stream-extra",
-    "version": "0.0.24",
+    "version": "0.0.0-20240714132542",
     "description": "Extensions to Web Streams API",
     "keywords": [
         "stream",
@@ -34,7 +34,7 @@
     },
     "dependencies": {
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/struct": "workspace:^0.0.24"
+        "@yume-chan/struct": "workspace:0.0.0-20240714132542"
     },
     "devDependencies": {
         "@jest/globals": "^30.0.0-alpha.4",

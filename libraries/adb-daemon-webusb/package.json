@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-daemon-webusb",
-    "version": "0.0.24",
+    "version": "0.0.0-20240714132542",
     "description": "Adb daemon transport connection for `@yume-chan/adb` using WebUSB API.",
     "keywords": [
         "webusb",
@@ -34,9 +34,9 @@
     },
     "dependencies": {
         "@types/w3c-web-usb": "^1.0.10",
-        "@yume-chan/adb": "workspace:^0.0.24",
-        "@yume-chan/stream-extra": "workspace:^0.0.24",
-        "@yume-chan/struct": "workspace:^0.0.24"
+        "@yume-chan/adb": "workspace:0.0.0-20240714132542",
+        "@yume-chan/stream-extra": "workspace:0.0.0-20240714132542",
+        "@yume-chan/struct": "workspace:0.0.0-20240714132542"
     },
     "devDependencies": {
         "@jest/globals": "^30.0.0-alpha.4",

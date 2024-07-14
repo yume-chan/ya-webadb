@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/scrcpy-decoder-tinyh264",
-    "version": "0.0.24",
+    "version": "0.0.0-20240714132542",
     "description": "Raw H.264 stream decoder and renderer wrapping TinyH264 and YUVCanvas packages (software decoding).",
     "keywords": [
         "adb",
@@ -36,9 +36,9 @@
     },
     "dependencies": {
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/event": "workspace:^0.0.24",
-        "@yume-chan/scrcpy": "workspace:^0.0.24",
-        "@yume-chan/stream-extra": "workspace:^0.0.24",
+        "@yume-chan/event": "workspace:0.0.0-20240714132542",
+        "@yume-chan/scrcpy": "workspace:0.0.0-20240714132542",
+        "@yume-chan/stream-extra": "workspace:0.0.0-20240714132542",
         "tinyh264": "^0.0.7",
         "yuv-buffer": "^1.0.0",
         "yuv-canvas": "^1.2.11"
