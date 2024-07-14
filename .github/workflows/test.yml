@@ -27,7 +27,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - run: node common/scripts/install-run-rush.js install
-      - run: node common/scripts/install-run-rush.js build --verbose
-      - run: node common/scripts/install-run-rush.js test --verbose
-      - run: node common/scripts/install-run-rush.js lint --verbose
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: true
+
+      - run: pnpm run build
+      - run: pnpm run test
+      - run: pnpm run lint

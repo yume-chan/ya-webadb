@@ -19,9 +19,13 @@ jobs:
         with:
           node-version: 18
 
-      - run: node common/scripts/install-run-rush.js install
-      - run: node common/scripts/install-run-rush.js build --verbose
-      - run: node common/scripts/install-run-rush.js publish -p --include-all --set-access-level public
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: true
+
+      - run: pnpm run build
+      - run: pnpm recursive publish --access public
         env:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
