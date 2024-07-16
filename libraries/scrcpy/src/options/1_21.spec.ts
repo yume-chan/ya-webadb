@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { AndroidAvcProfile } from "../codec/index.js";
 
@@ -10,7 +11,7 @@ describe("ScrcpyOptions1_21", () => {
     describe("serialize", () => {
         it("should serialize empty value", () => {
             const options = new ScrcpyOptions1_21({});
-            expect(options.serialize()).toEqual([]);
+            assert.deepEqual(options.serialize(), []);
         });
 
         it("should omit primitive values same as default value", () => {
@@ -18,14 +19,14 @@ describe("ScrcpyOptions1_21", () => {
                 // Default value
                 sendFrameMeta: true,
             });
-            expect(options.serialize()).toEqual([]);
+            assert.deepEqual(options.serialize(), []);
         });
 
         it("should omit `ScrcpyOptionValue`s same as default value", () => {
             const options = new ScrcpyOptions1_21({
                 codecOptions: new CodecOptions(),
             });
-            expect(options.serialize()).toEqual([]);
+            assert.deepEqual(options.serialize(), []);
         });
 
         it("should convert ScrcpyOptionValue to string", () => {
@@ -34,7 +35,7 @@ describe("ScrcpyOptions1_21", () => {
                     profile: AndroidAvcProfile.High,
                 }),
             });
-            expect(options.serialize()).toEqual(["codec_options=profile=8"]);
+            assert.deepEqual(options.serialize(), ["codec_options=profile=8"]);
         });
     });
 });

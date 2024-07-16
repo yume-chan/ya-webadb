@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { Uint8ArrayBufferFieldConverter } from "./base.js";
 import { FixedLengthBufferLikeFieldDefinition } from "./fixed-length.js";
@@ -11,7 +12,7 @@ describe("Types", () => {
                     Uint8ArrayBufferFieldConverter.Instance,
                     { length: 10 },
                 );
-                expect(definition.getSize()).toBe(10);
+                assert.strictEqual(definition.getSize(), 10);
             });
         });
     });

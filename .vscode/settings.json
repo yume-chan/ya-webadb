@@ -114,7 +114,7 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "explorer.sortOrder": "mixed",
-    "prettier.prettierPath": "./common/temp/node_modules/prettier/index.cjs",
+    "prettier.prettierPath": "./node_modules/prettier/index.cjs",
     "cSpell.numSuggestions": 4,
     "cSpell.ignoreRegExpList": [
         "0x[0-9a-f_]+"

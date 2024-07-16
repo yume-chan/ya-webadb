@@ -1,11 +1,12 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { StructDefaultOptions } from "./options.js";
 
 describe("StructDefaultOptions", () => {
     describe(".littleEndian", () => {
         it("should be `false`", () => {
-            expect(StructDefaultOptions).toHaveProperty("littleEndian", false);
+            assert.strictEqual(StructDefaultOptions.littleEndian, false);
         });
     });
 });

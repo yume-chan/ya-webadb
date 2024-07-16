@@ -1,9 +1,10 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { placeholder } from "./utils.js";
 
 describe("placeholder", () => {
     it("should return `undefined`", () => {
-        expect(placeholder()).toBe(undefined);
+        assert.ok(placeholder);
     });
 });

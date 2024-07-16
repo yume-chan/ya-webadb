@@ -1,47 +1,53 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { IntentBuilder } from "./intent.js";
 
 describe("Intent", () => {
     describe("IntentBuilder", () => {
         it("should set intent action", () => {
-            expect(
+            assert.deepStrictEqual(
                 new IntentBuilder().setAction("test_action").build(),
-            ).toEqual(["-a", "test_action"]);
+                ["-a", "test_action"],
+            );
         });
 
         it("should set intent categories", () => {
-            expect(
+            assert.deepStrictEqual(
                 new IntentBuilder()
                     .addCategory("category_1")
                     .addCategory("category_2")
                     .build(),
-            ).toEqual(["-c", "category_1", "-c", "category_2"]);
+                ["-c", "category_1", "-c", "category_2"],
+            );
         });
 
         it("should set intent package", () => {
-            expect(new IntentBuilder().setPackage("package_1").build()).toEqual(
+            assert.deepStrictEqual(
+                new IntentBuilder().setPackage("package_1").build(),
                 ["-p", "package_1"],
             );
         });
 
         it("should set intent component", () => {
-            expect(
+            assert.deepStrictEqual(
                 new IntentBuilder().setComponent("component_1").build(),
-            ).toEqual(["-n", "component_1"]);
+                ["-n", "component_1"],
+            );
         });
 
         it("should set intent data", () => {
-            expect(new IntentBuilder().setData("data_1").build()).toEqual([
-                "-d",
-                "data_1",
-            ]);
+            assert.deepStrictEqual(
+                new IntentBuilder().setData("data_1").build(),
+                ["-d", "data_1"],
+            );
         });
 
         it("should pass intent extras", () => {
-            expect(
+            assert.deepStrictEqual(
                 new IntentBuilder().addStringExtra("key1", "value1").build(),
-            ).toEqual(["--es", "key1", "value1"]);
+                ["--es", "key1", "value1"],
+            );
         });
     });
 });

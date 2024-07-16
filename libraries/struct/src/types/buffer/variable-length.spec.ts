@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { describe, expect, it, jest } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import {
     StructDefaultOptions,
@@ -29,17 +30,17 @@ class MockLengthFieldValue extends StructFieldValue<any> {
 
     override value: string | number = 0;
 
-    override get = jest.fn((): string | number => this.value);
+    override get = mock.fn((): string | number => this.value);
 
     size = 0;
 
-    override getSize = jest.fn((): number => this.size);
+    override getSize = mock.fn((): number => this.size);
 
-    override set = jest.fn((value: string | number) => {
+    override set = mock.fn((value: string | number) => {
         void value;
     });
 
-    serialize = jest.fn((array: Uint8Array, offset: number): void => {
+    serialize = mock.fn((array: Uint8Array, offset: number): void => {
         void array;
         void offset;
     });
@@ -60,7 +61,7 @@ describe("Types", () => {
 
             size = 0;
 
-            override getSize = jest.fn(() => this.size);
+            override getSize = mock.fn(() => this.size);
 
             override serialize(array: Uint8Array, offset: number): void {
                 void array;
@@ -80,13 +81,19 @@ describe("Types", () => {
                     );
 
                 mockOriginalFieldValue.size = 0;
-                expect(lengthFieldValue.getSize()).toBe(0);
-                expect(mockOriginalFieldValue.getSize).toHaveBeenCalledTimes(1);
+                assert.strictEqual(lengthFieldValue.getSize(), 0);
+                assert.strictEqual(
+                    mockOriginalFieldValue.getSize.mock.callCount(),
+                    1,
+                );
 
-                mockOriginalFieldValue.getSize.mockClear();
+                mockOriginalFieldValue.getSize.mock.resetCalls();
                 mockOriginalFieldValue.size = 100;
-                expect(lengthFieldValue.getSize()).toBe(100);
-                expect(mockOriginalFieldValue.getSize).toHaveBeenCalledTimes(1);
+                assert.strictEqual(lengthFieldValue.getSize(), 100);
+                assert.strictEqual(
+                    mockOriginalFieldValue.getSize.mock.callCount(),
+                    1,
+                );
             });
         });
 
@@ -102,16 +109,28 @@ describe("Types", () => {
 
                 mockOriginalFieldValue.value = 0;
                 mockBufferFieldValue.size = 0;
-                expect(lengthFieldValue.get()).toBe(0);
-                expect(mockBufferFieldValue.getSize).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(lengthFieldValue.get(), 0);
+                assert.strictEqual(
+                    mockBufferFieldValue.getSize.mock.callCount(),
+                    1,
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.callCount(),
+                    1,
+                );
 
-                mockBufferFieldValue.getSize.mockClear();
-                mockOriginalFieldValue.get.mockClear();
+                mockBufferFieldValue.getSize.mock.resetCalls();
+                mockOriginalFieldValue.get.mock.resetCalls();
                 mockBufferFieldValue.size = 100;
-                expect(lengthFieldValue.get()).toBe(100);
-                expect(mockBufferFieldValue.getSize).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(lengthFieldValue.get(), 100);
+                assert.strictEqual(
+                    mockBufferFieldValue.getSize.mock.callCount(),
+                    1,
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.callCount(),
+                    1,
+                );
             });
 
             it("should return size of its `bufferValue` as string", () => {
@@ -125,16 +144,28 @@ describe("Types", () => {
                     );
 
                 mockBufferFieldValue.size = 0;
-                expect(lengthFieldValue.get()).toBe("0");
-                expect(mockBufferFieldValue.getSize).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(lengthFieldValue.get(), "0");
+                assert.strictEqual(
+                    mockBufferFieldValue.getSize.mock.callCount(),
+                    1,
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.callCount(),
+                    1,
+                );
 
-                mockBufferFieldValue.getSize.mockClear();
-                mockOriginalFieldValue.get.mockClear();
+                mockBufferFieldValue.getSize.mock.resetCalls();
+                mockOriginalFieldValue.get.mock.resetCalls();
                 mockBufferFieldValue.size = 100;
-                expect(lengthFieldValue.get()).toBe("100");
-                expect(mockBufferFieldValue.getSize).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(lengthFieldValue.get(), "100");
+                assert.strictEqual(
+                    mockBufferFieldValue.getSize.mock.callCount(),
+                    1,
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.callCount(),
+                    1,
+                );
             });
         });
 
@@ -150,10 +181,10 @@ describe("Types", () => {
 
                 mockOriginalFieldValue.value = 0;
                 mockBufferFieldValue.size = 0;
-                expect(lengthFieldValue.get()).toBe(0);
+                assert.strictEqual(lengthFieldValue.get(), 0);
 
                 (lengthFieldValue as StructFieldValue<any>).set(100);
-                expect(lengthFieldValue.get()).toBe(0);
+                assert.strictEqual(lengthFieldValue.get(), 0);
             });
         });
 
@@ -173,30 +204,50 @@ describe("Types", () => {
                 mockOriginalFieldValue.value = 10;
                 mockBufferFieldValue.size = 0;
                 lengthFieldValue.serialize(array, offset);
-                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toHaveReturnedWith(10);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(0);
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.callCount(),
                     1,
                 );
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    array,
-                    offset,
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.calls[0]?.result,
+                    10,
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.set.mock.callCount(),
+                    1,
+                );
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.set.mock.calls[0]?.arguments,
+                    [0],
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.serialize.mock.callCount(),
+                    1,
+                );
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.serialize.mock.calls[0]?.arguments,
+                    [array, offset],
                 );
 
-                mockOriginalFieldValue.set.mockClear();
-                mockOriginalFieldValue.serialize.mockClear();
+                mockOriginalFieldValue.set.mock.resetCalls();
+                mockOriginalFieldValue.serialize.mock.resetCalls();
                 mockBufferFieldValue.size = 100;
                 lengthFieldValue.serialize(array, offset);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(100);
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                assert.strictEqual(
+                    mockOriginalFieldValue.set.mock.callCount(),
                     1,
                 );
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    array,
-                    offset,
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.set.mock.calls[0]?.arguments,
+                    [100],
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.serialize.mock.callCount(),
+                    1,
+                );
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.serialize.mock.calls[0]?.arguments,
+                    [array, offset],
                 );
             });
 
@@ -215,30 +266,50 @@ describe("Types", () => {
                 mockOriginalFieldValue.value = "10";
                 mockBufferFieldValue.size = 0;
                 lengthFieldValue.serialize(array, offset);
-                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toHaveReturnedWith("10");
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith("0");
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.callCount(),
                     1,
                 );
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    array,
-                    offset,
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.calls[0]?.result,
+                    "10",
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.set.mock.callCount(),
+                    1,
+                );
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.set.mock.calls[0]?.arguments,
+                    ["0"],
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.serialize.mock.callCount(),
+                    1,
+                );
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.serialize.mock.calls[0]?.arguments,
+                    [array, offset],
                 );
 
-                mockOriginalFieldValue.set.mockClear();
-                mockOriginalFieldValue.serialize.mockClear();
+                mockOriginalFieldValue.set.mock.resetCalls();
+                mockOriginalFieldValue.serialize.mock.resetCalls();
                 mockBufferFieldValue.size = 100;
                 lengthFieldValue.serialize(array, offset);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith("100");
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                assert.strictEqual(
+                    mockOriginalFieldValue.set.mock.callCount(),
                     1,
                 );
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    array,
-                    offset,
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.set.mock.calls[0]?.arguments,
+                    ["100"],
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.serialize.mock.callCount(),
+                    1,
+                );
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.serialize.mock.calls[0]?.arguments,
+                    [array, offset],
                 );
             });
 
@@ -261,32 +332,50 @@ describe("Types", () => {
                 mockOriginalFieldValue.value = "10";
                 mockBufferFieldValue.size = 0;
                 lengthFieldValue.serialize(array, offset);
-                expect(mockOriginalFieldValue.get).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.get).toHaveReturnedWith("10");
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith("0");
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.callCount(),
                     1,
                 );
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    array,
-                    offset,
+                assert.strictEqual(
+                    mockOriginalFieldValue.get.mock.calls[0]?.result,
+                    "10",
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.set.mock.callCount(),
+                    1,
+                );
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.set.mock.calls[0]?.arguments,
+                    ["0"],
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.serialize.mock.callCount(),
+                    1,
+                );
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.serialize.mock.calls[0]?.arguments,
+                    [array, offset],
                 );
 
-                mockOriginalFieldValue.set.mockClear();
-                mockOriginalFieldValue.serialize.mockClear();
+                mockOriginalFieldValue.set.mock.resetCalls();
+                mockOriginalFieldValue.serialize.mock.resetCalls();
                 mockBufferFieldValue.size = 100;
                 lengthFieldValue.serialize(array, offset);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledTimes(1);
-                expect(mockOriginalFieldValue.set).toHaveBeenCalledWith(
-                    (100).toString(radix),
-                );
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledTimes(
+                assert.strictEqual(
+                    mockOriginalFieldValue.set.mock.callCount(),
                     1,
                 );
-                expect(mockOriginalFieldValue.serialize).toHaveBeenCalledWith(
-                    array,
-                    offset,
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.set.mock.calls[0]?.arguments,
+                    [(100).toString(radix)],
+                );
+                assert.strictEqual(
+                    mockOriginalFieldValue.serialize.mock.callCount(),
+                    1,
+                );
+                assert.deepStrictEqual(
+                    mockOriginalFieldValue.serialize.mock.calls[0]?.arguments,
+                    [array, offset],
                 );
             });
         });
@@ -317,18 +406,18 @@ describe("Types", () => {
                         value,
                     );
 
-                expect(bufferFieldValue).toHaveProperty(
-                    "definition",
+                assert.strictEqual(
+                    bufferFieldValue.definition,
                     bufferFieldDefinition,
                 );
-                expect(bufferFieldValue).toHaveProperty(
-                    "options",
+                assert.strictEqual(
+                    bufferFieldValue.options,
                     StructDefaultOptions,
                 );
-                expect(bufferFieldValue).toHaveProperty("struct", struct);
-                expect(bufferFieldValue).toHaveProperty("value", value);
-                expect(bufferFieldValue).toHaveProperty("array", undefined);
-                expect(bufferFieldValue).toHaveProperty("length", undefined);
+                assert.strictEqual(bufferFieldValue.struct, struct);
+                assert.deepStrictEqual(bufferFieldValue["value"], value);
+                assert.strictEqual(bufferFieldValue["array"], undefined);
+                assert.strictEqual(bufferFieldValue["length"], undefined);
             });
 
             it("should accept initial `array`", () => {
@@ -355,18 +444,18 @@ describe("Types", () => {
                         value,
                     );
 
-                expect(bufferFieldValue).toHaveProperty(
-                    "definition",
+                assert.strictEqual(
+                    bufferFieldValue.definition,
                     bufferFieldDefinition,
                 );
-                expect(bufferFieldValue).toHaveProperty(
-                    "options",
+                assert.strictEqual(
+                    bufferFieldValue.options,
                     StructDefaultOptions,
                 );
-                expect(bufferFieldValue).toHaveProperty("struct", struct);
-                expect(bufferFieldValue).toHaveProperty("value", value);
-                expect(bufferFieldValue).toHaveProperty("array", value);
-                expect(bufferFieldValue).toHaveProperty("length", value.length);
+                assert.strictEqual(bufferFieldValue.struct, struct);
+                assert.deepStrictEqual(bufferFieldValue["value"], value);
+                assert.deepStrictEqual(bufferFieldValue["array"], value);
+                assert.strictEqual(bufferFieldValue["length"], value.length);
             });
 
             it("should replace `lengthField` on `struct`", () => {
@@ -392,10 +481,12 @@ describe("Types", () => {
                         value,
                     );
 
-                expect(bufferFieldValue["lengthFieldValue"]).toBeInstanceOf(
-                    StructFieldValue,
+                assert.ok(
+                    bufferFieldValue["lengthFieldValue"] instanceof
+                        StructFieldValue,
                 );
-                expect(struct.fieldValues[lengthField]).toBe(
+                assert.strictEqual(
+                    struct.fieldValues[lengthField],
                     bufferFieldValue["lengthFieldValue"],
                 );
             });
@@ -403,11 +494,11 @@ describe("Types", () => {
 
         describe("#getSize", () => {
             class MockBufferFieldConverter extends BufferFieldConverter<Uint8Array> {
-                override toBuffer = jest.fn((value: Uint8Array): Uint8Array => {
+                override toBuffer = mock.fn((value: Uint8Array): Uint8Array => {
                     return value;
                 });
 
-                override toValue = jest.fn(
+                override toValue = mock.fn(
                     (arrayBuffer: Uint8Array): Uint8Array => {
                         return arrayBuffer;
                     },
@@ -415,7 +506,7 @@ describe("Types", () => {
 
                 size: number | undefined = 0;
 
-                override getSize = jest.fn(
+                override getSize = mock.fn(
                     (value: Uint8Array): number | undefined => {
                         void value;
                         return this.size;
@@ -448,10 +539,19 @@ describe("Types", () => {
                         value,
                     );
 
-                expect(bufferFieldValue.getSize()).toBe(100);
-                expect(bufferFieldConverter.toValue).toHaveBeenCalledTimes(0);
-                expect(bufferFieldConverter.toBuffer).toHaveBeenCalledTimes(0);
-                expect(bufferFieldConverter.getSize).toHaveBeenCalledTimes(0);
+                assert.strictEqual(bufferFieldValue.getSize(), 100);
+                assert.strictEqual(
+                    bufferFieldConverter.toValue.mock.callCount(),
+                    0,
+                );
+                assert.strictEqual(
+                    bufferFieldConverter.toBuffer.mock.callCount(),
+                    0,
+                );
+                assert.strictEqual(
+                    bufferFieldConverter.getSize.mock.callCount(),
+                    0,
+                );
             });
 
             it("should call `getSize` of its `converter`", () => {
@@ -479,12 +579,21 @@ describe("Types", () => {
                     );
 
                 bufferFieldConverter.size = 100;
-                expect(bufferFieldValue.getSize()).toBe(100);
-                expect(bufferFieldConverter.toValue).toHaveBeenCalledTimes(0);
-                expect(bufferFieldConverter.toBuffer).toHaveBeenCalledTimes(0);
-                expect(bufferFieldConverter.getSize).toHaveBeenCalledTimes(1);
-                expect(bufferFieldValue).toHaveProperty("array", undefined);
-                expect(bufferFieldValue).toHaveProperty("length", 100);
+                assert.strictEqual(bufferFieldValue.getSize(), 100);
+                assert.strictEqual(
+                    bufferFieldConverter.toValue.mock.callCount(),
+                    0,
+                );
+                assert.strictEqual(
+                    bufferFieldConverter.toBuffer.mock.callCount(),
+                    0,
+                );
+                assert.strictEqual(
+                    bufferFieldConverter.getSize.mock.callCount(),
+                    1,
+                );
+                assert.strictEqual(bufferFieldValue["array"], undefined);
+                assert.strictEqual(bufferFieldValue["length"], 100);
             });
 
             it("should call `toBuffer` of its `converter` if it does not support `getSize`", () => {
@@ -512,12 +621,21 @@ describe("Types", () => {
                     );
 
                 bufferFieldConverter.size = undefined;
-                expect(bufferFieldValue.getSize()).toBe(100);
-                expect(bufferFieldConverter.toValue).toHaveBeenCalledTimes(0);
-                expect(bufferFieldConverter.toBuffer).toHaveBeenCalledTimes(1);
-                expect(bufferFieldConverter.getSize).toHaveBeenCalledTimes(1);
-                expect(bufferFieldValue).toHaveProperty("array", value);
-                expect(bufferFieldValue).toHaveProperty("length", 100);
+                assert.strictEqual(bufferFieldValue.getSize(), 100);
+                assert.strictEqual(
+                    bufferFieldConverter.toValue.mock.callCount(),
+                    0,
+                );
+                assert.strictEqual(
+                    bufferFieldConverter.toBuffer.mock.callCount(),
+                    1,
+                );
+                assert.strictEqual(
+                    bufferFieldConverter.getSize.mock.callCount(),
+                    1,
+                );
+                assert.strictEqual(bufferFieldValue["array"], value);
+                assert.strictEqual(bufferFieldValue["length"], 100);
             });
         });
 
@@ -548,8 +666,8 @@ describe("Types", () => {
 
                 const newValue = new ArrayBuffer(100);
                 bufferFieldValue.set(newValue);
-                expect(bufferFieldValue.get()).toBe(newValue);
-                expect(bufferFieldValue).toHaveProperty("array", undefined);
+                assert.strictEqual(bufferFieldValue.get(), newValue);
+                assert.strictEqual(bufferFieldValue["array"], undefined);
             });
 
             it("should clear length", () => {
@@ -578,7 +696,7 @@ describe("Types", () => {
 
                 const newValue = new ArrayBuffer(100);
                 bufferFieldValue.set(newValue);
-                expect(bufferFieldValue).toHaveProperty("length", undefined);
+                assert.strictEqual(bufferFieldValue["length"], undefined);
             });
         });
     });
@@ -590,7 +708,7 @@ describe("Types", () => {
                     Uint8ArrayBufferFieldConverter.Instance,
                     { lengthField: "foo" },
                 );
-                expect(definition.getSize()).toBe(0);
+                assert.strictEqual(definition.getSize(), 0);
             });
         });
 
@@ -608,13 +726,22 @@ describe("Types", () => {
                 );
 
                 originalLengthFieldValue.value = 0;
-                expect(definition["getDeserializeSize"](struct)).toBe(0);
-                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(definition["getDeserializeSize"](struct), 0);
+                assert.strictEqual(
+                    originalLengthFieldValue.get.mock.callCount(),
+                    1,
+                );
 
-                originalLengthFieldValue.get.mockClear();
+                originalLengthFieldValue.get.mock.resetCalls();
                 originalLengthFieldValue.value = 100;
-                expect(definition["getDeserializeSize"](struct)).toBe(100);
-                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(
+                    definition["getDeserializeSize"](struct),
+                    100,
+                );
+                assert.strictEqual(
+                    originalLengthFieldValue.get.mock.callCount(),
+                    1,
+                );
             });
 
             it("should return value of its `lengthField` as number", () => {
@@ -630,13 +757,22 @@ describe("Types", () => {
                 );
 
                 originalLengthFieldValue.value = "0";
-                expect(definition["getDeserializeSize"](struct)).toBe(0);
-                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(definition["getDeserializeSize"](struct), 0);
+                assert.strictEqual(
+                    originalLengthFieldValue.get.mock.callCount(),
+                    1,
+                );
 
-                originalLengthFieldValue.get.mockClear();
+                originalLengthFieldValue.get.mock.resetCalls();
                 originalLengthFieldValue.value = "100";
-                expect(definition["getDeserializeSize"](struct)).toBe(100);
-                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(
+                    definition["getDeserializeSize"](struct),
+                    100,
+                );
+                assert.strictEqual(
+                    originalLengthFieldValue.get.mock.callCount(),
+                    1,
+                );
             });
 
             it("should return value of its `lengthField` as number with specified radix", () => {
@@ -653,15 +789,22 @@ describe("Types", () => {
                 );
 
                 originalLengthFieldValue.value = "0";
-                expect(definition["getDeserializeSize"](struct)).toBe(0);
-                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(definition["getDeserializeSize"](struct), 0);
+                assert.strictEqual(
+                    originalLengthFieldValue.get.mock.callCount(),
+                    1,
+                );
 
-                originalLengthFieldValue.get.mockClear();
+                originalLengthFieldValue.get.mock.resetCalls();
                 originalLengthFieldValue.value = "100";
-                expect(definition["getDeserializeSize"](struct)).toBe(
+                assert.strictEqual(
+                    definition["getDeserializeSize"](struct),
                     Number.parseInt("100", radix),
                 );
-                expect(originalLengthFieldValue.get).toHaveBeenCalledTimes(1);
+                assert.strictEqual(
+                    originalLengthFieldValue.get.mock.callCount(),
+                    1,
+                );
             });
         });
 
@@ -685,18 +828,15 @@ describe("Types", () => {
                     value,
                 );
 
-                expect(bufferFieldValue).toHaveProperty(
-                    "definition",
-                    definition,
-                );
-                expect(bufferFieldValue).toHaveProperty(
-                    "options",
+                assert.strictEqual(bufferFieldValue.definition, definition);
+                assert.strictEqual(
+                    bufferFieldValue.options,
                     StructDefaultOptions,
                 );
-                expect(bufferFieldValue).toHaveProperty("struct", struct);
-                expect(bufferFieldValue).toHaveProperty("value", value);
-                expect(bufferFieldValue).toHaveProperty("array", undefined);
-                expect(bufferFieldValue).toHaveProperty("length", undefined);
+                assert.strictEqual(bufferFieldValue.struct, struct);
+                assert.strictEqual(bufferFieldValue["value"], value);
+                assert.strictEqual(bufferFieldValue["array"], undefined);
+                assert.strictEqual(bufferFieldValue["length"], undefined);
             });
 
             it("should create a `VariableLengthBufferLikeStructFieldValue` with `arrayBuffer`", () => {
@@ -719,18 +859,15 @@ describe("Types", () => {
                     value,
                 );
 
-                expect(bufferFieldValue).toHaveProperty(
-                    "definition",
-                    definition,
-                );
-                expect(bufferFieldValue).toHaveProperty(
-                    "options",
+                assert.strictEqual(bufferFieldValue.definition, definition);
+                assert.strictEqual(
+                    bufferFieldValue.options,
                     StructDefaultOptions,
                 );
-                expect(bufferFieldValue).toHaveProperty("struct", struct);
-                expect(bufferFieldValue).toHaveProperty("value", value);
-                expect(bufferFieldValue).toHaveProperty("array", value);
-                expect(bufferFieldValue).toHaveProperty("length", 100);
+                assert.strictEqual(bufferFieldValue.struct, struct);
+                assert.strictEqual(bufferFieldValue["value"], value);
+                assert.strictEqual(bufferFieldValue["array"], value);
+                assert.strictEqual(bufferFieldValue["length"], 100);
             });
         });
     });

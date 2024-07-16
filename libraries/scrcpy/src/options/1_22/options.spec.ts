@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { ScrcpyOptions1_21 } from "../1_21.js";
 
@@ -12,6 +13,6 @@ describe("ScrcpyOptions1_22", () => {
         const controller1_22 = new ScrcpyOptions1_22(
             {},
         ).createScrollController();
-        expect(controller1_22).not.toBe(controller1_21);
+        assert.notStrictEqual(controller1_22, controller1_21);
     });
 });

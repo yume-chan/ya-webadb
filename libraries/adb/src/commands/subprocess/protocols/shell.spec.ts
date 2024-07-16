@@ -1,7 +1,8 @@
-import { describe, expect, it } from "@jest/globals";
 import { PromiseResolver } from "@yume-chan/async";
 import type { ReadableStreamDefaultController } from "@yume-chan/stream-extra";
 import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
+import assert from "node:assert";
+import { describe, it } from "node:test";
 
 import type { AdbSocket } from "../../../adb.js";
 
@@ -45,6 +46,10 @@ function createMockSocket(
     return [socket, closed];
 }
 
+async function assertResolves<T>(promise: Promise<T>, expected: T) {
+    return assert.deepStrictEqual(await promise, expected);
+}
+
 describe("AdbSubprocessShellProtocol", () => {
     describe("`stdout` and `stderr`", () => {
         it("should parse data from `socket", async () => {
@@ -54,11 +59,11 @@ describe("AdbSubprocessShellProtocol", () => {
             const stdoutReader = process.stdout.getReader();
             const stderrReader = process.stderr.getReader();
 
-            await expect(stdoutReader.read()).resolves.toEqual({
+            assertResolves(stdoutReader.read(), {
                 done: false,
                 value: new Uint8Array([1, 2, 3]),
             });
-            await expect(stderrReader.read()).resolves.toEqual({
+            assertResolves(stderrReader.read(), {
                 done: false,
                 value: new Uint8Array([4, 5, 6]),
             });
@@ -87,11 +92,11 @@ describe("AdbSubprocessShellProtocol", () => {
             await stdoutReader.cancel();
             closed.resolve();
 
-            await expect(stderrReader.read()).resolves.toEqual({
+            assertResolves(stderrReader.read(), {
                 done: false,
                 value: new Uint8Array([4, 5, 6]),
             });
-            await expect(stderrReader.read()).resolves.toEqual({
+            assertResolves(stderrReader.read(), {
                 done: false,
                 value: new Uint8Array([10, 11, 12]),
             });
@@ -115,24 +120,26 @@ describe("AdbSubprocessShellProtocol", () => {
                 const stdoutReader = process.stdout.getReader();
                 const stderrReader = process.stderr.getReader();
 
-                await expect(stdoutReader.read()).resolves.toEqual({
+                assertResolves(stdoutReader.read(), {
                     done: false,
                     value: new Uint8Array([1, 2, 3]),
                 });
-                await expect(stderrReader.read()).resolves.toEqual({
+                assertResolves(stderrReader.read(), {
                     done: false,
                     value: new Uint8Array([4, 5, 6]),
                 });
 
                 closed.resolve();
 
-                await expect(stdoutReader.read()).resolves.toEqual({
+                assertResolves(stdoutReader.read(), {
                     done: true,
+                    value: undefined,
                 });
-                await expect(stderrReader.read()).resolves.toEqual({
+                assertResolves(stderrReader.read(), {
                     done: true,
+                    value: undefined,
                 });
-                await expect(process.exit).resolves.toBe(42);
+                assert.strictEqual(await process.exit, 42);
             });
         });
 
@@ -146,11 +153,11 @@ describe("AdbSubprocessShellProtocol", () => {
                 const stdoutReader = process.stdout.getReader();
                 const stderrReader = process.stderr.getReader();
 
-                await expect(stdoutReader.read()).resolves.toEqual({
+                assertResolves(stdoutReader.read(), {
                     done: false,
                     value: new Uint8Array([1, 2, 3]),
                 });
-                await expect(stderrReader.read()).resolves.toEqual({
+                assertResolves(stderrReader.read(), {
                     done: false,
                     value: new Uint8Array([4, 5, 6]),
                 });
@@ -158,13 +165,15 @@ describe("AdbSubprocessShellProtocol", () => {
                 closed.resolve();
 
                 await Promise.all([
-                    expect(stdoutReader.read()).resolves.toEqual({
+                    assertResolves(stdoutReader.read(), {
                         done: true,
+                        value: undefined,
                     }),
-                    expect(stderrReader.read()).resolves.toEqual({
+                    assertResolves(stderrReader.read(), {
                         done: true,
+                        value: undefined,
                     }),
-                    expect(process.exit).rejects.toThrow(),
+                    assert.rejects(process.exit),
                 ]);
             });
         });
@@ -181,11 +190,11 @@ describe("AdbSubprocessShellProtocol", () => {
             const stdoutReader = process.stdout.getReader();
             const stderrReader = process.stderr.getReader();
 
-            await expect(stdoutReader.read()).resolves.toEqual({
+            await assertResolves(stdoutReader.read(), {
                 done: false,
                 value: new Uint8Array([1, 2, 3]),
             });
-            await expect(stderrReader.read()).resolves.toEqual({
+            await assertResolves(stderrReader.read(), {
                 done: false,
                 value: new Uint8Array([4, 5, 6]),
             });
@@ -193,9 +202,9 @@ describe("AdbSubprocessShellProtocol", () => {
             closed.resolve();
 
             await Promise.all([
-                expect(stdoutReader.read()).rejects.toThrow(),
-                expect(stderrReader.read()).rejects.toThrow(),
-                expect(process.exit).rejects.toThrow(),
+                assert.rejects(stdoutReader.read()),
+                assert.rejects(stderrReader.read()),
+                assert.rejects(process.exit),
             ]);
         });
     });

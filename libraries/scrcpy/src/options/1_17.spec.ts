@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { ScrcpyOptions1_17 } from "./1_17.js";
 
@@ -8,14 +9,14 @@ describe("ScrcpyOptions1_17", () => {
         // `setListDisplays` is implemented in `ScrcpyOptions1_16`,
         // but it should modify `value` of `ScrcpyOptions1_17`.
         options.setListDisplays();
-        expect(options.value.displayId).toBe(-1);
+        assert.strictEqual(options.value.displayId, -1);
     });
 
     describe("setListEncoders", () => {
         it("should set `encoderName` to `_`", () => {
             const options = new ScrcpyOptions1_17({});
             options.setListEncoders();
-            expect(options.value.encoderName).toBe("_");
+            assert.strictEqual(options.value.encoderName, "_");
         });
     });
 });

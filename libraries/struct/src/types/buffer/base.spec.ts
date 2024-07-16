@@ -1,4 +1,5 @@
-import { describe, expect, it, jest } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import type { ExactReadable } from "../../basic/index.js";
 import { StructDefaultOptions, StructValue } from "../../basic/index.js";
@@ -16,65 +17,73 @@ class MockDeserializationStream implements ExactReadable {
 
     position = 0;
 
-    readExactly = jest.fn(() => this.array);
+    readExactly = mock.fn(() => this.array);
 }
 
 describe("Types", () => {
     describe("Buffer", () => {
         describe("Uint8ArrayBufferFieldSubType", () => {
             it("should have a static instance", () => {
-                expect(Uint8ArrayBufferFieldConverter.Instance).toBeInstanceOf(
-                    Uint8ArrayBufferFieldConverter,
+                assert.ok(
+                    Uint8ArrayBufferFieldConverter.Instance instanceof
+                        Uint8ArrayBufferFieldConverter,
                 );
             });
 
             it("`#toBuffer` should return the same `Uint8Array`", () => {
                 const array = new Uint8Array(10);
-                expect(
+                assert.strictEqual(
                     Uint8ArrayBufferFieldConverter.Instance.toBuffer(array),
-                ).toBe(array);
+                    array,
+                );
             });
 
             it("`#fromBuffer` should return the same `Uint8Array`", () => {
                 const buffer = new Uint8Array(10);
-                expect(
+                assert.strictEqual(
                     Uint8ArrayBufferFieldConverter.Instance.toValue(buffer),
-                ).toBe(buffer);
+                    buffer,
+                );
             });
 
             it("`#getSize` should return the `byteLength` of the `Uint8Array`", () => {
                 const array = new Uint8Array(10);
-                expect(
+                assert.strictEqual(
                     Uint8ArrayBufferFieldConverter.Instance.getSize(array),
-                ).toBe(10);
+                    10,
+                );
             });
         });
 
         describe("StringBufferFieldSubType", () => {
             it("should have a static instance", () => {
-                expect(StringBufferFieldConverter.Instance).toBeInstanceOf(
-                    StringBufferFieldConverter,
+                assert.ok(
+                    StringBufferFieldConverter.Instance instanceof
+                        StringBufferFieldConverter,
                 );
             });
 
             it("`#toBuffer` should return the decoded string", () => {
                 const text = "foo";
                 const array = new Uint8Array(Buffer.from(text, "utf-8"));
-                expect(
+                assert.deepStrictEqual(
                     StringBufferFieldConverter.Instance.toBuffer(text),
-                ).toEqual(array);
+                    array,
+                );
             });
 
             it("`#fromBuffer` should return the encoded ArrayBuffer", () => {
                 const text = "foo";
                 const array = new Uint8Array(Buffer.from(text, "utf-8"));
-                expect(StringBufferFieldConverter.Instance.toValue(array)).toBe(
+                assert.strictEqual(
+                    StringBufferFieldConverter.Instance.toValue(array),
                     text,
                 );
             });
 
             it("`#getSize` should return -1", () => {
-                expect(StringBufferFieldConverter.Instance.getSize()).toBe(
+                assert.strictEqual(
+                    StringBufferFieldConverter.Instance.getSize(),
                     undefined,
                 );
             });
@@ -106,11 +115,14 @@ describe("Types", () => {
                     context,
                     struct,
                 );
-                expect(context.readExactly).toHaveBeenCalledTimes(1);
-                expect(context.readExactly).toHaveBeenCalledWith(size);
-                expect(fieldValue).toHaveProperty("array", array);
+                assert.strictEqual(context.readExactly.mock.callCount(), 1);
+                assert.deepStrictEqual(
+                    context.readExactly.mock.calls[0]?.arguments,
+                    [size],
+                );
+                assert.strictEqual(fieldValue["array"], array);
 
-                expect(fieldValue.get()).toBe(array);
+                assert.strictEqual(fieldValue.get(), array);
             });
 
             it("should work when `#getSize` returns `0`", () => {
@@ -130,13 +142,13 @@ describe("Types", () => {
                     context,
                     struct,
                 );
-                expect(context.readExactly).toHaveBeenCalledTimes(0);
-                expect(fieldValue["array"]).toBeInstanceOf(Uint8Array);
-                expect(fieldValue["array"]).toHaveProperty("byteLength", 0);
+                assert.strictEqual(context.readExactly.mock.callCount(), 0);
+                assert.ok(fieldValue["array"] instanceof Uint8Array);
+                assert.strictEqual(fieldValue["array"].byteLength, 0);
 
                 const value = fieldValue.get();
-                expect(value).toBeInstanceOf(Uint8Array);
-                expect(value).toHaveProperty("byteLength", 0);
+                assert.ok(value instanceof Uint8Array);
+                assert.strictEqual(value.byteLength, 0);
             });
         });
 
@@ -162,8 +174,8 @@ describe("Types", () => {
 
                     const newValue = new Uint8Array(20);
                     fieldValue.set(newValue);
-                    expect(fieldValue.get()).toBe(newValue);
-                    expect(fieldValue).toHaveProperty("array", undefined);
+                    assert.deepStrictEqual(fieldValue.get(), newValue);
+                    assert.strictEqual(fieldValue["array"], undefined);
                 });
             });
 
@@ -192,7 +204,7 @@ describe("Types", () => {
                     const targetArray = new Uint8Array(size);
                     fieldValue.serialize(targetArray, 0);
 
-                    expect(targetArray).toEqual(sourceArray);
+                    assert.deepStrictEqual(targetArray, sourceArray);
                 });
 
                 it("should be able to serialize a modified value", () => {
@@ -221,7 +233,7 @@ describe("Types", () => {
                     const targetArray = new Uint8Array(size);
                     fieldValue.serialize(targetArray, 0);
 
-                    expect(targetArray).toEqual(sourceArray);
+                    assert.deepStrictEqual(targetArray, sourceArray);
                 });
             });
         });

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import {
     getInt64,
@@ -13,7 +14,8 @@ describe("getInt64", () => {
     describe("little endian", () => {
         it("should work for minimal value", () => {
             const array = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0x80]);
-            expect(getInt64LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getInt64LittleEndian(array, 0),
                 new DataView(array.buffer).getBigInt64(0, true),
             );
         });
@@ -22,14 +24,16 @@ describe("getInt64", () => {
             const array = new Uint8Array([
                 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x7f,
             ]);
-            expect(getInt64LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getInt64LittleEndian(array, 0),
                 new DataView(array.buffer).getBigInt64(0, true),
             );
         });
 
         it("should work for middle value", () => {
             const array = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
-            expect(getInt64LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getInt64LittleEndian(array, 0),
                 new DataView(array.buffer).getBigInt64(0, true),
             );
         });
@@ -38,7 +42,8 @@ describe("getInt64", () => {
             const array = new Uint8Array([
                 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             ]);
-            expect(getInt64LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getInt64LittleEndian(array, 0),
                 new DataView(array.buffer).getBigInt64(0, true),
             );
         });
@@ -47,7 +52,8 @@ describe("getInt64", () => {
     describe("big endian", () => {
         it("should work for minimal value", () => {
             const array = new Uint8Array([0x80, 0, 0, 0, 0, 0, 0, 0]);
-            expect(getInt64BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getInt64BigEndian(array, 0),
                 new DataView(array.buffer).getBigInt64(0, false),
             );
         });
@@ -56,14 +62,16 @@ describe("getInt64", () => {
             const array = new Uint8Array([
                 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
             ]);
-            expect(getInt64BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getInt64BigEndian(array, 0),
                 new DataView(array.buffer).getBigInt64(0, false),
             );
         });
 
         it("should work for middle value", () => {
             const array = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]);
-            expect(getInt64BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getInt64BigEndian(array, 0),
                 new DataView(array.buffer).getBigInt64(0, false),
             );
         });
@@ -72,7 +80,8 @@ describe("getInt64", () => {
             const array = new Uint8Array([
                 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
             ]);
-            expect(getInt64BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getInt64BigEndian(array, 0),
                 new DataView(array.buffer).getBigInt64(0, false),
             );
         });
@@ -80,10 +89,12 @@ describe("getInt64", () => {
 
     it("should work for selected endianness", () => {
         const array = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
-        expect(getInt64(array, 0, false)).toBe(
+        assert.strictEqual(
+            getInt64(array, 0, false),
             new DataView(array.buffer).getBigInt64(0, false),
         );
-        expect(getInt64(array, 0, true)).toBe(
+        assert.strictEqual(
+            getInt64(array, 0, true),
             new DataView(array.buffer).getBigInt64(0, true),
         );
     });
@@ -100,7 +111,7 @@ describe("setInt64", () => {
             );
             const actual = new Uint8Array(8);
             setInt64LittleEndian(actual, 0, -0x8000_0000_0000_0000n);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for maximal value", () => {
@@ -112,7 +123,7 @@ describe("setInt64", () => {
             );
             const actual = new Uint8Array(8);
             setInt64LittleEndian(actual, 0, 0x7fff_ffff_ffff_ffffn);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for middle value", () => {
@@ -124,7 +135,7 @@ describe("setInt64", () => {
             );
             const actual = new Uint8Array(8);
             setInt64LittleEndian(actual, 0, 0xedcb_a987_6543_2100n);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for super-large value", () => {
@@ -133,7 +144,7 @@ describe("setInt64", () => {
             new DataView(expected.buffer).setBigInt64(0, value, true);
             const actual = new Uint8Array(8);
             setInt64LittleEndian(actual, 0, value);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
     });
 
@@ -147,7 +158,7 @@ describe("setInt64", () => {
             );
             const actual = new Uint8Array(8);
             setInt64BigEndian(actual, 0, -0x8000_0000_0000_0000n);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for maximal value", () => {
@@ -159,7 +170,7 @@ describe("setInt64", () => {
             );
             const actual = new Uint8Array(8);
             setInt64BigEndian(actual, 0, 0x7fff_ffff_ffff_ffffn);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for middle value", () => {
@@ -171,7 +182,7 @@ describe("setInt64", () => {
             );
             const actual = new Uint8Array(8);
             setInt64BigEndian(actual, 0, 0xedcb_a987_6543_2100n);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for super-large value", () => {
@@ -180,7 +191,7 @@ describe("setInt64", () => {
             new DataView(expected.buffer).setBigInt64(0, value, false);
             const actual = new Uint8Array(8);
             setInt64BigEndian(actual, 0, value);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
     });
 
@@ -194,7 +205,7 @@ describe("setInt64", () => {
             false,
         );
         setInt64(actual, 0, 0x7fff_ffff_ffff_ffffn, false);
-        expect(actual).toEqual(expected);
+        assert.deepStrictEqual(actual, expected);
 
         new DataView(expected.buffer).setBigInt64(
             0,
@@ -202,6 +213,6 @@ describe("setInt64", () => {
             true,
         );
         setInt64(actual, 0, 0x7fff_ffff_ffff_ffffn, true);
-        expect(actual).toEqual(expected);
+        assert.deepStrictEqual(actual, expected);
     });
 });

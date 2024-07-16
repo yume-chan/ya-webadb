@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import {
     getUint16,
@@ -13,28 +14,32 @@ describe("getUint16", () => {
     describe("little endian", () => {
         it("should work for minimal value", () => {
             const array = new Uint8Array([0, 0]);
-            expect(getUint16LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint16LittleEndian(array, 0),
                 new DataView(array.buffer).getUint16(0, true),
             );
         });
 
         it("should work for maximal value", () => {
             const array = new Uint8Array([255, 255]);
-            expect(getUint16LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint16LittleEndian(array, 0),
                 new DataView(array.buffer).getUint16(0, true),
             );
         });
 
         it("should work for middle value", () => {
             const array = new Uint8Array([0, 128]);
-            expect(getUint16LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint16LittleEndian(array, 0),
                 new DataView(array.buffer).getUint16(0, true),
             );
         });
 
         it("should work for random value", () => {
             const array = new Uint8Array([1, 2]);
-            expect(getUint16LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint16LittleEndian(array, 0),
                 new DataView(array.buffer).getUint16(0, true),
             );
         });
@@ -43,28 +48,32 @@ describe("getUint16", () => {
     describe("big endian", () => {
         it("should work for minimal value", () => {
             const array = new Uint8Array([0, 0]);
-            expect(getUint16BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint16BigEndian(array, 0),
                 new DataView(array.buffer).getUint16(0, false),
             );
         });
 
         it("should work for maximal value", () => {
             const array = new Uint8Array([255, 255]);
-            expect(getUint16BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint16BigEndian(array, 0),
                 new DataView(array.buffer).getUint16(0, false),
             );
         });
 
         it("should work for middle value", () => {
             const array = new Uint8Array([128, 255]);
-            expect(getUint16BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint16BigEndian(array, 0),
                 new DataView(array.buffer).getUint16(0, false),
             );
         });
 
         it("should work for random value", () => {
             const array = new Uint8Array([1, 2]);
-            expect(getUint16BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint16BigEndian(array, 0),
                 new DataView(array.buffer).getUint16(0, false),
             );
         });
@@ -72,10 +81,12 @@ describe("getUint16", () => {
 
     it("should work for selected endianness", () => {
         const array = new Uint8Array([1, 2]);
-        expect(getUint16(array, 0, false)).toBe(
+        assert.strictEqual(
+            getUint16(array, 0, false),
             new DataView(array.buffer).getUint16(0, false),
         );
-        expect(getUint16(array, 0, true)).toBe(
+        assert.strictEqual(
+            getUint16(array, 0, true),
             new DataView(array.buffer).getUint16(0, true),
         );
     });
@@ -88,7 +99,7 @@ describe("setUint16", () => {
             new DataView(expected.buffer).setUint16(0, 0, true);
             const actual = new Uint8Array(2);
             setUint16LittleEndian(actual, 0, 0);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for maximal value", () => {
@@ -96,7 +107,7 @@ describe("setUint16", () => {
             new DataView(expected.buffer).setUint16(0, 0xffff, true);
             const actual = new Uint8Array(2);
             setUint16LittleEndian(actual, 0, 0xffff);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for middle value", () => {
@@ -104,7 +115,7 @@ describe("setUint16", () => {
             new DataView(expected.buffer).setUint16(0, 0x8000, true);
             const actual = new Uint8Array(2);
             setUint16LittleEndian(actual, 0, 0x8000);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
     });
 
@@ -114,7 +125,7 @@ describe("setUint16", () => {
             new DataView(expected.buffer).setUint16(0, 0, false);
             const actual = new Uint8Array(2);
             setUint16BigEndian(actual, 0, 0);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for maximal value", () => {
@@ -122,7 +133,7 @@ describe("setUint16", () => {
             new DataView(expected.buffer).setUint16(0, 0xffff, false);
             const actual = new Uint8Array(2);
             setUint16BigEndian(actual, 0, 0xffff);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for middle value", () => {
@@ -130,7 +141,7 @@ describe("setUint16", () => {
             new DataView(expected.buffer).setUint16(0, 0x8000, false);
             const actual = new Uint8Array(2);
             setUint16BigEndian(actual, 0, 0x8000);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
     });
 
@@ -140,10 +151,10 @@ describe("setUint16", () => {
 
         new DataView(expected.buffer).setUint16(0, 0xffff, false);
         setUint16(actual, 0, 0xffff, false);
-        expect(actual).toEqual(expected);
+        assert.deepStrictEqual(actual, expected);
 
         new DataView(expected.buffer).setUint16(0, 0xffff, true);
         setUint16(actual, 0, 0xffff, true);
-        expect(actual).toEqual(expected);
+        assert.deepStrictEqual(actual, expected);
     });
 });

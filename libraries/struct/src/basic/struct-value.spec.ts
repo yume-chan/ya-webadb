@@ -1,4 +1,5 @@
-import { describe, expect, it, jest } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import type { StructFieldDefinition } from "./definition.js";
 import type { StructFieldValue } from "./field-value.js";
@@ -10,12 +11,12 @@ describe("StructValue", () => {
             const foo = new StructValue({});
             const bar = new StructValue({});
 
-            expect(foo).toHaveProperty("fieldValues", {});
-            expect(foo).toHaveProperty("value", {});
-            expect(bar).toHaveProperty("fieldValues", {});
-            expect(bar).toHaveProperty("value", {});
-            expect(foo.fieldValues).not.toBe(bar.fieldValues);
-            expect(foo.value).not.toBe(bar.fieldValues);
+            assert.deepStrictEqual(foo.fieldValues, {});
+            assert.deepEqual(foo.value, {});
+            assert.deepStrictEqual(bar.fieldValues, {});
+            assert.deepEqual(bar.value, {});
+            assert.notStrictEqual(foo.fieldValues, bar.fieldValues);
+            assert.notStrictEqual(foo.value, bar.fieldValues);
         });
     });
 
@@ -43,16 +44,16 @@ describe("StructValue", () => {
             >;
             object.set(bar, barValue);
 
-            expect(object.fieldValues[foo]).toBe(fooValue);
-            expect(object.fieldValues[bar]).toBe(barValue);
+            assert.strictEqual(object.fieldValues[foo], fooValue);
+            assert.strictEqual(object.fieldValues[bar], barValue);
         });
 
         it("should define a property for `key`", () => {
             const object = new StructValue({});
 
             const foo = "foo";
-            const fooGetter = jest.fn(() => 42);
-            const fooSetter = jest.fn((value: number) => {
+            const fooGetter = mock.fn(() => 42);
+            const fooSetter = mock.fn((value: number) => {
                 void value;
             });
             const fooValue = {
@@ -64,8 +65,8 @@ describe("StructValue", () => {
             object.set(foo, fooValue);
 
             const bar = "bar";
-            const barGetter = jest.fn(() => true);
-            const barSetter = jest.fn((value: boolean) => {
+            const barGetter = mock.fn(() => true);
+            const barSetter = mock.fn((value: boolean) => {
                 void value;
             });
             const barValue = {
@@ -76,13 +77,13 @@ describe("StructValue", () => {
             >;
             object.set(bar, barValue);
 
-            expect(object.value).toHaveProperty(foo, 42);
-            expect(fooGetter).toHaveBeenCalledTimes(1);
-            expect(barGetter).toHaveBeenCalledTimes(1);
+            assert.strictEqual(object.value[foo], 42);
+            assert.strictEqual(fooGetter.mock.callCount(), 1);
+            assert.strictEqual(barGetter.mock.callCount(), 1);
 
             object.value[foo] = 100;
-            expect(fooSetter).toHaveBeenCalledTimes(0);
-            expect(barSetter).toHaveBeenCalledTimes(0);
+            assert.strictEqual(fooSetter.mock.callCount(), 0);
+            assert.strictEqual(barSetter.mock.callCount(), 0);
         });
     });
 
@@ -100,7 +101,7 @@ describe("StructValue", () => {
             >;
             object.set(foo, fooValue);
 
-            expect(object.get(foo)).toBe(fooValue);
+            assert.strictEqual(object.get(foo), fooValue);
         });
     });
 });

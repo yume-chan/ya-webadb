@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { BufferedReadableStream } from "./buffered.js";
 import { ReadableStream } from "./stream.js";
@@ -43,7 +44,7 @@ async function runTest(inputSizes: number[], readSizes: number[]) {
     index = 0;
     for (const size of readSizes) {
         const buffer = await buffered.readExactly(size);
-        expect(buffer).toEqual(input.subarray(index, index + size));
+        assert.deepStrictEqual(buffer, input.subarray(index, index + size));
         index += size;
     }
 }
@@ -53,14 +54,16 @@ describe("BufferedStream", () => {
         it("read 0 buffer", async () => {
             const source = new MockReadableStream([]);
             const buffered = new BufferedReadableStream(source);
-            await expect(buffered.readExactly(10)).rejects.toThrow();
+            await assert.rejects(async () => {
+                await buffered.readExactly(10);
+            });
         });
 
         it("input 1 exact buffer", async () => {
             const input = randomUint8Array(10);
             const source = new MockReadableStream([input]);
             const buffered = new BufferedReadableStream(source);
-            await expect(buffered.readExactly(10)).resolves.toBe(input);
+            assert.deepStrictEqual(await buffered.readExactly(10), input);
         });
 
         it("input 1 large buffer", () => {
@@ -70,7 +73,9 @@ describe("BufferedStream", () => {
         it("read 1 small buffer", async () => {
             const source = new MockReadableStream([randomUint8Array(5)]);
             const buffered = new BufferedReadableStream(source);
-            await expect(buffered.readExactly(10)).rejects.toThrow();
+            await assert.rejects(async () => {
+                await buffered.readExactly(10);
+            });
         });
 
         it("input 2 small buffers", () => {
@@ -83,7 +88,9 @@ describe("BufferedStream", () => {
                 randomUint8Array(5),
             ]);
             const buffered = new BufferedReadableStream(source);
-            await expect(buffered.readExactly(20)).rejects.toThrow();
+            await assert.rejects(async () => {
+                await buffered.readExactly(20);
+            });
         });
 
         it("input 2 small + large buffers", () => {

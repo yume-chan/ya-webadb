@@ -1,11 +1,12 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { ScrcpyOptions1_16 } from "./options.js";
 
 describe("ScrcpyOptions1_16", () => {
     describe("serialize", () => {
         it("should return `-` for default values", () => {
-            expect(new ScrcpyOptions1_16({}).serialize()).toEqual([
+            assert.deepStrictEqual(new ScrcpyOptions1_16({}).serialize(), [
                 "debug",
                 "0",
                 "8000000",
@@ -27,7 +28,7 @@ describe("ScrcpyOptions1_16", () => {
         it("should set `display` to `-1`", () => {
             const options = new ScrcpyOptions1_16({});
             options.setListDisplays();
-            expect(options.value.displayId).toBe(-1);
+            assert.strictEqual(options.value.displayId, -1);
         });
     });
 });

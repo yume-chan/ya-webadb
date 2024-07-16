@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { ScrcpyControlMessageType } from "../../control/index.js";
 
@@ -11,22 +12,22 @@ describe("ScrcpyFloatToInt16NumberType", () => {
     it("should serialize", () => {
         const array = new Uint8Array(2);
         ScrcpySignedFloatNumberVariant.serialize(array, 0, -1, true);
-        expect(new DataView(array.buffer).getInt16(0, true)).toBe(-0x8000);
+        assert.strictEqual(new DataView(array.buffer).getInt16(0, true), -0x8000);
 
         ScrcpySignedFloatNumberVariant.serialize(array, 0, 0, true);
-        expect(new DataView(array.buffer).getInt16(0, true)).toBe(0);
+        assert.strictEqual(new DataView(array.buffer).getInt16(0, true), 0);
 
         ScrcpySignedFloatNumberVariant.serialize(array, 0, 1, true);
-        expect(new DataView(array.buffer).getInt16(0, true)).toBe(0x7fff);
+        assert.strictEqual(new DataView(array.buffer).getInt16(0, true), 0x7fff);
     });
 
     it("should clamp input values", () => {
         const array = new Uint8Array(2);
         ScrcpySignedFloatNumberVariant.serialize(array, 0, -2, true);
-        expect(new DataView(array.buffer).getInt16(0, true)).toBe(-0x8000);
+        assert.strictEqual(new DataView(array.buffer).getInt16(0, true), -0x8000);
 
         ScrcpySignedFloatNumberVariant.serialize(array, 0, 2, true);
-        expect(new DataView(array.buffer).getInt16(0, true)).toBe(0x7fff);
+        assert.strictEqual(new DataView(array.buffer).getInt16(0, true), 0x7fff);
     });
 
     it("should deserialize", () => {
@@ -34,13 +35,22 @@ describe("ScrcpyFloatToInt16NumberType", () => {
         const view = new Uint8Array(dataView.buffer);
 
         dataView.setInt16(0, -0x8000, true);
-        expect(ScrcpySignedFloatNumberVariant.deserialize(view, true)).toBe(-1);
+        assert.strictEqual(
+            ScrcpySignedFloatNumberVariant.deserialize(view, true),
+            -1,
+        );
 
         dataView.setInt16(0, 0, true);
-        expect(ScrcpySignedFloatNumberVariant.deserialize(view, true)).toBe(0);
+        assert.strictEqual(
+            ScrcpySignedFloatNumberVariant.deserialize(view, true),
+            0,
+        );
 
         dataView.setInt16(0, 0x7fff, true);
-        expect(ScrcpySignedFloatNumberVariant.deserialize(view, true)).toBe(1);
+        assert.strictEqual(
+            ScrcpySignedFloatNumberVariant.deserialize(view, true),
+            1,
+        );
     });
 });
 
@@ -57,8 +67,8 @@ describe("ScrcpyScrollController1_25", () => {
             scrollY: 0.5,
             buttons: 0,
         });
-        expect(message1).toBeInstanceOf(Uint8Array);
-        expect(message1).toHaveProperty("byteLength", 21);
+        assert.ok(message1 instanceof Uint8Array);
+        assert.strictEqual(message1.byteLength, 21);
 
         const message2 = controller.serializeScrollMessage({
             type: ScrcpyControlMessageType.InjectScroll,
@@ -70,7 +80,7 @@ describe("ScrcpyScrollController1_25", () => {
             scrollY: 1.5,
             buttons: 0,
         });
-        expect(message2).toBeInstanceOf(Uint8Array);
-        expect(message2).toHaveProperty("byteLength", 21);
+        assert.ok(message2 instanceof Uint8Array);
+        assert.strictEqual(message2.byteLength, 21);
     });
 });

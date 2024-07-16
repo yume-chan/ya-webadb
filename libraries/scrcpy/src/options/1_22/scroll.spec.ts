@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { ScrcpyControlMessageType } from "../../control/index.js";
 
@@ -17,7 +18,7 @@ describe("ScrcpyScrollController1_22", () => {
             scrollY: 1.5,
             buttons: 0,
         });
-        expect(message).toBeInstanceOf(Uint8Array);
-        expect(message).toHaveProperty("byteLength", 25);
+        assert.ok(message instanceof Uint8Array);
+        assert.strictEqual(message.byteLength, 25);
     });
 });

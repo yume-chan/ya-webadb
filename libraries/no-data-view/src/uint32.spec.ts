@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import {
     getUint32,
@@ -13,28 +14,32 @@ describe("getUint32", () => {
     describe("little endian", () => {
         it("should work for minimal value", () => {
             const array = new Uint8Array([0, 0, 0, 0]);
-            expect(getUint32LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint32LittleEndian(array, 0),
                 new DataView(array.buffer).getUint32(0, true),
             );
         });
 
         it("should work for maximal value", () => {
             const array = new Uint8Array([255, 255, 255, 255]);
-            expect(getUint32LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint32LittleEndian(array, 0),
                 new DataView(array.buffer).getUint32(0, true),
             );
         });
 
         it("should work for middle value", () => {
             const array = new Uint8Array([0, 0, 0, 128]);
-            expect(getUint32LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint32LittleEndian(array, 0),
                 new DataView(array.buffer).getUint32(0, true),
             );
         });
 
         it("should work for random value", () => {
             const array = new Uint8Array([1, 2, 3, 4]);
-            expect(getUint32LittleEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint32LittleEndian(array, 0),
                 new DataView(array.buffer).getUint32(0, true),
             );
         });
@@ -43,28 +48,32 @@ describe("getUint32", () => {
     describe("big endian", () => {
         it("should work for minimal value", () => {
             const array = new Uint8Array([0, 0, 0, 0]);
-            expect(getUint32BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint32BigEndian(array, 0),
                 new DataView(array.buffer).getUint32(0, false),
             );
         });
 
         it("should work for maximal value", () => {
             const array = new Uint8Array([255, 255, 255, 255]);
-            expect(getUint32BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint32BigEndian(array, 0),
                 new DataView(array.buffer).getUint32(0, false),
             );
         });
 
         it("should work for middle value", () => {
             const array = new Uint8Array([128, 0, 0, 0]);
-            expect(getUint32BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint32BigEndian(array, 0),
                 new DataView(array.buffer).getUint32(0, false),
             );
         });
 
         it("should work for random value", () => {
             const array = new Uint8Array([1, 2, 3, 4]);
-            expect(getUint32BigEndian(array, 0)).toBe(
+            assert.strictEqual(
+                getUint32BigEndian(array, 0),
                 new DataView(array.buffer).getUint32(0, false),
             );
         });
@@ -72,10 +81,12 @@ describe("getUint32", () => {
 
     it("should work for selected endianness", () => {
         const array = new Uint8Array([1, 2, 3, 4]);
-        expect(getUint32(array, 0, false)).toBe(
+        assert.strictEqual(
+            getUint32(array, 0, false),
             new DataView(array.buffer).getUint32(0, false),
         );
-        expect(getUint32(array, 0, true)).toBe(
+        assert.strictEqual(
+            getUint32(array, 0, true),
             new DataView(array.buffer).getUint32(0, true),
         );
     });
@@ -88,7 +99,7 @@ describe("setUint32", () => {
             new DataView(expected.buffer).setUint32(0, 0, true);
             const actual = new Uint8Array(4);
             setUint32LittleEndian(actual, 0, 0);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for maximal value", () => {
@@ -96,7 +107,7 @@ describe("setUint32", () => {
             new DataView(expected.buffer).setUint32(0, 0xffff_ffff, true);
             const actual = new Uint8Array(4);
             setUint32LittleEndian(actual, 0, 0xffff_ffff);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for middle value", () => {
@@ -104,7 +115,7 @@ describe("setUint32", () => {
             new DataView(expected.buffer).setUint32(0, 0x8000_0000, true);
             const actual = new Uint8Array(4);
             setUint32LittleEndian(actual, 0, 0x8000_0000);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
     });
 
@@ -114,7 +125,7 @@ describe("setUint32", () => {
             new DataView(expected.buffer).setUint32(0, 0, false);
             const actual = new Uint8Array(4);
             setUint32BigEndian(actual, 0, 0);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for maximal value", () => {
@@ -122,7 +133,7 @@ describe("setUint32", () => {
             new DataView(expected.buffer).setUint32(0, 0xffff_ffff, false);
             const actual = new Uint8Array(4);
             setUint32BigEndian(actual, 0, 0xffff_ffff);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
 
         it("should work for middle value", () => {
@@ -130,7 +141,7 @@ describe("setUint32", () => {
             new DataView(expected.buffer).setUint32(0, 0x8000_0000, false);
             const actual = new Uint8Array(4);
             setUint32BigEndian(actual, 0, 0x8000_0000);
-            expect(actual).toEqual(expected);
+            assert.deepStrictEqual(actual, expected);
         });
     });
 
@@ -140,10 +151,10 @@ describe("setUint32", () => {
 
         new DataView(expected.buffer).setUint32(0, 0xffff_ffff, false);
         setUint32(actual, 0, 0xffff_ffff, false);
-        expect(actual).toEqual(expected);
+        assert.deepStrictEqual(actual, expected);
 
         new DataView(expected.buffer).setUint32(0, 0xffff_ffff, true);
         setUint32(actual, 0, 0xffff_ffff, true);
-        expect(actual).toEqual(expected);
+        assert.deepStrictEqual(actual, expected);
     });
 });

@@ -10,7 +10,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 export default tslint.config(
     {
-        ignores: ["**/*.js", "**/*.d.ts"],
+        ignores: ["**/*.js", "**/*.mjs", "**/*.d.ts"],
     },
     eslint.configs.recommended,
     {
@@ -62,6 +62,11 @@ export default tslint.config(
                 },
             ],
         },
+    },
+    {
+        files: ["**/*.spec.ts"],
+        // Node.js `test` module violates this
+        rules: { "@typescript-eslint/no-floating-promises": "off" },
     },
     {
         plugins: { "import-x": eslintImportX },

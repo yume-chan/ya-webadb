@@ -1,6 +1,7 @@
-import { describe, expect, it, jest } from "@jest/globals";
 import { PromiseResolver } from "@yume-chan/async";
 import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
+import assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import type { AdbSocket } from "../../../adb.js";
 
@@ -12,7 +13,7 @@ describe("AdbSubprocessNoneProtocol", () => {
             const closed = new PromiseResolver<void>();
             const socket: AdbSocket = {
                 service: "",
-                close: jest.fn(() => {}),
+                close: mock.fn(() => {}),
                 closed: closed.promise,
                 readable: new ReadableStream({
                     async start(controller) {
@@ -28,11 +29,11 @@ describe("AdbSubprocessNoneProtocol", () => {
             const process = new AdbSubprocessNoneProtocol(socket);
             const reader = process.stdout.getReader();
 
-            await expect(reader.read()).resolves.toEqual({
+            assert.deepStrictEqual(await reader.read(), {
                 done: false,
                 value: new Uint8Array([1, 2, 3]),
             });
-            await expect(reader.read()).resolves.toEqual({
+            assert.deepStrictEqual(await reader.read(), {
                 done: false,
                 value: new Uint8Array([4, 5, 6]),
             });
@@ -42,7 +43,7 @@ describe("AdbSubprocessNoneProtocol", () => {
             const closed = new PromiseResolver<void>();
             const socket: AdbSocket = {
                 service: "",
-                close: jest.fn(() => {}),
+                close: mock.fn(() => {}),
                 closed: closed.promise,
                 readable: new ReadableStream({
                     async start(controller) {
@@ -58,19 +59,20 @@ describe("AdbSubprocessNoneProtocol", () => {
             const process = new AdbSubprocessNoneProtocol(socket);
             const reader = process.stdout.getReader();
 
-            await expect(reader.read()).resolves.toEqual({
+            assert.deepStrictEqual(await reader.read(), {
                 done: false,
                 value: new Uint8Array([1, 2, 3]),
             });
-            await expect(reader.read()).resolves.toEqual({
+            assert.deepStrictEqual(await reader.read(), {
                 done: false,
                 value: new Uint8Array([4, 5, 6]),
             });
 
             closed.resolve();
 
-            await expect(reader.read()).resolves.toEqual({
+            assert.deepStrictEqual(await reader.read(), {
                 done: true,
+                value: undefined,
             });
         });
     });
@@ -80,7 +82,7 @@ describe("AdbSubprocessNoneProtocol", () => {
             const closed = new PromiseResolver<void>();
             const socket: AdbSocket = {
                 service: "",
-                close: jest.fn(() => {}),
+                close: mock.fn(() => {}),
                 closed: closed.promise,
                 readable: new ReadableStream({
                     async start(controller) {
@@ -98,7 +100,10 @@ describe("AdbSubprocessNoneProtocol", () => {
 
             closed.resolve();
 
-            await expect(reader.read()).resolves.toEqual({ done: true });
+            assert.deepStrictEqual(await reader.read(), {
+                done: true,
+                value: undefined,
+            });
         });
     });
 
@@ -107,7 +112,7 @@ describe("AdbSubprocessNoneProtocol", () => {
             const closed = new PromiseResolver<void>();
             const socket: AdbSocket = {
                 service: "",
-                close: jest.fn(() => {}),
+                close: mock.fn(() => {}),
                 closed: closed.promise,
                 readable: new ReadableStream(),
                 writable: new WritableStream(),
@@ -117,25 +122,25 @@ describe("AdbSubprocessNoneProtocol", () => {
 
             closed.resolve();
 
-            await expect(process.exit).resolves.toBe(0);
+            assert.strictEqual(await process.exit, 0);
         });
     });
 
     it("`resize` shouldn't throw any error", () => {
         const socket: AdbSocket = {
             service: "",
-            close: jest.fn(() => {}),
+            close: mock.fn(() => {}),
             closed: new PromiseResolver<void>().promise,
             readable: new ReadableStream(),
             writable: new WritableStream(),
         };
 
         const process = new AdbSubprocessNoneProtocol(socket);
-        expect(() => process.resize()).not.toThrow();
+        assert.doesNotThrow(() => process.resize());
     });
 
     it("`kill` should close `socket`", async () => {
-        const close = jest.fn(() => {});
+        const close = mock.fn(() => {});
         const socket: AdbSocket = {
             service: "",
             close,
@@ -146,6 +151,6 @@ describe("AdbSubprocessNoneProtocol", () => {
 
         const process = new AdbSubprocessNoneProtocol(socket);
         await process.kill();
-        expect(close).toHaveBeenCalledTimes(1);
+        assert.deepEqual(close.mock.callCount(), 1);
     });
 });

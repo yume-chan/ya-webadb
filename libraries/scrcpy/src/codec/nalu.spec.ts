@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { NaluSodbBitReader } from "./nalu.js";
 
@@ -9,25 +10,28 @@ describe("nalu", () => {
                 const reader = new NaluSodbBitReader(
                     new Uint8Array([0b10000000]),
                 );
-                expect(reader).toHaveProperty("ended", true);
+                assert.strictEqual(reader.ended, true);
             });
 
             it("should throw error if stream is empty", () => {
-                expect(
+                assert.throws(
                     () => new NaluSodbBitReader(new Uint8Array(0)),
-                ).toThrowErrorMatchingInlineSnapshot(`"Stop bit not found"`);
+                    /Stop bit not found/,
+                );
             });
 
             it("should throw error if no end bit found (single byte)", () => {
-                expect(
+                assert.throws(
                     () => new NaluSodbBitReader(new Uint8Array(1)),
-                ).toThrowErrorMatchingInlineSnapshot(`"Stop bit not found"`);
+                    /Stop bit not found/,
+                );
             });
 
             it("should throw error if no end bit found (multiple bytes)", () => {
-                expect(
+                assert.throws(
                     () => new NaluSodbBitReader(new Uint8Array(10)),
-                ).toThrowErrorMatchingInlineSnapshot(`"Stop bit not found"`);
+                    /Stop bit not found/,
+                );
             });
         });
 
@@ -36,42 +40,42 @@ describe("nalu", () => {
                 const reader = new NaluSodbBitReader(
                     new Uint8Array([0b10110111]),
                 );
-                expect(reader.next()).toBe(1);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(1);
-                expect(reader.next()).toBe(1);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(1);
-                expect(reader.next()).toBe(1);
+                assert.strictEqual(reader.next(), 1);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 1);
+                assert.strictEqual(reader.next(), 1);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 1);
+                assert.strictEqual(reader.next(), 1);
             });
 
             it("should read bits in Big Endian (multiple bytes)", () => {
                 const reader = new NaluSodbBitReader(
                     new Uint8Array([0b01001000, 0b10000100, 0b00010001]),
                 );
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(1);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(1);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(1);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(1);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(1);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
-                expect(reader.next()).toBe(0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 1);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 1);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 1);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 1);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 1);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
+                assert.strictEqual(reader.next(), 0);
             });
 
             it("should throw error if read after end bit (single byte, middle)", () => {
@@ -79,11 +83,9 @@ describe("nalu", () => {
                     new Uint8Array([0b11111000]),
                 );
                 for (let i = 0; i < 4; i += 1) {
-                    expect(reader.next()).toBe(1);
+                    assert.strictEqual(reader.next(), 1);
                 }
-                expect(() => reader.next()).toThrowErrorMatchingInlineSnapshot(
-                    `"Bit index out of bounds"`,
-                );
+                assert.throws(() => reader.next(), /Bit index out of bounds/);
             });
 
             it("should throw error if read after end bit (single byte, end)", () => {
@@ -91,11 +93,9 @@ describe("nalu", () => {
                     new Uint8Array([0b11111111]),
                 );
                 for (let i = 0; i < 7; i += 1) {
-                    expect(reader.next()).toBe(1);
+                    assert.strictEqual(reader.next(), 1);
                 }
-                expect(() => reader.next()).toThrowErrorMatchingInlineSnapshot(
-                    `"Bit index out of bounds"`,
-                );
+                assert.throws(() => reader.next(), /Bit index out of bounds/);
             });
 
             it("should throw error if read after end bit (multiple bytes, start)", () => {
@@ -103,11 +103,9 @@ describe("nalu", () => {
                     new Uint8Array([0b11111111, 0b10000000]),
                 );
                 for (let i = 0; i < 8; i += 1) {
-                    expect(reader.next()).toBe(1);
+                    assert.strictEqual(reader.next(), 1);
                 }
-                expect(() => reader.next()).toThrowErrorMatchingInlineSnapshot(
-                    `"Bit index out of bounds"`,
-                );
+                assert.throws(() => reader.next(), /Bit index out of bounds/);
             });
 
             it("should throw error if read after end bit (multiple bytes, middle)", () => {
@@ -115,11 +113,9 @@ describe("nalu", () => {
                     new Uint8Array([0b11111111, 0b11111000]),
                 );
                 for (let i = 0; i < 12; i += 1) {
-                    expect(reader.next()).toBe(1);
+                    assert.strictEqual(reader.next(), 1);
                 }
-                expect(() => reader.next()).toThrowErrorMatchingInlineSnapshot(
-                    `"Bit index out of bounds"`,
-                );
+                assert.throws(() => reader.next(), /Bit index out of bounds/);
             });
 
             it("should skip emulation prevent byte", () => {
@@ -127,13 +123,13 @@ describe("nalu", () => {
                     new Uint8Array([0xff, 0x00, 0x00, 0x03, 0xff, 0x80]),
                 );
                 for (let i = 0; i < 8; i += 1) {
-                    expect(reader.next()).toBe(1);
+                    assert.strictEqual(reader.next(), 1);
                 }
                 for (let i = 0; i < 16; i += 1) {
-                    expect(reader.next()).toBe(0);
+                    assert.strictEqual(reader.next(), 0);
                 }
                 for (let i = 0; i < 8; i += 1) {
-                    expect(reader.next()).toBe(1);
+                    assert.strictEqual(reader.next(), 1);
                 }
             });
 
@@ -144,13 +140,13 @@ describe("nalu", () => {
                     ]),
                 );
                 for (let i = 0; i < 8; i += 1) {
-                    expect(reader.next()).toBe(1);
+                    assert.strictEqual(reader.next(), 1);
                 }
                 for (let i = 0; i < 32; i += 1) {
-                    expect(reader.next()).toBe(0);
+                    assert.strictEqual(reader.next(), 0);
                 }
                 for (let i = 0; i < 8; i += 1) {
-                    expect(reader.next()).toBe(1);
+                    assert.strictEqual(reader.next(), 1);
                 }
             });
         });
@@ -161,14 +157,13 @@ describe("nalu", () => {
             const reader = new NaluSodbBitReader(new Uint8Array([0b01000011]));
 
             reader.skip(1);
-            expect(reader.next()).toBe(1);
-            expect(reader.next()).toBe(0);
+            assert.strictEqual(reader.next(), 1);
+
+            assert.strictEqual(reader.next(), 0);
 
             reader.skip(3);
-            expect(reader.next()).toBe(1);
-            expect(() => reader.next()).toThrowErrorMatchingInlineSnapshot(
-                `"Bit index out of bounds"`,
-            );
+            assert.strictEqual(reader.next(), 1);
+            assert.throws(() => reader.next(), /Bit index out of bounds/);
         });
 
         it("should skip <8 bits in multiple bytes", () => {
@@ -177,15 +172,15 @@ describe("nalu", () => {
             );
 
             reader.skip(5);
-            expect(reader.next()).toBe(1);
-            expect(reader.next()).toBe(0);
+            assert.strictEqual(reader.next(), 1);
+
+            assert.strictEqual(reader.next(), 0);
 
             reader.skip(3);
-            expect(reader.next()).toBe(1);
-            expect(reader.next()).toBe(0);
-            expect(() => reader.next()).toThrowErrorMatchingInlineSnapshot(
-                `"Bit index out of bounds"`,
-            );
+            assert.strictEqual(reader.next(), 1);
+
+            assert.strictEqual(reader.next(), 0);
+            assert.throws(() => reader.next(), /Bit index out of bounds/);
         });
 
         it("should skip >8 bits without emulation prevention byte", () => {
@@ -193,8 +188,9 @@ describe("nalu", () => {
                 new Uint8Array([0b00000000, 0b00100001]),
             );
             reader.skip(10);
-            expect(reader.next()).toBe(1);
-            expect(reader.next()).toBe(0);
+            assert.strictEqual(reader.next(), 1);
+
+            assert.strictEqual(reader.next(), 0);
         });
     });
 });

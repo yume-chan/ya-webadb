@@ -1,4 +1,5 @@
-import { describe, expect, it, jest } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import type { Disposable } from "./disposable.js";
 import { AutoDisposable } from "./disposable.js";
@@ -7,7 +8,7 @@ describe("Event", () => {
     describe("AutoDisposable", () => {
         it("should dispose its dependencies", () => {
             const myDisposable = {
-                dispose: jest.fn(),
+                dispose: mock.fn(),
             };
             class MyAutoDisposable extends AutoDisposable {
                 constructor(disposable: Disposable) {
@@ -18,7 +19,7 @@ describe("Event", () => {
 
             const myAutoDisposable = new MyAutoDisposable(myDisposable);
             myAutoDisposable.dispose();
-            expect(myDisposable.dispose).toHaveBeenCalledTimes(1);
+            assert.strictEqual(myDisposable.dispose.mock.callCount(), 1);
         });
     });
 });

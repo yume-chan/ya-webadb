@@ -1,4 +1,5 @@
-import { describe, expect, it, jest } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import type {
     AsyncExactReadable,
@@ -26,15 +27,15 @@ class MockDeserializationStream implements ExactReadable {
 
     position = 0;
 
-    readExactly = jest.fn(() => this.buffer);
+    readExactly = mock.fn(() => this.buffer);
 }
 
 describe("Struct", () => {
     describe(".constructor", () => {
         it("should initialize fields", () => {
             const struct = new Struct();
-            expect(struct).toHaveProperty("options", StructDefaultOptions);
-            expect(struct).toHaveProperty("size", 0);
+            assert.deepStrictEqual(struct.options, StructDefaultOptions);
+            assert.strictEqual(struct.size, 0);
         });
     });
 
@@ -44,7 +45,7 @@ describe("Struct", () => {
                 super(size);
             }
 
-            getSize = jest.fn(() => {
+            getSize = mock.fn(() => {
                 return this.options;
             });
 
@@ -87,16 +88,16 @@ describe("Struct", () => {
             const fieldDefinition1 = new MockFieldDefinition(4);
 
             struct.field(field1, fieldDefinition1);
-            expect(struct).toHaveProperty("size", 4);
-            expect(fieldDefinition1.getSize).toHaveBeenCalledTimes(1);
-            expect(struct.fields).toEqual([[field1, fieldDefinition1]]);
+            assert.strictEqual(struct.size, 4);
+            assert.strictEqual(fieldDefinition1.getSize.mock.callCount(), 1);
+            assert.deepStrictEqual(struct.fields, [[field1, fieldDefinition1]]);
 
             const field2 = "bar";
             const fieldDefinition2 = new MockFieldDefinition(8);
             struct.field(field2, fieldDefinition2);
-            expect(struct).toHaveProperty("size", 12);
-            expect(fieldDefinition2.getSize).toHaveBeenCalledTimes(1);
-            expect(struct.fields).toEqual([
+            assert.strictEqual(struct.size, 12);
+            assert.strictEqual(fieldDefinition2.getSize.mock.callCount(), 1);
+            assert.deepStrictEqual(struct.fields, [
                 [field1, fieldDefinition1],
                 [field2, fieldDefinition2],
             ]);
@@ -106,9 +107,9 @@ describe("Struct", () => {
             const struct = new Struct();
             const fieldName = "foo";
             struct.field(fieldName, new MockFieldDefinition(4));
-            expect(() =>
-                struct.field(fieldName, new MockFieldDefinition(4)),
-            ).toThrow();
+            assert.throws(() => {
+                struct.field(fieldName, new MockFieldDefinition(4));
+            });
         });
     });
 
@@ -116,81 +117,81 @@ describe("Struct", () => {
         it("`int8` should append an `int8` field", () => {
             const struct = new Struct();
             struct.int8("foo");
-            expect(struct).toHaveProperty("size", 1);
+            assert.strictEqual(struct.size, 1);
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
-            expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.variant).toBe(NumberFieldVariant.Int8);
+            assert.ok(definition instanceof NumberFieldDefinition);
+            assert.strictEqual(definition.variant, NumberFieldVariant.Int8);
         });
 
         it("`uint8` should append an `uint8` field", () => {
             const struct = new Struct();
             struct.uint8("foo");
-            expect(struct).toHaveProperty("size", 1);
+            assert.strictEqual(struct.size, 1);
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
-            expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.variant).toBe(NumberFieldVariant.Uint8);
+            assert.ok(definition instanceof NumberFieldDefinition);
+            assert.strictEqual(definition.variant, NumberFieldVariant.Uint8);
         });
 
         it("`int16` should append an `int16` field", () => {
             const struct = new Struct();
             struct.int16("foo");
-            expect(struct).toHaveProperty("size", 2);
+            assert.strictEqual(struct.size, 2);
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
-            expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.variant).toBe(NumberFieldVariant.Int16);
+            assert.ok(definition instanceof NumberFieldDefinition);
+            assert.strictEqual(definition.variant, NumberFieldVariant.Int16);
         });
 
         it("`uint16` should append an `uint16` field", () => {
             const struct = new Struct();
             struct.uint16("foo");
-            expect(struct).toHaveProperty("size", 2);
+            assert.strictEqual(struct.size, 2);
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
-            expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.variant).toBe(NumberFieldVariant.Uint16);
+            assert.ok(definition instanceof NumberFieldDefinition);
+            assert.strictEqual(definition.variant, NumberFieldVariant.Uint16);
         });
 
         it("`int32` should append an `int32` field", () => {
             const struct = new Struct();
             struct.int32("foo");
-            expect(struct).toHaveProperty("size", 4);
+            assert.strictEqual(struct.size, 4);
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
-            expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.variant).toBe(NumberFieldVariant.Int32);
+            assert.ok(definition instanceof NumberFieldDefinition);
+            assert.strictEqual(definition.variant, NumberFieldVariant.Int32);
         });
 
         it("`uint32` should append an `uint32` field", () => {
             const struct = new Struct();
             struct.uint32("foo");
-            expect(struct).toHaveProperty("size", 4);
+            assert.strictEqual(struct.size, 4);
 
             const definition = struct.fields[0]![1] as NumberFieldDefinition;
-            expect(definition).toBeInstanceOf(NumberFieldDefinition);
-            expect(definition.variant).toBe(NumberFieldVariant.Uint32);
+            assert.ok(definition instanceof NumberFieldDefinition);
+            assert.strictEqual(definition.variant, NumberFieldVariant.Uint32);
         });
 
         it("`int64` should append an `int64` field", () => {
             const struct = new Struct();
             struct.int64("foo");
-            expect(struct).toHaveProperty("size", 8);
+            assert.strictEqual(struct.size, 8);
 
             const definition = struct.fields[0]![1] as BigIntFieldDefinition;
-            expect(definition).toBeInstanceOf(BigIntFieldDefinition);
-            expect(definition.variant).toBe(BigIntFieldVariant.Int64);
+            assert.ok(definition instanceof BigIntFieldDefinition);
+            assert.strictEqual(definition.variant, BigIntFieldVariant.Int64);
         });
 
         it("`uint64` should append an `uint64` field", () => {
             const struct = new Struct();
             struct.uint64("foo");
-            expect(struct).toHaveProperty("size", 8);
+            assert.strictEqual(struct.size, 8);
 
             const definition = struct.fields[0]![1] as BigIntFieldDefinition;
-            expect(definition).toBeInstanceOf(BigIntFieldDefinition);
-            expect(definition.variant).toBe(BigIntFieldVariant.Uint64);
+            assert.ok(definition instanceof BigIntFieldDefinition);
+            assert.strictEqual(definition.variant, BigIntFieldVariant.Uint64);
         });
 
         describe("#uint8ArrayLike", () => {
@@ -198,71 +199,81 @@ describe("Struct", () => {
                 it("`#uint8Array` with fixed length", () => {
                     const struct = new Struct();
                     struct.uint8Array("foo", { length: 10 });
-                    expect(struct).toHaveProperty("size", 10);
+                    assert.strictEqual(struct.size, 10);
 
                     const definition = struct
                         .fields[0]![1] as FixedLengthBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(
-                        FixedLengthBufferLikeFieldDefinition,
+                    assert.ok(
+                        definition instanceof
+                            FixedLengthBufferLikeFieldDefinition,
                     );
-                    expect(definition.converter).toBeInstanceOf(
-                        BufferFieldConverter,
+                    assert.ok(
+                        definition.converter instanceof BufferFieldConverter,
                     );
-                    expect(definition.options.length).toBe(10);
+                    assert.strictEqual(definition.options.length, 10);
                 });
 
                 it("`#string` with fixed length", () => {
                     const struct = new Struct();
                     struct.string("foo", { length: 10 });
-                    expect(struct).toHaveProperty("size", 10);
+                    assert.strictEqual(struct.size, 10);
 
                     const definition = struct
                         .fields[0]![1] as FixedLengthBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(
-                        FixedLengthBufferLikeFieldDefinition,
+                    assert.ok(
+                        definition instanceof
+                            FixedLengthBufferLikeFieldDefinition,
                     );
-                    expect(definition.converter).toBeInstanceOf(
-                        BufferFieldConverter,
+                    assert.ok(
+                        definition.converter instanceof BufferFieldConverter,
                     );
-                    expect(definition.options.length).toBe(10);
+                    assert.strictEqual(definition.options.length, 10);
                 });
             });
 
             describe("VariableLengthBufferLikeFieldDefinition", () => {
                 it("`#uint8Array` with variable length", () => {
                     const struct = new Struct().int8("barLength");
-                    expect(struct).toHaveProperty("size", 1);
+                    assert.strictEqual(struct.size, 1);
 
                     struct.uint8Array("bar", { lengthField: "barLength" });
-                    expect(struct).toHaveProperty("size", 1);
+                    assert.strictEqual(struct.size, 1);
 
                     const definition = struct
                         .fields[1]![1] as VariableLengthBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(
-                        VariableLengthBufferLikeFieldDefinition,
+                    assert.ok(
+                        definition instanceof
+                            VariableLengthBufferLikeFieldDefinition,
                     );
-                    expect(definition.converter).toBeInstanceOf(
-                        BufferFieldConverter,
+                    assert.ok(
+                        definition.converter instanceof BufferFieldConverter,
                     );
-                    expect(definition.options.lengthField).toBe("barLength");
+                    assert.strictEqual(
+                        definition.options.lengthField,
+                        "barLength",
+                    );
                 });
 
                 it("`#string` with variable length", () => {
                     const struct = new Struct().int8("barLength");
-                    expect(struct).toHaveProperty("size", 1);
+                    assert.strictEqual(struct.size, 1);
 
                     struct.string("bar", { lengthField: "barLength" });
-                    expect(struct).toHaveProperty("size", 1);
+                    assert.strictEqual(struct.size, 1);
 
                     const definition = struct
                         .fields[1]![1] as VariableLengthBufferLikeFieldDefinition;
-                    expect(definition).toBeInstanceOf(
-                        VariableLengthBufferLikeFieldDefinition,
+                    assert.ok(
+                        definition instanceof
+                            VariableLengthBufferLikeFieldDefinition,
                     );
-                    expect(definition.converter).toBeInstanceOf(
-                        BufferFieldConverter,
+                    assert.ok(
+                        definition.converter instanceof BufferFieldConverter,
                     );
-                    expect(definition.options.lengthField).toBe("barLength");
+                    assert.strictEqual(
+                        definition.options.lengthField,
+                        "barLength",
+                    );
                 });
             });
         });
@@ -277,31 +288,24 @@ describe("Struct", () => {
                     .int64("int64");
 
                 const field0 = struct.fields[0]!;
-                expect(field0).toHaveProperty("0", "int8");
-                expect(field0[1]).toHaveProperty(
-                    "variant",
+                assert.strictEqual(field0[0], "int8");
+                assert.strictEqual(
+                    (field0[1] as NumberFieldDefinition).variant,
                     NumberFieldVariant.Int8,
                 );
 
                 const field1 = struct.fields[1]!;
-                expect(field1).toHaveProperty("0", "int16");
-                expect(field1[1]).toHaveProperty(
-                    "variant",
+                assert.strictEqual(field1[0], "int16");
+                assert.strictEqual(
+                    (field1[1] as NumberFieldDefinition).variant,
                     NumberFieldVariant.Int16,
                 );
 
                 const field2 = struct.fields[2]!;
-                expect(field2).toHaveProperty("0", "int32");
-                expect(field2[1]).toHaveProperty(
-                    "variant",
+                assert.strictEqual(field2[0], "int32");
+                assert.strictEqual(
+                    (field2[1] as NumberFieldDefinition).variant,
                     NumberFieldVariant.Int32,
-                );
-
-                const field3 = struct.fields[3]!;
-                expect(field3).toHaveProperty("0", "int64");
-                expect(field3[1]).toHaveProperty(
-                    "variant",
-                    BigIntFieldVariant.Int64,
                 );
             });
         });
@@ -311,16 +315,27 @@ describe("Struct", () => {
                 const struct = new Struct().int8("foo").int16("bar");
 
                 const stream = new MockDeserializationStream();
-                stream.readExactly
-                    .mockReturnValueOnce(new Uint8Array([2]))
-                    .mockReturnValueOnce(new Uint8Array([0, 16]));
+                stream.readExactly.mock.mockImplementationOnce(
+                    () => new Uint8Array([2]),
+                    0,
+                );
+                stream.readExactly.mock.mockImplementationOnce(
+                    () => new Uint8Array([0, 16]),
+                    1,
+                );
 
                 const result = struct.deserialize(stream);
-                expect(result).toEqual({ foo: 2, bar: 16 });
+                assert.deepEqual(result, { foo: 2, bar: 16 });
 
-                expect(stream.readExactly).toHaveBeenCalledTimes(2);
-                expect(stream.readExactly).toHaveBeenNthCalledWith(1, 1);
-                expect(stream.readExactly).toHaveBeenNthCalledWith(2, 2);
+                assert.strictEqual(stream.readExactly.mock.callCount(), 2);
+                assert.deepStrictEqual(
+                    stream.readExactly.mock.calls[0]!.arguments,
+                    [1],
+                );
+                assert.deepStrictEqual(
+                    stream.readExactly.mock.calls[1]!.arguments,
+                    [2],
+                );
             });
 
             it("should deserialize with dynamic size fields", () => {
@@ -329,18 +344,33 @@ describe("Struct", () => {
                     .uint8Array("foo", { lengthField: "fooLength" });
 
                 const stream = new MockDeserializationStream();
-                stream.readExactly
-                    .mockReturnValueOnce(new Uint8Array([2]))
-                    .mockReturnValueOnce(new Uint8Array([3, 4]));
+                stream.readExactly.mock.mockImplementationOnce(
+                    () => new Uint8Array([2]),
+                    0,
+                );
+                stream.readExactly.mock.mockImplementationOnce(
+                    () => new Uint8Array([3, 4]),
+                    1,
+                );
 
                 const result = struct.deserialize(stream);
-                expect(result).toEqual({
-                    fooLength: 2,
-                    foo: new Uint8Array([3, 4]),
+                assert.deepEqual(result, {
+                    get fooLength() {
+                        return 2;
+                    },
+                    get foo() {
+                        return new Uint8Array([3, 4]);
+                    },
                 });
-                expect(stream.readExactly).toHaveBeenCalledTimes(2);
-                expect(stream.readExactly).toHaveBeenNthCalledWith(1, 1);
-                expect(stream.readExactly).toHaveBeenNthCalledWith(2, 2);
+                assert.strictEqual(stream.readExactly.mock.callCount(), 2);
+                assert.deepStrictEqual(
+                    stream.readExactly.mock.calls[0]!.arguments,
+                    [1],
+                );
+                assert.deepStrictEqual(
+                    stream.readExactly.mock.calls[1]!.arguments,
+                    [2],
+                );
             });
         });
 
@@ -351,32 +381,33 @@ describe("Struct", () => {
                 const stream = new MockDeserializationStream();
                 const result = struct.deserialize(stream);
 
-                expect(
+                assert.deepStrictEqual(
                     Object.entries(
                         Object.getOwnPropertyDescriptors(
                             Object.getPrototypeOf(result),
                         ),
                     ),
-                ).toEqual([
                     [
-                        "foo",
-                        {
-                            configurable: true,
-                            enumerable: true,
-                            writable: true,
-                            value: 42,
-                        },
+                        [
+                            "foo",
+                            {
+                                configurable: true,
+                                enumerable: true,
+                                writable: true,
+                                value: 42,
+                            },
+                        ],
+                        [
+                            "bar",
+                            {
+                                configurable: true,
+                                enumerable: true,
+                                writable: true,
+                                value: true,
+                            },
+                        ],
                     ],
-                    [
-                        "bar",
-                        {
-                            configurable: true,
-                            enumerable: true,
-                            writable: true,
-                            value: true,
-                        },
-                    ],
-                ]);
+                );
             });
 
             it("should accept accessors", () => {
@@ -395,85 +426,67 @@ describe("Struct", () => {
                 const stream = new MockDeserializationStream();
                 const result = struct.deserialize(stream);
 
-                expect(
-                    Object.entries(
-                        Object.getOwnPropertyDescriptors(
-                            Object.getPrototypeOf(result),
-                        ),
-                    ),
-                ).toEqual([
-                    [
-                        "foo",
-                        {
-                            configurable: true,
-                            enumerable: true,
-                            get: expect.any(Function),
-                        },
-                    ],
-                    [
-                        "bar",
-                        {
-                            configurable: true,
-                            enumerable: true,
-                            get: expect.any(Function),
-                            set: expect.any(Function),
-                        },
-                    ],
-                ]);
+                const properties = Object.getOwnPropertyDescriptors(
+                    Object.getPrototypeOf(result),
+                );
+                assert.strictEqual(properties.foo?.configurable, true);
+                assert.strictEqual(properties.foo?.enumerable, true);
+                assert.strictEqual(properties.bar?.configurable, true);
+                assert.strictEqual(properties.bar?.enumerable, true);
             });
         });
 
         describe("#postDeserialize", () => {
             it("can throw errors", () => {
                 const struct = new Struct();
-                const callback = jest.fn(() => {
+                const callback = mock.fn(() => {
                     throw new Error("mock");
                 });
                 struct.postDeserialize(callback);
 
                 const stream = new MockDeserializationStream();
-                expect(() => struct.deserialize(stream)).toThrow("mock");
-                expect(callback).toHaveBeenCalledTimes(1);
+                assert.throws(() => struct.deserialize(stream), /mock/);
+                assert.strictEqual(callback.mock.callCount(), 1);
             });
 
             it("can replace return value", () => {
                 const struct = new Struct();
-                const callback = jest.fn(() => "mock");
+                const callback = mock.fn(() => "mock");
                 struct.postDeserialize(callback);
 
                 const stream = new MockDeserializationStream();
-                expect(struct.deserialize(stream)).toBe("mock");
-                expect(callback).toHaveBeenCalledTimes(1);
-                expect(callback).toHaveBeenCalledWith({});
+                assert.strictEqual(struct.deserialize(stream), "mock");
+                assert.strictEqual(callback.mock.callCount(), 1);
+                assert.deepEqual(callback.mock.calls[0]?.arguments, [{}]);
             });
 
             it("can return nothing", () => {
                 const struct = new Struct();
-                const callback = jest.fn();
+                const callback = mock.fn();
                 struct.postDeserialize(callback);
 
                 const stream = new MockDeserializationStream();
                 const result = struct.deserialize(stream);
 
-                expect(callback).toHaveBeenCalledTimes(1);
-                expect(callback).toHaveBeenCalledWith(result);
+                assert.strictEqual(callback.mock.callCount(), 1);
+                assert.deepEqual(callback.mock.calls[0]?.arguments, [result]);
             });
 
             it("should overwrite callback", () => {
                 const struct = new Struct();
 
-                const callback1 = jest.fn();
+                const callback1 = mock.fn();
                 struct.postDeserialize(callback1);
 
-                const callback2 = jest.fn();
+                const callback2 = mock.fn();
                 struct.postDeserialize(callback2);
 
                 const stream = new MockDeserializationStream();
                 struct.deserialize(stream);
 
-                expect(callback1).toHaveBeenCalledTimes(0);
-                expect(callback2).toHaveBeenCalledTimes(1);
-                expect(callback2).toHaveBeenCalledWith({});
+                assert.strictEqual(callback1.mock.callCount(), 0);
+                assert.strictEqual(callback2.mock.callCount(), 1);
+                assert.deepEqual(callback2.mock.calls[0]?.arguments, [{}]);
             });
         });
 
@@ -485,7 +498,10 @@ describe("Struct", () => {
                     struct.serialize({ foo: 0x42, bar: 0x1024 }),
                 );
 
-                expect(result).toEqual(new Uint8Array([0x42, 0x10, 0x24]));
+                assert.deepStrictEqual(
+                    result,
+                    new Uint8Array([0x42, 0x10, 0x24]),
+                );
             });
 
             it("should serialize with dynamic size fields", () => {
@@ -499,7 +515,8 @@ describe("Struct", () => {
                     }),
                 );
 
-                expect(result).toEqual(
+                assert.deepStrictEqual(
+                    result,
                     new Uint8Array([0x03, 0x03, 0x04, 0x05]),
                 );
             });

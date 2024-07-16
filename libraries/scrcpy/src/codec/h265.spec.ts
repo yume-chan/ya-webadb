@@ -4,7 +4,8 @@
 // cspell: ignore dbbp
 // cspell: ignore texmc
 
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { h265ParseSequenceParameterSet } from "./h265.js";
 
@@ -22,7 +23,7 @@ describe("h265", () => {
 
             const sps = h265ParseSequenceParameterSet(buffer);
 
-            expect(sps).toEqual({
+            assert.deepStrictEqual(sps, {
                 sps_video_parameter_set_id: 0,
                 sps_max_sub_layers_minus1: 0,
                 sps_temporal_id_nesting_flag: true,

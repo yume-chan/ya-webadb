@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { ConcatBufferStream, ConcatStringStream } from "./concat.js";
 import { ReadableStream } from "./stream.js";
@@ -6,10 +7,10 @@ import { ReadableStream } from "./stream.js";
 describe("ConcatStringStream", () => {
     it("should have Promise interface", () => {
         const readable = new ConcatStringStream().readable;
-        expect(readable).toBeInstanceOf(ReadableStream);
-        expect(readable).toHaveProperty("then", expect.any(Function));
-        expect(readable).toHaveProperty("catch", expect.any(Function));
-        expect(readable).toHaveProperty("finally", expect.any(Function));
+        assert.ok(readable instanceof ReadableStream);
+        assert.ok(typeof readable.then === "function");
+        assert.ok(typeof readable.catch === "function");
+        assert.ok(typeof readable.finally === "function");
     });
 
     it("should resolve to result", async () => {
@@ -21,7 +22,7 @@ describe("ConcatStringStream", () => {
             },
         }).pipeThrough(new ConcatStringStream());
 
-        await expect(readable).resolves.toBe("foobar");
+        assert.strictEqual(await readable, "foobar");
     });
 
     it("should read result", async () => {
@@ -34,11 +35,11 @@ describe("ConcatStringStream", () => {
         }).pipeThrough(new ConcatStringStream());
 
         const reader = readable.getReader();
-        await expect(reader.read()).resolves.toEqual({
+        assert.deepStrictEqual(await reader.read(), {
             done: false,
             value: "foobar",
         });
-        await expect(reader.read()).resolves.toEqual({
+        assert.deepStrictEqual(await reader.read(), {
             done: true,
             value: undefined,
         });
@@ -46,22 +47,20 @@ describe("ConcatStringStream", () => {
 
     it("should report error when aborted", async () => {
         const stream = new ConcatStringStream();
-        const reason = "aborted";
+        const reason = new Error("aborted");
         await stream.writable.getWriter().abort(reason);
-        await expect(stream.readable).rejects.toBe(reason);
-        await expect(() => stream.readable.getReader().read()).rejects.toBe(
-            reason,
-        );
+        await assert.rejects(() => stream.readable, reason);
+        await assert.rejects(() => stream.readable.getReader().read(), reason);
     });
 });
 
 describe("ConcatBufferStream", () => {
     it("should have Promise interface", () => {
         const readable = new ConcatBufferStream().readable;
-        expect(readable).toBeInstanceOf(ReadableStream);
-        expect(readable).toHaveProperty("then", expect.any(Function));
-        expect(readable).toHaveProperty("catch", expect.any(Function));
-        expect(readable).toHaveProperty("finally", expect.any(Function));
+        assert.ok(readable instanceof ReadableStream);
+        assert.ok(typeof readable.then === "function");
+        assert.ok(typeof readable.catch === "function");
+        assert.ok(typeof readable.finally === "function");
     });
 
     it("should return empty buffer if no input", async () => {
@@ -71,7 +70,7 @@ describe("ConcatBufferStream", () => {
             },
         }).pipeThrough(new ConcatBufferStream());
 
-        await expect(readable).resolves.toEqual(new Uint8Array());
+        assert.deepStrictEqual(await readable, new Uint8Array());
     });
 
     it("should return one segment", async () => {
@@ -82,7 +81,7 @@ describe("ConcatBufferStream", () => {
             },
         }).pipeThrough(new ConcatBufferStream());
 
-        await expect(readable).resolves.toEqual(new Uint8Array([1, 2, 3]));
+        assert.deepStrictEqual(await readable, new Uint8Array([1, 2, 3]));
     });
 
     it("should resolve to result", async () => {
@@ -94,7 +93,8 @@ describe("ConcatBufferStream", () => {
             },
         }).pipeThrough(new ConcatBufferStream());
 
-        await expect(readable).resolves.toEqual(
+        assert.deepStrictEqual(
+            await readable,
             new Uint8Array([1, 2, 3, 4, 5, 6]),
         );
     });
@@ -109,11 +109,11 @@ describe("ConcatBufferStream", () => {
         }).pipeThrough(new ConcatBufferStream());
 
         const reader = readable.getReader();
-        await expect(reader.read()).resolves.toEqual({
+        assert.deepStrictEqual(await reader.read(), {
             done: false,
             value: new Uint8Array([1, 2, 3, 4, 5, 6]),
         });
-        await expect(reader.read()).resolves.toEqual({
+        assert.deepStrictEqual(await reader.read(), {
             done: true,
             value: undefined,
         });
@@ -121,11 +121,9 @@ describe("ConcatBufferStream", () => {
 
     it("should report error when aborted", async () => {
         const stream = new ConcatBufferStream();
-        const reason = "aborted";
+        const reason = new Error("aborted");
         await stream.writable.getWriter().abort(reason);
-        await expect(stream.readable).rejects.toBe(reason);
-        await expect(() => stream.readable.getReader().read()).rejects.toBe(
-            reason,
-        );
+        await assert.rejects(() => stream.readable, reason);
+        await assert.rejects(() => stream.readable.getReader().read(), reason);
     });
 });

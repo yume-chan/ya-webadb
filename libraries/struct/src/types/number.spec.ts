@@ -1,4 +1,5 @@
-import { describe, expect, it, jest, test } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import type { ExactReadable } from "../basic/index.js";
 import { StructDefaultOptions, StructValue } from "../basic/index.js";
@@ -11,7 +12,7 @@ function testEndian(
     max: number,
     littleEndian: boolean,
 ) {
-    test(`min = ${min}`, () => {
+    it(`min = ${min}`, () => {
         const buffer = new ArrayBuffer(type.size);
         const view = new DataView(buffer);
         (
@@ -22,10 +23,10 @@ function testEndian(
             ] as (offset: number, value: number, littleEndian: boolean) => void
         )(0, min, littleEndian);
         const output = type.deserialize(new Uint8Array(buffer), littleEndian);
-        expect(output).toBe(min);
+        assert.strictEqual(output, min);
     });
 
-    test("1", () => {
+    it("1", () => {
         const buffer = new ArrayBuffer(type.size);
         const view = new DataView(buffer);
         const input = 1;
@@ -37,10 +38,10 @@ function testEndian(
             ] as (offset: number, value: number, littleEndian: boolean) => void
         )(0, input, littleEndian);
         const output = type.deserialize(new Uint8Array(buffer), littleEndian);
-        expect(output).toBe(input);
+        assert.strictEqual(output, input);
     });
 
-    test(`max = ${max}`, () => {
+    it(`max = ${max}`, () => {
         const buffer = new ArrayBuffer(type.size);
         const view = new DataView(buffer);
         (
@@ -51,7 +52,7 @@ function testEndian(
             ] as (offset: number, value: number, littleEndian: boolean) => void
         )(0, max, littleEndian);
         const output = type.deserialize(new Uint8Array(buffer), littleEndian);
-        expect(output).toBe(max);
+        assert.strictEqual(output, max);
     });
 }
 
@@ -93,8 +94,8 @@ describe("Types", () => {
             describe("Int8", () => {
                 const key = "Int8";
 
-                test("basic", () => {
-                    expect(NumberFieldVariant[key]).toHaveProperty("size", 1);
+                it("basic", () => {
+                    assert.strictEqual(NumberFieldVariant[key].size, 1);
                 });
 
                 testDeserialize(NumberFieldVariant[key]);
@@ -103,8 +104,8 @@ describe("Types", () => {
             describe("Uint8", () => {
                 const key = "Uint8";
 
-                test("basic", () => {
-                    expect(NumberFieldVariant[key]).toHaveProperty("size", 1);
+                it("basic", () => {
+                    assert.strictEqual(NumberFieldVariant[key].size, 1);
                 });
 
                 testDeserialize(NumberFieldVariant[key]);
@@ -113,8 +114,8 @@ describe("Types", () => {
             describe("Int16", () => {
                 const key = "Int16";
 
-                test("basic", () => {
-                    expect(NumberFieldVariant[key]).toHaveProperty("size", 2);
+                it("basic", () => {
+                    assert.strictEqual(NumberFieldVariant[key].size, 2);
                 });
 
                 testDeserialize(NumberFieldVariant[key]);
@@ -123,8 +124,8 @@ describe("Types", () => {
             describe("Uint16", () => {
                 const key = "Uint16";
 
-                test("basic", () => {
-                    expect(NumberFieldVariant[key]).toHaveProperty("size", 2);
+                it("basic", () => {
+                    assert.strictEqual(NumberFieldVariant[key].size, 2);
                 });
 
                 testDeserialize(NumberFieldVariant[key]);
@@ -133,8 +134,8 @@ describe("Types", () => {
             describe("Int32", () => {
                 const key = "Int32";
 
-                test("basic", () => {
-                    expect(NumberFieldVariant[key]).toHaveProperty("size", 4);
+                it("basic", () => {
+                    assert.strictEqual(NumberFieldVariant[key].size, 4);
                 });
 
                 testDeserialize(NumberFieldVariant[key]);
@@ -143,8 +144,8 @@ describe("Types", () => {
             describe("Uint32", () => {
                 const key = "Uint32";
 
-                test("basic", () => {
-                    expect(NumberFieldVariant[key]).toHaveProperty("size", 4);
+                it("basic", () => {
+                    assert.strictEqual(NumberFieldVariant[key].size, 4);
                 });
 
                 testDeserialize(NumberFieldVariant[key]);
@@ -154,42 +155,48 @@ describe("Types", () => {
         describe("NumberFieldDefinition", () => {
             describe("#getSize", () => {
                 it("should return size of its type", () => {
-                    expect(
+                    assert.strictEqual(
                         new NumberFieldDefinition(
                             NumberFieldVariant.Int8,
                         ).getSize(),
-                    ).toBe(1);
-                    expect(
+                        1,
+                    );
+                    assert.strictEqual(
                         new NumberFieldDefinition(
                             NumberFieldVariant.Uint8,
                         ).getSize(),
-                    ).toBe(1);
-                    expect(
+                        1,
+                    );
+                    assert.strictEqual(
                         new NumberFieldDefinition(
                             NumberFieldVariant.Int16,
                         ).getSize(),
-                    ).toBe(2);
-                    expect(
+                        2,
+                    );
+                    assert.strictEqual(
                         new NumberFieldDefinition(
                             NumberFieldVariant.Uint16,
                         ).getSize(),
-                    ).toBe(2);
-                    expect(
+                        2,
+                    );
+                    assert.strictEqual(
                         new NumberFieldDefinition(
                             NumberFieldVariant.Int32,
                         ).getSize(),
-                    ).toBe(4);
-                    expect(
+                        4,
+                    );
+                    assert.strictEqual(
                         new NumberFieldDefinition(
                             NumberFieldVariant.Uint32,
                         ).getSize(),
-                    ).toBe(4);
+                        4,
+                    );
                 });
             });
 
             describe("#deserialize", () => {
                 it("should deserialize Uint8", () => {
-                    const readExactly = jest.fn(
+                    const readExactly = mock.fn(
                         () => new Uint8Array([1, 2, 3, 4]),
                     );
                     const stream: ExactReadable = { position: 0, readExactly };
@@ -204,15 +211,16 @@ describe("Types", () => {
                         struct,
                     );
 
-                    expect(value.get()).toBe(1);
-                    expect(readExactly).toHaveBeenCalledTimes(1);
-                    expect(readExactly).toHaveBeenCalledWith(
-                        NumberFieldVariant.Uint8.size,
+                    assert.strictEqual(value.get(), 1);
+                    assert.strictEqual(readExactly.mock.callCount(), 1);
+                    assert.deepStrictEqual(
+                        readExactly.mock.calls[0]?.arguments,
+                        [NumberFieldVariant.Uint8.size],
                     );
                 });
 
                 it("should deserialize Uint16", () => {
-                    const readExactly = jest.fn(
+                    const readExactly = mock.fn(
                         () => new Uint8Array([1, 2, 3, 4]),
                     );
                     const stream: ExactReadable = { position: 0, readExactly };
@@ -227,15 +235,16 @@ describe("Types", () => {
                         struct,
                     );
 
-                    expect(value.get()).toBe((1 << 8) | 2);
-                    expect(readExactly).toHaveBeenCalledTimes(1);
-                    expect(readExactly).toHaveBeenCalledWith(
-                        NumberFieldVariant.Uint16.size,
+                    assert.strictEqual(value.get(), (1 << 8) | 2);
+                    assert.strictEqual(readExactly.mock.callCount(), 1);
+                    assert.deepStrictEqual(
+                        readExactly.mock.calls[0]?.arguments,
+                        [NumberFieldVariant.Uint16.size],
                     );
                 });
 
                 it("should deserialize Uint16LE", () => {
-                    const readExactly = jest.fn(
+                    const readExactly = mock.fn(
                         () => new Uint8Array([1, 2, 3, 4]),
                     );
                     const stream: ExactReadable = { position: 0, readExactly };
@@ -250,10 +259,11 @@ describe("Types", () => {
                         struct,
                     );
 
-                    expect(value.get()).toBe((2 << 8) | 1);
-                    expect(readExactly).toHaveBeenCalledTimes(1);
-                    expect(readExactly).toHaveBeenCalledWith(
-                        NumberFieldVariant.Uint16.size,
+                    assert.strictEqual(value.get(), (2 << 8) | 1);
+                    assert.strictEqual(readExactly.mock.callCount(), 1);
+                    assert.deepStrictEqual(
+                        readExactly.mock.calls[0]?.arguments,
+                        [NumberFieldVariant.Uint16.size],
                     );
                 });
             });
@@ -264,41 +274,47 @@ describe("Types", () => {
                 it("should return size of its definition", () => {
                     const struct = new StructValue({});
 
-                    expect(
+                    assert.strictEqual(
                         new NumberFieldDefinition(NumberFieldVariant.Int8)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
-                    ).toBe(1);
+                        1,
+                    );
 
-                    expect(
+                    assert.strictEqual(
                         new NumberFieldDefinition(NumberFieldVariant.Uint8)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
-                    ).toBe(1);
+                        1,
+                    );
 
-                    expect(
+                    assert.strictEqual(
                         new NumberFieldDefinition(NumberFieldVariant.Int16)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
-                    ).toBe(2);
+                        2,
+                    );
 
-                    expect(
+                    assert.strictEqual(
                         new NumberFieldDefinition(NumberFieldVariant.Uint16)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
-                    ).toBe(2);
+                        2,
+                    );
 
-                    expect(
+                    assert.strictEqual(
                         new NumberFieldDefinition(NumberFieldVariant.Int32)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
-                    ).toBe(4);
+                        4,
+                    );
 
-                    expect(
+                    assert.strictEqual(
                         new NumberFieldDefinition(NumberFieldVariant.Uint32)
                             .create(StructDefaultOptions, struct, 42)
                             .getSize(),
-                    ).toBe(4);
+                        4,
+                    );
                 });
             });
 
@@ -317,9 +333,10 @@ describe("Types", () => {
                     const array = new Uint8Array(10);
                     value.serialize(array, 2);
 
-                    expect(Array.from(array)).toEqual([
-                        0, 0, 42, 0, 0, 0, 0, 0, 0, 0,
-                    ]);
+                    assert.deepStrictEqual(
+                        Array.from(array),
+                        [0, 0, 42, 0, 0, 0, 0, 0, 0, 0],
+                    );
                 });
             });
         });

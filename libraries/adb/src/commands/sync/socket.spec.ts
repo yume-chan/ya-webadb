@@ -1,4 +1,6 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
+
 import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 
 import { AdbSyncSocket } from "./socket.js";
@@ -40,7 +42,7 @@ describe("AdbSyncSocket", () => {
                 await Promise.resolve();
             }
 
-            expect(result).toEqual([1, 2, 3]);
+            assert.deepStrictEqual(result, [1, 2, 3]);
         });
     });
 });

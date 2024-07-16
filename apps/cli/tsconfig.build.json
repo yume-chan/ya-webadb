@@ -4,17 +4,17 @@
         "lib": [
             "ESNext",
             "DOM"
-        ],
+        ]
     },
     "references": [
-        {
-            "path": "../../libraries/adb/tsconfig.build.json"
-        },
         {
             "path": "../../libraries/adb-server-node-tcp/tsconfig.build.json"
         },
         {
+            "path": "../../libraries/adb/tsconfig.build.json"
+        },
+        {
             "path": "../../libraries/stream-extra/tsconfig.build.json"
         }
-    ],
+    ]
 }

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import {
     calculateBase64EncodedLength,
@@ -9,13 +10,13 @@ import {
 describe("base64", () => {
     describe("calculateBase64EncodedLength", () => {
         it("should return correct length and padding", () => {
-            expect(calculateBase64EncodedLength(0)).toEqual([0, 0]);
-            expect(calculateBase64EncodedLength(1)).toEqual([4, 2]);
-            expect(calculateBase64EncodedLength(2)).toEqual([4, 1]);
-            expect(calculateBase64EncodedLength(3)).toEqual([4, 0]);
-            expect(calculateBase64EncodedLength(4)).toEqual([8, 2]);
-            expect(calculateBase64EncodedLength(5)).toEqual([8, 1]);
-            expect(calculateBase64EncodedLength(6)).toEqual([8, 0]);
+            assert.deepStrictEqual(calculateBase64EncodedLength(0), [0, 0]);
+            assert.deepStrictEqual(calculateBase64EncodedLength(1), [4, 2]);
+            assert.deepStrictEqual(calculateBase64EncodedLength(2), [4, 1]);
+            assert.deepStrictEqual(calculateBase64EncodedLength(3), [4, 0]);
+            assert.deepStrictEqual(calculateBase64EncodedLength(4), [8, 2]);
+            assert.deepStrictEqual(calculateBase64EncodedLength(5), [8, 1]);
+            assert.deepStrictEqual(calculateBase64EncodedLength(6), [8, 0]);
         });
     });
 
@@ -32,7 +33,8 @@ describe("base64", () => {
         inputs.forEach((input) => {
             describe(`input length = ${input.length}`, () => {
                 it("should return correct decoded buffer", () => {
-                    expect(decodeBase64(nodeEncodeBase64(input))).toEqual(
+                    assert.deepStrictEqual(
+                        decodeBase64(nodeEncodeBase64(input)),
                         input,
                     );
                 });
@@ -77,7 +79,7 @@ describe("base64", () => {
 
             describe(`input length = ${input.length}`, () => {
                 it("should return correct encoded buffer", () => {
-                    expect(encodeBase64(input)).toEqual(correct);
+                    assert.deepStrictEqual(encodeBase64(input), correct);
                 });
 
                 it("should take `output`", () => {
@@ -90,14 +92,16 @@ describe("base64", () => {
                         input,
                         output.subarray(2, 2 + correct.length + 2),
                     );
-                    expect(outputLength).toEqual(correct.length);
-                    expect(output).toEqual(expectedOutput);
+                    assert.strictEqual(outputLength, correct.length);
+                    assert.deepStrictEqual(output, expectedOutput);
                 });
 
                 it("should throw if `output` is too small", () => {
                     if (correct.length !== 0) {
                         const output = new Uint8Array(correct.length - 1);
-                        expect(() => encodeBase64(input, output)).toThrow();
+                        assert.throws(() => {
+                            encodeBase64(input, output);
+                        });
                     }
                 });
 
@@ -184,8 +188,8 @@ describe("base64", () => {
                             ),
                             buffer.subarray(outputOffset),
                         );
-                        expect(outputLength).toEqual(correct.length);
-                        expect(buffer).toEqual(expectedBuffer);
+                        assert.strictEqual(outputLength, correct.length);
+                        assert.deepStrictEqual(buffer, expectedBuffer);
                     }
 
                     // Validate with the dumb version of `canEncodeInPlace` above.
@@ -203,9 +207,9 @@ describe("base64", () => {
                                 it(`should throw with offset = ${
                                     i - 1
                                 }`, () => {
-                                    expect(() =>
-                                        testInPlaceEncodeBase64(i - 1),
-                                    ).toThrow();
+                                    assert.throws(() => {
+                                        testInPlaceEncodeBase64(i - 1);
+                                    });
                                 });
                             }
 
@@ -230,9 +234,9 @@ describe("base64", () => {
                             last = i;
 
                             it(`should throw with offset = ${i}`, () => {
-                                expect(() =>
-                                    testInPlaceEncodeBase64(i),
-                                ).toThrow();
+                                assert.throws(() => {
+                                    testInPlaceEncodeBase64(i);
+                                });
                             });
                         }
                     }

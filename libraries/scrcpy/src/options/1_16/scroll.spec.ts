@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { ScrcpyControlMessageType } from "../../control/index.js";
 
@@ -17,7 +18,7 @@ describe("ScrcpyScrollController1_16", () => {
             scrollY: 0.5,
             buttons: 0,
         });
-        expect(message).toBeUndefined();
+        assert.strictEqual(message, undefined);
     });
 
     it("should return a message when scroll distance is greater than 1", () => {
@@ -32,8 +33,8 @@ describe("ScrcpyScrollController1_16", () => {
             scrollY: 1.5,
             buttons: 0,
         });
-        expect(message).toBeInstanceOf(Uint8Array);
-        expect(message).toHaveProperty("byteLength", 21);
+        assert.ok(message instanceof Uint8Array);
+        assert.strictEqual(message.byteLength, 21);
     });
 
     it("should return a message when accumulated scroll distance is greater than 1", () => {
@@ -58,8 +59,8 @@ describe("ScrcpyScrollController1_16", () => {
             scrollY: 0.5,
             buttons: 0,
         });
-        expect(message).toBeInstanceOf(Uint8Array);
-        expect(message).toHaveProperty("byteLength", 21);
+        assert.ok(message instanceof Uint8Array);
+        assert.strictEqual(message.byteLength, 21);
     });
 
     it("should return a message when accumulated scroll distance is less than -1", () => {
@@ -84,7 +85,7 @@ describe("ScrcpyScrollController1_16", () => {
             scrollY: -0.5,
             buttons: 0,
         });
-        expect(message).toBeInstanceOf(Uint8Array);
-        expect(message).toHaveProperty("byteLength", 21);
+        assert.ok(message instanceof Uint8Array);
+        assert.strictEqual(message.byteLength, 21);
     });
 });

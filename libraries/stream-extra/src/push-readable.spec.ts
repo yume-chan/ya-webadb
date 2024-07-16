@@ -1,5 +1,6 @@
-import { describe, expect, it, jest } from "@jest/globals";
 import { delay } from "@yume-chan/async";
+import * as assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import type { PushReadableStreamController } from "./push-readable.js";
 import { PushReadableStream } from "./push-readable.js";
@@ -7,16 +8,16 @@ import { PushReadableStream } from "./push-readable.js";
 describe("PushReadableStream", () => {
     describe(".cancel", () => {
         it("should abort the `AbortSignal`", async () => {
-            const abortHandler = jest.fn();
+            const abortHandler = mock.fn();
             const stream = new PushReadableStream((controller) => {
                 controller.abortSignal.addEventListener("abort", abortHandler);
             });
             await stream.cancel("reason");
-            expect(abortHandler).toHaveBeenCalledTimes(1);
+            assert.strictEqual(abortHandler.mock.callCount(), 1);
         });
 
         it("should ignore pending `enqueue`", async () => {
-            const log = jest.fn();
+            const log = mock.fn();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);
@@ -28,84 +29,86 @@ describe("PushReadableStream", () => {
             const reader = stream.getReader();
             await delay(0);
             await reader.cancel("reason");
-            expect(log.mock.calls).toMatchInlineSnapshot(`
+            await delay(0);
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments),
                 [
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "complete",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 2,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "waiting",
-                      "source": "producer",
-                      "value": 2,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "cancel",
-                      "phase": "start",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "cancel",
-                      "phase": "complete",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "ignored",
-                      "source": "producer",
-                      "value": 2,
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "start",
-                      "source": "producer",
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "ignored",
-                      "source": "producer",
-                    },
-                  ],
-                ]
-            `);
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "complete",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 2,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "waiting",
+                            source: "producer",
+                            value: 2,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "cancel",
+                            phase: "start",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "cancel",
+                            phase: "complete",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "ignored",
+                            source: "producer",
+                            value: 2,
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "start",
+                            source: "producer",
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "ignored",
+                            source: "producer",
+                        },
+                    ],
+                ],
+            );
         });
 
         it("should ignore future `enqueue`", async () => {
-            const log = jest.fn();
+            const log = mock.fn();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);
@@ -116,104 +119,105 @@ describe("PushReadableStream", () => {
                 log,
             );
             const reader = stream.getReader();
-            await delay(1);
+            await delay(0);
             await reader.cancel("reason");
             // Add extra microtasks to allow all operations to complete
-            await delay(1);
-            expect(log.mock.calls).toMatchInlineSnapshot(`
+            await delay(0);
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments),
                 [
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "complete",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 2,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "waiting",
-                      "source": "producer",
-                      "value": 2,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "cancel",
-                      "phase": "start",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "cancel",
-                      "phase": "complete",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "ignored",
-                      "source": "producer",
-                      "value": 2,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 3,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "ignored",
-                      "source": "producer",
-                      "value": 3,
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "start",
-                      "source": "producer",
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "ignored",
-                      "source": "producer",
-                    },
-                  ],
-                ]
-            `);
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "complete",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 2,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "waiting",
+                            source: "producer",
+                            value: 2,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "cancel",
+                            phase: "start",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "cancel",
+                            phase: "complete",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "ignored",
+                            source: "producer",
+                            value: 2,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 3,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "ignored",
+                            source: "producer",
+                            value: 3,
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "start",
+                            source: "producer",
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "ignored",
+                            source: "producer",
+                        },
+                    ],
+                ],
+            );
         });
 
         it("should allow explicit `close` call", async () => {
-            const log = jest.fn();
+            const log = mock.fn();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);
@@ -224,98 +228,100 @@ describe("PushReadableStream", () => {
                 log,
             );
             const reader = stream.getReader();
-            await delay(1);
+            await delay(0);
             await reader.cancel("reason");
-            expect(log.mock.calls).toMatchInlineSnapshot(`
+            await delay(0);
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments),
                 [
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "complete",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 2,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "waiting",
-                      "source": "producer",
-                      "value": 2,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "cancel",
-                      "phase": "start",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "cancel",
-                      "phase": "complete",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "ignored",
-                      "source": "producer",
-                      "value": 2,
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": true,
-                      "operation": "close",
-                      "phase": "start",
-                      "source": "producer",
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": true,
-                      "operation": "close",
-                      "phase": "ignored",
-                      "source": "producer",
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "start",
-                      "source": "producer",
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "ignored",
-                      "source": "producer",
-                    },
-                  ],
-                ]
-            `);
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "complete",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 2,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "waiting",
+                            source: "producer",
+                            value: 2,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "cancel",
+                            phase: "start",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "cancel",
+                            phase: "complete",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "ignored",
+                            source: "producer",
+                            value: 2,
+                        },
+                    ],
+                    [
+                        {
+                            explicit: true,
+                            operation: "close",
+                            phase: "start",
+                            source: "producer",
+                        },
+                    ],
+                    [
+                        {
+                            explicit: true,
+                            operation: "close",
+                            phase: "ignored",
+                            source: "producer",
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "start",
+                            source: "producer",
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "ignored",
+                            source: "producer",
+                        },
+                    ],
+                ],
+            );
         });
     });
 
@@ -326,7 +332,7 @@ describe("PushReadableStream", () => {
                 controller = controller_;
             });
             controller.error(new Error("error"));
-            await expect(controller.enqueue(1)).rejects.toThrow();
+            await assert.rejects(controller.enqueue(1));
         });
 
         it("should reject future `close`", () => {
@@ -335,13 +341,13 @@ describe("PushReadableStream", () => {
                 controller = controller_;
             });
             controller.error(new Error("error"));
-            expect(() => controller.close()).toThrow();
+            assert.throws(() => controller.close());
         });
     });
 
     describe("0 high water mark", () => {
         it("should allow `read` before `enqueue`", async () => {
-            const log = jest.fn();
+            const log = mock.fn();
             let controller!: PushReadableStreamController<unknown>;
             const stream = new PushReadableStream(
                 (controller_) => {
@@ -352,47 +358,51 @@ describe("PushReadableStream", () => {
             );
             const reader = stream.getReader();
             const promise = reader.read();
-            await delay(1);
+            await delay(0);
             await controller.enqueue(1);
-            await expect(promise).resolves.toEqual({ done: false, value: 1 });
-            expect(log.mock.calls).toMatchInlineSnapshot(`
+            assert.deepStrictEqual(await promise, {
+                done: false,
+                value: 1,
+            });
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments),
                 [
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "start",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "complete",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "complete",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                ]
-            `);
+                    [
+                        {
+                            operation: "pull",
+                            phase: "start",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "pull",
+                            phase: "complete",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "complete",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                ],
+            );
         });
 
         it("should allow `enqueue` before `read`", async () => {
-            const log = jest.fn();
+            const log = mock.fn();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);
@@ -401,74 +411,76 @@ describe("PushReadableStream", () => {
                 log,
             );
             const reader = stream.getReader();
-            await expect(reader.read()).resolves.toEqual({
+            assert.deepStrictEqual(await reader.read(), {
                 done: false,
                 value: 1,
             });
-            expect(log.mock.calls).toMatchInlineSnapshot(`
+            await delay(0);
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments),
                 [
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "waiting",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "start",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "complete",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "complete",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "start",
-                      "source": "producer",
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "complete",
-                      "source": "producer",
-                    },
-                  ],
-                ]
-            `);
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "waiting",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "pull",
+                            phase: "start",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "pull",
+                            phase: "complete",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "complete",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "start",
+                            source: "producer",
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "complete",
+                            source: "producer",
+                        },
+                    ],
+                ],
+            );
         });
     });
 
     describe("non 0 high water mark", () => {
         it("should allow `read` before `enqueue`", async () => {
-            const log = jest.fn();
+            const log = mock.fn();
             let controller!: PushReadableStreamController<unknown>;
             const stream = new PushReadableStream(
                 (controller_) => {
@@ -479,61 +491,65 @@ describe("PushReadableStream", () => {
             );
             const reader = stream.getReader();
             const promise = reader.read();
-            await delay(1);
+            await delay(0);
             await controller.enqueue(1);
-            await expect(promise).resolves.toEqual({ done: false, value: 1 });
-            expect(log.mock.calls).toMatchInlineSnapshot(`
+            assert.deepStrictEqual(await promise, {
+                done: false,
+                value: 1,
+            });
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments),
                 [
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "start",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "complete",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "start",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "complete",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "complete",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                ]
-            `);
+                    [
+                        {
+                            operation: "pull",
+                            phase: "start",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "pull",
+                            phase: "complete",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "pull",
+                            phase: "start",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "pull",
+                            phase: "complete",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "complete",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                ],
+            );
         });
 
         it("should allow `enqueue` before `read`", async () => {
-            const log = jest.fn();
+            const log = mock.fn();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);
@@ -542,60 +558,62 @@ describe("PushReadableStream", () => {
                 log,
             );
             const reader = stream.getReader();
-            await expect(reader.read()).resolves.toEqual({
+            assert.deepStrictEqual(await reader.read(), {
                 done: false,
                 value: 1,
             });
-            expect(log.mock.calls).toMatchInlineSnapshot(`
+            await delay(0);
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments),
                 [
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "start",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "enqueue",
-                      "phase": "complete",
-                      "source": "producer",
-                      "value": 1,
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "start",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "operation": "pull",
-                      "phase": "complete",
-                      "source": "consumer",
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "start",
-                      "source": "producer",
-                    },
-                  ],
-                  [
-                    {
-                      "explicit": false,
-                      "operation": "close",
-                      "phase": "complete",
-                      "source": "producer",
-                    },
-                  ],
-                ]
-            `);
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "start",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "enqueue",
+                            phase: "complete",
+                            source: "producer",
+                            value: 1,
+                        },
+                    ],
+                    [
+                        {
+                            operation: "pull",
+                            phase: "start",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            operation: "pull",
+                            phase: "complete",
+                            source: "consumer",
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "start",
+                            source: "producer",
+                        },
+                    ],
+                    [
+                        {
+                            explicit: false,
+                            operation: "close",
+                            phase: "complete",
+                            source: "producer",
+                        },
+                    ],
+                ],
+            );
         });
     });
 
@@ -608,11 +626,11 @@ describe("PushReadableStream", () => {
 
         it("reject Promise should error the stream", async () => {
             const stream = new PushReadableStream(async () => {
-                await delay(1);
+                await delay(0);
                 throw new Error("error");
             });
             const reader = stream.getReader();
-            await expect(reader.closed).rejects.toThrow("error");
+            await assert.rejects(reader.closed, /error/);
         });
     });
 
@@ -622,16 +640,16 @@ describe("PushReadableStream", () => {
                 controller.close();
             });
             const reader = stream.getReader();
-            await expect(reader.closed).resolves.toBeUndefined();
+            assert.strictEqual(await reader.closed, undefined);
         });
 
-        it("should work with async `source`", () => {
+        it("should work with async `source`", async () => {
             const stream = new PushReadableStream(async (controller) => {
-                await delay(1);
+                await delay(0);
                 controller.close();
             });
             const reader = stream.getReader();
-            return expect(reader.closed).resolves.toBeUndefined();
+            assert.strictEqual(await reader.closed, undefined);
         });
     });
 });

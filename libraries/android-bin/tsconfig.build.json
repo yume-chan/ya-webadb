@@ -9,6 +9,6 @@
         },
         {
             "path": "../struct/tsconfig.build.json"
-        },
+        }
     ]
 }

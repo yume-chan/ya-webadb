@@ -6,7 +6,7 @@
             "DOM"
         ],
         "types": [
-            "w3c-web-usb",
+            "w3c-web-usb"
         ]
     },
     "references": [
@@ -18,6 +18,6 @@
         },
         {
             "path": "../struct/tsconfig.build.json"
-        },
+        }
     ]
 }

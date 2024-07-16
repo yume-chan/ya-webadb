@@ -1,4 +1,5 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import type { ValueOrPromise } from "../utils.js";
 
@@ -50,7 +51,7 @@ describe("StructFieldDefinition", () => {
                 }
             }
 
-            expect(new MockFieldDefinition(42)).toHaveProperty("options", 42);
+            assert.strictEqual(new MockFieldDefinition(42).options, 42);
         });
     });
 });

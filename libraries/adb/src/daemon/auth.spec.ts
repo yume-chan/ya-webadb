@@ -1,4 +1,6 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
+
 import { EMPTY_UINT8_ARRAY, encodeUtf8 } from "@yume-chan/struct";
 
 import { decodeBase64 } from "../utils/base64.js";
@@ -93,7 +95,7 @@ describe("auth", () => {
                 results.push(result);
             }
 
-            expect(results).toStrictEqual([
+            assert.deepStrictEqual(results, [
                 {
                     command: AdbCommand.Auth,
                     arg0: AdbAuthType.PublicKey,
@@ -125,7 +127,7 @@ describe("auth", () => {
                 results.push(result);
             }
 
-            expect(results).toStrictEqual([
+            assert.deepStrictEqual(results, [
                 {
                     command: AdbCommand.Auth,
                     arg0: AdbAuthType.PublicKey,

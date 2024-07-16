@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import type { ValueOrPromise } from "../utils.js";
 
@@ -31,10 +32,10 @@ describe("StructFieldValue", () => {
                 struct as never,
                 value as never,
             );
-            expect(fieldValue).toHaveProperty("definition", definition);
-            expect(fieldValue).toHaveProperty("options", options);
-            expect(fieldValue).toHaveProperty("struct", struct);
-            expect(fieldValue.get()).toBe(value);
+            assert.strictEqual(fieldValue.definition, definition);
+            assert.strictEqual(fieldValue.options, options);
+            assert.strictEqual(fieldValue.struct, struct);
+            assert.strictEqual(fieldValue.get(), value);
         });
     });
 
@@ -92,7 +93,7 @@ describe("StructFieldValue", () => {
                 undefined as never,
                 undefined as never,
             );
-            expect(fieldValue.getSize()).toBe(42);
+            assert.strictEqual(fieldValue.getSize(), 42);
         });
     });
 
@@ -113,10 +114,10 @@ describe("StructFieldValue", () => {
                 undefined as never,
             );
             fieldValue.set(1);
-            expect(fieldValue.get()).toBe(1);
+            assert.strictEqual(fieldValue.get(), 1);
 
             fieldValue.set(2);
-            expect(fieldValue.get()).toBe(2);
+            assert.strictEqual(fieldValue.get(), 2);
         });
     });
 });

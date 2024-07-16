@@ -1,4 +1,5 @@
-import { describe, expect, it, jest } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
 import { WritableStream } from "./stream.js";
 import { WrapWritableStream } from "./wrap-writable.js";
@@ -9,31 +10,31 @@ describe("WrapWritableStream", () => {
             const stream = new WritableStream();
             const wrapper = new WrapWritableStream(stream);
             await wrapper.close();
-            expect(wrapper.writable).toBe(stream);
+            assert.strictEqual(wrapper.writable, stream);
         });
 
         it("should accept a start function", async () => {
             const stream = new WritableStream();
-            const start = jest.fn<() => WritableStream<number>>(() => stream);
+            const start = mock.fn(() => stream);
             const wrapper = new WrapWritableStream(start);
-            await stream.close();
-            expect(start).toHaveBeenCalledTimes(1);
-            expect(wrapper.writable).toBe(stream);
+            await wrapper.close();
+            assert.strictEqual(start.mock.callCount(), 1);
+            assert.strictEqual(wrapper.writable, stream);
         });
 
         it("should accept a start object", async () => {
             const stream = new WritableStream();
-            const start = jest.fn<() => WritableStream<number>>(() => stream);
+            const start = mock.fn(() => stream);
             const wrapper = new WrapWritableStream({ start });
             await wrapper.close();
-            expect(start).toHaveBeenCalledTimes(1);
-            expect(wrapper.writable).toBe(stream);
+            assert.strictEqual(start.mock.callCount(), 1);
+            assert.strictEqual(wrapper.writable, stream);
         });
     });
 
     describe("write", () => {
         it("should write to inner stream", async () => {
-            const write = jest.fn<() => void>();
+            const write = mock.fn<(chunk: unknown) => void>();
             const stream = new WrapWritableStream(
                 new WritableStream({
                     write,
@@ -43,68 +44,68 @@ describe("WrapWritableStream", () => {
             const data = {};
             await writer.write(data);
             await writer.close();
-            expect(write).toHaveBeenCalledTimes(1);
-            expect(write).toHaveBeenCalledWith(data, expect.anything());
+            assert.strictEqual(write.mock.callCount(), 1);
+            assert.deepStrictEqual(write.mock.calls[0]!.arguments[0], data);
         });
     });
 
     describe("close", () => {
         it("should close wrapper", async () => {
-            const close = jest.fn<() => void>();
+            const close = mock.fn<() => void>();
             const stream = new WrapWritableStream({
                 start() {
                     return new WritableStream();
                 },
                 close,
             });
-            await expect(stream.close()).resolves.toBe(undefined);
-            expect(close).toHaveBeenCalledTimes(1);
+            await assert.doesNotReject(stream.close());
+            assert.strictEqual(close.mock.callCount(), 1);
         });
 
         it("should close inner stream", async () => {
-            const close = jest.fn<() => void>();
+            const close = mock.fn<() => void>();
             const stream = new WrapWritableStream(
                 new WritableStream({
                     close,
                 }),
             );
-            await expect(stream.close()).resolves.toBe(undefined);
-            expect(close).toHaveBeenCalledTimes(1);
+            await assert.doesNotReject(stream.close());
+            assert.strictEqual(close.mock.callCount(), 1);
         });
 
         it("should not close inner stream twice", async () => {
             const stream = new WrapWritableStream(new WritableStream());
-            await expect(stream.close()).resolves.toBe(undefined);
+            await assert.doesNotReject(stream.close());
         });
     });
 
     describe("abort", () => {
         it("should close wrapper", async () => {
-            const close = jest.fn<() => void>();
+            const close = mock.fn<() => void>();
             const stream = new WrapWritableStream({
                 start() {
                     return new WritableStream();
                 },
                 close,
             });
-            await expect(stream.abort()).resolves.toBe(undefined);
-            expect(close).toHaveBeenCalledTimes(1);
+            await assert.doesNotReject(stream.abort());
+            assert.strictEqual(close.mock.callCount(), 1);
         });
 
         it("should abort inner stream", async () => {
-            const abort = jest.fn<() => void>();
+            const abort = mock.fn<() => void>();
             const stream = new WrapWritableStream(
                 new WritableStream({
                     abort,
                 }),
             );
-            await expect(stream.abort()).resolves.toBe(undefined);
-            expect(abort).toHaveBeenCalledTimes(1);
+            await assert.doesNotReject(stream.abort());
+            assert.strictEqual(abort.mock.callCount(), 1);
         });
 
         it("should not close inner stream twice", async () => {
             const stream = new WrapWritableStream(new WritableStream());
-            await expect(stream.abort()).resolves.toBe(undefined);
+            await assert.doesNotReject(stream.abort());
         });
     });
 });

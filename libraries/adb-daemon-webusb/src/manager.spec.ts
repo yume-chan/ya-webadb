@@ -1,17 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/require-await */
-import { describe, expect, it, jest } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it, mock } from "node:test";
 
-import { ADB_DEFAULT_INTERFACE_FILTER, AdbDaemonWebUsbDevice } from "./device";
+import {
+    ADB_DEFAULT_INTERFACE_FILTER,
+    AdbDaemonWebUsbDevice,
+} from "./device.js";
 import { AdbDaemonWebUsbDeviceManager } from "./manager.js";
 
 class MockUsb implements USB {
-    onconnect: (ev: USBConnectionEvent) => void = jest.fn();
-    ondisconnect: (ev: USBConnectionEvent) => void = jest.fn();
+    onconnect: (ev: USBConnectionEvent) => void = mock.fn();
+    ondisconnect: (ev: USBConnectionEvent) => void = mock.fn();
 
-    getDevices: () => Promise<USBDevice[]> = jest.fn(async () => []);
-    requestDevice: (options?: USBDeviceRequestOptions) => Promise<USBDevice> =
-        jest.fn(async () => ({ serialNumber: "abcdefgh" }) as never);
+    getDevices = mock.fn(async () => []);
+    requestDevice = mock.fn(
+        async () => ({ serialNumber: "abcdefgh" }) as never,
+    );
 
     addEventListener(
         type: "connect" | "disconnect",
@@ -57,67 +62,87 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
         it("should accept 0 args", async () => {
             const usb = new MockUsb();
             const manager = new AdbDaemonWebUsbDeviceManager(usb);
-            await expect(manager.requestDevice()).resolves.toBeInstanceOf(
-                AdbDaemonWebUsbDevice,
+            assert.ok(
+                (await manager.requestDevice()) instanceof
+                    AdbDaemonWebUsbDevice,
             );
-            expect(usb.requestDevice).toHaveBeenCalledTimes(1);
-            expect(usb.requestDevice).toHaveBeenCalledWith({
-                filters: [ADB_DEFAULT_INTERFACE_FILTER],
-            });
+            assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
+            assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
+                {
+                    filters: [ADB_DEFAULT_INTERFACE_FILTER],
+                    exclusionFilters: undefined,
+                },
+            ]);
         });
 
         it("should accept undefined filters", async () => {
             const usb = new MockUsb();
             const manager = new AdbDaemonWebUsbDeviceManager(usb);
-            await expect(
-                manager.requestDevice({ filters: undefined }),
-            ).resolves.toBeInstanceOf(AdbDaemonWebUsbDevice);
-            expect(usb.requestDevice).toHaveBeenCalledTimes(1);
-            expect(usb.requestDevice).toHaveBeenCalledWith({
-                filters: [ADB_DEFAULT_INTERFACE_FILTER],
-            });
+            assert.ok(
+                (await manager.requestDevice({ filters: undefined })) instanceof
+                    AdbDaemonWebUsbDevice,
+            );
+            assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
+            assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
+                {
+                    filters: [ADB_DEFAULT_INTERFACE_FILTER],
+                    exclusionFilters: undefined,
+                },
+            ]);
         });
 
         it("should accept empty filters array", async () => {
             const usb = new MockUsb();
             const manager = new AdbDaemonWebUsbDeviceManager(usb);
-            await expect(
-                manager.requestDevice({ filters: [] }),
-            ).resolves.toBeInstanceOf(AdbDaemonWebUsbDevice);
-            expect(usb.requestDevice).toHaveBeenCalledTimes(1);
-            expect(usb.requestDevice).toHaveBeenCalledWith({
-                filters: [ADB_DEFAULT_INTERFACE_FILTER],
-            });
+            assert.ok(
+                (await manager.requestDevice({ filters: [] })) instanceof
+                    AdbDaemonWebUsbDevice,
+            );
+            assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
+            assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
+                {
+                    filters: [ADB_DEFAULT_INTERFACE_FILTER],
+                    exclusionFilters: undefined,
+                },
+            ]);
         });
 
         it("should accept empty filter object", async () => {
             const usb = new MockUsb();
             const manager = new AdbDaemonWebUsbDeviceManager(usb);
-            await expect(
-                manager.requestDevice({ filters: [{}] }),
-            ).resolves.toBeInstanceOf(AdbDaemonWebUsbDevice);
-            expect(usb.requestDevice).toHaveBeenCalledTimes(1);
-            expect(usb.requestDevice).toHaveBeenCalledWith({
-                filters: [ADB_DEFAULT_INTERFACE_FILTER],
-            });
+            assert.ok(
+                (await manager.requestDevice({ filters: [{}] })) instanceof
+                    AdbDaemonWebUsbDevice,
+            );
+            assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
+            assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
+                {
+                    filters: [ADB_DEFAULT_INTERFACE_FILTER],
+                    exclusionFilters: undefined,
+                },
+            ]);
         });
 
         it("should merge missing fields with default values", async () => {
             const usb = new MockUsb();
             const manager = new AdbDaemonWebUsbDeviceManager(usb);
             const filter: USBDeviceFilter = { vendorId: 0x1234 };
-            await expect(
-                manager.requestDevice({ filters: [filter] }),
-            ).resolves.toBeInstanceOf(AdbDaemonWebUsbDevice);
-            expect(usb.requestDevice).toHaveBeenCalledTimes(1);
-            expect(usb.requestDevice).toHaveBeenCalledWith({
-                filters: [
-                    {
-                        ...ADB_DEFAULT_INTERFACE_FILTER,
-                        ...filter,
-                    },
-                ],
-            });
+            assert.ok(
+                (await manager.requestDevice({ filters: [filter] })) instanceof
+                    AdbDaemonWebUsbDevice,
+            );
+            assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
+            assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
+                {
+                    filters: [
+                        {
+                            ...ADB_DEFAULT_INTERFACE_FILTER,
+                            ...filter,
+                        },
+                    ],
+                    exclusionFilters: undefined,
+                },
+            ]);
         });
 
         it("should merge undefined fields with default values", async () => {
@@ -127,18 +152,22 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
                 classCode: undefined,
                 vendorId: 0x1234,
             };
-            await expect(
-                manager.requestDevice({ filters: [filter] }),
-            ).resolves.toBeInstanceOf(AdbDaemonWebUsbDevice);
-            expect(usb.requestDevice).toHaveBeenCalledTimes(1);
-            expect(usb.requestDevice).toHaveBeenCalledWith({
-                filters: [
-                    {
-                        ...filter,
-                        ...ADB_DEFAULT_INTERFACE_FILTER,
-                    },
-                ],
-            });
+            assert.ok(
+                (await manager.requestDevice({ filters: [filter] })) instanceof
+                    AdbDaemonWebUsbDevice,
+            );
+            assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
+            assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
+                {
+                    filters: [
+                        {
+                            ...filter,
+                            ...ADB_DEFAULT_INTERFACE_FILTER,
+                        },
+                    ],
+                    exclusionFilters: undefined,
+                },
+            ]);
         });
 
         it("should accept multiple filters", async () => {
@@ -146,22 +175,27 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
             const manager = new AdbDaemonWebUsbDeviceManager(usb);
             const filter1: USBDeviceFilter = { vendorId: 0x1234 };
             const filter2: USBDeviceFilter = { classCode: 0xaa };
-            await expect(
-                manager.requestDevice({ filters: [filter1, filter2] }),
-            ).resolves.toBeInstanceOf(AdbDaemonWebUsbDevice);
-            expect(usb.requestDevice).toHaveBeenCalledTimes(1);
-            expect(usb.requestDevice).toHaveBeenCalledWith({
-                filters: [
-                    {
-                        ...ADB_DEFAULT_INTERFACE_FILTER,
-                        ...filter1,
-                    },
-                    {
-                        ...ADB_DEFAULT_INTERFACE_FILTER,
-                        ...filter2,
-                    },
-                ],
-            });
+            assert.ok(
+                (await manager.requestDevice({
+                    filters: [filter1, filter2],
+                })) instanceof AdbDaemonWebUsbDevice,
+            );
+            assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
+            assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
+                {
+                    filters: [
+                        {
+                            ...ADB_DEFAULT_INTERFACE_FILTER,
+                            ...filter1,
+                        },
+                        {
+                            ...ADB_DEFAULT_INTERFACE_FILTER,
+                            ...filter2,
+                        },
+                    ],
+                    exclusionFilters: undefined,
+                },
+            ]);
         });
     });
 });

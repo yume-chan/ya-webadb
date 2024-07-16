@@ -1,9 +1,10 @@
-import { describe, expect, it } from "@jest/globals";
+import * as assert from "node:assert";
+import { describe, it } from "node:test";
 
 import { CodecOptions } from "./codec-options.js";
 
 describe("CodecOptions", () => {
     it("should detect empty value", () => {
-        expect(new CodecOptions({}).toOptionValue()).toBeUndefined();
+        assert.strictEqual(new CodecOptions({}).toOptionValue(), undefined);
     });
 });
