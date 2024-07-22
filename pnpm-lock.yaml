@@ -50,7 +50,7 @@ importers:
         version: 3.3.3
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/adb:
     dependencies:
@@ -93,10 +93,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/adb-credential-web:
     dependencies:
@@ -115,7 +115,7 @@ importers:
         version: 3.3.3
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/adb-daemon-webusb:
     dependencies:
@@ -155,10 +155,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/adb-scrcpy:
     dependencies:
@@ -201,10 +201,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/adb-server-node-tcp:
     dependencies:
@@ -235,7 +235,7 @@ importers:
         version: 3.3.3
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/android-bin:
     dependencies:
@@ -269,10 +269,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/aoa:
     dependencies:
@@ -291,7 +291,7 @@ importers:
         version: 3.3.3
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/event:
     dependencies:
@@ -319,10 +319,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/fetch-scrcpy-server:
     dependencies:
@@ -362,10 +362,10 @@ importers:
         version: 2.8.0
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/pcm-player:
     devDependencies:
@@ -392,10 +392,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/scrcpy:
     dependencies:
@@ -432,10 +432,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/scrcpy-decoder-tinyh264:
     dependencies:
@@ -481,10 +481,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/scrcpy-decoder-webcodecs:
     dependencies:
@@ -524,10 +524,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/stream-extra:
     dependencies:
@@ -558,10 +558,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   libraries/struct:
     dependencies:
@@ -589,10 +589,10 @@ importers:
         version: 3.3.3
       ts-jest:
         specifier: ^29.2.2
-        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3)
+        version: 29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   toolchain/eslint-config:
     dependencies:
@@ -607,13 +607,13 @@ importers:
         version: 9.7.0
       eslint-plugin-import-x:
         specifier: ^3.0.1
-        version: 3.0.1(eslint@9.7.0)(typescript@5.5.3)
+        version: 3.0.1(eslint@9.7.0)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
       typescript-eslint:
         specifier: ^7.16.0
-        version: 7.16.0(eslint@9.7.0)(typescript@5.5.3)
+        version: 7.16.0(eslint@9.7.0)(typescript@5.5.4)
     devDependencies:
       prettier:
         specifier: ^3.3.3
@@ -2729,8 +2729,8 @@ packages:
       typescript:
         optional: true
 
-  typescript@5.5.3:
-    resolution: {integrity: sha512-/hreyEujaB0w76zKo6717l3L0o/qEUtRgdvUBvlkhoWeOVMjMuHNHk0BRBzikzuGDqNmPQbg5ifMEqsHLiIUcQ==}
+  typescript@5.5.4:
+    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -3574,34 +3574,34 @@ snapshots:
     dependencies:
       '@types/yargs-parser': 21.0.3
 
-  '@typescript-eslint/eslint-plugin@7.16.0(@typescript-eslint/parser@7.16.0(eslint@9.7.0)(typescript@5.5.3))(eslint@9.7.0)(typescript@5.5.3)':
+  '@typescript-eslint/eslint-plugin@7.16.0(@typescript-eslint/parser@7.16.0(eslint@9.7.0)(typescript@5.5.4))(eslint@9.7.0)(typescript@5.5.4)':
     dependencies:
       '@eslint-community/regexpp': 4.11.0
-      '@typescript-eslint/parser': 7.16.0(eslint@9.7.0)(typescript@5.5.3)
+      '@typescript-eslint/parser': 7.16.0(eslint@9.7.0)(typescript@5.5.4)
       '@typescript-eslint/scope-manager': 7.16.0
-      '@typescript-eslint/type-utils': 7.16.0(eslint@9.7.0)(typescript@5.5.3)
-      '@typescript-eslint/utils': 7.16.0(eslint@9.7.0)(typescript@5.5.3)
+      '@typescript-eslint/type-utils': 7.16.0(eslint@9.7.0)(typescript@5.5.4)
+      '@typescript-eslint/utils': 7.16.0(eslint@9.7.0)(typescript@5.5.4)
       '@typescript-eslint/visitor-keys': 7.16.0
       eslint: 9.7.0
       graphemer: 1.4.0
       ignore: 5.3.1
       natural-compare: 1.4.0
-      ts-api-utils: 1.3.0(typescript@5.5.3)
+      ts-api-utils: 1.3.0(typescript@5.5.4)
     optionalDependencies:
-      typescript: 5.5.3
+      typescript: 5.5.4
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@7.16.0(eslint@9.7.0)(typescript@5.5.3)':
+  '@typescript-eslint/parser@7.16.0(eslint@9.7.0)(typescript@5.5.4)':
     dependencies:
       '@typescript-eslint/scope-manager': 7.16.0
       '@typescript-eslint/types': 7.16.0
-      '@typescript-eslint/typescript-estree': 7.16.0(typescript@5.5.3)
+      '@typescript-eslint/typescript-estree': 7.16.0(typescript@5.5.4)
       '@typescript-eslint/visitor-keys': 7.16.0
       debug: 4.3.5
       eslint: 9.7.0
     optionalDependencies:
-      typescript: 5.5.3
+      typescript: 5.5.4
     transitivePeerDependencies:
       - supports-color
 
@@ -3610,21 +3610,21 @@ snapshots:
       '@typescript-eslint/types': 7.16.0
       '@typescript-eslint/visitor-keys': 7.16.0
 
-  '@typescript-eslint/type-utils@7.16.0(eslint@9.7.0)(typescript@5.5.3)':
+  '@typescript-eslint/type-utils@7.16.0(eslint@9.7.0)(typescript@5.5.4)':
     dependencies:
-      '@typescript-eslint/typescript-estree': 7.16.0(typescript@5.5.3)
-      '@typescript-eslint/utils': 7.16.0(eslint@9.7.0)(typescript@5.5.3)
+      '@typescript-eslint/typescript-estree': 7.16.0(typescript@5.5.4)
+      '@typescript-eslint/utils': 7.16.0(eslint@9.7.0)(typescript@5.5.4)
       debug: 4.3.5
       eslint: 9.7.0
-      ts-api-utils: 1.3.0(typescript@5.5.3)
+      ts-api-utils: 1.3.0(typescript@5.5.4)
     optionalDependencies:
-      typescript: 5.5.3
+      typescript: 5.5.4
     transitivePeerDependencies:
       - supports-color
 
   '@typescript-eslint/types@7.16.0': {}
 
-  '@typescript-eslint/typescript-estree@7.16.0(typescript@5.5.3)':
+  '@typescript-eslint/typescript-estree@7.16.0(typescript@5.5.4)':
     dependencies:
       '@typescript-eslint/types': 7.16.0
       '@typescript-eslint/visitor-keys': 7.16.0
@@ -3633,18 +3633,18 @@ snapshots:
       is-glob: 4.0.3
       minimatch: 9.0.5
       semver: 7.6.2
-      ts-api-utils: 1.3.0(typescript@5.5.3)
+      ts-api-utils: 1.3.0(typescript@5.5.4)
     optionalDependencies:
-      typescript: 5.5.3
+      typescript: 5.5.4
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@7.16.0(eslint@9.7.0)(typescript@5.5.3)':
+  '@typescript-eslint/utils@7.16.0(eslint@9.7.0)(typescript@5.5.4)':
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@9.7.0)
       '@typescript-eslint/scope-manager': 7.16.0
       '@typescript-eslint/types': 7.16.0
-      '@typescript-eslint/typescript-estree': 7.16.0(typescript@5.5.3)
+      '@typescript-eslint/typescript-estree': 7.16.0(typescript@5.5.4)
       eslint: 9.7.0
     transitivePeerDependencies:
       - supports-color
@@ -4032,10 +4032,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import-x@3.0.1(eslint@9.7.0)(typescript@5.5.3):
+  eslint-plugin-import-x@3.0.1(eslint@9.7.0)(typescript@5.5.4):
     dependencies:
       '@rtsao/scc': 1.1.0
-      '@typescript-eslint/utils': 7.16.0(eslint@9.7.0)(typescript@5.5.3)
+      '@typescript-eslint/utils': 7.16.0(eslint@9.7.0)(typescript@5.5.4)
       debug: 4.3.5
       doctrine: 3.0.0
       eslint: 9.7.0
@@ -5320,11 +5320,11 @@ snapshots:
     dependencies:
       escape-string-regexp: 5.0.0
 
-  ts-api-utils@1.3.0(typescript@5.5.3):
+  ts-api-utils@1.3.0(typescript@5.5.4):
     dependencies:
-      typescript: 5.5.3
+      typescript: 5.5.4
 
-  ts-jest@29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.3):
+  ts-jest@29.2.2(@babel/core@7.24.8)(@jest/types@29.6.3)(jest@30.0.0-alpha.5)(typescript@5.5.4):
     dependencies:
       bs-logger: 0.2.6
       ejs: 3.1.10
@@ -5335,7 +5335,7 @@ snapshots:
       lodash.memoize: 4.1.2
       make-error: 1.3.6
       semver: 7.6.2
-      typescript: 5.5.3
+      typescript: 5.5.4
       yargs-parser: 21.1.1
     optionalDependencies:
       '@babel/core': 7.24.8
@@ -5351,18 +5351,18 @@ snapshots:
 
   type-fest@0.21.3: {}
 
-  typescript-eslint@7.16.0(eslint@9.7.0)(typescript@5.5.3):
+  typescript-eslint@7.16.0(eslint@9.7.0)(typescript@5.5.4):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 7.16.0(@typescript-eslint/parser@7.16.0(eslint@9.7.0)(typescript@5.5.3))(eslint@9.7.0)(typescript@5.5.3)
-      '@typescript-eslint/parser': 7.16.0(eslint@9.7.0)(typescript@5.5.3)
-      '@typescript-eslint/utils': 7.16.0(eslint@9.7.0)(typescript@5.5.3)
+      '@typescript-eslint/eslint-plugin': 7.16.0(@typescript-eslint/parser@7.16.0(eslint@9.7.0)(typescript@5.5.4))(eslint@9.7.0)(typescript@5.5.4)
+      '@typescript-eslint/parser': 7.16.0(eslint@9.7.0)(typescript@5.5.4)
+      '@typescript-eslint/utils': 7.16.0(eslint@9.7.0)(typescript@5.5.4)
       eslint: 9.7.0
     optionalDependencies:
-      typescript: 5.5.3
+      typescript: 5.5.4
     transitivePeerDependencies:
       - supports-color
 
-  typescript@5.5.3: {}
+  typescript@5.5.4: {}
 
   unbzip2-stream@1.4.3:
     dependencies:
