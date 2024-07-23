@@ -77,8 +77,6 @@ const filterCoverage = test.pipe(
                 },
             } = chunk;
 
-            console.log(chunk);
-
             summary.files = summary.files.filter(
                 (file) =>
                     file.path.startsWith(workingDirectory) &&
