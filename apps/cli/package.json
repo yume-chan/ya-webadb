@@ -42,10 +42,10 @@
         "source-map-support": "^0.5.21"
     },
     "devDependencies": {
-        "@types/node": "^20.14.9",
+        "@types/node": "^20.14.11",
         "@yume-chan/eslint-config": "workspace:^1.0.0",
         "@yume-chan/tsconfig": "workspace:^1.0.0",
         "prettier": "^3.3.3",
-        "typescript": "^5.5.3"
+        "typescript": "^5.5.4"
     }
 }

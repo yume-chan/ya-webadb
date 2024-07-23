@@ -1,8 +1,12 @@
-import { delay } from "@yume-chan/async";
 import * as assert from "node:assert";
 import { describe, it, mock } from "node:test";
 
-import type { PushReadableStreamController } from "./push-readable.js";
+import { delay } from "@yume-chan/async";
+
+import type {
+    PushReadableLogger,
+    PushReadableStreamController,
+} from "./push-readable.js";
 import { PushReadableStream } from "./push-readable.js";
 
 describe("PushReadableStream", () => {
@@ -17,7 +21,7 @@ describe("PushReadableStream", () => {
         });
 
         it("should ignore pending `enqueue`", async () => {
-            const log = mock.fn();
+            const log = mock.fn<PushReadableLogger<number>>();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);
@@ -108,7 +112,7 @@ describe("PushReadableStream", () => {
         });
 
         it("should ignore future `enqueue`", async () => {
-            const log = mock.fn();
+            const log = mock.fn<PushReadableLogger<number>>();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);
@@ -217,7 +221,7 @@ describe("PushReadableStream", () => {
         });
 
         it("should allow explicit `close` call", async () => {
-            const log = mock.fn();
+            const log = mock.fn<PushReadableLogger<number>>();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);
@@ -347,7 +351,7 @@ describe("PushReadableStream", () => {
 
     describe("0 high water mark", () => {
         it("should allow `read` before `enqueue`", async () => {
-            const log = mock.fn();
+            const log = mock.fn<PushReadableLogger<number>>();
             let controller!: PushReadableStreamController<unknown>;
             const stream = new PushReadableStream(
                 (controller_) => {
@@ -402,7 +406,7 @@ describe("PushReadableStream", () => {
         });
 
         it("should allow `enqueue` before `read`", async () => {
-            const log = mock.fn();
+            const log = mock.fn<PushReadableLogger<number>>();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);
@@ -480,7 +484,7 @@ describe("PushReadableStream", () => {
 
     describe("non 0 high water mark", () => {
         it("should allow `read` before `enqueue`", async () => {
-            const log = mock.fn();
+            const log = mock.fn<PushReadableLogger<number>>();
             let controller!: PushReadableStreamController<unknown>;
             const stream = new PushReadableStream(
                 (controller_) => {
@@ -549,7 +553,7 @@ describe("PushReadableStream", () => {
         });
 
         it("should allow `enqueue` before `read`", async () => {
-            const log = mock.fn();
+            const log = mock.fn<PushReadableLogger<number>>();
             const stream = new PushReadableStream(
                 async (controller) => {
                     await controller.enqueue(1);

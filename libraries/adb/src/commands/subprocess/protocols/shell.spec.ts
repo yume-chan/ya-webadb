@@ -1,8 +1,9 @@
+import assert from "node:assert";
+import { describe, it } from "node:test";
+
 import { PromiseResolver } from "@yume-chan/async";
 import type { ReadableStreamDefaultController } from "@yume-chan/stream-extra";
 import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
-import assert from "node:assert";
-import { describe, it } from "node:test";
 
 import type { AdbSocket } from "../../../adb.js";
 
@@ -52,7 +53,7 @@ async function assertResolves<T>(promise: Promise<T>, expected: T) {
 
 describe("AdbSubprocessShellProtocol", () => {
     describe("`stdout` and `stderr`", () => {
-        it("should parse data from `socket", async () => {
+        it("should parse data from `socket", () => {
             const [socket] = createMockSocket(() => {});
 
             const process = new AdbSubprocessShellProtocol(socket);

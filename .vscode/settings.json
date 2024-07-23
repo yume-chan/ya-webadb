@@ -104,6 +104,7 @@
             "pattern": "libraries/*",
         }
     ],
+    "eslint.debug": true,
     "[javascript]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },

@@ -12,22 +12,34 @@ describe("ScrcpyFloatToInt16NumberType", () => {
     it("should serialize", () => {
         const array = new Uint8Array(2);
         ScrcpySignedFloatNumberVariant.serialize(array, 0, -1, true);
-        assert.strictEqual(new DataView(array.buffer).getInt16(0, true), -0x8000);
+        assert.strictEqual(
+            new DataView(array.buffer).getInt16(0, true),
+            -0x8000,
+        );
 
         ScrcpySignedFloatNumberVariant.serialize(array, 0, 0, true);
         assert.strictEqual(new DataView(array.buffer).getInt16(0, true), 0);
 
         ScrcpySignedFloatNumberVariant.serialize(array, 0, 1, true);
-        assert.strictEqual(new DataView(array.buffer).getInt16(0, true), 0x7fff);
+        assert.strictEqual(
+            new DataView(array.buffer).getInt16(0, true),
+            0x7fff,
+        );
     });
 
     it("should clamp input values", () => {
         const array = new Uint8Array(2);
         ScrcpySignedFloatNumberVariant.serialize(array, 0, -2, true);
-        assert.strictEqual(new DataView(array.buffer).getInt16(0, true), -0x8000);
+        assert.strictEqual(
+            new DataView(array.buffer).getInt16(0, true),
+            -0x8000,
+        );
 
         ScrcpySignedFloatNumberVariant.serialize(array, 0, 2, true);
-        assert.strictEqual(new DataView(array.buffer).getInt16(0, true), 0x7fff);
+        assert.strictEqual(
+            new DataView(array.buffer).getInt16(0, true),
+            0x7fff,
+        );
     });
 
     it("should deserialize", () => {

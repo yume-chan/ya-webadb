@@ -1,7 +1,8 @@
-import { PromiseResolver } from "@yume-chan/async";
-import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 import assert from "node:assert";
 import { describe, it, mock } from "node:test";
+
+import { PromiseResolver } from "@yume-chan/async";
+import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../../../adb.js";
 
