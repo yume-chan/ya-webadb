@@ -6,7 +6,7 @@
         "test": "pnpm recursive run test",
         "lint": "pnpm recursive run lint"
     },
-    "dependencies": {
+    "devDependencies": {
         "@changesets/cli": "^2.27.7"
     }
 }

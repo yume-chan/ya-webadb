@@ -27,7 +27,6 @@
     "sideEffects": false,
     "scripts": {
         "build": "tsc -b tsconfig.build.json",
-        "build:watch": "tsc -b tsconfig.build.json",
         "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
         "prepublishOnly": "npm run build"
     },

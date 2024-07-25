@@ -1,16 +1,14 @@
 ## Development
 
-The repository uses [Rush](https://rushjs.io/) for monorepo management.
+The repository uses [PNPM](https://pnpm.io/) for monorepo management.
 
-### Install Rush globally
+### Install PNPM globally
 
 ```sh
-$ npm i -g @microsoft/rush
+$ npm i -g pnpm
 ```
 
 ### Get code
-
-The build script only works inside a Git repository, so, always use `git` to clone this repository. "Download ZIP" option in GitHub code menu or source code tarball in GitHub releases will NOT work.
 
 ```sh
 git clone https://github.com/yume-chan/ya-webadb.git
@@ -20,30 +18,61 @@ cd ya-webadb
 ### Install dependencies
 
 ```sh
-$ rush install
+$ pnpm install
 ```
 
-### Everyday commands
+### Build all packages
 
--   Build all packages:
+```sh
+$ pnpm build
+```
 
-    ```sh
-    $ rush build
-    ```
+### Run all tests
 
--   Watch changes and rebuild in all libraries:
+Tests are written using Node.js built-in test runner. Node.js 20.x is used in local development and GitHub Actions, Node.js 22.x might have a regression on parsing source maps.
 
-    ```sh
-    $ rush build:watch
-    ```
+```sh
+$ pnpm test
+```
+
+### Run ESLint and Prettier
+
+```sh
+$ pnpm lint
+```
+
+## Update dependencies
+
+```sh
+$ pnpm recursive update --latest --interactive
+$ pnpm dedupe
+```
+
+Renovate is also enabled, but since it doesn't update `package.json` files, it's recommended to run the above commands manually.
+
+Run `pnpm build` and `pnpm test` to make sure everything works after updating dependencies.
+
+## Creating Pull Requests
+
+When creating a pull request, use `changeset` command to add a new changelog:
+
+```sh
+$ pnpm changeset
+```
+
+Then follow the instructions to select changed packages and write a summary of the changes.
 
 ## Release new versions
 
+NPM packages are released using GitHub Actions. Create a new tag and push it to the repository to trigger the release workflow.
+
 ```sh
-rush version --bump
-export NPM_AUTH_TOKEN=... # Copy NPM auth token from ~/.npmrc
-rush publish -p --include-all --set-access-level public
-rush update # Update lock file
+pnpm changeset version
+git add -A
+git commit -m "chore: release new version"
+git push
+git tag vX.Y.Z
+git push --tags
 ```
 
 ## FAQ

@@ -7,7 +7,7 @@ settings:
 importers:
 
   .:
-    dependencies:
+    devDependencies:
       '@changesets/cli':
         specifier: ^2.27.7
         version: 2.27.7
@@ -34,8 +34,8 @@ importers:
         version: 0.5.21
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -68,8 +68,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -121,8 +121,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -186,8 +186,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -214,8 +214,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -258,8 +258,8 @@ importers:
         version: 2.2.0
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -283,14 +283,14 @@ importers:
         version: 4.0.3
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
 
   libraries/no-data-view:
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -344,8 +344,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -440,8 +440,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -465,8 +465,8 @@ importers:
         version: link:../no-data-view
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       '@yume-chan/eslint-config':
         specifier: workspace:^1.0.0
         version: link:../../toolchain/eslint-config
@@ -489,8 +489,8 @@ importers:
         specifier: ^9.7.0
         version: 9.7.0
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       eslint:
         specifier: ^9.7.0
         version: 9.7.0
@@ -511,8 +511,8 @@ importers:
   toolchain/package-lint:
     dependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -520,8 +520,8 @@ importers:
   toolchain/test-runner:
     devDependencies:
       '@types/node':
-        specifier: ^20.14.11
-        version: 20.14.11
+        specifier: ^20.14.12
+        version: 20.14.12
       typescript:
         specifier: ^5.5.4
         version: 5.5.4
@@ -665,8 +665,8 @@ packages:
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
 
-  '@types/node@20.14.11':
-    resolution: {integrity: sha512-kprQpL8MMeszbz6ojB5/tU8PLN4kesnN8Gjzw349rDlNgsSzg90lAVj3llK99Dh7JON+t9AuscPPFW6mPbTnSA==}
+  '@types/node@20.14.12':
+    resolution: {integrity: sha512-r7wNXakLeSsGT0H1AU863vS2wa5wBOK4bWMjZz2wj+8nBx+m5PeIn0k8AloSLpRuiwdRQZwarZqHE4FNArPuJQ==}
 
   '@types/semver@7.5.8':
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
@@ -1533,11 +1533,6 @@ packages:
     resolution: {integrity: sha512-e1QtP3YL5tWww8uKaOCQ18UxIT2laNBXHjV/S2WYCiK4udiv8lkG89KRIoCjUagnAmCBurjF4zEVX2ByBbnCjQ==}
     hasBin: true
 
-  semver@7.6.2:
-    resolution: {integrity: sha512-FNAIBWCx9qcRhoHcgcJ0gvU7SN1lYU2ZXuSfl04bSC5OpvDHFyJCjdNHomPXxjQlCBU67YW64PzY7/VIEH7F2w==}
-    engines: {node: '>=10'}
-    hasBin: true
-
   semver@7.6.3:
     resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
     engines: {node: '>=10'}
@@ -1771,7 +1766,7 @@ snapshots:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.6.2
+      semver: 7.6.3
 
   '@changesets/assemble-release-plan@6.0.3':
     dependencies:
@@ -1781,7 +1776,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.0
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
-      semver: 7.6.2
+      semver: 7.6.3
 
   '@changesets/changelog-git@0.2.0':
     dependencies:
@@ -1818,7 +1813,7 @@ snapshots:
       p-limit: 2.3.0
       preferred-pm: 3.1.4
       resolve-from: 5.0.0
-      semver: 7.6.2
+      semver: 7.6.3
       spawndamnit: 2.0.0
       term-size: 2.2.1
 
@@ -1842,7 +1837,7 @@ snapshots:
       '@manypkg/get-packages': 1.1.3
       chalk: 2.4.2
       fs-extra: 7.0.1
-      semver: 7.6.2
+      semver: 7.6.3
 
   '@changesets/get-release-plan@4.0.3':
     dependencies:
@@ -1991,7 +1986,7 @@ snapshots:
 
   '@types/node@12.20.55': {}
 
-  '@types/node@20.14.11':
+  '@types/node@20.14.12':
     dependencies:
       undici-types: 5.26.5
 
@@ -2520,7 +2515,7 @@ snapshots:
     dependencies:
       '@xhmikosr/downloader': 13.0.1
       node-fetch: 3.3.2
-      semver: 7.6.2
+      semver: 7.6.3
 
   glob-parent@5.1.2:
     dependencies:
@@ -2685,7 +2680,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.6.2
+      semver: 7.6.3
 
   merge-options@3.0.4:
     dependencies:
@@ -2872,8 +2867,6 @@ snapshots:
   seek-bzip@1.0.6:
     dependencies:
       commander: 2.20.3
-
-  semver@7.6.2: {}
 
   semver@7.6.3: {}
 
