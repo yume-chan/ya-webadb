@@ -185,7 +185,7 @@ export class BugReport extends AdbCommandBase {
      */
     async bugReportZ(options?: BugReportZOptions): Promise<string> {
         if (options?.signal?.aborted) {
-            throw options?.signal.reason ?? new Error("Aborted");
+            throw options?.signal.reason as Error;
         }
 
         if (!this.#supportsBugReportZ) {

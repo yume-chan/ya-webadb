@@ -8,6 +8,7 @@ import type {
     WritableStreamDefaultWriter,
 } from "./stream.js";
 import { WritableStream } from "./stream.js";
+import { tryClose } from "./try-close.js";
 import { WrapReadableStream } from "./wrap-readable.js";
 
 const NOOP = () => {
@@ -134,11 +135,7 @@ export class DuplexStreamFactory<R, W> {
         this.#closed.resolve();
 
         for (const controller of this.#readableControllers) {
-            try {
-                controller.close();
-            } catch {
-                // ignore
-            }
+            tryClose(controller);
         }
 
         await this.#options.dispose?.();

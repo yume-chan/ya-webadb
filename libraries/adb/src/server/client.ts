@@ -11,6 +11,8 @@ import {
     BufferedReadableStream,
     MaybeConsumable,
     WrapWritableStream,
+    tryCancel,
+    tryClose,
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 import {
@@ -23,12 +25,7 @@ import {
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import type { AdbFeature } from "../features.js";
-import {
-    NOOP,
-    hexToNumber,
-    sequenceEqual,
-    write4HexDigits,
-} from "../utils/index.js";
+import { hexToNumber, sequenceEqual, write4HexDigits } from "../utils/index.js";
 
 import { AdbServerTransport } from "./transport.js";
 
@@ -123,8 +120,8 @@ class AdbServerStream {
     }
 
     async dispose() {
-        await this.#buffered.cancel().catch(NOOP);
-        await this.#writer.close().catch(NOOP);
+        void tryCancel(this.#buffered);
+        void tryClose(this.#writer);
         await this.#connection.close();
     }
 }

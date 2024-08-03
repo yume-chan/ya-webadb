@@ -334,7 +334,7 @@ export class AdbPacketDispatcher implements Closeable {
                 remoteId,
                 this.options.initialDelayedAckBytes,
             );
-        } catch (e) {
+        } catch {
             await this.sendPacket(
                 AdbCommand.Close,
                 0,

@@ -117,7 +117,7 @@ export class AdbSync extends AutoDisposable {
         try {
             await this.lstat(path + "/");
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }

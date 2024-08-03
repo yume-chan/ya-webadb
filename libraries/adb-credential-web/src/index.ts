@@ -6,7 +6,7 @@ function openDatabase() {
     return new Promise<IDBDatabase>((resolve, reject) => {
         const request = indexedDB.open("Tango", 1);
         request.onerror = () => {
-            reject(request.error);
+            reject(request.error!);
         };
         request.onupgradeneeded = () => {
             const db = request.result;
@@ -27,13 +27,13 @@ async function saveKey(key: Uint8Array): Promise<void> {
         const store = transaction.objectStore("Authentication");
         const putRequest = store.add(key);
         putRequest.onerror = () => {
-            reject(putRequest.error);
+            reject(putRequest.error!);
         };
         putRequest.onsuccess = () => {
             resolve();
         };
         transaction.onerror = () => {
-            reject(transaction.error);
+            reject(transaction.error!);
         };
         transaction.oncomplete = () => {
             db.close();
@@ -49,13 +49,13 @@ async function getAllKeys() {
         const store = transaction.objectStore("Authentication");
         const getRequest = store.getAll();
         getRequest.onerror = () => {
-            reject(getRequest.error);
+            reject(getRequest.error!);
         };
         getRequest.onsuccess = () => {
             resolve(getRequest.result as Uint8Array[]);
         };
         transaction.onerror = () => {
-            reject(transaction.error);
+            reject(transaction.error!);
         };
         transaction.oncomplete = () => {
             db.close();

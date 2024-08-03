@@ -110,7 +110,7 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
                     };
                 }
                 return stream;
-            } catch (e) {
+            } catch {
                 // Maybe the server is still starting
                 await delay(100);
             }

@@ -81,7 +81,7 @@ export class ScrcpyOptions1_21 extends ScrcpyOptions<ScrcpyOptionsInit1_21> {
         }
     }
 
-    #deviceMessageError: unknown;
+    #deviceMessageError: Error | undefined;
 
     override async parseDeviceMessage(
         id: number,
@@ -97,12 +97,12 @@ export class ScrcpyOptions1_21 extends ScrcpyOptions<ScrcpyOptionsInit1_21> {
                     break;
             }
         } catch (e) {
-            this.#deviceMessageError = e;
+            this.#deviceMessageError = e as Error;
             throw e;
         }
     }
 
-    override async endDeviceMessageStream(e?: unknown): Promise<void> {
+    override async endDeviceMessageStream(e?: Error): Promise<void> {
         await super.endDeviceMessageStream(e);
         this.#deviceMessageError ??=
             e ?? new Error("Device message stream ended");

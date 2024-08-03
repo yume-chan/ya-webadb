@@ -14,5 +14,6 @@ export * from "./stream.js";
 export * from "./struct-deserialize.js";
 export * from "./struct-serialize.js";
 export * from "./task.js";
+export * from "./try-close.js";
 export * from "./wrap-readable.js";
 export * from "./wrap-writable.js";

@@ -3,10 +3,7 @@ import { ExactReadableEndedError } from "@yume-chan/struct";
 
 import { PushReadableStream } from "./push-readable.js";
 import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
-
-const NOOP = () => {
-    // no-op
-};
+import { tryCancel } from "./try-close.js";
 
 export class BufferedReadableStream implements AsyncExactReadable {
     #buffered: Uint8Array | undefined;
@@ -133,8 +130,7 @@ export class BufferedReadableStream implements AsyncExactReadable {
                 await controller.enqueue(buffered);
 
                 controller.abortSignal.addEventListener("abort", () => {
-                    // NOOP: the reader might already be released
-                    this.reader.cancel().catch(NOOP);
+                    void tryCancel(this.reader);
                 });
 
                 // Manually pipe the stream

@@ -93,7 +93,7 @@ export const p = {
                     const result = format.stringify(value);
                     // Parse the result to make sure it is valid
                     format.parse({ value: result, position: 0 });
-                } catch (e) {
+                } catch {
                     // ignore
                 }
             }
@@ -141,7 +141,7 @@ export const p = {
             while (true) {
                 try {
                     result.push(format.parse(reader));
-                } catch (e) {
+                } catch {
                     break;
                 }
             }

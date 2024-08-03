@@ -5,6 +5,7 @@ import type { AdbIncomingSocketHandler, AdbServerClient } from "@yume-chan/adb";
 import {
     MaybeConsumable,
     PushReadableStream,
+    tryClose,
     WrapWritableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
@@ -32,11 +33,7 @@ function nodeSocketToConnection(
                 socket.resume();
             });
             socket.on("end", () => {
-                try {
-                    controller.close();
-                } catch (e) {
-                    // controller already closed
-                }
+                tryClose(controller);
             });
         }),
         writable: new WritableStream<Uint8Array>({

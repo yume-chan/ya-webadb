@@ -32,6 +32,7 @@ export default tslint.config(
         languageOptions: {
             parserOptions: {
                 tsconfigRootDir: root,
+                projectService: true,
                 project: [
                     "libraries/*/tsconfig.test.json",
                     "libraries/*/tsconfig.build.json",
