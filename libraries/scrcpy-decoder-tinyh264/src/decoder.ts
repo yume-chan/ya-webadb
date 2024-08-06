@@ -35,7 +35,7 @@ export function createCanvas() {
         return document.createElement("canvas");
     }
     if (typeof OffscreenCanvas !== "undefined") {
-        return new OffscreenCanvas(0, 0);
+        return new OffscreenCanvas(1, 1);
     }
     throw new Error("no canvas input found nor any canvas can be created");
 }

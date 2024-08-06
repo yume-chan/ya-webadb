@@ -1,24 +1,18 @@
-import type { FrameSink } from "./type.js";
+import { CanvasWebCodecsVideoDecoderRenderer } from "./canvas.js";
 
-export class BitmapFrameSink implements FrameSink {
+export class BitmapWebCodecsDecoderRenderer extends CanvasWebCodecsVideoDecoderRenderer {
     #context: ImageBitmapRenderingContext;
 
-    constructor(canvas: HTMLCanvasElement | OffscreenCanvas) {
-        this.#context = canvas.getContext("bitmaprenderer", { alpha: false })!;
+    constructor(canvas?: HTMLCanvasElement | OffscreenCanvas) {
+        super(canvas);
+
+        this.#context = this.canvas.getContext("bitmaprenderer", {
+            alpha: false,
+        })!;
     }
 
-    draw(frame: VideoFrame): void {
-        createImageBitmap(frame)
-            .then((bitmap) => {
-                this.#context.transferFromImageBitmap(bitmap);
-                frame.close();
-            })
-            .catch((e) => {
-                console.warn(
-                    "[@yume-chan/scrcpy-decoder-webcodecs]",
-                    "VideoDecoder error",
-                    e,
-                );
-            });
+    async draw(frame: VideoFrame): Promise<void> {
+        const bitmap = await createImageBitmap(frame);
+        this.#context.transferFromImageBitmap(bitmap);
     }
 }

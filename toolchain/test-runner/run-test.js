@@ -48,7 +48,7 @@ async function findTests(path) {
 await findTests(resolve(process.cwd(), "esm"));
 
 const test = run({
-    concurrency: true,
+    concurrency: false,
     files: tests,
 });
 test.on("test:fail", () => {
@@ -124,11 +124,3 @@ filterCoverage
     .pipe(lcov)
     // @ts-expect-error
     .pipe(createWriteStream(resolve(coverageFolder, "lcov.info")));
-
-// run({
-//     concurrency: false,
-//     files: tests,
-// })
-//     // @ts-expect-error
-//     .pipe(Lcov)
-//     .pipe(createWriteStream(resolve(coverageFolder, "lcov.info")));

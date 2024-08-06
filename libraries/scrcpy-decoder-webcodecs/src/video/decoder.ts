@@ -4,32 +4,110 @@ import { ScrcpyVideoCodecId } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
-    TinyH264DecoderInit,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
-import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
 import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 
 import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
 import type { CodecDecoder } from "./codec/type.js";
-import type { FrameSink } from "./render/index.js";
-import { BitmapFrameSink, WebGLFrameSink } from "./render/index.js";
+import type { WebCodecsVideoDecoderRenderer } from "./render/index.js";
 
-export interface WebCodecsVideoDecoderInit extends TinyH264DecoderInit {
+class Pool<T> {
+    #controller!: ReadableStreamDefaultController<T>;
+    #readable = new ReadableStream<T>(
+        {
+            start: (controller) => {
+                this.#controller = controller;
+            },
+            pull: (controller) => {
+                controller.enqueue(this.#initializer());
+            },
+        },
+        { highWaterMark: 0 },
+    );
+    #reader = this.#readable.getReader();
+
+    #initializer: () => T;
+
+    #size = 0;
+    #capacity: number;
+
+    constructor(initializer: () => T, capacity: number) {
+        this.#initializer = initializer;
+        this.#capacity = capacity;
+    }
+
+    async borrow() {
+        const result = await this.#reader.read();
+        return result.value!;
+    }
+
+    return(value: T) {
+        if (this.#size < this.#capacity) {
+            this.#controller.enqueue(value);
+            this.#size += 1;
+        }
+    }
+}
+
+class VideoFrameCapturer {
+    #canvas: OffscreenCanvas | HTMLCanvasElement;
+    #context: ImageBitmapRenderingContext;
+
+    constructor() {
+        if (typeof OffscreenCanvas !== "undefined") {
+            this.#canvas = new OffscreenCanvas(1, 1);
+        } else {
+            this.#canvas = document.createElement("canvas");
+            this.#canvas.width = 1;
+            this.#canvas.height = 1;
+        }
+        this.#context = this.#canvas.getContext("bitmaprenderer", {
+            alpha: false,
+        })!;
+    }
+
+    async capture(frame: VideoFrame): Promise<Blob> {
+        this.#canvas.width = frame.displayWidth;
+        this.#canvas.height = frame.displayHeight;
+
+        const bitmap = await createImageBitmap(frame);
+        this.#context.transferFromImageBitmap(bitmap);
+
+        if (this.#canvas instanceof OffscreenCanvas) {
+            return await this.#canvas.convertToBlob({
+                type: "image/png",
+            });
+        } else {
+            return new Promise((resolve, reject) => {
+                (this.#canvas as HTMLCanvasElement).toBlob((blob) => {
+                    if (!blob) {
+                        reject(new Error("Failed to convert canvas to blob"));
+                    } else {
+                        resolve(blob);
+                    }
+                }, "image/png");
+            });
+        }
+    }
+}
+
+const VideoFrameCapturerPool = /*@__PURE__*/ new Pool(
+    () => new VideoFrameCapturer(),
+    4,
+);
+
+export interface WebCodecsVideoDecoderInit {
     /**
      * The video codec to decode
      */
     codec: ScrcpyVideoCodecId;
 
-    /**
-     * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
-     * Enable this option may reduce performance.
-     */
-    enableCapture?: boolean | undefined;
+    renderer: WebCodecsVideoDecoderRenderer;
 }
 
 export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
-    static isSupported() {
+    static get isSupported() {
         return typeof globalThis.VideoDecoder !== "undefined";
     }
 
@@ -37,6 +115,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         {
             h264: {},
             h265: {},
+            av1: {},
         };
 
     #codec: ScrcpyVideoCodecId;
@@ -51,19 +130,23 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#writable;
     }
 
-    #renderer: HTMLCanvasElement | OffscreenCanvas;
+    #error: Error | undefined;
+    #controller!: WritableStreamDefaultController;
+
+    #renderer: WebCodecsVideoDecoderRenderer;
     get renderer() {
         return this.#renderer;
     }
 
-    #frameRendered = 0;
+    #framesDraw = 0;
+    #framesPresented = 0;
     get framesRendered() {
-        return this.#frameRendered;
+        return this.#framesPresented;
     }
 
-    #frameSkipped = 0;
+    #framesSkipped = 0;
     get framesSkipped() {
-        return this.#frameSkipped;
+        return this.#framesSkipped;
     }
 
     #sizeChanged = new EventEmitter<{ width: number; height: number }>();
@@ -72,61 +155,40 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     #decoder: VideoDecoder;
-    #frameSink: FrameSink;
 
-    #currentFrameRendered = false;
+    #drawing = false;
+    #nextFrame: VideoFrame | undefined;
+    #captureFrame: VideoFrame | undefined;
+
     #animationFrameId = 0;
 
     /**
      * Create a new WebCodecs video decoder.
      */
-    constructor({ codec, canvas, enableCapture }: WebCodecsVideoDecoderInit) {
+    constructor({ codec, renderer }: WebCodecsVideoDecoderInit) {
         this.#codec = codec;
 
-        if (canvas) {
-            this.#renderer = canvas;
-        } else {
-            this.#renderer = createCanvas();
-        }
-
-        try {
-            this.#frameSink = new WebGLFrameSink(
-                this.#renderer,
-                !!enableCapture,
-            );
-        } catch {
-            this.#frameSink = new BitmapFrameSink(this.#renderer);
-        }
+        this.#renderer = renderer;
 
         this.#decoder = new VideoDecoder({
             output: (frame) => {
-                if (this.#currentFrameRendered) {
-                    this.#frameRendered += 1;
-                } else {
-                    this.#frameSkipped += 1;
-                }
-                this.#currentFrameRendered = false;
+                this.#captureFrame?.close();
+                // PERF: `VideoFrame#clone` is cheap
+                this.#captureFrame = frame.clone();
 
-                // PERF: Draw every frame to minimize latency at cost of performance.
-                // When multiple frames are drawn in one vertical sync interval,
-                // only the last one is visible to users.
-                // But this ensures users can always see the most up-to-date screen.
-                // This is also the behavior of official Scrcpy client.
-                // https://github.com/Genymobile/scrcpy/issues/3679
-                this.#updateSize(frame.displayWidth, frame.displayHeight);
-                this.#frameSink.draw(frame);
-            },
-            error(e) {
-                if (controller) {
-                    try {
-                        controller.error(e);
-                    } catch {
-                        // ignore
-                        // `controller` may already in error state
+                if (this.#drawing) {
+                    if (this.#nextFrame) {
+                        this.#nextFrame.close();
+                        this.#framesSkipped += 1;
                     }
-                } else {
-                    error = e;
+                    this.#nextFrame = frame;
+                    return;
                 }
+
+                void this.#draw(frame);
+            },
+            error: (error) => {
+                this.#setError(error);
             },
         });
 
@@ -151,14 +213,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 break;
         }
 
-        let error: Error | undefined;
-        let controller: WritableStreamDefaultController | undefined;
         this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
-            start: (_controller) => {
-                if (error) {
-                    _controller.error(error);
+            start: (controller) => {
+                if (this.#error) {
+                    controller.error(this.#error);
                 } else {
-                    controller = _controller;
+                    this.#controller = controller;
                 }
             },
             write: (packet) => {
@@ -166,32 +226,79 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             },
         });
 
-        this.#onFramePresented();
+        this.#onVerticalSync();
+    }
+
+    #setError(error: Error) {
+        if (this.#controller) {
+            try {
+                this.#controller.error(error);
+            } catch {
+                // ignore
+            }
+        } else {
+            this.#error = error;
+        }
+    }
+
+    async #draw(frame: VideoFrame) {
+        try {
+            this.#drawing = true;
+            // PERF: Draw every frame to minimize latency at cost of performance.
+            // When multiple frames are drawn in one vertical sync interval,
+            // only the last one is visible to users.
+            // But this ensures users can always see the most up-to-date screen.
+            // This is also the behavior of official Scrcpy client.
+            // https://github.com/Genymobile/scrcpy/issues/3679
+            this.#updateSize(frame.displayWidth, frame.displayHeight);
+            await this.#renderer.draw(frame);
+            this.#framesDraw += 1;
+            frame.close();
+
+            if (this.#nextFrame) {
+                const frame = this.#nextFrame;
+                this.#nextFrame = undefined;
+                await this.#draw(frame);
+            }
+
+            this.#drawing = false;
+        } catch (error) {
+            this.#setError(error as Error);
+        }
     }
 
     #updateSize = (width: number, height: number) => {
-        if (
-            width !== this.#renderer.width ||
-            height !== this.#renderer.height
-        ) {
-            this.#renderer.width = width;
-            this.#renderer.height = height;
-            this.#sizeChanged.fire({
-                width: width,
-                height: height,
-            });
-        }
+        this.#renderer.setSize(width, height);
+        this.#sizeChanged.fire({ width, height });
     };
 
-    #onFramePresented = () => {
-        this.#currentFrameRendered = true;
-        this.#animationFrameId = requestAnimationFrame(this.#onFramePresented);
+    #onVerticalSync = () => {
+        if (this.#framesDraw > 0) {
+            this.#framesPresented += 1;
+            this.#framesSkipped += this.#framesDraw - 1;
+            this.#framesDraw = 0;
+        }
+        this.#animationFrameId = requestAnimationFrame(this.#onVerticalSync);
     };
+
+    async snapshot() {
+        const frame = this.#captureFrame;
+        if (!frame) {
+            return undefined;
+        }
+
+        const capturer = await VideoFrameCapturerPool.borrow();
+        const result = await capturer.capture(frame);
+        VideoFrameCapturerPool.return(capturer);
+        return result;
+    }
 
     dispose() {
         cancelAnimationFrame(this.#animationFrameId);
         if (this.#decoder.state !== "closed") {
             this.#decoder.close();
         }
+        this.#nextFrame?.close();
+        this.#captureFrame?.close();
     }
 }

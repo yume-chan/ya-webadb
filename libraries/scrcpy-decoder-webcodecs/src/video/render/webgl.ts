@@ -1,6 +1,30 @@
-import type { FrameSink } from "./type.js";
+import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
 
-export class WebGLFrameSink implements FrameSink {
+import { CanvasWebCodecsVideoDecoderRenderer } from "./canvas.js";
+
+const Resolved = Promise.resolve();
+
+function createContext(
+    canvas: HTMLCanvasElement | OffscreenCanvas,
+    enableCapture?: boolean,
+): WebGLRenderingContext | null {
+    const attributes: WebGLContextAttributes = {
+        // Low-power GPU should be enough for video rendering.
+        powerPreference: "low-power",
+        alpha: false,
+        // Disallow software rendering.
+        // Other rendering methods are faster than software-based WebGL.
+        failIfMajorPerformanceCaveat: true,
+        preserveDrawingBuffer: !!enableCapture,
+    };
+
+    return (
+        canvas.getContext("webgl2", attributes) ||
+        canvas.getContext("webgl", attributes)
+    );
+}
+
+export class WebGLWebCodecsDecoderRenderer extends CanvasWebCodecsVideoDecoderRenderer {
     static vertexShaderSource = `
         attribute vec2 xy;
 
@@ -24,6 +48,11 @@ export class WebGLFrameSink implements FrameSink {
         }
 `;
 
+    static get isSupported() {
+        const canvas = createCanvas();
+        return !!createContext(canvas);
+    }
+
     #context: WebGLRenderingContext;
 
     /**
@@ -34,36 +63,32 @@ export class WebGLFrameSink implements FrameSink {
      * Enable this option may reduce performance.
      */
     constructor(
-        canvas: HTMLCanvasElement | OffscreenCanvas,
-        enableCapture: boolean,
+        canvas?: HTMLCanvasElement | OffscreenCanvas,
+        enableCapture?: boolean,
     ) {
-        const attributes: WebGLContextAttributes = {
-            // Low-power GPU should be enough for video rendering.
-            powerPreference: "low-power",
-            alpha: false,
-            // Disallow software rendering.
-            // Other rendering methods are faster than software-based WebGL.
-            failIfMajorPerformanceCaveat: true,
-            preserveDrawingBuffer: enableCapture,
-        };
+        super(canvas);
 
-        const gl =
-            canvas.getContext("webgl2", attributes) ||
-            canvas.getContext("webgl", attributes);
+        const gl = createContext(this.canvas, enableCapture);
         if (!gl) {
             throw new Error("WebGL not supported");
         }
         this.#context = gl;
 
         const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
-        gl.shaderSource(vertexShader, WebGLFrameSink.vertexShaderSource);
+        gl.shaderSource(
+            vertexShader,
+            WebGLWebCodecsDecoderRenderer.vertexShaderSource,
+        );
         gl.compileShader(vertexShader);
         if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
             throw new Error(gl.getShaderInfoLog(vertexShader)!);
         }
 
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-        gl.shaderSource(fragmentShader, WebGLFrameSink.fragmentShaderSource);
+        gl.shaderSource(
+            fragmentShader,
+            WebGLWebCodecsDecoderRenderer.fragmentShaderSource,
+        );
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
             throw new Error(gl.getShaderInfoLog(fragmentShader)!);
@@ -100,7 +125,7 @@ export class WebGLFrameSink implements FrameSink {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
 
-    draw(frame: VideoFrame) {
+    draw(frame: VideoFrame): Promise<void> {
         const gl = this.#context;
         gl.texImage2D(
             gl.TEXTURE_2D,
@@ -110,9 +135,10 @@ export class WebGLFrameSink implements FrameSink {
             gl.UNSIGNED_BYTE,
             frame,
         );
-        frame.close();
 
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
+
+        return Resolved;
     }
 }
