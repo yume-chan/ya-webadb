@@ -242,7 +242,7 @@ export class AdbDaemonWebUsbConnection
         } catch (e) {
             // On Windows, disconnecting the device will cause `NetworkError` to be thrown,
             // even before the `disconnect` event is fired.
-            // We need to wait a little bit and check if the device is still connected.
+            // Wait a little while and check if the device is still connected.
             // https://github.com/WICG/webusb/issues/219
             if (isErrorName(e, "NetworkError")) {
                 await new Promise<void>((resolve) => {
@@ -253,8 +253,6 @@ export class AdbDaemonWebUsbConnection
 
                 if (closed) {
                     return undefined;
-                } else {
-                    throw e;
                 }
             }
 
@@ -318,7 +316,15 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
         }
 
         if (!interface_.claimed) {
-            await this.#raw.claimInterface(interface_.interfaceNumber);
+            try {
+                await this.#raw.claimInterface(interface_.interfaceNumber);
+            } catch (e) {
+                if (isErrorName(e, "NetworkError")) {
+                    throw new AdbDaemonWebUsbDevice.DeviceBusyError(e);
+                }
+
+                throw e;
+            }
         }
 
         if (
@@ -348,5 +354,15 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
             outEndpoint,
             this.#usbManager,
         );
+    }
+}
+
+export namespace AdbDaemonWebUsbDevice {
+    export class DeviceBusyError extends Error {
+        constructor(cause?: Error) {
+            super("The device is already in used by another program", {
+                cause,
+            });
+        }
     }
 }

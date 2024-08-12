@@ -114,13 +114,15 @@ interface AdbDaemonSocketConnectorConstructionOptions {
 
     /**
      * The number of bytes the device can send before receiving an ack packet.
-     * Using delayed ack can improve the throughput,
-     * especially when the device is connected over Wi-Fi (so the latency is higher).
+     *
+     * On Android 14 and newer, the Delayed Acknowledgement feature is added to
+     * improve performance, especially for high-latency connections like ADB over Wi-Fi.
      *
      * When `features` doesn't include `AdbFeature.DelayedAck`, it must be set to 0. Otherwise,
-     * the value must be in the range of unsigned 32-bit integer. If the device enabled
-     * delayed ack but the client didn't, the device will throw an error when the client sends
-     * the first data packet. And vice versa.
+     * the value must be in the range of unsigned 32-bit integer.
+     *
+     * If the device enabled delayed ack but the client didn't, the device will throw an error
+     * when the client sends the first data packet. And vice versa.
      */
     initialDelayedAckBytes: number;
 

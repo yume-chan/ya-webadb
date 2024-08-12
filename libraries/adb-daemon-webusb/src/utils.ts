@@ -1,4 +1,4 @@
-export function isErrorName(e: unknown, name: string): boolean {
+export function isErrorName(e: unknown, name: string): e is Error {
     // node-usb package doesn't use `DOMException`,
     // so use a looser check
     // https://github.com/node-usb/node-usb/issues/573
