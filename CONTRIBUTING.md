@@ -29,7 +29,7 @@ $ pnpm build
 
 ### Run all tests
 
-Tests are written using Node.js built-in test runner. Node.js 20.x is used in local development and GitHub Actions, Node.js 22.x might have a regression on parsing source maps.
+Tests are written using Node.js built-in test runner. Node.js v20.16.0 and later might have a bug reporting code coverage: https://github.com/nodejs/node/issues/54240
 
 ```sh
 $ pnpm test
