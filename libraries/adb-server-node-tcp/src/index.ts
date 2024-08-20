@@ -130,7 +130,7 @@ export class AdbServerNodeTcpConnector
 
         if (!address) {
             const info = server.address() as AddressInfo;
-            address = `tcp:${info.address}:${info.port}`;
+            address = `tcp:${info.port}`;
         }
 
         this.#listeners.set(address, server);
