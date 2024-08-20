@@ -89,6 +89,11 @@ export class AdbReverseCommand extends AutoDisposable {
         return stream;
     }
 
+    /**
+     * Get a list of all reverse port forwarding on the device.
+     *
+     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/list/)
+     */
     async list(): Promise<AdbForwardListener[]> {
         const stream = await this.createBufferedStream("reverse:list-forward");
 
@@ -107,10 +112,9 @@ export class AdbReverseCommand extends AutoDisposable {
     }
 
     /**
-     * Add an already existing reverse tunnel. Depends on the transport type, this may not do anything.
-     * @param deviceAddress The address to be listened on device by ADB daemon. Or `tcp:0` to choose an available TCP port.
-     * @param localAddress The address that listens on the local machine.
-     * @returns `tcp:{ACTUAL_LISTENING_PORT}`, If `deviceAddress` is `tcp:0`; otherwise, `deviceAddress`.
+     * Add a reverse port forwarding for a program that already listens on a port.
+     *
+     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/add/#addexternal)
      */
     async addExternal(deviceAddress: string, localAddress: string) {
         const stream = await this.sendRequest(
@@ -143,12 +147,9 @@ export class AdbReverseCommand extends AutoDisposable {
     }
 
     /**
-     * @param deviceAddress The address to be listened on device by ADB daemon. Or `tcp:0` to choose an available TCP port.
-     * @param handler A callback to handle incoming connections.
-     * @param localAddressThe The address that listens on the local machine. May be `undefined` to let the transport choose an appropriate one.
-     * @returns `tcp:{ACTUAL_LISTENING_PORT}`, If `deviceAddress` is `tcp:0`; otherwise, `deviceAddress`.
-     * @throws {AdbReverseNotSupportedError} If ADB reverse tunnel is not supported on this device when connected wirelessly.
-     * @throws {AdbReverseError} If ADB daemon returns an error.
+     * Add a reverse port forwarding.
+     *
+     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/add/)
      */
     async add(
         deviceAddress: string,
@@ -170,6 +171,11 @@ export class AdbReverseCommand extends AutoDisposable {
         }
     }
 
+    /**
+     * Remove a reverse port forwarding.
+     *
+     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/remove/#remove-one-port-forwarding)
+     */
     async remove(deviceAddress: string): Promise<void> {
         const localAddress =
             this.#deviceAddressToLocalAddress.get(deviceAddress);
@@ -182,6 +188,11 @@ export class AdbReverseCommand extends AutoDisposable {
         // No need to close the stream, device will close it
     }
 
+    /**
+     * Remove all reverse port forwarding, including the ones added by other programs.
+     *
+     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/remove/#remove-all-port-forwardings)
+     */
     async removeAll(): Promise<void> {
         await this.adb.transport.clearReverseTunnels();
         this.#deviceAddressToLocalAddress.clear();

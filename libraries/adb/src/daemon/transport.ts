@@ -148,14 +148,16 @@ interface AdbDaemonSocketConnectorConstructionOptions {
     readTimeLimit?: number | undefined;
 }
 
+/**
+ * An ADB Transport that connects to ADB Daemons directly.
+ *
+ * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/)
+ */
 export class AdbDaemonTransport implements AdbTransport {
     /**
-     * Authenticates the connection and creates an `AdbDaemonTransport` instance
-     * that can be used by `Adb` class.
+     * Authenticate with the ADB Daemon and create a new transport.
      *
-     * If an authentication process failed,
-     * no matter which value the `preserveConnection` option has,
-     * the `connection` is always kept open, so it can be used in another `authenticate` call.
+     * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/connect-device/)
      */
     static async authenticate({
         serial,

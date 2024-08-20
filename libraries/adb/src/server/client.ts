@@ -126,6 +126,11 @@ class AdbServerStream {
     }
 }
 
+/**
+ * Client for the ADB Server.
+ *
+ * [Online Documentation](https://docs.tangoapp.dev/tango/server/client/)
+ */
 export class AdbServerClient {
     static readonly VERSION = 41;
 
@@ -280,7 +285,11 @@ export class AdbServerClient {
     }
 
     /**
-     * `adb devices -l`
+     * Get a list of connected devices from ADB Server.
+     *
+     * Equivalent ADB Command: `adb devices -l`
+     *
+     * [Online Documentation](https://docs.tangoapp.dev/tango/server/devices/)
      */
     async getDevices(): Promise<AdbServerClient.Device[]> {
         const connection = await this.createConnection("host:devices-l");
@@ -293,11 +302,9 @@ export class AdbServerClient {
     }
 
     /**
-     * Track the device list.
+     * Monitors device list changes.
      *
-     * @param signal An optional `AbortSignal` to stop tracking
-     *
-     * When `signal` is aborted, `trackDevices` will return normally, instead of throwing `signal.reason`.
+     * [Online Documentation](https://docs.tangoapp.dev/tango/server/watch/)
      */
     async *trackDevices(
         signal?: AbortSignal,
@@ -491,6 +498,11 @@ export class AdbServerClient {
         }
     }
 
+    /**
+     * Creates an ADB Transport for the specified device.
+     *
+     * [Online Documentation](https://docs.tangoapp.dev/tango/server/transport/)
+     */
     async createTransport(
         device: AdbServerClient.DeviceSelector,
     ): Promise<AdbServerTransport> {
@@ -579,6 +591,11 @@ export namespace AdbServerClient {
         transportId: bigint;
     }
 
+    /**
+     * A union type for selecting a device.
+     *
+     * [Online Documentation](https://docs.tangoapp.dev/tango/server/selector/)
+     */
     export type DeviceSelector =
         | { transportId: bigint }
         | { serial: string }

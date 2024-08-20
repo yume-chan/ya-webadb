@@ -9,11 +9,11 @@
     },
     "dependencies": {
         "@eslint/js": "^9.9.0",
-        "@types/node": "^22.2.0",
+        "@types/node": "^22.4.1",
         "eslint": "^9.9.0",
         "eslint-plugin-import-x": "^3.1.0",
         "typescript": "^5.5.4",
-        "typescript-eslint": "^8.0.1"
+        "typescript-eslint": "^8.2.0"
     },
     "devDependencies": {
         "prettier": "^3.3.3"

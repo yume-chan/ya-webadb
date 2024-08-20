@@ -172,8 +172,8 @@ export class AdbSync extends AutoDisposable {
         return this._socket.lock();
     }
 
-    override async dispose() {
+    override dispose() {
         super.dispose();
-        await this._socket.close();
+        void this._socket.close();
     }
 }

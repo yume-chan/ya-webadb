@@ -37,8 +37,8 @@ function nodeSocketToConnection(
             });
         }),
         writable: new WritableStream<Uint8Array>({
-            write: async (chunk) => {
-                await new Promise<void>((resolve, reject) => {
+            write: (chunk) => {
+                return new Promise<void>((resolve, reject) => {
                     socket.write(chunk, (err) => {
                         if (err) {
                             reject(err);
@@ -58,6 +58,11 @@ function nodeSocketToConnection(
     };
 }
 
+/**
+ * An `AdbServerClient.ServerConnector` implementation for Node.js.
+ *
+ * [Online Documentation](https://docs.tangoapp.dev/tango/server/client/)
+ */
 export class AdbServerNodeTcpConnector
     implements AdbServerClient.ServerConnector
 {

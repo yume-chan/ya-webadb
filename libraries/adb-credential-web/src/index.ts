@@ -63,6 +63,12 @@ async function getAllKeys() {
     });
 }
 
+/**
+ * An `AdbCredentialStore` implementation that creates RSA private keys using Web Crypto API
+ * and stores them in IndexedDB.
+ *
+ * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/credential-store/)
+ */
 export default class AdbWebCredentialStore implements AdbCredentialStore {
     #appName: string;
 

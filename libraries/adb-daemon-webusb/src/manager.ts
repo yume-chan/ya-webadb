@@ -12,6 +12,9 @@ export namespace AdbDaemonWebUsbDeviceManager {
     }
 }
 
+/**
+ * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/usb/device-manager/)
+ */
 export class AdbDaemonWebUsbDeviceManager {
     /**
      * Gets the instance of {@link AdbDaemonWebUsbDeviceManager} using browser WebUSB implementation.
@@ -35,17 +38,9 @@ export class AdbDaemonWebUsbDeviceManager {
     }
 
     /**
-     * Request access to a connected device.
-     * This is a convince method for `usb.requestDevice()`.
-     * @param filters
-     * The filters to apply to the device list.
+     * Call `USB#requestDevice()` to prompt the user to select a device.
      *
-     * It must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface,
-     * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the displayed device list.
-     *
-     * Defaults to {@link ADB_DEFAULT_INTERFACE_FILTER}.
-     * @returns An {@link AdbDaemonWebUsbDevice} instance if the user selected a device,
-     * or `undefined` if the user cancelled the device picker.
+     * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/usb/request-device/)
      */
     async requestDevice(
         options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
@@ -69,16 +64,9 @@ export class AdbDaemonWebUsbDeviceManager {
     }
 
     /**
-     * Get all connected and authenticated devices.
-     * This is a convince method for `usb.getDevices()`.
-     * @param filters
-     * The filters to apply to the device list.
+     * Get all connected and requested devices that match the specified filters.
      *
-     * It must have `classCode`, `subclassCode` and `protocolCode` fields for selecting the ADB interface,
-     * but might also have `vendorId`, `productId` or `serialNumber` fields to limit the device list.
-     *
-     * Defaults to {@link ADB_DEFAULT_INTERFACE_FILTER}.
-     * @returns An array of {@link AdbDaemonWebUsbDevice} instances for all connected and authenticated devices.
+     * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/usb/get-devices/)
      */
     getDevices(
         filters?: USBDeviceFilter[] | undefined,

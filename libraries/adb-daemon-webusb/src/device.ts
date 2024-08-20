@@ -343,8 +343,9 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
     }
 
     /**
-     * Claim the device and create a pair of `AdbPacket` streams to the ADB interface.
-     * @returns The pair of `AdbPacket` streams.
+     * Open the device and create a new connection to the ADB Daemon.
+     *
+     * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/usb/create-connection/)
      */
     async connect(): Promise<AdbDaemonWebUsbConnection> {
         const [inEndpoint, outEndpoint] = await this.#claimInterface();
