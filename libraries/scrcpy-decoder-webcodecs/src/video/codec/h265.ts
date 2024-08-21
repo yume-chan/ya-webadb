@@ -41,6 +41,8 @@ export class H265Decoder extends H26xDecoder {
         ].join(".");
         this.#decoder.configure({
             codec,
+            codedWidth: croppedWidth,
+            codedHeight: croppedHeight,
             optimizeForLatency: true,
         });
     }
