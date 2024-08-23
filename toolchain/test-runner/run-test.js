@@ -117,10 +117,5 @@ const filterCoverage = test.pipe(
     }),
 );
 
-// @ts-expect-error
 test.pipe(spec()).pipe(process.stdout);
-test
-    // @ts-expect-error
-    .pipe(lcov)
-    // @ts-expect-error
-    .pipe(createWriteStream(resolve(coverageFolder, "lcov.info")));
+test.pipe(lcov).pipe(createWriteStream(resolve(coverageFolder, "lcov.info")));

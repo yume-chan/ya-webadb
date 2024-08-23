@@ -1,4 +1,3 @@
-import { AutoDisposable } from "@yume-chan/event";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 
 import type { Adb, AdbSocket } from "../../adb.js";
@@ -39,7 +38,7 @@ export interface AdbSyncWriteOptions {
     dryRun?: boolean;
 }
 
-export class AdbSync extends AutoDisposable {
+export class AdbSync {
     protected _adb: Adb;
     protected _socket: AdbSyncSocket;
 
@@ -70,8 +69,6 @@ export class AdbSync extends AutoDisposable {
     }
 
     constructor(adb: Adb, socket: AdbSocket) {
-        super();
-
         this._adb = adb;
         this._socket = new AdbSyncSocket(socket, adb.maxPayloadSize);
 
@@ -172,8 +169,7 @@ export class AdbSync extends AutoDisposable {
         return this._socket.lock();
     }
 
-    override dispose() {
-        super.dispose();
-        void this._socket.close();
+    dispose() {
+        return this._socket.close();
     }
 }

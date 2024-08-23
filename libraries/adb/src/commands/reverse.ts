@@ -1,6 +1,5 @@
 // cspell: ignore killforward
 
-import { AutoDisposable } from "@yume-chan/event";
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import Struct, { ExactReadableEndedError, encodeUtf8 } from "@yume-chan/struct";
 
@@ -62,14 +61,12 @@ function decimalToNumber(buffer: Uint8Array) {
 
 const OKAY = encodeUtf8("OKAY");
 
-export class AdbReverseCommand extends AutoDisposable {
+export class AdbReverseCommand {
     protected adb: Adb;
 
     readonly #deviceAddressToLocalAddress = new Map<string, string>();
 
     constructor(adb: Adb) {
-        super();
-
         this.adb = adb;
     }
 
