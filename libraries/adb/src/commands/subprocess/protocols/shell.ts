@@ -19,20 +19,25 @@ import { encodeUtf8 } from "../../../utils/index.js";
 
 import type { AdbSubprocessProtocol } from "./types.js";
 
-export enum AdbShellProtocolId {
-    Stdin,
-    Stdout,
-    Stderr,
-    Exit,
-    CloseStdin,
-    WindowSizeChange,
-}
+export const AdbShellProtocolId = {
+    Stdin: 0,
+    Stdout: 1,
+    Stderr: 2,
+    Exit: 3,
+    CloseStdin: 4,
+    WindowSizeChange: 5,
+} as const;
+
+export type AdbShellProtocolId =
+    (typeof AdbShellProtocolId)[keyof typeof AdbShellProtocolId];
 
 // This packet format is used in both directions.
-export const AdbShellProtocolPacket = new Struct({ littleEndian: true })
-    .uint8("id", placeholder<AdbShellProtocolId>())
-    .uint32("length")
-    .uint8Array("data", { lengthField: "length" });
+export const AdbShellProtocolPacket =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .uint8("id", placeholder<AdbShellProtocolId>())
+        .uint32("length")
+        .uint8Array("data", { lengthField: "length" });
 
 type AdbShellProtocolPacket = StructValueType<typeof AdbShellProtocolPacket>;
 

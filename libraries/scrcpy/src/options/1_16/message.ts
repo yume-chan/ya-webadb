@@ -23,37 +23,43 @@ export const SCRCPY_CONTROL_MESSAGE_TYPES_1_16: readonly ScrcpyControlMessageTyp
         /* 10 */ ScrcpyControlMessageType.RotateDevice,
     ];
 
-export const ScrcpyMediaStreamRawPacket = new Struct()
-    .uint64("pts")
-    .uint32("size")
-    .uint8Array("data", { lengthField: "size" });
+export const ScrcpyMediaStreamRawPacket =
+    /* #__PURE__ */
+    new Struct()
+        .uint64("pts")
+        .uint32("size")
+        .uint8Array("data", { lengthField: "size" });
 
 export const SCRCPY_MEDIA_PACKET_FLAG_CONFIG = 1n << 63n;
 
-export const ScrcpyInjectTouchControlMessage1_16 = new Struct()
-    .uint8("type")
-    .uint8("action", placeholder<AndroidMotionEventAction>())
-    .uint64("pointerId")
-    .uint32("pointerX")
-    .uint32("pointerY")
-    .uint16("screenWidth")
-    .uint16("screenHeight")
-    .field("pressure", ScrcpyUnsignedFloatFieldDefinition)
-    .uint32("buttons");
+export const ScrcpyInjectTouchControlMessage1_16 =
+    /* #__PURE__ */
+    new Struct()
+        .uint8("type")
+        .uint8("action", placeholder<AndroidMotionEventAction>())
+        .uint64("pointerId")
+        .uint32("pointerX")
+        .uint32("pointerY")
+        .uint16("screenWidth")
+        .uint16("screenHeight")
+        .field("pressure", ScrcpyUnsignedFloatFieldDefinition)
+        .uint32("buttons");
 
 export type ScrcpyInjectTouchControlMessage1_16 =
     (typeof ScrcpyInjectTouchControlMessage1_16)["TInit"];
 
 export const ScrcpyBackOrScreenOnControlMessage1_16 = EmptyControlMessage;
 
-export const ScrcpySetClipboardControlMessage1_15 = new Struct()
-    .uint8("type")
-    .uint32("length")
-    .string("content", { lengthField: "length" });
+export const ScrcpySetClipboardControlMessage1_15 =
+    /* #__PURE__ */
+    new Struct()
+        .uint8("type")
+        .uint32("length")
+        .string("content", { lengthField: "length" });
 
 export type ScrcpySetClipboardControlMessage1_15 =
     (typeof ScrcpySetClipboardControlMessage1_15)["TInit"];
 
-export const ScrcpyClipboardDeviceMessage = new Struct()
-    .uint32("length")
-    .string("content", { lengthField: "length" });
+export const ScrcpyClipboardDeviceMessage =
+    /* #__PURE__ */
+    new Struct().uint32("length").string("content", { lengthField: "length" });

@@ -33,7 +33,7 @@ class MockDeserializationStream implements ExactReadable {
 describe("Struct", () => {
     describe(".constructor", () => {
         it("should initialize fields", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             assert.deepStrictEqual(struct.options, StructDefaultOptions);
             assert.strictEqual(struct.size, 0);
         });
@@ -82,7 +82,7 @@ describe("Struct", () => {
         }
 
         it("should push a field and update size", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
 
             const field1 = "foo";
             const fieldDefinition1 = new MockFieldDefinition(4);
@@ -104,7 +104,7 @@ describe("Struct", () => {
         });
 
         it("should throw an error if field name already exists", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             const fieldName = "foo";
             struct.field(fieldName, new MockFieldDefinition(4));
             assert.throws(() => {
@@ -115,7 +115,7 @@ describe("Struct", () => {
 
     describe("#number", () => {
         it("`int8` should append an `int8` field", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             struct.int8("foo");
             assert.strictEqual(struct.size, 1);
 
@@ -125,7 +125,7 @@ describe("Struct", () => {
         });
 
         it("`uint8` should append an `uint8` field", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             struct.uint8("foo");
             assert.strictEqual(struct.size, 1);
 
@@ -135,7 +135,7 @@ describe("Struct", () => {
         });
 
         it("`int16` should append an `int16` field", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             struct.int16("foo");
             assert.strictEqual(struct.size, 2);
 
@@ -145,7 +145,7 @@ describe("Struct", () => {
         });
 
         it("`uint16` should append an `uint16` field", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             struct.uint16("foo");
             assert.strictEqual(struct.size, 2);
 
@@ -155,7 +155,7 @@ describe("Struct", () => {
         });
 
         it("`int32` should append an `int32` field", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             struct.int32("foo");
             assert.strictEqual(struct.size, 4);
 
@@ -165,7 +165,7 @@ describe("Struct", () => {
         });
 
         it("`uint32` should append an `uint32` field", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             struct.uint32("foo");
             assert.strictEqual(struct.size, 4);
 
@@ -175,7 +175,7 @@ describe("Struct", () => {
         });
 
         it("`int64` should append an `int64` field", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             struct.int64("foo");
             assert.strictEqual(struct.size, 8);
 
@@ -185,7 +185,7 @@ describe("Struct", () => {
         });
 
         it("`uint64` should append an `uint64` field", () => {
-            const struct = new Struct();
+            const struct = /* #__PURE__ */ new Struct();
             struct.uint64("foo");
             assert.strictEqual(struct.size, 8);
 
@@ -197,7 +197,7 @@ describe("Struct", () => {
         describe("#uint8ArrayLike", () => {
             describe("FixedLengthBufferLikeFieldDefinition", () => {
                 it("`#uint8Array` with fixed length", () => {
-                    const struct = new Struct();
+                    const struct = /* #__PURE__ */ new Struct();
                     struct.uint8Array("foo", { length: 10 });
                     assert.strictEqual(struct.size, 10);
 
@@ -214,7 +214,7 @@ describe("Struct", () => {
                 });
 
                 it("`#string` with fixed length", () => {
-                    const struct = new Struct();
+                    const struct = /* #__PURE__ */ new Struct();
                     struct.string("foo", { length: 10 });
                     assert.strictEqual(struct.size, 10);
 
@@ -233,7 +233,9 @@ describe("Struct", () => {
 
             describe("VariableLengthBufferLikeFieldDefinition", () => {
                 it("`#uint8Array` with variable length", () => {
-                    const struct = new Struct().int8("barLength");
+                    const struct = /* #__PURE__ */ new Struct().int8(
+                        "barLength",
+                    );
                     assert.strictEqual(struct.size, 1);
 
                     struct.uint8Array("bar", { lengthField: "barLength" });
@@ -255,7 +257,9 @@ describe("Struct", () => {
                 });
 
                 it("`#string` with variable length", () => {
-                    const struct = new Struct().int8("barLength");
+                    const struct = /* #__PURE__ */ new Struct().int8(
+                        "barLength",
+                    );
                     assert.strictEqual(struct.size, 1);
 
                     struct.string("bar", { lengthField: "barLength" });
@@ -280,9 +284,11 @@ describe("Struct", () => {
 
         describe("#concat", () => {
             it("should append all fields from other struct", () => {
-                const sub = new Struct().int16("int16").int32("int32");
+                const sub = /* #__PURE__ */ new Struct()
+                    .int16("int16")
+                    .int32("int32");
 
-                const struct = new Struct()
+                const struct = /* #__PURE__ */ new Struct()
                     .int8("int8")
                     .concat(sub)
                     .int64("int64");
@@ -312,7 +318,9 @@ describe("Struct", () => {
 
         describe("#deserialize", () => {
             it("should deserialize without dynamic size fields", () => {
-                const struct = new Struct().int8("foo").int16("bar");
+                const struct = /* #__PURE__ */ new Struct()
+                    .int8("foo")
+                    .int16("bar");
 
                 const stream = new MockDeserializationStream();
                 stream.readExactly.mock.mockImplementationOnce(
@@ -339,7 +347,7 @@ describe("Struct", () => {
             });
 
             it("should deserialize with dynamic size fields", () => {
-                const struct = new Struct()
+                const struct = /* #__PURE__ */ new Struct()
                     .int8("fooLength")
                     .uint8Array("foo", { lengthField: "fooLength" });
 
@@ -376,7 +384,10 @@ describe("Struct", () => {
 
         describe("#extra", () => {
             it("should accept plain field", () => {
-                const struct = new Struct().extra({ foo: 42, bar: true });
+                const struct = /* #__PURE__ */ new Struct().extra({
+                    foo: 42,
+                    bar: true,
+                });
 
                 const stream = new MockDeserializationStream();
                 const result = struct.deserialize(stream);
@@ -411,7 +422,7 @@ describe("Struct", () => {
             });
 
             it("should accept accessors", () => {
-                const struct = new Struct().extra({
+                const struct = /* #__PURE__ */ new Struct().extra({
                     get foo() {
                         return 42;
                     },
@@ -438,7 +449,7 @@ describe("Struct", () => {
 
         describe("#postDeserialize", () => {
             it("can throw errors", () => {
-                const struct = new Struct();
+                const struct = /* #__PURE__ */ new Struct();
                 const callback = mock.fn(() => {
                     throw new Error("mock");
                 });
@@ -450,7 +461,7 @@ describe("Struct", () => {
             });
 
             it("can replace return value", () => {
-                const struct = new Struct();
+                const struct = /* #__PURE__ */ new Struct();
                 const callback = mock.fn(() => "mock");
                 struct.postDeserialize(callback);
 
@@ -461,7 +472,7 @@ describe("Struct", () => {
             });
 
             it("can return nothing", () => {
-                const struct = new Struct();
+                const struct = /* #__PURE__ */ new Struct();
                 const callback = mock.fn();
                 struct.postDeserialize(callback);
 
@@ -473,7 +484,7 @@ describe("Struct", () => {
             });
 
             it("should overwrite callback", () => {
-                const struct = new Struct();
+                const struct = /* #__PURE__ */ new Struct();
 
                 const callback1 = mock.fn();
                 struct.postDeserialize(callback1);
@@ -492,7 +503,9 @@ describe("Struct", () => {
 
         describe("#serialize", () => {
             it("should serialize without dynamic size fields", () => {
-                const struct = new Struct().int8("foo").int16("bar");
+                const struct = /* #__PURE__ */ new Struct()
+                    .int8("foo")
+                    .int16("bar");
 
                 const result = new Uint8Array(
                     struct.serialize({ foo: 0x42, bar: 0x1024 }),
@@ -505,7 +518,7 @@ describe("Struct", () => {
             });
 
             it("should serialize with dynamic size fields", () => {
-                const struct = new Struct()
+                const struct = /* #__PURE__ */ new Struct()
                     .int8("fooLength")
                     .uint8Array("foo", { lengthField: "fooLength" });
 

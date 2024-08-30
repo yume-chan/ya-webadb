@@ -8,14 +8,16 @@ export interface ScrcpyScrollController {
     ): Uint8Array | undefined;
 }
 
-export const ScrcpyInjectScrollControlMessage1_16 = new Struct()
-    .uint8("type")
-    .uint32("pointerX")
-    .uint32("pointerY")
-    .uint16("screenWidth")
-    .uint16("screenHeight")
-    .int32("scrollX")
-    .int32("scrollY");
+export const ScrcpyInjectScrollControlMessage1_16 =
+    /* #__PURE__ */
+    new Struct()
+        .uint8("type")
+        .uint32("pointerX")
+        .uint32("pointerY")
+        .uint16("screenWidth")
+        .uint16("screenHeight")
+        .int32("scrollX")
+        .int32("scrollY");
 
 /**
  * Old version of Scrcpy server only supports integer values for scroll.

@@ -5,9 +5,9 @@ import {
     ScrcpyScrollController1_16,
 } from "../1_16/index.js";
 
-export const ScrcpyInjectScrollControlMessage1_22 = new Struct()
-    .concat(ScrcpyInjectScrollControlMessage1_16)
-    .int32("buttons");
+export const ScrcpyInjectScrollControlMessage1_22 =
+    /* #__PURE__ */
+    new Struct().concat(ScrcpyInjectScrollControlMessage1_16).int32("buttons");
 
 export type ScrcpyInjectScrollControlMessage1_22 =
     (typeof ScrcpyInjectScrollControlMessage1_22)["TInit"];

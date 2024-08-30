@@ -3,40 +3,46 @@ import Struct, { StructEmptyError } from "@yume-chan/struct";
 
 import type { Adb } from "../adb.js";
 
-const Version = new Struct({ littleEndian: true }).uint32("version");
+const Version =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true }).uint32("version");
 
-export const AdbFrameBufferV1 = new Struct({ littleEndian: true })
-    .uint32("bpp")
-    .uint32("size")
-    .uint32("width")
-    .uint32("height")
-    .uint32("red_offset")
-    .uint32("red_length")
-    .uint32("blue_offset")
-    .uint32("blue_length")
-    .uint32("green_offset")
-    .uint32("green_length")
-    .uint32("alpha_offset")
-    .uint32("alpha_length")
-    .uint8Array("data", { lengthField: "size" });
+export const AdbFrameBufferV1 =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .uint32("bpp")
+        .uint32("size")
+        .uint32("width")
+        .uint32("height")
+        .uint32("red_offset")
+        .uint32("red_length")
+        .uint32("blue_offset")
+        .uint32("blue_length")
+        .uint32("green_offset")
+        .uint32("green_length")
+        .uint32("alpha_offset")
+        .uint32("alpha_length")
+        .uint8Array("data", { lengthField: "size" });
 
 export type AdbFrameBufferV1 = (typeof AdbFrameBufferV1)["TDeserializeResult"];
 
-export const AdbFrameBufferV2 = new Struct({ littleEndian: true })
-    .uint32("bpp")
-    .uint32("colorSpace")
-    .uint32("size")
-    .uint32("width")
-    .uint32("height")
-    .uint32("red_offset")
-    .uint32("red_length")
-    .uint32("blue_offset")
-    .uint32("blue_length")
-    .uint32("green_offset")
-    .uint32("green_length")
-    .uint32("alpha_offset")
-    .uint32("alpha_length")
-    .uint8Array("data", { lengthField: "size" });
+export const AdbFrameBufferV2 =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .uint32("bpp")
+        .uint32("colorSpace")
+        .uint32("size")
+        .uint32("width")
+        .uint32("height")
+        .uint32("red_offset")
+        .uint32("red_length")
+        .uint32("blue_offset")
+        .uint32("blue_length")
+        .uint32("green_offset")
+        .uint32("green_length")
+        .uint32("alpha_offset")
+        .uint32("alpha_length")
+        .uint8Array("data", { lengthField: "size" });
 
 export type AdbFrameBufferV2 = (typeof AdbFrameBufferV2)["TDeserializeResult"];
 

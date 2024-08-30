@@ -1,23 +1,31 @@
-// Array is faster than object literal or `Map`
-const charToIndex: number[] = [];
-const indexToChar: number[] = [];
-const paddingChar = "=".charCodeAt(0);
+const [charToIndex, indexToChar, paddingChar] = /* #__PURE__ */ (() => {
+    // Array is faster than object literal or `Map`
+    const charToIndex: number[] = [];
+    const indexToChar: number[] = [];
+    const paddingChar = "=".charCodeAt(0);
 
-function addRange(start: string, end: string) {
-    const charCodeStart = start.charCodeAt(0);
-    const charCodeEnd = end.charCodeAt(0);
+    function addRange(start: string, end: string) {
+        const charCodeStart = start.charCodeAt(0);
+        const charCodeEnd = end.charCodeAt(0);
 
-    for (let charCode = charCodeStart; charCode <= charCodeEnd; charCode += 1) {
-        charToIndex[charCode] = indexToChar.length;
-        indexToChar.push(charCode);
+        for (
+            let charCode = charCodeStart;
+            charCode <= charCodeEnd;
+            charCode += 1
+        ) {
+            charToIndex[charCode] = indexToChar.length;
+            indexToChar.push(charCode);
+        }
     }
-}
 
-addRange("A", "Z");
-addRange("a", "z");
-addRange("0", "9");
-addRange("+", "+");
-addRange("/", "/");
+    addRange("A", "Z");
+    addRange("a", "z");
+    addRange("0", "9");
+    addRange("+", "+");
+    addRange("/", "/");
+
+    return [charToIndex, indexToChar, paddingChar];
+})();
 
 /**
  * Calculate the required length of the output buffer for the given input length.

@@ -1,3 +1,3 @@
 import { Struct } from "@yume-chan/struct";
 
-export const EmptyControlMessage = new Struct().uint8("type");
+export const EmptyControlMessage = /* #__PURE__ */ new Struct().uint8("type");

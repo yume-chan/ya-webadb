@@ -14,18 +14,22 @@ export interface AdbSyncEntry extends AdbSyncStat {
     name: string;
 }
 
-export const AdbSyncEntryResponse = new Struct({ littleEndian: true })
-    .concat(AdbSyncLstatResponse)
-    .uint32("nameLength")
-    .string("name", { lengthField: "nameLength" });
+export const AdbSyncEntryResponse =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .concat(AdbSyncLstatResponse)
+        .uint32("nameLength")
+        .string("name", { lengthField: "nameLength" });
 
 export type AdbSyncEntryResponse =
     (typeof AdbSyncEntryResponse)["TDeserializeResult"];
 
-export const AdbSyncEntry2Response = new Struct({ littleEndian: true })
-    .concat(AdbSyncStatResponse)
-    .uint32("nameLength")
-    .string("name", { lengthField: "nameLength" });
+export const AdbSyncEntry2Response =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .concat(AdbSyncStatResponse)
+        .uint32("nameLength")
+        .string("name", { lengthField: "nameLength" });
 
 export type AdbSyncEntry2Response =
     (typeof AdbSyncEntry2Response)["TDeserializeResult"];

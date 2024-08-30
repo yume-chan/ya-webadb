@@ -92,10 +92,9 @@ class VideoFrameCapturer {
     }
 }
 
-const VideoFrameCapturerPool = /*@__PURE__*/ new Pool(
-    () => new VideoFrameCapturer(),
-    4,
-);
+const VideoFrameCapturerPool =
+    /* #__PURE__ */
+    new Pool(() => new VideoFrameCapturer(), 4);
 
 export interface WebCodecsVideoDecoderInit {
     /**

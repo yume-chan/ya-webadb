@@ -32,15 +32,13 @@ interface GlobalExtension {
     TransformStream: typeof TransformStreamType;
 }
 
-const Global = globalThis as unknown as GlobalExtension;
-
-export const AbortController = Global.AbortController;
-
 export type ReadableStream<out T> = ReadableStreamType<T>;
-export const ReadableStream = Global.ReadableStream;
-
 export type WritableStream<in T> = WritableStreamType<T>;
-export const WritableStream = Global.WritableStream;
-
 export type TransformStream<I, O> = TransformStreamType<I, O>;
-export const TransformStream = Global.TransformStream;
+
+export const {
+    AbortController,
+    ReadableStream,
+    WritableStream,
+    TransformStream,
+} = globalThis as unknown as GlobalExtension;

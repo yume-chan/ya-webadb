@@ -1,30 +1,36 @@
 import { Consumable, TransformStream } from "@yume-chan/stream-extra";
 import Struct from "@yume-chan/struct";
 
-export enum AdbCommand {
-    Auth = 0x48545541, // 'AUTH'
-    Close = 0x45534c43, // 'CLSE'
-    Connect = 0x4e584e43, // 'CNXN'
-    Okay = 0x59414b4f, // 'OKAY'
-    Open = 0x4e45504f, // 'OPEN'
-    Write = 0x45545257, // 'WRTE'
-}
+export const AdbCommand = {
+    Auth: 0x48545541, // 'AUTH'
+    Close: 0x45534c43, // 'CLSE'
+    Connect: 0x4e584e43, // 'CNXN'
+    Okay: 0x59414b4f, // 'OKAY'
+    Open: 0x4e45504f, // 'OPEN'
+    Write: 0x45545257, // 'WRTE'
+} as const;
 
-export const AdbPacketHeader = new Struct({ littleEndian: true })
-    .uint32("command")
-    .uint32("arg0")
-    .uint32("arg1")
-    .uint32("payloadLength")
-    .uint32("checksum")
-    .int32("magic");
+export type AdbCommand = (typeof AdbCommand)[keyof typeof AdbCommand];
+
+export const AdbPacketHeader =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .uint32("command")
+        .uint32("arg0")
+        .uint32("arg1")
+        .uint32("payloadLength")
+        .uint32("checksum")
+        .int32("magic");
 
 export type AdbPacketHeader = (typeof AdbPacketHeader)["TDeserializeResult"];
 
 type AdbPacketHeaderInit = (typeof AdbPacketHeader)["TInit"];
 
-export const AdbPacket = new Struct({ littleEndian: true })
-    .concat(AdbPacketHeader)
-    .uint8Array("payload", { lengthField: "payloadLength" });
+export const AdbPacket =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .concat(AdbPacketHeader)
+        .uint8Array("payload", { lengthField: "payloadLength" });
 
 export type AdbPacket = (typeof AdbPacket)["TDeserializeResult"];
 

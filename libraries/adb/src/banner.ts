@@ -1,11 +1,13 @@
 import type { AdbFeature } from "./features.js";
 
-export enum AdbBannerKey {
-    Product = "ro.product.name",
-    Model = "ro.product.model",
-    Device = "ro.product.device",
-    Features = "features",
-}
+export const AdbBannerKey = {
+    Product: "ro.product.name",
+    Model: "ro.product.model",
+    Device: "ro.product.device",
+    Features: "features",
+} as const;
+
+export type AdbBannerKey = (typeof AdbBannerKey)[keyof typeof AdbBannerKey];
 
 export class AdbBanner {
     static parse(banner: string) {

@@ -4,22 +4,22 @@ import { encodeUtf8 } from "../../utils/index.js";
 
 import { adbSyncEncodeId } from "./response.js";
 
-export namespace AdbSyncRequestId {
-    export const List = adbSyncEncodeId("LIST");
-    export const ListV2 = adbSyncEncodeId("LIS2");
-    export const Send = adbSyncEncodeId("SEND");
-    export const SendV2 = adbSyncEncodeId("SND2");
-    export const Lstat = adbSyncEncodeId("STAT");
-    export const Stat = adbSyncEncodeId("STA2");
-    export const LstatV2 = adbSyncEncodeId("LST2");
-    export const Data = adbSyncEncodeId("DATA");
-    export const Done = adbSyncEncodeId("DONE");
-    export const Receive = adbSyncEncodeId("RECV");
-}
+export const AdbSyncRequestId = {
+    List: adbSyncEncodeId("LIST"),
+    ListV2: adbSyncEncodeId("LIS2"),
+    Send: adbSyncEncodeId("SEND"),
+    SendV2: adbSyncEncodeId("SND2"),
+    Lstat: adbSyncEncodeId("STAT"),
+    Stat: adbSyncEncodeId("STA2"),
+    LstatV2: adbSyncEncodeId("LST2"),
+    Data: adbSyncEncodeId("DATA"),
+    Done: adbSyncEncodeId("DONE"),
+    Receive: adbSyncEncodeId("RECV"),
+} as const;
 
-export const AdbSyncNumberRequest = new Struct({ littleEndian: true })
-    .uint32("id")
-    .uint32("arg");
+export const AdbSyncNumberRequest =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true }).uint32("id").uint32("arg");
 
 export interface AdbSyncWritable {
     write(buffer: Uint8Array): Promise<void>;

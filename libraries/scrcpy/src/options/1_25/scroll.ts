@@ -27,15 +27,17 @@ const ScrcpySignedFloatFieldDefinition = new NumberFieldDefinition(
     ScrcpySignedFloatNumberVariant,
 );
 
-export const ScrcpyInjectScrollControlMessage1_25 = new Struct()
-    .uint8("type", ScrcpyControlMessageType.InjectScroll as const)
-    .uint32("pointerX")
-    .uint32("pointerY")
-    .uint16("screenWidth")
-    .uint16("screenHeight")
-    .field("scrollX", ScrcpySignedFloatFieldDefinition)
-    .field("scrollY", ScrcpySignedFloatFieldDefinition)
-    .int32("buttons");
+export const ScrcpyInjectScrollControlMessage1_25 =
+    /* #__PURE__ */
+    new Struct()
+        .uint8("type", ScrcpyControlMessageType.InjectScroll as const)
+        .uint32("pointerX")
+        .uint32("pointerY")
+        .uint16("screenWidth")
+        .uint16("screenHeight")
+        .field("scrollX", ScrcpySignedFloatFieldDefinition)
+        .field("scrollY", ScrcpySignedFloatFieldDefinition)
+        .int32("buttons");
 
 export type ScrcpyInjectScrollControlMessage1_25 =
     (typeof ScrcpyInjectScrollControlMessage1_25)["TInit"];

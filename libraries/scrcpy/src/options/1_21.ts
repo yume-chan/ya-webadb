@@ -10,7 +10,9 @@ import type { ScrcpyOptionsInit1_18 } from "./1_18.js";
 import { ScrcpyOptions1_18 } from "./1_18.js";
 import { ScrcpyOptions, toScrcpyOptionValue } from "./types.js";
 
-export const ScrcpyAckClipboardDeviceMessage = new Struct().uint64("sequence");
+export const ScrcpyAckClipboardDeviceMessage =
+    /* #__PURE__ */
+    new Struct().uint64("sequence");
 
 export interface ScrcpyOptionsInit1_21 extends ScrcpyOptionsInit1_18 {
     clipboardAutosync?: boolean;
@@ -20,12 +22,14 @@ function toSnakeCase(input: string): string {
     return input.replace(/([A-Z])/g, "_$1").toLowerCase();
 }
 
-export const ScrcpySetClipboardControlMessage1_21 = new Struct()
-    .uint8("type")
-    .uint64("sequence")
-    .int8("paste", placeholder<boolean>())
-    .uint32("length")
-    .string("content", { lengthField: "length" });
+export const ScrcpySetClipboardControlMessage1_21 =
+    /* #__PURE__ */
+    new Struct()
+        .uint8("type")
+        .uint64("sequence")
+        .int8("paste", placeholder<boolean>())
+        .uint32("length")
+        .string("content", { lengthField: "length" });
 
 export type ScrcpySetClipboardControlMessage1_21 =
     (typeof ScrcpySetClipboardControlMessage1_21)["TInit"];

@@ -30,17 +30,19 @@ import type {
 } from "./types.js";
 import { ScrcpyOptions } from "./types.js";
 
-export const ScrcpyInjectTouchControlMessage2_0 = new Struct()
-    .uint8("type")
-    .uint8("action", placeholder<AndroidMotionEventAction>())
-    .uint64("pointerId")
-    .uint32("pointerX")
-    .uint32("pointerY")
-    .uint16("screenWidth")
-    .uint16("screenHeight")
-    .field("pressure", ScrcpyUnsignedFloatFieldDefinition)
-    .uint32("actionButton")
-    .uint32("buttons");
+export const ScrcpyInjectTouchControlMessage2_0 =
+    /* #__PURE__ */
+    new Struct()
+        .uint8("type")
+        .uint8("action", placeholder<AndroidMotionEventAction>())
+        .uint64("pointerId")
+        .uint32("pointerX")
+        .uint32("pointerY")
+        .uint16("screenWidth")
+        .uint16("screenHeight")
+        .field("pressure", ScrcpyUnsignedFloatFieldDefinition)
+        .uint32("actionButton")
+        .uint32("buttons");
 
 export type ScrcpyInjectTouchControlMessage2_0 =
     (typeof ScrcpyInjectTouchControlMessage2_0)["TInit"];

@@ -42,9 +42,11 @@ export interface ScrcpyOptionsInit1_18
     powerOffOnClose?: boolean;
 }
 
-export const ScrcpyBackOrScreenOnControlMessage1_18 = new Struct()
-    .concat(ScrcpyBackOrScreenOnControlMessage1_16)
-    .uint8("action", placeholder<AndroidKeyEventAction>());
+export const ScrcpyBackOrScreenOnControlMessage1_18 =
+    /* #__PURE__ */
+    new Struct()
+        .concat(ScrcpyBackOrScreenOnControlMessage1_16)
+        .uint8("action", placeholder<AndroidKeyEventAction>());
 
 export type ScrcpyBackOrScreenOnControlMessage1_18 =
     (typeof ScrcpyBackOrScreenOnControlMessage1_18)["TInit"];

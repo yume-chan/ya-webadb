@@ -18,32 +18,36 @@ function encodeAsciiUnchecked(value: string): Uint8Array {
  * Encode ID to numbers for faster comparison
  * @param value A 4-character string
  * @returns A 32-bit integer by encoding the string as little-endian
+ *
+ * #__NO_SIDE_EFFECTS__
  */
 export function adbSyncEncodeId(value: string): number {
     const buffer = encodeAsciiUnchecked(value);
     return getUint32LittleEndian(buffer, 0);
 }
 
-export namespace AdbSyncResponseId {
-    export const Entry = adbSyncEncodeId("DENT");
-    export const Entry2 = adbSyncEncodeId("DNT2");
-    export const Lstat = adbSyncEncodeId("STAT");
-    export const Stat = adbSyncEncodeId("STA2");
-    export const Lstat2 = adbSyncEncodeId("LST2");
-    export const Done = adbSyncEncodeId("DONE");
-    export const Data = adbSyncEncodeId("DATA");
-    export const Ok = adbSyncEncodeId("OKAY");
-    export const Fail = adbSyncEncodeId("FAIL");
-}
+export const AdbSyncResponseId = {
+    Entry: adbSyncEncodeId("DENT"),
+    Entry2: adbSyncEncodeId("DNT2"),
+    Lstat: adbSyncEncodeId("STAT"),
+    Stat: adbSyncEncodeId("STA2"),
+    Lstat2: adbSyncEncodeId("LST2"),
+    Done: adbSyncEncodeId("DONE"),
+    Data: adbSyncEncodeId("DATA"),
+    Ok: adbSyncEncodeId("OKAY"),
+    Fail: adbSyncEncodeId("FAIL"),
+};
 
 export class AdbSyncError extends Error {}
 
-export const AdbSyncFailResponse = new Struct({ littleEndian: true })
-    .uint32("messageLength")
-    .string("message", { lengthField: "messageLength" })
-    .postDeserialize((object) => {
-        throw new AdbSyncError(object.message);
-    });
+export const AdbSyncFailResponse =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .uint32("messageLength")
+        .string("message", { lengthField: "messageLength" })
+        .postDeserialize((object) => {
+            throw new AdbSyncError(object.message);
+        });
 
 export async function adbSyncReadResponse<T>(
     stream: AsyncExactReadable,

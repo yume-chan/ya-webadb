@@ -6,9 +6,11 @@ export enum AndroidScreenPowerMode {
     Normal = 2,
 }
 
-export const ScrcpySetScreenPowerModeControlMessage = new Struct()
-    .uint8("type")
-    .uint8("mode", placeholder<AndroidScreenPowerMode>());
+export const ScrcpySetScreenPowerModeControlMessage =
+    /* #__PURE__ */
+    new Struct()
+        .uint8("type")
+        .uint8("mode", placeholder<AndroidScreenPowerMode>());
 
 export type ScrcpySetScreenPowerModeControlMessage =
     (typeof ScrcpySetScreenPowerModeControlMessage)["TInit"];

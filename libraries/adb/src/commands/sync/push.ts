@@ -25,9 +25,9 @@ export interface AdbSyncPushV1Options {
     packetSize?: number;
 }
 
-export const AdbSyncOkResponse = new Struct({ littleEndian: true }).uint32(
-    "unused",
-);
+export const AdbSyncOkResponse =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true }).uint32("unused");
 
 async function pipeFileData(
     locked: AdbSyncSocketLocked,
@@ -86,19 +86,22 @@ export async function adbSyncPushV1({
     }
 }
 
-export enum AdbSyncSendV2Flags {
-    None = 0,
-    Brotli = 1,
+export const AdbSyncSendV2Flags = {
+    None: 0,
+    Brotli: 1,
     /**
      * 2
      */
-    Lz4 = 1 << 1,
+    Lz4: 1 << 1,
     /**
      * 4
      */
-    Zstd = 1 << 2,
-    DryRun = 0x80000000,
-}
+    Zstd: 1 << 2,
+    DryRun: 0x80000000,
+} as const;
+
+export type AdbSyncSendV2Flags =
+    (typeof AdbSyncSendV2Flags)[keyof typeof AdbSyncSendV2Flags];
 
 export interface AdbSyncPushV2Options extends AdbSyncPushV1Options {
     /**
@@ -110,10 +113,12 @@ export interface AdbSyncPushV2Options extends AdbSyncPushV1Options {
     dryRun?: boolean;
 }
 
-export const AdbSyncSendV2Request = new Struct({ littleEndian: true })
-    .uint32("id")
-    .uint32("mode")
-    .uint32("flags", placeholder<AdbSyncSendV2Flags>());
+export const AdbSyncSendV2Request =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .uint32("id")
+        .uint32("mode")
+        .uint32("flags", placeholder<AdbSyncSendV2Flags>());
 
 export async function adbSyncPushV2({
     socket,

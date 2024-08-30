@@ -6,9 +6,11 @@ import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponses } from "./response.js";
 import type { AdbSyncSocket } from "./socket.js";
 
-export const AdbSyncDataResponse = new Struct({ littleEndian: true })
-    .uint32("dataLength")
-    .uint8Array("data", { lengthField: "dataLength" });
+export const AdbSyncDataResponse =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .uint32("dataLength")
+        .uint8Array("data", { lengthField: "dataLength" });
 
 export type AdbSyncDataResponse =
     (typeof AdbSyncDataResponse)["TDeserializeResult"];

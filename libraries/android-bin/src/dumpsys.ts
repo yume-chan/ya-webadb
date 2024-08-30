@@ -31,7 +31,32 @@ const BatteryDumpFields: Record<
     current: { type: "number", field: "current" },
 };
 
+const Status = {
+    Unknown: 1,
+    Charging: 2,
+    Discharging: 3,
+    NotCharging: 4,
+    Full: 5,
+} as const;
+
+const Health = {
+    Unknown: 1,
+    Good: 2,
+    Overheat: 3,
+    Dead: 4,
+    OverVoltage: 5,
+    UnspecifiedFailure: 6,
+    Cold: 7,
+} as const;
+
+const Battery = {
+    Status,
+    Health,
+};
+
 export class DumpSys extends AdbCommandBase {
+    static readonly Battery = Battery;
+
     async diskStats() {
         const output = await this.adb.subprocess.spawnAndWaitLegacy([
             "dumpsys",
@@ -113,6 +138,9 @@ export class DumpSys extends AdbCommandBase {
 
 export namespace DumpSys {
     export namespace Battery {
+        export type Status = (typeof Status)[keyof typeof Status];
+        export type Health = (typeof Health)[keyof typeof Health];
+
         export interface Info {
             acPowered: boolean;
             usbPowered: boolean;
@@ -130,24 +158,6 @@ export namespace DumpSys {
             temperature?: number;
             technology?: string;
             current?: number;
-        }
-
-        export enum Status {
-            Unknown = 1,
-            Charging,
-            Discharging,
-            NotCharging,
-            Full,
-        }
-
-        export enum Health {
-            Unknown = 1,
-            Good,
-            Overheat,
-            Dead,
-            OverVoltage,
-            UnspecifiedFailure,
-            Cold,
         }
     }
 }

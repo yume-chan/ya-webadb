@@ -82,9 +82,10 @@ interface GlobalExtension {
 
 const { TextEncoder, TextDecoder } = globalThis as unknown as GlobalExtension;
 
-const SharedEncoder = new TextEncoder();
-const SharedDecoder = new TextDecoder();
+const SharedEncoder = /* #__PURE__ */ new TextEncoder();
+const SharedDecoder = /* #__PURE__ */ new TextDecoder();
 
+/* #__NO_SIDE_EFFECTS__ */
 export function encodeUtf8(input: string): Uint8Array {
     return SharedEncoder.encode(input);
 }

@@ -205,12 +205,14 @@ export enum AndroidKeyCode {
     AndroidPaste,
 }
 
-export const ScrcpyInjectKeyCodeControlMessage = new Struct()
-    .uint8("type")
-    .uint8("action", placeholder<AndroidKeyEventAction>())
-    .uint32("keyCode", placeholder<AndroidKeyCode>())
-    .uint32("repeat")
-    .uint32("metaState", placeholder<AndroidKeyEventMeta>());
+export const ScrcpyInjectKeyCodeControlMessage =
+    /* #__PURE__ */
+    new Struct()
+        .uint8("type")
+        .uint8("action", placeholder<AndroidKeyEventAction>())
+        .uint32("keyCode", placeholder<AndroidKeyCode>())
+        .uint32("repeat")
+        .uint32("metaState", placeholder<AndroidKeyEventMeta>());
 
 export type ScrcpyInjectKeyCodeControlMessage =
     (typeof ScrcpyInjectKeyCodeControlMessage)["TInit"];

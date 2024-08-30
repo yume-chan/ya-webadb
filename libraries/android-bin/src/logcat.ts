@@ -17,30 +17,39 @@ import Struct, { decodeUtf8 } from "@yume-chan/struct";
 // so instead of adding to core library, it's implemented here
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/include/android/log.h;l=141;drc=82b5738732161dbaafb2e2f25cce19cd26b9157d
-export enum LogId {
-    All = -1,
-    Main,
-    Radio,
-    Events,
-    System,
-    Crash,
-    Stats,
-    Security,
-    Kernel,
-}
+export const LogId = {
+    All: -1,
+    Main: 0,
+    Radio: 1,
+    Events: 2,
+    System: 3,
+    Crash: 4,
+    Stats: 5,
+    Security: 6,
+    Kernel: 7,
+} as const;
+
+export type LogId = (typeof LogId)[keyof typeof LogId];
+
+const LogIdName =
+    /* #__PURE__ */
+    Object.fromEntries(Object.entries(LogId).map(([k, v]) => [v, k]));
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/include/android/log.h;l=73;drc=82b5738732161dbaafb2e2f25cce19cd26b9157d
-export enum AndroidLogPriority {
-    Unknown,
-    Default,
-    Verbose,
-    Debug,
-    Info,
-    Warn,
-    Error,
-    Fatal,
-    Silent,
-}
+export const AndroidLogPriority = {
+    Unknown: 0,
+    Default: 1,
+    Verbose: 2,
+    Debug: 3,
+    Info: 4,
+    Warn: 5,
+    Error: 6,
+    Fatal: 7,
+    Silent: 8,
+} as const;
+
+export type AndroidLogPriority =
+    (typeof AndroidLogPriority)[keyof typeof AndroidLogPriority];
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;l=140;drc=8dbf3b2bb6b6d1652d9797e477b9abd03278bb79
 export const AndroidLogPriorityToCharacter: Record<AndroidLogPriority, string> =
@@ -56,16 +65,18 @@ export const AndroidLogPriorityToCharacter: Record<AndroidLogPriority, string> =
         [AndroidLogPriority.Silent]: "S",
     };
 
-export enum LogcatFormat {
-    Brief,
-    Process,
-    Tag,
-    Thread,
-    Raw,
-    Time,
-    ThreadTime,
-    Long,
-}
+export const LogcatFormat = {
+    Brief: 0,
+    Process: 1,
+    Tag: 2,
+    Thread: 3,
+    Raw: 4,
+    Time: 5,
+    ThreadTime: 6,
+    Long: 7,
+} as const;
+
+export type LogcatFormat = (typeof LogcatFormat)[keyof typeof LogcatFormat];
 
 export interface LogcatFormatModifiers {
     microseconds?: boolean;
@@ -88,23 +99,25 @@ export interface LogcatOptions {
 const NANOSECONDS_PER_SECOND = BigInt(1e9);
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/include/log/log_read.h;l=39;drc=82b5738732161dbaafb2e2f25cce19cd26b9157d
-export const LoggerEntry = new Struct({ littleEndian: true })
-    .uint16("payloadSize")
-    .uint16("headerSize")
-    .int32("pid")
-    .uint32("tid")
-    .uint32("seconds")
-    .uint32("nanoseconds")
-    .uint32("logId")
-    .uint32("uid")
-    .extra({
-        get timestamp() {
-            return (
-                BigInt(this.seconds) * NANOSECONDS_PER_SECOND +
-                BigInt(this.nanoseconds)
-            );
-        },
-    });
+export const LoggerEntry =
+    /* #__PURE__ */
+    new Struct({ littleEndian: true })
+        .uint16("payloadSize")
+        .uint16("headerSize")
+        .int32("pid")
+        .uint32("tid")
+        .uint32("seconds")
+        .uint32("nanoseconds")
+        .uint32("logId")
+        .uint32("uid")
+        .extra({
+            get timestamp() {
+                return (
+                    BigInt(this.seconds) * NANOSECONDS_PER_SECOND +
+                    BigInt(this.nanoseconds)
+                );
+            },
+        });
 
 export type LoggerEntry = (typeof LoggerEntry)["TDeserializeResult"];
 
@@ -385,7 +398,7 @@ export interface LogSize {
 
 export class Logcat extends AdbCommandBase {
     static logIdToName(id: LogId): string {
-        return LogId[id];
+        return LogIdName[id]!;
     }
 
     static logNameToId(name: string): LogId {

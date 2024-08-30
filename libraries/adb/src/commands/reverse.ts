@@ -14,9 +14,11 @@ export interface AdbForwardListener {
     remoteName: string;
 }
 
-const AdbReverseStringResponse = new Struct()
-    .string("length", { length: 4 })
-    .string("content", { lengthField: "length", lengthFieldRadix: 16 });
+const AdbReverseStringResponse =
+    /* #__PURE__ */
+    new Struct()
+        .string("length", { length: 4 })
+        .string("content", { lengthField: "length", lengthFieldRadix: 16 });
 
 export class AdbReverseError extends Error {
     constructor(message: string) {
@@ -33,9 +35,9 @@ export class AdbReverseNotSupportedError extends AdbReverseError {
     }
 }
 
-const AdbReverseErrorResponse = new Struct()
-    .concat(AdbReverseStringResponse)
-    .postDeserialize((value) => {
+const AdbReverseErrorResponse =
+    /* #__PURE__ */
+    new Struct().concat(AdbReverseStringResponse).postDeserialize((value) => {
         // https://issuetracker.google.com/issues/37066218
         // ADB on Android <9 can't create reverse tunnels when connected wirelessly (ADB over Wi-Fi),
         // and returns this confusing "more than one device/emulator" error.
