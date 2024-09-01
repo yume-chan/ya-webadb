@@ -169,6 +169,11 @@ export class AdbServerClient {
                         break;
                 }
             }
+
+            if(status === 'offline' && !product && !model && !device){
+                continue;
+            }
+
             if (!transportId) {
                 throw new Error(`No transport id for device ${serial}`);
             }
