@@ -1,13 +1,9 @@
 export interface SyncPromise<T> {
     then<TResult1 = T, TResult2 = never>(
-        onfulfilled?:
-            | ((value: T) => TResult1 | PromiseLike<TResult1>)
-            | null
-            | undefined,
+        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
         onrejected?:
             | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
-            | null
-            | undefined,
+            | null,
     ): SyncPromise<TResult1 | TResult2>;
 
     valueOrPromise(): T | PromiseLike<T>;
@@ -62,14 +58,10 @@ class PendingSyncPromise<T> implements SyncPromise<T> {
     }
 
     then<TResult1 = T, TResult2 = never>(
-        onfulfilled?:
-            | ((value: T) => TResult1 | PromiseLike<TResult1>)
-            | null
-            | undefined,
+        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
         onrejected?:
             | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
-            | null
-            | undefined,
+            | null,
     ) {
         return new PendingSyncPromise<TResult1 | TResult2>(
             this.#promise.then(onfulfilled, onrejected),
@@ -89,10 +81,7 @@ class ResolvedSyncPromise<T> implements SyncPromise<T> {
     }
 
     then<TResult1 = T>(
-        onfulfilled?:
-            | ((value: T) => TResult1 | PromiseLike<TResult1>)
-            | null
-            | undefined,
+        onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
     ) {
         if (!onfulfilled) {
             return this as never;
@@ -113,11 +102,10 @@ class RejectedSyncPromise<T> implements SyncPromise<T> {
     }
 
     then<TResult1 = T, TResult2 = never>(
-        _?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined,
+        _?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null,
         onrejected?:
             | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
-            | null
-            | undefined,
+            | null,
     ) {
         if (!onrejected) {
             return this as never;

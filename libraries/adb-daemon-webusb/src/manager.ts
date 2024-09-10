@@ -68,9 +68,7 @@ export class AdbDaemonWebUsbDeviceManager {
      *
      * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/usb/get-devices/)
      */
-    getDevices(
-        filters?: USBDeviceFilter[] | undefined,
-    ): Promise<AdbDaemonWebUsbDevice[]>;
+    getDevices(filters?: USBDeviceFilter[]): Promise<AdbDaemonWebUsbDevice[]>;
     async getDevices(
         filters_: USBDeviceFilter[] | undefined,
     ): Promise<AdbDaemonWebUsbDevice[]> {
