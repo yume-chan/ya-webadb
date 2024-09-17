@@ -15,16 +15,16 @@ importers:
   apps/cli:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../../libraries/adb
       '@yume-chan/adb-server-node-tcp':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../../libraries/adb-server-node-tcp
       '@yume-chan/android-bin':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../../libraries/android-bin
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../../libraries/stream-extra
       commander:
         specifier: ^12.1.0
@@ -34,13 +34,13 @@ importers:
         version: 0.5.21
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -55,29 +55,29 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/event':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../event
       '@yume-chan/no-data-view':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../no-data-view
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/test-runner':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -89,14 +89,14 @@ importers:
   libraries/adb-credential-web:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../adb
     devDependencies:
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -111,26 +111,26 @@ importers:
         specifier: ^1.0.10
         version: 1.0.10
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/test-runner':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -142,29 +142,29 @@ importers:
   libraries/adb-scrcpy:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../adb
       '@yume-chan/async':
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/event':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../event
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../scrcpy
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../struct
     devDependencies:
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -176,23 +176,23 @@ importers:
   libraries/adb-server-node-tcp:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -204,26 +204,26 @@ importers:
   libraries/android-bin:
     dependencies:
       '@yume-chan/adb':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../adb
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/test-runner':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -239,10 +239,10 @@ importers:
         version: 1.0.10
     devDependencies:
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -258,16 +258,16 @@ importers:
         version: 2.2.0
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/test-runner':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -283,22 +283,22 @@ importers:
         version: 4.0.3
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
 
   libraries/no-data-view:
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/test-runner':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -316,10 +316,10 @@ importers:
         specifier: ^0.0.60
         version: 0.0.60
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -334,26 +334,26 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/no-data-view':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../no-data-view
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../stream-extra
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/test-runner':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -368,13 +368,13 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/event':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../event
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../scrcpy
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../stream-extra
       tinyh264:
         specifier: ^0.0.7
@@ -387,10 +387,10 @@ importers:
         version: 1.2.11
     devDependencies:
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -402,26 +402,26 @@ importers:
   libraries/scrcpy-decoder-webcodecs:
     dependencies:
       '@yume-chan/event':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../event
       '@yume-chan/no-data-view':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../no-data-view
       '@yume-chan/scrcpy':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../scrcpy
       '@yume-chan/scrcpy-decoder-tinyh264':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../scrcpy-decoder-tinyh264
       '@yume-chan/stream-extra':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../stream-extra
     devDependencies:
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -436,20 +436,20 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@yume-chan/struct':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/test-runner':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -461,20 +461,20 @@ importers:
   libraries/struct:
     dependencies:
       '@yume-chan/no-data-view':
-        specifier: workspace:^0.0.24
+        specifier: workspace:^
         version: link:../no-data-view
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       '@yume-chan/eslint-config':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/eslint-config
       '@yume-chan/test-runner':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
-        specifier: workspace:^1.0.0
+        specifier: workspace:^
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.3.3
@@ -489,8 +489,8 @@ importers:
         specifier: ^9.10.0
         version: 9.10.0
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       eslint:
         specifier: ^9.10.0
         version: 9.10.0
@@ -501,8 +501,8 @@ importers:
         specifier: ^5.6.2
         version: 5.6.2
       typescript-eslint:
-        specifier: ^8.5.0
-        version: 8.5.0(eslint@9.10.0)(typescript@5.6.2)
+        specifier: ^8.6.0
+        version: 8.6.0(eslint@9.10.0)(typescript@5.6.2)
     devDependencies:
       prettier:
         specifier: ^3.3.3
@@ -511,8 +511,8 @@ importers:
   toolchain/package-lint:
     dependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -520,8 +520,8 @@ importers:
   toolchain/test-runner:
     devDependencies:
       '@types/node':
-        specifier: ^22.5.4
-        version: 22.5.4
+        specifier: ^22.5.5
+        version: 22.5.5
       typescript:
         specifier: ^5.6.2
         version: 5.6.2
@@ -599,8 +599,8 @@ packages:
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
 
-  '@eslint-community/regexpp@4.11.0':
-    resolution: {integrity: sha512-G/M/tIiMrTAxEWRfLfQJMmGNX28IxBg4PBz8XqQhqUHLFI6TL2htpIB1iQCj144V5ee/JaKyT9/WZ0MGZWfA7A==}
+  '@eslint-community/regexpp@4.11.1':
+    resolution: {integrity: sha512-m4DVN9ZqskZoLU5GlWZadwDnYo3vAEydiUayB9widCl9ffWx2IvPnp6n3on5rJmziJSw9Bv+Z3ChDVdMwXCY8Q==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
 
   '@eslint/config-array@0.18.0':
@@ -669,8 +669,8 @@ packages:
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
 
-  '@types/node@22.5.4':
-    resolution: {integrity: sha512-FDuKUJQm/ju9fT/SeX/6+gBzoPzlVCzfzmGkwKvRHQVxi4BntVbyIwf6a4Xn62mrvndLiml6z/UBXIdEVjQLXg==}
+  '@types/node@22.5.5':
+    resolution: {integrity: sha512-Xjs4y5UPO/CLdzpgR6GirZJx36yScjh73+2NlLlkFRSoQN8B0DpfXPdZGnvVmLRLOsqDpOfTNv7D9trgGhmOIA==}
 
   '@types/semver@7.5.8':
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
@@ -678,8 +678,8 @@ packages:
   '@types/w3c-web-usb@1.0.10':
     resolution: {integrity: sha512-CHgUI5kTc/QLMP8hODUHhge0D4vx+9UiAwIGiT0sTy/B2XpdX1U5rJt6JSISgr6ikRT7vxV9EVAFeYZqUnl1gQ==}
 
-  '@typescript-eslint/eslint-plugin@8.5.0':
-    resolution: {integrity: sha512-lHS5hvz33iUFQKuPFGheAB84LwcJ60G8vKnEhnfcK1l8kGVLro2SFYW6K0/tj8FUhRJ0VHyg1oAfg50QGbPPHw==}
+  '@typescript-eslint/eslint-plugin@8.6.0':
+    resolution: {integrity: sha512-UOaz/wFowmoh2G6Mr9gw60B1mm0MzUtm6Ic8G2yM1Le6gyj5Loi/N+O5mocugRGY+8OeeKmkMmbxNqUCq3B4Sg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       '@typescript-eslint/parser': ^8.0.0 || ^8.0.0-alpha.0
@@ -689,8 +689,8 @@ packages:
       typescript:
         optional: true
 
-  '@typescript-eslint/parser@8.5.0':
-    resolution: {integrity: sha512-gF77eNv0Xz2UJg/NbpWJ0kqAm35UMsvZf1GHj8D9MRFTj/V3tAciIWXfmPLsAAF/vUlpWPvUDyH1jjsr0cMVWw==}
+  '@typescript-eslint/parser@8.6.0':
+    resolution: {integrity: sha512-eQcbCuA2Vmw45iGfcyG4y6rS7BhWfz9MQuk409WD47qMM+bKCGQWXxvoOs1DUp+T7UBMTtRTVT+kXr7Sh4O9Ow==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
@@ -699,25 +699,12 @@ packages:
       typescript:
         optional: true
 
-  '@typescript-eslint/scope-manager@8.5.0':
-    resolution: {integrity: sha512-06JOQ9Qgj33yvBEx6tpC8ecP9o860rsR22hWMEd12WcTRrfaFgHr2RB/CA/B+7BMhHkXT4chg2MyboGdFGawYg==}
+  '@typescript-eslint/scope-manager@8.6.0':
+    resolution: {integrity: sha512-ZuoutoS5y9UOxKvpc/GkvF4cuEmpokda4wRg64JEia27wX+PysIE9q+lzDtlHHgblwUWwo5/Qn+/WyTUvDwBHw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript-eslint/type-utils@8.5.0':
-    resolution: {integrity: sha512-N1K8Ix+lUM+cIDhL2uekVn/ZD7TZW+9/rwz8DclQpcQ9rk4sIL5CAlBC0CugWKREmDjBzI/kQqU4wkg46jWLYA==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-    peerDependencies:
-      typescript: '*'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  '@typescript-eslint/types@8.5.0':
-    resolution: {integrity: sha512-qjkormnQS5wF9pjSi6q60bKUHH44j2APxfh9TQRXK8wbYVeDYYdYJGIROL87LGZZ2gz3Rbmjc736qyL8deVtdw==}
-    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
-
-  '@typescript-eslint/typescript-estree@8.5.0':
-    resolution: {integrity: sha512-vEG2Sf9P8BPQ+d0pxdfndw3xIXaoSjliG0/Ejk7UggByZPKXmJmw3GW5jV2gHNQNawBUyfahoSiCFVov0Ruf7Q==}
+  '@typescript-eslint/type-utils@8.6.0':
+    resolution: {integrity: sha512-dtePl4gsuenXVwC7dVNlb4mGDcKjDT/Ropsk4za/ouMBPplCLyznIaR+W65mvCvsyS97dymoBRrioEXI7k0XIg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       typescript: '*'
@@ -725,14 +712,27 @@ packages:
       typescript:
         optional: true
 
-  '@typescript-eslint/utils@8.5.0':
-    resolution: {integrity: sha512-6yyGYVL0e+VzGYp60wvkBHiqDWOpT63pdMV2CVG4LVDd5uR6q1qQN/7LafBZtAtNIn/mqXjsSeS5ggv/P0iECw==}
+  '@typescript-eslint/types@8.6.0':
+    resolution: {integrity: sha512-rojqFZGd4MQxw33SrOy09qIDS8WEldM8JWtKQLAjf/X5mGSeEFh5ixQlxssMNyPslVIk9yzWqXCsV2eFhYrYUw==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@typescript-eslint/typescript-estree@8.6.0':
+    resolution: {integrity: sha512-MOVAzsKJIPIlLK239l5s06YXjNqpKTVhBVDnqUumQJja5+Y94V3+4VUFRA0G60y2jNnTVwRCkhyGQpavfsbq/g==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    peerDependencies:
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@typescript-eslint/utils@8.6.0':
+    resolution: {integrity: sha512-eNp9cWnYf36NaOVjkEUznf6fEgVy1TWpE0o52e4wtojjBx7D1UV2WAWGzR+8Y5lVFtpMLPwNbC67T83DWSph4A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
 
-  '@typescript-eslint/visitor-keys@8.5.0':
-    resolution: {integrity: sha512-yTPqMnbAZJNy2Xq2XU8AdtOW9tJIr+UQb64aXB9f3B1498Zx9JorVgFJcZpEc9UBuCCrdzKID2RGAMkYcDtZOw==}
+  '@typescript-eslint/visitor-keys@8.6.0':
+    resolution: {integrity: sha512-wapVFfZg9H0qOYh4grNVQiMklJGluQrOUiOhYRrQWhx7BY/+I1IYb8BczWNbbUpO+pqy0rDciv3lQH5E1bCLrg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@xhmikosr/archive-type@6.0.1':
@@ -1098,8 +1098,8 @@ packages:
     resolution: {integrity: sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg==}
     engines: {node: '>=10'}
 
-  get-tsconfig@4.8.0:
-    resolution: {integrity: sha512-Pgba6TExTZ0FJAn1qkJAjIeKoDJ3CsI2ChuLohJnZl/tTU8MVrq3b+2t5UOPfRa4RMsorClBjJALkJUMjG1PAw==}
+  get-tsconfig@4.8.1:
+    resolution: {integrity: sha512-k9PN+cFBmaLWtVz29SkUoqU5O0slLuHJXt/2P+tMVFT+phsSGXGkp9t3rQIqdz0e+06EHNGs3oM6ZX1s2zHxRg==}
 
   gh-release-fetch@4.0.3:
     resolution: {integrity: sha512-TOiP1nwLsH5shG85Yt6v6Kjq5JU/44jXyEpbcfPgmj3C829yeXIlx9nAEwQRaxtRF3SJinn2lz7XUkfG9W/U4g==}
@@ -1290,8 +1290,8 @@ packages:
     resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
 
-  mime-db@1.52.0:
-    resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
+  mime-db@1.53.0:
+    resolution: {integrity: sha512-oHlN/w+3MQ3rba9rqFr6V/ypF10LSkdwUysQL7GkXoTgIWeV+tcXGA852TBxH+gsh8UWoyhR1hKcoMJTuWflpg==}
     engines: {node: '>= 0.6'}
 
   mimic-response@3.1.0:
@@ -1404,8 +1404,8 @@ packages:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
 
-  peek-readable@5.1.1:
-    resolution: {integrity: sha512-4hEOSH7KeEaZpMDF/xfm1W9fS5rT7Ett3BkXWHqAEzRLLwLaHkwOL+GvvpIEh9UrvX9BDhzfkvteslgraoH69w==}
+  peek-readable@5.2.0:
+    resolution: {integrity: sha512-U94a+eXHzct7vAd19GH3UQ2dH4Satbng0MyYTMaQatL0pvYYL5CTPR25HBhKtecl+4bfu1/i3vC6k0hydO5Vcw==}
     engines: {node: '>=14.16'}
 
   pend@1.2.0:
@@ -1559,8 +1559,8 @@ packages:
   stable-hash@0.0.4:
     resolution: {integrity: sha512-LjdcbuBeLcdETCrPn9i8AYAZ1eCtu4ECAWtP7UleOiZ9LzVxRzzUZEoZ8zB24nhkQnDWyET0I+3sWokSDS3E7g==}
 
-  streamx@2.18.0:
-    resolution: {integrity: sha512-LLUC1TWdjVdn1weXGcSxyTR3T4+acB6tVGXT95y0nGbca4t4o/ng1wKAGTljm9VicuCVLvRlqFYXYy5GwgM7sQ==}
+  streamx@2.20.1:
+    resolution: {integrity: sha512-uTa0mU6WUC65iUvzKH4X9hEdvSW7rbPxPtwfWiLMSj3qTdQbAiUboZTxauKfpFuGIGa1C2BYijZ7wgdUXICJhA==}
 
   string_decoder@1.3.0:
     resolution: {integrity: sha512-hkRX8U1WjJFd8LsDJ2yQ/wWWxaopEsABU1XfkM8A+j0+85JAGppt16cr1Whg6KIbb4okU6Mql6BOj+uup/wKeA==}
@@ -1584,9 +1584,9 @@ packages:
     resolution: {integrity: sha512-A21Xsm1XzUkK0qK1ZrytDUvqsQWict2Cykhvi0fBQntGG5JSprESasEyV1EZ/4CiR5WB5KjzLTrP/bO37B0wPg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  strtok3@7.1.0:
-    resolution: {integrity: sha512-19dQEwG6Jd+VabjPRyBhymIF069vZiqWSZa2jJBoKJTsqGKnTxowGoQaLnz+yLARfDI041IUQekyPUMWElOgsQ==}
-    engines: {node: '>=14.16'}
+  strtok3@7.1.1:
+    resolution: {integrity: sha512-mKX8HA/cdBqMKUr0MMZAFssCkIGoZeSCMXgnt79yKxNFguMLVFgRe6wB+fsL0NmoHDbeyZXczy7vEPSoo3rkzg==}
+    engines: {node: '>=16'}
 
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
@@ -1603,8 +1603,8 @@ packages:
     resolution: {integrity: sha512-wK0Ri4fOGjv/XPy8SBHZChl8CM7uMc5VML7SqiQ0zG7+J5Vr+RMQDoHa2CNT6KHUnTGIXH34UDMkPzAUyapBZg==}
     engines: {node: '>=8'}
 
-  text-decoder@1.1.0:
-    resolution: {integrity: sha512-TmLJNj6UgX8xcUZo4UDStGQtDiTzF7BzWlzn9g7UWrjkpHr5uJTK1ld16wZ3LXb2vb6jH8qU89dW5whuMdXYdw==}
+  text-decoder@1.2.0:
+    resolution: {integrity: sha512-n1yg1mOj9DNpk3NeZOx7T6jchTbyJS3i3cucbNN6FcdPriMZx7NsgrGpWWdWZZGxD7ES1XB+3uoqHMgOKaN+fg==}
 
   text-table@0.2.0:
     resolution: {integrity: sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==}
@@ -1647,8 +1647,8 @@ packages:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
     engines: {node: '>= 0.8.0'}
 
-  typescript-eslint@8.5.0:
-    resolution: {integrity: sha512-uD+XxEoSIvqtm4KE97etm32Tn5MfaZWgWfMMREStLxR6JzvHkc2Tkj7zhTEK5XmtpTmKHNnG8Sot6qDfhHtR1Q==}
+  typescript-eslint@8.6.0:
+    resolution: {integrity: sha512-eEhhlxCEpCd4helh3AO1hk0UP2MvbRi9CtIAJTVPQjuSXOOO2jsEacNi4UdcJzZJbeuVg1gMhtZ8UYb+NFYPrA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       typescript: '*'
@@ -1865,7 +1865,7 @@ snapshots:
       eslint: 9.10.0
       eslint-visitor-keys: 3.4.3
 
-  '@eslint-community/regexpp@4.11.0': {}
+  '@eslint-community/regexpp@4.11.1': {}
 
   '@eslint/config-array@0.18.0':
     dependencies:
@@ -1943,7 +1943,7 @@ snapshots:
 
   '@types/node@12.20.55': {}
 
-  '@types/node@22.5.4':
+  '@types/node@22.5.5':
     dependencies:
       undici-types: 6.19.8
 
@@ -1951,14 +1951,14 @@ snapshots:
 
   '@types/w3c-web-usb@1.0.10': {}
 
-  '@typescript-eslint/eslint-plugin@8.5.0(@typescript-eslint/parser@8.5.0(eslint@9.10.0)(typescript@5.6.2))(eslint@9.10.0)(typescript@5.6.2)':
+  '@typescript-eslint/eslint-plugin@8.6.0(@typescript-eslint/parser@8.6.0(eslint@9.10.0)(typescript@5.6.2))(eslint@9.10.0)(typescript@5.6.2)':
     dependencies:
-      '@eslint-community/regexpp': 4.11.0
-      '@typescript-eslint/parser': 8.5.0(eslint@9.10.0)(typescript@5.6.2)
-      '@typescript-eslint/scope-manager': 8.5.0
-      '@typescript-eslint/type-utils': 8.5.0(eslint@9.10.0)(typescript@5.6.2)
-      '@typescript-eslint/utils': 8.5.0(eslint@9.10.0)(typescript@5.6.2)
-      '@typescript-eslint/visitor-keys': 8.5.0
+      '@eslint-community/regexpp': 4.11.1
+      '@typescript-eslint/parser': 8.6.0(eslint@9.10.0)(typescript@5.6.2)
+      '@typescript-eslint/scope-manager': 8.6.0
+      '@typescript-eslint/type-utils': 8.6.0(eslint@9.10.0)(typescript@5.6.2)
+      '@typescript-eslint/utils': 8.6.0(eslint@9.10.0)(typescript@5.6.2)
+      '@typescript-eslint/visitor-keys': 8.6.0
       eslint: 9.10.0
       graphemer: 1.4.0
       ignore: 5.3.2
@@ -1969,12 +1969,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.5.0(eslint@9.10.0)(typescript@5.6.2)':
+  '@typescript-eslint/parser@8.6.0(eslint@9.10.0)(typescript@5.6.2)':
     dependencies:
-      '@typescript-eslint/scope-manager': 8.5.0
-      '@typescript-eslint/types': 8.5.0
-      '@typescript-eslint/typescript-estree': 8.5.0(typescript@5.6.2)
-      '@typescript-eslint/visitor-keys': 8.5.0
+      '@typescript-eslint/scope-manager': 8.6.0
+      '@typescript-eslint/types': 8.6.0
+      '@typescript-eslint/typescript-estree': 8.6.0(typescript@5.6.2)
+      '@typescript-eslint/visitor-keys': 8.6.0
       debug: 4.3.7
       eslint: 9.10.0
     optionalDependencies:
@@ -1982,15 +1982,15 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/scope-manager@8.5.0':
+  '@typescript-eslint/scope-manager@8.6.0':
     dependencies:
-      '@typescript-eslint/types': 8.5.0
-      '@typescript-eslint/visitor-keys': 8.5.0
+      '@typescript-eslint/types': 8.6.0
+      '@typescript-eslint/visitor-keys': 8.6.0
 
-  '@typescript-eslint/type-utils@8.5.0(eslint@9.10.0)(typescript@5.6.2)':
+  '@typescript-eslint/type-utils@8.6.0(eslint@9.10.0)(typescript@5.6.2)':
     dependencies:
-      '@typescript-eslint/typescript-estree': 8.5.0(typescript@5.6.2)
-      '@typescript-eslint/utils': 8.5.0(eslint@9.10.0)(typescript@5.6.2)
+      '@typescript-eslint/typescript-estree': 8.6.0(typescript@5.6.2)
+      '@typescript-eslint/utils': 8.6.0(eslint@9.10.0)(typescript@5.6.2)
       debug: 4.3.7
       ts-api-utils: 1.3.0(typescript@5.6.2)
     optionalDependencies:
@@ -1999,12 +1999,12 @@ snapshots:
       - eslint
       - supports-color
 
-  '@typescript-eslint/types@8.5.0': {}
+  '@typescript-eslint/types@8.6.0': {}
 
-  '@typescript-eslint/typescript-estree@8.5.0(typescript@5.6.2)':
+  '@typescript-eslint/typescript-estree@8.6.0(typescript@5.6.2)':
     dependencies:
-      '@typescript-eslint/types': 8.5.0
-      '@typescript-eslint/visitor-keys': 8.5.0
+      '@typescript-eslint/types': 8.6.0
+      '@typescript-eslint/visitor-keys': 8.6.0
       debug: 4.3.7
       fast-glob: 3.3.2
       is-glob: 4.0.3
@@ -2016,20 +2016,20 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.5.0(eslint@9.10.0)(typescript@5.6.2)':
+  '@typescript-eslint/utils@8.6.0(eslint@9.10.0)(typescript@5.6.2)':
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@9.10.0)
-      '@typescript-eslint/scope-manager': 8.5.0
-      '@typescript-eslint/types': 8.5.0
-      '@typescript-eslint/typescript-estree': 8.5.0(typescript@5.6.2)
+      '@typescript-eslint/scope-manager': 8.6.0
+      '@typescript-eslint/types': 8.6.0
+      '@typescript-eslint/typescript-estree': 8.6.0(typescript@5.6.2)
       eslint: 9.10.0
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@typescript-eslint/visitor-keys@8.5.0':
+  '@typescript-eslint/visitor-keys@8.6.0':
     dependencies:
-      '@typescript-eslint/types': 8.5.0
+      '@typescript-eslint/types': 8.6.0
       eslint-visitor-keys: 3.4.3
 
   '@xhmikosr/archive-type@6.0.1':
@@ -2251,12 +2251,12 @@ snapshots:
 
   eslint-plugin-import-x@4.2.1(eslint@9.10.0)(typescript@5.6.2):
     dependencies:
-      '@typescript-eslint/utils': 8.5.0(eslint@9.10.0)(typescript@5.6.2)
+      '@typescript-eslint/utils': 8.6.0(eslint@9.10.0)(typescript@5.6.2)
       debug: 4.3.7
       doctrine: 3.0.0
       eslint: 9.10.0
       eslint-import-resolver-node: 0.3.9
-      get-tsconfig: 4.8.0
+      get-tsconfig: 4.8.1
       is-glob: 4.0.3
       minimatch: 9.0.5
       semver: 7.6.3
@@ -2278,7 +2278,7 @@ snapshots:
   eslint@9.10.0:
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@9.10.0)
-      '@eslint-community/regexpp': 4.11.0
+      '@eslint-community/regexpp': 4.11.1
       '@eslint/config-array': 0.18.0
       '@eslint/eslintrc': 3.1.0
       '@eslint/js': 9.10.0
@@ -2336,7 +2336,7 @@ snapshots:
 
   ext-list@2.2.2:
     dependencies:
-      mime-db: 1.52.0
+      mime-db: 1.53.0
 
   ext-name@5.0.0:
     dependencies:
@@ -2387,7 +2387,7 @@ snapshots:
   file-type@18.7.0:
     dependencies:
       readable-web-to-node-stream: 3.0.2
-      strtok3: 7.1.0
+      strtok3: 7.1.1
       token-types: 5.0.1
 
   filename-reserved-regex@3.0.0: {}
@@ -2441,7 +2441,7 @@ snapshots:
 
   get-stream@6.0.1: {}
 
-  get-tsconfig@4.8.0:
+  get-tsconfig@4.8.1:
     dependencies:
       resolve-pkg-maps: 1.0.0
 
@@ -2618,7 +2618,7 @@ snapshots:
       braces: 3.0.3
       picomatch: 2.3.1
 
-  mime-db@1.52.0: {}
+  mime-db@1.53.0: {}
 
   mimic-response@3.1.0: {}
 
@@ -2707,7 +2707,7 @@ snapshots:
 
   path-type@4.0.0: {}
 
-  peek-readable@5.1.1: {}
+  peek-readable@5.2.0: {}
 
   pend@1.2.0: {}
 
@@ -2826,11 +2826,11 @@ snapshots:
 
   stable-hash@0.0.4: {}
 
-  streamx@2.18.0:
+  streamx@2.20.1:
     dependencies:
       fast-fifo: 1.3.2
       queue-tick: 1.0.1
-      text-decoder: 1.1.0
+      text-decoder: 1.2.0
     optionalDependencies:
       bare-events: 2.4.2
 
@@ -2853,10 +2853,10 @@ snapshots:
 
   strip-outer@2.0.0: {}
 
-  strtok3@7.1.0:
+  strtok3@7.1.1:
     dependencies:
       '@tokenizer/token': 0.3.0
-      peek-readable: 5.1.1
+      peek-readable: 5.2.0
 
   supports-color@7.2.0:
     dependencies:
@@ -2868,11 +2868,11 @@ snapshots:
     dependencies:
       b4a: 1.6.6
       fast-fifo: 1.3.2
-      streamx: 2.18.0
+      streamx: 2.20.1
 
   term-size@2.2.1: {}
 
-  text-decoder@1.1.0:
+  text-decoder@1.2.0:
     dependencies:
       b4a: 1.6.6
 
@@ -2911,11 +2911,11 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
 
-  typescript-eslint@8.5.0(eslint@9.10.0)(typescript@5.6.2):
+  typescript-eslint@8.6.0(eslint@9.10.0)(typescript@5.6.2):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 8.5.0(@typescript-eslint/parser@8.5.0(eslint@9.10.0)(typescript@5.6.2))(eslint@9.10.0)(typescript@5.6.2)
-      '@typescript-eslint/parser': 8.5.0(eslint@9.10.0)(typescript@5.6.2)
-      '@typescript-eslint/utils': 8.5.0(eslint@9.10.0)(typescript@5.6.2)
+      '@typescript-eslint/eslint-plugin': 8.6.0(@typescript-eslint/parser@8.6.0(eslint@9.10.0)(typescript@5.6.2))(eslint@9.10.0)(typescript@5.6.2)
+      '@typescript-eslint/parser': 8.6.0(eslint@9.10.0)(typescript@5.6.2)
+      '@typescript-eslint/utils': 8.6.0(eslint@9.10.0)(typescript@5.6.2)
     optionalDependencies:
       typescript: 5.6.2
     transitivePeerDependencies:

@@ -32,16 +32,16 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^0.0.24",
+        "@yume-chan/adb": "workspace:^",
         "@yume-chan/async": "^2.2.0",
-        "@yume-chan/event": "workspace:^0.0.24",
-        "@yume-chan/scrcpy": "workspace:^0.0.24",
-        "@yume-chan/stream-extra": "workspace:^0.0.24",
-        "@yume-chan/struct": "workspace:^0.0.24"
+        "@yume-chan/event": "workspace:^",
+        "@yume-chan/scrcpy": "workspace:^",
+        "@yume-chan/stream-extra": "workspace:^",
+        "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
-        "@yume-chan/eslint-config": "workspace:^1.0.0",
-        "@yume-chan/tsconfig": "workspace:^1.0.0",
+        "@yume-chan/eslint-config": "workspace:^",
+        "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.3.3",
         "typescript": "^5.6.2"
     }

@@ -34,8 +34,8 @@
         "@types/w3c-web-usb": "^1.0.10"
     },
     "devDependencies": {
-        "@yume-chan/eslint-config": "workspace:^1.0.0",
-        "@yume-chan/tsconfig": "workspace:^1.0.0",
+        "@yume-chan/eslint-config": "workspace:^",
+        "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.3.3",
         "typescript": "^5.6.2"
     }
