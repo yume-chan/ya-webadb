@@ -381,7 +381,7 @@ importers:
         version: 0.0.7
       yuv-buffer:
         specifier: ^1.0.0
-        version: 1.0.0
+        version: 1.0.1
       yuv-canvas:
         specifier: ^1.2.11
         version: 1.2.11
@@ -1704,8 +1704,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  yuv-buffer@1.0.0:
-    resolution: {integrity: sha512-5r5u7g7Dbdrwao/z8c4harQIpZwaNuzXjQXtgdFxTjr5Pm2eMmxIuckkKOONEM7fkiMNkeffXs6EPNESvAVzVg==}
+  yuv-buffer@1.0.1:
+    resolution: {integrity: sha512-1clmBXOyTX2R8OG0vaTFu5yP/C2XG4ULe+2HUu7c/aYE1fWpKvkGEzqMhUjknXp1Ts6Xfrc0YtIBbYxvaau38Q==}
 
   yuv-canvas@1.2.11:
     resolution: {integrity: sha512-LOxjD+gUO7XeHeExFEozpTEFBlbqEZOnaHLAwx4esJ2tzSWl/S/xDRSDu1N+asxYn7ldV+HtisrYAzJXkT7Rhw==}
@@ -2960,6 +2960,6 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  yuv-buffer@1.0.0: {}
+  yuv-buffer@1.0.1: {}
 
   yuv-canvas@1.2.11: {}
