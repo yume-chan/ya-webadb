@@ -384,7 +384,7 @@ importers:
         version: 1.0.0
       yuv-canvas:
         specifier: ^1.2.11
-        version: 1.2.11
+        version: 1.3.0
     devDependencies:
       '@yume-chan/eslint-config':
         specifier: workspace:^
@@ -1707,8 +1707,8 @@ packages:
   yuv-buffer@1.0.0:
     resolution: {integrity: sha512-5r5u7g7Dbdrwao/z8c4harQIpZwaNuzXjQXtgdFxTjr5Pm2eMmxIuckkKOONEM7fkiMNkeffXs6EPNESvAVzVg==}
 
-  yuv-canvas@1.2.11:
-    resolution: {integrity: sha512-LOxjD+gUO7XeHeExFEozpTEFBlbqEZOnaHLAwx4esJ2tzSWl/S/xDRSDu1N+asxYn7ldV+HtisrYAzJXkT7Rhw==}
+  yuv-canvas@1.3.0:
+    resolution: {integrity: sha512-zwl+lJgy23iTyCCUZbi0IRP+WezeKNeGEFU+a0gmtVRa81zL6mKJVxr+NKzlveJ2okz4aIOUEPrTs6yjuPt+Cg==}
 
 snapshots:
 
@@ -2962,4 +2962,4 @@ snapshots:
 
   yuv-buffer@1.0.0: {}
 
-  yuv-canvas@1.2.11: {}
+  yuv-canvas@1.3.0: {}
