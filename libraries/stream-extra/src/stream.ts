@@ -32,8 +32,8 @@ interface GlobalExtension {
     TransformStream: typeof TransformStreamType;
 }
 
-export type ReadableStream<out T> = ReadableStreamType<T>;
-export type WritableStream<in T> = WritableStreamType<T>;
+export type ReadableStream<T> = ReadableStreamType<T>;
+export type WritableStream<T> = WritableStreamType<T>;
 export type TransformStream<I, O> = TransformStreamType<I, O>;
 
 export const {
