@@ -6,11 +6,10 @@ import type {
     AbortSignal,
     ReadableWritablePair,
     WritableStreamDefaultWriter,
+    MaybeConsumable,
 } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
-    MaybeConsumable,
-    WrapWritableStream,
     tryCancel,
     tryClose,
 } from "@yume-chan/stream-extra";
@@ -211,8 +210,8 @@ export class AdbServerClient {
     readonly wireless = new AdbServerClient.WirelessCommands(this);
     readonly mDns = new AdbServerClient.MDnsCommands(this);
 
-    constructor(connection: AdbServerClient.ServerConnector) {
-        this.connector = connection;
+    constructor(connector: AdbServerClient.ServerConnector) {
+        this.connector = connector;
     }
 
     async createConnection(
@@ -437,9 +436,7 @@ export class AdbServerClient {
                 transportId,
                 service,
                 readable: socket.readable,
-                writable: new WrapWritableStream(
-                    socket.writable,
-                ).bePipedThroughFrom(new MaybeConsumable.UnwrapStream()),
+                writable: socket.writable,
                 get closed() {
                     return socket.closed;
                 },
@@ -567,7 +564,7 @@ export namespace AdbServerClient {
     }
 
     export interface ServerConnection
-        extends ReadableWritablePair<Uint8Array, Uint8Array>,
+        extends ReadableWritablePair<Uint8Array, MaybeConsumable<Uint8Array>>,
             Closeable {
         get closed(): Promise<void>;
     }

@@ -4,10 +4,7 @@ import type {
     QueuingStrategy,
     WritableStreamDefaultController,
 } from "./stream.js";
-import {
-    WritableStream as NativeWritableStream,
-    TransformStream,
-} from "./stream.js";
+import { WritableStream as NativeWritableStream } from "./stream.js";
 
 export function getValue<T>(value: MaybeConsumable<T>): T {
     return value instanceof Consumable ? value.value : value;
@@ -21,18 +18,6 @@ export function tryConsume<T, R>(
         return value.tryConsume(callback);
     } else {
         return callback(value as never);
-    }
-}
-
-export class UnwrapStream<T> extends TransformStream<MaybeConsumable<T>, T> {
-    constructor() {
-        super({
-            transform(chunk, controller) {
-                tryConsume(chunk, (chunk) => {
-                    controller.enqueue(chunk as T);
-                });
-            },
-        });
     }
 }
 

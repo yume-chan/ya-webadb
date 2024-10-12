@@ -6,8 +6,6 @@ import {
     MaybeConsumable,
     PushReadableStream,
     tryClose,
-    WrapWritableStream,
-    WritableStream,
 } from "@yume-chan/stream-extra";
 import type { ValueOrPromise } from "@yume-chan/struct";
 
@@ -36,7 +34,7 @@ function nodeSocketToConnection(
                 tryClose(controller);
             });
         }),
-        writable: new WritableStream<Uint8Array>({
+        writable: new MaybeConsumable.WritableStream<Uint8Array>({
             write: (chunk) => {
                 return new Promise<void>((resolve, reject) => {
                     socket.write(chunk, (err) => {
@@ -100,9 +98,7 @@ export class AdbServerNodeTcpConnector
                 await handler({
                     service: address!,
                     readable: connection.readable,
-                    writable: new WrapWritableStream(
-                        connection.writable,
-                    ).bePipedThroughFrom(new MaybeConsumable.UnwrapStream()),
+                    writable: connection.writable,
                     get closed() {
                         return connection.closed;
                     },

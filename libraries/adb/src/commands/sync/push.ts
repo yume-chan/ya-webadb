@@ -41,8 +41,8 @@ async function pipeFileData(
     file.pipeThrough(new DistributionStream(packetSize, true))
         .pipeTo(
             new MaybeConsumable.WritableStream({
-                write: async (chunk) => {
-                    await adbSyncWriteRequest(
+                write(chunk) {
+                    return adbSyncWriteRequest(
                         locked,
                         AdbSyncRequestId.Data,
                         chunk,

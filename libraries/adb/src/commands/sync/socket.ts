@@ -35,9 +35,9 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
         this.#combiner = new BufferCombiner(bufferSize);
     }
 
-    async #write(buffer: Uint8Array) {
+    #write(buffer: Uint8Array) {
         // `#combiner` will reuse the buffer, so we need to use the Consumable pattern
-        await Consumable.WritableStream.write(this.#writer, buffer);
+        return Consumable.WritableStream.write(this.#writer, buffer);
     }
 
     async flush() {
