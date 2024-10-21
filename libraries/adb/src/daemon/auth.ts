@@ -71,7 +71,6 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
     credentialStore: AdbCredentialStore,
     getNextRequest: () => Promise<AdbPacketData>,
 ): AsyncIterable<AdbPacketData> {
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     for await (const key of credentialStore.iterateKeys()) {
         const packet = await getNextRequest();
 
@@ -100,7 +99,6 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     }
 
     let privateKey: AdbPrivateKey | undefined;
-    // eslint-disable-next-line @typescript-eslint/await-thenable
     for await (const key of credentialStore.iterateKeys()) {
         privateKey = key;
         break;
