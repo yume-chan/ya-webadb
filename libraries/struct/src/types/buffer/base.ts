@@ -53,7 +53,8 @@ export abstract class BufferFieldConverter<
 export class Uint8ArrayBufferFieldConverter<
     TTypeScriptType = Uint8Array,
 > extends BufferFieldConverter<Uint8Array, TTypeScriptType> {
-    static readonly Instance = new Uint8ArrayBufferFieldConverter();
+    static readonly Instance =
+        /* #__PURE__ */ new Uint8ArrayBufferFieldConverter();
 
     protected constructor() {
         super();
@@ -76,7 +77,7 @@ export class Uint8ArrayBufferFieldConverter<
 export class StringBufferFieldConverter<
     TTypeScriptType = string,
 > extends BufferFieldConverter<string, TTypeScriptType> {
-    static readonly Instance = new StringBufferFieldConverter();
+    static readonly Instance = /* #__PURE__ */ new StringBufferFieldConverter();
 
     override toBuffer(value: string): Uint8Array {
         return encodeUtf8(value);

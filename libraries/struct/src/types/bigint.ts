@@ -47,9 +47,17 @@ export class BigIntFieldVariant {
         this.serialize = serialize;
     }
 
-    static readonly Int64 = new BigIntFieldVariant(8, getInt64, setInt64);
+    static readonly Int64 = /* #__PURE__ */ new BigIntFieldVariant(
+        8,
+        getInt64,
+        setInt64,
+    );
 
-    static readonly Uint64 = new BigIntFieldVariant(8, getUint64, setUint64);
+    static readonly Uint64 = /* #__PURE__ */ new BigIntFieldVariant(
+        8,
+        getUint64,
+        setUint64,
+    );
 }
 
 export class BigIntFieldDefinition<

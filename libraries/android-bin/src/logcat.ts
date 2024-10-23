@@ -33,7 +33,7 @@ export type LogId = (typeof LogId)[keyof typeof LogId];
 
 const LogIdName =
     /* #__PURE__ */
-    Object.fromEntries(Object.entries(LogId).map(([k, v]) => [v, k]));
+    (() => Object.fromEntries(Object.entries(LogId).map(([k, v]) => [v, k])))();
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/include/android/log.h;l=73;drc=82b5738732161dbaafb2e2f25cce19cd26b9157d
 export const AndroidLogPriority = {
@@ -96,7 +96,7 @@ export interface LogcatOptions {
     ids?: LogId[];
 }
 
-const NANOSECONDS_PER_SECOND = BigInt(1e9);
+const NANOSECONDS_PER_SECOND = /* #__PURE__ */ BigInt(1e9);
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/include/log/log_read.h;l=39;drc=82b5738732161dbaafb2e2f25cce19cd26b9157d
 export const LoggerEntry =

@@ -32,7 +32,7 @@
         "test": "run-test"
     },
     "dependencies": {
-        "@yume-chan/async": "^2.2.0",
+        "@yume-chan/async": "^4.0.0",
         "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
