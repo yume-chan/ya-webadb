@@ -5,11 +5,13 @@ import {
     getInt8,
     getUint16,
     getUint32,
+    getUint64,
     setInt16,
     setInt32,
     setInt64,
     setUint16,
     setUint32,
+    setUint64,
 } from "@yume-chan/no-data-view";
 
 import { bipedal } from "./bipedal.js";
@@ -104,11 +106,11 @@ export const u64: Field<bigint, never, never> & {
 } = {
     size: 8,
     serialize(value, { buffer, index, littleEndian }) {
-        setInt64(buffer, index, value, littleEndian);
+        setUint64(buffer, index, value, littleEndian);
     },
     deserialize: bipedal(function* (then, { reader, littleEndian }) {
         const data = yield* then(reader.readExactly(8));
-        return getInt64(data, 0, littleEndian);
+        return getUint64(data, 0, littleEndian);
     }),
     as: () => u64 as never,
 };
