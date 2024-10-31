@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { EMPTY_UINT8_ARRAY, encodeUtf8 } from "@yume-chan/struct";
+import { EmptyUint8Array, encodeUtf8 } from "@yume-chan/struct";
 
 import { decodeBase64 } from "../utils/base64.js";
 
@@ -86,7 +86,7 @@ describe("auth", () => {
                     command: AdbCommand.Auth,
                     arg0: AdbAuthType.Token,
                     arg1: 0,
-                    payload: EMPTY_UINT8_ARRAY,
+                    payload: EmptyUint8Array,
                 }),
             );
 
@@ -118,7 +118,7 @@ describe("auth", () => {
                     command: AdbCommand.Auth,
                     arg0: AdbAuthType.Token,
                     arg1: 0,
-                    payload: EMPTY_UINT8_ARRAY,
+                    payload: EmptyUint8Array,
                 }),
             );
 

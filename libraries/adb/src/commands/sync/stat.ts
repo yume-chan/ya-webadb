@@ -1,4 +1,5 @@
-import Struct, { placeholder } from "@yume-chan/struct";
+import type { StructValue } from "@yume-chan/struct";
+import { Struct, u32, u64 } from "@yume-chan/struct";
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponse } from "./response.js";
@@ -26,28 +27,28 @@ export interface AdbSyncStat {
     ctime?: bigint;
 }
 
-export const AdbSyncLstatResponse =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .int32("mode")
-        .int32("size")
-        .int32("mtime")
-        .extra({
-            get type() {
+export const AdbSyncLstatResponse = new Struct(
+    { mode: u32, size: u32, mtime: u32 },
+    {
+        littleEndian: true,
+        extra: {
+            get type(): LinuxFileType {
                 return (this.mode >> 12) as LinuxFileType;
             },
-            get permission() {
+            get permission(): number {
                 return this.mode & 0b00001111_11111111;
             },
-        })
-        .postDeserialize((object) => {
-            if (object.mode === 0 && object.size === 0 && object.mtime === 0) {
+        },
+        postDeserialize(value) {
+            if (value.mode === 0 && value.size === 0 && value.mtime === 0) {
                 throw new Error("lstat error");
             }
-        });
+            return value;
+        },
+    },
+);
 
-export type AdbSyncLstatResponse =
-    (typeof AdbSyncLstatResponse)["TDeserializeResult"];
+export type AdbSyncLstatResponse = StructValue<typeof AdbSyncLstatResponse>;
 
 export const AdbSyncStatErrorCode = {
     SUCCESS: 0,
@@ -85,36 +86,40 @@ const AdbSyncStatErrorName =
         ]),
     );
 
-export const AdbSyncStatResponse =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .uint32("error", placeholder<AdbSyncStatErrorCode>())
-        .uint64("dev")
-        .uint64("ino")
-        .uint32("mode")
-        .uint32("nlink")
-        .uint32("uid")
-        .uint32("gid")
-        .uint64("size")
-        .uint64("atime")
-        .uint64("mtime")
-        .uint64("ctime")
-        .extra({
-            get type() {
+export const AdbSyncStatResponse = new Struct(
+    {
+        error: u32.as<AdbSyncStatErrorCode>(),
+        dev: u64,
+        ino: u64,
+        mode: u32,
+        nlink: u32,
+        uid: u32,
+        gid: u32,
+        size: u64,
+        atime: u64,
+        mtime: u64,
+        ctime: u64,
+    },
+    {
+        littleEndian: true,
+        extra: {
+            get type(): LinuxFileType {
                 return (this.mode >> 12) as LinuxFileType;
             },
-            get permission() {
+            get permission(): number {
                 return this.mode & 0b00001111_11111111;
             },
-        })
-        .postDeserialize((object) => {
-            if (object.error) {
-                throw new Error(AdbSyncStatErrorName[object.error]);
+        },
+        postDeserialize(value) {
+            if (value.error) {
+                throw new Error(AdbSyncStatErrorName[value.error]);
             }
-        });
+            return value;
+        },
+    },
+);
 
-export type AdbSyncStatResponse =
-    (typeof AdbSyncStatResponse)["TDeserializeResult"];
+export type AdbSyncStatResponse = StructValue<typeof AdbSyncStatResponse>;
 
 export async function adbSyncLstat(
     socket: AdbSyncSocket,

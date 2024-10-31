@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import Struct from "./index.js";
+import { Struct } from "./index.js";
 
 describe("Struct", () => {
     describe("Index", () => {

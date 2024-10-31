@@ -5,7 +5,7 @@ import {
     Consumable,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 import { decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
 
 import type {
@@ -368,7 +368,7 @@ export class AdbDaemonTransport implements AdbTransport {
         this.#protocolVersion = version;
     }
 
-    connect(service: string): ValueOrPromise<AdbSocket> {
+    connect(service: string): MaybePromiseLike<AdbSocket> {
         return this.#dispatcher.createSocket(service);
     }
 
@@ -392,7 +392,7 @@ export class AdbDaemonTransport implements AdbTransport {
         this.#dispatcher.clearReverseTunnels();
     }
 
-    close(): ValueOrPromise<void> {
+    close(): MaybePromiseLike<void> {
         return this.#dispatcher.close();
     }
 }

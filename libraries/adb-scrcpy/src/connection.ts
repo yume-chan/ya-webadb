@@ -13,7 +13,7 @@ import {
     BufferedReadableStream,
     PushReadableStream,
 } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 export interface AdbScrcpyConnectionOptions {
     scid: number;
@@ -54,7 +54,7 @@ export abstract class AdbScrcpyConnection implements Disposable {
         this.socketName = this.getSocketName();
     }
 
-    initialize(): ValueOrPromise<void> {
+    initialize(): MaybePromiseLike<void> {
         // pure virtual method
     }
 
@@ -66,7 +66,7 @@ export abstract class AdbScrcpyConnection implements Disposable {
         return socketName;
     }
 
-    abstract getStreams(): ValueOrPromise<AdbScrcpyConnectionStreams>;
+    abstract getStreams(): MaybePromiseLike<AdbScrcpyConnectionStreams>;
 
     dispose(): void {
         // pure virtual method

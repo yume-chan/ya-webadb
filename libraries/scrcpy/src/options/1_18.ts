@@ -1,4 +1,5 @@
-import Struct, { placeholder } from "@yume-chan/struct";
+import type { StructInit } from "@yume-chan/struct";
+import { Struct, u8 } from "@yume-chan/struct";
 
 import type {
     AndroidKeyEventAction,
@@ -42,14 +43,17 @@ export interface ScrcpyOptionsInit1_18
     powerOffOnClose?: boolean;
 }
 
-export const ScrcpyBackOrScreenOnControlMessage1_18 =
-    /* #__PURE__ */
-    new Struct()
-        .concat(ScrcpyBackOrScreenOnControlMessage1_16)
-        .uint8("action", placeholder<AndroidKeyEventAction>());
+export const ScrcpyBackOrScreenOnControlMessage1_18 = new Struct(
+    {
+        ...ScrcpyBackOrScreenOnControlMessage1_16.fields,
+        action: u8.as<AndroidKeyEventAction>(),
+    },
+    { littleEndian: false },
+);
 
-export type ScrcpyBackOrScreenOnControlMessage1_18 =
-    (typeof ScrcpyBackOrScreenOnControlMessage1_18)["TInit"];
+export type ScrcpyBackOrScreenOnControlMessage1_18 = StructInit<
+    typeof ScrcpyBackOrScreenOnControlMessage1_18
+>;
 
 export const SCRCPY_CONTROL_MESSAGE_TYPES_1_18 =
     SCRCPY_CONTROL_MESSAGE_TYPES_1_16.slice();

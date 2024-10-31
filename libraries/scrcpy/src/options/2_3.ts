@@ -1,5 +1,5 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import { ScrcpyOptions1_21 } from "./1_21.js";
 import { ScrcpyOptions2_0 } from "./2_0.js";
@@ -33,7 +33,7 @@ export class ScrcpyOptions2_3 extends ScrcpyOptions<ScrcpyOptionsInit2_3> {
 
     override parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>,
-    ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
+    ): MaybePromiseLike<ScrcpyAudioStreamMetadata> {
         return ScrcpyOptions2_0.parseAudioMetadata(
             stream,
             this.value.sendCodecMeta,

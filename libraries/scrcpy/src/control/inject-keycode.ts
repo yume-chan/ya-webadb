@@ -1,4 +1,5 @@
-import Struct, { placeholder } from "@yume-chan/struct";
+import type { StructInit } from "@yume-chan/struct";
+import { Struct, u32, u8 } from "@yume-chan/struct";
 
 export enum AndroidKeyEventAction {
     Down = 0,
@@ -205,14 +206,17 @@ export enum AndroidKeyCode {
     AndroidPaste,
 }
 
-export const ScrcpyInjectKeyCodeControlMessage =
-    /* #__PURE__ */
-    new Struct()
-        .uint8("type")
-        .uint8("action", placeholder<AndroidKeyEventAction>())
-        .uint32("keyCode", placeholder<AndroidKeyCode>())
-        .uint32("repeat")
-        .uint32("metaState", placeholder<AndroidKeyEventMeta>());
+export const ScrcpyInjectKeyCodeControlMessage = new Struct(
+    {
+        type: u8,
+        action: u8.as<AndroidKeyEventAction>(),
+        keyCode: u32.as<AndroidKeyCode>(),
+        repeat: u32,
+        metaState: u32.as<AndroidKeyEventMeta>(),
+    },
+    { littleEndian: false },
+);
 
-export type ScrcpyInjectKeyCodeControlMessage =
-    (typeof ScrcpyInjectKeyCodeControlMessage)["TInit"];
+export type ScrcpyInjectKeyCodeControlMessage = StructInit<
+    typeof ScrcpyInjectKeyCodeControlMessage
+>;

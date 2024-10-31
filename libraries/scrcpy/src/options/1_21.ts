@@ -1,8 +1,8 @@
 // cspell: ignore autosync
 
 import { PromiseResolver } from "@yume-chan/async";
-import type { AsyncExactReadable } from "@yume-chan/struct";
-import Struct, { placeholder } from "@yume-chan/struct";
+import type { AsyncExactReadable, StructInit } from "@yume-chan/struct";
+import { Struct, string, u32, u64, u8 } from "@yume-chan/struct";
 
 import type { ScrcpySetClipboardControlMessage } from "../control/index.js";
 
@@ -10,9 +10,10 @@ import type { ScrcpyOptionsInit1_18 } from "./1_18.js";
 import { ScrcpyOptions1_18 } from "./1_18.js";
 import { ScrcpyOptions, toScrcpyOptionValue } from "./types.js";
 
-export const ScrcpyAckClipboardDeviceMessage =
-    /* #__PURE__ */
-    new Struct().uint64("sequence");
+export const ScrcpyAckClipboardDeviceMessage = new Struct(
+    { sequence: u64 },
+    { littleEndian: false },
+);
 
 export interface ScrcpyOptionsInit1_21 extends ScrcpyOptionsInit1_18 {
     clipboardAutosync?: boolean;
@@ -22,17 +23,19 @@ function toSnakeCase(input: string): string {
     return input.replace(/([A-Z])/g, "_$1").toLowerCase();
 }
 
-export const ScrcpySetClipboardControlMessage1_21 =
-    /* #__PURE__ */
-    new Struct()
-        .uint8("type")
-        .uint64("sequence")
-        .int8("paste", placeholder<boolean>())
-        .uint32("length")
-        .string("content", { lengthField: "length" });
+export const ScrcpySetClipboardControlMessage1_21 = new Struct(
+    {
+        type: u8,
+        sequence: u64,
+        paste: u8.as<boolean>(),
+        content: string(u32),
+    },
+    { littleEndian: false },
+);
 
-export type ScrcpySetClipboardControlMessage1_21 =
-    (typeof ScrcpySetClipboardControlMessage1_21)["TInit"];
+export type ScrcpySetClipboardControlMessage1_21 = StructInit<
+    typeof ScrcpySetClipboardControlMessage1_21
+>;
 
 export class ScrcpyOptions1_21 extends ScrcpyOptions<ScrcpyOptionsInit1_21> {
     static readonly DEFAULTS = {

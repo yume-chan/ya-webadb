@@ -51,6 +51,18 @@ async function assertResolves<T>(promise: Promise<T>, expected: T) {
     return assert.deepStrictEqual(await promise, expected);
 }
 
+describe("AdbShellProtocolPacket", () => {
+    it("should serialize", () => {
+        assert.deepStrictEqual(
+            AdbShellProtocolPacket.serialize({
+                id: AdbShellProtocolId.Stdout,
+                data: new Uint8Array([1, 2, 3, 4]),
+            }),
+            new Uint8Array([1, 4, 0, 0, 0, 1, 2, 3, 4]),
+        );
+    });
+});
+
 describe("AdbSubprocessShellProtocol", () => {
     describe("`stdout` and `stderr`", () => {
         it("should parse data from `socket", () => {

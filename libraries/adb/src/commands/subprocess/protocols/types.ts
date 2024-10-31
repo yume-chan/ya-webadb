@@ -3,7 +3,7 @@ import type {
     ReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type { Adb, AdbSocket } from "../../../adb.js";
 
@@ -40,23 +40,23 @@ export interface AdbSubprocessProtocol {
      * Some `AdbSubprocessProtocol`s may not support resizing
      * and will ignore calls to this method.
      */
-    resize(rows: number, cols: number): ValueOrPromise<void>;
+    resize(rows: number, cols: number): MaybePromiseLike<void>;
 
     /**
      * Kills the current process.
      */
-    kill(): ValueOrPromise<void>;
+    kill(): MaybePromiseLike<void>;
 }
 
 export interface AdbSubprocessProtocolConstructor {
     /** Returns `true` if the `adb` instance supports this shell */
-    isSupported(adb: Adb): ValueOrPromise<boolean>;
+    isSupported(adb: Adb): MaybePromiseLike<boolean>;
 
     /** Spawns an executable in PTY (interactive) mode. */
-    pty(adb: Adb, command: string): ValueOrPromise<AdbSubprocessProtocol>;
+    pty(adb: Adb, command: string): MaybePromiseLike<AdbSubprocessProtocol>;
 
     /** Spawns an executable and pipe the output. */
-    raw(adb: Adb, command: string): ValueOrPromise<AdbSubprocessProtocol>;
+    raw(adb: Adb, command: string): MaybePromiseLike<AdbSubprocessProtocol>;
 
     /** Creates a new `AdbShell` by attaching to an exist `AdbSocket` */
     new (socket: AdbSocket): AdbSubprocessProtocol;

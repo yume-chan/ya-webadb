@@ -1,5 +1,5 @@
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable, ValueOrPromise } from "@yume-chan/struct";
+import type { AsyncExactReadable, MaybePromiseLike } from "@yume-chan/struct";
 
 import type {
     ScrcpyBackOrScreenOnControlMessage,
@@ -170,13 +170,13 @@ export abstract class ScrcpyOptions<T extends object> {
      */
     parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
-    ): ValueOrPromise<ScrcpyVideoStream> {
+    ): MaybePromiseLike<ScrcpyVideoStream> {
         return this.#base.parseVideoStreamMetadata(stream);
     }
 
     parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>,
-    ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
+    ): MaybePromiseLike<ScrcpyAudioStreamMetadata> {
         return this.#base.parseAudioStreamMetadata(stream);
     }
 
@@ -184,7 +184,7 @@ export abstract class ScrcpyOptions<T extends object> {
         return this.#base.parseDeviceMessage(id, stream);
     }
 
-    endDeviceMessageStream(e?: unknown): ValueOrPromise<void> {
+    endDeviceMessageStream(e?: unknown): MaybePromiseLike<void> {
         return this.#base.endDeviceMessageStream(e);
     }
 

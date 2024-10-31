@@ -4,7 +4,7 @@ import {
     DistributionStream,
     MaybeConsumable,
 } from "@yume-chan/stream-extra";
-import Struct, { placeholder } from "@yume-chan/struct";
+import { Struct, u32 } from "@yume-chan/struct";
 
 import { NOOP } from "../../utils/index.js";
 
@@ -25,9 +25,10 @@ export interface AdbSyncPushV1Options {
     packetSize?: number;
 }
 
-export const AdbSyncOkResponse =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true }).uint32("unused");
+export const AdbSyncOkResponse = new Struct(
+    { unused: u32 },
+    { littleEndian: true },
+);
 
 async function pipeFileData(
     locked: AdbSyncSocketLocked,
@@ -113,12 +114,10 @@ export interface AdbSyncPushV2Options extends AdbSyncPushV1Options {
     dryRun?: boolean;
 }
 
-export const AdbSyncSendV2Request =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .uint32("id")
-        .uint32("mode")
-        .uint32("flags", placeholder<AdbSyncSendV2Flags>());
+export const AdbSyncSendV2Request = new Struct(
+    { id: u32, mode: u32, flags: u32.as<AdbSyncSendV2Flags>() },
+    { littleEndian: true },
+);
 
 export async function adbSyncPushV2({
     socket,

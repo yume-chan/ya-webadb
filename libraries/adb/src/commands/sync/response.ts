@@ -1,10 +1,6 @@
 import { getUint32LittleEndian } from "@yume-chan/no-data-view";
-import type {
-    AsyncExactReadable,
-    StructLike,
-    StructValueType,
-} from "@yume-chan/struct";
-import Struct, { decodeUtf8 } from "@yume-chan/struct";
+import type { AsyncExactReadable, StructLike } from "@yume-chan/struct";
+import { Struct, decodeUtf8, string, u32 } from "@yume-chan/struct";
 
 function encodeAsciiUnchecked(value: string): Uint8Array {
     const result = new Uint8Array(value.length);
@@ -40,14 +36,15 @@ export const AdbSyncResponseId = {
 
 export class AdbSyncError extends Error {}
 
-export const AdbSyncFailResponse =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .uint32("messageLength")
-        .string("message", { lengthField: "messageLength" })
-        .postDeserialize((object) => {
-            throw new AdbSyncError(object.message);
-        });
+export const AdbSyncFailResponse = new Struct(
+    { message: string(u32) },
+    {
+        littleEndian: true,
+        postDeserialize(value) {
+            throw new AdbSyncError(value.message);
+        },
+    },
+);
 
 export async function adbSyncReadResponse<T>(
     stream: AsyncExactReadable,
@@ -72,13 +69,11 @@ export async function adbSyncReadResponse<T>(
     }
 }
 
-export async function* adbSyncReadResponses<
-    T extends Struct<object, PropertyKey, object, unknown>,
->(
+export async function* adbSyncReadResponses<T>(
     stream: AsyncExactReadable,
     id: number | string,
-    type: T,
-): AsyncGenerator<StructValueType<T>, void, void> {
+    type: StructLike<T>,
+): AsyncGenerator<T, void, void> {
     if (typeof id === "string") {
         id = adbSyncEncodeId(id);
     }
@@ -97,7 +92,7 @@ export async function* adbSyncReadResponses<
                 await stream.readExactly(type.size);
                 return;
             case id:
-                yield (await type.deserialize(stream)) as StructValueType<T>;
+                yield await type.deserialize(stream);
                 break;
             default:
                 throw new Error(

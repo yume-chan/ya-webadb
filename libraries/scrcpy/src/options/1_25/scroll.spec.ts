@@ -3,24 +3,33 @@ import { describe, it } from "node:test";
 
 import { ScrcpyControlMessageType } from "../../control/index.js";
 
-import {
-    ScrcpyScrollController1_25,
-    ScrcpySignedFloatNumberVariant,
-} from "./scroll.js";
+import { ScrcpyScrollController1_25, ScrcpySignedFloat } from "./scroll.js";
 
-describe("ScrcpyFloatToInt16NumberType", () => {
+describe("ScrcpySignedFloat", () => {
     it("should serialize", () => {
         const array = new Uint8Array(2);
-        ScrcpySignedFloatNumberVariant.serialize(array, 0, -1, true);
+        ScrcpySignedFloat.serialize(-1, {
+            buffer: array,
+            index: 0,
+            littleEndian: true,
+        });
         assert.strictEqual(
             new DataView(array.buffer).getInt16(0, true),
             -0x8000,
         );
 
-        ScrcpySignedFloatNumberVariant.serialize(array, 0, 0, true);
+        ScrcpySignedFloat.serialize(0, {
+            buffer: array,
+            index: 0,
+            littleEndian: true,
+        });
         assert.strictEqual(new DataView(array.buffer).getInt16(0, true), 0);
 
-        ScrcpySignedFloatNumberVariant.serialize(array, 0, 1, true);
+        ScrcpySignedFloat.serialize(1, {
+            buffer: array,
+            index: 0,
+            littleEndian: true,
+        });
         assert.strictEqual(
             new DataView(array.buffer).getInt16(0, true),
             0x7fff,
@@ -29,13 +38,21 @@ describe("ScrcpyFloatToInt16NumberType", () => {
 
     it("should clamp input values", () => {
         const array = new Uint8Array(2);
-        ScrcpySignedFloatNumberVariant.serialize(array, 0, -2, true);
+        ScrcpySignedFloat.serialize(-2, {
+            buffer: array,
+            index: 0,
+            littleEndian: true,
+        });
         assert.strictEqual(
             new DataView(array.buffer).getInt16(0, true),
             -0x8000,
         );
 
-        ScrcpySignedFloatNumberVariant.serialize(array, 0, 2, true);
+        ScrcpySignedFloat.serialize(2, {
+            buffer: array,
+            index: 0,
+            littleEndian: true,
+        });
         assert.strictEqual(
             new DataView(array.buffer).getInt16(0, true),
             0x7fff,
@@ -48,19 +65,31 @@ describe("ScrcpyFloatToInt16NumberType", () => {
 
         dataView.setInt16(0, -0x8000, true);
         assert.strictEqual(
-            ScrcpySignedFloatNumberVariant.deserialize(view, true),
+            ScrcpySignedFloat.deserialize({
+                runtimeStruct: {} as never,
+                reader: { position: 0, readExactly: () => view },
+                littleEndian: true,
+            }),
             -1,
         );
 
         dataView.setInt16(0, 0, true);
         assert.strictEqual(
-            ScrcpySignedFloatNumberVariant.deserialize(view, true),
+            ScrcpySignedFloat.deserialize({
+                runtimeStruct: {} as never,
+                reader: { position: 0, readExactly: () => view },
+                littleEndian: true,
+            }),
             0,
         );
 
         dataView.setInt16(0, 0x7fff, true);
         assert.strictEqual(
-            ScrcpySignedFloatNumberVariant.deserialize(view, true),
+            ScrcpySignedFloat.deserialize({
+                runtimeStruct: {} as never,
+                reader: { position: 0, readExactly: () => view },
+                littleEndian: true,
+            }),
             1,
         );
     });

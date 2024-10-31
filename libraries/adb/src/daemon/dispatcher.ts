@@ -16,7 +16,7 @@ import {
     Consumable,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import { EMPTY_UINT8_ARRAY, decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
+import { EmptyUint8Array, decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
 
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 
@@ -259,7 +259,7 @@ export class AdbPacketDispatcher implements Closeable {
             AdbCommand.Close,
             packet.arg1,
             packet.arg0,
-            EMPTY_UINT8_ARRAY,
+            EmptyUint8Array,
         );
     }
 
@@ -271,7 +271,7 @@ export class AdbPacketDispatcher implements Closeable {
             payload = new Uint8Array(4);
             setUint32LittleEndian(payload, 0, ackBytes);
         } else {
-            payload = EMPTY_UINT8_ARRAY;
+            payload = EmptyUint8Array;
         }
 
         return this.sendPacket(AdbCommand.Okay, localId, remoteId, payload);
@@ -312,7 +312,7 @@ export class AdbPacketDispatcher implements Closeable {
                 AdbCommand.Close,
                 0,
                 remoteId,
-                EMPTY_UINT8_ARRAY,
+                EmptyUint8Array,
             );
             return;
         }
@@ -339,7 +339,7 @@ export class AdbPacketDispatcher implements Closeable {
                 AdbCommand.Close,
                 0,
                 remoteId,
-                EMPTY_UINT8_ARRAY,
+                EmptyUint8Array,
             );
         }
     }

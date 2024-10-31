@@ -4,22 +4,17 @@ import { PromiseResolver } from "@yume-chan/async";
 import { getUint64LittleEndian } from "@yume-chan/no-data-view";
 import type {
     AbortSignal,
+    MaybeConsumable,
     ReadableWritablePair,
     WritableStreamDefaultWriter,
-    MaybeConsumable,
 } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
     tryCancel,
     tryClose,
 } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
-import {
-    EMPTY_UINT8_ARRAY,
-    SyncPromise,
-    decodeUtf8,
-    encodeUtf8,
-} from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
+import { bipedal, decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
 
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
@@ -42,44 +37,38 @@ class AdbServerStream {
         this.#writer = connection.writable.getWriter();
     }
 
-    readExactly(length: number): ValueOrPromise<Uint8Array> {
+    readExactly(length: number): MaybePromiseLike<Uint8Array> {
         return this.#buffered.readExactly(length);
     }
 
-    readString() {
-        return SyncPromise.try(() => this.readExactly(4))
-            .then((buffer) => {
-                const length = hexToNumber(buffer);
-                if (length === 0) {
-                    return EMPTY_UINT8_ARRAY;
-                } else {
-                    return this.readExactly(length);
-                }
-            })
-            .then((buffer) => {
-                // TODO: Investigate using stream mode `TextDecoder` for long strings.
-                // Because concatenating strings uses rope data structure,
-                // which only points to the original strings and doesn't copy the data,
-                // it's more efficient than concatenating `Uint8Array`s.
-                //
-                // ```
-                // const decoder = new TextDecoder();
-                // let result = '';
-                // for await (const chunk of stream.iterateExactly(length)) {
-                //     result += decoder.decode(chunk, { stream: true });
-                // }
-                // result += decoder.decode();
-                // return result;
-                // ```
-                //
-                // Although, it will be super complex to use `SyncPromise` with async iterator,
-                // `stream.iterateExactly` need to return an
-                // `Iterator<Uint8Array | Promise<Uint8Array>>` instead of a true async iterator.
-                // Maybe `SyncPromise` should support async iterators directly.
-                return decodeUtf8(buffer);
-            })
-            .valueOrPromise();
-    }
+    readString = bipedal(function* (this: AdbServerStream, then) {
+        const data = yield* then(this.readExactly(4));
+        const length = hexToNumber(data);
+        if (length === 0) {
+            return "";
+        } else {
+            // TODO: Investigate using stream mode `TextDecoder` for long strings.
+            // Because concatenating strings uses rope data structure,
+            // which only points to the original strings and doesn't copy the data,
+            // it's more efficient than concatenating `Uint8Array`s.
+            //
+            // ```
+            // const decoder = new TextDecoder();
+            // let result = '';
+            // for await (const chunk of stream.iterateExactly(length)) {
+            //     result += decoder.decode(chunk, { stream: true });
+            // }
+            // result += decoder.decode();
+            // return result;
+            // ```
+            //
+            // Although, it will be super complex to use `SyncPromise` with async iterator,
+            // `stream.iterateExactly` need to return an
+            // `Iterator<Uint8Array | Promise<Uint8Array>>` instead of a true async iterator.
+            // Maybe `SyncPromise` should support async iterators directly.
+            return decodeUtf8(yield* then(this.readExactly(length)));
+        }
+    });
 
     async writeString(value: string): Promise<void> {
         // TODO: investigate using `encodeUtf8("0000" + value)` then modifying the length
@@ -572,16 +561,16 @@ export namespace AdbServerClient {
     export interface ServerConnector {
         connect(
             options?: ServerConnectionOptions,
-        ): ValueOrPromise<ServerConnection>;
+        ): MaybePromiseLike<ServerConnection>;
 
         addReverseTunnel(
             handler: AdbIncomingSocketHandler,
             address?: string,
-        ): ValueOrPromise<string>;
+        ): MaybePromiseLike<string>;
 
-        removeReverseTunnel(address: string): ValueOrPromise<void>;
+        removeReverseTunnel(address: string): MaybePromiseLike<void>;
 
-        clearReverseTunnels(): ValueOrPromise<void>;
+        clearReverseTunnels(): MaybePromiseLike<void>;
     }
 
     export interface Socket extends AdbSocket {

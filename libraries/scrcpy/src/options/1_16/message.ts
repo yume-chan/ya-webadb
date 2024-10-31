@@ -1,4 +1,5 @@
-import Struct, { placeholder } from "@yume-chan/struct";
+import type { StructInit } from "@yume-chan/struct";
+import { Struct, buffer, string, u16, u32, u64, u8 } from "@yume-chan/struct";
 
 import type { AndroidMotionEventAction } from "../../control/index.js";
 import {
@@ -6,7 +7,7 @@ import {
     ScrcpyControlMessageType,
 } from "../../control/index.js";
 
-import { ScrcpyUnsignedFloatFieldDefinition } from "./float.js";
+import { ScrcpyUnsignedFloat } from "./float.js";
 
 export const SCRCPY_CONTROL_MESSAGE_TYPES_1_16: readonly ScrcpyControlMessageType[] =
     [
@@ -23,43 +24,44 @@ export const SCRCPY_CONTROL_MESSAGE_TYPES_1_16: readonly ScrcpyControlMessageTyp
         /* 10 */ ScrcpyControlMessageType.RotateDevice,
     ];
 
-export const ScrcpyMediaStreamRawPacket =
-    /* #__PURE__ */
-    new Struct()
-        .uint64("pts")
-        .uint32("size")
-        .uint8Array("data", { lengthField: "size" });
+export const ScrcpyMediaStreamRawPacket = new Struct(
+    { pts: u64, data: buffer(u32) },
+    { littleEndian: false },
+);
 
 export const SCRCPY_MEDIA_PACKET_FLAG_CONFIG = 1n << 63n;
 
-export const ScrcpyInjectTouchControlMessage1_16 =
-    /* #__PURE__ */
-    new Struct()
-        .uint8("type")
-        .uint8("action", placeholder<AndroidMotionEventAction>())
-        .uint64("pointerId")
-        .uint32("pointerX")
-        .uint32("pointerY")
-        .uint16("screenWidth")
-        .uint16("screenHeight")
-        .field("pressure", ScrcpyUnsignedFloatFieldDefinition)
-        .uint32("buttons");
+export const ScrcpyInjectTouchControlMessage1_16 = new Struct(
+    {
+        type: u8,
+        action: u8.as<AndroidMotionEventAction>(),
+        pointerId: u64,
+        pointerX: u32,
+        pointerY: u32,
+        screenWidth: u16,
+        screenHeight: u16,
+        pressure: ScrcpyUnsignedFloat,
+        buttons: u32,
+    },
+    { littleEndian: false },
+);
 
-export type ScrcpyInjectTouchControlMessage1_16 =
-    (typeof ScrcpyInjectTouchControlMessage1_16)["TInit"];
+export type ScrcpyInjectTouchControlMessage1_16 = StructInit<
+    typeof ScrcpyInjectTouchControlMessage1_16
+>;
 
 export const ScrcpyBackOrScreenOnControlMessage1_16 = EmptyControlMessage;
 
-export const ScrcpySetClipboardControlMessage1_15 =
-    /* #__PURE__ */
-    new Struct()
-        .uint8("type")
-        .uint32("length")
-        .string("content", { lengthField: "length" });
+export const ScrcpySetClipboardControlMessage1_15 = new Struct(
+    { type: u8, content: string(u32) },
+    { littleEndian: false },
+);
 
-export type ScrcpySetClipboardControlMessage1_15 =
-    (typeof ScrcpySetClipboardControlMessage1_15)["TInit"];
+export type ScrcpySetClipboardControlMessage1_15 = StructInit<
+    typeof ScrcpySetClipboardControlMessage1_15
+>;
 
-export const ScrcpyClipboardDeviceMessage =
-    /* #__PURE__ */
-    new Struct().uint32("length").string("content", { lengthField: "length" });
+export const ScrcpyClipboardDeviceMessage = new Struct(
+    { content: string(u32) },
+    { littleEndian: false },
+);

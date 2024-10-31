@@ -1,6 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
 import { AbortController } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
 
 import type {
     AdbIncomingSocketHandler,
@@ -96,7 +95,7 @@ export class AdbServerTransport implements AdbTransport {
         await this.#client.connector.clearReverseTunnels();
     }
 
-    close(): ValueOrPromise<void> {
+    close(): void | Promise<void> {
         this.#closed.resolve();
         this.#waitAbortController.abort();
     }

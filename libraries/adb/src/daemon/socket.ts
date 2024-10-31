@@ -7,7 +7,7 @@ import type {
     WritableStreamDefaultController,
 } from "@yume-chan/stream-extra";
 import { MaybeConsumable, PushReadableStream } from "@yume-chan/stream-extra";
-import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
+import { EmptyUint8Array } from "@yume-chan/struct";
 
 import type { AdbSocket } from "../adb.js";
 
@@ -164,7 +164,7 @@ export class AdbDaemonSocketController
             AdbCommand.Close,
             this.localId,
             this.remoteId,
-            EMPTY_UINT8_ARRAY,
+            EmptyUint8Array,
         );
     }
 

@@ -1,5 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
+import { EmptyUint8Array } from "@yume-chan/struct";
 
 import type { ReadableStreamDefaultController } from "./stream.js";
 import { ReadableStream, WritableStream } from "./stream.js";
@@ -101,7 +101,7 @@ export class ConcatBufferStream {
             let offset = 0;
             switch (this.#segments.length) {
                 case 0:
-                    result = EMPTY_UINT8_ARRAY;
+                    result = EmptyUint8Array;
                     break;
                 case 1:
                     result = this.#segments[0]!;

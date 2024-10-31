@@ -1,19 +1,18 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import { PushReadableStream } from "@yume-chan/stream-extra";
-import Struct from "@yume-chan/struct";
+import type { StructValue } from "@yume-chan/struct";
+import { buffer, Struct, u32 } from "@yume-chan/struct";
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
-import { AdbSyncResponseId, adbSyncReadResponses } from "./response.js";
+import { adbSyncReadResponses, AdbSyncResponseId } from "./response.js";
 import type { AdbSyncSocket } from "./socket.js";
 
-export const AdbSyncDataResponse =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .uint32("dataLength")
-        .uint8Array("data", { lengthField: "dataLength" });
+export const AdbSyncDataResponse = new Struct(
+    { data: buffer(u32) },
+    { littleEndian: true },
+);
 
-export type AdbSyncDataResponse =
-    (typeof AdbSyncDataResponse)["TDeserializeResult"];
+export type AdbSyncDataResponse = StructValue<typeof AdbSyncDataResponse>;
 
 export async function* adbSyncPullGenerator(
     socket: AdbSyncSocket,

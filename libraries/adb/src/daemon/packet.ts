@@ -1,5 +1,6 @@
 import { Consumable, TransformStream } from "@yume-chan/stream-extra";
-import Struct from "@yume-chan/struct";
+import type { StructInit, StructValue } from "@yume-chan/struct";
+import { buffer, s32, Struct, u32 } from "@yume-chan/struct";
 
 export const AdbCommand = {
     Auth: 0x48545541, // 'AUTH'
@@ -12,27 +13,28 @@ export const AdbCommand = {
 
 export type AdbCommand = (typeof AdbCommand)[keyof typeof AdbCommand];
 
-export const AdbPacketHeader =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .uint32("command")
-        .uint32("arg0")
-        .uint32("arg1")
-        .uint32("payloadLength")
-        .uint32("checksum")
-        .int32("magic");
+export const AdbPacketHeader = new Struct(
+    {
+        command: u32,
+        arg0: u32,
+        arg1: u32,
+        payloadLength: u32,
+        checksum: u32,
+        magic: s32,
+    },
+    { littleEndian: true },
+);
 
-export type AdbPacketHeader = (typeof AdbPacketHeader)["TDeserializeResult"];
+export type AdbPacketHeader = StructValue<typeof AdbPacketHeader>;
 
-type AdbPacketHeaderInit = (typeof AdbPacketHeader)["TInit"];
+type AdbPacketHeaderInit = StructInit<typeof AdbPacketHeader>;
 
-export const AdbPacket =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .concat(AdbPacketHeader)
-        .uint8Array("payload", { lengthField: "payloadLength" });
+export const AdbPacket = new Struct(
+    { ...AdbPacketHeader.fields, payload: buffer("payloadLength") },
+    { littleEndian: true },
+);
 
-export type AdbPacket = (typeof AdbPacket)["TDeserializeResult"];
+export type AdbPacket = StructValue<typeof AdbPacket>;
 
 /**
  * `AdbPacketData` contains all the useful fields of `AdbPacket`.
@@ -45,11 +47,11 @@ export type AdbPacket = (typeof AdbPacket)["TDeserializeResult"];
  * so `AdbSocket#writable#write` only needs `AdbPacketData`.
  */
 export type AdbPacketData = Omit<
-    (typeof AdbPacket)["TInit"],
+    StructInit<typeof AdbPacket>,
     "checksum" | "magic"
 >;
 
-export type AdbPacketInit = (typeof AdbPacket)["TInit"];
+export type AdbPacketInit = StructInit<typeof AdbPacket>;
 
 export function calculateChecksum(payload: Uint8Array): number {
     return payload.reduce((result, item) => result + item, 0);
@@ -67,9 +69,10 @@ export class AdbPacketSerializeStream extends TransformStream<
                     const init = chunk as AdbPacketInit & AdbPacketHeaderInit;
                     init.payloadLength = init.payload.length;
 
+                    AdbPacketHeader.serialize(init, headerBuffer);
                     await Consumable.ReadableStream.enqueue(
                         controller,
-                        AdbPacketHeader.serialize(init, headerBuffer),
+                        headerBuffer,
                     );
 
                     if (init.payloadLength) {

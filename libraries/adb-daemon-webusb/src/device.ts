@@ -20,7 +20,7 @@ import {
     pipeFrom,
 } from "@yume-chan/stream-extra";
 import type { ExactReadable } from "@yume-chan/struct";
-import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
+import { EmptyUint8Array } from "@yume-chan/struct";
 
 import type { UsbInterfaceFilter } from "./utils.js";
 import {
@@ -185,7 +185,7 @@ export class AdbDaemonWebUsbConnection
                             if (zeroMask && (chunk.length & zeroMask) === 0) {
                                 await device.raw.transferOut(
                                     outEndpoint.endpointNumber,
-                                    EMPTY_UINT8_ARRAY,
+                                    EmptyUint8Array,
                                 );
                             }
                         } catch (e) {
@@ -234,7 +234,7 @@ export class AdbDaemonWebUsbConnection
                     );
                     packet.payload = new Uint8Array(result.data!.buffer);
                 } else {
-                    packet.payload = EMPTY_UINT8_ARRAY;
+                    packet.payload = EmptyUint8Array;
                 }
 
                 return packet;

@@ -3,7 +3,7 @@ import type {
     ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type { AdbBanner } from "./banner.js";
 import type { AdbFrameBuffer } from "./commands/index.js";
@@ -19,7 +19,7 @@ import {
 import type { AdbFeature } from "./features.js";
 
 export interface Closeable {
-    close(): ValueOrPromise<void>;
+    close(): MaybePromiseLike<void>;
 }
 
 /**
@@ -37,7 +37,7 @@ export interface AdbSocket
 
 export type AdbIncomingSocketHandler = (
     socket: AdbSocket,
-) => ValueOrPromise<void>;
+) => MaybePromiseLike<void>;
 
 export interface AdbTransport extends Closeable {
     readonly serial: string;
@@ -50,16 +50,16 @@ export interface AdbTransport extends Closeable {
 
     readonly clientFeatures: readonly AdbFeature[];
 
-    connect(service: string): ValueOrPromise<AdbSocket>;
+    connect(service: string): MaybePromiseLike<AdbSocket>;
 
     addReverseTunnel(
         handler: AdbIncomingSocketHandler,
         address?: string,
-    ): ValueOrPromise<string>;
+    ): MaybePromiseLike<string>;
 
-    removeReverseTunnel(address: string): ValueOrPromise<void>;
+    removeReverseTunnel(address: string): MaybePromiseLike<void>;
 
-    clearReverseTunnels(): ValueOrPromise<void>;
+    clearReverseTunnels(): MaybePromiseLike<void>;
 }
 
 export class Adb implements Closeable {

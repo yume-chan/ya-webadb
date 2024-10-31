@@ -1,6 +1,4 @@
-import Struct from "@yume-chan/struct";
-
-import { encodeUtf8 } from "../../utils/index.js";
+import { encodeUtf8, Struct, u32 } from "@yume-chan/struct";
 
 import { adbSyncEncodeId } from "./response.js";
 
@@ -17,9 +15,10 @@ export const AdbSyncRequestId = {
     Receive: adbSyncEncodeId("RECV"),
 } as const;
 
-export const AdbSyncNumberRequest =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true }).uint32("id").uint32("arg");
+export const AdbSyncNumberRequest = new Struct(
+    { id: u32, arg: u32 },
+    { littleEndian: true },
+);
 
 export interface AdbSyncWritable {
     write(buffer: Uint8Array): Promise<void>;

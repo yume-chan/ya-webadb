@@ -1,6 +1,6 @@
-import type { ValueOrPromise } from "../utils.js";
-
 // TODO: allow over reading (returning a `Uint8Array`, an `offset` and a `length`) to avoid copying
+
+import type { MaybePromiseLike } from "./utils.js";
 
 export class ExactReadableEndedError extends Error {
     constructor() {
@@ -30,5 +30,5 @@ export interface AsyncExactReadable {
      * The stream must return exactly `length` bytes or data. If that's not possible
      * (due to end of file or other error condition), it must throw an {@link ExactReadableEndedError}.
      */
-    readExactly(length: number): ValueOrPromise<Uint8Array>;
+    readExactly(length: number): MaybePromiseLike<Uint8Array>;
 }

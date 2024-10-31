@@ -1,3 +1,9 @@
-import { Struct } from "@yume-chan/struct";
+import type { StructInit } from "@yume-chan/struct";
+import { Struct, u8 } from "@yume-chan/struct";
 
-export const EmptyControlMessage = /* #__PURE__ */ new Struct().uint8("type");
+export const EmptyControlMessage = new Struct(
+    { type: u8 },
+    { littleEndian: false },
+);
+
+export type EmptyControlMessage = StructInit<typeof EmptyControlMessage>;

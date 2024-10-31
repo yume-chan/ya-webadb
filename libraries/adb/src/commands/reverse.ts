@@ -1,7 +1,12 @@
 // cspell: ignore killforward
 
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
-import Struct, { ExactReadableEndedError, encodeUtf8 } from "@yume-chan/struct";
+import {
+    ExactReadableEndedError,
+    Struct,
+    encodeUtf8,
+    string,
+} from "@yume-chan/struct";
 
 import type { Adb, AdbIncomingSocketHandler } from "../adb.js";
 import { hexToNumber, sequenceEqual } from "../utils/index.js";
@@ -14,11 +19,21 @@ export interface AdbForwardListener {
     remoteName: string;
 }
 
-const AdbReverseStringResponse =
-    /* #__PURE__ */
-    new Struct()
-        .string("length", { length: 4 })
-        .string("content", { lengthField: "length", lengthFieldRadix: 16 });
+const AdbReverseStringResponse = new Struct(
+    {
+        length: string(4),
+        content: string({
+            field: "length",
+            convert(value: string) {
+                return Number.parseInt(value);
+            },
+            back(value) {
+                return value.toString(16).padStart(4, "0");
+            },
+        }),
+    },
+    { littleEndian: true },
+);
 
 export class AdbReverseError extends Error {
     constructor(message: string) {
@@ -35,9 +50,9 @@ export class AdbReverseNotSupportedError extends AdbReverseError {
     }
 }
 
-const AdbReverseErrorResponse =
-    /* #__PURE__ */
-    new Struct().concat(AdbReverseStringResponse).postDeserialize((value) => {
+const AdbReverseErrorResponse = new Struct(AdbReverseStringResponse.fields, {
+    littleEndian: true,
+    postDeserialize: (value) => {
         // https://issuetracker.google.com/issues/37066218
         // ADB on Android <9 can't create reverse tunnels when connected wirelessly (ADB over Wi-Fi),
         // and returns this confusing "more than one device/emulator" error.
@@ -46,7 +61,8 @@ const AdbReverseErrorResponse =
         } else {
             throw new AdbReverseError(value.content);
         }
-    });
+    },
+});
 
 // Like `hexToNumber`, it's much faster than first converting `buffer` to a string
 function decimalToNumber(buffer: Uint8Array) {

@@ -1,50 +1,53 @@
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
-import Struct, { StructEmptyError } from "@yume-chan/struct";
+import type { StructValue } from "@yume-chan/struct";
+import { buffer, Struct, StructEmptyError, u32 } from "@yume-chan/struct";
 
 import type { Adb } from "../adb.js";
 
-const Version =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true }).uint32("version");
+const Version = new Struct({ version: u32 }, { littleEndian: true });
 
-export const AdbFrameBufferV1 =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .uint32("bpp")
-        .uint32("size")
-        .uint32("width")
-        .uint32("height")
-        .uint32("red_offset")
-        .uint32("red_length")
-        .uint32("blue_offset")
-        .uint32("blue_length")
-        .uint32("green_offset")
-        .uint32("green_length")
-        .uint32("alpha_offset")
-        .uint32("alpha_length")
-        .uint8Array("data", { lengthField: "size" });
+export const AdbFrameBufferV1 = new Struct(
+    {
+        bpp: u32,
+        size: u32,
+        width: u32,
+        height: u32,
+        red_offset: u32,
+        red_length: u32,
+        blue_offset: u32,
+        blue_length: u32,
+        green_offset: u32,
+        green_length: u32,
+        alpha_offset: u32,
+        alpha_length: u32,
+        data: buffer("size"),
+    },
+    { littleEndian: true },
+);
 
-export type AdbFrameBufferV1 = (typeof AdbFrameBufferV1)["TDeserializeResult"];
+export type AdbFrameBufferV1 = StructValue<typeof AdbFrameBufferV1>;
 
-export const AdbFrameBufferV2 =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .uint32("bpp")
-        .uint32("colorSpace")
-        .uint32("size")
-        .uint32("width")
-        .uint32("height")
-        .uint32("red_offset")
-        .uint32("red_length")
-        .uint32("blue_offset")
-        .uint32("blue_length")
-        .uint32("green_offset")
-        .uint32("green_length")
-        .uint32("alpha_offset")
-        .uint32("alpha_length")
-        .uint8Array("data", { lengthField: "size" });
+export const AdbFrameBufferV2 = new Struct(
+    {
+        bpp: u32,
+        colorSpace: u32,
+        size: u32,
+        width: u32,
+        height: u32,
+        red_offset: u32,
+        red_length: u32,
+        blue_offset: u32,
+        blue_length: u32,
+        green_offset: u32,
+        green_length: u32,
+        alpha_offset: u32,
+        alpha_length: u32,
+        data: buffer("size"),
+    },
+    { littleEndian: true },
+);
 
-export type AdbFrameBufferV2 = (typeof AdbFrameBufferV2)["TDeserializeResult"];
+export type AdbFrameBufferV2 = StructValue<typeof AdbFrameBufferV2>;
 
 /**
  * ADB uses 8 int32 fields to describe bit depths
@@ -99,9 +102,9 @@ export async function framebuffer(adb: Adb): Promise<AdbFrameBuffer> {
     switch (version) {
         case 1:
             // TODO: AdbFrameBuffer: does all v1 responses uses the same color space? Add it so the command returns same format for all versions.
-            return AdbFrameBufferV1.deserialize(stream);
+            return await AdbFrameBufferV1.deserialize(stream);
         case 2:
-            return AdbFrameBufferV2.deserialize(stream);
+            return await AdbFrameBufferV2.deserialize(stream);
         default:
             throw new AdbFrameBufferUnsupportedVersionError(version);
     }

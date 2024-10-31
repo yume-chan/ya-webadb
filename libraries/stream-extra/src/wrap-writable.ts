@@ -1,9 +1,9 @@
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type { TransformStream, WritableStreamDefaultWriter } from "./stream.js";
 import { WritableStream } from "./stream.js";
 
-export type WrapWritableStreamStart<T> = () => ValueOrPromise<
+export type WrapWritableStreamStart<T> = () => MaybePromiseLike<
     WritableStream<T>
 >;
 

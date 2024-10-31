@@ -1,4 +1,4 @@
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type {
     QueuingStrategy,
@@ -9,12 +9,12 @@ import { ReadableStream } from "./stream.js";
 
 export type WrapReadableStreamStart<T> = (
     controller: ReadableStreamDefaultController<T>,
-) => ValueOrPromise<ReadableStream<T>>;
+) => MaybePromiseLike<ReadableStream<T>>;
 
 export interface ReadableStreamWrapper<T> {
     start: WrapReadableStreamStart<T>;
-    cancel?(reason?: unknown): ValueOrPromise<void>;
-    close?(): ValueOrPromise<void>;
+    cancel?(reason?: unknown): MaybePromiseLike<void>;
+    close?(): MaybePromiseLike<void>;
 }
 
 function getWrappedReadableStream<T>(

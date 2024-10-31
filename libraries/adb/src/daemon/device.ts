@@ -1,5 +1,5 @@
 import type { Consumable, ReadableWritablePair } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 
@@ -8,7 +8,7 @@ export interface AdbDaemonDevice {
 
     readonly name: string | undefined;
 
-    connect(): ValueOrPromise<
+    connect(): MaybePromiseLike<
         ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
     >;
 }

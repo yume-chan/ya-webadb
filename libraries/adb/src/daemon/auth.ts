@@ -1,7 +1,7 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
-import type { ValueOrPromise } from "@yume-chan/struct";
-import { EMPTY_UINT8_ARRAY } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
+import { EmptyUint8Array } from "@yume-chan/struct";
 
 import {
     calculateBase64EncodedLength,
@@ -33,7 +33,7 @@ export interface AdbCredentialStore {
     /**
      * Generates and stores a RSA private key with modulus length `2048` and public exponent `65537`.
      */
-    generateKey(): ValueOrPromise<AdbPrivateKey>;
+    generateKey(): MaybePromiseLike<AdbPrivateKey>;
 
     /**
      * Synchronously or asynchronously iterates through all stored RSA private keys.
@@ -114,7 +114,7 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
 
     const nameBuffer = privateKey.name?.length
         ? encodeUtf8(privateKey.name)
-        : EMPTY_UINT8_ARRAY;
+        : EmptyUint8Array;
     const publicKeyBuffer = new Uint8Array(
         publicKeyBase64Length +
             (nameBuffer.length ? nameBuffer.length + 1 : 0) + // Space character + name

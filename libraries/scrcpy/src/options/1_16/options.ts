@@ -12,7 +12,7 @@ import {
     StructDeserializeStream,
     TransformStream,
 } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable, ValueOrPromise } from "@yume-chan/struct";
+import type { AsyncExactReadable, MaybePromiseLike } from "@yume-chan/struct";
 import { decodeUtf8 } from "@yume-chan/struct";
 
 import type {
@@ -159,7 +159,7 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
-    ): ValueOrPromise<ScrcpyVideoStream> {
+    ): MaybePromiseLike<ScrcpyVideoStream> {
         return (async () => {
             const buffered = new BufferedReadableStream(stream);
             const metadata: ScrcpyVideoStreamMetadata = {

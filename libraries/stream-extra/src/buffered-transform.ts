@@ -1,4 +1,4 @@
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 import { StructEmptyError } from "@yume-chan/struct";
 
 import { BufferedReadableStream } from "./buffered.js";
@@ -22,7 +22,7 @@ export class BufferedTransformStream<T>
     }
 
     constructor(
-        transform: (stream: BufferedReadableStream) => ValueOrPromise<T>,
+        transform: (stream: BufferedReadableStream) => MaybePromiseLike<T>,
     ) {
         // Convert incoming chunks to a `BufferedReadableStream`
         let sourceStreamController!: PushReadableStreamController<Uint8Array>;

@@ -7,7 +7,7 @@ import {
     PushReadableStream,
     tryClose,
 } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 function nodeSocketToConnection(
     socket: Socket,
@@ -138,7 +138,7 @@ export class AdbServerNodeTcpConnector
         return address;
     }
 
-    removeReverseTunnel(address: string): ValueOrPromise<void> {
+    removeReverseTunnel(address: string): MaybePromiseLike<void> {
         const server = this.#listeners.get(address);
         if (!server) {
             return;
@@ -147,7 +147,7 @@ export class AdbServerNodeTcpConnector
         this.#listeners.delete(address);
     }
 
-    clearReverseTunnels(): ValueOrPromise<void> {
+    clearReverseTunnels(): MaybePromiseLike<void> {
         for (const server of this.#listeners.values()) {
             server.close();
         }

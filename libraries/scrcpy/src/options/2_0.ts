@@ -4,8 +4,8 @@ import {
     BufferedReadableStream,
     PushReadableStream,
 } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
-import Struct, { placeholder } from "@yume-chan/struct";
+import type { MaybePromiseLike, StructInit } from "@yume-chan/struct";
+import { Struct, u16, u32, u64, u8 } from "@yume-chan/struct";
 
 import type {
     AndroidMotionEventAction,
@@ -15,7 +15,7 @@ import type {
 import {
     CodecOptions,
     ScrcpyOptions1_16,
-    ScrcpyUnsignedFloatFieldDefinition,
+    ScrcpyUnsignedFloat,
 } from "./1_16/index.js";
 import { ScrcpyOptions1_21 } from "./1_21.js";
 import type { ScrcpyOptionsInit1_24 } from "./1_24.js";
@@ -30,22 +30,25 @@ import type {
 } from "./types.js";
 import { ScrcpyOptions } from "./types.js";
 
-export const ScrcpyInjectTouchControlMessage2_0 =
-    /* #__PURE__ */
-    new Struct()
-        .uint8("type")
-        .uint8("action", placeholder<AndroidMotionEventAction>())
-        .uint64("pointerId")
-        .uint32("pointerX")
-        .uint32("pointerY")
-        .uint16("screenWidth")
-        .uint16("screenHeight")
-        .field("pressure", ScrcpyUnsignedFloatFieldDefinition)
-        .uint32("actionButton")
-        .uint32("buttons");
+export const ScrcpyInjectTouchControlMessage2_0 = new Struct(
+    {
+        type: u8,
+        action: u8.as<AndroidMotionEventAction>(),
+        pointerId: u64,
+        pointerX: u32,
+        pointerY: u32,
+        screenWidth: u16,
+        screenHeight: u16,
+        pressure: ScrcpyUnsignedFloat,
+        actionButton: u32,
+        buttons: u32,
+    },
+    { littleEndian: false },
+);
 
-export type ScrcpyInjectTouchControlMessage2_0 =
-    (typeof ScrcpyInjectTouchControlMessage2_0)["TInit"];
+export type ScrcpyInjectTouchControlMessage2_0 = StructInit<
+    typeof ScrcpyInjectTouchControlMessage2_0
+>;
 
 export class ScrcpyInstanceId implements ScrcpyOptionValue {
     static readonly NONE = new ScrcpyInstanceId(-1);
@@ -244,7 +247,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptions<ScrcpyOptionsInit2_0> {
 
     override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
-    ): ValueOrPromise<ScrcpyVideoStream> {
+    ): MaybePromiseLike<ScrcpyVideoStream> {
         const { sendDeviceMeta, sendCodecMeta } = this.value;
         if (!sendDeviceMeta && !sendCodecMeta) {
             let codec: ScrcpyVideoCodecId;
@@ -302,7 +305,7 @@ export class ScrcpyOptions2_0 extends ScrcpyOptions<ScrcpyOptionsInit2_0> {
 
     override parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>,
-    ): ValueOrPromise<ScrcpyAudioStreamMetadata> {
+    ): MaybePromiseLike<ScrcpyAudioStreamMetadata> {
         return ScrcpyOptions2_0.parseAudioMetadata(
             stream,
             this.value.sendCodecMeta,

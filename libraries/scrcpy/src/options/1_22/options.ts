@@ -1,5 +1,5 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type { ScrcpyScrollController } from "../1_16/index.js";
 import { ScrcpyOptions1_21 } from "../1_21.js";
@@ -28,7 +28,7 @@ export class ScrcpyOptions1_22 extends ScrcpyOptions<ScrcpyOptionsInit1_22> {
 
     override parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
-    ): ValueOrPromise<ScrcpyVideoStream> {
+    ): MaybePromiseLike<ScrcpyVideoStream> {
         if (!this.value.sendDeviceMeta) {
             return { stream, metadata: { codec: ScrcpyVideoCodecId.H264 } };
         } else {

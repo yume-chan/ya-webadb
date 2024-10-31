@@ -1,5 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
-import type { ValueOrPromise } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type {
     QueuingStrategy,
@@ -28,7 +28,7 @@ export interface DuplexStreamFactoryOptions {
      * `DuplexStreamFactory#dispose` yourself, you can return `false`
      * (or a `Promise` that resolves to `false`) to disable the automatic call.
      */
-    close?: (() => ValueOrPromise<boolean | void>) | undefined;
+    close?: (() => MaybePromiseLike<boolean | void>) | undefined;
 
     /**
      * Callback when any `ReadableStream` is closed (the other peer doesn't produce any more data),

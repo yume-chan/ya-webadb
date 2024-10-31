@@ -10,8 +10,8 @@ import {
     WrapReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable } from "@yume-chan/struct";
-import Struct, { decodeUtf8 } from "@yume-chan/struct";
+import type { AsyncExactReadable, StructValue } from "@yume-chan/struct";
+import { Struct, decodeUtf8, u16, u32 } from "@yume-chan/struct";
 
 // `adb logcat` is an alias to `adb shell logcat`
 // so instead of adding to core library, it's implemented here
@@ -99,27 +99,31 @@ export interface LogcatOptions {
 const NANOSECONDS_PER_SECOND = /* #__PURE__ */ BigInt(1e9);
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/include/log/log_read.h;l=39;drc=82b5738732161dbaafb2e2f25cce19cd26b9157d
-export const LoggerEntry =
-    /* #__PURE__ */
-    new Struct({ littleEndian: true })
-        .uint16("payloadSize")
-        .uint16("headerSize")
-        .int32("pid")
-        .uint32("tid")
-        .uint32("seconds")
-        .uint32("nanoseconds")
-        .uint32("logId")
-        .uint32("uid")
-        .extra({
-            get timestamp() {
+export const LoggerEntry = new Struct(
+    {
+        payloadSize: u16,
+        headerSize: u16,
+        pid: u32,
+        tid: u32,
+        seconds: u32,
+        nanoseconds: u32,
+        logId: u32,
+        uid: u32,
+    },
+    {
+        littleEndian: true,
+        extra: {
+            get timestamp(): bigint {
                 return (
                     BigInt(this.seconds) * NANOSECONDS_PER_SECOND +
                     BigInt(this.nanoseconds)
                 );
             },
-        });
+        },
+    },
+);
 
-export type LoggerEntry = (typeof LoggerEntry)["TDeserializeResult"];
+export type LoggerEntry = StructValue<typeof LoggerEntry>;
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/logprint.cpp;drc=bbe77d66e7bee8bd1f0bc7e5492b5376b0207ef6;bpv=0
 export interface AndroidLogEntry extends LoggerEntry {
