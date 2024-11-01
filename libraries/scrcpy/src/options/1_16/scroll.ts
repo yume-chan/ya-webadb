@@ -1,4 +1,4 @@
-import { s32, Struct, u16, u32, u8 } from "@yume-chan/struct";
+import { s32, struct, u16, u32, u8 } from "@yume-chan/struct";
 
 import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
 import { ScrcpyControlMessageType } from "../../control/index.js";
@@ -9,7 +9,7 @@ export interface ScrcpyScrollController {
     ): Uint8Array | undefined;
 }
 
-export const ScrcpyInjectScrollControlMessage1_16 = new Struct(
+export const ScrcpyInjectScrollControlMessage1_16 = struct(
     {
         type: u8.as(ScrcpyControlMessageType.InjectScroll as const),
         pointerX: u32,

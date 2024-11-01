@@ -1,7 +1,7 @@
 import type { StructInit } from "@yume-chan/struct";
-import { Struct, u8 } from "@yume-chan/struct";
+import { struct, u8 } from "@yume-chan/struct";
 
-export const EmptyControlMessage = new Struct(
+export const EmptyControlMessage = struct(
     { type: u8 },
     { littleEndian: false },
 );

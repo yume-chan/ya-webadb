@@ -1,13 +1,13 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import { PushReadableStream } from "@yume-chan/stream-extra";
 import type { StructValue } from "@yume-chan/struct";
-import { buffer, Struct, u32 } from "@yume-chan/struct";
+import { buffer, struct, u32 } from "@yume-chan/struct";
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { adbSyncReadResponses, AdbSyncResponseId } from "./response.js";
 import type { AdbSyncSocket } from "./socket.js";
 
-export const AdbSyncDataResponse = new Struct(
+export const AdbSyncDataResponse = struct(
     { data: buffer(u32) },
     { littleEndian: true },
 );

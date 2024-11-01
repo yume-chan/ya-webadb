@@ -11,7 +11,7 @@ import {
     WritableStream,
 } from "@yume-chan/stream-extra";
 import type { StructValue } from "@yume-chan/struct";
-import { Struct, buffer, u32, u8 } from "@yume-chan/struct";
+import { buffer, struct, u32, u8 } from "@yume-chan/struct";
 
 import type { Adb, AdbSocket } from "../../../adb.js";
 import { AdbFeature } from "../../../features.js";
@@ -32,7 +32,7 @@ export type AdbShellProtocolId =
     (typeof AdbShellProtocolId)[keyof typeof AdbShellProtocolId];
 
 // This packet format is used in both directions.
-export const AdbShellProtocolPacket = new Struct(
+export const AdbShellProtocolPacket = struct(
     {
         id: u8.as<AdbShellProtocolId>(),
         data: buffer(u32),

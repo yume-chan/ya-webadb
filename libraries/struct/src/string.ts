@@ -25,15 +25,19 @@ export interface String {
     ): Field<string, KOmitInit, KS>;
 }
 
-export const string: String = ((
+// This is required for Rollup tree-shaking to work.
+/* #__NO_SIDE_EFFECTS__ */
+function _string(
     lengthOrField: string | number | BufferLengthConverter<string, unknown>,
 ): Field<string, string, Record<string, unknown>> & {
     as: <T>(infer: T) => Field<T, string, Record<string, unknown>>;
-} => {
+} {
     const field = buffer(lengthOrField as never, {
         convert: decodeUtf8,
         back: encodeUtf8,
     });
     (field as never as { as: unknown }).as = () => field;
     return field as never;
-}) as never;
+}
+
+export const string: String = _string as never;

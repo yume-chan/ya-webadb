@@ -4,15 +4,12 @@ import { describe, it } from "node:test";
 import { buffer } from "./buffer.js";
 import type { ExactReadable } from "./readable.js";
 import { ExactReadableEndedError } from "./readable.js";
-import { Struct } from "./struct.js";
+import { struct } from "./struct.js";
 
 describe("buffer", () => {
     describe("fixed size", () => {
         it("should deserialize", () => {
-            const A = new Struct(
-                { value: buffer(10) },
-                { littleEndian: false },
-            );
+            const A = struct({ value: buffer(10) }, { littleEndian: false });
             const reader: ExactReadable = {
                 position: 0,
                 readExactly() {
@@ -25,10 +22,7 @@ describe("buffer", () => {
         });
 
         it("should throw for not enough data", () => {
-            const A = new Struct(
-                { value: buffer(10) },
-                { littleEndian: false },
-            );
+            const A = struct({ value: buffer(10) }, { littleEndian: false });
             const reader: ExactReadable = {
                 position: 0,
                 readExactly() {
@@ -43,10 +37,7 @@ describe("buffer", () => {
         });
 
         it("should throw for no data", () => {
-            const A = new Struct(
-                { value: buffer(10) },
-                { littleEndian: false },
-            );
+            const A = struct({ value: buffer(10) }, { littleEndian: false });
             const reader: ExactReadable = {
                 position: 0,
                 readExactly() {

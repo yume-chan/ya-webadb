@@ -2,10 +2,10 @@
 
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import {
-    ExactReadableEndedError,
-    Struct,
     encodeUtf8,
+    ExactReadableEndedError,
     string,
+    struct,
 } from "@yume-chan/struct";
 
 import type { Adb, AdbIncomingSocketHandler } from "../adb.js";
@@ -19,7 +19,7 @@ export interface AdbForwardListener {
     remoteName: string;
 }
 
-const AdbReverseStringResponse = new Struct(
+const AdbReverseStringResponse = struct(
     {
         length: string(4),
         content: string({
@@ -38,7 +38,6 @@ const AdbReverseStringResponse = new Struct(
 export class AdbReverseError extends Error {
     constructor(message: string) {
         super(message);
-        Object.setPrototypeOf(this, new.target.prototype);
     }
 }
 
@@ -50,19 +49,22 @@ export class AdbReverseNotSupportedError extends AdbReverseError {
     }
 }
 
-const AdbReverseErrorResponse = new Struct(AdbReverseStringResponse.fields, {
-    littleEndian: true,
-    postDeserialize: (value) => {
-        // https://issuetracker.google.com/issues/37066218
-        // ADB on Android <9 can't create reverse tunnels when connected wirelessly (ADB over Wi-Fi),
-        // and returns this confusing "more than one device/emulator" error.
-        if (value.content === "more than one device/emulator") {
-            throw new AdbReverseNotSupportedError();
-        } else {
-            throw new AdbReverseError(value.content);
-        }
+const AdbReverseErrorResponse = struct(
+    /* #__PURE__ */ (() => AdbReverseStringResponse.fields)(),
+    {
+        littleEndian: true,
+        postDeserialize: (value) => {
+            // https://issuetracker.google.com/issues/37066218
+            // ADB on Android <9 can't create reverse tunnels when connected wirelessly (ADB over Wi-Fi),
+            // and returns this confusing "more than one device/emulator" error.
+            if (value.content === "more than one device/emulator") {
+                throw new AdbReverseNotSupportedError();
+            } else {
+                throw new AdbReverseError(value.content);
+            }
+        },
     },
-});
+);
 
 // Like `hexToNumber`, it's much faster than first converting `buffer` to a string
 function decimalToNumber(buffer: Uint8Array) {

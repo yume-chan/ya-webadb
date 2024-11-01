@@ -1,12 +1,12 @@
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import type { StructValue } from "@yume-chan/struct";
-import { buffer, Struct, StructEmptyError, u32 } from "@yume-chan/struct";
+import { buffer, struct, StructEmptyError, u32 } from "@yume-chan/struct";
 
 import type { Adb } from "../adb.js";
 
-const Version = new Struct({ version: u32 }, { littleEndian: true });
+const Version = struct({ version: u32 }, { littleEndian: true });
 
-export const AdbFrameBufferV1 = new Struct(
+export const AdbFrameBufferV1 = struct(
     {
         bpp: u32,
         size: u32,
@@ -27,7 +27,7 @@ export const AdbFrameBufferV1 = new Struct(
 
 export type AdbFrameBufferV1 = StructValue<typeof AdbFrameBufferV1>;
 
-export const AdbFrameBufferV2 = new Struct(
+export const AdbFrameBufferV2 = struct(
     {
         bpp: u32,
         colorSpace: u32,

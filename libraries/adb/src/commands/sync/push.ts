@@ -4,7 +4,7 @@ import {
     DistributionStream,
     MaybeConsumable,
 } from "@yume-chan/stream-extra";
-import { Struct, u32 } from "@yume-chan/struct";
+import { struct, u32 } from "@yume-chan/struct";
 
 import { NOOP } from "../../utils/index.js";
 
@@ -25,7 +25,7 @@ export interface AdbSyncPushV1Options {
     packetSize?: number;
 }
 
-export const AdbSyncOkResponse = new Struct(
+export const AdbSyncOkResponse = struct(
     { unused: u32 },
     { littleEndian: true },
 );
@@ -114,7 +114,7 @@ export interface AdbSyncPushV2Options extends AdbSyncPushV1Options {
     dryRun?: boolean;
 }
 
-export const AdbSyncSendV2Request = new Struct(
+export const AdbSyncSendV2Request = struct(
     { id: u32, mode: u32, flags: u32.as<AdbSyncSendV2Flags>() },
     { littleEndian: true },
 );

@@ -11,7 +11,7 @@ import {
     WritableStream,
 } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable, StructValue } from "@yume-chan/struct";
-import { Struct, decodeUtf8, u16, u32 } from "@yume-chan/struct";
+import { decodeUtf8, struct, u16, u32 } from "@yume-chan/struct";
 
 // `adb logcat` is an alias to `adb shell logcat`
 // so instead of adding to core library, it's implemented here
@@ -99,7 +99,7 @@ export interface LogcatOptions {
 const NANOSECONDS_PER_SECOND = /* #__PURE__ */ BigInt(1e9);
 
 // https://cs.android.com/android/platform/superproject/+/master:system/logging/liblog/include/log/log_read.h;l=39;drc=82b5738732161dbaafb2e2f25cce19cd26b9157d
-export const LoggerEntry = new Struct(
+export const LoggerEntry = struct(
     {
         payloadSize: u16,
         headerSize: u16,

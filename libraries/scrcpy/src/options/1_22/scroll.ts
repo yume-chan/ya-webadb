@@ -1,13 +1,16 @@
 import type { StructInit } from "@yume-chan/struct";
-import { s32, Struct } from "@yume-chan/struct";
+import { s32, struct } from "@yume-chan/struct";
 
 import {
     ScrcpyInjectScrollControlMessage1_16,
     ScrcpyScrollController1_16,
 } from "../1_16/index.js";
 
-export const ScrcpyInjectScrollControlMessage1_22 = new Struct(
-    { ...ScrcpyInjectScrollControlMessage1_16.fields, buttons: s32 },
+export const ScrcpyInjectScrollControlMessage1_22 = struct(
+    /* #__PURE__ */ (() => ({
+        ...ScrcpyInjectScrollControlMessage1_16.fields,
+        buttons: s32,
+    }))(),
     { littleEndian: false },
 );
 

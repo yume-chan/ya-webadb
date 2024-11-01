@@ -1,6 +1,6 @@
 import { getInt16, setInt16 } from "@yume-chan/no-data-view";
 import type { Field, StructInit } from "@yume-chan/struct";
-import { bipedal, Struct, u16, u32, u8 } from "@yume-chan/struct";
+import { bipedal, struct, u16, u32, u8 } from "@yume-chan/struct";
 
 import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
 import { ScrcpyControlMessageType } from "../../control/index.js";
@@ -23,7 +23,7 @@ export const ScrcpySignedFloat: Field<number, never, never> = {
     }),
 };
 
-export const ScrcpyInjectScrollControlMessage1_25 = new Struct(
+export const ScrcpyInjectScrollControlMessage1_25 = struct(
     {
         type: u8.as(ScrcpyControlMessageType.InjectScroll as const),
         pointerX: u32,

@@ -25,9 +25,9 @@ $ npm i @yume-chan/struct
 ## Quick Start
 
 ```ts
-import { Struct, u8, u16, s32, buffer, string } from "@yume-chan/struct";
+import { struct, u8, u16, s32, buffer, string } from "@yume-chan/struct";
 
-const Message = new Struct(
+const Message = struct(
     {
         a: u8,
         b: u16,
@@ -94,7 +94,7 @@ const MyField: Field<number, never, never> = {
     },
 };
 
-const Message2 = new Struct({
+const Message2 = struct({
     a: u8,
     b: MyField,
 });

@@ -1,5 +1,5 @@
 import type { StructInit } from "@yume-chan/struct";
-import { Struct, u32, u8 } from "@yume-chan/struct";
+import { struct, u32, u8 } from "@yume-chan/struct";
 
 export enum AndroidKeyEventAction {
     Down = 0,
@@ -206,7 +206,7 @@ export enum AndroidKeyCode {
     AndroidPaste,
 }
 
-export const ScrcpyInjectKeyCodeControlMessage = new Struct(
+export const ScrcpyInjectKeyCodeControlMessage = struct(
     {
         type: u8,
         action: u8.as<AndroidKeyEventAction>(),

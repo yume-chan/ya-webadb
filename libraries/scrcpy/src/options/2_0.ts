@@ -5,7 +5,7 @@ import {
     PushReadableStream,
 } from "@yume-chan/stream-extra";
 import type { MaybePromiseLike, StructInit } from "@yume-chan/struct";
-import { Struct, u16, u32, u64, u8 } from "@yume-chan/struct";
+import { struct, u16, u32, u64, u8 } from "@yume-chan/struct";
 
 import type {
     AndroidMotionEventAction,
@@ -30,7 +30,7 @@ import type {
 } from "./types.js";
 import { ScrcpyOptions } from "./types.js";
 
-export const ScrcpyInjectTouchControlMessage2_0 = new Struct(
+export const ScrcpyInjectTouchControlMessage2_0 = struct(
     {
         type: u8,
         action: u8.as<AndroidMotionEventAction>(),

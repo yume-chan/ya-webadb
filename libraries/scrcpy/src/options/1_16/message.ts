@@ -1,5 +1,5 @@
 import type { StructInit } from "@yume-chan/struct";
-import { Struct, buffer, string, u16, u32, u64, u8 } from "@yume-chan/struct";
+import { buffer, string, struct, u16, u32, u64, u8 } from "@yume-chan/struct";
 
 import type { AndroidMotionEventAction } from "../../control/index.js";
 import {
@@ -24,14 +24,14 @@ export const SCRCPY_CONTROL_MESSAGE_TYPES_1_16: readonly ScrcpyControlMessageTyp
         /* 10 */ ScrcpyControlMessageType.RotateDevice,
     ];
 
-export const ScrcpyMediaStreamRawPacket = new Struct(
+export const ScrcpyMediaStreamRawPacket = struct(
     { pts: u64, data: buffer(u32) },
     { littleEndian: false },
 );
 
 export const SCRCPY_MEDIA_PACKET_FLAG_CONFIG = 1n << 63n;
 
-export const ScrcpyInjectTouchControlMessage1_16 = new Struct(
+export const ScrcpyInjectTouchControlMessage1_16 = struct(
     {
         type: u8,
         action: u8.as<AndroidMotionEventAction>(),
@@ -52,7 +52,7 @@ export type ScrcpyInjectTouchControlMessage1_16 = StructInit<
 
 export const ScrcpyBackOrScreenOnControlMessage1_16 = EmptyControlMessage;
 
-export const ScrcpySetClipboardControlMessage1_15 = new Struct(
+export const ScrcpySetClipboardControlMessage1_15 = struct(
     { type: u8, content: string(u32) },
     { littleEndian: false },
 );
@@ -61,7 +61,7 @@ export type ScrcpySetClipboardControlMessage1_15 = StructInit<
     typeof ScrcpySetClipboardControlMessage1_15
 >;
 
-export const ScrcpyClipboardDeviceMessage = new Struct(
+export const ScrcpyClipboardDeviceMessage = struct(
     { content: string(u32) },
     { littleEndian: false },
 );

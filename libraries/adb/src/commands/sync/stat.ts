@@ -1,5 +1,5 @@
 import type { StructValue } from "@yume-chan/struct";
-import { Struct, u32, u64 } from "@yume-chan/struct";
+import { struct, u32, u64 } from "@yume-chan/struct";
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponse } from "./response.js";
@@ -27,7 +27,7 @@ export interface AdbSyncStat {
     ctime?: bigint;
 }
 
-export const AdbSyncLstatResponse = new Struct(
+export const AdbSyncLstatResponse = struct(
     { mode: u32, size: u32, mtime: u32 },
     {
         littleEndian: true,
@@ -86,7 +86,7 @@ const AdbSyncStatErrorName =
         ]),
     );
 
-export const AdbSyncStatResponse = new Struct(
+export const AdbSyncStatResponse = struct(
     {
         error: u32.as<AdbSyncStatErrorCode>(),
         dev: u64,

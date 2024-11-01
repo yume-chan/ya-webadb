@@ -1,6 +1,6 @@
 import { getUint32LittleEndian } from "@yume-chan/no-data-view";
 import type { AsyncExactReadable, StructLike } from "@yume-chan/struct";
-import { Struct, decodeUtf8, string, u32 } from "@yume-chan/struct";
+import { decodeUtf8, string, struct, u32 } from "@yume-chan/struct";
 
 function encodeAsciiUnchecked(value: string): Uint8Array {
     const result = new Uint8Array(value.length);
@@ -36,7 +36,7 @@ export const AdbSyncResponseId = {
 
 export class AdbSyncError extends Error {}
 
-export const AdbSyncFailResponse = new Struct(
+export const AdbSyncFailResponse = struct(
     { message: string(u32) },
     {
         littleEndian: true,

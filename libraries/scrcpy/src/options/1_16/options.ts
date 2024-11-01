@@ -37,7 +37,7 @@ import {
 
 import { CodecOptions } from "./codec-options.js";
 import type { ScrcpyOptionsInit1_16 } from "./init.js";
-import { ScrcpyLogLevel1_16, ScrcpyVideoOrientation1_16 } from "./init.js";
+import { ScrcpyVideoOrientation1_16 } from "./init.js";
 import {
     SCRCPY_CONTROL_MESSAGE_TYPES_1_16,
     SCRCPY_MEDIA_PACKET_FLAG_CONFIG,
@@ -52,7 +52,7 @@ import { ScrcpyScrollController1_16 } from "./scroll.js";
 
 export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
     static readonly DEFAULTS = {
-        logLevel: ScrcpyLogLevel1_16.Debug,
+        logLevel: "debug",
         maxSize: 0,
         bitRate: 8_000_000,
         maxFps: 0,

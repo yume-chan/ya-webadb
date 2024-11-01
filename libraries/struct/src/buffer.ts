@@ -42,14 +42,16 @@ export interface BufferLike {
 
 export const EmptyUint8Array = new Uint8Array(0);
 
-export const buffer: BufferLike = ((
+// This is required for Rollup tree-shaking to work.
+/* #__NO_SIDE_EFFECTS__ */
+function _buffer(
     lengthOrField:
         | string
         | number
         | Field<number, never, unknown>
         | BufferLengthConverter<string, unknown>,
     converter?: Converter<Uint8Array, unknown>,
-): Field<unknown, string, Record<string, unknown>> => {
+): Field<unknown, string, Record<string, unknown>> {
     if (typeof lengthOrField === "number") {
         if (converter) {
             return {
@@ -226,4 +228,6 @@ export const buffer: BufferLike = ((
             return reader.readExactly(length);
         },
     };
-}) as never;
+}
+
+export const buffer: BufferLike = _buffer as never;

@@ -1,11 +1,6 @@
 import type { CodecOptions } from "./codec-options.js";
 
-export enum ScrcpyLogLevel1_16 {
-    Debug = "debug",
-    Info = "info",
-    Warn = "warn",
-    Error = "error",
-}
+export type ScrcpyLogLevel1_16 = "debug" | "info" | "warn" | "error";
 
 export enum ScrcpyVideoOrientation1_16 {
     Unlocked = -1,
