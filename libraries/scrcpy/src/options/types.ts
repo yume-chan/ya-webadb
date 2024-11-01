@@ -77,7 +77,7 @@ export abstract class ScrcpyOptions<T extends object> {
 
     readonly value: Required<T>;
 
-    get clipboard(): ReadableStream<string> {
+    get clipboard(): ReadableStream<string> | undefined {
         return this.#base.clipboard;
     }
 

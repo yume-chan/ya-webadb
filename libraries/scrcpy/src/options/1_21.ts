@@ -6,6 +6,7 @@ import { Struct, string, u32, u64, u8 } from "@yume-chan/struct";
 
 import type { ScrcpySetClipboardControlMessage } from "../control/index.js";
 
+import type { ReadableStream } from "@yume-chan/stream-extra";
 import type { ScrcpyOptionsInit1_18 } from "./1_18.js";
 import { ScrcpyOptions1_18 } from "./1_18.js";
 import { ScrcpyOptions, toScrcpyOptionValue } from "./types.js";
@@ -73,6 +74,14 @@ export class ScrcpyOptions1_21 extends ScrcpyOptions<ScrcpyOptionsInit1_21> {
     }
 
     #clipboardAck = new Map<bigint, PromiseResolver<void>>();
+
+    override get clipboard(): ReadableStream<string> | undefined {
+        if (this.value.clipboardAutosync) {
+            return super.clipboard;
+        } else {
+            return undefined;
+        }
+    }
 
     constructor(init: ScrcpyOptionsInit1_21) {
         super(ScrcpyOptions1_18, init, ScrcpyOptions1_21.DEFAULTS);

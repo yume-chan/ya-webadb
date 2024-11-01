@@ -120,17 +120,20 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
         return SCRCPY_CONTROL_MESSAGE_TYPES_1_16;
     }
 
-    #clipboardController!: PushReadableStreamController<string>;
-    #clipboard: ReadableStream<string>;
+    #clipboardController: PushReadableStreamController<string> | undefined;
+    #clipboard: ReadableStream<string> | undefined;
     override get clipboard() {
         return this.#clipboard;
     }
 
     constructor(init: ScrcpyOptionsInit1_16) {
         super(ScrcpyOptions0_00, init, ScrcpyOptions1_16.DEFAULTS);
-        this.#clipboard = new PushReadableStream<string>((controller) => {
-            this.#clipboardController = controller;
-        });
+
+        if (this.value.control) {
+            this.#clipboard = new PushReadableStream<string>((controller) => {
+                this.#clipboardController = controller;
+            });
+        }
     }
 
     serialize(): string[] {
@@ -181,7 +184,7 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     async #parseClipboardMessage(stream: AsyncExactReadable) {
         const message = await ScrcpyClipboardDeviceMessage.deserialize(stream);
-        await this.#clipboardController.enqueue(message.content);
+        await this.#clipboardController?.enqueue(message.content);
     }
 
     override async parseDeviceMessage(
@@ -200,9 +203,9 @@ export class ScrcpyOptions1_16 extends ScrcpyOptions<ScrcpyOptionsInit1_16> {
 
     override endDeviceMessageStream(e?: unknown): void {
         if (e) {
-            this.#clipboardController.error(e);
+            this.#clipboardController?.error(e);
         } else {
-            this.#clipboardController.close();
+            this.#clipboardController?.close();
         }
     }
 
