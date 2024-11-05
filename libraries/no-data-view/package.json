@@ -35,7 +35,7 @@
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.3.3",
-        "tinybench": "^2.9.0",
+        "tinybench": "^3.0.0",
         "typescript": "^5.6.3"
     }
 }
