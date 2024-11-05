@@ -85,51 +85,7 @@ function _buffer(
         };
     }
 
-    if (typeof lengthOrField === "string") {
-        if (converter) {
-            return {
-                size: 0,
-                preSerialize: (value, runtimeStruct) => {
-                    runtimeStruct[lengthOrField] = converter.back(value).length;
-                },
-                serialize: (value, { buffer, index }) => {
-                    buffer.set(converter.back(value), index);
-                },
-                deserialize: bipedal(function* (
-                    then,
-                    { reader, runtimeStruct },
-                ) {
-                    const length = runtimeStruct[lengthOrField] as number;
-                    if (length === 0) {
-                        return converter.convert(EmptyUint8Array);
-                    }
-
-                    const value = yield* then(reader.readExactly(length));
-                    return converter.convert(value);
-                }),
-            };
-        }
-
-        return {
-            size: 0,
-            preSerialize: (value, runtimeStruct) => {
-                runtimeStruct[lengthOrField] = (value as Uint8Array).length;
-            },
-            serialize: (value, { buffer, index }) => {
-                buffer.set(value as Uint8Array, index);
-            },
-            deserialize: ({ reader, runtimeStruct }) => {
-                const length = runtimeStruct[lengthOrField] as number;
-                if (length === 0) {
-                    return EmptyUint8Array;
-                }
-
-                return reader.readExactly(length);
-            },
-        };
-    }
-
-    if ("serialize" in lengthOrField) {
+    if (typeof lengthOrField === "object" && "serialize" in lengthOrField) {
         if (converter) {
             return {
                 size: 0,
@@ -185,12 +141,65 @@ function _buffer(
         };
     }
 
+    if (typeof lengthOrField === "string") {
+        if (converter) {
+            return {
+                size: 0,
+                preSerialize: (value, runtimeStruct) => {
+                    runtimeStruct[lengthOrField] = converter.back(value).length;
+                },
+                dynamicSize: (value) => {
+                    return converter.back(value).length;
+                },
+                serialize: (value, { buffer, index }) => {
+                    buffer.set(converter.back(value), index);
+                },
+                deserialize: bipedal(function* (
+                    then,
+                    { reader, runtimeStruct },
+                ) {
+                    const length = runtimeStruct[lengthOrField] as number;
+                    if (length === 0) {
+                        return converter.convert(EmptyUint8Array);
+                    }
+
+                    const value = yield* then(reader.readExactly(length));
+                    return converter.convert(value);
+                }),
+            };
+        }
+
+        return {
+            size: 0,
+            preSerialize: (value, runtimeStruct) => {
+                runtimeStruct[lengthOrField] = (value as Uint8Array).length;
+            },
+            dynamicSize: (value) => {
+                return (value as Uint8Array).length;
+            },
+            serialize: (value, { buffer, index }) => {
+                buffer.set(value as Uint8Array, index);
+            },
+            deserialize: ({ reader, runtimeStruct }) => {
+                const length = runtimeStruct[lengthOrField] as number;
+                if (length === 0) {
+                    return EmptyUint8Array;
+                }
+
+                return reader.readExactly(length);
+            },
+        };
+    }
+
     if (converter) {
         return {
             size: 0,
             preSerialize: (value, runtimeStruct) => {
                 const length = converter.back(value).length;
                 runtimeStruct[lengthOrField.field] = lengthOrField.back(length);
+            },
+            dynamicSize: (value) => {
+                return converter.back(value).length;
             },
             serialize: (value, { buffer, index }) => {
                 buffer.set(converter.back(value), index);
@@ -214,6 +223,9 @@ function _buffer(
             runtimeStruct[lengthOrField.field] = lengthOrField.back(
                 (value as Uint8Array).length,
             );
+        },
+        dynamicSize: (value) => {
+            return (value as Uint8Array).length;
         },
         serialize: (value, { buffer, index }) => {
             buffer.set(value as Uint8Array, index);
