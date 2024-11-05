@@ -1,12 +1,12 @@
 // cspell: ignore autosync
 
 import { PromiseResolver } from "@yume-chan/async";
+import type { ReadableStream } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable, StructInit } from "@yume-chan/struct";
 import { string, struct, u32, u64, u8 } from "@yume-chan/struct";
 
 import type { ScrcpySetClipboardControlMessage } from "../control/index.js";
 
-import type { ReadableStream } from "@yume-chan/stream-extra";
 import type { ScrcpyOptionsInit1_18 } from "./1_18.js";
 import { ScrcpyOptions1_18 } from "./1_18.js";
 import { ScrcpyOptions, toScrcpyOptionValue } from "./types.js";

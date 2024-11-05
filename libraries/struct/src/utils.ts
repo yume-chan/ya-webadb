@@ -6,26 +6,24 @@
 // But using top level await to load them requires Node.js 14.1.
 // So there is no point to do that. Let's just assume they exist in global.
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-declare class TextEncoderType {
-    constructor();
-
+interface TextEncoder {
     encode(input: string): Uint8Array;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-declare class TextDecoderType {
-    constructor();
-
-    decode(buffer: ArrayBufferView | ArrayBuffer): string;
+interface TextDecoder {
+    decode(
+        buffer?: ArrayBufferView | ArrayBuffer,
+        options?: { stream?: boolean },
+    ): string;
 }
 
 interface GlobalExtension {
-    TextEncoder: typeof TextEncoderType;
-    TextDecoder: typeof TextDecoderType;
+    TextEncoder: new () => TextEncoder;
+    TextDecoder: new () => TextDecoder;
 }
 
-const { TextEncoder, TextDecoder } = globalThis as unknown as GlobalExtension;
+export const { TextEncoder, TextDecoder } =
+    globalThis as unknown as GlobalExtension;
 
 const SharedEncoder = /* #__PURE__ */ new TextEncoder();
 const SharedDecoder = /* #__PURE__ */ new TextDecoder();

@@ -1,5 +1,5 @@
-import type { AsyncExactReadable } from "@yume-chan/struct";
-import { ExactReadableEndedError } from "@yume-chan/struct";
+import type { AsyncExactReadable, MaybePromiseLike } from "@yume-chan/struct";
+import { bipedal, ExactReadableEndedError } from "@yume-chan/struct";
 
 import { PushReadableStream } from "./push-readable.js";
 import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
@@ -7,6 +7,8 @@ import { tryCancel } from "./try-close.js";
 
 export class BufferedReadableStream implements AsyncExactReadable {
     #buffered: Uint8Array | undefined;
+    // PERF: `subarray` is slow
+    // don't use it until absolutely necessary
     #bufferedOffset = 0;
     #bufferedLength = 0;
 
@@ -23,99 +25,124 @@ export class BufferedReadableStream implements AsyncExactReadable {
         this.reader = stream.getReader();
     }
 
-    async #readSource() {
+    #readBuffered(length: number) {
+        if (!this.#buffered) {
+            return undefined;
+        }
+
+        const value = this.#buffered.subarray(
+            this.#bufferedOffset,
+            this.#bufferedOffset + length,
+        );
+
+        // PERF: Synchronous path for reading from internal buffer
+        if (this.#bufferedLength > length) {
+            this.#position += length;
+            this.#bufferedOffset += length;
+            this.#bufferedLength -= length;
+            return value;
+        }
+
+        this.#position += this.#bufferedLength;
+        this.#buffered = undefined;
+        this.#bufferedOffset = 0;
+        this.#bufferedLength = 0;
+        return value;
+    }
+
+    async #readSource(length: number): Promise<Uint8Array> {
         const { done, value } = await this.reader.read();
         if (done) {
             throw new ExactReadableEndedError();
         }
+
+        if (value.length > length) {
+            this.#buffered = value;
+            this.#bufferedOffset = length;
+            this.#bufferedLength = value.length - length;
+            this.#position += length;
+            return value.subarray(0, length);
+        }
+
+        this.#position += value.length;
         return value;
     }
 
-    async #readAsync(length: number, initial?: Uint8Array) {
-        let result: Uint8Array;
-        let index: number;
+    iterateExactly(
+        length: number,
+    ): Iterator<MaybePromiseLike<Uint8Array>, void, void> {
+        let state = this.#buffered ? 0 : 1;
+        return {
+            next: () => {
+                switch (state) {
+                    case 0: {
+                        const value = this.#readBuffered(length)!;
+                        if (value.length === length) {
+                            state = 2;
+                        } else {
+                            length -= value.length;
+                            state = 1;
+                        }
+                        return { done: false, value };
+                    }
+                    case 1:
+                        state = 3;
+                        return {
+                            done: false,
+                            value: this.#readSource(length).then((value) => {
+                                if (value.length === length) {
+                                    state = 2;
+                                } else {
+                                    length -= value.length;
+                                    state = 1;
+                                }
+                                return value;
+                            }),
+                        };
+                    case 2:
+                        return { done: true, value: undefined };
+                    case 3:
+                        throw new Error(
+                            "Can't call `next` before previous Promise resolves",
+                        );
+                    default:
+                        throw new Error("unreachable");
+                }
+            },
+        };
+    }
 
+    readExactly = bipedal(function* (
+        this: BufferedReadableStream,
+        then,
+        length: number,
+    ) {
+        let result: Uint8Array | undefined;
+        let index = 0;
+
+        const initial = this.#readBuffered(length);
         if (initial) {
+            if (initial.length === length) {
+                return initial;
+            }
+
             result = new Uint8Array(length);
-            result.set(initial);
-            index = initial.length;
+            result.set(initial, index);
+            index += initial.length;
             length -= initial.length;
         } else {
-            const array = await this.#readSource();
-            if (array.length === length) {
-                this.#position += length;
-                return array;
-            }
-
-            if (array.length > length) {
-                this.#buffered = array;
-                this.#bufferedOffset = length;
-                this.#bufferedLength = array.length - length;
-                this.#position += length;
-                return array.subarray(0, length);
-            }
-
             result = new Uint8Array(length);
-            result.set(array);
-            index = array.length;
-            length -= array.length;
-            this.#position += array.length;
         }
 
         while (length > 0) {
-            const array = await this.#readSource();
-            if (array.length === length) {
-                result.set(array, index);
-                this.#position += length;
-                return result;
-            }
-
-            if (array.length > length) {
-                this.#buffered = array;
-                this.#bufferedOffset = length;
-                this.#bufferedLength = array.length - length;
-                result.set(array.subarray(0, length), index);
-                this.#position += length;
-                return result;
-            }
-
-            result.set(array, index);
-            index += array.length;
-            length -= array.length;
-            this.#position += array.length;
+            const value = yield* then(this.#readSource(length));
+            result.set(value, index);
+            index += value.length;
+            length -= value.length;
         }
 
         return result;
-    }
-
-    /**
-     *
-     * @param length
-     * @returns
-     */
-    readExactly(length: number): Uint8Array | Promise<Uint8Array> {
-        // PERF: Add a synchronous path for reading from internal buffer
-        if (this.#buffered) {
-            const array = this.#buffered;
-            const offset = this.#bufferedOffset;
-            if (this.#bufferedLength > length) {
-                // PERF: `subarray` is slow
-                // don't use it until absolutely necessary
-                this.#bufferedOffset += length;
-                this.#bufferedLength -= length;
-                this.#position += length;
-                return array.subarray(offset, offset + length);
-            }
-
-            this.#buffered = undefined;
-            this.#bufferedLength = 0;
-            this.#bufferedOffset = 0;
-            this.#position += array.length - offset;
-            return this.#readAsync(length, array.subarray(offset));
-        }
-
-        return this.#readAsync(length);
-    }
+    });
 
     /**
      * Return a readable stream with unconsumed data (if any) and

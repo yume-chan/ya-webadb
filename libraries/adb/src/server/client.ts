@@ -1,6 +1,7 @@
 // cspell:ignore tport
 
 import { PromiseResolver } from "@yume-chan/async";
+import { EventEmitter } from "@yume-chan/event";
 import { getUint64LittleEndian } from "@yume-chan/no-data-view";
 import type {
     AbortSignal,
@@ -14,10 +15,16 @@ import {
     tryClose,
 } from "@yume-chan/stream-extra";
 import type { MaybePromiseLike } from "@yume-chan/struct";
-import { bipedal, decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
+import {
+    bipedal,
+    decodeUtf8,
+    encodeUtf8,
+    TextDecoder,
+} from "@yume-chan/struct";
 
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
+import type { DeviceObserver } from "../device-observer.js";
 import type { AdbFeature } from "../features.js";
 import { hexToNumber, sequenceEqual, write4HexDigits } from "../utils/index.js";
 
@@ -47,26 +54,18 @@ class AdbServerStream {
         if (length === 0) {
             return "";
         } else {
-            // TODO: Investigate using stream mode `TextDecoder` for long strings.
-            // Because concatenating strings uses rope data structure,
-            // which only points to the original strings and doesn't copy the data,
-            // it's more efficient than concatenating `Uint8Array`s.
-            //
-            // ```
-            // const decoder = new TextDecoder();
-            // let result = '';
-            // for await (const chunk of stream.iterateExactly(length)) {
-            //     result += decoder.decode(chunk, { stream: true });
-            // }
-            // result += decoder.decode();
-            // return result;
-            // ```
-            //
-            // Although, it will be super complex to use `SyncPromise` with async iterator,
-            // `stream.iterateExactly` need to return an
-            // `Iterator<Uint8Array | Promise<Uint8Array>>` instead of a true async iterator.
-            // Maybe `SyncPromise` should support async iterators directly.
-            return decodeUtf8(yield* then(this.readExactly(length)));
+            const decoder = new TextDecoder();
+            let result = "";
+            const iterator = this.#buffered.iterateExactly(length);
+            while (true) {
+                const { done, value } = iterator.next();
+                if (done) {
+                    break;
+                }
+                result += decoder.decode(yield* then(value), { stream: true });
+            }
+            result += decoder.decode();
+            return result;
         }
     });
 
@@ -294,26 +293,55 @@ export class AdbServerClient {
      *
      * [Online Documentation](https://docs.tangoapp.dev/tango/server/watch/)
      */
-    async *trackDevices(
-        signal?: AbortSignal,
-    ): AsyncGenerator<AdbServerClient.Device[], void, void> {
+    async trackDevices(): Promise<DeviceObserver<AdbServerClient.Device>> {
         const connection = await this.createConnection("host:track-devices-l");
-        try {
+
+        let current: AdbServerClient.Device[] = [];
+        const deviceAddedEvent = new EventEmitter<AdbServerClient.Device[]>();
+        const deviceRemovedEvent = new EventEmitter<AdbServerClient.Device[]>();
+        const listChangedEvent = new EventEmitter<AdbServerClient.Device[]>();
+
+        void (async () => {
             while (true) {
-                const response = await raceSignal(
-                    async () => await connection.readString(),
-                    signal,
-                );
-                const devices = AdbServerClient.parseDeviceList(response);
-                yield devices;
+                const response = await connection.readString();
+                const next = AdbServerClient.parseDeviceList(response);
+
+                const added: AdbServerClient.Device[] = [];
+                for (const nextDevice of next) {
+                    const index = current.findIndex(
+                        (device) =>
+                            device.transportId === nextDevice.transportId,
+                    );
+                    if (index === -1) {
+                        added.push(nextDevice);
+                        continue;
+                    }
+
+                    current[index] = current[current.length - 1]!;
+                    current.length -= 1;
+                }
+
+                if (added.length) {
+                    deviceAddedEvent.fire(added);
+                }
+                if (current.length) {
+                    deviceRemovedEvent.fire(current);
+                }
+
+                current = next;
+                listChangedEvent.fire(current);
             }
-        } catch (e) {
-            if (e === signal?.reason) {
-                return;
-            }
-        } finally {
-            await connection.dispose();
-        }
+        })();
+
+        return {
+            deviceAdded: deviceAddedEvent.event,
+            deviceRemoved: deviceRemovedEvent.event,
+            listChanged: listChangedEvent.event,
+            get current() {
+                return current;
+            },
+            stop: () => connection.dispose(),
+        };
     }
 
     /**

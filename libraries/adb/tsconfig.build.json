@@ -1,17 +1,3 @@
 {
-    "extends": "./node_modules/@yume-chan/tsconfig/tsconfig.base.json",
-    "references": [
-        {
-            "path": "../event/tsconfig.build.json"
-        },
-        {
-            "path": "../no-data-view/tsconfig.build.json"
-        },
-        {
-            "path": "../stream-extra/tsconfig.build.json"
-        },
-        {
-            "path": "../struct/tsconfig.build.json"
-        }
-    ]
+    "extends": "./node_modules/@yume-chan/tsconfig/tsconfig.base.json"
 }

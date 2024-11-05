@@ -29,6 +29,7 @@ export type StructInit<
 export type StructValue<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     T extends Struct<any, any, any>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 > = T extends Struct<any, any, infer P> ? P : never;
 
 export class StructDeserializeError extends Error {

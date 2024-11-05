@@ -99,3 +99,37 @@ export function findUsbEndpoints(endpoints: USBEndpoint[]) {
     }
     throw new Error("unreachable");
 }
+
+export function matchesFilters(
+    device: USBDevice,
+    filters: (USBDeviceFilter & UsbInterfaceFilter)[],
+) {
+    for (const filter of filters) {
+        if (
+            filter.vendorId !== undefined &&
+            device.vendorId !== filter.vendorId
+        ) {
+            continue;
+        }
+        if (
+            filter.productId !== undefined &&
+            device.productId !== filter.productId
+        ) {
+            continue;
+        }
+        if (
+            filter.serialNumber !== undefined &&
+            getSerialNumber(device) !== filter.serialNumber
+        ) {
+            continue;
+        }
+
+        try {
+            findUsbAlternateInterface(device, filters);
+            return true;
+        } catch {
+            continue;
+        }
+    }
+    return false;
+}

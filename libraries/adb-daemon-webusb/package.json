@@ -34,6 +34,7 @@
     "dependencies": {
         "@types/w3c-web-usb": "^1.0.10",
         "@yume-chan/adb": "workspace:^",
+        "@yume-chan/event": "workspace:^",
         "@yume-chan/stream-extra": "workspace:^",
         "@yume-chan/struct": "workspace:^"
     },

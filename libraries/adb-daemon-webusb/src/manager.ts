@@ -1,9 +1,6 @@
 import { AdbDaemonWebUsbDevice, toAdbDeviceFilters } from "./device.js";
-import {
-    findUsbAlternateInterface,
-    getSerialNumber,
-    isErrorName,
-} from "./utils.js";
+import { AdbDaemonWebUsbDeviceObserver } from "./observer.js";
+import { isErrorName, matchesFilters } from "./utils.js";
 
 export namespace AdbDaemonWebUsbDeviceManager {
     export interface RequestDeviceOptions {
@@ -76,36 +73,7 @@ export class AdbDaemonWebUsbDeviceManager {
 
         const devices = await this.#usbManager.getDevices();
         return devices
-            .filter((device) => {
-                for (const filter of filters) {
-                    if (
-                        filter.vendorId !== undefined &&
-                        device.vendorId !== filter.vendorId
-                    ) {
-                        continue;
-                    }
-                    if (
-                        filter.productId !== undefined &&
-                        device.productId !== filter.productId
-                    ) {
-                        continue;
-                    }
-                    if (
-                        filter.serialNumber !== undefined &&
-                        getSerialNumber(device) !== filter.serialNumber
-                    ) {
-                        continue;
-                    }
-
-                    try {
-                        findUsbAlternateInterface(device, filters);
-                        return true;
-                    } catch {
-                        continue;
-                    }
-                }
-                return false;
-            })
+            .filter((device) => matchesFilters(device, filters))
             .map(
                 (device) =>
                     new AdbDaemonWebUsbDevice(
@@ -114,5 +82,9 @@ export class AdbDaemonWebUsbDeviceManager {
                         this.#usbManager,
                     ),
             );
+    }
+
+    trackDevices(filters?: USBDeviceFilter[]): AdbDaemonWebUsbDeviceObserver {
+        return new AdbDaemonWebUsbDeviceObserver(this.#usbManager, filters);
     }
 }

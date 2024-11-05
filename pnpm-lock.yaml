@@ -113,6 +113,9 @@ importers:
       '@yume-chan/adb':
         specifier: workspace:^
         version: link:../adb
+      '@yume-chan/event':
+        specifier: workspace:^
+        version: link:../event
       '@yume-chan/stream-extra':
         specifier: workspace:^
         version: link:../stream-extra
