@@ -11,7 +11,7 @@ export type AndroidScreenPowerMode =
     (typeof AndroidScreenPowerMode)[keyof typeof AndroidScreenPowerMode];
 
 export const ScrcpySetScreenPowerModeControlMessage = struct(
-    { type: u8, mode: u8.as<AndroidScreenPowerMode>() },
+    { type: u8, mode: u8<AndroidScreenPowerMode>() },
     { littleEndian: false },
 );
 

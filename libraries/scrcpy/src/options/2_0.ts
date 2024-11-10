@@ -33,7 +33,7 @@ import { ScrcpyOptions } from "./types.js";
 export const ScrcpyInjectTouchControlMessage2_0 = struct(
     {
         type: u8,
-        action: u8.as<AndroidMotionEventAction>(),
+        action: u8<AndroidMotionEventAction>(),
         pointerId: u64,
         pointerX: u32,
         pointerY: u32,

@@ -48,7 +48,7 @@ export interface ScrcpyOptionsInit1_18
 export const ScrcpyBackOrScreenOnControlMessage1_18 = struct(
     /* #__PURE__ */ (() => ({
         ...ScrcpyBackOrScreenOnControlMessage1_16.fields,
-        action: u8.as<AndroidKeyEventAction>(),
+        action: u8<AndroidKeyEventAction>(),
     }))(),
     { littleEndian: false },
 );

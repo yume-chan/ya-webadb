@@ -28,7 +28,7 @@ export const ScrcpySetClipboardControlMessage1_21 = struct(
     {
         type: u8,
         sequence: u64,
-        paste: u8.as<boolean>(),
+        paste: u8<boolean>(),
         content: string(u32),
     },
     { littleEndian: false },

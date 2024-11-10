@@ -34,7 +34,7 @@ export const SCRCPY_MEDIA_PACKET_FLAG_CONFIG = 1n << 63n;
 export const ScrcpyInjectTouchControlMessage1_16 = struct(
     {
         type: u8,
-        action: u8.as<AndroidMotionEventAction>(),
+        action: u8<AndroidMotionEventAction>(),
         pointerId: u64,
         pointerX: u32,
         pointerY: u32,

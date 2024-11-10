@@ -3,7 +3,6 @@ import type { Field, StructInit } from "@yume-chan/struct";
 import { bipedal, struct, u16, u32, u8 } from "@yume-chan/struct";
 
 import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
-import { ScrcpyControlMessageType } from "../../control/index.js";
 import type { ScrcpyScrollController } from "../1_16/index.js";
 import { clamp } from "../1_16/index.js";
 
@@ -25,7 +24,7 @@ export const ScrcpySignedFloat: Field<number, never, never> = {
 
 export const ScrcpyInjectScrollControlMessage1_25 = struct(
     {
-        type: u8.as(ScrcpyControlMessageType.InjectScroll as const),
+        type: u8,
         pointerX: u32,
         pointerY: u32,
         screenWidth: u16,

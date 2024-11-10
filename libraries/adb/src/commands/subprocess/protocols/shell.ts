@@ -34,7 +34,7 @@ export type AdbShellProtocolId =
 // This packet format is used in both directions.
 export const AdbShellProtocolPacket = struct(
     {
-        id: u8.as<AdbShellProtocolId>(),
+        id: u8<AdbShellProtocolId>(),
         data: buffer(u32),
     },
     { littleEndian: true },

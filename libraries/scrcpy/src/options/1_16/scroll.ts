@@ -1,7 +1,6 @@
 import { s32, struct, u16, u32, u8 } from "@yume-chan/struct";
 
 import type { ScrcpyInjectScrollControlMessage } from "../../control/index.js";
-import { ScrcpyControlMessageType } from "../../control/index.js";
 
 export interface ScrcpyScrollController {
     serializeScrollMessage(
@@ -11,7 +10,7 @@ export interface ScrcpyScrollController {
 
 export const ScrcpyInjectScrollControlMessage1_16 = struct(
     {
-        type: u8.as(ScrcpyControlMessageType.InjectScroll as const),
+        type: u8,
         pointerX: u32,
         pointerY: u32,
         screenWidth: u16,

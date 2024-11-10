@@ -77,18 +77,17 @@ export const AdbSyncStatErrorCode = {
 export type AdbSyncStatErrorCode =
     (typeof AdbSyncStatErrorCode)[keyof typeof AdbSyncStatErrorCode];
 
-const AdbSyncStatErrorName =
-    /* #__PURE__ */
+const AdbSyncStatErrorName = /* #__PURE__ */ (() =>
     Object.fromEntries(
         Object.entries(AdbSyncStatErrorCode).map(([key, value]) => [
             value,
             key,
         ]),
-    );
+    ))();
 
 export const AdbSyncStatResponse = struct(
     {
-        error: u32.as<AdbSyncStatErrorCode>(),
+        error: u32<AdbSyncStatErrorCode>(),
         dev: u64,
         ino: u64,
         mode: u32,

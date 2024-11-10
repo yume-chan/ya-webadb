@@ -115,7 +115,7 @@ export interface AdbSyncPushV2Options extends AdbSyncPushV1Options {
 }
 
 export const AdbSyncSendV2Request = struct(
-    { id: u32, mode: u32, flags: u32.as<AdbSyncSendV2Flags>() },
+    { id: u32, mode: u32, flags: u32<AdbSyncSendV2Flags>() },
     { littleEndian: true },
 );
 

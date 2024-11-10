@@ -42,7 +42,7 @@ export interface BufferLike {
 
 export const EmptyUint8Array = new Uint8Array(0);
 
-// This is required for Rollup tree-shaking to work.
+// Rollup doesn't support `/* #__NO_SIDE_EFFECTS__ */ export const a = () => {}
 /* #__NO_SIDE_EFFECTS__ */
 function _buffer(
     lengthOrField:
@@ -54,16 +54,27 @@ function _buffer(
 ): Field<unknown, string, Record<string, unknown>> {
     if (typeof lengthOrField === "number") {
         if (converter) {
+            if (lengthOrField === 0) {
+                return {
+                    size: 0,
+                    serialize: () => {},
+                    deserialize: () => converter.convert(EmptyUint8Array),
+                };
+            }
+
             return {
                 size: lengthOrField,
                 serialize: (value, { buffer, index }) => {
-                    buffer.set(converter.back(value), index);
+                    buffer.set(
+                        converter.back(value).slice(0, lengthOrField),
+                        index,
+                    );
                 },
                 deserialize: bipedal(function* (then, { reader }) {
-                    const value = yield* then(
+                    const array = yield* then(
                         reader.readExactly(lengthOrField),
                     );
-                    return converter.convert(value);
+                    return converter.convert(array);
                 }),
             };
         }
@@ -79,13 +90,21 @@ function _buffer(
         return {
             size: lengthOrField,
             serialize: (value, { buffer, index }) => {
-                buffer.set(value as Uint8Array, index);
+                buffer.set(
+                    (value as Uint8Array).slice(0, lengthOrField),
+                    index,
+                );
             },
             deserialize: ({ reader }) => reader.readExactly(lengthOrField),
         };
     }
 
-    if (typeof lengthOrField === "object" && "serialize" in lengthOrField) {
+    // Some Field type might be `function`s
+    if (
+        (typeof lengthOrField === "object" ||
+            typeof lengthOrField === "function") &&
+        "serialize" in lengthOrField
+    ) {
         if (converter) {
             return {
                 size: 0,
@@ -108,10 +127,10 @@ function _buffer(
                     const length = yield* then(
                         lengthOrField.deserialize(context),
                     );
-                    const value = yield* then(
+                    const array = yield* then(
                         context.reader.readExactly(length),
                     );
-                    return converter.convert(value);
+                    return converter.convert(array);
                 }),
             };
         }

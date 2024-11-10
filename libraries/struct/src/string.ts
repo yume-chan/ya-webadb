@@ -25,7 +25,7 @@ export interface String {
     ): Field<string, KOmitInit, KS>;
 }
 
-// This is required for Rollup tree-shaking to work.
+// Rollup doesn't support `/* #__NO_SIDE_EFFECTS__ */ export const a = () => {}
 /* #__NO_SIDE_EFFECTS__ */
 function _string(
     lengthOrField: string | number | BufferLengthConverter<string, unknown>,
