@@ -5,7 +5,6 @@ import type { MaybePromiseLike } from "./utils.js";
 export class ExactReadableEndedError extends Error {
     constructor() {
         super("ExactReadable ended");
-        Object.setPrototypeOf(this, new.target.prototype);
     }
 }
 
