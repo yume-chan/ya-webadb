@@ -2,12 +2,12 @@ import type { AddressInfo, SocketConnectOpts } from "net";
 import { Server, Socket } from "net";
 
 import type { AdbIncomingSocketHandler, AdbServerClient } from "@yume-chan/adb";
+import type { MaybePromiseLike } from "@yume-chan/async";
 import {
     MaybeConsumable,
     PushReadableStream,
     tryClose,
 } from "@yume-chan/stream-extra";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 
 function nodeSocketToConnection(
     socket: Socket,

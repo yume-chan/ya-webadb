@@ -1,6 +1,6 @@
 // TODO: allow over reading (returning a `Uint8Array`, an `offset` and a `length`) to avoid copying
 
-import type { MaybePromiseLike } from "./utils.js";
+import type { MaybePromiseLike } from "@yume-chan/async";
 
 export class ExactReadableEndedError extends Error {
     constructor() {

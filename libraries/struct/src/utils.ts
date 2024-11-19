@@ -38,7 +38,3 @@ export function decodeUtf8(buffer: ArrayBufferView | ArrayBuffer): string {
     // but this method is not for stream mode, so the instance can be reused
     return SharedDecoder.decode(buffer);
 }
-
-export type MaybePromise<T> = T | Promise<T>;
-
-export type MaybePromiseLike<T> = T | PromiseLike<T>;

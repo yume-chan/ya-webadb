@@ -1,9 +1,9 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import type {
     MaybeConsumable,
     ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type { AdbBanner } from "./banner.js";
 import type { AdbFrameBuffer } from "./commands/index.js";

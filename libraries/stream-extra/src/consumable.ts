@@ -1,4 +1,4 @@
-import { PromiseResolver } from "@yume-chan/async";
+import { PromiseResolver, isPromiseLike } from "@yume-chan/async";
 
 import type {
     QueuingStrategy,
@@ -12,125 +12,122 @@ import {
 import type { Task } from "./task.js";
 import { createTask } from "./task.js";
 
-function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
-    return typeof value === "object" && value !== null && "then" in value;
+// Workaround https://github.com/evanw/esbuild/issues/3923
+class WritableStream<in T> extends NativeWritableStream<Consumable<T>> {
+    static async write<T>(
+        writer: WritableStreamDefaultWriter<Consumable<T>>,
+        value: T,
+    ) {
+        const consumable = new Consumable(value);
+        await writer.write(consumable);
+        await consumable.consumed;
+    }
+
+    constructor(
+        sink: Consumable.WritableStreamSink<T>,
+        strategy?: QueuingStrategy<T>,
+    ) {
+        let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
+        if (strategy) {
+            wrappedStrategy = {};
+            if ("highWaterMark" in strategy) {
+                wrappedStrategy.highWaterMark = strategy.highWaterMark;
+            }
+            if ("size" in strategy) {
+                wrappedStrategy.size = (chunk) => {
+                    return strategy.size!(
+                        chunk instanceof Consumable ? chunk.value : chunk,
+                    );
+                };
+            }
+        }
+
+        super(
+            {
+                start(controller) {
+                    return sink.start?.(controller);
+                },
+                async write(chunk, controller) {
+                    await chunk.tryConsume((chunk) =>
+                        sink.write?.(chunk, controller),
+                    );
+                },
+                abort(reason) {
+                    return sink.abort?.(reason);
+                },
+                close() {
+                    return sink.close?.();
+                },
+            },
+            wrappedStrategy,
+        );
+    }
+}
+
+class ReadableStream<T> extends NativeReadableStream<Consumable<T>> {
+    static async enqueue<T>(
+        controller: { enqueue: (chunk: Consumable<T>) => void },
+        chunk: T,
+    ) {
+        const output = new Consumable(chunk);
+        controller.enqueue(output);
+        await output.consumed;
+    }
+
+    constructor(
+        source: Consumable.ReadableStreamSource<T>,
+        strategy?: QueuingStrategy<T>,
+    ) {
+        let wrappedController:
+            | Consumable.ReadableStreamController<T>
+            | undefined;
+
+        let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
+        if (strategy) {
+            wrappedStrategy = {};
+            if ("highWaterMark" in strategy) {
+                wrappedStrategy.highWaterMark = strategy.highWaterMark;
+            }
+            if ("size" in strategy) {
+                wrappedStrategy.size = (chunk) => {
+                    return strategy.size!(chunk.value);
+                };
+            }
+        }
+
+        super(
+            {
+                async start(controller) {
+                    wrappedController = {
+                        async enqueue(chunk) {
+                            await ReadableStream.enqueue(controller, chunk);
+                        },
+                        close() {
+                            controller.close();
+                        },
+                        error(reason) {
+                            controller.error(reason);
+                        },
+                    };
+
+                    await source.start?.(wrappedController);
+                },
+                async pull() {
+                    await source.pull?.(wrappedController!);
+                },
+                async cancel(reason) {
+                    await source.cancel?.(reason);
+                },
+            },
+            wrappedStrategy,
+        );
+    }
 }
 
 export class Consumable<T> {
-    static readonly WritableStream = class WritableStream<
-        in T,
-    > extends NativeWritableStream<Consumable<T>> {
-        static async write<T>(
-            writer: WritableStreamDefaultWriter<Consumable<T>>,
-            value: T,
-        ) {
-            const consumable = new Consumable(value);
-            await writer.write(consumable);
-            await consumable.consumed;
-        }
+    static readonly WritableStream = WritableStream;
 
-        constructor(
-            sink: Consumable.WritableStreamSink<T>,
-            strategy?: QueuingStrategy<T>,
-        ) {
-            let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
-            if (strategy) {
-                wrappedStrategy = {};
-                if ("highWaterMark" in strategy) {
-                    wrappedStrategy.highWaterMark = strategy.highWaterMark;
-                }
-                if ("size" in strategy) {
-                    wrappedStrategy.size = (chunk) => {
-                        return strategy.size!(
-                            chunk instanceof Consumable ? chunk.value : chunk,
-                        );
-                    };
-                }
-            }
-
-            super(
-                {
-                    start(controller) {
-                        return sink.start?.(controller);
-                    },
-                    async write(chunk, controller) {
-                        await chunk.tryConsume((chunk) =>
-                            sink.write?.(chunk, controller),
-                        );
-                    },
-                    abort(reason) {
-                        return sink.abort?.(reason);
-                    },
-                    close() {
-                        return sink.close?.();
-                    },
-                },
-                wrappedStrategy,
-            );
-        }
-    };
-
-    static readonly ReadableStream = class ReadableStream<
-        T,
-    > extends NativeReadableStream<Consumable<T>> {
-        static async enqueue<T>(
-            controller: { enqueue: (chunk: Consumable<T>) => void },
-            chunk: T,
-        ) {
-            const output = new Consumable(chunk);
-            controller.enqueue(output);
-            await output.consumed;
-        }
-
-        constructor(
-            source: Consumable.ReadableStreamSource<T>,
-            strategy?: QueuingStrategy<T>,
-        ) {
-            let wrappedController:
-                | Consumable.ReadableStreamController<T>
-                | undefined;
-
-            let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
-            if (strategy) {
-                wrappedStrategy = {};
-                if ("highWaterMark" in strategy) {
-                    wrappedStrategy.highWaterMark = strategy.highWaterMark;
-                }
-                if ("size" in strategy) {
-                    wrappedStrategy.size = (chunk) => {
-                        return strategy.size!(chunk.value);
-                    };
-                }
-            }
-
-            super(
-                {
-                    async start(controller) {
-                        wrappedController = {
-                            async enqueue(chunk) {
-                                await ReadableStream.enqueue(controller, chunk);
-                            },
-                            close() {
-                                controller.close();
-                            },
-                            error(reason) {
-                                controller.error(reason);
-                            },
-                        };
-
-                        await source.start?.(wrappedController);
-                    },
-                    async pull() {
-                        await source.pull?.(wrappedController!);
-                    },
-                    async cancel(reason) {
-                        await source.cancel?.(reason);
-                    },
-                },
-                wrappedStrategy,
-            );
-        }
-    };
+    static readonly ReadableStream = ReadableStream;
 
     readonly #task: Task;
     readonly #resolver: PromiseResolver<void>;

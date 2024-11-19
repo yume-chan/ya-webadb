@@ -17,17 +17,17 @@ export class AdbDaemonWebUsbDeviceObserver
     #filters: UsbInterfaceFilter[];
     #usbManager: USB;
 
-    #deviceAdded = new EventEmitter<AdbDaemonWebUsbDevice[]>();
-    deviceAdded = this.#deviceAdded.event;
+    #onError = new EventEmitter<Error>();
+    onError = this.#onError.event;
 
-    #deviceRemoved = new EventEmitter<AdbDaemonWebUsbDevice[]>();
-    deviceRemoved = this.#deviceRemoved.event;
+    #onDeviceAdd = new EventEmitter<AdbDaemonWebUsbDevice[]>();
+    onDeviceAdd = this.#onDeviceAdd.event;
 
-    #deviceChanged = new EventEmitter<AdbDaemonWebUsbDevice[]>();
-    deviceChanged = this.#deviceChanged.event;
+    #onDeviceRemove = new EventEmitter<AdbDaemonWebUsbDevice[]>();
+    onDeviceRemove = this.#onDeviceRemove.event;
 
-    #listChanged = new EventEmitter<AdbDaemonWebUsbDevice[]>();
-    listChanged = this.#listChanged.event;
+    #onListChange = new EventEmitter<AdbDaemonWebUsbDevice[]>();
+    onListChange = this.#onListChange.event;
 
     current: AdbDaemonWebUsbDevice[] = [];
 
@@ -49,9 +49,9 @@ export class AdbDaemonWebUsbDeviceObserver
             this.#filters,
             this.#usbManager,
         );
-        this.#deviceAdded.fire([device]);
+        this.#onDeviceAdd.fire([device]);
         this.current.push(device);
-        this.#listChanged.fire(this.current);
+        this.#onListChange.fire(this.current);
     };
 
     #handleDisconnect = (e: USBConnectionEvent) => {
@@ -60,10 +60,10 @@ export class AdbDaemonWebUsbDeviceObserver
         );
         if (index !== -1) {
             const device = this.current[index]!;
-            this.#deviceRemoved.fire([device]);
+            this.#onDeviceRemove.fire([device]);
             this.current[index] = this.current[this.current.length - 1]!;
             this.current.length -= 1;
-            this.#listChanged.fire(this.current);
+            this.#onListChange.fire(this.current);
         }
     };
 

@@ -1,5 +1,6 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable, MaybePromiseLike } from "@yume-chan/struct";
+import type { AsyncExactReadable } from "@yume-chan/struct";
 
 import type {
     ScrcpyBackOrScreenOnControlMessage,

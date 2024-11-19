@@ -1,3 +1,4 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
 import type { ReadableWritablePair } from "@yume-chan/stream-extra";
 import {
@@ -5,7 +6,6 @@ import {
     Consumable,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 import { decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
 
 import type {

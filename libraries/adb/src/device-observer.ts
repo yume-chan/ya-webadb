@@ -1,10 +1,11 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import type { Event } from "@yume-chan/event";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 
 export interface DeviceObserver<T> {
-    deviceAdded: Event<T[]>;
-    deviceRemoved: Event<T[]>;
-    listChanged: Event<T[]>;
+    onError: Event<Error>;
+    onDeviceAdd: Event<T[]>;
+    onDeviceRemove: Event<T[]>;
+    onListChange: Event<T[]>;
     current: T[];
     stop(): MaybePromiseLike<void>;
 }

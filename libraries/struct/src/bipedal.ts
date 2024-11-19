@@ -1,8 +1,5 @@
-import type { MaybePromiseLike } from "./utils.js";
-
-function isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
-    return typeof value === "object" && value !== null && "then" in value;
-}
+import type { MaybePromiseLike } from "@yume-chan/async";
+import { isPromiseLike } from "@yume-chan/async";
 
 function advance<T>(
     iterator: Iterator<unknown, T, unknown>,

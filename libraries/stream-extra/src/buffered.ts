@@ -1,4 +1,5 @@
-import type { AsyncExactReadable, MaybePromiseLike } from "@yume-chan/struct";
+import type { MaybePromiseLike } from "@yume-chan/async";
+import type { AsyncExactReadable } from "@yume-chan/struct";
 import { bipedal, ExactReadableEndedError } from "@yume-chan/struct";
 
 import { PushReadableStream } from "./push-readable.js";

@@ -75,7 +75,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                                 // But in `PushReadableStream`, `enqueue` is an async function,
                                 // the producer can't just check `abortSignal.aborted`
                                 // before calling `enqueue`, as it might change when waiting
-                                // for the backpressure to be resolved.
+                                // for the backpressure to be reduced.
                                 //
                                 // So IMO it's better to handle this for the producer
                                 // by simply ignoring the `enqueue` call.
@@ -85,7 +85,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                                 // they called `close` or `error`.
                                 //
                                 // Obviously, the producer should listen to the `abortSignal` and
-                                // stop producing, but most pushing data sources can't be stopped.
+                                // stop producing, but most pushing data sources don't support that.
                                 logger?.({
                                     source: "producer",
                                     operation: "enqueue",

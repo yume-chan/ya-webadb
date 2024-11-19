@@ -1,3 +1,4 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
 import { AbortController } from "@yume-chan/stream-extra";
 
@@ -95,7 +96,7 @@ export class AdbServerTransport implements AdbTransport {
         await this.#client.connector.clearReverseTunnels();
     }
 
-    close(): void | Promise<void> {
+    close(): MaybePromiseLike<void> {
         this.#closed.resolve();
         this.#waitAbortController.abort();
     }

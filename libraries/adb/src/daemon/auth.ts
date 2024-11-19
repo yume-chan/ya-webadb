@@ -1,6 +1,6 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 import { EmptyUint8Array } from "@yume-chan/struct";
 
 import {

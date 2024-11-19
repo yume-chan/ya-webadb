@@ -1,10 +1,11 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { getUint32BigEndian } from "@yume-chan/no-data-view";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     BufferedReadableStream,
     PushReadableStream,
 } from "@yume-chan/stream-extra";
-import type { MaybePromiseLike, StructInit } from "@yume-chan/struct";
+import type { StructInit } from "@yume-chan/struct";
 import { struct, u16, u32, u64, u8 } from "@yume-chan/struct";
 
 import type {

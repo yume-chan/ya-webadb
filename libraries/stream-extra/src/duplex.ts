@@ -1,5 +1,5 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type {
     QueuingStrategy,

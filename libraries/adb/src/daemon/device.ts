@@ -1,5 +1,5 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import type { Consumable, ReadableWritablePair } from "@yume-chan/stream-extra";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 

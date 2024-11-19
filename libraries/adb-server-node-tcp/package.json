@@ -33,11 +33,12 @@
     },
     "dependencies": {
         "@yume-chan/adb": "workspace:^",
+        "@yume-chan/async": "^4.0.2",
         "@yume-chan/stream-extra": "workspace:^",
         "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^22.9.0",
+        "@types/node": "^22.9.1",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.3.3",

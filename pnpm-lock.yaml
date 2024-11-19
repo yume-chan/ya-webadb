@@ -34,8 +34,8 @@ importers:
         version: 0.5.21
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -52,8 +52,8 @@ importers:
   libraries/adb:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^4.0.2
+        version: 4.0.2
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
@@ -68,8 +68,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -124,8 +124,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -148,8 +148,8 @@ importers:
         specifier: workspace:^
         version: link:../adb
       '@yume-chan/async':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^4.0.2
+        version: 4.0.2
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
@@ -181,6 +181,9 @@ importers:
       '@yume-chan/adb':
         specifier: workspace:^
         version: link:../adb
+      '@yume-chan/async':
+        specifier: ^4.0.2
+        version: 4.0.2
       '@yume-chan/stream-extra':
         specifier: workspace:^
         version: link:../stream-extra
@@ -189,8 +192,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -217,8 +220,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -257,12 +260,12 @@ importers:
   libraries/event:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^4.0.2
+        version: 4.0.2
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -286,14 +289,14 @@ importers:
         version: 4.0.3
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
 
   libraries/no-data-view:
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -334,8 +337,8 @@ importers:
   libraries/scrcpy:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^4.0.2
+        version: 4.0.2
       '@yume-chan/no-data-view':
         specifier: workspace:^
         version: link:../no-data-view
@@ -347,8 +350,8 @@ importers:
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -368,8 +371,8 @@ importers:
   libraries/scrcpy-decoder-tinyh264:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^4.0.2
+        version: 4.0.2
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
@@ -404,6 +407,9 @@ importers:
 
   libraries/scrcpy-decoder-webcodecs:
     dependencies:
+      '@yume-chan/async':
+        specifier: ^4.0.2
+        version: 4.0.2
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
@@ -436,15 +442,15 @@ importers:
   libraries/stream-extra:
     dependencies:
       '@yume-chan/async':
-        specifier: ^4.0.0
-        version: 4.0.0
+        specifier: ^4.0.2
+        version: 4.0.2
       '@yume-chan/struct':
         specifier: workspace:^
         version: link:../struct
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -463,13 +469,16 @@ importers:
 
   libraries/struct:
     dependencies:
+      '@yume-chan/async':
+        specifier: ^4.0.2
+        version: 4.0.2
       '@yume-chan/no-data-view':
         specifier: workspace:^
         version: link:../no-data-view
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -492,8 +501,8 @@ importers:
         specifier: ^9.15.0
         version: 9.15.0
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       eslint:
         specifier: ^9.15.0
         version: 9.15.0
@@ -514,8 +523,8 @@ importers:
   toolchain/package-lint:
     dependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -523,8 +532,8 @@ importers:
   toolchain/test-runner:
     devDependencies:
       '@types/node':
-        specifier: ^22.9.0
-        version: 22.9.0
+        specifier: ^22.9.1
+        version: 22.9.1
       typescript:
         specifier: ^5.6.3
         version: 5.6.3
@@ -694,8 +703,8 @@ packages:
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
 
-  '@types/node@22.9.0':
-    resolution: {integrity: sha512-vuyHg81vvWA1Z1ELfvLko2c8f34gyA0zaic0+Rllc5lbCnbSyuvb2Oxpm6TAUAC/2xZN3QGqxBNggD1nNR2AfQ==}
+  '@types/node@22.9.1':
+    resolution: {integrity: sha512-p8Yy/8sw1caA8CdRIQBG5tiLHmxtQKObCijiAa9Ez+d4+PRffM4054xbju0msf+cvhJpnFEeNjxmVT/0ipktrg==}
 
   '@types/w3c-web-usb@1.0.10':
     resolution: {integrity: sha512-CHgUI5kTc/QLMP8hODUHhge0D4vx+9UiAwIGiT0sTy/B2XpdX1U5rJt6JSISgr6ikRT7vxV9EVAFeYZqUnl1gQ==}
@@ -790,8 +799,8 @@ packages:
     resolution: {integrity: sha512-mBvWew1kZJHfNQVVfVllMjUDwCGN9apPa0t4/z1zaUJ9MzpXjRL3w8fsfJKB8gHN/h4rik9HneKfDbh2fErN+w==}
     engines: {node: ^14.14.0 || >=16.0.0}
 
-  '@yume-chan/async@4.0.0':
-    resolution: {integrity: sha512-T4DOnvaVqrx+PQh8bESdS6y2ozii7M0isJ5MpGU0girfz9kmwOaJ+rF1oeTJGZ0k+v92+eo/q6SpJjcjnO9tuQ==}
+  '@yume-chan/async@4.0.2':
+    resolution: {integrity: sha512-YP5Hg4DZoq6CXzeTsiOu6rDNUaWw8SMiM4cB2rHam4zRTatgUHCWpSKMawQt0+nUro/+IeNTZLh2QpIFyxuGzg==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -1978,7 +1987,7 @@ snapshots:
 
   '@types/node@12.20.55': {}
 
-  '@types/node@22.9.0':
+  '@types/node@22.9.1':
     dependencies:
       undici-types: 6.19.8
 
@@ -2119,7 +2128,7 @@ snapshots:
       merge-options: 3.0.4
       p-event: 5.0.1
 
-  '@yume-chan/async@4.0.0': {}
+  '@yume-chan/async@4.0.2': {}
 
   acorn-jsx@5.3.2(acorn@8.14.0):
     dependencies:

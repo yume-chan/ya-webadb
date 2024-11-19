@@ -1,5 +1,5 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream } from "@yume-chan/stream-extra";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type { ScrcpyScrollController } from "../1_16/index.js";
 import { ScrcpyOptions1_21 } from "../1_21.js";

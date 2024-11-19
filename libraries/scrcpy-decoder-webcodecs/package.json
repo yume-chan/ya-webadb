@@ -33,6 +33,7 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
+        "@yume-chan/async": "^4.0.2",
         "@yume-chan/event": "workspace:^",
         "@yume-chan/no-data-view": "workspace:^",
         "@yume-chan/scrcpy": "workspace:^",

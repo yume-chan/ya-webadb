@@ -1,3 +1,4 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import {
     getUint16BigEndian,
     getUint32BigEndian,
@@ -12,7 +13,7 @@ import {
     StructDeserializeStream,
     TransformStream,
 } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable, MaybePromiseLike } from "@yume-chan/struct";
+import type { AsyncExactReadable } from "@yume-chan/struct";
 import { decodeUtf8 } from "@yume-chan/struct";
 
 import type {

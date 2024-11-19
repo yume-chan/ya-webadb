@@ -1,5 +1,6 @@
 import type { Adb, AdbSocket } from "@yume-chan/adb";
 import { AdbReverseNotSupportedError, NOOP } from "@yume-chan/adb";
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { delay } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
@@ -13,7 +14,6 @@ import {
     BufferedReadableStream,
     PushReadableStream,
 } from "@yume-chan/stream-extra";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 
 export interface AdbScrcpyConnectionOptions {
     scid: number;

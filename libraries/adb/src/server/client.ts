@@ -1,5 +1,6 @@
 // cspell:ignore tport
 
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
 import { EventEmitter } from "@yume-chan/event";
 import { getUint64LittleEndian } from "@yume-chan/no-data-view";
@@ -14,7 +15,6 @@ import {
     tryCancel,
     tryClose,
 } from "@yume-chan/stream-extra";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 import {
     bipedal,
     decodeUtf8,
@@ -297,46 +297,52 @@ export class AdbServerClient {
         const connection = await this.createConnection("host:track-devices-l");
 
         let current: AdbServerClient.Device[] = [];
-        const deviceAddedEvent = new EventEmitter<AdbServerClient.Device[]>();
-        const deviceRemovedEvent = new EventEmitter<AdbServerClient.Device[]>();
-        const listChangedEvent = new EventEmitter<AdbServerClient.Device[]>();
+        const onError = new EventEmitter<Error>();
+        const onDeviceAdd = new EventEmitter<AdbServerClient.Device[]>();
+        const onDeviceRemove = new EventEmitter<AdbServerClient.Device[]>();
+        const onListChange = new EventEmitter<AdbServerClient.Device[]>();
 
         void (async () => {
-            while (true) {
-                const response = await connection.readString();
-                const next = AdbServerClient.parseDeviceList(response);
+            try {
+                while (true) {
+                    const response = await connection.readString();
+                    const next = AdbServerClient.parseDeviceList(response);
 
-                const added: AdbServerClient.Device[] = [];
-                for (const nextDevice of next) {
-                    const index = current.findIndex(
-                        (device) =>
-                            device.transportId === nextDevice.transportId,
-                    );
-                    if (index === -1) {
-                        added.push(nextDevice);
-                        continue;
+                    const added: AdbServerClient.Device[] = [];
+                    for (const nextDevice of next) {
+                        const index = current.findIndex(
+                            (device) =>
+                                device.transportId === nextDevice.transportId,
+                        );
+                        if (index === -1) {
+                            added.push(nextDevice);
+                            continue;
+                        }
+
+                        current[index] = current[current.length - 1]!;
+                        current.length -= 1;
                     }
 
-                    current[index] = current[current.length - 1]!;
-                    current.length -= 1;
-                }
+                    if (added.length) {
+                        onDeviceAdd.fire(added);
+                    }
+                    if (current.length) {
+                        onDeviceRemove.fire(current);
+                    }
 
-                if (added.length) {
-                    deviceAddedEvent.fire(added);
+                    current = next;
+                    onListChange.fire(current);
                 }
-                if (current.length) {
-                    deviceRemovedEvent.fire(current);
-                }
-
-                current = next;
-                listChangedEvent.fire(current);
+            } catch (e) {
+                onError.fire(e as Error);
             }
         })();
 
         return {
-            deviceAdded: deviceAddedEvent.event,
-            deviceRemoved: deviceRemovedEvent.event,
-            listChanged: listChangedEvent.event,
+            onError: onError.event,
+            onDeviceAdd: onDeviceAdd.event,
+            onDeviceRemove: onDeviceRemove.event,
+            onListChange: onListChange.event,
             get current() {
                 return current;
             },

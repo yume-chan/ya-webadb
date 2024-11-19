@@ -1,5 +1,6 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
+
 import type { AsyncExactReadable } from "./readable.js";
-import type { MaybePromiseLike } from "./utils.js";
 
 export interface SerializeContext {
     buffer: Uint8Array;

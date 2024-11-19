@@ -1,8 +1,9 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
+
 import { bipedal } from "./bipedal.js";
 import type { DeserializeContext, Field, SerializeContext } from "./field.js";
 import type { AsyncExactReadable, ExactReadable } from "./readable.js";
 import { ExactReadableEndedError } from "./readable.js";
-import type { MaybePromiseLike } from "./utils.js";
 
 export type FieldsType<
     T extends Record<string, Field<unknown, string, unknown>>,

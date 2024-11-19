@@ -1,9 +1,9 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import type {
     MaybeConsumable,
     ReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import type { MaybePromiseLike } from "@yume-chan/struct";
 
 import type { Adb, AdbSocket } from "../../../adb.js";
 
