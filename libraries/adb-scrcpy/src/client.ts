@@ -10,6 +10,7 @@ import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
+    ScrcpyOptionsInit1_16,
     ScrcpyVideoStreamMetadata,
 } from "@yume-chan/scrcpy";
 import {
@@ -120,7 +121,7 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>,
+        options: AdbScrcpyOptions<Pick<ScrcpyOptionsInit1_16, "tunnelForward">>,
     ) {
         let connection: AdbScrcpyConnection | undefined;
         let process: AdbSubprocessProtocol | undefined;
@@ -132,7 +133,7 @@ export class AdbScrcpyClient {
             } catch (e) {
                 if (e instanceof AdbReverseNotSupportedError) {
                     // When reverse tunnel is not supported, try forward tunnel.
-                    options.tunnelForwardOverride = true;
+                    options.value.tunnelForward = true;
                     connection = options.createConnection(adb);
                     await connection.initialize();
                 } else {

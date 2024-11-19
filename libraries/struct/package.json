@@ -37,7 +37,7 @@
         "@yume-chan/no-data-view": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^22.7.7",
+        "@types/node": "^22.9.0",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",

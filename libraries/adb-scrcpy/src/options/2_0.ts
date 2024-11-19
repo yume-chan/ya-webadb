@@ -2,6 +2,7 @@ import type { Adb } from "@yume-chan/adb";
 import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
+    ScrcpyOptionsInit1_16,
     ScrcpyOptionsInit2_0,
 } from "@yume-chan/scrcpy";
 
@@ -23,7 +24,7 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>,
+        options: AdbScrcpyOptions<Pick<ScrcpyOptionsInit1_16, "tunnelForward">>,
     ): Promise<ScrcpyEncoder[]> {
         try {
             // Similar to `AdbScrcpyOptions1_16.getDisplays`,
@@ -80,7 +81,7 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
                 control: this.value.control,
                 sendDummyByte: this.value.sendDummyByte,
             },
-            this.tunnelForwardOverride || this.value.tunnelForward,
+            this.value.tunnelForward,
         );
     }
 }

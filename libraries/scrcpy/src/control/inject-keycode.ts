@@ -218,7 +218,7 @@ export type AndroidKeyCode =
 export const AndroidKeyNames = /* #__PURE__ */ (() =>
     Object.fromEntries(
         Object.entries(AndroidKeyCode).map(([k, v]) => [v, k]),
-    ) as { [k in AndroidKeyCode]: string })();
+    ) as Record<AndroidKeyCode, string>)();
 
 export const ScrcpyInjectKeyCodeControlMessage = struct(
     {

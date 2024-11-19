@@ -39,7 +39,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>,
+        options: AdbScrcpyOptions<Pick<ScrcpyOptionsInit1_16, "tunnelForward">>,
     ): Promise<ScrcpyEncoder[]> {
         const client = await AdbScrcpyClient.start(adb, path, version, options);
 
@@ -62,7 +62,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<object>,
+        options: AdbScrcpyOptions<Pick<ScrcpyOptionsInit1_16, "tunnelForward">>,
     ): Promise<ScrcpyDisplay[]> {
         try {
             // Server will exit before opening connections when an invalid display id was given
@@ -119,7 +119,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
                 control: true, // Always enabled even when `--no-control` is specified
                 sendDummyByte: true, // Always enabled
             },
-            this.tunnelForwardOverride || this.value.tunnelForward,
+            this.value.tunnelForward,
         );
     }
 }

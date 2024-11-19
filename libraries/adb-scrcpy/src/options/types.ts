@@ -13,12 +13,6 @@ export abstract class AdbScrcpyOptions<
         return this.#base.defaults;
     }
 
-    /**
-     * Allows the client to forcefully enable forward tunnel mode
-     * when reverse tunnel fails.
-     */
-    tunnelForwardOverride = false;
-
     constructor(base: ScrcpyOptions<T>) {
         super(
             // HACK: `ScrcpyOptions`'s constructor requires a constructor for the base class,

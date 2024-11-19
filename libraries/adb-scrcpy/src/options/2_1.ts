@@ -50,7 +50,7 @@ export class AdbScrcpyOptions2_1 extends AdbScrcpyOptions<
                 control: this.value.control,
                 sendDummyByte: this.value.sendDummyByte,
             },
-            this.tunnelForwardOverride || this.value.tunnelForward,
+            this.value.tunnelForward,
         );
     }
 }
