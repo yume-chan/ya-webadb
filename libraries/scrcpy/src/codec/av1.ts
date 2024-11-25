@@ -6,39 +6,39 @@
 // cspell: ignore Smpte
 // cspell: ignore Chromat
 
-export enum AndroidAv1Profile {
-    Main8 = 1 << 0,
-    Main10 = 1 << 1,
-    Main10Hdr10 = 1 << 12,
-    Main10Hdr10Plus = 1 << 13,
-}
+export const AndroidAv1Profile = {
+    Main8: 1 << 0,
+    Main10: 1 << 1,
+    Main10Hdr10: 1 << 12,
+    Main10Hdr10Plus: 1 << 13,
+};
 
-export enum AndroidAv1Level {
-    Level2 = 1 << 0,
-    Level21 = 1 << 1,
-    Level22 = 1 << 2,
-    Level23 = 1 << 3,
-    Level3 = 1 << 4,
-    Level31 = 1 << 5,
-    Level32 = 1 << 6,
-    Level33 = 1 << 7,
-    Level4 = 1 << 8,
-    Level41 = 1 << 9,
-    Level42 = 1 << 10,
-    Level43 = 1 << 11,
-    Level5 = 1 << 12,
-    Level51 = 1 << 13,
-    Level52 = 1 << 14,
-    Level53 = 1 << 15,
-    Level6 = 1 << 16,
-    Level61 = 1 << 17,
-    Level62 = 1 << 18,
-    Level63 = 1 << 19,
-    Level7 = 1 << 20,
-    Level71 = 1 << 21,
-    Level72 = 1 << 22,
-    Level73 = 1 << 23,
-}
+export const AndroidAv1Level = {
+    Level2: 1 << 0,
+    Level21: 1 << 1,
+    Level22: 1 << 2,
+    Level23: 1 << 3,
+    Level3: 1 << 4,
+    Level31: 1 << 5,
+    Level32: 1 << 6,
+    Level33: 1 << 7,
+    Level4: 1 << 8,
+    Level41: 1 << 9,
+    Level42: 1 << 10,
+    Level43: 1 << 11,
+    Level5: 1 << 12,
+    Level51: 1 << 13,
+    Level52: 1 << 14,
+    Level53: 1 << 15,
+    Level6: 1 << 16,
+    Level61: 1 << 17,
+    Level62: 1 << 18,
+    Level63: 1 << 19,
+    Level7: 1 << 20,
+    Level71: 1 << 21,
+    Level72: 1 << 22,
+    Level73: 1 << 23,
+};
 
 class BitReader {
     #data: Uint8Array;
@@ -126,7 +126,78 @@ class BitReader {
     }
 }
 
+const ObuType = {
+    SequenceHeader: 1,
+    TemporalDelimiter: 2,
+    FrameHeader: 3,
+    TileGroup: 4,
+    Metadata: 5,
+    Frame: 6,
+    RedundantFrameHeader: 7,
+    TileList: 8,
+    Padding: 15,
+};
+
+type ObuType = (typeof ObuType)[keyof typeof ObuType];
+
+const ColorPrimaries = {
+    Bt709: 1,
+    Unspecified: 2,
+    Bt470M: 4,
+    Bt470BG: 5,
+    Bt601: 6,
+    Smpte240: 7,
+    GenericFilm: 8,
+    Bt2020: 9,
+    Xyz: 10,
+    Smpte431: 11,
+    Smpte432: 12,
+    Ebu3213: 22,
+};
+
+const TransferCharacteristics = {
+    Bt709: 1,
+    Unspecified: 2,
+    Bt470M: 4,
+    Bt470BG: 5,
+    Bt601: 6,
+    Smpte240: 7,
+    Linear: 8,
+    Log100: 9,
+    Log100Sqrt10: 10,
+    Iec61966: 11,
+    Bt1361: 12,
+    Srgb: 13,
+    Bt2020Ten: 14,
+    Bt2020Twelve: 15,
+    Smpte2084: 16,
+    Smpte428: 17,
+    Hlg: 18,
+};
+
+const MatrixCoefficients = {
+    Identity: 0,
+    Bt709: 1,
+    Unspecified: 2,
+    Fcc: 4,
+    Bt470BG: 5,
+    Bt601: 6,
+    Smpte240: 7,
+    YCgCo: 8,
+    Bt2020Ncl: 9,
+    Bt2020Cl: 10,
+    Smpte2085: 11,
+    ChromatNcl: 12,
+    ChromatCl: 13,
+    ICtCp: 14,
+};
+
 export class Av1 extends BitReader {
+    static ObuType = ObuType;
+    static ColorPrimaries = ColorPrimaries;
+    static TransferCharacteristics = TransferCharacteristics;
+    static MatrixCoefficients = MatrixCoefficients;
+
     #Leb128Bytes: number = 0;
 
     uvlc() {
@@ -637,67 +708,14 @@ export namespace Av1 {
 
     export type SequenceHeaderObu = ReturnType<Av1["sequenceHeaderObu"]>;
 
-    export enum ObuType {
-        SequenceHeader = 1,
-        TemporalDelimiter,
-        FrameHeader,
-        TileGroup,
-        Metadata,
-        Frame,
-        RedundantFrameHeader,
-        TileList,
-        Padding = 15,
-    }
+    export type ObuType = (typeof ObuType)[keyof typeof ObuType];
 
-    export enum ColorPrimaries {
-        Bt709 = 1,
-        Unspecified,
-        Bt470M = 4,
-        Bt470BG,
-        Bt601,
-        Smpte240,
-        GenericFilm,
-        Bt2020,
-        Xyz,
-        Smpte431,
-        Smpte432,
-        Ebu3213 = 22,
-    }
+    export type ColorPrimaries =
+        (typeof ColorPrimaries)[keyof typeof ColorPrimaries];
 
-    export enum TransferCharacteristics {
-        Bt709 = 1,
-        Unspecified,
-        Bt470M = 4,
-        Bt470BG,
-        Bt601,
-        Smpte240,
-        Linear,
-        Log100,
-        Log100Sqrt10,
-        Iec61966,
-        Bt1361,
-        Srgb,
-        Bt2020Ten,
-        Bt2020Twelve,
-        Smpte2084,
-        Smpte428,
-        Hlg,
-    }
+    export type TransferCharacteristics =
+        (typeof TransferCharacteristics)[keyof typeof TransferCharacteristics];
 
-    export enum MatrixCoefficients {
-        Identity = 0,
-        Bt709,
-        Unspecified,
-        Fcc = 4,
-        Bt470BG,
-        Bt601,
-        Smpte240,
-        YCgCo,
-        Bt2020Ncl,
-        Bt2020Cl,
-        Smpte2085,
-        ChromatNcl,
-        ChromatCl,
-        ICtCp,
-    }
+    export type MatrixCoefficients =
+        (typeof MatrixCoefficients)[keyof typeof MatrixCoefficients];
 }

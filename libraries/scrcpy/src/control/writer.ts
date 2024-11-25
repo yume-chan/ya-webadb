@@ -1,17 +1,19 @@
 import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
 import { Consumable } from "@yume-chan/stream-extra";
 
-import type { ScrcpyOptions } from "../options/index.js";
-
 import type {
     AndroidKeyEventAction,
-    ScrcpyInjectKeyCodeControlMessage,
-} from "./inject-keycode.js";
-import type { ScrcpyInjectScrollControlMessage } from "./inject-scroll.js";
-import type { ScrcpyInjectTouchControlMessage } from "./inject-touch.js";
+    AndroidScreenPowerMode,
+} from "../android/index.js";
+import type { ScrcpyOptions } from "../base/index.js";
+import type {
+    ScrcpyInjectScrollControlMessage,
+    ScrcpyInjectTouchControlMessage,
+    ScrcpySetClipboardControlMessage,
+} from "../latest.js";
+
+import type { ScrcpyInjectKeyCodeControlMessage } from "./inject-key-code.js";
 import { ScrcpyControlMessageSerializer } from "./serializer.js";
-import type { ScrcpySetClipboardControlMessage } from "./set-clipboard.js";
-import type { AndroidScreenPowerMode } from "./set-screen-power-mode.js";
 
 export class ScrcpyControlMessageWriter {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
@@ -66,7 +68,7 @@ export class ScrcpyControlMessageWriter {
     }
 
     async setScreenPowerMode(mode: AndroidScreenPowerMode) {
-        await this.write(this.#serializer.setScreenPowerMode(mode));
+        await this.write(this.#serializer.setDisplayPower(mode));
     }
 
     async expandNotificationPanel() {

@@ -2,7 +2,7 @@ import type { Adb } from "@yume-chan/adb";
 import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
-    ScrcpyOptionsInit2_1,
+    ScrcpyOptions2_1Impl,
 } from "@yume-chan/scrcpy";
 
 import type { AdbScrcpyConnection } from "../connection.js";
@@ -15,7 +15,7 @@ export class AdbScrcpyOptions2_1 extends AdbScrcpyOptions<
     // Only pick options that are used in this class,
     // so changes in `ScrcpyOptionsInitX_XX` won't affect type assignability with this class
     Pick<
-        ScrcpyOptionsInit2_1,
+        ScrcpyOptions2_1Impl.Init,
         | "tunnelForward"
         | "control"
         | "sendDummyByte"

@@ -210,6 +210,8 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                     this.#updateSize,
                 );
                 break;
+            default:
+                throw new Error(`Unsupported codec: ${this.#codec}`);
         }
 
         this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({

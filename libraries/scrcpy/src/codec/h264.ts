@@ -5,40 +5,40 @@
 import { NaluSodbBitReader, annexBSplitNalu } from "./nalu.js";
 
 // From https://developer.android.com/reference/android/media/MediaCodecInfo.CodecProfileLevel
-export enum AndroidAvcProfile {
-    Baseline = 1 << 0,
-    Main = 1 << 1,
-    Extended = 1 << 2,
-    High = 1 << 3,
-    High10 = 1 << 4,
-    High422 = 1 << 5,
-    High444 = 1 << 6,
-    ConstrainedBaseline = 1 << 16,
-    ConstrainedHigh = 1 << 19,
-}
+export const AndroidAvcProfile = {
+    Baseline: 1 << 0,
+    Main: 1 << 1,
+    Extended: 1 << 2,
+    High: 1 << 3,
+    High10: 1 << 4,
+    High422: 1 << 5,
+    High444: 1 << 6,
+    ConstrainedBaseline: 1 << 16,
+    ConstrainedHigh: 1 << 19,
+};
 
-export enum AndroidAvcLevel {
-    Level1 = 1 << 0,
-    Level1b = 1 << 1,
-    Level11 = 1 << 2,
-    Level12 = 1 << 3,
-    Level13 = 1 << 4,
-    Level2 = 1 << 5,
-    Level21 = 1 << 6,
-    Level22 = 1 << 7,
-    Level3 = 1 << 8,
-    Level31 = 1 << 9,
-    Level32 = 1 << 10,
-    Level4 = 1 << 11,
-    Level41 = 1 << 12,
-    Level42 = 1 << 13,
-    Level5 = 1 << 14,
-    Level51 = 1 << 15,
-    Level52 = 1 << 16,
-    Level6 = 1 << 17,
-    Level61 = 1 << 18,
-    Level62 = 1 << 19,
-}
+export const AndroidAvcLevel = {
+    Level1: 1 << 0,
+    Level1b: 1 << 1,
+    Level11: 1 << 2,
+    Level12: 1 << 3,
+    Level13: 1 << 4,
+    Level2: 1 << 5,
+    Level21: 1 << 6,
+    Level22: 1 << 7,
+    Level3: 1 << 8,
+    Level31: 1 << 9,
+    Level32: 1 << 10,
+    Level4: 1 << 11,
+    Level41: 1 << 12,
+    Level42: 1 << 13,
+    Level5: 1 << 14,
+    Level51: 1 << 15,
+    Level52: 1 << 16,
+    Level6: 1 << 17,
+    Level61: 1 << 18,
+    Level62: 1 << 19,
+};
 
 // H.264 has two standards: ITU-T H.264 and ISO/IEC 14496-10
 // they have the same content, and refer themselves as "H.264".

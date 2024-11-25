@@ -10,12 +10,12 @@ import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
-    ScrcpyOptionsInit1_16,
+    ScrcpyOptions1_15,
     ScrcpyVideoStreamMetadata,
 } from "@yume-chan/scrcpy";
 import {
     Av1,
-    DEFAULT_SERVER_PATH,
+    DefaultServerPath,
     ScrcpyControlMessageWriter,
     ScrcpyVideoCodecId,
     h264ParseConfiguration,
@@ -104,7 +104,7 @@ export class AdbScrcpyClient {
     static async pushServer(
         adb: Adb,
         file: ReadableStream<MaybeConsumable<Uint8Array>>,
-        filename = DEFAULT_SERVER_PATH,
+        filename = DefaultServerPath,
     ) {
         const sync = await adb.sync();
         try {
@@ -121,7 +121,9 @@ export class AdbScrcpyClient {
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<Pick<ScrcpyOptionsInit1_16, "tunnelForward">>,
+        options: AdbScrcpyOptions<
+            Pick<ScrcpyOptions1_15.Init, "tunnelForward">
+        >,
     ) {
         let connection: AdbScrcpyConnection | undefined;
         let process: AdbSubprocessProtocol | undefined;
@@ -342,7 +344,7 @@ export class AdbScrcpyClient {
                     type = result[0]!;
                 } catch (e) {
                     if (e instanceof ExactReadableEndedError) {
-                        await this.#options.endDeviceMessageStream();
+                        this.#options.endDeviceMessageStream();
                         break;
                     }
                     throw e;
@@ -350,7 +352,7 @@ export class AdbScrcpyClient {
                 await this.#options.parseDeviceMessage(type, buffered);
             }
         } catch (e) {
-            await this.#options.endDeviceMessageStream(e);
+            this.#options.endDeviceMessageStream(e);
             buffered.cancel(e).catch(() => {});
         }
     }

@@ -2,7 +2,7 @@ import type { Adb } from "@yume-chan/adb";
 import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
-    ScrcpyOptionsInit1_16,
+    ScrcpyOptions1_16Impl,
 } from "@yume-chan/scrcpy";
 import { WritableStream } from "@yume-chan/stream-extra";
 
@@ -21,7 +21,7 @@ import { AdbScrcpyOptions } from "./types.js";
 export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
     // Only pick options that are used in this class,
     // so changes in `ScrcpyOptionsInitX_XX` won't affect type assignability with this class
-    Pick<ScrcpyOptionsInit1_16, "tunnelForward">
+    Pick<ScrcpyOptions1_16Impl.Init, "tunnelForward">
 > {
     static createConnection(
         adb: Adb,
@@ -39,7 +39,9 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<Pick<ScrcpyOptionsInit1_16, "tunnelForward">>,
+        options: AdbScrcpyOptions<
+            Pick<ScrcpyOptions1_16Impl.Init, "tunnelForward">
+        >,
     ): Promise<ScrcpyEncoder[]> {
         const client = await AdbScrcpyClient.start(adb, path, version, options);
 
@@ -62,7 +64,9 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<Pick<ScrcpyOptionsInit1_16, "tunnelForward">>,
+        options: AdbScrcpyOptions<
+            Pick<ScrcpyOptions1_16Impl.Init, "tunnelForward">
+        >,
     ): Promise<ScrcpyDisplay[]> {
         try {
             // Server will exit before opening connections when an invalid display id was given

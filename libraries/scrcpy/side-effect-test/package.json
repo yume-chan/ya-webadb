@@ -1,0 +1,19 @@
+{
+    "name": "side-effect-test",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@rollup/plugin-node-resolve": "^15.3.0",
+        "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-typescript": "^12.1.1",
+        "rollup": "^4.27.4"
+    }
+}

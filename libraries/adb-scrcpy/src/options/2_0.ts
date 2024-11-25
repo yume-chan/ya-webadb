@@ -2,8 +2,8 @@ import type { Adb } from "@yume-chan/adb";
 import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
-    ScrcpyOptionsInit1_16,
-    ScrcpyOptionsInit2_0,
+    ScrcpyOptions1_16Impl,
+    ScrcpyOptions2_0Impl,
 } from "@yume-chan/scrcpy";
 
 import { AdbScrcpyClient, AdbScrcpyExitedError } from "../client.js";
@@ -16,7 +16,7 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
     // Only pick options that are used in this class,
     // so changes in `ScrcpyOptionsInitX_XX` won't affect type assignability with this class
     Pick<
-        ScrcpyOptionsInit2_0,
+        ScrcpyOptions2_0Impl.Init,
         "tunnelForward" | "control" | "sendDummyByte" | "scid" | "audio"
     >
 > {
@@ -24,7 +24,9 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
         adb: Adb,
         path: string,
         version: string,
-        options: AdbScrcpyOptions<Pick<ScrcpyOptionsInit1_16, "tunnelForward">>,
+        options: AdbScrcpyOptions<
+            Pick<ScrcpyOptions1_16Impl.Init, "tunnelForward">
+        >,
     ): Promise<ScrcpyEncoder[]> {
         try {
             // Similar to `AdbScrcpyOptions1_16.getDisplays`,

@@ -117,5 +117,7 @@ const filterCoverage = test.pipe(
     }),
 );
 
-test.pipe(spec()).pipe(process.stdout);
-test.pipe(lcov).pipe(createWriteStream(resolve(coverageFolder, "lcov.info")));
+filterCoverage.pipe(spec()).pipe(process.stdout);
+filterCoverage
+    .pipe(lcov)
+    .pipe(createWriteStream(resolve(coverageFolder, "lcov.info")));

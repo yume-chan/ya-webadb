@@ -1,37 +1,41 @@
 import type {
-    ScrcpyOptions,
-    ScrcpyScrollController,
-} from "../options/index.js";
+    AndroidKeyEventAction,
+    AndroidScreenPowerMode,
+} from "../android/index.js";
+import type { ScrcpyOptions, ScrcpyScrollController } from "../base/index.js";
+import { ScrcpyControlMessageType } from "../base/index.js";
+import type {
+    ScrcpyInjectScrollControlMessage,
+    ScrcpyInjectTouchControlMessage,
+    ScrcpySetClipboardControlMessage,
+    ScrcpyUHidCreateControlMessage,
+} from "../latest.js";
 
 import { EmptyControlMessage } from "./empty.js";
-import type { AndroidKeyEventAction } from "./inject-keycode.js";
-import { ScrcpyInjectKeyCodeControlMessage } from "./inject-keycode.js";
-import type { ScrcpyInjectScrollControlMessage } from "./inject-scroll.js";
+import { ScrcpyInjectKeyCodeControlMessage } from "./inject-key-code.js";
 import { ScrcpyInjectTextControlMessage } from "./inject-text.js";
-import type { ScrcpyInjectTouchControlMessage } from "./inject-touch.js";
-import { ScrcpyRotateDeviceControlMessage } from "./rotate-device.js";
-import type { ScrcpySetClipboardControlMessage } from "./set-clipboard.js";
-import type { AndroidScreenPowerMode } from "./set-screen-power-mode.js";
-import { ScrcpySetScreenPowerModeControlMessage } from "./set-screen-power-mode.js";
+import { ScrcpyControlMessageTypeMap } from "./message-type-map.js";
+import { ScrcpySetDisplayPowerControlMessage } from "./set-screen-power-mode.js";
+import { ScrcpyStartAppControlMessage } from "./start-app.js";
 import {
-    ScrcpyControlMessageType,
-    ScrcpyControlMessageTypeValue,
-} from "./type.js";
+    ScrcpyUHidDestroyControlMessage,
+    ScrcpyUHidInputControlMessage,
+} from "./uhid.js";
 
 export class ScrcpyControlMessageSerializer {
     #options: ScrcpyOptions<object>;
-    #typeValues: ScrcpyControlMessageTypeValue;
+    #typeMap: ScrcpyControlMessageTypeMap;
     #scrollController: ScrcpyScrollController;
 
     constructor(options: ScrcpyOptions<object>) {
         this.#options = options;
-        this.#typeValues = new ScrcpyControlMessageTypeValue(options);
+        this.#typeMap = new ScrcpyControlMessageTypeMap(options);
         this.#scrollController = options.createScrollController();
     }
 
     injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">) {
         return ScrcpyInjectKeyCodeControlMessage.serialize(
-            this.#typeValues.fillMessageType(
+            this.#typeMap.fillMessageType(
                 message,
                 ScrcpyControlMessageType.InjectKeyCode,
             ),
@@ -41,7 +45,7 @@ export class ScrcpyControlMessageSerializer {
     injectText(text: string) {
         return ScrcpyInjectTextControlMessage.serialize({
             text,
-            type: this.#typeValues.get(ScrcpyControlMessageType.InjectText),
+            type: this.#typeMap.get(ScrcpyControlMessageType.InjectText),
         });
     }
 
@@ -50,7 +54,7 @@ export class ScrcpyControlMessageSerializer {
      */
     injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
         return this.#options.serializeInjectTouchControlMessage(
-            this.#typeValues.fillMessageType(
+            this.#typeMap.fillMessageType(
                 message,
                 ScrcpyControlMessageType.InjectTouch,
             ),
@@ -62,7 +66,7 @@ export class ScrcpyControlMessageSerializer {
      */
     injectScroll(message: Omit<ScrcpyInjectScrollControlMessage, "type">) {
         return this.#scrollController.serializeScrollMessage(
-            this.#typeValues.fillMessageType(
+            this.#typeMap.fillMessageType(
                 message,
                 ScrcpyControlMessageType.InjectScroll,
             ),
@@ -72,22 +76,20 @@ export class ScrcpyControlMessageSerializer {
     backOrScreenOn(action: AndroidKeyEventAction) {
         return this.#options.serializeBackOrScreenOnControlMessage({
             action,
-            type: this.#typeValues.get(ScrcpyControlMessageType.BackOrScreenOn),
+            type: this.#typeMap.get(ScrcpyControlMessageType.BackOrScreenOn),
         });
     }
 
-    setScreenPowerMode(mode: AndroidScreenPowerMode) {
-        return ScrcpySetScreenPowerModeControlMessage.serialize({
+    setDisplayPower(mode: AndroidScreenPowerMode) {
+        return ScrcpySetDisplayPowerControlMessage.serialize({
             mode,
-            type: this.#typeValues.get(
-                ScrcpyControlMessageType.SetScreenPowerMode,
-            ),
+            type: this.#typeMap.get(ScrcpyControlMessageType.SetDisplayPower),
         });
     }
 
     expandNotificationPanel() {
         return EmptyControlMessage.serialize({
-            type: this.#typeValues.get(
+            type: this.#typeMap.get(
                 ScrcpyControlMessageType.ExpandNotificationPanel,
             ),
         });
@@ -95,7 +97,7 @@ export class ScrcpyControlMessageSerializer {
 
     expandSettingPanel() {
         return EmptyControlMessage.serialize({
-            type: this.#typeValues.get(
+            type: this.#typeMap.get(
                 ScrcpyControlMessageType.ExpandSettingPanel,
             ),
         });
@@ -103,22 +105,74 @@ export class ScrcpyControlMessageSerializer {
 
     collapseNotificationPanel() {
         return EmptyControlMessage.serialize({
-            type: this.#typeValues.get(
+            type: this.#typeMap.get(
                 ScrcpyControlMessageType.CollapseNotificationPanel,
             ),
         });
     }
 
     rotateDevice() {
-        return ScrcpyRotateDeviceControlMessage.serialize({
-            type: this.#typeValues.get(ScrcpyControlMessageType.RotateDevice),
+        return EmptyControlMessage.serialize({
+            type: this.#typeMap.get(ScrcpyControlMessageType.RotateDevice),
         });
     }
 
     setClipboard(message: Omit<ScrcpySetClipboardControlMessage, "type">) {
         return this.#options.serializeSetClipboardControlMessage({
             ...message,
-            type: this.#typeValues.get(ScrcpyControlMessageType.SetClipboard),
+            type: this.#typeMap.get(ScrcpyControlMessageType.SetClipboard),
+        });
+    }
+
+    uHidCreate(message: Omit<ScrcpyUHidCreateControlMessage, "type">) {
+        if (!this.#options.serializeUHidCreateControlMessage) {
+            throw new Error("UHid not supported");
+        }
+
+        return this.#options.serializeUHidCreateControlMessage(
+            this.#typeMap.fillMessageType(
+                message,
+                ScrcpyControlMessageType.UHidCreate,
+            ),
+        );
+    }
+
+    uHidInput(message: Omit<ScrcpyUHidInputControlMessage, "type">) {
+        return ScrcpyUHidInputControlMessage.serialize(
+            this.#typeMap.fillMessageType(
+                message,
+                ScrcpyControlMessageType.UHidInput,
+            ),
+        );
+    }
+
+    uHidDestroy(id: number) {
+        return ScrcpyUHidDestroyControlMessage.serialize({
+            type: this.#typeMap.get(ScrcpyControlMessageType.UHidDestroy),
+            id,
+        });
+    }
+
+    startApp(
+        name: string,
+        options?: { forceStop?: boolean; searchByName?: boolean },
+    ) {
+        if (options?.searchByName) {
+            name = "?" + name;
+        }
+        if (options?.forceStop) {
+            name = "+" + name;
+        }
+
+        return ScrcpyStartAppControlMessage.serialize({
+            type: this.#typeMap.get(ScrcpyControlMessageType.StartApp),
+            name,
+        });
+    }
+
+    resetVideo() {
+        return EmptyControlMessage.serialize({
+            type: this.#typeMap.get(ScrcpyControlMessageType.ResetVideo),
         });
     }
 }
