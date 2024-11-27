@@ -136,7 +136,7 @@ const ObuType = {
     RedundantFrameHeader: 7,
     TileList: 8,
     Padding: 15,
-};
+} as const;
 
 type ObuType = (typeof ObuType)[keyof typeof ObuType];
 
@@ -153,7 +153,7 @@ const ColorPrimaries = {
     Smpte431: 11,
     Smpte432: 12,
     Ebu3213: 22,
-};
+} as const;
 
 const TransferCharacteristics = {
     Bt709: 1,
@@ -173,7 +173,7 @@ const TransferCharacteristics = {
     Smpte2084: 16,
     Smpte428: 17,
     Hlg: 18,
-};
+} as const;
 
 const MatrixCoefficients = {
     Identity: 0,
@@ -190,7 +190,7 @@ const MatrixCoefficients = {
     ChromatNcl: 12,
     ChromatCl: 13,
     ICtCp: 14,
-};
+} as const;
 
 export class Av1 extends BitReader {
     static ObuType = ObuType;
@@ -623,13 +623,16 @@ export class Av1 extends BitReader {
         // const NumPlanes = mono_chrome ? 1 : 3;
 
         const color_description_present_flag = !!this.f1();
-        let color_primaries = Av1.ColorPrimaries.Unspecified;
-        let transfer_characteristics = Av1.TransferCharacteristics.Unspecified;
-        let matrix_coefficients = Av1.MatrixCoefficients.Unspecified;
+        let color_primaries: Av1.ColorPrimaries =
+            Av1.ColorPrimaries.Unspecified;
+        let transfer_characteristics: Av1.TransferCharacteristics =
+            Av1.TransferCharacteristics.Unspecified;
+        let matrix_coefficients: Av1.MatrixCoefficients =
+            Av1.MatrixCoefficients.Unspecified;
         if (color_description_present_flag) {
-            color_primaries = this.f(8);
-            transfer_characteristics = this.f(8);
-            matrix_coefficients = this.f(8);
+            color_primaries = this.f(8) as Av1.ColorPrimaries;
+            transfer_characteristics = this.f(8) as Av1.TransferCharacteristics;
+            matrix_coefficients = this.f(8) as Av1.MatrixCoefficients;
         }
 
         let color_range = false;

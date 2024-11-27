@@ -10,10 +10,12 @@ import type {
     ScrcpyInjectScrollControlMessage,
     ScrcpyInjectTouchControlMessage,
     ScrcpySetClipboardControlMessage,
+    ScrcpyUHidCreateControlMessage,
 } from "../latest.js";
 
 import type { ScrcpyInjectKeyCodeControlMessage } from "./inject-key-code.js";
 import { ScrcpyControlMessageSerializer } from "./serializer.js";
+import type { ScrcpyUHidInputControlMessage } from "./uhid.js";
 
 export class ScrcpyControlMessageWriter {
     #writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>;
@@ -27,25 +29,23 @@ export class ScrcpyControlMessageWriter {
         this.#serializer = new ScrcpyControlMessageSerializer(options);
     }
 
-    async write(message: Uint8Array) {
-        await Consumable.WritableStream.write(this.#writer, message);
+    write(message: Uint8Array) {
+        return Consumable.WritableStream.write(this.#writer, message);
     }
 
-    async injectKeyCode(
-        message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">,
-    ) {
-        await this.write(this.#serializer.injectKeyCode(message));
+    injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">) {
+        return this.write(this.#serializer.injectKeyCode(message));
     }
 
-    async injectText(text: string) {
-        await this.write(this.#serializer.injectText(text));
+    injectText(text: string) {
+        return this.write(this.#serializer.injectText(text));
     }
 
     /**
      * `pressure` is a float value between 0 and 1.
      */
-    async injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
-        await this.write(this.#serializer.injectTouch(message));
+    injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
+        return this.write(this.#serializer.injectTouch(message));
     }
 
     /**
@@ -67,24 +67,24 @@ export class ScrcpyControlMessageWriter {
         }
     }
 
-    async setScreenPowerMode(mode: AndroidScreenPowerMode) {
-        await this.write(this.#serializer.setDisplayPower(mode));
+    setScreenPowerMode(mode: AndroidScreenPowerMode) {
+        return this.write(this.#serializer.setDisplayPower(mode));
     }
 
-    async expandNotificationPanel() {
-        await this.write(this.#serializer.expandNotificationPanel());
+    expandNotificationPanel() {
+        return this.write(this.#serializer.expandNotificationPanel());
     }
 
-    async expandSettingPanel() {
-        await this.write(this.#serializer.expandSettingPanel());
+    expandSettingPanel() {
+        return this.write(this.#serializer.expandSettingPanel());
     }
 
-    async collapseNotificationPanel() {
-        await this.write(this.#serializer.collapseNotificationPanel());
+    collapseNotificationPanel() {
+        return this.write(this.#serializer.collapseNotificationPanel());
     }
 
-    async rotateDevice() {
-        await this.write(this.#serializer.rotateDevice());
+    rotateDevice() {
+        return this.write(this.#serializer.rotateDevice());
     }
 
     async setClipboard(
@@ -97,6 +97,29 @@ export class ScrcpyControlMessageWriter {
             await this.write(result[0]);
             await result[1];
         }
+    }
+
+    uHidCreate(message: Omit<ScrcpyUHidCreateControlMessage, "type">) {
+        return this.write(this.#serializer.uHidCreate(message));
+    }
+
+    uHidInput(message: Omit<ScrcpyUHidInputControlMessage, "type">) {
+        return this.write(this.#serializer.uHidInput(message));
+    }
+
+    uHidDestroy(id: number) {
+        return this.write(this.#serializer.uHidDestroy(id));
+    }
+
+    startApp(
+        name: string,
+        options?: { forceStop?: boolean; searchByName?: boolean },
+    ) {
+        return this.write(this.#serializer.startApp(name, options));
+    }
+
+    resetVideo() {
+        return this.write(this.#serializer.resetVideo());
     }
 
     releaseLock() {

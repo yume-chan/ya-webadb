@@ -13,7 +13,7 @@ export const AndroidMotionEventAction = {
     HoverExit: 10,
     ButtonPress: 11,
     ButtonRelease: 12,
-};
+} as const;
 
 export type AndroidMotionEventAction =
     (typeof AndroidMotionEventAction)[keyof typeof AndroidMotionEventAction];
@@ -27,7 +27,7 @@ export const AndroidMotionEventButton = {
     Forward: 16,
     StylusPrimary: 32,
     StylusSecondary: 64,
-};
+} as const;
 
 export type AndroidMotionEventButton =
     (typeof AndroidMotionEventButton)[keyof typeof AndroidMotionEventButton];

@@ -8,7 +8,6 @@ import {
     SplitStringStream,
     TextDecoderStream,
     WrapReadableStream,
-    WritableStream,
 } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable, StructValue } from "@yume-chan/struct";
 import { decodeUtf8, struct, u16, u32 } from "@yume-chan/struct";
@@ -437,53 +436,48 @@ export class Logcat extends AdbCommandBase {
         ]);
 
         const result: LogSize[] = [];
-        await stdout
+        for await (const line of stdout
             .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new SplitStringStream("\n"))
-            .pipeTo(
-                new WritableStream({
-                    write(chunk) {
-                        let match = chunk.match(Logcat.LOG_SIZE_REGEX_11);
-                        if (match) {
-                            result.push({
-                                id: Logcat.logNameToId(match[1]!),
-                                size: Logcat.parseSize(
-                                    Number.parseInt(match[2]!, 10),
-                                    match[3]!,
-                                ),
-                                readable: Logcat.parseSize(
-                                    Number.parseInt(match[6]!, 10),
-                                    match[7]!,
-                                ),
-                                consumed: Logcat.parseSize(
-                                    Number.parseInt(match[4]!, 10),
-                                    match[5]!,
-                                ),
-                                maxEntrySize: parseInt(match[8]!, 10),
-                                maxPayloadSize: parseInt(match[9]!, 10),
-                            });
-                            return;
-                        }
+            .pipeThrough(new SplitStringStream("\n"))) {
+            let match = line.match(Logcat.LOG_SIZE_REGEX_11);
+            if (match) {
+                result.push({
+                    id: Logcat.logNameToId(match[1]!),
+                    size: Logcat.parseSize(
+                        Number.parseInt(match[2]!, 10),
+                        match[3]!,
+                    ),
+                    readable: Logcat.parseSize(
+                        Number.parseInt(match[6]!, 10),
+                        match[7]!,
+                    ),
+                    consumed: Logcat.parseSize(
+                        Number.parseInt(match[4]!, 10),
+                        match[5]!,
+                    ),
+                    maxEntrySize: parseInt(match[8]!, 10),
+                    maxPayloadSize: parseInt(match[9]!, 10),
+                });
+                break;
+            }
 
-                        match = chunk.match(Logcat.LOG_SIZE_REGEX_10);
-                        if (match) {
-                            result.push({
-                                id: Logcat.logNameToId(match[1]!),
-                                size: Logcat.parseSize(
-                                    Number.parseInt(match[2]!, 10),
-                                    match[3]!,
-                                ),
-                                consumed: Logcat.parseSize(
-                                    Number.parseInt(match[4]!, 10),
-                                    match[5]!,
-                                ),
-                                maxEntrySize: parseInt(match[6]!, 10),
-                                maxPayloadSize: parseInt(match[7]!, 10),
-                            });
-                        }
-                    },
-                }),
-            );
+            match = line.match(Logcat.LOG_SIZE_REGEX_10);
+            if (match) {
+                result.push({
+                    id: Logcat.logNameToId(match[1]!),
+                    size: Logcat.parseSize(
+                        Number.parseInt(match[2]!, 10),
+                        match[3]!,
+                    ),
+                    consumed: Logcat.parseSize(
+                        Number.parseInt(match[4]!, 10),
+                        match[5]!,
+                    ),
+                    maxEntrySize: parseInt(match[6]!, 10),
+                    maxPayloadSize: parseInt(match[7]!, 10),
+                });
+            }
+        }
 
         return result;
     }

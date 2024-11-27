@@ -1,8 +1,7 @@
 import type { PrevImpl } from "./prev.js";
 
-export interface Init extends Omit<PrevImpl.Init, "display"> {
+export interface Init extends PrevImpl.Init {
     videoSource?: "display" | "camera";
-    displayId?: number;
     cameraId?: string | undefined;
     cameraSize?: string | undefined;
     cameraFacing?: "front" | "back" | "external" | undefined;

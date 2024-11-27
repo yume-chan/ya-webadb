@@ -2,7 +2,6 @@ import type { MaybeConsumable, WritableStream } from "@yume-chan/stream-extra";
 import { ReadableStream } from "@yume-chan/stream-extra";
 
 import type { Adb, AdbSocket } from "../../../adb.js";
-import { unreachable } from "../../../utils/index.js";
 
 import type { AdbSubprocessProtocol } from "./types.js";
 
@@ -64,10 +63,9 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
         this.#socket = socket;
 
         this.#stderr = new ReadableStream({
-            start: (controller) => {
-                this.#socket.closed
-                    .then(() => controller.close())
-                    .catch(unreachable);
+            start: async (controller) => {
+                await this.#socket.closed;
+                controller.close();
             },
         });
         this.#exit = socket.closed.then(() => 0);

@@ -7,6 +7,7 @@ import type {
     ScrcpyInjectTouchControlMessage,
     ScrcpySetClipboardControlMessage,
     ScrcpyUHidCreateControlMessage,
+    ScrcpyUHidOutputDeviceMessage,
 } from "../latest.js";
 
 import type { ScrcpyAudioStreamMetadata } from "./audio.js";
@@ -22,7 +23,11 @@ export interface ScrcpyOptions<T extends object> {
 
     value: Required<T>;
 
-    get clipboard(): ReadableStream<string> | undefined;
+    readonly clipboard?: ReadableStream<string> | undefined;
+
+    readonly uHidOutput?:
+        | ReadableStream<ScrcpyUHidOutputDeviceMessage>
+        | undefined;
 
     serialize(): string[];
 

@@ -33,6 +33,7 @@ export function encodeUtf8(input: string): Uint8Array {
     return SharedEncoder.encode(input);
 }
 
+/* #__NO_SIDE_EFFECTS__ */
 export function decodeUtf8(buffer: ArrayBufferView | ArrayBuffer): string {
     // `TextDecoder` has internal states in stream mode,
     // but this method is not for stream mode, so the instance can be reused

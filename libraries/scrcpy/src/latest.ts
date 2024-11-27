@@ -1,8 +1,15 @@
 export {
     BackOrScreenOnControlMessage as ScrcpyBackOrScreenOnControlMessage,
+    CaptureOrientation as ScrcpyCaptureOrientation,
+    CodecOptions as ScrcpyCodecOptions,
     InjectScrollControlMessage as ScrcpyInjectScrollControlMessage,
     InjectTouchControlMessage as ScrcpyInjectTouchControlMessage,
     InstanceId as ScrcpyInstanceId,
+    LockOrientation as ScrcpyLockOrientation,
+    NewDisplay as ScrcpyNewDisplay,
+    Orientation as ScrcpyOrientation,
+    PointerId as ScrcpyPointerId,
     SetClipboardControlMessage as ScrcpySetClipboardControlMessage,
     UHidCreateControlMessage as ScrcpyUHidCreateControlMessage,
-} from "./2_7/impl/index.js";
+    UHidOutputDeviceMessage as ScrcpyUHidOutputDeviceMessage,
+} from "./3_0/impl/index.js";

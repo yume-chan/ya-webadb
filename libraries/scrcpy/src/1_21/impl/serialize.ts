@@ -4,15 +4,16 @@ function toSnakeCase(input: string): string {
     return input.replace(/([A-Z])/g, "_$1").toLowerCase();
 }
 
+// 1.21 changed the format of arguments
 export function serialize<T extends object>(
     options: T,
     defaults: Required<T>,
 ): string[] {
-    // 1.21 changed the format of arguments
     const result: string[] = [];
     for (const [key, value] of Object.entries(options)) {
         const serializedValue = toScrcpyOptionValue(value, undefined);
-        if (!serializedValue) {
+        // v3.0 `new_display` option needs to send empty strings to server
+        if (serializedValue === undefined) {
             continue;
         }
 
@@ -20,7 +21,7 @@ export function serialize<T extends object>(
             defaults[key as keyof T],
             undefined,
         );
-        if (serializedValue == defaultValue) {
+        if (serializedValue === defaultValue) {
             continue;
         }
 

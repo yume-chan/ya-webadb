@@ -4,18 +4,7 @@ import { bipedal, struct, u16, u32, u64, u8 } from "@yume-chan/struct";
 
 import type { AndroidMotionEventAction } from "../../android/index.js";
 import type { ScrcpyInjectTouchControlMessage } from "../../latest.js";
-
-export function clamp(value: number, min: number, max: number): number {
-    if (value < min) {
-        return min;
-    }
-
-    if (value > max) {
-        return max;
-    }
-
-    return value;
-}
+import { clamp } from "../../utils/index.js";
 
 export const UnsignedFloat: Field<number, never, never> = {
     size: 2,
@@ -32,6 +21,13 @@ export const UnsignedFloat: Field<number, never, never> = {
         return value === 0xffff ? 1 : value / 0x10000;
     }),
 };
+
+export const PointerId = {
+    Mouse: -1n,
+    Finger: -2n,
+    VirtualMouse: -3n,
+    VirtualFinger: -4n,
+} as const;
 
 export const InjectTouchControlMessage = struct(
     {

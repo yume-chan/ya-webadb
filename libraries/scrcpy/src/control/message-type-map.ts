@@ -24,7 +24,7 @@ export class ScrcpyControlMessageTypeMap {
         message: Omit<T, "type">,
         type: T["type"],
     ): T {
-        (message as T).type = this.get(type);
+        (message as T).type = this.get(type) as ScrcpyControlMessageType;
         return message as T;
     }
 }

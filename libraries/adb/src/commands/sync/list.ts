@@ -15,23 +15,25 @@ export interface AdbSyncEntry extends AdbSyncStat {
     name: string;
 }
 
-export const AdbSyncEntryResponse = struct(
-    /* #__PURE__ */ (() => ({
-        ...AdbSyncLstatResponse.fields,
-        name: string(u32),
-    }))(),
-    { littleEndian: true, extra: AdbSyncLstatResponse.extra },
-);
+export const AdbSyncEntryResponse = /* #__PURE__ */ (() =>
+    struct(
+        {
+            ...AdbSyncLstatResponse.fields,
+            name: string(u32),
+        },
+        { littleEndian: true, extra: AdbSyncLstatResponse.extra },
+    ))();
 
 export type AdbSyncEntryResponse = StructValue<typeof AdbSyncEntryResponse>;
 
-export const AdbSyncEntry2Response = struct(
-    /* #__PURE__ */ (() => ({
-        ...AdbSyncStatResponse.fields,
-        name: string(u32),
-    }))(),
-    { littleEndian: true, extra: AdbSyncStatResponse.extra },
-);
+export const AdbSyncEntry2Response = /* #__PURE__ */ (() =>
+    struct(
+        {
+            ...AdbSyncStatResponse.fields,
+            name: string(u32),
+        },
+        { littleEndian: true, extra: AdbSyncStatResponse.extra },
+    ))();
 
 export type AdbSyncEntry2Response = StructValue<typeof AdbSyncEntry2Response>;
 

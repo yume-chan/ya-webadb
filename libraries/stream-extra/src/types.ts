@@ -242,7 +242,7 @@ export declare class ReadableStream<out R> implements AsyncIterable<R> {
      * such as an array, an async generator, or a Node.js readable stream.
      */
     static from<R>(
-        asyncIterable: Iterable<R> | AsyncIterable<R> | ReadableStreamLike<R>,
+        asyncIterable: Iterable<R> | AsyncIterable<R>,
     ): ReadableStream<R>;
 }
 
@@ -253,7 +253,7 @@ export declare class ReadableStream<out R> implements AsyncIterable<R> {
  */
 export declare interface ReadableStreamAsyncIterator<R>
     extends AsyncIterableIterator<R> {
-    next(): Promise<IteratorResult<R, undefined>>;
+    next(): Promise<IteratorResult<R, void>>;
     return(value?: R): Promise<IteratorResult<R>>;
 }
 

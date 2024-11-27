@@ -18,11 +18,11 @@ import { bipedal } from "./bipedal.js";
 import type { Field } from "./field.js";
 
 export interface NumberField<T> extends Field<T, never, never> {
-    <U>(infer?: T): Field<U, never, never>;
+    <const U>(infer?: U): Field<U, never, never>;
 }
 
 /* #__NO_SIDE_EFFECTS__ */
-function number<T>(
+function factory<T>(
     size: number,
     serialize: Field<T, never, never>["serialize"],
     deserialize: Field<T, never, never>["deserialize"],
@@ -34,7 +34,7 @@ function number<T>(
     return result as never;
 }
 
-export const u8 = number<number>(
+export const u8 = factory<number>(
     1,
     (value, { buffer, index }) => {
         buffer[index] = value;
@@ -45,7 +45,7 @@ export const u8 = number<number>(
     }),
 );
 
-export const s8 = number<number>(
+export const s8 = factory<number>(
     1,
     (value, { buffer, index }) => {
         buffer[index] = value;
@@ -56,7 +56,7 @@ export const s8 = number<number>(
     }),
 );
 
-export const u16 = number<number>(
+export const u16 = factory<number>(
     2,
     (value, { buffer, index, littleEndian }) => {
         setUint16(buffer, index, value, littleEndian);
@@ -67,7 +67,7 @@ export const u16 = number<number>(
     }),
 );
 
-export const s16 = number<number>(
+export const s16 = factory<number>(
     2,
     (value, { buffer, index, littleEndian }) => {
         setInt16(buffer, index, value, littleEndian);
@@ -78,7 +78,7 @@ export const s16 = number<number>(
     }),
 );
 
-export const u32 = number<number>(
+export const u32 = factory<number>(
     4,
     (value, { buffer, index, littleEndian }) => {
         setUint32(buffer, index, value, littleEndian);
@@ -89,7 +89,7 @@ export const u32 = number<number>(
     }),
 );
 
-export const s32 = number<number>(
+export const s32 = factory<number>(
     4,
     (value, { buffer, index, littleEndian }) => {
         setInt32(buffer, index, value, littleEndian);
@@ -100,7 +100,7 @@ export const s32 = number<number>(
     }),
 );
 
-export const u64 = number<bigint>(
+export const u64 = factory<bigint>(
     8,
     (value, { buffer, index, littleEndian }) => {
         setUint64(buffer, index, value, littleEndian);
@@ -111,7 +111,7 @@ export const u64 = number<bigint>(
     }),
 );
 
-export const s64 = number<bigint>(
+export const s64 = factory<bigint>(
     8,
     (value, { buffer, index, littleEndian }) => {
         setInt64(buffer, index, value, littleEndian);

@@ -43,11 +43,13 @@ export interface AdbCredentialStore {
     iterateKeys(): AdbKeyIterable;
 }
 
-export enum AdbAuthType {
-    Token = 1,
-    Signature = 2,
-    PublicKey = 3,
-}
+export const AdbAuthType = {
+    Token: 1,
+    Signature: 2,
+    PublicKey: 3,
+} as const;
+
+export type AdbAuthType = (typeof AdbAuthType)[keyof typeof AdbAuthType];
 
 export interface AdbAuthenticator {
     /**

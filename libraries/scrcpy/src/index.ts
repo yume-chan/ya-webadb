@@ -17,6 +17,7 @@ export * from "./2_4/index.js";
 export * from "./2_5.js";
 export * from "./2_6/index.js";
 export * from "./2_7/index.js";
+export * from "./3_0/index.js";
 export * from "./android/index.js";
 export * from "./base/index.js";
 export * from "./codec/index.js";

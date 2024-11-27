@@ -9,7 +9,7 @@ export const VideoOrientation = {
     Landscape: 1,
     PortraitFlipped: 2,
     LandscapeFlipped: 3,
-};
+} as const;
 
 export type VideoOrientation =
     (typeof VideoOrientation)[keyof typeof VideoOrientation];

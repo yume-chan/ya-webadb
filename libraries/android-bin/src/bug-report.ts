@@ -211,37 +211,33 @@ export class BugReport extends AdbCommandBase {
         let filename: string | undefined;
         let error: string | undefined;
 
-        await process.stdout
+        for await (const line of process.stdout
             .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new SplitStringStream("\n"))
-            .pipeTo(
-                new WritableStream<string>({
-                    write(line) {
-                        // `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
-                        let match = line.match(BugReport.PROGRESS_REGEX);
-                        if (match) {
-                            options?.onProgress?.(match[1]!, match[2]!);
-                        }
+            // Each chunk should contain one or several full lines
+            .pipeThrough(new SplitStringStream("\n"))) {
+            // `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
+            let match = line.match(BugReport.PROGRESS_REGEX);
+            if (match) {
+                options?.onProgress?.(match[1]!, match[2]!);
+            }
 
-                        match = line.match(BugReport.BEGIN_REGEX);
-                        if (match) {
-                            filename = match[1]!;
-                        }
+            match = line.match(BugReport.BEGIN_REGEX);
+            if (match) {
+                filename = match[1]!;
+            }
 
-                        match = line.match(BugReport.OK_REGEX);
-                        if (match) {
-                            filename = match[1];
-                        }
+            match = line.match(BugReport.OK_REGEX);
+            if (match) {
+                filename = match[1];
+            }
 
-                        match = line.match(BugReport.FAIL_REGEX);
-                        if (match) {
-                            // Don't report error now
-                            // We want to gather all output.
-                            error = match[1];
-                        }
-                    },
-                }),
-            );
+            match = line.match(BugReport.FAIL_REGEX);
+            if (match) {
+                // Don't report error now
+                // We want to gather all output.
+                error = match[1];
+            }
+        }
 
         if (error) {
             throw new Error(error);

@@ -6,7 +6,7 @@ export const LockOrientation = {
     Unlocked: 0,
     LockedInitial: 1,
     LockedValue: 2,
-};
+} as const;
 
 export type LockOrientation =
     (typeof LockOrientation)[keyof typeof LockOrientation];
@@ -16,16 +16,17 @@ export const Orientation = {
     Orient90: 90,
     Orient180: 180,
     Orient270: 270,
-};
+} as const;
 
 export type Orientation = (typeof Orientation)[keyof typeof Orientation];
 
 export class CaptureOrientation implements ScrcpyOptionValue {
-    static Default = /* #__PURE__ */ new CaptureOrientation(
-        LockOrientation.Unlocked,
-        Orientation.Orient0,
-        false,
-    );
+    static Unlocked = /* #__PURE__ */ (() =>
+        new CaptureOrientation(
+            LockOrientation.Unlocked,
+            Orientation.Orient0,
+            false,
+        ))();
 
     lock: LockOrientation;
     orientation: Orientation;
@@ -59,7 +60,7 @@ export class CaptureOrientation implements ScrcpyOptionValue {
 }
 
 export class NewDisplay implements ScrcpyOptionValue {
-    static Empty = /* #__PURE__ */ new NewDisplay();
+    static Default = /* #__PURE__ */ new NewDisplay();
 
     width?: number | undefined;
     height?: number | undefined;
@@ -90,7 +91,7 @@ export class NewDisplay implements ScrcpyOptionValue {
             this.height === undefined &&
             this.dpi === undefined
         ) {
-            return undefined;
+            return "";
         }
 
         if (this.width === undefined) {
@@ -112,6 +113,9 @@ export interface Init extends Omit<PrevImpl.Init, "lockVideoOrientation"> {
 
     listApps?: boolean;
 
-    newDisplay?: NewDisplay;
+    // `display_id` and `new_display` can't be specified at the same time
+    // but `serialize` method will exclude options that are same as the default value
+    // so `displayId: 0` will be ignored
+    newDisplay?: NewDisplay | undefined;
     vdSystemDecorations?: boolean;
 }

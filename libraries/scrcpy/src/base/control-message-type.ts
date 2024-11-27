@@ -18,7 +18,7 @@ export const ScrcpyControlMessageType = {
     OpenHardKeyboardSettings: 15,
     StartApp: 16,
     ResetVideo: 17,
-};
+} as const;
 
 export type ScrcpyControlMessageType =
     (typeof ScrcpyControlMessageType)[keyof typeof ScrcpyControlMessageType];

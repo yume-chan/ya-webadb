@@ -5,6 +5,7 @@ export {
 } from "./back-or-screen-on.js";
 export { ControlMessageTypes } from "./control-message-types.js";
 export { Defaults } from "./defaults.js";
-export type { Init } from "./init.js";
+export { VideoOrientation } from "./init.js";
+export type { Init, LogLevel } from "./init.js";
 export { EncoderRegex } from "./parse-encoder.js";
 export { SerializeOrder } from "./serialize-order.js";

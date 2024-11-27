@@ -46,6 +46,8 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
         const client = await AdbScrcpyClient.start(adb, path, version, options);
 
         const encoders: ScrcpyEncoder[] = [];
+
+        // `client.stdout` is supplied by user and may not support async iteration
         await client.stdout.pipeTo(
             new WritableStream({
                 write: (line) => {

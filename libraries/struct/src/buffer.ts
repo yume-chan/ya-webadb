@@ -42,9 +42,7 @@ export interface BufferLike {
 
 export const EmptyUint8Array = new Uint8Array(0);
 
-// Rollup doesn't support `/* #__NO_SIDE_EFFECTS__ */ export const a = () => {}
-/* #__NO_SIDE_EFFECTS__ */
-function _buffer(
+export const buffer: BufferLike = function (
     lengthOrField:
         | string
         | number
@@ -259,6 +257,4 @@ function _buffer(
             return reader.readExactly(length);
         },
     };
-}
-
-export const buffer: BufferLike = _buffer as never;
+} as never;

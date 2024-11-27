@@ -1,10 +1,12 @@
+import { omit } from "../../utils/index.js";
+
 import type { Init } from "./init.js";
 import { InstanceId } from "./init.js";
 import { PrevImpl } from "./prev.js";
 
 export const Defaults = /* #__PURE__ */ (() =>
     ({
-        ...PrevImpl.Defaults,
+        ...omit(PrevImpl.Defaults, "bitRate", "codecOptions", "encoderName"),
         scid: InstanceId.NONE,
 
         videoCodec: "h264",

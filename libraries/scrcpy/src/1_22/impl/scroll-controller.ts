@@ -1,6 +1,8 @@
 import type { StructInit } from "@yume-chan/struct";
 import { s32, struct } from "@yume-chan/struct";
 
+import type { ScrcpyInjectScrollControlMessage } from "../../latest.js";
+
 import { PrevImpl } from "./prev.js";
 
 export const InjectScrollControlMessage = /* #__PURE__ */ (() =>
@@ -18,7 +20,7 @@ export type InjectScrollControlMessage = StructInit<
 
 export class ScrollController extends PrevImpl.ScrollController {
     override serializeScrollMessage(
-        message: InjectScrollControlMessage,
+        message: ScrcpyInjectScrollControlMessage,
     ): Uint8Array | undefined {
         const processed = this.processMessage(message);
         if (!processed) {

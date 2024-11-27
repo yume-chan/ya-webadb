@@ -41,7 +41,7 @@ async function parseAsync(
     let width: number | undefined;
     let height: number | undefined;
     if (options.sendCodecMeta) {
-        codec = await PrevImpl.readU32(buffered);
+        codec = (await PrevImpl.readU32(buffered)) as ScrcpyVideoCodecId;
         width = await PrevImpl.readU32(buffered);
         height = await PrevImpl.readU32(buffered);
     } else {
@@ -64,9 +64,7 @@ export function parseVideoStreamMetadata(
     if (!options.sendDeviceMeta && !options.sendCodecMeta) {
         return {
             stream,
-            metadata: {
-                codec: toCodecId(options.videoCodec),
-            },
+            metadata: { codec: toCodecId(options.videoCodec) },
         };
     }
 

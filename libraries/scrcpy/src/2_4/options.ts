@@ -17,6 +17,7 @@ import type {
     ScrcpyInjectTouchControlMessage,
     ScrcpySetClipboardControlMessage,
     ScrcpyUHidCreateControlMessage,
+    ScrcpyUHidOutputDeviceMessage,
 } from "../latest.js";
 
 import type { Init } from "./impl/index.js";
@@ -55,12 +56,18 @@ export class ScrcpyOptions2_4 implements ScrcpyOptions<Init> {
     #ackClipboardHandler: AckClipboardHandler | undefined;
 
     #uHidOutput: UHidOutputStream | undefined;
-    get uHidOutput(): UHidOutputStream | undefined {
+    get uHidOutput():
+        | ReadableStream<ScrcpyUHidOutputDeviceMessage>
+        | undefined {
         return this.#uHidOutput;
     }
 
     constructor(init: Init) {
         this.value = { ...Defaults, ...init };
+
+        if (this.value.videoSource === "camera") {
+            this.value.control = false;
+        }
 
         if (this.value.control) {
             if (this.value.clipboardAutosync) {

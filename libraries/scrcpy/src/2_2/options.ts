@@ -54,6 +54,10 @@ export class ScrcpyOptions2_2 implements ScrcpyOptions<Init> {
     constructor(init: Init) {
         this.value = { ...Defaults, ...init };
 
+        if (this.value.videoSource === "camera") {
+            this.value.control = false;
+        }
+
         if (this.value.control && this.value.clipboardAutosync) {
             this.#clipboard = new ClipboardStream();
             this.#ackClipboardHandler = new AckClipboardHandler();

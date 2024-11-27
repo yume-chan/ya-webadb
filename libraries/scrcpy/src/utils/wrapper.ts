@@ -32,6 +32,10 @@ export class ScrcpyOptionsWrapper<T extends object>
         return this.#base.clipboard;
     }
 
+    get uHidOutput() {
+        return this.#base.uHidOutput;
+    }
+
     constructor(options: ScrcpyOptions<T>) {
         this.#base = options;
     }

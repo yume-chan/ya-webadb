@@ -6,7 +6,7 @@ export const VideoOrientation = {
     Landscape: 1,
     PortraitFlipped: 2,
     LandscapeFlipped: 3,
-};
+} as const;
 
 export type VideoOrientation =
     (typeof VideoOrientation)[keyof typeof VideoOrientation];
@@ -83,6 +83,10 @@ export class CodecOptions implements ScrcpyOptionValue {
             })
             .join(",");
     }
+}
+
+export namespace CodecOptions {
+    export type Init = CodecOptionsInit;
 }
 
 export interface Init {
