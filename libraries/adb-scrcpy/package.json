@@ -42,7 +42,7 @@
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.3.3",
-        "typescript": "^5.6.3"
+        "prettier": "^3.4.1",
+        "typescript": "^5.7.2"
     }
 }

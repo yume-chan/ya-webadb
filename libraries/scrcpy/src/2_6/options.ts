@@ -37,10 +37,9 @@ import {
     serializeUHidCreateControlMessage,
     setListDisplays,
     setListEncoders,
-    UHidOutputStream
-    
+    UHidOutputStream,
 } from "./impl/index.js";
-import type {Init} from "./impl/index.js";
+import type { Init } from "./impl/index.js";
 
 export class ScrcpyOptions2_6 implements ScrcpyOptions<Init> {
     readonly value: Required<Init>;

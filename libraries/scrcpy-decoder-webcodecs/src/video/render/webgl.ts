@@ -94,7 +94,7 @@ export class WebGLWebCodecsDecoderRenderer extends CanvasWebCodecsVideoDecoderRe
             throw new Error(gl.getShaderInfoLog(fragmentShader)!);
         }
 
-        const shaderProgram = gl.createProgram()!;
+        const shaderProgram = gl.createProgram();
         gl.attachShader(shaderProgram, vertexShader);
         gl.attachShader(shaderProgram, fragmentShader);
         gl.linkProgram(shaderProgram);

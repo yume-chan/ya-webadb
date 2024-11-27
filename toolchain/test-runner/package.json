@@ -6,7 +6,7 @@
         "run-test": "wrapper.js"
     },
     "devDependencies": {
-        "@types/node": "^22.9.1",
-        "typescript": "^5.6.3"
+        "@types/node": "^22.10.0",
+        "typescript": "^5.7.2"
     }
 }
