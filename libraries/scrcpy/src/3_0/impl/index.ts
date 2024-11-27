@@ -6,5 +6,6 @@ export {
     LockOrientation,
     NewDisplay,
     Orientation,
-    type Init,
 } from "./init.js";
+export type { Init } from "./init.js";
+export { parseEncoder } from "./parse-encoder.js";

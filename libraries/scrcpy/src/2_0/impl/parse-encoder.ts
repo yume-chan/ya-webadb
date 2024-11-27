@@ -1,25 +1,15 @@
 import type { ScrcpyEncoder } from "../../base/index.js";
 
+const EncoderRegex =
+    /^\s+--(video|audio)-codec=(\S+)\s+--\1-encoder='([^']+)'$/;
+
 export function parseEncoder(line: string): ScrcpyEncoder | undefined {
-    let match = line.match(
-        /^\s+--video-codec=(\S+)\s+--video-encoder='([^']+)'$/,
-    );
-    if (match) {
-        return {
-            type: "video",
-            codec: match[1]!,
-            name: match[2]!,
-        };
-    }
-
-    match = line.match(/^\s+--audio-codec=(\S+)\s+--audio-encoder='([^']+)'$/);
-    if (match) {
-        return {
-            type: "audio",
-            codec: match[1]!,
-            name: match[2]!,
-        };
-    }
-
-    return undefined;
+    const match = line.match(EncoderRegex);
+    return match
+        ? {
+              type: match[1]! as "video" | "audio",
+              name: match[3]!,
+              codec: match[2]!,
+          }
+        : undefined;
 }
