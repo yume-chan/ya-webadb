@@ -38,7 +38,7 @@ await Promise.all([
         resolve(binFolder, "index.js"),
         `
 export const VERSION = '${version}';
-export const BIN = new URL('./server.bin', import.meta.url);
+export const BIN = /* #__PURE__ */ new URL('./server.bin', import.meta.url);
     `,
     ),
     fs.writeFile(
