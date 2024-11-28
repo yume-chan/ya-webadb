@@ -42,13 +42,10 @@ export class WrapWritableStream<T> extends WritableStream<T> {
     ) {
         super({
             start: async () => {
-                // `start` is invoked before `ReadableStream`'s constructor finish,
-                // so using `this` synchronously causes
-                // "Must call super constructor in derived class before accessing 'this' or returning from derived constructor".
-                // Queue a microtask to avoid this.
-                await Promise.resolve();
-
-                this.writable = await getWrappedWritableStream(start);
+                const writable = await getWrappedWritableStream(start);
+                // `start` is called in `super()`, so can't use `this` synchronously.
+                // but it's fine after the first `await`
+                this.writable = writable;
                 this.#writer = this.writable.getWriter();
             },
             write: async (chunk) => {
