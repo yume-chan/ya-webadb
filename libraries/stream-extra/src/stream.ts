@@ -84,6 +84,9 @@ const ReadableStream = /* #__PURE__ */ (() => {
                     yield value;
                 }
             } finally {
+                // Calling `iterator.return` will enter this `finally` block.
+                // We don't need to care about the parameter to `iterator.return`,
+                // it will be returned as the final `result.value` automatically.
                 if (!options?.preventCancel) {
                     await reader.cancel();
                 }

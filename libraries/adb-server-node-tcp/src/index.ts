@@ -58,8 +58,6 @@ function nodeSocketToConnection(
 
 /**
  * An `AdbServerClient.ServerConnector` implementation for Node.js.
- *
- * [Online Documentation](https://docs.tangoapp.dev/tango/server/client/)
  */
 export class AdbServerNodeTcpConnector
     implements AdbServerClient.ServerConnector

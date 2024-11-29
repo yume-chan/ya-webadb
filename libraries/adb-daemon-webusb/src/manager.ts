@@ -9,9 +9,6 @@ export namespace AdbDaemonWebUsbDeviceManager {
     }
 }
 
-/**
- * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/usb/device-manager/)
- */
 export class AdbDaemonWebUsbDeviceManager {
     /**
      * Gets the instance of {@link AdbDaemonWebUsbDeviceManager} using browser WebUSB implementation.
@@ -36,8 +33,6 @@ export class AdbDaemonWebUsbDeviceManager {
 
     /**
      * Call `USB#requestDevice()` to prompt the user to select a device.
-     *
-     * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/usb/request-device/)
      */
     async requestDevice(
         options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
@@ -62,8 +57,6 @@ export class AdbDaemonWebUsbDeviceManager {
 
     /**
      * Get all connected and requested devices that match the specified filters.
-     *
-     * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/usb/get-devices/)
      */
     getDevices(filters?: USBDeviceFilter[]): Promise<AdbDaemonWebUsbDevice[]>;
     async getDevices(

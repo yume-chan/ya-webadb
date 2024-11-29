@@ -25,7 +25,7 @@ const AdbReverseStringResponse = struct(
         content: string({
             field: "length",
             convert(value: string) {
-                return Number.parseInt(value);
+                return Number.parseInt(value, 16);
             },
             back(value) {
                 return value.toString(16).padStart(4, "0");
@@ -108,8 +108,6 @@ export class AdbReverseCommand {
 
     /**
      * Get a list of all reverse port forwarding on the device.
-     *
-     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/list/)
      */
     async list(): Promise<AdbForwardListener[]> {
         const stream = await this.createBufferedStream("reverse:list-forward");
@@ -130,8 +128,6 @@ export class AdbReverseCommand {
 
     /**
      * Add a reverse port forwarding for a program that already listens on a port.
-     *
-     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/add/#addexternal)
      */
     async addExternal(deviceAddress: string, localAddress: string) {
         const stream = await this.sendRequest(
@@ -165,8 +161,6 @@ export class AdbReverseCommand {
 
     /**
      * Add a reverse port forwarding.
-     *
-     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/add/)
      */
     async add(
         deviceAddress: string,
@@ -190,8 +184,6 @@ export class AdbReverseCommand {
 
     /**
      * Remove a reverse port forwarding.
-     *
-     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/remove/#remove-one-port-forwarding)
      */
     async remove(deviceAddress: string): Promise<void> {
         const localAddress =
@@ -207,8 +199,6 @@ export class AdbReverseCommand {
 
     /**
      * Remove all reverse port forwarding, including the ones added by other programs.
-     *
-     * [Online Documentation](https://docs.tangoapp.dev/api/reverse/remove/#remove-all-port-forwardings)
      */
     async removeAll(): Promise<void> {
         await this.adb.transport.clearReverseTunnels();

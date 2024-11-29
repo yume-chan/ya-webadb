@@ -41,6 +41,7 @@ export class H265Decoder extends H26xDecoder {
         ].join(".");
         this.#decoder.configure({
             codec,
+            // Microsoft Edge requires explicit size to work
             codedWidth: croppedWidth,
             codedHeight: croppedHeight,
             optimizeForLatency: true,

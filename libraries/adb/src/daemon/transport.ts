@@ -151,14 +151,10 @@ interface AdbDaemonSocketConnectorConstructionOptions {
 
 /**
  * An ADB Transport that connects to ADB Daemons directly.
- *
- * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/)
  */
 export class AdbDaemonTransport implements AdbTransport {
     /**
      * Authenticate with the ADB Daemon and create a new transport.
-     *
-     * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/connect-device/)
      */
     static async authenticate({
         serial,

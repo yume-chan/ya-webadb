@@ -24,8 +24,6 @@ export interface Closeable {
 
 /**
  * Represents an ADB socket.
- *
- * [Online Documentation](https://docs.tangoapp.dev/api/socket/)
  */
 export interface AdbSocket
     extends ReadableWritablePair<Uint8Array, MaybeConsumable<Uint8Array>>,
@@ -112,8 +110,6 @@ export class Adb implements Closeable {
 
     /**
      * Creates a new ADB Socket to the specified service or socket address.
-     *
-     * [Online Documentation](https://docs.tangoapp.dev/api/socket/#forward-tunnel)
      */
     async createSocket(service: string): Promise<AdbSocket> {
         return this.transport.connect(service);

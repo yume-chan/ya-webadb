@@ -38,6 +38,8 @@ import {
 } from "./impl/index.js";
 
 export class ScrcpyOptions2_0 implements ScrcpyOptions<Init> {
+    static readonly Defaults = Defaults;
+
     readonly value: Required<Init>;
 
     get controlMessageTypes(): readonly ScrcpyControlMessageType[] {

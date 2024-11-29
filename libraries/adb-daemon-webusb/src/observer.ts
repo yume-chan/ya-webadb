@@ -8,8 +8,6 @@ import { matchesFilters } from "./utils.js";
 /**
  * A watcher that listens for new WebUSB devices and notifies the callback when
  * a new device is connected or disconnected.
- *
- * [Online Documentation](https://docs.tangoapp.dev/tango/daemon/usb/watch-devices/)
  */
 export class AdbDaemonWebUsbDeviceObserver
     implements DeviceObserver<AdbDaemonWebUsbDevice>
