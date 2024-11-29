@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-credential-web",
-    "version": "0.0.24",
+    "version": "0.0.0-next-20241129144018",
     "description": "Credential Store for `@yume-chan/adb` using WebCrypto and IndexedDB APIs.",
     "keywords": [
         "adb"
