@@ -3,10 +3,7 @@
 import * as assert from "node:assert";
 import { describe, it, mock } from "node:test";
 
-import {
-    ADB_DEFAULT_INTERFACE_FILTER,
-    AdbDaemonWebUsbDevice,
-} from "./device.js";
+import { AdbDaemonWebUsbDevice, AdbDefaultInterfaceFilter } from "./device.js";
 import { AdbDaemonWebUsbDeviceManager } from "./manager.js";
 
 class MockUsb implements USB {
@@ -69,7 +66,7 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
             assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
             assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
                 {
-                    filters: [ADB_DEFAULT_INTERFACE_FILTER],
+                    filters: [AdbDefaultInterfaceFilter],
                     exclusionFilters: undefined,
                 },
             ]);
@@ -85,7 +82,7 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
             assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
             assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
                 {
-                    filters: [ADB_DEFAULT_INTERFACE_FILTER],
+                    filters: [AdbDefaultInterfaceFilter],
                     exclusionFilters: undefined,
                 },
             ]);
@@ -101,7 +98,7 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
             assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
             assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
                 {
-                    filters: [ADB_DEFAULT_INTERFACE_FILTER],
+                    filters: [AdbDefaultInterfaceFilter],
                     exclusionFilters: undefined,
                 },
             ]);
@@ -117,7 +114,7 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
             assert.strictEqual(usb.requestDevice.mock.callCount(), 1);
             assert.deepEqual(usb.requestDevice.mock.calls[0]?.arguments, [
                 {
-                    filters: [ADB_DEFAULT_INTERFACE_FILTER],
+                    filters: [AdbDefaultInterfaceFilter],
                     exclusionFilters: undefined,
                 },
             ]);
@@ -136,7 +133,7 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
                 {
                     filters: [
                         {
-                            ...ADB_DEFAULT_INTERFACE_FILTER,
+                            ...AdbDefaultInterfaceFilter,
                             ...filter,
                         },
                     ],
@@ -162,7 +159,7 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
                     filters: [
                         {
                             ...filter,
-                            ...ADB_DEFAULT_INTERFACE_FILTER,
+                            ...AdbDefaultInterfaceFilter,
                         },
                     ],
                     exclusionFilters: undefined,
@@ -185,11 +182,11 @@ describe("AdbDaemonWebUsbDeviceManager", () => {
                 {
                     filters: [
                         {
-                            ...ADB_DEFAULT_INTERFACE_FILTER,
+                            ...AdbDefaultInterfaceFilter,
                             ...filter1,
                         },
                         {
-                            ...ADB_DEFAULT_INTERFACE_FILTER,
+                            ...AdbDefaultInterfaceFilter,
                             ...filter2,
                         },
                     ],

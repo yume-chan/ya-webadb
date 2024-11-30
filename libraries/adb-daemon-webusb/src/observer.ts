@@ -1,9 +1,13 @@
 import type { DeviceObserver } from "@yume-chan/adb";
 import { EventEmitter } from "@yume-chan/event";
 
-import { AdbDaemonWebUsbDevice, toAdbDeviceFilters } from "./device.js";
+import {
+    AdbDaemonWebUsbDevice,
+    mergeDefaultAdbInterfaceFilter,
+} from "./device.js";
+import type { AdbDaemonWebUsbDeviceManager } from "./manager.js";
 import type { UsbInterfaceFilter } from "./utils.js";
-import { matchesFilters } from "./utils.js";
+import { matchFilters } from "./utils.js";
 
 /**
  * A watcher that listens for new WebUSB devices and notifies the callback when
@@ -12,7 +16,8 @@ import { matchesFilters } from "./utils.js";
 export class AdbDaemonWebUsbDeviceObserver
     implements DeviceObserver<AdbDaemonWebUsbDevice>
 {
-    #filters: UsbInterfaceFilter[];
+    #filters: (USBDeviceFilter & UsbInterfaceFilter)[];
+    #exclusionFilters?: USBDeviceFilter[] | undefined;
     #usbManager: USB;
 
     #onError = new EventEmitter<Error>();
@@ -29,8 +34,12 @@ export class AdbDaemonWebUsbDeviceObserver
 
     current: AdbDaemonWebUsbDevice[] = [];
 
-    constructor(usb: USB, filters?: USBDeviceFilter[]) {
-        this.#filters = toAdbDeviceFilters(filters);
+    constructor(
+        usb: USB,
+        options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
+    ) {
+        this.#filters = mergeDefaultAdbInterfaceFilter(options.filters);
+        this.#exclusionFilters = options.exclusionFilters;
         this.#usbManager = usb;
 
         this.#usbManager.addEventListener("connect", this.#handleConnect);
@@ -38,13 +47,18 @@ export class AdbDaemonWebUsbDeviceObserver
     }
 
     #handleConnect = (e: USBConnectionEvent) => {
-        if (!matchesFilters(e.device, this.#filters)) {
+        const interface_ = matchFilters(
+            e.device,
+            this.#filters,
+            this.#exclusionFilters,
+        );
+        if (!interface_) {
             return;
         }
 
         const device = new AdbDaemonWebUsbDevice(
             e.device,
-            this.#filters,
+            interface_,
             this.#usbManager,
         );
         this.#onDeviceAdd.fire([device]);
@@ -71,5 +85,10 @@ export class AdbDaemonWebUsbDeviceObserver
             "disconnect",
             this.#handleDisconnect,
         );
+
+        this.#onError.dispose();
+        this.#onDeviceAdd.dispose();
+        this.#onDeviceRemove.dispose();
+        this.#onListChange.dispose();
     }
 }

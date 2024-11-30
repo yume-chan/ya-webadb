@@ -1,6 +1,9 @@
-import { AdbDaemonWebUsbDevice, toAdbDeviceFilters } from "./device.js";
+import {
+    AdbDaemonWebUsbDevice,
+    mergeDefaultAdbInterfaceFilter,
+} from "./device.js";
 import { AdbDaemonWebUsbDeviceObserver } from "./observer.js";
-import { isErrorName, matchesFilters } from "./utils.js";
+import { isErrorName, matchFilters } from "./utils.js";
 
 export namespace AdbDaemonWebUsbDeviceManager {
     export interface RequestDeviceOptions {
@@ -37,14 +40,30 @@ export class AdbDaemonWebUsbDeviceManager {
     async requestDevice(
         options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
     ): Promise<AdbDaemonWebUsbDevice | undefined> {
-        const filters = toAdbDeviceFilters(options.filters);
+        const filters = mergeDefaultAdbInterfaceFilter(options.filters);
 
         try {
             const device = await this.#usbManager.requestDevice({
                 filters,
                 exclusionFilters: options.exclusionFilters,
             });
-            return new AdbDaemonWebUsbDevice(device, filters, this.#usbManager);
+
+            const interface_ = matchFilters(
+                device,
+                filters,
+                options.exclusionFilters,
+            );
+            if (!interface_) {
+                // `#usbManager` doesn't support `exclusionFilters`,
+                // selected device is invalid
+                return undefined;
+            }
+
+            return new AdbDaemonWebUsbDevice(
+                device,
+                interface_,
+                this.#usbManager,
+            );
         } catch (e) {
             // No device selected
             if (isErrorName(e, "NotFoundError")) {
@@ -58,26 +77,37 @@ export class AdbDaemonWebUsbDeviceManager {
     /**
      * Get all connected and requested devices that match the specified filters.
      */
-    getDevices(filters?: USBDeviceFilter[]): Promise<AdbDaemonWebUsbDevice[]>;
     async getDevices(
-        filters_: USBDeviceFilter[] | undefined,
+        options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
     ): Promise<AdbDaemonWebUsbDevice[]> {
-        const filters = toAdbDeviceFilters(filters_);
+        const filters = mergeDefaultAdbInterfaceFilter(options.filters);
 
         const devices = await this.#usbManager.getDevices();
-        return devices
-            .filter((device) => matchesFilters(device, filters))
-            .map(
-                (device) =>
+        // filter map
+        const result: AdbDaemonWebUsbDevice[] = [];
+        for (const device of devices) {
+            const interface_ = matchFilters(
+                device,
+                filters,
+                options.exclusionFilters,
+            );
+            if (interface_) {
+                result.push(
                     new AdbDaemonWebUsbDevice(
                         device,
-                        filters,
+                        interface_,
                         this.#usbManager,
                     ),
-            );
+                );
+            }
+        }
+
+        return result;
     }
 
-    trackDevices(filters?: USBDeviceFilter[]): AdbDaemonWebUsbDeviceObserver {
-        return new AdbDaemonWebUsbDeviceObserver(this.#usbManager, filters);
+    trackDevices(
+        options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
+    ): AdbDaemonWebUsbDeviceObserver {
+        return new AdbDaemonWebUsbDeviceObserver(this.#usbManager, options);
     }
 }

@@ -22,39 +22,31 @@ import {
 import type { ExactReadable } from "@yume-chan/struct";
 import { EmptyUint8Array } from "@yume-chan/struct";
 
-import type { UsbInterfaceFilter } from "./utils.js";
-import {
-    findUsbAlternateInterface,
-    findUsbEndpoints,
-    getSerialNumber,
-    isErrorName,
-} from "./utils.js";
+import type { UsbInterfaceFilter, UsbInterfaceIdentifier } from "./utils.js";
+import { findUsbEndpoints, getSerialNumber, isErrorName } from "./utils.js";
 
 /**
  * The default filter for ADB devices, as defined by Google.
  */
-export const ADB_DEFAULT_INTERFACE_FILTER = {
+export const AdbDefaultInterfaceFilter = {
     classCode: 0xff,
     subclassCode: 0x42,
     protocolCode: 1,
 } as const satisfies UsbInterfaceFilter;
 
-export function toAdbDeviceFilters(
+export function mergeDefaultAdbInterfaceFilter(
     filters: USBDeviceFilter[] | undefined,
 ): (USBDeviceFilter & UsbInterfaceFilter)[] {
     if (!filters || filters.length === 0) {
-        return [ADB_DEFAULT_INTERFACE_FILTER];
+        return [AdbDefaultInterfaceFilter];
     } else {
         return filters.map((filter) => ({
             ...filter,
-            classCode:
-                filter.classCode ?? ADB_DEFAULT_INTERFACE_FILTER.classCode,
+            classCode: filter.classCode ?? AdbDefaultInterfaceFilter.classCode,
             subclassCode:
-                filter.subclassCode ??
-                ADB_DEFAULT_INTERFACE_FILTER.subclassCode,
+                filter.subclassCode ?? AdbDefaultInterfaceFilter.subclassCode,
             protocolCode:
-                filter.protocolCode ??
-                ADB_DEFAULT_INTERFACE_FILTER.protocolCode,
+                filter.protocolCode ?? AdbDefaultInterfaceFilter.protocolCode,
         }));
     }
 }
@@ -262,7 +254,7 @@ export class AdbDaemonWebUsbConnection
 }
 
 export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
-    #filters: UsbInterfaceFilter[];
+    #interface: UsbInterfaceIdentifier;
     #usbManager: USB;
 
     #raw: USBDevice;
@@ -287,22 +279,24 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
      */
     constructor(
         device: USBDevice,
-        filters: UsbInterfaceFilter[],
+        interface_: UsbInterfaceIdentifier,
         usbManager: USB,
     ) {
         this.#raw = device;
         this.#serial = getSerialNumber(device);
-        this.#filters = filters;
+        this.#interface = interface_;
         this.#usbManager = usbManager;
     }
 
-    async #claimInterface(): Promise<[USBEndpoint, USBEndpoint]> {
+    async #claimInterface(): Promise<{
+        inEndpoint: USBEndpoint;
+        outEndpoint: USBEndpoint;
+    }> {
         if (!this.#raw.opened) {
             await this.#raw.open();
         }
 
-        const { configuration, interface_, alternate } =
-            findUsbAlternateInterface(this.#raw, this.#filters);
+        const { configuration, interface_, alternate } = this.#interface;
 
         if (
             this.#raw.configuration?.configurationValue !==
@@ -336,17 +330,14 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
             );
         }
 
-        const { inEndpoint, outEndpoint } = findUsbEndpoints(
-            alternate.endpoints,
-        );
-        return [inEndpoint, outEndpoint];
+        return findUsbEndpoints(alternate.endpoints);
     }
 
     /**
      * Open the device and create a new connection to the ADB Daemon.
      */
     async connect(): Promise<AdbDaemonWebUsbConnection> {
-        const [inEndpoint, outEndpoint] = await this.#claimInterface();
+        const { inEndpoint, outEndpoint } = await this.#claimInterface();
         return new AdbDaemonWebUsbConnection(
             this,
             inEndpoint,
