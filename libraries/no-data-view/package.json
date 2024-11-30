@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/no-data-view",
-    "version": "0.0.24",
+    "version": "0.0.0-next-20241130050937",
     "description": "Plain methods to avoid creating `DataView`s",
     "keywords": [],
     "license": "MIT",
