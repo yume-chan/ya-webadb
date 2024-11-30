@@ -12,7 +12,45 @@ class MockUsb implements USB {
 
     getDevices = mock.fn(async () => []);
     requestDevice = mock.fn(
-        async () => ({ serialNumber: "abcdefgh" }) as never,
+        async (options?: USBDeviceRequestOptions) =>
+            ({
+                serialNumber: options?.filters?.[0]?.serialNumber ?? "abcdefgh",
+                vendorId: options?.filters?.[0]?.vendorId ?? 0x18d1,
+                productId: options?.filters?.[0]?.productId ?? 0x4e49,
+                configurations: [
+                    {
+                        configurationValue: 1,
+                        interfaces: [
+                            {
+                                interfaceNumber: 0,
+                                claimed: false,
+                                alternate: {
+                                    alternateSetting: 0,
+                                    interfaceClass:
+                                        AdbDefaultInterfaceFilter.classCode,
+                                    interfaceSubclass:
+                                        AdbDefaultInterfaceFilter.subclassCode,
+                                    interfaceProtocol:
+                                        AdbDefaultInterfaceFilter.protocolCode,
+                                    endpoints: [],
+                                },
+                                alternates: [
+                                    {
+                                        alternateSetting: 0,
+                                        interfaceClass:
+                                            AdbDefaultInterfaceFilter.classCode,
+                                        interfaceSubclass:
+                                            AdbDefaultInterfaceFilter.subclassCode,
+                                        interfaceProtocol:
+                                            AdbDefaultInterfaceFilter.protocolCode,
+                                        endpoints: [],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            }) satisfies Partial<USBDevice> as never,
     );
 
     addEventListener(

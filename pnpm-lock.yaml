@@ -534,6 +534,9 @@ importers:
       '@yume-chan/adb':
         specifier: workspace:^
         version: link:../../libraries/adb
+      '@yume-chan/scrcpy':
+        specifier: workspace:^
+        version: link:../../libraries/scrcpy
       '@yume-chan/struct':
         specifier: workspace:^
         version: link:../../libraries/struct

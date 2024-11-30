@@ -30,4 +30,5 @@ u64(1);
 u8(1);
 struct({}, {});
 
+export * from "@yume-chan/scrcpy";
 export * from "@yume-chan/struct";

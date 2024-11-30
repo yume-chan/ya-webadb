@@ -71,6 +71,10 @@ export class ScrcpyOptions2_6 implements ScrcpyOptions<Init> {
             this.value.control = false;
         }
 
+        if (this.value.audioDup) {
+            this.value.audioSource = "playback";
+        }
+
         if (this.value.control) {
             if (this.value.clipboardAutosync) {
                 this.#clipboard = new ClipboardStream();
