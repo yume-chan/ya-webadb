@@ -96,15 +96,6 @@ const VideoFrameCapturerPool =
     /* #__PURE__ */
     new Pool(() => new VideoFrameCapturer(), 4);
 
-export interface WebCodecsVideoDecoderInit {
-    /**
-     * The video codec to decode
-     */
-    codec: ScrcpyVideoCodecId;
-
-    renderer: WebCodecsVideoDecoderRenderer;
-}
-
 export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     static get isSupported() {
         return typeof globalThis.VideoDecoder !== "undefined";
@@ -164,7 +155,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     /**
      * Create a new WebCodecs video decoder.
      */
-    constructor({ codec, renderer }: WebCodecsVideoDecoderInit) {
+    constructor({ codec, renderer }: WebCodecsVideoDecoder.Options) {
         this.#codec = codec;
 
         this.#renderer = renderer;
@@ -301,5 +292,16 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         }
         this.#nextFrame?.close();
         this.#captureFrame?.close();
+    }
+}
+
+export namespace WebCodecsVideoDecoder {
+    export interface Options {
+        /**
+         * The video codec to decode
+         */
+        codec: ScrcpyVideoCodecId;
+
+        renderer: WebCodecsVideoDecoderRenderer;
     }
 }

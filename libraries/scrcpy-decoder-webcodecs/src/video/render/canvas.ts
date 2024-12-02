@@ -2,7 +2,7 @@ import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
 
 import type { WebCodecsVideoDecoderRenderer } from "./type.js";
 
-export abstract class CanvasWebCodecsVideoDecoderRenderer
+export abstract class CanvasWebCodecsDecoderRenderer
     implements WebCodecsVideoDecoderRenderer
 {
     #canvas: HTMLCanvasElement | OffscreenCanvas;

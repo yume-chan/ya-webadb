@@ -17,18 +17,9 @@ import type {
 import type { TinyH264Wrapper } from "./wrapper.js";
 import { createTinyH264Wrapper } from "./wrapper.js";
 
-const NOOP = () => {
+const noop = () => {
     // no-op
 };
-
-export interface TinyH264DecoderInit {
-    /**
-     * Optional render target canvas element or offscreen canvas.
-     * If not provided, a new `<canvas>` (when DOM is available)
-     * or a `OffscreenCanvas` will be created.
-     */
-    canvas?: HTMLCanvasElement | OffscreenCanvas | undefined;
-}
 
 export function createCanvas() {
     if (typeof document !== "undefined") {
@@ -77,7 +68,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
     #yuvCanvas: YuvCanvas | undefined;
     #initializer: PromiseResolver<TinyH264Wrapper> | undefined;
 
-    constructor({ canvas }: TinyH264DecoderInit = {}) {
+    constructor({ canvas }: TinyH264Decoder.Options = {}) {
         if (canvas) {
             this.#renderer = canvas;
         } else {
@@ -180,7 +171,18 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         this.#initializer?.promise
             .then((wrapper) => wrapper.dispose())
             // NOOP: It's disposed so nobody cares about the error
-            .catch(NOOP);
+            .catch(noop);
         this.#initializer = undefined;
+    }
+}
+
+export namespace TinyH264Decoder {
+    export interface Options {
+        /**
+         * Optional render target canvas element or offscreen canvas.
+         * If not provided, a new `<canvas>` (when DOM is available)
+         * or a `OffscreenCanvas` will be created.
+         */
+        canvas?: HTMLCanvasElement | OffscreenCanvas | undefined;
     }
 }

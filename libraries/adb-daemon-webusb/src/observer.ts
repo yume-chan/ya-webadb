@@ -20,9 +20,6 @@ export class AdbDaemonWebUsbDeviceObserver
     #exclusionFilters?: USBDeviceFilter[] | undefined;
     #usbManager: USB;
 
-    #onError = new EventEmitter<Error>();
-    onError = this.#onError.event;
-
     #onDeviceAdd = new EventEmitter<AdbDaemonWebUsbDevice[]>();
     onDeviceAdd = this.#onDeviceAdd.event;
 
@@ -86,7 +83,6 @@ export class AdbDaemonWebUsbDeviceObserver
             this.#handleDisconnect,
         );
 
-        this.#onError.dispose();
         this.#onDeviceAdd.dispose();
         this.#onDeviceRemove.dispose();
         this.#onListChange.dispose();

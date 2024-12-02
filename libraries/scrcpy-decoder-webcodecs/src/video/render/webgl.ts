@@ -1,6 +1,6 @@
 import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
 
-import { CanvasWebCodecsVideoDecoderRenderer } from "./canvas.js";
+import { CanvasWebCodecsDecoderRenderer } from "./canvas.js";
 
 const Resolved = Promise.resolve();
 
@@ -24,7 +24,7 @@ function createContext(
     );
 }
 
-export class WebGLWebCodecsDecoderRenderer extends CanvasWebCodecsVideoDecoderRenderer {
+export class WebGLWebCodecsDecoderRenderer extends CanvasWebCodecsDecoderRenderer {
     static vertexShaderSource = `
         attribute vec2 xy;
 

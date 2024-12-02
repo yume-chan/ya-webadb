@@ -2,6 +2,7 @@
 
 import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
+import type { Event } from "@yume-chan/event";
 import { EventEmitter } from "@yume-chan/event";
 import { getUint64LittleEndian } from "@yume-chan/no-data-view";
 import type {
@@ -24,7 +25,7 @@ import {
 
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
-import type { DeviceObserver } from "../device-observer.js";
+import type { DeviceObserver as DeviceObserverBase } from "../device-observer.js";
 import type { AdbFeature } from "../features.js";
 import { hexToNumber, sequenceEqual, write4HexDigits } from "../utils/index.js";
 
@@ -287,7 +288,7 @@ export class AdbServerClient {
     /**
      * Monitors device list changes.
      */
-    async trackDevices(): Promise<DeviceObserver<AdbServerClient.Device>> {
+    async trackDevices(): Promise<AdbServerClient.DeviceObserver> {
         const connection = await this.createConnection("host:track-devices-l");
 
         let current: AdbServerClient.Device[] = [];
@@ -751,5 +752,9 @@ export namespace AdbServerClient {
                 await connection.dispose();
             }
         }
+    }
+
+    export interface DeviceObserver extends DeviceObserverBase<Device> {
+        onError: Event<Error>;
     }
 }

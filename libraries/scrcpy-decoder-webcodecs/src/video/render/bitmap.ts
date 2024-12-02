@@ -1,6 +1,6 @@
-import { CanvasWebCodecsVideoDecoderRenderer } from "./canvas.js";
+import { CanvasWebCodecsDecoderRenderer } from "./canvas.js";
 
-export class BitmapWebCodecsDecoderRenderer extends CanvasWebCodecsVideoDecoderRenderer {
+export class BitmapWebCodecsDecoderRenderer extends CanvasWebCodecsDecoderRenderer {
     #context: ImageBitmapRenderingContext;
 
     constructor(canvas?: HTMLCanvasElement | OffscreenCanvas) {
