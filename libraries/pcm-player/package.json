@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/pcm-player",
-    "version": "0.0.24",
+    "version": "1.0.0",
     "description": "Play raw audio sample stream using Web Audio API",
     "keywords": [
         "audio"

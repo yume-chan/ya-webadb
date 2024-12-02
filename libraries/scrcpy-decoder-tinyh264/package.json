@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/scrcpy-decoder-tinyh264",
-    "version": "0.0.24",
+    "version": "1.0.0",
     "description": "Raw H.264 stream decoder and renderer wrapping TinyH264 and YUVCanvas packages (software decoding).",
     "keywords": [
         "adb",

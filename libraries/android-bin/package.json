@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/android-bin",
-    "version": "0.0.24",
+    "version": "1.0.0",
     "description": "Wrappers for Android built-in executables.",
     "keywords": [
         "adb",
