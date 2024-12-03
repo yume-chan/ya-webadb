@@ -89,6 +89,24 @@ export namespace CodecOptions {
     export type Init = CodecOptionsInit;
 }
 
+export class Crop implements ScrcpyOptionValue {
+    width: number;
+    height: number;
+    x: number;
+    y: number;
+
+    constructor(width: number, height: number, x: number, y: number) {
+        this.width = width;
+        this.height = height;
+        this.x = x;
+        this.y = y;
+    }
+
+    toOptionValue(): string | undefined {
+        return `${this.width}:${this.height}:${this.x}:${this.y}`;
+    }
+}
+
 export interface Init {
     logLevel?: LogLevel;
 
@@ -124,7 +142,7 @@ export interface Init {
      */
     tunnelForward?: boolean;
 
-    crop?: string | undefined;
+    crop?: Crop | undefined;
 
     /**
      * Send PTS so that the client may record properly

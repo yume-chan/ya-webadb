@@ -2,6 +2,7 @@ export {
     BackOrScreenOnControlMessage as ScrcpyBackOrScreenOnControlMessage,
     CaptureOrientation as ScrcpyCaptureOrientation,
     CodecOptions as ScrcpyCodecOptions,
+    Crop as ScrcpyCrop,
     InjectScrollControlMessage as ScrcpyInjectScrollControlMessage,
     InjectTouchControlMessage as ScrcpyInjectTouchControlMessage,
     InstanceId as ScrcpyInstanceId,
@@ -13,3 +14,5 @@ export {
     UHidCreateControlMessage as ScrcpyUHidCreateControlMessage,
     UHidOutputDeviceMessage as ScrcpyUHidOutputDeviceMessage,
 } from "./3_0/impl/index.js";
+
+export { ScrcpyOptions3_0 as ScrcpyOptionsLatest } from "./3_0/index.js";
