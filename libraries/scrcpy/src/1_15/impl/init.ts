@@ -142,7 +142,7 @@ export interface Init {
      */
     tunnelForward?: boolean;
 
-    crop?: Crop | undefined;
+    crop?: Crop | string | undefined;
 
     /**
      * Send PTS so that the client may record properly
@@ -168,5 +168,5 @@ export interface Init {
 
     stayAwake?: boolean;
 
-    codecOptions?: CodecOptions;
+    codecOptions?: CodecOptions | string | undefined;
 }

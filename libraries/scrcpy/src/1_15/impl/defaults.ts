@@ -1,5 +1,5 @@
 import type { Init } from "./init.js";
-import { CodecOptions, VideoOrientation } from "./init.js";
+import { VideoOrientation } from "./init.js";
 
 export const Defaults = /* #__PURE__ */ (() =>
     ({
@@ -15,5 +15,5 @@ export const Defaults = /* #__PURE__ */ (() =>
         displayId: 0,
         showTouches: false,
         stayAwake: false,
-        codecOptions: CodecOptions.Empty,
+        codecOptions: undefined,
     }) as const satisfies Required<Init>)();

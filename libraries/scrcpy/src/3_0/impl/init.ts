@@ -107,7 +107,7 @@ export class NewDisplay implements ScrcpyOptionValue {
 }
 
 export interface Init extends Omit<PrevImpl.Init, "lockVideoOrientation"> {
-    captureOrientation?: CaptureOrientation;
+    captureOrientation?: CaptureOrientation | string | undefined;
     angle?: number;
     screenOffTimeout?: number | undefined;
 
@@ -116,6 +116,6 @@ export interface Init extends Omit<PrevImpl.Init, "lockVideoOrientation"> {
     // `display_id` and `new_display` can't be specified at the same time
     // but `serialize` method will exclude options that are same as the default value
     // so `displayId: 0` will be ignored
-    newDisplay?: NewDisplay | undefined;
+    newDisplay?: NewDisplay | string | undefined;
     vdSystemDecorations?: boolean;
 }

@@ -26,17 +26,17 @@ export class InstanceId implements ScrcpyOptionValue {
 
 export interface Init
     extends Omit<PrevImpl.Init, "bitRate" | "codecOptions" | "encoderName"> {
-    scid?: InstanceId;
+    scid?: InstanceId | string | undefined;
 
     videoCodec?: "h264" | "h265" | "av1";
     videoBitRate?: number;
-    videoCodecOptions?: PrevImpl.CodecOptions;
+    videoCodecOptions?: PrevImpl.CodecOptions | string | undefined;
     videoEncoder?: string | undefined;
 
     audio?: boolean;
     audioCodec?: "raw" | "opus" | "aac";
     audioBitRate?: number;
-    audioCodecOptions?: PrevImpl.CodecOptions;
+    audioCodecOptions?: PrevImpl.CodecOptions | string | undefined;
     audioEncoder?: string | undefined;
 
     listEncoders?: boolean;
