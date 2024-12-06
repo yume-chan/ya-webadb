@@ -4,6 +4,7 @@ import type {
     ScrcpyEncoder,
     ScrcpyOptions2_1Impl,
 } from "@yume-chan/scrcpy";
+import { toScrcpyOptionValue } from "@yume-chan/scrcpy";
 
 import type { AdbScrcpyConnection } from "../connection.js";
 
@@ -44,7 +45,7 @@ export class AdbScrcpyOptions2_1 extends AdbScrcpyOptions<
         return AdbScrcpyOptions1_16.createConnection(
             adb,
             {
-                scid: this.value.scid.value,
+                scid: toScrcpyOptionValue(this.value.scid, undefined),
                 video: this.value.video,
                 audio: this.value.audio,
                 control: this.value.control,

@@ -5,6 +5,7 @@ import type {
     ScrcpyOptions1_16Impl,
     ScrcpyOptions2_0Impl,
 } from "@yume-chan/scrcpy";
+import { toScrcpyOptionValue } from "@yume-chan/scrcpy";
 
 import { AdbScrcpyClient, AdbScrcpyExitedError } from "../client.js";
 import type { AdbScrcpyConnection } from "../connection.js";
@@ -77,7 +78,7 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
         return AdbScrcpyOptions1_16.createConnection(
             adb,
             {
-                scid: this.value.scid.value,
+                scid: toScrcpyOptionValue(this.value.scid, undefined),
                 video: true, // Always enabled
                 audio: this.value.audio,
                 control: this.value.control,

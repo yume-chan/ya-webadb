@@ -16,7 +16,7 @@ import {
 } from "@yume-chan/stream-extra";
 
 export interface AdbScrcpyConnectionOptions {
-    scid: number;
+    scid: string | undefined;
 
     video: boolean;
 
@@ -60,8 +60,8 @@ export abstract class AdbScrcpyConnection implements Disposable {
 
     protected getSocketName(): string {
         let socketName = "localabstract:" + SCRCPY_SOCKET_NAME_PREFIX;
-        if (this.options.scid !== undefined && this.options.scid >= 0) {
-            socketName += "_" + this.options.scid.toString(16).padStart(8, "0");
+        if (this.options.scid !== undefined) {
+            socketName += "_" + this.options.scid.padStart(8, "0");
         }
         return socketName;
     }

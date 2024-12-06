@@ -119,7 +119,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
         return AdbScrcpyOptions1_16.createConnection(
             adb,
             {
-                scid: -1, // Not Supported
+                scid: undefined, // Not Supported
                 video: true, // Always enabled
                 audio: false, // Not Supported
                 control: true, // Always enabled even when `--no-control` is specified
