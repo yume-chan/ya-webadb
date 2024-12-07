@@ -37,11 +37,11 @@
         "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^22.10.0",
+        "@types/node": "^22.10.1",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.4.1",
+        "prettier": "^3.4.2",
         "typescript": "^5.7.2"
     }
 }

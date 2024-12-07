@@ -8,14 +8,14 @@
         "run-eslint": "run-eslint.js"
     },
     "dependencies": {
-        "@eslint/js": "^9.15.0",
-        "@types/node": "^22.10.0",
-        "eslint": "^9.15.0",
-        "eslint-plugin-import-x": "^4.4.3",
+        "@eslint/js": "^9.16.0",
+        "@types/node": "^22.10.1",
+        "eslint": "^9.16.0",
+        "eslint-plugin-import-x": "^4.5.0",
         "typescript": "^5.7.2",
-        "typescript-eslint": "^8.16.0"
+        "typescript-eslint": "^8.17.0"
     },
     "devDependencies": {
-        "prettier": "^3.4.1"
+        "prettier": "^3.4.2"
     }
 }
