@@ -2,8 +2,8 @@ import { getInt16, setInt16 } from "@yume-chan/no-data-view";
 import type { Field, StructInit } from "@yume-chan/struct";
 import { bipedal, struct, u16, u32, u8 } from "@yume-chan/struct";
 
-import { ScrcpyControlMessageType } from "../../base/index.js";
 import type { ScrcpyScrollController } from "../../base/index.js";
+import { ScrcpyControlMessageType } from "../../base/index.js";
 import type { ScrcpyInjectScrollControlMessage } from "../../latest.js";
 import { clamp } from "../../utils/index.js";
 
@@ -48,4 +48,8 @@ export class ScrollController implements ScrcpyScrollController {
     ): Uint8Array | undefined {
         return InjectScrollControlMessage.serialize(message);
     }
+}
+
+export function createScrollController(): ScrcpyScrollController {
+    return new ScrollController();
 }
