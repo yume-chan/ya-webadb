@@ -85,6 +85,10 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
             throw new Error("Unexpected server output");
         } catch (e) {
             if (e instanceof AdbScrcpyExitedError) {
+                if (e.output[0]?.startsWith("[server] ERROR:")) {
+                    throw e;
+                }
+
                 const displays: ScrcpyDisplay[] = [];
                 for (const line of e.output) {
                     const display = options.parseDisplay(line);
