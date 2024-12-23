@@ -1,12 +1,12 @@
-import { ScrcpyOptions3_0 } from "./3_0/options.js";
+import { ScrcpyOptions3_1 } from "./3_1/options.js";
 
-export class ScrcpyOptionsLatest extends ScrcpyOptions3_0 {
-    constructor(init: ScrcpyOptions3_0.Init, version: string) {
+export class ScrcpyOptionsLatest extends ScrcpyOptions3_1 {
+    constructor(init: ScrcpyOptions3_1.Init, version: string) {
         super(init, version);
     }
 }
 
-export { ScrcpyOptions3_0Impl as ScrcpyOptionsLatestImpl } from "./3_0/index.js";
+export { ScrcpyOptions3_1Impl as ScrcpyOptionsLatestImpl } from "./3_1/index.js";
 
 export {
     BackOrScreenOnControlMessage as ScrcpyBackOrScreenOnControlMessage,
@@ -23,4 +23,4 @@ export {
     SetClipboardControlMessage as ScrcpySetClipboardControlMessage,
     UHidCreateControlMessage as ScrcpyUHidCreateControlMessage,
     UHidOutputDeviceMessage as ScrcpyUHidOutputDeviceMessage,
-} from "./3_0/impl/index.js";
+} from "./3_1/impl/index.js";
