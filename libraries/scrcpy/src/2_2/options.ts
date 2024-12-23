@@ -40,6 +40,8 @@ import {
 export class ScrcpyOptions2_2 implements ScrcpyOptions<Init> {
     static readonly Defaults = Defaults;
 
+    readonly version: string;
+
     readonly value: Required<Init>;
 
     get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
@@ -53,8 +55,9 @@ export class ScrcpyOptions2_2 implements ScrcpyOptions<Init> {
 
     #ackClipboardHandler: AckClipboardHandler | undefined;
 
-    constructor(init: Init) {
+    constructor(init: Init, version = "v2.2") {
         this.value = { ...Defaults, ...init };
+        this.version = version;
 
         if (this.value.videoSource === "camera") {
             this.value.control = false;

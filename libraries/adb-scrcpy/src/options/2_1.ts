@@ -28,17 +28,12 @@ export class AdbScrcpyOptions2_1 extends AdbScrcpyOptions<
     override async getEncoders(
         adb: Adb,
         path: string,
-        version: string,
     ): Promise<ScrcpyEncoder[]> {
-        return AdbScrcpyOptions2_0.getEncoders(adb, path, version, this);
+        return AdbScrcpyOptions2_0.getEncoders(adb, path, this);
     }
 
-    override getDisplays(
-        adb: Adb,
-        path: string,
-        version: string,
-    ): Promise<ScrcpyDisplay[]> {
-        return AdbScrcpyOptions1_16.getDisplays(adb, path, version, this);
+    override getDisplays(adb: Adb, path: string): Promise<ScrcpyDisplay[]> {
+        return AdbScrcpyOptions1_16.getDisplays(adb, path, this);
     }
 
     override createConnection(adb: Adb): AdbScrcpyConnection {

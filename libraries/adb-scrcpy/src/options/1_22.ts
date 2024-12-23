@@ -18,20 +18,12 @@ export class AdbScrcpyOptions1_22 extends AdbScrcpyOptions<
         "tunnelForward" | "control" | "sendDummyByte"
     >
 > {
-    override getEncoders(
-        adb: Adb,
-        path: string,
-        version: string,
-    ): Promise<ScrcpyEncoder[]> {
-        return AdbScrcpyOptions1_16.getEncoders(adb, path, version, this);
+    override getEncoders(adb: Adb, path: string): Promise<ScrcpyEncoder[]> {
+        return AdbScrcpyOptions1_16.getEncoders(adb, path, this);
     }
 
-    override getDisplays(
-        adb: Adb,
-        path: string,
-        version: string,
-    ): Promise<ScrcpyDisplay[]> {
-        return AdbScrcpyOptions1_16.getDisplays(adb, path, version, this);
+    override getDisplays(adb: Adb, path: string): Promise<ScrcpyDisplay[]> {
+        return AdbScrcpyOptions1_16.getDisplays(adb, path, this);
     }
 
     override createConnection(adb: Adb): AdbScrcpyConnection {

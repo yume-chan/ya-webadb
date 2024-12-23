@@ -20,6 +20,10 @@ export class ScrcpyOptionsWrapper<T extends object>
 {
     #base: ScrcpyOptions<T>;
 
+    get version() {
+        return this.#base.version;
+    }
+
     get controlMessageTypes() {
         return this.#base.controlMessageTypes;
     }

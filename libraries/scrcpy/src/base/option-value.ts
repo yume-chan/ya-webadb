@@ -28,8 +28,8 @@ export function toScrcpyOptionValue<T>(value: unknown, empty: T): string | T {
         typeof value !== "number" &&
         typeof value !== "boolean"
     ) {
-        throw new TypeError(`Invalid option value: ${String(value)}`);
+        throw new TypeError(`Invalid option value: ${JSON.stringify(value)}`);
     }
 
-    return String(value);
+    return value.toString();
 }

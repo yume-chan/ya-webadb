@@ -120,7 +120,6 @@ export class AdbScrcpyClient {
     static async start(
         adb: Adb,
         path: string,
-        version: string,
         options: AdbScrcpyOptions<
             Pick<ScrcpyOptions1_15.Init, "tunnelForward">
         >,
@@ -151,7 +150,7 @@ export class AdbScrcpyClient {
                     "app_process",
                     /* unused */ "/",
                     "com.genymobile.scrcpy.Server",
-                    version,
+                    options.version,
                     ...options.serialize(),
                 ],
                 {

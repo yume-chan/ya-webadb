@@ -20,6 +20,7 @@ import type {
     ScrcpyUHidOutputDeviceMessage,
 } from "../latest.js";
 
+import type { Init } from "./impl/index.js";
 import {
     AckClipboardHandler,
     ClipboardStream,
@@ -39,10 +40,11 @@ import {
     setListEncoders,
     UHidOutputStream,
 } from "./impl/index.js";
-import type { Init } from "./impl/index.js";
 
 export class ScrcpyOptions2_6 implements ScrcpyOptions<Init> {
     static readonly Defaults = Defaults;
+
+    readonly version: string;
 
     readonly value: Required<Init>;
 
@@ -64,8 +66,9 @@ export class ScrcpyOptions2_6 implements ScrcpyOptions<Init> {
         return this.#uHidOutput;
     }
 
-    constructor(init: Init) {
+    constructor(init: Init, version = "2.6") {
         this.value = { ...Defaults, ...init };
+        this.version = version;
 
         if (this.value.videoSource === "camera") {
             this.value.control = false;

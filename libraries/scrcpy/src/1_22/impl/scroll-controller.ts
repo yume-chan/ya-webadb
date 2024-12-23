@@ -1,9 +1,9 @@
 import type { StructInit } from "@yume-chan/struct";
 import { s32, struct } from "@yume-chan/struct";
 
+import type { ScrcpyScrollController } from "../../base/index.js";
 import type { ScrcpyInjectScrollControlMessage } from "../../latest.js";
 
-import type { ScrcpyScrollController } from "../../base/index.js";
 import { PrevImpl } from "./prev.js";
 
 export const InjectScrollControlMessage = /* #__PURE__ */ (() =>

@@ -24,7 +24,6 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
     static async getEncoders(
         adb: Adb,
         path: string,
-        version: string,
         options: AdbScrcpyOptions<
             Pick<ScrcpyOptions1_16Impl.Init, "tunnelForward">
         >,
@@ -32,12 +31,7 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
         try {
             // Similar to `AdbScrcpyOptions1_16.getDisplays`,
             // server start procedure won't complete and `start `will throw
-            const client = await AdbScrcpyClient.start(
-                adb,
-                path,
-                version,
-                options,
-            );
+            const client = await AdbScrcpyClient.start(adb, path, options);
 
             // If the server didn't exit, manually stop it and throw an error
             await client.close();
@@ -61,17 +55,12 @@ export class AdbScrcpyOptions2_0 extends AdbScrcpyOptions<
     override async getEncoders(
         adb: Adb,
         path: string,
-        version: string,
     ): Promise<ScrcpyEncoder[]> {
-        return AdbScrcpyOptions2_0.getEncoders(adb, path, version, this);
+        return AdbScrcpyOptions2_0.getEncoders(adb, path, this);
     }
 
-    override getDisplays(
-        adb: Adb,
-        path: string,
-        version: string,
-    ): Promise<ScrcpyDisplay[]> {
-        return AdbScrcpyOptions1_16.getDisplays(adb, path, version, this);
+    override getDisplays(adb: Adb, path: string): Promise<ScrcpyDisplay[]> {
+        return AdbScrcpyOptions1_16.getDisplays(adb, path, this);
     }
 
     override createConnection(adb: Adb): AdbScrcpyConnection {

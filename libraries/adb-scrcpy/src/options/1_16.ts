@@ -38,12 +38,11 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
     static async getEncoders(
         adb: Adb,
         path: string,
-        version: string,
         options: AdbScrcpyOptions<
             Pick<ScrcpyOptions1_16Impl.Init, "tunnelForward">
         >,
     ): Promise<ScrcpyEncoder[]> {
-        const client = await AdbScrcpyClient.start(adb, path, version, options);
+        const client = await AdbScrcpyClient.start(adb, path, options);
 
         const encoders: ScrcpyEncoder[] = [];
 
@@ -65,7 +64,6 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
     static async getDisplays(
         adb: Adb,
         path: string,
-        version: string,
         options: AdbScrcpyOptions<
             Pick<ScrcpyOptions1_16Impl.Init, "tunnelForward">
         >,
@@ -73,12 +71,7 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
         try {
             // Server will exit before opening connections when an invalid display id was given
             // so `start` will throw an `AdbScrcpyExitedError`
-            const client = await AdbScrcpyClient.start(
-                adb,
-                path,
-                version,
-                options,
-            );
+            const client = await AdbScrcpyClient.start(adb, path, options);
 
             // If the server didn't exit, manually stop it and throw an error
             await client.close();
@@ -103,20 +96,12 @@ export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<
         }
     }
 
-    override getEncoders(
-        adb: Adb,
-        path: string,
-        version: string,
-    ): Promise<ScrcpyEncoder[]> {
-        return AdbScrcpyOptions1_16.getEncoders(adb, path, version, this);
+    override getEncoders(adb: Adb, path: string): Promise<ScrcpyEncoder[]> {
+        return AdbScrcpyOptions1_16.getEncoders(adb, path, this);
     }
 
-    override getDisplays(
-        adb: Adb,
-        path: string,
-        version: string,
-    ): Promise<ScrcpyDisplay[]> {
-        return AdbScrcpyOptions1_16.getDisplays(adb, path, version, this);
+    override getDisplays(adb: Adb, path: string): Promise<ScrcpyDisplay[]> {
+        return AdbScrcpyOptions1_16.getDisplays(adb, path, this);
     }
 
     override createConnection(adb: Adb): AdbScrcpyConnection {

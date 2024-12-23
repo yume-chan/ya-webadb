@@ -44,6 +44,8 @@ import {
 export class ScrcpyOptions2_4 implements ScrcpyOptions<Init> {
     static readonly Defaults = Defaults;
 
+    readonly version: string;
+
     readonly value: Required<Init>;
 
     get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
@@ -64,8 +66,9 @@ export class ScrcpyOptions2_4 implements ScrcpyOptions<Init> {
         return this.#uHidOutput;
     }
 
-    constructor(init: Init) {
+    constructor(init: Init, version = "2.4") {
         this.value = { ...Defaults, ...init };
+        this.version = version;
 
         if (this.value.videoSource === "camera") {
             this.value.control = false;

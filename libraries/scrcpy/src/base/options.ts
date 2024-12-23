@@ -19,6 +19,8 @@ import type { ScrcpyScrollController } from "./scroll-controller.js";
 import type { ScrcpyVideoStream } from "./video.js";
 
 export interface ScrcpyOptions<T extends object> {
+    get version(): string;
+
     get controlMessageTypes(): readonly ScrcpyControlMessageType[];
 
     value: Required<T>;

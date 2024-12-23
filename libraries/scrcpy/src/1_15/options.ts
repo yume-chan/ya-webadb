@@ -36,6 +36,8 @@ import {
 export class ScrcpyOptions1_15 implements ScrcpyOptions<Init> {
     static readonly Defaults = Defaults;
 
+    readonly version: string;
+
     readonly value: Required<Init>;
 
     get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
@@ -47,8 +49,9 @@ export class ScrcpyOptions1_15 implements ScrcpyOptions<Init> {
         return this.#clipboard;
     }
 
-    constructor(init: Init) {
+    constructor(init: Init, version = "1.15") {
         this.value = { ...Defaults, ...init };
+        this.version = version;
 
         if (this.value.control) {
             this.#clipboard = new ClipboardStream();
