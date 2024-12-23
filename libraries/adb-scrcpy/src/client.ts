@@ -217,28 +217,26 @@ export class AdbScrcpyClient {
      * This method will modify the given `options`,
      * so don't reuse it elsewhere.
      */
-    static async getEncoders(
+    static getEncoders(
         adb: Adb,
         path: string,
-        version: string,
         options: AdbScrcpyOptions<object>,
     ): Promise<ScrcpyEncoder[]> {
         options.setListEncoders();
-        return await options.getEncoders(adb, path, version);
+        return options.getEncoders(adb, path);
     }
 
     /**
      * This method will modify the given `options`,
      * so don't reuse it elsewhere.
      */
-    static async getDisplays(
+    static getDisplays(
         adb: Adb,
         path: string,
-        version: string,
         options: AdbScrcpyOptions<object>,
     ): Promise<ScrcpyDisplay[]> {
         options.setListDisplays();
-        return await options.getDisplays(adb, path, version);
+        return options.getDisplays(adb, path);
     }
 
     #options: AdbScrcpyOptions<object>;
