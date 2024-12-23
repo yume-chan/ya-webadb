@@ -121,4 +121,5 @@
         "0x[0-9a-f_]+"
     ],
     "typescript.tsdk": "libraries/adb/node_modules/typescript/lib",
+    "eslint.problems.shortenToSingleLine": true,
 }

@@ -30,7 +30,7 @@
         "test": "run-test"
     },
     "devDependencies": {
-        "@types/node": "^22.10.1",
+        "@types/node": "^22.10.2",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
