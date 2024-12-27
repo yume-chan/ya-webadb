@@ -10,7 +10,7 @@ import { WritableStream } from "@yume-chan/stream-extra";
 
 import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
 import type { CodecDecoder } from "./codec/type.js";
-import type { WebCodecsVideoDecoderRenderer } from "./render/index.js";
+import type { VideoFrameRenderer } from "./render/index.js";
 
 class Pool<T> {
     #controller!: ReadableStreamDefaultController<T>;
@@ -123,7 +123,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     #error: Error | undefined;
     #controller!: WritableStreamDefaultController;
 
-    #renderer: WebCodecsVideoDecoderRenderer;
+    #renderer: VideoFrameRenderer;
     get renderer() {
         return this.#renderer;
     }
@@ -302,6 +302,6 @@ export namespace WebCodecsVideoDecoder {
          */
         codec: ScrcpyVideoCodecId;
 
-        renderer: WebCodecsVideoDecoderRenderer;
+        renderer: VideoFrameRenderer;
     }
 }

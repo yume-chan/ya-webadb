@@ -1,6 +1,6 @@
 // cspell: ignore insertable
 
-import type { WebCodecsVideoDecoderRenderer } from "./type.js";
+import type { VideoFrameRenderer } from "./type.js";
 
 declare class MediaStreamTrackGenerator extends MediaStreamTrack {
     constructor(options: { kind: "audio" | "video" });
@@ -8,9 +8,7 @@ declare class MediaStreamTrackGenerator extends MediaStreamTrack {
     writable: WritableStream<VideoFrame>;
 }
 
-export class InsertableStreamWebCodecsDecoderRenderer
-    implements WebCodecsVideoDecoderRenderer
-{
+export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
     static get isSupported() {
         return typeof MediaStreamTrackGenerator !== "undefined";
     }

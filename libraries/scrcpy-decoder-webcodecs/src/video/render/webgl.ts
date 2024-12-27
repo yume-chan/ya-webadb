@@ -1,6 +1,6 @@
 import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
 
-import { CanvasWebCodecsDecoderRenderer } from "./canvas.js";
+import { CanvasVideoFrameRenderer } from "./canvas.js";
 
 const Resolved = Promise.resolve();
 
@@ -24,7 +24,7 @@ function createContext(
     );
 }
 
-export class WebGLWebCodecsDecoderRenderer extends CanvasWebCodecsDecoderRenderer {
+export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
     static vertexShaderSource = `
         attribute vec2 xy;
 
@@ -77,7 +77,7 @@ export class WebGLWebCodecsDecoderRenderer extends CanvasWebCodecsDecoderRendere
         const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
         gl.shaderSource(
             vertexShader,
-            WebGLWebCodecsDecoderRenderer.vertexShaderSource,
+            WebGLVideoFrameRenderer.vertexShaderSource,
         );
         gl.compileShader(vertexShader);
         if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
@@ -87,7 +87,7 @@ export class WebGLWebCodecsDecoderRenderer extends CanvasWebCodecsDecoderRendere
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
         gl.shaderSource(
             fragmentShader,
-            WebGLWebCodecsDecoderRenderer.fragmentShaderSource,
+            WebGLVideoFrameRenderer.fragmentShaderSource,
         );
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
