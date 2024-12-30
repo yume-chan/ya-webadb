@@ -1,6 +1,4 @@
-import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
-import { AbortController } from "@yume-chan/stream-extra";
 
 import type {
     AdbIncomingSocketHandler,
@@ -44,9 +42,13 @@ export class AdbServerTransport implements AdbTransport {
 
     readonly banner: AdbBanner;
 
+    #sockets: AdbSocket[] = [];
+
     #closed = new PromiseResolver<void>();
-    #waitAbortController = new AbortController();
-    readonly disconnected: Promise<void>;
+    #disconnected: Promise<void>;
+    get disconnected() {
+        return this.#disconnected;
+    }
 
     get clientFeatures() {
         // No need to get host features (features supported by ADB server)
@@ -54,31 +56,29 @@ export class AdbServerTransport implements AdbTransport {
         return ADB_SERVER_DEFAULT_FEATURES;
     }
 
+    // eslint-disable-next-line @typescript-eslint/max-params
     constructor(
         client: AdbServerClient,
         serial: string,
         banner: AdbBanner,
         transportId: bigint,
+        disconnected: Promise<void>,
     ) {
         this.#client = client;
         this.serial = serial;
         this.banner = banner;
         this.transportId = transportId;
 
-        this.disconnected = Promise.race([
-            this.#closed.promise,
-            client.waitFor({ transportId }, "disconnect", {
-                signal: this.#waitAbortController.signal,
-                unref: true,
-            }),
-        ]);
+        this.#disconnected = Promise.race([this.#closed.promise, disconnected]);
     }
 
     async connect(service: string): Promise<AdbSocket> {
-        return await this.#client.createDeviceConnection(
+        const socket = await this.#client.createDeviceConnection(
             { transportId: this.transportId },
             service,
         );
+        this.#sockets.push(socket);
+        return socket;
     }
 
     async addReverseTunnel(
@@ -96,8 +96,10 @@ export class AdbServerTransport implements AdbTransport {
         await this.#client.connector.clearReverseTunnels();
     }
 
-    close(): MaybePromiseLike<void> {
+    async close(): Promise<void> {
+        for (const socket of this.#sockets) {
+            await socket.close();
+        }
         this.#closed.resolve();
-        this.#waitAbortController.abort();
     }
 }

@@ -3,123 +3,28 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
 import type { Event } from "@yume-chan/event";
-import { EventEmitter } from "@yume-chan/event";
 import { getUint64LittleEndian } from "@yume-chan/no-data-view";
 import type {
     AbortSignal,
     MaybeConsumable,
     ReadableWritablePair,
-    WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
-import {
-    BufferedReadableStream,
-    tryCancel,
-    tryClose,
-} from "@yume-chan/stream-extra";
-import {
-    bipedal,
-    decodeUtf8,
-    encodeUtf8,
-    TextDecoder,
-} from "@yume-chan/struct";
+import { AbortController } from "@yume-chan/stream-extra";
 
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import type { DeviceObserver as DeviceObserverBase } from "../device-observer.js";
 import type { AdbFeature } from "../features.js";
-import { hexToNumber, sequenceEqual, write4HexDigits } from "../utils/index.js";
+import { hexToNumber, sequenceEqual } from "../utils/index.js";
 
+import { AdbServerDeviceObserverOwner } from "./observer.js";
+import { AdbServerStream, FAIL } from "./stream.js";
 import { AdbServerTransport } from "./transport.js";
-
-const OKAY = encodeUtf8("OKAY");
-const FAIL = encodeUtf8("FAIL");
-
-class AdbServerStream {
-    #connection: AdbServerClient.ServerConnection;
-    #buffered: BufferedReadableStream;
-    #writer: WritableStreamDefaultWriter<Uint8Array>;
-
-    constructor(connection: AdbServerClient.ServerConnection) {
-        this.#connection = connection;
-        this.#buffered = new BufferedReadableStream(connection.readable);
-        this.#writer = connection.writable.getWriter();
-    }
-
-    readExactly(length: number): MaybePromiseLike<Uint8Array> {
-        return this.#buffered.readExactly(length);
-    }
-
-    readString = bipedal(function* (this: AdbServerStream, then) {
-        const data = yield* then(this.readExactly(4));
-        const length = hexToNumber(data);
-        if (length === 0) {
-            return "";
-        } else {
-            const decoder = new TextDecoder();
-            let result = "";
-            const iterator = this.#buffered.iterateExactly(length);
-            while (true) {
-                const { done, value } = iterator.next();
-                if (done) {
-                    break;
-                }
-                result += decoder.decode(yield* then(value), { stream: true });
-            }
-            result += decoder.decode();
-            return result;
-        }
-    });
-
-    async writeString(value: string): Promise<void> {
-        // TODO: investigate using `encodeUtf8("0000" + value)` then modifying the length
-        // That way allocates a new string (hopefully only a rope) instead of a new buffer
-        const encoded = encodeUtf8(value);
-        const buffer = new Uint8Array(4 + encoded.length);
-        write4HexDigits(buffer, 0, encoded.length);
-        buffer.set(encoded, 4);
-        await this.#writer.write(buffer);
-    }
-
-    async readOkay(): Promise<void> {
-        const response = await this.readExactly(4);
-        if (sequenceEqual(response, OKAY)) {
-            // `OKAY` is followed by data length and data
-            // But different services want to parse the data differently
-            // So don't read the data here
-            return;
-        }
-
-        if (sequenceEqual(response, FAIL)) {
-            const reason = await this.readString();
-            throw new Error(reason);
-        }
-
-        throw new Error(`Unexpected response: ${decodeUtf8(response)}`);
-    }
-
-    release() {
-        this.#writer.releaseLock();
-        return {
-            readable: this.#buffered.release(),
-            writable: this.#connection.writable,
-            closed: this.#connection.closed,
-            close: () => this.#connection.close(),
-        };
-    }
-
-    async dispose() {
-        void tryCancel(this.#buffered);
-        void tryClose(this.#writer);
-        await this.#connection.close();
-    }
-}
 
 /**
  * Client for the ADB Server.
  */
 export class AdbServerClient {
-    static readonly VERSION = 41;
-
     static parseDeviceList(value: string): AdbServerClient.Device[] {
         const devices: AdbServerClient.Device[] = [];
         for (const line of value.split("\n")) {
@@ -196,6 +101,7 @@ export class AdbServerClient {
 
     readonly wireless = new AdbServerClient.WirelessCommands(this);
     readonly mDns = new AdbServerClient.MDnsCommands(this);
+    #observerOwner = new AdbServerDeviceObserverOwner(this);
 
     constructor(connector: AdbServerClient.ServerConnector) {
         this.connector = connector;
@@ -240,11 +146,11 @@ export class AdbServerClient {
         }
     }
 
-    async validateVersion() {
+    async validateVersion(minimalVersion: number) {
         const version = await this.getVersion();
-        if (version !== AdbServerClient.VERSION) {
+        if (version < minimalVersion) {
             throw new Error(
-                `adb server version (${version}) doesn't match this client (${AdbServerClient.VERSION})`,
+                `adb server version (${version}) doesn't match this client (${minimalVersion})`,
             );
         }
     }
@@ -288,61 +194,10 @@ export class AdbServerClient {
     /**
      * Monitors device list changes.
      */
-    async trackDevices(): Promise<AdbServerClient.DeviceObserver> {
-        const connection = await this.createConnection("host:track-devices-l");
-
-        let current: AdbServerClient.Device[] = [];
-        const onError = new EventEmitter<Error>();
-        const onDeviceAdd = new EventEmitter<AdbServerClient.Device[]>();
-        const onDeviceRemove = new EventEmitter<AdbServerClient.Device[]>();
-        const onListChange = new EventEmitter<AdbServerClient.Device[]>();
-
-        void (async () => {
-            try {
-                while (true) {
-                    const response = await connection.readString();
-                    const next = AdbServerClient.parseDeviceList(response);
-
-                    const added: AdbServerClient.Device[] = [];
-                    for (const nextDevice of next) {
-                        const index = current.findIndex(
-                            (device) =>
-                                device.transportId === nextDevice.transportId,
-                        );
-                        if (index === -1) {
-                            added.push(nextDevice);
-                            continue;
-                        }
-
-                        current[index] = current[current.length - 1]!;
-                        current.length -= 1;
-                    }
-
-                    if (added.length) {
-                        onDeviceAdd.fire(added);
-                    }
-                    if (current.length) {
-                        onDeviceRemove.fire(current);
-                    }
-
-                    current = next;
-                    onListChange.fire(current);
-                }
-            } catch (e) {
-                onError.fire(e as Error);
-            }
-        })();
-
-        return {
-            onError: onError.event,
-            onDeviceAdd: onDeviceAdd.event,
-            onDeviceRemove: onDeviceRemove.event,
-            onListChange: onListChange.event,
-            get current() {
-                return current;
-            },
-            stop: () => connection.dispose(),
-        };
+    async trackDevices(
+        options?: AdbServerClient.ServerConnectionOptions,
+    ): Promise<AdbServerClient.DeviceObserver> {
+        return this.#observerOwner.createObserver(options);
     }
 
     /**
@@ -412,20 +267,22 @@ export class AdbServerClient {
         device: AdbServerClient.DeviceSelector,
         service: string,
     ): Promise<AdbServerClient.Socket> {
-        await this.validateVersion();
-
         let switchService: string;
         let transportId: bigint | undefined;
         if (!device) {
+            await this.validateVersion(41);
             switchService = `host:tport:any`;
         } else if ("transportId" in device) {
             switchService = `host:transport-id:${device.transportId}`;
             transportId = device.transportId;
         } else if ("serial" in device) {
+            await this.validateVersion(41);
             switchService = `host:tport:serial:${device.serial}`;
         } else if ("usb" in device) {
+            await this.validateVersion(41);
             switchService = `host:tport:usb`;
         } else if ("tcp" in device) {
+            await this.validateVersion(41);
             switchService = `host:tport:local`;
         } else {
             throw new TypeError("Invalid device selector");
@@ -467,18 +324,7 @@ export class AdbServerClient {
             throw e;
         }
     }
-
-    /**
-     * Wait for a device to be connected or disconnected.
-     *
-     * `adb wait-for-<state>`
-     *
-     * @param device The device selector
-     * @param state The state to wait for
-     * @param options The options
-     * @returns A promise that resolves when the condition is met.
-     */
-    async waitFor(
+    async #waitForUnchecked(
         device: AdbServerClient.DeviceSelector,
         state: "device" | "disconnect",
         options?: AdbServerClient.ServerConnectionOptions,
@@ -514,6 +360,60 @@ export class AdbServerClient {
     }
 
     /**
+     * Wait for a device to be connected or disconnected.
+     *
+     * `adb wait-for-<state>`
+     *
+     * @param device The device selector
+     * @param state The state to wait for
+     * @param options The options
+     * @returns A promise that resolves when the condition is met.
+     */
+    async waitFor(
+        device: AdbServerClient.DeviceSelector,
+        state: "device" | "disconnect",
+        options?: AdbServerClient.ServerConnectionOptions,
+    ): Promise<void> {
+        if (state === "disconnect") {
+            await this.validateVersion(41);
+        }
+
+        return this.#waitForUnchecked(device, state, options);
+    }
+
+    async waitForDisconnect(
+        transportId: bigint,
+        options?: AdbServerClient.ServerConnectionOptions,
+    ): Promise<void> {
+        const serverVersion = await this.getVersion();
+        if (serverVersion >= 41) {
+            return this.#waitForUnchecked(
+                { transportId },
+                "disconnect",
+                options,
+            );
+        } else {
+            const observer = await this.trackDevices(options);
+            return new Promise<void>((resolve, reject) => {
+                observer.onDeviceRemove((devices) => {
+                    if (
+                        devices.some(
+                            (device) => device.transportId === transportId,
+                        )
+                    ) {
+                        observer.stop();
+                        resolve();
+                    }
+                });
+                observer.onError((e) => {
+                    observer.stop();
+                    reject(e);
+                });
+            });
+        }
+    }
+
+    /**
      * Creates an ADB Transport for the specified device.
      */
     async createTransport(
@@ -533,12 +433,26 @@ export class AdbServerClient {
             features,
         );
 
-        return new AdbServerTransport(
+        const waitAbortController = new AbortController();
+        const disconnected = this.waitForDisconnect(transportId, {
+            unref: true,
+            signal: waitAbortController.signal,
+        });
+
+        const transport = new AdbServerTransport(
             this,
             info?.serial ?? "",
             banner,
             transportId,
+            disconnected,
         );
+
+        transport.disconnected.then(
+            () => waitAbortController.abort(),
+            () => waitAbortController.abort(),
+        );
+
+        return transport;
     }
 }
 

@@ -4,7 +4,7 @@
 
 import "source-map-support/register.js";
 
-import { Adb, AdbServerClient } from "@yume-chan/adb";
+import { Adb, AdbServerClient, Ref } from "@yume-chan/adb";
 import { AdbServerNodeTcpConnector } from "@yume-chan/adb-server-node-tcp";
 import { WritableStream } from "@yume-chan/stream-extra";
 import { program } from "commander";
@@ -132,6 +132,8 @@ createDeviceCommand("shell [args...]")
     )
     .configureHelp({ showGlobalOptions: true })
     .action(async (args: string[], options: DeviceCommandOptions) => {
+        const ref = new Ref();
+
         const adb = await createAdb(options);
         const shell = await adb.subprocess.shell(args);
 
@@ -169,6 +171,8 @@ createDeviceCommand("shell [args...]")
                 process.exit(1);
             },
         );
+
+        ref.unref();
     });
 
 createDeviceCommand("logcat [args...]")
