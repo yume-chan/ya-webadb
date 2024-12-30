@@ -37,7 +37,7 @@
         "@yume-chan/adb-server-node-tcp": "workspace:^",
         "@yume-chan/android-bin": "workspace:^",
         "@yume-chan/stream-extra": "workspace:^",
-        "commander": "^12.1.0",
+        "commander": "^13.0.0",
         "source-map-support": "^0.5.21"
     },
     "devDependencies": {
