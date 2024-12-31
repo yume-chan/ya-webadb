@@ -1,5 +1,12 @@
 # Change Log - @yume-chan/adb-daemon-webusb
 
+## 1.1.0
+
+### Patch Changes
+
+- Updated dependencies [ab98953]
+    - @yume-chan/adb@1.1.0
+
 ## 1.0.1
 
 ### Patch Changes

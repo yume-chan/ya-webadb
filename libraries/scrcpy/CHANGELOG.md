@@ -1,5 +1,19 @@
 # Change Log - @yume-chan/scrcpy
 
+## 1.1.0
+
+### Minor Changes
+
+- 8c5b3c2: Add support for Scrcpy 3.1
+- cb44b63: Move `version` info to option classes and provide default values
+
+### Patch Changes
+
+- 6140ebc: Accept raw (serialized) values for complex options
+- 6140ebc: Add `ScrcpyCrop` class for the `crop` option
+- 6140ebc: Add aliases for all Scrcpy patch versions
+- 7f2a09c: Fix incorrect scroll controller in version 1.22 and later
+
 ## 1.0.1
 
 ### Patch Changes

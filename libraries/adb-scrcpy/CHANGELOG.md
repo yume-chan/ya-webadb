@@ -1,5 +1,23 @@
 # Change Log - @yume-chan/adb-scrcpy
 
+## 1.1.0
+
+### Minor Changes
+
+- cb44b63: Move `version` info to option classes and provide default values
+
+### Patch Changes
+
+- Updated dependencies [ab98953]
+- Updated dependencies [6140ebc]
+- Updated dependencies [6140ebc]
+- Updated dependencies [6140ebc]
+- Updated dependencies [8c5b3c2]
+- Updated dependencies [7f2a09c]
+- Updated dependencies [cb44b63]
+    - @yume-chan/adb@1.1.0
+    - @yume-chan/scrcpy@1.1.0
+
 ## 1.0.1
 
 ### Patch Changes

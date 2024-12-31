@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/adb
 
+## 1.1.0
+
+### Minor Changes
+
+- ab98953: Add partial support for ADB server version 40
+
 ## 1.0.1
 
 ### Patch Changes
