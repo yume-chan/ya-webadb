@@ -100,6 +100,7 @@ export class AdbServerTransport implements AdbTransport {
         for (const socket of this.#sockets) {
             await socket.close();
         }
+        this.#sockets.length = 0;
         this.#closed.resolve();
     }
 }
