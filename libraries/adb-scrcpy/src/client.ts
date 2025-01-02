@@ -301,6 +301,10 @@ export class AdbScrcpyClient {
         return this.#controller;
     }
 
+    get clipboard(): ReadableStream<string> | undefined {
+        return this.#options.clipboard;
+    }
+
     constructor({
         options,
         process,
