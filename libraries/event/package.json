@@ -36,11 +36,11 @@
         "@yume-chan/async": "^4.0.2"
     },
     "devDependencies": {
-        "@types/node": "^22.10.2",
+        "@types/node": "^22.10.5",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.4.2",
-        "typescript": "^5.7.2"
+        "typescript": "^5.7.3"
     }
 }

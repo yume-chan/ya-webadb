@@ -40,7 +40,8 @@ abstract class SourceProcessor<T>
                 this.#totalSampleCount -= count;
             }
 
-            const data = event.data as ArrayBuffer[];
+            // https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1860
+            const { data } = event as MessageEvent<ArrayBuffer[]>;
             const [source, length] = this.createSource(data);
             this.#chunks.push(source);
             this.#chunkSampleCounts.push(length);
