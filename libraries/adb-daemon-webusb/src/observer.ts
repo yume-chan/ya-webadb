@@ -16,6 +16,14 @@ import { matchFilters } from "./utils.js";
 export class AdbDaemonWebUsbDeviceObserver
     implements DeviceObserver<AdbDaemonWebUsbDevice>
 {
+    static async create(
+        usb: USB,
+        options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
+    ) {
+        const devices = await usb.getDevices();
+        return new AdbDaemonWebUsbDeviceObserver(usb, devices, options);
+    }
+
     #filters: (USBDeviceFilter & UsbInterfaceFilter)[];
     #exclusionFilters?: USBDeviceFilter[] | undefined;
     #usbManager: USB;
@@ -33,31 +41,39 @@ export class AdbDaemonWebUsbDeviceObserver
 
     constructor(
         usb: USB,
+        initial: USBDevice[],
         options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
     ) {
         this.#filters = mergeDefaultAdbInterfaceFilter(options.filters);
         this.#exclusionFilters = options.exclusionFilters;
         this.#usbManager = usb;
+        this.current = initial
+            .map((device) => this.#convertDevice(device))
+            .filter((device) => !!device);
 
         this.#usbManager.addEventListener("connect", this.#handleConnect);
         this.#usbManager.addEventListener("disconnect", this.#handleDisconnect);
     }
 
-    #handleConnect = (e: USBConnectionEvent) => {
+    #convertDevice(device: USBDevice): AdbDaemonWebUsbDevice | undefined {
         const interface_ = matchFilters(
-            e.device,
+            device,
             this.#filters,
             this.#exclusionFilters,
         );
         if (!interface_) {
+            return undefined;
+        }
+
+        return new AdbDaemonWebUsbDevice(device, interface_, this.#usbManager);
+    }
+
+    #handleConnect = (e: USBConnectionEvent) => {
+        const device = this.#convertDevice(e.device);
+        if (!device) {
             return;
         }
 
-        const device = new AdbDaemonWebUsbDevice(
-            e.device,
-            interface_,
-            this.#usbManager,
-        );
         this.#onDeviceAdd.fire([device]);
         this.current.push(device);
         this.#onListChange.fire(this.current);

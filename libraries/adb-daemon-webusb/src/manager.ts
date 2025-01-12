@@ -107,7 +107,7 @@ export class AdbDaemonWebUsbDeviceManager {
 
     trackDevices(
         options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},
-    ): AdbDaemonWebUsbDeviceObserver {
-        return new AdbDaemonWebUsbDeviceObserver(this.#usbManager, options);
+    ): Promise<AdbDaemonWebUsbDeviceObserver> {
+        return AdbDaemonWebUsbDeviceObserver.create(this.#usbManager, options);
     }
 }
