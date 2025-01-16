@@ -1,48 +1,48 @@
 {
-    "name": "@yume-chan/adb-scrcpy",
-    "version": "1.1.0",
-    "description": "Use `@yume-chan/adb` to bootstrap `@yume-chan/scrcpy`.",
-    "keywords": [
-        "adb",
-        "android-phone",
-        "scrcpy"
-    ],
-    "license": "MIT",
-    "author": {
-        "name": "Simon Chan",
-        "email": "cnsimonchan@live.com",
-        "url": "https://chensi.moe/blog"
-    },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/adb-scrcpy#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/adb-scrcpy"
-    },
-    "bugs": {
-        "url": "https://github.com/yume-chan/ya-webadb/issues"
-    },
-    "type": "module",
-    "main": "esm/index.js",
-    "types": "esm/index.d.ts",
-    "sideEffects": false,
-    "scripts": {
-        "build": "tsc -b tsconfig.build.json",
-        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
-        "prepublishOnly": "npm run build"
-    },
-    "dependencies": {
-        "@yume-chan/adb": "workspace:^",
-        "@yume-chan/async": "^4.0.2",
-        "@yume-chan/event": "workspace:^",
-        "@yume-chan/scrcpy": "workspace:^",
-        "@yume-chan/stream-extra": "workspace:^",
-        "@yume-chan/struct": "workspace:^"
-    },
-    "devDependencies": {
-        "@yume-chan/eslint-config": "workspace:^",
-        "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.4.2",
-        "typescript": "^5.7.3"
-    }
+  "name": "@yume-chan/adb-scrcpy",
+  "version": "1.1.0",
+  "description": "Use `@yume-chan/adb` to bootstrap `@yume-chan/scrcpy`.",
+  "keywords": [
+    "adb",
+    "android-phone",
+    "scrcpy"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Simon Chan",
+    "email": "cnsimonchan@live.com",
+    "url": "https://chensi.moe/blog"
+  },
+  "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/adb-scrcpy#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yume-chan/ya-webadb.git",
+    "directory": "packages/adb-scrcpy"
+  },
+  "bugs": {
+    "url": "https://github.com/yume-chan/ya-webadb/issues"
+  },
+  "type": "module",
+  "main": "esm/index.js",
+  "types": "esm/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@yume-chan/adb": "workspace:^",
+    "@yume-chan/async": "^4.0.2",
+    "@yume-chan/event": "workspace:^",
+    "@yume-chan/scrcpy": "workspace:^",
+    "@yume-chan/stream-extra": "workspace:^",
+    "@yume-chan/struct": "workspace:^"
+  },
+  "devDependencies": {
+    "@yume-chan/eslint-config": "workspace:^",
+    "@yume-chan/tsconfig": "workspace:^",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
 }

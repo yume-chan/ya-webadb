@@ -1,7 +1,7 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "module": "nodenext",
-        "checkJs": true
-    },
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "nodenext",
+    "checkJs": true
+  }
 }

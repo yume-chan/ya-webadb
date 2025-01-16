@@ -1,42 +1,42 @@
 {
-    "name": "@yume-chan/aoa",
-    "version": "1.0.0",
-    "description": "TypeScript implementation of Android Open Accessory protocol.",
-    "keywords": [
-        "adb",
-        "android-phone"
-    ],
-    "license": "MIT",
-    "author": {
-        "name": "Simon Chan",
-        "email": "cnsimonchan@live.com",
-        "url": "https://chensi.moe/blog"
-    },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/aoa#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/aoa"
-    },
-    "bugs": {
-        "url": "https://github.com/yume-chan/ya-webadb/issues"
-    },
-    "type": "module",
-    "main": "esm/index.js",
-    "types": "esm/index.d.ts",
-    "sideEffects": false,
-    "scripts": {
-        "build": "tsc -b tsconfig.build.json",
-        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
-        "prepublishOnly": "npm run build"
-    },
-    "dependencies": {
-        "@types/w3c-web-usb": "^1.0.10"
-    },
-    "devDependencies": {
-        "@yume-chan/eslint-config": "workspace:^",
-        "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.4.2",
-        "typescript": "^5.7.3"
-    }
+  "name": "@yume-chan/aoa",
+  "version": "1.0.0",
+  "description": "TypeScript implementation of Android Open Accessory protocol.",
+  "keywords": [
+    "adb",
+    "android-phone"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Simon Chan",
+    "email": "cnsimonchan@live.com",
+    "url": "https://chensi.moe/blog"
+  },
+  "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/aoa#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yume-chan/ya-webadb.git",
+    "directory": "packages/aoa"
+  },
+  "bugs": {
+    "url": "https://github.com/yume-chan/ya-webadb/issues"
+  },
+  "type": "module",
+  "main": "esm/index.js",
+  "types": "esm/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@types/w3c-web-usb": "^1.0.10"
+  },
+  "devDependencies": {
+    "@yume-chan/eslint-config": "workspace:^",
+    "@yume-chan/tsconfig": "workspace:^",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
 }

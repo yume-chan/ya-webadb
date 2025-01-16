@@ -81,7 +81,7 @@ git push --tags
 
 WebUSB and Service Worker (which is used for file downloading) requires Secure Context (HTTPS or localhost).
 
--   If you have a domain name, add a free SSL certificate from [Let's Encrypt](https://letsencrypt.org/).
--   If you are using IP address or can't get a free SSL certificate, either
-    -   Add a self-issued SSL certificate and trust it on every device accessing it.
-    -   Add the hostname to `chrome://flags/#unsafely-treat-insecure-origin-as-secure` on every device accessing it.
+- If you have a domain name, add a free SSL certificate from [Let's Encrypt](https://letsencrypt.org/).
+- If you are using IP address or can't get a free SSL certificate, either
+  - Add a self-issued SSL certificate and trust it on every device accessing it.
+  - Add the hostname to `chrome://flags/#unsafely-treat-insecure-origin-as-secure` on every device accessing it.

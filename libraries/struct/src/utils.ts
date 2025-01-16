@@ -7,35 +7,31 @@
 // So there is no point to do that. Let's just assume they exist in global.
 
 interface TextEncoder {
-    encode(input: string): Uint8Array;
+  encode(input: string): Uint8Array;
 }
 
 interface TextDecoder {
-    decode(
-        buffer?: ArrayBufferView | ArrayBuffer,
-        options?: { stream?: boolean },
-    ): string;
+  decode(buffer?: ArrayBufferView | ArrayBuffer, options?: { stream?: boolean }): string;
 }
 
 interface GlobalExtension {
-    TextEncoder: new () => TextEncoder;
-    TextDecoder: new () => TextDecoder;
+  TextEncoder: new () => TextEncoder;
+  TextDecoder: new () => TextDecoder;
 }
 
-export const { TextEncoder, TextDecoder } =
-    globalThis as unknown as GlobalExtension;
+export const { TextEncoder, TextDecoder } = globalThis as unknown as GlobalExtension;
 
 const SharedEncoder = /* #__PURE__ */ new TextEncoder();
 const SharedDecoder = /* #__PURE__ */ new TextDecoder();
 
 /* #__NO_SIDE_EFFECTS__ */
 export function encodeUtf8(input: string): Uint8Array {
-    return SharedEncoder.encode(input);
+  return SharedEncoder.encode(input);
 }
 
 /* #__NO_SIDE_EFFECTS__ */
 export function decodeUtf8(buffer: ArrayBufferView | ArrayBuffer): string {
-    // `TextDecoder` has internal states in stream mode,
-    // but this method is not for stream mode, so the instance can be reused
-    return SharedDecoder.decode(buffer);
+  // `TextDecoder` has internal states in stream mode,
+  // but this method is not for stream mode, so the instance can be reused
+  return SharedDecoder.decode(buffer);
 }

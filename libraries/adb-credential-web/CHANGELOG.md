@@ -5,7 +5,7 @@
 ### Patch Changes
 
 - Updated dependencies [ab98953]
-    - @yume-chan/adb@1.1.0
+  - @yume-chan/adb@1.1.0
 
 ## 1.0.1
 
@@ -13,14 +13,14 @@
 
 - 53688d3: Use PNPM workspace and Changesets to manage the monorepo.
 
-    Because Changesets doesn't support alpha versions (`0.x.x`), this version is `1.0.0`. Future versions will follow SemVer rules, for example, breaking API changes will introduce a new major version.
+  Because Changesets doesn't support alpha versions (`0.x.x`), this version is `1.0.0`. Future versions will follow SemVer rules, for example, breaking API changes will introduce a new major version.
 
 - db8466f: Add common interface for device observers
 - Updated dependencies [53688d3]
 - Updated dependencies [db8466f]
 - Updated dependencies [db8466f]
 - Updated dependencies [db8466f]
-    - @yume-chan/adb@1.0.1
+  - @yume-chan/adb@1.0.1
 
 This log was last generated on Tue, 18 Jun 2024 02:49:43 GMT and should not be manually modified.
 

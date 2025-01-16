@@ -1,6 +1,6 @@
 /* #__NO_SIDE_EFFECTS__ */
 export const NOOP = () => {
-    // no-op
+  // no-op
 };
 
 /**
@@ -8,6 +8,6 @@ export const NOOP = () => {
  * An explicit way to suppress ESLint floating promise warnings.
  */
 export function unreachable(...args: unknown[]): never {
-    // Trigger runtime's unhandled rejection event.
-    throw new Error("Unreachable. Arguments:\n" + args.join("\n"));
+  // Trigger runtime's unhandled rejection event.
+  throw new Error('Unreachable. Arguments:\n' + args.join('\n'));
 }

@@ -10,8 +10,8 @@ Google Chrome 89 and Mozilla Firefox 102 provide full support for Web Streams AP
 
 In Node.js, it's not possible to load the `stream/web` module while keeping the compatibility with both Web and bundlers:
 
--   Webpack has poor support with Top Level Await, for example, Hot Module Replacement doesn't work when any module is using TLA.
--   Web doesn't have the `module` module, thus requires a shim in import map.
+- Webpack has poor support with Top Level Await, for example, Hot Module Replacement doesn't work when any module is using TLA.
+- Web doesn't have the `module` module, thus requires a shim in import map.
 
 Assigning `ReadableStream`, `WritableStream` and `TransformStream` from `stream/web` module to `globalThis`, before loading this library, will still work. Other custom polyfill can also be loaded this way.
 
@@ -24,8 +24,8 @@ Native implementations will perform this check, so `new globalThis.ReadableStrea
 The `WrapReadableStream` class can be used to bypass this check:
 
 ```ts
-import { WrapReadableStream } from "@yume-chan/stream-extra";
-import { WritableStream as PolyfillWritableStream } from "web-streams-polyfill";
+import { WrapReadableStream } from '@yume-chan/stream-extra';
+import { WritableStream as PolyfillWritableStream } from 'web-streams-polyfill';
 
 const nativeReadable = new globalThis.ReadableStream();
 const wrappedReadable = new WrapReadableStream(new globalThis.ReadableStream());

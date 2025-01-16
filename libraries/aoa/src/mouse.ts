@@ -1,7 +1,7 @@
 export class HidMouse {
-    static readonly descriptor = new Uint8Array(
-        // prettier-ignore
-        [
+  static readonly descriptor = new Uint8Array(
+    // prettier-ignore
+    [
             0x05, 0x01,       // Usage Page (Generic Desktop)
             0x09, 0x02,       // Usage (Mouse)
             0xa1, 0x01,       // Collection (Application)
@@ -39,22 +39,22 @@ export class HidMouse {
             0x81, 0x06,       //         Input (Data, Variable, Relative)
             0xc0,             //     End Collection
             0xc0,             // End Collection
-        ],
-    );
+        ]
+  );
 
-    static serializeInputReport(report: {
-        movementX?: number;
-        movementY?: number;
-        buttons?: number;
-        scrollX?: number;
-        scrollY?: number;
-    }): Uint8Array {
-        return new Uint8Array([
-            report.buttons ?? 0,
-            report.movementX ?? 0,
-            report.movementY ?? 0,
-            report.scrollY ?? 0,
-            report.scrollX ?? 0,
-        ]);
-    }
+  static serializeInputReport(report: {
+    movementX?: number;
+    movementY?: number;
+    buttons?: number;
+    scrollX?: number;
+    scrollY?: number;
+  }): Uint8Array {
+    return new Uint8Array([
+      report.buttons ?? 0,
+      report.movementX ?? 0,
+      report.movementY ?? 0,
+      report.scrollY ?? 0,
+      report.scrollX ?? 0
+    ]);
+  }
 }

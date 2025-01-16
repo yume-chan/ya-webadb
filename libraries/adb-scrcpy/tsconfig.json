@@ -1,25 +1,25 @@
 {
-    "references": [
-        {
-            "path": "./tsconfig.build.json"
-        },
-        {
-            "path": "./tsconfig.test.json"
-        },
-        {
-            "path": "../adb/tsconfig.build.json"
-        },
-        {
-            "path": "../event/tsconfig.build.json"
-        },
-        {
-            "path": "../scrcpy/tsconfig.build.json"
-        },
-        {
-            "path": "../stream-extra/tsconfig.build.json"
-        },
-        {
-            "path": "../struct/tsconfig.build.json"
-        }
-    ]
+  "references": [
+    {
+      "path": "./tsconfig.build.json"
+    },
+    {
+      "path": "./tsconfig.test.json"
+    },
+    {
+      "path": "../adb/tsconfig.build.json"
+    },
+    {
+      "path": "../event/tsconfig.build.json"
+    },
+    {
+      "path": "../scrcpy/tsconfig.build.json"
+    },
+    {
+      "path": "../stream-extra/tsconfig.build.json"
+    },
+    {
+      "path": "../struct/tsconfig.build.json"
+    }
+  ]
 }

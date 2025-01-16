@@ -1,6 +1,6 @@
 const FINGER_DESCRIPTOR = new Uint8Array(
-    // prettier-ignore
-    [
+  // prettier-ignore
+  [
         0x09, 0x22,       //     Usage (Finger)
         0xa1, 0x02,       //     Collection (Logical)
         0x09, 0x51,       //         Usage (Contact Identifier)
@@ -32,12 +32,12 @@ const FINGER_DESCRIPTOR = new Uint8Array(
         0x95, 0x02,       //         Report Count (2)
         0x81, 0x02,       //         Input (Data, Variable, Absolute)
         0xc0,             //     End Collection
-    ],
+    ]
 );
 
 const DESCRIPTOR_HEAD = new Uint8Array(
-    // prettier-ignore
-    [
+  // prettier-ignore
+  [
         0x05, 0x0d, // Usage Page (Digitizers)
         0x09, 0x04, // Usage (Touch Screen)
         0xa1, 0x01, // Collection (Application)
@@ -51,82 +51,78 @@ const DESCRIPTOR_HEAD = new Uint8Array(
         0x75, 0x08, //     Report Size (8)
         0x95, 0x01, //     Report Count (1)
         0x81, 0x02, //     Input (Data, Variable, Absolute)
-    ],
+    ]
 );
 
 const DESCRIPTOR_TAIL = new Uint8Array([
-    0xc0, // End Collection
+  0xc0 // End Collection
 ]);
 
-const DESCRIPTOR = new Uint8Array(
-    DESCRIPTOR_HEAD.length +
-        FINGER_DESCRIPTOR.length * 10 +
-        DESCRIPTOR_TAIL.length,
-);
+const DESCRIPTOR = new Uint8Array(DESCRIPTOR_HEAD.length + FINGER_DESCRIPTOR.length * 10 + DESCRIPTOR_TAIL.length);
 let offset = 0;
 DESCRIPTOR.set(DESCRIPTOR_HEAD, offset);
 offset += DESCRIPTOR_HEAD.length;
 for (let i = 0; i < 10; i += 1) {
-    DESCRIPTOR.set(FINGER_DESCRIPTOR, offset);
-    offset += FINGER_DESCRIPTOR.length;
+  DESCRIPTOR.set(FINGER_DESCRIPTOR, offset);
+  offset += FINGER_DESCRIPTOR.length;
 }
 DESCRIPTOR.set(DESCRIPTOR_TAIL, offset);
 
 interface Finger {
-    x: number;
-    y: number;
+  x: number;
+  y: number;
 }
 
 /**
  * A ten-point touch screen.
  */
 export class HidTouchScreen {
-    static readonly FINGER_DESCRIPTOR = FINGER_DESCRIPTOR;
+  static readonly FINGER_DESCRIPTOR = FINGER_DESCRIPTOR;
 
-    static readonly DESCRIPTOR = DESCRIPTOR;
+  static readonly DESCRIPTOR = DESCRIPTOR;
 
-    #fingers = new Map<number, Finger>();
+  #fingers = new Map<number, Finger>();
 
-    down(id: number, x: number, y: number) {
-        if (this.#fingers.size >= 10) {
-            return;
-        }
-
-        this.#fingers.set(id, {
-            x,
-            y,
-        });
+  down(id: number, x: number, y: number) {
+    if (this.#fingers.size >= 10) {
+      return;
     }
 
-    move(id: number, x: number, y: number) {
-        const finger = this.#fingers.get(id);
-        if (finger) {
-            finger.x = x;
-            finger.y = y;
-        }
+    this.#fingers.set(id, {
+      x,
+      y
+    });
+  }
+
+  move(id: number, x: number, y: number) {
+    const finger = this.#fingers.get(id);
+    if (finger) {
+      finger.x = x;
+      finger.y = y;
     }
+  }
 
-    up(id: number) {
-        this.#fingers.delete(id);
+  up(id: number) {
+    this.#fingers.delete(id);
+  }
+
+  serializeInputReport(): Uint8Array {
+    const report = new Uint8Array(1 + 6 * 10);
+    report[0] = this.#fingers.size;
+    let offset = 1;
+    for (const [id, finger] of this.#fingers) {
+      report[offset] = id;
+      offset += 1;
+
+      report[offset] = 1;
+      offset += 1;
+
+      report[offset] = finger.x & 0xff;
+      report[offset + 1] = (finger.x >> 8) & 0xff;
+      report[offset + 2] = finger.y & 0xff;
+      report[offset + 3] = (finger.y >> 8) & 0xff;
+      offset += 4;
     }
-
-    serializeInputReport(): Uint8Array {
-        const report = new Uint8Array(1 + 6 * 10);
-        report[0] = this.#fingers.size;
-        let offset = 1;
-        for (const [id, finger] of this.#fingers) {
-            report[offset] = id;
-            offset += 1;
-
-            report[offset] = 1;
-            offset += 1;
-
-            report[offset] = finger.x & 0xff;
-            report[offset + 1] = (finger.x >> 8) & 0xff;
-            report[offset + 2] = finger.y & 0xff;
-            report[offset + 3] = (finger.y >> 8) & 0xff;
-            offset += 4;
-        }
-        return report;
-    }
+    return report;
+  }
 }

@@ -1,8 +1,8 @@
 name: Suggestion
 description: Suggest a new feature or improvement
 labels:
-  - "type:enhancement"
-title: "[Suggestion] "
+  - 'type:enhancement'
+title: '[Suggestion] '
 body:
   - type: checkboxes
     attributes:

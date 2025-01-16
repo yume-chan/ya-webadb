@@ -1,39 +1,39 @@
 {
-    "name": "@yume-chan/pcm-player",
-    "version": "1.0.0",
-    "description": "Play raw audio sample stream using Web Audio API",
-    "keywords": [
-        "audio"
-    ],
-    "license": "MIT",
-    "author": {
-        "name": "Simon Chan",
-        "email": "cnsimonchan@live.com",
-        "url": "https://chensi.moe/blog"
-    },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/pcm-player#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/pcm-player"
-    },
-    "bugs": {
-        "url": "https://github.com/yume-chan/ya-webadb/issues"
-    },
-    "type": "module",
-    "main": "esm/index.js",
-    "types": "esm/index.d.ts",
-    "sideEffects": false,
-    "scripts": {
-        "build": "tsc -b tsconfig.dom.json && tsc -b tsconfig.worker.json",
-        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
-        "prepublishOnly": "npm run build"
-    },
-    "devDependencies": {
-        "@types/audioworklet": "^0.0.65",
-        "@yume-chan/eslint-config": "workspace:^",
-        "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.4.2",
-        "typescript": "^5.7.3"
-    }
+  "name": "@yume-chan/pcm-player",
+  "version": "1.0.0",
+  "description": "Play raw audio sample stream using Web Audio API",
+  "keywords": [
+    "audio"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Simon Chan",
+    "email": "cnsimonchan@live.com",
+    "url": "https://chensi.moe/blog"
+  },
+  "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/pcm-player#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yume-chan/ya-webadb.git",
+    "directory": "packages/pcm-player"
+  },
+  "bugs": {
+    "url": "https://github.com/yume-chan/ya-webadb/issues"
+  },
+  "type": "module",
+  "main": "esm/index.js",
+  "types": "esm/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b tsconfig.dom.json && tsc -b tsconfig.worker.json",
+    "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/audioworklet": "^0.0.65",
+    "@yume-chan/eslint-config": "workspace:^",
+    "@yume-chan/tsconfig": "workspace:^",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
 }

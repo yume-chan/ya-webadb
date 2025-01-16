@@ -1,135 +1,118 @@
-import type { MaybePromiseLike } from "@yume-chan/async";
-import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable } from "@yume-chan/struct";
+import type { MaybePromiseLike } from '@yume-chan/async';
+import type { ReadableStream, TransformStream } from '@yume-chan/stream-extra';
+import type { AsyncExactReadable } from '@yume-chan/struct';
 
-import type { ScrcpyAudioStreamMetadata } from "../base/audio.js";
-import type { ScrcpyEncoder } from "../base/encoder.js";
-import type { ScrcpyMediaStreamPacket } from "../base/media.js";
-import type { ScrcpyOptions } from "../base/options.js";
-import type { ScrcpyScrollController } from "../base/scroll-controller.js";
-import type { ScrcpyVideoStream } from "../base/video.js";
+import type { ScrcpyAudioStreamMetadata } from '../base/audio.js';
+import type { ScrcpyEncoder } from '../base/encoder.js';
+import type { ScrcpyMediaStreamPacket } from '../base/media.js';
+import type { ScrcpyOptions } from '../base/options.js';
+import type { ScrcpyScrollController } from '../base/scroll-controller.js';
+import type { ScrcpyVideoStream } from '../base/video.js';
 import type {
-    ScrcpyBackOrScreenOnControlMessage,
-    ScrcpyInjectTouchControlMessage,
-    ScrcpySetClipboardControlMessage,
-    ScrcpyUHidCreateControlMessage,
-} from "../latest.js";
+  ScrcpyBackOrScreenOnControlMessage,
+  ScrcpyInjectTouchControlMessage,
+  ScrcpySetClipboardControlMessage,
+  ScrcpyUHidCreateControlMessage
+} from '../latest.js';
 
-export class ScrcpyOptionsWrapper<T extends object>
-    implements ScrcpyOptions<T>
-{
-    #base: ScrcpyOptions<T>;
+export class ScrcpyOptionsWrapper<T extends object> implements ScrcpyOptions<T> {
+  #base: ScrcpyOptions<T>;
 
-    get version() {
-        return this.#base.version;
+  get version() {
+    return this.#base.version;
+  }
+
+  get controlMessageTypes() {
+    return this.#base.controlMessageTypes;
+  }
+
+  get value() {
+    return this.#base.value;
+  }
+
+  get clipboard() {
+    return this.#base.clipboard;
+  }
+
+  get uHidOutput() {
+    return this.#base.uHidOutput;
+  }
+
+  constructor(options: ScrcpyOptions<T>) {
+    this.#base = options;
+  }
+
+  serialize(): string[] {
+    return this.#base.serialize();
+  }
+
+  setListDisplays() {
+    this.#base.setListDisplays();
+  }
+
+  parseDisplay(line: string) {
+    return this.#base.parseDisplay(line);
+  }
+
+  setListEncoders(): void {
+    if (!this.#base.setListEncoders) {
+      throw new Error('setListEncoders is not implemented');
     }
+    this.#base.setListEncoders();
+  }
 
-    get controlMessageTypes() {
-        return this.#base.controlMessageTypes;
+  parseEncoder(line: string): ScrcpyEncoder | undefined {
+    if (!this.#base.parseEncoder) {
+      throw new Error('parseEncoder is not implemented');
     }
+    return this.#base.parseEncoder(line);
+  }
 
-    get value() {
-        return this.#base.value;
-    }
+  parseVideoStreamMetadata(stream: ReadableStream<Uint8Array>): MaybePromiseLike<ScrcpyVideoStream> {
+    return this.#base.parseVideoStreamMetadata(stream);
+  }
 
-    get clipboard() {
-        return this.#base.clipboard;
+  parseAudioStreamMetadata(stream: ReadableStream<Uint8Array>): MaybePromiseLike<ScrcpyAudioStreamMetadata> {
+    if (!this.#base.parseAudioStreamMetadata) {
+      throw new Error('parseAudioStreamMetadata is not implemented');
     }
+    return this.#base.parseAudioStreamMetadata(stream);
+  }
 
-    get uHidOutput() {
-        return this.#base.uHidOutput;
-    }
+  parseDeviceMessage(id: number, stream: AsyncExactReadable): Promise<void> {
+    return this.#base.parseDeviceMessage(id, stream);
+  }
 
-    constructor(options: ScrcpyOptions<T>) {
-        this.#base = options;
-    }
+  endDeviceMessageStream(e?: unknown): void {
+    this.#base.endDeviceMessageStream(e);
+  }
 
-    serialize(): string[] {
-        return this.#base.serialize();
-    }
+  createMediaStreamTransformer(): TransformStream<Uint8Array, ScrcpyMediaStreamPacket> {
+    return this.#base.createMediaStreamTransformer();
+  }
 
-    setListDisplays() {
-        this.#base.setListDisplays();
-    }
+  serializeInjectTouchControlMessage(message: ScrcpyInjectTouchControlMessage): Uint8Array {
+    return this.#base.serializeInjectTouchControlMessage(message);
+  }
 
-    parseDisplay(line: string) {
-        return this.#base.parseDisplay(line);
-    }
+  serializeBackOrScreenOnControlMessage(message: ScrcpyBackOrScreenOnControlMessage): Uint8Array | undefined {
+    return this.#base.serializeBackOrScreenOnControlMessage(message);
+  }
 
-    setListEncoders(): void {
-        if (!this.#base.setListEncoders) {
-            throw new Error("setListEncoders is not implemented");
-        }
-        this.#base.setListEncoders();
-    }
+  serializeSetClipboardControlMessage(
+    message: ScrcpySetClipboardControlMessage
+  ): Uint8Array | [Uint8Array, Promise<void>] {
+    return this.#base.serializeSetClipboardControlMessage(message);
+  }
 
-    parseEncoder(line: string): ScrcpyEncoder | undefined {
-        if (!this.#base.parseEncoder) {
-            throw new Error("parseEncoder is not implemented");
-        }
-        return this.#base.parseEncoder(line);
-    }
+  createScrollController(): ScrcpyScrollController {
+    return this.#base.createScrollController();
+  }
 
-    parseVideoStreamMetadata(
-        stream: ReadableStream<Uint8Array>,
-    ): MaybePromiseLike<ScrcpyVideoStream> {
-        return this.#base.parseVideoStreamMetadata(stream);
+  serializeUHidCreateControlMessage(message: ScrcpyUHidCreateControlMessage): Uint8Array {
+    if (!this.#base.serializeUHidCreateControlMessage) {
+      throw new Error('serializeUHidCreateControlMessage is not implemented');
     }
-
-    parseAudioStreamMetadata(
-        stream: ReadableStream<Uint8Array>,
-    ): MaybePromiseLike<ScrcpyAudioStreamMetadata> {
-        if (!this.#base.parseAudioStreamMetadata) {
-            throw new Error("parseAudioStreamMetadata is not implemented");
-        }
-        return this.#base.parseAudioStreamMetadata(stream);
-    }
-
-    parseDeviceMessage(id: number, stream: AsyncExactReadable): Promise<void> {
-        return this.#base.parseDeviceMessage(id, stream);
-    }
-
-    endDeviceMessageStream(e?: unknown): void {
-        this.#base.endDeviceMessageStream(e);
-    }
-
-    createMediaStreamTransformer(): TransformStream<
-        Uint8Array,
-        ScrcpyMediaStreamPacket
-    > {
-        return this.#base.createMediaStreamTransformer();
-    }
-
-    serializeInjectTouchControlMessage(
-        message: ScrcpyInjectTouchControlMessage,
-    ): Uint8Array {
-        return this.#base.serializeInjectTouchControlMessage(message);
-    }
-
-    serializeBackOrScreenOnControlMessage(
-        message: ScrcpyBackOrScreenOnControlMessage,
-    ): Uint8Array | undefined {
-        return this.#base.serializeBackOrScreenOnControlMessage(message);
-    }
-
-    serializeSetClipboardControlMessage(
-        message: ScrcpySetClipboardControlMessage,
-    ): Uint8Array | [Uint8Array, Promise<void>] {
-        return this.#base.serializeSetClipboardControlMessage(message);
-    }
-
-    createScrollController(): ScrcpyScrollController {
-        return this.#base.createScrollController();
-    }
-
-    serializeUHidCreateControlMessage(
-        message: ScrcpyUHidCreateControlMessage,
-    ): Uint8Array {
-        if (!this.#base.serializeUHidCreateControlMessage) {
-            throw new Error(
-                "serializeUHidCreateControlMessage is not implemented",
-            );
-        }
-        return this.#base.serializeUHidCreateControlMessage(message);
-    }
+    return this.#base.serializeUHidCreateControlMessage(message);
+  }
 }

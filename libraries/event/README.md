@@ -13,7 +13,7 @@ Inspired by TypeScript, Visual Studio Code, and more.
 
 ```ts
 interface Disposable {
-    dispose(): void;
+  dispose(): void;
 }
 ```
 
@@ -23,10 +23,10 @@ Represents anything that need cleanup before the garbage collector recycle it.
 
 ```ts
 class AutoDisposable implements Disposable {
-    private disposables;
-    constructor();
-    protected addDisposable<T extends Disposable>(disposable: T): T;
-    dispose(): void;
+  private disposables;
+  constructor();
+  protected addDisposable<T extends Disposable>(disposable: T): T;
+  dispose(): void;
 }
 ```
 
@@ -38,17 +38,17 @@ Usually works like:
 
 ```ts
 class MyObject extends AutoDisposable {
-    private event1 = this.addDisposable(new EventEmitter<void>());
+  private event1 = this.addDisposable(new EventEmitter<void>());
 
-    private event2 = this.addDisposable(new EventEmitter<void>());
+  private event2 = this.addDisposable(new EventEmitter<void>());
 
-    public dispose() {
-        // If the derived class has its own dispose logic
-        // Don't forget to call super's `dispose`
-        super.dispose();
+  public dispose() {
+    // If the derived class has its own dispose logic
+    // Don't forget to call super's `dispose`
+    super.dispose();
 
-        // Clean up itself.
-    }
+    // Clean up itself.
+  }
 }
 ```
 
@@ -56,7 +56,7 @@ class MyObject extends AutoDisposable {
 
 ```ts
 class DisposableList extends AutoDisposable {
-    add<T extends Disposable>(disposable: T): T;
+  add<T extends Disposable>(disposable: T): T;
 }
 ```
 
@@ -66,27 +66,30 @@ An `AutoDisposable` that can be used alone (i.e. not as a base class).
 
 ```ts
 interface EventListener<TEvent, TThis, TArgs extends unknown[], TResult> {
-    (this: TThis, e: TEvent, ...args: TArgs): TResult;
+  (this: TThis, e: TEvent, ...args: TArgs): TResult;
 }
 
 interface RemoveEventListener extends Disposable {
-    (): void;
+  (): void;
 }
 
 interface Event<TEvent, TResult = unknown> {
-    (listener: EventListener<TEvent, unknown, [], TResult>): RemoveEventListener;
-    <TThis, TArgs extends unknown[]>(listener: EventListener<TEvent, TThis, TArgs, TResult>, thisArg: TThis, ...args: TArgs): RemoveEventListener;
+  (listener: EventListener<TEvent, unknown, [], TResult>): RemoveEventListener;
+  <TThis, TArgs extends unknown[]>(
+    listener: EventListener<TEvent, TThis, TArgs, TResult>,
+    thisArg: TThis,
+    ...args: TArgs
+  ): RemoveEventListener;
 }
 
 class EventEmitter<TEvent, TResult = unknown> implements Disposable {
-    protected readonly listeners: EventListenerInfo<TEvent, TResult>[];
-    constructor();
-    protected addEventListener(info: EventListenerInfo<TEvent, TResult>): RemoveEventListener;
-    event: Event<TEvent, TResult>;
-    fire(e: TEvent): void;
-    dispose(): void;
+  protected readonly listeners: EventListenerInfo<TEvent, TResult>[];
+  constructor();
+  protected addEventListener(info: EventListenerInfo<TEvent, TResult>): RemoveEventListener;
+  event: Event<TEvent, TResult>;
+  fire(e: TEvent): void;
+  dispose(): void;
 }
-
 ```
 
 |                                     | Node.js `EventEmitter` | This `EventEmitter` |
