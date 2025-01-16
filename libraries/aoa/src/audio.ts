@@ -1,13 +1,13 @@
-import { AoaRequestType } from "./type.js";
+import { AoaRequestType } from './type.js';
 
 // The original plan is to add more audio modes,
 // but AOA audio accessory mode is soon deprecated in Android 8.
 export enum AoaAudioMode {
-    Off,
-    /**
-     * 2 channel, 16 bit, 44.1KHz PCM
-     */
-    On,
+  Off,
+  /**
+   * 2 channel, 16 bit, 44.1KHz PCM
+   */
+  On
 }
 
 /**
@@ -26,39 +26,39 @@ export enum AoaAudioMode {
  * @param mode The audio mode.
  */
 export async function aoaSetAudioMode(device: USBDevice, mode: AoaAudioMode) {
-    await device.controlTransferOut(
-        {
-            recipient: "device",
-            requestType: "vendor",
-            request: AoaRequestType.SetAudioMode,
-            value: mode,
-            index: 0,
-        },
-        new ArrayBuffer(0),
-    );
+  await device.controlTransferOut(
+    {
+      recipient: 'device',
+      requestType: 'vendor',
+      request: AoaRequestType.SetAudioMode,
+      value: mode,
+      index: 0
+    },
+    new ArrayBuffer(0)
+  );
 }
 
 function findAudioStreamingInterface(device: USBDevice) {
-    for (const configuration of device.configurations) {
-        for (const interface_ of configuration.interfaces) {
-            for (const alternate of interface_.alternates) {
-                // Audio
-                if (alternate.interfaceClass !== 0x01) {
-                    continue;
-                }
-                // AudioStreaming
-                if (alternate.interfaceSubclass !== 0x02) {
-                    continue;
-                }
-                if (alternate.endpoints.length === 0) {
-                    continue;
-                }
-                return { configuration, interface_, alternate };
-            }
+  for (const configuration of device.configurations) {
+    for (const interface_ of configuration.interfaces) {
+      for (const alternate of interface_.alternates) {
+        // Audio
+        if (alternate.interfaceClass !== 0x01) {
+          continue;
         }
+        // AudioStreaming
+        if (alternate.interfaceSubclass !== 0x02) {
+          continue;
+        }
+        if (alternate.endpoints.length === 0) {
+          continue;
+        }
+        return { configuration, interface_, alternate };
+      }
     }
+  }
 
-    throw new TypeError("No matched alternate interface found");
+  throw new TypeError('No matched alternate interface found');
 }
 
 /**
@@ -67,59 +67,39 @@ function findAudioStreamingInterface(device: USBDevice) {
  * @returns A readable stream of raw audio data.
  */
 export function aoaGetAudioStream(device: USBDevice) {
-    let endpointNumber!: number;
-    return new ReadableStream<Uint8Array>({
-        async start() {
-            const { configuration, interface_, alternate } =
-                findAudioStreamingInterface(device);
+  let endpointNumber!: number;
+  return new ReadableStream<Uint8Array>({
+    async start() {
+      const { configuration, interface_, alternate } = findAudioStreamingInterface(device);
 
-            if (
-                device.configuration?.configurationValue !==
-                configuration.configurationValue
-            ) {
-                await device.selectConfiguration(
-                    configuration.configurationValue,
-                );
-            }
+      if (device.configuration?.configurationValue !== configuration.configurationValue) {
+        await device.selectConfiguration(configuration.configurationValue);
+      }
 
-            if (!interface_.claimed) {
-                await device.claimInterface(interface_.interfaceNumber);
-            }
+      if (!interface_.claimed) {
+        await device.claimInterface(interface_.interfaceNumber);
+      }
 
-            if (
-                interface_.alternate.alternateSetting !==
-                alternate.alternateSetting
-            ) {
-                await device.selectAlternateInterface(
-                    interface_.interfaceNumber,
-                    alternate.alternateSetting,
-                );
-            }
+      if (interface_.alternate.alternateSetting !== alternate.alternateSetting) {
+        await device.selectAlternateInterface(interface_.interfaceNumber, alternate.alternateSetting);
+      }
 
-            const endpoint = alternate.endpoints.find(
-                (endpoint) =>
-                    endpoint.type === "isochronous" &&
-                    endpoint.direction === "in",
-            );
-            if (!endpoint) {
-                throw new TypeError("No matched endpoint found");
-            }
+      const endpoint = alternate.endpoints.find(
+        (endpoint) => endpoint.type === 'isochronous' && endpoint.direction === 'in'
+      );
+      if (!endpoint) {
+        throw new TypeError('No matched endpoint found');
+      }
 
-            endpointNumber = endpoint.endpointNumber;
-        },
-        async pull(controller) {
-            const result = await device.isochronousTransferIn(endpointNumber, [
-                1024,
-            ]);
-            for (const packet of result.packets) {
-                const data = packet.data!;
-                const array = new Uint8Array(
-                    data.buffer,
-                    data.byteOffset,
-                    data.byteLength,
-                );
-                controller.enqueue(array);
-            }
-        },
-    });
+      endpointNumber = endpoint.endpointNumber;
+    },
+    async pull(controller) {
+      const result = await device.isochronousTransferIn(endpointNumber, [1024]);
+      for (const packet of result.packets) {
+        const data = packet.data!;
+        const array = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+        controller.enqueue(array);
+      }
+    }
+  });
 }

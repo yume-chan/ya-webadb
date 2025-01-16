@@ -1,50 +1,50 @@
 {
-    "name": "@yume-chan/adb-cli",
-    "private": true,
-    "version": "0.0.19",
-    "description": "Re-implement `adb`",
-    "keywords": [
-        "adb",
-        "cli"
-    ],
-    "license": "MIT",
-    "author": {
-        "name": "Simon Chan",
-        "email": "cnsimonchan@live.com",
-        "url": "https://chensi.moe/blog"
-    },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/apps/adb-cli#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "apps/adb-cli"
-    },
-    "bugs": {
-        "url": "https://github.com/yume-chan/ya-webadb/issues"
-    },
-    "type": "module",
-    "main": "esm/index.js",
-    "types": "esm/index.d.ts",
-    "scripts": {
-        "build": "tsc -b tsconfig.build.json",
-        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4"
-    },
-    "bin": {
-        "tango-cli": "esm/index.js"
-    },
-    "dependencies": {
-        "@yume-chan/adb": "workspace:^",
-        "@yume-chan/adb-server-node-tcp": "workspace:^",
-        "@yume-chan/android-bin": "workspace:^",
-        "@yume-chan/stream-extra": "workspace:^",
-        "commander": "^13.0.0",
-        "source-map-support": "^0.5.21"
-    },
-    "devDependencies": {
-        "@types/node": "^22.10.5",
-        "@yume-chan/eslint-config": "workspace:^",
-        "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.4.2",
-        "typescript": "^5.7.3"
-    }
+  "name": "@yume-chan/adb-cli",
+  "private": true,
+  "version": "0.0.19",
+  "description": "Re-implement `adb`",
+  "keywords": [
+    "adb",
+    "cli"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Simon Chan",
+    "email": "cnsimonchan@live.com",
+    "url": "https://chensi.moe/blog"
+  },
+  "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/apps/adb-cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yume-chan/ya-webadb.git",
+    "directory": "apps/adb-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/yume-chan/ya-webadb/issues"
+  },
+  "type": "module",
+  "main": "esm/index.js",
+  "types": "esm/index.d.ts",
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4"
+  },
+  "bin": {
+    "tango-cli": "esm/index.js"
+  },
+  "dependencies": {
+    "@yume-chan/adb": "workspace:^",
+    "@yume-chan/adb-server-node-tcp": "workspace:^",
+    "@yume-chan/android-bin": "workspace:^",
+    "@yume-chan/stream-extra": "workspace:^",
+    "commander": "^13.0.0",
+    "source-map-support": "^0.5.21"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@yume-chan/eslint-config": "workspace:^",
+    "@yume-chan/tsconfig": "workspace:^",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
 }

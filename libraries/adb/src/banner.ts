@@ -1,85 +1,85 @@
-import type { AdbFeature } from "./features.js";
+import type { AdbFeature } from './features.js';
 
 export const AdbBannerKey = {
-    Product: "ro.product.name",
-    Model: "ro.product.model",
-    Device: "ro.product.device",
-    Features: "features",
+  Product: 'ro.product.name',
+  Model: 'ro.product.model',
+  Device: 'ro.product.device',
+  Features: 'features'
 } as const;
 
 export type AdbBannerKey = (typeof AdbBannerKey)[keyof typeof AdbBannerKey];
 
 export class AdbBanner {
-    static parse(banner: string) {
-        let product: string | undefined;
-        let model: string | undefined;
-        let device: string | undefined;
-        let features: AdbFeature[] = [];
+  static parse(banner: string) {
+    let product: string | undefined;
+    let model: string | undefined;
+    let device: string | undefined;
+    let features: AdbFeature[] = [];
 
-        const pieces = banner.split("::");
-        if (pieces.length > 1) {
-            const props = pieces[1]!;
-            for (const prop of props.split(";")) {
-                // istanbul ignore if
-                if (!prop) {
-                    continue;
-                }
-
-                const keyValue = prop.split("=");
-                if (keyValue.length !== 2) {
-                    continue;
-                }
-
-                const [key, value] = keyValue;
-                switch (key) {
-                    case AdbBannerKey.Product:
-                        product = value;
-                        break;
-                    case AdbBannerKey.Model:
-                        model = value;
-                        break;
-                    case AdbBannerKey.Device:
-                        device = value;
-                        break;
-                    case AdbBannerKey.Features:
-                        features = value!.split(",") as AdbFeature[];
-                        break;
-                }
-            }
+    const pieces = banner.split('::');
+    if (pieces.length > 1) {
+      const props = pieces[1]!;
+      for (const prop of props.split(';')) {
+        // istanbul ignore if
+        if (!prop) {
+          continue;
         }
 
-        return new AdbBanner(product, model, device, features);
+        const keyValue = prop.split('=');
+        if (keyValue.length !== 2) {
+          continue;
+        }
+
+        const [key, value] = keyValue;
+        switch (key) {
+          case AdbBannerKey.Product:
+            product = value;
+            break;
+          case AdbBannerKey.Model:
+            model = value;
+            break;
+          case AdbBannerKey.Device:
+            device = value;
+            break;
+          case AdbBannerKey.Features:
+            features = value!.split(',') as AdbFeature[];
+            break;
+        }
+      }
     }
 
-    #product: string | undefined;
-    get product() {
-        return this.#product;
-    }
+    return new AdbBanner(product, model, device, features);
+  }
 
-    #model: string | undefined;
-    get model() {
-        return this.#model;
-    }
+  #product: string | undefined;
+  get product() {
+    return this.#product;
+  }
 
-    #device: string | undefined;
-    get device() {
-        return this.#device;
-    }
+  #model: string | undefined;
+  get model() {
+    return this.#model;
+  }
 
-    #features: AdbFeature[] = [];
-    get features() {
-        return this.#features;
-    }
+  #device: string | undefined;
+  get device() {
+    return this.#device;
+  }
 
-    constructor(
-        product: string | undefined,
-        model: string | undefined,
-        device: string | undefined,
-        features: AdbFeature[],
-    ) {
-        this.#product = product;
-        this.#model = model;
-        this.#device = device;
-        this.#features = features;
-    }
+  #features: AdbFeature[] = [];
+  get features() {
+    return this.#features;
+  }
+
+  constructor(
+    product: string | undefined,
+    model: string | undefined,
+    device: string | undefined,
+    features: AdbFeature[]
+  ) {
+    this.#product = product;
+    this.#model = model;
+    this.#device = device;
+    this.#features = features;
+  }
 }

@@ -1,5 +1,5 @@
 {
-    "compilerOptions": {
-        "checkJs": true
-    },
+  "compilerOptions": {
+    "checkJs": true
+  }
 }

@@ -1,6 +1,6 @@
 interface GlobalExtension {
-    setInterval: (callback: () => void, delay: number) => number;
-    clearInterval: (id: number) => void;
+  setInterval: (callback: () => void, delay: number) => number;
+  clearInterval: (id: number) => void;
 }
 
 const { setInterval, clearInterval } = globalThis as unknown as GlobalExtension;
@@ -15,23 +15,23 @@ const { setInterval, clearInterval } = globalThis as unknown as GlobalExtension;
  * This is the same as how Node.js works.
  */
 export class Ref {
-    #intervalId: number | undefined;
+  #intervalId: number | undefined;
 
-    constructor(options?: { unref?: boolean | undefined }) {
-        if (!options?.unref) {
-            this.ref();
-        }
+  constructor(options?: { unref?: boolean | undefined }) {
+    if (!options?.unref) {
+      this.ref();
     }
+  }
 
-    ref() {
-        // `setInterval` can keep current Node.js alive, the delay value doesn't matter
-        this.#intervalId = setInterval(() => {}, 60 * 1000);
-    }
+  ref() {
+    // `setInterval` can keep current Node.js alive, the delay value doesn't matter
+    this.#intervalId = setInterval(() => {}, 60 * 1000);
+  }
 
-    unref() {
-        if (this.#intervalId) {
-            clearInterval(this.#intervalId);
-            this.#intervalId = undefined;
-        }
+  unref() {
+    if (this.#intervalId) {
+      clearInterval(this.#intervalId);
+      this.#intervalId = undefined;
     }
+  }
 }

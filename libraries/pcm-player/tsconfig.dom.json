@@ -1,11 +1,7 @@
 {
   "extends": "./node_modules/@yume-chan/tsconfig/tsconfig.base.json",
   "compilerOptions": {
-    "lib": [
-      "ESNext",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": []
   }
 }

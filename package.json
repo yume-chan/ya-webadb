@@ -1,12 +1,14 @@
 {
-    "name": "@tango-adb/monorepo",
-    "private": true,
-    "scripts": {
-        "build": "pnpm recursive run build",
-        "test": "pnpm recursive run test",
-        "lint": "pnpm recursive run lint"
-    },
-    "devDependencies": {
-        "@changesets/cli": "^2.27.11"
-    }
+  "name": "@tango-adb/monorepo",
+  "private": true,
+  "scripts": {
+    "build": "pnpm recursive run build",
+    "test": "pnpm recursive run test",
+    "lint": "pnpm recursive run lint",
+    "format": "prettier . --write"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.11",
+    "prettier": "^3.4.2"
+  }
 }

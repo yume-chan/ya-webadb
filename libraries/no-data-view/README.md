@@ -29,7 +29,7 @@ Assign a negative number to a `Uint8Array` will treat it as an unsigned number, 
 In fact, `setIntXX` and `setUintXX` is the same method, they are both provided only for consistency.
 
 ```ts
-import { getInt8 } from "@yume-chan/no-data-view";
+import { getInt8 } from '@yume-chan/no-data-view';
 
 const array = new Uint8Array(1);
 array[0] = -1;

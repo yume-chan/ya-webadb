@@ -1,1 +1,1 @@
-export * as PrevImpl from "../../1_17/impl/index.js";
+export * as PrevImpl from '../../1_17/impl/index.js';

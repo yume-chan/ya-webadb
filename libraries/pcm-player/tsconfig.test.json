@@ -1,19 +1,10 @@
 {
-    "extends": "./tsconfig.dom.json",
-    "compilerOptions": {
-        "lib": [
-            "ESNext",
-            "DOM",
-            "DOM.Iterable"
-        ],
-        "types": [
-            "audioworklet"
-        ],
-        "rootDir": "./"
-    },
-    "include": [
-        "src",
-        "worker"
-    ],
-    "exclude": []
+  "extends": "./tsconfig.dom.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["audioworklet"],
+    "rootDir": "./"
+  },
+  "include": ["src", "worker"],
+  "exclude": []
 }

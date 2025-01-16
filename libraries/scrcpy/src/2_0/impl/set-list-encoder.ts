@@ -1,5 +1,5 @@
-import type { Init } from "./init.js";
+import type { Init } from './init.js';
 
-export function setListEncoders(options: Pick<Init, "listEncoders">): void {
-    options.listEncoders = true;
+export function setListEncoders(options: Pick<Init, 'listEncoders'>): void {
+  options.listEncoders = true;
 }

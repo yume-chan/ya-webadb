@@ -1,125 +1,121 @@
 {
-    "cSpell.words": [
-        "ADB's",
-        "adbd",
-        "addrs",
-        "allowlist",
-        "arraybuffer",
-        "autorun",
-        "Backquote",
-        "Bframes",
-        "Bitstream",
-        "bootloader",
-        "brotli",
-        "CLSE",
-        "CNXN",
-        "colour",
-        "comlink",
-        "concat",
-        "Demuxer",
-        "Deserialization",
-        "DESERIALIZERS",
-        "diskstats",
-        "dumpsys",
-        "ebml",
-        "Embedder",
-        "entrypoints",
-        "fflate",
-        "flac",
-        "genymobile",
-        "Genymobile's",
-        "getprop",
-        "Golomb",
-        "keyof",
-        "laggy",
-        "localabstract",
-        "Logcat",
-        "lstat",
-        "luma",
-        "Matroska",
-        "mdns",
-        "muxer",
-        "Muxing",
-        "Nalu",
-        "opendir",
-        "PKCS",
-        "ponyfill",
-        "runtimes",
-        "scid",
-        "Scrcpy",
-        "sendrecv",
-        "sideload",
-        "sideloading",
-        "Sodb",
-        "struct",
-        "struct's",
-        "subsampling",
-        "tcpip",
-        "tinyh",
-        "transferables",
-        "tsbuildinfo",
-        "undici",
-        "versioncode",
-        "webadb",
-        "webcodecs",
-        "webm",
-        "websockify",
-        "webusb",
-        "wifi",
-        "wirelessly",
-        "WRTE",
-        "yume",
-        "zstd"
-    ],
-    "editor.tabSize": 4,
-    "editor.codeActionsOnSave": {
-        "source.organizeImports": "explicit",
-        "source.fixAll": "explicit"
-    },
-    "jest.rootPath": "packages/struct",
-    "jest.showCoverageOnLoad": true,
-    "markdown.extension.toc.levels": "2..6",
-    "files.associations": {
-        "*.mdx": "markdown",
-        "*.json": "jsonc"
-    },
-    "prettier.tabWidth": 4,
-    "json.schemas": [
-        {
-            "fileMatch": [
-                "version-policies.json"
-            ],
-            "url": "https://developer.microsoft.com/json-schemas/rush/v5/version-policies.schema.json"
-        }
-    ],
-    "typescript.preferences.quoteStyle": "single",
-    "typescript.format.semicolons": "insert",
-    "editor.formatOnSave": true,
-    "eslint.nodePath": "./toolchain/eslint-config/node_modules/eslint",
-    "eslint.options": {
-        "overrideConfigFile": "./node_modules/@yume-chan/eslint-config/eslint.config.js"
-    },
-    "eslint.workingDirectories": [
-        {
-            "pattern": "libraries/*",
-        }
-    ],
-    "eslint.debug": true,
-    "[javascript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[typescriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "explorer.sortOrder": "mixed",
-    "prettier.prettierPath": "./node_modules/prettier/index.cjs",
-    "cSpell.numSuggestions": 4,
-    "cSpell.ignoreRegExpList": [
-        "0x[0-9a-f_]+"
-    ],
-    "typescript.tsdk": "libraries/adb/node_modules/typescript/lib",
-    "eslint.problems.shortenToSingleLine": true,
+  "cSpell.words": [
+    "ADB's",
+    "adbd",
+    "addrs",
+    "allowlist",
+    "arraybuffer",
+    "autorun",
+    "Backquote",
+    "Bframes",
+    "Bitstream",
+    "bootloader",
+    "brotli",
+    "CLSE",
+    "CNXN",
+    "colour",
+    "comlink",
+    "concat",
+    "Demuxer",
+    "Deserialization",
+    "DESERIALIZERS",
+    "diskstats",
+    "dumpsys",
+    "ebml",
+    "Embedder",
+    "entrypoints",
+    "fflate",
+    "flac",
+    "genymobile",
+    "Genymobile's",
+    "getprop",
+    "Golomb",
+    "keyof",
+    "laggy",
+    "localabstract",
+    "Logcat",
+    "lstat",
+    "luma",
+    "Matroska",
+    "mdns",
+    "muxer",
+    "Muxing",
+    "Nalu",
+    "opendir",
+    "PKCS",
+    "ponyfill",
+    "runtimes",
+    "scid",
+    "Scrcpy",
+    "sendrecv",
+    "sideload",
+    "sideloading",
+    "Sodb",
+    "struct",
+    "struct's",
+    "subsampling",
+    "tcpip",
+    "tinyh",
+    "transferables",
+    "tsbuildinfo",
+    "undici",
+    "versioncode",
+    "webadb",
+    "webcodecs",
+    "webm",
+    "websockify",
+    "webusb",
+    "wifi",
+    "wirelessly",
+    "WRTE",
+    "yume",
+    "zstd"
+  ],
+  "editor.tabSize": 4,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll": "explicit"
+  },
+  "jest.rootPath": "packages/struct",
+  "jest.showCoverageOnLoad": true,
+  "markdown.extension.toc.levels": "2..6",
+  "files.associations": {
+    "*.mdx": "markdown",
+    "*.json": "jsonc"
+  },
+  "prettier.tabWidth": 4,
+  "json.schemas": [
+    {
+      "fileMatch": ["version-policies.json"],
+      "url": "https://developer.microsoft.com/json-schemas/rush/v5/version-policies.schema.json"
+    }
+  ],
+  "typescript.preferences.quoteStyle": "single",
+  "typescript.format.semicolons": "insert",
+  "editor.formatOnSave": true,
+  "eslint.nodePath": "./toolchain/eslint-config/node_modules/eslint",
+  "eslint.options": {
+    "overrideConfigFile": "./node_modules/@yume-chan/eslint-config/eslint.config.js"
+  },
+  "eslint.workingDirectories": [
+    {
+      "pattern": "libraries/*"
+    }
+  ],
+  "eslint.debug": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "explorer.sortOrder": "mixed",
+  "prettier.prettierPath": "./node_modules/prettier/index.cjs",
+  "cSpell.numSuggestions": 4,
+  "cSpell.ignoreRegExpList": ["0x[0-9a-f_]+"],
+  "typescript.tsdk": "libraries/adb/node_modules/typescript/lib",
+  "eslint.problems.shortenToSingleLine": true
 }

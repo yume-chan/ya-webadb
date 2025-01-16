@@ -1,17 +1,14 @@
 {
-    "extends": "./node_modules/@yume-chan/tsconfig/tsconfig.base.json",
-    "compilerOptions": {
-        "lib": [
-            "ESNext",
-            "DOM"
-        ]
+  "extends": "./node_modules/@yume-chan/tsconfig/tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"]
+  },
+  "references": [
+    {
+      "path": "../scrcpy/tsconfig.build.json"
     },
-    "references": [
-        {
-            "path": "../scrcpy/tsconfig.build.json"
-        },
-        {
-            "path": "../stream-extra/tsconfig.build.json"
-        }
-    ]
+    {
+      "path": "../stream-extra/tsconfig.build.json"
+    }
+  ]
 }

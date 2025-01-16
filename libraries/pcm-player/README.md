@@ -4,18 +4,18 @@ Play raw audio sample stream using Web Audio API.
 
 ## Features
 
--   [x] Arbitrary channel count
--   [x] Arbitrary sample rate
--   [x] Basic OLA (overlap-add) resampler
--   [ ] Adjustable buffer size
+- [x] Arbitrary channel count
+- [x] Arbitrary sample rate
+- [x] Basic OLA (overlap-add) resampler
+- [ ] Adjustable buffer size
 
 ## Usage
 
 Depends on the sample format, there are multiple player classes:
 
--   `Int16PcmPlayer` (little endian)
--   `Float32PcmPlayer`
--   `Float32PlanerPcmPlayer`
+- `Int16PcmPlayer` (little endian)
+- `Float32PcmPlayer`
+- `Float32PlanerPcmPlayer`
 
 No `Planer`: audio samples are interleaved (left channel first).
 

@@ -1,8 +1,8 @@
 {
-    "extends": "./node_modules/@yume-chan/tsconfig/tsconfig.base.json",
-    "references": [
-        {
-            "path": "../struct/tsconfig.build.json"
-        }
-    ]
+  "extends": "./node_modules/@yume-chan/tsconfig/tsconfig.base.json",
+  "references": [
+    {
+      "path": "../struct/tsconfig.build.json"
+    }
+  ]
 }

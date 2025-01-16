@@ -1,41 +1,41 @@
 {
-    "name": "@yume-chan/no-data-view",
-    "version": "1.0.0",
-    "description": "Plain methods to avoid creating `DataView`s",
-    "keywords": [],
-    "license": "MIT",
-    "author": {
-        "name": "Simon Chan",
-        "email": "cnsimonchan@live.com",
-        "url": "https://chensi.moe/blog"
-    },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/no-data-view#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/no-data-view"
-    },
-    "bugs": {
-        "url": "https://github.com/yume-chan/ya-webadb/issues"
-    },
-    "type": "module",
-    "main": "esm/index.js",
-    "types": "esm/index.d.ts",
-    "sideEffects": false,
-    "scripts": {
-        "benchmark": "node benchmark.js",
-        "build": "tsc -b tsconfig.build.json",
-        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
-        "prepublishOnly": "npm run build",
-        "test": "run-test"
-    },
-    "devDependencies": {
-        "@types/node": "^22.10.5",
-        "@yume-chan/eslint-config": "workspace:^",
-        "@yume-chan/test-runner": "workspace:^",
-        "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.4.2",
-        "tinybench": "^3.1.0",
-        "typescript": "^5.7.3"
-    }
+  "name": "@yume-chan/no-data-view",
+  "version": "1.0.0",
+  "description": "Plain methods to avoid creating `DataView`s",
+  "keywords": [],
+  "license": "MIT",
+  "author": {
+    "name": "Simon Chan",
+    "email": "cnsimonchan@live.com",
+    "url": "https://chensi.moe/blog"
+  },
+  "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/no-data-view#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yume-chan/ya-webadb.git",
+    "directory": "packages/no-data-view"
+  },
+  "bugs": {
+    "url": "https://github.com/yume-chan/ya-webadb/issues"
+  },
+  "type": "module",
+  "main": "esm/index.js",
+  "types": "esm/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "benchmark": "node benchmark.js",
+    "build": "tsc -b tsconfig.build.json",
+    "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+    "prepublishOnly": "npm run build",
+    "test": "run-test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "@yume-chan/eslint-config": "workspace:^",
+    "@yume-chan/test-runner": "workspace:^",
+    "@yume-chan/tsconfig": "workspace:^",
+    "prettier": "^3.4.2",
+    "tinybench": "^3.1.0",
+    "typescript": "^5.7.3"
+  }
 }

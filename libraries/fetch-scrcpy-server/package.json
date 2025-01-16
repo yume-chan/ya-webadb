@@ -1,36 +1,36 @@
 {
-    "name": "@yume-chan/fetch-scrcpy-server",
-    "version": "1.0.0",
-    "description": "A script to download Scrcpy server binary.",
-    "keywords": [
-        "scrcpy"
-    ],
-    "license": "MIT",
-    "author": {
-        "name": "Simon Chan",
-        "email": "cnsimonchan@live.com",
-        "url": "https://chensi.moe/blog"
-    },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/fetch-scrcpy-server#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/fetch-scrcpy-server"
-    },
-    "bugs": {
-        "url": "https://github.com/yume-chan/ya-webadb/issues"
-    },
-    "bin": {
-        "fetch-scrcpy-server": "bin/fetch-server.js"
-    },
-    "type": "module",
-    "main": "index.js",
-    "types": "index.d.ts",
-    "sideEffects": false,
-    "dependencies": {
-        "gh-release-fetch": "^4.0.3"
-    },
-    "devDependencies": {
-        "@types/node": "^22.10.5"
-    }
+  "name": "@yume-chan/fetch-scrcpy-server",
+  "version": "1.0.0",
+  "description": "A script to download Scrcpy server binary.",
+  "keywords": [
+    "scrcpy"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Simon Chan",
+    "email": "cnsimonchan@live.com",
+    "url": "https://chensi.moe/blog"
+  },
+  "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/fetch-scrcpy-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yume-chan/ya-webadb.git",
+    "directory": "packages/fetch-scrcpy-server"
+  },
+  "bugs": {
+    "url": "https://github.com/yume-chan/ya-webadb/issues"
+  },
+  "bin": {
+    "fetch-scrcpy-server": "bin/fetch-server.js"
+  },
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "gh-release-fetch": "^4.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5"
+  }
 }

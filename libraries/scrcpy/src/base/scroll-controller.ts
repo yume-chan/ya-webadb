@@ -1,7 +1,5 @@
-import type { ScrcpyInjectScrollControlMessage } from "../latest.js";
+import type { ScrcpyInjectScrollControlMessage } from '../latest.js';
 
 export interface ScrcpyScrollController {
-    serializeScrollMessage(
-        message: ScrcpyInjectScrollControlMessage,
-    ): Uint8Array | undefined;
+  serializeScrollMessage(message: ScrcpyInjectScrollControlMessage): Uint8Array | undefined;
 }

@@ -1,5 +1,5 @@
 export interface ScrcpyDisplay {
-    id: number;
+  id: number;
 
-    resolution?: string;
+  resolution?: string;
 }

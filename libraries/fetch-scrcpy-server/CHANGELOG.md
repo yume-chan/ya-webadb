@@ -6,7 +6,7 @@
 
 - 53688d3: Use PNPM workspace and Changesets to manage the monorepo.
 
-    Because Changesets doesn't support alpha versions (`0.x.x`), this version is `1.0.0`. Future versions will follow SemVer rules, for example, breaking API changes will introduce a new major version.
+  Because Changesets doesn't support alpha versions (`0.x.x`), this version is `1.0.0`. Future versions will follow SemVer rules, for example, breaking API changes will introduce a new major version.
 
 - ea5002b: Mark `BIN` field as pure
 

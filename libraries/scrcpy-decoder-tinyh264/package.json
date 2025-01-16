@@ -1,50 +1,50 @@
 {
-    "name": "@yume-chan/scrcpy-decoder-tinyh264",
-    "version": "1.1.0",
-    "description": "Raw H.264 stream decoder and renderer wrapping TinyH264 and YUVCanvas packages (software decoding).",
-    "keywords": [
-        "adb",
-        "android-phone",
-        "scrcpy",
-        "scrcpy-decoder"
-    ],
-    "license": "MIT",
-    "author": {
-        "name": "Simon Chan",
-        "email": "cnsimonchan@live.com",
-        "url": "https://chensi.moe/blog"
-    },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/scrcpy-decoder-tinyh264#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/scrcpy-decoder-tinyh264"
-    },
-    "bugs": {
-        "url": "https://github.com/yume-chan/ya-webadb/issues"
-    },
-    "type": "module",
-    "main": "esm/index.js",
-    "types": "esm/index.d.ts",
-    "sideEffects": false,
-    "scripts": {
-        "build": "tsc -b tsconfig.build.json",
-        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
-        "prepublishOnly": "npm run build"
-    },
-    "dependencies": {
-        "@yume-chan/async": "^4.0.2",
-        "@yume-chan/event": "workspace:^",
-        "@yume-chan/scrcpy": "workspace:^",
-        "@yume-chan/stream-extra": "workspace:^",
-        "tinyh264": "^0.0.7",
-        "yuv-buffer": "^1.0.1",
-        "yuv-canvas": "^1.3.0"
-    },
-    "devDependencies": {
-        "@yume-chan/eslint-config": "workspace:^",
-        "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.4.2",
-        "typescript": "^5.7.3"
-    }
+  "name": "@yume-chan/scrcpy-decoder-tinyh264",
+  "version": "1.1.0",
+  "description": "Raw H.264 stream decoder and renderer wrapping TinyH264 and YUVCanvas packages (software decoding).",
+  "keywords": [
+    "adb",
+    "android-phone",
+    "scrcpy",
+    "scrcpy-decoder"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Simon Chan",
+    "email": "cnsimonchan@live.com",
+    "url": "https://chensi.moe/blog"
+  },
+  "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/scrcpy-decoder-tinyh264#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yume-chan/ya-webadb.git",
+    "directory": "packages/scrcpy-decoder-tinyh264"
+  },
+  "bugs": {
+    "url": "https://github.com/yume-chan/ya-webadb/issues"
+  },
+  "type": "module",
+  "main": "esm/index.js",
+  "types": "esm/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@yume-chan/async": "^4.0.2",
+    "@yume-chan/event": "workspace:^",
+    "@yume-chan/scrcpy": "workspace:^",
+    "@yume-chan/stream-extra": "workspace:^",
+    "tinyh264": "^0.0.7",
+    "yuv-buffer": "^1.0.1",
+    "yuv-canvas": "^1.3.0"
+  },
+  "devDependencies": {
+    "@yume-chan/eslint-config": "workspace:^",
+    "@yume-chan/tsconfig": "workspace:^",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
 }
