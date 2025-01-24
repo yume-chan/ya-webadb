@@ -37,11 +37,11 @@
         "@yume-chan/adb-server-node-tcp": "workspace:^",
         "@yume-chan/android-bin": "workspace:^",
         "@yume-chan/stream-extra": "workspace:^",
-        "commander": "^13.0.0",
+        "commander": "^13.1.0",
         "source-map-support": "^0.5.21"
     },
     "devDependencies": {
-        "@types/node": "^22.10.5",
+        "@types/node": "^22.10.10",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.4.2",

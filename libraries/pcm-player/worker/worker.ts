@@ -33,15 +33,13 @@ abstract class SourceProcessor<T>
         this.channelCount = options.outputChannelCount![0]!;
         this.#readBuffer = new Float32Array(this.channelCount);
 
-        this.port.onmessage = (event) => {
+        this.port.onmessage = ({ data }: MessageEvent<ArrayBuffer[]>) => {
             while (this.#totalSampleCount > 0.35 * 48000) {
                 this.#chunks.shift();
                 const count = this.#chunkSampleCounts.shift()!;
                 this.#totalSampleCount -= count;
             }
 
-            // https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1860
-            const { data } = event as MessageEvent<ArrayBuffer[]>;
             const [source, length] = this.createSource(data);
             this.#chunks.push(source);
             this.#chunkSampleCounts.push(length);
