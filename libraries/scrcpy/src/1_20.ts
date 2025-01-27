@@ -6,4 +6,6 @@ export class ScrcpyOptions1_20 extends ScrcpyOptions1_18 {
     }
 }
 
-export { ScrcpyOptions1_18Impl as ScrcpyOptions1_20Impl } from "./1_18/index.js";
+export namespace ScrcpyOptions1_20 {
+    export type Init = ScrcpyOptions1_18.Init;
+}

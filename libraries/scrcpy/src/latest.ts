@@ -6,7 +6,9 @@ export class ScrcpyOptionsLatest extends ScrcpyOptions3_1 {
     }
 }
 
-export { ScrcpyOptions3_1Impl as ScrcpyOptionsLatestImpl } from "./3_1/index.js";
+export namespace ScrcpyOptionsLatest {
+    export type Init = ScrcpyOptions3_1.Init;
+}
 
 export {
     BackOrScreenOnControlMessage as ScrcpyBackOrScreenOnControlMessage,

@@ -2,7 +2,7 @@ import type { Adb } from "@yume-chan/adb";
 import type { ScrcpyDisplay, ScrcpyEncoder } from "@yume-chan/scrcpy";
 import { ScrcpyOptionsWrapper } from "@yume-chan/scrcpy";
 
-import type { AdbScrcpyConnection } from "../connection.js";
+import type { AdbScrcpyConnection } from "./connection.js";
 
 export abstract class AdbScrcpyOptions<
     T extends object,

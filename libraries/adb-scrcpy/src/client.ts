@@ -39,7 +39,7 @@ import {
 import { ExactReadableEndedError } from "@yume-chan/struct";
 
 import type { AdbScrcpyConnection } from "./connection.js";
-import type { AdbScrcpyOptions } from "./options/index.js";
+import type { AdbScrcpyOptions } from "./types.js";
 
 function arrayToStream<T>(array: T[]): ReadableStream<T> {
     return new PushReadableStream(async (controller) => {
