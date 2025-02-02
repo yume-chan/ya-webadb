@@ -35,7 +35,7 @@ export class AdbServerClient {
             const parts = line.split(" ").filter(Boolean);
             const serial = parts[0]!;
             const status = parts[1]!;
-            if (status !== "device" && status !== "unauthorized") {
+            if (status !== "device" && status !== "unauthorized" && status !== "offline") {
                 continue;
             }
 
@@ -60,11 +60,17 @@ export class AdbServerClient {
                         break;
                 }
             }
+
+            if(status === 'offline' && !product && !model && !device){
+                continue;
+            }
+
             if (!transportId) {
                 throw new Error(`No transport id for device ${serial}`);
             }
             devices.push({
                 serial,
+                offline: status === "offline",
                 authenticating: status === "unauthorized",
                 product,
                 model,
@@ -535,6 +541,7 @@ export namespace AdbServerClient {
         model?: string | undefined;
         device?: string | undefined;
         transportId: bigint;
+        offline?:boolean
     }
 
     export class NetworkError extends Error {
