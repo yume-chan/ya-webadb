@@ -1,6 +1,7 @@
 import type { PrevImpl } from "./prev.js";
 
-export interface Init extends Omit<PrevImpl.Init, "audioSource"> {
-    audioSource?: PrevImpl.Init["audioSource"] | "playback";
+export interface Init<TVideo extends boolean>
+    extends Omit<PrevImpl.Init<TVideo>, "audioSource"> {
+    audioSource?: PrevImpl.Init<TVideo>["audioSource"] | "playback";
     audioDup?: boolean;
 }

@@ -1,6 +1,6 @@
 import type { PrevImpl } from "./prev.js";
 
-export interface Init extends PrevImpl.Init {
-    video?: boolean;
+export interface Init<TVideo extends boolean> extends PrevImpl.Init {
+    video?: TVideo;
     audioSource?: "output" | "mic";
 }

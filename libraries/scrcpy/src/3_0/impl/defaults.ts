@@ -12,4 +12,4 @@ export const Defaults = /* #__PURE__ */ (() =>
         listApps: false,
         newDisplay: undefined,
         vdSystemDecorations: true,
-    }) as const satisfies Required<Init>)();
+    }) as const satisfies Required<Init<true>>)();

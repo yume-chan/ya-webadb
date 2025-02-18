@@ -5,4 +5,4 @@ export const Defaults = /* #__PURE__ */ (() =>
     ({
         ...PrevImpl.Defaults,
         audioDup: false,
-    }) as const satisfies Required<Init>)();
+    }) as const satisfies Required<Init<true>>)();

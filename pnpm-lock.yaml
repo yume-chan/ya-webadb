@@ -163,9 +163,15 @@ importers:
         specifier: workspace:^
         version: link:../struct
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.10
+        version: 22.10.10
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
+      '@yume-chan/test-runner':
+        specifier: workspace:^
+        version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
         specifier: workspace:^
         version: link:../../toolchain/tsconfig

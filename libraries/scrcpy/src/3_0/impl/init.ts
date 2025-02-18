@@ -106,7 +106,8 @@ export class NewDisplay implements ScrcpyOptionValue {
     }
 }
 
-export interface Init extends Omit<PrevImpl.Init, "lockVideoOrientation"> {
+export interface Init<TVideo extends boolean>
+    extends Omit<PrevImpl.Init<TVideo>, "lockVideoOrientation"> {
     captureOrientation?: CaptureOrientation | string | undefined;
     angle?: number;
     screenOffTimeout?: number | undefined;

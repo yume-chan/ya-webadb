@@ -41,12 +41,14 @@ import {
     UHidOutputStream,
 } from "./impl/index.js";
 
-export class ScrcpyOptions2_4 implements ScrcpyOptions<Init> {
+export class ScrcpyOptions2_4<TVideo extends boolean>
+    implements ScrcpyOptions<Init<TVideo>>
+{
     static readonly Defaults = Defaults;
 
     readonly version: string;
 
-    readonly value: Required<Init>;
+    readonly value: Required<Init<TVideo>>;
 
     get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
         return ControlMessageTypes;
@@ -66,8 +68,8 @@ export class ScrcpyOptions2_4 implements ScrcpyOptions<Init> {
         return this.#uHidOutput;
     }
 
-    constructor(init: Init, version = "2.4") {
-        this.value = { ...Defaults, ...init };
+    constructor(init: Init<TVideo>, version = "2.4") {
+        this.value = { ...Defaults, ...init } as never;
         this.version = version;
 
         if (this.value.videoSource === "camera") {
@@ -85,7 +87,7 @@ export class ScrcpyOptions2_4 implements ScrcpyOptions<Init> {
     }
 
     serialize(): string[] {
-        return serialize(this.value, Defaults);
+        return serialize<Init<boolean>>(this.value, Defaults);
     }
 
     setListDisplays(): void {
@@ -185,8 +187,8 @@ export class ScrcpyOptions2_4 implements ScrcpyOptions<Init> {
     }
 }
 
-type Init_ = Init;
+type Init_<TVideo extends boolean> = Init<TVideo>;
 
 export namespace ScrcpyOptions2_4 {
-    export type Init = Init_;
+    export type Init<TVideo extends boolean = boolean> = Init_<TVideo>;
 }

@@ -29,7 +29,8 @@
     "scripts": {
         "build": "tsc -b tsconfig.build.json",
         "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "npm run build",
+        "test": "run-test"
     },
     "dependencies": {
         "@yume-chan/adb": "workspace:^",
@@ -40,7 +41,9 @@
         "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
+        "@types/node": "^22.10.10",
         "@yume-chan/eslint-config": "workspace:^",
+        "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.4.2",
         "typescript": "^5.7.3"

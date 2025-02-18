@@ -10,87 +10,9 @@ import { WritableStream } from "@yume-chan/stream-extra";
 
 import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
 import type { CodecDecoder } from "./codec/type.js";
+import { Pool } from "./pool.js";
 import type { VideoFrameRenderer } from "./render/index.js";
-
-class Pool<T> {
-    #controller!: ReadableStreamDefaultController<T>;
-    #readable = new ReadableStream<T>(
-        {
-            start: (controller) => {
-                this.#controller = controller;
-            },
-            pull: (controller) => {
-                controller.enqueue(this.#initializer());
-            },
-        },
-        { highWaterMark: 0 },
-    );
-    #reader = this.#readable.getReader();
-
-    #initializer: () => T;
-
-    #size = 0;
-    #capacity: number;
-
-    constructor(initializer: () => T, capacity: number) {
-        this.#initializer = initializer;
-        this.#capacity = capacity;
-    }
-
-    async borrow() {
-        const result = await this.#reader.read();
-        return result.value!;
-    }
-
-    return(value: T) {
-        if (this.#size < this.#capacity) {
-            this.#controller.enqueue(value);
-            this.#size += 1;
-        }
-    }
-}
-
-class VideoFrameCapturer {
-    #canvas: OffscreenCanvas | HTMLCanvasElement;
-    #context: ImageBitmapRenderingContext;
-
-    constructor() {
-        if (typeof OffscreenCanvas !== "undefined") {
-            this.#canvas = new OffscreenCanvas(1, 1);
-        } else {
-            this.#canvas = document.createElement("canvas");
-            this.#canvas.width = 1;
-            this.#canvas.height = 1;
-        }
-        this.#context = this.#canvas.getContext("bitmaprenderer", {
-            alpha: false,
-        })!;
-    }
-
-    async capture(frame: VideoFrame): Promise<Blob> {
-        this.#canvas.width = frame.displayWidth;
-        this.#canvas.height = frame.displayHeight;
-
-        const bitmap = await createImageBitmap(frame);
-        this.#context.transferFromImageBitmap(bitmap);
-
-        if (this.#canvas instanceof OffscreenCanvas) {
-            return await this.#canvas.convertToBlob({
-                type: "image/png",
-            });
-        } else {
-            return new Promise((resolve, reject) => {
-                (this.#canvas as HTMLCanvasElement).toBlob((blob) => {
-                    if (!blob) {
-                        reject(new Error("Failed to convert canvas to blob"));
-                    } else {
-                        resolve(blob);
-                    }
-                }, "image/png");
-            });
-        }
-    }
-}
+import { VideoFrameCapturer } from "./snapshot.js";
 
 const VideoFrameCapturerPool =
     /* #__PURE__ */
@@ -142,6 +64,16 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     #sizeChanged = new EventEmitter<{ width: number; height: number }>();
     get sizeChanged() {
         return this.#sizeChanged.event;
+    }
+
+    #width: number = 0;
+    get width() {
+        return this.#width;
+    }
+
+    #height: number = 0;
+    get height() {
+        return this.#height;
     }
 
     #decoder: VideoDecoder;
@@ -218,7 +150,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             },
         });
 
-        this.#onVerticalSync();
+        this.#handleAnimationFrame();
     }
 
     #setError(error: Error) {
@@ -261,16 +193,20 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
     #updateSize = (width: number, height: number) => {
         this.#renderer.setSize(width, height);
+        this.#width = width;
+        this.#height = height;
         this.#sizeChanged.fire({ width, height });
     };
 
-    #onVerticalSync = () => {
+    #handleAnimationFrame = () => {
         if (this.#framesDraw > 0) {
             this.#framesPresented += 1;
             this.#framesSkipped += this.#framesDraw - 1;
             this.#framesDraw = 0;
         }
-        this.#animationFrameId = requestAnimationFrame(this.#onVerticalSync);
+        this.#animationFrameId = requestAnimationFrame(
+            this.#handleAnimationFrame,
+        );
     };
 
     async snapshot() {

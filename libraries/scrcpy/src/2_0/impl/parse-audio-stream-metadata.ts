@@ -11,7 +11,7 @@ import { ScrcpyAudioCodec } from "../../base/index.js";
 
 export async function parseAudioStreamMetadata(
     stream: ReadableStream<Uint8Array>,
-    options: Pick<Required<Init>, "sendCodecMeta" | "audioCodec">,
+    options: Pick<Required<Init<boolean>>, "sendCodecMeta" | "audioCodec">,
 ): Promise<ScrcpyAudioStreamMetadata> {
     const buffered = new BufferedReadableStream(stream);
 

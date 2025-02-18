@@ -11,15 +11,10 @@ import type {
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
     ScrcpyOptions1_15,
-    ScrcpyVideoStreamMetadata,
 } from "@yume-chan/scrcpy";
 import {
-    Av1,
     DefaultServerPath,
     ScrcpyControlMessageWriter,
-    ScrcpyVideoCodecId,
-    h264ParseConfiguration,
-    h265ParseConfiguration,
 } from "@yume-chan/scrcpy";
 import type {
     Consumable,
@@ -30,7 +25,6 @@ import type {
 import {
     AbortController,
     BufferedReadableStream,
-    InspectStream,
     PushReadableStream,
     SplitStringStream,
     TextDecoderStream,
@@ -40,6 +34,7 @@ import { ExactReadableEndedError } from "@yume-chan/struct";
 
 import type { AdbScrcpyConnection } from "./connection.js";
 import type { AdbScrcpyOptions } from "./types.js";
+import { AdbScrcpyVideoStream } from "./video.js";
 
 function arrayToStream<T>(array: T[]): ReadableStream<T> {
     return new PushReadableStream(async (controller) => {
@@ -73,8 +68,8 @@ export class AdbScrcpyExitedError extends Error {
     }
 }
 
-interface AdbScrcpyClientInit {
-    options: AdbScrcpyOptions<object>;
+interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
+    options: TOptions;
     process: AdbSubprocessProtocol;
     stdout: ReadableStream<string>;
 
@@ -83,11 +78,6 @@ interface AdbScrcpyClientInit {
     controlStream:
         | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
         | undefined;
-}
-
-export interface AdbScrcpyVideoStream {
-    stream: ReadableStream<ScrcpyMediaStreamPacket>;
-    metadata: ScrcpyVideoStreamMetadata;
 }
 
 export interface AdbScrcpyAudioStreamSuccessMetadata
@@ -100,7 +90,7 @@ export type AdbScrcpyAudioStreamMetadata =
     | ScrcpyAudioStreamErroredMetadata
     | AdbScrcpyAudioStreamSuccessMetadata;
 
-export class AdbScrcpyClient {
+export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     static async pushServer(
         adb: Adb,
         file: ReadableStream<MaybeConsumable<Uint8Array>>,
@@ -117,13 +107,15 @@ export class AdbScrcpyClient {
         }
     }
 
-    static async start(
-        adb: Adb,
-        path: string,
-        options: AdbScrcpyOptions<
+    static async start<
+        TOptions extends AdbScrcpyOptions<
             Pick<ScrcpyOptions1_15.Init, "tunnelForward">
         >,
-    ) {
+    >(
+        adb: Adb,
+        path: string,
+        options: TOptions,
+    ): Promise<AdbScrcpyClient<TOptions>> {
         let connection: AdbScrcpyConnection | undefined;
         let process: AdbSubprocessProtocol | undefined;
 
@@ -239,7 +231,7 @@ export class AdbScrcpyClient {
         return options.getDisplays(adb, path);
     }
 
-    #options: AdbScrcpyOptions<object>;
+    #options: TOptions;
     #process: AdbSubprocessProtocol;
 
     #stdout: ReadableStream<string>;
@@ -249,16 +241,6 @@ export class AdbScrcpyClient {
 
     get exit() {
         return this.#process.exit;
-    }
-
-    #screenWidth: number | undefined;
-    get screenWidth() {
-        return this.#screenWidth;
-    }
-
-    #screenHeight: number | undefined;
-    get screenHeight() {
-        return this.#screenHeight;
     }
 
     #videoStream: Promise<AdbScrcpyVideoStream> | undefined;
@@ -271,8 +253,12 @@ export class AdbScrcpyClient {
      * Note: if it's not `undefined`, it must be consumed to prevent
      * the connection from being blocked.
      */
-    get videoStream() {
-        return this.#videoStream;
+    get videoStream(): TOptions["value"] extends { video: infer T }
+        ? T extends false
+            ? undefined
+            : Promise<AdbScrcpyVideoStream>
+        : Promise<AdbScrcpyVideoStream> {
+        return this.#videoStream as never;
     }
 
     #audioStream: Promise<AdbScrcpyAudioStreamMetadata> | undefined;
@@ -312,7 +298,7 @@ export class AdbScrcpyClient {
         videoStream,
         audioStream,
         controlStream,
-    }: AdbScrcpyClientInit) {
+    }: AdbScrcpyClientInit<TOptions>) {
         this.#options = options;
         this.#process = process;
         this.#stdout = stdout;
@@ -358,65 +344,10 @@ export class AdbScrcpyClient {
         }
     }
 
-    #configureH264(data: Uint8Array) {
-        const { croppedWidth, croppedHeight } = h264ParseConfiguration(data);
-
-        this.#screenWidth = croppedWidth;
-        this.#screenHeight = croppedHeight;
-    }
-
-    #configureH265(data: Uint8Array) {
-        const { croppedWidth, croppedHeight } = h265ParseConfiguration(data);
-
-        this.#screenWidth = croppedWidth;
-        this.#screenHeight = croppedHeight;
-    }
-
-    #configureAv1(data: Uint8Array) {
-        const parser = new Av1(data);
-        const sequenceHeader = parser.searchSequenceHeaderObu();
-        if (!sequenceHeader) {
-            return;
-        }
-
-        const { max_frame_width_minus_1, max_frame_height_minus_1 } =
-            sequenceHeader;
-
-        const width = max_frame_width_minus_1 + 1;
-        const height = max_frame_height_minus_1 + 1;
-
-        this.#screenWidth = width;
-        this.#screenHeight = height;
-    }
-
     async #createVideoStream(initialStream: ReadableStream<Uint8Array>) {
-        const { stream, metadata } =
+        const { metadata, stream } =
             await this.#options.parseVideoStreamMetadata(initialStream);
-
-        return {
-            stream: stream
-                .pipeThrough(this.#options.createMediaStreamTransformer())
-                .pipeThrough(
-                    new InspectStream((packet) => {
-                        if (packet.type === "configuration") {
-                            switch (metadata.codec) {
-                                case ScrcpyVideoCodecId.H264:
-                                    this.#configureH264(packet.data);
-                                    break;
-                                case ScrcpyVideoCodecId.H265:
-                                    this.#configureH265(packet.data);
-                                    break;
-                                case ScrcpyVideoCodecId.AV1:
-                                    // AV1 configuration is in normal stream
-                                    break;
-                            }
-                        } else if (metadata.codec === ScrcpyVideoCodecId.AV1) {
-                            this.#configureAv1(packet.data);
-                        }
-                    }),
-                ),
-            metadata,
-        };
+        return new AdbScrcpyVideoStream(this.#options, metadata, stream);
     }
 
     async #createAudioStream(

@@ -50,6 +50,16 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#sizeChanged.event;
     }
 
+    #width: number = 0;
+    get width() {
+        return this.#width;
+    }
+
+    #height: number = 0;
+    get height() {
+        return this.#height;
+    }
+
     #frameRendered = 0;
     get framesRendered() {
         return this.#frameRendered;
@@ -124,12 +134,16 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             cropLeft,
             cropTop,
         } = h264ParseConfiguration(data);
+
+        this.#width = croppedWidth;
+        this.#height = croppedHeight;
         this.#sizeChanged.fire({
             width: croppedWidth,
             height: croppedHeight,
         });
 
         // H.264 Baseline profile only supports YUV 420 pixel format
+        // So chroma width/height is each half of video width/height
         const chromaWidth = encodedWidth / 2;
         const chromaHeight = encodedHeight / 2;
 

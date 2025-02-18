@@ -6,4 +6,4 @@ export const Defaults = /* #__PURE__ */ (() =>
         ...PrevImpl.Defaults,
         video: true,
         audioSource: "output",
-    }) as const satisfies Required<Init>)();
+    }) as const satisfies Required<Init<true>>)();

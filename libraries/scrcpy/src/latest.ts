@@ -1,13 +1,16 @@
 import { ScrcpyOptions3_1 } from "./3_1/options.js";
 
-export class ScrcpyOptionsLatest extends ScrcpyOptions3_1 {
-    constructor(init: ScrcpyOptions3_1.Init, version: string) {
+export class ScrcpyOptionsLatest<
+    TVideo extends boolean,
+> extends ScrcpyOptions3_1<TVideo> {
+    constructor(init: ScrcpyOptions3_1.Init<TVideo>, version: string) {
         super(init, version);
     }
 }
 
 export namespace ScrcpyOptionsLatest {
-    export type Init = ScrcpyOptions3_1.Init;
+    export type Init<TVideo extends boolean = boolean> =
+        ScrcpyOptions3_1.Init<TVideo>;
 }
 
 export {

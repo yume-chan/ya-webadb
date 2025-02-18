@@ -15,7 +15,7 @@ export function createConnection(
     adb: Adb,
     options: Required<
         Pick<
-            ScrcpyOptions2_1.Init,
+            ScrcpyOptions2_1.Init<boolean>,
             | "tunnelForward"
             | "control"
             | "sendDummyByte"

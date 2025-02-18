@@ -10,8 +10,10 @@ import {
 import type { AdbScrcpyConnection } from "./connection.js";
 import { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyOptions2_6 extends AdbScrcpyOptions<ScrcpyOptions2_6.Init> {
-    constructor(init: ScrcpyOptions2_6.Init, version?: string) {
+export class AdbScrcpyOptions2_6<
+    TVideo extends boolean,
+> extends AdbScrcpyOptions<ScrcpyOptions2_6.Init<TVideo>> {
+    constructor(init: ScrcpyOptions2_6.Init<TVideo>, version?: string) {
         super(new ScrcpyOptions2_6(init, version));
     }
 
@@ -29,5 +31,6 @@ export class AdbScrcpyOptions2_6 extends AdbScrcpyOptions<ScrcpyOptions2_6.Init>
 }
 
 export namespace AdbScrcpyOptions2_6 {
-    export type Init = ScrcpyOptions2_6.Init;
+    export type Init<TVideo extends boolean = boolean> =
+        ScrcpyOptions2_6.Init<TVideo>;
 }
