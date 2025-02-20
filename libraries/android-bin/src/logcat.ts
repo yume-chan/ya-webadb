@@ -90,9 +90,17 @@ export interface LogcatFormatModifiers {
 }
 
 export interface LogcatOptions {
-    dump?: boolean;
-    pid?: number;
-    ids?: LogId[];
+    dump?: boolean | undefined;
+    pid?: number | undefined;
+    ids?: LogId[] | undefined;
+    tail?: number | Date | undefined;
+}
+
+function formatTailTime(date: Date) {
+    // Tail time supports multiple formats,
+    // `sssss.mmm` is simplest to implement
+    const timestamp = date.getTime();
+    return ((timestamp / 1000) | 0) + "." + (timestamp % 1000);
 }
 
 const NANOSECONDS_PER_SECOND = /* #__PURE__ */ BigInt(1e9);
@@ -502,6 +510,14 @@ export class Logcat extends AdbCommandBase {
             }
             if (options?.ids) {
                 args.push("-b", Logcat.joinLogId(options.ids));
+            }
+            if (options?.tail) {
+                args.push(
+                    "-t",
+                    typeof options.tail === "number"
+                        ? options.tail.toString()
+                        : formatTailTime(options.tail),
+                );
             }
 
             // TODO: make `spawn` return synchronously with streams pending
