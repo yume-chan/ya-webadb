@@ -1,4 +1,8 @@
-import type { MaybeConsumable, WritableStream } from "@yume-chan/stream-extra";
+import type {
+    AbortSignal,
+    MaybeConsumable,
+    WritableStream,
+} from "@yume-chan/stream-extra";
 import { ReadableStream } from "@yume-chan/stream-extra";
 
 import type { Adb, AdbSocket } from "../../../adb.js";

@@ -1,3 +1,4 @@
+import type { AbortSignal } from "@yume-chan/stream-extra";
 import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 import { AdbCommandBase } from "../base.js";

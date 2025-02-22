@@ -1,5 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type {
+    AbortSignal,
     PushReadableStreamController,
     ReadableStream,
     WritableStreamDefaultWriter,

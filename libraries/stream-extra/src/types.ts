@@ -28,6 +28,7 @@ export declare interface AbortSignal {
      * Remove an event listener that was previously added with {@link AbortSignal.addEventListener}.
      */
     removeEventListener(type: "abort", listener: () => void): void;
+    throwIfAborted(): void;
 }
 
 /**

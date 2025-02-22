@@ -1,5 +1,6 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import type {
+    AbortSignal,
     MaybeConsumable,
     ReadableStream,
     WritableStream,
