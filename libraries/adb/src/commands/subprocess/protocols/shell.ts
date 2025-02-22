@@ -55,16 +55,18 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
         return adb.canUseFeature(AdbFeature.ShellV2);
     }
 
-    static async pty(adb: Adb, command: string) {
+    static async pty(adb: Adb, command: string, signal?: AbortSignal) {
         // TODO: AdbShellSubprocessProtocol: Support setting `XTERM` environment variable
         return new AdbSubprocessShellProtocol(
             await adb.createSocket(`shell,v2,pty:${command}`),
+            signal,
         );
     }
 
-    static async raw(adb: Adb, command: string) {
+    static async raw(adb: Adb, command: string, signal?: AbortSignal) {
         return new AdbSubprocessShellProtocol(
             await adb.createSocket(`shell,v2,raw:${command}`),
+            signal,
         );
     }
 
@@ -91,8 +93,11 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
         return this.#exit.promise;
     }
 
-    constructor(socket: AdbSocket) {
+    constructor(socket: AdbSocket, signal?: AbortSignal) {
+        signal?.throwIfAborted();
+
         this.#socket = socket;
+        signal?.addEventListener("abort", () => void this.kill());
 
         let stdoutController!: PushReadableStreamController<Uint8Array>;
         let stderrController!: PushReadableStreamController<Uint8Array>;

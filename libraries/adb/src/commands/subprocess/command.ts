@@ -24,11 +24,13 @@ export interface AdbSubprocessOptions {
      * @default [AdbSubprocessShellProtocol, AdbSubprocessNoneProtocol]
      */
     protocols: AdbSubprocessProtocolConstructor[];
+
+    signal?: AbortSignal;
 }
 
-const DEFAULT_OPTIONS: AdbSubprocessOptions = {
+const DEFAULT_OPTIONS = {
     protocols: [AdbSubprocessShellProtocol, AdbSubprocessNoneProtocol],
-};
+} satisfies AdbSubprocessOptions;
 
 export interface AdbSubprocessWaitResult {
     stdout: string;
@@ -42,7 +44,7 @@ export class AdbSubprocess extends AdbCommandBase {
         command?: string | string[],
         options?: Partial<AdbSubprocessOptions>,
     ): Promise<AdbSubprocessProtocol> {
-        const { protocols } = { ...DEFAULT_OPTIONS, ...options };
+        const { protocols, signal } = { ...DEFAULT_OPTIONS, ...options };
 
         let Constructor: AdbSubprocessProtocolConstructor | undefined;
         for (const item of protocols) {
@@ -63,7 +65,7 @@ export class AdbSubprocess extends AdbCommandBase {
             // spawn the default shell
             command = "";
         }
-        return await Constructor[mode](this.adb, command);
+        return await Constructor[mode](this.adb, command, signal);
     }
 
     /**

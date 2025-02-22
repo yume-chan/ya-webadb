@@ -53,10 +53,18 @@ export interface AdbSubprocessProtocolConstructor {
     isSupported(adb: Adb): MaybePromiseLike<boolean>;
 
     /** Spawns an executable in PTY (interactive) mode. */
-    pty(adb: Adb, command: string): MaybePromiseLike<AdbSubprocessProtocol>;
+    pty: (
+        adb: Adb,
+        command: string,
+        signal?: AbortSignal,
+    ) => MaybePromiseLike<AdbSubprocessProtocol>;
 
     /** Spawns an executable and pipe the output. */
-    raw(adb: Adb, command: string): MaybePromiseLike<AdbSubprocessProtocol>;
+    raw(
+        adb: Adb,
+        command: string,
+        signal?: AbortSignal,
+    ): MaybePromiseLike<AdbSubprocessProtocol>;
 
     /** Creates a new `AdbShell` by attaching to an exist `AdbSocket` */
     new (socket: AdbSocket): AdbSubprocessProtocol;

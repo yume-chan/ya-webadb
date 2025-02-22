@@ -30,8 +30,9 @@ export type AndroidKeyEventMeta =
     (typeof AndroidKeyEventMeta)[keyof typeof AndroidKeyEventMeta];
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/view/KeyEvent.java;l=97;drc=95c1165bb895dd844e1793460710f7163dd330a3
-// Most names follow Web API `KeyboardEvent.code`,
-// Android-only (not exist in HID keyboard standard) keys are prefixed by `Android`.
+// Android key code to Chrome key code: https://source.chromium.org/chromium/chromium/src/+/main:ui/events/keycodes/keyboard_code_conversion_android.cc
+// Chrome key code to DOM key code: https://source.chromium.org/chromium/chromium/src/+/main:ui/events/keycodes/dom/dom_code_data.inc
+// Some keys are not mapped to `KeyboardEvent.code`, only to `KeyboardEvent.key`: https://source.chromium.org/chromium/chromium/src/+/main:ui/events/keycodes/dom/dom_key_data.inc
 export const AndroidKeyCode = {
     AndroidHome: 3,
     AndroidBack: 4,

@@ -80,13 +80,11 @@ export type LogcatFormat = (typeof LogcatFormat)[keyof typeof LogcatFormat];
 export interface LogcatFormatModifiers {
     microseconds?: boolean;
     nanoseconds?: boolean;
-    printable?: boolean;
     year?: boolean;
     timezone?: boolean;
     epoch?: boolean;
     monotonic?: boolean;
     uid?: boolean;
-    descriptive?: boolean;
 }
 
 export interface LogcatOptions {

@@ -18,17 +18,19 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
         return true;
     }
 
-    static async pty(adb: Adb, command: string) {
+    static async pty(adb: Adb, command: string, signal?: AbortSignal) {
         return new AdbSubprocessNoneProtocol(
             await adb.createSocket(`shell:${command}`),
+            signal,
         );
     }
 
-    static async raw(adb: Adb, command: string) {
+    static async raw(adb: Adb, command: string, signal?: AbortSignal) {
         // `shell,raw:${command}` also triggers raw mode,
         // But is not supported on Android version <7.
         return new AdbSubprocessNoneProtocol(
             await adb.createSocket(`exec:${command}`),
+            signal,
         );
     }
 
@@ -59,8 +61,11 @@ export class AdbSubprocessNoneProtocol implements AdbSubprocessProtocol {
         return this.#exit;
     }
 
-    constructor(socket: AdbSocket) {
+    constructor(socket: AdbSocket, signal?: AbortSignal) {
+        signal?.throwIfAborted();
+
         this.#socket = socket;
+        signal?.addEventListener("abort", () => void this.kill());
 
         this.#stderr = new ReadableStream({
             start: async (controller) => {
