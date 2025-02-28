@@ -1,4 +1,4 @@
-import { EventEmitter } from "@yume-chan/event";
+import { EventEmitter, StickyEventEmitter } from "@yume-chan/event";
 
 import { Ref } from "../utils/index.js";
 
@@ -95,6 +95,17 @@ export class AdbServerDeviceObserverOwner {
             throw options.signal.reason;
         }
 
+        const onDeviceAdd = new EventEmitter<AdbServerClient.Device[]>();
+        const onDeviceRemove = new EventEmitter<AdbServerClient.Device[]>();
+        const onListChange = new StickyEventEmitter<AdbServerClient.Device[]>();
+        const onError = new StickyEventEmitter<Error>();
+
+        const observer = { onDeviceAdd, onDeviceRemove, onListChange, onError };
+        // Register `observer` before `#connect`.
+        // Because `#connect` might immediately receive some data
+        // and want to trigger observers
+        this.#observers.push(observer);
+
         this.#stream ??= this.#connect();
         const stream = await this.#stream;
 
@@ -102,14 +113,6 @@ export class AdbServerDeviceObserverOwner {
             await this.#handleObserverStop(stream);
             throw options.signal.reason;
         }
-
-        const onDeviceAdd = new EventEmitter<AdbServerClient.Device[]>();
-        const onDeviceRemove = new EventEmitter<AdbServerClient.Device[]>();
-        const onListChange = new EventEmitter<AdbServerClient.Device[]>();
-        const onError = new EventEmitter<Error>();
-
-        const observer = { onDeviceAdd, onDeviceRemove, onListChange, onError };
-        this.#observers.push(observer);
 
         const ref = new Ref(options);
 

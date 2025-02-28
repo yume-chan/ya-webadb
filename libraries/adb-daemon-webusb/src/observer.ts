@@ -1,5 +1,5 @@
 import type { DeviceObserver } from "@yume-chan/adb";
-import { EventEmitter } from "@yume-chan/event";
+import { EventEmitter, StickyEventEmitter } from "@yume-chan/event";
 
 import {
     AdbDaemonWebUsbDevice,
@@ -34,7 +34,7 @@ export class AdbDaemonWebUsbDeviceObserver
     #onDeviceRemove = new EventEmitter<AdbDaemonWebUsbDevice[]>();
     onDeviceRemove = this.#onDeviceRemove.event;
 
-    #onListChange = new EventEmitter<AdbDaemonWebUsbDevice[]>();
+    #onListChange = new StickyEventEmitter<AdbDaemonWebUsbDevice[]>();
     onListChange = this.#onListChange.event;
 
     current: AdbDaemonWebUsbDevice[] = [];

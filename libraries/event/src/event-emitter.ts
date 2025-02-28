@@ -62,7 +62,7 @@ export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
 
     fire(e: TEvent) {
         for (const info of this.listeners.slice()) {
-            info.listener.apply(info.thisArg, [e, ...info.args]);
+            info.listener.call(info.thisArg, e, ...info.args);
         }
     }
 
