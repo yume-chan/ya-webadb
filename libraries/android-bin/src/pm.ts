@@ -475,6 +475,22 @@ export class PackageManager extends AdbCommandBase {
         }
     }
 
+    async getPackages(packageName: string): Promise<string[]> {
+        const args = ["pm", "-p", packageName];
+
+        const process = await this.#cmdOrSubprocess(args);
+        const result: string[] = [];
+        for await (const line of process.stdout
+            .pipeThrough(new TextDecoderStream())
+            .pipeThrough(new SplitStringStream("\n"))) {
+            if (line.startsWith("package:")) {
+                result.push(line.substring("package:".length));
+            }
+        }
+
+        return result;
+    }
+
     async uninstall(
         packageName: string,
         options?: Partial<PackageManagerUninstallOptions>,
