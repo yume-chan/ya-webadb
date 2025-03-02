@@ -7,6 +7,6 @@
         "lint": "pnpm recursive run lint"
     },
     "devDependencies": {
-        "@changesets/cli": "^2.27.12"
+        "@changesets/cli": "^2.28.1"
     }
 }

@@ -1,4 +1,5 @@
-import { EventEmitter, type EventListenerInfo } from "./event-emitter.js";
+import type { EventListenerInfo } from "./event-emitter.js";
+import { EventEmitter } from "./event-emitter.js";
 import type { RemoveEventListener } from "./event.js";
 
 export class StickyEventEmitter<TEvent, TResult = unknown> extends EventEmitter<
