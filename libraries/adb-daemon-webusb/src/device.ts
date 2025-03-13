@@ -22,6 +22,7 @@ import {
 import type { ExactReadable } from "@yume-chan/struct";
 import { EmptyUint8Array } from "@yume-chan/struct";
 
+import { DeviceBusyError as _DeviceBusyError } from "./error.js";
 import type { UsbInterfaceFilter, UsbInterfaceIdentifier } from "./utils.js";
 import { findUsbEndpoints, getSerialNumber, isErrorName } from "./utils.js";
 
@@ -254,6 +255,8 @@ export class AdbDaemonWebUsbConnection
 }
 
 export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
+    static DeviceBusyError = _DeviceBusyError;
+
     #interface: UsbInterfaceIdentifier;
     #usbManager: USB;
 
@@ -348,11 +351,5 @@ export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
 }
 
 export namespace AdbDaemonWebUsbDevice {
-    export class DeviceBusyError extends Error {
-        constructor(cause?: Error) {
-            super("The device is already in used by another program", {
-                cause,
-            });
-        }
-    }
+    export type DeviceBusyError = _DeviceBusyError;
 }

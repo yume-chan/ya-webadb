@@ -42,14 +42,16 @@ export interface BufferLike {
 
 export const EmptyUint8Array = new Uint8Array(0);
 
-export const buffer: BufferLike = function (
+// Prettier will move the annotation and make it invalid
+// prettier-ignore
+export const buffer: BufferLike = (/* #__NO_SIDE_EFFECTS__ */ (
     lengthOrField:
         | string
         | number
         | Field<number, never, unknown>
         | BufferLengthConverter<string, unknown>,
     converter?: Converter<Uint8Array, unknown>,
-): Field<unknown, string, Record<string, unknown>> {
+): Field<unknown, string, Record<string, unknown>> => {
     if (typeof lengthOrField === "number") {
         if (converter) {
             if (lengthOrField === 0) {
@@ -257,4 +259,4 @@ export const buffer: BufferLike = function (
             return reader.readExactly(length);
         },
     };
-} as never;
+}) as never;

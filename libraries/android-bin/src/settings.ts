@@ -6,11 +6,14 @@ import type { SingleUser } from "./utils.js";
 
 export type SettingsNamespace = "system" | "secure" | "global";
 
-export enum SettingsResetMode {
-    UntrustedDefaults = "untrusted_defaults",
-    UntrustedClear = "untrusted_clear",
-    TrustedDefaults = "trusted_defaults",
-}
+export const SettingsResetMode = {
+    UntrustedDefaults: "untrusted_defaults",
+    UntrustedClear: "untrusted_clear",
+    TrustedDefaults: "trusted_defaults",
+} as const;
+
+export type SettingsResetMode =
+    (typeof SettingsResetMode)[keyof typeof SettingsResetMode];
 
 export interface SettingsOptions {
     user?: SingleUser;

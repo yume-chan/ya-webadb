@@ -25,19 +25,17 @@ export interface String {
     ): Field<string, KOmitInit, KS>;
 }
 
-// Rollup doesn't support `/* #__NO_SIDE_EFFECTS__ */ export const a = () => {}
-/* #__NO_SIDE_EFFECTS__ */
-function _string(
+// Prettier will move the annotation and make it invalid
+// prettier-ignore
+export const string: String = (/* #__NO_SIDE_EFFECTS__ */ (
     lengthOrField: string | number | BufferLengthConverter<string, unknown>,
 ): Field<string, string, Record<string, unknown>> & {
     as: <T>(infer: T) => Field<T, string, Record<string, unknown>>;
-} {
+} => {
     const field = buffer(lengthOrField as never, {
         convert: decodeUtf8,
         back: encodeUtf8,
     });
     (field as never as { as: unknown }).as = () => field;
     return field as never;
-}
-
-export const string: String = _string as never;
+}) as never;

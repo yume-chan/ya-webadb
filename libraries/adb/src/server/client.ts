@@ -15,16 +15,27 @@ import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import type { DeviceObserver as DeviceObserverBase } from "../device-observer.js";
 import type { AdbFeature } from "../features.js";
-import { hexToNumber, sequenceEqual } from "../utils/index.js";
+import { hexToNumber } from "../utils/index.js";
 
+import {
+    MDnsCommands,
+    WirelessCommands,
+    AlreadyConnectedError as _AlreadyConnectedError,
+    NetworkError as _NetworkError,
+    UnauthorizedError as _UnauthorizedError,
+} from "./commands/index.js";
 import { AdbServerDeviceObserverOwner } from "./observer.js";
-import { AdbServerStream, FAIL } from "./stream.js";
+import { AdbServerStream } from "./stream.js";
 import { AdbServerTransport } from "./transport.js";
 
 /**
  * Client for the ADB Server.
  */
 export class AdbServerClient {
+    static NetworkError = _NetworkError;
+    static UnauthorizedError = _UnauthorizedError;
+    static AlreadyConnectedError = _AlreadyConnectedError;
+
     static parseDeviceList(value: string): AdbServerClient.Device[] {
         const devices: AdbServerClient.Device[] = [];
         for (const line of value.split("\n")) {
@@ -99,8 +110,8 @@ export class AdbServerClient {
 
     readonly connector: AdbServerClient.ServerConnector;
 
-    readonly wireless = new AdbServerClient.WirelessCommands(this);
-    readonly mDns = new AdbServerClient.MDnsCommands(this);
+    readonly wireless = new WirelessCommands(this);
+    readonly mDns = new MDnsCommands(this);
     #observerOwner = new AdbServerDeviceObserverOwner(this);
 
     constructor(connector: AdbServerClient.ServerConnector) {
@@ -537,138 +548,11 @@ export namespace AdbServerClient {
         transportId: bigint;
     }
 
-    export class NetworkError extends Error {
-        constructor(message: string) {
-            super(message);
-            this.name = "NetworkError";
-        }
-    }
-
-    export class UnauthorizedError extends Error {
-        constructor(message: string) {
-            super(message);
-            this.name = "UnauthorizedError";
-        }
-    }
-
-    export class AlreadyConnectedError extends Error {
-        constructor(message: string) {
-            super(message);
-            this.name = "AlreadyConnectedError";
-        }
-    }
-
-    export class WirelessCommands {
-        #client: AdbServerClient;
-
-        constructor(client: AdbServerClient) {
-            this.#client = client;
-        }
-
-        /**
-         * `adb pair <password> <address>`
-         */
-        async pair(address: string, password: string): Promise<void> {
-            const connection = await this.#client.createConnection(
-                `host:pair:${password}:${address}`,
-            );
-            try {
-                const response = await connection.readExactly(4);
-                // `response` is either `FAIL`, or 4 hex digits for length of the string
-                if (sequenceEqual(response, FAIL)) {
-                    throw new Error(await connection.readString());
-                }
-                const length = hexToNumber(response);
-                // Ignore the string as it's always `Successful ...`
-                await connection.readExactly(length);
-            } finally {
-                await connection.dispose();
-            }
-        }
-
-        /**
-         * `adb connect <address>`
-         */
-        async connect(address: string): Promise<void> {
-            const connection = await this.#client.createConnection(
-                `host:connect:${address}`,
-            );
-            try {
-                const response = await connection.readString();
-                switch (response) {
-                    case `already connected to ${address}`:
-                        throw new AdbServerClient.AlreadyConnectedError(
-                            response,
-                        );
-                    case `failed to connect to ${address}`: // `adb pair` mode not authorized
-                    case `failed to authenticate to ${address}`: // `adb tcpip` mode not authorized
-                        throw new AdbServerClient.UnauthorizedError(response);
-                    case `connected to ${address}`:
-                        return;
-                    default:
-                        throw new AdbServerClient.NetworkError(response);
-                }
-            } finally {
-                await connection.dispose();
-            }
-        }
-
-        /**
-         * `adb disconnect <address>`
-         */
-        async disconnect(address: string): Promise<void> {
-            const connection = await this.#client.createConnection(
-                `host:disconnect:${address}`,
-            );
-            try {
-                await connection.readString();
-            } finally {
-                await connection.dispose();
-            }
-        }
-    }
-
-    export class MDnsCommands {
-        #client: AdbServerClient;
-
-        constructor(client: AdbServerClient) {
-            this.#client = client;
-        }
-
-        async check() {
-            const connection =
-                await this.#client.createConnection("host:mdns:check");
-            try {
-                const response = await connection.readString();
-                return !response.startsWith("ERROR:");
-            } finally {
-                await connection.dispose();
-            }
-        }
-
-        async getServices() {
-            const connection =
-                await this.#client.createConnection("host:mdns:services");
-            try {
-                const response = await connection.readString();
-                return response
-                    .split("\n")
-                    .filter(Boolean)
-                    .map((line) => {
-                        const parts = line.split("\t");
-                        return {
-                            name: parts[0]!,
-                            service: parts[1]!,
-                            address: parts[2]!,
-                        };
-                    });
-            } finally {
-                await connection.dispose();
-            }
-        }
-    }
-
     export interface DeviceObserver extends DeviceObserverBase<Device> {
         onError: Event<Error>;
     }
+
+    export type NetworkError = _NetworkError;
+    export type UnauthorizedError = _UnauthorizedError;
+    export type AlreadyConnectedError = _AlreadyConnectedError;
 }

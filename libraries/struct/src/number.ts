@@ -23,18 +23,19 @@ export interface NumberField<T> extends Field<T, never, never> {
 
 /* #__NO_SIDE_EFFECTS__ */
 function factory<T>(
+    fn: NumberField<T>,
     size: number,
     serialize: Field<T, never, never>["serialize"],
     deserialize: Field<T, never, never>["deserialize"],
-): NumberField<T> {
-    const result = () => result;
-    result.size = size;
-    result.serialize = serialize;
-    result.deserialize = deserialize;
-    return result as never;
+) {
+    fn.size = size;
+    fn.serialize = serialize;
+    fn.deserialize = deserialize;
 }
 
-export const u8 = factory<number>(
+export const u8: NumberField<number> = (() => u8) as never;
+factory(
+    u8,
     1,
     (value, { buffer, index }) => {
         buffer[index] = value;
@@ -45,7 +46,9 @@ export const u8 = factory<number>(
     }),
 );
 
-export const s8 = factory<number>(
+export const s8: NumberField<number> = (() => s8) as never;
+factory(
+    s8,
     1,
     (value, { buffer, index }) => {
         buffer[index] = value;
@@ -56,7 +59,9 @@ export const s8 = factory<number>(
     }),
 );
 
-export const u16 = factory<number>(
+export const u16: NumberField<number> = (() => u16) as never;
+factory(
+    u16,
     2,
     (value, { buffer, index, littleEndian }) => {
         setUint16(buffer, index, value, littleEndian);
@@ -67,7 +72,9 @@ export const u16 = factory<number>(
     }),
 );
 
-export const s16 = factory<number>(
+export const s16: NumberField<number> = (() => u16) as never;
+factory(
+    s16,
     2,
     (value, { buffer, index, littleEndian }) => {
         setInt16(buffer, index, value, littleEndian);
@@ -78,7 +85,9 @@ export const s16 = factory<number>(
     }),
 );
 
-export const u32 = factory<number>(
+export const u32: NumberField<number> = (() => u32) as never;
+factory(
+    u32,
     4,
     (value, { buffer, index, littleEndian }) => {
         setUint32(buffer, index, value, littleEndian);
@@ -89,7 +98,9 @@ export const u32 = factory<number>(
     }),
 );
 
-export const s32 = factory<number>(
+export const s32: NumberField<number> = (() => s32) as never;
+factory(
+    s32,
     4,
     (value, { buffer, index, littleEndian }) => {
         setInt32(buffer, index, value, littleEndian);
@@ -100,7 +111,9 @@ export const s32 = factory<number>(
     }),
 );
 
-export const u64 = factory<bigint>(
+export const u64: NumberField<bigint> = (() => u64) as never;
+factory(
+    u64,
     8,
     (value, { buffer, index, littleEndian }) => {
         setUint64(buffer, index, value, littleEndian);
@@ -111,7 +124,9 @@ export const u64 = factory<bigint>(
     }),
 );
 
-export const s64 = factory<bigint>(
+export const s64: NumberField<bigint> = (() => u64) as never;
+factory(
+    s64,
     8,
     (value, { buffer, index, littleEndian }) => {
         setInt64(buffer, index, value, littleEndian);
