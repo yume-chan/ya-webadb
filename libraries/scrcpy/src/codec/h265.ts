@@ -330,8 +330,10 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
     if (pcm_enabled_flag) {
         pcm_sample_bit_depth_luma_minus1 = reader.read(4);
         pcm_sample_bit_depth_chroma_minus1 = reader.read(4);
-        log2_min_pcm_luma_coding_block_size_minus3 = reader.read(4);
-        log2_diff_max_min_pcm_luma_coding_block_size = reader.read(4);
+        log2_min_pcm_luma_coding_block_size_minus3 =
+            reader.decodeExponentialGolombNumber();
+        log2_diff_max_min_pcm_luma_coding_block_size =
+            reader.decodeExponentialGolombNumber();
         pcm_loop_filter_disabled_flag = !!reader.next();
     }
 
@@ -894,6 +896,30 @@ export function h265ParseShortTermReferencePictureSet(
     };
 }
 
+export const H265AspectRatioIndicator = {
+    Unspecified: 0,
+    Square: 1,
+    _12_11: 2,
+    _10_11: 3,
+    _16_11: 4,
+    _40_33: 5,
+    _24_11: 6,
+    _20_11: 7,
+    _32_11: 8,
+    _80_33: 9,
+    _18_11: 10,
+    _15_11: 11,
+    _64_33: 12,
+    _160_99: 13,
+    _4_3: 15,
+    _3_2: 16,
+    _2_1: 17,
+    Extended: 255,
+} as const;
+
+export type H265AspectRatioIndicator =
+    (typeof H265AspectRatioIndicator)[keyof typeof H265AspectRatioIndicator];
+
 /**
  * E.2.1 VUI parameters syntax
  */
@@ -902,12 +928,12 @@ export function h265ParseVuiParameters(
     sps_max_sub_layers_minus1: number,
 ) {
     const aspect_ratio_info_present_flag = !!reader.next();
-    let aspect_ratio_idc: number | undefined;
+    let aspect_ratio_idc: H265AspectRatioIndicator | undefined;
     let sar_width: number | undefined;
     let sar_height: number | undefined;
     if (aspect_ratio_info_present_flag) {
-        aspect_ratio_idc = reader.read(8);
-        if (aspect_ratio_idc === 255) {
+        aspect_ratio_idc = reader.read(8) as H265AspectRatioIndicator;
+        if (aspect_ratio_idc === H265AspectRatioIndicator.Extended) {
             sar_width = reader.read(16);
             sar_height = reader.read(16);
         }
