@@ -7,7 +7,7 @@
     "scripts": {},
     "keywords": [],
     "dependencies": {
-        "@types/node": "^22.13.8",
+        "@types/node": "^22.13.10",
         "json5": "^2.2.3"
     },
     "author": "",

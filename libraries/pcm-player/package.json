@@ -33,7 +33,7 @@
         "@types/audioworklet": "^0.0.71",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.5.2",
+        "prettier": "^3.5.3",
         "typescript": "^5.8.2"
     }
 }
