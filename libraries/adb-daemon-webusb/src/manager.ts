@@ -18,11 +18,10 @@ export class AdbDaemonWebUsbDeviceManager {
      *
      * May be `undefined` if current runtime does not support WebUSB.
      */
-    static readonly BROWSER = /* #__PURE__ */ (() => {
+    static readonly BROWSER = /* #__PURE__ */ (() =>
         typeof globalThis.navigator !== "undefined" && globalThis.navigator.usb
             ? new AdbDaemonWebUsbDeviceManager(globalThis.navigator.usb)
-            : undefined;
-    })();
+            : undefined)();
 
     #usbManager: USB;
 
