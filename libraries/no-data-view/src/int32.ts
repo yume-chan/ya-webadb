@@ -1,3 +1,4 @@
+/* #__NO_SIDE_EFFECTS__ */
 export function getInt32LittleEndian(
     buffer: Uint8Array,
     offset: number,
@@ -10,6 +11,7 @@ export function getInt32LittleEndian(
     );
 }
 
+/* #__NO_SIDE_EFFECTS__ */
 export function getInt32BigEndian(buffer: Uint8Array, offset: number): number {
     return (
         (buffer[offset]! << 24) |
@@ -19,6 +21,7 @@ export function getInt32BigEndian(buffer: Uint8Array, offset: number): number {
     );
 }
 
+/* #__NO_SIDE_EFFECTS__ */
 export function getInt32(
     buffer: Uint8Array,
     offset: number,

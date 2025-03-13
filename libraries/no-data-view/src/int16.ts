@@ -1,3 +1,4 @@
+/* #__NO_SIDE_EFFECTS__ */
 export function getInt16LittleEndian(
     buffer: Uint8Array,
     offset: number,
@@ -5,10 +6,12 @@ export function getInt16LittleEndian(
     return ((buffer[offset]! | (buffer[offset + 1]! << 8)) << 16) >> 16;
 }
 
+/* #__NO_SIDE_EFFECTS__ */
 export function getInt16BigEndian(buffer: Uint8Array, offset: number): number {
     return (((buffer[offset]! << 8) | buffer[offset + 1]!) << 16) >> 16;
 }
 
+/* #__NO_SIDE_EFFECTS__ */
 export function getInt16(
     buffer: Uint8Array,
     offset: number,
@@ -19,6 +22,7 @@ export function getInt16(
         : (((buffer[offset]! << 8) | buffer[offset + 1]!) << 16) >> 16;
 }
 
+/* #__NO_SIDE_EFFECTS__ */
 export function setInt16LittleEndian(
     buffer: Uint8Array,
     offset: number,

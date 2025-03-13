@@ -5,7 +5,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript"
+        "start": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript --watch"
     },
     "keywords": [],
     "author": "",

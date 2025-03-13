@@ -23,19 +23,18 @@ export interface NumberField<T> extends Field<T, never, never> {
 
 /* #__NO_SIDE_EFFECTS__ */
 function factory<T>(
-    fn: NumberField<T>,
     size: number,
     serialize: Field<T, never, never>["serialize"],
     deserialize: Field<T, never, never>["deserialize"],
 ) {
+    const fn: NumberField<T> = (() => fn) as never;
     fn.size = size;
     fn.serialize = serialize;
     fn.deserialize = deserialize;
+    return fn;
 }
 
-export const u8: NumberField<number> = (() => u8) as never;
-factory(
-    u8,
+export const u8: NumberField<number> = factory(
     1,
     (value, { buffer, index }) => {
         buffer[index] = value;
@@ -46,9 +45,7 @@ factory(
     }),
 );
 
-export const s8: NumberField<number> = (() => s8) as never;
-factory(
-    s8,
+export const s8: NumberField<number> = factory(
     1,
     (value, { buffer, index }) => {
         buffer[index] = value;
@@ -59,9 +56,7 @@ factory(
     }),
 );
 
-export const u16: NumberField<number> = (() => u16) as never;
-factory(
-    u16,
+export const u16: NumberField<number> = factory(
     2,
     (value, { buffer, index, littleEndian }) => {
         setUint16(buffer, index, value, littleEndian);
@@ -72,9 +67,7 @@ factory(
     }),
 );
 
-export const s16: NumberField<number> = (() => u16) as never;
-factory(
-    s16,
+export const s16: NumberField<number> = factory(
     2,
     (value, { buffer, index, littleEndian }) => {
         setInt16(buffer, index, value, littleEndian);
@@ -85,9 +78,7 @@ factory(
     }),
 );
 
-export const u32: NumberField<number> = (() => u32) as never;
-factory(
-    u32,
+export const u32: NumberField<number> = factory(
     4,
     (value, { buffer, index, littleEndian }) => {
         setUint32(buffer, index, value, littleEndian);
@@ -98,9 +89,7 @@ factory(
     }),
 );
 
-export const s32: NumberField<number> = (() => s32) as never;
-factory(
-    s32,
+export const s32: NumberField<number> = factory(
     4,
     (value, { buffer, index, littleEndian }) => {
         setInt32(buffer, index, value, littleEndian);
@@ -111,9 +100,7 @@ factory(
     }),
 );
 
-export const u64: NumberField<bigint> = (() => u64) as never;
-factory(
-    u64,
+export const u64: NumberField<bigint> = factory(
     8,
     (value, { buffer, index, littleEndian }) => {
         setUint64(buffer, index, value, littleEndian);
@@ -124,9 +111,7 @@ factory(
     }),
 );
 
-export const s64: NumberField<bigint> = (() => u64) as never;
-factory(
-    s64,
+export const s64: NumberField<bigint> = factory(
     8,
     (value, { buffer, index, littleEndian }) => {
         setInt64(buffer, index, value, littleEndian);
