@@ -1,5 +1,5 @@
 import type { Adb } from "@yume-chan/adb";
-import { AdbCommandBase } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 
 import { Settings } from "./settings.js";
 import { p } from "./string-format.js";
@@ -17,7 +17,7 @@ export interface OverlayDisplayDevice {
     showSystemDecorations: boolean;
 }
 
-export class OverlayDisplay extends AdbCommandBase {
+export class OverlayDisplay extends AdbServiceBase {
     #settings: Settings;
 
     static readonly SETTING_KEY = "overlay_display_devices";

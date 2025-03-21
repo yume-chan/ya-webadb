@@ -10,7 +10,7 @@ import type { AdbFrameBuffer } from "./commands/index.js";
 import {
     AdbPower,
     AdbReverseCommand,
-    AdbSubprocess,
+    AdbSubprocessService,
     AdbSync,
     AdbTcpIpCommand,
     escapeArg,
@@ -87,7 +87,7 @@ export class Adb implements Closeable {
         return this.banner.features;
     }
 
-    readonly subprocess: AdbSubprocess;
+    readonly subprocess: AdbSubprocessService;
     readonly power: AdbPower;
     readonly reverse: AdbReverseCommand;
     readonly tcpip: AdbTcpIpCommand;
@@ -95,7 +95,7 @@ export class Adb implements Closeable {
     constructor(transport: AdbTransport) {
         this.transport = transport;
 
-        this.subprocess = new AdbSubprocess(this);
+        this.subprocess = new AdbSubprocessService(this);
         this.power = new AdbPower(this);
         this.reverse = new AdbReverseCommand(this);
         this.tcpip = new AdbTcpIpCommand(this);
@@ -123,11 +123,11 @@ export class Adb implements Closeable {
     }
 
     async getProp(key: string): Promise<string> {
-        const stdout = await this.subprocess.spawnAndWaitLegacy([
+        const result = await this.subprocess.noneProtocol.spawnWaitText([
             "getprop",
             key,
         ]);
-        return stdout.trim();
+        return result.stdout.trim();
     }
 
     async rm(
@@ -150,8 +150,9 @@ export class Adb implements Closeable {
         }
         // https://android.googlesource.com/platform/packages/modules/adb/+/1a0fb8846d4e6b671c8aa7f137a8c21d7b248716/client/adb_install.cpp#984
         args.push("</dev/null");
-        const stdout = await this.subprocess.spawnAndWaitLegacy(args);
-        return stdout;
+
+        const result = await this.subprocess.noneProtocol.spawnWaitText(args);
+        return result.stdout;
     }
 
     async sync(): Promise<AdbSync> {

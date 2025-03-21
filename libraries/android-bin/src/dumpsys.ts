@@ -1,4 +1,4 @@
-import { AdbCommandBase } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 
 const BatteryDumpFields: Record<
     string,
@@ -54,17 +54,17 @@ const Battery = {
     Health,
 };
 
-export class DumpSys extends AdbCommandBase {
+export class DumpSys extends AdbServiceBase {
     static readonly Battery = Battery;
 
     async diskStats() {
-        const output = await this.adb.subprocess.spawnAndWaitLegacy([
+        const result = await this.adb.subprocess.noneProtocol.spawnWaitText([
             "dumpsys",
             "diskstats",
         ]);
 
         function getSize(name: string) {
-            const match = output.match(
+            const match = result.stdout.match(
                 new RegExp(`${name}-Free: (\\d+)K / (\\d+)K`),
             );
             if (!match) {
@@ -91,7 +91,7 @@ export class DumpSys extends AdbCommandBase {
     }
 
     async battery(): Promise<DumpSys.Battery.Info> {
-        const output = await this.adb.subprocess.spawnAndWaitLegacy([
+        const result = await this.adb.subprocess.noneProtocol.spawnWaitText([
             "dumpsys",
             "battery",
         ]);
@@ -105,7 +105,7 @@ export class DumpSys extends AdbCommandBase {
             health: DumpSys.Battery.Health.Unknown,
         };
 
-        for (const line of output.split("\n")) {
+        for (const line of result.stdout.split("\n")) {
             const parts = line.split(":").map((part) => part.trim());
             if (parts.length !== 2) {
                 continue;

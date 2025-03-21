@@ -1,5 +1,5 @@
-import type { Adb, AdbSubprocessWaitResult } from "@yume-chan/adb";
-import { AdbCommandBase } from "@yume-chan/adb";
+import type { Adb, ProcessTextResult } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 
 import { Cmd } from "./cmd.js";
 import type { SingleUser } from "./utils.js";
@@ -25,7 +25,7 @@ export interface SettingsPutOptions extends SettingsOptions {
 }
 
 // frameworks/base/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
-export class Settings extends AdbCommandBase {
+export class Settings extends AdbServiceBase {
     #cmd: Cmd;
 
     constructor(adb: Adb) {
@@ -48,21 +48,19 @@ export class Settings extends AdbCommandBase {
         command.push(verb, namespace);
         command = command.concat(args);
 
-        let output: AdbSubprocessWaitResult;
-        if (this.#cmd.supportsCmd) {
-            output = await this.#cmd.spawnAndWait(
-                command[0]!,
-                ...command.slice(1),
-            );
+        let result: ProcessTextResult;
+        if (this.#cmd.noneProtocol) {
+            result = await this.#cmd.noneProtocol.spawnWaitText(command);
         } else {
-            output = await this.adb.subprocess.spawnAndWait(command);
+            result =
+                await this.adb.subprocess.noneProtocol.spawnWaitText(command);
         }
 
-        if (output.stderr) {
-            throw new Error(output.stderr);
+        if (result.stderr) {
+            throw new Error(result.stderr);
         }
 
-        return output.stdout;
+        return result.stdout;
     }
 
     async get(

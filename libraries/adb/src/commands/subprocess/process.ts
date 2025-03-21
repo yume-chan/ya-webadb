@@ -1,14 +1,11 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import type {
-    AbortSignal,
     MaybeConsumable,
     ReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
 
-import type { Adb, AdbSocket } from "../../../adb.js";
-
-export interface AdbSubprocessProtocol {
+export interface Process {
     /**
      * A WritableStream that writes to the `stdin` stream.
      */
@@ -33,7 +30,7 @@ export interface AdbSubprocessProtocol {
      * Note: Some `AdbSubprocessProtocol` doesn't support exit code,
      * They will always resolve it with `0`.
      */
-    readonly exit: Promise<number>;
+    readonly exited: Promise<number>;
 
     /**
      * Resizes the current shell.
@@ -47,26 +44,4 @@ export interface AdbSubprocessProtocol {
      * Kills the current process.
      */
     kill(): MaybePromiseLike<void>;
-}
-
-export interface AdbSubprocessProtocolConstructor {
-    /** Returns `true` if the `adb` instance supports this shell */
-    isSupported(adb: Adb): MaybePromiseLike<boolean>;
-
-    /** Spawns an executable in PTY (interactive) mode. */
-    pty: (
-        adb: Adb,
-        command: string,
-        signal?: AbortSignal,
-    ) => MaybePromiseLike<AdbSubprocessProtocol>;
-
-    /** Spawns an executable and pipe the output. */
-    raw(
-        adb: Adb,
-        command: string,
-        signal?: AbortSignal,
-    ): MaybePromiseLike<AdbSubprocessProtocol>;
-
-    /** Creates a new `AdbShell` by attaching to an exist `AdbSocket` */
-    new (socket: AdbSocket): AdbSubprocessProtocol;
 }

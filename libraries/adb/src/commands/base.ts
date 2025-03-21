@@ -2,11 +2,14 @@ import { AutoDisposable } from "@yume-chan/event";
 
 import type { Adb } from "../adb.js";
 
-export class AdbCommandBase extends AutoDisposable {
-    protected adb: Adb;
+export class AdbServiceBase extends AutoDisposable {
+    #adb: Adb;
+    get adb() {
+        return this.#adb;
+    }
 
     constructor(adb: Adb) {
         super();
-        this.adb = adb;
+        this.#adb = adb;
     }
 }

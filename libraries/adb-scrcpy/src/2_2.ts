@@ -1,4 +1,4 @@
-import type { Adb } from "@yume-chan/adb";
+import type { Adb, ProcessSpawner } from "@yume-chan/adb";
 import type { ScrcpyDisplay, ScrcpyEncoder } from "@yume-chan/scrcpy";
 import { ScrcpyOptions2_2 } from "@yume-chan/scrcpy";
 
@@ -13,8 +13,11 @@ import { AdbScrcpyOptions } from "./types.js";
 export class AdbScrcpyOptions2_2<
     TVideo extends boolean,
 > extends AdbScrcpyOptions<ScrcpyOptions2_2.Init<TVideo>> {
-    constructor(init: ScrcpyOptions2_2.Init<TVideo>, version?: string) {
-        super(new ScrcpyOptions2_2(init, version));
+    constructor(
+        init: ScrcpyOptions2_2.Init<TVideo>,
+        metadata: { version?: string; spawner?: ProcessSpawner | undefined },
+    ) {
+        super(new ScrcpyOptions2_2(init, metadata.version), metadata.spawner);
     }
 
     override getEncoders(adb: Adb, path: string): Promise<ScrcpyEncoder[]> {
