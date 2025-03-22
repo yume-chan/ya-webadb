@@ -53,7 +53,7 @@ importers:
     dependencies:
       '@yume-chan/async':
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.1.1
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
@@ -149,7 +149,7 @@ importers:
         version: link:../adb
       '@yume-chan/async':
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.1.1
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
@@ -189,7 +189,7 @@ importers:
         version: link:../adb
       '@yume-chan/async':
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.1.1
       '@yume-chan/stream-extra':
         specifier: workspace:^
         version: link:../stream-extra
@@ -267,7 +267,7 @@ importers:
     dependencies:
       '@yume-chan/async':
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.1.1
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
@@ -344,7 +344,7 @@ importers:
     dependencies:
       '@yume-chan/async':
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.1.1
       '@yume-chan/no-data-view':
         specifier: workspace:^
         version: link:../no-data-view
@@ -378,7 +378,7 @@ importers:
     dependencies:
       '@yume-chan/async':
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.1.1
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
@@ -415,7 +415,7 @@ importers:
     dependencies:
       '@yume-chan/async':
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.1.1
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
@@ -449,7 +449,7 @@ importers:
     dependencies:
       '@yume-chan/async':
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.1.1
       '@yume-chan/struct':
         specifier: workspace:^
         version: link:../struct
@@ -477,7 +477,7 @@ importers:
     dependencies:
       '@yume-chan/async':
         specifier: ^4.0.2
-        version: 4.0.2
+        version: 4.1.1
       '@yume-chan/no-data-view':
         specifier: workspace:^
         version: link:../no-data-view
@@ -1015,8 +1015,8 @@ packages:
     resolution: {integrity: sha512-mBvWew1kZJHfNQVVfVllMjUDwCGN9apPa0t4/z1zaUJ9MzpXjRL3w8fsfJKB8gHN/h4rik9HneKfDbh2fErN+w==}
     engines: {node: ^14.14.0 || >=16.0.0}
 
-  '@yume-chan/async@4.0.2':
-    resolution: {integrity: sha512-YP5Hg4DZoq6CXzeTsiOu6rDNUaWw8SMiM4cB2rHam4zRTatgUHCWpSKMawQt0+nUro/+IeNTZLh2QpIFyxuGzg==}
+  '@yume-chan/async@4.1.1':
+    resolution: {integrity: sha512-qNufiJnFrRAVjQKnyhD5BR3JalojkM74UcBL4caQe96UA8ixazNq1s2vV1WPPnKyAPiC+ZeBW0uEV3H2xmsNMA==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -2542,7 +2542,7 @@ snapshots:
       merge-options: 3.0.4
       p-event: 5.0.1
 
-  '@yume-chan/async@4.0.2': {}
+  '@yume-chan/async@4.1.1': {}
 
   acorn-jsx@5.3.2(acorn@8.14.1):
     dependencies:
