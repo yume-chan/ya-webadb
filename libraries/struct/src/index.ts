@@ -12,6 +12,8 @@ declare global {
 
 export * from "./bipedal.js";
 export * from "./buffer.js";
+export * from "./concat.js";
+export * from "./extend.js";
 export * from "./field.js";
 export * from "./number.js";
 export * from "./readable.js";

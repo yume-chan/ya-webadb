@@ -12,40 +12,33 @@ import type {
     StructSerializer,
 } from "./types.js";
 
-export type FieldsValue<
-    T extends Record<string, FieldDeserializer<unknown, unknown>>,
-> = {
+export type StructField =
+    | Field<unknown, string, unknown, unknown>
+    | (StructSerializer<unknown> & StructDeserializer<unknown>);
+
+export type StructFields = Record<string, StructField>;
+
+export type FieldsValue<T extends StructFields> = {
     [K in keyof T]: T[K] extends FieldDeserializer<infer U, unknown>
         ? U
         : never;
 };
 
-export type FieldOmitInit<
-    T extends
-        | Field<unknown, string, unknown, unknown>
-        | StructDeserializer<unknown>,
-> =
+export type FieldOmitInit<T extends StructField> =
     T extends Field<unknown, infer U, unknown, unknown>
         ? string extends U
             ? never
             : U
         : never;
 
-export type FieldsOmitInits<
-    T extends Record<
-        string,
-        Field<unknown, string, unknown, unknown> | StructDeserializer<unknown>
-    >,
-> = {
+export type FieldsOmitInits<T extends StructFields> = {
     [K in keyof T]: FieldOmitInit<T[K]>;
 }[keyof T];
 
-export type FieldsInit<
-    T extends Record<
-        string,
-        Field<unknown, string, unknown, unknown> | StructDeserializer<unknown>
-    >,
-> = Omit<FieldsValue<T>, FieldsOmitInits<T>>;
+export type FieldsInit<T extends StructFields> = Omit<
+    FieldsValue<T>,
+    FieldsOmitInits<T>
+>;
 
 export class StructDeserializeError extends Error {
     constructor(message: string) {
@@ -67,56 +60,59 @@ export class StructEmptyError extends StructDeserializeError {
     }
 }
 
+export type ExtraToIntersection<
+    Extra extends Record<PropertyKey, unknown> | undefined,
+> = Extra extends undefined ? unknown : Extra;
+
 export interface Struct<
-    T extends Record<
-        string,
-        | Field<unknown, string, Partial<FieldsValue<T>>>
-        | StructDeserializer<unknown>
-    >,
+    Fields extends StructFields,
     Extra extends Record<PropertyKey, unknown> | undefined = undefined,
-    PostDeserialize = FieldsValue<T> & Extra,
-> extends StructSerializer<FieldsInit<T>>,
+    PostDeserialize = FieldsValue<Fields> & Extra,
+> extends StructSerializer<FieldsInit<Fields>>,
         StructDeserializer<PostDeserialize> {
-    fields: T;
+    littleEndian: boolean;
+    fields: Fields;
     extra: Extra;
 }
 
 /* #__NO_SIDE_EFFECTS__ */
 export function struct<
-    T extends Record<
+    Fields extends Record<
         string,
-        | Field<unknown, string, Partial<FieldsValue<T>>, unknown>
+        | Field<unknown, string, Partial<FieldsValue<Fields>>, unknown>
         | (StructSerializer<unknown> & StructDeserializer<unknown>)
     >,
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-    Extra extends Record<PropertyKey, unknown> = {},
-    PostDeserialize = FieldsValue<T> & Extra,
+    Extra extends Record<PropertyKey, unknown> | undefined = undefined,
+    PostDeserialize = FieldsValue<Fields> & ExtraToIntersection<Extra>,
 >(
-    fields: T,
+    fields: Fields,
     options: {
-        littleEndian?: boolean;
-        extra?: Extra & ThisType<FieldsValue<T>>;
-        postDeserialize?: (
-            this: FieldsValue<T> & Extra,
-            fields: FieldsValue<T> & Extra,
-        ) => PostDeserialize;
+        littleEndian: boolean;
+        extra?: (Extra & ThisType<FieldsValue<Fields>>) | undefined;
+        postDeserialize?:
+            | ((
+                  this: FieldsValue<Fields> & ExtraToIntersection<Extra>,
+                  value: FieldsValue<Fields> & ExtraToIntersection<Extra>,
+              ) => PostDeserialize)
+            | undefined;
     },
-): Struct<T, Extra, PostDeserialize> {
+): Struct<Fields, Extra, PostDeserialize> {
     const fieldList = Object.entries(fields);
     const size = fieldList.reduce((sum, [, field]) => sum + field.size, 0);
 
-    const littleEndian = !!options.littleEndian;
+    const littleEndian = options.littleEndian;
     const extra = options.extra
         ? Object.getOwnPropertyDescriptors(options.extra)
         : undefined;
 
     return {
+        littleEndian,
         type: "byob",
         fields,
         size,
         extra: options.extra,
         serialize(
-            source: FieldsInit<T>,
+            source: FieldsInit<Fields>,
             bufferOrContext?:
                 | Uint8Array
                 | FieldDefaultSerializeContext
@@ -196,14 +192,16 @@ export function struct<
             }
         },
         deserialize: bipedal(function* (
-            this: Struct<T, Extra, PostDeserialize>,
+            this: Struct<Fields, Extra, PostDeserialize>,
             then,
             reader: AsyncExactReadable,
         ) {
             const startPosition = reader.position;
 
             const result = {} as Record<string, unknown>;
-            const context: FieldDeserializeContext<Partial<FieldsValue<T>>> = {
+            const context: FieldDeserializeContext<
+                Partial<FieldsValue<Fields>>
+            > = {
                 dependencies: result as never,
                 littleEndian: littleEndian,
             };

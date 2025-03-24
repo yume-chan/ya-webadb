@@ -1,5 +1,5 @@
 import type { StructValue } from "@yume-chan/struct";
-import { string, struct, u32 } from "@yume-chan/struct";
+import { extend, string, u32 } from "@yume-chan/struct";
 
 import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
 import { AdbSyncResponseId, adbSyncReadResponses } from "./response.js";
@@ -15,25 +15,15 @@ export interface AdbSyncEntry extends AdbSyncStat {
     name: string;
 }
 
-export const AdbSyncEntryResponse = /* #__PURE__ */ (() =>
-    struct(
-        {
-            ...AdbSyncLstatResponse.fields,
-            name: string(u32),
-        },
-        { littleEndian: true, extra: AdbSyncLstatResponse.extra },
-    ))();
+export const AdbSyncEntryResponse = extend(AdbSyncLstatResponse, {
+    name: string(u32),
+});
 
 export type AdbSyncEntryResponse = StructValue<typeof AdbSyncEntryResponse>;
 
-export const AdbSyncEntry2Response = /* #__PURE__ */ (() =>
-    struct(
-        {
-            ...AdbSyncStatResponse.fields,
-            name: string(u32),
-        },
-        { littleEndian: true, extra: AdbSyncStatResponse.extra },
-    ))();
+export const AdbSyncEntry2Response = extend(AdbSyncStatResponse, {
+    name: string(u32),
+});
 
 export type AdbSyncEntry2Response = StructValue<typeof AdbSyncEntry2Response>;
 
