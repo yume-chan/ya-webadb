@@ -1,19 +1,15 @@
 import type { StructInit } from "@yume-chan/struct";
-import { s32, struct } from "@yume-chan/struct";
+import { extend, s32 } from "@yume-chan/struct";
 
 import type { ScrcpyScrollController } from "../../base/index.js";
 import type { ScrcpyInjectScrollControlMessage } from "../../latest.js";
 
 import { PrevImpl } from "./prev.js";
 
-export const InjectScrollControlMessage = /* #__PURE__ */ (() =>
-    struct(
-        {
-            ...PrevImpl.InjectScrollControlMessage.fields,
-            buttons: s32,
-        },
-        { littleEndian: false },
-    ))();
+export const InjectScrollControlMessage = extend(
+    PrevImpl.InjectScrollControlMessage,
+    { buttons: s32 },
+);
 
 export type InjectScrollControlMessage = StructInit<
     typeof InjectScrollControlMessage

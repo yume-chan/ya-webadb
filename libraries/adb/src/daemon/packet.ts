@@ -1,6 +1,6 @@
 import { Consumable, TransformStream } from "@yume-chan/stream-extra";
 import type { StructInit, StructValue } from "@yume-chan/struct";
-import { buffer, s32, struct, u32 } from "@yume-chan/struct";
+import { buffer, extend, s32, struct, u32 } from "@yume-chan/struct";
 
 export const AdbCommand = {
     Auth: 0x48545541, // 'AUTH'
@@ -29,13 +29,9 @@ export type AdbPacketHeader = StructValue<typeof AdbPacketHeader>;
 
 type AdbPacketHeaderInit = StructInit<typeof AdbPacketHeader>;
 
-export const AdbPacket = struct(
-    /* #__PURE__ */ (() => ({
-        ...AdbPacketHeader.fields,
-        payload: buffer("payloadLength"),
-    }))(),
-    { littleEndian: true },
-);
+export const AdbPacket = extend(AdbPacketHeader, {
+    payload: buffer("payloadLength"),
+});
 
 export type AdbPacket = StructValue<typeof AdbPacket>;
 
