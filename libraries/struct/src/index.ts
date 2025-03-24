@@ -17,4 +17,5 @@ export * from "./number.js";
 export * from "./readable.js";
 export * from "./string.js";
 export * from "./struct.js";
+export * from "./types.js";
 export * from "./utils.js";

@@ -15,7 +15,7 @@ import {
     u8,
 } from "@yume-chan/struct";
 
-bipedal(function () {});
+bipedal(function* () {});
 buffer(u8);
 decodeUtf8(new Uint8Array());
 encodeUtf8("");
