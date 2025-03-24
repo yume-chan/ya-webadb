@@ -19,8 +19,7 @@ import {
     ReadableStream,
     pipeFrom,
 } from "@yume-chan/stream-extra";
-import type { ExactReadable } from "@yume-chan/struct";
-import { EmptyUint8Array } from "@yume-chan/struct";
+import { EmptyUint8Array, Uint8ArrayExactReadable } from "@yume-chan/struct";
 
 import { DeviceBusyError as _DeviceBusyError } from "./error.js";
 import type { UsbInterfaceFilter, UsbInterfaceIdentifier } from "./utils.js";
@@ -49,29 +48,6 @@ export function mergeDefaultAdbInterfaceFilter(
             protocolCode:
                 filter.protocolCode ?? AdbDefaultInterfaceFilter.protocolCode,
         }));
-    }
-}
-
-class Uint8ArrayExactReadable implements ExactReadable {
-    #data: Uint8Array;
-    #position: number;
-
-    get position() {
-        return this.#position;
-    }
-
-    constructor(data: Uint8Array) {
-        this.#data = data;
-        this.#position = 0;
-    }
-
-    readExactly(length: number): Uint8Array {
-        const result = this.#data.subarray(
-            this.#position,
-            this.#position + length,
-        );
-        this.#position += length;
-        return result;
     }
 }
 
