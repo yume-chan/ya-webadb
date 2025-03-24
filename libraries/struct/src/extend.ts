@@ -6,6 +6,7 @@ import type {
 } from "./struct.js";
 import { struct } from "./struct.js";
 
+/* #__NO_SIDE_EFFECTS__ */
 export function extend<
     Base extends Struct<
         StructFields,
