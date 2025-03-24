@@ -2,7 +2,7 @@
 // cspell: ignore bugreportz
 
 import type { Adb, AdbSync } from "@yume-chan/adb";
-import { AdbCommandBase, AdbSubprocessShellProtocol } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 import type { AbortSignal, ReadableStream } from "@yume-chan/stream-extra";
 import {
     AbortController,
@@ -31,7 +31,7 @@ export interface BugReportZOptions {
     onProgress?: ((completed: string, total: string) => void) | undefined;
 }
 
-export class BugReport extends AdbCommandBase {
+export class BugReport extends AdbServiceBase {
     static VERSION_REGEX: RegExp = /(\d+)\.(\d+)/;
 
     static BEGIN_REGEX: RegExp = /BEGIN:(.*)/;
@@ -47,7 +47,7 @@ export class BugReport extends AdbCommandBase {
      */
     static async queryCapabilities(adb: Adb): Promise<BugReport> {
         // bugreportz requires shell protocol
-        if (!AdbSubprocessShellProtocol.isSupported(adb)) {
+        if (!adb.subprocess.shellProtocol) {
             return new BugReport(adb, {
                 supportsBugReport: true,
                 bugReportZVersion: undefined,
@@ -57,11 +57,11 @@ export class BugReport extends AdbCommandBase {
             });
         }
 
-        const { stderr, exitCode } = await adb.subprocess.spawnAndWait([
+        const result = await adb.subprocess.shellProtocol.spawnWaitText([
             "bugreportz",
             "-v",
         ]);
-        if (exitCode !== 0 || stderr === "") {
+        if (result.exitCode !== 0 || result.stderr === "") {
             return new BugReport(adb, {
                 supportsBugReport: true,
                 bugReportZVersion: undefined,
@@ -71,7 +71,7 @@ export class BugReport extends AdbCommandBase {
             });
         }
 
-        const match = stderr.match(BugReport.VERSION_REGEX);
+        const match = result.stderr.match(BugReport.VERSION_REGEX);
         if (!match) {
             return new BugReport(adb, {
                 supportsBugReport: true,
@@ -170,7 +170,8 @@ export class BugReport extends AdbCommandBase {
 
         return new WrapReadableStream(async () => {
             // https://cs.android.com/android/platform/superproject/+/master:frameworks/native/cmds/bugreport/bugreport.cpp;drc=9b73bf07d73dbab5b792632e1e233edbad77f5fd;bpv=0;bpt=0
-            const process = await this.adb.subprocess.spawn(["bugreport"]);
+            const process =
+                await this.adb.subprocess.noneProtocol.spawn("bugreport");
             return process.stdout;
         });
     }
@@ -200,9 +201,8 @@ export class BugReport extends AdbCommandBase {
             args.push("-p");
         }
 
-        const process = await this.adb.subprocess.spawn(args, {
-            protocols: [AdbSubprocessShellProtocol],
-        });
+        // `subprocess.shellProtocol` must be defined when `this.#supportsBugReportZ` is `true`
+        const process = await this.adb.subprocess.shellProtocol!.spawn(args);
 
         options?.signal?.addEventListener("abort", () => {
             void process.kill();
@@ -258,10 +258,10 @@ export class BugReport extends AdbCommandBase {
      */
     bugReportZStream(): ReadableStream<Uint8Array> {
         return new PushReadableStream(async (controller) => {
-            const process = await this.adb.subprocess.spawn(
-                ["bugreportz", "-s"],
-                { protocols: [AdbSubprocessShellProtocol] },
-            );
+            const process = await this.adb.subprocess.shellProtocol!.spawn([
+                "bugreportz",
+                "-s",
+            ]);
             process.stdout
                 .pipeTo(
                     new WritableStream({
@@ -285,7 +285,7 @@ export class BugReport extends AdbCommandBase {
                 .catch((e) => {
                     controller.error(e);
                 });
-            await process.exit;
+            await process.exited;
         });
     }
 

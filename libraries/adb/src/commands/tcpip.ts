@@ -1,4 +1,4 @@
-import { AdbCommandBase } from "./base.js";
+import { AdbServiceBase } from "./base.js";
 
 /**
  * ADB daemon checks for the following properties in the order of
@@ -27,7 +27,7 @@ function parsePort(value: string): number | undefined {
     return Number.parseInt(value, 10);
 }
 
-export class AdbTcpIpCommand extends AdbCommandBase {
+export class AdbTcpIpCommand extends AdbServiceBase {
     async getListenAddresses(): Promise<AdbTcpIpListenAddresses> {
         const serviceListenAddresses = await this.adb.getProp(
             "service.adb.listen_addrs",

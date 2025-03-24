@@ -1,4 +1,4 @@
-import { AdbCommandBase } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
@@ -18,7 +18,7 @@ export interface AdbRestoreOptions {
     file: ReadableStream<MaybeConsumable<Uint8Array>>;
 }
 
-export class AdbBackup extends AdbCommandBase {
+export class AdbBackup extends AdbServiceBase {
     /**
      * User must confirm backup on device within 60 seconds.
      */
@@ -55,7 +55,7 @@ export class AdbBackup extends AdbCommandBase {
             args.push(...options.packages);
         }
 
-        const process = await this.adb.subprocess.spawn(args);
+        const process = await this.adb.subprocess.noneProtocol.spawn(args);
         return process.stdout;
     }
 
@@ -68,7 +68,7 @@ export class AdbBackup extends AdbCommandBase {
         if (options.user !== undefined) {
             args.push("--user", options.user.toString());
         }
-        const process = await this.adb.subprocess.spawn(args);
+        const process = await this.adb.subprocess.noneProtocol.spawn(args);
         const [output] = await Promise.all([
             process.stdout
                 .pipeThrough(new TextDecoderStream())

@@ -4,7 +4,7 @@
 // cspell:ignore versioncode
 
 import type { Adb } from "@yume-chan/adb";
-import { AdbCommandBase, escapeArg } from "@yume-chan/adb";
+import { AdbServiceBase, escapeArg } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 import {
     ConcatStringStream,
@@ -281,7 +281,7 @@ function buildInstallArguments(
     return args;
 }
 
-export class PackageManager extends AdbCommandBase {
+export class PackageManager extends AdbServiceBase {
     #cmd: Cmd;
 
     constructor(adb: Adb) {
@@ -301,7 +301,9 @@ export class PackageManager extends AdbCommandBase {
         const args = buildInstallArguments("install", options);
         // WIP: old version of pm doesn't support multiple apks
         args.push(...apks);
-        return await this.adb.subprocess.spawnAndWaitLegacy(args);
+        const result =
+            await this.adb.subprocess.noneProtocol.spawnWaitText(args);
+        return result.stdout;
     }
 
     async pushAndInstallStream(
@@ -335,9 +337,9 @@ export class PackageManager extends AdbCommandBase {
         args.push(filePath);
 
         try {
-            const output = await this.adb.subprocess
-                .spawnAndWaitLegacy(args.map(escapeArg))
-                .then((output) => output.trim());
+            const output = await this.adb.subprocess.noneProtocol
+                .spawnWaitText(args.map(escapeArg))
+                .then(({ stdout }) => stdout.trim());
 
             if (output !== "Success") {
                 throw new Error(output);
@@ -356,18 +358,16 @@ export class PackageManager extends AdbCommandBase {
         // It's hard to detect whether `pm` supports streaming install (unless actually trying),
         // so check for whether `cmd` is supported,
         // and assume `pm` streaming install support status is same as that.
-        if (!this.#cmd.supportsCmd) {
+        if (!this.#cmd.noneProtocol) {
             // Fall back to push file then install
             await this.pushAndInstallStream(stream, options);
             return;
         }
 
         const args = buildInstallArguments("install", options);
-        // Remove `pm` from args, `Cmd#spawn` will prepend `cmd <command>` so the final args
-        // will be `cmd package install <args>`
-        args.shift();
+        args[0] = "package";
         args.push("-S", size.toString());
-        const process = await this.#cmd.spawn(false, "package", ...args);
+        const process = await this.#cmd.noneProtocol.spawn(args);
 
         const output = process.stdout
             .pipeThrough(new TextDecoderStream())
@@ -438,12 +438,12 @@ export class PackageManager extends AdbCommandBase {
     }
 
     async #cmdOrSubprocess(args: string[]) {
-        if (this.#cmd.supportsCmd) {
-            args.shift();
-            return await this.#cmd.spawn(false, "package", ...args);
+        if (this.#cmd.noneProtocol) {
+            args[0] = "package";
+            return await this.#cmd.noneProtocol.spawn(args);
         }
 
-        return this.adb.subprocess.spawn(args);
+        return this.adb.subprocess.noneProtocol.spawn(args);
     }
 
     async *listPackages(
@@ -568,6 +568,17 @@ export class PackageManager extends AdbCommandBase {
         return Number.parseInt(sessionIdString[1]!, 10);
     }
 
+    async checkResult(stream: ReadableStream<Uint8Array>) {
+        const output = await stream
+            .pipeThrough(new TextDecoderStream())
+            .pipeThrough(new ConcatStringStream())
+            .then((output) => output.trim());
+
+        if (!output.startsWith("Success")) {
+            throw new Error(output);
+        }
+    }
+
     async sessionAddSplit(
         sessionId: number,
         splitName: string,
@@ -581,12 +592,8 @@ export class PackageManager extends AdbCommandBase {
             path,
         ];
 
-        const output = await this.adb.subprocess
-            .spawnAndWaitLegacy(args)
-            .then((output) => output.trim());
-        if (!output.startsWith("Success")) {
-            throw new Error(output);
-        }
+        const process = await this.adb.subprocess.noneProtocol.spawn(args);
+        await this.checkResult(process.stdout);
     }
 
     async sessionAddSplitStream(
@@ -606,39 +613,22 @@ export class PackageManager extends AdbCommandBase {
         ];
 
         const process = await this.#cmdOrSubprocess(args);
-        const output = process.stdout
-            .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new ConcatStringStream())
-            .then((output) => output.trim());
-
         await Promise.all([
             stream.pipeTo(process.stdin),
-            output.then((output) => {
-                if (!output.startsWith("Success")) {
-                    throw new Error(output);
-                }
-            }),
+            this.checkResult(process.stdout),
         ]);
     }
 
     async sessionCommit(sessionId: number): Promise<void> {
         const args: string[] = ["pm", "install-commit", sessionId.toString()];
-        const output = await this.adb.subprocess
-            .spawnAndWaitLegacy(args)
-            .then((output) => output.trim());
-        if (output !== "Success") {
-            throw new Error(output);
-        }
+        const process = await this.adb.subprocess.noneProtocol.spawn(args);
+        await this.checkResult(process.stdout);
     }
 
     async sessionAbandon(sessionId: number): Promise<void> {
         const args: string[] = ["pm", "install-abandon", sessionId.toString()];
-        const output = await this.adb.subprocess
-            .spawnAndWaitLegacy(args)
-            .then((output) => output.trim());
-        if (output !== "Success") {
-            throw new Error(output);
-        }
+        const process = await this.adb.subprocess.noneProtocol.spawn(args);
+        await this.checkResult(process.stdout);
     }
 }
 

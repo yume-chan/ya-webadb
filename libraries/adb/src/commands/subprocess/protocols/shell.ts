@@ -1,6 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
 import type {
-    AbortSignal,
     PushReadableStreamController,
     ReadableStream,
     WritableStreamDefaultWriter,
@@ -17,8 +16,8 @@ import { buffer, struct, u32, u8 } from "@yume-chan/struct";
 import type { Adb, AdbSocket } from "../../../adb.js";
 import { AdbFeature } from "../../../features.js";
 import { encodeUtf8 } from "../../../utils/index.js";
-
-import type { AdbSubprocessProtocol } from "./types.js";
+import type { Process } from "../process.js";
+import type { AdbProcessSpawner } from "../spawner.js";
 
 export const AdbShellProtocolId = {
     Stdin: 0,
@@ -51,26 +50,7 @@ type AdbShellProtocolPacket = StructValue<typeof AdbShellProtocolPacket>;
  * * `exit` exit code: Yes
  * * `resize`: Yes
  */
-export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
-    static isSupported(adb: Adb) {
-        return adb.canUseFeature(AdbFeature.ShellV2);
-    }
-
-    static async pty(adb: Adb, command: string, signal?: AbortSignal) {
-        // TODO: AdbShellSubprocessProtocol: Support setting `XTERM` environment variable
-        return new AdbSubprocessShellProtocol(
-            await adb.createSocket(`shell,v2,pty:${command}`),
-            signal,
-        );
-    }
-
-    static async raw(adb: Adb, command: string, signal?: AbortSignal) {
-        return new AdbSubprocessShellProtocol(
-            await adb.createSocket(`shell,v2,raw:${command}`),
-            signal,
-        );
-    }
-
+export class AdbShellProtocolProcess implements Process {
     readonly #socket: AdbSocket;
     #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
 
@@ -89,16 +69,13 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
         return this.#stderr;
     }
 
-    readonly #exit = new PromiseResolver<number>();
-    get exit() {
-        return this.#exit.promise;
+    readonly #exited = new PromiseResolver<number>();
+    get exited() {
+        return this.#exited.promise;
     }
 
-    constructor(socket: AdbSocket, signal?: AbortSignal) {
-        signal?.throwIfAborted();
-
+    constructor(socket: AdbSocket) {
         this.#socket = socket;
-        signal?.addEventListener("abort", () => void this.kill());
 
         let stdoutController!: PushReadableStreamController<Uint8Array>;
         let stderrController!: PushReadableStreamController<Uint8Array>;
@@ -116,7 +93,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                     write: async (chunk) => {
                         switch (chunk.id) {
                             case AdbShellProtocolId.Exit:
-                                this.#exit.resolve(chunk.data[0]!);
+                                this.#exited.resolve(chunk.data[0]!);
                                 break;
                             case AdbShellProtocolId.Stdout:
                                 await stdoutController.enqueue(chunk.data);
@@ -133,7 +110,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                     stdoutController.close();
                     stderrController.close();
                     // If `#exit` has already resolved, this will be a no-op
-                    this.#exit.reject(
+                    this.#exited.reject(
                         new Error("Socket ended without exit message"),
                     );
                 },
@@ -141,7 +118,7 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
                     stdoutController.error(e);
                     stderrController.error(e);
                     // If `#exit` has already resolved, this will be a no-op
-                    this.#exit.reject(e);
+                    this.#exited.reject(e);
                 },
             );
 
@@ -173,5 +150,33 @@ export class AdbSubprocessShellProtocol implements AdbSubprocessProtocol {
 
     kill() {
         return this.#socket.close();
+    }
+}
+
+export class AdbShellProtocolSpawner implements AdbProcessSpawner {
+    #adb: Adb;
+    get adb() {
+        return this.#adb;
+    }
+
+    get isSupported() {
+        return this.#adb.canUseFeature(AdbFeature.ShellV2);
+    }
+
+    constructor(adb: Adb) {
+        this.#adb = adb;
+    }
+
+    async raw(command: string[]) {
+        return new AdbShellProtocolProcess(
+            await this.#adb.createSocket(`shell,v2,raw:${command.join(" ")}`),
+        );
+    }
+
+    async pty(command: string[]) {
+        // TODO: Support setting `XTERM` environment variable
+        return new AdbShellProtocolProcess(
+            await this.#adb.createSocket(`shell,v2,pty:${command.join(" ")}`),
+        );
     }
 }

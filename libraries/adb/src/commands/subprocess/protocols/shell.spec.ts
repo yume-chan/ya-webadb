@@ -10,7 +10,7 @@ import type { AdbSocket } from "../../../adb.js";
 import {
     AdbShellProtocolId,
     AdbShellProtocolPacket,
-    AdbSubprocessShellProtocol,
+    AdbShellProtocolProcess,
 } from "./shell.js";
 
 function createMockSocket(
@@ -68,7 +68,7 @@ describe("AdbSubprocessShellProtocol", () => {
         it("should parse data from `socket", () => {
             const [socket] = createMockSocket(() => {});
 
-            const process = new AdbSubprocessShellProtocol(socket);
+            const process = new AdbShellProtocolProcess(socket);
             const stdoutReader = process.stdout.getReader();
             const stderrReader = process.stderr.getReader();
 
@@ -98,7 +98,7 @@ describe("AdbSubprocessShellProtocol", () => {
                 );
             });
 
-            const process = new AdbSubprocessShellProtocol(socket);
+            const process = new AdbShellProtocolProcess(socket);
             const stdoutReader = process.stdout.getReader();
             const stderrReader = process.stderr.getReader();
 
@@ -129,7 +129,7 @@ describe("AdbSubprocessShellProtocol", () => {
                     controller.close();
                 });
 
-                const process = new AdbSubprocessShellProtocol(socket);
+                const process = new AdbShellProtocolProcess(socket);
                 const stdoutReader = process.stdout.getReader();
                 const stderrReader = process.stderr.getReader();
 
@@ -152,7 +152,7 @@ describe("AdbSubprocessShellProtocol", () => {
                     done: true,
                     value: undefined,
                 });
-                assert.strictEqual(await process.exit, 42);
+                assert.strictEqual(await process.exited, 42);
             });
         });
 
@@ -162,7 +162,7 @@ describe("AdbSubprocessShellProtocol", () => {
                     controller.close();
                 });
 
-                const process = new AdbSubprocessShellProtocol(socket);
+                const process = new AdbShellProtocolProcess(socket);
                 const stdoutReader = process.stdout.getReader();
                 const stderrReader = process.stderr.getReader();
 
@@ -186,7 +186,7 @@ describe("AdbSubprocessShellProtocol", () => {
                         done: true,
                         value: undefined,
                     }),
-                    assert.rejects(process.exit),
+                    assert.rejects(process.exited),
                 ]);
             });
         });
@@ -199,7 +199,7 @@ describe("AdbSubprocessShellProtocol", () => {
                 controller.close();
             });
 
-            const process = new AdbSubprocessShellProtocol(socket);
+            const process = new AdbShellProtocolProcess(socket);
             const stdoutReader = process.stdout.getReader();
             const stderrReader = process.stderr.getReader();
 
@@ -217,7 +217,7 @@ describe("AdbSubprocessShellProtocol", () => {
             await Promise.all([
                 assert.rejects(stdoutReader.read()),
                 assert.rejects(stderrReader.read()),
-                assert.rejects(process.exit),
+                assert.rejects(process.exited),
             ]);
         });
     });

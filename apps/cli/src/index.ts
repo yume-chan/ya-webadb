@@ -135,7 +135,7 @@ createDeviceCommand("shell [args...]")
         const ref = new Ref();
 
         const adb = await createAdb(options);
-        const shell = await adb.subprocess.shell(args);
+        const shell = await adb.subprocess.noneProtocol.shell(args);
 
         const stdinWriter = shell.stdin.getWriter();
 
@@ -160,7 +160,7 @@ createDeviceCommand("shell [args...]")
                 process.exit(1);
             });
 
-        shell.exit.then(
+        shell.exited.then(
             (code) => {
                 // `process.stdin.on("data")` will keep the process alive,
                 // so call `process.exit` explicitly.
@@ -181,7 +181,10 @@ createDeviceCommand("logcat [args...]")
     .configureHelp({ showGlobalOptions: true })
     .action(async (args: string[], options: DeviceCommandOptions) => {
         const adb = await createAdb(options);
-        const logcat = await adb.subprocess.spawn(`logcat ${args.join(" ")}`);
+        const logcat = await adb.subprocess.noneProtocol.spawn([
+            "logcat",
+            ...args,
+        ]);
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         process.on("SIGINT", async () => {
             await logcat.kill();

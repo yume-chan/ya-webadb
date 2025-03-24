@@ -6,7 +6,7 @@ import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../../../adb.js";
 
-import { AdbSubprocessNoneProtocol } from "./none.js";
+import { AdbNoneProtocolProcess } from "./none.js";
 
 describe("AdbSubprocessNoneProtocol", () => {
     describe("stdout", () => {
@@ -27,7 +27,7 @@ describe("AdbSubprocessNoneProtocol", () => {
                 writable: new WritableStream(),
             };
 
-            const process = new AdbSubprocessNoneProtocol(socket);
+            const process = new AdbNoneProtocolProcess(socket);
             const reader = process.stdout.getReader();
 
             assert.deepStrictEqual(await reader.read(), {
@@ -57,7 +57,7 @@ describe("AdbSubprocessNoneProtocol", () => {
                 writable: new WritableStream(),
             };
 
-            const process = new AdbSubprocessNoneProtocol(socket);
+            const process = new AdbNoneProtocolProcess(socket);
             const reader = process.stdout.getReader();
 
             assert.deepStrictEqual(await reader.read(), {
@@ -96,7 +96,7 @@ describe("AdbSubprocessNoneProtocol", () => {
                 writable: new WritableStream(),
             };
 
-            const process = new AdbSubprocessNoneProtocol(socket);
+            const process = new AdbNoneProtocolProcess(socket);
             const reader = process.stderr.getReader();
 
             closed.resolve();
@@ -119,11 +119,11 @@ describe("AdbSubprocessNoneProtocol", () => {
                 writable: new WritableStream(),
             };
 
-            const process = new AdbSubprocessNoneProtocol(socket);
+            const process = new AdbNoneProtocolProcess(socket);
 
             closed.resolve();
 
-            assert.strictEqual(await process.exit, 0);
+            assert.strictEqual(await process.exited, 0);
         });
     });
 
@@ -136,7 +136,7 @@ describe("AdbSubprocessNoneProtocol", () => {
             writable: new WritableStream(),
         };
 
-        const process = new AdbSubprocessNoneProtocol(socket);
+        const process = new AdbNoneProtocolProcess(socket);
         assert.doesNotThrow(() => process.resize());
     });
 
@@ -150,7 +150,7 @@ describe("AdbSubprocessNoneProtocol", () => {
             writable: new WritableStream(),
         };
 
-        const process = new AdbSubprocessNoneProtocol(socket);
+        const process = new AdbNoneProtocolProcess(socket);
         await process.kill();
         assert.deepEqual(close.mock.callCount(), 1);
     });

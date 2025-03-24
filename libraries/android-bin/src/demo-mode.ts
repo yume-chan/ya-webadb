@@ -5,7 +5,7 @@
 // cspell: ignore sysui
 
 import type { Adb } from "@yume-chan/adb";
-import { AdbCommandBase } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 
 import { Settings } from "./settings.js";
 
@@ -51,7 +51,7 @@ export const DemoModeStatusBarModes = [
 
 export type DemoModeStatusBarMode = (typeof DemoModeStatusBarModes)[number];
 
-export class DemoMode extends AdbCommandBase {
+export class DemoMode extends AdbServiceBase {
     #settings: Settings;
 
     constructor(adb: Adb) {
@@ -112,7 +112,7 @@ export class DemoMode extends AdbCommandBase {
         command: string,
         extra?: Record<string, string>,
     ): Promise<void> {
-        await this.adb.subprocess.spawnAndWaitLegacy([
+        await this.adb.subprocess.noneProtocol.spawnWaitText([
             "am",
             "broadcast",
             "-a",

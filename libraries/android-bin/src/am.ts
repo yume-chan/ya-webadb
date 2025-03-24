@@ -1,5 +1,5 @@
-import type { Adb } from "@yume-chan/adb";
-import { AdbCommandBase } from "@yume-chan/adb";
+import type { Adb, Process } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd.js";
@@ -24,7 +24,7 @@ const START_ACTIVITY_OPTIONS_MAP: Partial<
     user: "--user",
 };
 
-export class ActivityManager extends AdbCommandBase {
+export class ActivityManager extends AdbServiceBase {
     #cmd: Cmd;
 
     constructor(adb: Adb) {
@@ -32,13 +32,13 @@ export class ActivityManager extends AdbCommandBase {
         this.#cmd = new Cmd(adb);
     }
 
-    async #cmdOrSubprocess(args: string[]) {
-        if (this.#cmd.supportsCmd) {
-            args.shift();
-            return await this.#cmd.spawn(false, "activity", ...args);
+    async #cmdOrSubprocess(args: string[]): Promise<Process> {
+        if (this.#cmd.noneProtocol) {
+            args[0] = "activity";
+            return await this.#cmd.noneProtocol.spawn(args);
         }
 
-        return this.adb.subprocess.spawn(args);
+        return this.adb.subprocess.noneProtocol.spawn(args);
     }
 
     async startActivity(

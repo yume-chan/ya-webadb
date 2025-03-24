@@ -1,8 +1,5 @@
-import type { Adb, AdbSubprocessProtocol } from "@yume-chan/adb";
-import {
-    AdbReverseNotSupportedError,
-    AdbSubprocessNoneProtocol,
-} from "@yume-chan/adb";
+import type { Adb, Process } from "@yume-chan/adb";
+import { AdbReverseNotSupportedError } from "@yume-chan/adb";
 import type {
     ScrcpyAudioStreamDisabledMetadata,
     ScrcpyAudioStreamErroredMetadata,
@@ -70,7 +67,7 @@ export class AdbScrcpyExitedError extends Error {
 
 interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
     options: TOptions;
-    process: AdbSubprocessProtocol;
+    process: Process;
     stdout: ReadableStream<string>;
 
     videoStream: ReadableStream<Uint8Array> | undefined;
@@ -117,7 +114,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
         options: TOptions,
     ): Promise<AdbScrcpyClient<TOptions>> {
         let connection: AdbScrcpyConnection | undefined;
-        let process: AdbSubprocessProtocol | undefined;
+        let process: Process | undefined;
 
         try {
             try {
@@ -135,22 +132,21 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
                 }
             }
 
-            process = await adb.subprocess.spawn(
-                [
-                    // cspell: disable-next-line
-                    `CLASSPATH=${path}`,
-                    "app_process",
-                    /* unused */ "/",
-                    "com.genymobile.scrcpy.Server",
-                    options.version,
-                    ...options.serialize(),
-                ],
-                {
-                    // Scrcpy server doesn't use stderr,
-                    // so disable Shell Protocol to simplify processing
-                    protocols: [AdbSubprocessNoneProtocol],
-                },
-            );
+            const args = [
+                "app_process",
+                "-cp",
+                path,
+                /* unused */ "/",
+                "com.genymobile.scrcpy.Server",
+                options.version,
+                ...options.serialize(),
+            ];
+
+            if (options.spawner) {
+                process = await options.spawner.raw(args);
+            } else {
+                process = await adb.subprocess.noneProtocol.spawn(args);
+            }
 
             const stdout = process.stdout
                 .pipeThrough(new TextDecoderStream())
@@ -180,7 +176,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
                 });
 
             const streams = await Promise.race([
-                process.exit.then(() => {
+                process.exited.then(() => {
                     throw new AdbScrcpyExitedError(output);
                 }),
                 connection.getStreams(),
@@ -232,15 +228,15 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     }
 
     #options: TOptions;
-    #process: AdbSubprocessProtocol;
+    #process: Process;
 
     #stdout: ReadableStream<string>;
     get stdout() {
         return this.#stdout;
     }
 
-    get exit() {
-        return this.#process.exit;
+    get exited() {
+        return this.#process.exited;
     }
 
     #videoStream: Promise<AdbScrcpyVideoStream> | undefined;

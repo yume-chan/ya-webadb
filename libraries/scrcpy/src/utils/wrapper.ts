@@ -40,8 +40,8 @@ export class ScrcpyOptionsWrapper<T extends object>
         return this.#base.uHidOutput;
     }
 
-    constructor(options: ScrcpyOptions<T>) {
-        this.#base = options;
+    constructor(base: ScrcpyOptions<T>) {
+        this.#base = base;
     }
 
     serialize(): string[] {
