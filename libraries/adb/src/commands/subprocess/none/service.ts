@@ -1,4 +1,5 @@
 import type { Adb } from "../../../adb.js";
+import { splitCommand } from "../utils.js";
 
 import { AdbNoneProtocolTerminal } from "./pty.js";
 import { AdbNoneProtocolProcessImpl } from "./spawn.js";
@@ -22,7 +23,11 @@ export class AdbNoneProtocolShellService extends AdbNoneProtocolSpawner {
         this.#adb = adb;
     }
 
-    async pty(command?: string[]): Promise<AdbNoneProtocolTerminal> {
+    async pty(command?: string | string[]): Promise<AdbNoneProtocolTerminal> {
+        if (typeof command === "string") {
+            command = splitCommand(command);
+        }
+
         return new AdbNoneProtocolTerminal(
             await this.#adb.createSocket(`shell:${command?.join(" ")}`),
         );
