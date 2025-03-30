@@ -1,5 +1,4 @@
 import type { Adb } from "../../../adb.js";
-import { splitCommand } from "../utils.js";
 
 import { AdbNoneProtocolPtyProcess } from "./pty.js";
 import { AdbNoneProtocolProcessImpl } from "./spawn.js";
@@ -24,12 +23,14 @@ export class AdbNoneProtocolSubprocessService extends AdbNoneProtocolSpawner {
     }
 
     async pty(command?: string | string[]): Promise<AdbNoneProtocolPtyProcess> {
-        if (typeof command === "string") {
-            command = splitCommand(command);
+        if (command === undefined) {
+            command = "";
+        } else if (Array.isArray(command)) {
+            command = command.join(" ");
         }
 
         return new AdbNoneProtocolPtyProcess(
-            await this.#adb.createSocket(`shell:${command?.join(" ")}`),
+            await this.#adb.createSocket(`shell:${command}`),
         );
     }
 }

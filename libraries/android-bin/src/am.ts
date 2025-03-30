@@ -1,8 +1,7 @@
-import type { Adb, AdbNoneProtocolProcess } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
-import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
-import { Cmd } from "./cmd.js";
+import { CmdNoneProtocolService } from "./cmd.js";
 import type { IntentBuilder } from "./intent.js";
 import type { SingleUser } from "./utils.js";
 import { buildArguments } from "./utils.js";
@@ -25,38 +24,32 @@ const START_ACTIVITY_OPTIONS_MAP: Partial<
 };
 
 export class ActivityManager extends AdbServiceBase {
-    #cmd: Cmd;
+    static ServiceName = "activity";
+    static CommandName = "am";
+
+    #cmd: CmdNoneProtocolService;
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = new Cmd(adb);
-    }
-
-    async #cmdOrSubprocess(args: string[]): Promise<AdbNoneProtocolProcess> {
-        if (this.#cmd.noneProtocol) {
-            args[0] = "activity";
-            return await this.#cmd.noneProtocol.spawn(args);
-        }
-
-        return this.adb.subprocess.noneProtocol.spawn(args);
+        this.#cmd = new CmdNoneProtocolService(
+            adb,
+            ActivityManager.CommandName,
+        );
     }
 
     async startActivity(
         options: ActivityManagerStartActivityOptions,
     ): Promise<void> {
         let args = buildArguments(
-            ["am", "start-activity", "-W"],
+            [ActivityManager.ServiceName, "start-activity", "-W"],
             options,
             START_ACTIVITY_OPTIONS_MAP,
         );
 
         args = args.concat(options.intent.build());
 
-        const process = await this.#cmdOrSubprocess(args);
-
-        const output = await process.output
-            .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new ConcatStringStream())
+        const output = await this.#cmd
+            .spawnWaitText(args)
             .then((output) => output.trim());
 
         for (const line of output) {

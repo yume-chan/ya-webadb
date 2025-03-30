@@ -128,7 +128,7 @@ export class Adb implements Closeable {
             .then((output) => output.trim());
     }
 
-    async rm(
+    rm(
         filenames: string | string[],
         options?: { recursive?: boolean; force?: boolean },
     ): Promise<string> {
@@ -149,7 +149,7 @@ export class Adb implements Closeable {
         // https://android.googlesource.com/platform/packages/modules/adb/+/1a0fb8846d4e6b671c8aa7f137a8c21d7b248716/client/adb_install.cpp#984
         args.push("</dev/null");
 
-        return await this.subprocess.noneProtocol.spawnWaitText(args);
+        return this.subprocess.noneProtocol.spawnWaitText(args);
     }
 
     async sync(): Promise<AdbSync> {

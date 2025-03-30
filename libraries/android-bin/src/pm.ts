@@ -4,7 +4,7 @@
 // cspell:ignore versioncode
 
 import type { Adb } from "@yume-chan/adb";
-import { AdbServiceBase, escapeArg } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 import {
     ConcatStringStream,
@@ -12,7 +12,7 @@ import {
     TextDecoderStream,
 } from "@yume-chan/stream-extra";
 
-import { Cmd } from "./cmd.js";
+import { CmdNoneProtocolService } from "./cmd.js";
 import type { IntentBuilder } from "./intent.js";
 import type { SingleUserOrAll } from "./utils.js";
 import { buildArguments } from "./utils.js";
@@ -260,7 +260,7 @@ function buildInstallArguments(
     options: Partial<PackageManagerInstallOptions> | undefined,
 ): string[] {
     const args = buildArguments(
-        ["pm", command],
+        [PackageManager.ServiceName, command],
         options,
         PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
     );
@@ -282,11 +282,14 @@ function buildInstallArguments(
 }
 
 export class PackageManager extends AdbServiceBase {
-    #cmd: Cmd;
+    static ServiceName = "package";
+    static CommandName = "pm";
+
+    #cmd: CmdNoneProtocolService;
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = new Cmd(adb);
+        this.#cmd = new CmdNoneProtocolService(adb, PackageManager.CommandName);
     }
 
     /**
@@ -299,30 +302,9 @@ export class PackageManager extends AdbServiceBase {
         options?: Partial<PackageManagerInstallOptions>,
     ): Promise<string> {
         const args = buildInstallArguments("install", options);
+        args[0] = PackageManager.CommandName;
         // WIP: old version of pm doesn't support multiple apks
         args.push(...apks);
-        const result =
-            await this.adb.subprocess.noneProtocol.spawnWaitText(args);
-        return result;
-    }
-
-    async pushAndInstallStream(
-        stream: ReadableStream<MaybeConsumable<Uint8Array>>,
-        options?: Partial<PackageManagerInstallOptions>,
-    ): Promise<void> {
-        const sync = await this.adb.sync();
-
-        const fileName = Math.random().toString().substring(2);
-        const filePath = `/data/local/tmp/${fileName}.apk`;
-
-        try {
-            await sync.write({
-                filename: filePath,
-                file: stream,
-            });
-        } finally {
-            await sync.dispose();
-        }
 
         // Starting from Android 7, `pm` becomes a wrapper to `cmd package`.
         // The benefit of `cmd package` is it starts faster than the old `pm`,
@@ -333,17 +315,37 @@ export class PackageManager extends AdbServiceBase {
         // read files in `/data/local/tmp` (and many other places) due to SELinux policies,
         // so installing files must still use `pm`.
         // (the starting executable file decides which SELinux policies to apply)
-        const args = buildInstallArguments("install", options);
-        args.push(filePath);
+        const output = await this.adb.subprocess.noneProtocol
+            .spawnWaitText(args)
+            .then((output) => output.trim());
+
+        if (output !== "Success") {
+            throw new Error(output);
+        }
+
+        return output;
+    }
+
+    async pushAndInstallStream(
+        stream: ReadableStream<MaybeConsumable<Uint8Array>>,
+        options?: Partial<PackageManagerInstallOptions>,
+    ): Promise<string> {
+        const fileName = Math.random().toString().substring(2);
+        const filePath = `/data/local/tmp/${fileName}.apk`;
+
+        const sync = await this.adb.sync();
 
         try {
-            const output = await this.adb.subprocess.noneProtocol
-                .spawnWaitText(args.map(escapeArg))
-                .then((output) => output.trim());
+            await sync.write({
+                filename: filePath,
+                file: stream,
+            });
+        } finally {
+            await sync.dispose();
+        }
 
-            if (output !== "Success") {
-                throw new Error(output);
-            }
+        try {
+            return await this.install([filePath], options);
         } finally {
             await this.adb.rm(filePath);
         }
@@ -358,16 +360,15 @@ export class PackageManager extends AdbServiceBase {
         // It's hard to detect whether `pm` supports streaming install (unless actually trying),
         // so check for whether `cmd` is supported,
         // and assume `pm` streaming install support status is same as that.
-        if (!this.#cmd.noneProtocol) {
+        if (!this.#cmd.isSupported) {
             // Fall back to push file then install
             await this.pushAndInstallStream(stream, options);
             return;
         }
 
         const args = buildInstallArguments("install", options);
-        args[0] = "package";
         args.push("-S", size.toString());
-        const process = await this.#cmd.noneProtocol.spawn(args);
+        const process = await this.#cmd.spawn(args);
 
         const output = process.output
             .pipeThrough(new TextDecoderStream())
@@ -437,20 +438,11 @@ export class PackageManager extends AdbServiceBase {
         };
     }
 
-    async #cmdOrSubprocess(args: string[]) {
-        if (this.#cmd.noneProtocol) {
-            args[0] = "package";
-            return await this.#cmd.noneProtocol.spawn(args);
-        }
-
-        return this.adb.subprocess.noneProtocol.spawn(args);
-    }
-
     async *listPackages(
         options?: Partial<PackageManagerListPackagesOptions>,
     ): AsyncGenerator<PackageManagerListPackagesResult, void, void> {
         const args = buildArguments(
-            ["pm", "list", "packages"],
+            ["package", "list", "packages"],
             options,
             PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP,
         );
@@ -458,12 +450,9 @@ export class PackageManager extends AdbServiceBase {
             args.push(options.filter);
         }
 
-        const process = await this.#cmdOrSubprocess(args);
+        const process = await this.#cmd.spawn(args);
         const reader = process.output
             .pipeThrough(new TextDecoderStream())
-            // FIXME: `SplitStringStream` will throw away some data
-            // if it doesn't end with a separator. So each chunk of data
-            // must contain several complete lines.
             .pipeThrough(new SplitStringStream("\n"))
             .getReader();
         while (true) {
@@ -475,10 +464,9 @@ export class PackageManager extends AdbServiceBase {
         }
     }
 
-    async getPackages(packageName: string): Promise<string[]> {
-        const args = ["pm", "-p", packageName];
-
-        const process = await this.#cmdOrSubprocess(args);
+    async getPackageSources(packageName: string): Promise<string[]> {
+        const args = [PackageManager.ServiceName, "-p", packageName];
+        const process = await this.#cmd.spawn(args);
         const result: string[] = [];
         for await (const line of process.output
             .pipeThrough(new TextDecoderStream())
@@ -496,7 +484,7 @@ export class PackageManager extends AdbServiceBase {
         options?: Partial<PackageManagerUninstallOptions>,
     ): Promise<void> {
         const args = buildArguments(
-            ["pm", "uninstall"],
+            [PackageManager.ServiceName, "uninstall"],
             options,
             PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP,
         );
@@ -505,10 +493,8 @@ export class PackageManager extends AdbServiceBase {
             args.push(...options.splitNames);
         }
 
-        const process = await this.#cmdOrSubprocess(args);
-        const output = await process.output
-            .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new ConcatStringStream())
+        const output = await this.#cmd
+            .spawnWaitText(args)
             .then((output) => output.trim());
         if (output !== "Success") {
             throw new Error(output);
@@ -519,17 +505,15 @@ export class PackageManager extends AdbServiceBase {
         options: PackageManagerResolveActivityOptions,
     ): Promise<string | undefined> {
         let args = buildArguments(
-            ["pm", "resolve-activity", "--components"],
+            [PackageManager.ServiceName, "resolve-activity", "--components"],
             options,
             PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP,
         );
 
         args = args.concat(options.intent.build());
 
-        const process = await this.#cmdOrSubprocess(args);
-        const output = await process.output
-            .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new ConcatStringStream())
+        const output = await this.#cmd
+            .spawnWaitText(args)
             .then((output) => output.trim());
 
         if (output === "No activity found") {
@@ -554,10 +538,8 @@ export class PackageManager extends AdbServiceBase {
     ): Promise<number> {
         const args = buildInstallArguments("install-create", options);
 
-        const process = await this.#cmdOrSubprocess(args);
-        const output = await process.output
-            .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new ConcatStringStream())
+        const output = await this.#cmd
+            .spawnWaitText(args)
             .then((output) => output.trim());
 
         const sessionIdString = output.match(/.*\[(\d+)\].*/);
@@ -603,7 +585,7 @@ export class PackageManager extends AdbServiceBase {
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
     ): Promise<void> {
         const args: string[] = [
-            "pm",
+            PackageManager.ServiceName,
             "install-write",
             "-S",
             size.toString(),
@@ -612,7 +594,7 @@ export class PackageManager extends AdbServiceBase {
             "-",
         ];
 
-        const process = await this.#cmdOrSubprocess(args);
+        const process = await this.#cmd.spawn(args);
         await Promise.all([
             stream.pipeTo(process.stdin),
             this.checkResult(process.output),
@@ -620,14 +602,22 @@ export class PackageManager extends AdbServiceBase {
     }
 
     async sessionCommit(sessionId: number): Promise<void> {
-        const args: string[] = ["pm", "install-commit", sessionId.toString()];
-        const process = await this.adb.subprocess.noneProtocol.spawn(args);
+        const args: string[] = [
+            PackageManager.ServiceName,
+            "install-commit",
+            sessionId.toString(),
+        ];
+        const process = await this.#cmd.spawn(args);
         await this.checkResult(process.output);
     }
 
     async sessionAbandon(sessionId: number): Promise<void> {
-        const args: string[] = ["pm", "install-abandon", sessionId.toString()];
-        const process = await this.adb.subprocess.noneProtocol.spawn(args);
+        const args: string[] = [
+            PackageManager.ServiceName,
+            "install-abandon",
+            sessionId.toString(),
+        ];
+        const process = await this.#cmd.spawn(args);
         await this.checkResult(process.output);
     }
 }

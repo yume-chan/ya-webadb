@@ -1,6 +1,5 @@
 import type { Adb } from "../../../adb.js";
 import { AdbFeature } from "../../../features.js";
-import { splitCommand } from "../utils.js";
 
 import { AdbShellProtocolPtyProcess } from "./pty.js";
 import { AdbShellProtocolProcessImpl } from "./spawn.js";
@@ -31,13 +30,15 @@ export class AdbShellProtocolSubprocessService extends AdbShellProtocolSpawner {
     async pty(
         command?: string | string[],
     ): Promise<AdbShellProtocolPtyProcess> {
-        if (typeof command === "string") {
-            command = splitCommand(command);
+        if (command === undefined) {
+            command = "";
+        } else if (Array.isArray(command)) {
+            command = command.join(" ");
         }
 
         // TODO: Support setting `XTERM` environment variable
         return new AdbShellProtocolPtyProcess(
-            await this.#adb.createSocket(`shell,v2,pty:${command?.join(" ")}`),
+            await this.#adb.createSocket(`shell,v2,pty:${command}`),
         );
     }
 }

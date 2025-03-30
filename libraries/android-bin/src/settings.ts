@@ -1,7 +1,7 @@
 import type { Adb } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
 
-import { Cmd } from "./cmd.js";
+import { CmdNoneProtocolService } from "./cmd.js";
 import type { SingleUser } from "./utils.js";
 
 export type SettingsNamespace = "system" | "secure" | "global";
@@ -26,11 +26,14 @@ export interface SettingsPutOptions extends SettingsOptions {
 
 // frameworks/base/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
 export class Settings extends AdbServiceBase {
-    #cmd: Cmd;
+    static ServiceName = "settings";
+    static CommandName = "settings";
+
+    #cmd: CmdNoneProtocolService;
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = new Cmd(adb);
+        this.#cmd = new CmdNoneProtocolService(adb, Settings.CommandName);
     }
 
     base(
@@ -39,7 +42,7 @@ export class Settings extends AdbServiceBase {
         options: SettingsOptions | undefined,
         ...args: string[]
     ): Promise<string> {
-        let command = ["settings"];
+        let command = [Settings.ServiceName];
 
         if (options?.user !== undefined) {
             command.push("--user", options.user.toString());
@@ -48,11 +51,7 @@ export class Settings extends AdbServiceBase {
         command.push(verb, namespace);
         command = command.concat(args);
 
-        if (this.#cmd.noneProtocol) {
-            return this.#cmd.noneProtocol.spawnWaitText(command);
-        } else {
-            return this.adb.subprocess.noneProtocol.spawnWaitText(command);
-        }
+        return this.#cmd.spawnWaitText(command);
     }
 
     async get(
