@@ -135,19 +135,19 @@ createDeviceCommand("shell [args...]")
         const ref = new Ref();
 
         const adb = await createAdb(options);
-        const shell = await adb.subprocess.noneProtocol.shell(args);
+        const shell = await adb.subprocess.noneProtocol.pty(args);
 
-        const stdinWriter = shell.stdin.getWriter();
+        const inputWriter = shell.input.getWriter();
 
         process.stdin.setRawMode(true);
         process.stdin.on("data", (data: Uint8Array) => {
-            stdinWriter.write(data).catch((e) => {
+            inputWriter.write(data).catch((e) => {
                 console.error(e);
                 process.exit(1);
             });
         });
 
-        shell.stdout
+        shell.output
             .pipeTo(
                 new WritableStream({
                     write(chunk) {
@@ -161,10 +161,10 @@ createDeviceCommand("shell [args...]")
             });
 
         shell.exited.then(
-            (code) => {
+            () => {
                 // `process.stdin.on("data")` will keep the process alive,
                 // so call `process.exit` explicitly.
-                process.exit(code);
+                process.exit(0);
             },
             (e) => {
                 console.error(e);
@@ -189,7 +189,7 @@ createDeviceCommand("logcat [args...]")
         process.on("SIGINT", async () => {
             await logcat.kill();
         });
-        await logcat.stdout.pipeTo(
+        await logcat.output.pipeTo(
             new WritableStream({
                 write: (chunk) => {
                     process.stdout.write(chunk);

@@ -1,4 +1,4 @@
-import type { Adb, Process } from "@yume-chan/adb";
+import type { Adb, AdbNoneProtocolProcess } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
 import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
@@ -32,7 +32,7 @@ export class ActivityManager extends AdbServiceBase {
         this.#cmd = new Cmd(adb);
     }
 
-    async #cmdOrSubprocess(args: string[]): Promise<Process> {
+    async #cmdOrSubprocess(args: string[]): Promise<AdbNoneProtocolProcess> {
         if (this.#cmd.noneProtocol) {
             args[0] = "activity";
             return await this.#cmd.noneProtocol.spawn(args);
@@ -54,7 +54,7 @@ export class ActivityManager extends AdbServiceBase {
 
         const process = await this.#cmdOrSubprocess(args);
 
-        const output = await process.stdout
+        const output = await process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());

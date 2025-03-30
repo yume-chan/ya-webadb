@@ -1,4 +1,4 @@
-import type { Adb, ProcessSpawner } from "@yume-chan/adb";
+import type { Adb, AdbNoneProtocolSpawner } from "@yume-chan/adb";
 import type { ScrcpyDisplay, ScrcpyEncoder } from "@yume-chan/scrcpy";
 import { ScrcpyOptions1_15_1 } from "@yume-chan/scrcpy";
 
@@ -13,11 +13,14 @@ import { AdbScrcpyOptions } from "./types.js";
 export class AdbScrcpyOptions1_15_1 extends AdbScrcpyOptions<ScrcpyOptions1_15_1.Init> {
     constructor(
         init: ScrcpyOptions1_15_1.Init,
-        metadata: { version?: string; spawner?: ProcessSpawner | undefined },
+        metadata?: {
+            version?: string;
+            spawner?: AdbNoneProtocolSpawner | undefined;
+        },
     ) {
         super(
-            new ScrcpyOptions1_15_1(init, metadata.version),
-            metadata.spawner,
+            new ScrcpyOptions1_15_1(init, metadata?.version),
+            metadata?.spawner,
         );
     }
 

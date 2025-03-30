@@ -35,24 +35,18 @@ export class AdbPower extends AdbServiceBase {
         return this.reboot("edl");
     }
 
-    async powerOff(): Promise<string> {
-        const result = await this.adb.subprocess.noneProtocol.spawnWaitText([
-            "reboot",
-            "-p",
-        ]);
-        return result.stdout;
+    powerOff(): Promise<string> {
+        return this.adb.subprocess.noneProtocol.spawnWaitText(["reboot", "-p"]);
     }
 
-    async powerButton(longPress = false): Promise<string> {
+    powerButton(longPress = false): Promise<string> {
         const args = ["input", "keyevent"];
         if (longPress) {
             args.push("--longpress");
         }
         args.push("POWER");
 
-        const result =
-            await this.adb.subprocess.noneProtocol.spawnWaitText(args);
-        return result.stdout;
+        return this.adb.subprocess.noneProtocol.spawnWaitText(args);
     }
 
     /**

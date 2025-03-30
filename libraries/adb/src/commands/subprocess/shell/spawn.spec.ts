@@ -7,11 +7,8 @@ import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../../../adb.js";
 
-import {
-    AdbShellProtocolId,
-    AdbShellProtocolPacket,
-    AdbShellProtocolProcess,
-} from "./shell.js";
+import { AdbShellProtocolId, AdbShellProtocolPacket } from "./shared.js";
+import { AdbShellProtocolProcessImpl } from "./spawn.js";
 
 function createMockSocket(
     readable: (controller: ReadableStreamDefaultController<Uint8Array>) => void,
@@ -68,7 +65,7 @@ describe("AdbSubprocessShellProtocol", () => {
         it("should parse data from `socket", () => {
             const [socket] = createMockSocket(() => {});
 
-            const process = new AdbShellProtocolProcess(socket);
+            const process = new AdbShellProtocolProcessImpl(socket);
             const stdoutReader = process.stdout.getReader();
             const stderrReader = process.stderr.getReader();
 
@@ -98,7 +95,7 @@ describe("AdbSubprocessShellProtocol", () => {
                 );
             });
 
-            const process = new AdbShellProtocolProcess(socket);
+            const process = new AdbShellProtocolProcessImpl(socket);
             const stdoutReader = process.stdout.getReader();
             const stderrReader = process.stderr.getReader();
 
@@ -129,7 +126,7 @@ describe("AdbSubprocessShellProtocol", () => {
                     controller.close();
                 });
 
-                const process = new AdbShellProtocolProcess(socket);
+                const process = new AdbShellProtocolProcessImpl(socket);
                 const stdoutReader = process.stdout.getReader();
                 const stderrReader = process.stderr.getReader();
 
@@ -162,7 +159,7 @@ describe("AdbSubprocessShellProtocol", () => {
                     controller.close();
                 });
 
-                const process = new AdbShellProtocolProcess(socket);
+                const process = new AdbShellProtocolProcessImpl(socket);
                 const stdoutReader = process.stdout.getReader();
                 const stderrReader = process.stderr.getReader();
 
@@ -199,7 +196,7 @@ describe("AdbSubprocessShellProtocol", () => {
                 controller.close();
             });
 
-            const process = new AdbShellProtocolProcess(socket);
+            const process = new AdbShellProtocolProcessImpl(socket);
             const stdoutReader = process.stdout.getReader();
             const stderrReader = process.stderr.getReader();
 

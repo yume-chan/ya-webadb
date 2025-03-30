@@ -6,7 +6,7 @@ import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../../../adb.js";
 
-import { AdbNoneProtocolProcess } from "./none.js";
+import { AdbNoneProtocolProcessImpl } from "./spawn.js";
 
 describe("AdbSubprocessNoneProtocol", () => {
     describe("stdout", () => {
@@ -27,8 +27,8 @@ describe("AdbSubprocessNoneProtocol", () => {
                 writable: new WritableStream(),
             };
 
-            const process = new AdbNoneProtocolProcess(socket);
-            const reader = process.stdout.getReader();
+            const process = new AdbNoneProtocolProcessImpl(socket);
+            const reader = process.output.getReader();
 
             assert.deepStrictEqual(await reader.read(), {
                 done: false,
@@ -57,8 +57,8 @@ describe("AdbSubprocessNoneProtocol", () => {
                 writable: new WritableStream(),
             };
 
-            const process = new AdbNoneProtocolProcess(socket);
-            const reader = process.stdout.getReader();
+            const process = new AdbNoneProtocolProcessImpl(socket);
+            const reader = process.output.getReader();
 
             assert.deepStrictEqual(await reader.read(), {
                 done: false,
@@ -68,36 +68,6 @@ describe("AdbSubprocessNoneProtocol", () => {
                 done: false,
                 value: new Uint8Array([4, 5, 6]),
             });
-
-            closed.resolve();
-
-            assert.deepStrictEqual(await reader.read(), {
-                done: true,
-                value: undefined,
-            });
-        });
-    });
-
-    describe("stderr", () => {
-        it("should be empty", async () => {
-            const closed = new PromiseResolver<void>();
-            const socket: AdbSocket = {
-                service: "",
-                close: mock.fn(() => {}),
-                closed: closed.promise,
-                readable: new ReadableStream({
-                    async start(controller) {
-                        controller.enqueue(new Uint8Array([1, 2, 3]));
-                        controller.enqueue(new Uint8Array([4, 5, 6]));
-                        await closed.promise;
-                        controller.close();
-                    },
-                }),
-                writable: new WritableStream(),
-            };
-
-            const process = new AdbNoneProtocolProcess(socket);
-            const reader = process.stderr.getReader();
 
             closed.resolve();
 
@@ -119,25 +89,12 @@ describe("AdbSubprocessNoneProtocol", () => {
                 writable: new WritableStream(),
             };
 
-            const process = new AdbNoneProtocolProcess(socket);
+            const process = new AdbNoneProtocolProcessImpl(socket);
 
             closed.resolve();
 
-            assert.strictEqual(await process.exited, 0);
+            assert.strictEqual(await process.exited, undefined);
         });
-    });
-
-    it("`resize` shouldn't throw any error", () => {
-        const socket: AdbSocket = {
-            service: "",
-            close: mock.fn(() => {}),
-            closed: new PromiseResolver<void>().promise,
-            readable: new ReadableStream(),
-            writable: new WritableStream(),
-        };
-
-        const process = new AdbNoneProtocolProcess(socket);
-        assert.doesNotThrow(() => process.resize());
     });
 
     it("`kill` should close `socket`", async () => {
@@ -150,7 +107,7 @@ describe("AdbSubprocessNoneProtocol", () => {
             writable: new WritableStream(),
         };
 
-        const process = new AdbNoneProtocolProcess(socket);
+        const process = new AdbNoneProtocolProcessImpl(socket);
         await process.kill();
         assert.deepEqual(close.mock.callCount(), 1);
     });

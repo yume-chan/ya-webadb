@@ -64,7 +64,7 @@ export class DumpSys extends AdbServiceBase {
         ]);
 
         function getSize(name: string) {
-            const match = result.stdout.match(
+            const match = result.match(
                 new RegExp(`${name}-Free: (\\d+)K / (\\d+)K`),
             );
             if (!match) {
@@ -105,7 +105,7 @@ export class DumpSys extends AdbServiceBase {
             health: DumpSys.Battery.Health.Unknown,
         };
 
-        for (const line of result.stdout.split("\n")) {
+        for (const line of result.split("\n")) {
             const parts = line.split(":").map((part) => part.trim());
             if (parts.length !== 2) {
                 continue;

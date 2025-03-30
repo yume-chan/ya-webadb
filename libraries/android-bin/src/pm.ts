@@ -303,7 +303,7 @@ export class PackageManager extends AdbServiceBase {
         args.push(...apks);
         const result =
             await this.adb.subprocess.noneProtocol.spawnWaitText(args);
-        return result.stdout;
+        return result;
     }
 
     async pushAndInstallStream(
@@ -339,7 +339,7 @@ export class PackageManager extends AdbServiceBase {
         try {
             const output = await this.adb.subprocess.noneProtocol
                 .spawnWaitText(args.map(escapeArg))
-                .then(({ stdout }) => stdout.trim());
+                .then((output) => output.trim());
 
             if (output !== "Success") {
                 throw new Error(output);
@@ -369,7 +369,7 @@ export class PackageManager extends AdbServiceBase {
         args.push("-S", size.toString());
         const process = await this.#cmd.noneProtocol.spawn(args);
 
-        const output = process.stdout
+        const output = process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());
@@ -459,7 +459,7 @@ export class PackageManager extends AdbServiceBase {
         }
 
         const process = await this.#cmdOrSubprocess(args);
-        const reader = process.stdout
+        const reader = process.output
             .pipeThrough(new TextDecoderStream())
             // FIXME: `SplitStringStream` will throw away some data
             // if it doesn't end with a separator. So each chunk of data
@@ -480,7 +480,7 @@ export class PackageManager extends AdbServiceBase {
 
         const process = await this.#cmdOrSubprocess(args);
         const result: string[] = [];
-        for await (const line of process.stdout
+        for await (const line of process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new SplitStringStream("\n"))) {
             if (line.startsWith("package:")) {
@@ -506,7 +506,7 @@ export class PackageManager extends AdbServiceBase {
         }
 
         const process = await this.#cmdOrSubprocess(args);
-        const output = await process.stdout
+        const output = await process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());
@@ -527,7 +527,7 @@ export class PackageManager extends AdbServiceBase {
         args = args.concat(options.intent.build());
 
         const process = await this.#cmdOrSubprocess(args);
-        const output = await process.stdout
+        const output = await process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());
@@ -555,7 +555,7 @@ export class PackageManager extends AdbServiceBase {
         const args = buildInstallArguments("install-create", options);
 
         const process = await this.#cmdOrSubprocess(args);
-        const output = await process.stdout
+        const output = await process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new ConcatStringStream())
             .then((output) => output.trim());
@@ -593,7 +593,7 @@ export class PackageManager extends AdbServiceBase {
         ];
 
         const process = await this.adb.subprocess.noneProtocol.spawn(args);
-        await this.checkResult(process.stdout);
+        await this.checkResult(process.output);
     }
 
     async sessionAddSplitStream(
@@ -615,20 +615,20 @@ export class PackageManager extends AdbServiceBase {
         const process = await this.#cmdOrSubprocess(args);
         await Promise.all([
             stream.pipeTo(process.stdin),
-            this.checkResult(process.stdout),
+            this.checkResult(process.output),
         ]);
     }
 
     async sessionCommit(sessionId: number): Promise<void> {
         const args: string[] = ["pm", "install-commit", sessionId.toString()];
         const process = await this.adb.subprocess.noneProtocol.spawn(args);
-        await this.checkResult(process.stdout);
+        await this.checkResult(process.output);
     }
 
     async sessionAbandon(sessionId: number): Promise<void> {
         const args: string[] = ["pm", "install-abandon", sessionId.toString()];
         const process = await this.adb.subprocess.noneProtocol.spawn(args);
-        await this.checkResult(process.stdout);
+        await this.checkResult(process.output);
     }
 }
 

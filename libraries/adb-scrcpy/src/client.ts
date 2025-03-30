@@ -1,4 +1,4 @@
-import type { Adb, Process } from "@yume-chan/adb";
+import type { Adb, AdbNoneProtocolProcess } from "@yume-chan/adb";
 import { AdbReverseNotSupportedError } from "@yume-chan/adb";
 import type {
     ScrcpyAudioStreamDisabledMetadata,
@@ -67,7 +67,7 @@ export class AdbScrcpyExitedError extends Error {
 
 interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
     options: TOptions;
-    process: Process;
+    process: AdbNoneProtocolProcess;
     stdout: ReadableStream<string>;
 
     videoStream: ReadableStream<Uint8Array> | undefined;
@@ -114,7 +114,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
         options: TOptions,
     ): Promise<AdbScrcpyClient<TOptions>> {
         let connection: AdbScrcpyConnection | undefined;
-        let process: Process | undefined;
+        let process: AdbNoneProtocolProcess | undefined;
 
         try {
             try {
@@ -143,23 +143,23 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             ];
 
             if (options.spawner) {
-                process = await options.spawner.raw(args);
+                process = await options.spawner.spawn(args);
             } else {
                 process = await adb.subprocess.noneProtocol.spawn(args);
             }
 
-            const stdout = process.stdout
+            const output = process.output
                 .pipeThrough(new TextDecoderStream())
                 .pipeThrough(new SplitStringStream("\n"));
 
             // Must read all streams, otherwise the whole connection will be blocked.
-            const output: string[] = [];
+            const lines: string[] = [];
             const abortController = new AbortController();
-            const pipe = stdout
+            const pipe = output
                 .pipeTo(
                     new WritableStream({
                         write(chunk) {
-                            output.push(chunk);
+                            lines.push(chunk);
                         },
                     }),
                     {
@@ -177,7 +177,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
 
             const streams = await Promise.race([
                 process.exited.then(() => {
-                    throw new AdbScrcpyExitedError(output);
+                    throw new AdbScrcpyExitedError(lines);
                 }),
                 connection.getStreams(),
             ]);
@@ -188,7 +188,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             return new AdbScrcpyClient({
                 options,
                 process,
-                stdout: concatStreams(arrayToStream(output), stdout),
+                stdout: concatStreams(arrayToStream(lines), output),
                 videoStream: streams.video,
                 audioStream: streams.audio,
                 controlStream: streams.control,
@@ -228,7 +228,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     }
 
     #options: TOptions;
-    #process: Process;
+    #process: AdbNoneProtocolProcess;
 
     #stdout: ReadableStream<string>;
     get stdout() {

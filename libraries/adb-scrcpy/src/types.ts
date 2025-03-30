@@ -1,4 +1,4 @@
-import type { Adb, ProcessSpawner } from "@yume-chan/adb";
+import type { Adb, AdbNoneProtocolSpawner } from "@yume-chan/adb";
 import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
@@ -11,12 +11,12 @@ import type { AdbScrcpyConnection } from "./connection.js";
 export abstract class AdbScrcpyOptions<
     T extends object,
 > extends ScrcpyOptionsWrapper<T> {
-    #spawner: ProcessSpawner | undefined;
+    #spawner: AdbNoneProtocolSpawner | undefined;
     get spawner() {
         return this.#spawner;
     }
 
-    constructor(base: ScrcpyOptions<T>, spawner?: ProcessSpawner) {
+    constructor(base: ScrcpyOptions<T>, spawner?: AdbNoneProtocolSpawner) {
         super(base);
         this.#spawner = spawner;
     }

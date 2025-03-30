@@ -10,48 +10,14 @@ import {
     StructDeserializeStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import type { StructValue } from "@yume-chan/struct";
-import { buffer, struct, u32, u8 } from "@yume-chan/struct";
 
-import type { Adb, AdbSocket } from "../../../adb.js";
-import { AdbFeature } from "../../../features.js";
-import { encodeUtf8 } from "../../../utils/index.js";
-import type { Process } from "../process.js";
-import type { AdbProcessSpawner } from "../spawner.js";
+import type { AdbSocket } from "../../../adb.js";
 
-export const AdbShellProtocolId = {
-    Stdin: 0,
-    Stdout: 1,
-    Stderr: 2,
-    Exit: 3,
-    CloseStdin: 4,
-    WindowSizeChange: 5,
-} as const;
+import { AdbShellProtocolId, AdbShellProtocolPacket } from "./shared.js";
+import type { AdbShellProtocolProcess } from "./spawner.js";
 
-export type AdbShellProtocolId =
-    (typeof AdbShellProtocolId)[keyof typeof AdbShellProtocolId];
-
-// This packet format is used in both directions.
-export const AdbShellProtocolPacket = struct(
-    {
-        id: u8<AdbShellProtocolId>(),
-        data: buffer(u32),
-    },
-    { littleEndian: true },
-);
-
-type AdbShellProtocolPacket = StructValue<typeof AdbShellProtocolPacket>;
-
-/**
- * Shell v2 a.k.a Shell Protocol
- *
- * Features:
- * * `stderr`: Yes
- * * `exit` exit code: Yes
- * * `resize`: Yes
- */
-export class AdbShellProtocolProcess implements Process {
-    readonly #socket: AdbSocket;
+export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
+    #socket: AdbSocket;
     #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
 
     #stdin: WritableStream<MaybeConsumable<Uint8Array>>;
@@ -69,7 +35,7 @@ export class AdbShellProtocolProcess implements Process {
         return this.#stderr;
     }
 
-    readonly #exited = new PromiseResolver<number>();
+    #exited = new PromiseResolver<number>();
     get exited() {
         return this.#exited.promise;
     }
@@ -136,47 +102,7 @@ export class AdbShellProtocolProcess implements Process {
         });
     }
 
-    async resize(rows: number, cols: number) {
-        await this.#writer.write(
-            AdbShellProtocolPacket.serialize({
-                id: AdbShellProtocolId.WindowSizeChange,
-                // The "correct" format is `${rows}x${cols},${x_pixels}x${y_pixels}`
-                // However, according to https://linux.die.net/man/4/tty_ioctl
-                // `x_pixels` and `y_pixels` are unused, so always sending `0` should be fine.
-                data: encodeUtf8(`${rows}x${cols},0x0\0`),
-            }),
-        );
-    }
-
     kill() {
         return this.#socket.close();
-    }
-}
-
-export class AdbShellProtocolSpawner implements AdbProcessSpawner {
-    #adb: Adb;
-    get adb() {
-        return this.#adb;
-    }
-
-    get isSupported() {
-        return this.#adb.canUseFeature(AdbFeature.ShellV2);
-    }
-
-    constructor(adb: Adb) {
-        this.#adb = adb;
-    }
-
-    async raw(command: string[]) {
-        return new AdbShellProtocolProcess(
-            await this.#adb.createSocket(`shell,v2,raw:${command.join(" ")}`),
-        );
-    }
-
-    async pty(command: string[]) {
-        // TODO: Support setting `XTERM` environment variable
-        return new AdbShellProtocolProcess(
-            await this.#adb.createSocket(`shell,v2,pty:${command.join(" ")}`),
-        );
     }
 }

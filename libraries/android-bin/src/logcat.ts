@@ -442,7 +442,7 @@ export class Logcat extends AdbServiceBase {
         ]);
 
         const result: LogSize[] = [];
-        for await (const line of process.stdout
+        for await (const line of process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new SplitStringStream("\n"))) {
             let match = line.match(Logcat.LOG_SIZE_REGEX_11);
@@ -521,7 +521,7 @@ export class Logcat extends AdbServiceBase {
             // TODO: make `spawn` return synchronously with streams pending
             // so it's easier to chain them.
             const process = await this.adb.subprocess.noneProtocol.spawn(args);
-            return process.stdout;
+            return process.output;
         }).pipeThrough(
             new BufferedTransformStream((stream) => {
                 return deserializeAndroidLogEntry(stream);

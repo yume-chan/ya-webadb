@@ -172,7 +172,7 @@ export class BugReport extends AdbServiceBase {
             // https://cs.android.com/android/platform/superproject/+/master:frameworks/native/cmds/bugreport/bugreport.cpp;drc=9b73bf07d73dbab5b792632e1e233edbad77f5fd;bpv=0;bpt=0
             const process =
                 await this.adb.subprocess.noneProtocol.spawn("bugreport");
-            return process.stdout;
+            return process.output;
         });
     }
 

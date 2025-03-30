@@ -1,4 +1,4 @@
-import type { Adb, ProcessTextResult } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
 
 import { Cmd } from "./cmd.js";
@@ -33,7 +33,7 @@ export class Settings extends AdbServiceBase {
         this.#cmd = new Cmd(adb);
     }
 
-    async base(
+    base(
         verb: string,
         namespace: SettingsNamespace,
         options: SettingsOptions | undefined,
@@ -48,19 +48,11 @@ export class Settings extends AdbServiceBase {
         command.push(verb, namespace);
         command = command.concat(args);
 
-        let result: ProcessTextResult;
         if (this.#cmd.noneProtocol) {
-            result = await this.#cmd.noneProtocol.spawnWaitText(command);
+            return this.#cmd.noneProtocol.spawnWaitText(command);
         } else {
-            result =
-                await this.adb.subprocess.noneProtocol.spawnWaitText(command);
+            return this.adb.subprocess.noneProtocol.spawnWaitText(command);
         }
-
-        if (result.stderr) {
-            throw new Error(result.stderr);
-        }
-
-        return result.stdout;
     }
 
     async get(

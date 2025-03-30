@@ -1,4 +1,4 @@
-import type { ProcessSpawner } from "@yume-chan/adb";
+import type { AdbNoneProtocolSpawner } from "@yume-chan/adb";
 
 import { AdbScrcpyOptions3_1 } from "./3_1.js";
 
@@ -7,7 +7,10 @@ export class AdbScrcpyOptionsLatest<
 > extends AdbScrcpyOptions3_1<TVideo> {
     constructor(
         init: AdbScrcpyOptions3_1.Init<TVideo>,
-        metadata: { version: string; spawner?: ProcessSpawner | undefined },
+        metadata?: {
+            version: string;
+            spawner?: AdbNoneProtocolSpawner | undefined;
+        },
     ) {
         super(init, metadata);
     }
