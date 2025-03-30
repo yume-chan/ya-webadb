@@ -16,7 +16,7 @@ import type { AdbSocket } from "../../../adb.js";
 
 import { AdbShellProtocolId, AdbShellProtocolPacket } from "./shared.js";
 
-export class AdbShellProtocolTerminal {
+export class AdbShellProtocolPtyProcess {
     readonly #socket: AdbSocket;
     #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
 

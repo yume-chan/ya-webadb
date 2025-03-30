@@ -6,7 +6,7 @@ import type {
 
 import type { AdbSocket } from "../../../adb.js";
 
-export class AdbNoneProtocolTerminal {
+export class AdbNoneProtocolPtyProcess {
     readonly #socket: AdbSocket;
 
     get input(): WritableStream<MaybeConsumable<Uint8Array>> {

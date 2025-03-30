@@ -1,8 +1,8 @@
 import type { Adb } from "../../adb.js";
 import { AdbFeature } from "../../features.js";
 
-import { AdbNoneProtocolShellService } from "./none/index.js";
-import { AdbShellProtocolShellService } from "./shell/index.js";
+import { AdbNoneProtocolSubprocessService } from "./none/index.js";
+import { AdbShellProtocolSubprocessService } from "./shell/index.js";
 
 export class AdbSubprocessService {
     #adb: Adb;
@@ -10,23 +10,23 @@ export class AdbSubprocessService {
         return this.#adb;
     }
 
-    #noneProtocol: AdbNoneProtocolShellService;
-    get noneProtocol(): AdbNoneProtocolShellService {
+    #noneProtocol: AdbNoneProtocolSubprocessService;
+    get noneProtocol(): AdbNoneProtocolSubprocessService {
         return this.#noneProtocol;
     }
 
-    #shellProtocol?: AdbShellProtocolShellService;
-    get shellProtocol(): AdbShellProtocolShellService | undefined {
+    #shellProtocol?: AdbShellProtocolSubprocessService;
+    get shellProtocol(): AdbShellProtocolSubprocessService | undefined {
         return this.#shellProtocol;
     }
 
     constructor(adb: Adb) {
         this.#adb = adb;
 
-        this.#noneProtocol = new AdbNoneProtocolShellService(adb);
+        this.#noneProtocol = new AdbNoneProtocolSubprocessService(adb);
 
         if (adb.canUseFeature(AdbFeature.ShellV2)) {
-            this.#shellProtocol = new AdbShellProtocolShellService(adb);
+            this.#shellProtocol = new AdbShellProtocolSubprocessService(adb);
         }
     }
 }
