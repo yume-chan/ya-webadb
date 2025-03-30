@@ -65,31 +65,37 @@ describe("SignedFloat", () => {
 
         dataView.setInt16(0, -0x8000, true);
         assert.strictEqual(
-            SignedFloat.deserialize({
-                runtimeStruct: {} as never,
-                reader: { position: 0, readExactly: () => view },
-                littleEndian: true,
-            }),
+            SignedFloat.deserialize(
+                { position: 0, readExactly: () => view },
+                {
+                    littleEndian: true,
+                    dependencies: {} as never,
+                },
+            ),
             -1,
         );
 
         dataView.setInt16(0, 0, true);
         assert.strictEqual(
-            SignedFloat.deserialize({
-                runtimeStruct: {} as never,
-                reader: { position: 0, readExactly: () => view },
-                littleEndian: true,
-            }),
+            SignedFloat.deserialize(
+                { position: 0, readExactly: () => view },
+                {
+                    littleEndian: true,
+                    dependencies: {} as never,
+                },
+            ),
             0,
         );
 
         dataView.setInt16(0, 0x7fff, true);
         assert.strictEqual(
-            SignedFloat.deserialize({
-                runtimeStruct: {} as never,
-                reader: { position: 0, readExactly: () => view },
-                littleEndian: true,
-            }),
+            SignedFloat.deserialize(
+                { position: 0, readExactly: () => view },
+                {
+                    littleEndian: true,
+                    dependencies: {} as never,
+                },
+            ),
             1,
         );
     });
