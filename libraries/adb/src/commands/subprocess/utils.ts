@@ -22,12 +22,12 @@ export function escapeArg(s: string) {
 export function splitCommand(command: string): string[] {
     const result: string[] = [];
     let quote: string | undefined;
-    let escape = false;
+    let isEscaped = false;
     let start = 0;
 
     for (let i = 0, len = command.length; i < len; i += 1) {
-        if (escape) {
-            escape = false;
+        if (isEscaped) {
+            isEscaped = false;
             continue;
         }
 
@@ -48,12 +48,12 @@ export function splitCommand(command: string): string[] {
                 }
                 break;
             case "\\":
-                escape = true;
+                isEscaped = true;
                 break;
         }
     }
 
-    if (start < command.length - 1) {
+    if (start < command.length) {
         result.push(command.substring(start));
     }
 

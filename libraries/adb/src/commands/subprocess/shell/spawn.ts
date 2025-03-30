@@ -67,6 +67,10 @@ export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
                             case AdbShellProtocolId.Stderr:
                                 await stderrController.enqueue(chunk.data);
                                 break;
+                            default:
+                                // Ignore unknown messages like Google ADB does
+                                // https://cs.android.com/android/platform/superproject/main/+/main:packages/modules/adb/daemon/shell_service.cpp;l=684;drc=61197364367c9e404c7da6900658f1b16c42d0da
+                                break;
                         }
                     },
                 }),

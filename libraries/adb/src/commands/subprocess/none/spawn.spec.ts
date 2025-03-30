@@ -8,7 +8,7 @@ import type { AdbSocket } from "../../../adb.js";
 
 import { AdbNoneProtocolProcessImpl } from "./spawn.js";
 
-describe("AdbSubprocessNoneProtocol", () => {
+describe("AdbNoneProtocolProcessImpl", () => {
     describe("stdout", () => {
         it("should pipe data from `socket`", async () => {
             const closed = new PromiseResolver<void>();

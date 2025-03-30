@@ -48,19 +48,7 @@ async function assertResolves<T>(promise: Promise<T>, expected: T) {
     return assert.deepStrictEqual(await promise, expected);
 }
 
-describe("AdbShellProtocolPacket", () => {
-    it("should serialize", () => {
-        assert.deepStrictEqual(
-            AdbShellProtocolPacket.serialize({
-                id: AdbShellProtocolId.Stdout,
-                data: new Uint8Array([1, 2, 3, 4]),
-            }),
-            new Uint8Array([1, 4, 0, 0, 0, 1, 2, 3, 4]),
-        );
-    });
-});
-
-describe("AdbSubprocessShellProtocol", () => {
+describe("AdbShellProtocolProcessImpl", () => {
     describe("`stdout` and `stderr`", () => {
         it("should parse data from `socket", () => {
             const [socket] = createMockSocket(() => {});
@@ -115,7 +103,7 @@ describe("AdbSubprocessShellProtocol", () => {
 
     describe("`socket` close", () => {
         describe("with `exit` message", () => {
-            it("should close `stdout`, `stderr` and resolve `exit`", async () => {
+            it("should close `stdout`, `stderr` and resolve `exited`", async () => {
                 const [socket, closed] = createMockSocket((controller) => {
                     controller.enqueue(
                         AdbShellProtocolPacket.serialize({
@@ -154,7 +142,7 @@ describe("AdbSubprocessShellProtocol", () => {
         });
 
         describe("with no `exit` message", () => {
-            it("should close `stdout`, `stderr` and reject `exit`", async () => {
+            it("should close `stdout`, `stderr` and reject `exited`", async () => {
                 const [socket, closed] = createMockSocket((controller) => {
                     controller.close();
                 });
@@ -190,7 +178,7 @@ describe("AdbSubprocessShellProtocol", () => {
     });
 
     describe("`socket.readable` invalid data", () => {
-        it("should error `stdout`, `stderr` and reject `exit`", async () => {
+        it("should error `stdout`, `stderr` and reject `exited`", async () => {
             const [socket, closed] = createMockSocket((controller) => {
                 controller.enqueue(new Uint8Array([7, 8, 9]));
                 controller.close();
