@@ -27,18 +27,29 @@ export class AdbShellProtocolSubprocessService extends AdbShellProtocolSpawner {
         this.#adb = adb;
     }
 
-    async pty(
-        command?: string | string[],
-    ): Promise<AdbShellProtocolPtyProcess> {
-        if (command === undefined) {
-            command = "";
-        } else if (Array.isArray(command)) {
-            command = command.join(" ");
+    async pty({
+        command,
+        terminalType,
+    }: {
+        command?: string | string[] | undefined;
+        terminalType?: string;
+    }): Promise<AdbShellProtocolPtyProcess> {
+        let service = "shell,v2,pty";
+
+        if (terminalType) {
+            service += `,TERM=` + terminalType;
         }
 
-        // TODO: Support setting `XTERM` environment variable
+        service += ":";
+
+        if (typeof command === "string") {
+            service += command;
+        } else if (Array.isArray(command)) {
+            service += command.join(" ");
+        }
+
         return new AdbShellProtocolPtyProcess(
-            await this.#adb.createSocket(`shell,v2,pty:${command}`),
+            await this.#adb.createSocket(service),
         );
     }
 }
