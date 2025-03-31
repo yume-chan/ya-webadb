@@ -12,8 +12,8 @@ import { AdbShellProtocolProcessImpl } from "./spawn.js";
 
 function createMockSocket(
     readable: (controller: ReadableStreamDefaultController<Uint8Array>) => void,
-): [AdbSocket, PromiseResolver<void>] {
-    const closed = new PromiseResolver<void>();
+): [AdbSocket, PromiseResolver<undefined>] {
+    const closed = new PromiseResolver<undefined>();
     const socket: AdbSocket = {
         service: "",
         close() {},
@@ -88,7 +88,7 @@ describe("AdbShellProtocolProcessImpl", () => {
             const stderrReader = process.stderr.getReader();
 
             await stdoutReader.cancel();
-            closed.resolve();
+            closed.resolve(undefined);
 
             assertResolves(stderrReader.read(), {
                 done: false,
@@ -127,7 +127,7 @@ describe("AdbShellProtocolProcessImpl", () => {
                     value: new Uint8Array([4, 5, 6]),
                 });
 
-                closed.resolve();
+                closed.resolve(undefined);
 
                 assertResolves(stdoutReader.read(), {
                     done: true,
@@ -160,7 +160,7 @@ describe("AdbShellProtocolProcessImpl", () => {
                     value: new Uint8Array([4, 5, 6]),
                 });
 
-                closed.resolve();
+                closed.resolve(undefined);
 
                 await Promise.all([
                     assertResolves(stdoutReader.read(), {
@@ -197,7 +197,7 @@ describe("AdbShellProtocolProcessImpl", () => {
                 value: new Uint8Array([4, 5, 6]),
             });
 
-            closed.resolve();
+            closed.resolve(undefined);
 
             await Promise.all([
                 assert.rejects(stdoutReader.read()),
