@@ -11,7 +11,6 @@ import {
     TextDecoderStream,
 } from "@yume-chan/stream-extra";
 
-import { NOOP } from "../../../utils/no-op.js";
 import { splitCommand } from "../utils.js";
 
 export interface AdbShellProtocolProcess {
@@ -26,10 +25,16 @@ export interface AdbShellProtocolProcess {
 }
 
 export class AdbShellProtocolSpawner {
-    #spawn: (command: string[]) => Promise<AdbShellProtocolProcess>;
+    readonly #spawn: (
+        command: string[],
+        signal: AbortSignal | undefined,
+    ) => Promise<AdbShellProtocolProcess>;
 
     constructor(
-        spawn: (command: string[]) => Promise<AdbShellProtocolProcess>,
+        spawn: (
+            command: string[],
+            signal: AbortSignal | undefined,
+        ) => Promise<AdbShellProtocolProcess>,
     ) {
         this.#spawn = spawn;
     }
@@ -38,24 +43,17 @@ export class AdbShellProtocolSpawner {
         command: string | string[],
         signal?: AbortSignal,
     ): Promise<AdbShellProtocolProcess> {
+        signal?.throwIfAborted();
+
         if (typeof command === "string") {
             command = splitCommand(command);
         }
 
-        const process = await this.#spawn(command);
+        const process = await this.#spawn(command, signal);
 
-        if (signal) {
-            if (signal.aborted) {
-                void process.exited.catch(NOOP);
-                await process.kill();
-                throw signal.reason;
-            }
-
-            const handleAbort = () => void process.kill();
-            signal.addEventListener("abort", handleAbort);
-            void process.exited.finally(() =>
-                signal.removeEventListener("abort", handleAbort),
-            );
+        if (signal?.aborted) {
+            await process.kill();
+            throw signal.reason;
         }
 
         return process;

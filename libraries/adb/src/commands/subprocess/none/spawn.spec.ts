@@ -9,12 +9,12 @@ import type { AdbSocket } from "../../../adb.js";
 import { AdbNoneProtocolProcessImpl } from "./spawn.js";
 
 describe("AdbNoneProtocolProcessImpl", () => {
-    describe("stdout", () => {
+    describe("output", () => {
         it("should pipe data from `socket`", async () => {
-            const closed = new PromiseResolver<void>();
-            const socket: AdbSocket = {
+            const closed = new PromiseResolver<undefined>();
+            const socket = {
                 service: "",
-                close: mock.fn(() => {}),
+                close: () => {},
                 closed: closed.promise,
                 readable: new ReadableStream({
                     async start(controller) {
@@ -25,7 +25,7 @@ describe("AdbNoneProtocolProcessImpl", () => {
                     },
                 }),
                 writable: new WritableStream(),
-            };
+            } satisfies AdbSocket;
 
             const process = new AdbNoneProtocolProcessImpl(socket);
             const reader = process.output.getReader();
@@ -41,8 +41,8 @@ describe("AdbNoneProtocolProcessImpl", () => {
         });
 
         it("should close when `socket` is closed", async () => {
-            const closed = new PromiseResolver<void>();
-            const socket: AdbSocket = {
+            const closed = new PromiseResolver<undefined>();
+            const socket = {
                 service: "",
                 close: mock.fn(() => {}),
                 closed: closed.promise,
@@ -55,7 +55,7 @@ describe("AdbNoneProtocolProcessImpl", () => {
                     },
                 }),
                 writable: new WritableStream(),
-            };
+            } satisfies AdbSocket;
 
             const process = new AdbNoneProtocolProcessImpl(socket);
             const reader = process.output.getReader();
@@ -69,7 +69,7 @@ describe("AdbNoneProtocolProcessImpl", () => {
                 value: new Uint8Array([4, 5, 6]),
             });
 
-            closed.resolve();
+            closed.resolve(undefined);
 
             assert.deepStrictEqual(await reader.read(), {
                 done: true,
@@ -80,35 +80,35 @@ describe("AdbNoneProtocolProcessImpl", () => {
 
     describe("exit", () => {
         it("should resolve when `socket` closes", async () => {
-            const closed = new PromiseResolver<void>();
-            const socket: AdbSocket = {
+            const closed = new PromiseResolver<undefined>();
+            const socket = {
                 service: "",
-                close: mock.fn(() => {}),
+                close: () => {},
                 closed: closed.promise,
                 readable: new ReadableStream(),
                 writable: new WritableStream(),
-            };
+            } satisfies AdbSocket;
 
             const process = new AdbNoneProtocolProcessImpl(socket);
 
-            closed.resolve();
+            closed.resolve(undefined);
 
             assert.strictEqual(await process.exited, undefined);
         });
     });
 
     it("`kill` should close `socket`", async () => {
-        const close = mock.fn(() => {});
-        const socket: AdbSocket = {
+        const socket = {
             service: "",
-            close,
-            closed: new PromiseResolver<void>().promise,
+            close: mock.fn(() => {}),
+            closed: new PromiseResolver<undefined>().promise,
             readable: new ReadableStream(),
             writable: new WritableStream(),
-        };
+        } satisfies AdbSocket;
 
         const process = new AdbNoneProtocolProcessImpl(socket);
         await process.kill();
-        assert.deepEqual(close.mock.callCount(), 1);
+
+        assert.deepEqual(socket.close.mock.callCount(), 1);
     });
 });

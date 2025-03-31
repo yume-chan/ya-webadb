@@ -1,3 +1,4 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import type {
     ReadableStream,
     WritableStream,
@@ -6,12 +7,13 @@ import type {
 import { MaybeConsumable } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../../../adb.js";
+import type { AdbPtyProcess } from "../pty.js";
 
-export class AdbNoneProtocolPtyProcess {
+export class AdbNoneProtocolPtyProcess implements AdbPtyProcess<undefined> {
     readonly #socket: AdbSocket;
+    readonly #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
 
-    #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
-    #input: MaybeConsumable.WritableStream<Uint8Array>;
+    readonly #input: MaybeConsumable.WritableStream<Uint8Array>;
     get input(): WritableStream<MaybeConsumable<Uint8Array>> {
         return this.#input;
     }
@@ -20,7 +22,7 @@ export class AdbNoneProtocolPtyProcess {
         return this.#socket.readable;
     }
 
-    get exited(): Promise<void> {
+    get exited(): Promise<undefined> {
         return this.#socket.closed;
     }
 
@@ -37,7 +39,7 @@ export class AdbNoneProtocolPtyProcess {
         return this.#writer.write(new Uint8Array([0x03]));
     }
 
-    async kill(): Promise<void> {
-        await this.#socket.close();
+    kill(): MaybePromiseLike<void> {
+        return this.#socket.close();
     }
 }

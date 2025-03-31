@@ -507,7 +507,7 @@ export namespace AdbServerClient {
     export interface ServerConnection
         extends ReadableWritablePair<Uint8Array, MaybeConsumable<Uint8Array>>,
             Closeable {
-        get closed(): Promise<void>;
+        get closed(): Promise<undefined>;
     }
 
     export interface ServerConnector {

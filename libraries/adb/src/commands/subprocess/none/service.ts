@@ -5,18 +5,19 @@ import { AdbNoneProtocolProcessImpl } from "./spawn.js";
 import { AdbNoneProtocolSpawner } from "./spawner.js";
 
 export class AdbNoneProtocolSubprocessService extends AdbNoneProtocolSpawner {
-    #adb: Adb;
+    readonly #adb: Adb;
     get adb(): Adb {
         return this.#adb;
     }
 
     constructor(adb: Adb) {
         super(
-            async (command) =>
+            async (command, signal) =>
                 // `shell,raw:${command}` also triggers raw mode,
                 // But is not supported on Android version <7.
                 new AdbNoneProtocolProcessImpl(
                     await this.#adb.createSocket(`exec:${command.join(" ")}`),
+                    signal,
                 ),
         );
         this.#adb = adb;

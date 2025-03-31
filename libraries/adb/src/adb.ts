@@ -30,7 +30,7 @@ export interface AdbSocket
         Closeable {
     get service(): string;
 
-    get closed(): Promise<void>;
+    get closed(): Promise<undefined>;
 }
 
 export type AdbIncomingSocketHandler = (

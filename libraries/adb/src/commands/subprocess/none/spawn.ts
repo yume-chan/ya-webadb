@@ -1,4 +1,7 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
+import { PromiseResolver } from "@yume-chan/async";
 import type {
+    AbortSignal,
     MaybeConsumable,
     ReadableStream,
     WritableStream,
@@ -19,15 +22,31 @@ export class AdbNoneProtocolProcessImpl implements AdbNoneProtocolProcess {
         return this.#socket.readable;
     }
 
+    readonly #exited = new PromiseResolver<void>();
     get exited(): Promise<void> {
-        return this.#socket.closed;
+        return this.#exited.promise;
     }
 
-    constructor(socket: AdbSocket) {
+    constructor(socket: AdbSocket, signal?: AbortSignal) {
         this.#socket = socket;
+        this.#socket.closed.then(
+            () => this.#exited.resolve(),
+            (e) => this.#exited.reject(e),
+        );
+
+        if (signal) {
+            const handleAbort = () => {
+                this.#socket.close();
+                this.#exited.reject(signal.reason);
+            };
+            signal.addEventListener("abort", handleAbort);
+            void this.exited.finally(() =>
+                signal.removeEventListener("abort", handleAbort),
+            );
+        }
     }
 
-    async kill(): Promise<void> {
-        await this.#socket.close();
+    kill(): MaybePromiseLike<void> {
+        return this.#socket.close();
     }
 }

@@ -1,5 +1,7 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
 import type {
+    AbortSignal,
     PushReadableStreamController,
     ReadableStream,
     WritableStreamDefaultWriter,
@@ -17,30 +19,30 @@ import { AdbShellProtocolId, AdbShellProtocolPacket } from "./shared.js";
 import type { AdbShellProtocolProcess } from "./spawner.js";
 
 export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
-    #socket: AdbSocket;
-    #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
+    readonly #socket: AdbSocket;
+    readonly #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
 
-    #stdin: WritableStream<MaybeConsumable<Uint8Array>>;
+    readonly #stdin: WritableStream<MaybeConsumable<Uint8Array>>;
     get stdin() {
         return this.#stdin;
     }
 
-    #stdout: ReadableStream<Uint8Array>;
+    readonly #stdout: ReadableStream<Uint8Array>;
     get stdout() {
         return this.#stdout;
     }
 
-    #stderr: ReadableStream<Uint8Array>;
+    readonly #stderr: ReadableStream<Uint8Array>;
     get stderr() {
         return this.#stderr;
     }
 
-    #exited = new PromiseResolver<number>();
+    readonly #exited = new PromiseResolver<number>();
     get exited() {
         return this.#exited.promise;
     }
 
-    constructor(socket: AdbSocket) {
+    constructor(socket: AdbSocket, signal?: AbortSignal) {
         this.#socket = socket;
 
         let stdoutController!: PushReadableStreamController<Uint8Array>;
@@ -92,6 +94,17 @@ export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
                 },
             );
 
+        if (signal) {
+            const handleAbort = () => {
+                this.#socket.close();
+                this.#exited.reject(signal.reason);
+            };
+            signal.addEventListener("abort", handleAbort);
+            void this.exited.finally(() =>
+                signal.removeEventListener("abort", handleAbort),
+            );
+        }
+
         this.#writer = this.#socket.writable.getWriter();
 
         this.#stdin = new MaybeConsumable.WritableStream<Uint8Array>({
@@ -106,7 +119,7 @@ export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
         });
     }
 
-    kill() {
+    kill(): MaybePromiseLike<void> {
         return this.#socket.close();
     }
 }

@@ -6,7 +6,7 @@ import { AdbShellProtocolProcessImpl } from "./spawn.js";
 import { AdbShellProtocolSpawner } from "./spawner.js";
 
 export class AdbShellProtocolSubprocessService extends AdbShellProtocolSpawner {
-    #adb: Adb;
+    readonly #adb: Adb;
     get adb() {
         return this.#adb;
     }
@@ -17,11 +17,12 @@ export class AdbShellProtocolSubprocessService extends AdbShellProtocolSpawner {
 
     constructor(adb: Adb) {
         super(
-            async (command) =>
+            async (command, signal) =>
                 new AdbShellProtocolProcessImpl(
                     await this.#adb.createSocket(
                         `shell,v2,raw:${command.join(" ")}`,
                     ),
+                    signal,
                 ),
         );
         this.#adb = adb;

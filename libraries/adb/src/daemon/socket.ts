@@ -54,7 +54,7 @@ export class AdbDaemonSocketController
 
     #closed = false;
 
-    #closedPromise = new PromiseResolver<void>();
+    #closedPromise = new PromiseResolver<undefined>();
     get closed() {
         return this.#closedPromise.promise;
     }
@@ -170,7 +170,7 @@ export class AdbDaemonSocketController
 
     dispose() {
         this.#readableController.close();
-        this.#closedPromise.resolve();
+        this.#closedPromise.resolve(undefined);
     }
 }
 
@@ -200,7 +200,7 @@ export class AdbDaemonSocket implements AdbDaemonSocketInfo, AdbSocket {
         return this.#controller.writable;
     }
 
-    get closed(): Promise<void> {
+    get closed(): Promise<undefined> {
         return this.#controller.closed;
     }
 
