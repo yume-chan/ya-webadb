@@ -15,13 +15,13 @@ import {
     setUint64,
 } from "@yume-chan/no-data-view";
 
-import type { Field } from "./field.js";
-import { field } from "./field.js";
-import type { AsyncExactReadable } from "./readable.js";
 import type {
+    Field,
     FieldByobSerializeContext,
     FieldDeserializeContext,
-} from "./types.js";
+} from "./field/index.js";
+import { field } from "./field/index.js";
+import type { AsyncExactReadable } from "./readable.js";
 
 export interface NumberField<T> extends Field<T, never, never, T> {
     <const U>(infer?: U): Field<U, never, never, T>;

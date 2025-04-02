@@ -34,10 +34,15 @@ export class Uint8ArrayExactReadable implements ExactReadable {
     }
 
     readExactly(length: number): Uint8Array {
+        if (this.#position + length > this.#data.length) {
+            throw new ExactReadableEndedError();
+        }
+
         const result = this.#data.subarray(
             this.#position,
             this.#position + length,
         );
+
         this.#position += length;
         return result;
     }

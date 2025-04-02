@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import type { Field } from "./field.js";
+import type { Field } from "./field/index.js";
 import { s16, s32, s8, u16, u32, u8 } from "./number.js";
 
 function testNumber(

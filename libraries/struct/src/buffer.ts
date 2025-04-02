@@ -1,5 +1,5 @@
-import type { Field } from "./field.js";
-import { field } from "./field.js";
+import type { Field } from "./field/index.js";
+import { field } from "./field/index.js";
 
 export const EmptyUint8Array = new Uint8Array(0);
 
@@ -74,7 +74,7 @@ function _buffer<LengthOmitInit extends string, LengthDependencies, U>(
     converter: Converter<Uint8Array, U>,
 ): Field<U, LengthOmitInit, LengthDependencies, Uint8Array>;
 
-/* @__NO_SIDE_EFFECTS__ */
+/* #__NO_SIDE_EFFECTS__ */
 function _buffer(
     lengthOrField:
         | string

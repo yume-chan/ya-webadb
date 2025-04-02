@@ -1,12 +1,14 @@
 import { bipedal } from "./bipedal.js";
-import type { Field } from "./field.js";
-import type { AsyncExactReadable } from "./readable.js";
-import { ExactReadableEndedError } from "./readable.js";
 import type {
+    Field,
     FieldByobSerializeContext,
     FieldDefaultSerializeContext,
     FieldDeserializeContext,
     FieldDeserializer,
+} from "./field/index.js";
+import type { AsyncExactReadable } from "./readable.js";
+import { ExactReadableEndedError } from "./readable.js";
+import type {
     StructDeserializer,
     StructSerializeContext,
     StructSerializer,
@@ -113,10 +115,7 @@ export function struct<
         extra: options.extra,
         serialize(
             source: FieldsInit<Fields>,
-            bufferOrContext?:
-                | Uint8Array
-                | FieldDefaultSerializeContext
-                | StructSerializeContext,
+            bufferOrContext?: Uint8Array | StructSerializeContext,
         ): Uint8Array | number {
             const temp: Record<string, unknown> = { ...source };
 
@@ -171,18 +170,18 @@ export function struct<
                 index = 0;
             }
 
-            const context: FieldByobSerializeContext = {
+            const context = {
                 buffer,
                 index,
                 littleEndian,
-            };
+            } satisfies FieldByobSerializeContext;
             for (const [index, [key, field]] of fieldList.entries()) {
                 if (buffers[index]) {
                     buffer.set(buffers[index], context.index);
                 } else {
                     field.serialize(temp[key], context);
                 }
-                context.index! += sizes[index]!;
+                context.index += sizes[index]!;
             }
 
             if (externalBuffer) {

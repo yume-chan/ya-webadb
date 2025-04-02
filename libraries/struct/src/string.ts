@@ -1,6 +1,6 @@
 import type { BufferLengthConverter } from "./buffer.js";
 import { buffer } from "./buffer.js";
-import type { Field } from "./field.js";
+import type { Field } from "./field/index.js";
 import { decodeUtf8, encodeUtf8 } from "./utils.js";
 
 export interface String {
