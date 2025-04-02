@@ -37,9 +37,9 @@ export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
         return this.#stderr;
     }
 
-    readonly #exited = new PromiseResolver<number>();
+    readonly #exited: Promise<number>;
     get exited() {
-        return this.#exited.promise;
+        return this.#exited;
     }
 
     constructor(socket: AdbSocket, signal?: AbortSignal) {
@@ -54,6 +54,9 @@ export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
             stderrController = controller;
         });
 
+        const exited = new PromiseResolver<number>();
+        this.#exited = exited.promise;
+
         socket.readable
             .pipeThrough(new StructDeserializeStream(AdbShellProtocolPacket))
             .pipeTo(
@@ -61,7 +64,7 @@ export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
                     write: async (chunk) => {
                         switch (chunk.id) {
                             case AdbShellProtocolId.Exit:
-                                this.#exited.resolve(chunk.data[0]!);
+                                exited.resolve(chunk.data[0]!);
                                 break;
                             case AdbShellProtocolId.Stdout:
                                 await stdoutController.enqueue(chunk.data);
@@ -81,32 +84,31 @@ export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
                 () => {
                     stdoutController.close();
                     stderrController.close();
-                    // If `#exit` has already resolved, this will be a no-op
-                    this.#exited.reject(
+                    // If `exited` has already settled, this will be a no-op
+                    exited.reject(
                         new Error("Socket ended without exit message"),
                     );
                 },
                 (e) => {
                     stdoutController.error(e);
                     stderrController.error(e);
-                    // If `#exit` has already resolved, this will be a no-op
-                    this.#exited.reject(e);
+                    // If `exited` has already settled, this will be a no-op
+                    exited.reject(e);
                 },
             );
 
         if (signal) {
-            const handleAbort = () => {
+            // `signal` won't affect `this.stdout` and `this.stderr`
+            // So remaining data can still be read
+            // (call `controller.error` will discard all pending data)
+
+            signal.addEventListener("abort", () => {
+                exited.reject(signal.reason);
                 this.#socket.close();
-                this.#exited.reject(signal.reason);
-            };
-            signal.addEventListener("abort", handleAbort);
-            void this.exited.finally(() =>
-                signal.removeEventListener("abort", handleAbort),
-            );
+            });
         }
 
         this.#writer = this.#socket.writable.getWriter();
-
         this.#stdin = new MaybeConsumable.WritableStream<Uint8Array>({
             write: async (chunk) => {
                 await this.#writer.write(

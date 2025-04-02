@@ -458,10 +458,7 @@ export class AdbServerClient {
             disconnected,
         );
 
-        transport.disconnected.then(
-            () => waitAbortController.abort(),
-            () => waitAbortController.abort(),
-        );
+        void transport.disconnected.finally(() => waitAbortController.abort());
 
         return transport;
     }

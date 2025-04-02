@@ -41,7 +41,7 @@ export class AdbNoneProtocolSpawner {
         this.#spawn = spawn;
     }
 
-    async spawn(
+    spawn(
         command: string | string[],
         signal?: AbortSignal,
     ): Promise<AdbNoneProtocolProcess> {
@@ -51,14 +51,7 @@ export class AdbNoneProtocolSpawner {
             command = splitCommand(command);
         }
 
-        const process = await this.#spawn(command, signal);
-
-        if (signal?.aborted) {
-            await process.kill();
-            throw signal.reason;
-        }
-
-        return process;
+        return this.#spawn(command, signal);
     }
 
     async spawnWait(command: string | string[]): Promise<Uint8Array> {

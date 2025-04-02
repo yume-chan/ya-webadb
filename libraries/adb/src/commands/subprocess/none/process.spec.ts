@@ -6,7 +6,7 @@ import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../../../adb.js";
 
-import { AdbNoneProtocolProcessImpl } from "./spawn.js";
+import { AdbNoneProtocolProcessImpl } from "./process.js";
 
 describe("AdbNoneProtocolProcessImpl", () => {
     describe("output", () => {

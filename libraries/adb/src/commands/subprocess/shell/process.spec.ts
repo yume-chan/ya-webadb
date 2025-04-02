@@ -7,8 +7,8 @@ import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../../../adb.js";
 
+import { AdbShellProtocolProcessImpl } from "./process.js";
 import { AdbShellProtocolId, AdbShellProtocolPacket } from "./shared.js";
-import { AdbShellProtocolProcessImpl } from "./spawn.js";
 
 function createMockSocket(
     readable: (controller: ReadableStreamDefaultController<Uint8Array>) => void,

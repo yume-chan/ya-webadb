@@ -39,7 +39,7 @@ export class AdbShellProtocolSpawner {
         this.#spawn = spawn;
     }
 
-    async spawn(
+    spawn(
         command: string | string[],
         signal?: AbortSignal,
     ): Promise<AdbShellProtocolProcess> {
@@ -49,14 +49,7 @@ export class AdbShellProtocolSpawner {
             command = splitCommand(command);
         }
 
-        const process = await this.#spawn(command, signal);
-
-        if (signal?.aborted) {
-            await process.kill();
-            throw signal.reason;
-        }
-
-        return process;
+        return this.#spawn(command, signal);
     }
 
     async spawnWait(
