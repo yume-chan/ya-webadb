@@ -35,7 +35,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -69,7 +69,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -125,7 +125,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -165,7 +165,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -199,7 +199,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -227,7 +227,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -271,7 +271,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -296,13 +296,13 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
 
   libraries/no-data-view:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -357,7 +357,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -456,7 +456,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -484,7 +484,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -508,7 +508,7 @@ importers:
         version: 9.22.0
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       eslint:
         specifier: ^9.22.0
         version: 9.22.0
@@ -530,7 +530,7 @@ importers:
     dependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -567,7 +567,7 @@ importers:
     devDependencies:
       '@types/node':
         specifier: ^22.13.10
-        version: 22.13.10
+        version: 22.13.15
       typescript:
         specifier: ^5.8.2
         version: 5.8.2
@@ -906,8 +906,8 @@ packages:
   '@types/node@12.20.55':
     resolution: {integrity: sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ==}
 
-  '@types/node@22.13.10':
-    resolution: {integrity: sha512-I6LPUvlRH+O6VRUqYOcMudhaIdUVWfsjnZavnsraHvpBwaEyMN29ry+0UVJhImYL16xsscu0aske3yA+uPOWfw==}
+  '@types/node@22.13.15':
+    resolution: {integrity: sha512-imAbQEEbVni6i6h6Bd5xkCRwLqFc8hihCsi2GbtDoAtUcAFQ6Zs4pFXTZUUbroTkXdImczWM9AI8eZUuybXE3w==}
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
@@ -2367,7 +2367,7 @@ snapshots:
 
   '@types/node@12.20.55': {}
 
-  '@types/node@22.13.10':
+  '@types/node@22.13.15':
     dependencies:
       undici-types: 6.20.0
 
