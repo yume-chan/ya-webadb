@@ -1,7 +1,7 @@
-import type { Adb, AdbSubprocessWaitResult } from "@yume-chan/adb";
-import { AdbCommandBase } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 
-import { Cmd } from "./cmd.js";
+import { CmdNoneProtocolService } from "./cmd.js";
 import type { SingleUser } from "./utils.js";
 
 export type SettingsNamespace = "system" | "secure" | "global";
@@ -25,21 +25,24 @@ export interface SettingsPutOptions extends SettingsOptions {
 }
 
 // frameworks/base/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
-export class Settings extends AdbCommandBase {
-    #cmd: Cmd;
+export class Settings extends AdbServiceBase {
+    static ServiceName = "settings";
+    static CommandName = "settings";
+
+    #cmd: CmdNoneProtocolService;
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = new Cmd(adb);
+        this.#cmd = new CmdNoneProtocolService(adb, Settings.CommandName);
     }
 
-    async base(
+    base(
         verb: string,
         namespace: SettingsNamespace,
         options: SettingsOptions | undefined,
         ...args: string[]
     ): Promise<string> {
-        let command = ["settings"];
+        let command = [Settings.ServiceName];
 
         if (options?.user !== undefined) {
             command.push("--user", options.user.toString());
@@ -48,21 +51,7 @@ export class Settings extends AdbCommandBase {
         command.push(verb, namespace);
         command = command.concat(args);
 
-        let output: AdbSubprocessWaitResult;
-        if (this.#cmd.supportsCmd) {
-            output = await this.#cmd.spawnAndWait(
-                command[0]!,
-                ...command.slice(1),
-            );
-        } else {
-            output = await this.adb.subprocess.spawnAndWait(command);
-        }
-
-        if (output.stderr) {
-            throw new Error(output.stderr);
-        }
-
-        return output.stdout;
+        return this.#cmd.spawnWaitText(command);
     }
 
     async get(

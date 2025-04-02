@@ -135,19 +135,19 @@ createDeviceCommand("shell [args...]")
         const ref = new Ref();
 
         const adb = await createAdb(options);
-        const shell = await adb.subprocess.shell(args);
+        const shell = await adb.subprocess.noneProtocol.pty(args);
 
-        const stdinWriter = shell.stdin.getWriter();
+        const inputWriter = shell.input.getWriter();
 
         process.stdin.setRawMode(true);
         process.stdin.on("data", (data: Uint8Array) => {
-            stdinWriter.write(data).catch((e) => {
+            inputWriter.write(data).catch((e) => {
                 console.error(e);
                 process.exit(1);
             });
         });
 
-        shell.stdout
+        shell.output
             .pipeTo(
                 new WritableStream({
                     write(chunk) {
@@ -160,11 +160,11 @@ createDeviceCommand("shell [args...]")
                 process.exit(1);
             });
 
-        shell.exit.then(
-            (code) => {
+        shell.exited.then(
+            () => {
                 // `process.stdin.on("data")` will keep the process alive,
                 // so call `process.exit` explicitly.
-                process.exit(code);
+                process.exit(0);
             },
             (e) => {
                 console.error(e);
@@ -181,12 +181,15 @@ createDeviceCommand("logcat [args...]")
     .configureHelp({ showGlobalOptions: true })
     .action(async (args: string[], options: DeviceCommandOptions) => {
         const adb = await createAdb(options);
-        const logcat = await adb.subprocess.spawn(`logcat ${args.join(" ")}`);
+        const logcat = await adb.subprocess.noneProtocol.spawn([
+            "logcat",
+            ...args,
+        ]);
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
         process.on("SIGINT", async () => {
             await logcat.kill();
         });
-        await logcat.stdout.pipeTo(
+        await logcat.output.pipeTo(
             new WritableStream({
                 write: (chunk) => {
                     process.stdout.write(chunk);

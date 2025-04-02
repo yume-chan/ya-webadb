@@ -1,7 +1,7 @@
 // cspell: ignore logcat
 // cspell: ignore usec
 
-import { AdbCommandBase, AdbSubprocessNoneProtocol } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     BufferedTransformStream,
@@ -405,7 +405,7 @@ export interface LogSize {
     maxPayloadSize: number;
 }
 
-export class Logcat extends AdbCommandBase {
+export class Logcat extends AdbServiceBase {
     static logIdToName(id: LogId): string {
         return LogIdName[id]!;
     }
@@ -435,14 +435,14 @@ export class Logcat extends AdbCommandBase {
         /(.*): ring buffer is (.*) (.*)B \((.*) (.*)B consumed, (.*) (.*)B readable\), max entry is (.*) B, max payload is (.*) B/;
 
     async getLogSize(ids?: LogId[]): Promise<LogSize[]> {
-        const { stdout } = await this.adb.subprocess.spawn([
+        const process = await this.adb.subprocess.noneProtocol.spawn([
             "logcat",
             "-g",
             ...(ids ? ["-b", Logcat.joinLogId(ids)] : []),
         ]);
 
         const result: LogSize[] = [];
-        for await (const line of stdout
+        for await (const line of process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new SplitStringStream("\n"))) {
             let match = line.match(Logcat.LOG_SIZE_REGEX_11);
@@ -494,7 +494,7 @@ export class Logcat extends AdbCommandBase {
             args.push("-b", Logcat.joinLogId(ids));
         }
 
-        await this.adb.subprocess.spawnAndWait(args);
+        await this.adb.subprocess.noneProtocol.spawnWaitText(args);
     }
 
     binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {
@@ -520,11 +520,8 @@ export class Logcat extends AdbCommandBase {
 
             // TODO: make `spawn` return synchronously with streams pending
             // so it's easier to chain them.
-            const { stdout } = await this.adb.subprocess.spawn(args, {
-                // PERF: None protocol is 150% faster then Shell protocol
-                protocols: [AdbSubprocessNoneProtocol],
-            });
-            return stdout;
+            const process = await this.adb.subprocess.noneProtocol.spawn(args);
+            return process.output;
         }).pipeThrough(
             new BufferedTransformStream((stream) => {
                 return deserializeAndroidLogEntry(stream);

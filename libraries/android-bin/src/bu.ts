@@ -1,6 +1,5 @@
-import { AdbCommandBase } from "@yume-chan/adb";
+import { AdbServiceBase } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
-import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 export interface AdbBackupOptions {
     user: number;
@@ -18,7 +17,7 @@ export interface AdbRestoreOptions {
     file: ReadableStream<MaybeConsumable<Uint8Array>>;
 }
 
-export class AdbBackup extends AdbCommandBase {
+export class AdbBackup extends AdbServiceBase {
     /**
      * User must confirm backup on device within 60 seconds.
      */
@@ -55,26 +54,19 @@ export class AdbBackup extends AdbCommandBase {
             args.push(...options.packages);
         }
 
-        const process = await this.adb.subprocess.spawn(args);
-        return process.stdout;
+        const process = await this.adb.subprocess.noneProtocol.spawn(args);
+        return process.output;
     }
 
     /**
      * User must enter the password (if any) and
      * confirm restore on device within 60 seconds.
      */
-    async restore(options: AdbRestoreOptions): Promise<string> {
+    restore(options: AdbRestoreOptions): Promise<string> {
         const args = ["bu", "restore"];
         if (options.user !== undefined) {
             args.push("--user", options.user.toString());
         }
-        const process = await this.adb.subprocess.spawn(args);
-        const [output] = await Promise.all([
-            process.stdout
-                .pipeThrough(new TextDecoderStream())
-                .pipeThrough(new ConcatStringStream()),
-            options.file.pipeTo(process.stdin),
-        ]);
-        return output;
+        return this.adb.subprocess.noneProtocol.spawnWaitText(args);
     }
 }

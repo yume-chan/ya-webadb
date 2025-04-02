@@ -3,9 +3,9 @@
 // cspell: ignore keyevent
 // cspell: ignore longpress
 
-import { AdbCommandBase } from "./base.js";
+import { AdbServiceBase } from "./base.js";
 
-export class AdbPower extends AdbCommandBase {
+export class AdbPower extends AdbServiceBase {
     reboot(mode = "") {
         return this.adb.createSocketAndWait(`reboot:${mode}`);
     }
@@ -35,18 +35,18 @@ export class AdbPower extends AdbCommandBase {
         return this.reboot("edl");
     }
 
-    powerOff() {
-        return this.adb.subprocess.spawnAndWaitLegacy(["reboot", "-p"]);
+    powerOff(): Promise<string> {
+        return this.adb.subprocess.noneProtocol.spawnWaitText(["reboot", "-p"]);
     }
 
-    powerButton(longPress = false) {
+    powerButton(longPress = false): Promise<string> {
         const args = ["input", "keyevent"];
         if (longPress) {
             args.push("--longpress");
         }
         args.push("POWER");
 
-        return this.adb.subprocess.spawnAndWaitLegacy(args);
+        return this.adb.subprocess.noneProtocol.spawnWaitText(args);
     }
 
     /**

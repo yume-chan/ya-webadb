@@ -14,7 +14,7 @@ describe("AdbSyncSocket", () => {
                 {
                     service: "",
                     close() {},
-                    closed: Promise.resolve(),
+                    closed: Promise.resolve(undefined),
                     readable: new ReadableStream(),
                     writable: new WritableStream(),
                 },

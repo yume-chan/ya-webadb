@@ -7,12 +7,19 @@ import {
     getDisplays,
     getEncoders,
 } from "./1_22/impl/index.js";
+import type { AdbScrcpyClientOptions } from "./client-options.js";
 import type { AdbScrcpyConnection } from "./connection.js";
 import { AdbScrcpyOptions } from "./types.js";
 
 export class AdbScrcpyOptions1_25 extends AdbScrcpyOptions<ScrcpyOptions1_25.Init> {
-    constructor(init: ScrcpyOptions1_25.Init, version?: string) {
-        super(new ScrcpyOptions1_25(init, version));
+    constructor(
+        init: ScrcpyOptions1_25.Init,
+        clientOptions?: AdbScrcpyClientOptions,
+    ) {
+        super(
+            new ScrcpyOptions1_25(init, clientOptions?.version),
+            clientOptions?.spawner,
+        );
     }
 
     override getEncoders(adb: Adb, path: string): Promise<ScrcpyEncoder[]> {

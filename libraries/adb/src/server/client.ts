@@ -458,10 +458,7 @@ export class AdbServerClient {
             disconnected,
         );
 
-        transport.disconnected.then(
-            () => waitAbortController.abort(),
-            () => waitAbortController.abort(),
-        );
+        void transport.disconnected.finally(() => waitAbortController.abort());
 
         return transport;
     }
@@ -507,7 +504,7 @@ export namespace AdbServerClient {
     export interface ServerConnection
         extends ReadableWritablePair<Uint8Array, MaybeConsumable<Uint8Array>>,
             Closeable {
-        get closed(): Promise<void>;
+        get closed(): Promise<undefined>;
     }
 
     export interface ServerConnector {

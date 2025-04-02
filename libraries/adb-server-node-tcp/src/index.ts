@@ -14,7 +14,7 @@ function nodeSocketToConnection(
 ): AdbServerClient.ServerConnection {
     socket.setNoDelay(true);
 
-    const closed = new Promise<void>((resolve) => {
+    const closed = new Promise<undefined>((resolve) => {
         socket.on("close", resolve);
     });
 

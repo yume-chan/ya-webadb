@@ -151,7 +151,7 @@ export class AdbSync {
             // It may fail if `filename` already exists.
             // Ignore the result.
             // TODO: sync: test push mkdir workaround (need an Android 8 device)
-            await this._adb.subprocess.spawnAndWait([
+            await this._adb.subprocess.noneProtocol.spawnWait([
                 "mkdir",
                 "-p",
                 escapeArg(dirname(options.filename)),
