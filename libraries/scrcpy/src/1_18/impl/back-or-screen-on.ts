@@ -1,19 +1,15 @@
 import type { StructInit } from "@yume-chan/struct";
-import { struct, u8 } from "@yume-chan/struct";
+import { extend, u8 } from "@yume-chan/struct";
 
 import type { AndroidKeyEventAction } from "../../android/index.js";
 import type { ScrcpyBackOrScreenOnControlMessage } from "../../latest.js";
 
 import { PrevImpl } from "./prev.js";
 
-export const BackOrScreenOnControlMessage = /* #__PURE__ */ (() =>
-    struct(
-        {
-            ...PrevImpl.BackOrScreenOnControlMessage.fields,
-            action: u8<AndroidKeyEventAction>(),
-        },
-        { littleEndian: false },
-    ))();
+export const BackOrScreenOnControlMessage = extend(
+    PrevImpl.BackOrScreenOnControlMessage,
+    { action: u8<AndroidKeyEventAction>() },
+);
 
 export type BackOrScreenOnControlMessage = StructInit<
     typeof BackOrScreenOnControlMessage

@@ -1,8 +1,10 @@
 import {
     bipedal,
     buffer,
+    concat,
     decodeUtf8,
     encodeUtf8,
+    extend,
     s16,
     s32,
     s64,
@@ -15,7 +17,7 @@ import {
     u8,
 } from "@yume-chan/struct";
 
-bipedal(function () {});
+bipedal(function* () {});
 buffer(u8);
 decodeUtf8(new Uint8Array());
 encodeUtf8("");
@@ -28,7 +30,13 @@ u16(1);
 u32(1);
 u64(1);
 u8(1);
-struct({}, {});
+struct({}, { littleEndian: true });
+concat(
+    { littleEndian: true },
+    struct({ a: u8 }, { littleEndian: true }),
+    struct({ b: u8 }, { littleEndian: true }),
+);
+extend(struct({ a: u16 }, { littleEndian: true }), { b: buffer(32) });
 
 export * from "@yume-chan/scrcpy";
 export * from "@yume-chan/struct";

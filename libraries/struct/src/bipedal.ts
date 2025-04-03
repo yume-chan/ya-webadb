@@ -20,18 +20,22 @@ function advance<T>(
     }
 }
 
+export type BipedalGenerator<This, T, A extends unknown[]> = (
+    this: This,
+    then: <U>(value: MaybePromiseLike<U>) => Iterable<unknown, U, unknown>,
+    ...args: A
+) => Generator<unknown, T, unknown>;
+
+/* #__NO_SIDE_EFFECTS__ */
 export function bipedal<This, T, A extends unknown[]>(
-    fn: (
-        this: This,
-        then: <U>(value: U | PromiseLike<U>) => Iterable<unknown, U, unknown>,
-        ...args: A
-    ) => Generator<unknown, T, unknown>,
+    fn: BipedalGenerator<This, T, A>,
+    bindThis?: This,
 ): { (this: This, ...args: A): MaybePromiseLike<T> } {
-    return function (this: This, ...args: A) {
+    function result(this: This, ...args: A): MaybePromiseLike<T> {
         const iterator = fn.call(
             this,
             function* <U>(
-                value: U | PromiseLike<U>,
+                value: MaybePromiseLike<U>,
             ): Generator<
                 PromiseLike<U>,
                 U,
@@ -51,5 +55,11 @@ export function bipedal<This, T, A extends unknown[]>(
             ...args,
         ) as never;
         return advance(iterator, undefined);
-    };
+    }
+
+    if (bindThis) {
+        return result.bind(bindThis);
+    } else {
+        return result;
+    }
 }

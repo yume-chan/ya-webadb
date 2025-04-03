@@ -20,6 +20,34 @@ export interface ExactReadable {
     readExactly(length: number): Uint8Array;
 }
 
+export class Uint8ArrayExactReadable implements ExactReadable {
+    #data: Uint8Array;
+    #position: number;
+
+    get position() {
+        return this.#position;
+    }
+
+    constructor(data: Uint8Array) {
+        this.#data = data;
+        this.#position = 0;
+    }
+
+    readExactly(length: number): Uint8Array {
+        if (this.#position + length > this.#data.length) {
+            throw new ExactReadableEndedError();
+        }
+
+        const result = this.#data.subarray(
+            this.#position,
+            this.#position + length,
+        );
+
+        this.#position += length;
+        return result;
+    }
+}
+
 export interface AsyncExactReadable {
     readonly position: number;
 

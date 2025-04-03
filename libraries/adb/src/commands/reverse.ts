@@ -4,6 +4,7 @@ import { BufferedReadableStream } from "@yume-chan/stream-extra";
 import {
     encodeUtf8,
     ExactReadableEndedError,
+    extend,
     string,
     struct,
 } from "@yume-chan/struct";
@@ -49,11 +50,11 @@ export class AdbReverseNotSupportedError extends AdbReverseError {
     }
 }
 
-const AdbReverseErrorResponse = struct(
-    /* #__PURE__ */ (() => AdbReverseStringResponse.fields)(),
+const AdbReverseErrorResponse = extend(
+    AdbReverseStringResponse,
+    {},
     {
-        littleEndian: true,
-        postDeserialize: (value) => {
+        postDeserialize(value) {
             // https://issuetracker.google.com/issues/37066218
             // ADB on Android <9 can't create reverse tunnels when connected wirelessly (ADB over Wi-Fi),
             // and returns this confusing "more than one device/emulator" error.

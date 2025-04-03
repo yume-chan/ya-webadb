@@ -1,6 +1,8 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
+import { Uint8ArrayExactReadable } from "@yume-chan/struct";
+
 import { ScrcpyControlMessageType } from "../../base/index.js";
 
 import { ScrollController, SignedFloat } from "./scroll-controller.js";
@@ -65,30 +67,27 @@ describe("SignedFloat", () => {
 
         dataView.setInt16(0, -0x8000, true);
         assert.strictEqual(
-            SignedFloat.deserialize({
-                runtimeStruct: {} as never,
-                reader: { position: 0, readExactly: () => view },
+            SignedFloat.deserialize(new Uint8ArrayExactReadable(view), {
                 littleEndian: true,
+                dependencies: {} as never,
             }),
             -1,
         );
 
         dataView.setInt16(0, 0, true);
         assert.strictEqual(
-            SignedFloat.deserialize({
-                runtimeStruct: {} as never,
-                reader: { position: 0, readExactly: () => view },
+            SignedFloat.deserialize(new Uint8ArrayExactReadable(view), {
                 littleEndian: true,
+                dependencies: {} as never,
             }),
             0,
         );
 
         dataView.setInt16(0, 0x7fff, true);
         assert.strictEqual(
-            SignedFloat.deserialize({
-                runtimeStruct: {} as never,
-                reader: { position: 0, readExactly: () => view },
+            SignedFloat.deserialize(new Uint8ArrayExactReadable(view), {
                 littleEndian: true,
+                dependencies: {} as never,
             }),
             1,
         );

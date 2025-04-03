@@ -1,37 +1,46 @@
-import type { MaybePromiseLike } from "@yume-chan/async";
-
 import { bipedal } from "./bipedal.js";
-import type { DeserializeContext, Field, SerializeContext } from "./field.js";
-import type { AsyncExactReadable, ExactReadable } from "./readable.js";
+import type {
+    Field,
+    FieldByobSerializeContext,
+    FieldDefaultSerializeContext,
+    FieldDeserializeContext,
+    FieldDeserializer,
+} from "./field/index.js";
+import type { AsyncExactReadable } from "./readable.js";
 import { ExactReadableEndedError } from "./readable.js";
+import type {
+    StructDeserializer,
+    StructSerializeContext,
+    StructSerializer,
+} from "./types.js";
 
-export type FieldsType<
-    T extends Record<string, Field<unknown, string, unknown>>,
-> = {
-    [K in keyof T]: T[K] extends Field<infer TK, string, unknown> ? TK : never;
+export type StructField =
+    | Field<unknown, string, unknown, unknown>
+    | (StructSerializer<unknown> & StructDeserializer<unknown>);
+
+export type StructFields = Record<string, StructField>;
+
+export type FieldsValue<T extends StructFields> = {
+    [K in keyof T]: T[K] extends FieldDeserializer<infer U, unknown>
+        ? U
+        : never;
 };
 
-export type StructInit<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    T extends Struct<any, any, any>,
-> = Omit<
-    FieldsType<T["fields"]>,
-    {
-        [K in keyof T["fields"]]: T["fields"][K] extends Field<
-            unknown,
-            infer U,
-            unknown
-        >
-            ? U
-            : never;
-    }[keyof T["fields"]]
->;
+export type FieldOmitInit<T extends StructField> =
+    T extends Field<unknown, infer U, unknown, unknown>
+        ? string extends U
+            ? never
+            : U
+        : never;
 
-export type StructValue<
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    T extends Struct<any, any, any>,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-> = T extends Struct<any, any, infer P> ? P : never;
+export type FieldsOmitInits<T extends StructFields> = {
+    [K in keyof T]: FieldOmitInit<T[K]>;
+}[keyof T];
+
+export type FieldsInit<T extends StructFields> = Omit<
+    FieldsValue<T>,
+    FieldsOmitInits<T>
+>;
 
 export class StructDeserializeError extends Error {
     constructor(message: string) {
@@ -53,92 +62,125 @@ export class StructEmptyError extends StructDeserializeError {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type StructLike<T> = Struct<any, any, T>;
+export type ExtraToIntersection<
+    Extra extends Record<PropertyKey, unknown> | undefined,
+> = Extra extends undefined ? unknown : Extra;
 
 export interface Struct<
-    T extends Record<string, Field<unknown, string, Partial<FieldsType<T>>>>,
+    Fields extends StructFields,
     Extra extends Record<PropertyKey, unknown> | undefined = undefined,
-    PostDeserialize = FieldsType<T> & Extra,
-> {
-    fields: T;
-    size: number;
+    PostDeserialize = FieldsValue<Fields> & Extra,
+> extends StructSerializer<FieldsInit<Fields>>,
+        StructDeserializer<PostDeserialize> {
+    littleEndian: boolean;
+    fields: Fields;
     extra: Extra;
-
-    serialize(runtimeStruct: StructInit<this>): Uint8Array;
-    serialize(runtimeStruct: StructInit<this>, buffer: Uint8Array): number;
-
-    deserialize(reader: ExactReadable): PostDeserialize;
-    deserialize(reader: AsyncExactReadable): MaybePromiseLike<PostDeserialize>;
 }
 
 /* #__NO_SIDE_EFFECTS__ */
 export function struct<
-    T extends Record<string, Field<unknown, string, Partial<FieldsType<T>>>>,
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-    Extra extends Record<PropertyKey, unknown> = {},
-    PostDeserialize = FieldsType<T> & Extra,
+    Fields extends Record<
+        string,
+        | Field<unknown, string, Partial<FieldsValue<Fields>>, unknown>
+        | (StructSerializer<unknown> & StructDeserializer<unknown>)
+    >,
+    Extra extends Record<PropertyKey, unknown> | undefined = undefined,
+    PostDeserialize = FieldsValue<Fields> & ExtraToIntersection<Extra>,
 >(
-    fields: T,
+    fields: Fields,
     options: {
-        littleEndian?: boolean;
-        extra?: Extra & ThisType<FieldsType<T>>;
-        postDeserialize?: (
-            this: FieldsType<T> & Extra,
-            fields: FieldsType<T> & Extra,
-        ) => PostDeserialize;
+        littleEndian: boolean;
+        extra?: (Extra & ThisType<FieldsValue<Fields>>) | undefined;
+        postDeserialize?:
+            | ((
+                  this: FieldsValue<Fields> & ExtraToIntersection<Extra>,
+                  value: FieldsValue<Fields> & ExtraToIntersection<Extra>,
+              ) => PostDeserialize)
+            | undefined;
     },
-): Struct<T, Extra, PostDeserialize> {
+): Struct<Fields, Extra, PostDeserialize> {
     const fieldList = Object.entries(fields);
     const size = fieldList.reduce((sum, [, field]) => sum + field.size, 0);
 
-    const littleEndian = !!options.littleEndian;
+    const littleEndian = options.littleEndian;
     const extra = options.extra
         ? Object.getOwnPropertyDescriptors(options.extra)
         : undefined;
 
     return {
+        littleEndian,
+        type: "byob",
         fields,
         size,
         extra: options.extra,
         serialize(
-            runtimeStruct: StructInit<Struct<T, Extra, PostDeserialize>>,
-            buffer?: Uint8Array,
+            source: FieldsInit<Fields>,
+            bufferOrContext?: Uint8Array | StructSerializeContext,
         ): Uint8Array | number {
+            const temp: Record<string, unknown> = { ...source };
+
             for (const [key, field] of fieldList) {
-                if (key in runtimeStruct) {
-                    field.preSerialize?.(
-                        runtimeStruct[key as never],
-                        runtimeStruct as never,
-                    );
+                if (key in temp && "init" in field) {
+                    const result = field.init?.(temp[key], temp as never);
+                    if (result !== undefined) {
+                        temp[key] = result;
+                    }
                 }
             }
 
-            const sizes = fieldList.map(
-                ([key, field]) =>
-                    field.dynamicSize?.(runtimeStruct[key as never]) ??
-                    field.size,
-            );
+            const sizes = new Array<number>(fieldList.length);
+            const buffers = new Array<Uint8Array | undefined>(fieldList.length);
+            {
+                const context: FieldDefaultSerializeContext = { littleEndian };
+                for (const [index, [key, field]] of fieldList.entries()) {
+                    if (field.type === "byob") {
+                        sizes[index] = field.size;
+                    } else {
+                        buffers[index] = field.serialize(temp[key], context);
+                        sizes[index] = buffers[index].length;
+                    }
+                }
+            }
+
             const size = sizes.reduce((sum, size) => sum + size, 0);
 
-            let externalBuffer = false;
-            if (buffer) {
-                if (buffer.length < size) {
+            let externalBuffer: boolean;
+            let buffer: Uint8Array;
+            let index: number;
+            if (bufferOrContext instanceof Uint8Array) {
+                if (bufferOrContext.length < size) {
                     throw new Error("Buffer too small");
                 }
-
                 externalBuffer = true;
+                buffer = bufferOrContext;
+                index = 0;
+            } else if (
+                typeof bufferOrContext === "object" &&
+                "buffer" in bufferOrContext
+            ) {
+                externalBuffer = true;
+                buffer = bufferOrContext.buffer;
+                index = bufferOrContext.index ?? 0;
+                if (buffer.length - index < size) {
+                    throw new Error("Buffer too small");
+                }
             } else {
+                externalBuffer = false;
                 buffer = new Uint8Array(size);
+                index = 0;
             }
 
-            const context: SerializeContext = {
+            const context = {
                 buffer,
-                index: 0,
+                index,
                 littleEndian,
-            };
+            } satisfies FieldByobSerializeContext;
             for (const [index, [key, field]] of fieldList.entries()) {
-                field.serialize(runtimeStruct[key as never], context);
+                if (buffers[index]) {
+                    buffer.set(buffers[index], context.index);
+                } else {
+                    field.serialize(temp[key], context);
+                }
                 context.index += sizes[index]!;
             }
 
@@ -149,23 +191,24 @@ export function struct<
             }
         },
         deserialize: bipedal(function* (
-            this: Struct<T, Extra, PostDeserialize>,
+            this: Struct<Fields, Extra, PostDeserialize>,
             then,
             reader: AsyncExactReadable,
         ) {
             const startPosition = reader.position;
 
-            const runtimeStruct = {} as Record<string, unknown>;
-            const context: DeserializeContext<Partial<FieldsType<T>>> = {
-                reader,
-                runtimeStruct: runtimeStruct as never,
+            const result = {} as Record<string, unknown>;
+            const context: FieldDeserializeContext<
+                Partial<FieldsValue<Fields>>
+            > = {
+                dependencies: result as never,
                 littleEndian: littleEndian,
             };
 
             try {
                 for (const [key, field] of fieldList) {
-                    runtimeStruct[key] = yield* then(
-                        field.deserialize(context),
+                    result[key] = yield* then(
+                        field.deserialize(reader, context),
                     );
                 }
             } catch (e) {
@@ -181,16 +224,16 @@ export function struct<
             }
 
             if (extra) {
-                Object.defineProperties(runtimeStruct, extra);
+                Object.defineProperties(result, extra);
             }
 
             if (options.postDeserialize) {
                 return options.postDeserialize.call(
-                    runtimeStruct as never,
-                    runtimeStruct as never,
+                    result as never,
+                    result as never,
                 );
             } else {
-                return runtimeStruct;
+                return result;
             }
         }),
     } as never;

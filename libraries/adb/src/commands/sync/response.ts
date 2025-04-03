@@ -1,5 +1,5 @@
 import { getUint32LittleEndian } from "@yume-chan/no-data-view";
-import type { AsyncExactReadable, StructLike } from "@yume-chan/struct";
+import type { AsyncExactReadable, StructDeserializer } from "@yume-chan/struct";
 import { decodeUtf8, string, struct, u32 } from "@yume-chan/struct";
 
 function encodeAsciiUnchecked(value: string): Uint8Array {
@@ -49,7 +49,7 @@ export const AdbSyncFailResponse = struct(
 export async function adbSyncReadResponse<T>(
     stream: AsyncExactReadable,
     id: number | string,
-    type: StructLike<T>,
+    type: StructDeserializer<T>,
 ): Promise<T> {
     if (typeof id === "string") {
         id = adbSyncEncodeId(id);
@@ -72,7 +72,7 @@ export async function adbSyncReadResponse<T>(
 export async function* adbSyncReadResponses<T>(
     stream: AsyncExactReadable,
     id: number | string,
-    type: StructLike<T>,
+    type: StructDeserializer<T>,
 ): AsyncGenerator<T, void, void> {
     if (typeof id === "string") {
         id = adbSyncEncodeId(id);
