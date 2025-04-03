@@ -2,6 +2,8 @@ import { getUint32LittleEndian } from "@yume-chan/no-data-view";
 import type { AsyncExactReadable, StructDeserializer } from "@yume-chan/struct";
 import { decodeUtf8, string, struct, u32 } from "@yume-chan/struct";
 
+import { unreachable } from "../../utils/no-op.js";
+
 function encodeAsciiUnchecked(value: string): Uint8Array {
     const result = new Uint8Array(value.length);
     for (let i = 0; i < value.length; i += 1) {
@@ -83,7 +85,7 @@ export async function* adbSyncReadResponses<T>(
         switch (getUint32LittleEndian(buffer, 0)) {
             case AdbSyncResponseId.Fail:
                 await AdbSyncFailResponse.deserialize(stream);
-                throw new Error("Unreachable");
+                unreachable();
             case AdbSyncResponseId.Done:
                 // `DONE` responses' size are always same as the request's normal response.
                 //

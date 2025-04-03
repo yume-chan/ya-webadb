@@ -68,7 +68,7 @@ async function getAllKeys() {
  * and stores them in IndexedDB.
  */
 export default class AdbWebCredentialStore implements AdbCredentialStore {
-    #appName: string;
+    readonly #appName: string;
 
     constructor(appName = "Tango") {
         this.#appName = appName;

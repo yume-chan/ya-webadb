@@ -43,7 +43,7 @@ export class AdbDaemonSocketController
     readonly localCreated!: boolean;
     readonly service!: string;
 
-    #readable: ReadableStream<Uint8Array>;
+    readonly #readable: ReadableStream<Uint8Array>;
     #readableController!: PushReadableStreamController<Uint8Array>;
     get readable() {
         return this.#readable;
@@ -54,12 +54,12 @@ export class AdbDaemonSocketController
 
     #closed = false;
 
-    #closedPromise = new PromiseResolver<undefined>();
+    readonly #closedPromise = new PromiseResolver<undefined>();
     get closed() {
         return this.#closedPromise.promise;
     }
 
-    #socket: AdbDaemonSocket;
+    readonly #socket: AdbDaemonSocket;
     get socket() {
         return this.#socket;
     }
@@ -178,7 +178,7 @@ export class AdbDaemonSocketController
  * A duplex stream representing a socket to ADB daemon.
  */
 export class AdbDaemonSocket implements AdbDaemonSocketInfo, AdbSocket {
-    #controller: AdbDaemonSocketController;
+    readonly #controller: AdbDaemonSocketController;
 
     get localId(): number {
         return this.#controller.localId;

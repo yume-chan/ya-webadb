@@ -3,7 +3,7 @@ import { AutoDisposable } from "@yume-chan/event";
 import type { Adb } from "../adb.js";
 
 export class AdbServiceBase extends AutoDisposable {
-    #adb: Adb;
+    readonly #adb: Adb;
     get adb() {
         return this.#adb;
     }

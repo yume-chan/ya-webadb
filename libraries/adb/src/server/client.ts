@@ -112,7 +112,7 @@ export class AdbServerClient {
 
     readonly wireless = new WirelessCommands(this);
     readonly mDns = new MDnsCommands(this);
-    #observerOwner = new AdbServerDeviceObserverOwner(this);
+    readonly #observerOwner = new AdbServerDeviceObserverOwner(this);
 
     constructor(connector: AdbServerClient.ServerConnector) {
         this.connector = connector;

@@ -101,18 +101,21 @@ export class AdbPacketDispatcher implements Closeable {
      */
     readonly #sockets = new Map<number, AdbDaemonSocketController>();
 
-    #writer: WritableStreamDefaultWriter<Consumable<AdbPacketInit>>;
+    readonly #writer: WritableStreamDefaultWriter<Consumable<AdbPacketInit>>;
 
     readonly options: AdbPacketDispatcherOptions;
 
     #closed = false;
-    #disconnected = new PromiseResolver<void>();
+    readonly #disconnected = new PromiseResolver<void>();
     get disconnected() {
         return this.#disconnected.promise;
     }
 
-    #incomingSocketHandlers = new Map<string, AdbIncomingSocketHandler>();
-    #readAbortController = new AbortController();
+    readonly #incomingSocketHandlers = new Map<
+        string,
+        AdbIncomingSocketHandler
+    >();
+    readonly #readAbortController = new AbortController();
 
     constructor(
         connection: ReadableWritablePair<

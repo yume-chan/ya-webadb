@@ -3,7 +3,7 @@
 import type { AdbServerClient } from "../client.js";
 
 export class MDnsCommands {
-    #client: AdbServerClient;
+    readonly #client: AdbServerClient;
 
     constructor(client: AdbServerClient) {
         this.#client = client;

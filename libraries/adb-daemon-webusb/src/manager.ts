@@ -23,7 +23,7 @@ export class AdbDaemonWebUsbDeviceManager {
             ? new AdbDaemonWebUsbDeviceManager(globalThis.navigator.usb)
             : undefined)();
 
-    #usbManager: USB;
+    readonly #usbManager: USB;
 
     /**
      * Create a new instance of {@link AdbDaemonWebUsbDeviceManager} using the specified WebUSB implementation.

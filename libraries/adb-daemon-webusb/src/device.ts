@@ -54,27 +54,27 @@ export function mergeDefaultAdbInterfaceFilter(
 export class AdbDaemonWebUsbConnection
     implements ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
 {
-    #device: AdbDaemonWebUsbDevice;
+    readonly #device: AdbDaemonWebUsbDevice;
     get device() {
         return this.#device;
     }
 
-    #inEndpoint: USBEndpoint;
+    readonly #inEndpoint: USBEndpoint;
     get inEndpoint() {
         return this.#inEndpoint;
     }
 
-    #outEndpoint: USBEndpoint;
+    readonly #outEndpoint: USBEndpoint;
     get outEndpoint() {
         return this.#outEndpoint;
     }
 
-    #readable: ReadableStream<AdbPacketData>;
+    readonly #readable: ReadableStream<AdbPacketData>;
     get readable() {
         return this.#readable;
     }
 
-    #writable: WritableStream<Consumable<AdbPacketInit>>;
+    readonly #writable: WritableStream<Consumable<AdbPacketInit>>;
     get writable() {
         return this.#writable;
     }
@@ -233,15 +233,15 @@ export class AdbDaemonWebUsbConnection
 export class AdbDaemonWebUsbDevice implements AdbDaemonDevice {
     static DeviceBusyError = _DeviceBusyError;
 
-    #interface: UsbInterfaceIdentifier;
-    #usbManager: USB;
+    readonly #interface: UsbInterfaceIdentifier;
+    readonly #usbManager: USB;
 
-    #raw: USBDevice;
+    readonly #raw: USBDevice;
     get raw() {
         return this.#raw;
     }
 
-    #serial: string;
+    readonly #serial: string;
     get serial(): string {
         return this.#serial;
     }

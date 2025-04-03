@@ -9,10 +9,10 @@ import type { AdbBanner } from "./banner.js";
 import type { AdbFrameBuffer } from "./commands/index.js";
 import {
     AdbPower,
-    AdbReverseCommand,
+    AdbReverseService,
     AdbSubprocessService,
     AdbSync,
-    AdbTcpIpCommand,
+    AdbTcpIpService,
     escapeArg,
     framebuffer,
 } from "./commands/index.js";
@@ -61,26 +61,29 @@ export interface AdbTransport extends Closeable {
 }
 
 export class Adb implements Closeable {
-    readonly transport: AdbTransport;
+    readonly #transport: AdbTransport;
+    get transport(): AdbTransport {
+        return this.#transport;
+    }
 
     get serial() {
-        return this.transport.serial;
+        return this.#transport.serial;
     }
 
     get maxPayloadSize() {
-        return this.transport.maxPayloadSize;
+        return this.#transport.maxPayloadSize;
     }
 
     get banner() {
-        return this.transport.banner;
+        return this.#transport.banner;
     }
 
     get disconnected() {
-        return this.transport.disconnected;
+        return this.#transport.disconnected;
     }
 
     public get clientFeatures() {
-        return this.transport.clientFeatures;
+        return this.#transport.clientFeatures;
     }
 
     public get deviceFeatures() {
@@ -89,16 +92,16 @@ export class Adb implements Closeable {
 
     readonly subprocess: AdbSubprocessService;
     readonly power: AdbPower;
-    readonly reverse: AdbReverseCommand;
-    readonly tcpip: AdbTcpIpCommand;
+    readonly reverse: AdbReverseService;
+    readonly tcpip: AdbTcpIpService;
 
     constructor(transport: AdbTransport) {
-        this.transport = transport;
+        this.#transport = transport;
 
         this.subprocess = new AdbSubprocessService(this);
         this.power = new AdbPower(this);
-        this.reverse = new AdbReverseCommand(this);
-        this.tcpip = new AdbTcpIpCommand(this);
+        this.reverse = new AdbReverseService(this);
+        this.tcpip = new AdbTcpIpService(this);
     }
 
     canUseFeature(feature: AdbFeature): boolean {
@@ -112,7 +115,7 @@ export class Adb implements Closeable {
      * Creates a new ADB Socket to the specified service or socket address.
      */
     async createSocket(service: string): Promise<AdbSocket> {
-        return this.transport.connect(service);
+        return this.#transport.connect(service);
     }
 
     async createSocketAndWait(service: string): Promise<string> {
@@ -162,6 +165,6 @@ export class Adb implements Closeable {
     }
 
     async close(): Promise<void> {
-        await this.transport.close();
+        await this.#transport.close();
     }
 }

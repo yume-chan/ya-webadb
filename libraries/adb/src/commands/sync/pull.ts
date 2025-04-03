@@ -1,5 +1,4 @@
-import type { ReadableStream } from "@yume-chan/stream-extra";
-import { PushReadableStream } from "@yume-chan/stream-extra";
+import { ReadableStream } from "@yume-chan/stream-extra";
 import type { StructValue } from "@yume-chan/struct";
 import { buffer, struct, u32 } from "@yume-chan/struct";
 
@@ -52,10 +51,5 @@ export function adbSyncPull(
     socket: AdbSyncSocket,
     path: string,
 ): ReadableStream<Uint8Array> {
-    // TODO: use `ReadableStream.from` when it's supported
-    return new PushReadableStream(async (controller) => {
-        for await (const data of adbSyncPullGenerator(socket, path)) {
-            await controller.enqueue(data);
-        }
-    });
+    return ReadableStream.from(adbSyncPullGenerator(socket, path));
 }

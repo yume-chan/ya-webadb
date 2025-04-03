@@ -26,7 +26,7 @@ export class AlreadyConnectedError extends Error {
 }
 
 export class WirelessCommands {
-    #client: AdbServerClient;
+    readonly #client: AdbServerClient;
 
     constructor(client: AdbServerClient) {
         this.#client = client;

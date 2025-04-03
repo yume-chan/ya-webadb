@@ -51,22 +51,22 @@ export class AdbBanner {
         return new AdbBanner(product, model, device, features);
     }
 
-    #product: string | undefined;
+    readonly #product: string | undefined;
     get product() {
         return this.#product;
     }
 
-    #model: string | undefined;
+    readonly #model: string | undefined;
     get model() {
         return this.#model;
     }
 
-    #device: string | undefined;
+    readonly #device: string | undefined;
     get device() {
         return this.#device;
     }
 
-    #features: AdbFeature[] = [];
+    readonly #features: AdbFeature[] = [];
     get features() {
         return this.#features;
     }

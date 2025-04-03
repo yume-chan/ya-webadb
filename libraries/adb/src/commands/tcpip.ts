@@ -27,7 +27,7 @@ function parsePort(value: string): number | undefined {
     return Number.parseInt(value, 10);
 }
 
-export class AdbTcpIpCommand extends AdbServiceBase {
+export class AdbTcpIpService extends AdbServiceBase {
     async getListenAddresses(): Promise<AdbTcpIpListenAddresses> {
         const serviceListenAddresses = await this.adb.getProp(
             "service.adb.listen_addrs",

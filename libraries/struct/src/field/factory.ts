@@ -9,7 +9,7 @@ import type {
 import { byobFieldSerializer, defaultFieldSerializer } from "./serialize.js";
 import type { Field, FieldDeserializeContext, FieldOptions } from "./types.js";
 
-export type MaybeBipedalFieldDeserializer<T, D> = BipedalGenerator<
+export type BipedalFieldDeserializer<T, D> = BipedalGenerator<
     undefined,
     T,
     [reader: AsyncExactReadable, context: FieldDeserializeContext<D>]
@@ -20,7 +20,7 @@ function _field<T, OmitInit extends string, D, Raw = T>(
     size: number,
     type: "default",
     serialize: DefaultFieldSerializer<Raw>,
-    deserialize: MaybeBipedalFieldDeserializer<T, D>,
+    deserialize: BipedalFieldDeserializer<T, D>,
     options?: FieldOptions<T, OmitInit, D, Raw>,
 ): Field<T, OmitInit, D, Raw>;
 // eslint-disable-next-line @typescript-eslint/max-params
@@ -28,7 +28,7 @@ function _field<T, OmitInit extends string, D, Raw = T>(
     size: number,
     type: "byob",
     serialize: ByobFieldSerializer<Raw>,
-    deserialize: MaybeBipedalFieldDeserializer<T, D>,
+    deserialize: BipedalFieldDeserializer<T, D>,
     options?: FieldOptions<T, OmitInit, D, Raw>,
 ): Field<T, OmitInit, D, Raw>;
 /* #__NO_SIDE_EFFECTS__ */
@@ -37,7 +37,7 @@ function _field<T, OmitInit extends string, D, Raw = T>(
     size: number,
     type: "default" | "byob",
     serialize: DefaultFieldSerializer<Raw> | ByobFieldSerializer<Raw>,
-    deserialize: MaybeBipedalFieldDeserializer<T, D>,
+    deserialize: BipedalFieldDeserializer<T, D>,
     options?: FieldOptions<T, OmitInit, D, Raw>,
 ): Field<T, OmitInit, D, Raw> {
     const field: Field<T, OmitInit, D, Raw> = {

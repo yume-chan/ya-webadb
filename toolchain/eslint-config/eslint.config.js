@@ -25,6 +25,7 @@ export default tslint.config(
                     maxBOF: 0,
                 },
             ],
+            "no-fallthrough": "off",
         },
     },
     ...tslint.configs.recommendedTypeChecked,

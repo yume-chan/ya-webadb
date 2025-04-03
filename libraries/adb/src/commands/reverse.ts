@@ -9,8 +9,10 @@ import {
     struct,
 } from "@yume-chan/struct";
 
-import type { Adb, AdbIncomingSocketHandler } from "../adb.js";
+import type { AdbIncomingSocketHandler } from "../adb.js";
 import { hexToNumber, sequenceEqual } from "../utils/index.js";
+
+import { AdbServiceBase } from "./base.js";
 
 export interface AdbForwardListener {
     deviceSerial: string;
@@ -82,14 +84,8 @@ function decimalToNumber(buffer: Uint8Array) {
 
 const OKAY = encodeUtf8("OKAY");
 
-export class AdbReverseCommand {
-    protected adb: Adb;
-
+export class AdbReverseService extends AdbServiceBase {
     readonly #deviceAddressToLocalAddress = new Map<string, string>();
-
-    constructor(adb: Adb) {
-        this.adb = adb;
-    }
 
     protected async createBufferedStream(service: string) {
         const socket = await this.adb.createSocket(service);

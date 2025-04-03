@@ -5,17 +5,17 @@ import { AdbNoneProtocolSubprocessService } from "./none/index.js";
 import { AdbShellProtocolSubprocessService } from "./shell/index.js";
 
 export class AdbSubprocessService {
-    #adb: Adb;
+    readonly #adb: Adb;
     get adb() {
         return this.#adb;
     }
 
-    #noneProtocol: AdbNoneProtocolSubprocessService;
+    readonly #noneProtocol: AdbNoneProtocolSubprocessService;
     get noneProtocol(): AdbNoneProtocolSubprocessService {
         return this.#noneProtocol;
     }
 
-    #shellProtocol?: AdbShellProtocolSubprocessService;
+    readonly #shellProtocol?: AdbShellProtocolSubprocessService;
     get shellProtocol(): AdbShellProtocolSubprocessService | undefined {
         return this.#shellProtocol;
     }
