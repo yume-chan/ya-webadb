@@ -1,5 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { EventEmitter } from "@yume-chan/event";
+import { StickyEventEmitter } from "@yume-chan/event";
 import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
 import {
     AndroidAvcLevel,
@@ -45,7 +45,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#renderer;
     }
 
-    #sizeChanged = new EventEmitter<{ width: number; height: number }>();
+    #sizeChanged = new StickyEventEmitter<{ width: number; height: number }>();
     get sizeChanged() {
         return this.#sizeChanged.event;
     }

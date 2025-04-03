@@ -1,4 +1,4 @@
-import { EventEmitter } from "@yume-chan/event";
+import { StickyEventEmitter } from "@yume-chan/event";
 import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
 import { ScrcpyVideoCodecId } from "@yume-chan/scrcpy";
 import type {
@@ -61,7 +61,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#framesSkipped;
     }
 
-    #sizeChanged = new EventEmitter<{ width: number; height: number }>();
+    #sizeChanged = new StickyEventEmitter<{ width: number; height: number }>();
     get sizeChanged() {
         return this.#sizeChanged.event;
     }

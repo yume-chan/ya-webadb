@@ -5,20 +5,23 @@ import { Ref } from "../utils/index.js";
 import { AdbServerClient } from "./client.js";
 import type { AdbServerStream } from "./stream.js";
 
-function unorderedRemove<T>(array: T[], index: number) {
+export function unorderedRemove<T>(array: T[], index: number) {
+    if (index < 0 || index >= array.length) {
+        return;
+    }
     array[index] = array[array.length - 1]!;
     array.length -= 1;
 }
 
 export class AdbServerDeviceObserverOwner {
-    current: AdbServerClient.Device[] = [];
+    current: readonly AdbServerClient.Device[] = [];
 
-    #client: AdbServerClient;
+    readonly #client: AdbServerClient;
     #stream: Promise<AdbServerStream> | undefined;
     #observers: {
-        onDeviceAdd: EventEmitter<AdbServerClient.Device[]>;
-        onDeviceRemove: EventEmitter<AdbServerClient.Device[]>;
-        onListChange: EventEmitter<AdbServerClient.Device[]>;
+        onDeviceAdd: EventEmitter<readonly AdbServerClient.Device[]>;
+        onDeviceRemove: EventEmitter<readonly AdbServerClient.Device[]>;
+        onListChange: EventEmitter<readonly AdbServerClient.Device[]>;
         onError: EventEmitter<Error>;
     }[] = [];
 
@@ -27,42 +30,50 @@ export class AdbServerDeviceObserverOwner {
     }
 
     async #receive(stream: AdbServerStream) {
+        const response = await stream.readString();
+        const next = AdbServerClient.parseDeviceList(response);
+
+        const removed = this.current.slice();
+        const added: AdbServerClient.Device[] = [];
+        for (const nextDevice of next) {
+            const index = removed.findIndex(
+                (device) => device.transportId === nextDevice.transportId,
+            );
+
+            if (index === -1) {
+                added.push(nextDevice);
+                continue;
+            }
+
+            unorderedRemove(removed, index);
+        }
+
+        this.current = next;
+
+        if (added.length) {
+            for (const observer of this.#observers) {
+                observer.onDeviceAdd.fire(added);
+            }
+        }
+        if (removed.length) {
+            for (const observer of this.#observers) {
+                observer.onDeviceRemove.fire(removed);
+            }
+        }
+
+        for (const observer of this.#observers) {
+            observer.onListChange.fire(this.current);
+        }
+    }
+
+    async #receiveLoop(stream: AdbServerStream) {
         try {
             while (true) {
-                const response = await stream.readString();
-                const next = AdbServerClient.parseDeviceList(response);
-
-                const added: AdbServerClient.Device[] = [];
-                for (const nextDevice of next) {
-                    const index = this.current.findIndex(
-                        (device) =>
-                            device.transportId === nextDevice.transportId,
-                    );
-                    if (index === -1) {
-                        added.push(nextDevice);
-                        continue;
-                    }
-
-                    unorderedRemove(this.current, index);
-                }
-
-                if (added.length) {
-                    for (const observer of this.#observers) {
-                        observer.onDeviceAdd.fire(added);
-                    }
-                }
-                if (this.current.length) {
-                    for (const observer of this.#observers) {
-                        observer.onDeviceRemove.fire(this.current);
-                    }
-                }
-
-                this.current = next;
-                for (const observer of this.#observers) {
-                    observer.onListChange.fire(this.current);
-                }
+                await this.#receive(stream);
             }
         } catch (e) {
+            this.#stream = undefined;
+
             for (const observer of this.#observers) {
                 observer.onError.fire(e as Error);
             }
@@ -76,7 +87,11 @@ export class AdbServerDeviceObserverOwner {
             { unref: true },
         );
 
-        void this.#receive(stream);
+        // Set `current` and `onListChange` value before returning
+        await this.#receive(stream);
+
+        // Then start receive loop
+        void this.#receiveLoop(stream);
 
         return stream;
     }
@@ -91,55 +106,65 @@ export class AdbServerDeviceObserverOwner {
     async createObserver(
         options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<AdbServerClient.DeviceObserver> {
-        if (options?.signal?.aborted) {
-            throw options.signal.reason;
-        }
+        options?.signal?.throwIfAborted();
 
-        const onDeviceAdd = new EventEmitter<AdbServerClient.Device[]>();
-        const onDeviceRemove = new EventEmitter<AdbServerClient.Device[]>();
-        const onListChange = new StickyEventEmitter<AdbServerClient.Device[]>();
+        const onDeviceAdd = new EventEmitter<
+            readonly AdbServerClient.Device[]
+        >();
+        const onDeviceRemove = new EventEmitter<
+            readonly AdbServerClient.Device[]
+        >();
+        const onListChange = new StickyEventEmitter<
+            readonly AdbServerClient.Device[]
+        >();
         const onError = new StickyEventEmitter<Error>();
 
         const observer = { onDeviceAdd, onDeviceRemove, onListChange, onError };
         // Register `observer` before `#connect`.
-        // Because `#connect` might immediately receive some data
-        // and want to trigger observers
+        // So `#handleObserverStop` knows if there is any observer.
         this.#observers.push(observer);
 
-        this.#stream ??= this.#connect();
-        const stream = await this.#stream;
+        let stream: AdbServerStream;
+        if (!this.#stream) {
+            this.#stream = this.#connect();
 
-        if (options?.signal?.aborted) {
-            await this.#handleObserverStop(stream);
-            throw options.signal.reason;
+            try {
+                stream = await this.#stream;
+            } catch (e) {
+                this.#stream = undefined;
+                throw e;
+            }
+        } else {
+            stream = await this.#stream;
+            onListChange.fire(this.current);
         }
 
         const ref = new Ref(options);
 
         const stop = async () => {
-            const index = self.#observers.indexOf(observer);
-            if (index === -1) {
-                return;
-            }
-
-            unorderedRemove(this.#observers, index);
-
+            unorderedRemove(this.#observers, this.#observers.indexOf(observer));
             await this.#handleObserverStop(stream);
-
             ref.unref();
         };
 
-        options?.signal?.addEventListener("abort", () => void stop());
+        if (options?.signal) {
+            if (options.signal.aborted) {
+                await stop();
+                throw options.signal.reason;
+            }
+
+            options.signal.addEventListener("abort", () => void stop());
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const self = this;
+        const _this = this;
         return {
             onDeviceAdd: onDeviceAdd.event,
             onDeviceRemove: onDeviceRemove.event,
             onListChange: onListChange.event,
             onError: onError.event,
             get current() {
-                return self.current;
+                return _this.current;
             },
             stop,
         };

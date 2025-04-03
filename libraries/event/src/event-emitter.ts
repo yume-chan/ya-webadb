@@ -1,5 +1,5 @@
 import type { Disposable } from "./disposable.js";
-import type { EventListener, RemoveEventListener } from "./event.js";
+import type { Event, EventListener, RemoveEventListener } from "./event.js";
 
 export interface EventListenerInfo<TEvent, TResult = unknown> {
     listener: EventListener<TEvent, unknown, unknown[], TResult>;
@@ -7,17 +7,6 @@ export interface EventListenerInfo<TEvent, TResult = unknown> {
     thisArg: unknown;
 
     args: unknown[];
-}
-
-export interface AddEventListener<TEvent, TResult = unknown> {
-    (
-        listener: EventListener<TEvent, unknown, [], TResult>,
-    ): RemoveEventListener;
-    <TThis, TArgs extends unknown[]>(
-        listener: EventListener<TEvent, TThis, TArgs, TResult>,
-        thisArg: TThis,
-        ...args: TArgs
-    ): RemoveEventListener;
 }
 
 export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
@@ -42,7 +31,7 @@ export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
         return remove;
     }
 
-    event: AddEventListener<TEvent, TResult> = <TThis, TArgs extends unknown[]>(
+    event: Event<TEvent, TResult> = <TThis, TArgs extends unknown[]>(
         listener: EventListener<TEvent, TThis, TArgs, TResult>,
         thisArg?: TThis,
         ...args: TArgs

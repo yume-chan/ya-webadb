@@ -1,4 +1,5 @@
 import type { DeviceObserver } from "@yume-chan/adb";
+import { unorderedRemove } from "@yume-chan/adb";
 import { EventEmitter, StickyEventEmitter } from "@yume-chan/event";
 
 import {
@@ -24,20 +25,26 @@ export class AdbDaemonWebUsbDeviceObserver
         return new AdbDaemonWebUsbDeviceObserver(usb, devices, options);
     }
 
-    #filters: (USBDeviceFilter & UsbInterfaceFilter)[];
-    #exclusionFilters?: USBDeviceFilter[] | undefined;
-    #usbManager: USB;
+    readonly #filters: (USBDeviceFilter & UsbInterfaceFilter)[];
+    readonly #exclusionFilters?: USBDeviceFilter[] | undefined;
+    readonly #usbManager: USB;
 
-    #onDeviceAdd = new EventEmitter<AdbDaemonWebUsbDevice[]>();
+    readonly #onDeviceAdd = new EventEmitter<
+        readonly AdbDaemonWebUsbDevice[]
+    >();
     onDeviceAdd = this.#onDeviceAdd.event;
 
-    #onDeviceRemove = new EventEmitter<AdbDaemonWebUsbDevice[]>();
+    readonly #onDeviceRemove = new EventEmitter<
+        readonly AdbDaemonWebUsbDevice[]
+    >();
     onDeviceRemove = this.#onDeviceRemove.event;
 
-    #onListChange = new StickyEventEmitter<AdbDaemonWebUsbDevice[]>();
+    readonly #onListChange = new StickyEventEmitter<
+        readonly AdbDaemonWebUsbDevice[]
+    >();
     onListChange = this.#onListChange.event;
 
-    current: AdbDaemonWebUsbDevice[] = [];
+    current: readonly AdbDaemonWebUsbDevice[] = [];
 
     constructor(
         usb: USB,
@@ -47,9 +54,12 @@ export class AdbDaemonWebUsbDeviceObserver
         this.#filters = mergeDefaultAdbInterfaceFilter(options.filters);
         this.#exclusionFilters = options.exclusionFilters;
         this.#usbManager = usb;
+
         this.current = initial
             .map((device) => this.#convertDevice(device))
             .filter((device) => !!device);
+        // Fire `onListChange` to set the sticky value
+        this.#onListChange.fire(this.current);
 
         this.#usbManager.addEventListener("connect", this.#handleConnect);
         this.#usbManager.addEventListener("disconnect", this.#handleDisconnect);
@@ -74,8 +84,11 @@ export class AdbDaemonWebUsbDeviceObserver
             return;
         }
 
+        const next = this.current.slice();
+        next.push(device);
+        this.current = next;
+
         this.#onDeviceAdd.fire([device]);
-        this.current.push(device);
         this.#onListChange.fire(this.current);
     };
 
@@ -85,9 +98,12 @@ export class AdbDaemonWebUsbDeviceObserver
         );
         if (index !== -1) {
             const device = this.current[index]!;
+
+            const next = this.current.slice();
+            unorderedRemove(next, index);
+            this.current = next;
+
             this.#onDeviceRemove.fire([device]);
-            this.current[index] = this.current[this.current.length - 1]!;
-            this.current.length -= 1;
             this.#onListChange.fire(this.current);
         }
     };
