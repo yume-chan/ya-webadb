@@ -1,6 +1,6 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable } from "@yume-chan/struct";
+import type { AsyncExactReadable, ExactReadable } from "@yume-chan/struct";
 
 import type {
     ScrcpyControlMessageType,
@@ -8,6 +8,7 @@ import type {
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
     ScrcpyOptions,
+    ScrcpyOptionsListEncoders,
     ScrcpyScrollController,
     ScrcpyVideoStream,
 } from "../base/index.js";
@@ -36,10 +37,10 @@ import {
     setListEncoders,
 } from "./impl/index.js";
 
-export class ScrcpyOptions1_24 implements ScrcpyOptions<Init> {
+export class ScrcpyOptions1_24
+    implements ScrcpyOptions<Init>, ScrcpyOptionsListEncoders
+{
     static readonly Defaults = Defaults;
-
-    readonly version: string;
 
     readonly value: Required<Init>;
 
@@ -54,9 +55,8 @@ export class ScrcpyOptions1_24 implements ScrcpyOptions<Init> {
 
     #ackClipboardHandler: AckClipboardHandler | undefined;
 
-    constructor(init: Init, version = "1.24") {
+    constructor(init: Init) {
         this.value = { ...Defaults, ...init };
-        this.version = version;
 
         if (this.value.control && this.value.clipboardAutosync) {
             this.#clipboard = new ClipboardStream();
@@ -92,7 +92,7 @@ export class ScrcpyOptions1_24 implements ScrcpyOptions<Init> {
 
     async parseDeviceMessage(
         id: number,
-        stream: AsyncExactReadable,
+        stream: ExactReadable | AsyncExactReadable,
     ): Promise<void> {
         if (await this.#clipboard?.parse(id, stream)) {
             return;

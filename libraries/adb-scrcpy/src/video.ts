@@ -1,4 +1,4 @@
-import { EventEmitter } from "@yume-chan/event";
+import { StickyEventEmitter } from "@yume-chan/event";
 import type {
     ScrcpyMediaStreamPacket,
     ScrcpyVideoStreamMetadata,
@@ -27,7 +27,7 @@ export class AdbScrcpyVideoStream {
         return this.#stream;
     }
 
-    #sizeChanged = new EventEmitter<{ width: number; height: number }>();
+    #sizeChanged = new StickyEventEmitter<{ width: number; height: number }>();
     get sizeChanged() {
         return this.#sizeChanged.event;
     }

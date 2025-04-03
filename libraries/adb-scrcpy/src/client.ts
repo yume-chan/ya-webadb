@@ -30,7 +30,7 @@ import {
 import { ExactReadableEndedError } from "@yume-chan/struct";
 
 import type { AdbScrcpyConnection } from "./connection.js";
-import type { AdbScrcpyOptions } from "./types.js";
+import type { AdbScrcpyOptions, AdbScrcpyOptionsGetEncoders } from "./types.js";
 import { AdbScrcpyVideoStream } from "./video.js";
 
 function arrayToStream<T>(array: T[]): ReadableStream<T> {
@@ -68,7 +68,7 @@ export class AdbScrcpyExitedError extends Error {
 interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
     options: TOptions;
     process: AdbNoneProtocolProcess;
-    stdout: ReadableStream<string>;
+    output: ReadableStream<string>;
 
     videoStream: ReadableStream<Uint8Array> | undefined;
     audioStream: ReadableStream<Uint8Array> | undefined;
@@ -188,7 +188,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             return new AdbScrcpyClient({
                 options,
                 process,
-                stdout: concatStreams(arrayToStream(lines), output),
+                output: concatStreams(arrayToStream(lines), output),
                 videoStream: streams.video,
                 audioStream: streams.audio,
                 controlStream: streams.control,
@@ -208,7 +208,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     static getEncoders(
         adb: Adb,
         path: string,
-        options: AdbScrcpyOptions<object>,
+        options: AdbScrcpyOptions<object> & AdbScrcpyOptionsGetEncoders,
     ): Promise<ScrcpyEncoder[]> {
         options.setListEncoders();
         return options.getEncoders(adb, path);
@@ -230,9 +230,9 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     #options: TOptions;
     #process: AdbNoneProtocolProcess;
 
-    #stdout: ReadableStream<string>;
-    get stdout() {
-        return this.#stdout;
+    #output: ReadableStream<string>;
+    get output() {
+        return this.#output;
     }
 
     get exited() {
@@ -290,14 +290,14 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     constructor({
         options,
         process,
-        stdout,
+        output,
         videoStream,
         audioStream,
         controlStream,
     }: AdbScrcpyClientInit<TOptions>) {
         this.#options = options;
         this.#process = process;
-        this.#stdout = stdout;
+        this.#output = output;
 
         this.#videoStream = videoStream
             ? this.#createVideoStream(videoStream)
@@ -349,6 +349,12 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     async #createAudioStream(
         initialStream: ReadableStream<Uint8Array>,
     ): Promise<AdbScrcpyAudioStreamMetadata> {
+        if (!this.#options.parseAudioStreamMetadata) {
+            throw new Error(
+                "parsing audio stream is not supported in this version",
+            );
+        }
+
         const metadata =
             await this.#options.parseAudioStreamMetadata(initialStream);
 

@@ -1,6 +1,6 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable } from "@yume-chan/struct";
+import type { AsyncExactReadable, ExactReadable } from "@yume-chan/struct";
 
 import type {
     ScrcpyBackOrScreenOnControlMessage,
@@ -19,8 +19,6 @@ import type { ScrcpyScrollController } from "./scroll-controller.js";
 import type { ScrcpyVideoStream } from "./video.js";
 
 export interface ScrcpyOptions<T extends object> {
-    get version(): string;
-
     get controlMessageTypes(): readonly ScrcpyControlMessageType[];
 
     value: Required<T>;
@@ -37,10 +35,6 @@ export interface ScrcpyOptions<T extends object> {
 
     parseDisplay(line: string): ScrcpyDisplay | undefined;
 
-    setListEncoders?(): void;
-
-    parseEncoder?(line: string): ScrcpyEncoder | undefined;
-
     parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): MaybePromiseLike<ScrcpyVideoStream>;
@@ -49,7 +43,10 @@ export interface ScrcpyOptions<T extends object> {
         stream: ReadableStream<Uint8Array>,
     ): MaybePromiseLike<ScrcpyAudioStreamMetadata>;
 
-    parseDeviceMessage(id: number, stream: AsyncExactReadable): Promise<void>;
+    parseDeviceMessage(
+        id: number,
+        stream: ExactReadable | AsyncExactReadable,
+    ): Promise<void>;
 
     endDeviceMessageStream(e?: unknown): void;
 
@@ -75,4 +72,10 @@ export interface ScrcpyOptions<T extends object> {
     serializeUHidCreateControlMessage?(
         message: ScrcpyUHidCreateControlMessage,
     ): Uint8Array;
+}
+
+export interface ScrcpyOptionsListEncoders {
+    setListEncoders(): void;
+
+    parseEncoder(line: string): ScrcpyEncoder | undefined;
 }

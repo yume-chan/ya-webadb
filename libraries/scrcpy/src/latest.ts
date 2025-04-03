@@ -3,8 +3,8 @@ import { ScrcpyOptions3_1 } from "./3_1/options.js";
 export class ScrcpyOptionsLatest<
     TVideo extends boolean,
 > extends ScrcpyOptions3_1<TVideo> {
-    constructor(init: ScrcpyOptions3_1.Init<TVideo>, version: string) {
-        super(init, version);
+    constructor(init: ScrcpyOptions3_1.Init<TVideo>) {
+        super(init);
     }
 }
 

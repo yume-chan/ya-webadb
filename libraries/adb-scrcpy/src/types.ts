@@ -3,27 +3,21 @@ import type {
     ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyOptions,
+    ScrcpyOptionsListEncoders,
 } from "@yume-chan/scrcpy";
-import { ScrcpyOptionsWrapper } from "@yume-chan/scrcpy";
 
 import type { AdbScrcpyConnection } from "./connection.js";
 
-export abstract class AdbScrcpyOptions<
-    T extends object,
-> extends ScrcpyOptionsWrapper<T> {
-    #spawner: AdbNoneProtocolSpawner | undefined;
-    get spawner() {
-        return this.#spawner;
-    }
+export interface AdbScrcpyOptions<T extends object> extends ScrcpyOptions<T> {
+    readonly version: string;
 
-    constructor(base: ScrcpyOptions<T>, spawner?: AdbNoneProtocolSpawner) {
-        super(base);
-        this.#spawner = spawner;
-    }
+    readonly spawner: AdbNoneProtocolSpawner | undefined;
 
-    abstract getEncoders(adb: Adb, path: string): Promise<ScrcpyEncoder[]>;
+    getDisplays(adb: Adb, path: string): Promise<ScrcpyDisplay[]>;
 
-    abstract getDisplays(adb: Adb, path: string): Promise<ScrcpyDisplay[]>;
+    createConnection(adb: Adb): AdbScrcpyConnection;
+}
 
-    abstract createConnection(adb: Adb): AdbScrcpyConnection;
+export interface AdbScrcpyOptionsGetEncoders extends ScrcpyOptionsListEncoders {
+    getEncoders(adb: Adb, path: string): Promise<ScrcpyEncoder[]>;
 }

@@ -1,36 +1,35 @@
-import type { Adb } from "@yume-chan/adb";
-import type { ScrcpyDisplay, ScrcpyEncoder } from "@yume-chan/scrcpy";
+import type { Adb, AdbNoneProtocolSpawner } from "@yume-chan/adb";
+import type { ScrcpyDisplay } from "@yume-chan/scrcpy";
 import { ScrcpyOptions1_16 } from "@yume-chan/scrcpy";
 
-import {
-    createConnection,
-    getDisplays,
-    getEncoders,
-} from "./1_15/impl/index.js";
+import { createConnection, getDisplays } from "./1_15/impl/index.js";
 import type { AdbScrcpyClientOptions } from "./client-options.js";
 import type { AdbScrcpyConnection } from "./connection.js";
-import { AdbScrcpyOptions } from "./types.js";
+import type { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyOptions1_16 extends AdbScrcpyOptions<ScrcpyOptions1_16.Init> {
+export class AdbScrcpyOptions1_16
+    extends ScrcpyOptions1_16
+    implements AdbScrcpyOptions<ScrcpyOptions1_16.Init>
+{
+    readonly version: string;
+
+    readonly spawner: AdbNoneProtocolSpawner | undefined;
+
     constructor(
         init: ScrcpyOptions1_16.Init,
         clientOptions?: AdbScrcpyClientOptions,
     ) {
-        super(
-            new ScrcpyOptions1_16(init, clientOptions?.version),
-            clientOptions?.spawner,
-        );
+        super(init);
+
+        this.version = clientOptions?.version ?? "1.16";
+        this.spawner = clientOptions?.spawner;
     }
 
-    override getEncoders(adb: Adb, path: string): Promise<ScrcpyEncoder[]> {
-        return getEncoders(adb, path, this);
-    }
-
-    override getDisplays(adb: Adb, path: string): Promise<ScrcpyDisplay[]> {
+    getDisplays(adb: Adb, path: string): Promise<ScrcpyDisplay[]> {
         return getDisplays(adb, path, this);
     }
 
-    override createConnection(adb: Adb): AdbScrcpyConnection {
+    createConnection(adb: Adb): AdbScrcpyConnection {
         return createConnection(adb, this.value);
     }
 }

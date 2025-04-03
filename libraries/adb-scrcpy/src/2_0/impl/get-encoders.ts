@@ -1,5 +1,9 @@
 import type { Adb } from "@yume-chan/adb";
-import type { ScrcpyEncoder, ScrcpyOptions1_15 } from "@yume-chan/scrcpy";
+import type {
+    ScrcpyEncoder,
+    ScrcpyOptions2_0,
+    ScrcpyOptionsListEncoders,
+} from "@yume-chan/scrcpy";
 
 import { AdbScrcpyClient, AdbScrcpyExitedError } from "../../client.js";
 import type { AdbScrcpyOptions } from "../../types.js";
@@ -7,7 +11,8 @@ import type { AdbScrcpyOptions } from "../../types.js";
 export async function getEncoders(
     adb: Adb,
     path: string,
-    options: AdbScrcpyOptions<Pick<ScrcpyOptions1_15.Init, "tunnelForward">>,
+    options: AdbScrcpyOptions<Pick<ScrcpyOptions2_0.Init, "tunnelForward">> &
+        ScrcpyOptionsListEncoders,
 ): Promise<ScrcpyEncoder[]> {
     try {
         // Similar to `getDisplays`, now the server won't create video sockets,
