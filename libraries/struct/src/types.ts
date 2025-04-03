@@ -33,3 +33,5 @@ export interface StructDeserializer<T> extends FieldDeserializer<T, never> {
 
 export type StructValue<T extends StructDeserializer<unknown>> =
     T extends StructDeserializer<infer P> ? P : never;
+
+export type StructLike<T> = StructSerializer<T> & StructDeserializer<T>;
