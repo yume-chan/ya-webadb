@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/struct
 
+## 2.0.1
+
+### Patch Changes
+
+- 0bcb9b8: Fix `buffer` and `struct` may not have correct size
+
 ## 2.0.0
 
 ### Major Changes

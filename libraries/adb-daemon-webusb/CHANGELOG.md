@@ -1,5 +1,14 @@
 # Change Log - @yume-chan/adb-daemon-webusb
 
+## 2.0.1
+
+### Patch Changes
+
+- Updated dependencies [0bcb9b8]
+    - @yume-chan/struct@2.0.1
+    - @yume-chan/adb@2.0.1
+    - @yume-chan/stream-extra@2.0.1
+
 ## 2.0.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/adb-credential-web
 
+## 2.0.1
+
+### Patch Changes
+
+- @yume-chan/adb@2.0.1
+
 ## 2.0.0
 
 ### Patch Changes

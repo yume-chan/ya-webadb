@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-daemon-webusb",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "Adb daemon transport connection for `@yume-chan/adb` using WebUSB API.",
     "keywords": [
         "webusb",

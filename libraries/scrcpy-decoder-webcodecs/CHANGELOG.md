@@ -1,5 +1,13 @@
 # Change Log - @yume-chan/scrcpy-decoder-webcodecs
 
+## 2.0.1
+
+### Patch Changes
+
+- @yume-chan/scrcpy@2.0.1
+- @yume-chan/stream-extra@2.0.1
+- @yume-chan/scrcpy-decoder-tinyh264@2.0.1
+
 ## 2.0.0
 
 ### Patch Changes
