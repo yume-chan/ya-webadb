@@ -13,9 +13,6 @@ export type StructSerializeContext = Omit<
 >;
 
 export interface StructSerializer<T> extends FieldSerializer<T> {
-    type: "byob";
-    size: number;
-
     serialize(source: T): Uint8Array;
     serialize(source: T, buffer: Uint8Array): number;
     serialize(source: T, context: StructSerializeContext): number;

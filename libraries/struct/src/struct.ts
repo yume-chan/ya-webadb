@@ -100,7 +100,15 @@ export function struct<
     },
 ): Struct<Fields, Extra, PostDeserialize> {
     const fieldList = Object.entries(fields);
-    const size = fieldList.reduce((sum, [, field]) => sum + field.size, 0);
+
+    let size = 0;
+    let byob = true;
+    for (const [, field] of fieldList) {
+        size += field.size;
+        if (byob && field.type !== "byob") {
+            byob = false;
+        }
+    }
 
     const littleEndian = options.littleEndian;
     const extra = options.extra
@@ -109,10 +117,11 @@ export function struct<
 
     return {
         littleEndian,
-        type: "byob",
         fields,
-        size,
         extra: options.extra,
+
+        type: byob ? "byob" : "default",
+        size,
         serialize(
             source: FieldsInit<Fields>,
             bufferOrContext?: Uint8Array | StructSerializeContext,

@@ -99,7 +99,7 @@ function _buffer(
             }
 
             return field(
-                0,
+                lengthOrField,
                 "byob",
                 (value, { buffer, index }) => {
                     buffer.set(value.slice(0, lengthOrField), index);
@@ -131,7 +131,7 @@ function _buffer(
         }
 
         return field(
-            0,
+            lengthOrField,
             "byob",
             (value, { buffer, index }) => {
                 buffer.set(value.slice(0, lengthOrField), index);
