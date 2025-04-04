@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/no-data-view
 
+## 2.0.0
+
+### Patch Changes
+
+- Mark methods as side-effect free
+
 ## 1.0.1
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # Change Log - @yume-chan/stream-extra
 
+## 2.0.0
+
+### Patch Changes
+
+- Updated dependencies [b79df96]
+    - @yume-chan/struct@2.0.0
+
 ## 1.0.1
 
 ### Patch Changes

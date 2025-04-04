@@ -1,5 +1,16 @@
 # Change Log - @yume-chan/scrcpy-decoder-tinyh264
 
+## 2.0.0
+
+### Patch Changes
+
+- Updated dependencies [fe06652]
+- Updated dependencies [05c01ad]
+- Updated dependencies [02f5bd5]
+    - @yume-chan/scrcpy@2.0.0
+    - @yume-chan/event@2.0.0
+    - @yume-chan/stream-extra@2.0.0
+
 ## 1.1.0
 
 ### Patch Changes

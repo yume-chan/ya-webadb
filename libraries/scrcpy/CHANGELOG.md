@@ -1,5 +1,23 @@
 # Change Log - @yume-chan/scrcpy
 
+## 2.0.0
+
+### Major Changes
+
+- fe06652: Move `version` parameter to `AdbScrcpyOptions`
+
+### Minor Changes
+
+- 02f5bd5: Add alias for all AdbScrcpyOptions versions
+
+### Patch Changes
+
+- Updated dependencies [b79df96]
+- Updated dependencies
+    - @yume-chan/struct@2.0.0
+    - @yume-chan/no-data-view@2.0.0
+    - @yume-chan/stream-extra@2.0.0
+
 ## 1.1.0
 
 ### Minor Changes

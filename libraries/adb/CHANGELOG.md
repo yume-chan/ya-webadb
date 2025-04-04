@@ -1,5 +1,25 @@
 # Change Log - @yume-chan/adb
 
+## 2.0.0
+
+### Major Changes
+
+- Redesign subprocess API
+
+### Minor Changes
+
+- 05c01ad: Make `DeviceObserver#onListChange` sticky
+
+### Patch Changes
+
+- Updated dependencies [05c01ad]
+- Updated dependencies [b79df96]
+- Updated dependencies
+    - @yume-chan/event@2.0.0
+    - @yume-chan/struct@2.0.0
+    - @yume-chan/no-data-view@2.0.0
+    - @yume-chan/stream-extra@2.0.0
+
 ## 1.1.0
 
 ### Minor Changes

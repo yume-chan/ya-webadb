@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/event
 
+## 2.0.0
+
+### Minor Changes
+
+- 05c01ad: Make `DeviceObserver#onListChange` sticky
+
 ## 1.0.1
 
 ### Patch Changes

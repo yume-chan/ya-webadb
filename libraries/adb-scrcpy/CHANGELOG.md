@@ -1,5 +1,29 @@
 # Change Log - @yume-chan/adb-scrcpy
 
+## 2.0.0
+
+### Major Changes
+
+- fe06652: Move `version` parameter to `AdbScrcpyOptions`
+
+### Minor Changes
+
+- d51ac8d: Forward `clipboard` stream from options class to `AdbScrcpyClient`
+- 02f5bd5: Add alias for all AdbScrcpyOptions versions
+
+### Patch Changes
+
+- Updated dependencies [fe06652]
+- Updated dependencies
+- Updated dependencies [05c01ad]
+- Updated dependencies [02f5bd5]
+- Updated dependencies [b79df96]
+    - @yume-chan/scrcpy@2.0.0
+    - @yume-chan/adb@2.0.0
+    - @yume-chan/event@2.0.0
+    - @yume-chan/struct@2.0.0
+    - @yume-chan/stream-extra@2.0.0
+
 ## 1.1.0
 
 ### Minor Changes

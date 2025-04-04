@@ -1,5 +1,16 @@
 # Change Log - @yume-chan/struct
 
+## 2.0.0
+
+### Major Changes
+
+- b79df96: Refactor struct package to allow `struct`s to be used as `field`
+
+### Patch Changes
+
+- Updated dependencies
+    - @yume-chan/no-data-view@2.0.0
+
 ## 1.0.1
 
 ### Patch Changes

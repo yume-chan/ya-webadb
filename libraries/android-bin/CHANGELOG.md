@@ -1,5 +1,24 @@
 # Change Log - @yume-chan/android-bin
 
+## 2.0.0
+
+### Major Changes
+
+- Redesign subprocess API
+
+### Minor Changes
+
+- 0f29501: Add `PackageManager.prototype.getPackages` method to get apk paths
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies [05c01ad]
+- Updated dependencies [b79df96]
+    - @yume-chan/adb@2.0.0
+    - @yume-chan/struct@2.0.0
+    - @yume-chan/stream-extra@2.0.0
+
 ## 1.1.0
 
 ### Patch Changes

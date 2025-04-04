@@ -1,5 +1,21 @@
 # Change Log - @yume-chan/adb-daemon-webusb
 
+## 2.0.0
+
+### Minor Changes
+
+- 05c01ad: Make `DeviceObserver#onListChange` sticky
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies [05c01ad]
+- Updated dependencies [b79df96]
+    - @yume-chan/adb@2.0.0
+    - @yume-chan/event@2.0.0
+    - @yume-chan/struct@2.0.0
+    - @yume-chan/stream-extra@2.0.0
+
 ## 1.1.0
 
 ### Patch Changes
