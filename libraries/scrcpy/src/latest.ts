@@ -1,16 +1,16 @@
-import { ScrcpyOptions3_1 } from "./3_1/options.js";
+import { ScrcpyOptions3_2 } from "./3_2/options.js";
 
 export class ScrcpyOptionsLatest<
     TVideo extends boolean,
-> extends ScrcpyOptions3_1<TVideo> {
-    constructor(init: ScrcpyOptions3_1.Init<TVideo>) {
+> extends ScrcpyOptions3_2<TVideo> {
+    constructor(init: ScrcpyOptions3_2.Init<TVideo>) {
         super(init);
     }
 }
 
 export namespace ScrcpyOptionsLatest {
     export type Init<TVideo extends boolean = boolean> =
-        ScrcpyOptions3_1.Init<TVideo>;
+        ScrcpyOptions3_2.Init<TVideo>;
 }
 
 export {
@@ -28,4 +28,4 @@ export {
     SetClipboardControlMessage as ScrcpySetClipboardControlMessage,
     UHidCreateControlMessage as ScrcpyUHidCreateControlMessage,
     UHidOutputDeviceMessage as ScrcpyUHidOutputDeviceMessage,
-} from "./3_1/impl/index.js";
+} from "./3_2/impl/index.js";
