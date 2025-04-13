@@ -10,6 +10,7 @@ import type { AsyncExactReadable } from "./readable.js";
 import { ExactReadableEndedError } from "./readable.js";
 import type {
     StructDeserializer,
+    StructLike,
     StructSerializeContext,
     StructSerializer,
 } from "./types.js";
@@ -82,7 +83,7 @@ export function struct<
     Fields extends Record<
         string,
         | Field<unknown, string, Partial<FieldsValue<Fields>>, unknown>
-        | (StructSerializer<unknown> & StructDeserializer<unknown>)
+        | StructLike<unknown>
     >,
     Extra extends Record<PropertyKey, unknown> | undefined = undefined,
     PostDeserialize = FieldsValue<Fields> & ExtraToIntersection<Extra>,

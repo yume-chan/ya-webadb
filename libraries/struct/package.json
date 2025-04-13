@@ -34,15 +34,15 @@
         "test": "run-test"
     },
     "dependencies": {
-        "@yume-chan/async": "^4.0.2",
+        "@yume-chan/async": "^4.1.2",
         "@yume-chan/no-data-view": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^22.13.10",
+        "@types/node": "^22.14.1",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.5.3",
-        "typescript": "^5.8.2"
+        "typescript": "^5.8.3"
     }
 }
