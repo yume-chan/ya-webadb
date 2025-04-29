@@ -41,7 +41,7 @@
         "source-map-support": "^0.5.21"
     },
     "devDependencies": {
-        "@types/node": "^22.14.1",
+        "@types/node": "^22.15.3",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.5.3",

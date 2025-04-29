@@ -47,7 +47,7 @@ export class AdbServerClient {
             const serial = parts[0]!;
             const state = parts[1]!;
             if (
-                state !== "unauthroized" &&
+                state !== "unauthorized" &&
                 state !== "offline" &&
                 state !== "device"
             ) {
@@ -540,7 +540,7 @@ export namespace AdbServerClient {
         | { tcp: true }
         | undefined;
 
-    export type ConnectionState = "unauthroized" | "offline" | "device";
+    export type ConnectionState = "unauthorized" | "offline" | "device";
 
     export interface Device {
         serial: string;
