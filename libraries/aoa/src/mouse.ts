@@ -48,7 +48,7 @@ export class HidMouse {
         buttons?: number;
         scrollX?: number;
         scrollY?: number;
-    }): Uint8Array {
+    }): Uint8Array<ArrayBuffer> {
         return new Uint8Array([
             report.buttons ?? 0,
             report.movementX ?? 0,

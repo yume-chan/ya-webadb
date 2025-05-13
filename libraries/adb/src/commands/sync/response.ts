@@ -4,7 +4,7 @@ import { decodeUtf8, string, struct, u32 } from "@yume-chan/struct";
 
 import { unreachable } from "../../utils/no-op.js";
 
-function encodeAsciiUnchecked(value: string): Uint8Array {
+function encodeAsciiUnchecked(value: string): Uint8Array<ArrayBuffer> {
     const result = new Uint8Array(value.length);
     for (let i = 0; i < value.length; i += 1) {
         result[i] = value.charCodeAt(i);

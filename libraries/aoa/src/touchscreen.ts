@@ -110,7 +110,7 @@ export class HidTouchScreen {
         this.#fingers.delete(id);
     }
 
-    serializeInputReport(): Uint8Array {
+    serializeInputReport(): Uint8Array<ArrayBuffer> {
         const report = new Uint8Array(1 + 6 * 10);
         report[0] = this.#fingers.size;
         let offset = 1;

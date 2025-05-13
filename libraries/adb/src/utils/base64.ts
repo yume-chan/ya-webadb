@@ -47,7 +47,7 @@ export function calculateBase64EncodedLength(
  * @param input The input buffer
  * @returns The encoded output buffer
  */
-export function encodeBase64(input: Uint8Array): Uint8Array;
+export function encodeBase64(input: Uint8Array): Uint8Array<ArrayBuffer>;
 /**
  * Encode the given input into base64 and write it to the output buffer.
  *
@@ -295,7 +295,7 @@ function encodeBackward(
     }
 }
 
-export function decodeBase64(input: string): Uint8Array {
+export function decodeBase64(input: string): Uint8Array<ArrayBuffer> {
     let padding: number;
     if (input[input.length - 2] === "=") {
         padding = 2;

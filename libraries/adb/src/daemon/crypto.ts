@@ -140,7 +140,9 @@ export function adbGetPublicKeySize() {
     return 4 + 4 + ModulusLengthInBytes + ModulusLengthInBytes + 4;
 }
 
-export function adbGeneratePublicKey(privateKey: Uint8Array): Uint8Array;
+export function adbGeneratePublicKey(
+    privateKey: Uint8Array,
+): Uint8Array<ArrayBuffer>;
 export function adbGeneratePublicKey(
     privateKey: Uint8Array,
     output: Uint8Array,
@@ -287,7 +289,10 @@ export const SHA1_DIGEST_INFO = new Uint8Array([
 // encrypt the given data with its private key)
 // However SubtileCrypto.encrypt() doesn't accept 'RSASSA-PKCS1-v1_5' algorithm
 // So we need to implement the encryption by ourself
-export function rsaSign(privateKey: Uint8Array, data: Uint8Array): Uint8Array {
+export function rsaSign(
+    privateKey: Uint8Array,
+    data: Uint8Array,
+): Uint8Array<ArrayBuffer> {
     const [n, d] = rsaParsePrivateKey(privateKey);
 
     // PKCS#1 padding
