@@ -12,6 +12,7 @@ import type {
 import { AbortController } from "@yume-chan/stream-extra";
 
 import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
+import { Adb } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import type { DeviceObserver as DeviceObserverBase } from "../device-observer.js";
 import type { AdbFeature } from "../features.js";
@@ -465,6 +466,11 @@ export class AdbServerClient {
         void transport.disconnected.finally(() => waitAbortController.abort());
 
         return transport;
+    }
+
+    async createAdb(device: AdbServerClient.DeviceSelector) {
+        const transport = await this.createTransport(device);
+        return new Adb(transport);
     }
 }
 
