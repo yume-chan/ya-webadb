@@ -25,11 +25,11 @@
 
 Tango is a TypeScript re-implementation of ADB (Android Debugging Bridge) client that works in Chromium-based browsers (including Chrome for Android), Node.js, and Electron.
 
-Try it out at https://app.tangoapp.dev
+Try it out at https://tangoapp.dev
 
 ## Documentation
 
-Check the latest documentation at https://docs.tangoapp.dev/
+Check the latest documentation at https://tangoadb.dev/
 
 ## Contribute
 

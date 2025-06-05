@@ -30,7 +30,7 @@ This package is part of [Tango ADB](https://github.com/yume-chan/ya-webadb). Gen
 
 ## Documentation
 
-Check the latest documentation at https://docs.tangoapp.dev/tango/server/
+Check the latest documentation at https://tangoadb.dev/tango/server/
 
 ## Sponsors
 
