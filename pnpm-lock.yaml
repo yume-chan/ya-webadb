@@ -325,8 +325,8 @@ importers:
   libraries/pcm-player:
     devDependencies:
       '@types/audioworklet':
-        specifier: ^0.0.75
-        version: 0.0.75
+        specifier: ^0.0.77
+        version: 0.0.77
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -902,8 +902,8 @@ packages:
   '@tybys/wasm-util@0.9.0':
     resolution: {integrity: sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw==}
 
-  '@types/audioworklet@0.0.75':
-    resolution: {integrity: sha512-Xb35K9bXy+fUl/moqCgoTuvuLWxd2Tro1ua+2j3JzOBzYb5n5bvBry7OKNrw1imObjKufxV5+ZfZ02xFkqJiXw==}
+  '@types/audioworklet@0.0.77':
+    resolution: {integrity: sha512-aPQ0DurtnDRWO3qvu8iK1R0aDlKS7sDOWx7MVhMWkGTmlyfnf50GPKYJlKdq8UP159ntPiqPJ5XZ/2v1R0V0Bw==}
 
   '@types/estree@1.0.7':
     resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
@@ -2469,7 +2469,7 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
-  '@types/audioworklet@0.0.75': {}
+  '@types/audioworklet@0.0.77': {}
 
   '@types/estree@1.0.7': {}
 
