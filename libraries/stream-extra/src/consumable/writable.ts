@@ -1,27 +1,12 @@
-import { Consumable } from "./consumable.js";
-import type { MaybeConsumable } from "./maybe-consumable.js";
+import { Consumable } from "../consumable.js";
 import type {
     QueuingStrategy,
     WritableStreamDefaultController,
-} from "./stream.js";
-import { WritableStream as NativeWritableStream } from "./stream.js";
+    WritableStreamDefaultWriter,
+} from "../stream.js";
+import { WritableStream } from "../stream.js";
 
-export function getValue<T>(value: MaybeConsumable<T>): T {
-    return value instanceof Consumable ? value.value : value;
-}
-
-export function tryConsume<T, R>(
-    value: T,
-    callback: (value: T extends Consumable<infer U> ? U : T) => R,
-): R {
-    if (value instanceof Consumable) {
-        return value.tryConsume(callback);
-    } else {
-        return callback(value as never);
-    }
-}
-
-export interface WritableStreamSink<in T> {
+export interface ConsumableWritableStreamSink<in T> {
     start?(
         controller: WritableStreamDefaultController,
     ): void | PromiseLike<void>;
@@ -33,11 +18,23 @@ export interface WritableStreamSink<in T> {
     close?(): void | PromiseLike<void>;
 }
 
-export class WritableStream<in T> extends NativeWritableStream<
-    MaybeConsumable<T>
+export class ConsumableWritableStream<in T> extends WritableStream<
+    Consumable<T>
 > {
-    constructor(sink: WritableStreamSink<T>, strategy?: QueuingStrategy<T>) {
-        let wrappedStrategy: QueuingStrategy<MaybeConsumable<T>> | undefined;
+    static async write<T>(
+        writer: WritableStreamDefaultWriter<Consumable<T>>,
+        value: T,
+    ) {
+        const consumable = new Consumable(value);
+        await writer.write(consumable);
+        await consumable.consumed;
+    }
+
+    constructor(
+        sink: ConsumableWritableStreamSink<T>,
+        strategy?: QueuingStrategy<T>,
+    ) {
+        let wrappedStrategy: QueuingStrategy<Consumable<T>> | undefined;
         if (strategy) {
             wrappedStrategy = {};
             if ("highWaterMark" in strategy) {
@@ -57,9 +54,9 @@ export class WritableStream<in T> extends NativeWritableStream<
                 start(controller) {
                     return sink.start?.(controller);
                 },
-                async write(chunk, controller) {
-                    await tryConsume(chunk, (chunk) =>
-                        sink.write?.(chunk as T, controller),
+                write(chunk, controller) {
+                    return chunk.tryConsume((chunk) =>
+                        sink.write?.(chunk, controller),
                     );
                 },
                 abort(reason) {
