@@ -30,7 +30,7 @@ export const ADB_SERVER_DEFAULT_FEATURES = /* #__PURE__ */ (() =>
         "sendrecv_v2_lz4",
         "sendrecv_v2_zstd",
         "sendrecv_v2_dry_run_send",
-    ] as AdbFeature[])();
+    ] as readonly AdbFeature[])();
 
 export class AdbServerTransport implements AdbTransport {
     #client: AdbServerClient;

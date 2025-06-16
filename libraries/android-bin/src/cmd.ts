@@ -53,8 +53,9 @@ export class CmdNoneProtocolService extends AdbNoneProtocolSpawner {
                 throw new Error("Unsupported");
             }
 
-            command[0] = fallback;
-            return adb.subprocess.noneProtocol.spawn(command);
+            const fallbackCommand = command.slice();
+            fallbackCommand[0] = fallback;
+            return adb.subprocess.noneProtocol.spawn(fallbackCommand);
         });
 
         this.#supportsCmd = adb.canUseFeature(AdbFeature.Cmd);
@@ -116,8 +117,9 @@ export class CmdShellProtocolService extends AdbShellProtocolSpawner {
                 throw new Error("Unsupported");
             }
 
-            command[0] = fallback;
-            return adb.subprocess.shellProtocol.spawn(command);
+            const fallbackCommand = command.slice();
+            fallbackCommand[0] = fallback;
+            return adb.subprocess.shellProtocol.spawn(fallbackCommand);
         });
 
         this.#adb = adb;

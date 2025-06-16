@@ -35,7 +35,7 @@ export const AdbDefaultInterfaceFilter = {
 } as const satisfies UsbInterfaceFilter;
 
 export function mergeDefaultAdbInterfaceFilter(
-    filters: USBDeviceFilter[] | undefined,
+    filters: readonly USBDeviceFilter[] | undefined,
 ): (USBDeviceFilter & UsbInterfaceFilter)[] {
     if (!filters || filters.length === 0) {
         return [AdbDefaultInterfaceFilter];

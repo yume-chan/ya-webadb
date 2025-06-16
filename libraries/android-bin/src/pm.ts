@@ -231,7 +231,7 @@ export interface PackageManagerUninstallOptions {
      *
      * On Android 10 and lower, only one split name can be specified.
      */
-    splitNames: string[];
+    splitNames: readonly string[];
 }
 
 const PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP: Record<
@@ -298,7 +298,7 @@ export class PackageManager extends AdbServiceBase {
      * @param apks Path to the apk file. It must exist on the device. On Android 10 and lower, only one apk can be specified.
      */
     async install(
-        apks: string[],
+        apks: readonly string[],
         options?: Partial<PackageManagerInstallOptions>,
     ): Promise<string> {
         const args = buildInstallArguments("install", options);

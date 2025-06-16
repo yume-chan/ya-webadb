@@ -90,7 +90,7 @@ export interface LogcatFormatModifiers {
 export interface LogcatOptions {
     dump?: boolean | undefined;
     pid?: number | undefined;
-    ids?: LogId[] | undefined;
+    ids?: readonly LogId[] | undefined;
     tail?: number | Date | undefined;
 }
 
@@ -415,7 +415,7 @@ export class Logcat extends AdbServiceBase {
         return LogId[key as keyof typeof LogId];
     }
 
-    static joinLogId(ids: LogId[]): string {
+    static joinLogId(ids: readonly LogId[]): string {
         return ids.map((id) => Logcat.logIdToName(id)).join(",");
     }
 
@@ -434,7 +434,7 @@ export class Logcat extends AdbServiceBase {
     static readonly LOG_SIZE_REGEX_11: RegExp =
         /(.*): ring buffer is (.*) (.*)B \((.*) (.*)B consumed, (.*) (.*)B readable\), max entry is (.*) B, max payload is (.*) B/;
 
-    async getLogSize(ids?: LogId[]): Promise<LogSize[]> {
+    async getLogSize(ids?: readonly LogId[]): Promise<LogSize[]> {
         const process = await this.adb.subprocess.noneProtocol.spawn([
             "logcat",
             "-g",
@@ -488,7 +488,7 @@ export class Logcat extends AdbServiceBase {
         return result;
     }
 
-    async clear(ids?: LogId[]): Promise<void> {
+    async clear(ids?: readonly LogId[]): Promise<void> {
         const args = ["logcat", "-c"];
         if (ids && ids.length > 0) {
             args.push("-b", Logcat.joinLogId(ids));

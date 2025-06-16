@@ -57,9 +57,9 @@ function concatStreams<T>(...streams: ReadableStream<T>[]): ReadableStream<T> {
 }
 
 export class AdbScrcpyExitedError extends Error {
-    output: string[];
+    output: readonly string[];
 
-    constructor(output: string[]) {
+    constructor(output: readonly string[]) {
         super("scrcpy server exited prematurely");
         this.output = output;
     }

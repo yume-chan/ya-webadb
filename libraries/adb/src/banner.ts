@@ -66,7 +66,7 @@ export class AdbBanner {
         return this.#device;
     }
 
-    readonly #features: AdbFeature[] = [];
+    readonly #features: readonly AdbFeature[] = [];
     get features() {
         return this.#features;
     }
@@ -75,7 +75,7 @@ export class AdbBanner {
         product: string | undefined,
         model: string | undefined,
         device: string | undefined,
-        features: AdbFeature[],
+        features: readonly AdbFeature[],
     ) {
         this.#product = product;
         this.#model = model;

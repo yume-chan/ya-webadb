@@ -1,9 +1,9 @@
 export function buildArguments<T>(
-    commands: string[],
+    commands: readonly string[],
     options: Partial<T> | undefined,
     map: Partial<Record<keyof T, string>>,
 ): string[] {
-    const args = commands;
+    const args = commands.slice();
     if (options) {
         for (const [key, value] of Object.entries(options)) {
             if (value) {

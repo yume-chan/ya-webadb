@@ -32,7 +32,7 @@ export class AdbShellProtocolSubprocessService extends AdbShellProtocolSpawner {
     }
 
     async pty(options?: {
-        command?: string | string[] | undefined;
+        command?: string | readonly string[] | undefined;
         terminalType?: string;
     }): Promise<AdbShellProtocolPtyProcess> {
         let service = "shell,v2,pty";

@@ -39,7 +39,7 @@ export class AdbServerClient {
 
     static parseDeviceList(
         value: string,
-        includeStates: AdbServerClient.ConnectionState[] = [
+        includeStates: readonly AdbServerClient.ConnectionState[] = [
             "device",
             "unauthorized",
         ],
@@ -201,7 +201,7 @@ export class AdbServerClient {
      * Equivalent ADB Command: `adb devices -l`
      */
     async getDevices(
-        includeStates: AdbServerClient.ConnectionState[] = [
+        includeStates: readonly AdbServerClient.ConnectionState[] = [
             "device",
             "unauthorized",
         ],
@@ -249,7 +249,7 @@ export class AdbServerClient {
      */
     async getDeviceFeatures(
         device: AdbServerClient.DeviceSelector,
-    ): Promise<{ transportId: bigint; features: AdbFeature[] }> {
+    ): Promise<{ transportId: bigint; features: readonly AdbFeature[] }> {
         // On paper, `host:features` is a host service (device features are cached in host),
         // so it shouldn't use `createDeviceConnection`,
         // which is used to forward the service to the device.

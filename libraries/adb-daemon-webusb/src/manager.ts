@@ -7,8 +7,8 @@ import { isErrorName, matchFilters } from "./utils.js";
 
 export namespace AdbDaemonWebUsbDeviceManager {
     export interface RequestDeviceOptions {
-        filters?: USBDeviceFilter[] | undefined;
-        exclusionFilters?: USBDeviceFilter[] | undefined;
+        filters?: readonly USBDeviceFilter[] | undefined;
+        exclusionFilters?: readonly USBDeviceFilter[] | undefined;
     }
 }
 
@@ -44,7 +44,7 @@ export class AdbDaemonWebUsbDeviceManager {
         try {
             const device = await this.#usbManager.requestDevice({
                 filters,
-                exclusionFilters: options.exclusionFilters,
+                exclusionFilters: options.exclusionFilters as USBDeviceFilter[],
             });
 
             const interface_ = matchFilters(

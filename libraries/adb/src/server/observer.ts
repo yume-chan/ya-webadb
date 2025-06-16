@@ -14,7 +14,7 @@ export function unorderedRemove<T>(array: T[], index: number) {
 }
 
 interface Observer {
-    includeStates: AdbServerClient.ConnectionState[];
+    includeStates: readonly AdbServerClient.ConnectionState[];
     onDeviceAdd: EventEmitter<readonly AdbServerClient.Device[]>;
     onDeviceRemove: EventEmitter<readonly AdbServerClient.Device[]>;
     onListChange: EventEmitter<readonly AdbServerClient.Device[]>;
@@ -23,7 +23,7 @@ interface Observer {
 
 function filterDeviceStates(
     devices: readonly AdbServerClient.Device[],
-    states: AdbServerClient.ConnectionState[],
+    states: readonly AdbServerClient.ConnectionState[],
 ) {
     return devices.filter((device) => states.includes(device.state));
 }
@@ -214,6 +214,6 @@ export class AdbServerDeviceObserverOwner {
 
 export namespace AdbServerDeviceObserverOwner {
     export interface Options extends AdbServerClient.ServerConnectionOptions {
-        includeStates?: AdbServerClient.ConnectionState[];
+        includeStates?: readonly AdbServerClient.ConnectionState[];
     }
 }

@@ -1,11 +1,11 @@
 export class ParseError extends Error {
-    #expected: string[];
+    #expected: readonly string[];
 
-    get expected(): string[] {
+    get expected(): readonly string[] {
         return this.#expected;
     }
 
-    constructor(expected: string[]) {
+    constructor(expected: readonly string[]) {
         super(`Expected ${expected.join(", ")}`);
         this.#expected = expected;
     }

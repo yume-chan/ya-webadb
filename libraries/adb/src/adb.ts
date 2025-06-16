@@ -132,7 +132,7 @@ export class Adb implements Closeable {
     }
 
     rm(
-        filenames: string | string[],
+        filenames: string | readonly string[],
         options?: { recursive?: boolean; force?: boolean },
     ): Promise<string> {
         const args = ["rm"];
@@ -144,10 +144,12 @@ export class Adb implements Closeable {
         }
         if (Array.isArray(filenames)) {
             for (const filename of filenames) {
-                args.push(escapeArg(filename));
+                // https://github.com/microsoft/typescript/issues/17002
+                args.push(escapeArg(filename as string));
             }
         } else {
-            args.push(escapeArg(filenames));
+            // https://github.com/microsoft/typescript/issues/17002
+            args.push(escapeArg(filenames as string));
         }
         // https://android.googlesource.com/platform/packages/modules/adb/+/1a0fb8846d4e6b671c8aa7f137a8c21d7b248716/client/adb_install.cpp#984
         args.push("</dev/null");

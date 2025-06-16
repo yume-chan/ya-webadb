@@ -139,7 +139,7 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
     };
 };
 
-export const ADB_DEFAULT_AUTHENTICATORS: AdbAuthenticator[] = [
+export const ADB_DEFAULT_AUTHENTICATORS: readonly AdbAuthenticator[] = [
     AdbSignatureAuthenticator,
     AdbPublicKeyAuthenticator,
 ];

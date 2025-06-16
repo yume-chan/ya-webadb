@@ -28,7 +28,9 @@ export class AdbNoneProtocolSubprocessService extends AdbNoneProtocolSpawner {
         this.#adb = adb;
     }
 
-    async pty(command?: string | string[]): Promise<AdbNoneProtocolPtyProcess> {
+    async pty(
+        command?: string | readonly string[],
+    ): Promise<AdbNoneProtocolPtyProcess> {
         if (command === undefined) {
             command = "";
         } else if (Array.isArray(command)) {
@@ -36,7 +38,8 @@ export class AdbNoneProtocolSubprocessService extends AdbNoneProtocolSpawner {
         }
 
         return new AdbNoneProtocolPtyProcess(
-            await this.#adb.createSocket(`shell:${command}`),
+            // https://github.com/microsoft/typescript/issues/17002
+            await this.#adb.createSocket(`shell:${command as string}`),
         );
     }
 }

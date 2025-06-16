@@ -81,7 +81,7 @@ export class OverlayDisplay extends AdbServiceBase {
         }));
     }
 
-    async set(devices: OverlayDisplayDevice[]): Promise<void> {
+    async set(devices: readonly OverlayDisplayDevice[]): Promise<void> {
         await this.#settings.put(
             "global",
             OverlayDisplay.SETTING_KEY,

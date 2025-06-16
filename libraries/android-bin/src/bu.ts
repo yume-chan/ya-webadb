@@ -5,7 +5,7 @@ export interface AdbBackupOptions {
     user: number;
     saveSharedStorage?: boolean;
     saveWidgets?: boolean;
-    packages: string[] | "user" | "all";
+    packages: readonly string[] | "user" | "all";
     savePackageApk: boolean;
     savePackageObb: boolean;
     savePackageKeyValue: boolean;

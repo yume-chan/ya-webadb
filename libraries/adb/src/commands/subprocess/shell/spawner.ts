@@ -26,13 +26,13 @@ export interface AdbShellProtocolProcess {
 
 export class AdbShellProtocolSpawner {
     readonly #spawn: (
-        command: string[],
+        command: readonly string[],
         signal: AbortSignal | undefined,
     ) => Promise<AdbShellProtocolProcess>;
 
     constructor(
         spawn: (
-            command: string[],
+            command: readonly string[],
             signal: AbortSignal | undefined,
         ) => Promise<AdbShellProtocolProcess>,
     ) {
@@ -40,7 +40,7 @@ export class AdbShellProtocolSpawner {
     }
 
     spawn(
-        command: string | string[],
+        command: string | readonly string[],
         signal?: AbortSignal,
     ): Promise<AdbShellProtocolProcess> {
         signal?.throwIfAborted();
@@ -53,7 +53,7 @@ export class AdbShellProtocolSpawner {
     }
 
     async spawnWait(
-        command: string | string[],
+        command: string | readonly string[],
     ): Promise<AdbShellProtocolSpawner.WaitResult<Uint8Array>> {
         const process = await this.spawn(command);
         const [stdout, stderr, exitCode] = await Promise.all([
@@ -65,7 +65,7 @@ export class AdbShellProtocolSpawner {
     }
 
     async spawnWaitText(
-        command: string | string[],
+        command: string | readonly string[],
     ): Promise<AdbShellProtocolSpawner.WaitResult<string>> {
         const process = await this.spawn(command);
         const [stdout, stderr, exitCode] = await Promise.all([

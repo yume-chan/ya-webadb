@@ -49,7 +49,7 @@ export const ADB_DAEMON_DEFAULT_FEATURES = /* #__PURE__ */ (() =>
         "sendrecv_v2_zstd",
         "sendrecv_v2_dry_run_send",
         AdbFeature.DelayedAck,
-    ] as AdbFeature[])();
+    ] as readonly AdbFeature[])();
 export const ADB_DAEMON_DEFAULT_INITIAL_PAYLOAD_SIZE = 32 * 1024 * 1024;
 
 export type AdbDaemonConnection = ReadableWritablePair<
@@ -61,7 +61,7 @@ export interface AdbDaemonAuthenticationOptions {
     serial: string;
     connection: AdbDaemonConnection;
     credentialStore: AdbCredentialStore;
-    authenticators?: AdbAuthenticator[];
+    authenticators?: readonly AdbAuthenticator[];
     features?: readonly AdbFeature[];
 
     /**

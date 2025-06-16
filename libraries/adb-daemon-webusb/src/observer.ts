@@ -25,8 +25,8 @@ export class AdbDaemonWebUsbDeviceObserver
         return new AdbDaemonWebUsbDeviceObserver(usb, devices, options);
     }
 
-    readonly #filters: (USBDeviceFilter & UsbInterfaceFilter)[];
-    readonly #exclusionFilters?: USBDeviceFilter[] | undefined;
+    readonly #filters: readonly (USBDeviceFilter & UsbInterfaceFilter)[];
+    readonly #exclusionFilters?: readonly USBDeviceFilter[] | undefined;
     readonly #usbManager: USB;
 
     readonly #onDeviceAdd = new EventEmitter<

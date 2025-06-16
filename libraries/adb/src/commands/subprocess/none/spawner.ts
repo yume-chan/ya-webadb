@@ -28,13 +28,13 @@ export interface AdbNoneProtocolProcess {
 
 export class AdbNoneProtocolSpawner {
     readonly #spawn: (
-        command: string[],
+        command: readonly string[],
         signal: AbortSignal | undefined,
     ) => Promise<AdbNoneProtocolProcess>;
 
     constructor(
         spawn: (
-            command: string[],
+            command: readonly string[],
             signal: AbortSignal | undefined,
         ) => Promise<AdbNoneProtocolProcess>,
     ) {
@@ -42,7 +42,7 @@ export class AdbNoneProtocolSpawner {
     }
 
     spawn(
-        command: string | string[],
+        command: string | readonly string[],
         signal?: AbortSignal,
     ): Promise<AdbNoneProtocolProcess> {
         signal?.throwIfAborted();
@@ -54,12 +54,12 @@ export class AdbNoneProtocolSpawner {
         return this.#spawn(command, signal);
     }
 
-    async spawnWait(command: string | string[]): Promise<Uint8Array> {
+    async spawnWait(command: string | readonly string[]): Promise<Uint8Array> {
         const process = await this.spawn(command);
         return await process.output.pipeThrough(new ConcatBufferStream());
     }
 
-    async spawnWaitText(command: string | string[]): Promise<string> {
+    async spawnWaitText(command: string | readonly string[]): Promise<string> {
         const process = await this.spawn(command);
         return await process.output
             .pipeThrough(new TextDecoderStream())

@@ -80,7 +80,7 @@ export function getSerialNumber(device: USBDevice) {
  *
  * ADB interface only has two endpoints, one for input and one for output.
  */
-export function findUsbEndpoints(endpoints: USBEndpoint[]) {
+export function findUsbEndpoints(endpoints: readonly USBEndpoint[]) {
     if (endpoints.length === 0) {
         throw new TypeError("No endpoints given");
     }
@@ -153,18 +153,18 @@ export function matchFilter(
 
 export function matchFilters(
     device: USBDevice,
-    filters: (USBDeviceFilter & UsbInterfaceFilter)[],
-    exclusionFilters?: USBDeviceFilter[],
+    filters: readonly (USBDeviceFilter & UsbInterfaceFilter)[],
+    exclusionFilters?: readonly USBDeviceFilter[],
 ): UsbInterfaceIdentifier | false;
 export function matchFilters(
     device: USBDevice,
-    filters: USBDeviceFilter[],
-    exclusionFilters?: USBDeviceFilter[],
+    filters: readonly USBDeviceFilter[],
+    exclusionFilters?: readonly USBDeviceFilter[],
 ): boolean;
 export function matchFilters(
     device: USBDevice,
-    filters: USBDeviceFilter[],
-    exclusionFilters?: USBDeviceFilter[],
+    filters: readonly USBDeviceFilter[],
+    exclusionFilters?: readonly USBDeviceFilter[],
 ): UsbInterfaceIdentifier | boolean {
     if (exclusionFilters && exclusionFilters.length > 0) {
         if (matchFilters(device, exclusionFilters)) {
