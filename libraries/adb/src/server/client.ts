@@ -37,7 +37,13 @@ export class AdbServerClient {
     static UnauthorizedError = _UnauthorizedError;
     static AlreadyConnectedError = _AlreadyConnectedError;
 
-    static parseDeviceList(value: string): AdbServerClient.Device[] {
+    static parseDeviceList(
+        value: string,
+        includeStates: AdbServerClient.ConnectionState[] = [
+            "device",
+            "unauthorized",
+        ],
+    ): AdbServerClient.Device[] {
         const devices: AdbServerClient.Device[] = [];
         for (const line of value.split("\n")) {
             if (!line) {
@@ -46,12 +52,8 @@ export class AdbServerClient {
 
             const parts = line.split(" ").filter(Boolean);
             const serial = parts[0]!;
-            const state = parts[1]!;
-            if (
-                state !== "unauthorized" &&
-                state !== "offline" &&
-                state !== "device"
-            ) {
+            const state = parts[1]! as AdbServerClient.ConnectionState;
+            if (!includeStates.includes(state)) {
                 continue;
             }
 
@@ -82,6 +84,7 @@ export class AdbServerClient {
             devices.push({
                 serial,
                 state,
+                authenticating: state === "unauthorized",
                 product,
                 model,
                 device,
@@ -197,11 +200,16 @@ export class AdbServerClient {
      *
      * Equivalent ADB Command: `adb devices -l`
      */
-    async getDevices(): Promise<AdbServerClient.Device[]> {
+    async getDevices(
+        includeStates: AdbServerClient.ConnectionState[] = [
+            "device",
+            "unauthorized",
+        ],
+    ): Promise<AdbServerClient.Device[]> {
         const connection = await this.createConnection("host:devices-l");
         try {
             const response = await connection.readString();
-            return AdbServerClient.parseDeviceList(response);
+            return AdbServerClient.parseDeviceList(response, includeStates);
         } finally {
             await connection.dispose();
         }
@@ -211,7 +219,7 @@ export class AdbServerClient {
      * Monitors device list changes.
      */
     async trackDevices(
-        options?: AdbServerClient.ServerConnectionOptions,
+        options?: AdbServerDeviceObserverOwner.Options,
     ): Promise<AdbServerClient.DeviceObserver> {
         return this.#observerOwner.createObserver(options);
     }
@@ -551,6 +559,8 @@ export namespace AdbServerClient {
     export interface Device {
         serial: string;
         state: ConnectionState;
+        /** @deprecated Use {@link state} instead */
+        authenticating: boolean;
         product?: string | undefined;
         model?: string | undefined;
         device?: string | undefined;

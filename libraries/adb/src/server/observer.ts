@@ -13,17 +13,28 @@ export function unorderedRemove<T>(array: T[], index: number) {
     array.length -= 1;
 }
 
+interface Observer {
+    includeStates: AdbServerClient.ConnectionState[];
+    onDeviceAdd: EventEmitter<readonly AdbServerClient.Device[]>;
+    onDeviceRemove: EventEmitter<readonly AdbServerClient.Device[]>;
+    onListChange: EventEmitter<readonly AdbServerClient.Device[]>;
+    onError: EventEmitter<Error>;
+}
+
+function filterDeviceStates(
+    devices: readonly AdbServerClient.Device[],
+    states: AdbServerClient.ConnectionState[],
+) {
+    return devices.filter((device) => states.includes(device.state));
+}
+
 export class AdbServerDeviceObserverOwner {
     current: readonly AdbServerClient.Device[] = [];
 
     readonly #client: AdbServerClient;
+
     #stream: Promise<AdbServerStream> | undefined;
-    #observers: {
-        onDeviceAdd: EventEmitter<readonly AdbServerClient.Device[]>;
-        onDeviceRemove: EventEmitter<readonly AdbServerClient.Device[]>;
-        onListChange: EventEmitter<readonly AdbServerClient.Device[]>;
-        onError: EventEmitter<Error>;
-    }[] = [];
+    #observers: Observer[] = [];
 
     constructor(client: AdbServerClient) {
         this.#client = client;
@@ -52,17 +63,33 @@ export class AdbServerDeviceObserverOwner {
 
         if (added.length) {
             for (const observer of this.#observers) {
-                observer.onDeviceAdd.fire(added);
+                const filtered = filterDeviceStates(
+                    added,
+                    observer.includeStates,
+                );
+                if (filtered.length) {
+                    observer.onDeviceAdd.fire(filtered);
+                }
             }
         }
         if (removed.length) {
             for (const observer of this.#observers) {
-                observer.onDeviceRemove.fire(removed);
+                const filtered = filterDeviceStates(
+                    added,
+                    observer.includeStates,
+                );
+                if (filtered.length) {
+                    observer.onDeviceRemove.fire(removed);
+                }
             }
         }
 
         for (const observer of this.#observers) {
-            observer.onListChange.fire(this.current);
+            const filtered = filterDeviceStates(
+                this.current,
+                observer.includeStates,
+            );
+            observer.onListChange.fire(filtered);
         }
     }
 
@@ -104,10 +131,11 @@ export class AdbServerDeviceObserverOwner {
     }
 
     async createObserver(
-        options?: AdbServerClient.ServerConnectionOptions,
+        options?: AdbServerDeviceObserverOwner.Options,
     ): Promise<AdbServerClient.DeviceObserver> {
         options?.signal?.throwIfAborted();
 
+        let current: readonly AdbServerClient.Device[] = [];
         const onDeviceAdd = new EventEmitter<
             readonly AdbServerClient.Device[]
         >();
@@ -119,13 +147,27 @@ export class AdbServerDeviceObserverOwner {
         >();
         const onError = new StickyEventEmitter<Error>();
 
-        const observer = { onDeviceAdd, onDeviceRemove, onListChange, onError };
+        const includeStates = options?.includeStates ?? [
+            "device",
+            "unauthorized",
+        ];
+        const observer = {
+            includeStates,
+            onDeviceAdd,
+            onDeviceRemove,
+            onListChange,
+            onError,
+        } satisfies Observer;
         // Register `observer` before `#connect`.
         // So `#handleObserverStop` knows if there is any observer.
         this.#observers.push(observer);
 
+        // Read the filtered `current` value from `onListChange` event
+        onListChange.event((value) => (current = value));
+
         let stream: AdbServerStream;
         if (!this.#stream) {
+            // `#connect` will initialize `onListChange` and `current`
             this.#stream = this.#connect();
 
             try {
@@ -136,7 +178,8 @@ export class AdbServerDeviceObserverOwner {
             }
         } else {
             stream = await this.#stream;
-            onListChange.fire(this.current);
+            // Initialize `onListChange` and `current` ourselves
+            onListChange.fire(filterDeviceStates(this.current, includeStates));
         }
 
         const ref = new Ref(options);
@@ -156,17 +199,21 @@ export class AdbServerDeviceObserverOwner {
             options.signal.addEventListener("abort", () => void stop());
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const _this = this;
         return {
             onDeviceAdd: onDeviceAdd.event,
             onDeviceRemove: onDeviceRemove.event,
             onListChange: onListChange.event,
             onError: onError.event,
             get current() {
-                return _this.current;
+                return current;
             },
             stop,
         };
+    }
+}
+
+export namespace AdbServerDeviceObserverOwner {
+    export interface Options extends AdbServerClient.ServerConnectionOptions {
+        includeStates?: AdbServerClient.ConnectionState[];
     }
 }
