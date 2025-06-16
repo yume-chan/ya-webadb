@@ -7,6 +7,7 @@ import type {
 } from "./consumable/index.js";
 import {
     ConsumableReadableStream,
+    ConsumableWrapByteReadableStream,
     ConsumableWrapWritableStream,
     ConsumableWritableStream,
 } from "./consumable/index.js";
@@ -17,6 +18,7 @@ export class Consumable<T> {
     static readonly WritableStream = ConsumableWritableStream;
     static readonly WrapWritableStream = ConsumableWrapWritableStream;
     static readonly ReadableStream = ConsumableReadableStream;
+    static readonly WrapByteReadableStream = ConsumableWrapByteReadableStream;
 
     readonly #task: Task;
     readonly #resolver: PromiseResolver<void>;
@@ -75,4 +77,7 @@ export namespace Consumable {
         ConsumableReadableStreamController<T>;
     export type ReadableStreamSource<T> = ConsumableReadableStreamSource<T>;
     export type ReadableStream<T> = typeof ConsumableReadableStream<T>;
+
+    export type WrapByteReadableStream =
+        typeof ConsumableWrapByteReadableStream;
 }

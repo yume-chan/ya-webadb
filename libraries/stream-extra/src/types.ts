@@ -302,7 +302,7 @@ export declare class ReadableStreamBYOBReader {
  * @public
  */
 export declare interface ReadableStreamBYOBReaderReadOptions {
-    min?: number;
+    min?: number | undefined;
 }
 
 /**
