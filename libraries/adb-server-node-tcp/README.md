@@ -21,7 +21,7 @@
     <a href="https://www.npmjs.com/package/@yume-chan/adb-server-node-tcp">
         <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/adb-server-node-tcp?logo=npm">
     </a>
-    <a href="https://discord.gg/26k3ttC2PN">
+    <a href="https://tangoadb.dev/discord">
         <img alt="Discord" src="https://img.shields.io/discord/1120215514732564502?logo=discord&logoColor=%23ffffff&label=Discord">
     </a>
 </p>
