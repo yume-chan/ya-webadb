@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/stream-extra
 
+## 2.1.0
+
+### Minor Changes
+
+- 40a60ca: Add `Consumable.WrapByteReadableStream` and `MaybeConsumable.WrapWritableStream`
+
 ## 2.0.1
 
 ### Patch Changes

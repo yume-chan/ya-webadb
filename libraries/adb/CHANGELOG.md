@@ -1,5 +1,17 @@
 # Change Log - @yume-chan/adb
 
+## 2.1.0
+
+### Minor Changes
+
+- a835eb8: Add state filters to `AdbServerClient.prototype.getDevices` and `AdbServerClient.prototype.trackDevices`
+
+### Patch Changes
+
+- dbcfd34: Add `AdbServerClient.prototype.createAdb()` as a shorthand for `createTransport` and `new Adb`
+- Updated dependencies [40a60ca]
+    - @yume-chan/stream-extra@2.1.0
+
 ## 2.0.1
 
 ### Patch Changes

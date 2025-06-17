@@ -1,5 +1,12 @@
 # Change Log - @yume-chan/scrcpy
 
+## 2.1.0
+
+### Patch Changes
+
+- Updated dependencies [40a60ca]
+    - @yume-chan/stream-extra@2.1.0
+
 ## 2.0.1
 
 ### Patch Changes

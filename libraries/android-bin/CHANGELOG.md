@@ -1,5 +1,15 @@
 # Change Log - @yume-chan/android-bin
 
+## 2.1.0
+
+### Patch Changes
+
+- Updated dependencies [40a60ca]
+- Updated dependencies [a835eb8]
+- Updated dependencies [dbcfd34]
+    - @yume-chan/stream-extra@2.1.0
+    - @yume-chan/adb@2.1.0
+
 ## 2.0.1
 
 ### Patch Changes
