@@ -23,6 +23,7 @@ export * from "./3_0_1.js";
 export * from "./3_0_2.js";
 export * from "./3_1.js";
 export * from "./3_2.js";
+export * from "./3_3.js";
 export * from "./client-options.js";
 export * from "./client.js";
 export * from "./connection.js";
