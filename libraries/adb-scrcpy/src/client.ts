@@ -25,6 +25,7 @@ import {
     PushReadableStream,
     SplitStringStream,
     TextDecoderStream,
+    tryCancel,
     WritableStream,
 } from "@yume-chan/stream-extra";
 import { ExactReadableEndedError } from "@yume-chan/struct";
@@ -321,22 +322,24 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
         const buffered = new BufferedReadableStream(controlStream);
         try {
             while (true) {
-                let type: number;
+                let id: number;
                 try {
                     const result = await buffered.readExactly(1);
-                    type = result[0]!;
+                    id = result[0]!;
                 } catch (e) {
                     if (e instanceof ExactReadableEndedError) {
-                        this.#options.endDeviceMessageStream();
+                        this.#options.deviceMessageParsers.close();
                         break;
                     }
+
                     throw e;
                 }
-                await this.#options.parseDeviceMessage(type, buffered);
+
+                await this.#options.deviceMessageParsers.parse(id, buffered);
             }
         } catch (e) {
-            this.#options.endDeviceMessageStream(e);
-            buffered.cancel(e).catch(() => {});
+            this.#options.deviceMessageParsers.error(e);
+            await tryCancel(buffered);
         }
     }
 

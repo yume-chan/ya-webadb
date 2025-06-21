@@ -23,6 +23,8 @@ export class UHidOutputStream
 {
     #controller: PushReadableStreamController<UHidOutputDeviceMessage>;
 
+    readonly id = 2;
+
     constructor() {
         let controller!: PushReadableStreamController<UHidOutputDeviceMessage>;
         super((controller_) => {
@@ -31,14 +33,9 @@ export class UHidOutputStream
         this.#controller = controller;
     }
 
-    async parse(id: number, stream: AsyncExactReadable): Promise<boolean> {
-        if (id !== 2) {
-            return false;
-        }
-
+    async parse(_id: number, stream: AsyncExactReadable): Promise<undefined> {
         const message = await UHidOutputDeviceMessage.deserialize(stream);
         await this.#controller.enqueue(message);
-        return true;
     }
 
     close() {

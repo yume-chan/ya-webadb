@@ -29,18 +29,15 @@ export class AckClipboardHandler implements ScrcpyDeviceMessageParser {
 
     #closed = false;
 
-    async parse(id: number, stream: AsyncExactReadable) {
-        if (id !== 1) {
-            return false;
-        }
+    readonly id = 1;
 
+    async parse(_id: number, stream: AsyncExactReadable): Promise<undefined> {
         const message = await AckClipboardDeviceMessage.deserialize(stream);
         const resolver = this.#resolvers.get(message.sequence);
         if (resolver) {
             resolver.resolve();
             this.#resolvers.delete(message.sequence);
         }
-        return true;
     }
 
     close(): void {

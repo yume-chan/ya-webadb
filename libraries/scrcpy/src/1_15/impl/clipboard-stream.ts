@@ -16,6 +16,8 @@ export class ClipboardStream
 {
     #controller: PushReadableStreamController<string>;
 
+    readonly id = 0;
+
     constructor() {
         let controller!: PushReadableStreamController<string>;
         super((controller_) => {
@@ -24,13 +26,9 @@ export class ClipboardStream
         this.#controller = controller;
     }
 
-    async parse(id: number, stream: AsyncExactReadable): Promise<boolean> {
-        if (id === 0) {
-            const message = await ClipboardDeviceMessage.deserialize(stream);
-            await this.#controller.enqueue(message.content);
-            return true;
-        }
-        return false;
+    async parse(_id: number, stream: AsyncExactReadable): Promise<undefined> {
+        const message = await ClipboardDeviceMessage.deserialize(stream);
+        await this.#controller.enqueue(message.content);
     }
 
     close() {

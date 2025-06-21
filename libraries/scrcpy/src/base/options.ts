@@ -1,6 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable, ExactReadable } from "@yume-chan/struct";
 
 import type {
     ScrcpyBackOrScreenOnControlMessage,
@@ -12,6 +11,7 @@ import type {
 
 import type { ScrcpyAudioStreamMetadata } from "./audio.js";
 import type { ScrcpyControlMessageType } from "./control-message-type.js";
+import type { ScrcpyDeviceMessageParsers } from "./device-message.js";
 import type { ScrcpyDisplay } from "./display.js";
 import type { ScrcpyEncoder } from "./encoder.js";
 import type { ScrcpyMediaStreamPacket } from "./media.js";
@@ -29,6 +29,8 @@ export interface ScrcpyOptions<T extends object> {
         | ReadableStream<ScrcpyUHidOutputDeviceMessage>
         | undefined;
 
+    readonly deviceMessageParsers: ScrcpyDeviceMessageParsers;
+
     serialize(): string[];
 
     setListDisplays(): void;
@@ -42,13 +44,6 @@ export interface ScrcpyOptions<T extends object> {
     parseAudioStreamMetadata?(
         stream: ReadableStream<Uint8Array>,
     ): MaybePromiseLike<ScrcpyAudioStreamMetadata>;
-
-    parseDeviceMessage(
-        id: number,
-        stream: ExactReadable | AsyncExactReadable,
-    ): Promise<void>;
-
-    endDeviceMessageStream(e?: unknown): void;
 
     createMediaStreamTransformer(): TransformStream<
         Uint8Array,

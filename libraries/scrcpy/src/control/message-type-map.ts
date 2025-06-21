@@ -20,11 +20,11 @@ export class ScrcpyControlMessageTypeMap {
         return value;
     }
 
-    fillMessageType<T extends { type: ScrcpyControlMessageType }>(
+    fillMessageType<T extends { type: number }>(
         message: Omit<T, "type">,
-        type: T["type"],
+        type: ScrcpyControlMessageType,
     ): T {
-        (message as T).type = this.get(type) as ScrcpyControlMessageType;
+        (message as T).type = this.get(type);
         return message as T;
     }
 }

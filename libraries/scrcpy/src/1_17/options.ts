@@ -1,6 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable, ExactReadable } from "@yume-chan/struct";
 
 import type {
     ScrcpyControlMessageType,
@@ -12,6 +11,7 @@ import type {
     ScrcpyScrollController,
     ScrcpyVideoStream,
 } from "../base/index.js";
+import { ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -54,11 +54,18 @@ export class ScrcpyOptions1_17
         return this.#clipboard;
     }
 
+    #deviceMessageParsers = new ScrcpyDeviceMessageParsers();
+    get deviceMessageParsers() {
+        return this.#deviceMessageParsers;
+    }
+
     constructor(init: Init) {
         this.value = { ...Defaults, ...init };
 
         if (this.value.control) {
-            this.#clipboard = new ClipboardStream();
+            this.#clipboard = this.#deviceMessageParsers.add(
+                new ClipboardStream(),
+            );
         }
     }
 
@@ -86,25 +93,6 @@ export class ScrcpyOptions1_17
         stream: ReadableStream<Uint8Array>,
     ): MaybePromiseLike<ScrcpyVideoStream> {
         return parseVideoStreamMetadata(stream);
-    }
-
-    async parseDeviceMessage(
-        id: number,
-        stream: ExactReadable | AsyncExactReadable,
-    ): Promise<void> {
-        if (await this.#clipboard!.parse(id, stream)) {
-            return;
-        }
-
-        throw new Error("Unknown device message");
-    }
-
-    endDeviceMessageStream(e?: unknown): void {
-        if (e) {
-            this.#clipboard!.error(e);
-        } else {
-            this.#clipboard!.close();
-        }
     }
 
     createMediaStreamTransformer(): TransformStream<

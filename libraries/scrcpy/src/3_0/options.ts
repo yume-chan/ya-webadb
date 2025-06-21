@@ -1,6 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
-import type { AsyncExactReadable, ExactReadable } from "@yume-chan/struct";
 
 import type {
     ScrcpyAudioStreamMetadata,
@@ -13,6 +12,7 @@ import type {
     ScrcpyScrollController,
     ScrcpyVideoStream,
 } from "../base/index.js";
+import { ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -67,6 +67,11 @@ export class ScrcpyOptions3_0<TVideo extends boolean>
         return this.#uHidOutput;
     }
 
+    #deviceMessageParsers = new ScrcpyDeviceMessageParsers();
+    get deviceMessageParsers() {
+        return this.#deviceMessageParsers;
+    }
+
     constructor(init: Init<TVideo>) {
         this.value = { ...Defaults, ...init } as never;
 
@@ -80,11 +85,18 @@ export class ScrcpyOptions3_0<TVideo extends boolean>
 
         if (this.value.control) {
             if (this.value.clipboardAutosync) {
-                this.#clipboard = new ClipboardStream();
-                this.#ackClipboardHandler = new AckClipboardHandler();
+                this.#clipboard = this.#deviceMessageParsers.add(
+                    new ClipboardStream(),
+                );
+
+                this.#ackClipboardHandler = this.#deviceMessageParsers.add(
+                    new AckClipboardHandler(),
+                );
             }
 
-            this.#uHidOutput = new UHidOutputStream();
+            this.#uHidOutput = this.#deviceMessageParsers.add(
+                new UHidOutputStream(),
+            );
         }
     }
 
@@ -118,31 +130,6 @@ export class ScrcpyOptions3_0<TVideo extends boolean>
         stream: ReadableStream<Uint8Array>,
     ): MaybePromiseLike<ScrcpyAudioStreamMetadata> {
         return parseAudioStreamMetadata(stream, this.value);
-    }
-
-    async parseDeviceMessage(
-        id: number,
-        stream: ExactReadable | AsyncExactReadable,
-    ): Promise<void> {
-        if (await this.#clipboard?.parse(id, stream)) {
-            return;
-        }
-
-        if (await this.#ackClipboardHandler?.parse(id, stream)) {
-            return;
-        }
-
-        throw new Error("Unknown device message");
-    }
-
-    endDeviceMessageStream(e?: unknown): void {
-        if (e) {
-            this.#clipboard?.error(e);
-            this.#ackClipboardHandler?.error(e);
-        } else {
-            this.#clipboard?.close();
-            this.#ackClipboardHandler?.close();
-        }
     }
 
     createMediaStreamTransformer(): TransformStream<
