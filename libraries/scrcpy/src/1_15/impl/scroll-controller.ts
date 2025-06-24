@@ -34,33 +34,32 @@ export class ScrollController implements ScrcpyScrollController {
     protected processMessage(
         message: ScrcpyInjectScrollControlMessage,
     ): ScrcpyInjectScrollControlMessage | undefined {
-        this.#accumulatedX += message.scrollX;
-        this.#accumulatedY += message.scrollY;
+        // Ref https://github.com/libsdl-org/SDL/blob/878ea48b607f23e4ec8c12d1395b86ab529e30d0/src/events/SDL_mouse.c#L897-L914
 
-        let scrollX = 0;
-        let scrollY = 0;
-        if (this.#accumulatedX >= 1) {
-            scrollX = 1;
-            this.#accumulatedX = 0;
-        } else if (this.#accumulatedX <= -1) {
-            scrollX = -1;
-            this.#accumulatedX = 0;
+        if (Math.sign(message.scrollX) !== Math.sign(this.#accumulatedX)) {
+            this.#accumulatedX = message.scrollX;
+        } else {
+            this.#accumulatedX += message.scrollX;
         }
 
-        if (this.#accumulatedY >= 1) {
-            scrollY = 1;
-            this.#accumulatedY = 0;
-        } else if (this.#accumulatedY <= -1) {
-            scrollY = -1;
-            this.#accumulatedY = 0;
+        if (Math.sign(message.scrollY) !== Math.sign(this.#accumulatedY)) {
+            this.#accumulatedY = message.scrollY;
+        } else {
+            this.#accumulatedY += message.scrollY;
         }
 
-        if (scrollX === 0 && scrollY === 0) {
+        const integerX = this.#accumulatedX | 0;
+        this.#accumulatedX -= integerX;
+
+        const integerY = this.#accumulatedY | 0;
+        this.#accumulatedY -= integerY;
+
+        if (integerX === 0 && integerY === 0) {
             return undefined;
         }
 
-        message.scrollX = scrollX;
-        message.scrollY = scrollY;
+        message.scrollX = integerX;
+        message.scrollY = integerY;
         return message;
     }
 
