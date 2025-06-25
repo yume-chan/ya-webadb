@@ -36,16 +36,20 @@ export class ScrollController implements ScrcpyScrollController {
     ): ScrcpyInjectScrollControlMessage | undefined {
         // Ref https://github.com/libsdl-org/SDL/blob/878ea48b607f23e4ec8c12d1395b86ab529e30d0/src/events/SDL_mouse.c#L897-L914
 
-        if (Math.sign(message.scrollX) !== Math.sign(this.#accumulatedX)) {
-            this.#accumulatedX = message.scrollX;
-        } else {
-            this.#accumulatedX += message.scrollX;
+        if (message.scrollX) {
+            if (Math.sign(message.scrollX) !== Math.sign(this.#accumulatedX)) {
+                this.#accumulatedX = message.scrollX;
+            } else {
+                this.#accumulatedX += message.scrollX;
+            }
         }
 
-        if (Math.sign(message.scrollY) !== Math.sign(this.#accumulatedY)) {
-            this.#accumulatedY = message.scrollY;
-        } else {
-            this.#accumulatedY += message.scrollY;
+        if (message.scrollY) {
+            if (Math.sign(message.scrollY) !== Math.sign(this.#accumulatedY)) {
+                this.#accumulatedY = message.scrollY;
+            } else {
+                this.#accumulatedY += message.scrollY;
+            }
         }
 
         const integerX = this.#accumulatedX | 0;
