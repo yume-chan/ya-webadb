@@ -10,7 +10,7 @@ on:
     branches: [master]
 
 env:
-  BASE_PATH: /ya-webadb
+  BASE_PATH: /webadb
 
 jobs:
   build:
