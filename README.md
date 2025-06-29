@@ -21,6 +21,9 @@
     <a href="https://tangoadb.dev/discord">
         <img alt="Discord" src="https://img.shields.io/discord/1120215514732564502?logo=discord&logoColor=%23ffffff&label=Discord">
     </a>
+    <a href="https://tangoadb.dev/wechat">
+        <img alt="WeChat Group" src="https://img.shields.io/badge/WeChat-Group-%2307C160?logo=wechat&logoColor=white">
+    </a>
 </p>
 
 Tango is a TypeScript re-implementation of ADB (Android Debugging Bridge) client that works in Chromium-based browsers (including Chrome for Android), Node.js, and Electron.
