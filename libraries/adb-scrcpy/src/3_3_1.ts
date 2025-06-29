@@ -1,6 +1,6 @@
 import type { Adb, AdbNoneProtocolSpawner } from "@yume-chan/adb";
 import type { ScrcpyDisplay, ScrcpyEncoder } from "@yume-chan/scrcpy";
-import { ScrcpyOptions3_3 } from "@yume-chan/scrcpy";
+import { ScrcpyOptions3_3_1 } from "@yume-chan/scrcpy";
 
 import {
     createConnection,
@@ -11,10 +11,10 @@ import type { AdbScrcpyClientOptions } from "./client-options.js";
 import type { AdbScrcpyConnection } from "./connection.js";
 import type { AdbScrcpyOptions, AdbScrcpyOptionsGetEncoders } from "./types.js";
 
-export class AdbScrcpyOptions3_3<TVideo extends boolean>
-    extends ScrcpyOptions3_3<TVideo>
+export class AdbScrcpyOptions3_3_1<TVideo extends boolean>
+    extends ScrcpyOptions3_3_1<TVideo>
     implements
-        AdbScrcpyOptions<ScrcpyOptions3_3.Init<TVideo>>,
+        AdbScrcpyOptions<ScrcpyOptions3_3_1.Init<TVideo>>,
         AdbScrcpyOptionsGetEncoders
 {
     readonly version: string;
@@ -22,12 +22,12 @@ export class AdbScrcpyOptions3_3<TVideo extends boolean>
     readonly spawner: AdbNoneProtocolSpawner | undefined;
 
     constructor(
-        init: ScrcpyOptions3_3.Init<TVideo>,
+        init: ScrcpyOptions3_3_1.Init<TVideo>,
         clientOptions?: AdbScrcpyClientOptions,
     ) {
         super(init);
 
-        this.version = clientOptions?.version ?? "3.3";
+        this.version = clientOptions?.version ?? "3.3.1";
         this.spawner = clientOptions?.spawner;
     }
 
@@ -44,7 +44,7 @@ export class AdbScrcpyOptions3_3<TVideo extends boolean>
     }
 }
 
-export namespace AdbScrcpyOptions3_3 {
+export namespace AdbScrcpyOptions3_3_1 {
     export type Init<TVideo extends boolean = boolean> =
-        ScrcpyOptions3_3.Init<TVideo>;
+        ScrcpyOptions3_3_1.Init<TVideo>;
 }
