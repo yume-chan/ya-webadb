@@ -44,7 +44,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -81,7 +81,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -100,7 +100,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -137,7 +137,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -177,7 +177,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -208,7 +208,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -239,7 +239,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -258,7 +258,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -283,7 +283,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -314,7 +314,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       tinybench:
         specifier: ^4.0.1
         version: 4.0.1
@@ -335,7 +335,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -369,7 +369,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -406,7 +406,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -440,7 +440,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -468,7 +468,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -496,7 +496,7 @@ importers:
         version: link:../../toolchain/tsconfig
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -524,7 +524,7 @@ importers:
     devDependencies:
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
 
   toolchain/package-lint:
     dependencies:
@@ -576,7 +576,7 @@ importers:
     devDependencies:
       prettier:
         specifier: ^3.5.3
-        version: 3.5.3
+        version: 3.6.2
 
 packages:
 
@@ -1831,8 +1831,8 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  prettier@3.5.3:
-    resolution: {integrity: sha512-QQtaxnoDJeAkDvDKWCLiwIXkTgRhwYDEQCghU9Z6q03iyek/rxRh/2lC3HB7P8sWT2xC/y5JDctPLBIGzHKbhw==}
+  prettier@3.6.2:
+    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -3382,7 +3382,7 @@ snapshots:
 
   prettier@2.8.8: {}
 
-  prettier@3.5.3: {}
+  prettier@3.6.2: {}
 
   punycode@2.3.1: {}
 
