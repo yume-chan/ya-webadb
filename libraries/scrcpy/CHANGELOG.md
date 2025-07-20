@@ -1,5 +1,12 @@
 # Change Log - @yume-chan/scrcpy
 
+## 2.1.1
+
+### Patch Changes
+
+- 7edd616: Fix UHID output stream doesn't work from server version 2.6
+- e0def5b: Add support for server version 3.3.1
+
 ## 2.1.0
 
 ### Patch Changes

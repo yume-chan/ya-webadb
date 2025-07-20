@@ -1,5 +1,14 @@
 # Change Log - @yume-chan/adb-scrcpy
 
+## 2.1.1
+
+### Patch Changes
+
+- 7edd616: Fix UHID output stream doesn't work from server version 2.6
+- Updated dependencies [7edd616]
+- Updated dependencies [e0def5b]
+    - @yume-chan/scrcpy@2.1.1
+
 ## 2.1.0
 
 ### Patch Changes
