@@ -30,7 +30,7 @@
         "prepublishOnly": "npm run build"
     },
     "devDependencies": {
-        "@types/audioworklet": "^0.0.80",
+        "@types/audioworklet": "^0.0.82",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.6.2",
