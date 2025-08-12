@@ -7,28 +7,30 @@ import { decodeBase64 } from "../utils/base64.js";
 
 import type { AdbCredentialStore } from "./auth.js";
 import { AdbAuthType, AdbPublicKeyAuthenticator } from "./auth.js";
+import { rsaParsePrivateKey } from "./crypto.js";
+import type { SimpleRsaPrivateKey } from "./crypto.js";
 import type { AdbPacketData } from "./packet.js";
 import { AdbCommand } from "./packet.js";
 
 class MockCredentialStore implements AdbCredentialStore {
-    key: Uint8Array;
+    key: SimpleRsaPrivateKey;
     name: string | undefined;
 
     constructor(key: Uint8Array, name: string | undefined) {
-        this.key = key;
+        this.key = rsaParsePrivateKey(key);
         this.name = name;
     }
 
     *iterateKeys() {
         yield {
-            buffer: this.key,
+            ...this.key,
             name: this.name,
         };
     }
 
     generateKey() {
         return {
-            buffer: this.key,
+            ...this.key,
             name: this.name,
         };
     }

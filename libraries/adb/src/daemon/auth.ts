@@ -14,14 +14,11 @@ import {
     adbGetPublicKeySize,
     rsaSign,
 } from "./crypto.js";
+import type { SimpleRsaPrivateKey } from "./crypto.js";
 import type { AdbPacketData } from "./packet.js";
 import { AdbCommand } from "./packet.js";
 
-export interface AdbPrivateKey {
-    /**
-     * The private key in PKCS #8 format.
-     */
-    buffer: Uint8Array;
+export interface AdbPrivateKey extends SimpleRsaPrivateKey {
     name?: string | undefined;
 }
 
@@ -80,7 +77,7 @@ export const AdbSignatureAuthenticator: AdbAuthenticator = async function* (
             return;
         }
 
-        const signature = rsaSign(key.buffer, packet.payload);
+        const signature = rsaSign(key, packet.payload);
         yield {
             command: AdbCommand.Auth,
             arg0: AdbAuthType.Signature,
@@ -123,7 +120,7 @@ export const AdbPublicKeyAuthenticator: AdbAuthenticator = async function* (
             1, // Null character
     );
 
-    adbGeneratePublicKey(privateKey.buffer, publicKeyBuffer);
+    adbGeneratePublicKey(privateKey, publicKeyBuffer);
     encodeBase64(publicKeyBuffer.subarray(0, publicKeyLength), publicKeyBuffer);
 
     if (nameBuffer.length) {
