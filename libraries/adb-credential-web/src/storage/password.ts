@@ -9,14 +9,15 @@ import {
 
 import type { TangoDataStorage } from "./type.js";
 
-const PBKDF2_SALT_LENGTH = 16;
-const PBKDF2_ITERATIONS = 100000;
-const AES_IV_LENGTH = 32;
+const Pbkdf2SaltLength = 16;
+const Pbkdf2Iterations = 1_000_000;
+// Should be at least 16 bytes for security
+const AesIvLength = 32;
 
 const Bundle = struct(
     {
-        pbkdf2Salt: buffer(PBKDF2_SALT_LENGTH),
-        aesIv: buffer(AES_IV_LENGTH),
+        pbkdf2Salt: buffer(Pbkdf2SaltLength),
+        aesIv: buffer(AesIvLength),
         encrypted: buffer(u16),
     },
     { littleEndian: true },
@@ -32,7 +33,7 @@ async function deriveAesKey(password: string, salt?: Uint8Array<ArrayBuffer>) {
     );
 
     if (!salt) {
-        salt = new Uint8Array(PBKDF2_SALT_LENGTH);
+        salt = new Uint8Array(Pbkdf2SaltLength);
         crypto.getRandomValues(salt);
     }
 
@@ -40,7 +41,7 @@ async function deriveAesKey(password: string, salt?: Uint8Array<ArrayBuffer>) {
         {
             name: "PBKDF2",
             salt,
-            iterations: PBKDF2_ITERATIONS,
+            iterations: Pbkdf2Iterations,
             hash: "SHA-256",
         },
         baseKey,
@@ -68,7 +69,7 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
         const password = await this.#requestPassword("save");
         const { salt, aesKey } = await deriveAesKey(password);
 
-        const iv = new Uint8Array(AES_IV_LENGTH);
+        const iv = new Uint8Array(AesIvLength);
         crypto.getRandomValues(iv);
 
         const encrypted = await crypto.subtle.encrypt(
@@ -84,6 +85,10 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
         });
 
         await this.#storage.save(bundle);
+
+        // No way to clear `password` and `aesKey` from memory immedaitely,
+        // other values (`salt`, `iv`, `encrypted`, `bundle`) are not secrets.
+        // `data` may still be used by caller so is also not cleared.
     }
 
     async *load(): AsyncGenerator<Uint8Array, void, void> {
@@ -109,6 +114,8 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
                 );
 
                 yield new Uint8Array(decrypted);
+
+                new Uint8Array(decrypted).fill(0);
             } catch (e) {
                 if (e instanceof DOMException && e.name === "OperationError") {
                     throw new TangoPasswordProtectedStorage.PasswordIncorrectError();
