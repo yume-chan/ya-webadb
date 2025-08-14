@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { EmptyUint8Array, encodeUtf8 } from "@yume-chan/struct";
+import { encodeUtf8 } from "@yume-chan/struct";
 
 import { decodeBase64 } from "../utils/base64.js";
 
@@ -83,22 +83,24 @@ describe("auth", () => {
             );
 
             const authenticator = new AdbDefaultAuthenticator(store);
+            const challenge = new Uint8Array(20);
 
             const first = await authenticator.authenticate({
                 command: AdbCommand.Auth,
                 arg0: AdbAuthType.Token,
                 arg1: 0,
-                payload: EmptyUint8Array,
+                payload: challenge,
             });
             // This test focuses on public key authentication, so only check
             // the first response is type Signature and ignore other fields
-            assert.strictEqual(first.command, AdbAuthType.Signature);
+            assert.strictEqual(first.command, AdbCommand.Auth);
+            assert.strictEqual(first.arg0, AdbAuthType.Signature);
 
             const result = await authenticator.authenticate({
                 command: AdbCommand.Auth,
                 arg0: AdbAuthType.Token,
                 arg1: 0,
-                payload: EmptyUint8Array,
+                payload: challenge,
             });
 
             assert.deepStrictEqual(result, {
@@ -118,30 +120,24 @@ describe("auth", () => {
             );
 
             const authenticator = new AdbDefaultAuthenticator(store);
+            const challenge = new Uint8Array(20);
 
             const first = await authenticator.authenticate({
                 command: AdbCommand.Auth,
                 arg0: AdbAuthType.Token,
                 arg1: 0,
-                payload: EmptyUint8Array,
+                payload: challenge,
             });
             // This test focuses on public key authentication, so only check
             // the first response is type Signature and ignore other fields
-            assert.strictEqual(first.command, AdbAuthType.Signature);
-
-            // Ignore token authentication result
-            await authenticator.authenticate({
-                command: AdbCommand.Auth,
-                arg0: AdbAuthType.Token,
-                arg1: 0,
-                payload: EmptyUint8Array,
-            });
+            assert.strictEqual(first.command, AdbCommand.Auth);
+            assert.strictEqual(first.arg0, AdbAuthType.Signature);
 
             const result = await authenticator.authenticate({
                 command: AdbCommand.Auth,
                 arg0: AdbAuthType.Token,
                 arg1: 0,
-                payload: EmptyUint8Array,
+                payload: challenge,
             });
 
             assert.deepStrictEqual(result, {
