@@ -17,10 +17,7 @@ import { AdbBanner } from "../banner.js";
 import { AdbFeature } from "../features.js";
 
 import type { AdbAuthenticator, AdbCredentialStore } from "./auth.js";
-import {
-    ADB_DEFAULT_AUTHENTICATORS,
-    AdbAuthenticationProcessor,
-} from "./auth.js";
+import { AdbDefaultAuthenticator } from "./auth.js";
 import { AdbPacketDispatcher } from "./dispatcher.js";
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 import { AdbCommand, calculateChecksum } from "./packet.js";
@@ -60,8 +57,6 @@ export type AdbDaemonConnection = ReadableWritablePair<
 export interface AdbDaemonAuthenticationOptions {
     serial: string;
     connection: AdbDaemonConnection;
-    credentialStore: AdbCredentialStore;
-    authenticators?: readonly AdbAuthenticator[];
     features?: readonly AdbFeature[];
 
     /**
@@ -159,22 +154,28 @@ export class AdbDaemonTransport implements AdbTransport {
     static async authenticate({
         serial,
         connection,
-        credentialStore,
-        authenticators = ADB_DEFAULT_AUTHENTICATORS,
         features = ADB_DAEMON_DEFAULT_FEATURES,
         initialDelayedAckBytes = ADB_DAEMON_DEFAULT_INITIAL_PAYLOAD_SIZE,
         ...options
-    }: AdbDaemonAuthenticationOptions): Promise<AdbDaemonTransport> {
+    }: AdbDaemonAuthenticationOptions &
+        (
+            | { authenticator: AdbAuthenticator }
+            | { credentialStore: AdbCredentialStore }
+        )): Promise<AdbDaemonTransport> {
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
         // Android 4: 4K, Android 7: 256K, Android 9: 1M
         let maxPayloadSize = 1024 * 1024;
 
         const resolver = new PromiseResolver<string>();
-        const authProcessor = new AdbAuthenticationProcessor(
-            authenticators,
-            credentialStore,
-        );
+        let authenticator: AdbAuthenticator;
+        if ("authenticator" in options) {
+            authenticator = options.authenticator;
+        } else {
+            authenticator = new AdbDefaultAuthenticator(
+                options.credentialStore,
+            );
+        }
 
         // Here is similar to `AdbPacketDispatcher`,
         // But the received packet types and send packet processing are different.
@@ -193,9 +194,9 @@ export class AdbDaemonTransport implements AdbTransport {
                                 resolver.resolve(decodeUtf8(packet.payload));
                                 break;
                             case AdbCommand.Auth: {
-                                const response =
-                                    await authProcessor.process(packet);
-                                await sendPacket(response);
+                                await sendPacket(
+                                    await authenticator.authenticate(packet),
+                                );
                                 break;
                             }
                             default:
@@ -215,13 +216,17 @@ export class AdbDaemonTransport implements AdbTransport {
                 },
             )
             .then(
-                () => {
+                async () => {
+                    await authenticator.close?.();
+
                     // If `resolver` is already settled, call `reject` won't do anything.
                     resolver.reject(
                         new Error("Connection closed unexpectedly"),
                     );
                 },
-                (e) => {
+                async (e) => {
+                    await authenticator.close?.();
+
                     resolver.reject(e);
                 },
             );

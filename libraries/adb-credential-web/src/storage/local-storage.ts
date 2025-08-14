@@ -14,9 +14,9 @@ export class TangoLocalStorage implements TangoDataStorage {
     }
 
     *load(): Generator<Uint8Array, void, void> {
-        const key = localStorage.getItem(this.#storageKey);
-        if (key) {
-            yield decodeBase64(key);
+        const data = localStorage.getItem(this.#storageKey);
+        if (data) {
+            yield decodeBase64(data);
         }
     }
 }

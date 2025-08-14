@@ -53,7 +53,15 @@ async function deriveAesKey(password: string, salt?: Uint8Array<ArrayBuffer>) {
     return { salt, aesKey };
 }
 
+class PasswordIncorrectError extends Error {
+    constructor() {
+        super("Password incorrect");
+    }
+}
+
 export class TangoPasswordProtectedStorage implements TangoDataStorage {
+    static PasswordIncorrectError = PasswordIncorrectError;
+
     readonly #storage: TangoDataStorage;
     readonly #requestPassword: TangoPasswordProtectedStorage.RequestPassword;
 
@@ -115,10 +123,12 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
 
                 yield new Uint8Array(decrypted);
 
+                // No way to clear `password` and `aesKey` from memory immedaitely,
+                // all values in `bundle` are not secrets.
                 new Uint8Array(decrypted).fill(0);
             } catch (e) {
                 if (e instanceof DOMException && e.name === "OperationError") {
-                    throw new TangoPasswordProtectedStorage.PasswordIncorrectError();
+                    throw new PasswordIncorrectError();
                 }
 
                 throw e;
@@ -132,9 +142,5 @@ export namespace TangoPasswordProtectedStorage {
         reason: "save" | "load",
     ) => MaybePromiseLike<string>;
 
-    export class PasswordIncorrectError extends Error {
-        constructor() {
-            super("Password incorrect");
-        }
-    }
+    export type PasswordIncorrectError = typeof PasswordIncorrectError;
 }
