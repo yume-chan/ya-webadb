@@ -64,7 +64,7 @@ export function setBigUint(
             value >>= 64n;
         }
         // Clear the leading bytes
-        array.subarray(byteOffset, position).fill(0);
+        array.subarray(byteOffset, position + 8).fill(0);
     }
 }
 
