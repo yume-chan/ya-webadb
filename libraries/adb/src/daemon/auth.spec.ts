@@ -84,13 +84,15 @@ describe("auth", () => {
 
             const authenticator = new AdbDefaultAuthenticator(store);
 
-            // Ignore token authentication result
-            await authenticator.authenticate({
+            const first = await authenticator.authenticate({
                 command: AdbCommand.Auth,
                 arg0: AdbAuthType.Token,
                 arg1: 0,
                 payload: EmptyUint8Array,
             });
+            // This test focuses on public key authentication, so only check
+            // the first response is type Signature and ignore other fields
+            assert.strictEqual(first.command, AdbAuthType.Signature);
 
             const result = await authenticator.authenticate({
                 command: AdbCommand.Auth,
@@ -116,6 +118,16 @@ describe("auth", () => {
             );
 
             const authenticator = new AdbDefaultAuthenticator(store);
+
+            const first = await authenticator.authenticate({
+                command: AdbCommand.Auth,
+                arg0: AdbAuthType.Token,
+                arg1: 0,
+                payload: EmptyUint8Array,
+            });
+            // This test focuses on public key authentication, so only check
+            // the first response is type Signature and ignore other fields
+            assert.strictEqual(first.command, AdbAuthType.Signature);
 
             // Ignore token authentication result
             await authenticator.authenticate({

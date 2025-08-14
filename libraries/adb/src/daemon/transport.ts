@@ -283,7 +283,8 @@ export class AdbDaemonTransport implements AdbTransport {
             banner,
             features: actualFeatures,
             initialDelayedAckBytes,
-            ...options,
+            preserveConnection: options.preserveConnection,
+            readTimeLimit: options.readTimeLimit,
         });
     }
 

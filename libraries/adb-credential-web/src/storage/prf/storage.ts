@@ -15,8 +15,8 @@ const PrfInputLength = 32;
 const HkdfInfoLength = 32;
 // We use HMAC with SHA-512, so should be 64 bytes
 const HkdfSaltLength = 64;
-// Should be at least 16 bytes for security
-const AesIvLength = 32;
+// AES-GCM recommends 12-byte (96-bit) IV for performance and interoperability
+const AesIvLength = 12;
 
 async function deriveAesKey(
     source: BufferSource,
@@ -43,6 +43,13 @@ async function deriveAesKey(
         false,
         ["encrypt", "decrypt"],
     );
+}
+
+function toUint8Array(source: BufferSource) {
+    if (source instanceof ArrayBuffer) {
+        return new Uint8Array(source);
+    }
+    return new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
 }
 
 const Bundle = struct(
@@ -109,6 +116,13 @@ export class TangoPrfStorage implements TangoDataStorage {
         });
 
         await this.#storage.save(bundle);
+
+        // Clear secret memory
+        //   * No way to clear `aesKey`
+        //   * `info`, `salt`, `iv`, `encrypted` and `bundle` are not secrets
+        //   * `data` is owned by caller and will be cleared by caller
+        //   * Need to clear `prfOutput`
+        toUint8Array(prfOutput).fill(0);
     }
 
     async *load(): AsyncGenerator<Uint8Array, void, void> {
@@ -141,6 +155,13 @@ export class TangoPrfStorage implements TangoDataStorage {
 
             yield new Uint8Array(decrypted);
 
+            // Clear secret memory
+            //   * No way to clear `aesKey`
+            //   * `info`, `salt`, `iv`, `encrypted` and `bundle` are not secrets
+            //   * `data` is owned by caller and will be cleared by caller
+            //   * Caller is not allowed to use `decrypted` after `yield` returns
+            //   * Need to clear `prfOutput`
+            toUint8Array(prfOutput).fill(0);
             new Uint8Array(decrypted).fill(0);
         }
     }

@@ -11,8 +11,8 @@ import type { TangoDataStorage } from "./type.js";
 
 const Pbkdf2SaltLength = 16;
 const Pbkdf2Iterations = 1_000_000;
-// Should be at least 16 bytes for security
-const AesIvLength = 32;
+// AES-GCM recommends 12-byte (96-bit) IV for performance and interoperability
+const AesIvLength = 12;
 
 const Bundle = struct(
     {
@@ -46,7 +46,7 @@ async function deriveAesKey(password: string, salt?: Uint8Array<ArrayBuffer>) {
         },
         baseKey,
         { name: "AES-GCM", length: 256 },
-        true,
+        false,
         ["encrypt", "decrypt"],
     );
 
@@ -94,9 +94,10 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
 
         await this.#storage.save(bundle);
 
-        // No way to clear `password` and `aesKey` from memory immedaitely,
-        // other values (`salt`, `iv`, `encrypted`, `bundle`) are not secrets.
-        // `data` may still be used by caller so is also not cleared.
+        // Clear secret memory
+        //   * No way to clear `password` and `aesKey`
+        //   * `salt`, `iv`, `encrypted` and `bundle` are not secrets
+        //   * `data` is owned by caller and will be cleared by caller
     }
 
     async *load(): AsyncGenerator<Uint8Array, void, void> {
@@ -123,8 +124,10 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
 
                 yield new Uint8Array(decrypted);
 
-                // No way to clear `password` and `aesKey` from memory immedaitely,
-                // all values in `bundle` are not secrets.
+                // Clear secret memory
+                //   * No way to clear `password` and `aesKey`
+                //   * all values in `bundle` are not secrets
+                //   * Caller is not allowed to use `decrypted` after `yield` returns
                 new Uint8Array(decrypted).fill(0);
             } catch (e) {
                 if (e instanceof DOMException && e.name === "OperationError") {

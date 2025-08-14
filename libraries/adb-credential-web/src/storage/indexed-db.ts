@@ -17,72 +17,73 @@ function openDatabase() {
     });
 }
 
+function createTransaction<T>(
+    database: IDBDatabase,
+    callback: (transaction: IDBTransaction) => T,
+): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const transaction = database.transaction("Authentication", "readwrite");
+        transaction.onerror = () => {
+            reject(transaction.error!);
+        };
+        transaction.oncomplete = () => {
+            resolve(result);
+        };
+        transaction.onabort = () => {
+            reject(transaction.error ?? new Error("Transaction aborted"));
+        };
+
+        const result = callback(transaction);
+    });
+}
+
 export class TangoIndexedDbStorage implements TangoDataStorage {
     async save(data: Uint8Array): Promise<undefined> {
         const db = await openDatabase();
 
-        return new Promise<undefined>((resolve, reject) => {
-            const transaction = db.transaction("Authentication", "readwrite");
-            const store = transaction.objectStore("Authentication");
-            const putRequest = store.add(data);
-            putRequest.onerror = () => {
-                reject(putRequest.error!);
-            };
-            putRequest.onsuccess = () => {
-                resolve(undefined);
-            };
-            transaction.onerror = () => {
-                reject(transaction.error!);
-            };
-            transaction.oncomplete = () => {
-                db.close();
-            };
-        });
+        try {
+            await createTransaction(db, (tx) => {
+                const store = tx.objectStore("Authentication");
+                store.add(data);
+            });
+        } finally {
+            db.close();
+        }
     }
 
     async *load(): AsyncGenerator<Uint8Array, void, void> {
         const db = await openDatabase();
 
-        const keys = await new Promise<Uint8Array[]>((resolve, reject) => {
-            const transaction = db.transaction("Authentication", "readonly");
-            const store = transaction.objectStore("Authentication");
-            const getRequest = store.getAll();
-            getRequest.onerror = () => {
-                reject(getRequest.error!);
-            };
-            getRequest.onsuccess = () => {
-                resolve(getRequest.result as Uint8Array[]);
-            };
-            transaction.onerror = () => {
-                reject(transaction.error!);
-            };
-            transaction.oncomplete = () => {
-                db.close();
-            };
-        });
+        try {
+            const keys = await createTransaction(db, (tx) => {
+                return new Promise<Uint8Array[]>((resolve, reject) => {
+                    const store = tx.objectStore("Authentication");
+                    const getRequest = store.getAll();
+                    getRequest.onerror = () => {
+                        reject(getRequest.error!);
+                    };
+                    getRequest.onsuccess = () => {
+                        resolve(getRequest.result as Uint8Array[]);
+                    };
+                });
+            });
 
-        yield* keys;
+            yield* keys;
+        } finally {
+            db.close();
+        }
     }
 
     async clear() {
         const db = await openDatabase();
 
-        return new Promise<void>((resolve, reject) => {
-            const transaction = db.transaction("Authentication", "readwrite");
-            const store = transaction.objectStore("Authentication");
-            const clearRequest = store.clear();
-            clearRequest.onerror = () => {
-                reject(clearRequest.error!);
-            };
-            clearRequest.onsuccess = () => {
-                resolve();
-            };
-            transaction.onerror = () => {
-                reject(transaction.error!);
-            };
-            transaction.oncomplete = () => {
-                db.close();
-            };
-        });
+        try {
+            await createTransaction(db, (tx) => {
+                const store = tx.objectStore("Authentication");
+                store.clear();
+            });
+        } finally {
+            db.close();
+        }
     }
 }

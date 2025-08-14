@@ -37,10 +37,12 @@ export class AdbWebCryptoCredentialStore implements AdbCredentialStore {
             await crypto.subtle.exportKey("pkcs8", cryptoKey),
         );
 
-        await this.#storage.save(privateKey);
-
         const parsed = rsaParsePrivateKey(privateKey);
 
+        await this.#storage.save(privateKey);
+
+        // Clear secret memory
+        //   * `privateKey` is not allowed to be used after `save`
         privateKey.fill(0);
 
         return {
@@ -51,12 +53,9 @@ export class AdbWebCryptoCredentialStore implements AdbCredentialStore {
 
     async *iterateKeys(): AsyncGenerator<AdbPrivateKey, void, void> {
         for await (const privateKey of this.#storage.load()) {
-            const parsed = rsaParsePrivateKey(privateKey);
-
-            privateKey.fill(0);
-
+            // `privateKey` is owned by `#storage` and will be cleared by it
             yield {
-                ...parsed,
+                ...rsaParsePrivateKey(privateKey),
                 name: `${this.#appName}@${globalThis.location.hostname}`,
             };
         }
