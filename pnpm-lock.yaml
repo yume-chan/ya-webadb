@@ -94,6 +94,9 @@ importers:
       '@yume-chan/async':
         specifier: ^4.1.3
         version: 4.1.3
+      '@yume-chan/struct':
+        specifier: workspace:^
+        version: link:../struct
     devDependencies:
       '@yume-chan/eslint-config':
         specifier: workspace:^

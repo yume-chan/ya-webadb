@@ -3,7 +3,11 @@ import { describe, it } from "node:test";
 
 import { decodeBase64 } from "../utils/base64.js";
 
-import { adbGeneratePublicKey, modInverse } from "./crypto.js";
+import {
+    adbGeneratePublicKey,
+    modInverse,
+    rsaParsePrivateKey,
+} from "./crypto.js";
 
 describe("modInverse", () => {
     it("should return correct value", () => {
@@ -72,7 +76,8 @@ const PUBLIC_KEY = decodeBase64(
 
 describe("adbGeneratePublicKey", () => {
     it("should return correct value", () => {
-        const generated = adbGeneratePublicKey(PRIVATE_KEY);
+        const simpleKey = rsaParsePrivateKey(PRIVATE_KEY);
+        const generated = adbGeneratePublicKey(simpleKey);
         assert.deepStrictEqual(
             generated.subarray(0, 4),
             PUBLIC_KEY.subarray(0, 4),
@@ -96,8 +101,9 @@ describe("adbGeneratePublicKey", () => {
     });
 
     it("should throw if output is too small", () => {
+        const simpleKey = rsaParsePrivateKey(PRIVATE_KEY);
         assert.throws(
-            () => adbGeneratePublicKey(PRIVATE_KEY, new Uint8Array(1)),
+            () => adbGeneratePublicKey(simpleKey, new Uint8Array(1)),
             /output buffer is too small/,
         );
     });
