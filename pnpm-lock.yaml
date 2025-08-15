@@ -322,8 +322,8 @@ importers:
         specifier: ^3.6.2
         version: 3.6.2
       tinybench:
-        specifier: ^4.0.1
-        version: 4.0.1
+        specifier: ^5.0.0
+        version: 5.0.0
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -2023,9 +2023,9 @@ packages:
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
 
-  tinybench@4.0.1:
-    resolution: {integrity: sha512-Nb1srn7dvzkVx0J5h1vq8f48e3TIcbrS7e/UfAI/cDSef/n8yLh4zsAEsFkfpw6auTY+ZaspEvam/xs8nMnotQ==}
-    engines: {node: '>=18.0.0'}
+  tinybench@5.0.0:
+    resolution: {integrity: sha512-iqp7HhNk6IQXuE5fyJsX4ENpnWcw9k+QS5hsLXZq47J8hH/cL/WjNr6Fr9kXMqCGYMhFSLX8xwoJl6rgB0Pz/A==}
+    engines: {node: '>=20.0.0'}
 
   tinyh264@0.0.7:
     resolution: {integrity: sha512-etkBRgYkSFBdAi2Cqk4sZgi+xWs/vhzNgvjO3z2i4WILeEmORiNqxuQ4URJatrWQ9LPNV3WPWAtzsh/LA/XL/g==}
@@ -3574,7 +3574,7 @@ snapshots:
 
   through@2.3.8: {}
 
-  tinybench@4.0.1: {}
+  tinybench@5.0.0: {}
 
   tinyh264@0.0.7: {}
 
