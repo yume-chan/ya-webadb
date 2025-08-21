@@ -1,30 +1,13 @@
-import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
+import type { MaybePromiseLike } from "@yume-chan/async";
+import {
+    createCanvas,
+    webGLGetContext,
+    webGLLoseContext,
+} from "@yume-chan/scrcpy-decoder-tinyh264";
 
 import { CanvasVideoFrameRenderer } from "./canvas.js";
 
 const Resolved = Promise.resolve();
-
-function createContext(
-    canvas: HTMLCanvasElement | OffscreenCanvas,
-    enableCapture?: boolean,
-): WebGLRenderingContext | null {
-    const attributes: WebGLContextAttributes = {
-        // Low-power GPU should be enough for video rendering.
-        powerPreference: "low-power",
-        alpha: false,
-        // Disallow software rendering.
-        // `ImageBitmapRenderingContext` is faster than software-based WebGL.
-        failIfMajorPerformanceCaveat: true,
-        preserveDrawingBuffer: !!enableCapture,
-        // Enable desynchronized mode when not capturing to reduce latency.
-        desynchronized: !enableCapture,
-    };
-
-    return (
-        canvas.getContext("webgl2", attributes) ||
-        canvas.getContext("webgl", attributes)
-    );
-}
 
 export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
     static vertexShaderSource = `
@@ -52,7 +35,16 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
 
     static get isSupported() {
         const canvas = createCanvas();
-        return !!createContext(canvas);
+        const gl = webGLGetContext(canvas, {
+            // Disallow software rendering.
+            // `ImageBitmapRenderingContext` is faster than software-based WebGL.
+            failIfMajorPerformanceCaveat: true,
+        });
+        if (gl) {
+            webGLLoseContext(gl);
+            return true;
+        }
+        return false;
     }
 
     #context: WebGLRenderingContext;
@@ -70,9 +62,19 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
     ) {
         super(canvas);
 
-        const gl = createContext(this.canvas, enableCapture);
+        const gl = webGLGetContext(this.canvas, {
+            // Low-power GPU should be enough for video rendering.
+            powerPreference: "low-power",
+            alpha: false,
+            // Disallow software rendering.
+            // `ImageBitmapRenderingContext` is faster than software-based WebGL.
+            failIfMajorPerformanceCaveat: true,
+            preserveDrawingBuffer: !!enableCapture,
+            // Enable desynchronized mode when not capturing to reduce latency.
+            desynchronized: !enableCapture,
+        });
         if (!gl) {
-            throw new Error("WebGL not supported");
+            throw new Error("WebGL not supported, check `isSupported` first");
         }
         this.#context = gl;
 
@@ -142,5 +144,10 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 
         return Resolved;
+    }
+
+    override dispose(): MaybePromiseLike<undefined> {
+        webGLLoseContext(this.#context);
+        return undefined;
     }
 }

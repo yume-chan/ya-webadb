@@ -36,6 +36,47 @@ export function createCanvas() {
     throw new Error("no canvas input found nor any canvas can be created");
 }
 
+export function webGLGetContext(
+    canvas: HTMLCanvasElement | OffscreenCanvas,
+    attributes?: WebGLContextAttributes,
+): WebGLRenderingContext | WebGL2RenderingContext | null {
+    // For unknown reason, TypeScript can't correctly infer return type of
+    // `(HTMLCanvasElement | OffscreenCanvas).getContext("webgl2")`.
+    // so this helper function
+
+    {
+        const context = canvas.getContext(
+            "webgl2",
+            attributes,
+        ) as WebGL2RenderingContext | null;
+
+        if (context) {
+            return context;
+        }
+    }
+
+    {
+        const context = canvas.getContext(
+            "webgl",
+            attributes,
+        ) as WebGLRenderingContext | null;
+
+        if (context) {
+            return context;
+        }
+    }
+
+    return null;
+}
+
+export function webGLLoseContext(context: WebGLRenderingContext) {
+    try {
+        context.getExtension("WEBGL_lose_context")?.loseContext();
+    } catch {
+        // ignore
+    }
+}
+
 export class TinyH264Decoder implements ScrcpyVideoDecoder {
     static readonly capabilities: Record<string, ScrcpyVideoDecoderCapability> =
         {
@@ -123,15 +164,15 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             // But this doesn't work in Web Worker (with OffscreenCanvas)
             // so we implement our own check here
             const canvas = createCanvas();
-            const attributes: WebGLContextAttributes = {
+            const gl = webGLGetContext(canvas, {
                 // Disallow software rendering.
                 // yuv-canvas also supports 2d canvas
                 // which is faster than software-based WebGL.
                 failIfMajorPerformanceCaveat: true,
-            };
-            const gl =
-                canvas.getContext("webgl2", attributes) ||
-                canvas.getContext("webgl", attributes);
+            });
+            if (gl) {
+                webGLLoseContext(gl);
+            }
             this.#yuvCanvas = YuvCanvas.attach(this.#renderer, {
                 webGL: !!gl,
             });

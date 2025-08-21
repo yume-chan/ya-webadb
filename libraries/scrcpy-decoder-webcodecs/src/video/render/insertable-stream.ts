@@ -1,5 +1,7 @@
 // cspell: ignore insertable
 
+import type { MaybePromiseLike } from "@yume-chan/async";
+
 import type { VideoFrameRenderer } from "./type.js";
 
 declare class MediaStreamTrackGenerator extends MediaStreamTrack {
@@ -56,5 +58,9 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
 
     async draw(frame: VideoFrame): Promise<void> {
         await this.#writer.write(frame);
+    }
+
+    dispose(): MaybePromiseLike<undefined> {
+        return undefined;
     }
 }

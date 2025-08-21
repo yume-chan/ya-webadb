@@ -14,10 +14,14 @@ export class PerformanceCounterImpl
         return this.#framesSkipped;
     }
 
-    #animationFrameId = 0;
+    #animationFrameId: number;
 
     constructor() {
-        this.#handleAnimationFrame();
+        // `requestAnimationFrame` is also available in Web Worker
+        // https://developer.mozilla.org/en-US/docs/Web/API/DedicatedWorkerGlobalScope/requestAnimationFrame
+        this.#animationFrameId = requestAnimationFrame(
+            this.#handleAnimationFrame,
+        );
     }
 
     #handleAnimationFrame = () => {
@@ -29,8 +33,6 @@ export class PerformanceCounterImpl
             this.#framesDrawn = 0;
         }
 
-        // `requestAnimationFrame` is also available in Web Worker
-        // https://developer.mozilla.org/en-US/docs/Web/API/DedicatedWorkerGlobalScope/requestAnimationFrame
         this.#animationFrameId = requestAnimationFrame(
             this.#handleAnimationFrame,
         );

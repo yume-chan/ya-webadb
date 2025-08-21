@@ -243,6 +243,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     dispose() {
+        this.#renderer.dispose();
         this.#counter.dispose();
         if (this.#rawDecoder.state !== "closed") {
             this.#rawDecoder.close();

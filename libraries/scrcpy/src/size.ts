@@ -8,7 +8,7 @@ export interface ScrcpyVideoSize {
     readonly sizeChanged: Event<{ width: number; height: number }>;
 }
 
-export class ScrcpyVideoSizeImpl {
+export class ScrcpyVideoSizeImpl implements ScrcpyVideoSize {
     #width: number = 0;
     get width() {
         return this.#width;
