@@ -27,6 +27,8 @@ export abstract class CanvasVideoFrameRenderer implements VideoFrameRenderer {
     abstract draw(frame: VideoFrame): Promise<void>;
 
     dispose(): MaybePromiseLike<undefined> {
+        this.#canvas.width = 0;
+        this.#canvas.height = 0;
         return undefined;
     }
 }

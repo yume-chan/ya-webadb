@@ -165,7 +165,6 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     #setError(error: Error) {
-        this.dispose();
         this.#error = error;
 
         try {
@@ -173,6 +172,8 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         } catch {
             // ignore
         }
+
+        this.dispose();
     }
 
     async #draw(frame: VideoFrame) {
@@ -190,24 +191,27 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
             this.#drawing = true;
 
-            this.#updateSize(frame.displayWidth, frame.displayHeight);
+            do {
+                this.#updateSize(frame.displayWidth, frame.displayHeight);
 
-            // PERF: Draw every frame to minimize latency at cost of performance.
-            // When multiple frames are drawn in one vertical sync interval,
-            // only the last one is visible to users.
-            // But this ensures users can always see the most up-to-date screen.
-            // This is also the behavior of official Scrcpy client.
-            // https://github.com/Genymobile/scrcpy/issues/3679
-            await this.#renderer.draw(frame);
-            frame.close();
+                // PERF: Draw every frame to minimize latency at cost of performance.
+                // When multiple frames are drawn in one vertical sync interval,
+                // only the last one is visible to users.
+                // But this ensures users can always see the most up-to-date screen.
+                // This is also the behavior of official Scrcpy client.
+                // https://github.com/Genymobile/scrcpy/issues/3679
+                await this.#renderer.draw(frame);
+                frame.close();
 
-            this.#counter.increaseFramesDrawn();
+                this.#counter.increaseFramesDrawn();
 
-            if (this.#nextFrame) {
-                const frame = this.#nextFrame;
-                this.#nextFrame = undefined;
-                await this.#draw(frame);
-            }
+                if (this.#nextFrame) {
+                    frame = this.#nextFrame;
+                    this.#nextFrame = undefined;
+                } else {
+                    break;
+                }
+            } while (true);
 
             this.#drawing = false;
         } catch (error) {
