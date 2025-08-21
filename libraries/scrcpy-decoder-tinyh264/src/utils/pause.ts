@@ -6,7 +6,7 @@ import type {
     ScrcpyMediaStreamPacket,
 } from "@yume-chan/scrcpy";
 
-import type { ScrcpyVideoDecoderPauseController } from "./types.js";
+import type { ScrcpyVideoDecoderPauseController } from "../types.js";
 
 export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
     #paused = false;

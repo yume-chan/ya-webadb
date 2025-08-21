@@ -1,7 +1,8 @@
-import type { Disposable, Event } from "@yume-chan/event";
+import type { Disposable } from "@yume-chan/event";
 import type {
     ScrcpyMediaStreamPacket,
     ScrcpyVideoCodecId,
+    ScrcpyVideoSize,
 } from "@yume-chan/scrcpy";
 import type { WritableStream } from "@yume-chan/stream-extra";
 
@@ -25,11 +26,8 @@ export interface ScrcpyVideoDecoderPauseController {
 export interface ScrcpyVideoDecoder
     extends ScrcpyVideoDecoderPerformanceCounter,
         ScrcpyVideoDecoderPauseController,
+        ScrcpyVideoSize,
         Disposable {
-    readonly sizeChanged: Event<{ width: number; height: number }>;
-    readonly width: number;
-    readonly height: number;
-
     readonly writable: WritableStream<ScrcpyMediaStreamPacket>;
 }
 

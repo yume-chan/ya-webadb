@@ -1,6 +1,5 @@
-import { StickyEventEmitter } from "@yume-chan/event";
 import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
-import { ScrcpyVideoCodecId } from "@yume-chan/scrcpy";
+import { ScrcpyVideoCodecId, ScrcpyVideoSizeImpl } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
@@ -52,27 +51,23 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#renderer;
     }
 
+    #size = new ScrcpyVideoSizeImpl();
+    get width() {
+        return this.#size.width;
+    }
+    get height() {
+        return this.#size.height;
+    }
+    get sizeChanged() {
+        return this.#size.sizeChanged;
+    }
+
     #counter = new PerformanceCounterImpl();
     get framesRendered() {
         return this.#counter.framesRendered;
     }
     get framesSkipped() {
         return this.#counter.framesSkipped;
-    }
-
-    #sizeChanged = new StickyEventEmitter<{ width: number; height: number }>();
-    get sizeChanged() {
-        return this.#sizeChanged.event;
-    }
-
-    #width: number = 0;
-    get width() {
-        return this.#width;
-    }
-
-    #height: number = 0;
-    get height() {
-        return this.#height;
     }
 
     #pause: PauseControllerImpl;
@@ -222,9 +217,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
     #updateSize = (width: number, height: number) => {
         this.#renderer.setSize(width, height);
-        this.#width = width;
-        this.#height = height;
-        this.#sizeChanged.fire({ width, height });
+        this.#size.setSize(width, height);
     };
 
     async snapshot() {

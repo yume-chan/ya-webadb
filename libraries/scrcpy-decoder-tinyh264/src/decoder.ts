@@ -1,5 +1,4 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { StickyEventEmitter } from "@yume-chan/event";
 import type {
     ScrcpyMediaStreamConfigurationPacket,
     ScrcpyMediaStreamPacket,
@@ -8,17 +7,18 @@ import {
     AndroidAvcLevel,
     AndroidAvcProfile,
     h264ParseConfiguration,
+    ScrcpyVideoSizeImpl,
 } from "@yume-chan/scrcpy";
 import { WritableStream } from "@yume-chan/stream-extra";
 import YuvBuffer from "yuv-buffer";
 import YuvCanvas from "yuv-canvas";
 
-import { PauseControllerImpl } from "./pause.js";
-import { PerformanceCounterImpl } from "./performance.js";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
 } from "./types.js";
+import { PauseControllerImpl } from "./utils/pause.js";
+import { PerformanceCounterImpl } from "./utils/performance.js";
 import type { TinyH264Wrapper } from "./wrapper.js";
 import { createTinyH264Wrapper } from "./wrapper.js";
 
@@ -50,19 +50,15 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#renderer;
     }
 
-    #sizeChanged = new StickyEventEmitter<{ width: number; height: number }>();
-    get sizeChanged() {
-        return this.#sizeChanged.event;
-    }
-
-    #width: number = 0;
+    #size = new ScrcpyVideoSizeImpl();
     get width() {
-        return this.#width;
+        return this.#size.width;
     }
-
-    #height: number = 0;
     get height() {
-        return this.#height;
+        return this.#size.height;
+    }
+    get sizeChanged() {
+        return this.#size.sizeChanged;
     }
 
     #counter = new PerformanceCounterImpl();
@@ -150,12 +146,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             cropTop,
         } = h264ParseConfiguration(data);
 
-        this.#width = croppedWidth;
-        this.#height = croppedHeight;
-        this.#sizeChanged.fire({
-            width: croppedWidth,
-            height: croppedHeight,
-        });
+        this.#size.setSize(croppedWidth, croppedHeight);
 
         // H.264 Baseline profile only supports YUV 420 pixel format
         // So chroma width/height is each half of video width/height

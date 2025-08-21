@@ -33,4 +33,5 @@ export * from "./base/index.js";
 export * from "./codec/index.js";
 export * from "./control/index.js";
 export * from "./latest.js";
+export * from "./size.js";
 export * from "./utils/index.js";

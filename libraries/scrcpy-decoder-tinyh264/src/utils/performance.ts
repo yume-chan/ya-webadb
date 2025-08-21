@@ -1,4 +1,4 @@
-import type { ScrcpyVideoDecoderPerformanceCounter } from "./types.js";
+import type { ScrcpyVideoDecoderPerformanceCounter } from "../types.js";
 
 export class PerformanceCounterImpl
     implements ScrcpyVideoDecoderPerformanceCounter

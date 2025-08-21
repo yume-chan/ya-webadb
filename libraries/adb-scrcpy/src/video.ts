@@ -1,6 +1,6 @@
-import { StickyEventEmitter } from "@yume-chan/event";
 import type {
     ScrcpyMediaStreamPacket,
+    ScrcpyVideoSize,
     ScrcpyVideoStreamMetadata,
 } from "@yume-chan/scrcpy";
 import {
@@ -8,13 +8,14 @@ import {
     h264ParseConfiguration,
     h265ParseConfiguration,
     ScrcpyVideoCodecId,
+    ScrcpyVideoSizeImpl,
 } from "@yume-chan/scrcpy";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import { InspectStream } from "@yume-chan/stream-extra";
 
 import type { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyVideoStream {
+export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
     #options: AdbScrcpyOptions<object>;
 
     #metadata: ScrcpyVideoStreamMetadata;
@@ -27,19 +28,15 @@ export class AdbScrcpyVideoStream {
         return this.#stream;
     }
 
-    #sizeChanged = new StickyEventEmitter<{ width: number; height: number }>();
-    get sizeChanged() {
-        return this.#sizeChanged.event;
-    }
-
-    #width: number = 0;
+    #size = new ScrcpyVideoSizeImpl();
     get width() {
-        return this.#width;
+        return this.#size.width;
     }
-
-    #height: number = 0;
     get height() {
-        return this.#height;
+        return this.#size.height;
+    }
+    get sizeChanged() {
+        return this.#size.sizeChanged;
     }
 
     constructor(
@@ -74,18 +71,12 @@ export class AdbScrcpyVideoStream {
 
     #configureH264(data: Uint8Array) {
         const { croppedWidth, croppedHeight } = h264ParseConfiguration(data);
-
-        this.#width = croppedWidth;
-        this.#height = croppedHeight;
-        this.#sizeChanged.fire({ width: croppedWidth, height: croppedHeight });
+        this.#size.setSize(croppedWidth, croppedHeight);
     }
 
     #configureH265(data: Uint8Array) {
         const { croppedWidth, croppedHeight } = h265ParseConfiguration(data);
-
-        this.#width = croppedWidth;
-        this.#height = croppedHeight;
-        this.#sizeChanged.fire({ width: croppedWidth, height: croppedHeight });
+        this.#size.setSize(croppedWidth, croppedHeight);
     }
 
     #configureAv1(data: Uint8Array) {
@@ -101,8 +92,6 @@ export class AdbScrcpyVideoStream {
         const width = max_frame_width_minus_1 + 1;
         const height = max_frame_height_minus_1 + 1;
 
-        this.#width = width;
-        this.#height = height;
-        this.#sizeChanged.fire({ width, height });
+        this.#size.setSize(width, height);
     }
 }
