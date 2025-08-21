@@ -100,6 +100,10 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
                     throw new Error("Decoder not configured");
                 }
 
+                // TinyH264 decoder doesn't support associating metadata
+                // with each frame's input/output
+                // so skipping frames when resuming from pause is not supported
+
                 const wrapper = await this.#initializer.promise;
                 wrapper.feed(packet.data.slice().buffer);
             },
@@ -113,16 +117,18 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
     #configure = async ({
         data,
     }: ScrcpyMediaStreamConfigurationPacket): Promise<undefined> => {
-        this.dispose();
+        this.#disposeDecoder();
 
         this.#initializer = new PromiseResolver<TinyH264Wrapper>();
         if (!this.#yuvCanvas) {
-            // yuv-canvas detects WebGL support by creating a <canvas> itself
-            // not working in worker
+            // yuv-canvas supports detecting WebGL support by creating a <canvas> itself
+            // But this doesn't work in Web Worker (with OffscreenCanvas)
+            // so we implement our own check here
             const canvas = createCanvas();
             const attributes: WebGLContextAttributes = {
                 // Disallow software rendering.
-                // Other rendering methods are faster than software-based WebGL.
+                // yuv-canvas also supports 2d canvas
+                // which is faster than software-based WebGL.
                 failIfMajorPerformanceCaveat: true,
             };
             const gl =
@@ -174,9 +180,6 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         const uPlaneOffset = encodedWidth * encodedHeight;
         const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
         wrapper.onPictureReady(({ data }) => {
-            // PERF: TinyH264 doesn't take/output frame timestamp,
-            // so we might render extra frames when resuming from pause.
-
             const array = new Uint8Array(data);
             const frame = YuvBuffer.frame(
                 format,
@@ -199,13 +202,23 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#pause.resume();
     }
 
-    dispose(): void {
-        this.#counter.dispose();
+    /**
+     * Only dispose the TinyH264 decoder instance.
+     *
+     * This will be called when re-configuring multiple times,
+     * we don't want to dispose other parts (e.g. `#counter`) on that case
+     */
+    #disposeDecoder() {
         this.#initializer?.promise
             .then((wrapper) => wrapper.dispose())
             // NOOP: It's disposed so nobody cares about the error
             .catch(noop);
         this.#initializer = undefined;
+    }
+
+    dispose(): void {
+        this.#counter.dispose();
+        this.#disposeDecoder();
     }
 }
 

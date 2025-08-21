@@ -145,7 +145,16 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
         this.#pause = new PauseControllerImpl(
             (packet) => this.#decoder.decode(packet),
-            (packet) => this.#decoder.decode(packet),
+            (packet, skipRendering) => {
+                if (skipRendering) {
+                    // Set `pts` to 0 as a marker for skipping rendering this frame
+                    packet.pts = 0n;
+                } else if (packet.pts !== 0n) {
+                    // Avoid valid `pts: 0` to be skipped
+                    packet.pts = 1n;
+                }
+                return this.#decoder.decode(packet);
+            },
         );
 
         this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({

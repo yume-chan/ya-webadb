@@ -40,7 +40,7 @@ export abstract class H26xDecoder implements CodecDecoder {
                 // HACK: `timestamp` is only used as a marker to skip paused frames,
                 // so it's fine as long as we can differentiate `0` from non-zeros。
                 // Hope `packet.pts` won't be too large to lose precision.
-                timestamp: Number(packet.pts),
+                timestamp: packet.pts !== undefined ? Number(packet.pts) : 1,
                 data,
             }),
         );

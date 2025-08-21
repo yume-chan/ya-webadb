@@ -19,6 +19,7 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
     ) => MaybePromiseLike<undefined>;
     #onFrame: (
         packet: ScrcpyMediaStreamDataPacket,
+        skipRendering: boolean,
     ) => MaybePromiseLike<undefined>;
 
     /**
@@ -51,6 +52,7 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         ) => MaybePromiseLike<undefined>,
         onFrame: (
             packet: ScrcpyMediaStreamDataPacket,
+            skipRendering: boolean,
         ) => MaybePromiseLike<undefined>,
     ) {
         this.#onConfiguration = onConfiguration;
@@ -81,7 +83,7 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
                 await this.#onConfiguration(packet);
                 break;
             case "data":
-                await this.#onFrame(packet);
+                await this.#onFrame(packet, false);
                 break;
         }
     };
@@ -105,13 +107,16 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
             this.#pendingConfiguration = undefined;
         }
 
-        for (const frame of this.#pendingFrames) {
-            if (this.#pendingFrames.length) {
-                // Mark these frames with `pts: 0` so the renderer can skip them.
-                // only the last frame needs to be rendered on resume
-                frame.pts = BigInt(0);
-            }
-            await this.#onFrame(frame);
+        for (
+            let i = 0, length = this.#pendingFrames.length;
+            i < length;
+            i += 1
+        ) {
+            const frame = this.#pendingFrames[i]!;
+            // All pending frames except the last one don't need to be rendered
+            // because they are decoded in quick succession by the decoder
+            // and won't be visible
+            await this.#onFrame(frame, i !== length - 1);
         }
 
         this.#pendingFrames.length = 0;

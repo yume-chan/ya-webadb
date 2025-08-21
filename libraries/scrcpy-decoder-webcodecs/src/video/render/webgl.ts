@@ -13,10 +13,11 @@ function createContext(
         powerPreference: "low-power",
         alpha: false,
         // Disallow software rendering.
-        // Other rendering methods are faster than software-based WebGL.
+        // `ImageBitmapRenderingContext` is faster than software-based WebGL.
         failIfMajorPerformanceCaveat: true,
         preserveDrawingBuffer: !!enableCapture,
-        desynchronized: true,
+        // Enable desynchronized mode when not capturing to reduce latency.
+        desynchronized: !enableCapture,
     };
 
     return (
