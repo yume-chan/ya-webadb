@@ -105,6 +105,8 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
                 // so skipping frames when resuming from pause is not supported
 
                 const wrapper = await this.#initializer.promise;
+
+                // `packet.data` might be from a `BufferCombiner` so we have to copy it using `slice`
                 wrapper.feed(packet.data.slice().buffer);
             },
         );

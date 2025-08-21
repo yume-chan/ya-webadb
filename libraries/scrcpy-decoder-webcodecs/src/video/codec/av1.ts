@@ -94,7 +94,7 @@ export class Av1Codec implements CodecDecoder {
                 // Treat `undefined` as `key`, otherwise it won't decode.
                 type: packet.keyframe === false ? "delta" : "key",
                 // HACK: `timestamp` is only used as a marker to skip paused frames,
-                // so it's fine as long as we can differentiate `0` from non-zeros。
+                // so it's fine as long as we can differentiate `0` from non-zeros.
                 // Hope `packet.pts` won't be too large to lose precision.
                 timestamp: packet.pts !== undefined ? Number(packet.pts) : 1,
                 data: packet.data,
