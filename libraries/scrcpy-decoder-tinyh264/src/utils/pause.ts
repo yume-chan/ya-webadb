@@ -46,6 +46,8 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
     /** Block incoming frames while resuming */
     #resuming: Promise<undefined> | undefined;
 
+    #disposed = false;
+
     constructor(
         onConfiguration: (
             packet: ScrcpyMediaStreamConfigurationPacket,
@@ -60,6 +62,10 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
     }
 
     write = async (packet: ScrcpyMediaStreamPacket): Promise<undefined> => {
+        if (this.#disposed) {
+            throw new Error("Attempt to write to a closed decoder");
+        }
+
         if (this.#paused) {
             switch (packet.type) {
                 case "configuration":
@@ -78,6 +84,10 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
 
         await this.#resuming;
 
+        if (this.#disposed) {
+            return;
+        }
+
         switch (packet.type) {
             case "configuration":
                 await this.#onConfiguration(packet);
@@ -89,10 +99,18 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
     };
 
     pause(): void {
+        if (this.#disposed) {
+            throw new Error("Attempt to pause a closed decoder");
+        }
+
         this.#paused = true;
     }
 
     async resume(): Promise<undefined> {
+        if (this.#disposed) {
+            throw new Error("Attempt to resume a closed decoder");
+        }
+
         if (!this.#paused) {
             return;
         }
@@ -105,6 +123,10 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         if (this.#pendingConfiguration) {
             await this.#onConfiguration(this.#pendingConfiguration);
             this.#pendingConfiguration = undefined;
+
+            if (this.#disposed) {
+                return;
+            }
         }
 
         for (
@@ -117,11 +139,26 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
             // because they are decoded in quick succession by the decoder
             // and won't be visible
             await this.#onFrame(frame, i !== length - 1);
+
+            if (this.#disposed) {
+                return;
+            }
         }
 
         this.#pendingFrames.length = 0;
 
         resolver.resolve(undefined);
         this.#resuming = undefined;
+    }
+
+    dispose() {
+        if (this.#disposed) {
+            return;
+        }
+
+        this.#disposed = true;
+
+        this.#pendingConfiguration = undefined;
+        this.#pendingFrames.length = 0;
     }
 }

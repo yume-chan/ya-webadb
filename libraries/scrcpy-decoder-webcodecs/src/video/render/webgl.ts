@@ -1,7 +1,7 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import {
-    createCanvas,
     webGLGetContext,
+    webGLGetSupported,
     webGLLoseContext,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
 
@@ -10,7 +10,7 @@ import { CanvasVideoFrameRenderer } from "./canvas.js";
 const Resolved = Promise.resolve();
 
 export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
-    static vertexShaderSource = `
+    static VertexShaderSource = `
         attribute vec2 xy;
 
         varying highp vec2 uv;
@@ -23,7 +23,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         }
 `;
 
-    static fragmentShaderSource = `
+    static FragmentShaderSource = `
         varying highp vec2 uv;
 
         uniform sampler2D texture;
@@ -34,17 +34,11 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
 `;
 
     static get isSupported() {
-        const canvas = createCanvas();
-        const gl = webGLGetContext(canvas, {
+        return webGLGetSupported({
             // Disallow software rendering.
             // `ImageBitmapRenderingContext` is faster than software-based WebGL.
             failIfMajorPerformanceCaveat: true,
         });
-        if (gl) {
-            webGLLoseContext(gl);
-            return true;
-        }
-        return false;
     }
 
     #context: WebGLRenderingContext;
@@ -81,7 +75,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
         gl.shaderSource(
             vertexShader,
-            WebGLVideoFrameRenderer.vertexShaderSource,
+            WebGLVideoFrameRenderer.VertexShaderSource,
         );
         gl.compileShader(vertexShader);
         if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
@@ -91,7 +85,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
         gl.shaderSource(
             fragmentShader,
-            WebGLVideoFrameRenderer.fragmentShaderSource,
+            WebGLVideoFrameRenderer.FragmentShaderSource,
         );
         gl.compileShader(fragmentShader);
         if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {

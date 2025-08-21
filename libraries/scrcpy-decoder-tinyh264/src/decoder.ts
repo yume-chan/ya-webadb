@@ -77,6 +77,19 @@ export function webGLLoseContext(context: WebGLRenderingContext) {
     }
 }
 
+export function webGLGetSupported(
+    attributes?: WebGLContextAttributes,
+): boolean {
+    const canvas = createCanvas();
+
+    const gl = webGLGetContext(canvas, attributes);
+    if (gl) {
+        webGLLoseContext(gl);
+    }
+
+    return !!gl;
+}
+
 export class TinyH264Decoder implements ScrcpyVideoDecoder {
     static readonly capabilities: Record<string, ScrcpyVideoDecoderCapability> =
         {
@@ -86,9 +99,9 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             },
         };
 
-    #renderer: HTMLCanvasElement | OffscreenCanvas;
-    get renderer() {
-        return this.#renderer;
+    #canvas: HTMLCanvasElement | OffscreenCanvas;
+    get canvas() {
+        return this.#canvas;
     }
 
     #size = new ScrcpyVideoSizeImpl();
@@ -120,20 +133,32 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#writable;
     }
 
-    #yuvCanvas: YuvCanvas | undefined;
-    #initializer: PromiseResolver<TinyH264Wrapper> | undefined;
+    #renderer: YuvCanvas | undefined;
+    #decoder: Promise<TinyH264Wrapper> | undefined;
 
     constructor({ canvas }: TinyH264Decoder.Options = {}) {
         if (canvas) {
-            this.#renderer = canvas;
+            this.#canvas = canvas;
         } else {
-            this.#renderer = createCanvas();
+            this.#canvas = createCanvas();
         }
+
+        this.#renderer = YuvCanvas.attach(this.#canvas, {
+            // yuv-canvas supports detecting WebGL support by creating a <canvas> itself
+            // But this doesn't work in Web Worker (with OffscreenCanvas)
+            // so we implement our own check here
+            webGL: webGLGetSupported({
+                // Disallow software rendering.
+                // yuv-canvas also supports 2d canvas
+                // which is faster than software-based WebGL.
+                failIfMajorPerformanceCaveat: true,
+            }),
+        });
 
         this.#pause = new PauseControllerImpl(
             this.#configure,
             async (packet) => {
-                if (!this.#initializer) {
+                if (!this.#decoder) {
                     throw new Error("Decoder not configured");
                 }
 
@@ -141,15 +166,17 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
                 // with each frame's input/output
                 // so skipping frames when resuming from pause is not supported
 
-                const wrapper = await this.#initializer.promise;
+                const decoder = await this.#decoder;
 
                 // `packet.data` might be from a `BufferCombiner` so we have to copy it using `slice`
-                wrapper.feed(packet.data.slice().buffer);
+                decoder.feed(packet.data.slice().buffer);
             },
         );
 
         this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
             write: this.#pause.write,
+            // Nothing can be disposed when the stream is aborted/closed
+            // No new frames will arrive, but some frames might still be decoding and/or renderding
         });
     }
 
@@ -158,25 +185,8 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
     }: ScrcpyMediaStreamConfigurationPacket): Promise<undefined> => {
         this.#disposeDecoder();
 
-        this.#initializer = new PromiseResolver<TinyH264Wrapper>();
-        if (!this.#yuvCanvas) {
-            // yuv-canvas supports detecting WebGL support by creating a <canvas> itself
-            // But this doesn't work in Web Worker (with OffscreenCanvas)
-            // so we implement our own check here
-            const canvas = createCanvas();
-            const gl = webGLGetContext(canvas, {
-                // Disallow software rendering.
-                // yuv-canvas also supports 2d canvas
-                // which is faster than software-based WebGL.
-                failIfMajorPerformanceCaveat: true,
-            });
-            if (gl) {
-                webGLLoseContext(gl);
-            }
-            this.#yuvCanvas = YuvCanvas.attach(this.#renderer, {
-                webGL: !!gl,
-            });
-        }
+        const resolver = new PromiseResolver<TinyH264Wrapper>();
+        this.#decoder = resolver.promise;
 
         const {
             encodedWidth,
@@ -208,12 +218,11 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             displayHeight: croppedHeight,
         });
 
-        const wrapper = await createTinyH264Wrapper();
-        this.#initializer.resolve(wrapper);
+        const decoder = await createTinyH264Wrapper();
 
         const uPlaneOffset = encodedWidth * encodedHeight;
         const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
-        wrapper.onPictureReady(({ data }) => {
+        decoder.onPictureReady(({ data }) => {
             const array = new Uint8Array(data);
             const frame = YuvBuffer.frame(
                 format,
@@ -221,11 +230,13 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
                 YuvBuffer.chromaPlane(format, array, chromaWidth, uPlaneOffset),
                 YuvBuffer.chromaPlane(format, array, chromaWidth, vPlaneOffset),
             );
-            this.#yuvCanvas!.drawFrame(frame);
+            this.#renderer!.drawFrame(frame);
             this.#counter.increaseFramesDrawn();
         });
 
-        wrapper.feed(data.slice().buffer);
+        decoder.feed(data.slice().buffer);
+
+        resolver.resolve(decoder);
     };
 
     pause(): void {
@@ -243,16 +254,28 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
      * we don't want to dispose other parts (e.g. `#counter`) on that case
      */
     #disposeDecoder() {
-        this.#initializer?.promise
-            .then((wrapper) => wrapper.dispose())
+        if (!this.#decoder) {
+            return;
+        }
+
+        this.#decoder
+            .then((decoder) => decoder.dispose())
             // NOOP: It's disposed so nobody cares about the error
             .catch(noop);
-        this.#initializer = undefined;
+        this.#decoder = undefined;
     }
 
     dispose(): void {
-        this.#counter.dispose();
+        // This class doesn't need to guard against multiple dispose calls
+        // since most of the logic is already handled in `#pause`
+        this.#pause.dispose();
+
         this.#disposeDecoder();
+        this.#counter.dispose();
+        this.#size.dispose();
+
+        this.#canvas.width = 0;
+        this.#canvas.height = 0;
     }
 }
 

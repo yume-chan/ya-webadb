@@ -33,4 +33,8 @@ export class ScrcpyVideoSizeImpl implements ScrcpyVideoSize {
         this.#height = height;
         this.#sizeChanged.fire({ width, height });
     }
+
+    dispose() {
+        this.#sizeChanged.dispose();
+    }
 }

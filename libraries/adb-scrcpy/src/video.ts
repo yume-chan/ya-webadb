@@ -49,23 +49,28 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
         this.#stream = stream
             .pipeThrough(this.#options.createMediaStreamTransformer())
             .pipeThrough(
-                new InspectStream((packet) => {
-                    if (packet.type === "configuration") {
-                        switch (metadata.codec) {
-                            case ScrcpyVideoCodecId.H264:
-                                this.#configureH264(packet.data);
-                                break;
-                            case ScrcpyVideoCodecId.H265:
-                                this.#configureH265(packet.data);
-                                break;
-                            case ScrcpyVideoCodecId.AV1:
-                                // AV1 configuration is in data packet
-                                break;
+                new InspectStream(
+                    (packet) => {
+                        if (packet.type === "configuration") {
+                            switch (metadata.codec) {
+                                case ScrcpyVideoCodecId.H264:
+                                    this.#configureH264(packet.data);
+                                    break;
+                                case ScrcpyVideoCodecId.H265:
+                                    this.#configureH265(packet.data);
+                                    break;
+                                case ScrcpyVideoCodecId.AV1:
+                                    // AV1 configuration is in data packet
+                                    break;
+                            }
+                        } else if (metadata.codec === ScrcpyVideoCodecId.AV1) {
+                            this.#configureAv1(packet.data);
                         }
-                    } else if (metadata.codec === ScrcpyVideoCodecId.AV1) {
-                        this.#configureAv1(packet.data);
-                    }
-                }),
+                    },
+                    () => {
+                        this.#size.dispose();
+                    },
+                ),
             );
     }
 

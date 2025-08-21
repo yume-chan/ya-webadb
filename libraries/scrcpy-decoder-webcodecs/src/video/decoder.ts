@@ -161,10 +161,16 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 }
             },
             write: this.#pause.write,
+            // Nothing can be disposed when the stream is aborted/closed
+            // No new frames will arrive, but some frames might still be decoding and/or renderding
         });
     }
 
     #setError(error: Error) {
+        if (this.#error) {
+            return;
+        }
+
         this.#error = error;
 
         try {
@@ -247,13 +253,22 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     dispose() {
-        this.#renderer.dispose();
+        this.#captureFrame?.close();
+
         this.#counter.dispose();
+        this.#renderer.dispose();
+        this.#size.dispose();
+        this.#nextFrame?.close();
+
         if (this.#rawDecoder.state !== "closed") {
             this.#rawDecoder.close();
         }
-        this.#nextFrame?.close();
-        this.#captureFrame?.close();
+
+        // This class doesn't need to guard against multiple dispose calls
+        // since most of the logic is already handled in `#pause`
+        this.#pause.dispose();
+
+        this.#setError(new Error("Attempt to write to a disposed decoder"));
     }
 }
 
