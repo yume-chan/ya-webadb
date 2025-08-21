@@ -12,7 +12,7 @@ export abstract class H26xDecoder implements CodecDecoder {
 
     abstract configure(data: Uint8Array): void;
 
-    decode(packet: ScrcpyMediaStreamPacket): void {
+    decode(packet: ScrcpyMediaStreamPacket): undefined {
         if (packet.type === "configuration") {
             this.#config = packet.data;
             this.configure(packet.data);
@@ -37,7 +37,10 @@ export abstract class H26xDecoder implements CodecDecoder {
             new EncodedVideoChunk({
                 // Treat `undefined` as `key`, otherwise won't decode.
                 type: packet.keyframe === false ? "delta" : "key",
-                timestamp: 0,
+                // HACK: `timestamp` is only used as a marker to skip paused frames,
+                // so it's fine as long as we can differentiate `0` from non-zeros。
+                // Hope `packet.pts` won't be too large to lose precision.
+                timestamp: Number(packet.pts),
                 data,
             }),
         );

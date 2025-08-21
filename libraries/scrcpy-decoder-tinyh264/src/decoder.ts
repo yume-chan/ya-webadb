@@ -1,6 +1,9 @@
 import { PromiseResolver } from "@yume-chan/async";
 import { StickyEventEmitter } from "@yume-chan/event";
-import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
+import type {
+    ScrcpyMediaStreamConfigurationPacket,
+    ScrcpyMediaStreamPacket,
+} from "@yume-chan/scrcpy";
 import {
     AndroidAvcLevel,
     AndroidAvcProfile,
@@ -10,6 +13,8 @@ import { WritableStream } from "@yume-chan/stream-extra";
 import YuvBuffer from "yuv-buffer";
 import YuvCanvas from "yuv-canvas";
 
+import { PauseControllerImpl } from "./pause.js";
+import { PerformanceCounterImpl } from "./performance.js";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
@@ -60,14 +65,17 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#height;
     }
 
-    #frameRendered = 0;
+    #counter = new PerformanceCounterImpl();
     get framesRendered() {
-        return this.#frameRendered;
+        return this.#counter.framesRendered;
+    }
+    get framesSkipped() {
+        return this.#counter.framesSkipped;
     }
 
-    #frameSkipped = 0;
-    get framesSkipped() {
-        return this.#frameSkipped;
+    #pause: PauseControllerImpl;
+    get paused() {
+        return this.#pause.paused;
     }
 
     #writable: WritableStream<ScrcpyMediaStreamPacket>;
@@ -85,27 +93,26 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             this.#renderer = createCanvas();
         }
 
-        this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
-            write: async (packet) => {
-                switch (packet.type) {
-                    case "configuration":
-                        await this.#configure(packet.data);
-                        break;
-                    case "data": {
-                        if (!this.#initializer) {
-                            throw new Error("Decoder not configured");
-                        }
-
-                        const wrapper = await this.#initializer.promise;
-                        wrapper.feed(packet.data.slice().buffer);
-                        break;
-                    }
+        this.#pause = new PauseControllerImpl(
+            this.#configure,
+            async (packet) => {
+                if (!this.#initializer) {
+                    throw new Error("Decoder not configured");
                 }
+
+                const wrapper = await this.#initializer.promise;
+                wrapper.feed(packet.data.slice().buffer);
             },
+        );
+
+        this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
+            write: this.#pause.write,
         });
     }
 
-    async #configure(data: Uint8Array) {
+    #configure = async ({
+        data,
+    }: ScrcpyMediaStreamConfigurationPacket): Promise<undefined> => {
         this.dispose();
 
         this.#initializer = new PromiseResolver<TinyH264Wrapper>();
@@ -167,7 +174,9 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         const uPlaneOffset = encodedWidth * encodedHeight;
         const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
         wrapper.onPictureReady(({ data }) => {
-            this.#frameRendered += 1;
+            // PERF: TinyH264 doesn't take/output frame timestamp,
+            // so we might render extra frames when resuming from pause.
+
             const array = new Uint8Array(data);
             const frame = YuvBuffer.frame(
                 format,
@@ -176,12 +185,22 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
                 YuvBuffer.chromaPlane(format, array, chromaWidth, vPlaneOffset),
             );
             this.#yuvCanvas!.drawFrame(frame);
+            this.#counter.increaseFramesDrawn();
         });
 
         wrapper.feed(data.slice().buffer);
+    };
+
+    pause(): void {
+        this.#pause.pause();
+    }
+
+    resume(): Promise<undefined> {
+        return this.#pause.resume();
     }
 
     dispose(): void {
+        this.#counter.dispose();
         this.#initializer?.promise
             .then((wrapper) => wrapper.dispose())
             // NOOP: It's disposed so nobody cares about the error

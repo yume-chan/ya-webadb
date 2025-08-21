@@ -10,13 +10,25 @@ export interface ScrcpyVideoDecoderCapability {
     maxLevel?: number;
 }
 
-export interface ScrcpyVideoDecoder extends Disposable {
+export interface ScrcpyVideoDecoderPerformanceCounter {
+    readonly framesRendered: number;
+    readonly framesSkipped: number;
+}
+
+export interface ScrcpyVideoDecoderPauseController {
+    readonly paused: boolean;
+
+    pause(): void;
+    resume(): Promise<undefined>;
+}
+
+export interface ScrcpyVideoDecoder
+    extends ScrcpyVideoDecoderPerformanceCounter,
+        ScrcpyVideoDecoderPauseController,
+        Disposable {
     readonly sizeChanged: Event<{ width: number; height: number }>;
     readonly width: number;
     readonly height: number;
-
-    readonly framesRendered: number;
-    readonly framesSkipped: number;
 
     readonly writable: WritableStream<ScrcpyMediaStreamPacket>;
 }

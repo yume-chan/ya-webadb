@@ -1,7 +1,7 @@
 import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
 
 export interface CodecDecoder {
-    decode(packet: ScrcpyMediaStreamPacket): void;
+    decode(packet: ScrcpyMediaStreamPacket): undefined;
 }
 
 export interface CodecDecoderConstructor {

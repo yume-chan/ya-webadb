@@ -16,6 +16,7 @@ function createContext(
         // Other rendering methods are faster than software-based WebGL.
         failIfMajorPerformanceCaveat: true,
         preserveDrawingBuffer: !!enableCapture,
+        desynchronized: true,
     };
 
     return (

@@ -5,6 +5,10 @@ import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
+import {
+    PauseControllerImpl,
+    PerformanceCounterImpl,
+} from "@yume-chan/scrcpy-decoder-tinyh264";
 import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 
@@ -35,30 +39,25 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#codec;
     }
 
-    #codecDecoder: CodecDecoder;
+    #error: Error | undefined;
 
     #writable: WritableStream<ScrcpyMediaStreamPacket>;
+    #controller!: WritableStreamDefaultController;
     get writable() {
         return this.#writable;
     }
-
-    #error: Error | undefined;
-    #controller!: WritableStreamDefaultController;
 
     #renderer: VideoFrameRenderer;
     get renderer() {
         return this.#renderer;
     }
 
-    #framesDraw = 0;
-    #framesPresented = 0;
+    #counter = new PerformanceCounterImpl();
     get framesRendered() {
-        return this.#framesPresented;
+        return this.#counter.framesRendered;
     }
-
-    #framesSkipped = 0;
     get framesSkipped() {
-        return this.#framesSkipped;
+        return this.#counter.framesSkipped;
     }
 
     #sizeChanged = new StickyEventEmitter<{ width: number; height: number }>();
@@ -76,13 +75,17 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#height;
     }
 
-    #decoder: VideoDecoder;
+    #pause: PauseControllerImpl;
+    get paused() {
+        return this.#pause.paused;
+    }
+
+    #rawDecoder: VideoDecoder;
+    #decoder: CodecDecoder;
 
     #drawing = false;
     #nextFrame: VideoFrame | undefined;
     #captureFrame: VideoFrame | undefined;
-
-    #animationFrameId = 0;
 
     /**
      * Create a new WebCodecs video decoder.
@@ -92,20 +95,22 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
         this.#renderer = renderer;
 
-        this.#decoder = new VideoDecoder({
+        this.#rawDecoder = new VideoDecoder({
             output: (frame) => {
+                if (this.#error) {
+                    frame.close();
+                    return;
+                }
+
+                // Skip rendering frames while resuming from pause
+                if (frame.timestamp === 0) {
+                    frame.close();
+                    return;
+                }
+
                 this.#captureFrame?.close();
                 // PERF: `VideoFrame#clone` is cheap
                 this.#captureFrame = frame.clone();
-
-                if (this.#drawing) {
-                    if (this.#nextFrame) {
-                        this.#nextFrame.close();
-                        this.#framesSkipped += 1;
-                    }
-                    this.#nextFrame = frame;
-                    return;
-                }
 
                 void this.#draw(frame);
             },
@@ -116,26 +121,32 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
         switch (this.#codec) {
             case ScrcpyVideoCodecId.H264:
-                this.#codecDecoder = new H264Decoder(
-                    this.#decoder,
+                this.#decoder = new H264Decoder(
+                    this.#rawDecoder,
                     this.#updateSize,
                 );
                 break;
             case ScrcpyVideoCodecId.H265:
-                this.#codecDecoder = new H265Decoder(
-                    this.#decoder,
+                this.#decoder = new H265Decoder(
+                    this.#rawDecoder,
                     this.#updateSize,
                 );
                 break;
             case ScrcpyVideoCodecId.AV1:
-                this.#codecDecoder = new Av1Codec(
-                    this.#decoder,
+                this.#decoder = new Av1Codec(
+                    this.#rawDecoder,
                     this.#updateSize,
                 );
                 break;
             default:
-                throw new Error(`Unsupported codec: ${this.#codec as number}`);
+                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                throw new Error(`Unsupported codec: ${this.#codec}`);
         }
+
+        this.#pause = new PauseControllerImpl(
+            (packet) => this.#decoder.decode(packet),
+            (packet) => this.#decoder.decode(packet),
+        );
 
         this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
             start: (controller) => {
@@ -145,39 +156,48 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                     this.#controller = controller;
                 }
             },
-            write: (packet) => {
-                this.#codecDecoder.decode(packet);
-            },
+            write: this.#pause.write,
         });
-
-        this.#handleAnimationFrame();
     }
 
     #setError(error: Error) {
-        if (this.#controller) {
-            try {
-                this.#controller.error(error);
-            } catch {
-                // ignore
-            }
-        } else {
-            this.#error = error;
+        this.dispose();
+        this.#error = error;
+
+        try {
+            this.#controller?.error(error);
+        } catch {
+            // ignore
         }
     }
 
     async #draw(frame: VideoFrame) {
         try {
+            if (this.#drawing) {
+                if (this.#nextFrame) {
+                    // Frame `n` is still drawing, frame `n + m` (m > 0) is waiting, and frame `n + m + 1` comes.
+                    // Dispose frame `n + m` and set frame `n + m + 1` as the next frame.
+                    this.#nextFrame.close();
+                    this.#counter.increaseFramesSkipped();
+                }
+                this.#nextFrame = frame;
+                return;
+            }
+
             this.#drawing = true;
+
+            this.#updateSize(frame.displayWidth, frame.displayHeight);
+
             // PERF: Draw every frame to minimize latency at cost of performance.
             // When multiple frames are drawn in one vertical sync interval,
             // only the last one is visible to users.
             // But this ensures users can always see the most up-to-date screen.
             // This is also the behavior of official Scrcpy client.
             // https://github.com/Genymobile/scrcpy/issues/3679
-            this.#updateSize(frame.displayWidth, frame.displayHeight);
             await this.#renderer.draw(frame);
-            this.#framesDraw += 1;
             frame.close();
+
+            this.#counter.increaseFramesDrawn();
 
             if (this.#nextFrame) {
                 const frame = this.#nextFrame;
@@ -198,17 +218,6 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         this.#sizeChanged.fire({ width, height });
     };
 
-    #handleAnimationFrame = () => {
-        if (this.#framesDraw > 0) {
-            this.#framesPresented += 1;
-            this.#framesSkipped += this.#framesDraw - 1;
-            this.#framesDraw = 0;
-        }
-        this.#animationFrameId = requestAnimationFrame(
-            this.#handleAnimationFrame,
-        );
-    };
-
     async snapshot() {
         const frame = this.#captureFrame;
         if (!frame) {
@@ -216,15 +225,25 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         }
 
         const capturer = await VideoFrameCapturerPool.borrow();
-        const result = await capturer.capture(frame);
-        VideoFrameCapturerPool.return(capturer);
-        return result;
+        try {
+            return await capturer.capture(frame);
+        } finally {
+            VideoFrameCapturerPool.return(capturer);
+        }
+    }
+
+    pause(): void {
+        this.#pause.pause();
+    }
+
+    resume(): Promise<undefined> {
+        return this.#pause.resume();
     }
 
     dispose() {
-        cancelAnimationFrame(this.#animationFrameId);
-        if (this.#decoder.state !== "closed") {
-            this.#decoder.close();
+        this.#counter.dispose();
+        if (this.#rawDecoder.state !== "closed") {
+            this.#rawDecoder.close();
         }
         this.#nextFrame?.close();
         this.#captureFrame?.close();
