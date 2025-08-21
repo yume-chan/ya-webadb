@@ -149,7 +149,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 if (skipRendering) {
                     // Set `pts` to 0 as a marker for skipping rendering this frame
                     packet.pts = 0n;
-                } else if (packet.pts !== 0n) {
+                } else if (packet.pts === 0n) {
                     // Avoid valid `pts: 0` to be skipped
                     packet.pts = 1n;
                 }
