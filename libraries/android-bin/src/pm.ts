@@ -257,7 +257,7 @@ const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
 
 function buildInstallArguments(
     command: string,
-    options: Partial<PackageManagerInstallOptions> | undefined,
+    options: Optional<PackageManagerInstallOptions> | undefined,
 ): string[] {
     const args = buildArguments(
         [PackageManager.ServiceName, command],
@@ -534,7 +534,7 @@ export class PackageManager extends AdbServiceBase {
      * @returns ID of the new install session
      */
     async sessionCreate(
-        options?: Partial<PackageManagerInstallOptions>,
+        options?: Optional<PackageManagerInstallOptions>,
     ): Promise<number> {
         const args = buildInstallArguments("install-create", options);
 
@@ -544,7 +544,7 @@ export class PackageManager extends AdbServiceBase {
 
         const sessionIdString = output.match(/.*\[(\d+)\].*/);
         if (!sessionIdString) {
-            throw new Error("Failed to create install session");
+            throw new Error(output);
         }
 
         return Number.parseInt(sessionIdString[1]!, 10);
@@ -601,14 +601,36 @@ export class PackageManager extends AdbServiceBase {
         ]);
     }
 
-    async sessionCommit(sessionId: number): Promise<void> {
+    /**
+     * Commit an install session.
+     * @param sessionId ID of install session returned by `createSession`
+     * @param useShell
+     * Always use `pm install-commit` instead of `cmd package install-commit`.
+     *
+     * The later starts faster because it connects to the already running `system` process.
+     * But Android 7 doesn't write "Success" message when `cmd package` is used,
+     * causing this function to fail with empty message.
+     *
+     * If you know the device's API level, you can use this parameter to force `pm install-commit`
+     * on Android 7 to workaround this issue.
+     *
+     * https://cs.android.com/android/_/android/platform/frameworks/base/+/b6e96e52e379927859e82606c5b041d99f36a29e
+     * @returns A `Promise` that resolves when the session is committed
+     */
+    async sessionCommit(sessionId: number, useShell?: boolean): Promise<void> {
         const args: string[] = [
             PackageManager.ServiceName,
             "install-commit",
             sessionId.toString(),
         ];
-        const process = await this.#cmd.spawn(args);
-        await this.checkResult(process.output);
+        if (useShell) {
+            args[0] = PackageManager.CommandName;
+            const process = await this.adb.subprocess.noneProtocol.spawn(args);
+            await this.checkResult(process.output);
+        } else {
+            const process = await this.#cmd.spawn(args);
+            await this.checkResult(process.output);
+        }
     }
 
     async sessionAbandon(sessionId: number): Promise<void> {
@@ -622,10 +644,12 @@ export class PackageManager extends AdbServiceBase {
     }
 }
 
+export type Optional<T extends object> = { [K in keyof T]?: T[K] | undefined };
+
 export class PackageManagerInstallSession {
     static async create(
         packageManager: PackageManager,
-        options?: Partial<PackageManagerInstallOptions>,
+        options?: Optional<PackageManagerInstallOptions>,
     ): Promise<PackageManagerInstallSession> {
         const id = await packageManager.sessionCreate(options);
         return new PackageManagerInstallSession(packageManager, id);
@@ -660,8 +684,23 @@ export class PackageManagerInstallSession {
         );
     }
 
-    commit(): Promise<void> {
-        return this.#packageManager.sessionCommit(this.#id);
+    /**
+     * Commit this install session.
+     * @param useShell
+     * Always use `pm install-commit` instead of `cmd package install-commit`.
+     *
+     * The later starts faster because it connects to the already running `system` process.
+     * But Android 7 doesn't write "Success" message when `cmd package` is used,
+     * causing this function to fail with empty message.
+     *
+     * If you know the device's API level, you can use this parameter to force `pm install-commit`
+     * on Android 7 to workaround this issue.
+     *
+     * https://cs.android.com/android/_/android/platform/frameworks/base/+/b6e96e52e379927859e82606c5b041d99f36a29e
+     * @returns A `Promise` that resolves when the session is committed
+     */
+    commit(useShell?: boolean): Promise<void> {
+        return this.#packageManager.sessionCommit(this.#id, useShell);
     }
 
     abandon(): Promise<void> {
