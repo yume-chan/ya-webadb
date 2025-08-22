@@ -1,6 +1,8 @@
 // cspell: ignore insertable
 
 import type { MaybePromiseLike } from "@yume-chan/async";
+import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
+import { tryClose } from "@yume-chan/stream-extra";
 
 import type { VideoFrameRenderer } from "./type.js";
 
@@ -43,7 +45,7 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         // But Chrome has not implemented it yet.
         // https://issues.chromium.org/issues/40058895
         this.#generator = new MediaStreamTrackGenerator({ kind: "video" });
-        this.#writer = this.#generator.writable.getWriter();
+        this.#writer = this.#generator.writable.getWriter() as never;
 
         this.#stream = new MediaStream([this.#generator]);
         this.#element.srcObject = this.#stream;
@@ -61,6 +63,7 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
     }
 
     dispose(): MaybePromiseLike<undefined> {
+        tryClose(this.#writer);
         return undefined;
     }
 }

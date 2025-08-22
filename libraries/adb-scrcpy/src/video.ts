@@ -11,7 +11,7 @@ import {
     ScrcpyVideoSizeImpl,
 } from "@yume-chan/scrcpy";
 import type { ReadableStream } from "@yume-chan/stream-extra";
-import { InspectStream } from "@yume-chan/stream-extra";
+import { WritableStream } from "@yume-chan/stream-extra";
 
 import type { AdbScrcpyOptions } from "./types.js";
 
@@ -46,11 +46,16 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
     ) {
         this.#options = options;
         this.#metadata = metadata;
-        this.#stream = stream
+
+        let inspectStream: ReadableStream<ScrcpyMediaStreamPacket>;
+        [this.#stream, inspectStream] = stream
             .pipeThrough(this.#options.createMediaStreamTransformer())
-            .pipeThrough(
-                new InspectStream(
-                    (packet) => {
+            .tee();
+
+        void inspectStream
+            .pipeTo(
+                new WritableStream({
+                    write: (packet) => {
                         if (packet.type === "configuration") {
                             switch (metadata.codec) {
                                 case ScrcpyVideoCodecId.H264:
@@ -67,11 +72,9 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
                             this.#configureAv1(packet.data);
                         }
                     },
-                    () => {
-                        this.#size.dispose();
-                    },
-                ),
-            );
+                }),
+            )
+            .finally(() => this.#size.dispose());
     }
 
     #configureH264(data: Uint8Array) {
