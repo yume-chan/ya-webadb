@@ -78,6 +78,15 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     #rawDecoder: VideoDecoder;
     #decoder: CodecDecoder;
 
+    #framesDecoded = 0;
+    get framesDecoded() {
+        return this.#framesDecoded;
+    }
+    #decodingTime = 0;
+    get decodingTime() {
+        return this.#decodingTime;
+    }
+
     #drawing = false;
     #nextFrame: VideoFrame | undefined;
     #captureFrame: VideoFrame | undefined;
@@ -102,6 +111,9 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                     frame.close();
                     return;
                 }
+
+                this.#framesDecoded += 1;
+                this.#decodingTime += performance.now() - frame.timestamp;
 
                 this.#captureFrame?.close();
                 // PERF: `VideoFrame#clone` is cheap
@@ -144,9 +156,9 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 if (skipRendering) {
                     // Set `pts` to 0 as a marker for skipping rendering this frame
                     packet.pts = 0n;
-                } else if (packet.pts === 0n) {
-                    // Avoid valid `pts: 0` to be skipped
-                    packet.pts = 1n;
+                } else {
+                    // Set `pts` to current time to track decoding time
+                    packet.pts = BigInt(performance.now());
                 }
                 return this.#decoder.decode(packet);
             },
