@@ -113,7 +113,8 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 }
 
                 this.#framesDecoded += 1;
-                this.#decodingTime += performance.now() - frame.timestamp;
+                this.#decodingTime +=
+                    performance.now() - frame.timestamp / 1000;
 
                 this.#captureFrame?.close();
                 // PERF: `VideoFrame#clone` is cheap
@@ -158,7 +159,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                     packet.pts = 0n;
                 } else {
                     // Set `pts` to current time to track decoding time
-                    packet.pts = BigInt(performance.now());
+                    packet.pts = BigInt((performance.now() * 1000) | 0);
                 }
                 return this.#decoder.decode(packet);
             },
