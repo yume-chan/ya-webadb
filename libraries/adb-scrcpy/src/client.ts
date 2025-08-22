@@ -134,9 +134,9 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             }
 
             const args = [
+                // Use `CLASSPATH=` as `-cp` argument requires Android 8.0
+                `CLASSPATH=${path}`,
                 "app_process",
-                "-cp",
-                path,
                 /* unused */ "/",
                 "com.genymobile.scrcpy.Server",
                 options.version,
