@@ -3,6 +3,23 @@ import { field } from "./field/index.js";
 
 export const EmptyUint8Array = new Uint8Array(0);
 
+function copyMaybeDifferentLength(
+    dist: Uint8Array,
+    source: Uint8Array,
+    index: number,
+    length: number,
+) {
+    if (source.length < length) {
+        dist.set(source, index);
+        // Clear trailing bytes
+        dist.fill(0, index + source.length, index + length);
+    } else if (source.length === length) {
+        dist.set(source, index);
+    } else {
+        dist.set(source.subarray(0, length), index);
+    }
+}
+
 export interface Converter<From, To> {
     convert: (value: From) => To;
     back: (value: To) => From;
@@ -102,19 +119,12 @@ function _buffer(
                 lengthOrField,
                 "byob",
                 (value, { buffer, index }) => {
-                    if (value.length < lengthOrField) {
-                        buffer.set(value, index);
-                        // Clear remaining bytes in case of BYOB
-                        buffer.fill(
-                            0,
-                            index + value.length,
-                            index + lengthOrField,
-                        );
-                    } else if (value.length === lengthOrField) {
-                        buffer.set(value, index);
-                    } else {
-                        buffer.set(value.subarray(0, lengthOrField), index);
-                    }
+                    copyMaybeDifferentLength(
+                        buffer,
+                        value,
+                        index,
+                        lengthOrField,
+                    );
                 },
                 function* (then, reader) {
                     const array = yield* then(
@@ -146,7 +156,7 @@ function _buffer(
             lengthOrField,
             "byob",
             (value, { buffer, index }) => {
-                buffer.set(value.subarray(0, lengthOrField), index);
+                copyMaybeDifferentLength(buffer, value, index, lengthOrField);
             },
             // eslint-disable-next-line require-yield
             function* (_then, reader) {
