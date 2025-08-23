@@ -49,7 +49,9 @@ export class ActivityManager extends AdbServiceBase {
         args = args.concat(options.intent.build());
 
         const output = await this.#cmd
-            .spawnWaitText(args)
+            .spawn(args)
+            .wait()
+            .toString()
             .then((output) => output.trim());
 
         for (const line of output) {

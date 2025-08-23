@@ -67,6 +67,6 @@ export class AdbBackup extends AdbServiceBase {
         if (options.user !== undefined) {
             args.push("--user", options.user.toString());
         }
-        return this.adb.subprocess.noneProtocol.spawnWaitText(args);
+        return this.adb.subprocess.noneProtocol.spawn(args).wait().toString();
     }
 }

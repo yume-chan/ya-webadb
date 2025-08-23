@@ -2,13 +2,20 @@ import type { Adb, AdbShellProtocolProcess } from "@yume-chan/adb";
 import {
     AdbFeature,
     AdbNoneProtocolProcessImpl,
-    AdbNoneProtocolSpawner,
+    adbNoneProtocolSpawner,
     AdbServiceBase,
     AdbShellProtocolProcessImpl,
-    AdbShellProtocolSpawner,
+    adbShellProtocolSpawner,
 } from "@yume-chan/adb";
 
-export class CmdNoneProtocolService extends AdbNoneProtocolSpawner {
+export class CmdNoneProtocolService {
+    #adb: Adb;
+    #fallback:
+        | string
+        | Record<string, string>
+        | ((service: string) => string)
+        | undefined;
+
     #supportsAbbExec: boolean;
     get supportsAbbExec(): boolean {
         return this.#supportsAbbExec;
@@ -30,41 +37,52 @@ export class CmdNoneProtocolService extends AdbNoneProtocolSpawner {
             | Record<string, string>
             | ((service: string) => string),
     ) {
-        super(async (command) => {
-            if (this.#supportsAbbExec) {
-                return new AdbNoneProtocolProcessImpl(
-                    await adb.createSocket(`abb_exec:${command.join("\0")}\0`),
-                );
-            }
-
-            if (this.#supportsCmd) {
-                return adb.subprocess.noneProtocol.spawn(
-                    `cmd ${command.join(" ")}`,
-                );
-            }
-
-            if (typeof fallback === "function") {
-                fallback = fallback(command[0]!);
-            } else if (typeof fallback === "object") {
-                fallback = fallback[command[0]!];
-            }
-
-            if (!fallback) {
-                throw new Error("Unsupported");
-            }
-
-            const fallbackCommand = command.slice();
-            fallbackCommand[0] = fallback;
-            return adb.subprocess.noneProtocol.spawn(fallbackCommand);
-        });
+        this.#adb = adb;
+        this.#fallback = fallback;
 
         this.#supportsCmd = adb.canUseFeature(AdbFeature.Cmd);
         this.#supportsAbbExec = adb.canUseFeature(AdbFeature.AbbExec);
     }
+
+    spawn = adbNoneProtocolSpawner(async (command) => {
+        if (this.#supportsAbbExec) {
+            return new AdbNoneProtocolProcessImpl(
+                await this.#adb.createSocket(
+                    `abb_exec:${command.join("\0")}\0`,
+                ),
+            );
+        }
+
+        if (this.#supportsCmd) {
+            return this.#adb.subprocess.noneProtocol.spawn(
+                `cmd ${command.join(" ")}`,
+            );
+        }
+
+        let fallback = this.#fallback;
+        if (typeof fallback === "function") {
+            fallback = fallback(command[0]!);
+        } else if (typeof fallback === "object") {
+            fallback = fallback[command[0]!];
+        }
+
+        if (!fallback) {
+            throw new Error("Unsupported");
+        }
+
+        const fallbackCommand = command.slice();
+        fallbackCommand[0] = fallback;
+        return this.#adb.subprocess.noneProtocol.spawn(fallbackCommand);
+    });
 }
 
-export class CmdShellProtocolService extends AdbShellProtocolSpawner {
+export class CmdShellProtocolService {
     #adb: Adb;
+    #fallback:
+        | string
+        | Record<string, string>
+        | ((service: string) => string)
+        | undefined;
 
     #supportsCmd: boolean;
     get supportsCmd(): boolean {
@@ -90,23 +108,32 @@ export class CmdShellProtocolService extends AdbShellProtocolSpawner {
             | Record<string, string>
             | ((service: string) => string),
     ) {
-        super(async (command): Promise<AdbShellProtocolProcess> => {
+        this.#adb = adb;
+        this.#fallback = fallback;
+
+        this.#supportsCmd = adb.canUseFeature(AdbFeature.Cmd);
+        this.#supportsAbb = adb.canUseFeature(AdbFeature.Abb);
+    }
+
+    spawn = adbShellProtocolSpawner(
+        async (command): Promise<AdbShellProtocolProcess> => {
             if (this.#supportsAbb) {
                 return new AdbShellProtocolProcessImpl(
                     await this.#adb.createSocket(`abb:${command.join("\0")}\0`),
                 );
             }
 
-            if (!adb.subprocess.shellProtocol) {
+            if (!this.#adb.subprocess.shellProtocol) {
                 throw new Error("Unsupported");
             }
 
             if (this.#supportsCmd) {
-                return adb.subprocess.shellProtocol.spawn(
+                return this.#adb.subprocess.shellProtocol.spawn(
                     `cmd ${command.join(" ")}`,
                 );
             }
 
+            let fallback = this.#fallback;
             if (typeof fallback === "function") {
                 fallback = fallback(command[0]!);
             } else if (typeof fallback === "object") {
@@ -119,13 +146,9 @@ export class CmdShellProtocolService extends AdbShellProtocolSpawner {
 
             const fallbackCommand = command.slice();
             fallbackCommand[0] = fallback;
-            return adb.subprocess.shellProtocol.spawn(fallbackCommand);
-        });
-
-        this.#adb = adb;
-        this.#supportsCmd = adb.canUseFeature(AdbFeature.Cmd);
-        this.#supportsAbb = adb.canUseFeature(AdbFeature.Abb);
-    }
+            return this.#adb.subprocess.shellProtocol.spawn(fallbackCommand);
+        },
+    );
 }
 
 export class Cmd extends AdbServiceBase {

@@ -51,7 +51,7 @@ export class Settings extends AdbServiceBase {
         command.push(verb, namespace);
         command = command.concat(args);
 
-        return this.#cmd.spawnWaitText(command);
+        return this.#cmd.spawn(command).wait().toString();
     }
 
     async get(

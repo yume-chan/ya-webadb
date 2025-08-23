@@ -316,7 +316,9 @@ export class PackageManager extends AdbServiceBase {
         // so installing files must still use `pm`.
         // (the starting executable file decides which SELinux policies to apply)
         const output = await this.adb.subprocess.noneProtocol
-            .spawnWaitText(args)
+            .spawn(args)
+            .wait()
+            .toString()
             .then((output) => output.trim());
 
         if (output !== "Success") {
@@ -494,7 +496,9 @@ export class PackageManager extends AdbServiceBase {
         }
 
         const output = await this.#cmd
-            .spawnWaitText(args)
+            .spawn(args)
+            .wait()
+            .toString()
             .then((output) => output.trim());
         if (output !== "Success") {
             throw new Error(output);
@@ -513,7 +517,9 @@ export class PackageManager extends AdbServiceBase {
         args = args.concat(options.intent.build());
 
         const output = await this.#cmd
-            .spawnWaitText(args)
+            .spawn(args)
+            .wait()
+            .toString()
             .then((output) => output.trim());
 
         if (output === "No activity found") {
@@ -539,7 +545,9 @@ export class PackageManager extends AdbServiceBase {
         const args = buildInstallArguments("install-create", options);
 
         const output = await this.#cmd
-            .spawnWaitText(args)
+            .spawn(args)
+            .wait()
+            .toString()
             .then((output) => output.trim());
 
         const sessionIdString = output.match(/.*\[(\d+)\].*/);

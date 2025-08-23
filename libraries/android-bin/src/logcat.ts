@@ -494,7 +494,7 @@ export class Logcat extends AdbServiceBase {
             args.push("-b", Logcat.joinLogId(ids));
         }
 
-        await this.adb.subprocess.noneProtocol.spawnWaitText(args);
+        await this.adb.subprocess.noneProtocol.spawn(args).wait();
     }
 
     binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {

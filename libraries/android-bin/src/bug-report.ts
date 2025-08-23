@@ -57,10 +57,10 @@ export class BugReport extends AdbServiceBase {
             });
         }
 
-        const result = await adb.subprocess.shellProtocol.spawnWaitText([
-            "bugreportz",
-            "-v",
-        ]);
+        const result = await adb.subprocess.shellProtocol
+            .spawn(["bugreportz", "-v"])
+            .wait()
+            .toString();
         if (result.exitCode !== 0 || result.stderr === "") {
             return new BugReport(adb, {
                 supportsBugReport: true,

@@ -125,10 +125,12 @@ export class Adb implements Closeable {
             .pipeThrough(new ConcatStringStream());
     }
 
-    getProp(key: string): Promise<string> {
-        return this.subprocess.noneProtocol
-            .spawnWaitText(["getprop", key])
-            .then((output) => output.trim());
+    async getProp(key: string): Promise<string> {
+        const output = await this.subprocess.noneProtocol
+            .spawn(["getprop", key])
+            .wait()
+            .toString();
+        return output.trim();
     }
 
     rm(
@@ -154,7 +156,7 @@ export class Adb implements Closeable {
         // https://android.googlesource.com/platform/packages/modules/adb/+/1a0fb8846d4e6b671c8aa7f137a8c21d7b248716/client/adb_install.cpp#984
         args.push("</dev/null");
 
-        return this.subprocess.noneProtocol.spawnWaitText(args);
+        return this.subprocess.noneProtocol.spawn(args).wait().toString();
     }
 
     async sync(): Promise<AdbSync> {
