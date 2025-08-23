@@ -282,8 +282,8 @@ function buildInstallArguments(
 }
 
 export class PackageManager extends AdbServiceBase {
-    static ServiceName = "package" as const;
-    static CommandName = "pm" as const;
+    static readonly ServiceName = "package" as const;
+    static readonly CommandName = "pm" as const;
 
     #cmd: Cmd.NoneProtocolService;
 
@@ -463,6 +463,10 @@ export class PackageManager extends AdbServiceBase {
             .pipeThrough(new SplitStringStream("\n"));
 
         for await (const line of output) {
+            if (!line.startsWith('"package:"')) {
+                continue;
+            }
+
             yield PackageManager.parsePackageListItem(line);
         }
     }
@@ -578,13 +582,14 @@ export class PackageManager extends AdbServiceBase {
         path: string,
     ): Promise<void> {
         const args: string[] = [
-            "pm",
+            PackageManager.CommandName,
             "install-write",
             sessionId.toString(),
             escapeArg(splitName),
             escapeArg(path),
         ];
 
+        // Similar to `install`, must use `adb.subprocess` so it can read `path`
         const process = await this.adb.subprocess.noneProtocol.spawn(args);
         await this.checkResult(process.output);
     }

@@ -91,7 +91,7 @@ export class AccumulateStream<Input, Output, Accumulated = Output>
 /**
  * A `TransformStream` that concatenates strings.
  *
- * Its `readable` is also a `Promise<string>`, so it can be `await`ed to get the result.
+ * Its `readable` is also a Promise-like, that can be `await`ed to get the result.
  *
  * ```ts
  * const result: string = await readable.pipeThrough(new ConcatStringStream());
@@ -136,10 +136,12 @@ export function concatUint8Arrays(chunks: readonly Uint8Array[]): Uint8Array {
 /**
  * A `TransformStream` that concatenates `Uint8Array`s.
  *
- * If you want to decode the result as string,
+ * Its `readable` is also a Promise-like, that can be `await`ed to get the result.
+ *
+ * To convert a `ReadableStream<Uint8Array>` to a string,
  * prefer `.pipeThrough(new TextDecoderStream()).pipeThrough(new ConcatStringStream())`,
- * to `.pipeThrough(new ConcatBufferStream()).pipeThrough(new TextDecoderStream())`,
- * because of JavaScript engine optimizations,
+ * to `.pipeThrough(new ConcatBufferStream()).pipeThrough(new TextDecoderStream())`.
+ * Because of JavaScript engine optimizations,
  * concatenating strings is faster than concatenating `Uint8Array`s.
  */
 export class ConcatBufferStream extends AccumulateStream<
@@ -154,7 +156,12 @@ export class ConcatBufferStream extends AccumulateStream<
                 current.push(chunk);
                 return current;
             },
-            (current) => concatUint8Arrays(current),
+            (current) => {
+                const result = concatUint8Arrays(current);
+                // `current` is no longer needed. Clear it to free memory.
+                current.length = 0;
+                return result;
+            },
         );
     }
 }
