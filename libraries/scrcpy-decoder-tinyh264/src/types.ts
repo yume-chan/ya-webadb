@@ -12,7 +12,21 @@ export interface ScrcpyVideoDecoderCapability {
 }
 
 export interface ScrcpyVideoDecoderPerformanceCounter {
-    readonly framesRendered: number;
+    /**
+     * Gets the number of frames that have been drawn on the renderer
+     */
+    readonly framesDrawn: number;
+    /**
+     * Gets the number of frames that's visible to the user
+     *
+     * Might be `0` if the renderer is in a nested Web Worker on Chrome due to a Chrome bug.
+     * https://issues.chromium.org/issues/41483010
+     */
+    readonly framesPresented: number;
+    /**
+     * Gets the number of frames that wasn't drawn on the renderer
+     * because the renderer can't keep up
+     */
     readonly framesSkipped: number;
 }
 

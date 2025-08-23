@@ -76,6 +76,9 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
                     if (packet.keyframe) {
                         this.#pendingFrames.length = 0;
                     }
+                    // Generally there won't be too many non-key frames
+                    // (because that's bad for video quality),
+                    // Also all frames are required for proper decoding
                     this.#pendingFrames.push(packet);
                     break;
             }

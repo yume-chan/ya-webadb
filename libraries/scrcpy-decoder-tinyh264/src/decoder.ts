@@ -116,8 +116,11 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
     }
 
     #counter = new PerformanceCounterImpl();
-    get framesRendered() {
-        return this.#counter.framesRendered;
+    get framesDrawn() {
+        return this.#counter.framesDrawn;
+    }
+    get framesPresented() {
+        return this.#counter.framesPresented;
     }
     get framesSkipped() {
         return this.#counter.framesSkipped;
@@ -188,55 +191,71 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         const resolver = new PromiseResolver<TinyH264Wrapper>();
         this.#decoder = resolver.promise;
 
-        const {
-            encodedWidth,
-            encodedHeight,
-            croppedWidth,
-            croppedHeight,
-            cropLeft,
-            cropTop,
-        } = h264ParseConfiguration(data);
+        try {
+            const {
+                encodedWidth,
+                encodedHeight,
+                croppedWidth,
+                croppedHeight,
+                cropLeft,
+                cropTop,
+            } = h264ParseConfiguration(data);
 
-        this.#size.setSize(croppedWidth, croppedHeight);
+            this.#size.setSize(croppedWidth, croppedHeight);
 
-        // H.264 Baseline profile only supports YUV 420 pixel format
-        // So chroma width/height is each half of video width/height
-        const chromaWidth = encodedWidth / 2;
-        const chromaHeight = encodedHeight / 2;
+            // H.264 Baseline profile only supports YUV 420 pixel format
+            // So chroma width/height is each half of video width/height
+            const chromaWidth = encodedWidth / 2;
+            const chromaHeight = encodedHeight / 2;
 
-        // YUVCanvas will set canvas size when format changes
-        const format = YuvBuffer.format({
-            width: encodedWidth,
-            height: encodedHeight,
-            chromaWidth,
-            chromaHeight,
-            cropLeft: cropLeft,
-            cropTop: cropTop,
-            cropWidth: croppedWidth,
-            cropHeight: croppedHeight,
-            displayWidth: croppedWidth,
-            displayHeight: croppedHeight,
-        });
+            // YUVCanvas will set canvas size when format changes
+            const format = YuvBuffer.format({
+                width: encodedWidth,
+                height: encodedHeight,
+                chromaWidth,
+                chromaHeight,
+                cropLeft: cropLeft,
+                cropTop: cropTop,
+                cropWidth: croppedWidth,
+                cropHeight: croppedHeight,
+                displayWidth: croppedWidth,
+                displayHeight: croppedHeight,
+            });
 
-        const decoder = await createTinyH264Wrapper();
+            const decoder = await createTinyH264Wrapper();
 
-        const uPlaneOffset = encodedWidth * encodedHeight;
-        const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
-        decoder.onPictureReady(({ data }) => {
-            const array = new Uint8Array(data);
-            const frame = YuvBuffer.frame(
-                format,
-                YuvBuffer.lumaPlane(format, array, encodedWidth, 0),
-                YuvBuffer.chromaPlane(format, array, chromaWidth, uPlaneOffset),
-                YuvBuffer.chromaPlane(format, array, chromaWidth, vPlaneOffset),
-            );
-            this.#renderer!.drawFrame(frame);
-            this.#counter.increaseFramesDrawn();
-        });
+            const uPlaneOffset = encodedWidth * encodedHeight;
+            const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
+            decoder.onPictureReady(({ data }) => {
+                const array = new Uint8Array(data);
+                const frame = YuvBuffer.frame(
+                    format,
+                    YuvBuffer.lumaPlane(format, array, encodedWidth, 0),
+                    YuvBuffer.chromaPlane(
+                        format,
+                        array,
+                        chromaWidth,
+                        uPlaneOffset,
+                    ),
+                    YuvBuffer.chromaPlane(
+                        format,
+                        array,
+                        chromaWidth,
+                        vPlaneOffset,
+                    ),
+                );
 
-        decoder.feed(data.slice().buffer);
+                // Can't know if yuv-canvas is dropping frames or not
+                this.#renderer!.drawFrame(frame);
+                this.#counter.increaseFramesDrawn();
+            });
 
-        resolver.resolve(decoder);
+            decoder.feed(data.slice().buffer);
+
+            resolver.resolve(decoder);
+        } catch (e) {
+            resolver.reject(e);
+        }
     };
 
     pause(): void {

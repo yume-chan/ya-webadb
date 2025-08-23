@@ -11,7 +11,7 @@ import {
     ScrcpyVideoSizeImpl,
 } from "@yume-chan/scrcpy";
 import type { ReadableStream } from "@yume-chan/stream-extra";
-import { WritableStream } from "@yume-chan/stream-extra";
+import { InspectStream } from "@yume-chan/stream-extra";
 
 import type { AdbScrcpyOptions } from "./types.js";
 
@@ -47,17 +47,13 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
         this.#options = options;
         this.#metadata = metadata;
 
-        let inspectStream: ReadableStream<ScrcpyMediaStreamPacket>;
-        [this.#stream, inspectStream] = stream
+        this.#stream = stream
             .pipeThrough(this.#options.createMediaStreamTransformer())
-            .tee();
-
-        void inspectStream
-            .pipeTo(
-                new WritableStream({
-                    write: (packet) => {
+            .pipeThrough(
+                new InspectStream(
+                    (packet) => {
                         if (packet.type === "configuration") {
-                            switch (metadata.codec) {
+                            switch (this.#metadata.codec) {
                                 case ScrcpyVideoCodecId.H264:
                                     this.#configureH264(packet.data);
                                     break;
@@ -68,13 +64,18 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
                                     // AV1 configuration is in data packet
                                     break;
                             }
-                        } else if (metadata.codec === ScrcpyVideoCodecId.AV1) {
+                        } else if (
+                            this.#metadata.codec === ScrcpyVideoCodecId.AV1
+                        ) {
                             this.#configureAv1(packet.data);
                         }
                     },
-                }),
-            )
-            .finally(() => this.#size.dispose());
+                    {
+                        close: () => this.#size.dispose(),
+                        cancel: () => this.#size.dispose(),
+                    },
+                ),
+            );
     }
 
     #configureH264(data: Uint8Array) {

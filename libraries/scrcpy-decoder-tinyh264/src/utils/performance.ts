@@ -4,8 +4,12 @@ export class PerformanceCounterImpl
     implements ScrcpyVideoDecoderPerformanceCounter
 {
     #framesDrawn = 0;
+    get framesDrawn() {
+        return this.#framesDrawn;
+    }
+
     #framesPresented = 0;
-    get framesRendered() {
+    get framesPresented() {
         return this.#framesPresented;
     }
 
@@ -14,14 +18,22 @@ export class PerformanceCounterImpl
         return this.#framesSkipped;
     }
 
-    #animationFrameId: number;
+    #animationFrameId: number | undefined;
 
     constructor() {
-        // `requestAnimationFrame` is also available in Web Worker
+        // `requestAnimationFrame` is available in Web Worker
         // https://developer.mozilla.org/en-US/docs/Web/API/DedicatedWorkerGlobalScope/requestAnimationFrame
-        this.#animationFrameId = requestAnimationFrame(
-            this.#handleAnimationFrame,
-        );
+        try {
+            this.#animationFrameId = requestAnimationFrame(
+                this.#handleAnimationFrame,
+            );
+        } catch {
+            // Chrome has a bug that `requestAnimationFrame` doesn't work in nested Workers
+            // https://issues.chromium.org/issues/41483010
+            // Because we need actual vertical sync to count presented frames,
+            // `setTimeout` with a fixed delay also doesn't work.
+            // In this case just leave `framesPresented` at `0`
+        }
     }
 
     #handleAnimationFrame = () => {
@@ -29,7 +41,6 @@ export class PerformanceCounterImpl
         // Only then a frame is visible to the user.
         if (this.#framesDrawn > 0) {
             this.#framesPresented += 1;
-            this.#framesSkipped += this.#framesDrawn - 1;
             this.#framesDrawn = 0;
         }
 
@@ -47,6 +58,9 @@ export class PerformanceCounterImpl
     }
 
     dispose() {
-        cancelAnimationFrame(this.#animationFrameId);
+        // `0` is a valid value for RAF ID
+        if (this.#animationFrameId !== undefined) {
+            cancelAnimationFrame(this.#animationFrameId);
+        }
     }
 }

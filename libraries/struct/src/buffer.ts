@@ -102,7 +102,19 @@ function _buffer(
                 lengthOrField,
                 "byob",
                 (value, { buffer, index }) => {
-                    buffer.set(value.subarray(0, lengthOrField), index);
+                    if (value.length < lengthOrField) {
+                        buffer.set(value, index);
+                        // Clear remaining bytes in case of BYOB
+                        buffer.fill(
+                            0,
+                            index + value.length,
+                            index + lengthOrField,
+                        );
+                    } else if (value.length === lengthOrField) {
+                        buffer.set(value, index);
+                    } else {
+                        buffer.set(value.subarray(0, lengthOrField), index);
+                    }
                 },
                 function* (then, reader) {
                     const array = yield* then(

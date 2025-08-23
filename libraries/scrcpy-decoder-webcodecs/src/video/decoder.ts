@@ -63,8 +63,11 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     #counter = new PerformanceCounterImpl();
-    get framesRendered() {
-        return this.#counter.framesRendered;
+    get framesDrawn() {
+        return this.#counter.framesDrawn;
+    }
+    get framesPresented() {
+        return this.#counter.framesPresented;
     }
     get framesSkipped() {
         return this.#counter.framesSkipped;
@@ -83,6 +86,9 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#framesDecoded;
     }
     #decodingTime = 0;
+    /**
+     * Accumulated decoding time in milliseconds
+     */
     get decodingTime() {
         return this.#decodingTime;
     }
@@ -159,7 +165,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                     packet.pts = 0n;
                 } else {
                     // Set `pts` to current time to track decoding time
-                    packet.pts = BigInt((performance.now() * 1000) | 0);
+                    // Technically `performance.now()` can return 0 (when document starts loading),
+                    // but in practice it's impossible to call it at that time.
+                    const [ms, us] = performance.now().toString().split(".");
+                    // Multiply `performance.now()` by 1000 to get microseconds.
+                    // String manipulation is used to keep precision.
+                    packet.pts = BigInt(ms + us!.slice(0, 3).padEnd(3, "0"));
                 }
                 return this.#decoder.decode(packet);
             },
@@ -175,7 +186,8 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             },
             write: this.#pause.write,
             // Nothing can be disposed when the stream is aborted/closed
-            // No new frames will arrive, but some frames might still be decoding and/or renderding
+            // No new frames will arrive, but some frames might still be decoding and/or rendering,
+            // and they need to be presented.
         });
     }
 

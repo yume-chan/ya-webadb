@@ -45,7 +45,8 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         // But Chrome has not implemented it yet.
         // https://issues.chromium.org/issues/40058895
         this.#generator = new MediaStreamTrackGenerator({ kind: "video" });
-        this.#writer = this.#generator.writable.getWriter() as never;
+        this.#writer =
+            this.#generator.writable.getWriter() as WritableStreamDefaultWriter<VideoFrame>;
 
         this.#stream = new MediaStream([this.#generator]);
         this.#element.srcObject = this.#stream;
