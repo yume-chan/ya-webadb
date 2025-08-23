@@ -1,82 +1,117 @@
 import { PromiseResolver } from "@yume-chan/async";
 import { EmptyUint8Array } from "@yume-chan/struct";
 
-import type { ReadableStreamDefaultController } from "./stream.js";
+import type { ReadableWritablePair } from "./stream.js";
 import { ReadableStream, WritableStream } from "./stream.js";
-
-export interface ConcatStringReadableStream
-    extends ReadableStream<string>,
-        Promise<string> {}
 
 // `TransformStream` only calls its `source.flush` method when its `readable` is being read.
 // If the user want to use the `Promise` interface, the `flush` method will never be called,
 // so the `PromiseResolver` will never be resolved.
 // Thus we need to implement our own `TransformStream` using a `WritableStream` and a `ReadableStream`.
+export class AccumulateStream<Input, Output, Accumulated = Output>
+    implements ReadableWritablePair<Output, Input>
+{
+    #current: Accumulated;
+
+    #write: (chunk: Input, current: Accumulated) => Accumulated;
+    #finalize: (current: Accumulated) => Output;
+
+    #resolver = new PromiseResolver<Output>();
+
+    #writable = new WritableStream<Input>({
+        write: (chunk) => {
+            this.#current = this.#write(chunk, this.#current);
+        },
+        close: () => {
+            const output = this.#finalize(this.#current);
+            this.#resolver.resolve(output);
+        },
+        abort: (reason) => {
+            this.#resolver.reject(reason);
+        },
+    });
+    get writable() {
+        return this.#writable;
+    }
+
+    #readable = new ReadableStream<Output>(
+        {
+            pull: async (controller) => {
+                const output = await this.#resolver.promise;
+                controller.enqueue(output);
+                controller.close();
+            },
+        },
+        // `highWaterMark: 0` makes the `pull` method
+        // only be called when the `ReadableStream` is being read.
+        // If the user only uses the `Promise` interface,
+        // it's unnecessary to run the `pull` method.
+        { highWaterMark: 0 },
+    ) as ReadableStream<Output> &
+        Omit<Promise<Output>, typeof Symbol.toStringTag>;
+    get readable() {
+        return this.#readable;
+    }
+
+    constructor(
+        initial: Accumulated,
+        write: (chunk: Input, current: Accumulated) => Accumulated,
+        finalize: (current: Accumulated) => Output,
+    ) {
+        this.#current = initial;
+        this.#write = write;
+        this.#finalize = finalize;
+
+        // Make `readable` a `Promise`-like
+        this.#readable.then = (onfulfilled, onrejected) => {
+            return this.#resolver.promise.then(onfulfilled, onrejected);
+        };
+        this.#readable.catch = (onrejected) => {
+            return this.#resolver.promise.catch(onrejected);
+        };
+        this.#readable.finally = (onfinally) => {
+            return this.#resolver.promise.finally(onfinally);
+        };
+    }
+}
 
 /**
  * A `TransformStream` that concatenates strings.
  *
- * Its `readable` is also a `Promise<string>`, so it's possible to `await` it to get the result.
+ * Its `readable` is also a `Promise<string>`, so it can be `await`ed to get the result.
  *
  * ```ts
  * const result: string = await readable.pipeThrough(new ConcatStringStream());
  * ```
  */
-export class ConcatStringStream {
-    // PERF: rope (concat strings) is faster than `[].join('')`
-    #result = "";
-
-    #resolver = new PromiseResolver<string>();
-
-    #writable = new WritableStream<string>({
-        write: (chunk) => {
-            this.#result += chunk;
-        },
-        close: () => {
-            this.#resolver.resolve(this.#result);
-            this.#readableController.enqueue(this.#result);
-            this.#readableController.close();
-        },
-        abort: (reason) => {
-            this.#resolver.reject(reason);
-            this.#readableController.error(reason);
-        },
-    });
-    get writable(): WritableStream<string> {
-        return this.#writable;
-    }
-
-    #readableController!: ReadableStreamDefaultController<string>;
-    #readable = new ReadableStream<string>({
-        start: (controller) => {
-            this.#readableController = controller;
-        },
-    }) as ConcatStringReadableStream;
-    get readable(): ConcatStringReadableStream {
-        return this.#readable;
-    }
-
+export class ConcatStringStream extends AccumulateStream<string, string> {
     constructor() {
-        void Object.defineProperties(this.#readable, {
-            then: {
-                get: () =>
-                    this.#resolver.promise.then.bind(this.#resolver.promise),
-            },
-            catch: {
-                get: () =>
-                    this.#resolver.promise.catch.bind(this.#resolver.promise),
-            },
-            finally: {
-                get: () =>
-                    this.#resolver.promise.finally.bind(this.#resolver.promise),
-            },
-        });
+        // PERF: rope (concat strings) is faster than `[].join('')`
+        super(
+            "",
+            (chunk, current) => current + chunk,
+            (output) => output,
+        );
     }
 }
 
-export interface ConcatBufferReadableStream
-    extends ReadableStream<Uint8Array>,
-        Promise<Uint8Array> {}
+export function concatUint8Arrays(chunks: Uint8Array[]): Uint8Array {
+    switch (chunks.length) {
+        case 0:
+            return EmptyUint8Array;
+        case 1:
+            return chunks[0]!;
+    }
+
+    const length = chunks.reduce((a, b) => a + b.length, 0);
+    const output = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+        output.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return output;
+}
 
 /**
  * A `TransformStream` that concatenates `Uint8Array`s.
@@ -87,76 +122,19 @@ export interface ConcatBufferReadableStream
  * because of JavaScript engine optimizations,
  * concatenating strings is faster than concatenating `Uint8Array`s.
  */
-export class ConcatBufferStream {
-    #segments: Uint8Array[] = [];
-
-    #resolver = new PromiseResolver<Uint8Array>();
-
-    #writable = new WritableStream<Uint8Array>({
-        write: (chunk) => {
-            this.#segments.push(chunk);
-        },
-        close: () => {
-            let result: Uint8Array;
-            let offset = 0;
-            switch (this.#segments.length) {
-                case 0:
-                    result = EmptyUint8Array;
-                    break;
-                case 1:
-                    result = this.#segments[0]!;
-                    break;
-                default:
-                    result = new Uint8Array(
-                        this.#segments.reduce(
-                            (prev, item) => prev + item.length,
-                            0,
-                        ),
-                    );
-                    for (const segment of this.#segments) {
-                        result.set(segment, offset);
-                        offset += segment.length;
-                    }
-                    break;
-            }
-
-            this.#resolver.resolve(result);
-            this.#readableController.enqueue(result);
-            this.#readableController.close();
-        },
-        abort: (reason) => {
-            this.#resolver.reject(reason);
-            this.#readableController.error(reason);
-        },
-    });
-    get writable(): WritableStream<Uint8Array> {
-        return this.#writable;
-    }
-
-    #readableController!: ReadableStreamDefaultController<Uint8Array>;
-    #readable = new ReadableStream<Uint8Array>({
-        start: (controller) => {
-            this.#readableController = controller;
-        },
-    }) as ConcatBufferReadableStream;
-    get readable(): ConcatBufferReadableStream {
-        return this.#readable;
-    }
-
+export class ConcatBufferStream extends AccumulateStream<
+    Uint8Array,
+    Uint8Array,
+    Uint8Array[]
+> {
     constructor() {
-        void Object.defineProperties(this.#readable, {
-            then: {
-                get: () =>
-                    this.#resolver.promise.then.bind(this.#resolver.promise),
+        super(
+            [],
+            (chunk, current) => {
+                current.push(chunk);
+                return current;
             },
-            catch: {
-                get: () =>
-                    this.#resolver.promise.catch.bind(this.#resolver.promise),
-            },
-            finally: {
-                get: () =>
-                    this.#resolver.promise.finally.bind(this.#resolver.promise),
-            },
-        });
+            (current) => concatUint8Arrays(current),
+        );
     }
 }
