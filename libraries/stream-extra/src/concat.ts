@@ -137,7 +137,7 @@ export function concatUint8Arrays(chunks: Uint8Array[]): Uint8Array {
  *
  * If you want to decode the result as string,
  * prefer `.pipeThrough(new TextDecoderStream()).pipeThrough(new ConcatStringStream())`,
- * than `.pipeThrough(new ConcatBufferStream()).pipeThrough(new TextDecoderStream())`,
+ * to `.pipeThrough(new ConcatBufferStream()).pipeThrough(new TextDecoderStream())`,
  * because of JavaScript engine optimizations,
  * concatenating strings is faster than concatenating `Uint8Array`s.
  */
