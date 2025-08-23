@@ -102,7 +102,7 @@ function _buffer(
                 lengthOrField,
                 "byob",
                 (value, { buffer, index }) => {
-                    buffer.set(value.slice(0, lengthOrField), index);
+                    buffer.set(value.subarray(0, lengthOrField), index);
                 },
                 function* (then, reader) {
                     const array = yield* then(

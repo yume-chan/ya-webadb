@@ -282,8 +282,8 @@ function buildInstallArguments(
 }
 
 export class PackageManager extends AdbServiceBase {
-    static readonly ServiceName = "package" as const;
-    static readonly CommandName = "pm" as const;
+    static readonly ServiceName = "package";
+    static readonly CommandName = "pm";
 
     #cmd: Cmd.NoneProtocolService;
 
@@ -390,10 +390,12 @@ export class PackageManager extends AdbServiceBase {
         ]);
     }
 
+    static readonly PackageListItemPrefix = "package:";
+
     static parsePackageListItem(
         line: string,
     ): PackageManagerListPackagesResult {
-        line = line.substring("package:".length);
+        line = line.substring(PackageManager.PackageListItemPrefix.length);
 
         let packageName: string;
         let sourceDir: string | undefined;
@@ -463,7 +465,7 @@ export class PackageManager extends AdbServiceBase {
             .pipeThrough(new SplitStringStream("\n"));
 
         for await (const line of output) {
-            if (!line.startsWith('"package:"')) {
+            if (!line.startsWith(PackageManager.PackageListItemPrefix)) {
                 continue;
             }
 
