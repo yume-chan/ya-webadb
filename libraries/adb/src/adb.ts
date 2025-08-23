@@ -156,7 +156,11 @@ export class Adb implements Closeable {
         // https://android.googlesource.com/platform/packages/modules/adb/+/1a0fb8846d4e6b671c8aa7f137a8c21d7b248716/client/adb_install.cpp#984
         args.push("</dev/null");
 
-        return this.subprocess.noneProtocol.spawn(args).wait().toString();
+        return this.subprocess.noneProtocol
+            .spawn(args)
+            .wait()
+            .toString()
+            .then((output) => output.trim());
     }
 
     async sync(): Promise<AdbSync> {

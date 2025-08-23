@@ -61,7 +61,7 @@ export class Settings extends AdbServiceBase {
     ): Promise<string> {
         const output = await this.base("get", namespace, options, key);
         // Remove last \n
-        return output.substring(0, output.length - 1);
+        return output.endsWith("\n") ? output.slice(0, -1) : output;
     }
 
     async delete(

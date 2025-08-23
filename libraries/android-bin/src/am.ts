@@ -48,16 +48,15 @@ export class ActivityManager extends AdbServiceBase {
 
         args = args.concat(options.intent.build());
 
-        const output = await this.#cmd
-            .spawn(args)
-            .wait()
-            .toString()
-            .then((output) => output.trim());
+        const output = await this.#cmd.spawn(args).wait().toString();
 
-        for (const line of output) {
+        for (let line of output.trim().split(/\r?\n/)) {
+            line = line.trim();
+
             if (line.startsWith("Error:")) {
                 throw new Error(line.substring("Error:".length).trim());
             }
+
             if (line === "Complete") {
                 return;
             }

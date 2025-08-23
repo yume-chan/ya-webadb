@@ -12,6 +12,7 @@ import {
     StructDeserializeStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
+import { EmptyUint8Array } from "@yume-chan/struct";
 
 import type { AdbSocket } from "../../../adb.js";
 
@@ -110,14 +111,21 @@ export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
 
         this.#writer = this.#socket.writable.getWriter();
         this.#stdin = new MaybeConsumable.WritableStream<Uint8Array>({
-            write: async (chunk) => {
-                await this.#writer.write(
+            write: (chunk) =>
+                this.#writer.write(
                     AdbShellProtocolPacket.serialize({
                         id: AdbShellProtocolId.Stdin,
                         data: chunk,
                     }),
-                );
-            },
+                ),
+            close: () =>
+                // Only shell protocol + raw mode supports closing stdin
+                this.#writer.write(
+                    AdbShellProtocolPacket.serialize({
+                        id: AdbShellProtocolId.CloseStdin,
+                        data: EmptyUint8Array,
+                    }),
+                ),
         });
     }
 

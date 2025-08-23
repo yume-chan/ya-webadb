@@ -128,7 +128,7 @@ export class DemoMode extends AdbServiceBase {
             }
         }
 
-        await this.adb.subprocess.noneProtocol.spawn(args).wait().toString();
+        await this.adb.subprocess.noneProtocol.spawn(args).wait();
     }
 
     async setBatteryLevel(level: number): Promise<void> {

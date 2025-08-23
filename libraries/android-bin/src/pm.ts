@@ -550,7 +550,8 @@ export class PackageManager extends AdbServiceBase {
             .toString()
             .then((output) => output.trim());
 
-        const sessionIdString = output.match(/.*\[(\d+)\].*/);
+        // https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/pm/PackageManagerShellCommand.java;l=1744;drc=e38fa24e5738513d721ec2d9fd2dd00f32e327c1
+        const sessionIdString = output.match(/\[(\d+)\]/);
         if (!sessionIdString) {
             throw new Error(output);
         }

@@ -44,19 +44,20 @@ export class CmdNoneProtocolService {
         this.#supportsAbbExec = adb.canUseFeature(AdbFeature.AbbExec);
     }
 
-    spawn = adbNoneProtocolSpawner(async (command) => {
+    spawn = adbNoneProtocolSpawner(async (command, signal) => {
         if (this.#supportsAbbExec) {
             return new AdbNoneProtocolProcessImpl(
                 await this.#adb.createSocket(
                     `abb_exec:${command.join("\0")}\0`,
                 ),
+                signal,
             );
         }
 
         if (this.#supportsCmd) {
-            return this.#adb.subprocess.noneProtocol.spawn(
-                `cmd ${command.join(" ")}`,
-            );
+            const cmdCommand = command.slice();
+            cmdCommand.unshift("cmd");
+            return this.#adb.subprocess.noneProtocol.spawn(cmdCommand, signal);
         }
 
         let fallback = this.#fallback;
@@ -72,7 +73,7 @@ export class CmdNoneProtocolService {
 
         const fallbackCommand = command.slice();
         fallbackCommand[0] = fallback;
-        return this.#adb.subprocess.noneProtocol.spawn(fallbackCommand);
+        return this.#adb.subprocess.noneProtocol.spawn(fallbackCommand, signal);
     });
 }
 
@@ -116,10 +117,11 @@ export class CmdShellProtocolService {
     }
 
     spawn = adbShellProtocolSpawner(
-        async (command): Promise<AdbShellProtocolProcess> => {
+        async (command, signal): Promise<AdbShellProtocolProcess> => {
             if (this.#supportsAbb) {
                 return new AdbShellProtocolProcessImpl(
                     await this.#adb.createSocket(`abb:${command.join("\0")}\0`),
+                    signal,
                 );
             }
 
@@ -128,8 +130,11 @@ export class CmdShellProtocolService {
             }
 
             if (this.#supportsCmd) {
+                const cmdCommand = command.slice();
+                cmdCommand.unshift("cmd");
                 return this.#adb.subprocess.shellProtocol.spawn(
-                    `cmd ${command.join(" ")}`,
+                    cmdCommand,
+                    signal,
                 );
             }
 
@@ -146,7 +151,10 @@ export class CmdShellProtocolService {
 
             const fallbackCommand = command.slice();
             fallbackCommand[0] = fallback;
-            return this.#adb.subprocess.shellProtocol.spawn(fallbackCommand);
+            return this.#adb.subprocess.shellProtocol.spawn(
+                fallbackCommand,
+                signal,
+            );
         },
     );
 }

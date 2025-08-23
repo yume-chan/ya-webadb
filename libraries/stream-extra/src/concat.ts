@@ -62,13 +62,15 @@ export class AccumulateStream<Input, Output, Accumulated = Output>
         this.#write = write;
         this.#finalize = finalize;
 
-        // Make `readable` a `Promise`-like
+        // biome-ignore lint/suspicious/noThenProperty: This object is intentionally thenable
         this.#readable.then = (onfulfilled, onrejected) => {
             return this.#resolver.promise.then(onfulfilled, onrejected);
         };
+        // biome-ignore lint/suspicious/noThenProperty: This object is intentionally thenable
         this.#readable.catch = (onrejected) => {
             return this.#resolver.promise.catch(onrejected);
         };
+        // biome-ignore lint/suspicious/noThenProperty: This object is intentionally thenable
         this.#readable.finally = (onfinally) => {
             return this.#resolver.promise.finally(onfinally);
         };
@@ -95,6 +97,13 @@ export class ConcatStringStream extends AccumulateStream<string, string> {
     }
 }
 
+/**
+ * Concatenate all chunks into a single `Uint8Array`.
+ *
+ * If there is only one chunk, it will be returned directly.
+ * @param chunks An array of `Uint8Array`s to concatenate
+ * @returns An `Uint8Array` containing all chunks. If there is only one chunk, it will be returned directly.
+ */
 export function concatUint8Arrays(chunks: Uint8Array[]): Uint8Array {
     switch (chunks.length) {
         case 0:
@@ -118,7 +127,7 @@ export function concatUint8Arrays(chunks: Uint8Array[]): Uint8Array {
  *
  * If you want to decode the result as string,
  * prefer `.pipeThrough(new TextDecoderStream()).pipeThrough(new ConcatStringStream())`,
- * than `.pipeThough(new ConcatBufferStream()).pipeThrough(new TextDecoderStream())`,
+ * than `.pipeThrough(new ConcatBufferStream()).pipeThrough(new TextDecoderStream())`,
  * because of JavaScript engine optimizations,
  * concatenating strings is faster than concatenating `Uint8Array`s.
  */

@@ -78,7 +78,7 @@ export type LazyPromise<T, U> = Omit<Promise<T>, typeof Symbol.toStringTag> & U;
  * By using `createLazyPromise(computeT, { asU: computeU })`,
  * `computeT` will only run when `p` is used as a `Promise`.
  *
- * Not that the result object can't be returned from an async function,
+ * Note that the result object can't be returned from an async function,
  * as async functions always creates a new `Promise` with the return value,
  * which runs `initializer` immediately, and discards any extra `methods` attached.
  * @param initializer
@@ -103,12 +103,15 @@ export function createLazyPromise<
     };
 
     const result = {
+        // biome-ignore lint/suspicious/noThenProperty: This object is intentionally thenable
         then(onfulfilled, onrejected) {
             return getOrCreatePromise().then(onfulfilled, onrejected);
         },
+        // biome-ignore lint/suspicious/noThenProperty: This object is intentionally thenable
         catch(onrejected) {
             return getOrCreatePromise().catch(onrejected);
         },
+        // biome-ignore lint/suspicious/noThenProperty: This object is intentionally thenable
         finally(onfinally) {
             return getOrCreatePromise().finally(onfinally);
         },
@@ -116,7 +119,12 @@ export function createLazyPromise<
     } satisfies LazyPromise<T, {}> as LazyPromise<T, U>;
 
     for (const [key, value] of Object.entries(methods)) {
-        Object.defineProperty(result, key, value);
+        Object.defineProperty(result, key, {
+            configurable: true,
+            writable: true,
+            enumerable: false,
+            value,
+        });
     }
 
     return result;
