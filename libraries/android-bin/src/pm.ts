@@ -12,7 +12,7 @@ import {
     TextDecoderStream,
 } from "@yume-chan/stream-extra";
 
-import { CmdNoneProtocolService } from "./cmd.js";
+import { Cmd, createCmdNoneProtocolService } from "./cmd/index.js";
 import type { IntentBuilder } from "./intent.js";
 import type { Optional, SingleUserOrAll } from "./utils.js";
 import { buildArguments } from "./utils.js";
@@ -282,14 +282,17 @@ function buildInstallArguments(
 }
 
 export class PackageManager extends AdbServiceBase {
-    static ServiceName = "package";
-    static CommandName = "pm";
+    static ServiceName = "package" as const;
+    static CommandName = "pm" as const;
 
-    #cmd: CmdNoneProtocolService;
+    #cmd: Cmd.NoneProtocolService;
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = new CmdNoneProtocolService(adb, PackageManager.CommandName);
+        this.#cmd = createCmdNoneProtocolService(
+            adb,
+            PackageManager.CommandName,
+        );
     }
 
     /**
@@ -358,11 +361,11 @@ export class PackageManager extends AdbServiceBase {
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
         options?: Optional<PackageManagerInstallOptions>,
     ): Promise<void> {
-        // Android 7 added both `cmd` command and streaming install support,
-        // It's hard to detect whether `pm` supports streaming install (unless actually trying),
-        // so check for whether `cmd` is supported,
-        // and assume `pm` streaming install support status is same as that.
-        if (!this.#cmd.isSupported) {
+        // Technically `cmd` support and streaming install support are unrelated,
+        // but it's impossible to detect streaming install support without actually trying it.
+        // As they are both added in Android 7,
+        // assume `cmd` support also means streaming install support (and vice versa).
+        if (this.#cmd.mode === Cmd.Mode.Fallback) {
             // Fall back to push file then install
             await this.pushAndInstallStream(stream, options);
             return;
@@ -453,10 +456,12 @@ export class PackageManager extends AdbServiceBase {
         }
 
         const process = await this.#cmd.spawn(args);
+
         const reader = process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new SplitStringStream("\n"))
             .getReader();
+
         while (true) {
             const { done, value } = await reader.read();
             if (done) {

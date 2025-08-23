@@ -1,0 +1,69 @@
+import type { Adb } from "@yume-chan/adb";
+import {
+    AdbFeature,
+    AdbShellProtocolProcessImpl,
+    adbShellProtocolSpawner,
+} from "@yume-chan/adb";
+
+import { Cmd } from "./service.js";
+import { checkCommand, resolveFallback } from "./utils.js";
+
+export function createCmdShellProtocolService(
+    adb: Adb,
+    fallback: Exclude<Cmd.Fallback, undefined>,
+): Cmd.ShellProtocolService;
+export function createCmdShellProtocolService(
+    adb: Adb,
+    fallback?: Cmd.Fallback,
+): Cmd.ShellProtocolService | undefined;
+export function createCmdShellProtocolService(
+    adb: Adb,
+    fallback?: Cmd.Fallback,
+): Cmd.ShellProtocolService | undefined {
+    if (adb.canUseFeature(AdbFeature.AbbExec)) {
+        return {
+            mode: Cmd.Mode.Abb,
+            spawn: adbShellProtocolSpawner(async (command, signal) => {
+                checkCommand(command);
+
+                return new AdbShellProtocolProcessImpl(
+                    await adb.createSocket(`abb:${command.join("\0")}\0`),
+                    signal,
+                );
+            }),
+        };
+    }
+
+    const shellProtocolService = adb.subprocess.shellProtocol;
+    if (!shellProtocolService) {
+        return undefined;
+    }
+
+    if (adb.canUseFeature(AdbFeature.Cmd)) {
+        return {
+            mode: Cmd.Mode.Cmd,
+            spawn: adbShellProtocolSpawner(async (command, signal) => {
+                checkCommand(command);
+
+                const newCommand = command.slice();
+                newCommand.unshift("cmd");
+                return shellProtocolService.spawn(newCommand, signal);
+            }),
+        };
+    }
+
+    if (fallback) {
+        return {
+            mode: Cmd.Mode.Fallback,
+            spawn: adbShellProtocolSpawner(async (command, signal) => {
+                checkCommand(command);
+
+                const newCommand = command.slice();
+                newCommand.unshift(resolveFallback(fallback, command[0]!));
+                return shellProtocolService.spawn(newCommand, signal);
+            }),
+        };
+    }
+
+    return undefined;
+}
