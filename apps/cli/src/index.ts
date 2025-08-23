@@ -6,7 +6,6 @@ import "source-map-support/register.js";
 
 import { Adb, AdbServerClient, Ref } from "@yume-chan/adb";
 import { AdbServerNodeTcpConnector } from "@yume-chan/adb-server-node-tcp";
-import { WritableStream } from "@yume-chan/stream-extra";
 import { program } from "commander";
 
 program

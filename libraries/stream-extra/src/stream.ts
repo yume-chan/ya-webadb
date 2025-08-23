@@ -1,10 +1,4 @@
-import type {
-    AbortSignal,
-    ReadableStreamIteratorOptions,
-    ReadableStream as ReadableStreamType,
-    TransformStream as TransformStreamType,
-    WritableStream as WritableStreamType,
-} from "./types.js";
+import type { AbortSignal, ReadableStreamIteratorOptions } from "./types.js";
 
 export * from "./types.js";
 export { ReadableStream };
@@ -27,11 +21,59 @@ interface AbortControllerConstructor {
     new (): AbortController;
 }
 
+type ReadableStreamType<T> = typeof globalThis extends {
+    ReadableStream: unknown;
+}
+    ? // @ts-expect-error Just do it
+      globalThis.ReadableStream<T>
+    : // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+      import("./types.js").ReadableStream<T>;
+
+type ReadableStreamConstructor = typeof globalThis extends {
+    ReadableStream: unknown;
+}
+    ? // @ts-expect-error Just do it
+      typeof globalThis.ReadableStream
+    : // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+      typeof import("./types.js").ReadableStream;
+
+type WritableStreamType<T> = typeof globalThis extends {
+    WritableStream: unknown;
+}
+    ? // @ts-expect-error Just do it
+      globalThis.WritableStream<T>
+    : // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+      import("./types.js").WritableStream<T>;
+
+type WritableStreamConstructor = typeof globalThis extends {
+    WritableStream: unknown;
+}
+    ? // @ts-expect-error Just do it
+      typeof globalThis.WritableStream
+    : // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+      typeof import("./types.js").WritableStream;
+
+type TransformStreamType<I, O> = typeof globalThis extends {
+    TransformStream: unknown;
+}
+    ? // @ts-expect-error Just do it
+      globalThis.TransformStream<I, O>
+    : // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+      import("./types.js").TransformStream<I, O>;
+
+type TransformStreamConstructor = typeof globalThis extends {
+    TransformStream: unknown;
+}
+    ? // @ts-expect-error Just do it
+      typeof globalThis.TransformStream
+    : // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+      typeof import("./types.js").TransformStream;
+
 interface GlobalExtension {
     AbortController: AbortControllerConstructor;
-    ReadableStream: typeof ReadableStreamType;
-    WritableStream: typeof WritableStreamType;
-    TransformStream: typeof TransformStreamType;
+    ReadableStream: ReadableStreamConstructor;
+    WritableStream: WritableStreamConstructor;
+    TransformStream: TransformStreamConstructor;
 }
 
 export const { AbortController } = globalThis as unknown as GlobalExtension;
@@ -40,7 +82,7 @@ export type ReadableStream<T> = ReadableStreamType<T>;
 export type WritableStream<T> = WritableStreamType<T>;
 export type TransformStream<I, O> = TransformStreamType<I, O>;
 
-const ReadableStream = /* #__PURE__ */ (() => {
+const ReadableStream = /* #__PURE__ */ ((): ReadableStreamConstructor => {
     const { ReadableStream } = globalThis as unknown as GlobalExtension;
 
     if (!ReadableStream.from) {
