@@ -27,3 +27,5 @@ export function buildArguments<T>(
 
 export type SingleUser = number | "current";
 export type SingleUserOrAll = SingleUser | "all";
+
+export type Optional<T extends object> = { [K in keyof T]?: T[K] | undefined };

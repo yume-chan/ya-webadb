@@ -20,11 +20,21 @@ export class AccumulateStream<Input, Output, Accumulated = Output>
 
     #writable = new WritableStream<Input>({
         write: (chunk) => {
-            this.#current = this.#write(chunk, this.#current);
+            try {
+                this.#current = this.#write(chunk, this.#current);
+            } catch (e) {
+                this.#resolver.reject(e);
+                throw e;
+            }
         },
         close: () => {
-            const output = this.#finalize(this.#current);
-            this.#resolver.resolve(output);
+            try {
+                const output = this.#finalize(this.#current);
+                this.#resolver.resolve(output);
+            } catch (e) {
+                this.#resolver.reject(e);
+                throw e;
+            }
         },
         abort: (reason) => {
             this.#resolver.reject(reason);

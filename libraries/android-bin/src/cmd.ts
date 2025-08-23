@@ -8,6 +8,29 @@ import {
     adbShellProtocolSpawner,
 } from "@yume-chan/adb";
 
+function resolveFallback(
+    fallback:
+        | string
+        | Record<string, string>
+        | ((service: string) => string)
+        | undefined,
+    command: string,
+) {
+    if (typeof fallback === "function") {
+        fallback = fallback(command);
+    } else if (typeof fallback === "object" && fallback !== null) {
+        fallback = fallback[command];
+    }
+
+    if (!fallback) {
+        throw new Error(
+            `Neither abb nor cmd is supported, and no fallback for command ${command} is provided`,
+        );
+    }
+
+    return fallback;
+}
+
 export class CmdNoneProtocolService {
     #adb: Adb;
     #fallback:
@@ -45,6 +68,10 @@ export class CmdNoneProtocolService {
     }
 
     spawn = adbNoneProtocolSpawner(async (command, signal) => {
+        if (command.length === 0) {
+            throw new Error("No command provided");
+        }
+
         if (this.#supportsAbbExec) {
             return new AdbNoneProtocolProcessImpl(
                 await this.#adb.createSocket(
@@ -60,20 +87,9 @@ export class CmdNoneProtocolService {
             return this.#adb.subprocess.noneProtocol.spawn(cmdCommand, signal);
         }
 
-        let fallback = this.#fallback;
-        if (typeof fallback === "function") {
-            fallback = fallback(command[0]!);
-        } else if (typeof fallback === "object") {
-            fallback = fallback[command[0]!];
-        }
-
-        if (!fallback) {
-            throw new Error("Unsupported");
-        }
-
-        const fallbackCommand = command.slice();
-        fallbackCommand[0] = fallback;
-        return this.#adb.subprocess.noneProtocol.spawn(fallbackCommand, signal);
+        const shellCommand = command.slice();
+        shellCommand[0] = resolveFallback(this.#fallback, command[0]!);
+        return this.#adb.subprocess.noneProtocol.spawn(shellCommand, signal);
     });
 }
 
@@ -118,6 +134,10 @@ export class CmdShellProtocolService {
 
     spawn = adbShellProtocolSpawner(
         async (command, signal): Promise<AdbShellProtocolProcess> => {
+            if (command.length === 0) {
+                throw new Error("No command provided");
+            }
+
             if (this.#supportsAbb) {
                 return new AdbShellProtocolProcessImpl(
                     await this.#adb.createSocket(`abb:${command.join("\0")}\0`),
@@ -126,7 +146,7 @@ export class CmdShellProtocolService {
             }
 
             if (!this.#adb.subprocess.shellProtocol) {
-                throw new Error("Unsupported");
+                throw new Error("Neither abb nor shell protocol is supported");
             }
 
             if (this.#supportsCmd) {
@@ -138,21 +158,10 @@ export class CmdShellProtocolService {
                 );
             }
 
-            let fallback = this.#fallback;
-            if (typeof fallback === "function") {
-                fallback = fallback(command[0]!);
-            } else if (typeof fallback === "object") {
-                fallback = fallback[command[0]!];
-            }
-
-            if (!fallback) {
-                throw new Error("Unsupported");
-            }
-
-            const fallbackCommand = command.slice();
-            fallbackCommand[0] = fallback;
+            const shellCommand = command.slice();
+            shellCommand[0] = resolveFallback(this.#fallback, command[0]!);
             return this.#adb.subprocess.shellProtocol.spawn(
-                fallbackCommand,
+                shellCommand,
                 signal,
             );
         },

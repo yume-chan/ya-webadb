@@ -14,7 +14,7 @@ import {
 
 import { CmdNoneProtocolService } from "./cmd.js";
 import type { IntentBuilder } from "./intent.js";
-import type { SingleUserOrAll } from "./utils.js";
+import type { Optional, SingleUserOrAll } from "./utils.js";
 import { buildArguments } from "./utils.js";
 
 export enum PackageManagerInstallLocation {
@@ -653,8 +653,6 @@ export class PackageManager extends AdbServiceBase {
         await this.checkResult(process.output);
     }
 }
-
-export type Optional<T extends object> = { [K in keyof T]?: T[K] | undefined };
 
 export class PackageManagerInstallSession {
     static async create(
