@@ -4,7 +4,7 @@
 // cspell:ignore versioncode
 
 import type { Adb } from "@yume-chan/adb";
-import { AdbServiceBase } from "@yume-chan/adb";
+import { AdbServiceBase, escapeArg } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 import {
     ConcatStringStream,
@@ -307,7 +307,7 @@ export class PackageManager extends AdbServiceBase {
         const args = buildInstallArguments("install", options);
         args[0] = PackageManager.CommandName;
         // WIP: old version of pm doesn't support multiple apks
-        args.push(...apks);
+        args.push(...apks.map(escapeArg));
 
         // Starting from Android 7, `pm` becomes a wrapper to `cmd package`.
         // The benefit of `cmd package` is it starts faster than the old `pm`,
@@ -451,28 +451,24 @@ export class PackageManager extends AdbServiceBase {
             options,
             PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP,
         );
+        // `PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP` doesn't have `filter`
         if (options?.filter) {
-            args.push(options.filter);
+            args.push(escapeArg(options.filter));
         }
 
         const process = await this.#cmd.spawn(args);
 
-        const reader = process.output
+        const output = process.output
             .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new SplitStringStream("\n"))
-            .getReader();
+            .pipeThrough(new SplitStringStream("\n"));
 
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-                break;
-            }
-            yield PackageManager.parsePackageListItem(value);
+        for await (const line of output) {
+            yield PackageManager.parsePackageListItem(line);
         }
     }
 
     async getPackageSources(packageName: string): Promise<string[]> {
-        const args = [PackageManager.ServiceName, "-p", packageName];
+        const args = [PackageManager.ServiceName, "-p", escapeArg(packageName)];
         const process = await this.#cmd.spawn(args);
         const result: string[] = [];
         for await (const line of process.output
@@ -490,14 +486,14 @@ export class PackageManager extends AdbServiceBase {
         packageName: string,
         options?: Optional<PackageManagerUninstallOptions>,
     ): Promise<void> {
-        const args = buildArguments(
+        let args = buildArguments(
             [PackageManager.ServiceName, "uninstall"],
             options,
             PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP,
         );
-        args.push(packageName);
+        args.push(escapeArg(packageName));
         if (options?.splitNames) {
-            args.push(...options.splitNames);
+            args = args.concat(options.splitNames.map(escapeArg));
         }
 
         const output = await this.#cmd
@@ -519,7 +515,7 @@ export class PackageManager extends AdbServiceBase {
             PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP,
         );
 
-        args = args.concat(options.intent.build());
+        args = args.concat(options.intent.build().map(escapeArg));
 
         const output = await this.#cmd
             .spawn(args)
@@ -555,13 +551,14 @@ export class PackageManager extends AdbServiceBase {
             .toString()
             .then((output) => output.trim());
 
+        // The output format won't change to make it easier to parse
         // https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/pm/PackageManagerShellCommand.java;l=1744;drc=e38fa24e5738513d721ec2d9fd2dd00f32e327c1
-        const sessionIdString = output.match(/\[(\d+)\]/);
-        if (!sessionIdString) {
+        const match = output.match(/\[(\d+)\]/);
+        if (!match) {
             throw new Error(output);
         }
 
-        return Number.parseInt(sessionIdString[1]!, 10);
+        return Number.parseInt(match[1]!, 10);
     }
 
     async checkResult(stream: ReadableStream<Uint8Array>) {
@@ -584,8 +581,8 @@ export class PackageManager extends AdbServiceBase {
             "pm",
             "install-write",
             sessionId.toString(),
-            splitName,
-            path,
+            escapeArg(splitName),
+            escapeArg(path),
         ];
 
         const process = await this.adb.subprocess.noneProtocol.spawn(args);
@@ -604,7 +601,7 @@ export class PackageManager extends AdbServiceBase {
             "-S",
             size.toString(),
             sessionId.toString(),
-            splitName,
+            escapeArg(splitName),
             "-",
         ];
 

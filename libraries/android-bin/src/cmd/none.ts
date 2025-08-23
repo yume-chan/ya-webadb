@@ -6,7 +6,7 @@ import {
 } from "@yume-chan/adb";
 
 import { Cmd } from "./service.js";
-import { checkCommand, resolveFallback } from "./utils.js";
+import { checkCommand, resolveFallback, serializeAbbService } from "./utils.js";
 
 export function createCmdNoneProtocolService(
     adb: Adb,
@@ -26,10 +26,9 @@ export function createCmdNoneProtocolService(
             spawn: adbNoneProtocolSpawner(async (command, signal) => {
                 checkCommand(command);
 
-                return new AdbNoneProtocolProcessImpl(
-                    await adb.createSocket(`abb_exec:${command.join("\0")}\0`),
-                    signal,
-                );
+                const service = serializeAbbService("abb_exec", command);
+                const socket = await adb.createSocket(service);
+                return new AdbNoneProtocolProcessImpl(socket, signal);
             }),
         };
     }

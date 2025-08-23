@@ -51,6 +51,7 @@ export class AccumulateStream<Input, Output, Accumulated = Output>
                 controller.enqueue(output);
                 controller.close();
             },
+            // Ignore `abort` event since the user might use the `Promise` interface.
         },
         // `highWaterMark: 0` makes the `pull` method
         // only be called when the `ReadableStream` is being read.
@@ -114,7 +115,7 @@ export class ConcatStringStream extends AccumulateStream<string, string> {
  * @param chunks An array of `Uint8Array`s to concatenate
  * @returns An `Uint8Array` containing all chunks. If there is only one chunk, it will be returned directly.
  */
-export function concatUint8Arrays(chunks: Uint8Array[]): Uint8Array {
+export function concatUint8Arrays(chunks: readonly Uint8Array[]): Uint8Array {
     switch (chunks.length) {
         case 0:
             return EmptyUint8Array;

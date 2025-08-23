@@ -1,3 +1,5 @@
+import { escapeArg } from "@yume-chan/adb";
+
 export function buildArguments<T>(
     commands: readonly string[],
     options: Partial<T> | undefined,
@@ -15,7 +17,7 @@ export function buildArguments<T>(
                             args.push(value.toString());
                             break;
                         case "string":
-                            args.push(value);
+                            args.push(escapeArg(value));
                             break;
                     }
                 }

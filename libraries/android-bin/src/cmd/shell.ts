@@ -6,7 +6,7 @@ import {
 } from "@yume-chan/adb";
 
 import { Cmd } from "./service.js";
-import { checkCommand, resolveFallback } from "./utils.js";
+import { checkCommand, resolveFallback, serializeAbbService } from "./utils.js";
 
 export function createCmdShellProtocolService(
     adb: Adb,
@@ -26,10 +26,9 @@ export function createCmdShellProtocolService(
             spawn: adbShellProtocolSpawner(async (command, signal) => {
                 checkCommand(command);
 
-                return new AdbShellProtocolProcessImpl(
-                    await adb.createSocket(`abb:${command.join("\0")}\0`),
-                    signal,
-                );
+                const service = serializeAbbService("abb", command);
+                const socket = await adb.createSocket(service);
+                return new AdbShellProtocolProcessImpl(socket, signal);
             }),
         };
     }
@@ -59,7 +58,7 @@ export function createCmdShellProtocolService(
                 checkCommand(command);
 
                 const newCommand = command.slice();
-                newCommand.unshift(resolveFallback(fallback, command[0]!));
+                newCommand[0] = resolveFallback(fallback, command[0]!);
                 return shellProtocolService.spawn(newCommand, signal);
             }),
         };
