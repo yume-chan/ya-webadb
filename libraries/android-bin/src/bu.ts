@@ -1,8 +1,6 @@
 import { AdbServiceBase } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 
-import type { Optional } from "./utils.js";
-
 export interface AdbBackupOptions {
     user: number;
     saveSharedStorage?: boolean;
@@ -15,7 +13,7 @@ export interface AdbBackupOptions {
 }
 
 export interface AdbRestoreOptions {
-    user: number;
+    user?: number | undefined;
     file: ReadableStream<MaybeConsumable<Uint8Array>>;
 }
 
@@ -64,7 +62,7 @@ export class AdbBackup extends AdbServiceBase {
      * User must enter the password (if any) and
      * confirm restore on device within 60 seconds.
      */
-    restore(options: Optional<AdbRestoreOptions>): Promise<string> {
+    restore(options: AdbRestoreOptions): Promise<string> {
         const args = ["bu", "restore"];
         if (options.user !== undefined) {
             args.push("--user", options.user.toString());
