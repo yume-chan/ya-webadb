@@ -108,7 +108,9 @@ export const PackageManagerInstallOptions = {
 } as const;
 
 export type PackageManagerInstallOptions = {
-    [K in keyof typeof PackageManagerInstallOptions]: (typeof PackageManagerInstallOptions)[K]["type"];
+    [K in keyof typeof PackageManagerInstallOptions]?:
+        | (typeof PackageManagerInstallOptions)[K]["type"]
+        | undefined;
 };
 
 export interface PackageManagerListPackagesOptions {
@@ -187,7 +189,7 @@ const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
 
 function buildInstallArguments(
     command: string,
-    options: Optional<PackageManagerInstallOptions> | undefined,
+    options: PackageManagerInstallOptions | undefined,
     apiLevel: number | undefined,
 ): string[] {
     const args = [PackageManager.ServiceName, command];
@@ -283,7 +285,7 @@ export class PackageManager extends AdbServiceBase {
      */
     async install(
         apks: readonly string[],
-        options?: Optional<PackageManagerInstallOptions>,
+        options?: PackageManagerInstallOptions,
     ): Promise<void> {
         const args = buildInstallArguments("install", options, this.#apiLevel);
         args[0] = PackageManager.CommandName;
@@ -312,7 +314,7 @@ export class PackageManager extends AdbServiceBase {
 
     async pushAndInstallStream(
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
-        options?: Optional<PackageManagerInstallOptions>,
+        options?: PackageManagerInstallOptions,
     ): Promise<void> {
         const fileName = Math.random().toString().substring(2);
         const filePath = `/data/local/tmp/${fileName}.apk`;
@@ -338,7 +340,7 @@ export class PackageManager extends AdbServiceBase {
     async installStream(
         size: number,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
-        options?: Optional<PackageManagerInstallOptions>,
+        options?: PackageManagerInstallOptions,
     ): Promise<void> {
         // Technically `cmd` support and streaming install support are unrelated,
         // but it's impossible to detect streaming install support without actually trying it.
@@ -563,7 +565,7 @@ export class PackageManager extends AdbServiceBase {
      * @returns ID of the new install session
      */
     async sessionCreate(
-        options?: Optional<PackageManagerInstallOptions>,
+        options?: PackageManagerInstallOptions,
     ): Promise<number> {
         const args = buildInstallArguments(
             "install-create",
@@ -679,7 +681,7 @@ export class PackageManager extends AdbServiceBase {
 export class PackageManagerInstallSession {
     static async create(
         packageManager: PackageManager,
-        options?: Optional<PackageManagerInstallOptions>,
+        options?: PackageManagerInstallOptions,
     ): Promise<PackageManagerInstallSession> {
         const id = await packageManager.sessionCreate(options);
         return new PackageManagerInstallSession(packageManager, id);
