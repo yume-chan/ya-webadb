@@ -17,6 +17,7 @@ import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
 } from "./types.js";
+import { createCanvas, glIsSupported } from "./utils/index.js";
 import { PauseControllerImpl } from "./utils/pause.js";
 import { PerformanceCounterImpl } from "./utils/performance.js";
 import type { TinyH264Wrapper } from "./wrapper.js";
@@ -25,70 +26,6 @@ import { createTinyH264Wrapper } from "./wrapper.js";
 const noop = () => {
     // no-op
 };
-
-export function createCanvas() {
-    if (typeof document !== "undefined") {
-        return document.createElement("canvas");
-    }
-    if (typeof OffscreenCanvas !== "undefined") {
-        return new OffscreenCanvas(1, 1);
-    }
-    throw new Error("no canvas input found nor any canvas can be created");
-}
-
-export function webGLGetContext(
-    canvas: HTMLCanvasElement | OffscreenCanvas,
-    attributes?: WebGLContextAttributes,
-): WebGLRenderingContext | WebGL2RenderingContext | null {
-    // For unknown reason, TypeScript can't correctly infer return type of
-    // `(HTMLCanvasElement | OffscreenCanvas).getContext("webgl2")`.
-    // so this helper function
-
-    {
-        const context = canvas.getContext(
-            "webgl2",
-            attributes,
-        ) as WebGL2RenderingContext | null;
-
-        if (context) {
-            return context;
-        }
-    }
-
-    {
-        const context = canvas.getContext(
-            "webgl",
-            attributes,
-        ) as WebGLRenderingContext | null;
-
-        if (context) {
-            return context;
-        }
-    }
-
-    return null;
-}
-
-export function webGLLoseContext(context: WebGLRenderingContext) {
-    try {
-        context.getExtension("WEBGL_lose_context")?.loseContext();
-    } catch {
-        // ignore
-    }
-}
-
-export function webGLGetSupported(
-    attributes?: WebGLContextAttributes,
-): boolean {
-    const canvas = createCanvas();
-
-    const gl = webGLGetContext(canvas, attributes);
-    if (gl) {
-        webGLLoseContext(gl);
-    }
-
-    return !!gl;
-}
 
 export class TinyH264Decoder implements ScrcpyVideoDecoder {
     static readonly capabilities: Record<string, ScrcpyVideoDecoderCapability> =
@@ -150,7 +87,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             // yuv-canvas supports detecting WebGL support by creating a <canvas> itself
             // But this doesn't work in Web Worker (with OffscreenCanvas)
             // so we implement our own check here
-            webGL: webGLGetSupported({
+            webGL: glIsSupported({
                 // Disallow software rendering.
                 // yuv-canvas also supports 2d canvas
                 // which is faster than software-based WebGL.
@@ -179,7 +116,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
             write: this.#pause.write,
             // Nothing can be disposed when the stream is aborted/closed
-            // No new frames will arrive, but some frames might still be decoding and/or renderding
+            // No new frames will arrive, but some frames might still be decoding and/or rendering
         });
     }
 

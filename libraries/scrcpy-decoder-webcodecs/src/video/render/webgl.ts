@@ -1,8 +1,8 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import {
-    webGLGetContext,
-    webGLGetSupported,
-    webGLLoseContext,
+    glCreateContext,
+    glIsSupported,
+    glLoseContext,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
 
 import { CanvasVideoFrameRenderer } from "./canvas.js";
@@ -34,7 +34,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
 `;
 
     static get isSupported() {
-        return webGLGetSupported({
+        return glIsSupported({
             // Disallow software rendering.
             // `ImageBitmapRenderingContext` is faster than software-based WebGL.
             failIfMajorPerformanceCaveat: true,
@@ -56,7 +56,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
     ) {
         super(canvas);
 
-        const gl = webGLGetContext(this.canvas, {
+        const gl = glCreateContext(this.canvas, {
             // Low-power GPU should be enough for video rendering.
             powerPreference: "low-power",
             alpha: false,
@@ -141,7 +141,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
     }
 
     override dispose(): MaybePromiseLike<undefined> {
-        webGLLoseContext(this.#context);
+        glLoseContext(this.#context);
         return undefined;
     }
 }
