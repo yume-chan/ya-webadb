@@ -33,7 +33,7 @@ export class Settings extends AdbServiceBase {
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = Cmd.createNoneProtocolService(adb, Settings.CommandName);
+        this.#cmd = Cmd.createNoneProtocol(adb, Settings.CommandName);
     }
 
     base(

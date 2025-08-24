@@ -8,15 +8,15 @@ import {
 import { Cmd } from "./service.js";
 import { checkCommand, resolveFallback, serializeAbbService } from "./utils.js";
 
-export function createCmdNoneProtocolService(
+export function createNoneProtocol(
     adb: Adb,
     fallback: Exclude<Cmd.Fallback, undefined>,
 ): Cmd.NoneProtocolService;
-export function createCmdNoneProtocolService(
+export function createNoneProtocol(
     adb: Adb,
     fallback?: Cmd.Fallback,
 ): Cmd.NoneProtocolService | undefined;
-export function createCmdNoneProtocolService(
+export function createNoneProtocol(
     adb: Adb,
     fallback?: Cmd.Fallback,
 ): Cmd.NoneProtocolService | undefined {

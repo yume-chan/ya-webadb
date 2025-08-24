@@ -1,5 +1,6 @@
 import type { Adb } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
+import { SplitStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd/index.js";
 import type { IntentBuilder } from "./intent.js";
@@ -31,10 +32,7 @@ export class ActivityManager extends AdbServiceBase {
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = Cmd.createNoneProtocolService(
-            adb,
-            ActivityManager.CommandName,
-        );
+        this.#cmd = Cmd.createNoneProtocol(adb, ActivityManager.CommandName);
     }
 
     async startActivity(
@@ -48,16 +46,20 @@ export class ActivityManager extends AdbServiceBase {
 
         args = args.concat(options.intent.build());
 
-        const output = await this.#cmd.spawn(args).wait().toString();
+        const process = await this.#cmd.spawn(args);
+        const lines = process.output
+            .pipeThrough(new TextDecoderStream())
+            .pipeThrough(new SplitStringStream("\n", { trim: true }));
 
-        for (let line of output.trim().split(/\r?\n/)) {
-            line = line.trim();
-
+        for await (const line of lines) {
             if (line.startsWith("Error:")) {
+                // Exit from the `for await` loop will cancel `lines`,
+                // and subsequently, `process`, which is fine, as the work is already done
                 throw new Error(line.substring("Error:".length).trim());
             }
 
             if (line === "Complete") {
+                // Same as above
                 return;
             }
         }

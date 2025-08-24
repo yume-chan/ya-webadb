@@ -5,8 +5,8 @@ import type {
 } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
 
-import { createCmdNoneProtocolService } from "./none.js";
-import { createCmdShellProtocolService } from "./shell.js";
+import { createNoneProtocol } from "./none.js";
+import { createShellProtocol } from "./shell.js";
 
 export class Cmd extends AdbServiceBase {
     static readonly Mode = {
@@ -15,8 +15,8 @@ export class Cmd extends AdbServiceBase {
         Fallback: 2,
     } as const;
 
-    static readonly createNoneProtocolService = createCmdNoneProtocolService;
-    static readonly createShellProtocolService = createCmdShellProtocolService;
+    static readonly createNoneProtocol = createNoneProtocol;
+    static readonly createShellProtocol = createShellProtocol;
 
     #noneProtocol: Cmd.NoneProtocolService | undefined;
     get noneProtocol() {
@@ -31,8 +31,8 @@ export class Cmd extends AdbServiceBase {
     constructor(adb: Adb, fallback?: Cmd.Fallback) {
         super(adb);
 
-        this.#noneProtocol = createCmdNoneProtocolService(adb, fallback);
-        this.#shellProtocol = createCmdShellProtocolService(adb, fallback);
+        this.#noneProtocol = createNoneProtocol(adb, fallback);
+        this.#shellProtocol = createShellProtocol(adb, fallback);
     }
 }
 

@@ -444,7 +444,7 @@ export class Logcat extends AdbServiceBase {
         const result: LogSize[] = [];
         for await (const line of process.output
             .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new SplitStringStream("\n"))) {
+            .pipeThrough(new SplitStringStream("\n", { trim: true }))) {
             let match = line.match(Logcat.LOG_SIZE_REGEX_11);
             if (match) {
                 result.push({

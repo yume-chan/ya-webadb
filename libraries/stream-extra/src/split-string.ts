@@ -1,7 +1,7 @@
 import { TransformStream } from "./stream.js";
 
 export class SplitStringStream extends TransformStream<string, string> {
-    constructor(separator: string) {
+    constructor(separator: string, options?: { trim?: boolean | undefined }) {
         let remaining: string | undefined = undefined;
 
         super({
@@ -19,7 +19,11 @@ export class SplitStringStream extends TransformStream<string, string> {
                         break;
                     }
 
-                    controller.enqueue(chunk.substring(start, index));
+                    let value = chunk.substring(start, index);
+                    if (options?.trim) {
+                        value = value.trim();
+                    }
+                    controller.enqueue(value);
                     start = index + 1;
                 }
             },
