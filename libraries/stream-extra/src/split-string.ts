@@ -36,7 +36,7 @@ export class SplitStringStream extends TransformStream<string, string> {
 
         super({
             transform(chunk, controller) {
-                if (remaining) {
+                if (remaining !== undefined) {
                     chunk = remaining + chunk;
                     remaining = undefined;
                 }
@@ -45,6 +45,8 @@ export class SplitStringStream extends TransformStream<string, string> {
                 while (start < chunk.length) {
                     const index = chunk.indexOf(separator, start);
                     if (index === -1) {
+                        // `remaining` can't be an empty string
+                        // because `start` is less than `chunk.length`
                         remaining = chunk.substring(start);
                         break;
                     }
