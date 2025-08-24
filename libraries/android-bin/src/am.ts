@@ -1,7 +1,8 @@
 import type { Adb } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
+import { SplitStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
-import { CmdNoneProtocolService } from "./cmd.js";
+import { Cmd } from "./cmd/index.js";
 import type { IntentBuilder } from "./intent.js";
 import type { SingleUser } from "./utils.js";
 import { buildArguments } from "./utils.js";
@@ -27,14 +28,11 @@ export class ActivityManager extends AdbServiceBase {
     static ServiceName = "activity";
     static CommandName = "am";
 
-    #cmd: CmdNoneProtocolService;
+    #cmd: Cmd.NoneProtocolService;
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = new CmdNoneProtocolService(
-            adb,
-            ActivityManager.CommandName,
-        );
+        this.#cmd = Cmd.createNoneProtocol(adb, ActivityManager.CommandName);
     }
 
     async startActivity(
@@ -48,17 +46,25 @@ export class ActivityManager extends AdbServiceBase {
 
         args = args.concat(options.intent.build());
 
-        const output = await this.#cmd
-            .spawnWaitText(args)
-            .then((output) => output.trim());
+        const process = await this.#cmd.spawn(args);
+        const lines = process.output
+            .pipeThrough(new TextDecoderStream())
+            .pipeThrough(new SplitStringStream("\n", { trim: true }));
 
-        for (const line of output) {
+        for await (const line of lines) {
             if (line.startsWith("Error:")) {
+                // Exit from the `for await` loop will cancel `lines`,
+                // and subsequently, `process`, which is fine, as the work is already done
                 throw new Error(line.substring("Error:".length).trim());
             }
+
             if (line === "Complete") {
+                // Same as above
                 return;
             }
         }
+
+        // Ensure the subprocess exits before returning
+        await process.exited;
     }
 }

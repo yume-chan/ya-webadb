@@ -49,7 +49,7 @@ describe("ConcatStringStream", () => {
         const stream = new ConcatStringStream();
         const reason = new Error("aborted");
         await stream.writable.getWriter().abort(reason);
-        await assert.rejects(() => stream.readable, reason);
+        await assert.rejects(async () => await stream.readable, reason);
         await assert.rejects(() => stream.readable.getReader().read(), reason);
     });
 });
@@ -123,7 +123,7 @@ describe("ConcatBufferStream", () => {
         const stream = new ConcatBufferStream();
         const reason = new Error("aborted");
         await stream.writable.getWriter().abort(reason);
-        await assert.rejects(() => stream.readable, reason);
+        await assert.rejects(async () => await stream.readable, reason);
         await assert.rejects(() => stream.readable.getReader().read(), reason);
     });
 });

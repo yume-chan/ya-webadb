@@ -144,14 +144,14 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             ];
 
             if (options.spawner) {
-                process = await options.spawner.spawn(args);
+                process = await options.spawner(args);
             } else {
                 process = await adb.subprocess.noneProtocol.spawn(args);
             }
 
             const output = process.output
                 .pipeThrough(new TextDecoderStream())
-                .pipeThrough(new SplitStringStream("\n"));
+                .pipeThrough(new SplitStringStream("\n", { trimEnd: true }));
 
             // Must read all streams, otherwise the whole connection will be blocked.
             const lines: string[] = [];

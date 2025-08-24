@@ -112,7 +112,7 @@ export class DemoMode extends AdbServiceBase {
         command: string,
         extra?: Record<string, string>,
     ): Promise<void> {
-        await this.adb.subprocess.noneProtocol.spawnWaitText([
+        const args = [
             "am",
             "broadcast",
             "-a",
@@ -120,14 +120,15 @@ export class DemoMode extends AdbServiceBase {
             "-e",
             "command",
             command,
-            ...(extra
-                ? Object.entries(extra).flatMap(([key, value]) => [
-                      "-e",
-                      key,
-                      value,
-                  ])
-                : []),
-        ]);
+        ];
+
+        if (extra) {
+            for (const [key, value] of Object.entries(extra)) {
+                args.push("-e", key, value);
+            }
+        }
+
+        await this.adb.subprocess.noneProtocol.spawn(args).wait();
     }
 
     async setBatteryLevel(level: number): Promise<void> {
