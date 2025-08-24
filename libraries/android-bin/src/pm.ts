@@ -2,6 +2,7 @@
 // cspell:ignore instantapp
 // cspell:ignore apks
 // cspell:ignore versioncode
+// cspell:ignore dexopt
 
 import type { Adb, AdbNoneProtocolProcess } from "@yume-chan/adb";
 import { AdbServiceBase, escapeArg } from "@yume-chan/adb";
@@ -31,154 +32,83 @@ export enum PackageManagerInstallReason {
     UserRequest,
 }
 
-// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/pm/PackageManagerShellCommand.java;l=3046;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
-export interface PackageManagerInstallOptions {
-    /**
-     * `-R`
-     */
-    skipExisting: boolean;
-    /**
-     * `-i`
-     */
-    installerPackageName: string;
-    /**
-     * `-t`
-     */
-    allowTest: boolean;
-    /**
-     * `-f`
-     */
-    internalStorage: boolean;
-    /**
-     * `-d`
-     */
-    requestDowngrade: boolean;
-    /**
-     * `-g`
-     */
-    grantRuntimePermissions: boolean;
-    /**
-     * `--restrict-permissions`
-     */
-    restrictPermissions: boolean;
-    /**
-     * `--dont-kill`
-     */
-    doNotKill: boolean;
-    /**
-     * `--originating-uri`
-     */
-    originatingUri: string;
-    /**
-     * `--referrer`
-     */
-    refererUri: string;
-    /**
-     * `-p`
-     */
-    inheritFrom: string;
-    /**
-     * `--pkg`
-     */
-    packageName: string;
-    /**
-     * `--abi`
-     */
-    abi: string;
-    /**
-     * `--ephemeral`/`--instant`/`--instantapp`
-     */
-    instantApp: boolean;
-    /**
-     * `--full`
-     */
-    full: boolean;
-    /**
-     * `--preload`
-     */
-    preload: boolean;
-    /**
-     * `--user`
-     */
-    user: SingleUserOrAll;
-    /**
-     * `--install-location`
-     */
-    installLocation: PackageManagerInstallLocation;
-    /**
-     * `--install-reason`
-     */
-    installReason: PackageManagerInstallReason;
-    /**
-     * `--force-uuid`
-     */
-    forceUuid: string;
-    /**
-     * `--apex`
-     */
-    apex: boolean;
-    /**
-     * `--force-non-staged`
-     */
-    forceNonStaged: boolean;
-    /**
-     * `--staged`
-     */
-    staged: boolean;
-    /**
-     * `--force-queryable`
-     */
-    forceQueryable: boolean;
-    /**
-     * `--enable-rollback`
-     */
-    enableRollback: boolean;
-    /**
-     * `--staged-ready-timeout`
-     */
-    stagedReadyTimeout: number;
-    /**
-     * `--skip-verification`
-     */
-    skipVerification: boolean;
-    /**
-     * `--bypass-low-target-sdk-block`
-     */
-    bypassLowTargetSdkBlock: boolean;
+interface OptionDefinition<T> {
+    type: T;
+    name: string;
+    minApiLevel?: number;
+    maxApiLevel?: number;
 }
 
-export const PACKAGE_MANAGER_INSTALL_OPTIONS_MAP: Record<
-    keyof PackageManagerInstallOptions,
-    string
-> = {
-    skipExisting: "-R",
-    installerPackageName: "-i",
-    allowTest: "-t",
-    internalStorage: "-f",
-    requestDowngrade: "-d",
-    grantRuntimePermissions: "-g",
-    restrictPermissions: "--restrict-permissions",
-    doNotKill: "--dont-kill",
-    originatingUri: "--originating-uri",
-    refererUri: "--referrer",
-    inheritFrom: "-p",
-    packageName: "--pkg",
-    abi: "--abi",
-    instantApp: "--instant",
-    full: "--full",
-    preload: "--preload",
-    user: "--user",
-    installLocation: "--install-location",
-    installReason: "--install-reason",
-    forceUuid: "--force-uuid",
-    apex: "--apex",
-    forceNonStaged: "--force-non-staged",
-    staged: "--staged",
-    forceQueryable: "--force-queryable",
-    enableRollback: "--enable-rollback",
-    stagedReadyTimeout: "--staged-ready-timeout",
-    skipVerification: "--skip-verification",
-    bypassLowTargetSdkBlock: "--bypass-low-target-sdk-block",
+function option<T>(
+    name: string,
+    minApiLevel?: number,
+    maxApiLevel?: number,
+): OptionDefinition<T> {
+    return {
+        name,
+        minApiLevel,
+        maxApiLevel,
+    } as OptionDefinition<T>;
+}
+
+// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/pm/PackageManagerShellCommand.java;l=3046;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
+export const PackageManagerInstallOptions = {
+    forwardLock: option<boolean>("-l", undefined, 28),
+    replaceExisting: option<boolean>("-r", undefined, 27),
+    skipExisting: option<boolean>("-R", 28),
+    installerPackageName: option<string>("-i"),
+    allowTest: option<boolean>("-t"),
+    externalStorage: option<boolean>("-s", undefined, 28),
+    internalStorage: option<boolean>("-f"),
+    requestDowngrade: option<boolean>("-d"),
+    grantRuntimePermissions: option<boolean>("-g", 23),
+    restrictPermissions: option<boolean>("--restrict-permissions", 29),
+    doNotKill: option<boolean>("--dont-kill"),
+    originatingUri: option<string>("--originating-uri"),
+    refererUri: option<string>("--referrer"),
+    inheritFrom: option<string>("-p", 24),
+    packageName: option<string>("--pkg", 28),
+    abi: option<string>("--abi", 21),
+    instantApp: option<boolean>("--ephemeral", 24),
+    full: option<boolean>("--full", 26),
+    preload: option<boolean>("--preload", 28),
+    user: option<SingleUserOrAll>("--user", 21),
+    installLocation: option<PackageManagerInstallLocation>(
+        "--install-location",
+        24,
+    ),
+    installReason: option<PackageManagerInstallReason>("--install-reason", 29),
+    updateOwnership: option<boolean>("--update-ownership", 34),
+    forceUuid: option<string>("--force-uuid", 24),
+    forceSdk: option<number>("--force-sdk", 24),
+    apex: option<boolean>("--apex", 29),
+    forceNonStaged: option<boolean>("--force-non-staged", 31),
+    multiPackage: option<boolean>("--multi-package", 29),
+    staged: option<boolean>("--staged", 29),
+    nonStaged: option<boolean>("--non-staged", 35),
+    forceQueryable: option<boolean>("--force-queryable", 30),
+    enableRollback: option<boolean | number>("--enable-rollback", 29),
+    rollbackImpactLevel: option<number>("--rollback-impact-level", 35),
+    wait: option<boolean | number>("--wait", 30, 30),
+    noWait: option<boolean>("--no-wait", 30, 30),
+    stagedReadyTimeout: option<number>("--staged-ready-timeout", 31),
+    skipVerification: option<boolean>("--skip-verification", 30),
+    skipEnable: option<boolean>("--skip-enable", 34),
+    bypassLowTargetSdkBlock: option<boolean>(
+        "--bypass-low-target-sdk-block",
+        34,
+    ),
+    ignoreDexoptProfile: option<boolean>("--ignore-dexopt-profile", 35),
+    packageSource: option<number>("--package-source", 35),
+    dexoptCompilerFilter: option<string>("--dexopt-compiler-filter", 35),
+    disableAutoInstallDependencies: option<boolean>(
+        "--disable-auto-install-dependencies",
+        36,
+    ),
+} as const;
+
+export type PackageManagerInstallOptions = {
+    [K in keyof typeof PackageManagerInstallOptions]: (typeof PackageManagerInstallOptions)[K]["type"];
 };
 
 export interface PackageManagerListPackagesOptions {
@@ -258,12 +188,10 @@ const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
 function buildInstallArguments(
     command: string,
     options: Optional<PackageManagerInstallOptions> | undefined,
+    apiLevel: number | undefined,
 ): string[] {
-    const args = buildArguments(
-        [PackageManager.ServiceName, command],
-        options,
-        PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
-    );
+    const args = [PackageManager.ServiceName, command];
+
     if (!options?.skipExisting) {
         /*
          * | behavior             | previous version     | modern version       |
@@ -278,6 +206,59 @@ function buildInstallArguments(
          */
         args.push("-r");
     }
+
+    if (!options) {
+        return args;
+    }
+
+    for (const [key, value] of Object.entries(options)) {
+        if (value === undefined || value === null) {
+            continue;
+        }
+
+        const option =
+            PackageManagerInstallOptions[
+                key as keyof PackageManagerInstallOptions
+            ];
+
+        if (option === undefined) {
+            continue;
+        }
+
+        if (apiLevel !== undefined) {
+            if (
+                option.minApiLevel !== undefined &&
+                apiLevel < option.minApiLevel
+            ) {
+                continue;
+            }
+            if (
+                option.maxApiLevel !== undefined &&
+                apiLevel > option.maxApiLevel
+            ) {
+                continue;
+            }
+        }
+
+        switch (typeof value) {
+            case "boolean":
+                if (value) {
+                    args.push(option.name);
+                }
+                break;
+            case "number":
+                args.push(option.name, value.toString());
+                break;
+            case "string":
+                args.push(option.name, escapeArg(value));
+                break;
+            default:
+                throw new Error(
+                    `Unsupported type for option ${key}: ${typeof value}`,
+                );
+        }
+    }
+
     return args;
 }
 
@@ -285,10 +266,10 @@ export class PackageManager extends AdbServiceBase {
     static readonly ServiceName = "package";
     static readonly CommandName = "pm";
 
-    #apiLevel: number;
+    #apiLevel: number | undefined;
     #cmd: Cmd.NoneProtocolService;
 
-    constructor(adb: Adb, apiLevel = 0) {
+    constructor(adb: Adb, apiLevel?: number) {
         super(adb);
 
         this.#apiLevel = apiLevel;
@@ -304,7 +285,7 @@ export class PackageManager extends AdbServiceBase {
         apks: readonly string[],
         options?: Optional<PackageManagerInstallOptions>,
     ): Promise<void> {
-        const args = buildInstallArguments("install", options);
+        const args = buildInstallArguments("install", options, this.#apiLevel);
         args[0] = PackageManager.CommandName;
         // WIP: old version of pm doesn't support multiple apks
         args.push(...apks.map(escapeArg));
@@ -369,7 +350,7 @@ export class PackageManager extends AdbServiceBase {
             return;
         }
 
-        const args = buildInstallArguments("install", options);
+        const args = buildInstallArguments("install", options, this.#apiLevel);
         args.push("-S", size.toString());
         const process = await this.#cmd.spawn(args);
 
@@ -498,7 +479,7 @@ export class PackageManager extends AdbServiceBase {
 
         // `cmd package` doesn't support `path` command on Android 7 and 8.
         let process: AdbNoneProtocolProcess;
-        if (this.#apiLevel <= 27) {
+        if (this.#apiLevel !== undefined && this.#apiLevel <= 27) {
             args[0] = PackageManager.CommandName;
             process = await this.adb.subprocess.noneProtocol.spawn(args);
         } else {
@@ -584,7 +565,11 @@ export class PackageManager extends AdbServiceBase {
     async sessionCreate(
         options?: Optional<PackageManagerInstallOptions>,
     ): Promise<number> {
-        const args = buildInstallArguments("install-create", options);
+        const args = buildInstallArguments(
+            "install-create",
+            options,
+            this.#apiLevel,
+        );
 
         const output = await this.#cmd
             .spawn(args)
@@ -670,7 +655,7 @@ export class PackageManager extends AdbServiceBase {
         // but the "Success" message is not forwarded back to the client,
         // causing this function to fail with an empty message.
         let process: AdbNoneProtocolProcess;
-        if (this.#apiLevel <= 25) {
+        if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
             args[0] = PackageManager.CommandName;
             process = await this.adb.subprocess.noneProtocol.spawn(args);
         } else {
