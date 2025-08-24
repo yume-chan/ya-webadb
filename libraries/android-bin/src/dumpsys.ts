@@ -58,10 +58,10 @@ export class DumpSys extends AdbServiceBase {
     static readonly Battery = Battery;
 
     async diskStats() {
-        const result = await this.adb.subprocess.noneProtocol.spawnWaitText([
-            "dumpsys",
-            "diskstats",
-        ]);
+        const result = await this.adb.subprocess.noneProtocol
+            .spawn(["dumpsys", "diskstats"])
+            .wait()
+            .toString();
 
         function getSize(name: string) {
             const match = result.match(
@@ -91,10 +91,10 @@ export class DumpSys extends AdbServiceBase {
     }
 
     async battery(): Promise<DumpSys.Battery.Info> {
-        const result = await this.adb.subprocess.noneProtocol.spawnWaitText([
-            "dumpsys",
-            "battery",
-        ]);
+        const result = await this.adb.subprocess.noneProtocol
+            .spawn(["dumpsys", "battery"])
+            .wait()
+            .toString();
 
         const info: DumpSys.Battery.Info = {
             acPowered: false,

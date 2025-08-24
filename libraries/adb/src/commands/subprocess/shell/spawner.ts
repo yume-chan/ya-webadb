@@ -5,13 +5,15 @@ import type {
     ReadableStream,
     WritableStream,
 } from "@yume-chan/stream-extra";
-import {
-    ConcatBufferStream,
-    ConcatStringStream,
-    TextDecoderStream,
-} from "@yume-chan/stream-extra";
+import { concatUint8Arrays } from "@yume-chan/stream-extra";
 
-import { splitCommand } from "../utils.js";
+import type { AdbSubprocessSpawner } from "../types.js";
+import {
+    createLazyPromise,
+    decodeUtf8Chunked,
+    splitCommand,
+    ToArrayStream,
+} from "../utils.js";
 
 export interface AdbShellProtocolProcess {
     get stdin(): WritableStream<MaybeConsumable<Uint8Array>>;
@@ -24,62 +26,14 @@ export interface AdbShellProtocolProcess {
     kill(): MaybePromiseLike<void>;
 }
 
-export class AdbShellProtocolSpawner {
-    readonly #spawn: (
-        command: readonly string[],
-        signal: AbortSignal | undefined,
-    ) => Promise<AdbShellProtocolProcess>;
-
-    constructor(
-        spawn: (
-            command: readonly string[],
-            signal: AbortSignal | undefined,
-        ) => Promise<AdbShellProtocolProcess>,
-    ) {
-        this.#spawn = spawn;
-    }
-
-    spawn(
-        command: string | readonly string[],
-        signal?: AbortSignal,
-    ): Promise<AdbShellProtocolProcess> {
-        signal?.throwIfAborted();
-
-        if (typeof command === "string") {
-            command = splitCommand(command);
-        }
-
-        return this.#spawn(command, signal);
-    }
-
-    async spawnWait(
-        command: string | readonly string[],
-    ): Promise<AdbShellProtocolSpawner.WaitResult<Uint8Array>> {
-        const process = await this.spawn(command);
-        const [stdout, stderr, exitCode] = await Promise.all([
-            process.stdout.pipeThrough(new ConcatBufferStream()),
-            process.stderr.pipeThrough(new ConcatBufferStream()),
-            process.exited,
-        ]);
-        return { stdout, stderr, exitCode };
-    }
-
-    async spawnWaitText(
-        command: string | readonly string[],
-    ): Promise<AdbShellProtocolSpawner.WaitResult<string>> {
-        const process = await this.spawn(command);
-        const [stdout, stderr, exitCode] = await Promise.all([
-            process.stdout
-                .pipeThrough(new TextDecoderStream())
-                .pipeThrough(new ConcatStringStream()),
-            process.stderr
-                .pipeThrough(new TextDecoderStream())
-                .pipeThrough(new ConcatStringStream()),
-            process.exited,
-        ]);
-        return { stdout, stderr, exitCode };
-    }
-}
+export type AdbShellProtocolSpawner = (
+    command: string | readonly string[],
+    signal?: AbortSignal,
+) => Promise<AdbShellProtocolProcess> &
+    AdbSubprocessSpawner.Wait<
+        AdbShellProtocolSpawner.WaitResult<Uint8Array>,
+        AdbShellProtocolSpawner.WaitResult<string>
+    >;
 
 export namespace AdbShellProtocolSpawner {
     export interface WaitResult<T> {
@@ -87,4 +41,69 @@ export namespace AdbShellProtocolSpawner {
         stderr: T;
         exitCode: number;
     }
+}
+
+export function adbShellProtocolSpawner(
+    spawn: (
+        command: readonly string[],
+        signal: AbortSignal | undefined,
+    ) => Promise<AdbShellProtocolProcess>,
+): AdbShellProtocolSpawner {
+    return (command, signal) => {
+        signal?.throwIfAborted();
+
+        if (typeof command === "string") {
+            command = splitCommand(command);
+        }
+
+        const processPromise = spawn(
+            command,
+            signal,
+        ) as Promise<AdbShellProtocolProcess> &
+            AdbSubprocessSpawner.Wait<
+                AdbShellProtocolSpawner.WaitResult<Uint8Array>,
+                AdbShellProtocolSpawner.WaitResult<string>
+            >;
+
+        processPromise.wait = (options) => {
+            const waitPromise = processPromise.then(async (process) => {
+                const [, stdout, stderr, exitCode] = await Promise.all([
+                    options?.stdin?.pipeTo(process.stdin),
+                    process.stdout.pipeThrough(new ToArrayStream()),
+                    process.stderr.pipeThrough(new ToArrayStream()),
+                    process.exited,
+                ]);
+                return {
+                    stdout,
+                    stderr,
+                    exitCode,
+                } satisfies AdbShellProtocolSpawner.WaitResult<Uint8Array[]>;
+            });
+
+            return createLazyPromise(
+                async () => {
+                    const { stdout, stderr, exitCode } = await waitPromise;
+
+                    return {
+                        stdout: concatUint8Arrays(stdout),
+                        stderr: concatUint8Arrays(stderr),
+                        exitCode,
+                    };
+                },
+                {
+                    async toString() {
+                        const { stdout, stderr, exitCode } = await waitPromise;
+
+                        return {
+                            stdout: decodeUtf8Chunked(stdout),
+                            stderr: decodeUtf8Chunked(stderr),
+                            exitCode,
+                        };
+                    },
+                },
+            );
+        };
+
+        return processPromise;
+    };
 }

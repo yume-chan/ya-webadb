@@ -57,10 +57,10 @@ export class BugReport extends AdbServiceBase {
             });
         }
 
-        const result = await adb.subprocess.shellProtocol.spawnWaitText([
-            "bugreportz",
-            "-v",
-        ]);
+        const result = await adb.subprocess.shellProtocol
+            .spawn(["bugreportz", "-v"])
+            .wait()
+            .toString();
         if (result.exitCode !== 0 || result.stderr === "") {
             return new BugReport(adb, {
                 supportsBugReport: true,
@@ -211,10 +211,10 @@ export class BugReport extends AdbServiceBase {
         let filename: string | undefined;
         let error: string | undefined;
 
-        for await (const line of process.stdout
+        const lines = process.stdout
             .pipeThrough(new TextDecoderStream())
-            // Each chunk should contain one or several full lines
-            .pipeThrough(new SplitStringStream("\n"))) {
+            .pipeThrough(new SplitStringStream("\n", { trim: true }));
+        for await (const line of lines) {
             // `BEGIN:` and `PROGRESS:` only appear when `-p` is specified.
             let match = line.match(BugReport.PROGRESS_REGEX);
             if (match) {

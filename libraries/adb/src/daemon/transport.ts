@@ -160,7 +160,10 @@ export class AdbDaemonTransport implements AdbTransport {
     }: AdbDaemonAuthenticationOptions &
         (
             | { authenticator: AdbAuthenticator }
-            | { credentialStore: AdbCredentialStore }
+            | {
+                  credentialStore: AdbCredentialStore;
+                  onPublicKeyAuthentication?: (() => void) | undefined;
+              }
         )): Promise<AdbDaemonTransport> {
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
@@ -175,6 +178,11 @@ export class AdbDaemonTransport implements AdbTransport {
             authenticator = new AdbDefaultAuthenticator(
                 options.credentialStore,
             );
+            if (options.onPublicKeyAuthentication) {
+                (
+                    authenticator as AdbDefaultAuthenticator
+                ).onPublicKeyAuthentication(options.onPublicKeyAuthentication);
+            }
         }
 
         // Here is similar to `AdbPacketDispatcher`,

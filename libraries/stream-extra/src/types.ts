@@ -491,7 +491,7 @@ export declare interface StreamPipeOptions {
      * `AbortController`. In this case, the source readable stream will be canceled, and the destination writable stream
      * aborted, unless the respective options `preventCancel` or `preventAbort` are set.
      */
-    signal?: AbortSignal;
+    signal?: AbortSignal | undefined;
 }
 
 /**

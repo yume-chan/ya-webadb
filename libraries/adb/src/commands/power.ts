@@ -36,7 +36,10 @@ export class AdbPower extends AdbServiceBase {
     }
 
     powerOff(): Promise<string> {
-        return this.adb.subprocess.noneProtocol.spawnWaitText(["reboot", "-p"]);
+        return this.adb.subprocess.noneProtocol
+            .spawn(["reboot", "-p"])
+            .wait()
+            .toString();
     }
 
     powerButton(longPress = false): Promise<string> {
@@ -46,7 +49,7 @@ export class AdbPower extends AdbServiceBase {
         }
         args.push("POWER");
 
-        return this.adb.subprocess.noneProtocol.spawnWaitText(args);
+        return this.adb.subprocess.noneProtocol.spawn(args).wait().toString();
     }
 
     /**
