@@ -12,11 +12,11 @@ export function glCreateContext(
     canvas: HTMLCanvasElement | OffscreenCanvas,
     attributes?: WebGLContextAttributes,
 ): WebGLRenderingContext | WebGL2RenderingContext | null {
-    // For unknown reason, TypeScript can't correctly infer return type of
-    // `(HTMLCanvasElement | OffscreenCanvas).getContext("webgl2")`.
-    // so this helper function
+    // `HTMLCanvasElement.getContext` returns `null` for unsupported `contextId`,
+    // but `OffscreenCanvas.getContext` will throw an error,
+    // so `try...catch...` is required
 
-    {
+    try {
         const context = canvas.getContext(
             "webgl2",
             attributes,
@@ -25,11 +25,28 @@ export function glCreateContext(
         if (context) {
             return context;
         }
+    } catch {
+        // ignore
     }
 
-    {
+    try {
         const context = canvas.getContext(
             "webgl",
+            attributes,
+        ) as WebGLRenderingContext | null;
+
+        if (context) {
+            return context;
+        }
+    } catch {
+        // ignore
+    }
+
+    // Support very old browsers just in case
+    // `OffscreenCanvas` doesn't support `experimental-webgl`
+    if (canvas instanceof HTMLCanvasElement) {
+        const context = canvas.getContext(
+            "experimental-webgl",
             attributes,
         ) as WebGLRenderingContext | null;
 

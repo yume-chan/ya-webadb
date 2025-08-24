@@ -24,6 +24,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
 `;
 
     static FragmentShaderSource = `
+        precision mediump float;
         varying highp vec2 uv;
 
         uniform sampler2D texture;
