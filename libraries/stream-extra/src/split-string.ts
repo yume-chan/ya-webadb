@@ -16,17 +16,20 @@ export class SplitStringStream extends TransformStream<string, string> {
             throw new Error("separator must not be empty");
         }
 
+        const trim = !!options?.trim;
+        const trimEnd = !!options?.trimEnd;
+        const skipEmpty = !!options?.skipEmpty;
         const enqueue = (
             controller: TransformStreamDefaultController<string>,
             value: string,
         ) => {
-            if (options?.trim) {
+            if (trim) {
                 value = value.trim();
-            } else if (options?.trimEnd) {
+            } else if (trimEnd) {
                 value = value.trimEnd();
             }
 
-            if (!options?.skipEmpty || value) {
+            if (value || !skipEmpty) {
                 controller.enqueue(value);
             }
         };
@@ -53,7 +56,7 @@ export class SplitStringStream extends TransformStream<string, string> {
                 }
             },
             flush(controller) {
-                if (remaining) {
+                if (remaining !== undefined) {
                     enqueue(controller, remaining);
                 }
             },

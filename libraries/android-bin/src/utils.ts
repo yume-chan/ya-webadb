@@ -32,6 +32,10 @@ export function buildArguments<T>(
                 case "string":
                     args.push(option, escapeArg(value));
                     break;
+                default:
+                    throw new Error(
+                        `Unsupported type for option ${key}: ${typeof value}`,
+                    );
             }
         }
     }
