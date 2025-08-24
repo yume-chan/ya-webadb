@@ -281,32 +281,17 @@ function buildInstallArguments(
     return args;
 }
 
-function shouldUsePm(
-    options: PackageManager.UsePmOptions | undefined,
-    maxApiLevel: number,
-) {
-    if (options) {
-        if (options.usePm) {
-            return true;
-        } else if (
-            options.apiLevel !== undefined &&
-            options.apiLevel <= maxApiLevel
-        ) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 export class PackageManager extends AdbServiceBase {
     static readonly ServiceName = "package";
     static readonly CommandName = "pm";
 
+    #apiLevel: number;
     #cmd: Cmd.NoneProtocolService;
 
-    constructor(adb: Adb) {
+    constructor(adb: Adb, apiLevel = 0) {
         super(adb);
+
+        this.#apiLevel = apiLevel;
         this.#cmd = Cmd.createNoneProtocol(adb, PackageManager.CommandName);
     }
 
@@ -491,13 +476,7 @@ export class PackageManager extends AdbServiceBase {
      *
      * On supported Android versions, all split APKs are included.
      * @param packageName The package name to query
-     * @param options
-     * Whether to use `pm path` instead of `cmd package path`.
-     *
-     * `cmd package` is supported on Android 7,
-     * but `cmd package path` is not supported until Android 9.
-     *
-     * See {@link PackageManager.UsePmOptions} for details
+     * @param options The user ID to query
      * @returns An array of APK file paths
      */
     async getPackageSources(
@@ -507,16 +486,19 @@ export class PackageManager extends AdbServiceBase {
              * The user ID to query
              */
             user?: number | undefined;
-        } & PackageManager.UsePmOptions,
+        },
     ): Promise<string[]> {
+        // `pm path` and `pm -p` are the same,
+        // but `pm path` allows an optional `--user` option.
         const args = [PackageManager.ServiceName, "path"];
         if (options?.user !== undefined) {
             args.push("--user", options.user.toString());
         }
         args.push(escapeArg(packageName));
 
+        // `cmd package` doesn't support `path` command on Android 7 and 8.
         let process: AdbNoneProtocolProcess;
-        if (shouldUsePm(options, 27)) {
+        if (this.#apiLevel <= 27) {
             args[0] = PackageManager.CommandName;
             process = await this.adb.subprocess.noneProtocol.spawn(args);
         } else {
@@ -675,28 +657,20 @@ export class PackageManager extends AdbServiceBase {
     /**
      * Commit an install session.
      * @param sessionId ID of install session returned by `createSession`
-     * @param options
-     * Whether to use `pm install-commit` instead of `cmd package install-commit`.
-     *
-     * On Android 7, `cmd package install-commit` is supported,
-     * but the "Success" message is not forwarded back to the client,
-     * causing this function to fail with an empty message.
-     *
-     * https://cs.android.com/android/_/android/platform/frameworks/base/+/b6e96e52e379927859e82606c5b041d99f36a29e
      * @returns A `Promise` that resolves when the session is committed
      */
-    async sessionCommit(
-        sessionId: number,
-        options?: PackageManager.UsePmOptions,
-    ): Promise<void> {
+    async sessionCommit(sessionId: number): Promise<void> {
         const args: string[] = [
             PackageManager.ServiceName,
             "install-commit",
             sessionId.toString(),
         ];
 
+        // `cmd package` does support `install-commit` command on Android 7,
+        // but the "Success" message is not forwarded back to the client,
+        // causing this function to fail with an empty message.
         let process: AdbNoneProtocolProcess;
-        if (shouldUsePm(options, 25)) {
+        if (this.#apiLevel <= 25) {
             args[0] = PackageManager.CommandName;
             process = await this.adb.subprocess.noneProtocol.spawn(args);
         } else {
@@ -714,42 +688,6 @@ export class PackageManager extends AdbServiceBase {
         ];
         const process = await this.#cmd.spawn(args);
         await this.checkResult(process.output);
-    }
-}
-
-export namespace PackageManager {
-    /**
-     * `PackageManager` wrapper supports multiple methods to run commands:
-     *
-     *    * `pm` executable: Run traditional `pm` executable,
-     *       which needs to initialize the whole Android framework each time it starts.
-     *    * `cmd` executable: Run `cmd` executable,
-     *      which sends arguments directly to the running `system` process.
-     *    * `abb`: Use ADB abb command, which is similar to `cmd` executable,
-     *      but uses a daemon process instead of starting a new process every time.
-     *
-     * `cmd` and `abb` modes are faster, so they are preferred when supported.
-     * However, in older versions of Android, they don't support all commands,
-     * or have bugs that make them unsafe to use.
-     *
-     * These options allows you to force using `pm` even if `cmd` or `abb` modes are supported.
-     *
-     * See each command's documentation for details.
-     */
-    export interface UsePmOptions {
-        /**
-         * When `true`, always use `pm`, even if `cmd` or `abb` modes are supported.
-         *
-         * Overrides {@link apiLevel}.
-         */
-        usePm?: boolean | undefined;
-        /**
-         * API Level of the device.
-         *
-         * When provided, each command will determine whether `pm` should be used
-         * based on hardcoded API level checks.
-         */
-        apiLevel?: number | undefined;
     }
 }
 
@@ -793,14 +731,10 @@ export class PackageManagerInstallSession {
 
     /**
      * Commit this install session.
-     * @param options
-     * Whether to use `pm install-commit` instead of `cmd package install-commit`.
-     *
-     * See {@link PackageManager.sessionCommit} for details
      * @returns A `Promise` that resolves when the session is committed
      */
-    commit(options?: PackageManager.UsePmOptions): Promise<void> {
-        return this.#packageManager.sessionCommit(this.#id, options);
+    commit(): Promise<void> {
+        return this.#packageManager.sessionCommit(this.#id);
     }
 
     abandon(): Promise<void> {

@@ -1,5 +1,5 @@
-import type { Adb } from "@yume-chan/adb";
-import { AdbServiceBase } from "@yume-chan/adb";
+import type { Adb, AdbNoneProtocolProcess } from "@yume-chan/adb";
+import { AdbServiceBase, escapeArg } from "@yume-chan/adb";
 import { SplitStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd/index.js";
@@ -25,28 +25,41 @@ const START_ACTIVITY_OPTIONS_MAP: Partial<
 };
 
 export class ActivityManager extends AdbServiceBase {
-    static ServiceName = "activity";
-    static CommandName = "am";
+    static readonly ServiceName = "activity";
+    static readonly CommandName = "am";
 
+    #apiLevel: number;
     #cmd: Cmd.NoneProtocolService;
 
-    constructor(adb: Adb) {
+    constructor(adb: Adb, apiLevel = 0) {
         super(adb);
+
+        this.#apiLevel = apiLevel;
         this.#cmd = Cmd.createNoneProtocol(adb, ActivityManager.CommandName);
     }
 
     async startActivity(
         options: ActivityManagerStartActivityOptions,
     ): Promise<void> {
+        // `am start` and `am start-activity` are the same,
+        // but `am start-activity` was added in Android 8.
         let args = buildArguments(
-            [ActivityManager.ServiceName, "start-activity", "-W"],
+            [ActivityManager.ServiceName, "start", "-W"],
             options,
             START_ACTIVITY_OPTIONS_MAP,
         );
 
-        args = args.concat(options.intent.build());
+        args = args.concat(options.intent.build().map(escapeArg));
 
-        const process = await this.#cmd.spawn(args);
+        // `cmd activity` doesn't support `start` command on Android 7.
+        let process: AdbNoneProtocolProcess;
+        if (this.#apiLevel <= 25) {
+            args[0] = ActivityManager.CommandName;
+            process = await this.adb.subprocess.noneProtocol.spawn(args);
+        } else {
+            process = await this.#cmd.spawn(args);
+        }
+
         const lines = process.output
             .pipeThrough(new TextDecoderStream())
             .pipeThrough(new SplitStringStream("\n", { trim: true }));
