@@ -29,6 +29,8 @@ export function serializeAbbService(
     prefix: string,
     command: readonly string[],
 ): string {
+    checkCommand(command);
+
     // `abb` mode doesn't use `sh -c` to execute to command,
     // so it doesn't accept escaped arguments.
     // `splitCommand` can be used to remove the escaping,

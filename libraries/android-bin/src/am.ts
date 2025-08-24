@@ -1,8 +1,7 @@
 import type { Adb } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
 
-import type { Cmd } from "./cmd/index.js";
-import { createCmdNoneProtocolService } from "./cmd/index.js";
+import { Cmd } from "./cmd/index.js";
 import type { IntentBuilder } from "./intent.js";
 import type { SingleUser } from "./utils.js";
 import { buildArguments } from "./utils.js";
@@ -32,7 +31,7 @@ export class ActivityManager extends AdbServiceBase {
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = createCmdNoneProtocolService(
+        this.#cmd = Cmd.createNoneProtocolService(
             adb,
             ActivityManager.CommandName,
         );

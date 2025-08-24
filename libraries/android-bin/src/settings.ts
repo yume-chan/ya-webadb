@@ -1,8 +1,7 @@
 import type { Adb } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
 
-import type { Cmd } from "./cmd/index.js";
-import { createCmdNoneProtocolService } from "./cmd/index.js";
+import { Cmd } from "./cmd/index.js";
 import type { SingleUser } from "./utils.js";
 
 export type SettingsNamespace = "system" | "secure" | "global";
@@ -34,7 +33,7 @@ export class Settings extends AdbServiceBase {
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = createCmdNoneProtocolService(adb, Settings.CommandName);
+        this.#cmd = Cmd.createNoneProtocolService(adb, Settings.CommandName);
     }
 
     base(

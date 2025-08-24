@@ -12,7 +12,7 @@ import {
     TextDecoderStream,
 } from "@yume-chan/stream-extra";
 
-import { Cmd, createCmdNoneProtocolService } from "./cmd/index.js";
+import { Cmd } from "./cmd/index.js";
 import type { IntentBuilder } from "./intent.js";
 import type { Optional, SingleUserOrAll } from "./utils.js";
 import { buildArguments } from "./utils.js";
@@ -289,7 +289,7 @@ export class PackageManager extends AdbServiceBase {
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = createCmdNoneProtocolService(
+        this.#cmd = Cmd.createNoneProtocolService(
             adb,
             PackageManager.CommandName,
         );
@@ -303,7 +303,7 @@ export class PackageManager extends AdbServiceBase {
     async install(
         apks: readonly string[],
         options?: Optional<PackageManagerInstallOptions>,
-    ): Promise<string> {
+    ): Promise<void> {
         const args = buildInstallArguments("install", options);
         args[0] = PackageManager.CommandName;
         // WIP: old version of pm doesn't support multiple apks
@@ -327,14 +327,12 @@ export class PackageManager extends AdbServiceBase {
         if (output !== "Success") {
             throw new Error(output);
         }
-
-        return output;
     }
 
     async pushAndInstallStream(
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
         options?: Optional<PackageManagerInstallOptions>,
-    ): Promise<string> {
+    ): Promise<void> {
         const fileName = Math.random().toString().substring(2);
         const filePath = `/data/local/tmp/${fileName}.apk`;
 
@@ -350,7 +348,7 @@ export class PackageManager extends AdbServiceBase {
         }
 
         try {
-            return await this.install([filePath], options);
+            await this.install([filePath], options);
         } finally {
             await this.adb.rm(filePath);
         }

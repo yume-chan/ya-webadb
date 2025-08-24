@@ -134,7 +134,7 @@ function _buffer(
             lengthOrField,
             "byob",
             (value, { buffer, index }) => {
-                buffer.set(value.slice(0, lengthOrField), index);
+                buffer.set(value.subarray(0, lengthOrField), index);
             },
             // eslint-disable-next-line require-yield
             function* (_then, reader) {

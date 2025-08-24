@@ -15,6 +15,9 @@ export class Cmd extends AdbServiceBase {
         Fallback: 2,
     } as const;
 
+    static readonly createNoneProtocolService = createCmdNoneProtocolService;
+    static readonly createShellProtocolService = createCmdShellProtocolService;
+
     #noneProtocol: Cmd.NoneProtocolService | undefined;
     get noneProtocol() {
         return this.#noneProtocol;

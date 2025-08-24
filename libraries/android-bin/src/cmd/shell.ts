@@ -20,12 +20,10 @@ export function createCmdShellProtocolService(
     adb: Adb,
     fallback?: Cmd.Fallback,
 ): Cmd.ShellProtocolService | undefined {
-    if (adb.canUseFeature(AdbFeature.AbbExec)) {
+    if (adb.canUseFeature(AdbFeature.Abb)) {
         return {
             mode: Cmd.Mode.Abb,
             spawn: adbShellProtocolSpawner(async (command, signal) => {
-                checkCommand(command);
-
                 const service = serializeAbbService("abb", command);
                 const socket = await adb.createSocket(service);
                 return new AdbShellProtocolProcessImpl(socket, signal);

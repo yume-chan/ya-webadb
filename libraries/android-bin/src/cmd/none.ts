@@ -24,8 +24,6 @@ export function createCmdNoneProtocolService(
         return {
             mode: Cmd.Mode.Abb,
             spawn: adbNoneProtocolSpawner(async (command, signal) => {
-                checkCommand(command);
-
                 const service = serializeAbbService("abb_exec", command);
                 const socket = await adb.createSocket(service);
                 return new AdbNoneProtocolProcessImpl(socket, signal);
