@@ -63,5 +63,8 @@ export class ActivityManager extends AdbServiceBase {
                 return;
             }
         }
+
+        // Ensure the subprocess exits before returning
+        await process.exited;
     }
 }

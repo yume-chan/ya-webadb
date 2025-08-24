@@ -10,7 +10,7 @@ import { checkCommand, resolveFallback, serializeAbbService } from "./utils.js";
 
 export function createNoneProtocol(
     adb: Adb,
-    fallback: Exclude<Cmd.Fallback, undefined>,
+    fallback: NonNullable<Cmd.Fallback>,
 ): Cmd.NoneProtocolService;
 export function createNoneProtocol(
     adb: Adb,

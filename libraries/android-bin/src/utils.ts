@@ -8,19 +8,30 @@ export function buildArguments<T>(
     const args = commands.slice();
     if (options) {
         for (const [key, value] of Object.entries(options)) {
-            if (value) {
-                const option = map[key as keyof T];
-                if (option) {
-                    args.push(option);
-                    switch (typeof value) {
-                        case "number":
-                            args.push(value.toString());
-                            break;
-                        case "string":
-                            args.push(escapeArg(value));
-                            break;
+            if (value === undefined || value === null) {
+                continue;
+            }
+
+            const option = map[key as keyof T];
+            // Empty string means positional argument,
+            // they must be added at the end,
+            // so let the caller handle it.
+            if (option === undefined || option === "") {
+                continue;
+            }
+
+            switch (typeof value) {
+                case "boolean":
+                    if (value) {
+                        args.push(option);
                     }
-                }
+                    break;
+                case "number":
+                    args.push(option, value.toString());
+                    break;
+                case "string":
+                    args.push(option, escapeArg(value));
+                    break;
             }
         }
     }

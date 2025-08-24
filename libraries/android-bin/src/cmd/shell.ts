@@ -10,7 +10,7 @@ import { checkCommand, resolveFallback, serializeAbbService } from "./utils.js";
 
 export function createShellProtocol(
     adb: Adb,
-    fallback: Exclude<Cmd.Fallback, undefined>,
+    fallback: NonNullable<Cmd.Fallback>,
 ): Cmd.ShellProtocolService;
 export function createShellProtocol(
     adb: Adb,

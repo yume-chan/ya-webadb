@@ -151,7 +151,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
 
             const output = process.output
                 .pipeThrough(new TextDecoderStream())
-                .pipeThrough(new SplitStringStream("\n", { trim: true }));
+                .pipeThrough(new SplitStringStream("\n", { trimEnd: true }));
 
             // Must read all streams, otherwise the whole connection will be blocked.
             const lines: string[] = [];

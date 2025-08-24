@@ -1,8 +1,35 @@
+import type { TransformStreamDefaultController } from "./stream.js";
 import { TransformStream } from "./stream.js";
 
 export class SplitStringStream extends TransformStream<string, string> {
-    constructor(separator: string, options?: { trim?: boolean | undefined }) {
+    constructor(
+        separator: string,
+        options?: {
+            trim?: boolean | undefined;
+            trimEnd?: boolean | undefined;
+            skipEmpty?: boolean | undefined;
+        },
+    ) {
         let remaining: string | undefined = undefined;
+        const separatorLength = separator.length;
+        if (separatorLength === 0) {
+            throw new Error("separator must not be empty");
+        }
+
+        const enqueue = (
+            controller: TransformStreamDefaultController<string>,
+            value: string,
+        ) => {
+            if (options?.trim) {
+                value = value.trim();
+            } else if (options?.trimEnd) {
+                value = value.trimEnd();
+            }
+
+            if (!options?.skipEmpty || value) {
+                controller.enqueue(value);
+            }
+        };
 
         super({
             transform(chunk, controller) {
@@ -19,17 +46,15 @@ export class SplitStringStream extends TransformStream<string, string> {
                         break;
                     }
 
-                    let value = chunk.substring(start, index);
-                    if (options?.trim) {
-                        value = value.trim();
-                    }
-                    controller.enqueue(value);
-                    start = index + 1;
+                    const value = chunk.substring(start, index);
+                    enqueue(controller, value);
+
+                    start = index + separatorLength;
                 }
             },
             flush(controller) {
                 if (remaining) {
-                    controller.enqueue(remaining);
+                    enqueue(controller, remaining);
                 }
             },
         });
