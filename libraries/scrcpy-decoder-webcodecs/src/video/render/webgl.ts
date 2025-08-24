@@ -25,8 +25,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
 
     static FragmentShaderSource = `
         precision mediump float;
-        varying highp vec2 uv;
 
+        varying highp vec2 uv;
         uniform sampler2D texture;
 
         void main(void) {
@@ -42,7 +42,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         });
     }
 
-    #context: WebGLRenderingContext;
+    #context: WebGLRenderingContext | WebGL2RenderingContext;
 
     /**
      * Create a new WebGL frame renderer.
@@ -67,6 +67,10 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
             preserveDrawingBuffer: !!enableCapture,
             // Enable desynchronized mode when not capturing to reduce latency.
             desynchronized: !enableCapture,
+            antialias: false,
+            depth: false,
+            premultipliedAlpha: true,
+            stencil: false,
         });
         if (!gl) {
             throw new Error("WebGL not supported, check `isSupported` first");
@@ -119,7 +123,14 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_MIN_FILTER,
+            // WebGL 1 doesn't support mipmaps for non-power-of-two textures
+            gl instanceof WebGL2RenderingContext
+                ? gl.NEAREST_MIPMAP_LINEAR
+                : gl.NEAREST,
+        );
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
@@ -134,6 +145,11 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
             gl.UNSIGNED_BYTE,
             frame,
         );
+
+        // WebGL 1 doesn't support mipmaps for non-power-of-two textures
+        if (gl instanceof WebGL2RenderingContext) {
+            gl.generateMipmap(gl.TEXTURE_2D);
+        }
 
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
