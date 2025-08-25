@@ -1,5 +1,9 @@
 // cspell: ignore insertable
 
+import type { MaybePromiseLike } from "@yume-chan/async";
+import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
+import { tryClose } from "@yume-chan/stream-extra";
+
 import type { VideoFrameRenderer } from "./type.js";
 
 declare class MediaStreamTrackGenerator extends MediaStreamTrack {
@@ -34,6 +38,7 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         }
         this.#element.muted = true;
         this.#element.autoplay = true;
+        this.#element.playsInline = true;
         this.#element.disablePictureInPicture = true;
         this.#element.disableRemotePlayback = true;
 
@@ -41,7 +46,10 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         // But Chrome has not implemented it yet.
         // https://issues.chromium.org/issues/40058895
         this.#generator = new MediaStreamTrackGenerator({ kind: "video" });
-        this.#writer = this.#generator.writable.getWriter();
+        this.#generator.contentHint = "motion";
+
+        this.#writer =
+            this.#generator.writable.getWriter() as WritableStreamDefaultWriter<VideoFrame>;
 
         this.#stream = new MediaStream([this.#generator]);
         this.#element.srcObject = this.#stream;
@@ -54,7 +62,12 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         }
     }
 
-    async draw(frame: VideoFrame): Promise<void> {
-        await this.#writer.write(frame);
+    draw(frame: VideoFrame): Promise<void> {
+        return this.#writer.write(frame);
+    }
+
+    dispose(): MaybePromiseLike<undefined> {
+        tryClose(this.#writer);
+        return undefined;
     }
 }

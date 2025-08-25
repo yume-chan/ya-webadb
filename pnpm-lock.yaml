@@ -351,6 +351,9 @@ importers:
       '@yume-chan/async':
         specifier: ^4.1.3
         version: 4.1.3
+      '@yume-chan/event':
+        specifier: workspace:^
+        version: link:../event
       '@yume-chan/no-data-view':
         specifier: workspace:^
         version: link:../no-data-view

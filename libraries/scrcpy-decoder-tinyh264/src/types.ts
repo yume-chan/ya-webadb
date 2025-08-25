@@ -1,7 +1,8 @@
-import type { Disposable, Event } from "@yume-chan/event";
+import type { Disposable } from "@yume-chan/event";
 import type {
     ScrcpyMediaStreamPacket,
     ScrcpyVideoCodecId,
+    ScrcpyVideoSize,
 } from "@yume-chan/scrcpy";
 import type { WritableStream } from "@yume-chan/stream-extra";
 
@@ -10,14 +11,37 @@ export interface ScrcpyVideoDecoderCapability {
     maxLevel?: number;
 }
 
-export interface ScrcpyVideoDecoder extends Disposable {
-    readonly sizeChanged: Event<{ width: number; height: number }>;
-    readonly width: number;
-    readonly height: number;
-
-    readonly framesRendered: number;
+export interface ScrcpyVideoDecoderPerformanceCounter {
+    /**
+     * Gets the number of frames that have been drawn on the renderer
+     */
+    readonly framesDrawn: number;
+    /**
+     * Gets the number of frames that's visible to the user
+     *
+     * Might be `0` if the renderer is in a nested Web Worker on Chrome due to a Chrome bug.
+     * https://issues.chromium.org/issues/41483010
+     */
+    readonly framesPresented: number;
+    /**
+     * Gets the number of frames that wasn't drawn on the renderer
+     * because the renderer can't keep up
+     */
     readonly framesSkipped: number;
+}
 
+export interface ScrcpyVideoDecoderPauseController {
+    readonly paused: boolean;
+
+    pause(): void;
+    resume(): Promise<undefined>;
+}
+
+export interface ScrcpyVideoDecoder
+    extends ScrcpyVideoDecoderPerformanceCounter,
+        ScrcpyVideoDecoderPauseController,
+        ScrcpyVideoSize,
+        Disposable {
     readonly writable: WritableStream<ScrcpyMediaStreamPacket>;
 }
 
