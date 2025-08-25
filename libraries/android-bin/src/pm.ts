@@ -16,7 +16,7 @@ import {
 import { Cmd } from "./cmd/index.js";
 import type { IntentBuilder } from "./intent.js";
 import type { Optional, SingleUserOrAll } from "./utils.js";
-import { buildArguments } from "./utils.js";
+import { buildCommand } from "./utils.js";
 
 export enum PackageManagerInstallLocation {
     Auto,
@@ -65,7 +65,7 @@ export const PackageManagerInstallOptions = {
     restrictPermissions: option<boolean>("--restrict-permissions", 29),
     doNotKill: option<boolean>("--dont-kill"),
     originatingUri: option<string>("--originating-uri"),
-    refererUri: option<string>("--referrer"),
+    referrerUri: option<string>("--referrer"),
     inheritFrom: option<string>("-p", 24),
     packageName: option<string>("--pkg", 28),
     abi: option<string>("--abi", 21),
@@ -187,7 +187,7 @@ const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
     user: "--user",
 };
 
-function buildInstallArguments(
+function buildInstallCommand(
     command: string,
     options: PackageManagerInstallOptions | undefined,
     apiLevel: number | undefined,
@@ -252,7 +252,7 @@ function buildInstallArguments(
                 args.push(option.name, value.toString());
                 break;
             case "string":
-                args.push(option.name, escapeArg(value));
+                args.push(option.name, value);
                 break;
             default:
                 throw new Error(
@@ -287,22 +287,26 @@ export class PackageManager extends AdbServiceBase {
         apks: readonly string[],
         options?: PackageManagerInstallOptions,
     ): Promise<void> {
-        const args = buildInstallArguments("install", options, this.#apiLevel);
-        args[0] = PackageManager.CommandName;
+        const command = buildInstallCommand("install", options, this.#apiLevel);
+
+        command[0] = PackageManager.CommandName;
+
         // WIP: old version of pm doesn't support multiple apks
-        args.push(...apks.map(escapeArg));
+        for (const apk of apks) {
+            command.push(apk);
+        }
 
         // Starting from Android 7, `pm` becomes a wrapper to `cmd package`.
         // The benefit of `cmd package` is it starts faster than the old `pm`,
         // because it connects to the already running `system` process,
         // instead of initializing all system components from scratch.
         //
-        // But launching `cmd package` directly causes it to not be able to
-        // read files in `/data/local/tmp` (and many other places) due to SELinux policies,
-        // so installing files must still use `pm`.
+        // But `cmd` executable can't read files in `/data/local/tmp`
+        // (and many other places) due to SELinux policies,
+        // so installing from files must still use `pm`.
         // (the starting executable file decides which SELinux policies to apply)
         const output = await this.adb.subprocess.noneProtocol
-            .spawn(args)
+            .spawn(command.map(escapeArg))
             .wait()
             .toString()
             .then((output) => output.trim());
@@ -352,9 +356,9 @@ export class PackageManager extends AdbServiceBase {
             return;
         }
 
-        const args = buildInstallArguments("install", options, this.#apiLevel);
-        args.push("-S", size.toString());
-        const process = await this.#cmd.spawn(args);
+        const command = buildInstallCommand("install", options, this.#apiLevel);
+        command.push("-S", size.toString());
+        const process = await this.#cmd.spawn(command);
 
         const output = process.output
             .pipeThrough(new TextDecoderStream())
@@ -429,17 +433,17 @@ export class PackageManager extends AdbServiceBase {
     async *listPackages(
         options?: Optional<PackageManagerListPackagesOptions>,
     ): AsyncGenerator<PackageManagerListPackagesResult, void, void> {
-        const args = buildArguments(
+        const command = buildCommand(
             ["package", "list", "packages"],
             options,
             PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP,
         );
-        // `PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP` doesn't have `filter`
+
         if (options?.filter) {
-            args.push(escapeArg(options.filter));
+            command.push(options.filter);
         }
 
-        const process = await this.#cmd.spawn(args);
+        const process = await this.#cmd.spawn(command);
 
         const output = process.output
             .pipeThrough(new TextDecoderStream())
@@ -473,19 +477,23 @@ export class PackageManager extends AdbServiceBase {
     ): Promise<string[]> {
         // `pm path` and `pm -p` are the same,
         // but `pm path` allows an optional `--user` option.
-        const args = [PackageManager.ServiceName, "path"];
+        const command = [PackageManager.ServiceName, "path"];
+
         if (options?.user !== undefined) {
-            args.push("--user", options.user.toString());
+            command.push("--user", options.user.toString());
         }
-        args.push(escapeArg(packageName));
+
+        command.push(packageName);
 
         // `cmd package` doesn't support `path` command on Android 7 and 8.
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 27) {
-            args[0] = PackageManager.CommandName;
-            process = await this.adb.subprocess.noneProtocol.spawn(args);
+            command[0] = PackageManager.CommandName;
+            process = await this.adb.subprocess.noneProtocol.spawn(
+                command.map(escapeArg),
+            );
         } else {
-            process = await this.#cmd.spawn(args);
+            process = await this.#cmd.spawn(command);
         }
 
         const lines = process.output
@@ -510,18 +518,22 @@ export class PackageManager extends AdbServiceBase {
         packageName: string,
         options?: Optional<PackageManagerUninstallOptions>,
     ): Promise<void> {
-        let args = buildArguments(
+        const command = buildCommand(
             [PackageManager.ServiceName, "uninstall"],
             options,
             PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP,
         );
-        args.push(escapeArg(packageName));
+
+        command.push(packageName);
+
         if (options?.splitNames) {
-            args = args.concat(options.splitNames.map(escapeArg));
+            for (const splitName of options.splitNames) {
+                command.push(splitName);
+            }
         }
 
         const output = await this.#cmd
-            .spawn(args)
+            .spawn(command)
             .wait()
             .toString()
             .then((output) => output.trim());
@@ -533,16 +545,18 @@ export class PackageManager extends AdbServiceBase {
     async resolveActivity(
         options: PackageManagerResolveActivityOptions,
     ): Promise<string | undefined> {
-        let args = buildArguments(
+        const command = buildCommand(
             [PackageManager.ServiceName, "resolve-activity", "--components"],
             options,
             PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP,
         );
 
-        args = args.concat(options.intent.build().map(escapeArg));
+        for (const arg of options.intent.build()) {
+            command.push(arg);
+        }
 
         const output = await this.#cmd
-            .spawn(args)
+            .spawn(command)
             .wait()
             .toString()
             .then((output) => output.trim());
@@ -567,14 +581,14 @@ export class PackageManager extends AdbServiceBase {
     async sessionCreate(
         options?: PackageManagerInstallOptions,
     ): Promise<number> {
-        const args = buildInstallArguments(
+        const command = buildInstallCommand(
             "install-create",
             options,
             this.#apiLevel,
         );
 
         const output = await this.#cmd
-            .spawn(args)
+            .spawn(command)
             .wait()
             .toString()
             .then((output) => output.trim());
@@ -605,16 +619,18 @@ export class PackageManager extends AdbServiceBase {
         splitName: string,
         path: string,
     ): Promise<void> {
-        const args: string[] = [
+        const command: string[] = [
             PackageManager.CommandName,
             "install-write",
             sessionId.toString(),
-            escapeArg(splitName),
-            escapeArg(path),
+            splitName,
+            path,
         ];
 
         // Similar to `install`, must use `adb.subprocess` so it can read `path`
-        const process = await this.adb.subprocess.noneProtocol.spawn(args);
+        const process = await this.adb.subprocess.noneProtocol.spawn(
+            command.map(escapeArg),
+        );
         await this.checkResult(process.output);
     }
 
@@ -624,17 +640,17 @@ export class PackageManager extends AdbServiceBase {
         size: number,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
     ): Promise<void> {
-        const args: string[] = [
+        const command: string[] = [
             PackageManager.ServiceName,
             "install-write",
             "-S",
             size.toString(),
             sessionId.toString(),
-            escapeArg(splitName),
+            splitName,
             "-",
         ];
 
-        const process = await this.#cmd.spawn(args);
+        const process = await this.#cmd.spawn(command);
         await Promise.all([
             stream.pipeTo(process.stdin),
             this.checkResult(process.output),
@@ -647,7 +663,7 @@ export class PackageManager extends AdbServiceBase {
      * @returns A `Promise` that resolves when the session is committed
      */
     async sessionCommit(sessionId: number): Promise<void> {
-        const args: string[] = [
+        const command: string[] = [
             PackageManager.ServiceName,
             "install-commit",
             sessionId.toString(),
@@ -658,22 +674,24 @@ export class PackageManager extends AdbServiceBase {
         // causing this function to fail with an empty message.
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
-            args[0] = PackageManager.CommandName;
-            process = await this.adb.subprocess.noneProtocol.spawn(args);
+            command[0] = PackageManager.CommandName;
+            process = await this.adb.subprocess.noneProtocol.spawn(
+                command.map(escapeArg),
+            );
         } else {
-            process = await this.#cmd.spawn(args);
+            process = await this.#cmd.spawn(command);
         }
 
         await this.checkResult(process.output);
     }
 
     async sessionAbandon(sessionId: number): Promise<void> {
-        const args: string[] = [
+        const command: string[] = [
             PackageManager.ServiceName,
             "install-abandon",
             sessionId.toString(),
         ];
-        const process = await this.#cmd.spawn(args);
+        const process = await this.#cmd.spawn(command);
         await this.checkResult(process.output);
     }
 }

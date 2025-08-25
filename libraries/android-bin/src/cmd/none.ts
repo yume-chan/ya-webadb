@@ -3,6 +3,7 @@ import {
     AdbFeature,
     AdbNoneProtocolProcessImpl,
     adbNoneProtocolSpawner,
+    escapeArg,
 } from "@yume-chan/adb";
 
 import { Cmd } from "./service.js";
@@ -37,7 +38,7 @@ export function createNoneProtocol(
             spawn: adbNoneProtocolSpawner(async (command, signal) => {
                 checkCommand(command);
 
-                const newCommand = command.slice();
+                const newCommand = command.map(escapeArg);
                 newCommand.unshift("cmd");
                 return adb.subprocess.noneProtocol.spawn(newCommand, signal);
             }),
@@ -50,7 +51,7 @@ export function createNoneProtocol(
             spawn: adbNoneProtocolSpawner(async (command, signal) => {
                 checkCommand(command);
 
-                const newCommand = command.slice();
+                const newCommand = command.map(escapeArg);
                 newCommand[0] = resolveFallback(fallback, command[0]!);
                 return adb.subprocess.noneProtocol.spawn(newCommand, signal);
             }),
