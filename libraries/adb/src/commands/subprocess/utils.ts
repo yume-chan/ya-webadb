@@ -45,8 +45,10 @@ export function splitCommand(input: string): string[] {
         const char = input.charAt(i);
         switch (char) {
             case " ":
-                if (!quote && i !== start) {
-                    result.push(input.substring(start, i));
+                if (!quote) {
+                    if (i !== start) {
+                        result.push(input.substring(start, i));
+                    }
                     start = i + 1;
                 }
                 break;

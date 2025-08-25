@@ -65,7 +65,7 @@ export const PackageManagerInstallOptions = {
     restrictPermissions: option<boolean>("--restrict-permissions", 29),
     doNotKill: option<boolean>("--dont-kill"),
     originatingUri: option<string>("--originating-uri"),
-    refererUri: option<string>("--referrer"),
+    referrerUri: option<string>("--referrer"),
     inheritFrom: option<string>("-p", 24),
     packageName: option<string>("--pkg", 28),
     abi: option<string>("--abi", 21),
@@ -252,7 +252,7 @@ function buildInstallCommand(
                 args.push(option.name, value.toString());
                 break;
             case "string":
-                args.push(option.name, escapeArg(value));
+                args.push(option.name, value);
                 break;
             default:
                 throw new Error(
@@ -293,8 +293,7 @@ export class PackageManager extends AdbServiceBase {
 
         // WIP: old version of pm doesn't support multiple apks
         for (const apk of apks) {
-            // `install` only uses `pm` so escape the arguments here
-            command.push(escapeArg(apk));
+            command.push(apk);
         }
 
         // Starting from Android 7, `pm` becomes a wrapper to `cmd package`.
@@ -307,7 +306,7 @@ export class PackageManager extends AdbServiceBase {
         // so installing from files must still use `pm`.
         // (the starting executable file decides which SELinux policies to apply)
         const output = await this.adb.subprocess.noneProtocol
-            .spawn(command)
+            .spawn(command.map(escapeArg))
             .wait()
             .toString()
             .then((output) => output.trim());
@@ -624,13 +623,14 @@ export class PackageManager extends AdbServiceBase {
             PackageManager.CommandName,
             "install-write",
             sessionId.toString(),
-            // `install-write` only uses `pm` so escape the arguments here
-            escapeArg(splitName),
-            escapeArg(path),
+            splitName,
+            path,
         ];
 
         // Similar to `install`, must use `adb.subprocess` so it can read `path`
-        const process = await this.adb.subprocess.noneProtocol.spawn(command);
+        const process = await this.adb.subprocess.noneProtocol.spawn(
+            command.map(escapeArg),
+        );
         await this.checkResult(process.output);
     }
 
@@ -675,7 +675,9 @@ export class PackageManager extends AdbServiceBase {
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
             command[0] = PackageManager.CommandName;
-            process = await this.adb.subprocess.noneProtocol.spawn(command);
+            process = await this.adb.subprocess.noneProtocol.spawn(
+                command.map(escapeArg),
+            );
         } else {
             process = await this.#cmd.spawn(command);
         }
