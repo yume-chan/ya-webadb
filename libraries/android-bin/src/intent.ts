@@ -14,9 +14,31 @@ export interface IntentStringExtra {
     value: string;
 }
 
+export interface IntentNumberArrayExtra {
+    type: "array";
+    itemType: "int" | IntentNumberExtra["type"];
+    value: number[];
+}
+
 export interface IntentArrayListExtra {
     type: "arrayList";
     value: number[] | IntentNumberExtra[] | string[];
+}
+
+export interface IntentNumberArrayListExtra extends IntentArrayListExtra {
+    itemType: "int" | IntentNumberExtra["type"];
+    value: number[];
+}
+
+export interface IntentStringArrayExtra {
+    type: "array";
+    itemType: "string";
+    value: string[];
+}
+
+export interface IntentStringArrayListExtra extends IntentArrayListExtra {
+    itemType: "string";
+    value: string[];
 }
 
 export interface ComponentName {
@@ -39,16 +61,95 @@ export interface Intent {
               | IntentStringExtra
               | ComponentName
               | number[]
+              | IntentNumberArrayExtra
               | IntentArrayListExtra
               | IntentNumberExtra
               | IntentNumberExtra[]
+              | IntentNumberArrayListExtra
               | string[]
+              | IntentStringArrayExtra
+              | IntentStringArrayListExtra
               | boolean
           >
         | undefined;
     flags?: number | undefined;
     package?: string | undefined;
     component?: ComponentName | undefined;
+}
+
+function getNumberType(type: "int" | IntentNumberExtra["type"]) {
+    switch (type) {
+        case "int":
+            return "--ei";
+        case "long":
+            return "--el";
+        case "float":
+            return "--ef";
+        case "double":
+            return "--ed";
+        default:
+            throw new Error(`Unknown number type: ${type as string}`);
+    }
+}
+
+function serializeRawArray(
+    value: number[] | IntentNumberExtra[] | string[],
+): [type: string, value: string] {
+    if (value.length === 0) {
+        throw new Error("Can't determine array item type from empty array.");
+    }
+
+    const item = value[0];
+    switch (typeof item) {
+        case "number":
+            return ["--eia", (value as number[]).join(",")];
+        case "object":
+            return [
+                getNumberType(item.type) + "a",
+                (value as IntentNumberExtra[])
+                    .map((item) => item.value)
+                    .join(","),
+            ];
+        case "string":
+            return [
+                "--esa",
+                (value as string[])
+                    .map((item) => item.replaceAll(",", "\\,"))
+                    .join(","),
+            ];
+        default:
+            throw new Error(`Unknown array item type: ${typeof item}`);
+    }
+}
+
+function serializeArrayExtra(
+    value:
+        | Omit<IntentNumberArrayExtra, "type">
+        | Omit<IntentStringArrayExtra, "type">,
+): [type: string, value: string] {
+    if (value.itemType === "string") {
+        return [
+            "--esa",
+            value.value.map((item) => item.replaceAll(",", "\\,")).join(","),
+        ];
+    }
+
+    return [getNumberType(value.itemType) + "a", value.value.join(",")];
+}
+
+function serializeArrayListExtra(
+    value:
+        | IntentArrayListExtra
+        | IntentNumberArrayListExtra
+        | IntentStringArrayListExtra,
+): [type: string, value: string] {
+    if ("itemType" in value) {
+        const [type, valueString] = serializeArrayExtra(value);
+        return [type + "l", valueString];
+    }
+
+    const [type, valueString] = serializeRawArray(value.value);
+    return [type + "l", valueString];
 }
 
 export function serializeIntent(intent: Intent) {
@@ -89,63 +190,8 @@ export function serializeIntent(intent: Intent) {
                     }
 
                     if (Array.isArray(value)) {
-                        if (value.length === 0) {
-                            throw new Error(
-                                "Intent extra array cannot be empty",
-                            );
-                        }
-
-                        switch (typeof value[0]) {
-                            case "number":
-                                result.push(
-                                    "--eia",
-                                    key,
-                                    (value as number[]).join(","),
-                                );
-                                break;
-                            case "object":
-                                switch (value[0].type) {
-                                    case "long":
-                                        result.push(
-                                            "--ela",
-                                            key,
-                                            (value as IntentNumberExtra[])
-                                                .map((item) => item.value)
-                                                .join(","),
-                                        );
-                                        break;
-                                    case "float":
-                                        result.push(
-                                            "--efa",
-                                            key,
-                                            (value as IntentNumberExtra[])
-                                                .map((item) => item.value)
-                                                .join(","),
-                                        );
-                                        break;
-                                    case "double":
-                                        result.push(
-                                            "--eda",
-                                            key,
-                                            (value as IntentNumberExtra[])
-                                                .map((item) => item.value)
-                                                .join(","),
-                                        );
-                                        break;
-                                }
-                                break;
-                            case "string":
-                                result.push(
-                                    "--esa",
-                                    key,
-                                    (value as string[])
-                                        .map((item) =>
-                                            item.replaceAll(",", "\\,"),
-                                        )
-                                        .join(","),
-                                );
-                                break;
-                        }
+                        const [type, valueString] = serializeRawArray(value);
+                        result.push(type, key, valueString);
                         break;
                     }
 
@@ -162,79 +208,26 @@ export function serializeIntent(intent: Intent) {
                         case "uri":
                             result.push("--eu", key, value.value);
                             break;
+                        case "array":
+                            {
+                                const [type, valueString] =
+                                    serializeArrayExtra(value);
+                                result.push(type, key, valueString);
+                            }
+                            break;
                         case "arrayList":
-                            if (value.value.length === 0) {
-                                throw new Error(
-                                    "Intent extra array cannot be empty",
-                                );
-                            }
-
-                            switch (typeof value.value[0]) {
-                                case "number":
-                                    result.push(
-                                        "--eial",
-                                        key,
-                                        (value.value as number[]).join(","),
-                                    );
-                                    break;
-                                case "object":
-                                    switch (value.value[0].type) {
-                                        case "long":
-                                            result.push(
-                                                "--elal",
-                                                key,
-                                                (
-                                                    value.value as IntentNumberExtra[]
-                                                )
-                                                    .map((item) => item.value)
-                                                    .join(","),
-                                            );
-                                            break;
-                                        case "float":
-                                            result.push(
-                                                "--efal",
-                                                key,
-                                                (
-                                                    value.value as IntentNumberExtra[]
-                                                )
-                                                    .map((item) => item.value)
-                                                    .join(","),
-                                            );
-                                            break;
-                                        case "double":
-                                            result.push(
-                                                "--edal",
-                                                key,
-                                                (
-                                                    value.value as IntentNumberExtra[]
-                                                )
-                                                    .map((item) => item.value)
-                                                    .join(","),
-                                            );
-                                            break;
-                                    }
-                                    break;
-                                case "string":
-                                    result.push(
-                                        "--esal",
-                                        key,
-                                        (value.value as string[])
-                                            .map((item) =>
-                                                item.replaceAll(",", "\\,"),
-                                            )
-                                            .join(","),
-                                    );
-                                    break;
+                            {
+                                const [type, valueString] =
+                                    serializeArrayListExtra(value);
+                                result.push(type, key, valueString);
                             }
                             break;
-                        case "long":
-                            result.push("--el", key, value.value.toString());
-                            break;
-                        case "float":
-                            result.push("--ef", key, value.value.toString());
-                            break;
-                        case "double":
-                            result.push("--ed", key, value.value.toString());
+                        default:
+                            result.push(
+                                getNumberType(value.type),
+                                key,
+                                value.value.toString(),
+                            );
                             break;
                     }
                     break;
