@@ -5,7 +5,7 @@ import { SplitStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 import { Cmd } from "./cmd/index.js";
 import type { IntentBuilder } from "./intent.js";
 import type { SingleUser } from "./utils.js";
-import { buildArguments } from "./utils.js";
+import { buildCommand } from "./utils.js";
 
 export interface ActivityManagerStartActivityOptions {
     displayId?: number;
@@ -43,21 +43,25 @@ export class ActivityManager extends AdbServiceBase {
     ): Promise<void> {
         // `am start` and `am start-activity` are the same,
         // but `am start-activity` was added in Android 8.
-        let args = buildArguments(
+        const command = buildCommand(
             [ActivityManager.ServiceName, "start", "-W"],
             options,
             START_ACTIVITY_OPTIONS_MAP,
         );
 
-        args = args.concat(options.intent.build().map(escapeArg));
+        for (const arg of options.intent.build()) {
+            command.push(arg);
+        }
 
         // `cmd activity` doesn't support `start` command on Android 7.
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel <= 25) {
-            args[0] = ActivityManager.CommandName;
-            process = await this.adb.subprocess.noneProtocol.spawn(args);
+            command[0] = ActivityManager.CommandName;
+            process = await this.adb.subprocess.noneProtocol.spawn(
+                command.map(escapeArg),
+            );
         } else {
-            process = await this.#cmd.spawn(args);
+            process = await this.#cmd.spawn(command);
         }
 
         const lines = process.output

@@ -42,14 +42,17 @@ export class Settings extends AdbServiceBase {
         options: SettingsOptions | undefined,
         ...args: string[]
     ): Promise<string> {
-        let command = [Settings.ServiceName];
+        const command = [Settings.ServiceName];
 
         if (options?.user !== undefined) {
             command.push("--user", options.user.toString());
         }
 
         command.push(verb, namespace);
-        command = command.concat(args);
+
+        for (const arg of args) {
+            command.push(arg);
+        }
 
         return this.#cmd.spawn(command).wait().toString();
     }

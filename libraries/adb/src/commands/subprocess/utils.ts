@@ -13,7 +13,8 @@ export function escapeArg(s: string) {
             break;
         }
         result += s.substring(base, found);
-        // a'b becomes a'\'b (the backslash is not a escape character)
+        // a'b becomes 'a'\'b', which is 'a' + \' + 'b'
+        // (quoted string 'a', escaped single quote, and quoted string 'b')
         result += String.raw`'\''`;
         base = found + 1;
     }
@@ -22,23 +23,30 @@ export function escapeArg(s: string) {
     return result;
 }
 
-export function splitCommand(command: string): string[] {
+/**
+ * Split the command.
+ *
+ * Quotes and escaped characters are supported, and will be returned as-is.
+ * @param input The input command
+ * @returns An array of string containing the arguments
+ */
+export function splitCommand(input: string): string[] {
     const result: string[] = [];
     let quote: string | undefined;
     let isEscaped = false;
     let start = 0;
 
-    for (let i = 0, len = command.length; i < len; i += 1) {
+    for (let i = 0, len = input.length; i < len; i += 1) {
         if (isEscaped) {
             isEscaped = false;
             continue;
         }
 
-        const char = command.charAt(i);
+        const char = input.charAt(i);
         switch (char) {
             case " ":
                 if (!quote && i !== start) {
-                    result.push(command.substring(start, i));
+                    result.push(input.substring(start, i));
                     start = i + 1;
                 }
                 break;
@@ -56,8 +64,8 @@ export function splitCommand(command: string): string[] {
         }
     }
 
-    if (start < command.length) {
-        result.push(command.substring(start));
+    if (start < input.length) {
+        result.push(input.substring(start));
     }
 
     return result;
