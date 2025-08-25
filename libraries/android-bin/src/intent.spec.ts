@@ -1,51 +1,57 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { IntentBuilder } from "./intent.js";
+import { serializeIntent } from "./intent.js";
 
 describe("Intent", () => {
-    describe("IntentBuilder", () => {
+    describe("serializeIntent", () => {
         it("should set intent action", () => {
-            assert.deepStrictEqual(
-                new IntentBuilder().setAction("test_action").build(),
-                ["-a", "test_action"],
-            );
+            assert.deepStrictEqual(serializeIntent({ action: "test_action" }), [
+                "-a",
+                "test_action",
+            ]);
         });
 
         it("should set intent categories", () => {
             assert.deepStrictEqual(
-                new IntentBuilder()
-                    .addCategory("category_1")
-                    .addCategory("category_2")
-                    .build(),
+                serializeIntent({ categories: ["category_1", "category_2"] }),
                 ["-c", "category_1", "-c", "category_2"],
             );
         });
 
         it("should set intent package", () => {
-            assert.deepStrictEqual(
-                new IntentBuilder().setPackage("package_1").build(),
-                ["-p", "package_1"],
-            );
+            assert.deepStrictEqual(serializeIntent({ package: "package_1" }), [
+                "-p",
+                "package_1",
+            ]);
         });
 
         it("should set intent component", () => {
             assert.deepStrictEqual(
-                new IntentBuilder().setComponent("component_1").build(),
-                ["-n", "component_1"],
+                serializeIntent({
+                    component: {
+                        packageName: "package_1",
+                        className: "component_1",
+                    },
+                }),
+                ["-n", "package_1/component_1"],
             );
         });
 
         it("should set intent data", () => {
-            assert.deepStrictEqual(
-                new IntentBuilder().setData("data_1").build(),
-                ["-d", "data_1"],
-            );
+            assert.deepStrictEqual(serializeIntent({ data: "data_1" }), [
+                "-d",
+                "data_1",
+            ]);
         });
 
         it("should pass intent extras", () => {
             assert.deepStrictEqual(
-                new IntentBuilder().addStringExtra("key1", "value1").build(),
+                serializeIntent({
+                    extras: {
+                        key1: "value1",
+                    },
+                }),
                 ["--es", "key1", "value1"],
             );
         });

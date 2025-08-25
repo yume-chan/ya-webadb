@@ -3,8 +3,9 @@ import { AdbServiceBase, escapeArg } from "@yume-chan/adb";
 import { SplitStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd/index.js";
-import type { IntentBuilder } from "./intent.js";
-import type { SingleUser } from "./utils.js";
+import type { Intent } from "./intent.js";
+import { serializeIntent } from "./intent.js";
+import type { SingleUser, SingleUserOrAll } from "./utils.js";
 import { buildCommand } from "./utils.js";
 
 export interface ActivityManagerStartActivityOptions {
@@ -12,7 +13,7 @@ export interface ActivityManagerStartActivityOptions {
     windowingMode?: number;
     forceStop?: boolean;
     user?: SingleUser;
-    intent: IntentBuilder;
+    intent: Intent;
 }
 
 const START_ACTIVITY_OPTIONS_MAP: Partial<
@@ -49,7 +50,7 @@ export class ActivityManager extends AdbServiceBase {
             START_ACTIVITY_OPTIONS_MAP,
         );
 
-        for (const arg of options.intent.build()) {
+        for (const arg of serializeIntent(options.intent)) {
             command.push(arg);
         }
 
@@ -83,5 +84,30 @@ export class ActivityManager extends AdbServiceBase {
 
         // Ensure the subprocess exits before returning
         await process.exited;
+    }
+
+    async broadcast(
+        intent: Intent,
+        options?: { user?: SingleUserOrAll; receiverPermission?: string },
+    ) {
+        const command = [ActivityManager.ServiceName, "broadcast"];
+
+        if (options) {
+            if (options.user !== undefined) {
+                command.push("--user", options.user.toString());
+            }
+            if (options.receiverPermission) {
+                command.push(
+                    "--receiver-permission",
+                    options.receiverPermission,
+                );
+            }
+        }
+
+        for (const arg of serializeIntent(intent)) {
+            command.push(arg);
+        }
+
+        await this.#cmd.spawn(command).wait();
     }
 }
