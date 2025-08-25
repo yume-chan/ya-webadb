@@ -14,7 +14,8 @@ import {
 } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd/index.js";
-import type { IntentBuilder } from "./intent.js";
+import type { Intent } from "./intent.js";
+import { serializeIntent } from "./intent.js";
 import type { Optional, SingleUserOrAll } from "./utils.js";
 import { buildCommand } from "./utils.js";
 
@@ -178,7 +179,7 @@ const PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP: Record<
 
 export interface PackageManagerResolveActivityOptions {
     user?: SingleUserOrAll;
-    intent: IntentBuilder;
+    intent: Intent;
 }
 
 const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
@@ -551,7 +552,7 @@ export class PackageManager extends AdbServiceBase {
             PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP,
         );
 
-        for (const arg of options.intent.build()) {
+        for (const arg of serializeIntent(options.intent)) {
             command.push(arg);
         }
 
