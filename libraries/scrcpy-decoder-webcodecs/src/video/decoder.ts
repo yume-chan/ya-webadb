@@ -164,26 +164,18 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                     // Set `pts` to 0 as a marker for skipping rendering this frame
                     packet.pts = 0n;
                 } else {
-                    const [ms, us] = performance.now().toString().split(".");
-
-                    // Multiply `performance.now()` by 1000 to get microseconds.
-                    // Use string manipulation to improve precision.
-                    let timestamp = ms!;
-                    // `performance.now` might return an integer so `us` might be undefined
-                    if (us) {
-                        if (us.length < 3) {
-                            timestamp += us.padEnd(3, "0");
-                        } else {
-                            timestamp += us.slice(0, 3);
-                        }
-                    } else {
-                        timestamp += "000";
-                    }
-
                     // Set `pts` to current time to track decoding time
+
                     // Technically `performance.now()` can return 0 (when document starts loading),
                     // but in practice it's impossible to call it at that time.
-                    packet.pts = BigInt(timestamp);
+                    const now = performance.now();
+
+                    // `now` can be an integer, so `us` needs a default value
+                    const [ms, us = ""] = now.toString().split(".");
+
+                    // Multiply `performance.now()` by 1000 to get microseconds.
+                    // Use string concatenation to prevent precision loss.
+                    packet.pts = BigInt(ms + (us + "000").slice(0, 3));
                 }
                 return this.#decoder.decode(packet);
             },
