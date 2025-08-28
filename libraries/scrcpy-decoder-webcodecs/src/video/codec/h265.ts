@@ -25,7 +25,9 @@ export class H265Decoder extends H26xDecoder {
 
         this.#decoder.configure({
             codec: H265.toCodecString(configuration),
-            // Microsoft Edge requires explicit size to work
+            // Microsoft Edge on Windows requires explicit size,
+            // otherwise it returns frames in incorrect size.
+            // And it needs cropped size, as opposed to the option name.
             codedWidth: configuration.croppedWidth,
             codedHeight: configuration.croppedHeight,
             optimizeForLatency: true,

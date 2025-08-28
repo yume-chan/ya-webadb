@@ -200,6 +200,13 @@ export class Av1 extends BitReader {
     static TransferCharacteristics = TransferCharacteristics;
     static MatrixCoefficients = MatrixCoefficients;
 
+    /**
+     * Generate a codec string from an AV1 sequence header
+     * per Section 5 of AV1 Codec ISO Media File Format Binding
+     * https://aomediacodec.github.io/av1-isobmff/#codecsparam
+     * @param sequenceHeader The parsed AV1 sequence header
+     * @returns A codec string
+     */
     static toCodecString(sequenceHeader: Av1.SequenceHeaderObu) {
         const {
             seq_profile: seqProfile,
