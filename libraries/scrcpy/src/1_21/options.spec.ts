@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { AndroidAvcProfile } from "../codec/index.js";
+import { AndroidAvcProfile } from "../video/index.js";
 
 import { CodecOptions } from "./impl/index.js";
 import { ScrcpyOptions1_21 } from "./options.js";

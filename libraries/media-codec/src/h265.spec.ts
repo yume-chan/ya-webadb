@@ -7,7 +7,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { h265ParseSequenceParameterSet } from "./h265.js";
+import { parseSequenceParameterSet } from "./h265.js";
 
 describe("h265", () => {
     describe("h265ParseSequenceParameterSet", () => {
@@ -21,7 +21,7 @@ describe("h265", () => {
                 0x80,
             ]);
 
-            const sps = h265ParseSequenceParameterSet(buffer);
+            const sps = parseSequenceParameterSet(buffer);
 
             assert.deepStrictEqual(sps, {
                 sps_video_parameter_set_id: 0,
@@ -355,7 +355,7 @@ describe("h265", () => {
                 },
                 sps_extension_4bits: 0,
                 sps_extension_data_flag: undefined,
-            } satisfies ReturnType<typeof h265ParseSequenceParameterSet>);
+            } satisfies ReturnType<typeof parseSequenceParameterSet>);
         });
 
         it("issue #732", () => {
@@ -365,7 +365,7 @@ describe("h265", () => {
                 151, 43, 182, 64,
             ]);
 
-            const sps = h265ParseSequenceParameterSet(buffer);
+            const sps = parseSequenceParameterSet(buffer);
 
             assert.deepStrictEqual(sps, {
                 sps_video_parameter_set_id: 4,
@@ -552,7 +552,7 @@ describe("h265", () => {
                 spsMultilayerExtension: undefined,
                 sps3dExtension: undefined,
                 sps_extension_data_flag: undefined,
-            } satisfies ReturnType<typeof h265ParseSequenceParameterSet>);
+            } satisfies ReturnType<typeof parseSequenceParameterSet>);
         });
     });
 });

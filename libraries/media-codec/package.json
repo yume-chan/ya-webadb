@@ -1,12 +1,9 @@
 {
-    "name": "@yume-chan/scrcpy-decoder-webcodecs",
-    "version": "2.1.0",
-    "description": "Raw H.264 stream decoder and renderer using WebCodecs API (requires modern browser).",
+    "name": "@yume-chan/media-codec",
+    "version": "2.0.0",
+    "description": "H.264, H.265 and AV1 configuration packet parser",
     "keywords": [
-        "adb",
-        "android-phone",
-        "scrcpy",
-        "scrcpy-decoder"
+        "typescript"
     ],
     "license": "MIT",
     "author": {
@@ -14,11 +11,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/scrcpy-decoder-webcodecs#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/media-codec#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/scrcpy-decoder-webcodecs"
+        "directory": "libraries/media-codec"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
@@ -30,19 +27,16 @@
     "scripts": {
         "build": "tsc -b tsconfig.build.json",
         "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
-        "prepublishOnly": "npm run build"
+        "prepublishOnly": "npm run build",
+        "test": "run-test"
     },
     "dependencies": {
-        "@yume-chan/async": "^4.1.3",
-        "@yume-chan/event": "workspace:^",
-        "@yume-chan/media-codec": "workspace:^",
-        "@yume-chan/no-data-view": "workspace:^",
-        "@yume-chan/scrcpy": "workspace:^",
-        "@yume-chan/scrcpy-decoder-tinyh264": "workspace:^",
-        "@yume-chan/stream-extra": "workspace:^"
+        "@yume-chan/no-data-view": "workspace:^"
     },
     "devDependencies": {
+        "@types/node": "^24.3.0",
         "@yume-chan/eslint-config": "workspace:^",
+        "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.6.2",
         "typescript": "^5.9.2"

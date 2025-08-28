@@ -1,15 +1,10 @@
+import { Av1, H264, H265 } from "@yume-chan/media-codec";
 import type {
     ScrcpyMediaStreamPacket,
     ScrcpyVideoSize,
     ScrcpyVideoStreamMetadata,
 } from "@yume-chan/scrcpy";
-import {
-    Av1,
-    h264ParseConfiguration,
-    h265ParseConfiguration,
-    ScrcpyVideoCodecId,
-    ScrcpyVideoSizeImpl,
-} from "@yume-chan/scrcpy";
+import { ScrcpyVideoCodecId, ScrcpyVideoSizeImpl } from "@yume-chan/scrcpy";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import { InspectStream } from "@yume-chan/stream-extra";
 
@@ -51,7 +46,7 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
             .pipeThrough(this.#options.createMediaStreamTransformer())
             .pipeThrough(
                 new InspectStream(
-                    (packet) => {
+                    (packet): undefined => {
                         if (packet.type === "configuration") {
                             switch (this.#metadata.codec) {
                                 case ScrcpyVideoCodecId.H264:
@@ -79,12 +74,12 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
     }
 
     #configureH264(data: Uint8Array) {
-        const { croppedWidth, croppedHeight } = h264ParseConfiguration(data);
+        const { croppedWidth, croppedHeight } = H264.parseConfiguration(data);
         this.#size.setSize(croppedWidth, croppedHeight);
     }
 
     #configureH265(data: Uint8Array) {
-        const { croppedWidth, croppedHeight } = h265ParseConfiguration(data);
+        const { croppedWidth, croppedHeight } = H265.parseConfiguration(data);
         this.#size.setSize(croppedWidth, croppedHeight);
     }
 
