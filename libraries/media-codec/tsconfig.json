@@ -4,10 +4,10 @@
             "path": "./tsconfig.build.json"
         },
         {
-            "path": "../adb/tsconfig.build.json"
+            "path": "./tsconfig.test.json"
         },
         {
-            "path": "../stream-extra/tsconfig.build.json"
-        }
+            "path": "../no-data-view/tsconfig.build.json"
+        },
     ]
 }

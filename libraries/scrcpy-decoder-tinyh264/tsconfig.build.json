@@ -6,12 +6,4 @@
             "DOM"
         ]
     },
-    "references": [
-        {
-            "path": "../scrcpy/tsconfig.build.json"
-        },
-        {
-            "path": "../stream-extra/tsconfig.build.json"
-        }
-    ]
 }

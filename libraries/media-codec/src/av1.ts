@@ -6,6 +6,8 @@
 // cspell: ignore Smpte
 // cspell: ignore Chromat
 
+import { decimalTwoDigits } from "./format.js";
+
 export const AndroidAv1Profile = {
     Main8: 1 << 0,
     Main10: 1 << 1,
@@ -197,6 +199,55 @@ export class Av1 extends BitReader {
     static ColorPrimaries = ColorPrimaries;
     static TransferCharacteristics = TransferCharacteristics;
     static MatrixCoefficients = MatrixCoefficients;
+
+    static toCodecString(sequenceHeader: Av1.SequenceHeaderObu) {
+        const {
+            seq_profile: seqProfile,
+            seq_level_idx: [seqLevelIdx = 0],
+            color_config: {
+                BitDepth,
+                mono_chrome: monoChrome,
+                subsampling_x: subsamplingX,
+                subsampling_y: subsamplingY,
+                chroma_sample_position: chromaSamplePosition,
+                color_description_present_flag,
+            },
+        } = sequenceHeader;
+
+        let colorPrimaries: Av1.ColorPrimaries;
+        let transferCharacteristics: Av1.TransferCharacteristics;
+        let matrixCoefficients: Av1.MatrixCoefficients;
+        let colorRange: boolean;
+        if (color_description_present_flag) {
+            ({
+                color_primaries: colorPrimaries,
+                transfer_characteristics: transferCharacteristics,
+                matrix_coefficients: matrixCoefficients,
+                color_range: colorRange,
+            } = sequenceHeader.color_config);
+        } else {
+            colorPrimaries = Av1.ColorPrimaries.Bt709;
+            transferCharacteristics = Av1.TransferCharacteristics.Bt709;
+            matrixCoefficients = Av1.MatrixCoefficients.Bt709;
+            colorRange = false;
+        }
+
+        return [
+            "av01",
+            seqProfile.toString(16),
+            decimalTwoDigits(seqLevelIdx) +
+                (sequenceHeader.seq_tier[0] ? "H" : "M"),
+            decimalTwoDigits(BitDepth),
+            monoChrome ? "1" : "0",
+            (subsamplingX ? "1" : "0") +
+                (subsamplingY ? "1" : "0") +
+                chromaSamplePosition.toString(),
+            decimalTwoDigits(colorPrimaries),
+            decimalTwoDigits(transferCharacteristics),
+            decimalTwoDigits(matrixCoefficients),
+            colorRange ? "1" : "0",
+        ].join(".");
+    }
 
     #Leb128Bytes: number = 0;
 

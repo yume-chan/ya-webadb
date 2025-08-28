@@ -1,4 +1,5 @@
 import { PromiseResolver } from "@yume-chan/async";
+import { H264 } from "@yume-chan/media-codec";
 import type {
     ScrcpyMediaStreamConfigurationPacket,
     ScrcpyMediaStreamPacket,
@@ -6,7 +7,6 @@ import type {
 import {
     AndroidAvcLevel,
     AndroidAvcProfile,
-    h264ParseConfiguration,
     ScrcpyVideoSizeImpl,
 } from "@yume-chan/scrcpy";
 import { WritableStream } from "@yume-chan/stream-extra";
@@ -136,7 +136,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
                 croppedHeight,
                 cropLeft,
                 cropTop,
-            } = h264ParseConfiguration(data);
+            } = H264.parseConfiguration(data);
 
             this.#size.setSize(croppedWidth, croppedHeight);
 

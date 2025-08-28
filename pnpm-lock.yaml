@@ -159,6 +159,9 @@ importers:
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
+      '@yume-chan/media-codec':
+        specifier: workspace:^
+        version: link:../media-codec
       '@yume-chan/scrcpy':
         specifier: workspace:^
         version: link:../scrcpy
@@ -304,6 +307,31 @@ importers:
         specifier: ^24.3.0
         version: 24.3.0
 
+  libraries/media-codec:
+    dependencies:
+      '@yume-chan/no-data-view':
+        specifier: workspace:^
+        version: link:../no-data-view
+    devDependencies:
+      '@types/node':
+        specifier: ^24.3.0
+        version: 24.3.0
+      '@yume-chan/eslint-config':
+        specifier: workspace:^
+        version: link:../../toolchain/eslint-config
+      '@yume-chan/test-runner':
+        specifier: workspace:^
+        version: link:../../toolchain/test-runner
+      '@yume-chan/tsconfig':
+        specifier: workspace:^
+        version: link:../../toolchain/tsconfig
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+
   libraries/no-data-view:
     devDependencies:
       '@types/node':
@@ -391,6 +419,9 @@ importers:
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
+      '@yume-chan/media-codec':
+        specifier: workspace:^
+        version: link:../media-codec
       '@yume-chan/scrcpy':
         specifier: workspace:^
         version: link:../scrcpy
@@ -428,6 +459,9 @@ importers:
       '@yume-chan/event':
         specifier: workspace:^
         version: link:../event
+      '@yume-chan/media-codec':
+        specifier: workspace:^
+        version: link:../media-codec
       '@yume-chan/no-data-view':
         specifier: workspace:^
         version: link:../no-data-view

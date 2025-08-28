@@ -2,43 +2,8 @@
 // cspell: ignore qpprime
 // cspell: ignore colour
 
+import { hexTwoDigits } from "./format.js";
 import { NaluSodbBitReader, annexBSplitNalu } from "./nalu.js";
-
-// From https://developer.android.com/reference/android/media/MediaCodecInfo.CodecProfileLevel
-export const AndroidAvcProfile = {
-    Baseline: 1 << 0,
-    Main: 1 << 1,
-    Extended: 1 << 2,
-    High: 1 << 3,
-    High10: 1 << 4,
-    High422: 1 << 5,
-    High444: 1 << 6,
-    ConstrainedBaseline: 1 << 16,
-    ConstrainedHigh: 1 << 19,
-};
-
-export const AndroidAvcLevel = {
-    Level1: 1 << 0,
-    Level1b: 1 << 1,
-    Level11: 1 << 2,
-    Level12: 1 << 3,
-    Level13: 1 << 4,
-    Level2: 1 << 5,
-    Level21: 1 << 6,
-    Level22: 1 << 7,
-    Level3: 1 << 8,
-    Level31: 1 << 9,
-    Level32: 1 << 10,
-    Level4: 1 << 11,
-    Level41: 1 << 12,
-    Level42: 1 << 13,
-    Level5: 1 << 14,
-    Level51: 1 << 15,
-    Level52: 1 << 16,
-    Level6: 1 << 17,
-    Level61: 1 << 18,
-    Level62: 1 << 19,
-};
 
 // H.264 has two standards: ITU-T H.264 and ISO/IEC 14496-10
 // they have the same content, and refer themselves as "H.264".
@@ -49,7 +14,7 @@ export const AndroidAvcLevel = {
 
 // 7.3.2.1.1 Sequence parameter set data syntax
 // Variable names in this method uses the snake_case convention as in the spec for easier referencing.
-export function h264ParseSequenceParameterSet(nalu: Uint8Array) {
+export function parseSequenceParameterSet(nalu: Uint8Array) {
     const reader = new NaluSodbBitReader(nalu);
     if (reader.next() !== 0) {
         throw new Error("Invalid data");
@@ -218,7 +183,7 @@ export function h264ParseSequenceParameterSet(nalu: Uint8Array) {
  * Find Sequence Parameter Set (SPS) and Picture Parameter Set (PPS)
  * from H.264 Annex B formatted data.
  */
-export function h264SearchConfiguration(buffer: Uint8Array) {
+export function searchConfiguration(buffer: Uint8Array) {
     let sequenceParameterSet: Uint8Array | undefined;
     let pictureParameterSet: Uint8Array | undefined;
 
@@ -252,7 +217,7 @@ export function h264SearchConfiguration(buffer: Uint8Array) {
     throw new Error("Invalid data");
 }
 
-export interface H264Configuration {
+export interface Configuration {
     pictureParameterSet: Uint8Array;
     sequenceParameterSet: Uint8Array;
 
@@ -271,9 +236,9 @@ export interface H264Configuration {
     croppedHeight: number;
 }
 
-export function h264ParseConfiguration(data: Uint8Array): H264Configuration {
+export function parseConfiguration(data: Uint8Array): Configuration {
     const { sequenceParameterSet, pictureParameterSet } =
-        h264SearchConfiguration(data);
+        searchConfiguration(data);
 
     const {
         profile_idc: profileIndex,
@@ -286,7 +251,7 @@ export function h264ParseConfiguration(data: Uint8Array): H264Configuration {
         frame_crop_right_offset,
         frame_crop_top_offset,
         frame_crop_bottom_offset,
-    } = h264ParseSequenceParameterSet(sequenceParameterSet);
+    } = parseSequenceParameterSet(sequenceParameterSet);
 
     const encodedWidth = (pic_width_in_mbs_minus1 + 1) * 16;
     const encodedHeight =
@@ -314,4 +279,17 @@ export function h264ParseConfiguration(data: Uint8Array): H264Configuration {
         croppedWidth,
         croppedHeight,
     };
+}
+
+export function toCodecString(configuration: Configuration) {
+    const { profileIndex, constraintSet, levelIndex } = configuration;
+
+    // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
+    // ISO Base Media File Format Name Space
+    return (
+        "avc1." +
+        hexTwoDigits(profileIndex) +
+        hexTwoDigits(constraintSet) +
+        hexTwoDigits(levelIndex)
+    );
 }
