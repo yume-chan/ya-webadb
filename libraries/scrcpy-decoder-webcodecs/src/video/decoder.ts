@@ -160,9 +160,11 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         this.#pause = new PauseControllerImpl(
             (packet) => this.#decoder.decode(packet),
             (packet, skipRendering) => {
+                let pts: bigint;
+
                 if (skipRendering) {
                     // Set `pts` to 0 as a marker for skipping rendering this frame
-                    packet.pts = 0n;
+                    pts = 0n;
                 } else {
                     // Set `pts` to current time to track decoding time
 
@@ -175,9 +177,15 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
                     // Multiply `performance.now()` by 1000 to get microseconds.
                     // Use string concatenation to prevent precision loss.
-                    packet.pts = BigInt(ms + (us + "000").slice(0, 3));
+                    pts = BigInt(ms + (us + "000").slice(0, 3));
                 }
-                return this.#decoder.decode(packet);
+
+                // Create a copy of `packet` because other code (like recording)
+                // needs the original `pts`
+                return this.#decoder.decode({
+                    ...packet,
+                    pts,
+                });
             },
         );
 
