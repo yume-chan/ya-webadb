@@ -46,7 +46,7 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
             .pipeThrough(this.#options.createMediaStreamTransformer())
             .pipeThrough(
                 new InspectStream(
-                    (packet) => {
+                    (packet): undefined => {
                         if (packet.type === "configuration") {
                             switch (this.#metadata.codec) {
                                 case ScrcpyVideoCodecId.H264:
