@@ -14,7 +14,8 @@ import {
 } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd/index.js";
-import type { IntentBuilder } from "./intent.js";
+import type { Intent } from "./intent.js";
+import { serializeIntent } from "./intent.js";
 import type { Optional, SingleUserOrAll } from "./utils.js";
 import { buildCommand } from "./utils.js";
 
@@ -178,7 +179,7 @@ const PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP: Record<
 
 export interface PackageManagerResolveActivityOptions {
     user?: SingleUserOrAll;
-    intent: IntentBuilder;
+    intent: Intent;
 }
 
 const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
@@ -485,7 +486,7 @@ export class PackageManager extends AdbServiceBase {
 
         command.push(packageName);
 
-        // `cmd package` doesn't support `path` command on Android 7 and 8.
+        // Android 7 and 8 support `cmd package` but not `cmd package path` command
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 27) {
             command[0] = PackageManager.CommandName;
@@ -551,7 +552,7 @@ export class PackageManager extends AdbServiceBase {
             PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP,
         );
 
-        for (const arg of options.intent.build()) {
+        for (const arg of serializeIntent(options.intent)) {
             command.push(arg);
         }
 
@@ -669,9 +670,9 @@ export class PackageManager extends AdbServiceBase {
             sessionId.toString(),
         ];
 
-        // `cmd package` does support `install-commit` command on Android 7,
-        // but the "Success" message is not forwarded back to the client,
-        // causing this function to fail with an empty message.
+        // Android 7 did support `cmd package install-commit` command,
+        // but it wrote the "Success" message to an incorrect output stream,
+        // causing `checkResult` to fail with an empty message
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
             command[0] = PackageManager.CommandName;
