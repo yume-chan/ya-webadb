@@ -56,9 +56,9 @@ export class DemoMode extends AdbServiceBase {
     #am: ActivityManager;
     #settings: Settings;
 
-    constructor(adb: Adb) {
+    constructor(adb: Adb, apiLevel?: number) {
         super(adb);
-        this.#am = new ActivityManager(adb);
+        this.#am = new ActivityManager(adb, apiLevel);
         this.#settings = new Settings(adb);
     }
 
