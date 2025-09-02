@@ -1,7 +1,15 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 
-export interface TangoDataStorage {
-    save(data: Uint8Array): MaybePromiseLike<undefined>;
+export interface TangoKey {
+    privateKey: Uint8Array;
+    name: string | undefined;
+}
 
-    load(): Iterable<Uint8Array> | AsyncIterable<Uint8Array>;
+export interface TangoKeyStorage {
+    save(
+        privateKey: Uint8Array,
+        name: string | undefined,
+    ): MaybePromiseLike<undefined>;
+
+    load(): Iterable<TangoKey> | AsyncIterable<TangoKey>;
 }
