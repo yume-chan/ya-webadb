@@ -15,28 +15,13 @@ export interface IntentStringExtra {
 }
 
 export interface IntentNumberArrayExtra {
-    type: "array";
-    itemType: "int" | IntentNumberExtra["type"];
-    value: number[];
-}
-
-export interface IntentArrayListExtra {
-    type: "arrayList";
-    value: number[] | IntentNumberExtra[] | string[];
-}
-
-export interface IntentNumberArrayListExtra extends IntentArrayListExtra {
+    type: "array" | "arrayList";
     itemType: "int" | IntentNumberExtra["type"];
     value: number[];
 }
 
 export interface IntentStringArrayExtra {
-    type: "array";
-    itemType: "string";
-    value: string[];
-}
-
-export interface IntentStringArrayListExtra extends IntentArrayListExtra {
+    type: "array" | "arrayList";
     itemType: "string";
     value: string[];
 }
@@ -60,15 +45,9 @@ export interface Intent {
               | number
               | IntentStringExtra
               | ComponentName
-              | number[]
               | IntentNumberArrayExtra
-              | IntentArrayListExtra
-              | IntentNumberExtra
-              | IntentNumberExtra[]
-              | IntentNumberArrayListExtra
-              | string[]
               | IntentStringArrayExtra
-              | IntentStringArrayListExtra
+              | IntentNumberExtra
               | boolean
           >
         | undefined;
@@ -92,64 +71,29 @@ function getNumberType(type: "int" | IntentNumberExtra["type"]) {
     }
 }
 
-function serializeRawArray(
-    value: number[] | IntentNumberExtra[] | string[],
+function serializeArray(
+    array: IntentNumberArrayExtra | IntentStringArrayExtra,
 ): [type: string, value: string] {
-    if (value.length === 0) {
-        throw new Error("Can't determine array item type from empty array.");
+    let type: string;
+    let value: string;
+
+    if (array.itemType === "string") {
+        type = "--es";
+        value = array.value
+            .map((item) => item.replaceAll(",", "\\,"))
+            .join(",");
+    } else {
+        type = getNumberType(array.itemType);
+        value = array.value.join(",");
     }
 
-    const item = value[0];
-    switch (typeof item) {
-        case "number":
-            return ["--eia", (value as number[]).join(",")];
-        case "object":
-            return [
-                getNumberType(item.type) + "a",
-                (value as IntentNumberExtra[])
-                    .map((item) => item.value)
-                    .join(","),
-            ];
-        case "string":
-            return [
-                "--esa",
-                (value as string[])
-                    .map((item) => item.replaceAll(",", "\\,"))
-                    .join(","),
-            ];
-        default:
-            throw new Error(`Unknown array item type: ${typeof item}`);
-    }
-}
-
-function serializeArrayExtra(
-    value:
-        | Omit<IntentNumberArrayExtra, "type">
-        | Omit<IntentStringArrayExtra, "type">,
-): [type: string, value: string] {
-    if (value.itemType === "string") {
-        return [
-            "--esa",
-            value.value.map((item) => item.replaceAll(",", "\\,")).join(","),
-        ];
+    if (array.type === "array") {
+        type += "a";
+    } else {
+        type += "al";
     }
 
-    return [getNumberType(value.itemType) + "a", value.value.join(",")];
-}
-
-function serializeArrayListExtra(
-    value:
-        | IntentArrayListExtra
-        | IntentNumberArrayListExtra
-        | IntentStringArrayListExtra,
-): [type: string, value: string] {
-    if ("itemType" in value) {
-        const [type, valueString] = serializeArrayExtra(value);
-        return [type + "l", valueString];
-    }
-
-    const [type, valueString] = serializeRawArray(value.value);
-    return [type + "l", valueString];
+    return [type, value];
 }
 
 export function serializeIntent(intent: Intent) {
@@ -189,15 +133,9 @@ export function serializeIntent(intent: Intent) {
                         break;
                     }
 
-                    if (Array.isArray(value)) {
-                        const [type, valueString] = serializeRawArray(value);
-                        result.push(type, key, valueString);
-                        break;
-                    }
-
                     if ("packageName" in value) {
                         result.push(
-                            "---ecn",
+                            "--ecn",
                             key,
                             value.packageName + "/" + value.className,
                         );
@@ -209,16 +147,10 @@ export function serializeIntent(intent: Intent) {
                             result.push("--eu", key, value.value);
                             break;
                         case "array":
-                            {
-                                const [type, valueString] =
-                                    serializeArrayExtra(value);
-                                result.push(type, key, valueString);
-                            }
-                            break;
                         case "arrayList":
                             {
                                 const [type, valueString] =
-                                    serializeArrayListExtra(value);
+                                    serializeArray(value);
                                 result.push(type, key, valueString);
                             }
                             break;
