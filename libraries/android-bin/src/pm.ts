@@ -486,7 +486,7 @@ export class PackageManager extends AdbServiceBase {
 
         command.push(packageName);
 
-        // `cmd package` doesn't support `path` command on Android 7 and 8.
+        // Android 7 and 8 support `cmd package` but not `cmd package path` command
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 27) {
             command[0] = PackageManager.CommandName;
@@ -670,9 +670,9 @@ export class PackageManager extends AdbServiceBase {
             sessionId.toString(),
         ];
 
-        // `cmd package` does support `install-commit` command on Android 7,
-        // but the "Success" message is not forwarded back to the client,
-        // causing this function to fail with an empty message.
+        // Android 7 did support `cmd package install-commit` command,
+        // but it wrote the "Success" message to an incorrect output stream,
+        // causing `checkResult` to fail with an empty message
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
             command[0] = PackageManager.CommandName;

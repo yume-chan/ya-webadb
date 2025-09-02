@@ -184,6 +184,8 @@ export function serializeIntent(intent: Intent) {
         result.push("-p", intent.package);
     }
 
+    // `0` is the default value for `flags` when deserializing
+    // so it can be omitted if it's either `undefined` or `0`
     if (intent.flags) {
         result.push("-f", intent.flags.toString());
     }

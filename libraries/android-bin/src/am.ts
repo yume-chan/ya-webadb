@@ -29,10 +29,10 @@ export class ActivityManager extends AdbServiceBase {
     static readonly ServiceName = "activity";
     static readonly CommandName = "am";
 
-    #apiLevel: number;
+    #apiLevel: number | undefined;
     #cmd: Cmd.NoneProtocolService;
 
-    constructor(adb: Adb, apiLevel = 0) {
+    constructor(adb: Adb, apiLevel?: number) {
         super(adb);
 
         this.#apiLevel = apiLevel;
@@ -42,8 +42,8 @@ export class ActivityManager extends AdbServiceBase {
     async startActivity(
         options: ActivityManagerStartActivityOptions,
     ): Promise<void> {
-        // `am start` and `am start-activity` are the same,
-        // but `am start-activity` was added in Android 8.
+        // Android 8 added "start-activity" alias to "start"
+        // Use the most compatible command
         const command = buildCommand(
             [ActivityManager.ServiceName, "start", "-W"],
             options,
@@ -54,9 +54,9 @@ export class ActivityManager extends AdbServiceBase {
             command.push(arg);
         }
 
-        // `cmd activity` doesn't support `start` command on Android 7.
+        // Android 7 supports `cmd activity` but not `cmd activity start` command
         let process: AdbNoneProtocolProcess;
-        if (this.#apiLevel <= 25) {
+        if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
             command[0] = ActivityManager.CommandName;
             process = await this.adb.subprocess.noneProtocol.spawn(
                 command.map(escapeArg),
@@ -108,6 +108,14 @@ export class ActivityManager extends AdbServiceBase {
             command.push(arg);
         }
 
-        await this.#cmd.spawn(command).wait();
+        // Android 7 supports `cmd activity` but not `cmd activity broadcast` command
+        if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
+            command[0] = ActivityManager.CommandName;
+            await this.adb.subprocess.noneProtocol
+                .spawn(command.map(escapeArg))
+                .wait();
+        } else {
+            await this.#cmd.spawn(command).wait();
+        }
     }
 }
