@@ -2,39 +2,9 @@ import { getUint32LittleEndian } from "@yume-chan/no-data-view";
 import type { AsyncExactReadable, StructDeserializer } from "@yume-chan/struct";
 import { decodeUtf8, string, struct, u32 } from "@yume-chan/struct";
 
-import { unreachable } from "../../utils/no-op.js";
+import { unreachable } from "../../utils/index.js";
 
-function encodeAsciiUnchecked(value: string): Uint8Array<ArrayBuffer> {
-    const result = new Uint8Array(value.length);
-    for (let i = 0; i < value.length; i += 1) {
-        result[i] = value.charCodeAt(i);
-    }
-    return result;
-}
-
-/**
- * Encode ID to numbers for faster comparison
- * @param value A 4-character string
- * @returns A 32-bit integer by encoding the string as little-endian
- *
- * #__NO_SIDE_EFFECTS__
- */
-export function adbSyncEncodeId(value: string): number {
-    const buffer = encodeAsciiUnchecked(value);
-    return getUint32LittleEndian(buffer, 0);
-}
-
-export const AdbSyncResponseId = {
-    Entry: adbSyncEncodeId("DENT"),
-    Entry2: adbSyncEncodeId("DNT2"),
-    Lstat: adbSyncEncodeId("STAT"),
-    Stat: adbSyncEncodeId("STA2"),
-    Lstat2: adbSyncEncodeId("LST2"),
-    Done: adbSyncEncodeId("DONE"),
-    Data: adbSyncEncodeId("DATA"),
-    Ok: adbSyncEncodeId("OKAY"),
-    Fail: adbSyncEncodeId("FAIL"),
-};
+import { AdbSyncResponseId } from "./id.js";
 
 export class AdbSyncError extends Error {}
 
@@ -50,18 +20,14 @@ export const AdbSyncFailResponse = struct(
 
 export async function adbSyncReadResponse<T>(
     stream: AsyncExactReadable,
-    id: number | string,
+    id: number,
     type: StructDeserializer<T>,
 ): Promise<T> {
-    if (typeof id === "string") {
-        id = adbSyncEncodeId(id);
-    }
-
     const buffer = await stream.readExactly(4);
     switch (getUint32LittleEndian(buffer, 0)) {
         case AdbSyncResponseId.Fail:
             await AdbSyncFailResponse.deserialize(stream);
-            throw new Error("Unreachable");
+            unreachable();
         case id:
             return await type.deserialize(stream);
         default:
@@ -73,13 +39,9 @@ export async function adbSyncReadResponse<T>(
 
 export async function* adbSyncReadResponses<T>(
     stream: AsyncExactReadable,
-    id: number | string,
+    id: number,
     type: StructDeserializer<T>,
 ): AsyncGenerator<T, void, void> {
-    if (typeof id === "string") {
-        id = adbSyncEncodeId(id);
-    }
-
     while (true) {
         const buffer = await stream.readExactly(4);
         switch (getUint32LittleEndian(buffer, 0)) {

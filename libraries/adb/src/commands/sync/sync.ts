@@ -21,7 +21,7 @@ import { adbSyncLstat, adbSyncStat } from "./stat.js";
 export function dirname(path: string): string {
     const end = path.lastIndexOf("/");
     if (end === -1) {
-        throw new Error(`Invalid path`);
+        throw new Error(`Invalid absolute unix path: ${path}`);
     }
     if (end === 0) {
         return "/";
@@ -43,25 +43,25 @@ export class AdbSync {
     protected _socket: AdbSyncSocket;
 
     readonly #supportsStat: boolean;
-    readonly #supportsListV2: boolean;
+    readonly #supportsLs2: boolean;
     readonly #fixedPushMkdir: boolean;
-    readonly #supportsSendReceiveV2: boolean;
+    readonly #supportsSendReceive2: boolean;
     readonly #needPushMkdirWorkaround: boolean;
 
     get supportsStat(): boolean {
         return this.#supportsStat;
     }
 
-    get supportsListV2(): boolean {
-        return this.#supportsListV2;
+    get supportsLs2(): boolean {
+        return this.#supportsLs2;
     }
 
     get fixedPushMkdir(): boolean {
         return this.#fixedPushMkdir;
     }
 
-    get supportsSendReceiveV2(): boolean {
-        return this.#supportsSendReceiveV2;
+    get supportsSendReceive2(): boolean {
+        return this.#supportsSendReceive2;
     }
 
     get needPushMkdirWorkaround(): boolean {
@@ -72,15 +72,13 @@ export class AdbSync {
         this._adb = adb;
         this._socket = new AdbSyncSocket(socket, adb.maxPayloadSize);
 
-        this.#supportsStat = adb.canUseFeature(AdbFeature.StatV2);
-        this.#supportsListV2 = adb.canUseFeature(AdbFeature.ListV2);
+        this.#supportsStat = adb.canUseFeature(AdbFeature.Stat2);
+        this.#supportsLs2 = adb.canUseFeature(AdbFeature.Ls2);
         this.#fixedPushMkdir = adb.canUseFeature(AdbFeature.FixedPushMkdir);
-        this.#supportsSendReceiveV2 = adb.canUseFeature(
-            AdbFeature.SendReceiveV2,
-        );
+        this.#supportsSendReceive2 = adb.canUseFeature(AdbFeature.SendReceive2);
         // https://android.googlesource.com/platform/packages/modules/adb/+/91768a57b7138166e0a3d11f79cd55909dda7014/client/file_sync_client.cpp#1361
         this.#needPushMkdirWorkaround =
-            this._adb.canUseFeature(AdbFeature.ShellV2) && !this.fixedPushMkdir;
+            this._adb.canUseFeature(AdbFeature.Shell2) && !this.fixedPushMkdir;
     }
 
     /**
@@ -120,7 +118,7 @@ export class AdbSync {
     }
 
     opendir(path: string): AsyncGenerator<AdbSyncEntry, void, void> {
-        return adbSyncOpenDir(this._socket, path, this.supportsListV2);
+        return adbSyncOpenDir(this._socket, path, this.supportsLs2);
     }
 
     async readdir(path: string) {
@@ -157,7 +155,7 @@ export class AdbSync {
         }
 
         await adbSyncPush({
-            v2: this.supportsSendReceiveV2,
+            v2: this.supportsSendReceive2,
             socket: this._socket,
             ...options,
         });

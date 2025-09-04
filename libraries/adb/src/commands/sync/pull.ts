@@ -2,8 +2,9 @@ import { ReadableStream } from "@yume-chan/stream-extra";
 import type { StructValue } from "@yume-chan/struct";
 import { buffer, struct, u32 } from "@yume-chan/struct";
 
-import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
-import { adbSyncReadResponses, AdbSyncResponseId } from "./response.js";
+import { AdbSyncRequestId, AdbSyncResponseId } from "./id.js";
+import { adbSyncWriteRequest } from "./request.js";
+import { adbSyncReadResponses } from "./response.js";
 import type { AdbSyncSocket } from "./socket.js";
 
 export const AdbSyncDataResponse = struct(
