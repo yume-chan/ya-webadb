@@ -21,7 +21,7 @@ import { adbSyncLstat, adbSyncStat } from "./stat.js";
 export function dirname(path: string): string {
     const end = path.lastIndexOf("/");
     if (end === -1) {
-        throw new Error(`Invalid path`);
+        throw new Error(`Invalid absolute unix path: ${path}`);
     }
     if (end === 0) {
         return "/";

@@ -30,13 +30,13 @@ export class AdbServerTransport implements AdbTransport {
     }
 
     get clientFeatures() {
-        // This list tells the `Adb` instance how to invokes some commands.
+        // This list tells the `Adb` instance how to invoke some commands.
         //
-        // Because all device commands are created by `Adb` instance, not ADB server,
+        // Because all device commands are created by the `Adb` instance, not ADB server,
         // we don't need to fetch current server's feature list using `host-features` command.
         //
-        // And because all server commands are created by `AdbServerClient` instance, not `Adb`,
-        // we don't need to include server-only features in this list.
+        // And because all server commands are created by the `AdbServerClient` instance, not `Adb`,
+        // we don't need to pass server-only features to `Adb` in this list.
         return AdbDeviceFeatures;
     }
 

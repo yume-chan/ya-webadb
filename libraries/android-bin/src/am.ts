@@ -43,7 +43,7 @@ export class ActivityManager extends AdbServiceBase {
         options: ActivityManagerStartActivityOptions,
     ): Promise<void> {
         // Android 8 added "start-activity" alias to "start"
-        // Use the most compatible command
+        // but we want to use the most compatible one.
         const command = buildCommand(
             [ActivityManager.ServiceName, "start", "-W"],
             options,

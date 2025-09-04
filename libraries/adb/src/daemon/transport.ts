@@ -227,11 +227,10 @@ export class AdbDaemonTransport implements AdbTransport {
             );
         }
 
-        const actualFeatures = features.slice();
         if (initialDelayedAckBytes <= 0) {
             const index = features.indexOf(AdbFeature.DelayedAck);
             if (index !== -1) {
-                actualFeatures.splice(index, 1);
+                features = features.toSpliced(index, 1);
             }
         }
 
@@ -243,9 +242,7 @@ export class AdbDaemonTransport implements AdbTransport {
                 arg1: maxPayloadSize,
                 // The terminating `;` is required in formal definition
                 // But ADB daemon (all versions) can still work without it
-                payload: encodeUtf8(
-                    `host::features=${actualFeatures.join(",")}`,
-                ),
+                payload: encodeUtf8(`host::features=${features.join(",")}`),
             });
 
             banner = await resolver.promise;
@@ -265,7 +262,7 @@ export class AdbDaemonTransport implements AdbTransport {
             version,
             maxPayloadSize,
             banner,
-            features: actualFeatures,
+            features,
             initialDelayedAckBytes,
             preserveConnection: options.preserveConnection,
             readTimeLimit: options.readTimeLimit,
@@ -335,19 +332,19 @@ export class AdbDaemonTransport implements AdbTransport {
             initialDelayedAckBytes = 0;
         }
 
-        let calculateChecksum: boolean;
-        let appendNullToServiceString: boolean;
+        let shouldCalculateChecksum: boolean;
+        let shouldAppendNullToServiceString: boolean;
         if (version >= ADB_DAEMON_VERSION_OMIT_CHECKSUM) {
-            calculateChecksum = false;
-            appendNullToServiceString = false;
+            shouldCalculateChecksum = false;
+            shouldAppendNullToServiceString = false;
         } else {
-            calculateChecksum = true;
-            appendNullToServiceString = true;
+            shouldCalculateChecksum = true;
+            shouldAppendNullToServiceString = true;
         }
 
         this.#dispatcher = new AdbPacketDispatcher(connection, {
-            calculateChecksum,
-            appendNullToServiceString,
+            calculateChecksum: shouldCalculateChecksum,
+            appendNullToServiceString: shouldAppendNullToServiceString,
             initialDelayedAckBytes,
             ...options,
         });

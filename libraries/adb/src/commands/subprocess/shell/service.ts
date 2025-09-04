@@ -20,6 +20,7 @@ export class AdbShellProtocolSubprocessService {
     }
 
     spawn = adbShellProtocolSpawner(async (command, signal) => {
+        // Don't escape `command`. See `AdbNoneProtocolSubprocessService.prototype.spawn` for details.
         const socket = await this.#adb.createSocket(
             `shell,v2,raw:${command.join(" ")}`,
         );
@@ -45,6 +46,7 @@ export class AdbShellProtocolSubprocessService {
         service += ":";
 
         if (options) {
+            // Don't escape `command`. See `AdbNoneProtocolSubprocessService.prototype.spawn` for details.
             if (typeof options.command === "string") {
                 service += options.command;
             } else if (Array.isArray(options.command)) {

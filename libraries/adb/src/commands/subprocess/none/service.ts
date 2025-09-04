@@ -15,8 +15,14 @@ export class AdbNoneProtocolSubprocessService {
     }
 
     spawn = adbNoneProtocolSpawner(async (command, signal) => {
-        // `shell,raw:${command}` also triggers raw mode,
-        // But is not supported on Android version <7.
+        // Android 7 added `shell,raw:${command}` service which also triggers raw mode,
+        // but we want to use the most compatible one.
+        //
+        // Similar to SSH, we don't escape the `command`,
+        // because the command will be invoked by `sh -c`,
+        // it can contain environment variables (`KEY=value command`),
+        // and shell expansions (`echo "$KEY"` vs `echo '$KEY'`),
+        // which we can't know how to properly escape.
         const socket = await this.#adb.createSocket(
             `exec:${command.join(" ")}`,
         );
@@ -33,8 +39,10 @@ export class AdbNoneProtocolSubprocessService {
         command?: string | readonly string[],
     ): Promise<AdbNoneProtocolPtyProcess> {
         if (command === undefined) {
+            // Run the default shell
             command = "";
         } else if (Array.isArray(command)) {
+            // Don't escape `command`. See `spawn` above for details
             command = command.join(" ");
         }
 
