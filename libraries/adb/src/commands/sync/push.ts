@@ -8,8 +8,9 @@ import { struct, u32 } from "@yume-chan/struct";
 
 import { NOOP } from "../../utils/index.js";
 
-import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
-import { AdbSyncResponseId, adbSyncReadResponse } from "./response.js";
+import { AdbSyncRequestId, AdbSyncResponseId } from "./id.js";
+import { adbSyncWriteRequest } from "./request.js";
+import { adbSyncReadResponse } from "./response.js";
 import type { AdbSyncSocket, AdbSyncSocketLocked } from "./socket.js";
 import { LinuxFileType } from "./stat.js";
 

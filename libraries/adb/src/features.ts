@@ -1,6 +1,6 @@
 import * as AdbFeature from "./features-value.js";
 
-// enum
+// biome-ignore lint/suspicious/noRedeclare: TypeScript declaration merging for enum-like object
 type AdbFeature = (typeof AdbFeature)[keyof typeof AdbFeature];
 
 export { AdbFeature };
