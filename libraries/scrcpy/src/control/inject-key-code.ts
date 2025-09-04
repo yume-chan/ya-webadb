@@ -6,19 +6,17 @@ import type {
     AndroidKeyEventAction,
     AndroidKeyEventMeta,
 } from "../android/index.js";
-import { ScrcpyControlMessageType } from "../base/index.js";
 
-export const ScrcpyInjectKeyCodeControlMessage = /* #__PURE__ */ (() =>
-    struct(
-        {
-            type: u8(ScrcpyControlMessageType.InjectKeyCode),
-            action: u8<AndroidKeyEventAction>(),
-            keyCode: u32<AndroidKeyCode>(),
-            repeat: u32,
-            metaState: u32<AndroidKeyEventMeta>(),
-        },
-        { littleEndian: false },
-    ))();
+export const ScrcpyInjectKeyCodeControlMessage = struct(
+    {
+        type: u8,
+        action: u8<AndroidKeyEventAction>(),
+        keyCode: u32<AndroidKeyCode>(),
+        repeat: u32,
+        metaState: u32<AndroidKeyEventMeta>(),
+    },
+    { littleEndian: false },
+);
 
 export type ScrcpyInjectKeyCodeControlMessage = StructInit<
     typeof ScrcpyInjectKeyCodeControlMessage
