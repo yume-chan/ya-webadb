@@ -86,6 +86,34 @@ importers:
         specifier: ^5.9.2
         version: 5.9.2
 
+  libraries/adb-credential-nodejs:
+    dependencies:
+      '@yume-chan/adb':
+        specifier: workspace:^
+        version: link:../adb
+      '@yume-chan/adb-credential-web':
+        specifier: workspace:^
+        version: link:../adb-credential-web
+    devDependencies:
+      '@types/node':
+        specifier: ^24.3.0
+        version: 24.3.0
+      '@yume-chan/eslint-config':
+        specifier: workspace:^
+        version: link:../../toolchain/eslint-config
+      '@yume-chan/test-runner':
+        specifier: workspace:^
+        version: link:../../toolchain/test-runner
+      '@yume-chan/tsconfig':
+        specifier: workspace:^
+        version: link:../../toolchain/tsconfig
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
+
   libraries/adb-credential-web:
     dependencies:
       '@yume-chan/adb':

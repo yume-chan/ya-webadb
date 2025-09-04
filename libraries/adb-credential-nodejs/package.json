@@ -1,0 +1,45 @@
+{
+    "name": "@yume-chan/adb-credential-nodejs",
+    "version": "2.0.0",
+    "description": "ADB credential store for Node.js",
+    "keywords": [
+        "typescript"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-credential-nodejs#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "libraries/adb-credential-nodejs"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "sideEffects": false,
+    "scripts": {
+        "build": "tsc -b tsconfig.build.json",
+        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+        "prepublishOnly": "npm run build",
+        "test": "run-test"
+    },
+    "dependencies": {
+        "@yume-chan/adb": "workspace:^",
+        "@yume-chan/adb-credential-web": "workspace:^"
+    },
+    "devDependencies": {
+        "@types/node": "^24.3.0",
+        "@yume-chan/eslint-config": "workspace:^",
+        "@yume-chan/test-runner": "workspace:^",
+        "@yume-chan/tsconfig": "workspace:^",
+        "prettier": "^3.6.2",
+        "typescript": "^5.9.2"
+    }
+}

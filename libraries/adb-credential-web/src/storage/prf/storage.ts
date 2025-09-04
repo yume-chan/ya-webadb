@@ -5,7 +5,7 @@ import {
     Uint8ArrayExactReadable,
 } from "@yume-chan/struct";
 
-import type { TangoDataStorage } from "../type.js";
+import type { TangoKey, TangoKeyStorage } from "../type.js";
 
 import type { TangoPrfSource } from "./source.js";
 
@@ -64,17 +64,20 @@ const Bundle = struct(
     { littleEndian: true },
 );
 
-export class TangoPrfStorage implements TangoDataStorage {
-    readonly #storage: TangoDataStorage;
+export class TangoPrfStorage implements TangoKeyStorage {
+    readonly #storage: TangoKeyStorage;
     readonly #source: TangoPrfSource;
     #prevId: Uint8Array<ArrayBuffer> | undefined;
 
-    constructor(storage: TangoDataStorage, source: TangoPrfSource) {
+    constructor(storage: TangoKeyStorage, source: TangoPrfSource) {
         this.#storage = storage;
         this.#source = source;
     }
 
-    async save(data: Uint8Array<ArrayBuffer>): Promise<undefined> {
+    async save(
+        privateKey: Uint8Array<ArrayBuffer>,
+        name: string | undefined,
+    ): Promise<undefined> {
         const prfInput = new Uint8Array(PrfInputLength);
         crypto.getRandomValues(prfInput);
 
@@ -103,7 +106,7 @@ export class TangoPrfStorage implements TangoDataStorage {
         const encrypted = await crypto.subtle.encrypt(
             { name: "AES-GCM", iv },
             aesKey,
-            data,
+            privateKey,
         );
 
         const bundle = Bundle.serialize({
@@ -115,7 +118,7 @@ export class TangoPrfStorage implements TangoDataStorage {
             encrypted: new Uint8Array(encrypted),
         });
 
-        await this.#storage.save(bundle);
+        await this.#storage.save(bundle, name);
 
         // Clear secret memory
         //   * No way to clear `aesKey`
@@ -125,8 +128,11 @@ export class TangoPrfStorage implements TangoDataStorage {
         toUint8Array(prfOutput).fill(0);
     }
 
-    async *load(): AsyncGenerator<Uint8Array, void, void> {
-        for await (const serialized of this.#storage.load()) {
+    async *load(): AsyncGenerator<TangoKey, void, void> {
+        for await (const {
+            privateKey: serialized,
+            name,
+        } of this.#storage.load()) {
             const bundle = Bundle.deserialize(
                 new Uint8ArrayExactReadable(serialized),
             );
@@ -153,7 +159,7 @@ export class TangoPrfStorage implements TangoDataStorage {
                 bundle.encrypted as Uint8Array<ArrayBuffer>,
             );
 
-            yield new Uint8Array(decrypted);
+            yield { privateKey: new Uint8Array(decrypted), name };
 
             // Clear secret memory
             //   * No way to clear `aesKey`
