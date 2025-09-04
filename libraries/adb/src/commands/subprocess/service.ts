@@ -25,7 +25,7 @@ export class AdbSubprocessService {
 
         this.#noneProtocol = new AdbNoneProtocolSubprocessService(adb);
 
-        if (adb.canUseFeature(AdbFeature.ShellV2)) {
+        if (adb.canUseFeature(AdbFeature.Shell2)) {
             this.#shellProtocol = new AdbShellProtocolSubprocessService(adb);
         }
     }

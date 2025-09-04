@@ -12,7 +12,7 @@ export class AdbShellProtocolSubprocessService {
     }
 
     get isSupported() {
-        return this.#adb.canUseFeature(AdbFeature.ShellV2);
+        return this.#adb.canUseFeature(AdbFeature.Shell2);
     }
 
     constructor(adb: Adb) {
