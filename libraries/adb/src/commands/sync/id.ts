@@ -1,12 +1,7 @@
 import * as AdbSyncRequestId from "./id-request.js";
 import * as AdbSyncResponseId from "./id-response.js";
 
-// biome-ignore lint/suspicious/noRedeclare: TypeScript declaration merging for enum-like object
-type AdbSyncRequestId =
-    (typeof AdbSyncRequestId)[keyof typeof AdbSyncRequestId];
-
-// biome-ignore lint/suspicious/noRedeclare: TypeScript declaration merging for enum-like object
-type AdbSyncResponseId =
-    (typeof AdbSyncResponseId)[keyof typeof AdbSyncResponseId];
+// Values of `AdbSyncRequestId` and `AdbSyncResponseId` are all generic `number`s
+// so there is no point creating types for them
 
 export { AdbSyncRequestId, AdbSyncResponseId };
