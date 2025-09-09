@@ -6,31 +6,9 @@ import type {
     AdbTransport,
 } from "../adb.js";
 import type { AdbBanner } from "../banner.js";
-import { AdbFeature } from "../features.js";
+import { AdbDeviceFeatures } from "../features.js";
 
 import type { AdbServerClient } from "./client.js";
-
-export const ADB_SERVER_DEFAULT_FEATURES = /* #__PURE__ */ (() =>
-    [
-        AdbFeature.ShellV2,
-        AdbFeature.Cmd,
-        AdbFeature.StatV2,
-        AdbFeature.ListV2,
-        AdbFeature.FixedPushMkdir,
-        "apex",
-        AdbFeature.Abb,
-        // only tells the client the symlink timestamp issue in `adb push --sync` has been fixed.
-        // No special handling required.
-        "fixed_push_symlink_timestamp",
-        AdbFeature.AbbExec,
-        "remount_shell",
-        "track_app",
-        AdbFeature.SendReceiveV2,
-        "sendrecv_v2_brotli",
-        "sendrecv_v2_lz4",
-        "sendrecv_v2_zstd",
-        "sendrecv_v2_dry_run_send",
-    ] as readonly AdbFeature[])();
 
 export class AdbServerTransport implements AdbTransport {
     #client: AdbServerClient;
@@ -52,9 +30,14 @@ export class AdbServerTransport implements AdbTransport {
     }
 
     get clientFeatures() {
-        // No need to get host features (features supported by ADB server)
-        // Because we create all ADB packets ourselves
-        return ADB_SERVER_DEFAULT_FEATURES;
+        // This list tells the `Adb` instance how to invoke some commands.
+        //
+        // Because all device commands are created by the `Adb` instance, not ADB server,
+        // we don't need to fetch current server's feature list using `host-features` command.
+        //
+        // And because all server commands are created by the `AdbServerClient` instance, not `Adb`,
+        // we don't need to pass server-only features to `Adb` in this list.
+        return AdbDeviceFeatures;
     }
 
     // eslint-disable-next-line @typescript-eslint/max-params

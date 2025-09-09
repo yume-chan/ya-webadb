@@ -2,6 +2,12 @@
     "references": [
         {
             "path": "./tsconfig.build.json"
+        },
+        {
+            "path": "../adb/tsconfig.build.json"
+        },
+        {
+            "path": "../stream-extra/tsconfig.build.json"
         }
     ]
 }

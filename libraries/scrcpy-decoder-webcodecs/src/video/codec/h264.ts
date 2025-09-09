@@ -1,7 +1,6 @@
-import { h264ParseConfiguration } from "@yume-chan/scrcpy";
+import { H264 } from "@yume-chan/media-codec";
 
 import { H26xDecoder } from "./h26x.js";
-import { hexTwoDigits } from "./utils.js";
 
 export class H264Decoder extends H26xDecoder {
     #decoder: VideoDecoder;
@@ -17,25 +16,15 @@ export class H264Decoder extends H26xDecoder {
     }
 
     override configure(data: Uint8Array): void {
-        const {
-            profileIndex,
-            constraintSet,
-            levelIndex,
-            croppedWidth,
-            croppedHeight,
-        } = h264ParseConfiguration(data);
+        const configuration = H264.parseConfiguration(data);
 
-        this.#updateSize(croppedWidth, croppedHeight);
+        this.#updateSize(
+            configuration.croppedWidth,
+            configuration.croppedHeight,
+        );
 
-        // https://www.rfc-editor.org/rfc/rfc6381#section-3.3
-        // ISO Base Media File Format Name Space
-        const codec =
-            "avc1." +
-            hexTwoDigits(profileIndex) +
-            hexTwoDigits(constraintSet) +
-            hexTwoDigits(levelIndex);
         this.#decoder.configure({
-            codec: codec,
+            codec: H264.toCodecString(configuration),
             optimizeForLatency: true,
         });
     }

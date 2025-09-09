@@ -48,11 +48,14 @@ export function setBigUint(
     littleEndian?: boolean,
 ) {
     if (littleEndian) {
+        const end = byteOffset + length;
         while (value > 0n) {
             setInt64LittleEndian(array, byteOffset, value);
             byteOffset += 8;
             value >>= 64n;
         }
+        // Clear the trailing bytes
+        array.subarray(byteOffset, end).fill(0);
     } else {
         let position = byteOffset + length - 8;
         while (value > 0n) {
@@ -60,7 +63,14 @@ export function setBigUint(
             position -= 8;
             value >>= 64n;
         }
+        // Clear the leading bytes
+        array.subarray(byteOffset, position + 8).fill(0);
     }
+}
+
+export interface SimpleRsaPrivateKey {
+    n: bigint;
+    d: bigint;
 }
 
 // These values are correct only if
@@ -89,10 +99,16 @@ const RsaPrivateKeyNLength = 2048 / 8;
 const RsaPrivateKeyDOffset = 303;
 const RsaPrivateKeyDLength = 2048 / 8;
 
-export function rsaParsePrivateKey(key: Uint8Array): [n: bigint, d: bigint] {
+export function rsaParsePrivateKey(key: Uint8Array): SimpleRsaPrivateKey {
+    if (key.length < RsaPrivateKeyDOffset + RsaPrivateKeyDLength) {
+        throw new Error(
+            "RSA private key is too short. Expecting a PKCS#8 formatted RSA private key with modulus length 2048 bits and public exponent 65537.",
+        );
+    }
+
     const n = getBigUint(key, RsaPrivateKeyNOffset, RsaPrivateKeyNLength);
     const d = getBigUint(key, RsaPrivateKeyDOffset, RsaPrivateKeyDLength);
-    return [n, d];
+    return { n, d };
 }
 
 function nonNegativeMod(m: number, d: number) {
@@ -141,14 +157,14 @@ export function adbGetPublicKeySize() {
 }
 
 export function adbGeneratePublicKey(
-    privateKey: Uint8Array,
+    privateKey: SimpleRsaPrivateKey,
 ): Uint8Array<ArrayBuffer>;
 export function adbGeneratePublicKey(
-    privateKey: Uint8Array,
+    privateKey: SimpleRsaPrivateKey,
     output: Uint8Array,
 ): number;
 export function adbGeneratePublicKey(
-    privateKey: Uint8Array,
+    privateKey: SimpleRsaPrivateKey,
     output?: Uint8Array,
 ): Uint8Array | number {
     // cspell: ignore: mincrypt
@@ -198,7 +214,7 @@ export function adbGeneratePublicKey(
     outputOffset += 4;
 
     // extract `n` from private key
-    const [n] = rsaParsePrivateKey(privateKey);
+    const { n } = privateKey;
 
     // Calculate `n0inv`
     const n0inv = -modInverse(Number(n % 2n ** 32n), 2 ** 32);
@@ -283,17 +299,27 @@ export const SHA1_DIGEST_INFO = new Uint8Array([
     SHA1_DIGEST_LENGTH,
 ]);
 
-// SubtleCrypto.sign() will hash the given data and sign the hash
-// But we don't need the hashing step
-// (In another word, ADB just requires the client to
-// encrypt the given data with its private key)
-// However SubtileCrypto.encrypt() doesn't accept 'RSASSA-PKCS1-v1_5' algorithm
-// So we need to implement the encryption by ourself
+// Standard `RSASSA-PKCS1-v1_5` algorithm will hash the given data
+// and sign the hash
+// https://datatracker.ietf.org/doc/html/rfc8017#section-8.2
+//
+// But ADB authentication passes 20 bytes of random value to
+// OpenSSL's `RSA_sign` method which treat the input as a hash
+// https://docs.openssl.org/1.0.2/man3/RSA_sign/
+//
+// Since it's non-standard and not supported by Web Crypto API,
+// we need to implement the signing by ourself
 export function rsaSign(
-    privateKey: Uint8Array,
+    privateKey: SimpleRsaPrivateKey,
     data: Uint8Array,
 ): Uint8Array<ArrayBuffer> {
-    const [n, d] = rsaParsePrivateKey(privateKey);
+    if (data.length !== SHA1_DIGEST_LENGTH) {
+        throw new Error(
+            `rsaSign expects ${SHA1_DIGEST_LENGTH} bytes (SHA-1 digest length) of data but got ${data.length} bytes`,
+        );
+    }
+
+    const { n, d } = privateKey;
 
     // PKCS#1 padding
     const padded = new Uint8Array(256);

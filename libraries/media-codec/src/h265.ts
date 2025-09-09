@@ -18,44 +18,10 @@
 // cspell: ignore sodb
 // cspell: ignore luma
 
+import { getUint32LittleEndian } from "@yume-chan/no-data-view";
+
+import { hexDigits } from "./format.js";
 import { NaluSodbBitReader, annexBSplitNalu } from "./nalu.js";
-
-export const AndroidHevcProfile = {
-    Main: 1 << 0,
-    Main10: 1 << 1,
-    MainStill: 1 << 2,
-    Main10Hdr10: 1 << 12,
-    Main10Hdr10Plus: 1 << 13,
-};
-
-export const AndroidHevcLevel = {
-    MainTierLevel1: 1 << 0,
-    HighTierLevel1: 1 << 1,
-    MainTierLevel2: 1 << 2,
-    HighTierLevel2: 1 << 3,
-    MainTierLevel21: 1 << 4,
-    HighTierLevel21: 1 << 5,
-    MainTierLevel3: 1 << 6,
-    HighTierLevel3: 1 << 7,
-    MainTierLevel31: 1 << 8,
-    HighTierLevel31: 1 << 9,
-    MainTierLevel4: 1 << 10,
-    HighTierLevel4: 1 << 11,
-    MainTierLevel41: 1 << 12,
-    HighTierLevel41: 1 << 13,
-    MainTierLevel5: 1 << 14,
-    HighTierLevel5: 1 << 15,
-    MainTierLevel51: 1 << 16,
-    HighTierLevel51: 1 << 17,
-    MainTierLevel52: 1 << 18,
-    HighTierLevel52: 1 << 19,
-    MainTierLevel6: 1 << 20,
-    HighTierLevel6: 1 << 21,
-    MainTierLevel61: 1 << 22,
-    HighTierLevel61: 1 << 23,
-    MainTierLevel62: 1 << 24,
-    HighTierLevel62: 1 << 25,
-};
 
 /**
  * 6.2 Source, decoded and output picture formats
@@ -92,7 +58,7 @@ export function getSubHeightC(chroma_format_idc: number) {
 /**
  * 7.3.1.1 General NAL unit syntax
  */
-export function h265ParseNaluHeader(nalu: Uint8Array) {
+export function parseNaluHeader(nalu: Uint8Array) {
     const reader = new NaluSodbBitReader(nalu);
     if (reader.next() !== 0) {
         throw new Error("Invalid NALU header");
@@ -109,9 +75,9 @@ export function h265ParseNaluHeader(nalu: Uint8Array) {
     };
 }
 
-export type H265NaluHeader = ReturnType<typeof h265ParseNaluHeader>;
+export type NaluHeader = ReturnType<typeof parseNaluHeader>;
 
-export interface H265NaluRaw extends H265NaluHeader {
+export interface NaluRaw extends NaluHeader {
     data: Uint8Array;
     rbsp: Uint8Array;
 }
@@ -119,7 +85,7 @@ export interface H265NaluRaw extends H265NaluHeader {
 /**
  * 7.3.2.1 Video parameter set RBSP syntax
  */
-export function h265ParseVideoParameterSet(nalu: Uint8Array) {
+export function parseVideoParameterSet(nalu: Uint8Array) {
     const reader = new NaluSodbBitReader(nalu);
 
     const vps_video_parameter_set_id = reader.read(4);
@@ -130,7 +96,7 @@ export function h265ParseVideoParameterSet(nalu: Uint8Array) {
     const vps_temporal_id_nesting_flag = !!reader.next();
     reader.skip(16);
 
-    const profileTierLevel = h265ParseProfileTierLevel(
+    const profileTierLevel = parseProfileTierLevel(
         reader,
         true,
         vps_max_sub_layers_minus1,
@@ -172,7 +138,7 @@ export function h265ParseVideoParameterSet(nalu: Uint8Array) {
     let vps_num_hrd_parameters: number | undefined;
     let hrd_layer_set_idx: number[] | undefined;
     let cprms_present_flag: boolean[] | undefined;
-    let hrdParameters: H265HrdParameters[] | undefined;
+    let hrdParameters: HrdParameters[] | undefined;
     if (vps_timing_info_present_flag) {
         vps_num_units_in_tick = reader.read(32);
         vps_time_scale = reader.read(32);
@@ -193,7 +159,7 @@ export function h265ParseVideoParameterSet(nalu: Uint8Array) {
             if (i > 0) {
                 cprms_present_flag[i] = !!reader.next();
             }
-            hrdParameters[i] = h265ParseHrdParameters(
+            hrdParameters[i] = parseHrdParameters(
                 reader,
                 cprms_present_flag[i]!,
                 vps_max_sub_layers_minus1,
@@ -232,20 +198,20 @@ export function h265ParseVideoParameterSet(nalu: Uint8Array) {
 }
 
 export type SubLayerHrdParameters = ReturnType<
-    typeof h265ParseSubLayerHrdParameters
+    typeof parseSubLayerHrdParameters
 >;
 
 /**
  * 7.3.2.2.1 General sequence parameter set RBSP syntax
  */
-export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
+export function parseSequenceParameterSet(nalu: Uint8Array) {
     const reader = new NaluSodbBitReader(nalu);
 
     const sps_video_parameter_set_id = reader.read(4);
     const sps_max_sub_layers_minus1 = reader.read(3);
     const sps_temporal_id_nesting_flag = !!reader.next();
 
-    const profileTierLevel = h265ParseProfileTierLevel(
+    const profileTierLevel = parseProfileTierLevel(
         reader,
         true,
         sps_max_sub_layers_minus1,
@@ -315,7 +281,7 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
     if (scaling_list_enabled_flag) {
         sps_scaling_list_data_present_flag = !!reader.next();
         if (sps_scaling_list_data_present_flag) {
-            scalingListData = h265ParseScalingListData(reader);
+            scalingListData = parseScalingListData(reader);
         }
     }
 
@@ -340,7 +306,7 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
     const num_short_term_ref_pic_sets = reader.decodeExponentialGolombNumber();
     const shortTermRefPicSets: ShortTermReferencePictureSet[] = [];
     for (let i = 0; i < num_short_term_ref_pic_sets; i += 1) {
-        shortTermRefPicSets[i] = h265ParseShortTermReferencePictureSet(
+        shortTermRefPicSets[i] = parseShortTermReferencePictureSet(
             reader,
             i,
             num_short_term_ref_pic_sets,
@@ -367,12 +333,9 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
     const sps_temporal_mvp_enabled_flag = !!reader.next();
     const strong_intra_smoothing_enabled_flag = !!reader.next();
     const vui_parameters_present_flag = !!reader.next();
-    let vuiParameters: H265VuiParameters | undefined;
+    let vuiParameters: VuiParameters | undefined;
     if (vui_parameters_present_flag) {
-        vuiParameters = h265ParseVuiParameters(
-            reader,
-            sps_max_sub_layers_minus1,
-        );
+        vuiParameters = parseVuiParameters(reader, sps_max_sub_layers_minus1);
     }
 
     const sps_extension_present_flag = !!reader.next();
@@ -393,14 +356,14 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
         throw new Error("Not implemented");
     }
 
-    let spsMultilayerExtension: H265SpsMultilayerExtension | undefined;
+    let spsMultilayerExtension: SpsMultilayerExtension | undefined;
     if (sps_multilayer_extension_flag) {
-        spsMultilayerExtension = h265ParseSpsMultilayerExtension(reader);
+        spsMultilayerExtension = parseSpsMultilayerExtension(reader);
     }
 
-    let sps3dExtension: H265Sps3dExtension | undefined;
+    let sps3dExtension: Sps3dExtension | undefined;
     if (sps_3d_extension_flag) {
-        sps3dExtension = h265ParseSps3dExtension(reader);
+        sps3dExtension = parseSps3dExtension(reader);
     }
 
     if (sps_scc_extension_flag) {
@@ -484,7 +447,7 @@ export function h265ParseSequenceParameterSet(nalu: Uint8Array) {
  * Common part between general_profile_tier_level and
  * sub_layer_profile_tier_level
  */
-function h265ParseProfileTier(reader: NaluSodbBitReader) {
+function parseProfileTier(reader: NaluSodbBitReader) {
     const profile_space = reader.read(2);
     const tier_flag = !!reader.next();
     const profile_idc = reader.read(5);
@@ -609,43 +572,43 @@ function h265ParseProfileTier(reader: NaluSodbBitReader) {
     };
 }
 
-export type H265ProfileTier = ReturnType<typeof h265ParseProfileTier>;
+export type ProfileTier = ReturnType<typeof parseProfileTier>;
 
-export interface H265ProfileTierLevel {
-    generalProfileTier: H265ProfileTier | undefined;
+export interface ProfileTierLevel {
+    generalProfileTier: ProfileTier | undefined;
     general_level_idc: number;
     sub_layer_profile_present_flag: boolean[];
     sub_layer_level_present_flag: boolean[];
-    subLayerProfileTier: H265ProfileTier[];
+    subLayerProfileTier: ProfileTier[];
     sub_layer_level_idc: number[];
 }
 
 /**
  * 7.3.3 Profile, tier and level syntax
  */
-function h265ParseProfileTierLevel(
+function parseProfileTierLevel(
     reader: NaluSodbBitReader,
     profilePresentFlag: true,
     maxNumSubLayersMinus1: number,
-): H265ProfileTierLevel & { generalProfileTier: H265ProfileTier };
-function h265ParseProfileTierLevel(
+): ProfileTierLevel & { generalProfileTier: ProfileTier };
+function parseProfileTierLevel(
     reader: NaluSodbBitReader,
     profilePresentFlag: false,
     maxNumSubLayersMinus1: number,
-): H265ProfileTierLevel & { generalProfileTier: undefined };
-function h265ParseProfileTierLevel(
+): ProfileTierLevel & { generalProfileTier: undefined };
+function parseProfileTierLevel(
     reader: NaluSodbBitReader,
     profilePresentFlag: boolean,
     maxNumSubLayersMinus1: number,
-): H265ProfileTierLevel;
-function h265ParseProfileTierLevel(
+): ProfileTierLevel;
+function parseProfileTierLevel(
     reader: NaluSodbBitReader,
     profilePresentFlag: boolean,
     maxNumSubLayersMinus1: number,
-): H265ProfileTierLevel {
-    let generalProfileTier: H265ProfileTier | undefined;
+): ProfileTierLevel {
+    let generalProfileTier: ProfileTier | undefined;
     if (profilePresentFlag) {
-        generalProfileTier = h265ParseProfileTier(reader);
+        generalProfileTier = parseProfileTier(reader);
     }
 
     const general_level_idc = reader.read(8);
@@ -663,11 +626,11 @@ function h265ParseProfileTierLevel(
         }
     }
 
-    const subLayerProfileTier: H265ProfileTier[] = [];
+    const subLayerProfileTier: ProfileTier[] = [];
     const sub_layer_level_idc: number[] = [];
     for (let i = 0; i < maxNumSubLayersMinus1; i += 1) {
         if (sub_layer_profile_present_flag[i]) {
-            subLayerProfileTier[i] = h265ParseProfileTier(reader);
+            subLayerProfileTier[i] = parseProfileTier(reader);
         }
         if (sub_layer_level_present_flag[i]) {
             sub_layer_level_idc[i] = reader.read(8);
@@ -687,7 +650,7 @@ function h265ParseProfileTierLevel(
 /**
  * 7.3.4 Scaling list data syntax
  */
-export function h265ParseScalingListData(reader: NaluSodbBitReader) {
+export function parseScalingListData(reader: NaluSodbBitReader) {
     const scaling_list: number[][][] = [];
     for (let sizeId = 0; sizeId < 4; sizeId += 1) {
         scaling_list[sizeId] = [];
@@ -737,7 +700,7 @@ interface ShortTermReferencePictureSet {
 /**
  * 7.3.7 Short-term reference picture set syntax
  */
-export function h265ParseShortTermReferencePictureSet(
+export function parseShortTermReferencePictureSet(
     reader: NaluSodbBitReader,
     stRpsIdx: number,
     num_short_term_ref_pic_sets: number,
@@ -896,7 +859,7 @@ export function h265ParseShortTermReferencePictureSet(
     };
 }
 
-export const H265AspectRatioIndicator = {
+export const AspectRatioIndicator = {
     Unspecified: 0,
     Square: 1,
     _12_11: 2,
@@ -917,23 +880,23 @@ export const H265AspectRatioIndicator = {
     Extended: 255,
 } as const;
 
-export type H265AspectRatioIndicator =
-    (typeof H265AspectRatioIndicator)[keyof typeof H265AspectRatioIndicator];
+export type AspectRatioIndicator =
+    (typeof AspectRatioIndicator)[keyof typeof AspectRatioIndicator];
 
 /**
  * E.2.1 VUI parameters syntax
  */
-export function h265ParseVuiParameters(
+export function parseVuiParameters(
     reader: NaluSodbBitReader,
     sps_max_sub_layers_minus1: number,
 ) {
     const aspect_ratio_info_present_flag = !!reader.next();
-    let aspect_ratio_idc: H265AspectRatioIndicator | undefined;
+    let aspect_ratio_idc: AspectRatioIndicator | undefined;
     let sar_width: number | undefined;
     let sar_height: number | undefined;
     if (aspect_ratio_info_present_flag) {
-        aspect_ratio_idc = reader.read(8) as H265AspectRatioIndicator;
-        if (aspect_ratio_idc === H265AspectRatioIndicator.Extended) {
+        aspect_ratio_idc = reader.read(8) as AspectRatioIndicator;
+        if (aspect_ratio_idc === AspectRatioIndicator.Extended) {
             sar_width = reader.read(16);
             sar_height = reader.read(16);
         }
@@ -995,7 +958,7 @@ export function h265ParseVuiParameters(
     let vui_poc_proportional_to_timing_flag: boolean | undefined;
     let vui_num_ticks_poc_diff_one_minus1: number | undefined;
     let vui_hrd_parameters_present_flag: boolean | undefined;
-    let vui_hrd_parameters: H265HrdParameters | undefined;
+    let vui_hrd_parameters: HrdParameters | undefined;
     if (vui_timing_info_present_flag) {
         vui_num_units_in_tick = reader.read(32);
         vui_time_scale = reader.read(32);
@@ -1006,7 +969,7 @@ export function h265ParseVuiParameters(
         }
         vui_hrd_parameters_present_flag = !!reader.next();
         if (vui_hrd_parameters_present_flag) {
-            vui_hrd_parameters = h265ParseHrdParameters(
+            vui_hrd_parameters = parseHrdParameters(
                 reader,
                 true,
                 sps_max_sub_layers_minus1,
@@ -1085,12 +1048,12 @@ export function h265ParseVuiParameters(
     };
 }
 
-export type H265VuiParameters = ReturnType<typeof h265ParseVuiParameters>;
+export type VuiParameters = ReturnType<typeof parseVuiParameters>;
 
 /**
  * E.2.2 HRD parameters syntax
  */
-export function h265ParseHrdParameters(
+export function parseHrdParameters(
     reader: NaluSodbBitReader,
     commonInfPresentFlag: boolean,
     maxNumSubLayersMinus1: number,
@@ -1157,14 +1120,14 @@ export function h265ParseHrdParameters(
         }
 
         if (nal_hrd_parameters_present_flag) {
-            nalHrdParameters[i] = h265ParseSubLayerHrdParameters(
+            nalHrdParameters[i] = parseSubLayerHrdParameters(
                 reader,
                 i,
                 getCpbCnt(cpb_cnt_minus1[i]!),
             );
         }
         if (vcl_hrd_parameters_present_flag) {
-            vclHrdParameters[i] = h265ParseSubLayerHrdParameters(
+            vclHrdParameters[i] = parseSubLayerHrdParameters(
                 reader,
                 i,
                 getCpbCnt(cpb_cnt_minus1[i]!),
@@ -1196,12 +1159,12 @@ export function h265ParseHrdParameters(
     };
 }
 
-export type H265HrdParameters = ReturnType<typeof h265ParseHrdParameters>;
+export type HrdParameters = ReturnType<typeof parseHrdParameters>;
 
 /**
  * E.2.3 Sub-layer HRD parameters syntax
  */
-export function h265ParseSubLayerHrdParameters(
+export function parseSubLayerHrdParameters(
     reader: NaluSodbBitReader,
     subLayerId: number,
     CpbCnt: number,
@@ -1234,15 +1197,15 @@ function getCpbCnt(cpb_cnt_minus_1: number) {
     return cpb_cnt_minus_1 + 1;
 }
 
-export function h265SearchConfiguration(buffer: Uint8Array) {
-    let videoParameterSet!: H265NaluRaw;
-    let sequenceParameterSet!: H265NaluRaw;
-    let pictureParameterSet!: H265NaluRaw;
+export function searchConfiguration(buffer: Uint8Array) {
+    let videoParameterSet!: NaluRaw;
+    let sequenceParameterSet!: NaluRaw;
+    let pictureParameterSet!: NaluRaw;
     let count = 0;
 
     for (const nalu of annexBSplitNalu(buffer)) {
-        const header = h265ParseNaluHeader(nalu);
-        const raw: H265NaluRaw = {
+        const header = parseNaluHeader(nalu);
+        const raw: NaluRaw = {
             ...header,
             data: nalu,
             rbsp: nalu.subarray(2),
@@ -1274,18 +1237,18 @@ export function h265SearchConfiguration(buffer: Uint8Array) {
     throw new Error("Invalid data");
 }
 
-export function h265ParseSpsMultilayerExtension(reader: NaluSodbBitReader) {
+export function parseSpsMultilayerExtension(reader: NaluSodbBitReader) {
     const inter_view_mv_vert_constraint_flag = !!reader.next();
     return {
         inter_view_mv_vert_constraint_flag,
     };
 }
 
-export type H265SpsMultilayerExtension = ReturnType<
-    typeof h265ParseSpsMultilayerExtension
+export type SpsMultilayerExtension = ReturnType<
+    typeof parseSpsMultilayerExtension
 >;
 
-export function h265ParseSps3dExtension(reader: NaluSodbBitReader) {
+export function parseSps3dExtension(reader: NaluSodbBitReader) {
     const iv_di_mc_enabled_flag: boolean[] = [];
     const iv_mv_scal_enabled_flag: boolean[] = [];
 
@@ -1328,12 +1291,12 @@ export function h265ParseSps3dExtension(reader: NaluSodbBitReader) {
     };
 }
 
-export type H265Sps3dExtension = ReturnType<typeof h265ParseSps3dExtension>;
+export type Sps3dExtension = ReturnType<typeof parseSps3dExtension>;
 
-export interface H265Configuration {
-    videoParameterSet: H265NaluRaw;
-    sequenceParameterSet: H265NaluRaw;
-    pictureParameterSet: H265NaluRaw;
+export interface Configuration {
+    videoParameterSet: NaluRaw;
+    sequenceParameterSet: NaluRaw;
+    pictureParameterSet: NaluRaw;
 
     generalProfileSpace: number;
     generalProfileIndex: number;
@@ -1353,9 +1316,9 @@ export interface H265Configuration {
     croppedHeight: number;
 }
 
-export function h265ParseConfiguration(data: Uint8Array): H265Configuration {
+export function parseConfiguration(data: Uint8Array): Configuration {
     const { videoParameterSet, sequenceParameterSet, pictureParameterSet } =
-        h265SearchConfiguration(data);
+        searchConfiguration(data);
 
     const {
         profileTierLevel: {
@@ -1368,7 +1331,7 @@ export function h265ParseConfiguration(data: Uint8Array): H265Configuration {
             },
             general_level_idc: generalLevelIndex,
         },
-    } = h265ParseVideoParameterSet(videoParameterSet.rbsp);
+    } = parseVideoParameterSet(videoParameterSet.rbsp);
 
     const {
         chroma_format_idc,
@@ -1378,7 +1341,7 @@ export function h265ParseConfiguration(data: Uint8Array): H265Configuration {
         conf_win_right_offset: cropRight = 0,
         conf_win_top_offset: cropTop = 0,
         conf_win_bottom_offset: cropBottom = 0,
-    } = h265ParseSequenceParameterSet(sequenceParameterSet.rbsp);
+    } = parseSequenceParameterSet(sequenceParameterSet.rbsp);
 
     const SubWidthC = getSubWidthC(chroma_format_idc);
     const SubHeightC = getSubHeightC(chroma_format_idc);
@@ -1407,4 +1370,24 @@ export function h265ParseConfiguration(data: Uint8Array): H265Configuration {
         croppedWidth,
         croppedHeight,
     };
+}
+
+export function toCodecString(configuration: Configuration) {
+    const {
+        generalProfileSpace,
+        generalProfileIndex,
+        generalProfileCompatibilitySet,
+        generalTierFlag,
+        generalLevelIndex,
+        generalConstraintSet,
+    } = configuration;
+
+    return [
+        "hev1",
+        ["", "A", "B", "C"][generalProfileSpace]! +
+            generalProfileIndex.toString(),
+        hexDigits(getUint32LittleEndian(generalProfileCompatibilitySet, 0)),
+        (generalTierFlag ? "H" : "L") + generalLevelIndex.toString(),
+        ...Array.from(generalConstraintSet, hexDigits),
+    ].join(".");
 }

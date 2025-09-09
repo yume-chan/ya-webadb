@@ -14,42 +14,15 @@ import type {
     AdbTransport,
 } from "../adb.js";
 import { AdbBanner } from "../banner.js";
-import { AdbFeature } from "../features.js";
+import { AdbDeviceFeatures, AdbFeature } from "../features.js";
 
 import type { AdbAuthenticator, AdbCredentialStore } from "./auth.js";
-import {
-    ADB_DEFAULT_AUTHENTICATORS,
-    AdbAuthenticationProcessor,
-} from "./auth.js";
+import { AdbDefaultAuthenticator } from "./auth.js";
 import { AdbPacketDispatcher } from "./dispatcher.js";
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 import { AdbCommand, calculateChecksum } from "./packet.js";
 
 export const ADB_DAEMON_VERSION_OMIT_CHECKSUM = 0x01000001;
-// https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/transport.cpp#1252
-// There are some other feature constants, but some of them are only used by ADB server, not devices (daemons).
-export const ADB_DAEMON_DEFAULT_FEATURES = /* #__PURE__ */ (() =>
-    [
-        AdbFeature.ShellV2,
-        AdbFeature.Cmd,
-        AdbFeature.StatV2,
-        AdbFeature.ListV2,
-        AdbFeature.FixedPushMkdir,
-        "apex",
-        AdbFeature.Abb,
-        // only tells the client the symlink timestamp issue in `adb push --sync` has been fixed.
-        // No special handling required.
-        "fixed_push_symlink_timestamp",
-        AdbFeature.AbbExec,
-        "remount_shell",
-        "track_app",
-        AdbFeature.SendReceiveV2,
-        "sendrecv_v2_brotli",
-        "sendrecv_v2_lz4",
-        "sendrecv_v2_zstd",
-        "sendrecv_v2_dry_run_send",
-        AdbFeature.DelayedAck,
-    ] as readonly AdbFeature[])();
 export const ADB_DAEMON_DEFAULT_INITIAL_PAYLOAD_SIZE = 32 * 1024 * 1024;
 
 export type AdbDaemonConnection = ReadableWritablePair<
@@ -60,8 +33,6 @@ export type AdbDaemonConnection = ReadableWritablePair<
 export interface AdbDaemonAuthenticationOptions {
     serial: string;
     connection: AdbDaemonConnection;
-    credentialStore: AdbCredentialStore;
-    authenticators?: readonly AdbAuthenticator[];
     features?: readonly AdbFeature[];
 
     /**
@@ -159,22 +130,36 @@ export class AdbDaemonTransport implements AdbTransport {
     static async authenticate({
         serial,
         connection,
-        credentialStore,
-        authenticators = ADB_DEFAULT_AUTHENTICATORS,
-        features = ADB_DAEMON_DEFAULT_FEATURES,
+        features = AdbDeviceFeatures,
         initialDelayedAckBytes = ADB_DAEMON_DEFAULT_INITIAL_PAYLOAD_SIZE,
         ...options
-    }: AdbDaemonAuthenticationOptions): Promise<AdbDaemonTransport> {
+    }: AdbDaemonAuthenticationOptions &
+        (
+            | { authenticator: AdbAuthenticator }
+            | {
+                  credentialStore: AdbCredentialStore;
+                  onPublicKeyAuthentication?: (() => void) | undefined;
+              }
+        )): Promise<AdbDaemonTransport> {
         // Initially, set to highest-supported version and payload size.
         let version = 0x01000001;
         // Android 4: 4K, Android 7: 256K, Android 9: 1M
         let maxPayloadSize = 1024 * 1024;
 
         const resolver = new PromiseResolver<string>();
-        const authProcessor = new AdbAuthenticationProcessor(
-            authenticators,
-            credentialStore,
-        );
+        let authenticator: AdbAuthenticator;
+        if ("authenticator" in options) {
+            authenticator = options.authenticator;
+        } else {
+            authenticator = new AdbDefaultAuthenticator(
+                options.credentialStore,
+            );
+            if (options.onPublicKeyAuthentication) {
+                (
+                    authenticator as AdbDefaultAuthenticator
+                ).onPublicKeyAuthentication(options.onPublicKeyAuthentication);
+            }
+        }
 
         // Here is similar to `AdbPacketDispatcher`,
         // But the received packet types and send packet processing are different.
@@ -193,9 +178,9 @@ export class AdbDaemonTransport implements AdbTransport {
                                 resolver.resolve(decodeUtf8(packet.payload));
                                 break;
                             case AdbCommand.Auth: {
-                                const response =
-                                    await authProcessor.process(packet);
-                                await sendPacket(response);
+                                await sendPacket(
+                                    await authenticator.authenticate(packet),
+                                );
                                 break;
                             }
                             default:
@@ -215,13 +200,17 @@ export class AdbDaemonTransport implements AdbTransport {
                 },
             )
             .then(
-                () => {
+                async () => {
+                    await authenticator.close?.();
+
                     // If `resolver` is already settled, call `reject` won't do anything.
                     resolver.reject(
                         new Error("Connection closed unexpectedly"),
                     );
                 },
-                (e) => {
+                async (e) => {
+                    await authenticator.close?.();
+
                     resolver.reject(e);
                 },
             );
@@ -238,11 +227,10 @@ export class AdbDaemonTransport implements AdbTransport {
             );
         }
 
-        const actualFeatures = features.slice();
         if (initialDelayedAckBytes <= 0) {
             const index = features.indexOf(AdbFeature.DelayedAck);
             if (index !== -1) {
-                actualFeatures.splice(index, 1);
+                features = features.toSpliced(index, 1);
             }
         }
 
@@ -254,9 +242,7 @@ export class AdbDaemonTransport implements AdbTransport {
                 arg1: maxPayloadSize,
                 // The terminating `;` is required in formal definition
                 // But ADB daemon (all versions) can still work without it
-                payload: encodeUtf8(
-                    `host::features=${actualFeatures.join(",")}`,
-                ),
+                payload: encodeUtf8(`host::features=${features.join(",")}`),
             });
 
             banner = await resolver.promise;
@@ -276,9 +262,10 @@ export class AdbDaemonTransport implements AdbTransport {
             version,
             maxPayloadSize,
             banner,
-            features: actualFeatures,
+            features,
             initialDelayedAckBytes,
-            ...options,
+            preserveConnection: options.preserveConnection,
+            readTimeLimit: options.readTimeLimit,
         });
     }
 
@@ -322,7 +309,7 @@ export class AdbDaemonTransport implements AdbTransport {
         connection,
         version,
         banner,
-        features = ADB_DAEMON_DEFAULT_FEATURES,
+        features = AdbDeviceFeatures,
         initialDelayedAckBytes,
         ...options
     }: AdbDaemonSocketConnectorConstructionOptions) {
@@ -345,19 +332,19 @@ export class AdbDaemonTransport implements AdbTransport {
             initialDelayedAckBytes = 0;
         }
 
-        let calculateChecksum: boolean;
-        let appendNullToServiceString: boolean;
+        let shouldCalculateChecksum: boolean;
+        let shouldAppendNullToServiceString: boolean;
         if (version >= ADB_DAEMON_VERSION_OMIT_CHECKSUM) {
-            calculateChecksum = false;
-            appendNullToServiceString = false;
+            shouldCalculateChecksum = false;
+            shouldAppendNullToServiceString = false;
         } else {
-            calculateChecksum = true;
-            appendNullToServiceString = true;
+            shouldCalculateChecksum = true;
+            shouldAppendNullToServiceString = true;
         }
 
         this.#dispatcher = new AdbPacketDispatcher(connection, {
-            calculateChecksum,
-            appendNullToServiceString,
+            calculateChecksum: shouldCalculateChecksum,
+            appendNullToServiceString: shouldAppendNullToServiceString,
             initialDelayedAckBytes,
             ...options,
         });

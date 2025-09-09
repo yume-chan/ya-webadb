@@ -1,15 +1,32 @@
-// The order follows
-// https://cs.android.com/android/platform/superproject/+/master:packages/modules/adb/transport.cpp;l=77;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
-export const AdbFeature = {
-    ShellV2: "shell_v2",
-    Cmd: "cmd",
-    StatV2: "stat_v2",
-    ListV2: "ls_v2",
-    FixedPushMkdir: "fixed_push_mkdir",
-    Abb: "abb",
-    AbbExec: "abb_exec",
-    SendReceiveV2: "sendrecv_v2",
-    DelayedAck: "delayed_ack",
-} as const;
+import * as AdbFeature from "./features-value.js";
 
-export type AdbFeature = (typeof AdbFeature)[keyof typeof AdbFeature];
+// biome-ignore lint/suspicious/noRedeclare: TypeScript declaration merging for enum-like object
+type AdbFeature = (typeof AdbFeature)[keyof typeof AdbFeature];
+
+export { AdbFeature };
+
+// https://android.googlesource.com/platform/packages/modules/adb/+/79010dc6d5ca7490c493df800d4421730f5466ca/transport.cpp#1252
+// There are some other feature constants, but some of them are only used by ADB server, not devices (daemons).
+export const AdbDeviceFeatures = [
+    AdbFeature.Shell2,
+    AdbFeature.Cmd,
+    AdbFeature.Stat2,
+    AdbFeature.Ls2,
+    AdbFeature.FixedPushMkdir,
+    AdbFeature.Apex,
+    AdbFeature.Abb,
+    // only tells the client the symlink timestamp issue in `adb push --sync` has been fixed.
+    // No special handling required.
+    AdbFeature.FixedPushSymlinkTimestamp,
+    AdbFeature.AbbExec,
+    AdbFeature.RemountShell,
+    AdbFeature.TrackApp,
+    AdbFeature.SendReceive2,
+    AdbFeature.SendReceive2Brotli,
+    AdbFeature.SendReceive2Lz4,
+    AdbFeature.SendReceive2Zstd,
+    AdbFeature.SendReceive2DryRunSend,
+    AdbFeature.DevRaw,
+    AdbFeature.AppInfo,
+    AdbFeature.DelayedAck,
+] as readonly AdbFeature[];

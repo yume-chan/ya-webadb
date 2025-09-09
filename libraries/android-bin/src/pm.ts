@@ -2,9 +2,10 @@
 // cspell:ignore instantapp
 // cspell:ignore apks
 // cspell:ignore versioncode
+// cspell:ignore dexopt
 
-import type { Adb } from "@yume-chan/adb";
-import { AdbServiceBase } from "@yume-chan/adb";
+import type { Adb, AdbNoneProtocolProcess } from "@yume-chan/adb";
+import { AdbServiceBase, escapeArg } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 import {
     ConcatStringStream,
@@ -12,10 +13,11 @@ import {
     TextDecoderStream,
 } from "@yume-chan/stream-extra";
 
-import { CmdNoneProtocolService } from "./cmd.js";
-import type { IntentBuilder } from "./intent.js";
-import type { SingleUserOrAll } from "./utils.js";
-import { buildArguments } from "./utils.js";
+import { Cmd } from "./cmd/index.js";
+import type { Intent } from "./intent.js";
+import { serializeIntent } from "./intent.js";
+import type { Optional, SingleUserOrAll } from "./utils.js";
+import { buildCommand } from "./utils.js";
 
 export enum PackageManagerInstallLocation {
     Auto,
@@ -31,154 +33,85 @@ export enum PackageManagerInstallReason {
     UserRequest,
 }
 
-// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/pm/PackageManagerShellCommand.java;l=3046;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
-export interface PackageManagerInstallOptions {
-    /**
-     * `-R`
-     */
-    skipExisting: boolean;
-    /**
-     * `-i`
-     */
-    installerPackageName: string;
-    /**
-     * `-t`
-     */
-    allowTest: boolean;
-    /**
-     * `-f`
-     */
-    internalStorage: boolean;
-    /**
-     * `-d`
-     */
-    requestDowngrade: boolean;
-    /**
-     * `-g`
-     */
-    grantRuntimePermissions: boolean;
-    /**
-     * `--restrict-permissions`
-     */
-    restrictPermissions: boolean;
-    /**
-     * `--dont-kill`
-     */
-    doNotKill: boolean;
-    /**
-     * `--originating-uri`
-     */
-    originatingUri: string;
-    /**
-     * `--referrer`
-     */
-    refererUri: string;
-    /**
-     * `-p`
-     */
-    inheritFrom: string;
-    /**
-     * `--pkg`
-     */
-    packageName: string;
-    /**
-     * `--abi`
-     */
-    abi: string;
-    /**
-     * `--ephemeral`/`--instant`/`--instantapp`
-     */
-    instantApp: boolean;
-    /**
-     * `--full`
-     */
-    full: boolean;
-    /**
-     * `--preload`
-     */
-    preload: boolean;
-    /**
-     * `--user`
-     */
-    user: SingleUserOrAll;
-    /**
-     * `--install-location`
-     */
-    installLocation: PackageManagerInstallLocation;
-    /**
-     * `--install-reason`
-     */
-    installReason: PackageManagerInstallReason;
-    /**
-     * `--force-uuid`
-     */
-    forceUuid: string;
-    /**
-     * `--apex`
-     */
-    apex: boolean;
-    /**
-     * `--force-non-staged`
-     */
-    forceNonStaged: boolean;
-    /**
-     * `--staged`
-     */
-    staged: boolean;
-    /**
-     * `--force-queryable`
-     */
-    forceQueryable: boolean;
-    /**
-     * `--enable-rollback`
-     */
-    enableRollback: boolean;
-    /**
-     * `--staged-ready-timeout`
-     */
-    stagedReadyTimeout: number;
-    /**
-     * `--skip-verification`
-     */
-    skipVerification: boolean;
-    /**
-     * `--bypass-low-target-sdk-block`
-     */
-    bypassLowTargetSdkBlock: boolean;
+interface OptionDefinition<T> {
+    type: T;
+    name: string;
+    minApiLevel?: number;
+    maxApiLevel?: number;
 }
 
-export const PACKAGE_MANAGER_INSTALL_OPTIONS_MAP: Record<
-    keyof PackageManagerInstallOptions,
-    string
-> = {
-    skipExisting: "-R",
-    installerPackageName: "-i",
-    allowTest: "-t",
-    internalStorage: "-f",
-    requestDowngrade: "-d",
-    grantRuntimePermissions: "-g",
-    restrictPermissions: "--restrict-permissions",
-    doNotKill: "--dont-kill",
-    originatingUri: "--originating-uri",
-    refererUri: "--referrer",
-    inheritFrom: "-p",
-    packageName: "--pkg",
-    abi: "--abi",
-    instantApp: "--instant",
-    full: "--full",
-    preload: "--preload",
-    user: "--user",
-    installLocation: "--install-location",
-    installReason: "--install-reason",
-    forceUuid: "--force-uuid",
-    apex: "--apex",
-    forceNonStaged: "--force-non-staged",
-    staged: "--staged",
-    forceQueryable: "--force-queryable",
-    enableRollback: "--enable-rollback",
-    stagedReadyTimeout: "--staged-ready-timeout",
-    skipVerification: "--skip-verification",
-    bypassLowTargetSdkBlock: "--bypass-low-target-sdk-block",
+function option<T>(
+    name: string,
+    minApiLevel?: number,
+    maxApiLevel?: number,
+): OptionDefinition<T> {
+    return {
+        name,
+        minApiLevel,
+        maxApiLevel,
+    } as OptionDefinition<T>;
+}
+
+// https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/pm/PackageManagerShellCommand.java;l=3046;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
+export const PackageManagerInstallOptions = {
+    forwardLock: option<boolean>("-l", undefined, 28),
+    replaceExisting: option<boolean>("-r", undefined, 27),
+    skipExisting: option<boolean>("-R", 28),
+    installerPackageName: option<string>("-i"),
+    allowTest: option<boolean>("-t"),
+    externalStorage: option<boolean>("-s", undefined, 28),
+    internalStorage: option<boolean>("-f"),
+    requestDowngrade: option<boolean>("-d"),
+    grantRuntimePermissions: option<boolean>("-g", 23),
+    restrictPermissions: option<boolean>("--restrict-permissions", 29),
+    doNotKill: option<boolean>("--dont-kill"),
+    originatingUri: option<string>("--originating-uri"),
+    referrerUri: option<string>("--referrer"),
+    inheritFrom: option<string>("-p", 24),
+    packageName: option<string>("--pkg", 28),
+    abi: option<string>("--abi", 21),
+    instantApp: option<boolean>("--ephemeral", 24),
+    full: option<boolean>("--full", 26),
+    preload: option<boolean>("--preload", 28),
+    user: option<SingleUserOrAll>("--user", 21),
+    installLocation: option<PackageManagerInstallLocation>(
+        "--install-location",
+        24,
+    ),
+    installReason: option<PackageManagerInstallReason>("--install-reason", 29),
+    updateOwnership: option<boolean>("--update-ownership", 34),
+    forceUuid: option<string>("--force-uuid", 24),
+    forceSdk: option<number>("--force-sdk", 24),
+    apex: option<boolean>("--apex", 29),
+    forceNonStaged: option<boolean>("--force-non-staged", 31),
+    multiPackage: option<boolean>("--multi-package", 29),
+    staged: option<boolean>("--staged", 29),
+    nonStaged: option<boolean>("--non-staged", 35),
+    forceQueryable: option<boolean>("--force-queryable", 30),
+    enableRollback: option<boolean | number>("--enable-rollback", 29),
+    rollbackImpactLevel: option<number>("--rollback-impact-level", 35),
+    wait: option<boolean | number>("--wait", 30, 30),
+    noWait: option<boolean>("--no-wait", 30, 30),
+    stagedReadyTimeout: option<number>("--staged-ready-timeout", 31),
+    skipVerification: option<boolean>("--skip-verification", 30),
+    skipEnable: option<boolean>("--skip-enable", 34),
+    bypassLowTargetSdkBlock: option<boolean>(
+        "--bypass-low-target-sdk-block",
+        34,
+    ),
+    ignoreDexoptProfile: option<boolean>("--ignore-dexopt-profile", 35),
+    packageSource: option<number>("--package-source", 35),
+    dexoptCompilerFilter: option<string>("--dexopt-compiler-filter", 35),
+    disableAutoInstallDependencies: option<boolean>(
+        "--disable-auto-install-dependencies",
+        36,
+    ),
+} as const;
+
+export type PackageManagerInstallOptions = {
+    [K in keyof typeof PackageManagerInstallOptions]?:
+        | (typeof PackageManagerInstallOptions)[K]["type"]
+        | undefined;
 };
 
 export interface PackageManagerListPackagesOptions {
@@ -246,7 +179,7 @@ const PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP: Record<
 
 export interface PackageManagerResolveActivityOptions {
     user?: SingleUserOrAll;
-    intent: IntentBuilder;
+    intent: Intent;
 }
 
 const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
@@ -255,15 +188,13 @@ const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
     user: "--user",
 };
 
-function buildInstallArguments(
+function buildInstallCommand(
     command: string,
-    options: Partial<PackageManagerInstallOptions> | undefined,
+    options: PackageManagerInstallOptions | undefined,
+    apiLevel: number | undefined,
 ): string[] {
-    const args = buildArguments(
-        [PackageManager.ServiceName, command],
-        options,
-        PACKAGE_MANAGER_INSTALL_OPTIONS_MAP,
-    );
+    const args = [PackageManager.ServiceName, command];
+
     if (!options?.skipExisting) {
         /*
          * | behavior             | previous version     | modern version       |
@@ -278,18 +209,74 @@ function buildInstallArguments(
          */
         args.push("-r");
     }
+
+    if (!options) {
+        return args;
+    }
+
+    for (const [key, value] of Object.entries(options)) {
+        if (value === undefined || value === null) {
+            continue;
+        }
+
+        const option =
+            PackageManagerInstallOptions[
+                key as keyof PackageManagerInstallOptions
+            ];
+
+        if (option === undefined) {
+            continue;
+        }
+
+        if (apiLevel !== undefined) {
+            if (
+                option.minApiLevel !== undefined &&
+                apiLevel < option.minApiLevel
+            ) {
+                continue;
+            }
+            if (
+                option.maxApiLevel !== undefined &&
+                apiLevel > option.maxApiLevel
+            ) {
+                continue;
+            }
+        }
+
+        switch (typeof value) {
+            case "boolean":
+                if (value) {
+                    args.push(option.name);
+                }
+                break;
+            case "number":
+                args.push(option.name, value.toString());
+                break;
+            case "string":
+                args.push(option.name, value);
+                break;
+            default:
+                throw new Error(
+                    `Unsupported type for option ${key}: ${typeof value}`,
+                );
+        }
+    }
+
     return args;
 }
 
 export class PackageManager extends AdbServiceBase {
-    static ServiceName = "package";
-    static CommandName = "pm";
+    static readonly ServiceName = "package";
+    static readonly CommandName = "pm";
 
-    #cmd: CmdNoneProtocolService;
+    #apiLevel: number | undefined;
+    #cmd: Cmd.NoneProtocolService;
 
-    constructor(adb: Adb) {
+    constructor(adb: Adb, apiLevel?: number) {
         super(adb);
-        this.#cmd = new CmdNoneProtocolService(adb, PackageManager.CommandName);
+
+        this.#apiLevel = apiLevel;
+        this.#cmd = Cmd.createNoneProtocol(adb, PackageManager.CommandName);
     }
 
     /**
@@ -299,37 +286,41 @@ export class PackageManager extends AdbServiceBase {
      */
     async install(
         apks: readonly string[],
-        options?: Partial<PackageManagerInstallOptions>,
-    ): Promise<string> {
-        const args = buildInstallArguments("install", options);
-        args[0] = PackageManager.CommandName;
+        options?: PackageManagerInstallOptions,
+    ): Promise<void> {
+        const command = buildInstallCommand("install", options, this.#apiLevel);
+
+        command[0] = PackageManager.CommandName;
+
         // WIP: old version of pm doesn't support multiple apks
-        args.push(...apks);
+        for (const apk of apks) {
+            command.push(apk);
+        }
 
         // Starting from Android 7, `pm` becomes a wrapper to `cmd package`.
         // The benefit of `cmd package` is it starts faster than the old `pm`,
         // because it connects to the already running `system` process,
         // instead of initializing all system components from scratch.
         //
-        // But launching `cmd package` directly causes it to not be able to
-        // read files in `/data/local/tmp` (and many other places) due to SELinux policies,
-        // so installing files must still use `pm`.
+        // But `cmd` executable can't read files in `/data/local/tmp`
+        // (and many other places) due to SELinux policies,
+        // so installing from files must still use `pm`.
         // (the starting executable file decides which SELinux policies to apply)
         const output = await this.adb.subprocess.noneProtocol
-            .spawnWaitText(args)
+            .spawn(command.map(escapeArg))
+            .wait()
+            .toString()
             .then((output) => output.trim());
 
         if (output !== "Success") {
             throw new Error(output);
         }
-
-        return output;
     }
 
     async pushAndInstallStream(
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
-        options?: Partial<PackageManagerInstallOptions>,
-    ): Promise<string> {
+        options?: PackageManagerInstallOptions,
+    ): Promise<void> {
         const fileName = Math.random().toString().substring(2);
         const filePath = `/data/local/tmp/${fileName}.apk`;
 
@@ -345,7 +336,7 @@ export class PackageManager extends AdbServiceBase {
         }
 
         try {
-            return await this.install([filePath], options);
+            await this.install([filePath], options);
         } finally {
             await this.adb.rm(filePath);
         }
@@ -354,21 +345,21 @@ export class PackageManager extends AdbServiceBase {
     async installStream(
         size: number,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
-        options?: Partial<PackageManagerInstallOptions>,
+        options?: PackageManagerInstallOptions,
     ): Promise<void> {
-        // Android 7 added both `cmd` command and streaming install support,
-        // It's hard to detect whether `pm` supports streaming install (unless actually trying),
-        // so check for whether `cmd` is supported,
-        // and assume `pm` streaming install support status is same as that.
-        if (!this.#cmd.isSupported) {
+        // Technically `cmd` support and streaming install support are unrelated,
+        // but it's impossible to detect streaming install support without actually trying it.
+        // As they are both added in Android 7,
+        // assume `cmd` support also means streaming install support (and vice versa).
+        if (this.#cmd.mode === Cmd.Mode.Fallback) {
             // Fall back to push file then install
             await this.pushAndInstallStream(stream, options);
             return;
         }
 
-        const args = buildInstallArguments("install", options);
-        args.push("-S", size.toString());
-        const process = await this.#cmd.spawn(args);
+        const command = buildInstallCommand("install", options, this.#apiLevel);
+        command.push("-S", size.toString());
+        const process = await this.#cmd.spawn(command);
 
         const output = process.output
             .pipeThrough(new TextDecoderStream())
@@ -385,10 +376,12 @@ export class PackageManager extends AdbServiceBase {
         ]);
     }
 
+    static readonly PackageListItemPrefix = "package:";
+
     static parsePackageListItem(
         line: string,
     ): PackageManagerListPackagesResult {
-        line = line.substring("package:".length);
+        line = line.substring(PackageManager.PackageListItemPrefix.length);
 
         let packageName: string;
         let sourceDir: string | undefined;
@@ -439,41 +432,84 @@ export class PackageManager extends AdbServiceBase {
     }
 
     async *listPackages(
-        options?: Partial<PackageManagerListPackagesOptions>,
+        options?: Optional<PackageManagerListPackagesOptions>,
     ): AsyncGenerator<PackageManagerListPackagesResult, void, void> {
-        const args = buildArguments(
+        const command = buildCommand(
             ["package", "list", "packages"],
             options,
             PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP,
         );
+
         if (options?.filter) {
-            args.push(options.filter);
+            command.push(options.filter);
         }
 
-        const process = await this.#cmd.spawn(args);
-        const reader = process.output
+        const process = await this.#cmd.spawn(command);
+
+        const output = process.output
             .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new SplitStringStream("\n"))
-            .getReader();
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-                break;
+            .pipeThrough(new SplitStringStream("\n", { trim: true }));
+
+        for await (const line of output) {
+            if (!line.startsWith(PackageManager.PackageListItemPrefix)) {
+                continue;
             }
-            yield PackageManager.parsePackageListItem(value);
+
+            yield PackageManager.parsePackageListItem(line);
         }
     }
 
-    async getPackageSources(packageName: string): Promise<string[]> {
-        const args = [PackageManager.ServiceName, "-p", packageName];
-        const process = await this.#cmd.spawn(args);
-        const result: string[] = [];
-        for await (const line of process.output
+    /**
+     * Gets APK file paths for a package.
+     *
+     * On supported Android versions, all split APKs are included.
+     * @param packageName The package name to query
+     * @param options The user ID to query
+     * @returns An array of APK file paths
+     */
+    async getPackageSources(
+        packageName: string,
+        options?: {
+            /**
+             * The user ID to query
+             */
+            user?: number | undefined;
+        },
+    ): Promise<string[]> {
+        // `pm path` and `pm -p` are the same,
+        // but `pm path` allows an optional `--user` option.
+        const command = [PackageManager.ServiceName, "path"];
+
+        if (options?.user !== undefined) {
+            command.push("--user", options.user.toString());
+        }
+
+        command.push(packageName);
+
+        // Android 7 and 8 support `cmd package` but not `cmd package path` command
+        let process: AdbNoneProtocolProcess;
+        if (this.#apiLevel !== undefined && this.#apiLevel <= 27) {
+            command[0] = PackageManager.CommandName;
+            process = await this.adb.subprocess.noneProtocol.spawn(
+                command.map(escapeArg),
+            );
+        } else {
+            process = await this.#cmd.spawn(command);
+        }
+
+        const lines = process.output
             .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new SplitStringStream("\n"))) {
-            if (line.startsWith("package:")) {
-                result.push(line.substring("package:".length));
+            .pipeThrough(new SplitStringStream("\n", { trim: true }));
+
+        const result: string[] = [];
+        for await (const line of lines) {
+            if (!line.startsWith(PackageManager.PackageListItemPrefix)) {
+                continue;
             }
+
+            result.push(
+                line.substring(PackageManager.PackageListItemPrefix.length),
+            );
         }
 
         return result;
@@ -481,20 +517,26 @@ export class PackageManager extends AdbServiceBase {
 
     async uninstall(
         packageName: string,
-        options?: Partial<PackageManagerUninstallOptions>,
+        options?: Optional<PackageManagerUninstallOptions>,
     ): Promise<void> {
-        const args = buildArguments(
+        const command = buildCommand(
             [PackageManager.ServiceName, "uninstall"],
             options,
             PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP,
         );
-        args.push(packageName);
+
+        command.push(packageName);
+
         if (options?.splitNames) {
-            args.push(...options.splitNames);
+            for (const splitName of options.splitNames) {
+                command.push(splitName);
+            }
         }
 
         const output = await this.#cmd
-            .spawnWaitText(args)
+            .spawn(command)
+            .wait()
+            .toString()
             .then((output) => output.trim());
         if (output !== "Success") {
             throw new Error(output);
@@ -504,16 +546,20 @@ export class PackageManager extends AdbServiceBase {
     async resolveActivity(
         options: PackageManagerResolveActivityOptions,
     ): Promise<string | undefined> {
-        let args = buildArguments(
+        const command = buildCommand(
             [PackageManager.ServiceName, "resolve-activity", "--components"],
             options,
             PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP,
         );
 
-        args = args.concat(options.intent.build());
+        for (const arg of serializeIntent(options.intent)) {
+            command.push(arg);
+        }
 
         const output = await this.#cmd
-            .spawnWaitText(args)
+            .spawn(command)
+            .wait()
+            .toString()
             .then((output) => output.trim());
 
         if (output === "No activity found") {
@@ -534,20 +580,28 @@ export class PackageManager extends AdbServiceBase {
      * @returns ID of the new install session
      */
     async sessionCreate(
-        options?: Partial<PackageManagerInstallOptions>,
+        options?: PackageManagerInstallOptions,
     ): Promise<number> {
-        const args = buildInstallArguments("install-create", options);
+        const command = buildInstallCommand(
+            "install-create",
+            options,
+            this.#apiLevel,
+        );
 
         const output = await this.#cmd
-            .spawnWaitText(args)
+            .spawn(command)
+            .wait()
+            .toString()
             .then((output) => output.trim());
 
-        const sessionIdString = output.match(/.*\[(\d+)\].*/);
-        if (!sessionIdString) {
-            throw new Error("Failed to create install session");
+        // The output format won't change to make it easier to parse
+        // https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/pm/PackageManagerShellCommand.java;l=1744;drc=e38fa24e5738513d721ec2d9fd2dd00f32e327c1
+        const match = output.match(/\[(\d+)\]/);
+        if (!match) {
+            throw new Error(output);
         }
 
-        return Number.parseInt(sessionIdString[1]!, 10);
+        return Number.parseInt(match[1]!, 10);
     }
 
     async checkResult(stream: ReadableStream<Uint8Array>) {
@@ -566,15 +620,18 @@ export class PackageManager extends AdbServiceBase {
         splitName: string,
         path: string,
     ): Promise<void> {
-        const args: string[] = [
-            "pm",
+        const command: string[] = [
+            PackageManager.CommandName,
             "install-write",
             sessionId.toString(),
             splitName,
             path,
         ];
 
-        const process = await this.adb.subprocess.noneProtocol.spawn(args);
+        // Similar to `install`, must use `adb.subprocess` so it can read `path`
+        const process = await this.adb.subprocess.noneProtocol.spawn(
+            command.map(escapeArg),
+        );
         await this.checkResult(process.output);
     }
 
@@ -584,7 +641,7 @@ export class PackageManager extends AdbServiceBase {
         size: number,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
     ): Promise<void> {
-        const args: string[] = [
+        const command: string[] = [
             PackageManager.ServiceName,
             "install-write",
             "-S",
@@ -594,30 +651,48 @@ export class PackageManager extends AdbServiceBase {
             "-",
         ];
 
-        const process = await this.#cmd.spawn(args);
+        const process = await this.#cmd.spawn(command);
         await Promise.all([
             stream.pipeTo(process.stdin),
             this.checkResult(process.output),
         ]);
     }
 
+    /**
+     * Commit an install session.
+     * @param sessionId ID of install session returned by `createSession`
+     * @returns A `Promise` that resolves when the session is committed
+     */
     async sessionCommit(sessionId: number): Promise<void> {
-        const args: string[] = [
+        const command: string[] = [
             PackageManager.ServiceName,
             "install-commit",
             sessionId.toString(),
         ];
-        const process = await this.#cmd.spawn(args);
+
+        // Android 7 did support `cmd package install-commit` command,
+        // but it wrote the "Success" message to an incorrect output stream,
+        // causing `checkResult` to fail with an empty message
+        let process: AdbNoneProtocolProcess;
+        if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
+            command[0] = PackageManager.CommandName;
+            process = await this.adb.subprocess.noneProtocol.spawn(
+                command.map(escapeArg),
+            );
+        } else {
+            process = await this.#cmd.spawn(command);
+        }
+
         await this.checkResult(process.output);
     }
 
     async sessionAbandon(sessionId: number): Promise<void> {
-        const args: string[] = [
+        const command: string[] = [
             PackageManager.ServiceName,
             "install-abandon",
             sessionId.toString(),
         ];
-        const process = await this.#cmd.spawn(args);
+        const process = await this.#cmd.spawn(command);
         await this.checkResult(process.output);
     }
 }
@@ -625,7 +700,7 @@ export class PackageManager extends AdbServiceBase {
 export class PackageManagerInstallSession {
     static async create(
         packageManager: PackageManager,
-        options?: Partial<PackageManagerInstallOptions>,
+        options?: PackageManagerInstallOptions,
     ): Promise<PackageManagerInstallSession> {
         const id = await packageManager.sessionCreate(options);
         return new PackageManagerInstallSession(packageManager, id);
@@ -660,6 +735,10 @@ export class PackageManagerInstallSession {
         );
     }
 
+    /**
+     * Commit this install session.
+     * @returns A `Promise` that resolves when the session is committed
+     */
     commit(): Promise<void> {
         return this.#packageManager.sessionCommit(this.#id);
     }

@@ -35,6 +35,7 @@
     "dependencies": {
         "@yume-chan/async": "^4.1.3",
         "@yume-chan/event": "workspace:^",
+        "@yume-chan/media-codec": "workspace:^",
         "@yume-chan/no-data-view": "workspace:^",
         "@yume-chan/scrcpy": "workspace:^",
         "@yume-chan/scrcpy-decoder-tinyh264": "workspace:^",

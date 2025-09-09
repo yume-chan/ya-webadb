@@ -1,15 +1,3 @@
-declare global {
-    interface ArrayBuffer {
-        // Disallow assigning `Uint8Array` to `Arraybuffer`
-        __brand: never;
-    }
-
-    interface SharedArrayBuffer {
-        // Allow `SharedArrayBuffer` to be assigned to `ArrayBuffer`
-        __brand: never;
-    }
-}
-
 export * from "./bipedal.js";
 export * from "./buffer.js";
 export * from "./concat.js";

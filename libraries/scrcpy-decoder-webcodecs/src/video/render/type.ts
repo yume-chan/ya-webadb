@@ -4,4 +4,6 @@ export interface VideoFrameRenderer {
     setSize(width: number, height: number): void;
 
     draw(frame: VideoFrame): MaybePromiseLike<void>;
+
+    dispose(): MaybePromiseLike<undefined>;
 }

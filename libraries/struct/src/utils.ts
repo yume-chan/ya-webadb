@@ -7,7 +7,7 @@
 // So there is no point to do that. Let's just assume they exist in global.
 
 interface TextEncoder {
-    encode(input: string): Uint8Array;
+    encode(input: string): Uint8Array<ArrayBuffer>;
 }
 
 interface TextDecoder {
@@ -29,7 +29,7 @@ const SharedEncoder = /* #__PURE__ */ new TextEncoder();
 const SharedDecoder = /* #__PURE__ */ new TextDecoder();
 
 /* #__NO_SIDE_EFFECTS__ */
-export function encodeUtf8(input: string): Uint8Array {
+export function encodeUtf8(input: string): Uint8Array<ArrayBuffer> {
     return SharedEncoder.encode(input);
 }
 

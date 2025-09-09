@@ -13,6 +13,9 @@
             "path": "../event/tsconfig.build.json"
         },
         {
+            "path": "../media-codec/tsconfig.build.json"
+        },
+        {
             "path": "../scrcpy/tsconfig.build.json"
         },
         {

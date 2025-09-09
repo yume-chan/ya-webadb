@@ -2,3 +2,6 @@ packages:
   - apps/*
   - libraries/*
   - toolchain/*
+
+onlyBuiltDependencies:
+  - unrs-resolver

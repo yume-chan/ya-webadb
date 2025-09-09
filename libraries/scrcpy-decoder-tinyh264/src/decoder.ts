@@ -1,10 +1,13 @@
 import { PromiseResolver } from "@yume-chan/async";
-import { StickyEventEmitter } from "@yume-chan/event";
-import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
+import { H264 } from "@yume-chan/media-codec";
+import type {
+    ScrcpyMediaStreamConfigurationPacket,
+    ScrcpyMediaStreamPacket,
+} from "@yume-chan/scrcpy";
 import {
     AndroidAvcLevel,
     AndroidAvcProfile,
-    h264ParseConfiguration,
+    ScrcpyVideoSizeImpl,
 } from "@yume-chan/scrcpy";
 import { WritableStream } from "@yume-chan/stream-extra";
 import YuvBuffer from "yuv-buffer";
@@ -14,22 +17,15 @@ import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
 } from "./types.js";
+import { createCanvas, glIsSupported } from "./utils/index.js";
+import { PauseControllerImpl } from "./utils/pause.js";
+import { PerformanceCounterImpl } from "./utils/performance.js";
 import type { TinyH264Wrapper } from "./wrapper.js";
 import { createTinyH264Wrapper } from "./wrapper.js";
 
 const noop = () => {
     // no-op
 };
-
-export function createCanvas() {
-    if (typeof document !== "undefined") {
-        return document.createElement("canvas");
-    }
-    if (typeof OffscreenCanvas !== "undefined") {
-        return new OffscreenCanvas(1, 1);
-    }
-    throw new Error("no canvas input found nor any canvas can be created");
-}
 
 export class TinyH264Decoder implements ScrcpyVideoDecoder {
     static readonly capabilities: Record<string, ScrcpyVideoDecoderCapability> =
@@ -40,34 +36,36 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             },
         };
 
-    #renderer: HTMLCanvasElement | OffscreenCanvas;
-    get renderer() {
-        return this.#renderer;
+    #canvas: HTMLCanvasElement | OffscreenCanvas;
+    get canvas() {
+        return this.#canvas;
     }
 
-    #sizeChanged = new StickyEventEmitter<{ width: number; height: number }>();
-    get sizeChanged() {
-        return this.#sizeChanged.event;
-    }
-
-    #width: number = 0;
+    #size = new ScrcpyVideoSizeImpl();
     get width() {
-        return this.#width;
+        return this.#size.width;
     }
-
-    #height: number = 0;
     get height() {
-        return this.#height;
+        return this.#size.height;
+    }
+    get sizeChanged() {
+        return this.#size.sizeChanged;
     }
 
-    #frameRendered = 0;
-    get framesRendered() {
-        return this.#frameRendered;
+    #counter = new PerformanceCounterImpl();
+    get framesDrawn() {
+        return this.#counter.framesDrawn;
     }
-
-    #frameSkipped = 0;
+    get framesPresented() {
+        return this.#counter.framesPresented;
+    }
     get framesSkipped() {
-        return this.#frameSkipped;
+        return this.#counter.framesSkipped;
+    }
+
+    #pause: PauseControllerImpl;
+    get paused() {
+        return this.#pause.paused;
     }
 
     #writable: WritableStream<ScrcpyMediaStreamPacket>;
@@ -75,118 +73,165 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#writable;
     }
 
-    #yuvCanvas: YuvCanvas | undefined;
-    #initializer: PromiseResolver<TinyH264Wrapper> | undefined;
+    #renderer: YuvCanvas | undefined;
+    #decoder: Promise<TinyH264Wrapper> | undefined;
 
     constructor({ canvas }: TinyH264Decoder.Options = {}) {
         if (canvas) {
-            this.#renderer = canvas;
+            this.#canvas = canvas;
         } else {
-            this.#renderer = createCanvas();
+            this.#canvas = createCanvas();
         }
 
-        this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
-            write: async (packet) => {
-                switch (packet.type) {
-                    case "configuration":
-                        await this.#configure(packet.data);
-                        break;
-                    case "data": {
-                        if (!this.#initializer) {
-                            throw new Error("Decoder not configured");
-                        }
+        this.#renderer = YuvCanvas.attach(this.#canvas, {
+            // yuv-canvas supports detecting WebGL support by creating a <canvas> itself
+            // But this doesn't work in Web Worker (with OffscreenCanvas)
+            // so we implement our own check here
+            webGL: glIsSupported({
+                // Disallow software rendering.
+                // yuv-canvas also supports 2d canvas
+                // which is faster than software-based WebGL.
+                failIfMajorPerformanceCaveat: true,
+            }),
+        });
 
-                        const wrapper = await this.#initializer.promise;
-                        wrapper.feed(packet.data.slice().buffer);
-                        break;
-                    }
+        this.#pause = new PauseControllerImpl(
+            this.#configure,
+            async (packet) => {
+                if (!this.#decoder) {
+                    throw new Error("Decoder not configured");
                 }
+
+                // TinyH264 decoder doesn't support associating metadata
+                // with each frame's input/output
+                // so skipping frames when resuming from pause is not supported
+
+                const decoder = await this.#decoder;
+
+                // `packet.data` might be from a `BufferCombiner` so we have to copy it using `slice`
+                decoder.feed(packet.data.slice().buffer);
             },
+        );
+
+        this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
+            write: this.#pause.write,
+            // Nothing can be disposed when the stream is aborted/closed
+            // No new frames will arrive, but some frames might still be decoding and/or rendering
         });
     }
 
-    async #configure(data: Uint8Array) {
-        this.dispose();
+    #configure = async ({
+        data,
+    }: ScrcpyMediaStreamConfigurationPacket): Promise<undefined> => {
+        this.#disposeDecoder();
 
-        this.#initializer = new PromiseResolver<TinyH264Wrapper>();
-        if (!this.#yuvCanvas) {
-            // yuv-canvas detects WebGL support by creating a <canvas> itself
-            // not working in worker
-            const canvas = createCanvas();
-            const attributes: WebGLContextAttributes = {
-                // Disallow software rendering.
-                // Other rendering methods are faster than software-based WebGL.
-                failIfMajorPerformanceCaveat: true,
-            };
-            const gl =
-                canvas.getContext("webgl2", attributes) ||
-                canvas.getContext("webgl", attributes);
-            this.#yuvCanvas = YuvCanvas.attach(this.#renderer, {
-                webGL: !!gl,
+        const resolver = new PromiseResolver<TinyH264Wrapper>();
+        this.#decoder = resolver.promise;
+
+        try {
+            const {
+                encodedWidth,
+                encodedHeight,
+                croppedWidth,
+                croppedHeight,
+                cropLeft,
+                cropTop,
+            } = H264.parseConfiguration(data);
+
+            this.#size.setSize(croppedWidth, croppedHeight);
+
+            // H.264 Baseline profile only supports YUV 420 pixel format
+            // So chroma width/height is each half of video width/height
+            const chromaWidth = encodedWidth / 2;
+            const chromaHeight = encodedHeight / 2;
+
+            // YUVCanvas will set canvas size when format changes
+            const format = YuvBuffer.format({
+                width: encodedWidth,
+                height: encodedHeight,
+                chromaWidth,
+                chromaHeight,
+                cropLeft: cropLeft,
+                cropTop: cropTop,
+                cropWidth: croppedWidth,
+                cropHeight: croppedHeight,
+                displayWidth: croppedWidth,
+                displayHeight: croppedHeight,
             });
+
+            const decoder = await createTinyH264Wrapper();
+
+            const uPlaneOffset = encodedWidth * encodedHeight;
+            const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
+            decoder.onPictureReady(({ data }) => {
+                const array = new Uint8Array(data);
+                const frame = YuvBuffer.frame(
+                    format,
+                    YuvBuffer.lumaPlane(format, array, encodedWidth, 0),
+                    YuvBuffer.chromaPlane(
+                        format,
+                        array,
+                        chromaWidth,
+                        uPlaneOffset,
+                    ),
+                    YuvBuffer.chromaPlane(
+                        format,
+                        array,
+                        chromaWidth,
+                        vPlaneOffset,
+                    ),
+                );
+
+                // Can't know if yuv-canvas is dropping frames or not
+                this.#renderer!.drawFrame(frame);
+                this.#counter.increaseFramesDrawn();
+            });
+
+            decoder.feed(data.slice().buffer);
+
+            resolver.resolve(decoder);
+        } catch (e) {
+            resolver.reject(e);
+        }
+    };
+
+    pause(): void {
+        this.#pause.pause();
+    }
+
+    resume(): Promise<undefined> {
+        return this.#pause.resume();
+    }
+
+    /**
+     * Only dispose the TinyH264 decoder instance.
+     *
+     * This will be called when re-configuring multiple times,
+     * we don't want to dispose other parts (e.g. `#counter`) on that case
+     */
+    #disposeDecoder() {
+        if (!this.#decoder) {
+            return;
         }
 
-        const {
-            encodedWidth,
-            encodedHeight,
-            croppedWidth,
-            croppedHeight,
-            cropLeft,
-            cropTop,
-        } = h264ParseConfiguration(data);
-
-        this.#width = croppedWidth;
-        this.#height = croppedHeight;
-        this.#sizeChanged.fire({
-            width: croppedWidth,
-            height: croppedHeight,
-        });
-
-        // H.264 Baseline profile only supports YUV 420 pixel format
-        // So chroma width/height is each half of video width/height
-        const chromaWidth = encodedWidth / 2;
-        const chromaHeight = encodedHeight / 2;
-
-        // YUVCanvas will set canvas size when format changes
-        const format = YuvBuffer.format({
-            width: encodedWidth,
-            height: encodedHeight,
-            chromaWidth,
-            chromaHeight,
-            cropLeft: cropLeft,
-            cropTop: cropTop,
-            cropWidth: croppedWidth,
-            cropHeight: croppedHeight,
-            displayWidth: croppedWidth,
-            displayHeight: croppedHeight,
-        });
-
-        const wrapper = await createTinyH264Wrapper();
-        this.#initializer.resolve(wrapper);
-
-        const uPlaneOffset = encodedWidth * encodedHeight;
-        const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
-        wrapper.onPictureReady(({ data }) => {
-            this.#frameRendered += 1;
-            const array = new Uint8Array(data);
-            const frame = YuvBuffer.frame(
-                format,
-                YuvBuffer.lumaPlane(format, array, encodedWidth, 0),
-                YuvBuffer.chromaPlane(format, array, chromaWidth, uPlaneOffset),
-                YuvBuffer.chromaPlane(format, array, chromaWidth, vPlaneOffset),
-            );
-            this.#yuvCanvas!.drawFrame(frame);
-        });
-
-        wrapper.feed(data.slice().buffer);
+        this.#decoder
+            .then((decoder) => decoder.dispose())
+            // NOOP: It's disposed so nobody cares about the error
+            .catch(noop);
+        this.#decoder = undefined;
     }
 
     dispose(): void {
-        this.#initializer?.promise
-            .then((wrapper) => wrapper.dispose())
-            // NOOP: It's disposed so nobody cares about the error
-            .catch(noop);
-        this.#initializer = undefined;
+        // This class doesn't need to guard against multiple dispose calls
+        // since most of the logic is already handled in `#pause`
+        this.#pause.dispose();
+
+        this.#disposeDecoder();
+        this.#counter.dispose();
+        this.#size.dispose();
+
+        this.#canvas.width = 0;
+        this.#canvas.height = 0;
     }
 }
 

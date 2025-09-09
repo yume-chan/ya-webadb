@@ -1,8 +1,9 @@
 import type { StructValue } from "@yume-chan/struct";
 import { struct, u32, u64 } from "@yume-chan/struct";
 
-import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
-import { AdbSyncResponseId, adbSyncReadResponse } from "./response.js";
+import { AdbSyncRequestId, AdbSyncResponseId } from "./id.js";
+import { adbSyncWriteRequest } from "./request.js";
+import { adbSyncReadResponse } from "./response.js";
 import type { AdbSyncSocket } from "./socket.js";
 
 // https://github.com/python/cpython/blob/4e581d64b8aff3e2eda99b12f080c877bb78dfca/Lib/stat.py#L36
@@ -131,7 +132,7 @@ export async function adbSyncLstat(
             await adbSyncWriteRequest(locked, AdbSyncRequestId.LstatV2, path);
             return await adbSyncReadResponse(
                 locked,
-                AdbSyncResponseId.Lstat2,
+                AdbSyncResponseId.LstatV2,
                 AdbSyncStatResponse,
             );
         } else {

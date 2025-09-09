@@ -1,7 +1,7 @@
 import type { Adb } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
 
-import { CmdNoneProtocolService } from "./cmd.js";
+import { Cmd } from "./cmd/index.js";
 import type { SingleUser } from "./utils.js";
 
 export type SettingsNamespace = "system" | "secure" | "global";
@@ -29,11 +29,11 @@ export class Settings extends AdbServiceBase {
     static ServiceName = "settings";
     static CommandName = "settings";
 
-    #cmd: CmdNoneProtocolService;
+    #cmd: Cmd.NoneProtocolService;
 
     constructor(adb: Adb) {
         super(adb);
-        this.#cmd = new CmdNoneProtocolService(adb, Settings.CommandName);
+        this.#cmd = Cmd.createNoneProtocol(adb, Settings.CommandName);
     }
 
     base(
@@ -42,16 +42,19 @@ export class Settings extends AdbServiceBase {
         options: SettingsOptions | undefined,
         ...args: string[]
     ): Promise<string> {
-        let command = [Settings.ServiceName];
+        const command = [Settings.ServiceName];
 
         if (options?.user !== undefined) {
             command.push("--user", options.user.toString());
         }
 
         command.push(verb, namespace);
-        command = command.concat(args);
 
-        return this.#cmd.spawnWaitText(command);
+        for (const arg of args) {
+            command.push(arg);
+        }
+
+        return this.#cmd.spawn(command).wait().toString();
     }
 
     async get(
@@ -61,7 +64,7 @@ export class Settings extends AdbServiceBase {
     ): Promise<string> {
         const output = await this.base("get", namespace, options, key);
         // Remove last \n
-        return output.substring(0, output.length - 1);
+        return output.endsWith("\n") ? output.slice(0, -1) : output;
     }
 
     async delete(

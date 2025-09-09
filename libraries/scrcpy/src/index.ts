@@ -31,7 +31,7 @@ export * from "./3_3_1/index.js";
 export * from "./3_3_2.js";
 export * from "./android/index.js";
 export * from "./base/index.js";
-export * from "./codec/index.js";
 export * from "./control/index.js";
 export * from "./latest.js";
 export * from "./utils/index.js";
+export * from "./video/index.js";
