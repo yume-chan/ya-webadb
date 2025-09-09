@@ -143,16 +143,6 @@ export class AdbDaemonWebUsbConnection
                 new MaybeConsumable.WritableStream({
                     write: async (chunk) => {
                         try {
-                            if (
-                                typeof SharedArrayBuffer !== "undefined" &&
-                                chunk.buffer instanceof SharedArrayBuffer
-                            ) {
-                                // Copy data to a non-shared ArrayBuffer
-                                const copy = new Uint8Array(chunk.byteLength);
-                                copy.set(chunk);
-                                chunk = copy;
-                            }
-
                             await device.raw.transferOut(
                                 outEndpoint.endpointNumber,
                                 // WebUSB doesn't support SharedArrayBuffer
