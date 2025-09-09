@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/adb-scrcpy
 
+## 2.2.1
+
+### Patch Changes
+
+- 4a228d1: Fix default version for client version 3.3.2
+
 ## 2.2.0
 
 ### Minor Changes
