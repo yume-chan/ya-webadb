@@ -6,6 +6,7 @@ import type {
 import {
     AdbPacketHeader,
     AdbPacketSerializeStream,
+    toLocalUint8Array,
     unreachable,
 } from "@yume-chan/adb";
 import type {
@@ -154,9 +155,9 @@ export class AdbDaemonWebUsbConnection
 
                             await device.raw.transferOut(
                                 outEndpoint.endpointNumber,
-                                // Already checked `chunk` has a non-shared ArrayBuffer
+                                // WebUSB doesn't support SharedArrayBuffer
                                 // https://github.com/WICG/webusb/issues/243
-                                chunk as Uint8Array<ArrayBuffer>,
+                                toLocalUint8Array(chunk),
                             );
 
                             // In USB protocol, a not-full packet indicates the end of a transfer.
