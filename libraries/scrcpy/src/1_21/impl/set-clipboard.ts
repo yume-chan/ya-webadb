@@ -12,6 +12,7 @@ export const AckClipboardDeviceMessage = struct(
 
 export const SetClipboardControlMessage = struct(
     {
+        // value of `type` can change between versions
         type: u8,
         sequence: u64,
         paste: u8<boolean>(),

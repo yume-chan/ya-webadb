@@ -9,6 +9,7 @@ import type {
 
 export const ScrcpyInjectKeyCodeControlMessage = struct(
     {
+        // value of `type` can change between versions
         type: u8,
         action: u8<AndroidKeyEventAction>(),
         keyCode: u32<AndroidKeyCode>(),

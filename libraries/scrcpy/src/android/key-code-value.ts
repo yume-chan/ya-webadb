@@ -105,10 +105,24 @@ export const Quote = 75;
 export const Slash = 76;
 export const At = 77; // Name not verified
 
+/**
+ * Number modifier key.
+ *
+ * Used to enter numeric symbols.
+ * This key is not Num Lock; it is more like {@link AltLeft} and is
+ * interpreted as an ALT key by `android.text.method.MetaKeyKeyListener`.
+ */
 export const AndroidNum = 78;
+/**
+ * Headset Hook key.
+ *
+ * Used to hang up calls and stop media.
+ */
 export const AndroidHeadsetHook = 79;
 /**
- * Camera Focus key。
+ * Camera Focus key.
+ *
+ * Used to focus the camera.
  */
 export const AndroidFocus = 80;
 

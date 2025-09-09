@@ -25,6 +25,7 @@ export const SignedFloat: Field<number, never, never> = field(
 
 export const InjectScrollControlMessage = struct(
     {
+        // value of `type` can change between versions
         type: u8,
         pointerX: u32,
         pointerY: u32,

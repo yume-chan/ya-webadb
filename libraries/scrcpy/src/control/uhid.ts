@@ -3,6 +3,7 @@ import { buffer, struct, u16, u8 } from "@yume-chan/struct";
 
 export const ScrcpyUHidInputControlMessage = struct(
     {
+        // value of `type` can change between versions
         type: u8,
         id: u16,
         data: buffer(u16),
@@ -16,6 +17,7 @@ export type ScrcpyUHidInputControlMessage = StructInit<
 
 export const ScrcpyUHidDestroyControlMessage = struct(
     {
+        // value of `type` can change between versions
         type: u8,
         id: u16,
     },

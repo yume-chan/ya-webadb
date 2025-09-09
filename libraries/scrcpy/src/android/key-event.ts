@@ -31,7 +31,7 @@ export const AndroidKeyEventMeta = {
 export type AndroidKeyEventMeta =
     (typeof AndroidKeyEventMeta)[keyof typeof AndroidKeyEventMeta];
 
-// enum
+// biome-ignore lint/suspicious/noRedeclare: TypeScript declaration merging for enum-like object
 type AndroidKeyCode = (typeof AndroidKeyCode)[keyof typeof AndroidKeyCode];
 
 export { AndroidKeyCode };
