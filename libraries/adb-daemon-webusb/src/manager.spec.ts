@@ -17,8 +17,10 @@ class MockUsb implements USB {
                 serialNumber: options?.filters?.[0]?.serialNumber ?? "abcdefgh",
                 vendorId: options?.filters?.[0]?.vendorId ?? 0x18d1,
                 productId: options?.filters?.[0]?.productId ?? 0x4e49,
+                configuration: null,
                 configurations: [
                     {
+                        configurationName: null,
                         configurationValue: 1,
                         interfaces: [
                             {
@@ -30,6 +32,7 @@ class MockUsb implements USB {
                                         AdbDefaultInterfaceFilter.classCode,
                                     interfaceSubclass:
                                         AdbDefaultInterfaceFilter.subclassCode,
+                                    interfaceName: null,
                                     interfaceProtocol:
                                         AdbDefaultInterfaceFilter.protocolCode,
                                     endpoints: [],
@@ -41,6 +44,7 @@ class MockUsb implements USB {
                                             AdbDefaultInterfaceFilter.classCode,
                                         interfaceSubclass:
                                             AdbDefaultInterfaceFilter.subclassCode,
+                                        interfaceName: null,
                                         interfaceProtocol:
                                             AdbDefaultInterfaceFilter.protocolCode,
                                         endpoints: [],

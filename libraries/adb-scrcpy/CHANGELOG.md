@@ -1,5 +1,16 @@
 # Change Log - @yume-chan/adb-scrcpy
 
+## 2.2.0
+
+### Minor Changes
+
+- f34724f: Add support for Scrcpy server version 3.3.2 (no protocol changes)
+
+### Patch Changes
+
+- Updated dependencies [f34724f]
+    - @yume-chan/scrcpy@2.2.0
+
 ## 2.1.1
 
 ### Patch Changes
