@@ -20,7 +20,7 @@ export async function aoaHidRegister(
 export async function aoaHidSetReportDescriptor(
     device: USBDevice,
     accessoryId: number,
-    reportDescriptor: Uint8Array,
+    reportDescriptor: Uint8Array<ArrayBuffer>,
 ) {
     await device.controlTransferOut(
         {
@@ -50,7 +50,7 @@ export async function aoaHidUnregister(device: USBDevice, accessoryId: number) {
 export async function aoaHidSendInputReport(
     device: USBDevice,
     accessoryId: number,
-    event: Uint8Array,
+    event: Uint8Array<ArrayBuffer>,
 ) {
     await device.controlTransferOut(
         {
@@ -80,7 +80,7 @@ export class AoaHidDevice {
     static async register(
         device: USBDevice,
         accessoryId: number,
-        reportDescriptor: Uint8Array,
+        reportDescriptor: Uint8Array<ArrayBuffer>,
     ) {
         await aoaHidRegister(device, accessoryId, reportDescriptor.length);
         await aoaHidSetReportDescriptor(device, accessoryId, reportDescriptor);
@@ -95,7 +95,7 @@ export class AoaHidDevice {
         this.#accessoryId = accessoryId;
     }
 
-    async sendInputReport(event: Uint8Array) {
+    async sendInputReport(event: Uint8Array<ArrayBuffer>) {
         await aoaHidSendInputReport(this.#device, this.#accessoryId, event);
     }
 

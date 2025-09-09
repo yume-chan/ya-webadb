@@ -32,18 +32,18 @@
         "test": "run-test"
     },
     "dependencies": {
-        "@types/w3c-web-usb": "^1.0.10",
+        "@types/w3c-web-usb": "^1.0.12",
         "@yume-chan/adb": "workspace:^",
         "@yume-chan/event": "workspace:^",
         "@yume-chan/stream-extra": "workspace:^",
         "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^24.0.15",
+        "@types/node": "^24.3.1",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.6.2",
-        "typescript": "^5.8.3"
+        "typescript": "^5.9.2"
     }
 }

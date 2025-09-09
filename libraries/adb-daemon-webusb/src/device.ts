@@ -6,6 +6,7 @@ import type {
 import {
     AdbPacketHeader,
     AdbPacketSerializeStream,
+    toLocalUint8Array,
     unreachable,
 } from "@yume-chan/adb";
 import type {
@@ -144,7 +145,7 @@ export class AdbDaemonWebUsbConnection
                         try {
                             await device.raw.transferOut(
                                 outEndpoint.endpointNumber,
-                                chunk,
+                                toLocalUint8Array(chunk),
                             );
 
                             // In USB protocol, a not-full packet indicates the end of a transfer.
