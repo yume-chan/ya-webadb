@@ -19,6 +19,10 @@ export default defineConfig({
             format: {
                 beautify: true,
             },
+            compress: {
+                passes: 10,
+            },
+            mangle: false,
         }),
     ],
 });

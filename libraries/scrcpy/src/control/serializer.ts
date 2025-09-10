@@ -14,7 +14,6 @@ import type {
 import { EmptyControlMessage } from "./empty.js";
 import { ScrcpyInjectKeyCodeControlMessage } from "./inject-key-code.js";
 import { ScrcpyInjectTextControlMessage } from "./inject-text.js";
-import { ScrcpyControlMessageTypeMap } from "./message-type-map.js";
 import { ScrcpySetDisplayPowerControlMessage } from "./set-screen-power-mode.js";
 import { ScrcpyStartAppControlMessage } from "./start-app.js";
 import {
@@ -24,28 +23,39 @@ import {
 
 export class ScrcpyControlMessageSerializer {
     #options: ScrcpyOptions<object>;
-    #typeMap: ScrcpyControlMessageTypeMap;
     #scrollController: ScrcpyScrollController;
 
     constructor(options: ScrcpyOptions<object>) {
         this.#options = options;
-        this.#typeMap = new ScrcpyControlMessageTypeMap(options);
         this.#scrollController = options.createScrollController();
+    }
+
+    getType(type: ScrcpyControlMessageType): number {
+        const value = this.#options.controlMessageTypes[type];
+        if (value === undefined) {
+            throw new TypeError(`Invalid control message type: ${type}`);
+        }
+        return value;
+    }
+
+    #addType<T extends { type: number }>(
+        message: Omit<T, "type">,
+        type: ScrcpyControlMessageType,
+    ): T {
+        (message as T).type = this.getType(type);
+        return message as T;
     }
 
     injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">) {
         return ScrcpyInjectKeyCodeControlMessage.serialize(
-            this.#typeMap.fillMessageType(
-                message,
-                ScrcpyControlMessageType.InjectKeyCode,
-            ),
+            this.#addType(message, ScrcpyControlMessageType.InjectKeyCode),
         );
     }
 
     injectText(text: string) {
         return ScrcpyInjectTextControlMessage.serialize({
             text,
-            type: this.#typeMap.get(ScrcpyControlMessageType.InjectText),
+            type: this.getType(ScrcpyControlMessageType.InjectText),
         });
     }
 
@@ -54,10 +64,7 @@ export class ScrcpyControlMessageSerializer {
      */
     injectTouch(message: Omit<ScrcpyInjectTouchControlMessage, "type">) {
         return this.#options.serializeInjectTouchControlMessage(
-            this.#typeMap.fillMessageType(
-                message,
-                ScrcpyControlMessageType.InjectTouch,
-            ),
+            this.#addType(message, ScrcpyControlMessageType.InjectTouch),
         );
     }
 
@@ -66,30 +73,27 @@ export class ScrcpyControlMessageSerializer {
      */
     injectScroll(message: Omit<ScrcpyInjectScrollControlMessage, "type">) {
         return this.#scrollController.serializeScrollMessage(
-            this.#typeMap.fillMessageType(
-                message,
-                ScrcpyControlMessageType.InjectScroll,
-            ),
+            this.#addType(message, ScrcpyControlMessageType.InjectScroll),
         );
     }
 
     backOrScreenOn(action: AndroidKeyEventAction) {
         return this.#options.serializeBackOrScreenOnControlMessage({
             action,
-            type: this.#typeMap.get(ScrcpyControlMessageType.BackOrScreenOn),
+            type: this.getType(ScrcpyControlMessageType.BackOrScreenOn),
         });
     }
 
     setDisplayPower(mode: AndroidScreenPowerMode) {
         return ScrcpySetDisplayPowerControlMessage.serialize({
             mode,
-            type: this.#typeMap.get(ScrcpyControlMessageType.SetDisplayPower),
+            type: this.getType(ScrcpyControlMessageType.SetDisplayPower),
         });
     }
 
     expandNotificationPanel() {
         return EmptyControlMessage.serialize({
-            type: this.#typeMap.get(
+            type: this.getType(
                 ScrcpyControlMessageType.ExpandNotificationPanel,
             ),
         });
@@ -97,15 +101,13 @@ export class ScrcpyControlMessageSerializer {
 
     expandSettingPanel() {
         return EmptyControlMessage.serialize({
-            type: this.#typeMap.get(
-                ScrcpyControlMessageType.ExpandSettingPanel,
-            ),
+            type: this.getType(ScrcpyControlMessageType.ExpandSettingPanel),
         });
     }
 
     collapseNotificationPanel() {
         return EmptyControlMessage.serialize({
-            type: this.#typeMap.get(
+            type: this.getType(
                 ScrcpyControlMessageType.CollapseNotificationPanel,
             ),
         });
@@ -113,14 +115,14 @@ export class ScrcpyControlMessageSerializer {
 
     rotateDevice() {
         return EmptyControlMessage.serialize({
-            type: this.#typeMap.get(ScrcpyControlMessageType.RotateDevice),
+            type: this.getType(ScrcpyControlMessageType.RotateDevice),
         });
     }
 
     setClipboard(message: Omit<ScrcpySetClipboardControlMessage, "type">) {
         return this.#options.serializeSetClipboardControlMessage({
             ...message,
-            type: this.#typeMap.get(ScrcpyControlMessageType.SetClipboard),
+            type: this.getType(ScrcpyControlMessageType.SetClipboard),
         });
     }
 
@@ -130,25 +132,19 @@ export class ScrcpyControlMessageSerializer {
         }
 
         return this.#options.serializeUHidCreateControlMessage(
-            this.#typeMap.fillMessageType(
-                message,
-                ScrcpyControlMessageType.UHidCreate,
-            ),
+            this.#addType(message, ScrcpyControlMessageType.UHidCreate),
         );
     }
 
     uHidInput(message: Omit<ScrcpyUHidInputControlMessage, "type">) {
         return ScrcpyUHidInputControlMessage.serialize(
-            this.#typeMap.fillMessageType(
-                message,
-                ScrcpyControlMessageType.UHidInput,
-            ),
+            this.#addType(message, ScrcpyControlMessageType.UHidInput),
         );
     }
 
     uHidDestroy(id: number) {
         return ScrcpyUHidDestroyControlMessage.serialize({
-            type: this.#typeMap.get(ScrcpyControlMessageType.UHidDestroy),
+            type: this.getType(ScrcpyControlMessageType.UHidDestroy),
             id,
         });
     }
@@ -165,14 +161,14 @@ export class ScrcpyControlMessageSerializer {
         }
 
         return ScrcpyStartAppControlMessage.serialize({
-            type: this.#typeMap.get(ScrcpyControlMessageType.StartApp),
+            type: this.getType(ScrcpyControlMessageType.StartApp),
             name,
         });
     }
 
     resetVideo() {
         return EmptyControlMessage.serialize({
-            type: this.#typeMap.get(ScrcpyControlMessageType.ResetVideo),
+            type: this.getType(ScrcpyControlMessageType.ResetVideo),
         });
     }
 }

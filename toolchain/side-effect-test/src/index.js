@@ -1,7 +1,2 @@
-import { AdbDeviceFeatures, AdbFeature } from "@yume-chan/adb";
-
-export const A = [AdbFeature.Cmd];
-export { AdbDeviceFeatures };
-
-export * from "./scrcpy.js";
-export * from "./struct.js";
+export { default as Adb } from "./adb.js";
+export { default as Scrcpy } from "./scrcpy.js";

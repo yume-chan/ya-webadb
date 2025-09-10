@@ -2,7 +2,6 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
 
 import type {
-    ScrcpyControlMessageType,
     ScrcpyDisplay,
     ScrcpyMediaStreamPacket,
     ScrcpyOptions,
@@ -38,7 +37,7 @@ export class ScrcpyOptions1_15 implements ScrcpyOptions<Init> {
 
     readonly value: Required<Init>;
 
-    get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
+    get controlMessageTypes() {
         return ControlMessageTypes;
     }
 

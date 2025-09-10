@@ -3,7 +3,6 @@ import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
 
 import type {
     ScrcpyAudioStreamMetadata,
-    ScrcpyControlMessageType,
     ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
@@ -49,7 +48,7 @@ export class ScrcpyOptions2_7<TVideo extends boolean>
 
     readonly value: Required<Init<TVideo>>;
 
-    get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
+    get controlMessageTypes() {
         return ControlMessageTypes;
     }
 
