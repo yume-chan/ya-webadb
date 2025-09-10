@@ -1,22 +1,26 @@
-import type { Field } from "./field/index.js";
+import type {
+    BipedalFieldDeserializer,
+    ByobFieldSerializer,
+    Field,
+} from "./field/index.js";
 import { field } from "./field/index.js";
 
 export const EmptyUint8Array = new Uint8Array(0);
 
 function copyMaybeDifferentLength(
-    dist: Uint8Array,
+    dest: Uint8Array,
     source: Uint8Array,
     index: number,
     length: number,
 ) {
     if (source.length < length) {
-        dist.set(source, index);
+        dest.set(source, index);
         // Clear trailing bytes
-        dist.fill(0, index + source.length, index + length);
+        dest.fill(0, index + source.length, index + length);
     } else if (source.length === length) {
-        dist.set(source, index);
+        dest.set(source, index);
     } else {
-        dist.set(source.subarray(0, length), index);
+        dest.set(source.subarray(0, length), index);
     }
 }
 
@@ -129,67 +133,47 @@ export function buffer(
 ): Field<unknown, string, Record<string, unknown>, Uint8Array> {
     // Fixed length
     if (typeof lengthOrField === "number") {
-        if (converter) {
-            if (lengthOrField === 0) {
-                return field(
-                    0,
-                    "byob",
-                    () => {},
-                    // eslint-disable-next-line require-yield
-                    function* () {
-                        return converter.convert(EmptyUint8Array);
-                    },
-                );
-            }
-
-            return field(
-                lengthOrField,
-                "byob",
-                (value, { buffer, index }) => {
-                    copyMaybeDifferentLength(
-                        buffer,
-                        value,
-                        index,
-                        lengthOrField,
-                    );
-                },
-                function* (then, reader) {
-                    const array = yield* then(
-                        reader.readExactly(lengthOrField),
-                    );
-                    return converter.convert(array);
-                },
-                {
-                    init(value) {
-                        return converter.back(value);
-                    },
-                },
-            );
-        }
+        let serialize: ByobFieldSerializer<Uint8Array>;
+        let deserialize: BipedalFieldDeserializer<
+            unknown,
+            Record<string, unknown>
+        >;
+        let init: ((value: unknown) => Uint8Array) | undefined;
 
         if (lengthOrField === 0) {
-            return field(
-                0,
-                "byob",
-                () => {},
+            serialize = () => {};
+
+            if (converter) {
                 // eslint-disable-next-line require-yield
-                function* () {
+                deserialize = function* () {
+                    return converter.convert(EmptyUint8Array);
+                };
+            } else {
+                // eslint-disable-next-line require-yield
+                deserialize = function* () {
                     return EmptyUint8Array;
-                },
-            );
+                };
+            }
+        } else {
+            serialize = (value, { buffer, index }) =>
+                copyMaybeDifferentLength(buffer, value, index, lengthOrField);
+
+            if (converter) {
+                deserialize = function* (then, reader) {
+                    const array = reader.readExactly(lengthOrField);
+                    return converter.convert(yield* then(array));
+                };
+                init = (value) => converter.back(value);
+            } else {
+                // eslint-disable-next-line require-yield
+                deserialize = function* (_then, reader) {
+                    const array = reader.readExactly(lengthOrField);
+                    return array;
+                };
+            }
         }
 
-        return field(
-            lengthOrField,
-            "byob",
-            (value, { buffer, index }) => {
-                copyMaybeDifferentLength(buffer, value, index, lengthOrField);
-            },
-            // eslint-disable-next-line require-yield
-            function* (_then, reader) {
-                return reader.readExactly(lengthOrField);
-            },
-        );
+        return field(lengthOrField, "byob", serialize, deserialize, { init });
     }
 
     // Declare length field
@@ -199,48 +183,31 @@ export function buffer(
             typeof lengthOrField === "function") &&
         "serialize" in lengthOrField
     ) {
+        let deserialize: BipedalFieldDeserializer<
+            unknown,
+            Record<string, unknown>
+        >;
+        let init: ((value: unknown) => Uint8Array) | undefined;
+
         if (converter) {
-            return field(
-                lengthOrField.size,
-                "default",
-                (value, { littleEndian }) => {
-                    if (lengthOrField.type === "default") {
-                        const lengthBuffer = lengthOrField.serialize(
-                            value.length,
-                            { littleEndian },
-                        );
-                        const result = new Uint8Array(
-                            lengthBuffer.length + value.length,
-                        );
-                        result.set(lengthBuffer, 0);
-                        result.set(value, lengthBuffer.length);
-                        return result;
-                    } else {
-                        const result = new Uint8Array(
-                            lengthOrField.size + value.length,
-                        );
-                        lengthOrField.serialize(value.length, {
-                            buffer: result,
-                            index: 0,
-                            littleEndian,
-                        });
-                        result.set(value, lengthOrField.size);
-                        return result;
-                    }
-                },
-                function* (then, reader, context) {
-                    const length = yield* then(
-                        lengthOrField.deserialize(reader, context),
-                    );
-                    const array = yield* then(reader.readExactly(length));
-                    return converter.convert(array);
-                },
-                {
-                    init(value) {
-                        return converter.back(value);
-                    },
-                },
-            );
+            deserialize = function* (then, reader, context) {
+                const length = yield* then(
+                    lengthOrField.deserialize(reader, context),
+                );
+                const array =
+                    length !== 0 ? reader.readExactly(length) : EmptyUint8Array;
+                return converter.convert(yield* then(array));
+            };
+            init = (value) => converter.back(value);
+        } else {
+            deserialize = function* (then, reader, context) {
+                const length = yield* then(
+                    lengthOrField.deserialize(reader, context),
+                );
+                const array =
+                    length !== 0 ? reader.readExactly(length) : EmptyUint8Array;
+                return array;
+            };
         }
 
         return field(
@@ -251,6 +218,11 @@ export function buffer(
                     const lengthBuffer = lengthOrField.serialize(value.length, {
                         littleEndian,
                     });
+
+                    if (value.length === 0) {
+                        return lengthBuffer;
+                    }
+
                     const result = new Uint8Array(
                         lengthBuffer.length + value.length,
                     );
@@ -270,112 +242,91 @@ export function buffer(
                     return result;
                 }
             },
-            function* (then, reader, context) {
-                const length = yield* then(
-                    lengthOrField.deserialize(reader, context),
-                );
-                return yield* then(reader.readExactly(length));
-            },
+            deserialize,
+            { init },
         );
     }
 
-    // Reference exiting length field
+    // Reference existing length field
     if (typeof lengthOrField === "string") {
-        if (converter) {
-            return field(
-                0,
-                "default",
-                (source) => source,
-                // eslint-disable-next-line require-yield
-                function* (_then, reader, { dependencies }) {
-                    const length = dependencies[lengthOrField] as number;
-                    if (length === 0) {
-                        return EmptyUint8Array;
-                    }
+        let deserialize: BipedalFieldDeserializer<
+            unknown,
+            Record<string, unknown>
+        >;
+        let init: (
+            value: unknown,
+            dependencies: Record<string, unknown>,
+        ) => Uint8Array;
 
-                    return reader.readExactly(length);
-                },
-                {
-                    init(value, dependencies) {
-                        const array = converter.back(value);
-                        dependencies[lengthOrField] = array.length;
-                        return array;
-                    },
-                },
-            );
+        if (converter) {
+            deserialize = function* (then, reader, { dependencies }) {
+                const length = dependencies[lengthOrField] as number;
+                const array =
+                    length !== 0 ? reader.readExactly(length) : EmptyUint8Array;
+                return converter.convert(yield* then(array));
+            };
+            init = (value, dependencies) => {
+                const array = converter.back(value);
+                dependencies[lengthOrField] = array.length;
+                return array;
+            };
+        } else {
+            // eslint-disable-next-line require-yield
+            deserialize = function* (_then, reader, { dependencies }) {
+                const length = dependencies[lengthOrField] as number;
+                const array =
+                    length !== 0 ? reader.readExactly(length) : EmptyUint8Array;
+                return array;
+            };
+            init = (value, dependencies) => {
+                const array = value as Uint8Array;
+                dependencies[lengthOrField] = array.length;
+                return array;
+            };
         }
 
-        return field(
-            0,
-            "default",
-            (source) => source,
-            // eslint-disable-next-line require-yield
-            function* (_then, reader, { dependencies }) {
-                const length = dependencies[lengthOrField] as number;
-                if (length === 0) {
-                    return EmptyUint8Array;
-                }
-
-                return reader.readExactly(length);
-            },
-            {
-                init(value, dependencies) {
-                    dependencies[lengthOrField] = (value as Uint8Array).length;
-                    return undefined;
-                },
-            },
-        );
+        return field(0, "default", (source) => source, deserialize, { init });
     }
 
-    // Reference existing length field + converter
+    let deserialize: BipedalFieldDeserializer<unknown, Record<string, unknown>>;
+    let init: (
+        value: unknown,
+        dependencies: Record<string, unknown>,
+    ) => Uint8Array;
+
+    // Reference existing length field + length converter
     if (converter) {
-        return field(
-            0,
-            "default",
-            (source) => source,
-            // eslint-disable-next-line require-yield
-            function* (_then, reader, { dependencies }) {
-                const rawLength = dependencies[lengthOrField.field];
-                const length = lengthOrField.convert(rawLength);
-                if (length === 0) {
-                    return EmptyUint8Array;
-                }
-
-                return reader.readExactly(length);
-            },
-            {
-                init(value, dependencies) {
-                    const array = converter.back(value);
-                    dependencies[lengthOrField.field] = lengthOrField.back(
-                        array.length,
-                    );
-                    return array;
-                },
-            },
-        );
-    }
-
-    return field(
-        0,
-        "default",
-        (source) => source,
-        // eslint-disable-next-line require-yield
-        function* (_then, reader, { dependencies }) {
+        deserialize = function* (then, reader, { dependencies }) {
             const rawLength = dependencies[lengthOrField.field];
             const length = lengthOrField.convert(rawLength);
-            if (length === 0) {
-                return EmptyUint8Array;
-            }
+            const array =
+                length !== 0 ? reader.readExactly(length) : EmptyUint8Array;
+            return converter.convert(yield* then(array));
+        };
+        init = (value, dependencies) => {
+            const array = converter.back(value);
+            dependencies[lengthOrField.field] = lengthOrField.back(
+                array.length,
+            );
+            return array;
+        };
+    } else {
+        // eslint-disable-next-line require-yield
+        deserialize = function* (_then, reader, { dependencies }) {
+            const rawLength = dependencies[lengthOrField.field];
+            const length = lengthOrField.convert(rawLength);
+            const array =
+                length !== 0 ? reader.readExactly(length) : EmptyUint8Array;
+            return array;
+        };
+        init = (value, dependencies) => {
+            const array = value as Uint8Array;
+            dependencies[lengthOrField.field] = lengthOrField.back(
+                array.length,
+            );
+            return array;
+        };
+    }
 
-            return reader.readExactly(length);
-        },
-        {
-            init(value, dependencies) {
-                dependencies[lengthOrField.field] = lengthOrField.back(
-                    (value as Uint8Array).length,
-                );
-                return undefined;
-            },
-        },
-    );
+    return field(0, "default", (source) => source, deserialize, { init });
 }

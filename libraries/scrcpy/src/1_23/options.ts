@@ -43,7 +43,7 @@ export class ScrcpyOptions1_23
 
     readonly value: Required<Init>;
 
-    get controlMessageTypes() {
+    get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
     }
 
@@ -121,7 +121,21 @@ export class ScrcpyOptions1_23
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): Uint8Array | [Uint8Array, Promise<void>] {
-        return this.#ackClipboardHandler!.serializeSetClipboardControlMessage(
+        if (!this.#ackClipboardHandler) {
+            if (!this.value.control) {
+                throw new Error(
+                    "`serializeSetClipboardControlMessage` requires `control: true`",
+                );
+            } else if (!this.value.clipboardAutosync) {
+                throw new Error(
+                    "`serializeSetClipboardControlMessage` requires `clipboardAutosync: true`",
+                );
+            } else {
+                throw new Error("unreachable");
+            }
+        }
+
+        return this.#ackClipboardHandler.serializeSetClipboardControlMessage(
             message,
         );
     }

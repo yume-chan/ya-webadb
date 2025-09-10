@@ -48,7 +48,7 @@ export class ScrcpyOptions3_1<TVideo extends boolean>
 
     readonly value: Required<Init<TVideo>>;
 
-    get controlMessageTypes() {
+    get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
     }
 
@@ -153,7 +153,21 @@ export class ScrcpyOptions3_1<TVideo extends boolean>
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): Uint8Array | [Uint8Array, Promise<void>] {
-        return this.#ackClipboardHandler!.serializeSetClipboardControlMessage(
+        if (!this.#ackClipboardHandler) {
+            if (!this.value.control) {
+                throw new Error(
+                    "`serializeSetClipboardControlMessage` requires `control: true`",
+                );
+            } else if (!this.value.clipboardAutosync) {
+                throw new Error(
+                    "`serializeSetClipboardControlMessage` requires `clipboardAutosync: true`",
+                );
+            } else {
+                throw new Error("unreachable");
+            }
+        }
+
+        return this.#ackClipboardHandler.serializeSetClipboardControlMessage(
             message,
         );
     }

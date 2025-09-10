@@ -5,7 +5,7 @@ export const Defaults = {
     ...{
         ...PrevImpl.Defaults,
         // Remove obsolete values
-        // replies on minifier to flatten the nested spread
+        // relies on the minifier to flatten the nested spread
         bitRate: undefined,
         codecOptions: undefined,
         encoderName: undefined,

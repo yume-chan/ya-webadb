@@ -37,7 +37,7 @@ export class ScrcpyOptions1_15 implements ScrcpyOptions<Init> {
 
     readonly value: Required<Init>;
 
-    get controlMessageTypes() {
+    get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
     }
 
