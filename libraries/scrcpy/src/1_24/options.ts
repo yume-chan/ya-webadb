@@ -2,7 +2,6 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
 
 import type {
-    ScrcpyControlMessageType,
     ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
@@ -33,6 +32,7 @@ import {
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
+    serializeSetClipboardControlMessage,
     setListDisplays,
     setListEncoders,
 } from "./impl/index.js";
@@ -44,7 +44,7 @@ export class ScrcpyOptions1_24
 
     readonly value: Required<Init>;
 
-    get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
+    get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
     }
 
@@ -63,10 +63,12 @@ export class ScrcpyOptions1_24
     constructor(init: Init) {
         this.value = { ...Defaults, ...init };
 
-        if (this.value.control && this.value.clipboardAutosync) {
-            this.#clipboard = this.#deviceMessageParsers.add(
-                new ClipboardStream(),
-            );
+        if (this.value.control) {
+            if (this.value.clipboardAutosync) {
+                this.#clipboard = this.#deviceMessageParsers.add(
+                    new ClipboardStream(),
+                );
+            }
 
             this.#ackClipboardHandler = this.#deviceMessageParsers.add(
                 new AckClipboardHandler(),
@@ -122,8 +124,9 @@ export class ScrcpyOptions1_24
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): Uint8Array | [Uint8Array, Promise<void>] {
-        return this.#ackClipboardHandler!.serializeSetClipboardControlMessage(
+        return serializeSetClipboardControlMessage(
             message,
+            this.#ackClipboardHandler,
         );
     }
 

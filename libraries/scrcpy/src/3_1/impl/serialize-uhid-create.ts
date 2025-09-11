@@ -5,6 +5,7 @@ import type { ScrcpyUHidCreateControlMessage } from "../../latest.js";
 
 export const UHidCreateControlMessage = struct(
     {
+        // value of `type` can change between versions
         type: u8,
         id: u16,
         vendorId: u16,

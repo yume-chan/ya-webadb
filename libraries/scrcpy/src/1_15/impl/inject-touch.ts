@@ -32,6 +32,7 @@ export const PointerId = {
 
 export const InjectTouchControlMessage = struct(
     {
+        // value of `type` can change between versions
         type: u8,
         action: u8<AndroidMotionEventAction>(),
         pointerId: u64,

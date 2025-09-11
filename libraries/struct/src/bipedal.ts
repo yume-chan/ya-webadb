@@ -24,7 +24,7 @@ export type BipedalGenerator<This, T, A extends unknown[]> = (
     this: This,
     then: <U>(value: MaybePromiseLike<U>) => Iterable<unknown, U, unknown>,
     ...args: A
-) => Generator<unknown, T, unknown>;
+) => Generator<unknown, MaybePromiseLike<T>, unknown>;
 
 /* #__NO_SIDE_EFFECTS__ */
 export function bipedal<This, T, A extends unknown[]>(

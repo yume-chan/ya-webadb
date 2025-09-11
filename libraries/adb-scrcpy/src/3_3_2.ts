@@ -27,7 +27,7 @@ export class AdbScrcpyOptions3_3_2<TVideo extends boolean>
     ) {
         super(init);
 
-        this.version = clientOptions?.version ?? "3.3.1";
+        this.version = clientOptions?.version ?? "3.3.2";
         this.spawner = clientOptions?.spawner;
     }
 
