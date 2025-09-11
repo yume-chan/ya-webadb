@@ -35,6 +35,7 @@ import {
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
+    serializeSetClipboardControlMessage,
     serializeUHidCreateControlMessage,
     setListDisplays,
     setListEncoders,
@@ -87,11 +88,11 @@ export class ScrcpyOptions2_6<TVideo extends boolean>
                 this.#clipboard = this.#deviceMessageParsers.add(
                     new ClipboardStream(),
                 );
-
-                this.#ackClipboardHandler = this.#deviceMessageParsers.add(
-                    new AckClipboardHandler(),
-                );
             }
+
+            this.#ackClipboardHandler = this.#deviceMessageParsers.add(
+                new AckClipboardHandler(),
+            );
 
             this.#uHidOutput = this.#deviceMessageParsers.add(
                 new UHidOutputStream(),
@@ -153,22 +154,9 @@ export class ScrcpyOptions2_6<TVideo extends boolean>
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): Uint8Array | [Uint8Array, Promise<void>] {
-        if (!this.#ackClipboardHandler) {
-            if (!this.value.control) {
-                throw new Error(
-                    "`serializeSetClipboardControlMessage` requires `control: true`",
-                );
-            } else if (!this.value.clipboardAutosync) {
-                throw new Error(
-                    "`serializeSetClipboardControlMessage` requires `clipboardAutosync: true`",
-                );
-            } else {
-                throw new Error("unreachable");
-            }
-        }
-
-        return this.#ackClipboardHandler.serializeSetClipboardControlMessage(
+        return serializeSetClipboardControlMessage(
             message,
+            this.#ackClipboardHandler,
         );
     }
 

@@ -76,3 +76,16 @@ export class AckClipboardHandler implements ScrcpyDeviceMessageParser {
         ];
     }
 }
+
+export function serializeSetClipboardControlMessage(
+    message: ScrcpySetClipboardControlMessage,
+    ackHandler: AckClipboardHandler | undefined,
+): Uint8Array | [Uint8Array, Promise<void>] {
+    if (!ackHandler) {
+        throw new Error(
+            "`serializeSetClipboardControlMessage` requires `control: true` option",
+        );
+    }
+
+    return ackHandler.serializeSetClipboardControlMessage(message);
+}
