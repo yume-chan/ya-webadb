@@ -7,7 +7,7 @@ import {
     Uint8ArrayExactReadable,
 } from "@yume-chan/struct";
 
-import type { TangoDataStorage } from "./type.js";
+import type { TangoKey, TangoKeyStorage } from "./type.js";
 
 const Pbkdf2SaltLength = 16;
 const Pbkdf2Iterations = 1_000_000;
@@ -59,21 +59,24 @@ class PasswordIncorrectError extends Error {
     }
 }
 
-export class TangoPasswordProtectedStorage implements TangoDataStorage {
+export class TangoPasswordProtectedStorage implements TangoKeyStorage {
     static PasswordIncorrectError = PasswordIncorrectError;
 
-    readonly #storage: TangoDataStorage;
+    readonly #storage: TangoKeyStorage;
     readonly #requestPassword: TangoPasswordProtectedStorage.RequestPassword;
 
     constructor(
-        storage: TangoDataStorage,
+        storage: TangoKeyStorage,
         requestPassword: TangoPasswordProtectedStorage.RequestPassword,
     ) {
         this.#storage = storage;
         this.#requestPassword = requestPassword;
     }
 
-    async save(data: Uint8Array<ArrayBuffer>): Promise<undefined> {
+    async save(
+        privateKey: Uint8Array<ArrayBuffer>,
+        name: string | undefined,
+    ): Promise<undefined> {
         const password = await this.#requestPassword("save");
         const { salt, aesKey } = await deriveAesKey(password);
 
@@ -83,7 +86,7 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
         const encrypted = await crypto.subtle.encrypt(
             { name: "AES-GCM", iv },
             aesKey,
-            data,
+            privateKey,
         );
 
         const bundle = Bundle.serialize({
@@ -92,7 +95,7 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
             encrypted: new Uint8Array(encrypted),
         });
 
-        await this.#storage.save(bundle);
+        await this.#storage.save(bundle, name);
 
         // Clear secret memory
         //   * No way to clear `password` and `aesKey`
@@ -100,8 +103,11 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
         //   * `data` is owned by caller and will be cleared by caller
     }
 
-    async *load(): AsyncGenerator<Uint8Array, void, void> {
-        for await (const serialized of this.#storage.load()) {
+    async *load(): AsyncGenerator<TangoKey, void, void> {
+        for await (const {
+            privateKey: serialized,
+            name,
+        } of this.#storage.load()) {
             const bundle = Bundle.deserialize(
                 new Uint8ArrayExactReadable(serialized),
             );
@@ -122,7 +128,10 @@ export class TangoPasswordProtectedStorage implements TangoDataStorage {
                     bundle.encrypted as Uint8Array<ArrayBuffer>,
                 );
 
-                yield new Uint8Array(decrypted);
+                yield {
+                    privateKey: new Uint8Array(decrypted),
+                    name,
+                };
 
                 // Clear secret memory
                 //   * No way to clear `password` and `aesKey`

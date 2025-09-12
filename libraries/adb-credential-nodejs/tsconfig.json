@@ -1,0 +1,16 @@
+{
+    "references": [
+        {
+            "path": "./tsconfig.build.json"
+        },
+        {
+            "path": "./tsconfig.test.json"
+        },
+        {
+            "path": "../adb/tsconfig.build.json"
+        },
+        {
+            "path": "../adb-credential-web/tsconfig.build.json"
+        },
+    ]
+}

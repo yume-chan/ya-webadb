@@ -1,22 +1,37 @@
 import { decodeBase64, decodeUtf8, encodeBase64 } from "@yume-chan/adb";
 
-import type { TangoDataStorage } from "./type.js";
+import type { TangoKey, TangoKeyStorage } from "./type.js";
 
-export class TangoLocalStorage implements TangoDataStorage {
+type TangoKeyJson = {
+    [K in keyof TangoKey]: TangoKey[K] extends Uint8Array
+        ? string
+        : TangoKey[K];
+};
+
+export class TangoLocalStorage implements TangoKeyStorage {
     readonly #storageKey: string;
 
     constructor(storageKey: string) {
         this.#storageKey = storageKey;
     }
 
-    save(data: Uint8Array): undefined {
-        localStorage.setItem(this.#storageKey, decodeUtf8(encodeBase64(data)));
+    save(privateKey: Uint8Array, name: string | undefined): undefined {
+        const json = JSON.stringify({
+            privateKey: decodeUtf8(encodeBase64(privateKey)),
+            name,
+        } satisfies TangoKeyJson);
+
+        localStorage.setItem(this.#storageKey, json);
     }
 
-    *load(): Generator<Uint8Array, void, void> {
-        const data = localStorage.getItem(this.#storageKey);
-        if (data) {
-            yield decodeBase64(data);
+    *load(): Generator<TangoKey, void, void> {
+        const json = localStorage.getItem(this.#storageKey);
+        if (json) {
+            const { privateKey, name } = JSON.parse(json) as TangoKeyJson;
+            yield {
+                privateKey: decodeBase64(privateKey),
+                name,
+            };
         }
     }
 }
