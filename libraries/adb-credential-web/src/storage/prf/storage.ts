@@ -64,11 +64,20 @@ const Bundle = struct(
     { littleEndian: true },
 );
 
+/**
+ * A `TangoDataStorage` that encrypts and decrypts data using PRF
+ */
 export class TangoPrfStorage implements TangoKeyStorage {
     readonly #storage: TangoKeyStorage;
     readonly #source: TangoPrfSource;
     #prevId: Uint8Array<ArrayBuffer> | undefined;
 
+    /**
+     * Creates a new instance of `TangoPrfStorage`
+     *
+     * @param storage Another `TangoDataStorage` to store and retrieve the encrypted data
+     * @param source The `TangoPrfSource` to generate PRF output
+     */
     constructor(storage: TangoKeyStorage, source: TangoPrfSource) {
         this.#storage = storage;
         this.#source = source;
