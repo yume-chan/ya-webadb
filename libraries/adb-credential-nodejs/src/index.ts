@@ -1,7 +1,7 @@
 // cspell: ignore adbkey
 
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, opendir, readFile, stat, writeFile } from "node:fs/promises";
 import { homedir, hostname, userInfo } from "node:os";
 import { resolve } from "node:path";
 
@@ -15,7 +15,11 @@ import {
 import type { TangoKey, TangoKeyStorage } from "@yume-chan/adb-credential-web";
 
 export class TangoNodeStorage implements TangoKeyStorage {
-    constructor() {}
+    #logger: ((message: string) => void) | undefined;
+
+    constructor(logger: ((message: string) => void) | undefined) {
+        this.#logger = logger;
+    }
 
     async #getAndroidDirPath() {
         const dir = resolve(homedir(), ".android");
@@ -59,33 +63,74 @@ export class TangoNodeStorage implements TangoKeyStorage {
     }
 
     async #readPrivateKey(path: string) {
-        const pem = await readFile(path, "utf8");
-        return decodeBase64(
-            pem
-                // Parse PEM in Lax format (allows spaces/line breaks everywhere)
-                // https://datatracker.ietf.org/doc/html/rfc7468
-                .replaceAll(/-----(BEGIN|END) PRIVATE KEY-----/g, "")
-                .replaceAll(/\x20|\t|\r|\n|\v|\f/g, ""),
-        );
+        try {
+            const pem = await readFile(path, "utf8");
+            return decodeBase64(
+                pem
+                    // Parse PEM in Lax format (allows spaces/line breaks everywhere)
+                    // https://datatracker.ietf.org/doc/html/rfc7468
+                    .replaceAll(/-----(BEGIN|END) PRIVATE KEY-----/g, "")
+                    .replaceAll(/\x20|\t|\r|\n|\v|\f/g, ""),
+            );
+        } catch (e) {
+            throw new Error("Invalid private key file: " + path, { cause: e });
+        }
     }
 
-    async #readPublicKeyName(path: string) {
-        // NOTE: Google ADB actually never reads the `.pub` file for name,
+    async #readPublicKeyName(path: string): Promise<string | undefined> {
+        // Google ADB actually never reads the `.pub` file for name,
         // it always returns the default name.
+        // So we won't throw an error if the file can't be read.
 
-        const publicKeyPath = path + ".pub";
-        if (!existsSync(publicKeyPath)) {
-            return this.#getDefaultName();
+        try {
+            const publicKeyPath = path + ".pub";
+            if (!(await stat(publicKeyPath)).isFile()) {
+                return undefined;
+            }
+
+            const publicKey = await readFile(publicKeyPath, "utf8");
+            return publicKey.split(" ")[1]?.trim();
+        } catch {
+            return undefined;
         }
-
-        const publicKey = await readFile(publicKeyPath, "utf8");
-        return publicKey.split(" ")[1]?.trim() ?? this.#getDefaultName();
     }
 
     async #readKey(path: string): Promise<TangoKey> {
         const privateKey = await this.#readPrivateKey(path);
-        const name = await this.#readPublicKeyName(path);
+        const name =
+            (await this.#readPublicKeyName(path)) ?? this.#getDefaultName();
         return { privateKey, name };
+    }
+
+    async *#readVendorKeys(path: string) {
+        const stats = await stat(path);
+
+        if (stats.isFile()) {
+            try {
+                yield await this.#readKey(path);
+            } catch (e) {
+                this.#logger?.(String(e));
+            }
+            return;
+        }
+
+        if (stats.isDirectory()) {
+            for await (const dirent of await opendir(path)) {
+                if (!dirent.isFile()) {
+                    continue;
+                }
+
+                if (!dirent.name.endsWith(".adb_key")) {
+                    continue;
+                }
+
+                try {
+                    yield await this.#readKey(resolve(path, dirent.name));
+                } catch (e) {
+                    this.#logger?.(String(e));
+                }
+            }
+        }
     }
 
     async *load(): AsyncGenerator<TangoKey, void, void> {
@@ -98,7 +143,7 @@ export class TangoNodeStorage implements TangoKeyStorage {
         if (vendorKeys) {
             const separator = process.platform === "win32" ? ";" : ":";
             for (const path of vendorKeys.split(separator)) {
-                yield await this.#readKey(path);
+                yield* this.#readVendorKeys(path);
             }
         }
     }

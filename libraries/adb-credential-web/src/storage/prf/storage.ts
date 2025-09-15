@@ -107,7 +107,13 @@ export class TangoPrfStorage implements TangoKeyStorage {
         const salt = new Uint8Array(HkdfSaltLength);
         crypto.getRandomValues(salt);
 
-        const aesKey = await deriveAesKey(prfOutput, info, salt);
+        let aesKey: CryptoKey;
+        try {
+            aesKey = await deriveAesKey(prfOutput, info, salt);
+        } finally {
+            // Clear secret memory
+            toUint8Array(prfOutput).fill(0);
+        }
 
         const iv = new Uint8Array(AesIvLength);
         crypto.getRandomValues(iv);
@@ -128,13 +134,6 @@ export class TangoPrfStorage implements TangoKeyStorage {
         });
 
         await this.#storage.save(bundle, name);
-
-        // Clear secret memory
-        //   * No way to clear `aesKey`
-        //   * `info`, `salt`, `iv`, `encrypted` and `bundle` are not secrets
-        //   * `data` is owned by caller and will be cleared by caller
-        //   * Need to clear `prfOutput`
-        toUint8Array(prfOutput).fill(0);
     }
 
     async *load(): AsyncGenerator<TangoKey, void, void> {
@@ -153,11 +152,17 @@ export class TangoPrfStorage implements TangoKeyStorage {
 
             this.#prevId = bundle.id as Uint8Array<ArrayBuffer>;
 
-            const aesKey = await deriveAesKey(
-                prfOutput,
-                bundle.hkdfInfo as Uint8Array<ArrayBuffer>,
-                bundle.hkdfSalt as Uint8Array<ArrayBuffer>,
-            );
+            let aesKey: CryptoKey;
+            try {
+                aesKey = await deriveAesKey(
+                    prfOutput,
+                    bundle.hkdfInfo as Uint8Array<ArrayBuffer>,
+                    bundle.hkdfSalt as Uint8Array<ArrayBuffer>,
+                );
+            } finally {
+                // Clear secret memory
+                toUint8Array(prfOutput).fill(0);
+            }
 
             const decrypted = await crypto.subtle.decrypt(
                 {
@@ -168,16 +173,13 @@ export class TangoPrfStorage implements TangoKeyStorage {
                 bundle.encrypted as Uint8Array<ArrayBuffer>,
             );
 
-            yield { privateKey: new Uint8Array(decrypted), name };
-
-            // Clear secret memory
-            //   * No way to clear `aesKey`
-            //   * `info`, `salt`, `iv`, `encrypted` and `bundle` are not secrets
-            //   * `data` is owned by caller and will be cleared by caller
-            //   * Caller is not allowed to use `decrypted` after `yield` returns
-            //   * Need to clear `prfOutput`
-            toUint8Array(prfOutput).fill(0);
-            new Uint8Array(decrypted).fill(0);
+            try {
+                yield { privateKey: new Uint8Array(decrypted), name };
+            } finally {
+                // Clear secret memory
+                // Caller is not allowed to use `decrypted` after `yield` returns
+                new Uint8Array(decrypted).fill(0);
+            }
         }
     }
 }
