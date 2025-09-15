@@ -1,5 +1,6 @@
 import type { Adb } from "../../../adb.js";
 import { AdbFeature } from "../../../features.js";
+import { escapeSpaces } from "../utils.js";
 
 import { AdbShellProtocolProcessImpl } from "./process.js";
 import { AdbShellProtocolPtyProcess } from "./pty.js";
@@ -20,10 +21,16 @@ export class AdbShellProtocolSubprocessService {
     }
 
     spawn = adbShellProtocolSpawner(async (command, signal) => {
-        // Don't escape `command`. See `AdbNoneProtocolSubprocessService.prototype.spawn` for details.
-        const socket = await this.#adb.createSocket(
-            `shell,v2,raw:${command.join(" ")}`,
-        );
+        let service = "shell,v2,raw:";
+
+        if (!command.length) {
+            throw new Error("Command cannot be empty");
+        }
+
+        // Only escape spaces. See `AdbNoneProtocolSubprocessService.prototype.spawn` for details.
+        service += command.map(escapeSpaces).join(" ");
+
+        const socket = await this.#adb.createSocket(service);
 
         if (signal?.aborted) {
             await socket.close();
@@ -37,21 +44,21 @@ export class AdbShellProtocolSubprocessService {
         command?: string | readonly string[] | undefined;
         terminalType?: string;
     }): Promise<AdbShellProtocolPtyProcess> {
+        const { command, terminalType } = options ?? {};
+
         let service = "shell,v2,pty";
 
-        if (options?.terminalType) {
-            service += `,TERM=` + options.terminalType;
+        if (terminalType) {
+            service += `,TERM=` + terminalType;
         }
 
         service += ":";
 
-        if (options) {
-            // Don't escape `command`. See `AdbNoneProtocolSubprocessService.prototype.spawn` for details.
-            if (typeof options.command === "string") {
-                service += options.command;
-            } else if (Array.isArray(options.command)) {
-                service += options.command.join(" ");
-            }
+        if (typeof command === "string") {
+            service += command;
+        } else if (Array.isArray(command)) {
+            // Only escape spaces. See `AdbNoneProtocolSubprocessService.prototype.spawn` for details.
+            service += command.map(escapeSpaces).join(" ");
         }
 
         return new AdbShellProtocolPtyProcess(

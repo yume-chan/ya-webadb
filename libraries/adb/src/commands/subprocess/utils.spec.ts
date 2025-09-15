@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { escapeArg } from "./utils.js";
+import { escapeArg, escapeSpaces } from "./utils.js";
 
 describe("escapeArg", () => {
     it("should escape single quotes", () => {
@@ -40,5 +40,28 @@ describe("escapeArg", () => {
         assert.equal(escapeArg("abc\\"), String.raw`'abc\'`);
         assert.equal(escapeArg("abc("), String.raw`'abc('`);
         assert.equal(escapeArg("abc)"), String.raw`'abc)'`);
+    });
+});
+
+describe("escapeSpaces", () => {
+    it("should escape spaces", () => {
+        assert.equal(escapeSpaces(" "), "\\ ");
+        assert.equal(escapeSpaces(" abc"), "\\ abc");
+        assert.equal(escapeSpaces("abc "), "abc\\ ");
+        assert.equal(escapeSpaces("abc def"), "abc\\ def");
+        assert.equal(escapeSpaces(" abc def "), "\\ abc\\ def\\ ");
+    });
+
+    it("should not change already escaped spaces", () => {
+        assert.equal(escapeSpaces("\\ "), "\\ ");
+        assert.equal(escapeSpaces("\\ abc"), "\\ abc");
+        assert.equal(escapeSpaces("\\abc\\ def"), "\\abc\\ def");
+        assert.equal(escapeSpaces("\\abc\\ def\\ "), "\\abc\\ def\\ ");
+    });
+
+    it("should not change spaces in quotes", () => {
+        assert.equal(escapeSpaces("'abc def'"), "'abc def'");
+        assert.equal(escapeSpaces('"abc def"'), '"abc def"');
+        assert.equal(escapeSpaces('ab"c d"ef'), 'ab"c d"ef');
     });
 });

@@ -66,8 +66,58 @@ export function splitCommand(input: string): string[] {
         }
     }
 
+    if (isEscaped) {
+        throw new Error("The command can't end with a backslash");
+    }
+
     if (start < input.length) {
         result.push(input.substring(start));
+    }
+
+    return result;
+}
+
+export function escapeSpaces(input: string) {
+    let result = "";
+    let quote: string | undefined;
+    let isEscaped = false;
+    let start = 0;
+
+    for (let i = 0, length = input.length; i < length; i += 1) {
+        if (isEscaped) {
+            isEscaped = false;
+            continue;
+        }
+
+        const char = input.charAt(i);
+        switch (char) {
+            case " ":
+                if (!quote) {
+                    result += input.substring(start, i);
+                    result += "\\ ";
+                    start = i + 1;
+                }
+                break;
+            case "'":
+            case '"':
+                if (!quote) {
+                    quote = char;
+                } else if (char === quote) {
+                    quote = undefined;
+                }
+                break;
+            case "\\":
+                isEscaped = true;
+                break;
+        }
+    }
+
+    if (isEscaped) {
+        throw new Error("The argument can't end with a backslash");
+    }
+
+    if (start < input.length) {
+        result += input.substring(start);
     }
 
     return result;
