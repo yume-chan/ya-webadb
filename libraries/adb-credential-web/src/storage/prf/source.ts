@@ -1,6 +1,6 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 
-interface TangoPrfCreationResult {
+export interface TangoPrfCreationResult {
     /**
      * The generated PRF output
      */
