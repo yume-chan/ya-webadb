@@ -18,8 +18,12 @@ import type { ScrcpyMediaStreamPacket } from "./media.js";
 import type { ScrcpyScrollController } from "./scroll-controller.js";
 import type { ScrcpyVideoStream } from "./video.js";
 
+export type ScrcpyControlMessageTypeMap = Partial<
+    Record<ScrcpyControlMessageType, number>
+>;
+
 export interface ScrcpyOptions<T extends object> {
-    get controlMessageTypes(): readonly ScrcpyControlMessageType[];
+    get controlMessageTypes(): ScrcpyControlMessageTypeMap;
 
     value: Required<T>;
 

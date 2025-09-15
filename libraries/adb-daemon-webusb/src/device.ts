@@ -6,6 +6,7 @@ import type {
 import {
     AdbPacketHeader,
     AdbPacketSerializeStream,
+    toLocalUint8Array,
     unreachable,
 } from "@yume-chan/adb";
 import type {
@@ -142,21 +143,11 @@ export class AdbDaemonWebUsbConnection
                 new MaybeConsumable.WritableStream({
                     write: async (chunk) => {
                         try {
-                            if (
-                                typeof SharedArrayBuffer !== "undefined" &&
-                                chunk.buffer instanceof SharedArrayBuffer
-                            ) {
-                                // Copy data to a non-shared ArrayBuffer
-                                const copy = new Uint8Array(chunk.byteLength);
-                                copy.set(chunk);
-                                chunk = copy;
-                            }
-
                             await device.raw.transferOut(
                                 outEndpoint.endpointNumber,
-                                // Already checked `chunk` has a non-shared ArrayBuffer
+                                // WebUSB doesn't support SharedArrayBuffer
                                 // https://github.com/WICG/webusb/issues/243
-                                chunk as Uint8Array<ArrayBuffer>,
+                                toLocalUint8Array(chunk),
                             );
 
                             // In USB protocol, a not-full packet indicates the end of a transfer.

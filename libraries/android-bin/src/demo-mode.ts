@@ -7,6 +7,7 @@
 import type { Adb } from "@yume-chan/adb";
 import { AdbServiceBase } from "@yume-chan/adb";
 
+import { ActivityManager } from "./am.js";
 import { Settings } from "./settings.js";
 
 export enum DemoModeSignalStrength {
@@ -52,10 +53,12 @@ export const DemoModeStatusBarModes = [
 export type DemoModeStatusBarMode = (typeof DemoModeStatusBarModes)[number];
 
 export class DemoMode extends AdbServiceBase {
+    #am: ActivityManager;
     #settings: Settings;
 
-    constructor(adb: Adb) {
+    constructor(adb: Adb, apiLevel?: number) {
         super(adb);
+        this.#am = new ActivityManager(adb, apiLevel);
         this.#settings = new Settings(adb);
     }
 
@@ -108,27 +111,14 @@ export class DemoMode extends AdbServiceBase {
         }
     }
 
-    async broadcast(
-        command: string,
-        extra?: Record<string, string>,
-    ): Promise<void> {
-        const args = [
-            "am",
-            "broadcast",
-            "-a",
-            "com.android.systemui.demo",
-            "-e",
-            "command",
-            command,
-        ];
-
-        if (extra) {
-            for (const [key, value] of Object.entries(extra)) {
-                args.push("-e", key, value);
-            }
-        }
-
-        await this.adb.subprocess.noneProtocol.spawn(args).wait();
+    broadcast(command: string, extras?: Record<string, string>): Promise<void> {
+        return this.#am.broadcast({
+            action: "com.android.systemui.demo",
+            extras: {
+                command,
+                ...extras,
+            },
+        });
     }
 
     async setBatteryLevel(level: number): Promise<void> {

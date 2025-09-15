@@ -3,7 +3,6 @@ import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
 
 import type {
     ScrcpyAudioStreamMetadata,
-    ScrcpyControlMessageType,
     ScrcpyDisplay,
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
@@ -34,6 +33,7 @@ import {
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
+    serializeSetClipboardControlMessage,
     setListDisplays,
     setListEncoders,
 } from "./impl/index.js";
@@ -45,7 +45,7 @@ export class ScrcpyOptions2_3<TVideo extends boolean>
 
     readonly value: Required<Init<TVideo>>;
 
-    get controlMessageTypes(): readonly ScrcpyControlMessageType[] {
+    get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
     }
 
@@ -68,10 +68,12 @@ export class ScrcpyOptions2_3<TVideo extends boolean>
             this.value.control = false;
         }
 
-        if (this.value.control && this.value.clipboardAutosync) {
-            this.#clipboard = this.#deviceMessageParsers.add(
-                new ClipboardStream(),
-            );
+        if (this.value.control) {
+            if (this.value.clipboardAutosync) {
+                this.#clipboard = this.#deviceMessageParsers.add(
+                    new ClipboardStream(),
+                );
+            }
 
             this.#ackClipboardHandler = this.#deviceMessageParsers.add(
                 new AckClipboardHandler(),
@@ -133,8 +135,9 @@ export class ScrcpyOptions2_3<TVideo extends boolean>
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): Uint8Array | [Uint8Array, Promise<void>] {
-        return this.#ackClipboardHandler!.serializeSetClipboardControlMessage(
+        return serializeSetClipboardControlMessage(
             message,
+            this.#ackClipboardHandler,
         );
     }
 

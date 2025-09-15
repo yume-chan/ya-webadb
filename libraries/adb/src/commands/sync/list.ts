@@ -1,8 +1,9 @@
 import type { StructValue } from "@yume-chan/struct";
 import { extend, string, u32 } from "@yume-chan/struct";
 
-import { AdbSyncRequestId, adbSyncWriteRequest } from "./request.js";
-import { AdbSyncResponseId, adbSyncReadResponses } from "./response.js";
+import { AdbSyncRequestId, AdbSyncResponseId } from "./id.js";
+import { adbSyncWriteRequest } from "./request.js";
+import { adbSyncReadResponses } from "./response.js";
 import type { AdbSyncSocket } from "./socket.js";
 import type { AdbSyncStat } from "./stat.js";
 import {
@@ -36,7 +37,7 @@ export async function* adbSyncOpenDirV2(
         await adbSyncWriteRequest(locked, AdbSyncRequestId.ListV2, path);
         for await (const item of adbSyncReadResponses(
             locked,
-            AdbSyncResponseId.Entry2,
+            AdbSyncResponseId.EntryV2,
             AdbSyncEntry2Response,
         )) {
             // `LST2` can return error codes for failed `lstat` calls.

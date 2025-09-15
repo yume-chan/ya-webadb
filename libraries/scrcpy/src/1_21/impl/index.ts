@@ -7,4 +7,5 @@ export {
     AckClipboardDeviceMessage,
     AckClipboardHandler,
     SetClipboardControlMessage,
+    serializeSetClipboardControlMessage,
 } from "./set-clipboard.js";

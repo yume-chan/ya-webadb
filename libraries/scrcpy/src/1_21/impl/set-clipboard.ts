@@ -12,6 +12,7 @@ export const AckClipboardDeviceMessage = struct(
 
 export const SetClipboardControlMessage = struct(
     {
+        // value of `type` can change between versions
         type: u8,
         sequence: u64,
         paste: u8<boolean>(),
@@ -74,4 +75,17 @@ export class AckClipboardHandler implements ScrcpyDeviceMessageParser {
             resolver.promise,
         ];
     }
+}
+
+export function serializeSetClipboardControlMessage(
+    message: ScrcpySetClipboardControlMessage,
+    ackHandler: AckClipboardHandler | undefined,
+): Uint8Array | [Uint8Array, Promise<void>] {
+    if (!ackHandler) {
+        throw new Error(
+            "`serializeSetClipboardControlMessage` requires `control: true` option",
+        );
+    }
+
+    return ackHandler.serializeSetClipboardControlMessage(message);
 }

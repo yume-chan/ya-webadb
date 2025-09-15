@@ -3,7 +3,6 @@ import type { Field, StructInit } from "@yume-chan/struct";
 import { field, struct, u16, u32, u8 } from "@yume-chan/struct";
 
 import type { ScrcpyScrollController } from "../../base/index.js";
-import { ScrcpyControlMessageType } from "../../base/index.js";
 import type { ScrcpyInjectScrollControlMessage } from "../../latest.js";
 import { clamp } from "../../utils/index.js";
 
@@ -24,20 +23,20 @@ export const SignedFloat: Field<number, never, never> = field(
     },
 );
 
-export const InjectScrollControlMessage = /* #__PURE__ */ (() =>
-    struct(
-        {
-            type: u8(ScrcpyControlMessageType.InjectScroll),
-            pointerX: u32,
-            pointerY: u32,
-            videoWidth: u16,
-            videoHeight: u16,
-            scrollX: SignedFloat,
-            scrollY: SignedFloat,
-            buttons: u32,
-        },
-        { littleEndian: false },
-    ))();
+export const InjectScrollControlMessage = struct(
+    {
+        // value of `type` can change between versions
+        type: u8,
+        pointerX: u32,
+        pointerY: u32,
+        videoWidth: u16,
+        videoHeight: u16,
+        scrollX: SignedFloat,
+        scrollY: SignedFloat,
+        buttons: u32,
+    },
+    { littleEndian: false },
+);
 
 export type InjectScrollControlMessage = StructInit<
     typeof InjectScrollControlMessage

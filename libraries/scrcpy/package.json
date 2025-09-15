@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/scrcpy",
-    "version": "2.1.1",
+    "version": "2.2.0",
     "description": "TypeScript implementation of Scrcpy client.",
     "keywords": [
         "adb",
@@ -40,7 +40,7 @@
         "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^24.3.0",
+        "@types/node": "^24.3.1",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
