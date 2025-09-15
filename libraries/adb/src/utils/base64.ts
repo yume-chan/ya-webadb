@@ -305,6 +305,10 @@ function getCharIndex(input: string, offset: number) {
 }
 
 export function decodeBase64(input: string): Uint8Array<ArrayBuffer> {
+    if (input.length % 4 !== 0) {
+        throw new Error("Invalid Base64 length: " + input.length);
+    }
+
     let padding: number;
     if (input[input.length - 2] === "=") {
         padding = 2;

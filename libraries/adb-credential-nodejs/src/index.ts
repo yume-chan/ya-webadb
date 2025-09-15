@@ -1,7 +1,14 @@
 // cspell: ignore adbkey
 
 import { existsSync } from "node:fs";
-import { mkdir, opendir, readFile, stat, writeFile } from "node:fs/promises";
+import {
+    chmod,
+    mkdir,
+    opendir,
+    readFile,
+    stat,
+    writeFile,
+} from "node:fs/promises";
 import { homedir, hostname, userInfo } from "node:os";
 import { resolve } from "node:path";
 
@@ -23,9 +30,7 @@ export class TangoNodeStorage implements TangoKeyStorage {
 
     async #getAndroidDirPath() {
         const dir = resolve(homedir(), ".android");
-        if (!existsSync(dir)) {
-            await mkdir(dir, { mode: 0o750 });
-        }
+        await mkdir(dir, { mode: 0o750, recursive: true });
         return dir;
     }
 
@@ -51,14 +56,15 @@ export class TangoNodeStorage implements TangoKeyStorage {
             pem += base64.substring(i, i + 64) + "\n";
         }
         pem += "-----END PRIVATE KEY-----\n";
-        await writeFile(userKeyPath, pem, "utf8");
+        await writeFile(userKeyPath, pem, { encoding: "utf8", mode: 0o600 });
+        await chmod(userKeyPath, 0o600);
 
         name ??= this.#getDefaultName();
         const publicKey = adbGeneratePublicKey(rsaParsePrivateKey(privateKey));
         await writeFile(
             userKeyPath + ".pub",
             decodeUtf8(encodeBase64(publicKey)) + " " + name + "\n",
-            "utf8",
+            { encoding: "utf8", mode: 0o644 },
         );
     }
 
