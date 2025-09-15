@@ -20,10 +20,16 @@ export class AdbShellProtocolSubprocessService {
     }
 
     spawn = adbShellProtocolSpawner(async (command, signal) => {
+        let service = "shell,v2,raw:";
+
+        if (!command.length) {
+            throw new Error("Command cannot be empty");
+        }
+
         // Don't escape `command`. See `AdbNoneProtocolSubprocessService.prototype.spawn` for details.
-        const socket = await this.#adb.createSocket(
-            `shell,v2,raw:${command.join(" ")}`,
-        );
+        service += command.join(" ");
+
+        const socket = await this.#adb.createSocket(service);
 
         if (signal?.aborted) {
             await socket.close();
@@ -37,21 +43,23 @@ export class AdbShellProtocolSubprocessService {
         command?: string | readonly string[] | undefined;
         terminalType?: string;
     }): Promise<AdbShellProtocolPtyProcess> {
+        const { command, terminalType } = options ?? {};
+
         let service = "shell,v2,pty";
 
-        if (options?.terminalType) {
-            service += `,TERM=` + options.terminalType;
+        if (terminalType) {
+            if (terminalType.includes(",") || terminalType.includes(":")) {
+                throw new Error("terminalType must not contain ',' or ':'");
+            }
+            service += `,TERM=` + terminalType;
         }
-
         service += ":";
 
-        if (options) {
+        if (typeof command === "string") {
+            service += command;
+        } else if (Array.isArray(command)) {
             // Don't escape `command`. See `AdbNoneProtocolSubprocessService.prototype.spawn` for details.
-            if (typeof options.command === "string") {
-                service += options.command;
-            } else if (Array.isArray(options.command)) {
-                service += options.command.join(" ");
-            }
+            service += command.join(" ");
         }
 
         return new AdbShellProtocolPtyProcess(

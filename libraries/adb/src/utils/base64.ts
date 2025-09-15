@@ -295,7 +295,20 @@ function encodeBackward(
     }
 }
 
+function getCharIndex(input: string, offset: number) {
+    const charCode = input.charCodeAt(offset);
+    const index = charToIndex[charCode];
+    if (index === undefined) {
+        throw new Error("Invalid Base64 character: " + input[offset]);
+    }
+    return index;
+}
+
 export function decodeBase64(input: string): Uint8Array<ArrayBuffer> {
+    if (input.length % 4 !== 0) {
+        throw new Error("Invalid Base64 length: " + input.length);
+    }
+
     let padding: number;
     if (input[input.length - 2] === "=") {
         padding = 2;
@@ -309,17 +322,18 @@ export function decodeBase64(input: string): Uint8Array<ArrayBuffer> {
     let sIndex = 0;
     let dIndex = 0;
 
-    while (sIndex < input.length - (padding !== 0 ? 4 : 0)) {
-        const a = charToIndex[input.charCodeAt(sIndex)]!;
+    const loopEnd = input.length - (padding !== 0 ? 4 : 0);
+    while (sIndex < loopEnd) {
+        const a = getCharIndex(input, sIndex);
         sIndex += 1;
 
-        const b = charToIndex[input.charCodeAt(sIndex)]!;
+        const b = getCharIndex(input, sIndex);
         sIndex += 1;
 
-        const c = charToIndex[input.charCodeAt(sIndex)]!;
+        const c = getCharIndex(input, sIndex);
         sIndex += 1;
 
-        const d = charToIndex[input.charCodeAt(sIndex)]!;
+        const d = getCharIndex(input, sIndex);
         sIndex += 1;
 
         result[dIndex] = (a << 2) | ((b & 0b11_0000) >> 4);
@@ -333,23 +347,23 @@ export function decodeBase64(input: string): Uint8Array<ArrayBuffer> {
     }
 
     if (padding === 1) {
-        const a = charToIndex[input.charCodeAt(sIndex)]!;
+        const a = getCharIndex(input, sIndex);
         sIndex += 1;
 
-        const b = charToIndex[input.charCodeAt(sIndex)]!;
+        const b = getCharIndex(input, sIndex);
         sIndex += 1;
 
-        const c = charToIndex[input.charCodeAt(sIndex)]!;
+        const c = getCharIndex(input, sIndex);
 
         result[dIndex] = (a << 2) | ((b & 0b11_0000) >> 4);
         dIndex += 1;
 
         result[dIndex] = ((b & 0b1111) << 4) | ((c & 0b11_1100) >> 2);
     } else if (padding === 2) {
-        const a = charToIndex[input.charCodeAt(sIndex)]!;
+        const a = getCharIndex(input, sIndex);
         sIndex += 1;
 
-        const b = charToIndex[input.charCodeAt(sIndex)]!;
+        const b = getCharIndex(input, sIndex);
 
         result[dIndex] = (a << 2) | ((b & 0b11_0000) >> 4);
     }

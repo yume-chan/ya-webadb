@@ -25,16 +25,24 @@ class NotSupportedError extends Error {
     }
 }
 
-class AssertionFailedError extends Error {
+class OperationCancelledError extends Error {
     constructor() {
-        super("Assertion failed");
+        super("The operation is either cancelled by user or timed out");
     }
 }
 
 export class TangoWebAuthnPrfSource implements TangoPrfSource {
     static NotSupportedError = NotSupportedError;
-    static AssertionFailedError = AssertionFailedError;
+    static OperationCancelledError = OperationCancelledError;
 
+    /**
+     * Checks if the runtime supports WebAuthn PRF extension.
+     *
+     * Note that using the extension also requires a supported authenticator.
+     * Whether an authenticator supports the extension can only be checked
+     * during the `create` process.
+     * @returns `true` if the runtime supports WebAuthn PRF extension
+     */
     static async isSupported(): Promise<boolean> {
         if (typeof PublicKeyCredential === "undefined") {
             return false;
@@ -57,7 +65,8 @@ export class TangoWebAuthnPrfSource implements TangoPrfSource {
     readonly #userName: string;
 
     /**
-     * Create a new instance of TangoWebAuthnPrfSource
+     * Creates a new instance of `TangoWebAuthnPrfSource`
+     *
      * @param appName Name of your website shows in Passkey manager
      * @param userName Display name of the credential shows in Passkey manager
      */
@@ -66,6 +75,14 @@ export class TangoWebAuthnPrfSource implements TangoPrfSource {
         this.#userName = userName;
     }
 
+    /**
+     * Creates a new credential and generate PRF output using the credential and input data.
+     *
+     * @param input The input data
+     * @returns The credential ID and PRF output
+     * @throws `NotSupportedError` if the runtime or authenticator doesn't support PRF extension
+     * @throws `OperationCancelledError` if the attestation is either cancelled by user or timed out
+     */
     async create(input: Uint8Array<ArrayBuffer>): Promise<{
         output: BufferSource;
         id: Uint8Array<ArrayBuffer>;
@@ -73,22 +90,27 @@ export class TangoWebAuthnPrfSource implements TangoPrfSource {
         const challenge = new Uint8Array(32);
         crypto.getRandomValues(challenge);
 
-        const attestation = await navigator.credentials.create({
-            publicKey: {
-                challenge,
-                extensions: { prf: { eval: { first: input } } },
-                pubKeyCredParams: [
-                    { type: "public-key", alg: -7 },
-                    { type: "public-key", alg: -257 },
-                ],
-                rp: { name: this.#appName },
-                user: {
-                    id: challenge,
-                    name: this.#userName,
-                    displayName: this.#userName,
+        let attestation;
+        try {
+            attestation = await navigator.credentials.create({
+                publicKey: {
+                    challenge,
+                    extensions: { prf: { eval: { first: input } } },
+                    pubKeyCredParams: [
+                        { type: "public-key", alg: -7 },
+                        { type: "public-key", alg: -257 },
+                    ],
+                    rp: { name: this.#appName },
+                    user: {
+                        id: challenge,
+                        name: this.#userName,
+                        displayName: this.#userName,
+                    },
                 },
-            },
-        });
+            });
+        } catch {
+            throw new OperationCancelledError();
+        }
 
         checkCredential(attestation);
 
@@ -108,6 +130,14 @@ export class TangoWebAuthnPrfSource implements TangoPrfSource {
         return { output, id };
     }
 
+    /**
+     * Generates PRF output using a credential and input data.
+     *
+     * @param id ID of a previously created credential
+     * @param input The input data
+     * @returns PRF output
+     * @throws `OperationCancelledError` if the attestation is either cancelled by user or timed out
+     */
     async get(
         id: BufferSource,
         input: Uint8Array<ArrayBuffer>,
@@ -125,7 +155,7 @@ export class TangoWebAuthnPrfSource implements TangoPrfSource {
                 },
             });
         } catch {
-            throw new AssertionFailedError();
+            throw new OperationCancelledError();
         }
 
         checkCredential(assertion);
@@ -141,5 +171,5 @@ export class TangoWebAuthnPrfSource implements TangoPrfSource {
 
 export namespace TangoWebAuthnPrfSource {
     export type NotSupportedError = typeof NotSupportedError;
-    export type AssertionFailedError = typeof AssertionFailedError;
+    export type OperationCancelledError = typeof OperationCancelledError;
 }

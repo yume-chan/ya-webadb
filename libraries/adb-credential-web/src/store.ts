@@ -1,16 +1,16 @@
 import type { AdbCredentialStore, AdbPrivateKey } from "@yume-chan/adb";
 import { rsaParsePrivateKey } from "@yume-chan/adb";
 
-import type { TangoDataStorage } from "./storage/index.js";
+import type { TangoKeyStorage } from "./storage/index.js";
 
 export class AdbWebCryptoCredentialStore implements AdbCredentialStore {
-    readonly #storage: TangoDataStorage;
+    readonly #storage: TangoKeyStorage;
 
-    readonly #appName: string;
+    readonly #name: string | undefined;
 
-    constructor(storage: TangoDataStorage, appName: string = "Tango") {
+    constructor(storage: TangoKeyStorage, name?: string) {
         this.#storage = storage;
-        this.#appName = appName;
+        this.#name = name;
     }
 
     async generateKey(): Promise<AdbPrivateKey> {
@@ -39,7 +39,7 @@ export class AdbWebCryptoCredentialStore implements AdbCredentialStore {
 
         const parsed = rsaParsePrivateKey(privateKey);
 
-        await this.#storage.save(privateKey);
+        await this.#storage.save(privateKey, this.#name);
 
         // Clear secret memory
         //   * `privateKey` is not allowed to be used after `save`
@@ -47,16 +47,16 @@ export class AdbWebCryptoCredentialStore implements AdbCredentialStore {
 
         return {
             ...parsed,
-            name: `${this.#appName}@${globalThis.location.hostname}`,
+            name: this.#name,
         };
     }
 
     async *iterateKeys(): AsyncGenerator<AdbPrivateKey, void, void> {
-        for await (const privateKey of this.#storage.load()) {
+        for await (const key of this.#storage.load()) {
             // `privateKey` is owned by `#storage` and will be cleared by it
             yield {
-                ...rsaParsePrivateKey(privateKey),
-                name: `${this.#appName}@${globalThis.location.hostname}`,
+                ...rsaParsePrivateKey(key.privateKey),
+                name: key.name ?? this.#name,
             };
         }
     }

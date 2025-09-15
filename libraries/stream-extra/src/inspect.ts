@@ -1,4 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
+
 import { TransformStream } from "./stream.js";
 
 export class InspectStream<T> extends TransformStream<T, T> {
