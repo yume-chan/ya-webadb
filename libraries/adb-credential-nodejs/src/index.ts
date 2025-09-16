@@ -23,7 +23,7 @@ import {
 import type { TangoKey, TangoKeyStorage } from "@yume-chan/adb-credential-web";
 
 class KeyError extends Error {
-    path: string;
+    readonly path: string;
 
     constructor(message: string, path: string, options?: ErrorOptions) {
         super(message, options);
@@ -185,7 +185,7 @@ export class TangoNodeStorage implements TangoKeyStorage {
                 } catch (e) {
                     yield e instanceof KeyError
                         ? e
-                        : new VendorKeyError(path, { cause: e });
+                        : new VendorKeyError(file, { cause: e });
                 }
             }
         }

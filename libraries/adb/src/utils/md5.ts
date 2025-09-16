@@ -1,5 +1,6 @@
 import {
     getUint32LittleEndian,
+    setUint32LittleEndian,
     setUint64LittleEndian,
 } from "@yume-chan/no-data-view";
 
@@ -152,8 +153,11 @@ export class Md5 {
         );
         this.#update(this.#buffer);
 
-        const result = new Uint8Array(this.#state.buffer).slice();
-
+        const result = new Uint8Array(16);
+        setUint32LittleEndian(result, 0, this.#state[0]!);
+        setUint32LittleEndian(result, 4, this.#state[1]!);
+        setUint32LittleEndian(result, 8, this.#state[2]!);
+        setUint32LittleEndian(result, 12, this.#state[3]!);
         return result;
     }
 
