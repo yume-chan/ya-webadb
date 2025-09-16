@@ -10,7 +10,7 @@ import {
     writeFile,
 } from "node:fs/promises";
 import { homedir, hostname, userInfo } from "node:os";
-import { resolve } from "node:path";
+import { delimiter, resolve } from "node:path";
 
 import type { MaybeError } from "@yume-chan/adb";
 import {
@@ -105,7 +105,7 @@ export class TangoNodeStorage implements TangoKeyStorage {
                 pem
                     // Parse PEM in Lax format (allows spaces/line breaks everywhere)
                     // https://datatracker.ietf.org/doc/html/rfc7468
-                    .replaceAll(/-----(BEGIN|END) PRIVATE KEY-----/g, "")
+                    .replaceAll(/-----(BEGIN|END)( RSA)? PRIVATE KEY-----/g, "")
                     .replaceAll(/\x20|\t|\r|\n|\v|\f/g, ""),
             );
         } catch (e) {
@@ -125,7 +125,12 @@ export class TangoNodeStorage implements TangoKeyStorage {
             }
 
             const publicKey = await readFile(publicKeyPath, "utf8");
-            return publicKey.split(" ")[1]?.trim();
+            const spaceIndex = publicKey.indexOf(" ");
+            if (spaceIndex === -1) {
+                return undefined;
+            }
+            const name = publicKey.substring(spaceIndex + 1).trim();
+            return name ? name : undefined;
         } catch {
             return undefined;
         }
@@ -205,8 +210,7 @@ export class TangoNodeStorage implements TangoKeyStorage {
 
         const vendorKeys = process.env.ADB_VENDOR_KEYS;
         if (vendorKeys) {
-            const separator = process.platform === "win32" ? ";" : ":";
-            for (const path of vendorKeys.split(separator)) {
+            for (const path of vendorKeys.split(delimiter).filter(Boolean)) {
                 yield* this.#readVendorKeys(path);
             }
         }
