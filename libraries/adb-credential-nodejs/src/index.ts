@@ -12,6 +12,7 @@ import {
 import { homedir, hostname, userInfo } from "node:os";
 import { resolve } from "node:path";
 
+import type { MaybeError } from "@yume-chan/adb";
 import {
     adbGeneratePublicKey,
     decodeBase64,
@@ -22,12 +23,6 @@ import {
 import type { TangoKey, TangoKeyStorage } from "@yume-chan/adb-credential-web";
 
 export class TangoNodeStorage implements TangoKeyStorage {
-    #logger: ((message: string) => void) | undefined;
-
-    constructor(logger: ((message: string) => void) | undefined) {
-        this.#logger = logger;
-    }
-
     async #getAndroidDirPath() {
         const dir = resolve(homedir(), ".android");
         await mkdir(dir, { mode: 0o750, recursive: true });
@@ -108,14 +103,20 @@ export class TangoNodeStorage implements TangoKeyStorage {
         return { privateKey, name };
     }
 
-    async *#readVendorKeys(path: string) {
+    async *#readVendorKeys(
+        path: string,
+    ): AsyncGenerator<MaybeError<TangoKey>, void, void> {
         const stats = await stat(path);
 
         if (stats.isFile()) {
             try {
                 yield await this.#readKey(path);
             } catch (e) {
-                this.#logger?.(String(e));
+                if (e instanceof Error) {
+                    yield e;
+                } else {
+                    yield new Error(String(e));
+                }
             }
             return;
         }
@@ -133,16 +134,28 @@ export class TangoNodeStorage implements TangoKeyStorage {
                 try {
                     yield await this.#readKey(resolve(path, dirent.name));
                 } catch (e) {
-                    this.#logger?.(String(e));
+                    if (e instanceof Error) {
+                        yield e;
+                    } else {
+                        yield new Error(String(e));
+                    }
                 }
             }
         }
     }
 
-    async *load(): AsyncGenerator<TangoKey, void, void> {
+    async *load(): AsyncGenerator<MaybeError<TangoKey>, void, void> {
         const userKeyPath = await this.#getUserKeyPath();
         if (existsSync(userKeyPath)) {
-            yield await this.#readKey(userKeyPath);
+            try {
+                yield await this.#readKey(userKeyPath);
+            } catch (e) {
+                if (e instanceof Error) {
+                    yield e;
+                } else {
+                    yield new Error(String(e));
+                }
+            }
         }
 
         const vendorKeys = process.env.ADB_VENDOR_KEYS;

@@ -16,7 +16,11 @@ import type {
 import { AdbBanner } from "../banner.js";
 import { AdbDeviceFeatures, AdbFeature } from "../features.js";
 
-import type { AdbAuthenticator, AdbCredentialStore } from "./auth.js";
+import type {
+    AdbAuthenticator,
+    AdbCredentialStore,
+    AdbKeyInfo,
+} from "./auth.js";
 import { AdbDefaultAuthenticator } from "./auth.js";
 import { AdbPacketDispatcher } from "./dispatcher.js";
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
@@ -138,7 +142,14 @@ export class AdbDaemonTransport implements AdbTransport {
             | { authenticator: AdbAuthenticator }
             | {
                   credentialStore: AdbCredentialStore;
-                  onPublicKeyAuthentication?: (() => void) | undefined;
+                  onKeyLoadError?: ((error: Error) => void) | undefined;
+                  onSignatureAuthentication?:
+                      | ((key: AdbKeyInfo) => void)
+                      | undefined;
+                  onSignatureRejected?: ((key: AdbKeyInfo) => void) | undefined;
+                  onPublicKeyAuthentication?:
+                      | ((key: AdbKeyInfo) => void)
+                      | undefined;
               }
         )): Promise<AdbDaemonTransport> {
         // Initially, set to highest-supported version and payload size.
@@ -151,14 +162,28 @@ export class AdbDaemonTransport implements AdbTransport {
         if ("authenticator" in options) {
             authenticator = options.authenticator;
         } else {
-            authenticator = new AdbDefaultAuthenticator(
+            const defaultAuthenticator = new AdbDefaultAuthenticator(
                 options.credentialStore,
             );
-            if (options.onPublicKeyAuthentication) {
-                (
-                    authenticator as AdbDefaultAuthenticator
-                ).onPublicKeyAuthentication(options.onPublicKeyAuthentication);
+            if (options.onKeyLoadError) {
+                defaultAuthenticator.onKeyLoadError(options.onKeyLoadError);
             }
+            if (options.onSignatureAuthentication) {
+                defaultAuthenticator.onSignatureAuthentication(
+                    options.onSignatureAuthentication,
+                );
+            }
+            if (options.onSignatureRejected) {
+                defaultAuthenticator.onSignatureRejected(
+                    options.onSignatureRejected,
+                );
+            }
+            if (options.onPublicKeyAuthentication) {
+                defaultAuthenticator.onPublicKeyAuthentication(
+                    options.onPublicKeyAuthentication,
+                );
+            }
+            authenticator = defaultAuthenticator;
         }
 
         // Here is similar to `AdbPacketDispatcher`,

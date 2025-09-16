@@ -1,3 +1,4 @@
+import type { MaybeError } from "@yume-chan/adb";
 import type { MaybePromiseLike } from "@yume-chan/async";
 
 export interface TangoKey {
@@ -11,5 +12,7 @@ export interface TangoKeyStorage {
         name: string | undefined,
     ): MaybePromiseLike<undefined>;
 
-    load(): Iterable<TangoKey> | AsyncIterable<TangoKey>;
+    load():
+        | Iterable<MaybeError<TangoKey>>
+        | AsyncIterable<MaybeError<TangoKey>>;
 }
