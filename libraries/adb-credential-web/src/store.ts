@@ -1,4 +1,8 @@
-import type { AdbCredentialStore, AdbPrivateKey } from "@yume-chan/adb";
+import type {
+    AdbCredentialStore,
+    AdbPrivateKey,
+    MaybeError,
+} from "@yume-chan/adb";
 import { rsaParsePrivateKey } from "@yume-chan/adb";
 
 import type { TangoKeyStorage } from "./storage/index.js";
@@ -51,13 +55,28 @@ export class AdbWebCryptoCredentialStore implements AdbCredentialStore {
         };
     }
 
-    async *iterateKeys(): AsyncGenerator<AdbPrivateKey, void, void> {
-        for await (const key of this.#storage.load()) {
-            // `privateKey` is owned by `#storage` and will be cleared by it
-            yield {
-                ...rsaParsePrivateKey(key.privateKey),
-                name: key.name ?? this.#name,
-            };
+    async *iterateKeys(): AsyncGenerator<
+        MaybeError<AdbPrivateKey>,
+        void,
+        void
+    > {
+        for await (const result of this.#storage.load()) {
+            if (result instanceof Error) {
+                yield result;
+                continue;
+            }
+
+            try {
+                // `privateKey` is owned by `#storage` and will be cleared by it
+                yield {
+                    ...rsaParsePrivateKey(result.privateKey),
+                    name: result.name ?? this.#name,
+                };
+            } catch (e) {
+                yield e instanceof Error
+                    ? e
+                    : new Error(String(e), { cause: e });
+            }
         }
     }
 }

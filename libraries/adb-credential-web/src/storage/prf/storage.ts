@@ -1,3 +1,4 @@
+import type { MaybeError } from "@yume-chan/adb";
 import {
     buffer,
     struct,
@@ -136,49 +137,59 @@ export class TangoPrfStorage implements TangoKeyStorage {
         await this.#storage.save(bundle, name);
     }
 
-    async *load(): AsyncGenerator<TangoKey, void, void> {
-        for await (const {
-            privateKey: serialized,
-            name,
-        } of this.#storage.load()) {
-            const bundle = Bundle.deserialize(
-                new Uint8ArrayExactReadable(serialized),
-            );
-
-            const prfOutput = await this.#source.get(
-                bundle.id as Uint8Array<ArrayBuffer>,
-                bundle.prfInput as Uint8Array<ArrayBuffer>,
-            );
-
-            this.#prevId = bundle.id as Uint8Array<ArrayBuffer>;
-
-            let aesKey: CryptoKey;
-            try {
-                aesKey = await deriveAesKey(
-                    prfOutput,
-                    bundle.hkdfInfo as Uint8Array<ArrayBuffer>,
-                    bundle.hkdfSalt as Uint8Array<ArrayBuffer>,
-                );
-            } finally {
-                // Clear secret memory
-                toUint8Array(prfOutput).fill(0);
+    async *load(): AsyncGenerator<MaybeError<TangoKey>, void, void> {
+        for await (const result of this.#storage.load()) {
+            if (result instanceof Error) {
+                yield result;
+                continue;
             }
 
-            const decrypted = await crypto.subtle.decrypt(
-                {
-                    name: "AES-GCM",
-                    iv: bundle.aesIv as Uint8Array<ArrayBuffer>,
-                },
-                aesKey,
-                bundle.encrypted as Uint8Array<ArrayBuffer>,
-            );
+            const { privateKey: serialized, name } = result;
 
             try {
-                yield { privateKey: new Uint8Array(decrypted), name };
-            } finally {
-                // Clear secret memory
-                // Caller is not allowed to use `decrypted` after `yield` returns
-                new Uint8Array(decrypted).fill(0);
+                const bundle = Bundle.deserialize(
+                    new Uint8ArrayExactReadable(serialized),
+                );
+
+                const prfOutput = await this.#source.get(
+                    bundle.id as Uint8Array<ArrayBuffer>,
+                    bundle.prfInput as Uint8Array<ArrayBuffer>,
+                );
+
+                this.#prevId = bundle.id as Uint8Array<ArrayBuffer>;
+
+                let aesKey: CryptoKey;
+                try {
+                    aesKey = await deriveAesKey(
+                        prfOutput,
+                        bundle.hkdfInfo as Uint8Array<ArrayBuffer>,
+                        bundle.hkdfSalt as Uint8Array<ArrayBuffer>,
+                    );
+                } finally {
+                    // Clear secret memory
+                    toUint8Array(prfOutput).fill(0);
+                }
+
+                const decrypted = await crypto.subtle.decrypt(
+                    {
+                        name: "AES-GCM",
+                        iv: bundle.aesIv as Uint8Array<ArrayBuffer>,
+                    },
+                    aesKey,
+                    bundle.encrypted as Uint8Array<ArrayBuffer>,
+                );
+
+                try {
+                    yield { privateKey: new Uint8Array(decrypted), name };
+                } finally {
+                    // Clear secret memory
+                    // Caller is not allowed to use `decrypted` after `yield` returns
+                    new Uint8Array(decrypted).fill(0);
+                }
+            } catch (e) {
+                yield e instanceof Error
+                    ? e
+                    : new Error(String(e), { cause: e });
             }
         }
     }

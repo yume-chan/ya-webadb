@@ -6,6 +6,7 @@ import {
     calculateBase64EncodedLength,
     encodeBase64,
     encodeUtf8,
+    md5Digest,
 } from "../utils/index.js";
 
 import type { SimpleRsaPrivateKey } from "./crypto.js";
@@ -21,9 +22,11 @@ export interface AdbPrivateKey extends SimpleRsaPrivateKey {
     name?: string | undefined;
 }
 
+export type MaybeError<T> = T | Error;
+
 export type AdbKeyIterable =
-    | Iterable<AdbPrivateKey>
-    | AsyncIterable<AdbPrivateKey>;
+    | Iterable<MaybeError<AdbPrivateKey>>
+    | AsyncIterable<MaybeError<AdbPrivateKey>>;
 
 export interface AdbCredentialStore {
     /**
@@ -37,6 +40,20 @@ export interface AdbCredentialStore {
      * Each call to `iterateKeys` must return a different iterator that iterate through all stored keys.
      */
     iterateKeys(): AdbKeyIterable;
+}
+
+// https://cs.android.com/android/platform/superproject/main/+/main:frameworks/base/services/core/java/com/android/server/adb/AdbDebuggingManager.java;l=1419;drc=61197364367c9e404c7da6900658f1b16c42d0da
+function getFingerprint(key: AdbPrivateKey) {
+    const publicKey = adbGeneratePublicKey(key);
+    const md5 = md5Digest(publicKey);
+    return Array.from(md5, (byte) => byte.toString(16).padStart(2, "0")).join(
+        ":",
+    );
+}
+
+export interface AdbKeyInfo {
+    fingerprint: string;
+    name: string | undefined;
 }
 
 export const AdbAuthType = {
@@ -56,12 +73,29 @@ export interface AdbAuthenticator {
 export class AdbDefaultAuthenticator implements AdbAuthenticator {
     #credentialStore: AdbCredentialStore;
     #iterator:
-        | Iterator<AdbPrivateKey, void, void>
-        | AsyncIterator<AdbPrivateKey, void, void>
+        | Iterator<MaybeError<AdbPrivateKey>, void, void>
+        | AsyncIterator<MaybeError<AdbPrivateKey>, void, void>
         | undefined;
+
+    #prevKeyInfo: AdbKeyInfo | undefined;
     #firstKey: AdbPrivateKey | undefined;
 
-    #onPublicKeyAuthentication = new EventEmitter<void>();
+    #onKeyLoadError = new EventEmitter<Error>();
+    get onKeyLoadError() {
+        return this.#onKeyLoadError.event;
+    }
+
+    #onSignatureAuthentication = new EventEmitter<AdbKeyInfo>();
+    get onSignatureAuthentication() {
+        return this.#onSignatureAuthentication.event;
+    }
+
+    #onSignatureRejected = new EventEmitter<AdbKeyInfo>();
+    get onSignatureRejected() {
+        return this.#onSignatureRejected.event;
+    }
+
+    #onPublicKeyAuthentication = new EventEmitter<AdbKeyInfo>();
     get onPublicKeyAuthentication() {
         return this.#onPublicKeyAuthentication.event;
     }
@@ -70,11 +104,7 @@ export class AdbDefaultAuthenticator implements AdbAuthenticator {
         this.#credentialStore = credentialStore;
     }
 
-    async authenticate(packet: AdbPacketData): Promise<AdbPacketData> {
-        if (packet.arg0 !== AdbAuthType.Token) {
-            throw new Error("Unsupported authentication packet");
-        }
-
+    async #iterate(token: Uint8Array): Promise<AdbPacketData | undefined> {
         if (!this.#iterator) {
             const iterable = this.#credentialStore.iterateKeys();
             if (Symbol.iterator in iterable) {
@@ -86,21 +116,46 @@ export class AdbDefaultAuthenticator implements AdbAuthenticator {
             }
         }
 
-        const { done, value } = await this.#iterator.next();
-        if (!done) {
-            if (!this.#firstKey) {
-                this.#firstKey = value;
-            }
-
-            return {
-                command: AdbCommand.Auth,
-                arg0: AdbAuthType.Signature,
-                arg1: 0,
-                payload: rsaSign(value, packet.payload),
-            };
+        const { done, value: result } = await this.#iterator.next();
+        if (done) {
+            return undefined;
         }
 
-        this.#onPublicKeyAuthentication.fire();
+        if (result instanceof Error) {
+            this.#onKeyLoadError.fire(result);
+            return await this.#iterate(token);
+        }
+
+        if (!this.#firstKey) {
+            this.#firstKey = result;
+        }
+
+        // A new token implies the previous signature was rejected.
+        if (this.#prevKeyInfo) {
+            this.#onSignatureRejected.fire(this.#prevKeyInfo);
+        }
+
+        const fingerprint = getFingerprint(result);
+        this.#prevKeyInfo = { fingerprint, name: result.name };
+        this.#onSignatureAuthentication.fire(this.#prevKeyInfo);
+
+        return {
+            command: AdbCommand.Auth,
+            arg0: AdbAuthType.Signature,
+            arg1: 0,
+            payload: rsaSign(result, token),
+        };
+    }
+
+    async authenticate(packet: AdbPacketData): Promise<AdbPacketData> {
+        if (packet.arg0 !== AdbAuthType.Token) {
+            throw new Error("Unsupported authentication packet");
+        }
+
+        const signature = await this.#iterate(packet.payload);
+        if (signature) {
+            return signature;
+        }
 
         let key = this.#firstKey;
         if (!key) {
@@ -130,6 +185,11 @@ export class AdbDefaultAuthenticator implements AdbAuthenticator {
             publicKeyBuffer[publicKeyBase64Length] = 0x20;
             publicKeyBuffer.set(nameBuffer, publicKeyBase64Length + 1);
         }
+
+        this.#onPublicKeyAuthentication.fire({
+            fingerprint: getFingerprint(key),
+            name: key.name,
+        });
 
         return {
             command: AdbCommand.Auth,

@@ -1,3 +1,4 @@
+import type { MaybeError } from "@yume-chan/adb";
 import { encodeUtf8 } from "@yume-chan/adb";
 import type { MaybePromiseLike } from "@yume-chan/async";
 import {
@@ -103,22 +104,26 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
         //   * `data` is owned by caller and will be cleared by caller
     }
 
-    async *load(): AsyncGenerator<TangoKey, void, void> {
-        for await (const {
-            privateKey: serialized,
-            name,
-        } of this.#storage.load()) {
-            const bundle = Bundle.deserialize(
-                new Uint8ArrayExactReadable(serialized),
-            );
+    async *load(): AsyncGenerator<MaybeError<TangoKey>, void, void> {
+        for await (const result of this.#storage.load()) {
+            if (result instanceof Error) {
+                yield result;
+                continue;
+            }
 
-            const password = await this.#requestPassword("load");
-            const { aesKey } = await deriveAesKey(
-                password,
-                bundle.pbkdf2Salt as Uint8Array<ArrayBuffer>,
-            );
+            const { privateKey: serialized, name } = result;
 
             try {
+                const bundle = Bundle.deserialize(
+                    new Uint8ArrayExactReadable(serialized),
+                );
+
+                const password = await this.#requestPassword("load");
+                const { aesKey } = await deriveAesKey(
+                    password,
+                    bundle.pbkdf2Salt as Uint8Array<ArrayBuffer>,
+                );
+
                 const decrypted = await crypto.subtle.decrypt(
                     {
                         name: "AES-GCM",
@@ -128,22 +133,27 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
                     bundle.encrypted as Uint8Array<ArrayBuffer>,
                 );
 
-                yield {
-                    privateKey: new Uint8Array(decrypted),
-                    name,
-                };
-
-                // Clear secret memory
-                //   * No way to clear `password` and `aesKey`
-                //   * all values in `bundle` are not secrets
-                //   * Caller is not allowed to use `decrypted` after `yield` returns
-                new Uint8Array(decrypted).fill(0);
+                try {
+                    yield {
+                        privateKey: new Uint8Array(decrypted),
+                        name,
+                    };
+                } finally {
+                    // Clear secret memory
+                    //   * No way to clear `password` and `aesKey`
+                    //   * all values in `bundle` are not secrets
+                    //   * Caller is not allowed to use `decrypted` after `yield` returns
+                    new Uint8Array(decrypted).fill(0);
+                }
             } catch (e) {
                 if (e instanceof DOMException && e.name === "OperationError") {
-                    throw new PasswordIncorrectError();
+                    yield new PasswordIncorrectError();
+                    continue;
                 }
 
-                throw e;
+                yield e instanceof Error
+                    ? e
+                    : new Error(String(e), { cause: e });
             }
         }
     }

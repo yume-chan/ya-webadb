@@ -10,8 +10,9 @@ import {
     writeFile,
 } from "node:fs/promises";
 import { homedir, hostname, userInfo } from "node:os";
-import { resolve } from "node:path";
+import { delimiter, resolve } from "node:path";
 
+import type { MaybeError } from "@yume-chan/adb";
 import {
     adbGeneratePublicKey,
     decodeBase64,
@@ -21,12 +22,41 @@ import {
 } from "@yume-chan/adb";
 import type { TangoKey, TangoKeyStorage } from "@yume-chan/adb-credential-web";
 
-export class TangoNodeStorage implements TangoKeyStorage {
-    #logger: ((message: string) => void) | undefined;
+class KeyError extends Error {
+    readonly path: string;
 
-    constructor(logger: ((message: string) => void) | undefined) {
-        this.#logger = logger;
+    constructor(message: string, path: string, options?: ErrorOptions) {
+        super(message, options);
+        this.path = path;
     }
+}
+
+/**
+ * Can't read or parse a private key file.
+ *
+ * Check `path` for file path, and `cause` for the error.
+ */
+class InvalidKeyError extends KeyError {
+    constructor(path: string, options?: ErrorOptions) {
+        super(`Can't read private key file at "${path}"`, path, options);
+    }
+}
+
+/**
+ * Can't read or parse a vendor key.
+ *
+ * Check `path` for file path, and `cause` for the error.
+ */
+class VendorKeyError extends KeyError {
+    constructor(path: string, options?: ErrorOptions) {
+        super(`Can't read vendor key file at "${path}"`, path, options);
+    }
+}
+
+export class TangoNodeStorage implements TangoKeyStorage {
+    static readonly KeyError = KeyError;
+    static readonly InvalidKeyError = InvalidKeyError;
+    static readonly VendorKeyError = VendorKeyError;
 
     async #getAndroidDirPath() {
         const dir = resolve(homedir(), ".android");
@@ -75,11 +105,11 @@ export class TangoNodeStorage implements TangoKeyStorage {
                 pem
                     // Parse PEM in Lax format (allows spaces/line breaks everywhere)
                     // https://datatracker.ietf.org/doc/html/rfc7468
-                    .replaceAll(/-----(BEGIN|END) PRIVATE KEY-----/g, "")
+                    .replaceAll(/-----(BEGIN|END)( RSA)? PRIVATE KEY-----/g, "")
                     .replaceAll(/\x20|\t|\r|\n|\v|\f/g, ""),
             );
         } catch (e) {
-            throw new Error("Invalid private key file: " + path, { cause: e });
+            throw new InvalidKeyError(path, { cause: e });
         }
     }
 
@@ -95,7 +125,12 @@ export class TangoNodeStorage implements TangoKeyStorage {
             }
 
             const publicKey = await readFile(publicKeyPath, "utf8");
-            return publicKey.split(" ")[1]?.trim();
+            const spaceIndex = publicKey.indexOf(" ");
+            if (spaceIndex === -1) {
+                return undefined;
+            }
+            const name = publicKey.substring(spaceIndex + 1).trim();
+            return name ? name : undefined;
         } catch {
             return undefined;
         }
@@ -108,20 +143,39 @@ export class TangoNodeStorage implements TangoKeyStorage {
         return { privateKey, name };
     }
 
-    async *#readVendorKeys(path: string) {
-        const stats = await stat(path);
+    async *#readVendorKeys(
+        path: string,
+    ): AsyncGenerator<MaybeError<TangoKey>, void, void> {
+        let stats;
+        try {
+            stats = await stat(path);
+        } catch (e) {
+            yield new VendorKeyError(path, { cause: e });
+            return;
+        }
 
         if (stats.isFile()) {
             try {
                 yield await this.#readKey(path);
+                return;
             } catch (e) {
-                this.#logger?.(String(e));
+                yield e instanceof KeyError
+                    ? e
+                    : new VendorKeyError(path, { cause: e });
+                return;
             }
-            return;
         }
 
         if (stats.isDirectory()) {
-            for await (const dirent of await opendir(path)) {
+            let dir;
+            try {
+                dir = await opendir(path);
+            } catch (e) {
+                yield new VendorKeyError(path, { cause: e });
+                return;
+            }
+
+            for await (const dirent of dir) {
                 if (!dirent.isFile()) {
                     continue;
                 }
@@ -130,29 +184,43 @@ export class TangoNodeStorage implements TangoKeyStorage {
                     continue;
                 }
 
+                const file = resolve(path, dirent.name);
                 try {
-                    yield await this.#readKey(resolve(path, dirent.name));
+                    yield await this.#readKey(file);
                 } catch (e) {
-                    this.#logger?.(String(e));
+                    yield e instanceof KeyError
+                        ? e
+                        : new VendorKeyError(file, { cause: e });
                 }
             }
         }
     }
 
-    async *load(): AsyncGenerator<TangoKey, void, void> {
+    async *load(): AsyncGenerator<MaybeError<TangoKey>, void, void> {
         const userKeyPath = await this.#getUserKeyPath();
         if (existsSync(userKeyPath)) {
-            yield await this.#readKey(userKeyPath);
+            try {
+                yield await this.#readKey(userKeyPath);
+            } catch (e) {
+                yield e instanceof KeyError
+                    ? e
+                    : new InvalidKeyError(userKeyPath, { cause: e });
+            }
         }
 
         const vendorKeys = process.env.ADB_VENDOR_KEYS;
         if (vendorKeys) {
-            const separator = process.platform === "win32" ? ";" : ":";
-            for (const path of vendorKeys.split(separator)) {
+            for (const path of vendorKeys.split(delimiter).filter(Boolean)) {
                 yield* this.#readVendorKeys(path);
             }
         }
     }
+}
+
+export namespace TangoNodeStorage {
+    export type KeyError = typeof KeyError;
+    export type InvalidKeyError = typeof InvalidKeyError;
+    export type VendorKeyError = typeof VendorKeyError;
 }
 
 // Re-export everything except Web-only storages
