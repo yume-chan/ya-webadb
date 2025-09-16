@@ -145,16 +145,19 @@ export class TangoNodeStorage implements TangoKeyStorage {
         try {
             stats = await stat(path);
         } catch (e) {
-            return yield new VendorKeyError(path, { cause: e });
+            yield new VendorKeyError(path, { cause: e });
+            return;
         }
 
         if (stats.isFile()) {
             try {
-                return yield await this.#readKey(path);
+                yield await this.#readKey(path);
+                return;
             } catch (e) {
-                return yield e instanceof KeyError
+                yield e instanceof KeyError
                     ? e
                     : new VendorKeyError(path, { cause: e });
+                return;
             }
         }
 
@@ -163,7 +166,8 @@ export class TangoNodeStorage implements TangoKeyStorage {
             try {
                 dir = await opendir(path);
             } catch (e) {
-                return yield new VendorKeyError(path, { cause: e });
+                yield new VendorKeyError(path, { cause: e });
+                return;
             }
 
             for await (const dirent of dir) {

@@ -1,6 +1,6 @@
 import {
     getUint32LittleEndian,
-    setUint32LittleEndian,
+    setUint64LittleEndian,
 } from "@yume-chan/no-data-view";
 
 // Taken from https://github.com/digitalbazaar/forge/blob/e3c68e9695607702587583cda291d74e5369f21c/tests/unit/md5.js#L103
@@ -33,7 +33,7 @@ export class Md5 {
     }
 
     #state = new Uint32Array([0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476]);
-    #length = 0;
+    #length = 0n;
 
     #buffer = new Uint8Array(64);
     #bufferLength = 0;
@@ -41,7 +41,7 @@ export class Md5 {
     #w = new Uint32Array(16);
 
     update(input: Uint8Array) {
-        this.#length += input.length;
+        this.#length += BigInt(input.length);
 
         let offset = 0;
 
@@ -145,10 +145,10 @@ export class Md5 {
             this.#bufferLength = 0;
         }
 
-        setUint32LittleEndian(
+        setUint64LittleEndian(
             this.#buffer,
             this.#buffer.length - 8,
-            this.#length << 3,
+            this.#length << 3n,
         );
         this.#update(this.#buffer);
 
@@ -163,7 +163,7 @@ export class Md5 {
         this.#state[2] = 0x98badcfe;
         this.#state[3] = 0x10325476;
         this.#bufferLength = 0;
-        this.#length = 0;
+        this.#length = 0n;
         return this;
     }
 }
