@@ -187,11 +187,9 @@ export class TangoPrfStorage implements TangoKeyStorage {
                     new Uint8Array(decrypted).fill(0);
                 }
             } catch (e) {
-                if (e instanceof Error) {
-                    yield e;
-                } else {
-                    yield new Error(String(e));
-                }
+                yield e instanceof Error
+                    ? e
+                    : new Error(String(e), { cause: e });
             }
         }
     }

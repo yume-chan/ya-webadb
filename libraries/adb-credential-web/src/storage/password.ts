@@ -133,28 +133,27 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
                     bundle.encrypted as Uint8Array<ArrayBuffer>,
                 );
 
-                yield {
-                    privateKey: new Uint8Array(decrypted),
-                    name,
-                };
-
-                // Clear secret memory
-                //   * No way to clear `password` and `aesKey`
-                //   * all values in `bundle` are not secrets
-                //   * Caller is not allowed to use `decrypted` after `yield` returns
-                new Uint8Array(decrypted).fill(0);
+                try {
+                    yield {
+                        privateKey: new Uint8Array(decrypted),
+                        name,
+                    };
+                } finally {
+                    // Clear secret memory
+                    //   * No way to clear `password` and `aesKey`
+                    //   * all values in `bundle` are not secrets
+                    //   * Caller is not allowed to use `decrypted` after `yield` returns
+                    new Uint8Array(decrypted).fill(0);
+                }
             } catch (e) {
                 if (e instanceof DOMException && e.name === "OperationError") {
                     yield new PasswordIncorrectError();
                     continue;
                 }
 
-                if (e instanceof Error) {
-                    yield e;
-                    continue;
-                }
-
-                yield new Error(String(e));
+                yield e instanceof Error
+                    ? e
+                    : new Error(String(e), { cause: e });
             }
         }
     }

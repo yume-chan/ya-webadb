@@ -77,7 +77,7 @@ export class AdbDefaultAuthenticator implements AdbAuthenticator {
         | AsyncIterator<MaybeError<AdbPrivateKey>, void, void>
         | undefined;
 
-    #prevFingerprint: string | undefined;
+    #prevKeyInfo: AdbKeyInfo | undefined;
     #firstKey: AdbPrivateKey | undefined;
 
     #onKeyLoadError = new EventEmitter<Error>();
@@ -130,19 +130,14 @@ export class AdbDefaultAuthenticator implements AdbAuthenticator {
             this.#firstKey = result;
         }
 
-        if (this.#prevFingerprint) {
-            this.#onSignatureRejected.fire({
-                fingerprint: this.#prevFingerprint,
-                name: result.name,
-            });
+        // A new token implies the previous signature was rejected.
+        if (this.#prevKeyInfo) {
+            this.#onSignatureRejected.fire(this.#prevKeyInfo);
         }
 
         const fingerprint = getFingerprint(result);
-        this.#prevFingerprint = fingerprint;
-        this.#onSignatureAuthentication.fire({
-            fingerprint,
-            name: result.name,
-        });
+        this.#prevKeyInfo = { fingerprint, name: result.name };
+        this.#onSignatureAuthentication.fire(this.#prevKeyInfo);
 
         return {
             command: AdbCommand.Auth,

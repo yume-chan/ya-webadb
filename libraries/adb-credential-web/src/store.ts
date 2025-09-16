@@ -66,11 +66,17 @@ export class AdbWebCryptoCredentialStore implements AdbCredentialStore {
                 continue;
             }
 
-            // `privateKey` is owned by `#storage` and will be cleared by it
-            yield {
-                ...rsaParsePrivateKey(result.privateKey),
-                name: result.name ?? this.#name,
-            };
+            try {
+                // `privateKey` is owned by `#storage` and will be cleared by it
+                yield {
+                    ...rsaParsePrivateKey(result.privateKey),
+                    name: result.name ?? this.#name,
+                };
+            } catch (e) {
+                yield e instanceof Error
+                    ? e
+                    : new Error(String(e), { cause: e });
+            }
         }
     }
 }

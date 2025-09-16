@@ -22,7 +22,42 @@ import {
 } from "@yume-chan/adb";
 import type { TangoKey, TangoKeyStorage } from "@yume-chan/adb-credential-web";
 
+class KeyError extends Error {
+    path: string;
+
+    constructor(message: string, path: string, options?: ErrorOptions) {
+        super(message, options);
+        this.path = path;
+    }
+}
+
+/**
+ * Can't read or parse a private key file.
+ *
+ * Check `path` for file path, and `cause` for the error.
+ */
+class InvalidKeyError extends KeyError {
+    constructor(path: string, options?: ErrorOptions) {
+        super(`Can't read private key file at "${path}"`, path, options);
+    }
+}
+
+/**
+ * Can't read or parse a vendor key.
+ *
+ * Check `path` for file path, and `cause` for the error.
+ */
+class VendorKeyError extends KeyError {
+    constructor(path: string, options?: ErrorOptions) {
+        super(`Can't read vendor key file at "${path}"`, path, options);
+    }
+}
+
 export class TangoNodeStorage implements TangoKeyStorage {
+    static readonly KeyError = KeyError;
+    static readonly InvalidKeyError = InvalidKeyError;
+    static readonly VendorKeyError = VendorKeyError;
+
     async #getAndroidDirPath() {
         const dir = resolve(homedir(), ".android");
         await mkdir(dir, { mode: 0o750, recursive: true });
@@ -74,7 +109,7 @@ export class TangoNodeStorage implements TangoKeyStorage {
                     .replaceAll(/\x20|\t|\r|\n|\v|\f/g, ""),
             );
         } catch (e) {
-            throw new Error("Invalid private key file: " + path, { cause: e });
+            throw new InvalidKeyError(path, { cause: e });
         }
     }
 
@@ -106,23 +141,32 @@ export class TangoNodeStorage implements TangoKeyStorage {
     async *#readVendorKeys(
         path: string,
     ): AsyncGenerator<MaybeError<TangoKey>, void, void> {
-        const stats = await stat(path);
+        let stats;
+        try {
+            stats = await stat(path);
+        } catch (e) {
+            return yield new VendorKeyError(path, { cause: e });
+        }
 
         if (stats.isFile()) {
             try {
-                yield await this.#readKey(path);
+                return yield await this.#readKey(path);
             } catch (e) {
-                if (e instanceof Error) {
-                    yield e;
-                } else {
-                    yield new Error(String(e));
-                }
+                return yield e instanceof KeyError
+                    ? e
+                    : new VendorKeyError(path, { cause: e });
             }
-            return;
         }
 
         if (stats.isDirectory()) {
-            for await (const dirent of await opendir(path)) {
+            let dir;
+            try {
+                dir = await opendir(path);
+            } catch (e) {
+                return yield new VendorKeyError(path, { cause: e });
+            }
+
+            for await (const dirent of dir) {
                 if (!dirent.isFile()) {
                     continue;
                 }
@@ -131,14 +175,13 @@ export class TangoNodeStorage implements TangoKeyStorage {
                     continue;
                 }
 
+                const file = resolve(path, dirent.name);
                 try {
-                    yield await this.#readKey(resolve(path, dirent.name));
+                    yield await this.#readKey(file);
                 } catch (e) {
-                    if (e instanceof Error) {
-                        yield e;
-                    } else {
-                        yield new Error(String(e));
-                    }
+                    yield e instanceof KeyError
+                        ? e
+                        : new VendorKeyError(path, { cause: e });
                 }
             }
         }
@@ -150,11 +193,9 @@ export class TangoNodeStorage implements TangoKeyStorage {
             try {
                 yield await this.#readKey(userKeyPath);
             } catch (e) {
-                if (e instanceof Error) {
-                    yield e;
-                } else {
-                    yield new Error(String(e));
-                }
+                yield e instanceof KeyError
+                    ? e
+                    : new InvalidKeyError(userKeyPath, { cause: e });
             }
         }
 
@@ -166,6 +207,12 @@ export class TangoNodeStorage implements TangoKeyStorage {
             }
         }
     }
+}
+
+export namespace TangoNodeStorage {
+    export type KeyError = typeof KeyError;
+    export type InvalidKeyError = typeof InvalidKeyError;
+    export type VendorKeyError = typeof VendorKeyError;
 }
 
 // Re-export everything except Web-only storages
