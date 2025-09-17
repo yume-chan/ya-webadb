@@ -58,6 +58,14 @@ export class AdbDaemonWebUsbDeviceManager {
                 return undefined;
             }
 
+            // If this `requestDevice` adds a new device,
+            // Chrome won't fire a `connect` event for it.
+            // This will cause device observer to lose track of it,
+            // and when the device disconnects, device observer won't fire the disconnect event for it.
+            this.#usbManager.dispatchEvent(
+                new USBConnectionEvent("connect", { device }),
+            );
+
             return new AdbDaemonWebUsbDevice(
                 device,
                 interface_,
