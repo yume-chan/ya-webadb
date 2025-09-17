@@ -84,6 +84,12 @@ export class AdbDaemonWebUsbDeviceObserver
             return;
         }
 
+        // We send a `connect` event on `requestDevice` success,
+        // but this device might already exist if we already have the permission for it.
+        if (this.current.some((item) => item.raw === device.raw)) {
+            return;
+        }
+
         const next = this.current.slice();
         next.push(device);
         this.current = next;
