@@ -25,7 +25,10 @@ export interface Field<T, OmitInit extends string, D, Raw = T>
         FieldDeserializer<T, D> {
     omitInit: OmitInit | undefined;
 
-    init?(value: T, dependencies: D): Raw | undefined;
+    /**
+     * A function to convert deserialized value back to raw value for serialization.
+     */
+    init?(value: T, dependencies: D): Raw;
 }
 
 export interface FieldDeserializeContext<D> {
@@ -44,5 +47,8 @@ export interface FieldDeserializer<T, D> {
 export interface FieldOptions<T, OmitInit extends string, D, Raw = T> {
     omitInit?: OmitInit;
     dependencies?: D;
-    init?: (value: T, dependencies: D) => Raw | undefined;
+    /**
+     * A function to convert deserialized value back to raw value for serialization.
+     */
+    init?: ((value: T, dependencies: D) => Raw) | undefined;
 }

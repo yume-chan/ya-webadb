@@ -132,9 +132,7 @@ export function struct<
             for (const [key, field] of fieldList) {
                 if (key in temp && "init" in field) {
                     const result = field.init?.(temp[key], temp as never);
-                    if (result !== undefined) {
-                        temp[key] = result;
-                    }
+                    temp[key] = result;
                 }
             }
 
