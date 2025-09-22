@@ -52,7 +52,7 @@ export class AdbReverseNotSupportedError extends AdbReverseError {
     }
 }
 
-const AdbReverseErrorResponse = extend(
+export const AdbReverseErrorResponse = extend(
     AdbReverseStringResponse,
     {},
     {
