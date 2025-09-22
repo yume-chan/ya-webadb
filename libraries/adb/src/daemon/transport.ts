@@ -80,7 +80,7 @@ export interface AdbDaemonAuthenticationOptions {
     readTimeLimit?: number | undefined;
 }
 
-interface AdbDaemonSocketConnectorConstructionOptions {
+interface AdbDaemonTransportInit {
     serial: string;
     connection: AdbDaemonConnection;
     version: number;
@@ -337,7 +337,7 @@ export class AdbDaemonTransport implements AdbTransport {
         features = AdbDeviceFeatures,
         initialDelayedAckBytes,
         ...options
-    }: AdbDaemonSocketConnectorConstructionOptions) {
+    }: AdbDaemonTransportInit) {
         this.#serial = serial;
         this.#connection = connection;
         this.#banner = AdbBanner.parse(banner);
