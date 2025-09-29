@@ -55,8 +55,14 @@ async function deriveAesKey(password: string, salt?: Uint8Array<ArrayBuffer>) {
 }
 
 class PasswordIncorrectError extends Error {
-    constructor() {
+    #keyName: string | undefined;
+    get keyName() {
+        return this.#keyName;
+    }
+
+    constructor(keyName: string | undefined) {
         super("Password incorrect");
+        this.#keyName = keyName;
     }
 }
 
@@ -78,7 +84,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
         privateKey: Uint8Array<ArrayBuffer>,
         name: string | undefined,
     ): Promise<undefined> {
-        const password = await this.#requestPassword("save");
+        const password = await this.#requestPassword("save", name);
         const { salt, aesKey } = await deriveAesKey(password);
 
         const iv = new Uint8Array(AesIvLength);
@@ -118,7 +124,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
                     new Uint8ArrayExactReadable(serialized),
                 );
 
-                const password = await this.#requestPassword("load");
+                const password = await this.#requestPassword("load", name);
                 const { aesKey } = await deriveAesKey(
                     password,
                     bundle.pbkdf2Salt as Uint8Array<ArrayBuffer>,
@@ -147,7 +153,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
                 }
             } catch (e) {
                 if (e instanceof DOMException && e.name === "OperationError") {
-                    yield new PasswordIncorrectError();
+                    yield new PasswordIncorrectError(name);
                     continue;
                 }
 
@@ -162,6 +168,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
 export namespace TangoPasswordProtectedStorage {
     export type RequestPassword = (
         reason: "save" | "load",
+        name: string | undefined,
     ) => MaybePromiseLike<string>;
 
     export type PasswordIncorrectError = typeof PasswordIncorrectError;
