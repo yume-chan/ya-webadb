@@ -7,7 +7,7 @@ import { rsaParsePrivateKey } from "@yume-chan/adb";
 
 import type { TangoKeyStorage } from "./storage/index.js";
 
-export class AdbWebCryptoCredentialStore implements AdbCredentialStore {
+export class AdbWebCryptoCredentialManager implements AdbCredentialStore {
     readonly #storage: TangoKeyStorage;
 
     readonly #name: string | undefined;

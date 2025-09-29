@@ -225,7 +225,7 @@ export namespace TangoNodeStorage {
 
 // Re-export everything except Web-only storages
 export {
-    AdbWebCryptoCredentialStore,
+    AdbWebCryptoCredentialManager,
     TangoPasswordProtectedStorage,
     TangoPrfStorage,
 } from "@yume-chan/adb-credential-web";
