@@ -1,13 +1,47 @@
 import type {
-    AdbCredentialStore,
+    AdbCredentialManager,
+    AdbDaemonDefaultAuthenticationProcessorInit,
     AdbPrivateKey,
     MaybeError,
 } from "@yume-chan/adb";
-import { rsaParsePrivateKey } from "@yume-chan/adb";
+import {
+    AdbDaemonDefaultAuthenticationProcessor,
+    AdbDaemonDefaultAuthenticator,
+    rsaParsePrivateKey,
+} from "@yume-chan/adb";
 
 import type { TangoKeyStorage } from "./storage/index.js";
 
-export class AdbWebCryptoCredentialManager implements AdbCredentialStore {
+export class AdbWebCryptoCredentialManager implements AdbCredentialManager {
+    static createDefaultAuthenticationProcessor(
+        storage: TangoKeyStorage,
+        init?: Omit<
+            AdbDaemonDefaultAuthenticationProcessorInit,
+            "credentialStore"
+        > & {
+            name?: string;
+        },
+    ) {
+        return new AdbDaemonDefaultAuthenticationProcessor({
+            ...init,
+            credentialManager: new this(storage, init?.name),
+        });
+    }
+
+    static createDefaultAuthenticator(
+        storage: TangoKeyStorage,
+        init?: Omit<
+            AdbDaemonDefaultAuthenticationProcessorInit,
+            "credentialStore"
+        > & {
+            name?: string;
+        },
+    ) {
+        return new AdbDaemonDefaultAuthenticator(() =>
+            this.createDefaultAuthenticationProcessor(storage, init),
+        );
+    }
+
     readonly #storage: TangoKeyStorage;
 
     readonly #name: string | undefined;
