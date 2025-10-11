@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/scrcpy",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "description": "TypeScript implementation of Scrcpy client.",
     "keywords": [
         "adb",

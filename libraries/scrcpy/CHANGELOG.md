@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/scrcpy
 
+## 2.3.0
+
+### Minor Changes
+
+- ec2ec23: Add client version 3.3.3
+
 ## 2.2.0
 
 ### Minor Changes

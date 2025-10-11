@@ -1,5 +1,16 @@
 # Change Log - @yume-chan/adb-scrcpy
 
+## 2.3.0
+
+### Minor Changes
+
+- ec2ec23: Add client version 3.3.3
+
+### Patch Changes
+
+- Updated dependencies [ec2ec23]
+    - @yume-chan/scrcpy@2.3.0
+
 ## 2.2.1
 
 ### Patch Changes
