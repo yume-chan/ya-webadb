@@ -78,7 +78,7 @@ const PUBLIC_KEY =
     "QAAAANVsDNqDk46/2Qg74n5POy5nK/XA8glCLkvXMks9p885+GQ2WiVUctG8LP/W5cII11Pk1KsZ+90ccZV2fdjv+tnW/8li9iEWTC+G1udFMxsIQ+HRPvJF0Xl9JXDsC6pvdo9ic4d6r5BC9BGiijd0enoG/tHkJhMhbPf/j7+MWXDrF+BeJeyj0mWArbqS599IO2qUCZiNjRakAa/iESG6Om4xCJWTT8wGhSTs81cHcEeSmQ2ixRwS+uaa/8iK/mv6BvCep5qgFrJW1G9LD2WciVgTpOSc6B1N/OA92hwJYp2lHLPWZl6bJIYHqrzdHCxc4EEVVYHkSBdFy1w2vhg2YgRTlpbP00NVrZb6Car8BTqPnwTRIkHBC6nnrg6cWMQ0xusMtxChKBoYGhCLHY4iKK6ra3P1Ou1UXu0WySau3s+Av9FFXxtAuMAJUA+5GSMQGGECRhwLX910OfnHHN+VxqJkHQye4vNhIH5C1dJ39HJoxAdwH2tF7v7GF2fwsy2lUa3Vj6bBssWivCB9cKyJR0GVPZJZ1uah24ecvspwtAqbtxvj7ZD9l7AD92geEJdLrsbfhNaDyAioQ2grI32gdp80su/7BrdAsPaSomxCYBB8opmS+oJq6qTYxNZ0doT9EEyT5D9rl9UXXxq+rQbDpKV1rOQo5zJJ2GkELhUrslFm6n4+JQEAAQA=";
 
 describe("auth", () => {
-    describe("AdbDaemonAuthenticationProcessor", () => {
+    describe("AdbDaemonAuthProcessor", () => {
         it("should generate correct public key without name", async () => {
             const store = new MockCredentialManager(
                 new Uint8Array(PRIVATE_KEY),

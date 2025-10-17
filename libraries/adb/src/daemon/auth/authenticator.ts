@@ -25,11 +25,20 @@ export type AdbDaemonAuthenticateOptions = Pick<
     | "serial"
     | "connection"
     | "features"
-    | "initialDelayedAckBytes"
     | "preserveConnection"
     | "readTimeLimit"
-> &
-    AdbDaemonAuthProcessorInit;
+> & {
+    /**
+     * The number of bytes the device can send before receiving an ack packet.
+     *
+     * Android 14 added the Delayed Acknowledgement feature to improve performance,
+     * especially for high-latency connections like ADB over Wi-Fi.
+     *
+     * Unlike {@linkcode AdbDaemonTransportInit.initialDelayedAckBytes},
+     * setting this parameter to 0 or a negative number will disable Delayed Ack.
+     */
+    initialDelayedAckBytes?: number | undefined;
+} & AdbDaemonAuthProcessorInit;
 
 export interface IAdbDaemonAuthProcessor {
     process(packet: AdbPacketData): Promise<AdbPacketData>;
@@ -156,10 +165,11 @@ export class AdbDaemonAuthenticator {
             );
 
         if (initialDelayedAckBytes <= 0) {
-            const index = features.indexOf(AdbFeature.DelayedAck);
-            if (index !== -1) {
-                features = features.toSpliced(index, 1);
-            }
+            // Disable delayed ack by not sending this feature to the device
+            features = features.filter(
+                (feature) => feature !== AdbFeature.DelayedAck,
+            );
+            initialDelayedAckBytes = 0;
         }
 
         let banner: string;

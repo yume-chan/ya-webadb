@@ -31,16 +31,16 @@ export interface AdbDaemonTransportInit {
     /**
      * The number of bytes the device can send before receiving an ack packet.
      *
-     * On Android 14 and newer, the Delayed Acknowledgement feature is added to
-     * improve performance, especially for high-latency connections like ADB over Wi-Fi.
+     * Android 14 added the Delayed Acknowledgement feature to improve performance,
+     * especially for high-latency connections like ADB over Wi-Fi.
      *
-     * When `features` doesn't include `AdbFeature.DelayedAck`, it must be set to 0. Otherwise,
-     * the value must be in the range of unsigned 32-bit integer.
+     * Whether the feature is enabled is negotiated in the handshake process
+     * using the {@linkcode AdbFeature.DelayedAck} feature.
+     * If the feature is enabled, this parameter must be set to a positive integer.
      *
-     * If the device enabled delayed ack but the client didn't, the device will throw an error
-     * when the client sends the first data packet. And vice versa.
+     * If not specified, the default value is {@linkcode ADB_DAEMON_DEFAULT_INITIAL_PAYLOAD_SIZE}.
      */
-    initialDelayedAckBytes: number;
+    initialDelayedAckBytes?: number | undefined;
 
     /**
      * Whether to keep the `connection` open (don't call `writable.close` and `readable.cancel`)
@@ -109,7 +109,7 @@ export class AdbDaemonTransport implements AdbTransport {
         version,
         banner,
         features = AdbDeviceFeatures,
-        initialDelayedAckBytes,
+        initialDelayedAckBytes = ADB_DAEMON_DEFAULT_INITIAL_PAYLOAD_SIZE,
         ...options
     }: AdbDaemonTransportInit) {
         this.#serial = serial;
@@ -117,18 +117,18 @@ export class AdbDaemonTransport implements AdbTransport {
         this.#banner = AdbBanner.parse(banner);
         this.#clientFeatures = features;
 
-        if (features.includes(AdbFeature.DelayedAck)) {
-            if (initialDelayedAckBytes <= 0) {
-                throw new TypeError(
-                    "`initialDelayedAckBytes` must be greater than 0 when DelayedAck feature is enabled.",
-                );
-            }
-
-            if (!this.#banner.features.includes(AdbFeature.DelayedAck)) {
-                initialDelayedAckBytes = 0;
-            }
-        } else {
+        if (
+            !this.#banner.features.includes(AdbFeature.DelayedAck) ||
+            !features.includes(AdbFeature.DelayedAck)
+        ) {
+            // For `AdbPacketDispatcher`, 0 means disabled
             initialDelayedAckBytes = 0;
+        } else if (initialDelayedAckBytes <= 0) {
+            // Delayed Ack is enabled in handshake process, we can't disable it here,
+            // so it must be a positive integer
+            throw new TypeError(
+                "`initialDelayedAckBytes` must be greater than 0 when DelayedAck feature is enabled.",
+            );
         }
 
         let shouldCalculateChecksum: boolean;

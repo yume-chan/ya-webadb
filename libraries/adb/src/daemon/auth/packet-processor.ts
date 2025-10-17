@@ -82,7 +82,11 @@ export class AdbDaemonAuthProcessor implements IAdbDaemonAuthProcessor {
         this.#onPublicKeyAuthentication = init.onPublicKeyAuthentication;
     }
 
-    async #iterate(token: Uint8Array): Promise<AdbPacketData | undefined> {
+    /**
+     * Gets the next available private key.
+     * @returns The next available private key, or `undefined` if no more key is available
+     */
+    async #getNextKey() {
         if (!this.#iterator) {
             const iterable = this.#credentialManager.iterateKeys();
             if (Symbol.iterator in iterable) {
@@ -94,34 +98,52 @@ export class AdbDaemonAuthProcessor implements IAdbDaemonAuthProcessor {
             }
         }
 
-        const { done, value: result } = await this.#iterator.next();
-        if (done) {
+        while (true) {
+            const { done, value } = await this.#iterator.next();
+            if (done) {
+                return undefined;
+            }
+
+            if (value instanceof Error) {
+                // Report the error, then continue calling `next`
+                this.#onKeyLoadError?.(value);
+                continue;
+            }
+
+            return value;
+        }
+    }
+
+    /**
+     * Tries to sign the challenge using the next private key.
+     *
+     * @param challenge The data to sign
+     * @returns An `AdbPacket` containing the response, or `undefined` if no key is available
+     */
+    async #sign(challenge: Uint8Array): Promise<AdbPacketData | undefined> {
+        const key = await this.#getNextKey();
+        if (!key) {
             return undefined;
         }
 
-        if (result instanceof Error) {
-            this.#onKeyLoadError?.(result);
-            return await this.#iterate(token);
-        }
-
         if (!this.#firstKey) {
-            this.#firstKey = result;
+            this.#firstKey = key;
         }
 
-        // A new token implies the previous signature was rejected.
+        // A new challenge implies the previous signature was rejected.
         if (this.#prevKeyInfo) {
             this.#onSignatureRejected?.(this.#prevKeyInfo);
         }
 
-        const fingerprint = adbGetPublicKeyFingerprint(result);
-        this.#prevKeyInfo = { fingerprint, name: result.name };
+        const fingerprint = adbGetPublicKeyFingerprint(key);
+        this.#prevKeyInfo = { fingerprint, name: key.name };
         this.#onSignatureAuthentication?.(this.#prevKeyInfo);
 
         return {
             command: AdbCommand.Auth,
             arg0: AdbDaemonAuthType.Signature,
             arg1: 0,
-            payload: rsaSign(result, token),
+            payload: rsaSign(key, challenge),
         };
     }
 
@@ -130,7 +152,7 @@ export class AdbDaemonAuthProcessor implements IAdbDaemonAuthProcessor {
             throw new Error("Unsupported authentication packet");
         }
 
-        const signature = await this.#iterate(packet.payload);
+        const signature = await this.#sign(packet.payload);
         if (signature) {
             return signature;
         }

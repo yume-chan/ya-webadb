@@ -107,7 +107,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
         // Clear secret memory
         //   * No way to clear `password` and `aesKey`
         //   * `salt`, `iv`, `encrypted` and `bundle` are not secrets
-        //   * `data` is owned by caller and will be cleared by caller
+        //   * `privateKey` is owned by caller and will be cleared by caller
     }
 
     async *load(): AsyncGenerator<MaybeError<TangoKey>, void, void> {
