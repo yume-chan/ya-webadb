@@ -18,10 +18,14 @@ async function generateTest(packageName, filename) {
 // DO NOT MODIFY THIS FILE MANUALLY
 /* eslint-disable */
 
-import { ${names.join(", ")} } from "${packageName}";
+import {
+    ${names.join(",\n    ")}
+} from "${packageName}";
 
 export default () => {
-    console.log(${names.join(", ")})
+    console.log(
+        ${names.join(",\n        ")}
+    )
 }
 `,
         "utf8",

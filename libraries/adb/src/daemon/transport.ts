@@ -9,10 +9,6 @@ import type {
 import { AdbBanner } from "../banner.js";
 import { AdbDeviceFeatures, AdbFeature } from "../features.js";
 
-import type {
-    AdbDaemonAuthenticateOptions,
-    AdbDaemonAuthenticator,
-} from "./auth.js";
 import { AdbPacketDispatcher } from "./dispatcher.js";
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 
@@ -72,13 +68,6 @@ export interface AdbDaemonTransportInit {
  * An ADB Transport that connects to ADB Daemons directly.
  */
 export class AdbDaemonTransport implements AdbTransport {
-    static authenticate(
-        authenticator: AdbDaemonAuthenticator,
-        options: AdbDaemonAuthenticateOptions,
-    ) {
-        return authenticator.authenticate(options);
-    }
-
     #connection: AdbDaemonConnection;
     get connection() {
         return this.#connection;

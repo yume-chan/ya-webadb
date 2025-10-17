@@ -23,16 +23,16 @@ const rs = [
     4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
     6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21];
 
-export class Md5 {
-    static #k = new Uint32Array(64);
-
-    static {
-        for (let i = 0; i < 64; i += 1) {
-            // get the result of abs(sin(i + 1)) as a 32-bit integer
-            Md5.#k[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 0x100000000);
-        }
+const k = /* @__PURE__ */ (() => {
+    const k = new Uint32Array(64);
+    for (let i = 0; i < 64; i += 1) {
+        // get the result of abs(sin(i + 1)) as a 32-bit integer
+        k[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 0x100000000);
     }
+    return k;
+})();
 
+export class Md5 {
     #state = new Uint32Array([0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476]);
     #length = 0n;
 
@@ -88,7 +88,7 @@ export class Md5 {
         for (; i < 16; i += 1) {
             this.#w[i] = getUint32LittleEndian(input, offset + i * 4);
             f = d ^ (b & (c ^ d));
-            t = a + f + Md5.#k[i]! + this.#w[i]!;
+            t = a + f + k[i]! + this.#w[i]!;
             r = rs[i]!;
             a = d;
             d = c;
@@ -99,7 +99,7 @@ export class Md5 {
         // round 2
         for (; i < 32; i += 1) {
             f = c ^ (d & (b ^ c));
-            t = a + f + Md5.#k[i]! + this.#w[gs[i]!]!;
+            t = a + f + k[i]! + this.#w[gs[i]!]!;
             r = rs[i]!;
             a = d;
             d = c;
@@ -110,7 +110,7 @@ export class Md5 {
         // round 3
         for (; i < 48; i += 1) {
             f = b ^ c ^ d;
-            t = a + f + Md5.#k[i]! + this.#w[gs[i]!]!;
+            t = a + f + k[i]! + this.#w[gs[i]!]!;
             r = rs[i]!;
             a = d;
             d = c;
@@ -121,7 +121,7 @@ export class Md5 {
         // round 4
         for (; i < 64; i += 1) {
             f = c ^ (b | ~d);
-            t = a + f + Md5.#k[i]! + this.#w[gs[i]!]!;
+            t = a + f + k[i]! + this.#w[gs[i]!]!;
             r = rs[i]!;
             a = d;
             d = c;
