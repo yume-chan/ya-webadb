@@ -176,6 +176,10 @@ export class AdbDaemonAuthProcessor implements IAdbDaemonAuthProcessor {
         );
 
         adbGeneratePublicKey(key, publicKeyBuffer);
+        const fingerprint = adbGetPublicKeyFingerprint(
+            publicKeyBuffer.subarray(0, publicKeyLength),
+        );
+
         encodeBase64(
             publicKeyBuffer.subarray(0, publicKeyLength),
             publicKeyBuffer,
@@ -187,9 +191,7 @@ export class AdbDaemonAuthProcessor implements IAdbDaemonAuthProcessor {
         }
 
         this.#onPublicKeyAuthentication?.({
-            fingerprint: adbGetPublicKeyFingerprint(
-                publicKeyBuffer.subarray(0, publicKeyLength),
-            ),
+            fingerprint,
             name: key.name,
         });
 
