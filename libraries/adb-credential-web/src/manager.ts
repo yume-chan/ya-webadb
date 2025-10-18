@@ -1,5 +1,5 @@
 import type {
-    AdbCredentialStore,
+    AdbCredentialManager,
     AdbPrivateKey,
     MaybeError,
 } from "@yume-chan/adb";
@@ -7,7 +7,7 @@ import { rsaParsePrivateKey } from "@yume-chan/adb";
 
 import type { TangoKeyStorage } from "./storage/index.js";
 
-export class AdbWebCryptoCredentialStore implements AdbCredentialStore {
+export class AdbWebCryptoCredentialManager implements AdbCredentialManager {
     readonly #storage: TangoKeyStorage;
 
     readonly #name: string | undefined;

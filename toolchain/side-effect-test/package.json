@@ -6,7 +6,7 @@
     "main": "index.js",
     "scripts": {
         "start": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript --watch",
-        "test": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript"
+        "test": "node generate.mjs && rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript"
     },
     "keywords": [],
     "author": "",

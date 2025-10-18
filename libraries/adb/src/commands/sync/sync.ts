@@ -42,14 +42,14 @@ export class AdbSync {
     protected _adb: Adb;
     protected _socket: AdbSyncSocket;
 
-    readonly #supportsStat: boolean;
+    readonly #supportsStat2: boolean;
     readonly #supportsLs2: boolean;
     readonly #fixedPushMkdir: boolean;
     readonly #supportsSendReceive2: boolean;
     readonly #needPushMkdirWorkaround: boolean;
 
-    get supportsStat(): boolean {
-        return this.#supportsStat;
+    get supportsStat2(): boolean {
+        return this.#supportsStat2;
     }
 
     get supportsLs2(): boolean {
@@ -72,7 +72,7 @@ export class AdbSync {
         this._adb = adb;
         this._socket = new AdbSyncSocket(socket, adb.maxPayloadSize);
 
-        this.#supportsStat = adb.canUseFeature(AdbFeature.Stat2);
+        this.#supportsStat2 = adb.canUseFeature(AdbFeature.Stat2);
         this.#supportsLs2 = adb.canUseFeature(AdbFeature.Ls2);
         this.#fixedPushMkdir = adb.canUseFeature(AdbFeature.FixedPushMkdir);
         this.#supportsSendReceive2 = adb.canUseFeature(AdbFeature.SendReceive2);
@@ -87,7 +87,7 @@ export class AdbSync {
      * If `path` points to a symbolic link, the returned information is about the link itself (with `type` being `LinuxFileType.Link`).
      */
     async lstat(path: string): Promise<AdbSyncStat> {
-        return await adbSyncLstat(this._socket, path, this.#supportsStat);
+        return await adbSyncLstat(this._socket, path, this.#supportsStat2);
     }
 
     /**
@@ -96,7 +96,7 @@ export class AdbSync {
      * If `path` points to a symbolic link, it will be resolved and the returned information is about the target (with `type` being `LinuxFileType.File` or `LinuxFileType.Directory`).
      */
     async stat(path: string) {
-        if (!this.#supportsStat) {
+        if (!this.#supportsStat2) {
             throw new Error("Not supported");
         }
 

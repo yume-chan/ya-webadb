@@ -41,14 +41,14 @@ export class AdbSyncSocketLocked implements AsyncExactReadable {
     }
 
     async flush() {
-        try {
-            await this.#writeLock.wait();
-            const buffer = this.#combiner.flush();
-            if (buffer) {
+        const buffer = this.#combiner.flush();
+        if (buffer) {
+            try {
+                await this.#writeLock.wait();
                 await this.#write(buffer);
+            } finally {
+                this.#writeLock.notifyOne();
             }
-        } finally {
-            this.#writeLock.notifyOne();
         }
     }
 

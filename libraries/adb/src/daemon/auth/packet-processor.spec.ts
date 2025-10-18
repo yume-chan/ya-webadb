@@ -3,15 +3,18 @@ import { describe, it } from "node:test";
 
 import { encodeUtf8 } from "@yume-chan/struct";
 
-import { decodeBase64 } from "../utils/base64.js";
+import { decodeBase64 } from "../../utils/base64.js";
+import type { SimpleRsaPrivateKey } from "../crypto.js";
+import { rsaParsePrivateKey } from "../crypto.js";
+import { AdbCommand } from "../packet.js";
 
-import type { AdbCredentialStore } from "./auth.js";
-import { AdbAuthType, AdbDefaultAuthenticator } from "./auth.js";
-import type { SimpleRsaPrivateKey } from "./crypto.js";
-import { rsaParsePrivateKey } from "./crypto.js";
-import { AdbCommand } from "./packet.js";
+import type { AdbCredentialManager } from "./packet-processor.js";
+import {
+    AdbDaemonAuthProcessor,
+    AdbDaemonAuthType,
+} from "./packet-processor.js";
 
-class MockCredentialStore implements AdbCredentialStore {
+class MockCredentialManager implements AdbCredentialManager {
     key: SimpleRsaPrivateKey;
     name: string | undefined;
 
@@ -75,37 +78,39 @@ const PUBLIC_KEY =
     "QAAAANVsDNqDk46/2Qg74n5POy5nK/XA8glCLkvXMks9p885+GQ2WiVUctG8LP/W5cII11Pk1KsZ+90ccZV2fdjv+tnW/8li9iEWTC+G1udFMxsIQ+HRPvJF0Xl9JXDsC6pvdo9ic4d6r5BC9BGiijd0enoG/tHkJhMhbPf/j7+MWXDrF+BeJeyj0mWArbqS599IO2qUCZiNjRakAa/iESG6Om4xCJWTT8wGhSTs81cHcEeSmQ2ixRwS+uaa/8iK/mv6BvCep5qgFrJW1G9LD2WciVgTpOSc6B1N/OA92hwJYp2lHLPWZl6bJIYHqrzdHCxc4EEVVYHkSBdFy1w2vhg2YgRTlpbP00NVrZb6Car8BTqPnwTRIkHBC6nnrg6cWMQ0xusMtxChKBoYGhCLHY4iKK6ra3P1Ou1UXu0WySau3s+Av9FFXxtAuMAJUA+5GSMQGGECRhwLX910OfnHHN+VxqJkHQye4vNhIH5C1dJ39HJoxAdwH2tF7v7GF2fwsy2lUa3Vj6bBssWivCB9cKyJR0GVPZJZ1uah24ecvspwtAqbtxvj7ZD9l7AD92geEJdLrsbfhNaDyAioQ2grI32gdp80su/7BrdAsPaSomxCYBB8opmS+oJq6qTYxNZ0doT9EEyT5D9rl9UXXxq+rQbDpKV1rOQo5zJJ2GkELhUrslFm6n4+JQEAAQA=";
 
 describe("auth", () => {
-    describe("AdbDefaultAuthenticator", () => {
+    describe("AdbDaemonAuthProcessor", () => {
         it("should generate correct public key without name", async () => {
-            const store = new MockCredentialStore(
+            const store = new MockCredentialManager(
                 new Uint8Array(PRIVATE_KEY),
                 undefined,
             );
 
-            const authenticator = new AdbDefaultAuthenticator(store);
+            const authenticator = new AdbDaemonAuthProcessor({
+                credentialManager: store,
+            });
             const challenge = new Uint8Array(20);
 
-            const first = await authenticator.authenticate({
+            const first = await authenticator.process({
                 command: AdbCommand.Auth,
-                arg0: AdbAuthType.Token,
+                arg0: AdbDaemonAuthType.Token,
                 arg1: 0,
                 payload: challenge,
             });
             // This test focuses on public key authentication, so only check
             // the first response is type Signature and ignore other fields
             assert.strictEqual(first.command, AdbCommand.Auth);
-            assert.strictEqual(first.arg0, AdbAuthType.Signature);
+            assert.strictEqual(first.arg0, AdbDaemonAuthType.Signature);
 
-            const result = await authenticator.authenticate({
+            const result = await authenticator.process({
                 command: AdbCommand.Auth,
-                arg0: AdbAuthType.Token,
+                arg0: AdbDaemonAuthType.Token,
                 arg1: 0,
                 payload: challenge,
             });
 
             assert.deepStrictEqual(result, {
                 command: AdbCommand.Auth,
-                arg0: AdbAuthType.PublicKey,
+                arg0: AdbDaemonAuthType.PublicKey,
                 arg1: 0,
                 payload: encodeUtf8(`${PUBLIC_KEY}\0`),
             });
@@ -114,35 +119,37 @@ describe("auth", () => {
         it("should generate correct public key name", async () => {
             const name = "test@jest";
 
-            const store = new MockCredentialStore(
+            const store = new MockCredentialManager(
                 new Uint8Array(PRIVATE_KEY),
                 name,
             );
 
-            const authenticator = new AdbDefaultAuthenticator(store);
+            const authenticator = new AdbDaemonAuthProcessor({
+                credentialManager: store,
+            });
             const challenge = new Uint8Array(20);
 
-            const first = await authenticator.authenticate({
+            const first = await authenticator.process({
                 command: AdbCommand.Auth,
-                arg0: AdbAuthType.Token,
+                arg0: AdbDaemonAuthType.Token,
                 arg1: 0,
                 payload: challenge,
             });
             // This test focuses on public key authentication, so only check
             // the first response is type Signature and ignore other fields
             assert.strictEqual(first.command, AdbCommand.Auth);
-            assert.strictEqual(first.arg0, AdbAuthType.Signature);
+            assert.strictEqual(first.arg0, AdbDaemonAuthType.Signature);
 
-            const result = await authenticator.authenticate({
+            const result = await authenticator.process({
                 command: AdbCommand.Auth,
-                arg0: AdbAuthType.Token,
+                arg0: AdbDaemonAuthType.Token,
                 arg1: 0,
                 payload: challenge,
             });
 
             assert.deepStrictEqual(result, {
                 command: AdbCommand.Auth,
-                arg0: AdbAuthType.PublicKey,
+                arg0: AdbDaemonAuthType.PublicKey,
                 arg1: 0,
                 payload: encodeUtf8(`${PUBLIC_KEY} ${name}\0`),
             });

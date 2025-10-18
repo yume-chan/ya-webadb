@@ -1,4 +1,4 @@
-export * from "./auth.js";
+export * from "./auth/index.js";
 export * from "./crypto.js";
 export * from "./device.js";
 export * from "./dispatcher.js";
