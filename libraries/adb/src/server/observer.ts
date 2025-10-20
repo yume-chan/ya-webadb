@@ -75,7 +75,7 @@ export class AdbServerDeviceObserverOwner {
         if (removed.length) {
             for (const observer of this.#observers) {
                 const filtered = filterDeviceStates(
-                    added,
+                    removed,
                     observer.includeStates,
                 );
                 if (filtered.length) {
