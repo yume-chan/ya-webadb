@@ -6,6 +6,16 @@ import { describe, it, mock } from "node:test";
 import { AdbDaemonWebUsbDevice, AdbDefaultInterfaceFilter } from "./device.js";
 import { AdbDaemonWebUsbDeviceManager } from "./manager.js";
 
+Object.assign(globalThis, {
+    USBConnectionEvent: class USBConnectionEvent extends Event {
+        device: USBDevice;
+        constructor(type: string, device: USBDevice) {
+            super(type);
+            this.device = device;
+        }
+    },
+});
+
 class MockUsb implements USB {
     onconnect: (ev: USBConnectionEvent) => void = mock.fn();
     ondisconnect: (ev: USBConnectionEvent) => void = mock.fn();
@@ -92,7 +102,7 @@ class MockUsb implements USB {
         throw new Error("Method not implemented.");
     }
     dispatchEvent(_event: Event): boolean {
-        throw new Error("Method not implemented.");
+        return true;
     }
 }
 
