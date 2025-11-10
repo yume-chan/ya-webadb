@@ -43,7 +43,7 @@ function parseDeviceLineItem<
     key: string,
     optional?: Optional,
 ): readonly [start: number, value: Optional extends false ? T : T | undefined] {
-    let start = line.lastIndexOf(key, end - 1);
+    const start = line.lastIndexOf(key, end - 1);
     if (start === -1) {
         if (optional) {
             return [end, undefined as never] as const;
@@ -94,19 +94,23 @@ export class AdbServerClient {
             let value: string;
 
             // transport_id:123
+            // eslint-disable-next-line prefer-const
             [end, value] = parseDeviceLineItem(line, end, KeyTransportId);
             const transportId = BigInt(value);
 
             // device:abc (optional)
             let device: string | undefined;
+            // eslint-disable-next-line prefer-const
             [end, device] = parseDeviceLineItem(line, end, KeyDevice, true);
 
             // mode:abc (optional)
             let model: string | undefined;
+            // eslint-disable-next-line prefer-const
             [end, model] = parseDeviceLineItem(line, end, KeyModel, true);
 
             // product:abc (optional)
             let product: string | undefined;
+            // eslint-disable-next-line prefer-const
             [end, product] = parseDeviceLineItem(line, end, KeyProduct, true);
 
             let state: AdbServerClient.ConnectionState;

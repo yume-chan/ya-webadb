@@ -1,8 +1,8 @@
 import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
-import { string } from "./string.js";
 import { Uint8ArrayExactReadable } from "./readable.js";
+import { string } from "./string.js";
 
 describe("string", () => {
     it("should decode buffer as UTF-8", () => {
