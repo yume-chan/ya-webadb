@@ -58,6 +58,7 @@ function parseDeviceLineItem<
  * Client for the ADB Server.
  */
 export class AdbServerClient {
+    // https://android.googlesource.com/platform/packages/modules/adb/+/9f298fb1f3317371b49439efb20a598b3a881bf3/adb.cpp#144
     static ConnectionState = [
         "offline",
         "bootloader",
@@ -67,7 +68,7 @@ export class AdbServerClient {
         "rescue",
         "sideload",
         "unauthorized",
-        "authoring",
+        "authorizing",
         "detached",
     ];
 
