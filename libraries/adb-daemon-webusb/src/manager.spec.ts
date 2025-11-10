@@ -9,9 +9,9 @@ import { AdbDaemonWebUsbDeviceManager } from "./manager.js";
 Object.assign(globalThis, {
     USBConnectionEvent: class USBConnectionEvent extends Event {
         device: USBDevice;
-        constructor(type: string, device: USBDevice) {
-            super(type);
-            this.device = device;
+        constructor(type: string, init: USBConnectionEventInit) {
+            super(type, init);
+            this.device = init.device;
         }
     },
 });
