@@ -29,10 +29,49 @@ import { AdbServerDeviceObserverOwner } from "./observer.js";
 import { AdbServerStream } from "./stream.js";
 import { AdbServerTransport } from "./transport.js";
 
+const KeyTransportId = " transport_id:";
+const KeyDevice = " device:";
+const KeyModel = " model:";
+const KeyProduct = " product:";
+
+function parseDeviceLineItem<
+    T extends string = string,
+    Optional extends boolean = false,
+>(
+    line: string,
+    end: number,
+    key: string,
+    optional?: Optional,
+): readonly [start: number, value: Optional extends false ? T : T | undefined] {
+    const start = line.lastIndexOf(key, end - 1);
+    if (start === -1) {
+        if (optional) {
+            return [end, undefined as never] as const;
+        } else {
+            throw new Error(`Invalid device line: ${line}`);
+        }
+    }
+    return [start, line.substring(start + key.length, end) as T] as const;
+}
+
 /**
  * Client for the ADB Server.
  */
 export class AdbServerClient {
+    // https://android.googlesource.com/platform/packages/modules/adb/+/9f298fb1f3317371b49439efb20a598b3a881bf3/adb.cpp#144
+    static ConnectionState = [
+        "offline",
+        "bootloader",
+        "device",
+        "host",
+        "recovery",
+        "rescue",
+        "sideload",
+        "unauthorized",
+        "authorizing",
+        "detached",
+    ] as const;
+
     static NetworkError = _NetworkError;
     static UnauthorizedError = _UnauthorizedError;
     static AlreadyConnectedError = _AlreadyConnectedError;
@@ -50,37 +89,45 @@ export class AdbServerClient {
                 continue;
             }
 
-            const parts = line.split(" ").filter(Boolean);
-            const serial = parts[0]!;
-            const state = parts[1]! as AdbServerClient.ConnectionState;
+            // Parse backwards because `serial` might contain spaces.
+
+            let end = line.length;
+            let value: string;
+
+            // transport_id:123
+            // eslint-disable-next-line prefer-const
+            [end, value] = parseDeviceLineItem(line, end, KeyTransportId);
+            const transportId = BigInt(value);
+
+            // device:abc (optional)
+            let device: string | undefined;
+            // eslint-disable-next-line prefer-const
+            [end, device] = parseDeviceLineItem(line, end, KeyDevice, true);
+
+            // model:abc (optional)
+            let model: string | undefined;
+            // eslint-disable-next-line prefer-const
+            [end, model] = parseDeviceLineItem(line, end, KeyModel, true);
+
+            // product:abc (optional)
+            let product: string | undefined;
+            // eslint-disable-next-line prefer-const
+            [end, product] = parseDeviceLineItem(line, end, KeyProduct, true);
+
+            let state: AdbServerClient.ConnectionState;
+            do {
+                // devpath or state
+                // devpath doesn't have a fixed pattern (for example in libusb driver it could be something like `5-1.4`)
+                // so keep parsing until we get a valid state
+                [end, state] = parseDeviceLineItem(line, end, " ");
+            } while (!AdbServerClient.ConnectionState.includes(state));
+
             if (!includeStates.includes(state)) {
                 continue;
             }
 
-            let product: string | undefined;
-            let model: string | undefined;
-            let device: string | undefined;
-            let transportId: bigint | undefined;
-            for (let i = 2; i < parts.length; i += 1) {
-                const [key, value] = parts[i]!.split(":");
-                switch (key) {
-                    case "product":
-                        product = value;
-                        break;
-                    case "model":
-                        model = value;
-                        break;
-                    case "device":
-                        device = value;
-                        break;
-                    case "transport_id":
-                        transportId = BigInt(value!);
-                        break;
-                }
-            }
-            if (!transportId) {
-                throw new Error(`No transport id for device ${serial}`);
-            }
+            const serial = line.substring(0, end).trim();
+
             devices.push({
                 serial,
                 state,
@@ -554,7 +601,8 @@ export namespace AdbServerClient {
         | { tcp: true }
         | undefined;
 
-    export type ConnectionState = "unauthorized" | "offline" | "device";
+    export type ConnectionState =
+        (typeof AdbServerClient.ConnectionState)[number];
 
     export interface Device {
         serial: string;

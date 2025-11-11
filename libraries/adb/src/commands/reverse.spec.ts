@@ -2,6 +2,7 @@ import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { encodeUtf8, Uint8ArrayExactReadable } from "@yume-chan/struct";
+
 import { AdbReverseErrorResponse } from "./reverse.js";
 
 describe("AdbReverseErrorResponse", () => {
