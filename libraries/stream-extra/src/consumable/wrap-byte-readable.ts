@@ -17,6 +17,12 @@ export class ConsumableWrapByteReadableStream extends ReadableStream<
             async pull(controller) {
                 const { done, value } = await reader.read(array, { min });
                 if (done) {
+                    if (value) {
+                        await ConsumableReadableStream.enqueue(
+                            controller,
+                            value,
+                        );
+                    }
                     controller.close();
                     return;
                 }
