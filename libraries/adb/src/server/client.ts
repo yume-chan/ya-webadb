@@ -104,7 +104,7 @@ export class AdbServerClient {
             // eslint-disable-next-line prefer-const
             [end, device] = parseDeviceLineItem(line, end, KeyDevice, true);
 
-            // mode:abc (optional)
+            // model:abc (optional)
             let model: string | undefined;
             // eslint-disable-next-line prefer-const
             [end, model] = parseDeviceLineItem(line, end, KeyModel, true);
