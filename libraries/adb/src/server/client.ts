@@ -70,7 +70,7 @@ export class AdbServerClient {
         "unauthorized",
         "authorizing",
         "detached",
-    ];
+    ] as const;
 
     static NetworkError = _NetworkError;
     static UnauthorizedError = _UnauthorizedError;
@@ -601,7 +601,8 @@ export namespace AdbServerClient {
         | { tcp: true }
         | undefined;
 
-    export type ConnectionState = "unauthorized" | "offline" | "device";
+    export type ConnectionState =
+        (typeof AdbServerClient.ConnectionState)[number];
 
     export interface Device {
         serial: string;
