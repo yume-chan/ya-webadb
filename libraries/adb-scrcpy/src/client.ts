@@ -133,11 +133,13 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
                 }
             }
 
+            // Use environment variable CLASSPATH instead of -cp flag
+            // This is the approach used by the official scrcpy C implementation
+            // See: https://github.com/Genymobile/scrcpy/blob/master/app/src/server.c
             const args = [
+                `CLASSPATH=${path}`, // Set environment variable
                 "app_process",
-                "-cp",
-                path,
-                /* unused */ "/",
+                "/", // Parent dir (unused but required)
                 "com.genymobile.scrcpy.Server",
                 options.version,
                 ...options.serialize(),
