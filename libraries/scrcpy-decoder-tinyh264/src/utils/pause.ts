@@ -186,13 +186,25 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         handleVisibilityChange();
         document.addEventListener("visibilitychange", handleVisibilityChange);
 
+        let disposed = false;
+
         this.#disposeVisibilityTracker = () => {
+            // Make sure the visibility tracker is only disposed once
+            // Do not resume if it's paused by another visibility tracker
+            if (disposed) {
+                return;
+            }
+            disposed = true;
+
             document.removeEventListener(
                 "visibilitychange",
                 handleVisibilityChange,
             );
-            void this.#resumeInternal(true);
-            this.#disposeVisibilityTracker = undefined;
+
+            // Do not resume if decoder is already disposed
+            if (!this.#disposed) {
+                void this.#resumeInternal(true);
+            }
         };
         return this.#disposeVisibilityTracker;
     }
