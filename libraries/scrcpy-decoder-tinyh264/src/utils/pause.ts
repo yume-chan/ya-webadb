@@ -192,6 +192,7 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
                 handleVisibilityChange,
             );
             void this.#resumeInternal(true);
+            this.#disposeVisibilityTracker = undefined;
         };
         return this.#disposeVisibilityTracker;
     }
