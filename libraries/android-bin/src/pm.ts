@@ -347,7 +347,7 @@ export class PackageManager extends AdbServiceBase {
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
         options?: PackageManagerInstallOptions,
     ): Promise<void> {
-        // Technically `cmd` support and streaming install support are unrelated,
+        // Technically, support for `cmd` and streaming install are unrelated,
         // but it's impossible to detect streaming install support without actually trying it.
         // As they are both added in Android 7,
         // assume `cmd` support also means streaming install support (and vice versa).

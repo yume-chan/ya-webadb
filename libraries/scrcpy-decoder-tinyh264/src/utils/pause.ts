@@ -10,6 +10,7 @@ import type { ScrcpyVideoDecoderPauseController } from "../types.js";
 
 export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
     #paused = false;
+    #pausedByVisibility = false;
     get paused() {
         return this.#paused;
     }
@@ -101,20 +102,30 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         }
     };
 
-    pause(): void {
+    #pauseInternal(fromVisibilityTracker: boolean): void {
         if (this.#disposed) {
             throw new Error("Attempt to pause a closed decoder");
         }
 
+        this.#pausedByVisibility = fromVisibilityTracker;
         this.#paused = true;
     }
 
-    async resume(): Promise<undefined> {
+    pause(): void {
+        this.#pauseInternal(false);
+    }
+
+    async #resumeInternal(fromVisibilityTracker: boolean): Promise<undefined> {
         if (this.#disposed) {
             throw new Error("Attempt to resume a closed decoder");
         }
 
         if (!this.#paused) {
+            return;
+        }
+
+        // Manually paused by user, which overrides the visibility tracker
+        if (!this.#pausedByVisibility && fromVisibilityTracker) {
             return;
         }
 
@@ -154,6 +165,37 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         this.#resuming = undefined;
     }
 
+    resume(): Promise<undefined> {
+        return this.#resumeInternal(false);
+    }
+
+    #disposeVisibilityTracker: (() => undefined) | undefined;
+
+    trackDocumentVisibility(document: Document): () => undefined {
+        // Can only track one document
+        this.#disposeVisibilityTracker?.();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "hidden") {
+                this.#pauseInternal(true);
+            } else {
+                void this.#resumeInternal(true);
+            }
+        };
+
+        handleVisibilityChange();
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        this.#disposeVisibilityTracker = () => {
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibilityChange,
+            );
+            void this.#resumeInternal(true);
+        };
+        return this.#disposeVisibilityTracker;
+    }
+
     dispose() {
         if (this.#disposed) {
             return;
@@ -163,5 +205,7 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
 
         this.#pendingConfiguration = undefined;
         this.#pendingFrames.length = 0;
+
+        this.#disposeVisibilityTracker?.();
     }
 }

@@ -33,8 +33,28 @@ export interface ScrcpyVideoDecoderPerformanceCounter {
 export interface ScrcpyVideoDecoderPauseController {
     readonly paused: boolean;
 
+    /**
+     * Pause the decoder.
+     *
+     * It has a higher priority than {@link trackDocumentVisibility}.
+     * After calling `pause`, the decoder can only be resumed by calling {@link resume}.
+     */
     pause(): void;
+
+    /**
+     * Resume the decoder if it was paused.
+     */
     resume(): Promise<undefined>;
+
+    /**
+     * Pause the decoder when the document becomes invisible,
+     * and resume when the document becomes visible,
+     * to save system resources and battery.
+     *
+     * @param document A document to track
+     * @returns A function to stop tracking, and resume the decoder (if it was not explicitly paused)
+     */
+    trackDocumentVisibility(document: Document): () => undefined;
 }
 
 export interface ScrcpyVideoDecoder

@@ -15,13 +15,13 @@ export class AdbNoneProtocolSubprocessService {
     }
 
     spawn = adbNoneProtocolSpawner(async (command, signal) => {
-        // Android 7 added `shell,raw:${command}` service which also triggers raw mode,
-        // but we want to use the most compatible one.
-        let service = "exec:";
-
         if (!command.length) {
             throw new Error("Command cannot be empty");
         }
+
+        // Android 7 added `shell,raw:${command}` service which also triggers raw mode,
+        // but we want to keep backward compatibility.
+        let service = "exec:";
 
         // Similar to SSH, we don't escape the `command`,
         // because the command will be invoked by `sh -c`,
