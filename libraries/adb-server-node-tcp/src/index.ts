@@ -27,7 +27,9 @@ function nodeSocketToConnection(
                 }
 
                 socket.pause();
-                await controller.enqueue(data);
+                // `socket.encoding` is not set,
+                // so `data` is `Buffer<ArrayBuffer>`
+                await controller.enqueue(data as Buffer<ArrayBuffer>);
                 socket.resume();
             });
             socket.on("end", () => {

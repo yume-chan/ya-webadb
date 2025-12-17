@@ -290,6 +290,10 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#pause.resume();
     }
 
+    trackDocumentVisibility(document: Document): () => undefined {
+        return this.#pause.trackDocumentVisibility(document);
+    }
+
     dispose() {
         this.#captureFrame?.close();
 

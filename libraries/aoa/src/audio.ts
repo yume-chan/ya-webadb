@@ -108,9 +108,10 @@ export function aoaGetAudioStream(device: USBDevice) {
             endpointNumber = endpoint.endpointNumber;
         },
         async pull(controller) {
-            const result = await device.isochronousTransferIn(endpointNumber, [
-                1024,
-            ]);
+            const result = await device.isochronousTransferIn(
+                endpointNumber,
+                [1024],
+            );
             for (const packet of result.packets) {
                 const data = packet.data!;
                 const array = new Uint8Array(

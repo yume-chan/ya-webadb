@@ -58,7 +58,8 @@ export interface ScrcpyVideoDecoderPauseController {
 }
 
 export interface ScrcpyVideoDecoder
-    extends ScrcpyVideoDecoderPerformanceCounter,
+    extends
+        ScrcpyVideoDecoderPerformanceCounter,
         ScrcpyVideoDecoderPauseController,
         ScrcpyVideoSize,
         Disposable {

@@ -52,9 +52,10 @@ export function mergeDefaultAdbInterfaceFilter(
     }
 }
 
-export class AdbDaemonWebUsbConnection
-    implements ReadableWritablePair<AdbPacketData, Consumable<AdbPacketInit>>
-{
+export class AdbDaemonWebUsbConnection implements ReadableWritablePair<
+    AdbPacketData,
+    Consumable<AdbPacketInit>
+> {
     readonly #device: AdbDaemonWebUsbDevice;
     get device() {
         return this.#device;

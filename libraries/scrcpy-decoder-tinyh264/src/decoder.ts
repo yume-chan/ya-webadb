@@ -203,6 +203,10 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#pause.resume();
     }
 
+    trackDocumentVisibility(document: Document): () => undefined {
+        return this.#pause.trackDocumentVisibility(document);
+    }
+
     /**
      * Only dispose the TinyH264 decoder instance.
      *
