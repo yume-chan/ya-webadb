@@ -10,7 +10,7 @@ import type { ScrcpyVideoDecoderPauseController } from "../types.js";
 
 export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
     #paused = false;
-    #pausedByVisibility = false;
+    #pausedExplicitly = false;
     get paused() {
         return this.#paused;
     }
@@ -102,20 +102,22 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         }
     };
 
-    #pauseInternal(fromVisibilityTracker: boolean): void {
+    #pauseInternal(explicitly: boolean): void {
         if (this.#disposed) {
             throw new Error("Attempt to pause a closed decoder");
         }
 
-        this.#pausedByVisibility = fromVisibilityTracker;
         this.#paused = true;
+        if (explicitly) {
+            this.#pausedExplicitly = true;
+        }
     }
 
     pause(): void {
-        this.#pauseInternal(false);
+        this.#pauseInternal(true);
     }
 
-    async #resumeInternal(fromVisibilityTracker: boolean): Promise<undefined> {
+    async #resumeInternal(explicitly: boolean): Promise<undefined> {
         if (this.#disposed) {
             throw new Error("Attempt to resume a closed decoder");
         }
@@ -124,8 +126,9 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
             return;
         }
 
-        // Manually paused by user, which overrides the visibility tracker
-        if (!this.#pausedByVisibility && fromVisibilityTracker) {
+        // Visibility tracker (explicitly = false) can't resume
+        // a decoder paused by user (#pausedExplicitly = true)
+        if (this.#pausedExplicitly && !explicitly) {
             return;
         }
 
@@ -133,6 +136,7 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         this.#resuming = resolver.promise;
 
         this.#paused = false;
+        this.#pausedExplicitly = false;
 
         if (this.#pendingConfiguration) {
             await this.#onConfiguration(this.#pendingConfiguration);
@@ -166,7 +170,7 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
     }
 
     resume(): Promise<undefined> {
-        return this.#resumeInternal(false);
+        return this.#resumeInternal(true);
     }
 
     #disposeVisibilityTracker: (() => undefined) | undefined;
@@ -177,9 +181,9 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === "hidden") {
-                this.#pauseInternal(true);
+                this.#pauseInternal(false);
             } else {
-                void this.#resumeInternal(true);
+                void this.#resumeInternal(false);
             }
         };
 
@@ -203,7 +207,7 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
 
             // Do not resume if decoder is already disposed
             if (!this.#disposed) {
-                void this.#resumeInternal(true);
+                void this.#resumeInternal(false);
             }
         };
         return this.#disposeVisibilityTracker;
