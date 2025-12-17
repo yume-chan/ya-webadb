@@ -1,9 +1,13 @@
 name: Publish Package to npm
+
 on:
   push:
     tags:
       - "v**"
 
+permissions:
+  id-token: write
+  
 jobs:
   publish:
     name: Publish
@@ -25,9 +29,7 @@ jobs:
           run_install: true
 
       - run: pnpm run build
-      - run: |
-          npm config set "//registry.npmjs.org/:_authToken" "${NPM_TOKEN}"
-          pnpm recursive publish --access public --no-git-checks
+      
+      - run: pnpm recursive publish --access public --no-git-checks
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
