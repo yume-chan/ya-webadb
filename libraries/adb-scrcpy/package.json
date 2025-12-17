@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-scrcpy",
-    "version": "2.3.0",
+    "version": "2.3.2",
     "description": "Use `@yume-chan/adb` to bootstrap `@yume-chan/scrcpy`.",
     "keywords": [
         "adb",
