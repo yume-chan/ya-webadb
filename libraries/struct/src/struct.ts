@@ -71,7 +71,9 @@ export interface Struct<
     Fields extends StructFields,
     Extra extends Record<PropertyKey, unknown> | undefined = undefined,
     PostDeserialize = FieldsValue<Fields> & Extra,
-> extends StructSerializer<FieldsInit<Fields>>,
+>
+    extends
+        StructSerializer<FieldsInit<Fields>>,
         StructDeserializer<PostDeserialize> {
     littleEndian: boolean;
     fields: Fields;

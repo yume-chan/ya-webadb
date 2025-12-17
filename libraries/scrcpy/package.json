@@ -40,11 +40,11 @@
         "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^24.3.1",
+        "@types/node": "^25.0.3",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.6.2",
-        "typescript": "^5.9.2"
+        "prettier": "^3.7.4",
+        "typescript": "^5.9.3"
     }
 }

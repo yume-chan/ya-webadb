@@ -43,6 +43,7 @@ export interface Intent {
               | string
               | null
               | number
+              | bigint
               | IntentStringExtra
               | ComponentName
               | IntentNumberArrayExtra
@@ -71,7 +72,7 @@ function getNumberType(type: "int" | IntentNumberExtra["type"]) {
     }
 }
 
-function serializeArray(
+function serializeExtraArray(
     array: IntentNumberArrayExtra | IntentStringArrayExtra,
 ): [type: string, value: string] {
     let type: string;
@@ -96,24 +97,24 @@ function serializeArray(
     return [type, value];
 }
 
+function serializeString(
+    result: string[],
+    key: string,
+    value: string | undefined,
+) {
+    // Treat empty string as not set
+    if (value) {
+        result.push(key, value);
+    }
+}
+
 export function serializeIntent(intent: Intent) {
     const result: string[] = [];
 
-    if (intent.action) {
-        result.push("-a", intent.action);
-    }
-
-    if (intent.data) {
-        result.push("-d", intent.data);
-    }
-
-    if (intent.type) {
-        result.push("-t", intent.type);
-    }
-
-    if (intent.identifier) {
-        result.push("-i", intent.identifier);
-    }
+    serializeString(result, "-a", intent.action);
+    serializeString(result, "-d", intent.data);
+    serializeString(result, "-t", intent.type);
+    serializeString(result, "-i", intent.identifier);
 
     if (intent.categories) {
         for (const category of intent.categories) {
@@ -133,6 +134,7 @@ export function serializeIntent(intent: Intent) {
                         break;
                     }
 
+                    // `ComponentName`
                     if ("packageName" in value) {
                         result.push(
                             "--ecn",
@@ -150,7 +152,7 @@ export function serializeIntent(intent: Intent) {
                         case "arrayList":
                             {
                                 const [type, valueString] =
-                                    serializeArray(value);
+                                    serializeExtraArray(value);
                                 result.push(type, key, valueString);
                             }
                             break;
@@ -164,7 +166,20 @@ export function serializeIntent(intent: Intent) {
                     }
                     break;
                 case "number":
-                    result.push("--ei", key, value.toString());
+                    if (value % 1 !== 0) {
+                        throw new Error(
+                            `Extra \`${key}\` is not an integer, must use \`IntentNumberExtra\` type instead`,
+                        );
+                    }
+                    // Infer type from value
+                    if (value < -2147483648 || value > 2147483647) {
+                        result.push("--el", key, value.toString());
+                    } else {
+                        result.push("--ei", key, value.toString());
+                    }
+                    break;
+                case "bigint":
+                    result.push("--el", key, value.toString());
                     break;
                 case "boolean":
                     result.push("--ez", key, value ? "true" : "false");
@@ -180,9 +195,7 @@ export function serializeIntent(intent: Intent) {
         );
     }
 
-    if (intent.package) {
-        result.push("-p", intent.package);
-    }
+    serializeString(result, "-p", intent.package);
 
     // `0` is the default value for `flags` when deserializing
     // so it can be omitted if it's either `undefined` or `0`

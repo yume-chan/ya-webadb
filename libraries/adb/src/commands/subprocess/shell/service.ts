@@ -20,15 +20,12 @@ export class AdbShellProtocolSubprocessService {
     }
 
     spawn = adbShellProtocolSpawner(async (command, signal) => {
-        let service = "shell,v2,raw:";
-
         if (!command.length) {
             throw new Error("Command cannot be empty");
         }
 
         // Don't escape `command`. See `AdbNoneProtocolSubprocessService.prototype.spawn` for details.
-        service += command.join(" ");
-
+        const service = "shell,v2,raw:" + command.join(" ");
         const socket = await this.#adb.createSocket(service);
 
         if (signal?.aborted) {

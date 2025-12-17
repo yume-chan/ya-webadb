@@ -8,9 +8,11 @@ import { ReadableStream, WritableStream } from "./stream.js";
 // If the user wants to use the `Promise` interface, the `flush` method will never be called,
 // so the `PromiseResolver` will never be resolved.
 // Thus we need to implement our own `TransformStream` using a `WritableStream` and a `ReadableStream`.
-export class AccumulateStream<Input, Output, Accumulated = Output>
-    implements ReadableWritablePair<Output, Input>
-{
+export class AccumulateStream<
+    Input,
+    Output,
+    Accumulated = Output,
+> implements ReadableWritablePair<Output, Input> {
     #current: Accumulated;
 
     #write: (chunk: Input, current: Accumulated) => Accumulated;

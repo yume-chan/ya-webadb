@@ -78,8 +78,10 @@ interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
         | undefined;
 }
 
-export interface AdbScrcpyAudioStreamSuccessMetadata
-    extends Omit<ScrcpyAudioStreamSuccessMetadata, "stream"> {
+export interface AdbScrcpyAudioStreamSuccessMetadata extends Omit<
+    ScrcpyAudioStreamSuccessMetadata,
+    "stream"
+> {
     readonly stream: ReadableStream<ScrcpyMediaStreamPacket>;
 }
 

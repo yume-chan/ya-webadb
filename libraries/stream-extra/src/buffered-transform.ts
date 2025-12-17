@@ -11,9 +11,10 @@ import type {
 import { ReadableStream, WritableStream } from "./stream.js";
 
 // TODO: BufferedTransformStream: find better implementation
-export class BufferedTransformStream<T>
-    implements ReadableWritablePair<T, Uint8Array>
-{
+export class BufferedTransformStream<T> implements ReadableWritablePair<
+    T,
+    Uint8Array
+> {
     #readable: ReadableStream<T>;
     get readable() {
         return this.#readable;

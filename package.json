@@ -7,6 +7,6 @@
         "lint": "pnpm recursive --no-sort --workspace-concurrency=Infinity run lint"
     },
     "devDependencies": {
-        "@changesets/cli": "^2.29.6"
+        "@changesets/cli": "^2.29.8"
     }
 }

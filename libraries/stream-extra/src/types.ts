@@ -36,9 +36,7 @@ export declare interface AbortSignal {
  *
  * @public
  */
-export declare class ByteLengthQueuingStrategy
-    implements QueuingStrategy<ArrayBufferView>
-{
+export declare class ByteLengthQueuingStrategy implements QueuingStrategy<ArrayBufferView> {
     constructor(options: QueuingStrategyInit);
     /**
      * Returns the high water mark provided to the constructor.
@@ -252,8 +250,9 @@ export declare class ReadableStream<out R> implements AsyncIterable<R> {
  *
  * @public
  */
-export declare interface ReadableStreamAsyncIterator<R>
-    extends AsyncIterableIterator<R> {
+export declare interface ReadableStreamAsyncIterator<
+    R,
+> extends AsyncIterableIterator<R> {
     next(): Promise<IteratorResult<R, void>>;
     return(value?: R): Promise<IteratorResult<R>>;
 }

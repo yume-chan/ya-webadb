@@ -87,8 +87,7 @@ interface TinyH264DecoderReadyMessage extends TinyH264MessageBase {
 }
 
 interface TinyH264PictureReadyMessage
-    extends TinyH264MessageBase,
-        PictureReadyEventArgs {
+    extends TinyH264MessageBase, PictureReadyEventArgs {
     type: "pictureReady";
 }
 
