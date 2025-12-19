@@ -9,6 +9,7 @@ import {
 } from "@yume-chan/no-data-view";
 import type {
     ReadableWritablePair,
+    WritableStreamDefaultController,
     WritableStreamDefaultWriter,
 } from "@yume-chan/stream-extra";
 import {
@@ -132,8 +133,11 @@ export class AdbPacketDispatcher implements Closeable {
 
         connection.readable
             .pipeTo(
-                new WritableStream({
-                    write: async (packet) => {
+                new WritableStream<AdbPacketData>({
+                    write: async (
+                        packet: AdbPacketData,
+                        controller: WritableStreamDefaultController,
+                    ) => {
                         switch (packet.command) {
                             case AdbCommand.Close:
                                 await this.#handleClose(packet);
@@ -145,7 +149,12 @@ export class AdbPacketDispatcher implements Closeable {
                                 await this.#handleOpen(packet);
                                 break;
                             case AdbCommand.Write:
-                                await this.#handleWrite(packet);
+                                // Don't await - let each socket handle its own backpressure
+                                // without blocking other sockets' packet processing.
+                                // Fatal errors are propagated via WritableStream's controller.
+                                this.#handleWrite(packet).catch((e) => {
+                                    controller.error(e);
+                                });
                                 break;
                             default:
                                 // Junk data may only appear in the authentication phase,
