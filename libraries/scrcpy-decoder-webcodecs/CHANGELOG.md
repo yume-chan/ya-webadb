@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/scrcpy-decoder-webcodecs
 
+## 2.5.0
+
+### Minor Changes
+
+- 5ec8923: Expose `VideoDecoder.prototype.configure`'s `hardwareAcceleration` option
+
 ## 2.1.0
 
 ### Patch Changes
