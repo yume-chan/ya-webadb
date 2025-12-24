@@ -47,21 +47,24 @@ export type AdbDaemonAuthenticateOptions = Pick<
 } & (AdbDaemonDefaultAuthProcessorInit | { processor: AdbDaemonAuthProcessor });
 
 /**
- * Send packate during authentication stage
+ * Send a packet during authentication stage
  * @param writer Writer to send packet to
- * @param init The packet to send
+ * @param packet The packet to send. Note: this object will be modified.
  */
 function sendPacket(
     writer: WritableStreamDefaultWriter<Consumable<AdbPacketInit>>,
-    init: AdbPacketData,
+    packet: AdbPacketData,
 ): Promise<void> {
     // Always send checksum in auth steps
     // Because we don't know if the device needs it or not.
-    (init as AdbPacketInit).checksum = calculateChecksum(init.payload);
-    (init as AdbPacketInit).magic = init.command ^ 0xffffffff;
-    return Consumable.WritableStream.write(writer, init as AdbPacketInit);
+    (packet as AdbPacketInit).checksum = calculateChecksum(packet.payload);
+    (packet as AdbPacketInit).magic = packet.command ^ 0xffffffff;
+    return Consumable.WritableStream.write(writer, packet as AdbPacketInit);
 }
 
+/**
+ * Authenticates an `AdbDaemonConnection` using an `AdbDaemonAuthProcessor`.
+ */
 export async function adbDaemonAuthenticate({
     serial,
     connection,
