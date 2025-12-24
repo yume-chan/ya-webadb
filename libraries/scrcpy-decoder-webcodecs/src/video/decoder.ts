@@ -9,7 +9,7 @@ import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 
 import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
-import type { CodecDecoder } from "./codec/type.js";
+import type { CodecDecoder, CodecDecoderOptions } from "./codec/type.js";
 import { Pool } from "./pool.js";
 import type { VideoFrameRenderer } from "./render/index.js";
 import { VideoFrameCapturer } from "./snapshot.js";
@@ -35,6 +35,13 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#codec;
     }
 
+    #renderer: VideoFrameRenderer;
+    get renderer() {
+        return this.#renderer;
+    }
+
+    #options: CodecDecoderOptions;
+
     #codecDecoder: CodecDecoder;
 
     #writable: WritableStream<ScrcpyMediaStreamPacket>;
@@ -44,11 +51,6 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
     #error: Error | undefined;
     #controller!: WritableStreamDefaultController;
-
-    #renderer: VideoFrameRenderer;
-    get renderer() {
-        return this.#renderer;
-    }
 
     #framesDraw = 0;
     #framesPresented = 0;
@@ -87,10 +89,14 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     /**
      * Create a new WebCodecs video decoder.
      */
-    constructor({ codec, renderer }: WebCodecsVideoDecoder.Options) {
+    constructor({
+        codec,
+        renderer,
+        ...options
+    }: WebCodecsVideoDecoder.Options) {
         this.#codec = codec;
-
         this.#renderer = renderer;
+        this.#options = options;
 
         this.#decoder = new VideoDecoder({
             output: (frame) => {
@@ -119,18 +125,21 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                 this.#codecDecoder = new H264Decoder(
                     this.#decoder,
                     this.#updateSize,
+                    this.#options,
                 );
                 break;
             case ScrcpyVideoCodecId.H265:
                 this.#codecDecoder = new H265Decoder(
                     this.#decoder,
                     this.#updateSize,
+                    this.#options,
                 );
                 break;
             case ScrcpyVideoCodecId.AV1:
                 this.#codecDecoder = new Av1Codec(
                     this.#decoder,
                     this.#updateSize,
+                    this.#options,
                 );
                 break;
             default:
@@ -232,7 +241,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 }
 
 export namespace WebCodecsVideoDecoder {
-    export interface Options {
+    export interface Options extends CodecDecoderOptions {
         /**
          * The video codec to decode
          */
