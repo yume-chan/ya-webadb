@@ -12,7 +12,7 @@ import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 
 import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
-import type { CodecDecoder } from "./codec/type.js";
+import type { CodecDecoder, CodecDecoderOptions } from "./codec/type.js";
 import { Pool } from "./pool.js";
 import type { VideoFrameRenderer } from "./render/index.js";
 import { VideoFrameCapturer } from "./snapshot.js";
@@ -315,7 +315,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 }
 
 export namespace WebCodecsVideoDecoder {
-    export interface Options {
+    export interface Options extends CodecDecoderOptions {
         /**
          * The video codec to decode
          */

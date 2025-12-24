@@ -1,18 +1,21 @@
 import { Av1 } from "@yume-chan/media-codec";
 import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
 
-import type { CodecDecoder } from "./type.js";
+import type { CodecDecoder, CodecDecoderOptions } from "./type.js";
 
 export class Av1Codec implements CodecDecoder {
     #decoder: VideoDecoder;
     #updateSize: (width: number, height: number) => void;
+    #options: CodecDecoderOptions | undefined;
 
     constructor(
         decoder: VideoDecoder,
         updateSize: (width: number, height: number) => void,
+        options?: CodecDecoderOptions,
     ) {
         this.#decoder = decoder;
         this.#updateSize = updateSize;
+        this.#options = options;
     }
 
     #configure(data: Uint8Array) {
@@ -29,6 +32,8 @@ export class Av1Codec implements CodecDecoder {
 
         this.#decoder.configure({
             codec: Av1.toCodecString(sequenceHeader),
+            hardwareAcceleration:
+                this.#options?.hardwareAcceleration ?? "no-preference",
             optimizeForLatency: true,
         });
     }
