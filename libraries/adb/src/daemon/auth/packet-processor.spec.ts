@@ -10,8 +10,8 @@ import { AdbCommand } from "../packet.js";
 
 import type { AdbCredentialManager } from "./packet-processor.js";
 import {
-    AdbDaemonAuthProcessor,
     AdbDaemonAuthType,
+    AdbDaemonDefaultAuthProcessor,
 } from "./packet-processor.js";
 
 class MockCredentialManager implements AdbCredentialManager {
@@ -85,7 +85,7 @@ describe("auth", () => {
                 undefined,
             );
 
-            const authenticator = new AdbDaemonAuthProcessor({
+            const authenticator = new AdbDaemonDefaultAuthProcessor({
                 credentialManager: store,
             });
             const challenge = new Uint8Array(20);
@@ -124,7 +124,7 @@ describe("auth", () => {
                 name,
             );
 
-            const authenticator = new AdbDaemonAuthProcessor({
+            const authenticator = new AdbDaemonDefaultAuthProcessor({
                 credentialManager: store,
             });
             const challenge = new Uint8Array(20);

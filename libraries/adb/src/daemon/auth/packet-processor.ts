@@ -9,7 +9,7 @@ import { rsaSign } from "../crypto.js";
 import type { AdbPacketData } from "../packet.js";
 import { AdbCommand } from "../packet.js";
 
-import type { IAdbDaemonAuthProcessor } from "./authenticator.js";
+import type { AdbDaemonAuthProcessor } from "./authenticator.js";
 import {
     adbGeneratePublicKey,
     adbGetPublicKeyFingerprint,
@@ -51,7 +51,7 @@ export const AdbDaemonAuthType = {
 export type AdbDaemonAuthType =
     (typeof AdbDaemonAuthType)[keyof typeof AdbDaemonAuthType];
 
-export interface AdbDaemonAuthProcessorInit {
+export interface AdbDaemonDefaultAuthProcessorInit {
     credentialManager: AdbCredentialManager;
     onKeyLoadError?: ((error: Error) => void) | undefined;
     onSignatureAuthentication?: ((key: AdbKeyInfo) => void) | undefined;
@@ -59,7 +59,7 @@ export interface AdbDaemonAuthProcessorInit {
     onPublicKeyAuthentication?: ((key: AdbKeyInfo) => void) | undefined;
 }
 
-export class AdbDaemonAuthProcessor implements IAdbDaemonAuthProcessor {
+export class AdbDaemonDefaultAuthProcessor implements AdbDaemonAuthProcessor {
     #credentialManager: AdbCredentialManager;
     #onKeyLoadError: ((error: Error) => void) | undefined;
     #onSignatureAuthentication: ((key: AdbKeyInfo) => void) | undefined;
@@ -74,7 +74,7 @@ export class AdbDaemonAuthProcessor implements IAdbDaemonAuthProcessor {
     #prevKeyInfo: AdbKeyInfo | undefined;
     #firstKey: AdbPrivateKey | undefined;
 
-    constructor(init: AdbDaemonAuthProcessorInit) {
+    constructor(init: AdbDaemonDefaultAuthProcessorInit) {
         this.#credentialManager = init.credentialManager;
         this.#onKeyLoadError = init.onKeyLoadError;
         this.#onSignatureAuthentication = init.onSignatureAuthentication;
