@@ -133,7 +133,7 @@ export class AdbPacketDispatcher implements Closeable {
         connection.readable
             .pipeTo(
                 new WritableStream({
-                    write: async (packet) => {
+                    write: async (packet, controller) => {
                         switch (packet.command) {
                             case AdbCommand.Close:
                                 await this.#handleClose(packet);
@@ -145,7 +145,9 @@ export class AdbPacketDispatcher implements Closeable {
                                 await this.#handleOpen(packet);
                                 break;
                             case AdbCommand.Write:
-                                await this.#handleWrite(packet);
+                                this.#handleWrite(packet).catch((e) =>
+                                    controller.error(e),
+                                );
                                 break;
                             default:
                                 // Junk data may only appear in the authentication phase,
