@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/adb
 
+## 2.5.1
+
+### Patch Changes
+
+- b47941b: Forward AdbShellProtocolProcess.stdin close signal to remote process
+
 ## 2.4.0
 
 ### Minor Changes
