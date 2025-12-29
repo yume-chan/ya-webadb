@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/adb-server-node-tcp
 
+## 2.5.2
+
+### Patch Changes
+
+- e88a999: Close the underlying socket when the connection is aborted.
+
 ## 2.1.0
 
 ### Patch Changes
