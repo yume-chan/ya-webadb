@@ -20,7 +20,7 @@ export class Av1Codec implements CodecDecoder {
         this.#options = options;
     }
 
-    #configure(data: Uint8Array) {
+    #parseConfig(data: Uint8Array) {
         const parser = new Av1(data);
         const sequenceHeader = parser.searchSequenceHeaderObu();
 
@@ -94,11 +94,15 @@ export class Av1Codec implements CodecDecoder {
             return;
         }
 
-        this.#configure(packet.data);
+        this.#parseConfig(packet.data);
 
         if (packet.keyframe) {
-            this.#decoder.reset();
-            this.#decoder.configure(this.#parsedConfig!);
+            if (this.#decoder.decodeQueueSize) {
+                this.#decoder.reset();
+                this.#decoder.configure(this.#parsedConfig!);
+            } else if (this.#decoder.state === "unconfigured") {
+                this.#decoder.configure(this.#parsedConfig!);
+            }
         }
 
         this.#decoder.decode(
