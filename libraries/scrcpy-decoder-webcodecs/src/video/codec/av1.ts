@@ -6,6 +6,7 @@ import { decimalTwoDigits } from "./utils.js";
 
 export class Av1Codec implements CodecDecoder {
     #decoder: VideoDecoder;
+    #parsedConfig: VideoDecoderConfig | undefined;
     #updateSize: (width: number, height: number) => void;
     #options: CodecDecoderOptions | undefined;
 
@@ -80,12 +81,12 @@ export class Av1Codec implements CodecDecoder {
             decimalTwoDigits(matrixCoefficients),
             colorRange ? "1" : "0",
         ].join(".");
-        this.#decoder.configure({
+        this.#parsedConfig = {
             codec,
             hardwareAcceleration:
                 this.#options?.hardwareAcceleration ?? "no-preference",
             optimizeForLatency: true,
-        });
+        };
     }
 
     decode(packet: ScrcpyMediaStreamPacket): void {
@@ -94,6 +95,12 @@ export class Av1Codec implements CodecDecoder {
         }
 
         this.#configure(packet.data);
+
+        if (packet.keyframe) {
+            this.#decoder.reset();
+            this.#decoder.configure(this.#parsedConfig!);
+        }
+
         this.#decoder.decode(
             new EncodedVideoChunk({
                 // Treat `undefined` as `key`, otherwise it won't decode.
