@@ -21,7 +21,7 @@ let prevValue = 0;
 export function increasingNow() {
     let now = performance.now();
     if (now <= prevValue) {
-        now = nextUp(now);
+        now = nextUp(prevValue);
     }
     prevValue = now;
     return now;

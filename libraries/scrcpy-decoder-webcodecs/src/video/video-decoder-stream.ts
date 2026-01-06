@@ -68,6 +68,10 @@ export class VideoDecoderStream extends TransformStream<
                     return;
                 }
 
+                if (this.#decoder.state === "unconfigured") {
+                    throw new Error("Decoder not configured");
+                }
+
                 if (chunk.type === "key" && this.#decoder.decodeQueueSize) {
                     // If the device is too slow to decode all frames,
                     // Discard queued but not decoded frames when next keyframe arrives.

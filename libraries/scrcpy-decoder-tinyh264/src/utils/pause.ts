@@ -13,7 +13,9 @@ export class PauseController
     extends TransformStream<PauseController.Input, PauseController.Output>
     implements ScrcpyVideoDecoderPauseController
 {
-    #controller!: TransformStreamDefaultController<PauseController.Output>;
+    #controller:
+        | TransformStreamDefaultController<PauseController.Output>
+        | undefined;
 
     #paused = false;
     #pausedExplicitly = false;
@@ -51,6 +53,12 @@ export class PauseController
         super({
             start: async (controller) => {
                 await Promise.resolve();
+
+                if (this.#disposed) {
+                    controller.terminate();
+                    return;
+                }
+
                 this.#controller = controller;
             },
             transform: async (packet, controller) => {
@@ -131,7 +139,7 @@ export class PauseController
         this.#pausedExplicitly = false;
 
         if (this.#pendingConfiguration) {
-            this.#controller.enqueue(this.#pendingConfiguration);
+            this.#controller!.enqueue(this.#pendingConfiguration);
             this.#pendingConfiguration = undefined;
 
             if (this.#disposed) {
@@ -139,17 +147,18 @@ export class PauseController
             }
         }
 
-        const frames = this.#pendingFrames.slice();
-        for (let i = 0, length = frames.length - 1; i < length; i += 1) {
+        // `#pendingFrames` won't change during iteration
+        // because it can only change when `#paused` is `true`,
+        // but the code above already sets that to `false`
+        for (const [index, frame] of this.#pendingFrames.entries()) {
             // All pending frames except the last one don't need to be rendered
             // because they are decoded in quick succession by the decoder
             // and won't be visible
-            this.#controller.enqueue({ ...frames[i]!, skipRendering: true });
+            this.#controller!.enqueue({
+                ...frame,
+                skipRendering: index !== this.#pendingFrames.length - 1,
+            });
         }
-        this.#controller.enqueue({
-            ...frames[frames.length - 1]!,
-            skipRendering: false,
-        });
 
         this.#pendingFrames.length = 0;
 
@@ -208,7 +217,7 @@ export class PauseController
 
         this.#disposed = true;
 
-        this.#controller.terminate();
+        this.#controller?.terminate();
 
         this.#pendingConfiguration = undefined;
         this.#pendingFrames.length = 0;
