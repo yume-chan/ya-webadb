@@ -44,10 +44,11 @@ export class VideoDecoderStream extends TransformStream<
     #config?: VideoDecoderConfig;
 
     constructor() {
+        let decoder!: VideoDecoder;
+
         super({
-            start: async (controller) => {
-                await Promise.resolve();
-                this.#decoder = new VideoDecoder({
+            start: (controller) => {
+                decoder = new VideoDecoder({
                     output: (frame) => {
                         this.#framesDecoded += 1;
 
@@ -57,7 +58,7 @@ export class VideoDecoderStream extends TransformStream<
                         controller.error(error);
                     },
                 });
-                this.#decoder.addEventListener("dequeue", () =>
+                decoder.addEventListener("dequeue", () =>
                     this.#onDequeue.fire(undefined),
                 );
             },
@@ -92,5 +93,7 @@ export class VideoDecoderStream extends TransformStream<
                 this.#decoder.close();
             },
         });
+
+        this.#decoder = decoder;
     }
 }

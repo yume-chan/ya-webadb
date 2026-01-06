@@ -13,9 +13,7 @@ export class PauseController
     extends TransformStream<PauseController.Input, PauseController.Output>
     implements ScrcpyVideoDecoderPauseController
 {
-    #controller:
-        | TransformStreamDefaultController<PauseController.Output>
-        | undefined;
+    #controller: TransformStreamDefaultController<PauseController.Output>;
 
     #paused = false;
     #pausedExplicitly = false;
@@ -50,16 +48,11 @@ export class PauseController
     #disposed = false;
 
     constructor() {
+        let controller!: TransformStreamDefaultController<PauseController.Output>;
+
         super({
-            start: async (controller) => {
-                await Promise.resolve();
-
-                if (this.#disposed) {
-                    controller.terminate();
-                    return;
-                }
-
-                this.#controller = controller;
+            start: (controller_) => {
+                controller = controller_;
             },
             transform: async (packet, controller) => {
                 if (this.#paused) {
@@ -100,6 +93,8 @@ export class PauseController
                 }
             },
         });
+
+        this.#controller = controller;
     }
 
     #pauseInternal(explicitly: boolean): void {
@@ -139,7 +134,7 @@ export class PauseController
         this.#pausedExplicitly = false;
 
         if (this.#pendingConfiguration) {
-            this.#controller!.enqueue(this.#pendingConfiguration);
+            this.#controller.enqueue(this.#pendingConfiguration);
             this.#pendingConfiguration = undefined;
 
             if (this.#disposed) {
@@ -154,7 +149,7 @@ export class PauseController
             // All pending frames except the last one don't need to be rendered
             // because they are decoded in quick succession by the decoder
             // and won't be visible
-            this.#controller!.enqueue({
+            this.#controller.enqueue({
                 ...frame,
                 skipRendering: index !== this.#pendingFrames.length - 1,
             });
@@ -217,7 +212,7 @@ export class PauseController
 
         this.#disposed = true;
 
-        this.#controller?.terminate();
+        this.#controller.terminate();
 
         this.#pendingConfiguration = undefined;
         this.#pendingFrames.length = 0;
