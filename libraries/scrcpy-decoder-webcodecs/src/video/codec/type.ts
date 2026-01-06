@@ -1,17 +1,27 @@
-import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
+import type {
+    ScrcpyMediaStreamConfigurationPacket,
+    ScrcpyMediaStreamDataPacket,
+} from "@yume-chan/scrcpy";
+import type { TransformStream } from "@yume-chan/stream-extra";
 
-export interface CodecDecoder {
-    decode(packet: ScrcpyMediaStreamPacket): undefined;
-}
+export type CodecDecoder = TransformStream<
+    CodecDecoder.Input,
+    CodecDecoder.Output
+>;
 
-export interface CodecDecoderOptions {
-    hardwareAcceleration?: HardwareAcceleration | undefined;
+export namespace CodecDecoder {
+    export type Input =
+        | ScrcpyMediaStreamConfigurationPacket
+        | (ScrcpyMediaStreamDataPacket & { timestamp: number });
+
+    export type Config = VideoDecoderConfig & {
+        codedWidth: number;
+        codedHeight: number;
+    };
+
+    export type Output = Config | EncodedVideoChunk;
 }
 
 export interface CodecDecoderConstructor {
-    new (
-        decoder: VideoDecoder,
-        updateSize: (width: number, height: number) => void,
-        options?: CodecDecoderOptions,
-    ): CodecDecoder;
+    new (): CodecDecoder;
 }

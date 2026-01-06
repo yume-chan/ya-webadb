@@ -1,59 +1,43 @@
 import { Av1 } from "@yume-chan/media-codec";
-import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
+import { TransformStream } from "@yume-chan/stream-extra";
 
-import type { CodecDecoder, CodecDecoderOptions } from "./type.js";
+import type { CodecDecoder } from "./type.js";
 
-export class Av1Codec implements CodecDecoder {
-    #decoder: VideoDecoder;
-    #updateSize: (width: number, height: number) => void;
-    #options: CodecDecoderOptions | undefined;
+export class Av1Codec extends TransformStream<
+    CodecDecoder.Input,
+    CodecDecoder.Output
+> {
+    constructor() {
+        super({
+            transform: (packet, controller) => {
+                if (packet.type === "configuration") {
+                    // AV1 decoder doesn't need configuration packets
+                    return;
+                }
 
-    constructor(
-        decoder: VideoDecoder,
-        updateSize: (width: number, height: number) => void,
-        options?: CodecDecoderOptions,
-    ) {
-        this.#decoder = decoder;
-        this.#updateSize = updateSize;
-        this.#options = options;
-    }
+                const parser = new Av1(packet.data);
+                const sequenceHeader = parser.searchSequenceHeaderObu();
 
-    #configure(data: Uint8Array) {
-        const parser = new Av1(data);
-        const sequenceHeader = parser.searchSequenceHeaderObu();
+                if (sequenceHeader) {
+                    const width = sequenceHeader.max_frame_width_minus_1 + 1;
+                    const height = sequenceHeader.max_frame_height_minus_1 + 1;
 
-        if (!sequenceHeader) {
-            return;
-        }
+                    controller.enqueue({
+                        codec: Av1.toCodecString(sequenceHeader),
+                        codedWidth: width,
+                        codedHeight: height,
+                    });
+                }
 
-        const width = sequenceHeader.max_frame_width_minus_1 + 1;
-        const height = sequenceHeader.max_frame_height_minus_1 + 1;
-        this.#updateSize(width, height);
-
-        this.#decoder.configure({
-            codec: Av1.toCodecString(sequenceHeader),
-            hardwareAcceleration:
-                this.#options?.hardwareAcceleration ?? "no-preference",
-            optimizeForLatency: true,
+                controller.enqueue(
+                    new EncodedVideoChunk({
+                        // Treat `undefined` as `key`, otherwise it won't decode.
+                        type: packet.keyframe === false ? "delta" : "key",
+                        timestamp: packet.timestamp,
+                        data: packet.data,
+                    }),
+                );
+            },
         });
-    }
-
-    decode(packet: ScrcpyMediaStreamPacket): undefined {
-        if (packet.type === "configuration") {
-            return;
-        }
-
-        this.#configure(packet.data);
-        this.#decoder.decode(
-            new EncodedVideoChunk({
-                // Treat `undefined` as `key`, otherwise it won't decode.
-                type: packet.keyframe === false ? "delta" : "key",
-                // HACK: `timestamp` is only used as a marker to skip paused frames,
-                // so it's fine as long as we can differentiate `0` from non-zeros.
-                // Hope `packet.pts` won't be too large to lose precision.
-                timestamp: packet.pts !== undefined ? Number(packet.pts) : 1,
-                data: packet.data,
-            }),
-        );
     }
 }

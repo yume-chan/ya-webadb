@@ -1,8 +1,8 @@
 import type { ScrcpyVideoDecoderPerformanceCounter } from "../types.js";
 
-export class PerformanceCounterImpl implements ScrcpyVideoDecoderPerformanceCounter {
+export class PerformanceCounter implements ScrcpyVideoDecoderPerformanceCounter {
     #framesDrawn = 0;
-    get framesDrawn() {
+    get framesRendered() {
         return this.#framesDrawn;
     }
 
@@ -12,7 +12,7 @@ export class PerformanceCounterImpl implements ScrcpyVideoDecoderPerformanceCoun
     }
 
     #framesSkipped = 0;
-    get framesSkipped() {
+    get framesSkippedRendering() {
         return this.#framesSkipped;
     }
 

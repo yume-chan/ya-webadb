@@ -1,48 +1,45 @@
-import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
+import { concatUint8Arrays, TransformStream } from "@yume-chan/stream-extra";
 
 import type { CodecDecoder } from "./type.js";
 
-export abstract class H26xDecoder implements CodecDecoder {
+export abstract class H26xDecoder extends TransformStream<
+    CodecDecoder.Input,
+    CodecDecoder.Output
+> {
     #config: Uint8Array | undefined;
-    #decoder: VideoDecoder;
 
-    constructor(decoder: VideoDecoder) {
-        this.#decoder = decoder;
+    constructor() {
+        super({
+            transform: (packet, controller) => {
+                if (packet.type === "configuration") {
+                    this.#config = packet.data;
+                    controller.enqueue(this.configure(packet.data));
+                    return;
+                }
+
+                // For H.264 and H.265, when the stream is in Annex B format
+                // (which Scrcpy uses, as Android MediaCodec produces),
+                // configuration data needs to be combined with the first frame data.
+                // https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
+                let data: Uint8Array;
+                if (this.#config) {
+                    data = concatUint8Arrays([this.#config, packet.data]);
+                    this.#config = undefined;
+                } else {
+                    data = packet.data;
+                }
+
+                controller.enqueue(
+                    new EncodedVideoChunk({
+                        // Treat `undefined` as `key`, otherwise won't decode.
+                        type: packet.keyframe === false ? "delta" : "key",
+                        timestamp: packet.timestamp,
+                        data,
+                    }),
+                );
+            },
+        });
     }
 
-    abstract configure(data: Uint8Array): void;
-
-    decode(packet: ScrcpyMediaStreamPacket): undefined {
-        if (packet.type === "configuration") {
-            this.#config = packet.data;
-            this.configure(packet.data);
-            return;
-        }
-
-        // For H.264 and H.265, when the stream is in Annex B format
-        // (which Scrcpy uses, as Android MediaCodec produces),
-        // configuration data needs to be combined with the first frame data.
-        // https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
-        let data: Uint8Array;
-        if (this.#config !== undefined) {
-            data = new Uint8Array(this.#config.length + packet.data.length);
-            data.set(this.#config, 0);
-            data.set(packet.data, this.#config.length);
-            this.#config = undefined;
-        } else {
-            data = packet.data;
-        }
-
-        this.#decoder.decode(
-            new EncodedVideoChunk({
-                // Treat `undefined` as `key`, otherwise won't decode.
-                type: packet.keyframe === false ? "delta" : "key",
-                // HACK: `timestamp` is only used as a marker to skip paused frames,
-                // so it's fine as long as we can differentiate `0` from non-zeros.
-                // Hope `packet.pts` won't be too large to lose precision.
-                timestamp: packet.pts !== undefined ? Number(packet.pts) : 1,
-                data,
-            }),
-        );
-    }
+    abstract configure(data: Uint8Array): CodecDecoder.Config;
 }

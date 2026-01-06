@@ -13,11 +13,11 @@ import {
 import { encodeUtf8 } from "@yume-chan/struct";
 
 import type { AdbSocket } from "../../../adb.js";
-import type { AdbPtyProcess } from "../pty.js";
+import type { AdbPty } from "../pty.js";
 
 import { AdbShellProtocolId, AdbShellProtocolPacket } from "./shared.js";
 
-export class AdbShellProtocolPtyProcess implements AdbPtyProcess<number> {
+export class AdbShellProtocolPty implements AdbPty<number> {
     readonly #socket: AdbSocket;
     readonly #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
 
