@@ -30,7 +30,7 @@ export abstract class CanvasVideoFrameRenderer implements VideoFrameRenderer {
         close: () => this.dispose(),
         abort: () => this.dispose(),
     });
-    get writeable() {
+    get writable() {
         return this.#writable;
     }
 

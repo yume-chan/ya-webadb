@@ -55,6 +55,10 @@ export class PauseController
                 controller = controller_;
             },
             transform: async (packet, controller) => {
+                if (this.#disposed) {
+                    return;
+                }
+
                 if (this.#paused) {
                     switch (packet.type) {
                         case "configuration":
@@ -211,8 +215,6 @@ export class PauseController
         }
 
         this.#disposed = true;
-
-        this.#controller.terminate();
 
         this.#pendingConfiguration = undefined;
         this.#pendingFrames.length = 0;

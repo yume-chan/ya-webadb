@@ -21,7 +21,7 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
     }
 
     #generator: MediaStreamTrackGenerator;
-    get writeable() {
+    get writable() {
         return this.#generator.writable;
     }
 

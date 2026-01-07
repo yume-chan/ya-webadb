@@ -236,7 +236,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             // Skip frames if renderer can't keep up
             .pipeThrough(this.#renderController)
             // Render
-            .pipeTo(renderer.writeable)
+            .pipeTo(renderer.writable)
             .catch(noop);
     }
 
@@ -257,11 +257,13 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     dispose() {
-        this.#size.dispose();
+        // Most cleanup happens automatically when `writable` ends
+        // (in each stream's `close` callback).
+        // This method cleanup things that still available after `writable` ends
 
-        // This class doesn't need to guard against multiple dispose calls
-        // since most of the logic is already handled in `#pause`
+        this.#size.dispose();
         this.#pause.dispose();
+        this.#renderController.dispose();
     }
 }
 

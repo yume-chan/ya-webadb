@@ -102,6 +102,14 @@ export class RendererController
             close: () => {
                 this.#readableController.close();
                 this.#counter.dispose();
+                // Don't close `#captureFrame` to allow using `snapshot` on the last frame
+                // Don't close `#nextFrame` to make sure all frames are rendered
+            },
+            abort: (reason) => {
+                this.#readableController.error(reason);
+                this.#counter.dispose();
+                // Don't close `#captureFrame` to allow using `snapshot` on the last frame
+                // Don't close `#nextFrame` to make sure all frames are rendered
             },
         });
     }
@@ -120,13 +128,14 @@ export class RendererController
         while ((frame = this.#nextFrame)) {
             this.#nextFrame = undefined;
             await this.#readableController.enqueue(frame);
+            // The renderer is responsible for closing `frame`
             this.#counter.increaseFramesRendered();
         }
 
         this.#drawing = false;
     }
 
-    async snapshot() {
+    async snapshot(): Promise<Blob | undefined> {
         const frame = this.#captureFrame;
         if (!frame) {
             return undefined;
@@ -138,5 +147,13 @@ export class RendererController
         } finally {
             VideoFrameCapturerPool.return(capturer);
         }
+    }
+
+    dispose() {
+        this.#captureFrame?.close();
+        this.#captureFrame = undefined;
+
+        this.#nextFrame?.close();
+        this.#nextFrame = undefined;
     }
 }

@@ -12,7 +12,7 @@ export class VideoFrameCapturer {
         }
         this.#context = (this.#canvas as HTMLCanvasElement).getContext(
             "bitmaprenderer",
-            { alpha: false },
+            { alpha: true },
         )!;
     }
 
