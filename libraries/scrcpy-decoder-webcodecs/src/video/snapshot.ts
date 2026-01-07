@@ -10,9 +10,10 @@ export class VideoFrameCapturer {
             this.#canvas.width = 1;
             this.#canvas.height = 1;
         }
-        this.#context = this.#canvas.getContext("bitmaprenderer", {
-            alpha: false,
-        })!;
+        this.#context = (this.#canvas as HTMLCanvasElement).getContext(
+            "bitmaprenderer",
+            { alpha: false },
+        )!;
     }
 
     async capture(frame: VideoFrame): Promise<Blob> {

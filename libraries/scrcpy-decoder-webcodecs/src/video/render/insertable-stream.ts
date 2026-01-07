@@ -1,8 +1,6 @@
 // cspell: ignore insertable
 
-import type { MaybePromiseLike } from "@yume-chan/async";
-import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
-import { tryClose } from "@yume-chan/stream-extra";
+import type { WritableStream } from "@yume-chan/stream-extra";
 
 import type { VideoFrameRenderer } from "./type.js";
 
@@ -23,8 +21,14 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
     }
 
     #generator: MediaStreamTrackGenerator;
-    #writer: WritableStreamDefaultWriter<VideoFrame>;
+    get writeable() {
+        return this.#generator.writable;
+    }
+
     #stream: MediaStream;
+    get stream() {
+        return this.#stream;
+    }
 
     constructor(element?: HTMLVideoElement) {
         if (element) {
@@ -42,32 +46,18 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         this.#element.disablePictureInPicture = true;
         this.#element.disableRemotePlayback = true;
 
+        this.#element.addEventListener("resize", () => {
+            this.#element.width = this.#element.videoWidth;
+            this.#element.height = this.#element.videoHeight;
+        });
+
         // The spec replaced `MediaStreamTrackGenerator` with `VideoTrackGenerator`.
         // But Chrome has not implemented it yet.
         // https://issues.chromium.org/issues/40058895
         this.#generator = new MediaStreamTrackGenerator({ kind: "video" });
         this.#generator.contentHint = "motion";
 
-        this.#writer =
-            this.#generator.writable.getWriter() as WritableStreamDefaultWriter<VideoFrame>;
-
         this.#stream = new MediaStream([this.#generator]);
         this.#element.srcObject = this.#stream;
-    }
-
-    setSize(width: number, height: number): void {
-        if (this.#element.width !== width || this.#element.height !== height) {
-            this.#element.width = width;
-            this.#element.height = height;
-        }
-    }
-
-    draw(frame: VideoFrame): Promise<void> {
-        return this.#writer.write(frame);
-    }
-
-    dispose(): MaybePromiseLike<undefined> {
-        tryClose(this.#writer);
-        return undefined;
     }
 }

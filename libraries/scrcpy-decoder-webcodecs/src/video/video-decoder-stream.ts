@@ -89,7 +89,12 @@ export class VideoDecoderStream extends TransformStream<
                 this.#decoder.decode(chunk);
             },
             flush: async () => {
+                // Wait for all pending frames to be decoded when finishes normally
                 await this.#decoder.flush();
+                this.#decoder.close();
+            },
+            cancel: () => {
+                // Immediately close the decoder on cancel/error
                 this.#decoder.close();
             },
         });

@@ -205,7 +205,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
 
                 // Can't know if yuv-canvas is dropping frames or not
                 this.#renderer!.drawFrame(frame);
-                this.#counter.increaseFramesDrawn();
+                this.#counter.increaseFramesRendered();
             });
 
             decoder.feed(data.slice().buffer);

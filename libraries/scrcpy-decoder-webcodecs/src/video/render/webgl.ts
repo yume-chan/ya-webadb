@@ -1,4 +1,6 @@
-import type { MaybePromiseLike } from "@yume-chan/async";
+// cspell: ignore highp
+// cspell: ignore mediump
+
 import {
     glCreateContext,
     glIsSupported,
@@ -8,6 +10,54 @@ import {
 import { CanvasVideoFrameRenderer } from "./canvas.js";
 
 const Resolved = Promise.resolve();
+
+function createShader(gl: WebGLRenderingContext, type: number, source: string) {
+    const shader = gl.createShader(type)!;
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    return shader;
+}
+
+function createProgram(
+    gl: WebGLRenderingContext,
+    vertexShaderSource: string,
+    fragmentShaderSource: string,
+) {
+    const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+    const fragmentShader = createShader(
+        gl,
+        gl.FRAGMENT_SHADER,
+        fragmentShaderSource,
+    );
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+
+    try {
+        if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            return program;
+        }
+
+        // Don't check shader compile status unless linking fails
+        // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#dont_check_shader_compile_status_unless_linking_fails
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+            throw new Error(gl.getShaderInfoLog(vertexShader)!);
+        }
+
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+            throw new Error(gl.getShaderInfoLog(fragmentShader)!);
+        }
+
+        throw new Error(gl.getProgramInfoLog(program)!);
+    } finally {
+        // Delete objects eagerly
+        // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#delete_objects_eagerly
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+    }
+}
 
 export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
     static VertexShaderSource = `
@@ -42,7 +92,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         });
     }
 
-    #context: WebGLRenderingContext | WebGL2RenderingContext;
+    #context: WebGLRenderingContext;
+    #program: WebGLProgram;
 
     /**
      * Create a new WebGL frame renderer.
@@ -53,20 +104,22 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
      */
     constructor(
         canvas?: HTMLCanvasElement | OffscreenCanvas,
-        enableCapture?: boolean,
+        options?: WebGLVideoFrameRenderer.Options,
     ) {
-        super(canvas);
+        super(canvas, options);
 
         const gl = glCreateContext(this.canvas, {
             // Low-power GPU should be enough for video rendering.
             powerPreference: "low-power",
-            alpha: false,
+            // Avoid alpha:false, which can be expensive
+            // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#avoid_alphafalse_which_can_be_expensive
+            alpha: true,
             // Disallow software rendering.
             // `ImageBitmapRenderingContext` is faster than software-based WebGL.
             failIfMajorPerformanceCaveat: true,
-            preserveDrawingBuffer: !!enableCapture,
+            preserveDrawingBuffer: !!options?.enableCapture,
             // Enable desynchronized mode when not capturing to reduce latency.
-            desynchronized: !enableCapture,
+            desynchronized: !options?.enableCapture,
             antialias: false,
             depth: false,
             premultipliedAlpha: true,
@@ -77,34 +130,12 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         }
         this.#context = gl;
 
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
-        gl.shaderSource(
-            vertexShader,
+        this.#program = createProgram(
+            gl,
             WebGLVideoFrameRenderer.VertexShaderSource,
-        );
-        gl.compileShader(vertexShader);
-        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-            throw new Error(gl.getShaderInfoLog(vertexShader)!);
-        }
-
-        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-        gl.shaderSource(
-            fragmentShader,
             WebGLVideoFrameRenderer.FragmentShaderSource,
         );
-        gl.compileShader(fragmentShader);
-        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-            throw new Error(gl.getShaderInfoLog(fragmentShader)!);
-        }
-
-        const shaderProgram = gl.createProgram();
-        gl.attachShader(shaderProgram, vertexShader);
-        gl.attachShader(shaderProgram, fragmentShader);
-        gl.linkProgram(shaderProgram);
-        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            throw new Error(gl.getProgramInfoLog(shaderProgram)!);
-        }
-        gl.useProgram(shaderProgram);
+        gl.useProgram(this.#program);
 
         // Vertex coordinates, clockwise from bottom-left.
         const vertexBuffer = gl.createBuffer();
@@ -115,7 +146,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
             gl.STATIC_DRAW,
         );
 
-        const xyLocation = gl.getAttribLocation(shaderProgram, "xy");
+        const xyLocation = gl.getAttribLocation(this.#program, "xy");
         gl.vertexAttribPointer(xyLocation, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(xyLocation);
 
@@ -135,7 +166,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
 
-    draw(frame: VideoFrame): Promise<void> {
+    override draw(frame: VideoFrame): Promise<void> {
         const gl = this.#context;
         gl.texImage2D(
             gl.TEXTURE_2D,
@@ -154,11 +185,29 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
         gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
 
+        gl.flush();
+
         return Resolved;
     }
 
-    override dispose(): MaybePromiseLike<undefined> {
+    override dispose(): undefined {
+        this.#context.deleteProgram(this.#program);
+
+        // Lose contexts eagerly
+        // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#lose_contexts_eagerly
         glLoseContext(this.#context);
-        return undefined;
+
+        super.dispose();
+    }
+}
+
+export namespace WebGLVideoFrameRenderer {
+    export interface Options extends CanvasVideoFrameRenderer.Options {
+        /**
+         * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
+         *
+         * Enable this option may reduce performance.
+         */
+        enableCapture?: boolean;
     }
 }

@@ -51,7 +51,7 @@ export class PerformanceCounter implements ScrcpyVideoDecoderPerformanceCounter 
         this.#framesSkipped += 1;
     }
 
-    increaseFramesDrawn() {
+    increaseFramesRendered() {
         this.#framesDrawn += 1;
     }
 

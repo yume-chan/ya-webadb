@@ -1,9 +1,5 @@
-import type { MaybePromiseLike } from "@yume-chan/async";
+import type { WritableStream } from "@yume-chan/stream-extra";
 
 export interface VideoFrameRenderer {
-    setSize(width: number, height: number): void;
-
-    draw(frame: VideoFrame): MaybePromiseLike<void>;
-
-    dispose(): MaybePromiseLike<undefined>;
+    writeable: WritableStream<VideoFrame>;
 }

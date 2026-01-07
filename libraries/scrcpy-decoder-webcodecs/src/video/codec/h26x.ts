@@ -2,10 +2,10 @@ import { concatUint8Arrays, TransformStream } from "@yume-chan/stream-extra";
 
 import type { CodecDecoder } from "./type.js";
 
-export abstract class H26xDecoder extends TransformStream<
-    CodecDecoder.Input,
-    CodecDecoder.Output
-> {
+export abstract class H26xDecoder
+    extends TransformStream<CodecDecoder.Input, CodecDecoder.Output>
+    implements CodecDecoder
+{
     #config: Uint8Array | undefined;
 
     constructor() {

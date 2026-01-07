@@ -3,28 +3,15 @@ import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
-import {
-    noop,
-    PauseController,
-    PerformanceCounter,
-} from "@yume-chan/scrcpy-decoder-tinyh264";
-import {
-    InspectStream,
-    TransformStream,
-    WritableStream,
-} from "@yume-chan/stream-extra";
+import { noop, PauseController } from "@yume-chan/scrcpy-decoder-tinyh264";
+import { InspectStream, TransformStream } from "@yume-chan/stream-extra";
 
 import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
 import type { CodecDecoder } from "./codec/type.js";
-import { Pool } from "./pool.js";
 import type { VideoFrameRenderer } from "./render/index.js";
-import { VideoFrameCapturer } from "./snapshot.js";
+import { RendererController } from "./render/index.js";
 import { increasingNow } from "./time.js";
 import { VideoDecoderStream } from "./video-decoder-stream.js";
-
-const VideoFrameCapturerPool =
-    /* #__PURE__ */
-    new Pool(() => new VideoFrameCapturer(), 4);
 
 export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     static get isSupported() {
@@ -129,15 +116,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
     // #region renderer
 
-    #drawing = false;
-    #nextFrame: VideoFrame | undefined;
-
-    #counter = new PerformanceCounter();
+    #renderController = new RendererController();
     /**
      * Gets the number of frames that have been drawn on the renderer.
      */
     get framesRendered() {
-        return this.#counter.framesRendered;
+        return this.#renderController.framesRendered;
     }
     /**
      * Gets the number of frames that's visible to the user.
@@ -150,19 +134,17 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
      * https://issues.chromium.org/issues/41483010
      */
     get framesPresented() {
-        return this.#counter.framesPresented;
+        return this.#renderController.framesPresented;
     }
     /**
      * Gets the number of frames that wasn't drawn on the renderer
      * because the renderer can't keep up
      */
     get framesSkippedRendering() {
-        return this.#counter.framesSkippedRendering;
+        return this.#renderController.framesSkippedRendering;
     }
 
     // #endregion renderer
-
-    #captureFrame: VideoFrame | undefined;
 
     /**
      * Create a new WebCodecs video decoder.
@@ -228,16 +210,16 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                         chunk.hardwareAcceleration = hardwareAcceleration;
                         chunk.optimizeForLatency = optimizeForLatency;
 
-                        this.#updateSize(chunk.codedWidth, chunk.codedHeight);
+                        this.#size.setSize(chunk.codedWidth, chunk.codedHeight);
                     }
                 }),
             )
             // Convert `VideoDecoder` config/chunk to `VideoFrame`s
             .pipeThrough(this.#rawDecoder)
-            // Render `VideoFrame`s
-            .pipeTo(
-                new WritableStream({
-                    write: (frame) => {
+            // Track decoding time and filter skipped frames
+            .pipeThrough(
+                new TransformStream<VideoFrame, VideoFrame>({
+                    transform: (frame, controller) => {
                         // `frame.timestamp` is the same `EncodedVideoChunk.timestamp` set above
                         this.#totalDecodeTime +=
                             performance.now() - frame.timestamp;
@@ -247,74 +229,15 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                             return;
                         }
 
-                        // release the previous frame
-                        this.#captureFrame?.close();
-                        // PERF: `VideoFrame#clone` is cheap
-                        this.#captureFrame = frame.clone();
-
-                        return this.#draw(frame);
+                        controller.enqueue(frame);
                     },
                 }),
             )
+            // Skip frames if renderer can't keep up
+            .pipeThrough(this.#renderController)
+            // Render
+            .pipeTo(renderer.writeable)
             .catch(noop);
-    }
-
-    async #draw(frame: VideoFrame) {
-        if (this.#drawing) {
-            if (this.#nextFrame) {
-                // Frame `n` is still drawing, frame `n + m` (m > 0) is waiting, and frame `n + m + 1` comes.
-                // Dispose frame `n + m` and set frame `n + m + 1` as the next frame.
-                this.#nextFrame.close();
-                this.#counter.increaseFramesSkipped();
-            }
-            this.#nextFrame = frame;
-            return;
-        }
-
-        this.#drawing = true;
-
-        do {
-            this.#updateSize(frame.displayWidth, frame.displayHeight);
-
-            // PERF: Draw every frame to minimize latency at cost of performance.
-            // When multiple frames are drawn in one vertical sync interval,
-            // only the last one is visible to users.
-            // But this ensures users can always see the most up-to-date screen.
-            // This is also the behavior of official Scrcpy client.
-            // https://github.com/Genymobile/scrcpy/issues/3679
-            await this.#renderer.draw(frame);
-            frame.close();
-
-            this.#counter.increaseFramesDrawn();
-
-            if (this.#nextFrame) {
-                frame = this.#nextFrame;
-                this.#nextFrame = undefined;
-            } else {
-                break;
-            }
-        } while (true);
-
-        this.#drawing = false;
-    }
-
-    #updateSize = (width: number, height: number) => {
-        this.#renderer.setSize(width, height);
-        this.#size.setSize(width, height);
-    };
-
-    async snapshot() {
-        const frame = this.#captureFrame;
-        if (!frame) {
-            return undefined;
-        }
-
-        const capturer = await VideoFrameCapturerPool.borrow();
-        try {
-            return await capturer.capture(frame);
-        } finally {
-            VideoFrameCapturerPool.return(capturer);
-        }
     }
 
     pause(): void {
@@ -329,13 +252,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#pause.trackDocumentVisibility(document);
     }
 
-    dispose() {
-        this.#captureFrame?.close();
+    async snapshot() {
+        return this.#renderController.snapshot();
+    }
 
-        this.#counter.dispose();
-        this.#renderer.dispose();
+    dispose() {
         this.#size.dispose();
-        this.#nextFrame?.close();
 
         // This class doesn't need to guard against multiple dispose calls
         // since most of the logic is already handled in `#pause`

@@ -3,10 +3,10 @@ import { TransformStream } from "@yume-chan/stream-extra";
 
 import type { CodecDecoder } from "./type.js";
 
-export class Av1Codec extends TransformStream<
-    CodecDecoder.Input,
-    CodecDecoder.Output
-> {
+export class Av1Codec
+    extends TransformStream<CodecDecoder.Input, CodecDecoder.Output>
+    implements CodecDecoder
+{
     constructor() {
         super({
             transform: (packet, controller) => {
