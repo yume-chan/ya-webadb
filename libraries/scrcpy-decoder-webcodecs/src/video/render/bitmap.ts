@@ -3,10 +3,11 @@ import { CanvasVideoFrameRenderer } from "./canvas.js";
 export class BitmapVideoFrameRenderer extends CanvasVideoFrameRenderer {
     #context: ImageBitmapRenderingContext;
 
-    // Can't find whether `ImageBitmapRenderingContext` allows `ImageBitmap`'s `width/height`
-    // to be different from `canvas`'s `width/height`, so don't support `options`
-    constructor(canvas?: HTMLCanvasElement | OffscreenCanvas) {
-        super(canvas);
+    constructor(
+        canvas?: HTMLCanvasElement | OffscreenCanvas,
+        options?: CanvasVideoFrameRenderer.Options,
+    ) {
+        super(canvas, options);
 
         this.#context = this.canvas.getContext("bitmaprenderer", {
             // Avoid alpha:false, which can be expensive
@@ -18,5 +19,6 @@ export class BitmapVideoFrameRenderer extends CanvasVideoFrameRenderer {
     async draw(frame: VideoFrame): Promise<void> {
         const bitmap = await createImageBitmap(frame);
         this.#context.transferFromImageBitmap(bitmap);
+        bitmap.close();
     }
 }

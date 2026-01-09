@@ -226,6 +226,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
                         // Don't count these frames as skipped rendering
                         if (frame.timestamp <= this.#skipFramesUntil) {
+                            frame.close();
                             return;
                         }
 

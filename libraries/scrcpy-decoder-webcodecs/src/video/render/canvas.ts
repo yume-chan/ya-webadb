@@ -26,6 +26,8 @@ export abstract class CanvasVideoFrameRenderer implements VideoFrameRenderer {
             }
 
             await this.draw(frame);
+            // Don't close `frame`, which is required when resizing
+            // `frame` will be closed when next frame arrives or the stream ends
         },
         close: () => this.dispose(),
         abort: () => this.dispose(),
@@ -91,6 +93,11 @@ export abstract class CanvasVideoFrameRenderer implements VideoFrameRenderer {
         return true;
     }
 
+    /**
+     * Draws the frame on `<canvas>`.
+     *
+     * Derived classes must not transfer or close the `frame`.
+     */
     abstract draw(frame: VideoFrame): Promise<void>;
 
     dispose(): undefined {
