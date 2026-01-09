@@ -9,7 +9,7 @@ import { InspectStream, TransformStream } from "@yume-chan/stream-extra";
 import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
 import type { CodecDecoder } from "./codec/type.js";
 import type { VideoFrameRenderer } from "./render/index.js";
-import { RendererController } from "./render/index.js";
+import { AutoRenderer, RendererController } from "./render/index.js";
 import { increasingNow } from "./time.js";
 import { VideoDecoderStream } from "./video-decoder-stream.js";
 
@@ -151,7 +151,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
      */
     constructor({
         codec,
-        renderer,
+        renderer = new AutoRenderer(),
         hardwareAcceleration = "no-preference",
         optimizeForLatency = true,
     }: WebCodecsVideoDecoder.Options) {
@@ -265,6 +265,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         this.#size.dispose();
         this.#pause.dispose();
         this.#renderController.dispose();
+        this.#renderer.dispose?.();
     }
 }
 
@@ -278,6 +279,6 @@ export namespace WebCodecsVideoDecoder {
          */
         codec: ScrcpyVideoCodecId;
 
-        renderer: VideoFrameRenderer;
+        renderer?: VideoFrameRenderer | undefined;
     }
 }
