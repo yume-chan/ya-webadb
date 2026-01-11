@@ -1,10 +1,13 @@
 import { concatUint8Arrays, TransformStream } from "@yume-chan/stream-extra";
 
-import type { CodecDecoder } from "./type.js";
+import type { CodecTransformStream } from "./type.js";
 
-export abstract class H26xDecoder
-    extends TransformStream<CodecDecoder.Input, CodecDecoder.Output>
-    implements CodecDecoder
+export abstract class H26xTransfromStream
+    extends TransformStream<
+        CodecTransformStream.Input,
+        CodecTransformStream.Output
+    >
+    implements CodecTransformStream
 {
     #config: Uint8Array | undefined;
 
@@ -41,5 +44,5 @@ export abstract class H26xDecoder
         });
     }
 
-    abstract configure(data: Uint8Array): CodecDecoder.Config;
+    abstract configure(data: Uint8Array): CodecTransformStream.Config;
 }

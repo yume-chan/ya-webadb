@@ -4,12 +4,12 @@ import type {
 } from "@yume-chan/scrcpy";
 import type { TransformStream } from "@yume-chan/stream-extra";
 
-export type CodecDecoder = TransformStream<
-    CodecDecoder.Input,
-    CodecDecoder.Output
+export type CodecTransformStream = TransformStream<
+    CodecTransformStream.Input,
+    CodecTransformStream.Output
 >;
 
-export namespace CodecDecoder {
+export namespace CodecTransformStream {
     export type Input =
         | ScrcpyMediaStreamConfigurationPacket
         | (ScrcpyMediaStreamDataPacket & { timestamp: number });
@@ -22,6 +22,6 @@ export namespace CodecDecoder {
     export type Output = Config | EncodedVideoChunk;
 }
 
-export interface CodecDecoderConstructor {
-    new (): CodecDecoder;
+export interface CodecTransformStreamConstructor {
+    new (): CodecTransformStream;
 }

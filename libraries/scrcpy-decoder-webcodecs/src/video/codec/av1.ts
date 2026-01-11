@@ -1,11 +1,14 @@
 import { Av1 } from "@yume-chan/media-codec";
 import { TransformStream } from "@yume-chan/stream-extra";
 
-import type { CodecDecoder } from "./type.js";
+import type { CodecTransformStream } from "./type.js";
 
-export class Av1Codec
-    extends TransformStream<CodecDecoder.Input, CodecDecoder.Output>
-    implements CodecDecoder
+export class Av1TransformStream
+    extends TransformStream<
+        CodecTransformStream.Input,
+        CodecTransformStream.Output
+    >
+    implements CodecTransformStream
 {
     constructor() {
         super({

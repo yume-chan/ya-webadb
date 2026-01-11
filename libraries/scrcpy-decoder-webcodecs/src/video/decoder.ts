@@ -4,14 +4,17 @@ import type {
     ScrcpyVideoDecoderCapability,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
 import { noop, PauseController } from "@yume-chan/scrcpy-decoder-tinyh264";
-import { InspectStream, TransformStream } from "@yume-chan/stream-extra";
+import { InspectStream } from "@yume-chan/stream-extra";
 
-import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
-import type { CodecDecoder } from "./codec/type.js";
+import {
+    Av1TransformStream,
+    H264TransformStream,
+    H265TransformStream,
+} from "./codec/index.js";
+import type { CodecTransformStream } from "./codec/type.js";
 import type { VideoFrameRenderer } from "./render/index.js";
 import { AutoRenderer, RendererController } from "./render/index.js";
-import { increasingNow } from "./time.js";
-import { VideoDecoderStream } from "./video-decoder-stream.js";
+import { TimestampTransforms, VideoDecoderStream } from "./utils/index.js";
 
 export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     static get isSupported() {
@@ -48,11 +51,6 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     get writable() {
         return this.#pause.writable;
     }
-
-    /**
-     * Timestamp of the last frame to be skipped by pause controller.
-     */
-    #skipFramesUntil = 0;
 
     // #endregion pause controller
 
@@ -101,17 +99,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
     // #endregion raw decoder
 
-    // This is not in `VideoDecoderStream` because
-    // this time includes all pre-processing time,
-    // and requires `EncodedVideoCHunk.timestamp` to contain
-    // local time of when the frame is received,
-    // which is set by this class.
-    #totalDecodeTime = 0;
+    #timestampTransforms = new TimestampTransforms();
     /**
      * Gets the total time spent processing and decoding frames in milliseconds.
      */
     get totalDecodeTime() {
-        return this.#totalDecodeTime;
+        return this.#timestampTransforms.totalDecodeTime;
     }
 
     // #region renderer
@@ -158,16 +151,16 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         this.#codec = codec;
         this.#renderer = renderer;
 
-        let codecDecoder: CodecDecoder;
+        let codecTransform: CodecTransformStream;
         switch (this.#codec) {
             case ScrcpyVideoCodecId.H264:
-                codecDecoder = new H264Decoder();
+                codecTransform = new H264TransformStream();
                 break;
             case ScrcpyVideoCodecId.H265:
-                codecDecoder = new H265Decoder();
+                codecTransform = new H265TransformStream();
                 break;
             case ScrcpyVideoCodecId.AV1:
-                codecDecoder = new Av1Codec();
+                codecTransform = new Av1TransformStream();
                 break;
             default:
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
@@ -176,33 +169,9 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
         void this.#pause.readable
             // Add timestamp
-            .pipeThrough(
-                new TransformStream<PauseController.Output, CodecDecoder.Input>(
-                    {
-                        transform: (packet, controller) => {
-                            if (packet.type === "configuration") {
-                                controller.enqueue(packet);
-                                return;
-                            }
-
-                            // Use `timestamp` to convey `skipRendering` to later step
-                            // and track total decoding time
-                            const timestamp = increasingNow();
-
-                            if (packet.skipRendering) {
-                                this.#skipFramesUntil = timestamp;
-                            }
-
-                            controller.enqueue({
-                                ...packet,
-                                timestamp,
-                            });
-                        },
-                    },
-                ),
-            )
+            .pipeThrough(this.#timestampTransforms.addTimestamp)
             // Convert Scrcpy packets to `VideoDecoder` config/chunk
-            .pipeThrough(codecDecoder)
+            .pipeThrough(codecTransform)
             // Insert extra `VideoDecoder` config and intercept size changes
             .pipeThrough(
                 new InspectStream((chunk): undefined => {
@@ -214,30 +183,15 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
                     }
                 }),
             )
-            // Convert `VideoDecoder` config/chunk to `VideoFrame`s
+            // Decode `VideoDecoder` config/chunk to `VideoFrame`s
             .pipeThrough(this.#rawDecoder)
             // Track decoding time and filter skipped frames
-            .pipeThrough(
-                new TransformStream<VideoFrame, VideoFrame>({
-                    transform: (frame, controller) => {
-                        // `frame.timestamp` is the same `EncodedVideoChunk.timestamp` set above
-                        this.#totalDecodeTime +=
-                            performance.now() - frame.timestamp;
-
-                        // Don't count these frames as skipped rendering
-                        if (frame.timestamp <= this.#skipFramesUntil) {
-                            frame.close();
-                            return;
-                        }
-
-                        controller.enqueue(frame);
-                    },
-                }),
-            )
+            .pipeThrough(this.#timestampTransforms.consumeTimestamp)
             // Skip frames if renderer can't keep up
             .pipeThrough(this.#renderController)
             // Render
             .pipeTo(renderer.writable)
+            // Errors will be handled by source stream
             .catch(noop);
     }
 
