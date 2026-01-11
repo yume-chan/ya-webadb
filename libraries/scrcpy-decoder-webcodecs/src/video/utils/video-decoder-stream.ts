@@ -92,10 +92,12 @@ export class VideoDecoderStream extends TransformStream<
                 // Wait for all pending frames to be decoded when finishes normally
                 await this.#decoder.flush();
                 this.#decoder.close();
+                this.#onDequeue.dispose();
             },
             cancel: () => {
                 // Immediately close the decoder on cancel/error
                 this.#decoder.close();
+                this.#onDequeue.dispose();
             },
         });
 

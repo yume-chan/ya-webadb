@@ -68,7 +68,7 @@ export class TimestampTransforms {
 
     // This is not in `VideoDecoderStream` because
     // this time includes all pre-processing time,
-    // and requires `EncodedVideoCHunk.timestamp` to contain
+    // and requires `EncodedVideoChunk.timestamp` to contain
     // local time of when the frame is received,
     // which is set by this class.
     #totalDecodeTime = 0;

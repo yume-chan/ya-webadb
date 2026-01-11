@@ -2,7 +2,7 @@ import { concatUint8Arrays, TransformStream } from "@yume-chan/stream-extra";
 
 import type { CodecTransformStream } from "./type.js";
 
-export abstract class H26xTransfromStream
+export abstract class H26xTransformStream
     extends TransformStream<
         CodecTransformStream.Input,
         CodecTransformStream.Output
