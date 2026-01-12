@@ -5,6 +5,18 @@ export class VideoDecoderStream extends TransformStream<
     VideoDecoderConfig | EncodedVideoChunk,
     VideoFrame
 > {
+    /**
+     * The native decoder.
+     *
+     * `transform`, `flush` and `cancel` callbacks don't need to
+     * check `#decoder.state` for "closed".
+     *
+     * Decoder can enter "closed" state by either:
+     *   - Encounter a decoding error: this triggers `controller.error`,
+     *     so no more transformer callbacks will be called.
+     *   - Calling `close` manually: this only happens in `flush` and `cancel`,
+     *     so no more transformer callbacks will be called.
+     */
     #decoder!: VideoDecoder;
 
     /**
@@ -51,11 +63,12 @@ export class VideoDecoderStream extends TransformStream<
                 decoder = new VideoDecoder({
                     output: (frame) => {
                         this.#framesDecoded += 1;
-
                         controller.enqueue(frame);
                     },
                     error: (error) => {
+                        // Propagate decoder error to stream.
                         controller.error(error);
+                        this.#onDequeue.dispose();
                     },
                 });
                 decoder.addEventListener("dequeue", () =>
@@ -75,27 +88,33 @@ export class VideoDecoderStream extends TransformStream<
 
                 if (chunk.type === "key" && this.#decoder.decodeQueueSize) {
                     // If the device is too slow to decode all frames,
-                    // Discard queued but not decoded frames when next keyframe arrives.
+                    // discard queued frames when next keyframe arrives.
                     // (decoding can only start from keyframes)
                     // This limits the maximum latency to 1 keyframe interval
                     // (60 frames by default).
                     this.#framesSkipped += this.#decoder.decodeQueueSize;
                     this.#decoder.reset();
 
-                    // Reconfigure the decoder so it can be used again
+                    // `reset` also resets the decoder configuration
+                    // so we need to re-configure it again.
                     this.#decoder.configure(this.#config!);
                 }
 
                 this.#decoder.decode(chunk);
             },
             flush: async () => {
-                // Wait for all pending frames to be decoded when finishes normally
-                await this.#decoder.flush();
+                // `flush` can only be called when `state` is "configured".
+                if (this.#decoder.state === "configured") {
+                    // Wait for all queued frames to be decoded when
+                    // `writable` side ends without exception.
+                    // The `readable` side will wait for `flush` to complete before closing.
+                    await this.#decoder.flush();
+                }
                 this.#decoder.close();
                 this.#onDequeue.dispose();
             },
             cancel: () => {
-                // Immediately close the decoder on cancel/error
+                // Immediately close the decoder on stream cancel/error
                 this.#decoder.close();
                 this.#onDequeue.dispose();
             },
