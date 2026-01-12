@@ -1,6 +1,8 @@
 import { Av1 } from "@yume-chan/media-codec";
 import { TransformStream } from "@yume-chan/stream-extra";
 
+import { convertFrameType } from "../utils/frame-type.js";
+
 import type { CodecTransformStream } from "./type.js";
 
 export class Av1TransformStream
@@ -32,14 +34,11 @@ export class Av1TransformStream
                     });
                 }
 
-                controller.enqueue(
-                    new EncodedVideoChunk({
-                        // Treat `undefined` as `key`, otherwise it won't decode.
-                        type: packet.keyframe === false ? "delta" : "key",
-                        timestamp: packet.timestamp,
-                        data: packet.data,
-                    }),
-                );
+                controller.enqueue({
+                    type: convertFrameType(packet.keyframe),
+                    timestamp: packet.timestamp,
+                    data: packet.data,
+                });
             },
         });
     }

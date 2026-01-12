@@ -1,8 +1,10 @@
 import { EventEmitter } from "@yume-chan/event";
-import { TransformStream } from "@yume-chan/stream-extra";
+import { concatBuffers, TransformStream } from "@yume-chan/stream-extra";
+
+import type { CodecTransformStream } from "../codec/type.js";
 
 export class VideoDecoderStream extends TransformStream<
-    VideoDecoderConfig | EncodedVideoChunk,
+    CodecTransformStream.Config | CodecTransformStream.VideoChunk,
     VideoFrame
 > {
     /**
@@ -50,10 +52,20 @@ export class VideoDecoderStream extends TransformStream<
         return this.#framesSkipped;
     }
 
+    #decoderResetCount = 0;
+    /**
+     * Gets the number of times the decoder has been reset to catch up new keyframes.
+     */
+    get decoderResetCount() {
+        return this.#decoderResetCount;
+    }
+
     /**
      * Saved decoder configuration for use when resetting the native decoder.
      */
-    #config?: VideoDecoderConfig;
+    #config?: CodecTransformStream.Config;
+
+    #configured = false;
 
     constructor() {
         let decoder!: VideoDecoder;
@@ -77,29 +89,11 @@ export class VideoDecoderStream extends TransformStream<
             transform: (chunk) => {
                 if ("codec" in chunk) {
                     this.#config = chunk;
-                    this.#decoder.configure(chunk);
+                    this.#configured = false;
                     return;
                 }
 
-                if (this.#decoder.state === "unconfigured") {
-                    throw new Error("Decoder not configured");
-                }
-
-                if (chunk.type === "key" && this.#decoder.decodeQueueSize) {
-                    // If the device is too slow to decode all frames,
-                    // discard queued frames when next keyframe arrives.
-                    // (decoding can only start from keyframes)
-                    // This limits the maximum latency to 1 keyframe interval
-                    // (60 frames by default).
-                    this.#framesSkipped += this.#decoder.decodeQueueSize;
-                    this.#decoder.reset();
-
-                    // `reset` also resets the decoder configuration
-                    // so we need to re-configure it again.
-                    this.#decoder.configure(this.#config!);
-                }
-
-                this.#decoder.decode(chunk);
+                this.#handleVideoChunk(chunk);
             },
             flush: async () => {
                 // `flush` can only be called when `state` is "configured".
@@ -119,6 +113,91 @@ export class VideoDecoderStream extends TransformStream<
 
         this.#decoder = decoder;
         this.#decoder.addEventListener("dequeue", this.#handleDequeue);
+    }
+
+    #handleVideoChunk(chunk: CodecTransformStream.VideoChunk) {
+        if (!this.#config) {
+            throw new Error("Decoder not configured");
+        }
+
+        if (chunk.type === "key") {
+            if (this.#decoder.decodeQueueSize) {
+                // If the device is too slow to decode all frames,
+                // discard queued frames when next keyframe arrives.
+                // (decoding can only start from keyframes)
+                // This limits the maximum latency to 1 keyframe interval
+                // (60 frames by default).
+                this.#framesSkipped += this.#decoder.decodeQueueSize;
+                this.#decoderResetCount += 1;
+                this.#decoder.reset();
+
+                // `reset` also resets the decoder configuration
+                // so we need to re-configure it again.
+                this.#configureAndDecodeFirstKeyFrame(this.#config, chunk);
+                return;
+            }
+
+            if (!this.#configured) {
+                this.#configureAndDecodeFirstKeyFrame(this.#config, chunk);
+                return;
+            }
+
+            this.#decoder.decode(
+                // `type` has been checked to be "key"
+                new EncodedVideoChunk(chunk as EncodedVideoChunkInit),
+            );
+            return;
+        }
+
+        if (!this.#configured) {
+            if (chunk.type === undefined) {
+                // Infer the first frame after configuration as keyframe
+                // (`VideoDecoder` will throw error if it's not)
+                this.#configureAndDecodeFirstKeyFrame(this.#config, chunk);
+                return;
+            }
+
+            throw new Error("Expect a keyframe but got a delta frame");
+        }
+
+        this.#decoder.decode(
+            new EncodedAudioChunk({
+                // Treat `undefined` as "key" otherwise it won't decode
+                type: chunk.type ?? "key",
+                timestamp: chunk.timestamp,
+                duration: chunk.duration!,
+                data: chunk.data,
+            }),
+        );
+    }
+
+    #configureAndDecodeFirstKeyFrame(
+        config: CodecTransformStream.Config,
+        chunk: CodecTransformStream.VideoChunk,
+    ) {
+        this.#decoder.configure(config);
+        this.#configured = true;
+
+        if (config.raw) {
+            this.#decoder.decode(
+                new EncodedVideoChunk({
+                    type: "key",
+                    timestamp: chunk.timestamp,
+                    duration: chunk.duration!,
+                    data: concatBuffers([config.raw, chunk.data]),
+                }),
+            );
+            return;
+        }
+
+        this.#decoder.decode(
+            new EncodedAudioChunk({
+                type: "key",
+                timestamp: chunk.timestamp,
+                duration: chunk.duration!,
+                data: chunk.data,
+            }),
+        );
     }
 
     #handleDequeue = () => {

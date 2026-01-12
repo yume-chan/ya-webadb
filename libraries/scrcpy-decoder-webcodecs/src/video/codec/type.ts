@@ -9,6 +9,13 @@ export type CodecTransformStream = TransformStream<
     CodecTransformStream.Output
 >;
 
+type PartialPlusUndefined<T> = {
+    [P in keyof T]?: T[P] | undefined;
+};
+
+type Optional<T extends object, Keys extends keyof T> = Omit<T, Keys> &
+    PartialPlusUndefined<Pick<T, Keys>>;
+
 export namespace CodecTransformStream {
     export type Input =
         | ScrcpyMediaStreamConfigurationPacket
@@ -17,9 +24,19 @@ export namespace CodecTransformStream {
     export type Config = VideoDecoderConfig & {
         codedWidth: number;
         codedHeight: number;
+        /**
+         * Sets an optional raw buffer what will be prepended with the first key frame for decoding.
+         *
+         * Some codecs (e.g. H.264 and H.265 in Annex B format)
+         * send configuration in separate packet,
+         * but the configuration also needs to be feed into the decoder.
+         */
+        raw?: AllowSharedBufferSource;
     };
 
-    export type Output = Config | EncodedVideoChunk;
+    export type VideoChunk = Optional<EncodedVideoChunkInit, "type">;
+
+    export type Output = Config | VideoChunk;
 }
 
 export interface CodecTransformStreamConstructor {
