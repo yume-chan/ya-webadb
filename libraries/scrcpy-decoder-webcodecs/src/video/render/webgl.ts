@@ -196,7 +196,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
     };
 
     override draw(frame: VideoFrame): Promise<void> {
-        // Will be clsoed by `CanvasVideoFrameRenderer`
+        // Will be closed by `CanvasVideoFrameRenderer`
         this.#lastFrame = frame;
 
         const gl = this.#context;
