@@ -6,9 +6,11 @@ import { decimalTwoDigits } from "./utils.js";
 
 export class Av1Codec implements CodecDecoder {
     #decoder: VideoDecoder;
-    #parsedConfig: VideoDecoderConfig | undefined;
     #updateSize: (width: number, height: number) => void;
     #options: CodecDecoderOptions | undefined;
+
+    #config: VideoDecoderConfig | undefined;
+    #configured = false;
 
     constructor(
         decoder: VideoDecoder,
@@ -81,12 +83,13 @@ export class Av1Codec implements CodecDecoder {
             decimalTwoDigits(matrixCoefficients),
             colorRange ? "1" : "0",
         ].join(".");
-        this.#parsedConfig = {
+        this.#config = {
             codec,
             hardwareAcceleration:
                 this.#options?.hardwareAcceleration ?? "no-preference",
             optimizeForLatency: true,
         };
+        this.#configured = false;
     }
 
     decode(packet: ScrcpyMediaStreamPacket): void {
@@ -96,19 +99,33 @@ export class Av1Codec implements CodecDecoder {
 
         this.#parseConfig(packet.data);
 
+        if (!this.#config) {
+            throw new Error("Decoder not configured");
+        }
+
         if (packet.keyframe) {
             if (this.#decoder.decodeQueueSize) {
+                // If the device is too slow to decode all frames,
+                // discard queued frames when next keyframe arrives.
+                // (can only do this for keyframes because decoding must start from a keyframe)
+                // This limits the maximum latency to 1 keyframe interval
+                // (60 frames by default).
                 this.#decoder.reset();
-                this.#decoder.configure(this.#parsedConfig!);
-            } else if (this.#decoder.state === "unconfigured") {
-                this.#decoder.configure(this.#parsedConfig!);
+
+                // `reset` also resets the decoder configuration
+                // so we need to re-configure it again.
+                this.#decoder.configure(this.#config);
+                this.#configured = true;
+            } else if (!this.#configured) {
+                this.#decoder.configure(this.#config);
+                this.#configured = true;
             }
         }
 
         this.#decoder.decode(
             new EncodedVideoChunk({
-                // Treat `undefined` as `key`, otherwise it won't decode.
-                type: packet.keyframe === false ? "delta" : "key",
+                // AV1 requires Scrcpy 2.0 where `keyframe` flag must be set
+                type: packet.keyframe! ? "key" : "delta",
                 timestamp: 0,
                 data: packet.data,
             }),
