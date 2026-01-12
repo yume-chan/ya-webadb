@@ -161,7 +161,7 @@ export class VideoDecoderStream extends TransformStream<
         }
 
         this.#decoder.decode(
-            new EncodedAudioChunk({
+            new EncodedVideoChunk({
                 // Treat `undefined` as "key" otherwise it won't decode
                 type: chunk.type ?? "key",
                 timestamp: chunk.timestamp,
@@ -191,7 +191,7 @@ export class VideoDecoderStream extends TransformStream<
         }
 
         this.#decoder.decode(
-            new EncodedAudioChunk({
+            new EncodedVideoChunk({
                 type: "key",
                 timestamp: chunk.timestamp,
                 duration: chunk.duration!,
