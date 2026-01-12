@@ -60,6 +60,8 @@ export class VideoDecoderStream extends TransformStream<
 
         super({
             start: (controller) => {
+                // WARN: can't use `this` here
+
                 decoder = new VideoDecoder({
                     output: (frame) => {
                         this.#framesDecoded += 1;
@@ -68,12 +70,9 @@ export class VideoDecoderStream extends TransformStream<
                     error: (error) => {
                         // Propagate decoder error to stream.
                         controller.error(error);
-                        this.#onDequeue.dispose();
+                        this.#dispose();
                     },
                 });
-                decoder.addEventListener("dequeue", () =>
-                    this.#onDequeue.fire(undefined),
-                );
             },
             transform: (chunk) => {
                 if ("codec" in chunk) {
@@ -110,16 +109,28 @@ export class VideoDecoderStream extends TransformStream<
                     // The `readable` side will wait for `flush` to complete before closing.
                     await this.#decoder.flush();
                 }
-                this.#decoder.close();
-                this.#onDequeue.dispose();
+                this.#dispose();
             },
             cancel: () => {
                 // Immediately close the decoder on stream cancel/error
-                this.#decoder.close();
-                this.#onDequeue.dispose();
+                this.#dispose();
             },
         });
 
         this.#decoder = decoder;
+        this.#decoder.addEventListener("dequeue", this.#handleDequeue);
+    }
+
+    #handleDequeue = () => {
+        this.#onDequeue.fire(undefined);
+    };
+
+    #dispose() {
+        this.#decoder.removeEventListener("dequeue", this.#handleDequeue);
+        this.#onDequeue.dispose();
+
+        if (this.#decoder.state !== "closed") {
+            this.#decoder.close();
+        }
     }
 }

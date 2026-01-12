@@ -59,7 +59,7 @@ function createProgram(
     }
 }
 
-export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
+export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideoFrameRenderer.Options> {
     static VertexShaderSource = `
         attribute vec2 xy;
 
@@ -93,7 +93,9 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
     }
 
     #context: WebGLRenderingContext;
-    #program: WebGLProgram;
+    #program!: WebGLProgram;
+
+    #lastFrame?: VideoFrame;
 
     /**
      * Create a new WebGL frame renderer.
@@ -117,9 +119,9 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
             // Disallow software rendering.
             // `ImageBitmapRenderingContext` is faster than software-based WebGL.
             failIfMajorPerformanceCaveat: true,
-            preserveDrawingBuffer: !!options?.enableCapture,
+            preserveDrawingBuffer: !!this.options?.enableCapture,
             // Enable desynchronized mode when not capturing to reduce latency.
-            desynchronized: !options?.enableCapture,
+            desynchronized: !this.options?.enableCapture,
             antialias: false,
             depth: false,
             premultipliedAlpha: true,
@@ -129,6 +131,21 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
             throw new Error("WebGL not supported, check `isSupported` first");
         }
         this.#context = gl;
+
+        this.#initialize();
+
+        this.canvas.addEventListener(
+            "webglcontextlost",
+            this.#handleContextLost,
+        );
+        this.canvas.addEventListener(
+            "webglcontextrestored",
+            this.#handleContextRestored,
+        );
+    }
+
+    #initialize() {
+        const gl = this.#context;
 
         this.#program = createProgram(
             gl,
@@ -166,8 +183,27 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
 
+    #handleContextLost = (e: Event) => {
+        // Notify WebGL we want to handle context restoration
+        e.preventDefault();
+    };
+
+    #handleContextRestored = () => {
+        this.#initialize();
+        if (this.#lastFrame) {
+            void this.draw(this.#lastFrame);
+        }
+    };
+
     override draw(frame: VideoFrame): Promise<void> {
+        // Will be clsoed by `CanvasVideoFrameRenderer`
+        this.#lastFrame = frame;
+
         const gl = this.#context;
+        if (gl.isContextLost()) {
+            return Resolved;
+        }
+
         gl.texImage2D(
             gl.TEXTURE_2D,
             0,
@@ -192,6 +228,15 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer {
 
     override dispose(): undefined {
         this.#context.deleteProgram(this.#program);
+
+        this.canvas.removeEventListener(
+            "webglcontextlost",
+            this.#handleContextLost,
+        );
+        this.canvas.removeEventListener(
+            "webglcontextrestored",
+            this.#handleContextRestored,
+        );
 
         // Lose contexts eagerly
         // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#lose_contexts_eagerly

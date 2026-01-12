@@ -3,7 +3,7 @@ import type { CanvasVideoFrameRenderer } from "./canvas.js";
 import type { VideoFrameRenderer } from "./type.js";
 import { WebGLVideoFrameRenderer } from "./webgl.js";
 
-export class AutoRenderer implements VideoFrameRenderer {
+export class AutoCanvasRenderer implements VideoFrameRenderer {
     #inner: CanvasVideoFrameRenderer;
 
     get canvas() {

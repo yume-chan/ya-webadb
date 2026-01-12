@@ -3,23 +3,29 @@ import { WritableStream } from "@yume-chan/stream-extra";
 
 import type { VideoFrameRenderer } from "./type.js";
 
-export abstract class CanvasVideoFrameRenderer implements VideoFrameRenderer {
+export abstract class CanvasVideoFrameRenderer<
+    TOptions extends CanvasVideoFrameRenderer.Options =
+        CanvasVideoFrameRenderer.Options,
+> implements VideoFrameRenderer {
     #canvas: HTMLCanvasElement | OffscreenCanvas;
     get canvas() {
         return this.#canvas;
     }
 
-    #options: CanvasVideoFrameRenderer.Options | undefined;
+    #options: TOptions | undefined;
+    get options(): Readonly<TOptions> | undefined {
+        return this.#options;
+    }
 
     #resizeObserver: ResizeObserver | undefined;
 
     // Save the frame for redraw on resize
-    #frame: VideoFrame | undefined;
+    #lastFrame: VideoFrame | undefined;
 
     #writable = new WritableStream<VideoFrame>({
         write: async (frame) => {
-            this.#frame?.close();
-            this.#frame = frame;
+            this.#lastFrame?.close();
+            this.#lastFrame = frame;
 
             if (!this.#options?.useDevicePixels) {
                 this.#updateSize(frame.codedWidth, frame.codedHeight);
@@ -38,7 +44,7 @@ export abstract class CanvasVideoFrameRenderer implements VideoFrameRenderer {
 
     constructor(
         canvas?: HTMLCanvasElement | OffscreenCanvas,
-        options?: CanvasVideoFrameRenderer.Options,
+        options?: TOptions,
     ) {
         if (canvas) {
             this.#canvas = canvas;
@@ -70,8 +76,8 @@ export abstract class CanvasVideoFrameRenderer implements VideoFrameRenderer {
                     height = Math.round(size.blockSize * devicePixelRatio);
                 }
 
-                if (this.#updateSize(width, height) && this.#frame) {
-                    void this.draw(this.#frame);
+                if (this.#updateSize(width, height) && this.#lastFrame) {
+                    void this.draw(this.#lastFrame);
                 }
             });
             this.#resizeObserver.observe(canvas);
@@ -79,9 +85,9 @@ export abstract class CanvasVideoFrameRenderer implements VideoFrameRenderer {
     }
 
     #updateSize(width: number, height: number) {
-        if (this.#frame) {
-            width = Math.min(width, this.#frame.codedWidth);
-            height = Math.min(height, this.#frame.codedHeight);
+        if (this.#lastFrame) {
+            width = Math.min(width, this.#lastFrame.codedWidth);
+            height = Math.min(height, this.#lastFrame.codedHeight);
         }
 
         if (this.#canvas.width === width && this.#canvas.height === height) {
@@ -105,7 +111,7 @@ export abstract class CanvasVideoFrameRenderer implements VideoFrameRenderer {
         this.#canvas.height = 0;
 
         this.#resizeObserver?.disconnect();
-        this.#frame?.close();
+        this.#lastFrame?.close();
     }
 }
 

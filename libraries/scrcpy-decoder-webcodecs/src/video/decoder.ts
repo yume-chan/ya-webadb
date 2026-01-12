@@ -13,7 +13,7 @@ import {
 } from "./codec/index.js";
 import type { CodecTransformStream } from "./codec/type.js";
 import type { VideoFrameRenderer } from "./render/index.js";
-import { AutoRenderer, RendererController } from "./render/index.js";
+import { AutoCanvasRenderer, RendererController } from "./render/index.js";
 import { TimestampTransforms, VideoDecoderStream } from "./utils/index.js";
 
 export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
@@ -144,7 +144,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
      */
     constructor({
         codec,
-        renderer = new AutoRenderer(),
+        renderer = new AutoCanvasRenderer(),
         hardwareAcceleration = "no-preference",
         optimizeForLatency = true,
     }: WebCodecsVideoDecoder.Options) {
