@@ -8,8 +8,7 @@ import {
 } from "@yume-chan/scrcpy-decoder-tinyh264";
 
 import { CanvasVideoFrameRenderer } from "./canvas.js";
-
-const Resolved = Promise.resolve();
+import { RedrawController } from "./redraw.js";
 
 function createShader(gl: WebGLRenderingContext, type: number, source: string) {
     const shader = gl.createShader(type)!;
@@ -60,29 +59,72 @@ function createProgram(
 }
 
 export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideoFrameRenderer.Options> {
-    static VertexShaderSource = `
+    static VertexShader = `
         attribute vec2 xy;
 
         varying highp vec2 uv;
 
         void main(void) {
             gl_Position = vec4(xy, 0.0, 1.0);
+
             // Map vertex coordinates (-1 to +1) to UV coordinates (0 to 1).
+            uv = xy * 0.5 + 0.5;
             // UV coordinates are Y-flipped relative to vertex coordinates.
-            uv = vec2((1.0 + xy.x) / 2.0, (1.0 - xy.y) / 2.0);
+            uv.y = 1.0 - uv.y;
         }
 `;
 
-    static FragmentShaderSource = `
+    static FragmentShader = `
         precision mediump float;
 
-        varying highp vec2 uv;
-        uniform sampler2D texture;
+        uniform sampler2D source;
+        uniform vec2 texelSize;
+        uniform float zoom;
 
-        void main(void) {
-            gl_FragColor = texture2D(texture, uv);
+        varying vec2 uv;
+
+        vec4 tent4(vec2 uv) {
+            vec2 dx = vec2(texelSize.x, 0.0);
+            vec2 dy = vec2(0.0, texelSize.y);
+
+            vec4 c0 = texture2D(source, uv);
+            vec4 c1 = texture2D(source, uv + dx);
+            vec4 c2 = texture2D(source, uv + dy);
+            vec4 c3 = texture2D(source, uv + dx + dy);
+
+            return 0.25 * (c0 + c1 + c2 + c3);
+        }
+
+        vec4 gaussian9(vec2 uv) {
+            vec2 dx = vec2(texelSize.x, 0.0);
+            vec2 dy = vec2(0.0, texelSize.y);
+
+            vec4 sum = vec4(0.0);
+            sum += texture2D(source, uv) * 0.227027;
+            sum += texture2D(source, uv + dx) * 0.1945946;
+            sum += texture2D(source, uv - dx) * 0.1945946;
+            sum += texture2D(source, uv + dy) * 0.1945946;
+            sum += texture2D(source, uv - dy) * 0.1945946;
+
+            return sum;
+        }
+
+        void main() {
+            if (zoom < 0.6) {
+                gl_FragColor = tent4(uv);
+            } else if (zoom < 0.9) {
+                gl_FragColor = gaussian9(uv);
+            } else {
+                // Near 1:1, just sample directly
+                gl_FragColor = texture2D(uSource, uv);
+            }
         }
 `;
+
+    /**
+     * A single oversized triangle that covers the entire canvas.
+     */
+    static Vertices = new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]);
 
     static get isSupported() {
         return glIsSupported({
@@ -95,7 +137,39 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
     #context: WebGLRenderingContext;
     #program!: WebGLProgram;
 
-    #lastFrame?: VideoFrame;
+    #controller = new RedrawController((frame) => {
+        const gl = this.#context;
+        if (gl.isContextLost()) {
+            return;
+        }
+
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            frame,
+        );
+
+        const texelSizeLocation = gl.getUniformLocation(
+            this.#program,
+            "texelSize",
+        );
+        gl.uniform2f(
+            texelSizeLocation,
+            1.0 / frame.codedWidth,
+            1.0 / frame.codedHeight,
+        );
+
+        const zoomLocation = gl.getUniformLocation(this.#program, "zoom");
+        gl.uniform1f(zoomLocation, this.canvas.width / frame.codedWidth);
+
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+        gl.flush();
+    });
 
     /**
      * Create a new WebGL frame renderer.
@@ -149,8 +223,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
 
         this.#program = createProgram(
             gl,
-            WebGLVideoFrameRenderer.VertexShaderSource,
-            WebGLVideoFrameRenderer.FragmentShaderSource,
+            WebGLVideoFrameRenderer.VertexShader,
+            WebGLVideoFrameRenderer.FragmentShader,
         );
         gl.useProgram(this.#program);
 
@@ -159,7 +233,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
         gl.bufferData(
             gl.ARRAY_BUFFER,
-            new Float32Array([-1.0, -1.0, -1.0, +1.0, +1.0, +1.0, +1.0, -1.0]),
+            WebGLVideoFrameRenderer.Vertices,
             gl.STATIC_DRAW,
         );
 
@@ -171,14 +245,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(
-            gl.TEXTURE_2D,
-            gl.TEXTURE_MIN_FILTER,
-            // WebGL 1 doesn't support mipmaps for non-power-of-two textures
-            gl instanceof WebGL2RenderingContext
-                ? gl.NEAREST_MIPMAP_LINEAR
-                : gl.NEAREST,
-        );
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
@@ -190,40 +257,11 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
 
     #handleContextRestored = () => {
         this.#initialize();
-        if (this.#lastFrame) {
-            void this.draw(this.#lastFrame);
-        }
+        this.#controller.redraw();
     };
 
-    override draw(frame: VideoFrame): Promise<void> {
-        // Will be closed by `CanvasVideoFrameRenderer`
-        this.#lastFrame = frame;
-
-        const gl = this.#context;
-        if (gl.isContextLost()) {
-            return Resolved;
-        }
-
-        gl.texImage2D(
-            gl.TEXTURE_2D,
-            0,
-            gl.RGBA,
-            gl.RGBA,
-            gl.UNSIGNED_BYTE,
-            frame,
-        );
-
-        // WebGL 1 doesn't support mipmaps for non-power-of-two textures
-        if (gl instanceof WebGL2RenderingContext) {
-            gl.generateMipmap(gl.TEXTURE_2D);
-        }
-
-        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-        gl.drawArrays(gl.TRIANGLE_FAN, 0, 4);
-
-        gl.flush();
-
-        return Resolved;
+    override draw(frame: VideoFrame) {
+        return this.#controller.draw(frame);
     }
 
     override dispose(): undefined {

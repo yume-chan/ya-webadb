@@ -63,6 +63,8 @@
         "versioncode",
         "webadb",
         "webcodecs",
+        "webglcontextlost",
+        "webglcontextrestored",
         "webm",
         "websockify",
         "webusb",

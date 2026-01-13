@@ -33,12 +33,10 @@ export abstract class H26xTransformStream
     #configure(data: Uint8Array): CodecTransformStream.Config {
         return {
             ...this.configure(data),
-            /**
-             * For H.264 and H.265, when the stream is in Annex B format
-             * (which Scrcpy uses, as Android MediaCodec produces),
-             * configuration data needs to be combined with the first frame data.
-             * https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
-             */
+            // For H.264 and H.265, when the stream is in Annex B format
+            // (which Scrcpy uses, as Android MediaCodec produces),
+            // configuration data needs to be combined with the first frame data.
+            // https://www.w3.org/TR/webcodecs-avc-codec-registration/#encodedvideochunk-type
             raw: data,
         };
     }

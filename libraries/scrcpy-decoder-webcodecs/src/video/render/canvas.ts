@@ -1,6 +1,8 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
 import { WritableStream } from "@yume-chan/stream-extra";
 
+import { RedrawController } from "./redraw.js";
 import type { VideoFrameRenderer } from "./type.js";
 
 export abstract class CanvasVideoFrameRenderer<
@@ -13,28 +15,25 @@ export abstract class CanvasVideoFrameRenderer<
     }
 
     #options: TOptions | undefined;
+    #canvasSize: CanvasVideoFrameRenderer.Options["canvasSize"];
     get options(): Readonly<TOptions> | undefined {
         return this.#options;
     }
 
     #resizeObserver: ResizeObserver | undefined;
+    #displayWidth = Infinity;
+    #displayHeight = Infinity;
 
-    // Save the frame for redraw on resize
-    #lastFrame: VideoFrame | undefined;
+    #controller = new RedrawController((frame) => {
+        if (this.#canvasSize !== "external") {
+            this.#updateSize(frame);
+        }
+
+        return this.draw(frame);
+    });
 
     #writable = new WritableStream<VideoFrame>({
-        write: async (frame) => {
-            this.#lastFrame?.close();
-            this.#lastFrame = frame;
-
-            if (!this.#options?.useDevicePixels) {
-                this.#updateSize(frame.codedWidth, frame.codedHeight);
-            }
-
-            await this.draw(frame);
-            // Don't close `frame`, which is required when resizing
-            // `frame` will be closed when next frame arrives or the stream ends
-        },
+        write: (frame) => this.#controller.draw(frame),
         close: () => this.dispose(),
         abort: () => this.dispose(),
     });
@@ -46,48 +45,48 @@ export abstract class CanvasVideoFrameRenderer<
         canvas?: HTMLCanvasElement | OffscreenCanvas,
         options?: TOptions,
     ) {
-        if (canvas) {
-            this.#canvas = canvas;
-        } else {
-            this.#canvas = createCanvas();
-        }
-
+        this.#canvas = canvas ?? createCanvas();
         this.#options = options;
+        this.#canvasSize = options?.canvasSize ?? "video";
 
-        if (options?.useDevicePixels) {
-            if (!(canvas instanceof HTMLCanvasElement)) {
+        if (this.#canvasSize === "display") {
+            if (
+                typeof HTMLCanvasElement === "undefined" ||
+                !(canvas instanceof HTMLCanvasElement)
+            ) {
                 throw new Error(
-                    "useDevicePixels is only supported for HTMLCanvasElement",
+                    "`canvasSize: display` is only supported for HTMLCanvasElement",
                 );
             }
 
             this.#resizeObserver = new ResizeObserver((entries) => {
                 const entry = entries[0]!;
 
-                let width: number;
-                let height: number;
                 if (entry.devicePixelContentBoxSize) {
                     const size = entry.devicePixelContentBoxSize[0]!;
-                    width = size.inlineSize;
-                    height = size.blockSize;
+                    this.#displayWidth = size.inlineSize;
+                    this.#displayHeight = size.blockSize;
                 } else {
                     const size = entry.contentBoxSize[0]!;
-                    width = Math.round(size.inlineSize * devicePixelRatio);
-                    height = Math.round(size.blockSize * devicePixelRatio);
+                    this.#displayWidth = Math.round(
+                        size.inlineSize * devicePixelRatio,
+                    );
+                    this.#displayHeight = Math.round(
+                        size.blockSize * devicePixelRatio,
+                    );
                 }
 
-                if (this.#updateSize(width, height) && this.#lastFrame) {
-                    void this.draw(this.#lastFrame);
-                }
+                this.#controller.redraw();
             });
             this.#resizeObserver.observe(canvas);
         }
     }
 
-    #updateSize(width: number, height: number) {
-        if (this.#lastFrame) {
-            width = Math.min(width, this.#lastFrame.codedWidth);
-            height = Math.min(height, this.#lastFrame.codedHeight);
+    #updateSize(frame: VideoFrame) {
+        let { codedWidth: width, codedHeight: height } = frame;
+        if (this.#canvasSize === "display") {
+            width = Math.min(width, this.#displayWidth);
+            height = Math.min(height, this.#displayHeight);
         }
 
         if (this.#canvas.width === width && this.#canvas.height === height) {
@@ -104,32 +103,33 @@ export abstract class CanvasVideoFrameRenderer<
      *
      * Derived classes must not transfer or close the `frame`.
      */
-    abstract draw(frame: VideoFrame): Promise<void>;
+    abstract draw(frame: VideoFrame): MaybePromiseLike<undefined>;
 
     dispose(): undefined {
-        this.#canvas.width = 0;
-        this.#canvas.height = 0;
+        if (this.#canvasSize !== "external") {
+            this.#canvas.width = 0;
+            this.#canvas.height = 0;
+        }
 
         this.#resizeObserver?.disconnect();
-        this.#lastFrame?.close();
+        this.#controller.dispose();
     }
 }
 
 export namespace CanvasVideoFrameRenderer {
     export interface Options {
         /**
-         * Whether to link the rendering resolution to `<canvas>`'s display size.
+         * Whether to update the canvas size (rendering resolution) automatically.
          *
-         * If the display size is smaller than video resolution,
-         * this will improve the rendering performance.
-         * Rendering resolution won't exceed the video resolution.
-         *
-         * Use `style.width/height` to set the display size
-         * (can be in any units such as `px`, `%`, `em`, etc.).
-         * The size must have correct aspect ratio.
-         *
-         * Only apply to HTMLCanvasElement
+         * * `"video"` (default): update the canvas size to match the video resolution
+         * * `"display"` (only for `HTMLCanvasElement`):
+         *    update the canvas size to match the display size.
+         *    The display size can be set using `canvas.style.width/height`,
+         *    and must be in correct aspect ratio.
+         * * `"external"`: use the canvas size as it is.
+         *    The size must be manually set using `canvas.width/height`,
+         *    and must be in correct aspect ratio.
          */
-        useDevicePixels?: boolean;
+        canvasSize?: "video" | "display" | "external";
     }
 }
