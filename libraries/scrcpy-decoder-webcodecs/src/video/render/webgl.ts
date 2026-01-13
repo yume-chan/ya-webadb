@@ -109,14 +109,55 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
             return sum;
         }
 
+        float mnWeight(float x) {
+            x = abs(x);
+            float x2 = x * x;
+            float x3 = x2 * x;
+
+            if (x < 1.0) {
+                return (1.0/6.0) * ((12.0 - 9.0 * (1.0/3.0) - 6.0 * (1.0/3.0)) * x3 +
+                                    (-18.0 + 12.0 * (1.0/3.0) + 6.0 * (1.0/3.0)) * x2 +
+                                    (6.0 - 2.0 * (1.0/3.0)));
+            } else if (x < 2.0) {
+                return (1.0/6.0) * ((- (1.0/3.0) - 6.0 * (1.0/3.0)) * x3 +
+                                    ((6.0 * (1.0/3.0) + 30.0 * (1.0/3.0)) * x2 +
+                                    (-12.0 * (1.0/3.0) - 48.0 * (1.0/3.0)) * x +
+                                    (8.0 * (1.0/3.0) + 24.0 * (1.0/3.0))));
+            }
+            return 0.0;
+        }
+
+        vec4 bicubicMN(vec2 uv, vec2 texelSize) {
+            vec2 texCoord = uv / texelSize;
+            vec2 base = floor(texCoord - 0.5);
+            vec2 f = texCoord - base - 0.5;
+
+            vec4 sum = vec4(0.0);
+            float total = 0.0;
+
+            for (int j = -1; j <= 2; j++) {
+                float wy = mnWeight(float(j) - f.y);
+                for (int i = -1; i <= 2; i++) {
+                    float wx = mnWeight(float(i) - f.x);
+                    float w = wx * wy;
+
+                    vec2 coord = (base + vec2(float(i), float(j)) + 0.5) * texelSize;
+                    sum += texture2D(source, coord) * w;
+                    total += w;
+                }
+            }
+            return sum / total;
+        }
+
         void main() {
-            if (zoom < 0.6) {
-                gl_FragColor = tent4(uv);
-            } else if (zoom < 0.9) {
-                gl_FragColor = gaussian9(uv);
-            } else {
-                // Near 1:1, just sample directly
+            if (zoom > 0.95) {
                 gl_FragColor = texture2D(source, uv);
+            }
+            else if (zoom > 0.5) {
+                gl_FragColor = bicubicMN(uv, texelSize);
+            }
+            else {
+                gl_FragColor = tent4(uv);
             }
         }
 `;

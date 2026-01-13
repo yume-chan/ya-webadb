@@ -52,7 +52,7 @@ export abstract class CanvasVideoFrameRenderer<
         if (this.#canvasSize === "display") {
             if (
                 typeof HTMLCanvasElement === "undefined" ||
-                !(canvas instanceof HTMLCanvasElement)
+                !(this.#canvas instanceof HTMLCanvasElement)
             ) {
                 throw new Error(
                     "`canvasSize: display` is only supported for HTMLCanvasElement",
@@ -78,7 +78,7 @@ export abstract class CanvasVideoFrameRenderer<
 
                 this.#controller.redraw();
             });
-            this.#resizeObserver.observe(canvas);
+            this.#resizeObserver.observe(this.#canvas);
         }
     }
 

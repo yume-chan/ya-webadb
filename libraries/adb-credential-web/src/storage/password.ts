@@ -1,5 +1,5 @@
 import type { MaybeError } from "@yume-chan/adb";
-import { encodeUtf8 } from "@yume-chan/adb";
+import { encodeUtf8, toLocalUint8Array } from "@yume-chan/adb";
 import type { MaybePromiseLike } from "@yume-chan/async";
 import {
     buffer,
@@ -81,7 +81,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
     }
 
     async save(
-        privateKey: Uint8Array<ArrayBuffer>,
+        privateKey: Uint8Array,
         name: string | undefined,
     ): Promise<undefined> {
         const password = await this.#requestPassword("save", name);
@@ -93,7 +93,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
         const encrypted = await crypto.subtle.encrypt(
             { name: "AES-GCM", iv },
             aesKey,
-            privateKey,
+            toLocalUint8Array(privateKey),
         );
 
         const bundle = Bundle.serialize({

@@ -81,17 +81,14 @@ export class RendererController
                 // because they need to be closed at different times
                 this.#captureFrame = frame.clone();
 
-                if (this.#drawing) {
-                    // Frame A is drawing, frame B (`#nextFrame`) is waiting,
-                    // then frame C (`frame`) arrives.
-                    // Skip frame B and queue frame C
-                    if (this.#nextFrame) {
-                        this.#nextFrame.close();
-                        this.#counter.increaseFramesSkipped();
-                    }
-                    this.#nextFrame = frame;
-                    return;
+                // Frame A is drawing, frame B (`#nextFrame`) is waiting,
+                // then frame C (`frame`) arrives.
+                // Skip frame B and queue frame C
+                if (this.#nextFrame) {
+                    this.#nextFrame.close();
+                    this.#counter.increaseFramesSkipped();
                 }
+                this.#nextFrame = frame;
 
                 // Don't `await` because this writable needs to
                 // accept incoming frames as fast as produced.
@@ -115,6 +112,9 @@ export class RendererController
     }
 
     async #draw() {
+        if (this.#drawing) {
+            return;
+        }
         this.#drawing = true;
 
         // PERF: Draw every frame to minimize latency at cost of performance.
