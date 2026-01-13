@@ -116,7 +116,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
                 gl_FragColor = gaussian9(uv);
             } else {
                 // Near 1:1, just sample directly
-                gl_FragColor = texture2D(uSource, uv);
+                gl_FragColor = texture2D(source, uv);
             }
         }
 `;
@@ -137,7 +137,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
     #context: WebGLRenderingContext;
     #program!: WebGLProgram;
 
-    #controller = new RedrawController((frame) => {
+    #controller = new RedrawController((frame): undefined => {
         const gl = this.#context;
         if (gl.isContextLost()) {
             return;
