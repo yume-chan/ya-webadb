@@ -289,7 +289,7 @@ export namespace WebGLVideoFrameRenderer {
         /**
          * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
          *
-         * Enable this option may reduce performance.
+         * Enabling this option may reduce performance.
          */
         enableCapture?: boolean;
     }
