@@ -130,8 +130,8 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
      * Might be `0` if the renderer is in a nested Web Worker on Chrome due to a Chrome bug.
      * https://issues.chromium.org/issues/41483010
      */
-    get framesPresented() {
-        return this.#renderController.framesPresented;
+    get framesDisplayed() {
+        return this.#renderController.framesDisplayed;
     }
     /**
      * Gets the number of frames that wasn't drawn on the renderer

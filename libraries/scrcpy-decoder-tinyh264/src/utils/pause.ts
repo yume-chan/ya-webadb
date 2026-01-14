@@ -54,7 +54,7 @@ export class PauseController
             start: (controller_) => {
                 controller = controller_;
             },
-            transform: async (packet, controller) => {
+            transform: async (packet) => {
                 if (this.#disposed) {
                     return;
                 }

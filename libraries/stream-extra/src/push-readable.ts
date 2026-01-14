@@ -1,8 +1,5 @@
-import {
-    isPromiseLike,
-    PromiseResolver,
-    type MaybePromise,
-} from "@yume-chan/async";
+import type { MaybePromise } from "@yume-chan/async";
+import { isPromiseLike, PromiseResolver } from "@yume-chan/async";
 
 import type {
     AbortSignal,
@@ -59,7 +56,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
         strategy?: QueuingStrategy<T>,
         logger?: PushReadableLogger<T>,
     ) {
-        let controller_!: ReadableStreamDefaultController<T>;
+        let controller!: ReadableStreamDefaultController<T>;
         let ready: Promise<boolean> | undefined;
 
         let zeroHighWaterMarkAllowEnqueue = false;
@@ -106,10 +103,10 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 return false;
             }
 
-            if (controller_.desiredSize === null) {
+            if (controller.desiredSize === null) {
                 // `desiredSize` being `null` means the stream is in error state,
                 // `controller.enqueue` will throw an error for us.
-                controller_.enqueue(chunk);
+                controller.enqueue(chunk);
                 // istanbul ignore next
                 throw new Error("unreachable");
             }
@@ -130,7 +127,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 //
                 // So we need a special signal for this case.
                 zeroHighWaterMarkAllowEnqueue = false;
-                controller_.enqueue(chunk);
+                controller.enqueue(chunk);
                 logger?.({
                     source: "producer",
                     operation: "enqueue",
@@ -140,7 +137,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 return true;
             }
 
-            if (controller_.desiredSize <= 0) {
+            if (controller.desiredSize <= 0) {
                 logger?.({
                     source: "producer",
                     operation: "enqueue",
@@ -151,7 +148,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 waterMarkLow = new PromiseResolver<undefined>();
                 return waterMarkLow.promise.then(
                     (): boolean => {
-                        controller_.enqueue(chunk);
+                        controller.enqueue(chunk);
                         logger?.({
                             source: "producer",
                             operation: "enqueue",
@@ -174,7 +171,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 );
             }
 
-            controller_.enqueue(chunk);
+            controller.enqueue(chunk);
             logger?.({
                 source: "producer",
                 operation: "enqueue",
@@ -206,7 +203,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
             }
 
             stopped = true;
-            controller_.close();
+            controller.close();
             // Wake up pending `enqueue`
             waterMarkLow?.reject();
 
@@ -229,7 +226,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
             stopped = true;
             // `controller.error` won't throw on closed/errored/cancelled stream
             // so don't need any checks
-            controller_.error(error);
+            controller.error(error);
             // Wake up pending `enqueue`
             waterMarkLow?.reject();
 
@@ -243,8 +240,8 @@ export class PushReadableStream<T> extends ReadableStream<T> {
 
         super(
             {
-                start: (controller) => {
-                    controller_ = controller;
+                start: (controller_) => {
+                    controller = controller_;
 
                     const result = source({
                         abortSignal: abortController.signal,
