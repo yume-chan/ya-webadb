@@ -20,6 +20,11 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         return this.#element;
     }
 
+    #options: InsertableStreamVideoFrameRenderer.Options | undefined;
+    get options() {
+        return this.#options;
+    }
+
     #generator: MediaStreamTrackGenerator;
     get writable() {
         return this.#generator.writable;
@@ -30,7 +35,10 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         return this.#stream;
     }
 
-    constructor(element?: HTMLVideoElement) {
+    constructor(
+        element?: HTMLVideoElement,
+        options?: InsertableStreamVideoFrameRenderer.Options,
+    ) {
         if (element) {
             this.#element = element;
         } else if (typeof document !== "undefined") {
@@ -46,10 +54,10 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         this.#element.disablePictureInPicture = true;
         this.#element.disableRemotePlayback = true;
 
-        this.#element.addEventListener("resize", () => {
-            this.#element.width = this.#element.videoWidth;
-            this.#element.height = this.#element.videoHeight;
-        });
+        this.#options = options;
+        if (options?.updateSize) {
+            this.#element.addEventListener("resize", this.#handleResize);
+        }
 
         // The spec replaced `MediaStreamTrackGenerator` with `VideoTrackGenerator`.
         // But Chrome has not implemented it yet.
@@ -59,5 +67,28 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
 
         this.#stream = new MediaStream([this.#generator]);
         this.#element.srcObject = this.#stream;
+    }
+
+    #handleResize = () => {
+        this.#element.width = this.#element.videoWidth;
+        this.#element.height = this.#element.videoHeight;
+    };
+
+    dispose(): undefined {
+        if (this.#options?.updateSize) {
+            this.#element.removeEventListener("resize", this.#handleResize);
+        }
+        this.#generator.stop();
+        this.#stream.removeTrack(this.#generator);
+        this.#element.srcObject = null;
+    }
+}
+
+export namespace InsertableStreamVideoFrameRenderer {
+    export interface Options {
+        /**
+         * Whether to update the size of the video element when the size of the video frame changes.
+         */
+        updateSize?: boolean;
     }
 }

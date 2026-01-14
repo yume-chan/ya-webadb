@@ -17,13 +17,19 @@ export class BitmapVideoFrameRenderer extends CanvasVideoFrameRenderer {
             options,
         );
 
-        this.#context = (this.canvas as HTMLCanvasElement).getContext(
+        const context = (this.canvas as HTMLCanvasElement).getContext(
             "bitmaprenderer",
             {
                 // Avoid alpha:false, which can be expensive
                 // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#avoid_alphafalse_which_can_be_expensive
                 alpha: true,
             },
-        )!;
+        );
+        if (!context) {
+            // This can happen if the canvas already has a context of a different type
+            throw new Error("Failed to create rendering context");
+        }
+
+        this.#context = context;
     }
 }

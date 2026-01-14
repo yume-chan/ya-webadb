@@ -140,10 +140,6 @@ export class PauseController
         if (this.#pendingConfiguration) {
             this.#controller.enqueue(this.#pendingConfiguration);
             this.#pendingConfiguration = undefined;
-
-            if (this.#disposed) {
-                return;
-            }
         }
 
         // `#pendingFrames` won't change during iteration

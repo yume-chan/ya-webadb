@@ -13,8 +13,8 @@ export function glCreateContext(
     attributes?: WebGLContextAttributes,
 ): WebGLRenderingContext | WebGL2RenderingContext | null {
     // `HTMLCanvasElement.getContext` returns `null` for unsupported `contextId`,
-    // but `OffscreenCanvas.getContext` will throw an error,
-    // so `try...catch...` is required
+    // but `OffscreenCanvas.getContext` will throw errors,
+    // Support both cases using both `try...catch...` and `if`
 
     try {
         const context = canvas.getContext(

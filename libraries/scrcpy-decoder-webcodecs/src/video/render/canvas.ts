@@ -2,9 +2,10 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
 import { WritableStream } from "@yume-chan/stream-extra";
 
+import { canvasToBlob } from "../utils/index.js";
+
 import { RedrawController } from "./redraw.js";
 import type { VideoFrameRenderer } from "./type.js";
-import { canvasToBlob } from "../utils/snapshot.js";
 
 export abstract class CanvasVideoFrameRenderer<
     TOptions extends CanvasVideoFrameRenderer.Options =
@@ -65,26 +66,41 @@ export abstract class CanvasVideoFrameRenderer<
             }
 
             this.#resizeObserver = new ResizeObserver((entries) => {
-                const entry = entries[0]!;
-
-                if (entry.devicePixelContentBoxSize) {
-                    const size = entry.devicePixelContentBoxSize[0]!;
-                    this.#displayWidth = size.inlineSize;
-                    this.#displayHeight = size.blockSize;
-                } else {
-                    const size = entry.contentBoxSize[0]!;
-                    this.#displayWidth = Math.round(
-                        size.inlineSize * devicePixelRatio,
-                    );
-                    this.#displayHeight = Math.round(
-                        size.blockSize * devicePixelRatio,
-                    );
+                const entry = entries[0];
+                if (!entry) {
+                    return;
                 }
 
-                this.#controller.redraw();
+                const devicePixelSize = entry.devicePixelContentBoxSize?.[0];
+                if (devicePixelSize) {
+                    this.#setDisplaySize(
+                        devicePixelSize.inlineSize,
+                        devicePixelSize.blockSize,
+                    );
+                    return;
+                }
+
+                const cssSize = entry.contentBoxSize[0];
+                if (cssSize) {
+                    this.#setDisplaySize(
+                        Math.round(cssSize.inlineSize * devicePixelRatio),
+                        Math.round(cssSize.blockSize * devicePixelRatio),
+                    );
+                }
             });
             this.#resizeObserver.observe(this.#canvas);
         }
+    }
+
+    #setDisplaySize(width: number, height: number) {
+        if (this.#displayWidth === width && this.#displayHeight === height) {
+            return;
+        }
+
+        this.#displayWidth = width;
+        this.#displayHeight = height;
+
+        this.#controller.redraw();
     }
 
     #updateSize(frame: VideoFrame) {

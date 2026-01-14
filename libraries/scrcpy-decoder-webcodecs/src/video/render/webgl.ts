@@ -94,20 +94,6 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
             return 0.25 * (c0 + c1 + c2 + c3);
         }
 
-        vec4 gaussian9(vec2 uv) {
-            vec2 dx = vec2(texelSize.x, 0.0);
-            vec2 dy = vec2(0.0, texelSize.y);
-
-            vec4 sum = vec4(0.0);
-            sum += texture2D(source, uv) * 0.227027;
-            sum += texture2D(source, uv + dx) * 0.1945946;
-            sum += texture2D(source, uv - dx) * 0.1945946;
-            sum += texture2D(source, uv + dy) * 0.1945946;
-            sum += texture2D(source, uv - dy) * 0.1945946;
-
-            return sum;
-        }
-
         float mnWeight(float x) {
             x = abs(x);
             float x2 = x * x;
@@ -176,6 +162,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
 
     #context: WebGLRenderingContext;
     #program!: WebGLProgram;
+    #vertexBuffer!: WebGLBuffer;
+    #texture!: WebGLTexture;
     #texelSizeLocation!: WebGLUniformLocation;
     #zoomLocation!: WebGLUniformLocation;
 
@@ -233,6 +221,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
 
         const gl = glCreateContext(this.canvas, {
             // Low-power GPU should be enough for video rendering.
+            // Note that `OffscreenCanvas` created in Web Workers can only use `low-power` anyway.
             powerPreference: "low-power",
             // Avoid alpha:false, which can be expensive
             // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#avoid_alphafalse_which_can_be_expensive
@@ -276,8 +265,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         gl.useProgram(this.#program);
 
         // Vertex coordinates, clockwise from bottom-left.
-        const vertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+        this.#vertexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.#vertexBuffer);
         gl.bufferData(
             gl.ARRAY_BUFFER,
             WebGLVideoFrameRenderer.Vertices,
@@ -295,8 +284,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         this.#zoomLocation = gl.getUniformLocation(this.#program, "zoom")!;
 
         // Create one texture to upload frames to.
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
+        this.#texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.#texture);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -321,6 +310,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
     }
 
     override dispose(): undefined {
+        this.#context.deleteBuffer(this.#vertexBuffer);
+        this.#context.deleteTexture(this.#texture);
         this.#context.deleteProgram(this.#program);
 
         this.canvas.removeEventListener(

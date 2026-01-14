@@ -5,8 +5,12 @@ import type { CodecTransformStream } from "../codec/type.js";
 
 const view = new DataView(new ArrayBuffer(8));
 
+/**
+ * Gets the next presentable double-precision floating point value greater than x
+ * @param x A number. The caller must ensure that x is not NaN or Infinity
+ * @returns The next presentable double-precision floating point value
+ */
 function nextUp(x: number) {
-    if (Number.isNaN(x) || x === Infinity) return x;
     if (x === 0) return Number.MIN_VALUE;
 
     // Write the number as a float64
@@ -23,6 +27,11 @@ function nextUp(x: number) {
 
 let prevValue = 0;
 
+/**
+ * Gets current time.
+ *
+ * The returned value is guaranteed to be monotonically increasing.
+ */
 export function increasingNow() {
     let now = performance.now();
     if (now <= prevValue) {

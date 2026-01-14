@@ -1,9 +1,9 @@
 import type { ScrcpyVideoDecoderPerformanceCounter } from "../types.js";
 
 export class PerformanceCounter implements ScrcpyVideoDecoderPerformanceCounter {
-    #framesDrawn = 0;
+    #framesRendered = 0;
     get framesRendered() {
-        return this.#framesDrawn;
+        return this.#framesRendered;
     }
 
     #framesPresented = 0;
@@ -11,9 +11,9 @@ export class PerformanceCounter implements ScrcpyVideoDecoderPerformanceCounter 
         return this.#framesPresented;
     }
 
-    #framesSkipped = 0;
+    #framesSkippedRendering = 0;
     get framesSkippedRendering() {
-        return this.#framesSkipped;
+        return this.#framesSkippedRendering;
     }
 
     #animationFrameId: number | undefined;
@@ -37,9 +37,9 @@ export class PerformanceCounter implements ScrcpyVideoDecoderPerformanceCounter 
     #handleAnimationFrame = () => {
         // Animation frame handler is called on every vertical sync interval.
         // Only then a frame is visible to the user.
-        if (this.#framesDrawn > 0) {
+        if (this.#framesRendered > 0) {
             this.#framesPresented += 1;
-            this.#framesDrawn = 0;
+            this.#framesRendered = 0;
         }
 
         this.#animationFrameId = requestAnimationFrame(
@@ -48,11 +48,11 @@ export class PerformanceCounter implements ScrcpyVideoDecoderPerformanceCounter 
     };
 
     increaseFramesSkipped() {
-        this.#framesSkipped += 1;
+        this.#framesSkippedRendering += 1;
     }
 
     increaseFramesRendered() {
-        this.#framesDrawn += 1;
+        this.#framesRendered += 1;
     }
 
     dispose() {

@@ -27,7 +27,7 @@ export class RedrawController {
      * If a redraw is in progress and another one is in queue,
      * it cancels the queued redraw and draws the new frame instead.
      *
-     * @param frame A `VideoFrame` to draw
+     * @param frame A `VideoFrame` to draw. The frame will be closed after drawing.
      */
     draw(frame: VideoFrame) {
         if (this.#error) {
@@ -35,11 +35,11 @@ export class RedrawController {
             throw this.#error;
         }
 
-        this.#lastFrame?.close();
-        this.#lastFrame = frame.clone();
-
         this.#pendingRedraw?.abort();
         this.#pendingRedraw = undefined;
+
+        this.#lastFrame?.close();
+        this.#lastFrame = frame.clone();
 
         this.#ready = this.#ready.then(async (): Promise<undefined> => {
             try {
@@ -95,8 +95,8 @@ export class RedrawController {
     }
 
     dispose() {
-        this.#lastFrame?.close();
         this.#pendingRedraw?.abort();
+        this.#lastFrame?.close();
         this.#error = new Error("Can't write to a closed renderer");
     }
 }

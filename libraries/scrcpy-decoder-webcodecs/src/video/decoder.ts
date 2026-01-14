@@ -218,7 +218,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         }
 
         // First check if the renderer can provide a snapshot natively
-        let blob = await this.#renderer.snapshot?.();
+        const blob = await this.#renderer.snapshot?.();
         if (blob) {
             return blob;
         }
@@ -228,6 +228,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         try {
             const writer = renderer.writable.getWriter();
             await writer.write(frame);
+            await writer.close();
             // BitmapVideoFrameRenderer.snapshot will definitely return a value
             return await renderer.snapshot();
         } finally {
