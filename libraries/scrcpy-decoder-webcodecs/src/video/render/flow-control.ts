@@ -146,6 +146,8 @@ export class RendererController
         this.#nextFrame?.close();
         this.#nextFrame = undefined;
 
+        this.#counter.dispose();
+
         this.#readableController.close();
         // Throw a similar error to native TransformStream
         this.#writableController.error(

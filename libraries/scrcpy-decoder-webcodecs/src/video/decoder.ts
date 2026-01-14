@@ -240,8 +240,8 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         // (in each stream's `close` callback).
         // This method cleanup things that still available after `writable` ends
 
-        this.#size.dispose();
         this.#pause.dispose();
+        this.#size.dispose();
         this.#renderController.dispose();
         this.#renderer.dispose?.();
     }

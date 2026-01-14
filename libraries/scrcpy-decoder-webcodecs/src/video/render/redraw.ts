@@ -97,6 +97,6 @@ export class RedrawController {
     dispose() {
         this.#lastFrame?.close();
         this.#pendingRedraw?.abort();
-        this.#error = new Error("The RedrawController has been disposed");
+        this.#error = new Error("Can't write to a closed renderer");
     }
 }

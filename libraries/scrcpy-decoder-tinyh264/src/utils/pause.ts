@@ -215,6 +215,7 @@ export class PauseController
         }
 
         this.#disposed = true;
+        this.#controller.terminate();
 
         this.#pendingConfiguration = undefined;
         this.#pendingFrames.length = 0;

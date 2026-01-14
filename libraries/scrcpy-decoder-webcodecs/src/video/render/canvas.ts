@@ -39,8 +39,6 @@ export abstract class CanvasVideoFrameRenderer<
 
     #writable = new WritableStream<VideoFrame>({
         write: (frame) => this.#controller.draw(frame),
-        close: () => this.dispose(),
-        abort: () => this.dispose(),
     });
     get writable() {
         return this.#writable;
