@@ -131,11 +131,11 @@ export abstract class CanvasVideoFrameRenderer<
         this.#controller.redraw();
     }
 
-    async snapshot(): Promise<Blob | undefined> {
+    async snapshot(options?: ImageEncodeOptions): Promise<Blob | undefined> {
         if (this.#canvasSize !== "video") {
             return undefined;
         }
-        return canvasToBlob(this.#canvas);
+        return canvasToBlob(this.#canvas, options);
     }
 
     dispose(): undefined {

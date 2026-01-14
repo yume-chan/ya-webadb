@@ -25,8 +25,8 @@ export class AutoCanvasRenderer implements VideoFrameRenderer {
         }
     }
 
-    snapshot(): Promise<Blob | undefined> {
-        return this.#inner.snapshot();
+    snapshot(options?: ImageEncodeOptions): Promise<Blob | undefined> {
+        return this.#inner.snapshot(options);
     }
 
     dispose() {

@@ -211,14 +211,14 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#pause.trackDocumentVisibility(document);
     }
 
-    async snapshot() {
+    async snapshot(options?: ImageEncodeOptions) {
         const frame = this.#renderController.captureFrame;
         if (!frame) {
             return undefined;
         }
 
         // First check if the renderer can provide a snapshot natively
-        const blob = await this.#renderer.snapshot?.();
+        const blob = await this.#renderer.snapshot?.(options);
         if (blob) {
             return blob;
         }
@@ -230,7 +230,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             await writer.write(frame);
             await writer.close();
             // BitmapVideoFrameRenderer.snapshot will definitely return a value
-            return await renderer.snapshot();
+            return await renderer.snapshot(options);
         } finally {
             renderer.dispose();
         }

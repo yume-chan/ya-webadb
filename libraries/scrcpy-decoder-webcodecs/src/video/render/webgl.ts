@@ -302,11 +302,13 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         this.redraw();
     };
 
-    override async snapshot(): Promise<Blob | undefined> {
+    override async snapshot(
+        options?: ImageEncodeOptions,
+    ): Promise<Blob | undefined> {
         if (!this.options?.enableCapture) {
             return undefined;
         }
-        return super.snapshot();
+        return super.snapshot(options);
     }
 
     override dispose(): undefined {
