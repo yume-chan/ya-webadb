@@ -8,13 +8,6 @@ import type {
 } from "@yume-chan/stream-extra";
 import { PushReadableStream, WritableStream } from "@yume-chan/stream-extra";
 
-import { Pool } from "../pool.js";
-import { VideoFrameCapturer } from "../snapshot.js";
-
-const VideoFrameCapturerPool =
-    /* #__PURE__ */
-    new Pool(() => new VideoFrameCapturer(), 4);
-
 export class RendererController
     implements
         TransformStream<VideoFrame, VideoFrame>,
@@ -33,6 +26,10 @@ export class RendererController
     }
 
     #captureFrame: VideoFrame | undefined;
+    get captureFrame() {
+        return this.#captureFrame;
+    }
+
     #nextFrame: VideoFrame | undefined;
 
     #drawing = false;
@@ -140,20 +137,6 @@ export class RendererController
         }
 
         this.#drawing = false;
-    }
-
-    async snapshot(): Promise<Blob | undefined> {
-        const frame = this.#captureFrame;
-        if (!frame) {
-            return undefined;
-        }
-
-        const capturer = await VideoFrameCapturerPool.borrow();
-        try {
-            return await capturer.capture(frame);
-        } finally {
-            VideoFrameCapturerPool.return(capturer);
-        }
     }
 
     dispose() {

@@ -11,6 +11,9 @@ export class RedrawController {
     #error: unknown;
 
     #lastFrame: VideoFrame | undefined;
+    get lastFrame() {
+        return this.#lastFrame;
+    }
 
     constructor(draw: (frame: VideoFrame) => MaybePromiseLike<undefined>) {
         this.#draw = draw;

@@ -13,7 +13,11 @@ import {
 } from "./codec/index.js";
 import type { CodecTransformStream } from "./codec/type.js";
 import type { VideoFrameRenderer } from "./render/index.js";
-import { AutoCanvasRenderer, RendererController } from "./render/index.js";
+import {
+    AutoCanvasRenderer,
+    BitmapVideoFrameRenderer,
+    RendererController,
+} from "./render/index.js";
 import { TimestampTransforms, VideoDecoderStream } from "./utils/index.js";
 
 export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
@@ -208,7 +212,27 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     }
 
     async snapshot() {
-        return this.#renderController.snapshot();
+        const frame = this.#renderController.captureFrame;
+        if (!frame) {
+            return undefined;
+        }
+
+        // First check if the renderer can provide a snapshot natively
+        let blob = await this.#renderer.snapshot?.();
+        if (blob) {
+            return blob;
+        }
+
+        // Create a BitmapVideoFrameRenderer to draw the frame
+        const renderer = new BitmapVideoFrameRenderer();
+        try {
+            const writer = renderer.writable.getWriter();
+            await writer.write(frame);
+            // BitmapVideoFrameRenderer.snapshot will definitely return a value
+            return await renderer.snapshot();
+        } finally {
+            renderer.dispose();
+        }
     }
 
     dispose() {

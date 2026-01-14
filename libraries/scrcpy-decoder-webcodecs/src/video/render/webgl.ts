@@ -8,7 +8,6 @@ import {
 } from "@yume-chan/scrcpy-decoder-tinyh264";
 
 import { CanvasVideoFrameRenderer } from "./canvas.js";
-import { RedrawController } from "./redraw.js";
 
 function createShader(gl: WebGLRenderingContext, type: number, source: string) {
     const shader = gl.createShader(type)!;
@@ -177,40 +176,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
 
     #context: WebGLRenderingContext;
     #program!: WebGLProgram;
-
-    #controller = new RedrawController((frame): undefined => {
-        const gl = this.#context;
-        if (gl.isContextLost()) {
-            return;
-        }
-
-        gl.texImage2D(
-            gl.TEXTURE_2D,
-            0,
-            gl.RGBA,
-            gl.RGBA,
-            gl.UNSIGNED_BYTE,
-            frame,
-        );
-
-        const texelSizeLocation = gl.getUniformLocation(
-            this.#program,
-            "texelSize",
-        );
-        gl.uniform2f(
-            texelSizeLocation,
-            1.0 / frame.codedWidth,
-            1.0 / frame.codedHeight,
-        );
-
-        const zoomLocation = gl.getUniformLocation(this.#program, "zoom");
-        gl.uniform1f(zoomLocation, this.canvas.width / frame.codedWidth);
-
-        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
-
-        gl.flush();
-    });
+    #texelSizeLocation!: WebGLUniformLocation;
+    #zoomLocation!: WebGLUniformLocation;
 
     /**
      * Create a new WebGL frame renderer.
@@ -223,7 +190,46 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         canvas?: HTMLCanvasElement | OffscreenCanvas,
         options?: WebGLVideoFrameRenderer.Options,
     ) {
-        super(canvas, options);
+        super(
+            (frame) => {
+                const gl = this.#context;
+                if (gl.isContextLost()) {
+                    return;
+                }
+
+                gl.texImage2D(
+                    gl.TEXTURE_2D,
+                    0,
+                    gl.RGBA,
+                    gl.RGBA,
+                    gl.UNSIGNED_BYTE,
+                    frame,
+                );
+
+                gl.uniform2f(
+                    this.#texelSizeLocation,
+                    1.0 / frame.codedWidth,
+                    1.0 / frame.codedHeight,
+                );
+
+                gl.uniform1f(
+                    this.#zoomLocation,
+                    this.canvas.width / frame.codedWidth,
+                );
+
+                gl.viewport(
+                    0,
+                    0,
+                    gl.drawingBufferWidth,
+                    gl.drawingBufferHeight,
+                );
+                gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+                gl.flush();
+            },
+            canvas,
+            options,
+        );
 
         const gl = glCreateContext(this.canvas, {
             // Low-power GPU should be enough for video rendering.
@@ -282,6 +288,12 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         gl.vertexAttribPointer(xyLocation, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(xyLocation);
 
+        this.#texelSizeLocation = gl.getUniformLocation(
+            this.#program,
+            "texelSize",
+        )!;
+        this.#zoomLocation = gl.getUniformLocation(this.#program, "zoom")!;
+
         // Create one texture to upload frames to.
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -298,11 +310,14 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
 
     #handleContextRestored = () => {
         this.#initialize();
-        this.#controller.redraw();
+        this.redraw();
     };
 
-    override draw(frame: VideoFrame) {
-        return this.#controller.draw(frame);
+    override async snapshot(): Promise<Blob | undefined> {
+        if (!this.options?.enableCapture) {
+            return undefined;
+        }
+        return super.snapshot();
     }
 
     override dispose(): undefined {

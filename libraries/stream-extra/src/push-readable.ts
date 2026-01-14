@@ -259,12 +259,8 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                                 }
                                 return result;
                             } else {
-                                const promise = ready.then(() =>
-                                    enqueue(chunk),
-                                );
-                                ready = promise.catch(() => {
-                                    throw new Error("");
-                                });
+                                // Chain `enqueue` calls
+                                ready = ready.then(() => enqueue(chunk));
                             }
                             return ready;
                         },

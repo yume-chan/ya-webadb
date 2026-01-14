@@ -4,6 +4,7 @@ import { WritableStream } from "@yume-chan/stream-extra";
 
 import { RedrawController } from "./redraw.js";
 import type { VideoFrameRenderer } from "./type.js";
+import { canvasToBlob } from "../utils/snapshot.js";
 
 export abstract class CanvasVideoFrameRenderer<
     TOptions extends CanvasVideoFrameRenderer.Options =
@@ -24,13 +25,17 @@ export abstract class CanvasVideoFrameRenderer<
     #displayWidth = Infinity;
     #displayHeight = Infinity;
 
+    #draw: (frame: VideoFrame) => MaybePromiseLike<undefined>;
     #controller = new RedrawController((frame) => {
         if (this.#canvasSize !== "external") {
             this.#updateSize(frame);
         }
 
-        return this.draw(frame);
+        return this.#draw(frame);
     });
+    get lastFrame() {
+        return this.#controller.lastFrame;
+    }
 
     #writable = new WritableStream<VideoFrame>({
         write: (frame) => this.#controller.draw(frame),
@@ -42,9 +47,11 @@ export abstract class CanvasVideoFrameRenderer<
     }
 
     constructor(
+        draw: (frame: VideoFrame) => MaybePromiseLike<undefined>,
         canvas?: HTMLCanvasElement | OffscreenCanvas,
         options?: TOptions,
     ) {
+        this.#draw = draw;
         this.#canvas = canvas ?? createCanvas();
         this.#options = options;
         this.#canvasSize = options?.canvasSize ?? "video";
@@ -99,11 +106,23 @@ export abstract class CanvasVideoFrameRenderer<
     }
 
     /**
-     * Draws the frame on `<canvas>`.
+     * Redraws the last drawn frame.
      *
-     * Derived classes must not transfer or close the `frame`.
+     * If a draw or redraw is in progress, it waits for them to finish before redrawing.
+     *
+     * If a redraw is in progress and another one is in queue,
+     * it cancels the queued redraw and redraws the latest frame instead.
      */
-    abstract draw(frame: VideoFrame): MaybePromiseLike<undefined>;
+    redraw() {
+        this.#controller.redraw();
+    }
+
+    async snapshot(): Promise<Blob | undefined> {
+        if (this.#canvasSize !== "video") {
+            return undefined;
+        }
+        return canvasToBlob(this.#canvas);
+    }
 
     dispose(): undefined {
         if (this.#canvasSize !== "external") {

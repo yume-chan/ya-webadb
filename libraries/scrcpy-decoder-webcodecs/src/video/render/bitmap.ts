@@ -7,7 +7,15 @@ export class BitmapVideoFrameRenderer extends CanvasVideoFrameRenderer {
         canvas?: HTMLCanvasElement | OffscreenCanvas,
         options?: CanvasVideoFrameRenderer.Options,
     ) {
-        super(canvas, options);
+        super(
+            async (frame) => {
+                const bitmap = await createImageBitmap(frame);
+                this.#context.transferFromImageBitmap(bitmap);
+                bitmap.close();
+            },
+            canvas,
+            options,
+        );
 
         this.#context = (this.canvas as HTMLCanvasElement).getContext(
             "bitmaprenderer",
@@ -17,11 +25,5 @@ export class BitmapVideoFrameRenderer extends CanvasVideoFrameRenderer {
                 alpha: true,
             },
         )!;
-    }
-
-    async draw(frame: VideoFrame): Promise<undefined> {
-        const bitmap = await createImageBitmap(frame);
-        this.#context.transferFromImageBitmap(bitmap);
-        bitmap.close();
     }
 }
