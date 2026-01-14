@@ -191,7 +191,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         options?: WebGLVideoFrameRenderer.Options,
     ) {
         super(
-            (frame) => {
+            (frame): undefined => {
                 const gl = this.#context;
                 if (gl.isContextLost()) {
                     return;
