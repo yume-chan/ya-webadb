@@ -86,13 +86,9 @@ export async function parseAudioStreamMetadata(
             await controller.enqueue(buffer);
 
             const stream = buffered.release();
-            const reader = stream.getReader();
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) {
-                    break;
-                }
-                await controller.enqueue(value);
+
+            for await (const chunk of stream) {
+                await controller.enqueue(chunk);
             }
         }),
     };

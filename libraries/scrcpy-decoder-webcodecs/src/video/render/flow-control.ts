@@ -4,6 +4,7 @@ import type {
     PushReadableStreamController,
     ReadableStream,
     TransformStream,
+    WritableStreamDefaultController,
 } from "@yume-chan/stream-extra";
 import { PushReadableStream, WritableStream } from "@yume-chan/stream-extra";
 
@@ -26,6 +27,7 @@ export class RendererController
     }
 
     #writable: WritableStream<VideoFrame>;
+    #writableController!: WritableStreamDefaultController;
     get writable() {
         return this.#writable;
     }
@@ -70,6 +72,8 @@ export class RendererController
 
         this.#writable = new WritableStream({
             start: (controller) => {
+                this.#writableController = controller;
+
                 const signal = this.#readableController.abortSignal;
                 signal.addEventListener("abort", () =>
                     controller.error(signal.reason),
@@ -127,9 +131,12 @@ export class RendererController
         let frame: VideoFrame | undefined;
         while ((frame = this.#nextFrame)) {
             this.#nextFrame = undefined;
-            await this.#readableController.enqueue(frame);
-            // The renderer is responsible for closing `frame`
-            this.#counter.increaseFramesRendered();
+            if (await this.#readableController.enqueue(frame)) {
+                // The consumer is responsible for closing `frame`
+                this.#counter.increaseFramesRendered();
+            } else {
+                frame.close();
+            }
         }
 
         this.#drawing = false;
@@ -155,5 +162,11 @@ export class RendererController
 
         this.#nextFrame?.close();
         this.#nextFrame = undefined;
+
+        this.#readableController.close();
+        // Throw a similar error to native TransformStream
+        this.#writableController.error(
+            new TypeError("The transform stream has been terminated"),
+        );
     }
 }

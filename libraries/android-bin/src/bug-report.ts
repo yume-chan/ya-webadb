@@ -258,10 +258,10 @@ export class BugReport extends AdbServiceBase {
      */
     bugReportZStream(): ReadableStream<Uint8Array> {
         return new PushReadableStream(async (controller) => {
-            const process = await this.adb.subprocess.shellProtocol!.spawn([
-                "bugreportz",
-                "-s",
-            ]);
+            const process = await this.adb.subprocess.shellProtocol!.spawn(
+                ["bugreportz", "-s"],
+                controller.abortSignal,
+            );
             process.stdout
                 .pipeTo(
                     new WritableStream({
