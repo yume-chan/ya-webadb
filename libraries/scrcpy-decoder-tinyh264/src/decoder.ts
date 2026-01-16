@@ -41,6 +41,12 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#canvas;
     }
 
+    #renderer: YuvCanvas | undefined;
+    #rendererType: "2d" | "webgl";
+    get rendererType() {
+        return this.#rendererType;
+    }
+
     #pause = new PauseController();
     get paused() {
         return this.#pause.paused;
@@ -89,7 +95,6 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#counter.framesSkippedRendering;
     }
 
-    #renderer: YuvCanvas | undefined;
     #decoder: Promise<TinyH264Wrapper> | undefined;
 
     constructor({ canvas }: TinyH264Decoder.Options = {}) {
@@ -99,17 +104,19 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             this.#canvas = createCanvas();
         }
 
+        const webGlSupported = glIsSupported({
+            // Disallow software rendering.
+            // yuv-canvas also supports 2d canvas
+            // which is faster than software-based WebGL.
+            failIfMajorPerformanceCaveat: true,
+        });
         this.#renderer = YuvCanvas.attach(this.#canvas, {
             // yuv-canvas supports detecting WebGL support by creating a <canvas> itself
             // But this doesn't work in Web Worker (with OffscreenCanvas)
             // so we implement our own check here
-            webGL: glIsSupported({
-                // Disallow software rendering.
-                // yuv-canvas also supports 2d canvas
-                // which is faster than software-based WebGL.
-                failIfMajorPerformanceCaveat: true,
-            }),
+            webGL: webGlSupported,
         });
+        this.#rendererType = webGlSupported ? "webgl" : "2d";
 
         void this.#pause.readable
             .pipeTo(

@@ -6,6 +6,11 @@ import { WebGLVideoFrameRenderer } from "./webgl.js";
 export class AutoCanvasRenderer implements VideoFrameRenderer {
     #inner: CanvasVideoFrameRenderer;
 
+    #type: "bitmap" | "webgl";
+    get type() {
+        return this.#type;
+    }
+
     get canvas() {
         return this.#inner.canvas;
     }
@@ -20,8 +25,10 @@ export class AutoCanvasRenderer implements VideoFrameRenderer {
     ) {
         if (WebGLVideoFrameRenderer.isSupported) {
             this.#inner = new WebGLVideoFrameRenderer(canvas, options);
+            this.#type = "webgl";
         } else {
             this.#inner = new BitmapVideoFrameRenderer(canvas, options);
+            this.#type = "bitmap";
         }
     }
 
