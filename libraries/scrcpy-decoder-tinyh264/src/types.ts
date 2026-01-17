@@ -1,3 +1,4 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
     ScrcpyMediaStreamPacket,
@@ -13,21 +14,25 @@ export interface ScrcpyVideoDecoderCapability {
 
 export interface ScrcpyVideoDecoderPerformanceCounter {
     /**
-     * Gets the number of frames that have been drawn on the renderer
+     * Gets the number of frames that have been drawn on the renderer.
      */
-    readonly framesDrawn: number;
+    readonly framesRendered: number;
     /**
-     * Gets the number of frames that's visible to the user
+     * Gets the number of frames that's visible to the user.
+     *
+     * Multiple frames might be rendered during one vertical sync interval,
+     * but only the last of them is represented to the user.
+     * This costs some performance but reduces latency by 1 frame.
      *
      * Might be `0` if the renderer is in a nested Web Worker on Chrome due to a Chrome bug.
      * https://issues.chromium.org/issues/41483010
      */
-    readonly framesPresented: number;
+    readonly framesDisplayed: number;
     /**
      * Gets the number of frames that wasn't drawn on the renderer
      * because the renderer can't keep up
      */
-    readonly framesSkipped: number;
+    readonly framesSkippedRendering: number;
 }
 
 export interface ScrcpyVideoDecoderPauseController {
@@ -44,7 +49,7 @@ export interface ScrcpyVideoDecoderPauseController {
     /**
      * Resume the decoder if it was paused.
      */
-    resume(): Promise<undefined>;
+    resume(): MaybePromiseLike<undefined>;
 
     /**
      * Pause the decoder when the document becomes invisible,

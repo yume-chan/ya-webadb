@@ -7,9 +7,9 @@ import type {
 import { MaybeConsumable } from "@yume-chan/stream-extra";
 
 import type { AdbSocket } from "../../../adb.js";
-import type { AdbPtyProcess } from "../pty.js";
+import type { AdbPty } from "../pty.js";
 
-export class AdbNoneProtocolPtyProcess implements AdbPtyProcess<undefined> {
+export class AdbNoneProtocolPty implements AdbPty<undefined> {
     readonly #socket: AdbSocket;
     readonly #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
 

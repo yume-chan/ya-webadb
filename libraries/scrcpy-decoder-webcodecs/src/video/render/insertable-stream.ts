@@ -1,8 +1,6 @@
 // cspell: ignore insertable
 
-import type { MaybePromiseLike } from "@yume-chan/async";
-import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
-import { tryClose } from "@yume-chan/stream-extra";
+import type { WritableStream } from "@yume-chan/stream-extra";
 
 import type { VideoFrameRenderer } from "./type.js";
 
@@ -22,11 +20,25 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         return this.#element;
     }
 
-    #generator: MediaStreamTrackGenerator;
-    #writer: WritableStreamDefaultWriter<VideoFrame>;
-    #stream: MediaStream;
+    #options: InsertableStreamVideoFrameRenderer.Options | undefined;
+    get options() {
+        return this.#options;
+    }
 
-    constructor(element?: HTMLVideoElement) {
+    #generator: MediaStreamTrackGenerator;
+    get writable() {
+        return this.#generator.writable;
+    }
+
+    #stream: MediaStream;
+    get stream() {
+        return this.#stream;
+    }
+
+    constructor(
+        element?: HTMLVideoElement,
+        options?: InsertableStreamVideoFrameRenderer.Options,
+    ) {
         if (element) {
             this.#element = element;
         } else if (typeof document !== "undefined") {
@@ -42,32 +54,41 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         this.#element.disablePictureInPicture = true;
         this.#element.disableRemotePlayback = true;
 
+        this.#options = options;
+        if (options?.updateSize) {
+            this.#element.addEventListener("resize", this.#handleResize);
+        }
+
         // The spec replaced `MediaStreamTrackGenerator` with `VideoTrackGenerator`.
         // But Chrome has not implemented it yet.
         // https://issues.chromium.org/issues/40058895
         this.#generator = new MediaStreamTrackGenerator({ kind: "video" });
         this.#generator.contentHint = "motion";
 
-        this.#writer =
-            this.#generator.writable.getWriter() as WritableStreamDefaultWriter<VideoFrame>;
-
         this.#stream = new MediaStream([this.#generator]);
         this.#element.srcObject = this.#stream;
     }
 
-    setSize(width: number, height: number): void {
-        if (this.#element.width !== width || this.#element.height !== height) {
-            this.#element.width = width;
-            this.#element.height = height;
+    #handleResize = () => {
+        this.#element.width = this.#element.videoWidth;
+        this.#element.height = this.#element.videoHeight;
+    };
+
+    dispose(): undefined {
+        if (this.#options?.updateSize) {
+            this.#element.removeEventListener("resize", this.#handleResize);
         }
+        this.#generator.stop();
+        this.#stream.removeTrack(this.#generator);
+        this.#element.srcObject = null;
     }
+}
 
-    draw(frame: VideoFrame): Promise<void> {
-        return this.#writer.write(frame);
-    }
-
-    dispose(): MaybePromiseLike<undefined> {
-        tryClose(this.#writer);
-        return undefined;
+export namespace InsertableStreamVideoFrameRenderer {
+    export interface Options {
+        /**
+         * Whether to update the size of the video element when the size of the video frame changes.
+         */
+        updateSize?: boolean;
     }
 }

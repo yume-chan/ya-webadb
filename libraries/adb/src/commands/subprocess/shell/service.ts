@@ -2,7 +2,7 @@ import type { Adb } from "../../../adb.js";
 import { AdbFeature } from "../../../features.js";
 
 import { AdbShellProtocolProcessImpl } from "./process.js";
-import { AdbShellProtocolPtyProcess } from "./pty.js";
+import { AdbShellProtocolPty } from "./pty.js";
 import { adbShellProtocolSpawner } from "./spawner.js";
 
 export class AdbShellProtocolSubprocessService {
@@ -39,7 +39,7 @@ export class AdbShellProtocolSubprocessService {
     async pty(options?: {
         command?: string | readonly string[] | undefined;
         terminalType?: string;
-    }): Promise<AdbShellProtocolPtyProcess> {
+    }): Promise<AdbShellProtocolPty> {
         const { command, terminalType } = options ?? {};
 
         let service = "shell,v2,pty";
@@ -59,8 +59,6 @@ export class AdbShellProtocolSubprocessService {
             service += command.join(" ");
         }
 
-        return new AdbShellProtocolPtyProcess(
-            await this.#adb.createSocket(service),
-        );
+        return new AdbShellProtocolPty(await this.#adb.createSocket(service));
     }
 }

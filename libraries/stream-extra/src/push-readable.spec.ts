@@ -35,78 +35,60 @@ describe("PushReadableStream", () => {
             await reader.cancel("reason");
             await delay(0);
             assert.deepStrictEqual(
-                log.mock.calls.map((call) => call.arguments),
+                log.mock.calls.map((call) => call.arguments[0]),
                 [
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "complete",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 2,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "waiting",
-                            source: "producer",
-                            value: 2,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "cancel",
-                            phase: "start",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "cancel",
-                            phase: "complete",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "ignored",
-                            source: "producer",
-                            value: 2,
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "start",
-                            source: "producer",
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "ignored",
-                            source: "producer",
-                        },
-                    ],
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 1,
+                    },
+                    {
+                        operation: "enqueue",
+                        phase: "complete",
+                        source: "producer",
+                        value: 1,
+                    },
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 2,
+                    },
+                    {
+                        operation: "enqueue",
+                        phase: "waiting",
+                        source: "producer",
+                        value: 2,
+                    },
+                    {
+                        operation: "cancel",
+                        phase: "start",
+                        source: "consumer",
+                    },
+                    {
+                        operation: "cancel",
+                        phase: "complete",
+                        source: "consumer",
+                    },
+                    {
+                        operation: "enqueue",
+                        phase: "ignored",
+                        source: "producer",
+                        value: 2,
+                    },
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "start",
+                        source: "producer",
+                    },
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "ignored",
+                        source: "producer",
+                    },
                 ],
             );
         });
@@ -128,94 +110,82 @@ describe("PushReadableStream", () => {
             // Add extra microtasks to allow all operations to complete
             await delay(0);
             assert.deepStrictEqual(
-                log.mock.calls.map((call) => call.arguments),
+                log.mock.calls.map((call) => call.arguments[0]),
                 [
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "complete",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 2,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "waiting",
-                            source: "producer",
-                            value: 2,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "cancel",
-                            phase: "start",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "cancel",
-                            phase: "complete",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "ignored",
-                            source: "producer",
-                            value: 2,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 3,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "ignored",
-                            source: "producer",
-                            value: 3,
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "start",
-                            source: "producer",
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "ignored",
-                            source: "producer",
-                        },
-                    ],
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "complete",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 2,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "waiting",
+                        source: "producer",
+                        value: 2,
+                    },
+
+                    {
+                        operation: "cancel",
+                        phase: "start",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "cancel",
+                        phase: "complete",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "ignored",
+                        source: "producer",
+                        value: 2,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 3,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "ignored",
+                        source: "producer",
+                        value: 3,
+                    },
+
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "start",
+                        source: "producer",
+                    },
+
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "ignored",
+                        source: "producer",
+                    },
                 ],
             );
         });
@@ -231,99 +201,90 @@ describe("PushReadableStream", () => {
                 undefined,
                 log,
             );
+
             const reader = stream.getReader();
             await delay(0);
+
             await reader.cancel("reason");
             await delay(0);
+
             assert.deepStrictEqual(
-                log.mock.calls.map((call) => call.arguments),
+                log.mock.calls.map((call) => call.arguments[0]),
                 [
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "complete",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 2,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "waiting",
-                            source: "producer",
-                            value: 2,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "cancel",
-                            phase: "start",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "cancel",
-                            phase: "complete",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "ignored",
-                            source: "producer",
-                            value: 2,
-                        },
-                    ],
-                    [
-                        {
-                            explicit: true,
-                            operation: "close",
-                            phase: "start",
-                            source: "producer",
-                        },
-                    ],
-                    [
-                        {
-                            explicit: true,
-                            operation: "close",
-                            phase: "ignored",
-                            source: "producer",
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "start",
-                            source: "producer",
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "ignored",
-                            source: "producer",
-                        },
-                    ],
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "complete",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 2,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "waiting",
+                        source: "producer",
+                        value: 2,
+                    },
+
+                    {
+                        operation: "cancel",
+                        phase: "start",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "cancel",
+                        phase: "complete",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "ignored",
+                        source: "producer",
+                        value: 2,
+                    },
+
+                    {
+                        explicit: true,
+                        operation: "close",
+                        phase: "start",
+                        source: "producer",
+                    },
+
+                    {
+                        explicit: true,
+                        operation: "close",
+                        phase: "ignored",
+                        source: "producer",
+                    },
+
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "start",
+                        source: "producer",
+                    },
+
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "ignored",
+                        source: "producer",
+                    },
                 ],
             );
         });
@@ -369,38 +330,33 @@ describe("PushReadableStream", () => {
                 value: 1,
             });
             assert.deepStrictEqual(
-                log.mock.calls.map((call) => call.arguments),
+                log.mock.calls.map((call) => call.arguments[0]),
                 [
-                    [
-                        {
-                            operation: "pull",
-                            phase: "start",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "pull",
-                            phase: "complete",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "complete",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
+                    {
+                        operation: "pull",
+                        phase: "start",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "pull",
+                        phase: "complete",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "complete",
+                        source: "producer",
+                        value: 1,
+                    },
                 ],
             );
         });
@@ -421,62 +377,151 @@ describe("PushReadableStream", () => {
             });
             await delay(0);
             assert.deepStrictEqual(
-                log.mock.calls.map((call) => call.arguments),
+                log.mock.calls.map((call) => call.arguments[0]),
                 [
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "waiting",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "pull",
-                            phase: "start",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "pull",
-                            phase: "complete",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "complete",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "start",
-                            source: "producer",
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "complete",
-                            source: "producer",
-                        },
-                    ],
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "waiting",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "pull",
+                        phase: "start",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "pull",
+                        phase: "complete",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "complete",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "start",
+                        source: "producer",
+                    },
+
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "complete",
+                        source: "producer",
+                    },
+                ],
+            );
+        });
+
+        it("should allow multiple `enqueue`", async () => {
+            const log = mock.fn<PushReadableLogger<number>>();
+
+            const stream = new PushReadableStream(
+                async (controller) => {
+                    // Test calling `enqueue` multiple times without `await`
+                    // (this defeats the purpose of `PushReadableStream`
+                    // and shouldn't be used in production code,
+                    // but we want to make sure it doesn't break)
+                    const p1 = controller.enqueue(1);
+                    const p2 = controller.enqueue(2);
+                    await Promise.all([p1, p2]);
+                },
+                { highWaterMark: 0 },
+                log,
+            );
+            await delay(0);
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments[0]),
+                [
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 1,
+                        phase: "start",
+                    },
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 1,
+                        phase: "waiting",
+                    },
+                ],
+            );
+            log.mock.resetCalls();
+
+            const reader = stream.getReader();
+            assert.deepStrictEqual(await reader.read(), {
+                done: false,
+                value: 1,
+            });
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments[0]),
+                [
+                    {
+                        source: "consumer",
+                        operation: "pull",
+                        phase: "start",
+                    },
+                    {
+                        source: "consumer",
+                        operation: "pull",
+                        phase: "complete",
+                    },
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 1,
+                        phase: "complete",
+                    },
+                ],
+            );
+            log.mock.resetCalls();
+
+            assert.deepStrictEqual(await reader.read(), {
+                done: false,
+                value: 2,
+            });
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments[0]),
+                [
+                    {
+                        source: "consumer",
+                        operation: "pull",
+                        phase: "start",
+                    },
+                    {
+                        source: "consumer",
+                        operation: "pull",
+                        phase: "complete",
+                    },
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 2,
+                        phase: "start",
+                    },
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 2,
+                        phase: "complete",
+                    },
                 ],
             );
         });
@@ -502,52 +547,45 @@ describe("PushReadableStream", () => {
                 value: 1,
             });
             assert.deepStrictEqual(
-                log.mock.calls.map((call) => call.arguments),
+                log.mock.calls.map((call) => call.arguments[0]),
                 [
-                    [
-                        {
-                            operation: "pull",
-                            phase: "start",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "pull",
-                            phase: "complete",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "pull",
-                            phase: "start",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "pull",
-                            phase: "complete",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "complete",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
+                    {
+                        operation: "pull",
+                        phase: "start",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "pull",
+                        phase: "complete",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "pull",
+                        phase: "start",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "pull",
+                        phase: "complete",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "complete",
+                        source: "producer",
+                        value: 1,
+                    },
                 ],
             );
         });
@@ -568,54 +606,47 @@ describe("PushReadableStream", () => {
             });
             await delay(0);
             assert.deepStrictEqual(
-                log.mock.calls.map((call) => call.arguments),
+                log.mock.calls.map((call) => call.arguments[0]),
                 [
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "start",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "enqueue",
-                            phase: "complete",
-                            source: "producer",
-                            value: 1,
-                        },
-                    ],
-                    [
-                        {
-                            operation: "pull",
-                            phase: "start",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            operation: "pull",
-                            phase: "complete",
-                            source: "consumer",
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "start",
-                            source: "producer",
-                        },
-                    ],
-                    [
-                        {
-                            explicit: false,
-                            operation: "close",
-                            phase: "complete",
-                            source: "producer",
-                        },
-                    ],
+                    {
+                        operation: "enqueue",
+                        phase: "start",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "enqueue",
+                        phase: "complete",
+                        source: "producer",
+                        value: 1,
+                    },
+
+                    {
+                        operation: "pull",
+                        phase: "start",
+                        source: "consumer",
+                    },
+
+                    {
+                        operation: "pull",
+                        phase: "complete",
+                        source: "consumer",
+                    },
+
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "start",
+                        source: "producer",
+                    },
+
+                    {
+                        explicit: false,
+                        operation: "close",
+                        phase: "complete",
+                        source: "producer",
+                    },
                 ],
             );
         });
@@ -654,6 +685,70 @@ describe("PushReadableStream", () => {
             });
             const reader = stream.getReader();
             assert.strictEqual(await reader.closed, undefined);
+        });
+
+        it("should cancel pending `enqueue`", async () => {
+            const log = mock.fn<PushReadableLogger<number>>();
+
+            new PushReadableStream(
+                async (controller) => {
+                    controller.enqueue(1);
+                    controller.enqueue(2);
+                    await delay(0);
+                },
+                { highWaterMark: 1 },
+                log,
+            );
+
+            await delay(0);
+
+            assert.deepStrictEqual(
+                log.mock.calls.map((call) => call.arguments[0]),
+                [
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 1,
+                        phase: "start",
+                    },
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 1,
+                        phase: "complete",
+                    },
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 2,
+                        phase: "start",
+                    },
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 2,
+                        phase: "waiting",
+                    },
+                    {
+                        source: "producer",
+                        operation: "close",
+                        explicit: false,
+                        phase: "start",
+                    },
+                    {
+                        source: "producer",
+                        operation: "close",
+                        explicit: false,
+                        phase: "complete",
+                    },
+                    {
+                        source: "producer",
+                        operation: "enqueue",
+                        value: 2,
+                        phase: "ignored",
+                    },
+                ],
+            );
         });
     });
 });

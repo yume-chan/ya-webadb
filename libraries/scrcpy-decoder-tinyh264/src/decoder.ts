@@ -1,9 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
 import { H264 } from "@yume-chan/media-codec";
-import type {
-    ScrcpyMediaStreamConfigurationPacket,
-    ScrcpyMediaStreamPacket,
-} from "@yume-chan/scrcpy";
+import type { ScrcpyMediaStreamConfigurationPacket } from "@yume-chan/scrcpy";
 import {
     AndroidAvcLevel,
     AndroidAvcProfile,
@@ -17,13 +14,16 @@ import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
 } from "./types.js";
-import { createCanvas, glIsSupported } from "./utils/index.js";
-import { PauseControllerImpl } from "./utils/pause.js";
-import { PerformanceCounterImpl } from "./utils/performance.js";
+import {
+    createCanvas,
+    glIsSupported,
+    PauseController,
+    PerformanceCounter,
+} from "./utils/index.js";
 import type { TinyH264Wrapper } from "./wrapper.js";
 import { createTinyH264Wrapper } from "./wrapper.js";
 
-const noop = () => {
+export const noop = () => {
     // no-op
 };
 
@@ -41,6 +41,21 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#canvas;
     }
 
+    #renderer: YuvCanvas | undefined;
+    #rendererType: "2d" | "webgl";
+    get rendererType() {
+        return this.#rendererType;
+    }
+
+    #pause = new PauseController();
+    get paused() {
+        return this.#pause.paused;
+    }
+
+    get writable() {
+        return this.#pause.writable;
+    }
+
     #size = new ScrcpyVideoSizeImpl();
     get width() {
         return this.#size.width;
@@ -52,28 +67,34 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         return this.#size.sizeChanged;
     }
 
-    #counter = new PerformanceCounterImpl();
-    get framesDrawn() {
-        return this.#counter.framesDrawn;
+    #counter = new PerformanceCounter();
+    /**
+     * Gets the number of frames that have been drawn on the renderer.
+     */
+    get framesRendered() {
+        return this.#counter.framesRendered;
     }
-    get framesPresented() {
-        return this.#counter.framesPresented;
+    /**
+     * Gets the number of frames that's visible to the user.
+     *
+     * Multiple frames might be rendered during one vertical sync interval,
+     * but only the last of them is represented to the user.
+     * This costs some performance but reduces latency by 1 frame.
+     *
+     * Might be `0` if the renderer is in a nested Web Worker on Chrome due to a Chrome bug.
+     * https://issues.chromium.org/issues/41483010
+     */
+    get framesDisplayed() {
+        return this.#counter.framesDisplayed;
     }
-    get framesSkipped() {
-        return this.#counter.framesSkipped;
+    /**
+     * Gets the number of frames that wasn't drawn on the renderer
+     * because the renderer can't keep up
+     */
+    get framesSkippedRendering() {
+        return this.#counter.framesSkippedRendering;
     }
 
-    #pause: PauseControllerImpl;
-    get paused() {
-        return this.#pause.paused;
-    }
-
-    #writable: WritableStream<ScrcpyMediaStreamPacket>;
-    get writable() {
-        return this.#writable;
-    }
-
-    #renderer: YuvCanvas | undefined;
     #decoder: Promise<TinyH264Wrapper> | undefined;
 
     constructor({ canvas }: TinyH264Decoder.Options = {}) {
@@ -83,41 +104,45 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             this.#canvas = createCanvas();
         }
 
+        const webGlSupported = glIsSupported({
+            // Disallow software rendering.
+            // yuv-canvas also supports 2d canvas
+            // which is faster than software-based WebGL.
+            failIfMajorPerformanceCaveat: true,
+        });
         this.#renderer = YuvCanvas.attach(this.#canvas, {
             // yuv-canvas supports detecting WebGL support by creating a <canvas> itself
             // But this doesn't work in Web Worker (with OffscreenCanvas)
             // so we implement our own check here
-            webGL: glIsSupported({
-                // Disallow software rendering.
-                // yuv-canvas also supports 2d canvas
-                // which is faster than software-based WebGL.
-                failIfMajorPerformanceCaveat: true,
-            }),
+            webGL: webGlSupported,
         });
+        this.#rendererType = webGlSupported ? "webgl" : "2d";
 
-        this.#pause = new PauseControllerImpl(
-            this.#configure,
-            async (packet) => {
-                if (!this.#decoder) {
-                    throw new Error("Decoder not configured");
-                }
+        void this.#pause.readable
+            .pipeTo(
+                new WritableStream({
+                    write: async (packet) => {
+                        if (packet.type === "configuration") {
+                            await this.#configure(packet);
+                            return;
+                        }
 
-                // TinyH264 decoder doesn't support associating metadata
-                // with each frame's input/output
-                // so skipping frames when resuming from pause is not supported
+                        if (!this.#decoder) {
+                            throw new Error("Decoder not configured");
+                        }
 
-                const decoder = await this.#decoder;
+                        // TinyH264 decoder doesn't support associating metadata
+                        // with each frame's input/output
+                        // so skipping frames when resuming from pause is not supported
 
-                // `packet.data` might be from a `BufferCombiner` so we have to copy it using `slice`
-                decoder.feed(packet.data.slice().buffer);
-            },
-        );
+                        const decoder = await this.#decoder;
 
-        this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
-            write: this.#pause.write,
-            // Nothing can be disposed when the stream is aborted/closed
-            // No new frames will arrive, but some frames might still be decoding and/or rendering
-        });
+                        // `packet.data` might be from a `BufferCombiner` so we have to copy it using `slice`
+                        decoder.feed(packet.data.slice().buffer);
+                    },
+                }),
+            )
+            .catch(noop);
     }
 
     #configure = async ({
@@ -164,6 +189,9 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             const uPlaneOffset = encodedWidth * encodedHeight;
             const vPlaneOffset = uPlaneOffset + chromaWidth * chromaHeight;
             decoder.onPictureReady(({ data }) => {
+                // TinyH264 doesn't pass any frame metadata to `onPictureReady`
+                // so frames marked as skipped (by pause controller) can't be skipped
+
                 const array = new Uint8Array(data);
                 const frame = YuvBuffer.frame(
                     format,
@@ -184,7 +212,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
 
                 // Can't know if yuv-canvas is dropping frames or not
                 this.#renderer!.drawFrame(frame);
-                this.#counter.increaseFramesDrawn();
+                this.#counter.increaseFramesRendered();
             });
 
             decoder.feed(data.slice().buffer);
@@ -199,8 +227,8 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
         this.#pause.pause();
     }
 
-    resume(): Promise<undefined> {
-        return this.#pause.resume();
+    resume(): undefined {
+        this.#pause.resume();
     }
 
     trackDocumentVisibility(document: Document): () => undefined {

@@ -135,6 +135,42 @@ export function concatUint8Arrays(chunks: readonly Uint8Array[]): Uint8Array {
     return output;
 }
 
+export function toUint8Array(
+    buffer: ArrayBufferLike | ArrayBufferView<ArrayBufferLike>,
+): Uint8Array {
+    if (buffer instanceof Uint8Array) {
+        return buffer;
+    }
+    if (ArrayBuffer.isView(buffer)) {
+        return new Uint8Array(
+            buffer.buffer,
+            buffer.byteOffset,
+            buffer.byteLength,
+        );
+    }
+    return new Uint8Array(buffer);
+}
+
+export function concatBuffers(
+    buffers: readonly (ArrayBufferLike | ArrayBufferView<ArrayBufferLike>)[],
+): Uint8Array {
+    switch (buffers.length) {
+        case 0:
+            return EmptyUint8Array;
+        case 1:
+            return toUint8Array(buffers[0]!);
+    }
+
+    const length = buffers.reduce((a, b) => a + b.byteLength, 0);
+    const output = new Uint8Array(length);
+    let offset = 0;
+    for (const buffer of buffers) {
+        output.set(toUint8Array(buffer), offset);
+        offset += buffer.byteLength;
+    }
+    return output;
+}
+
 /**
  * A `TransformStream` that concatenates `Uint8Array`s.
  *

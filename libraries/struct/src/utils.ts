@@ -8,6 +8,10 @@
 
 interface TextEncoder {
     encode(input: string): Uint8Array<ArrayBuffer>;
+    encodeInto(
+        source: string,
+        destination: Uint8Array,
+    ): { read: number; written: number };
 }
 
 interface TextDecoder {
@@ -25,7 +29,7 @@ interface GlobalExtension {
 export const { TextEncoder, TextDecoder } =
     globalThis as unknown as GlobalExtension;
 
-const SharedEncoder = /* #__PURE__ */ new TextEncoder();
+export const SharedEncoder = /* #__PURE__ */ new TextEncoder();
 const SharedDecoder = /* #__PURE__ */ new TextDecoder();
 
 /* #__NO_SIDE_EFFECTS__ */

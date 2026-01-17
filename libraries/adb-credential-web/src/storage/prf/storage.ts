@@ -1,4 +1,4 @@
-import type { MaybeError } from "@yume-chan/adb";
+import { toLocalUint8Array, type MaybeError } from "@yume-chan/adb";
 import {
     buffer,
     struct,
@@ -85,7 +85,7 @@ export class TangoPrfStorage implements TangoKeyStorage {
     }
 
     async save(
-        privateKey: Uint8Array<ArrayBuffer>,
+        privateKey: Uint8Array,
         name: string | undefined,
     ): Promise<undefined> {
         const prfInput = new Uint8Array(PrfInputLength);
@@ -122,7 +122,7 @@ export class TangoPrfStorage implements TangoKeyStorage {
         const encrypted = await crypto.subtle.encrypt(
             { name: "AES-GCM", iv },
             aesKey,
-            privateKey,
+            toLocalUint8Array(privateKey),
         );
 
         const bundle = Bundle.serialize({

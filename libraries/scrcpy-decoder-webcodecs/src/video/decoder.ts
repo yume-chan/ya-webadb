@@ -1,25 +1,24 @@
-import type { ScrcpyMediaStreamPacket } from "@yume-chan/scrcpy";
 import { ScrcpyVideoCodecId, ScrcpyVideoSizeImpl } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
 } from "@yume-chan/scrcpy-decoder-tinyh264";
+import { noop, PauseController } from "@yume-chan/scrcpy-decoder-tinyh264";
+import { InspectStream } from "@yume-chan/stream-extra";
+
 import {
-    PauseControllerImpl,
-    PerformanceCounterImpl,
-} from "@yume-chan/scrcpy-decoder-tinyh264";
-import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
-import { WritableStream } from "@yume-chan/stream-extra";
-
-import { Av1Codec, H264Decoder, H265Decoder } from "./codec/index.js";
-import type { CodecDecoder, CodecDecoderOptions } from "./codec/type.js";
-import { Pool } from "./pool.js";
+    Av1TransformStream,
+    H264TransformStream,
+    H265TransformStream,
+} from "./codec/index.js";
+import type { CodecTransformStream } from "./codec/type.js";
 import type { VideoFrameRenderer } from "./render/index.js";
-import { VideoFrameCapturer } from "./snapshot.js";
-
-const VideoFrameCapturerPool =
-    /* #__PURE__ */
-    new Pool(() => new VideoFrameCapturer(), 4);
+import {
+    AutoCanvasRenderer,
+    BitmapVideoFrameRenderer,
+    RendererController,
+} from "./render/index.js";
+import { TimestampTransforms, VideoDecoderStream } from "./utils/index.js";
 
 export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     static get isSupported() {
@@ -33,6 +32,8 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             av1: {},
         };
 
+    // #region parameters
+
     #codec: ScrcpyVideoCodecId;
     get codec() {
         return this.#codec;
@@ -43,15 +44,21 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#renderer;
     }
 
-    #options: CodecDecoderOptions;
+    // #endregion parameters
 
-    #error: Error | undefined;
+    // #region pause controller
 
-    #writable: WritableStream<ScrcpyMediaStreamPacket>;
-    #controller!: WritableStreamDefaultController;
-    get writable() {
-        return this.#writable;
+    #pause = new PauseController();
+    get paused() {
+        return this.#pause.paused;
     }
+    get writable() {
+        return this.#pause.writable;
+    }
+
+    // #endregion pause controller
+
+    // #region size
 
     #size = new ScrcpyVideoSizeImpl();
     get width() {
@@ -64,272 +71,193 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#size.sizeChanged;
     }
 
-    #counter = new PerformanceCounterImpl();
-    get framesDrawn() {
-        return this.#counter.framesDrawn;
-    }
-    get framesPresented() {
-        return this.#counter.framesPresented;
-    }
-    get framesSkipped() {
-        return this.#counter.framesSkipped;
-    }
+    // #endregion size
 
-    #pause: PauseControllerImpl;
-    get paused() {
-        return this.#pause.paused;
-    }
+    // #region raw decoder
 
-    #rawDecoder: VideoDecoder;
-    #decoder: CodecDecoder;
-
-    #framesDecoded = 0;
-    get framesDecoded() {
-        return this.#framesDecoded;
-    }
-    #decodingTime = 0;
+    #rawDecoder = new VideoDecoderStream();
     /**
-     * Accumulated decoding time in milliseconds
+     * Gets the number of frames waiting to be decoded.
      */
-    get decodingTime() {
-        return this.#decodingTime;
+    get decodeQueueSize() {
+        return this.#rawDecoder.decodeQueueSize;
+    }
+    /**
+     * Gets an event when a frame is dequeued (either decoded or discarded).
+     */
+    get onDequeue() {
+        return this.#rawDecoder.onDequeue;
+    }
+    /**
+     * Gets the number of frames decoded by the decoder.
+     */
+    get framesDecoded() {
+        return this.#rawDecoder.framesDecoded;
+    }
+    /**
+     * Gets the number of frames skipped by the decoder.
+     */
+    get framesSkippedDecoding() {
+        return this.#rawDecoder.framesSkipped;
     }
 
-    #drawing = false;
-    #nextFrame: VideoFrame | undefined;
-    #captureFrame: VideoFrame | undefined;
+    // #endregion raw decoder
+
+    #timestampTransforms = new TimestampTransforms();
+    /**
+     * Gets the total time spent processing and decoding frames in milliseconds.
+     */
+    get totalDecodeTime() {
+        return this.#timestampTransforms.totalDecodeTime;
+    }
+
+    // #region renderer
+
+    #renderController = new RendererController();
+    /**
+     * Gets the number of frames that have been drawn on the renderer.
+     */
+    get framesRendered() {
+        return this.#renderController.framesRendered;
+    }
+    /**
+     * Gets the number of frames that's visible to the user.
+     *
+     * Multiple frames might be rendered during one vertical sync interval,
+     * but only the last of them is represented to the user.
+     * This costs some performance but reduces latency by 1 frame.
+     *
+     * Might be `0` if the renderer is in a nested Web Worker on Chrome due to a Chrome bug.
+     * https://issues.chromium.org/issues/41483010
+     */
+    get framesDisplayed() {
+        return this.#renderController.framesDisplayed;
+    }
+    /**
+     * Gets the number of frames that wasn't drawn on the renderer
+     * because the renderer can't keep up
+     */
+    get framesSkippedRendering() {
+        return this.#renderController.framesSkippedRendering;
+    }
+
+    // #endregion renderer
 
     /**
      * Create a new WebCodecs video decoder.
      */
     constructor({
         codec,
-        renderer,
-        ...options
+        renderer = new AutoCanvasRenderer(),
+        hardwareAcceleration = "no-preference",
+        optimizeForLatency = true,
     }: WebCodecsVideoDecoder.Options) {
         this.#codec = codec;
         this.#renderer = renderer;
-        this.#options = options;
 
-        this.#rawDecoder = new VideoDecoder({
-            output: (frame) => {
-                if (this.#error) {
-                    frame.close();
-                    return;
-                }
-
-                // Skip rendering frames while resuming from pause
-                if (frame.timestamp === 0) {
-                    frame.close();
-                    return;
-                }
-
-                this.#framesDecoded += 1;
-                this.#decodingTime +=
-                    performance.now() - frame.timestamp / 1000;
-
-                this.#captureFrame?.close();
-                // PERF: `VideoFrame#clone` is cheap
-                this.#captureFrame = frame.clone();
-
-                void this.#draw(frame);
-            },
-            error: (error) => {
-                this.#setError(error);
-            },
-        });
-
+        let codecTransform: CodecTransformStream;
         switch (this.#codec) {
             case ScrcpyVideoCodecId.H264:
-                this.#decoder = new H264Decoder(
-                    this.#rawDecoder,
-                    this.#updateSize,
-                    this.#options,
-                );
+                codecTransform = new H264TransformStream();
                 break;
             case ScrcpyVideoCodecId.H265:
-                this.#decoder = new H265Decoder(
-                    this.#rawDecoder,
-                    this.#updateSize,
-                    this.#options,
-                );
+                codecTransform = new H265TransformStream();
                 break;
             case ScrcpyVideoCodecId.AV1:
-                this.#decoder = new Av1Codec(
-                    this.#rawDecoder,
-                    this.#updateSize,
-                    this.#options,
-                );
+                codecTransform = new Av1TransformStream();
                 break;
             default:
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                 throw new Error(`Unsupported codec: ${this.#codec}`);
         }
 
-        this.#pause = new PauseControllerImpl(
-            (packet) => this.#decoder.decode(packet),
-            (packet, skipRendering) => {
-                let pts: bigint;
+        void this.#pause.readable
+            // Add timestamp
+            .pipeThrough(this.#timestampTransforms.addTimestamp)
+            // Convert Scrcpy packets to `VideoDecoder` config/chunk
+            .pipeThrough(codecTransform)
+            // Insert extra `VideoDecoder` config and intercept size changes
+            .pipeThrough(
+                new InspectStream((chunk): undefined => {
+                    if ("codec" in chunk) {
+                        chunk.hardwareAcceleration = hardwareAcceleration;
+                        chunk.optimizeForLatency = optimizeForLatency;
 
-                if (skipRendering) {
-                    // Set `pts` to 0 as a marker for skipping rendering this frame
-                    pts = 0n;
-                } else {
-                    // Set `pts` to current time to track decoding time
-
-                    // Technically `performance.now()` can return 0 (when document starts loading),
-                    // but in practice it's impossible to call it at that time.
-                    const now = performance.now();
-
-                    // `now` can be an integer, so `us` needs a default value
-                    const [ms, us = ""] = now.toString().split(".");
-
-                    // Multiply `performance.now()` by 1000 to get microseconds.
-                    // Use string concatenation to prevent precision loss.
-                    pts = BigInt(ms + (us + "000").slice(0, 3));
-                }
-
-                // Create a copy of `packet` because other code (like recording)
-                // needs the original `pts`
-                return this.#decoder.decode({
-                    ...packet,
-                    pts,
-                });
-            },
-        );
-
-        this.#writable = new WritableStream<ScrcpyMediaStreamPacket>({
-            start: (controller) => {
-                if (this.#error) {
-                    controller.error(this.#error);
-                } else {
-                    this.#controller = controller;
-                }
-            },
-            write: this.#pause.write,
-            // Nothing can be disposed when the stream is aborted/closed
-            // No new frames will arrive, but some frames might still be decoding and/or rendering,
-            // and they need to be presented.
-        });
-    }
-
-    #setError(error: Error) {
-        if (this.#error) {
-            return;
-        }
-
-        this.#error = error;
-
-        try {
-            this.#controller?.error(error);
-        } catch {
-            // ignore
-        }
-
-        this.dispose();
-    }
-
-    async #draw(frame: VideoFrame) {
-        try {
-            if (this.#drawing) {
-                if (this.#nextFrame) {
-                    // Frame `n` is still drawing, frame `n + m` (m > 0) is waiting, and frame `n + m + 1` comes.
-                    // Dispose frame `n + m` and set frame `n + m + 1` as the next frame.
-                    this.#nextFrame.close();
-                    this.#counter.increaseFramesSkipped();
-                }
-                this.#nextFrame = frame;
-                return;
-            }
-
-            this.#drawing = true;
-
-            do {
-                this.#updateSize(frame.displayWidth, frame.displayHeight);
-
-                // PERF: Draw every frame to minimize latency at cost of performance.
-                // When multiple frames are drawn in one vertical sync interval,
-                // only the last one is visible to users.
-                // But this ensures users can always see the most up-to-date screen.
-                // This is also the behavior of official Scrcpy client.
-                // https://github.com/Genymobile/scrcpy/issues/3679
-                await this.#renderer.draw(frame);
-                frame.close();
-
-                this.#counter.increaseFramesDrawn();
-
-                if (this.#nextFrame) {
-                    frame = this.#nextFrame;
-                    this.#nextFrame = undefined;
-                } else {
-                    break;
-                }
-            } while (true);
-
-            this.#drawing = false;
-        } catch (error) {
-            this.#setError(error as Error);
-        }
-    }
-
-    #updateSize = (width: number, height: number) => {
-        this.#renderer.setSize(width, height);
-        this.#size.setSize(width, height);
-    };
-
-    async snapshot() {
-        const frame = this.#captureFrame;
-        if (!frame) {
-            return undefined;
-        }
-
-        const capturer = await VideoFrameCapturerPool.borrow();
-        try {
-            return await capturer.capture(frame);
-        } finally {
-            VideoFrameCapturerPool.return(capturer);
-        }
+                        this.#size.setSize(chunk.codedWidth, chunk.codedHeight);
+                    }
+                }),
+            )
+            // Decode `VideoDecoder` config/chunk to `VideoFrame`s
+            .pipeThrough(this.#rawDecoder)
+            // Track decoding time and filter skipped frames
+            .pipeThrough(this.#timestampTransforms.consumeTimestamp)
+            // Skip frames if renderer can't keep up
+            .pipeThrough(this.#renderController)
+            // Render
+            .pipeTo(renderer.writable)
+            // Errors will be handled by source stream
+            .catch(noop);
     }
 
     pause(): void {
         this.#pause.pause();
     }
 
-    resume(): Promise<undefined> {
-        return this.#pause.resume();
+    resume(): undefined {
+        this.#pause.resume();
     }
 
     trackDocumentVisibility(document: Document): () => undefined {
         return this.#pause.trackDocumentVisibility(document);
     }
 
-    dispose() {
-        this.#captureFrame?.close();
-
-        this.#counter.dispose();
-        this.#renderer.dispose();
-        this.#size.dispose();
-        this.#nextFrame?.close();
-
-        if (this.#rawDecoder.state !== "closed") {
-            this.#rawDecoder.close();
+    async snapshot(options?: ImageEncodeOptions) {
+        const frame = this.#renderController.captureFrame;
+        if (!frame) {
+            return undefined;
         }
 
-        // This class doesn't need to guard against multiple dispose calls
-        // since most of the logic is already handled in `#pause`
-        this.#pause.dispose();
+        // First check if the renderer can provide a snapshot natively
+        const blob = await this.#renderer.snapshot?.(options);
+        if (blob) {
+            return blob;
+        }
 
-        this.#setError(new Error("Attempt to write to a disposed decoder"));
+        // Create a BitmapVideoFrameRenderer to draw the frame
+        const renderer = new BitmapVideoFrameRenderer();
+        try {
+            const writer = renderer.writable.getWriter();
+            await writer.write(frame);
+            await writer.close();
+            // BitmapVideoFrameRenderer.snapshot will definitely return a value
+            return await renderer.snapshot(options);
+        } finally {
+            renderer.dispose();
+        }
+    }
+
+    dispose() {
+        // Most cleanup happens automatically when `writable` ends
+        // (in each stream's `close` callback).
+        // This method cleanup things that still available after `writable` ends
+
+        this.#pause.dispose();
+        this.#size.dispose();
+        this.#renderController.dispose();
+        this.#renderer.dispose?.();
     }
 }
 
 export namespace WebCodecsVideoDecoder {
-    export interface Options extends CodecDecoderOptions {
+    export interface Options extends Pick<
+        VideoDecoderConfig,
+        "hardwareAcceleration" | "optimizeForLatency"
+    > {
         /**
          * The video codec to decode
          */
         codec: ScrcpyVideoCodecId;
 
-        renderer: VideoFrameRenderer;
+        renderer?: VideoFrameRenderer | undefined;
     }
 }

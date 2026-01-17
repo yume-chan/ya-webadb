@@ -146,13 +146,20 @@ export class AdbPacketDispatcher implements Closeable {
                                 this.#handleOkay(packet);
                                 break;
                             case AdbCommand.Open:
-                                await this.#handleOpen(packet);
+                                // Don't await
+                                // The handler may take a long time to accept the socket,
+                                // don't block other sockets' packet processing.
+                                this.#handleOpen(packet).catch((e) => {
+                                    // Propagate fatal errors to consumer
+                                    controller.error(e);
+                                });
                                 break;
                             case AdbCommand.Write:
-                                // Don't await - let each socket handle its own backpressure
-                                // without blocking other sockets' packet processing.
-                                // Fatal errors are propagated via WritableStream's controller.
+                                // Don't await
+                                // The socket might be stalled because of backpressure,
+                                // don't block other sockets' packet processing.
                                 this.#handleWrite(packet).catch((e) => {
+                                    // Propagate fatal errors to consumer
                                     controller.error(e);
                                 });
                                 break;

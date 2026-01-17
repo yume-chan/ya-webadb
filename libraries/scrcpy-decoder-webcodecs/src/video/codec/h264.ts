@@ -1,38 +1,15 @@
 import { H264 } from "@yume-chan/media-codec";
 
-import { H26xDecoder } from "./h26x.js";
-import type { CodecDecoderOptions } from "./type.js";
+import { H26xTransformStream } from "./h26x.js";
 
-export class H264Decoder extends H26xDecoder {
-    #decoder: VideoDecoder;
-    #updateSize: (width: number, height: number) => void;
-    #options: CodecDecoderOptions | undefined;
-
-    constructor(
-        decoder: VideoDecoder,
-        updateSize: (width: number, height: number) => void,
-        options?: CodecDecoderOptions,
-    ) {
-        super(decoder);
-
-        this.#decoder = decoder;
-        this.#updateSize = updateSize;
-        this.#options = options;
-    }
-
-    override configure(data: Uint8Array): void {
+export class H264TransformStream extends H26xTransformStream {
+    override configure(data: Uint8Array): H26xTransformStream.Config {
         const configuration = H264.parseConfiguration(data);
 
-        this.#updateSize(
-            configuration.croppedWidth,
-            configuration.croppedHeight,
-        );
-
-        this.#decoder.configure({
+        return {
             codec: H264.toCodecString(configuration),
-            hardwareAcceleration:
-                this.#options?.hardwareAcceleration ?? "no-preference",
-            optimizeForLatency: true,
-        });
+            codedHeight: configuration.croppedHeight,
+            codedWidth: configuration.croppedWidth,
+        };
     }
 }

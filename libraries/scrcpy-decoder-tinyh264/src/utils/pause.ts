@@ -1,27 +1,25 @@
-import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
 import type {
     ScrcpyMediaStreamConfigurationPacket,
     ScrcpyMediaStreamDataPacket,
     ScrcpyMediaStreamPacket,
 } from "@yume-chan/scrcpy";
+import type { TransformStreamDefaultController } from "@yume-chan/stream-extra";
+import { TransformStream } from "@yume-chan/stream-extra";
 
 import type { ScrcpyVideoDecoderPauseController } from "../types.js";
 
-export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
+export class PauseController
+    extends TransformStream<PauseController.Input, PauseController.Output>
+    implements ScrcpyVideoDecoderPauseController
+{
+    #controller: TransformStreamDefaultController<PauseController.Output>;
+
     #paused = false;
     #pausedExplicitly = false;
     get paused() {
         return this.#paused;
     }
-
-    #onConfiguration: (
-        packet: ScrcpyMediaStreamConfigurationPacket,
-    ) => MaybePromiseLike<undefined>;
-    #onFrame: (
-        packet: ScrcpyMediaStreamDataPacket,
-        skipRendering: boolean,
-    ) => MaybePromiseLike<undefined>;
 
     /**
      * Store incoming configuration change when paused,
@@ -49,58 +47,59 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
 
     #disposed = false;
 
-    constructor(
-        onConfiguration: (
-            packet: ScrcpyMediaStreamConfigurationPacket,
-        ) => MaybePromiseLike<undefined>,
-        onFrame: (
-            packet: ScrcpyMediaStreamDataPacket,
-            skipRendering: boolean,
-        ) => MaybePromiseLike<undefined>,
-    ) {
-        this.#onConfiguration = onConfiguration;
-        this.#onFrame = onFrame;
-    }
+    constructor() {
+        let controller!: TransformStreamDefaultController<PauseController.Output>;
 
-    write = async (packet: ScrcpyMediaStreamPacket): Promise<undefined> => {
-        if (this.#disposed) {
-            throw new Error("Attempt to write to a closed decoder");
-        }
+        super({
+            start: (controller_) => {
+                controller = controller_;
+            },
+            transform: async (packet) => {
+                if (this.#disposed) {
+                    return;
+                }
 
-        if (this.#paused) {
-            switch (packet.type) {
-                case "configuration":
-                    this.#pendingConfiguration = packet;
-                    this.#pendingFrames.length = 0;
-                    break;
-                case "data":
-                    if (packet.keyframe) {
-                        this.#pendingFrames.length = 0;
+                if (this.#paused) {
+                    switch (packet.type) {
+                        case "configuration":
+                            this.#pendingConfiguration = packet;
+                            this.#pendingFrames.length = 0;
+                            break;
+                        case "data":
+                            if (packet.keyframe) {
+                                this.#pendingFrames.length = 0;
+                            }
+                            // Generally there won't be too many non-key frames
+                            // (because that's bad for video quality),
+                            // Also all frames are required for proper decoding
+                            this.#pendingFrames.push(packet);
+                            break;
                     }
-                    // Generally there won't be too many non-key frames
-                    // (because that's bad for video quality),
-                    // Also all frames are required for proper decoding
-                    this.#pendingFrames.push(packet);
-                    break;
-            }
-            return;
-        }
+                    return;
+                }
 
-        await this.#resuming;
+                await this.#resuming;
 
-        if (this.#disposed) {
-            return;
-        }
+                if (this.#disposed) {
+                    return;
+                }
 
-        switch (packet.type) {
-            case "configuration":
-                await this.#onConfiguration(packet);
-                break;
-            case "data":
-                await this.#onFrame(packet, false);
-                break;
-        }
-    };
+                switch (packet.type) {
+                    case "configuration":
+                        controller.enqueue(packet);
+                        break;
+                    case "data":
+                        controller.enqueue({
+                            ...packet,
+                            skipRendering: false,
+                        });
+                        break;
+                }
+            },
+        });
+
+        this.#controller = controller;
+    }
 
     #pauseInternal(explicitly: boolean): void {
         if (this.#disposed) {
@@ -117,7 +116,7 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         this.#pauseInternal(true);
     }
 
-    async #resumeInternal(explicitly: boolean): Promise<undefined> {
+    #resumeInternal(explicitly: boolean): undefined {
         if (this.#disposed) {
             throw new Error("Attempt to resume a closed decoder");
         }
@@ -139,28 +138,21 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         this.#pausedExplicitly = false;
 
         if (this.#pendingConfiguration) {
-            await this.#onConfiguration(this.#pendingConfiguration);
+            this.#controller.enqueue(this.#pendingConfiguration);
             this.#pendingConfiguration = undefined;
-
-            if (this.#disposed) {
-                return;
-            }
         }
 
-        for (
-            let i = 0, length = this.#pendingFrames.length;
-            i < length;
-            i += 1
-        ) {
-            const frame = this.#pendingFrames[i]!;
+        // `#pendingFrames` won't change during iteration
+        // because it can only change when `#paused` is `true`,
+        // but the code above already sets that to `false`
+        for (const [index, frame] of this.#pendingFrames.entries()) {
             // All pending frames except the last one don't need to be rendered
             // because they are decoded in quick succession by the decoder
             // and won't be visible
-            await this.#onFrame(frame, i !== length - 1);
-
-            if (this.#disposed) {
-                return;
-            }
+            this.#controller.enqueue({
+                ...frame,
+                skipRendering: index !== this.#pendingFrames.length - 1,
+            });
         }
 
         this.#pendingFrames.length = 0;
@@ -169,8 +161,8 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         this.#resuming = undefined;
     }
 
-    resume(): Promise<undefined> {
-        return this.#resumeInternal(true);
+    resume(): undefined {
+        this.#resumeInternal(true);
     }
 
     #disposeVisibilityTracker: (() => undefined) | undefined;
@@ -219,10 +211,18 @@ export class PauseControllerImpl implements ScrcpyVideoDecoderPauseController {
         }
 
         this.#disposed = true;
+        this.#controller.terminate();
 
         this.#pendingConfiguration = undefined;
         this.#pendingFrames.length = 0;
 
         this.#disposeVisibilityTracker?.();
     }
+}
+
+export namespace PauseController {
+    export type Input = ScrcpyMediaStreamPacket;
+    export type Output =
+        | ScrcpyMediaStreamConfigurationPacket
+        | (ScrcpyMediaStreamDataPacket & { skipRendering: boolean });
 }

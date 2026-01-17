@@ -1,7 +1,7 @@
 import type { Adb } from "../../../adb.js";
 
 import { AdbNoneProtocolProcessImpl } from "./process.js";
-import { AdbNoneProtocolPtyProcess } from "./pty.js";
+import { AdbNoneProtocolPty } from "./pty.js";
 import { adbNoneProtocolSpawner } from "./spawner.js";
 
 export class AdbNoneProtocolSubprocessService {
@@ -42,7 +42,7 @@ export class AdbNoneProtocolSubprocessService {
 
     async pty(
         command?: string | readonly string[],
-    ): Promise<AdbNoneProtocolPtyProcess> {
+    ): Promise<AdbNoneProtocolPty> {
         let service = "shell:";
 
         if (typeof command === "string") {
@@ -52,8 +52,6 @@ export class AdbNoneProtocolSubprocessService {
             service += command.join(" ");
         }
 
-        return new AdbNoneProtocolPtyProcess(
-            await this.#adb.createSocket(service),
-        );
+        return new AdbNoneProtocolPty(await this.#adb.createSocket(service));
     }
 }
