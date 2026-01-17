@@ -5,7 +5,6 @@ import type { CodecDecoderOptions } from "./type.js";
 import { hexTwoDigits } from "./utils.js";
 
 export class H264Decoder extends H26xDecoder {
-    #decoder: VideoDecoder;
     #updateSize: (width: number, height: number) => void;
     #options: CodecDecoderOptions | undefined;
 
@@ -15,12 +14,11 @@ export class H264Decoder extends H26xDecoder {
         options?: CodecDecoderOptions,
     ) {
         super(decoder);
-        this.#decoder = decoder;
         this.#updateSize = updateSize;
         this.#options = options;
     }
 
-    override configure(data: Uint8Array): void {
+    override configure(data: Uint8Array): VideoDecoderConfig {
         const {
             profileIndex,
             constraintSet,
@@ -38,11 +36,11 @@ export class H264Decoder extends H26xDecoder {
             hexTwoDigits(profileIndex) +
             hexTwoDigits(constraintSet) +
             hexTwoDigits(levelIndex);
-        this.#decoder.configure({
+        return {
             codec: codec,
             hardwareAcceleration:
                 this.#options?.hardwareAcceleration ?? "no-preference",
             optimizeForLatency: true,
-        });
+        };
     }
 }

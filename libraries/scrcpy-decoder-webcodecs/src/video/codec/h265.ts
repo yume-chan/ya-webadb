@@ -6,7 +6,6 @@ import type { CodecDecoderOptions } from "./type.js";
 import { hexDigits } from "./utils.js";
 
 export class H265Decoder extends H26xDecoder {
-    #decoder: VideoDecoder;
     #updateSize: (width: number, height: number) => void;
     #options: CodecDecoderOptions | undefined;
 
@@ -16,12 +15,11 @@ export class H265Decoder extends H26xDecoder {
         options?: CodecDecoderOptions,
     ) {
         super(decoder);
-        this.#decoder = decoder;
         this.#updateSize = updateSize;
         this.#options = options;
     }
 
-    override configure(data: Uint8Array): void {
+    override configure(data: Uint8Array): VideoDecoderConfig {
         const {
             generalProfileSpace,
             generalProfileIndex,
@@ -43,7 +41,7 @@ export class H265Decoder extends H26xDecoder {
             (generalTierFlag ? "H" : "L") + generalLevelIndex.toString(),
             ...Array.from(generalConstraintSet, hexDigits),
         ].join(".");
-        this.#decoder.configure({
+        return {
             codec,
             // Microsoft Edge requires explicit size to work
             codedWidth: croppedWidth,
@@ -51,6 +49,6 @@ export class H265Decoder extends H26xDecoder {
             hardwareAcceleration:
                 this.#options?.hardwareAcceleration ?? "no-preference",
             optimizeForLatency: true,
-        });
+        };
     }
 }
