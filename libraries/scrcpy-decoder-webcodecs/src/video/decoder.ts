@@ -34,6 +34,11 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
     // #region parameters
 
+    #type: "software" | "hardware";
+    get type() {
+        return this.#type;
+    }
+
     #codec: ScrcpyVideoCodecId;
     get codec() {
         return this.#codec;
@@ -42,6 +47,10 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     #renderer: VideoFrameRenderer;
     get renderer() {
         return this.#renderer;
+    }
+
+    get rendererType() {
+        return this.#renderer.type;
     }
 
     // #endregion parameters
@@ -152,6 +161,10 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         hardwareAcceleration = "no-preference",
         optimizeForLatency = true,
     }: WebCodecsVideoDecoder.Options) {
+        this.#type =
+            hardwareAcceleration !== "prefer-software"
+                ? "hardware"
+                : "software";
         this.#codec = codec;
         this.#renderer = renderer;
 

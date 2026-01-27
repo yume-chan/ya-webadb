@@ -6,9 +6,8 @@ import { WebGLVideoFrameRenderer } from "./webgl.js";
 export class AutoCanvasRenderer implements VideoFrameRenderer {
     #inner: CanvasVideoFrameRenderer;
 
-    #type: "bitmap" | "webgl";
     get type() {
-        return this.#type;
+        return this.#inner.type;
     }
 
     get canvas() {
@@ -19,16 +18,11 @@ export class AutoCanvasRenderer implements VideoFrameRenderer {
         return this.#inner.writable;
     }
 
-    constructor(
-        canvas?: HTMLCanvasElement | OffscreenCanvas,
-        options?: WebGLVideoFrameRenderer.Options,
-    ) {
+    constructor(options?: WebGLVideoFrameRenderer.Options) {
         if (WebGLVideoFrameRenderer.isSupported) {
-            this.#inner = new WebGLVideoFrameRenderer(canvas, options);
-            this.#type = "webgl";
+            this.#inner = new WebGLVideoFrameRenderer(options);
         } else {
-            this.#inner = new BitmapVideoFrameRenderer(canvas, options);
-            this.#type = "bitmap";
+            this.#inner = new BitmapVideoFrameRenderer(options);
         }
     }
 

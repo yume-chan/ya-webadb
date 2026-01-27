@@ -160,6 +160,10 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         });
     }
 
+    override get type() {
+        return "hardware" as const;
+    }
+
     #context: WebGLRenderingContext;
     #program!: WebGLProgram;
     #vertexBuffer!: WebGLBuffer;
@@ -174,50 +178,38 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
      * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
      * Enable this option may reduce performance.
      */
-    constructor(
-        canvas?: HTMLCanvasElement | OffscreenCanvas,
-        options?: WebGLVideoFrameRenderer.Options,
-    ) {
-        super(
-            (frame): undefined => {
-                const gl = this.#context;
-                if (gl.isContextLost()) {
-                    return;
-                }
+    constructor(options?: WebGLVideoFrameRenderer.Options) {
+        super((frame): undefined => {
+            const gl = this.#context;
+            if (gl.isContextLost()) {
+                return;
+            }
 
-                gl.texImage2D(
-                    gl.TEXTURE_2D,
-                    0,
-                    gl.RGBA,
-                    gl.RGBA,
-                    gl.UNSIGNED_BYTE,
-                    frame,
-                );
+            gl.texImage2D(
+                gl.TEXTURE_2D,
+                0,
+                gl.RGBA,
+                gl.RGBA,
+                gl.UNSIGNED_BYTE,
+                frame,
+            );
 
-                gl.uniform2f(
-                    this.#texelSizeLocation,
-                    1.0 / frame.codedWidth,
-                    1.0 / frame.codedHeight,
-                );
+            gl.uniform2f(
+                this.#texelSizeLocation,
+                1.0 / frame.codedWidth,
+                1.0 / frame.codedHeight,
+            );
 
-                gl.uniform1f(
-                    this.#zoomLocation,
-                    this.canvas.width / frame.codedWidth,
-                );
+            gl.uniform1f(
+                this.#zoomLocation,
+                this.canvas.width / frame.codedWidth,
+            );
 
-                gl.viewport(
-                    0,
-                    0,
-                    gl.drawingBufferWidth,
-                    gl.drawingBufferHeight,
-                );
-                gl.drawArrays(gl.TRIANGLES, 0, 3);
+            gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-                gl.flush();
-            },
-            canvas,
-            options,
-        );
+            gl.flush();
+        }, options);
 
         const gl = glCreateContext(this.canvas, {
             // Low-power GPU should be enough for video rendering.

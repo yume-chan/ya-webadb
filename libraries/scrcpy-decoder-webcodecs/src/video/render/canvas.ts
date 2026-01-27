@@ -11,6 +11,8 @@ export abstract class CanvasVideoFrameRenderer<
     TOptions extends CanvasVideoFrameRenderer.Options =
         CanvasVideoFrameRenderer.Options,
 > implements VideoFrameRenderer {
+    abstract get type(): "software" | "hardware";
+
     #canvas: HTMLCanvasElement | OffscreenCanvas;
     get canvas() {
         return this.#canvas;
@@ -47,11 +49,10 @@ export abstract class CanvasVideoFrameRenderer<
 
     constructor(
         draw: (frame: VideoFrame) => MaybePromiseLike<undefined>,
-        canvas?: HTMLCanvasElement | OffscreenCanvas,
         options?: TOptions,
     ) {
         this.#draw = draw;
-        this.#canvas = canvas ?? createCanvas();
+        this.#canvas = options?.canvas ?? createCanvas();
         this.#options = options;
         this.#canvasSize = options?.canvasSize ?? "video";
 
@@ -151,6 +152,8 @@ export abstract class CanvasVideoFrameRenderer<
 
 export namespace CanvasVideoFrameRenderer {
     export interface Options {
+        canvas?: HTMLCanvasElement | OffscreenCanvas;
+
         /**
          * Whether to update the canvas size (rendering resolution) automatically.
          *
