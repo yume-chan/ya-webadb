@@ -22,7 +22,15 @@ import {
 } from "@yume-chan/adb";
 import type { TangoKey, TangoKeyStorage } from "@yume-chan/adb-credential-web";
 
+const KeyErrorBrand = Symbol.for("KeyError.brand");
+
 class KeyError extends Error {
+    [KeyErrorBrand] = true;
+
+    static override [Symbol.hasInstance](value: unknown) {
+        return !!(value as KeyError | undefined)?.[KeyErrorBrand];
+    }
+
     readonly path: string;
 
     constructor(message: string, path: string, options?: ErrorOptions) {
@@ -40,6 +48,10 @@ class InvalidKeyError extends KeyError {
     constructor(path: string, options?: ErrorOptions) {
         super(`Can't read private key file at "${path}"`, path, options);
     }
+}
+
+function wrapError(e: unknown, creator: (e: unknown) => KeyError) {
+    return e instanceof KeyError ? e : creator(e);
 }
 
 /**
@@ -159,9 +171,10 @@ export class TangoNodeStorage implements TangoKeyStorage {
                 yield await this.#readKey(path);
                 return;
             } catch (e) {
-                yield e instanceof KeyError
-                    ? e
-                    : new VendorKeyError(path, { cause: e });
+                yield wrapError(
+                    e,
+                    (e) => new VendorKeyError(path, { cause: e }),
+                );
                 return;
             }
         }
@@ -188,9 +201,10 @@ export class TangoNodeStorage implements TangoKeyStorage {
                 try {
                     yield await this.#readKey(file);
                 } catch (e) {
-                    yield e instanceof KeyError
-                        ? e
-                        : new VendorKeyError(file, { cause: e });
+                    yield wrapError(
+                        e,
+                        (e) => new VendorKeyError(file, { cause: e }),
+                    );
                 }
             }
         }
@@ -202,9 +216,10 @@ export class TangoNodeStorage implements TangoKeyStorage {
             try {
                 yield await this.#readKey(userKeyPath);
             } catch (e) {
-                yield e instanceof KeyError
-                    ? e
-                    : new InvalidKeyError(userKeyPath, { cause: e });
+                yield wrapError(
+                    e,
+                    (e) => new InvalidKeyError(userKeyPath, { cause: e }),
+                );
             }
         }
 

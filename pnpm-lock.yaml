@@ -122,6 +122,9 @@ importers:
       '@yume-chan/async':
         specifier: ^4.1.3
         version: 4.1.3
+      '@yume-chan/stream-extra':
+        specifier: workspace:^
+        version: link:../stream-extra
       '@yume-chan/struct':
         specifier: workspace:^
         version: link:../struct

@@ -57,7 +57,17 @@ export class StructNotEnoughDataError extends StructDeserializeError {
     }
 }
 
+const StructEmptyErrorBrand = Symbol.for("StructEmptyError.brand");
+
 export class StructEmptyError extends StructDeserializeError {
+    [StructEmptyErrorBrand] = true;
+
+    static override [Symbol.hasInstance](value: unknown) {
+        return !!(value as StructEmptyError | undefined)?.[
+            StructEmptyErrorBrand
+        ];
+    }
+
     constructor() {
         super("The underlying readable doesn't contain any more struct");
     }

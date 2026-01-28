@@ -1,4 +1,6 @@
-import { toLocalUint8Array, type MaybeError } from "@yume-chan/adb";
+import type { MaybeError } from "@yume-chan/adb";
+import { toLocalUint8Array } from "@yume-chan/adb";
+import { toUint8Array } from "@yume-chan/stream-extra";
 import {
     buffer,
     struct,
@@ -44,13 +46,6 @@ async function deriveAesKey(
         false,
         ["encrypt", "decrypt"],
     );
-}
-
-function toUint8Array(source: BufferSource) {
-    if (source instanceof ArrayBuffer) {
-        return new Uint8Array(source);
-    }
-    return new Uint8Array(source.buffer, source.byteOffset, source.byteLength);
 }
 
 const Bundle = struct(

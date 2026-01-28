@@ -14,11 +14,19 @@ import {
 import type { Task } from "./task.js";
 import { createTask } from "./task.js";
 
+const Brand = Symbol.for("Consumable.brand");
+
 export class Consumable<T> {
     static readonly WritableStream = ConsumableWritableStream;
     static readonly WrapWritableStream = ConsumableWrapWritableStream;
     static readonly ReadableStream = ConsumableReadableStream;
     static readonly WrapByteReadableStream = ConsumableWrapByteReadableStream;
+
+    readonly [Brand] = true;
+
+    static [Symbol.hasInstance](value: unknown) {
+        return !!(value as Consumable<unknown> | undefined)?.[Brand];
+    }
 
     readonly #task: Task;
     readonly #resolver: PromiseResolver<void>;
