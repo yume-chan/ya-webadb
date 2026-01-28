@@ -36,13 +36,17 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             },
         };
 
+    get type() {
+        return "software" as const;
+    }
+
     #canvas: HTMLCanvasElement | OffscreenCanvas;
     get canvas() {
         return this.#canvas;
     }
 
     #renderer: YuvCanvas | undefined;
-    #rendererType: "2d" | "webgl";
+    #rendererType: "software" | "hardware";
     get rendererType() {
         return this.#rendererType;
     }
@@ -116,7 +120,7 @@ export class TinyH264Decoder implements ScrcpyVideoDecoder {
             // so we implement our own check here
             webGL: webGlSupported,
         });
-        this.#rendererType = webGlSupported ? "webgl" : "2d";
+        this.#rendererType = webGlSupported ? "hardware" : "software";
 
         void this.#pause.readable
             .pipeTo(

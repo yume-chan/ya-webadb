@@ -1,21 +1,18 @@
 import { CanvasVideoFrameRenderer } from "./canvas.js";
 
 export class BitmapVideoFrameRenderer extends CanvasVideoFrameRenderer {
+    override get type() {
+        return "software" as const;
+    }
+
     #context: ImageBitmapRenderingContext;
 
-    constructor(
-        canvas?: HTMLCanvasElement | OffscreenCanvas,
-        options?: CanvasVideoFrameRenderer.Options,
-    ) {
-        super(
-            async (frame) => {
-                const bitmap = await createImageBitmap(frame);
-                this.#context.transferFromImageBitmap(bitmap);
-                bitmap.close();
-            },
-            canvas,
-            options,
-        );
+    constructor(options?: CanvasVideoFrameRenderer.Options) {
+        super(async (frame) => {
+            const bitmap = await createImageBitmap(frame);
+            this.#context.transferFromImageBitmap(bitmap);
+            bitmap.close();
+        }, options);
 
         const context = (this.canvas as HTMLCanvasElement).getContext(
             "bitmaprenderer",

@@ -15,6 +15,10 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         return typeof MediaStreamTrackGenerator !== "undefined";
     }
 
+    get type() {
+        return "hardware" as const;
+    }
+
     #element: HTMLVideoElement;
     get element() {
         return this.#element;

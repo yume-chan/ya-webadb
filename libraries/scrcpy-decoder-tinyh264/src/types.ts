@@ -68,6 +68,10 @@ export interface ScrcpyVideoDecoder
         ScrcpyVideoDecoderPauseController,
         ScrcpyVideoSize,
         Disposable {
+    readonly type: "software" | "hardware";
+
+    readonly rendererType: "software" | "hardware";
+
     readonly writable: WritableStream<ScrcpyMediaStreamPacket>;
 }
 
