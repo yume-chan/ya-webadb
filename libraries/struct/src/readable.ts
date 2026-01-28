@@ -2,7 +2,19 @@
 
 import type { MaybePromiseLike } from "@yume-chan/async";
 
+const ExactReadableEndedErrorBrand = Symbol.for(
+    "ExactReadableEndedError.brand",
+);
+
 export class ExactReadableEndedError extends Error {
+    [ExactReadableEndedErrorBrand] = true;
+
+    static override [Symbol.hasInstance](value: unknown) {
+        return !!(value as ExactReadableEndedError | undefined)?.[
+            ExactReadableEndedErrorBrand
+        ];
+    }
+
     constructor() {
         super("ExactReadable ended");
     }
