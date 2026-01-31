@@ -4,6 +4,7 @@ export {
     BackOrScreenOnControlMessage as ScrcpyBackOrScreenOnControlMessage,
     CaptureOrientation as ScrcpyCaptureOrientation,
     CodecOptions as ScrcpyCodecOptions,
+    VideoCodecOptions as ScrcpyVideoCodecOptions,
     Crop as ScrcpyCrop,
     InjectScrollControlMessage as ScrcpyInjectScrollControlMessage,
     InjectTouchControlMessage as ScrcpyInjectTouchControlMessage,
