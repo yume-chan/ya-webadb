@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import { AndroidAvcProfile } from "../video/index.js";
 
-import { CodecOptions } from "./impl/index.js";
+import { CodecOptions, VideoCodecOptions } from "./impl/index.js";
 import { ScrcpyOptions1_21 } from "./options.js";
 
 describe("ScrcpyOptions1_21", () => {
@@ -30,9 +30,9 @@ describe("ScrcpyOptions1_21", () => {
 
         it("should convert ScrcpyOptionValue to string", () => {
             const options = new ScrcpyOptions1_21({
-                codecOptions: new CodecOptions({
-                    profile: AndroidAvcProfile.High,
-                }),
+                codecOptions: new VideoCodecOptions().setProfile(
+                    AndroidAvcProfile.High,
+                ),
             });
             assert.deepStrictEqual(options.serialize(), [
                 "codec_options=profile=8",
