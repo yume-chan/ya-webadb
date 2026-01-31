@@ -57,7 +57,19 @@ function concatStreams<T>(...streams: ReadableStream<T>[]): ReadableStream<T> {
     });
 }
 
+export const AdbScrcpyExitedErrorBrand = Symbol.for(
+    "AdbScrcpyExitedError.brand",
+);
+
 export class AdbScrcpyExitedError extends Error {
+    [AdbScrcpyExitedErrorBrand] = true;
+
+    static override [Symbol.hasInstance](value: unknown) {
+        return !!(value as AdbScrcpyExitedError | undefined)?.[
+            AdbScrcpyExitedErrorBrand
+        ];
+    }
+
     output: readonly string[];
 
     constructor(output: readonly string[]) {
