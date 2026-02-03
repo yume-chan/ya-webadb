@@ -75,7 +75,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
         logger?: PushReadableLogger<T>,
     ) {
         let controller!: ReadableStreamDefaultController<T>;
-        let tasks = new TaskQueue();
+        const tasks = new TaskQueue();
 
         let zeroHighWaterMarkAllowEnqueue = false;
         // Resolves when consumer calls `reader.read`.

@@ -101,7 +101,7 @@ export abstract class CanvasVideoFrameRenderer<
         this.#displayWidth = width;
         this.#displayHeight = height;
 
-        this.#controller.redraw();
+        void this.#controller.redraw();
     }
 
     #updateSize(frame: VideoFrame) {
@@ -129,7 +129,7 @@ export abstract class CanvasVideoFrameRenderer<
      * it cancels the queued redraw and redraws the latest frame instead.
      */
     redraw() {
-        this.#controller.redraw();
+        return this.#controller.redraw();
     }
 
     async snapshot(options?: ImageEncodeOptions): Promise<Blob | undefined> {

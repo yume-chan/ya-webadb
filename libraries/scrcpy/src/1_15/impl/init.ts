@@ -1,4 +1,5 @@
 import type { ScrcpyOptionValue } from "../../base/index.js";
+
 import type { CodecOptions } from "./codec-options.js";
 
 export const VideoOrientation = {

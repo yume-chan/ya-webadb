@@ -53,7 +53,7 @@ export class RedrawController {
      * If a redraw is in progress and another one is in queue,
      * it cancels the queued redraw and redraws the latest frame instead.
      */
-    redraw(): void {
+    async redraw(): Promise<undefined> {
         if (!this.#lastFrame || this.#pendingRedraw) {
             return;
         }
@@ -61,7 +61,7 @@ export class RedrawController {
         const abortController = new AbortController();
         this.#pendingRedraw = abortController;
 
-        this.#queue.enqueue(async (): Promise<undefined> => {
+        return await this.#queue.enqueue(async (): Promise<undefined> => {
             if (abortController.signal.aborted) {
                 return;
             }

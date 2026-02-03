@@ -291,7 +291,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
 
     #handleContextRestored = () => {
         this.#initialize();
-        this.redraw();
+        void this.redraw();
     };
 
     override async snapshot(

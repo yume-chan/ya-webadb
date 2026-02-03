@@ -73,7 +73,9 @@ export class AdbServerNodeTcpConnector
     }
 
     async connect(
-        { unref, signal }: AdbServerClient.ServerConnectionOptions = { unref: false },
+        { unref, signal }: AdbServerClient.ServerConnectionOptions = {
+            unref: false,
+        },
     ): Promise<AdbServerClient.ServerConnection> {
         const socket = new Socket({ signal: signal as globalThis.AbortSignal });
         if (unref) {

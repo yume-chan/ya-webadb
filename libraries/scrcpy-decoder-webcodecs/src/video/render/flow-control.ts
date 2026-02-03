@@ -157,7 +157,7 @@ export class RendererController
         this.#drawTask = undefined;
     }
 
-    async #tryStartDrawing() {
+    #tryStartDrawing() {
         if (!this.#drawTask) {
             this.#drawTask = this.#draw();
         }
