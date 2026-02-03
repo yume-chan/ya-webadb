@@ -6,7 +6,11 @@ import type {
     TransformStream,
     WritableStreamDefaultController,
 } from "@yume-chan/stream-extra";
-import { PushReadableStream, WritableStream } from "@yume-chan/stream-extra";
+import {
+    PushReadableStream,
+    tryClose,
+    WritableStream,
+} from "@yume-chan/stream-extra";
 
 export class RendererController
     implements
@@ -32,7 +36,7 @@ export class RendererController
 
     #nextFrame: VideoFrame | undefined;
 
-    #drawing = false;
+    #drawTask: Promise<undefined> | undefined;
 
     #counter = new PerformanceCounter();
     /**
@@ -71,6 +75,7 @@ export class RendererController
             start: (controller) => {
                 this.#writableController = controller;
 
+                // Propagate `readable` error back to `writable`
                 const signal = this.#readableController.abortSignal;
                 signal.addEventListener("abort", () =>
                     controller.error(signal.reason),
@@ -95,29 +100,36 @@ export class RendererController
                 // accept incoming frames as fast as produced.
                 // The `#draw` method then draws the frames
                 // as fast as the renderer can keep up
-                void this.#draw();
+                void this.#tryStartDrawing();
             },
-            close: () => {
+            close: async () => {
+                // Normally `WritableStream` only calls `close` after `write` finishes,
+                // but because our `write` doesn't wait for `#draw`,
+                // we might still need to send `#nextFrame` to `readable`.
+                // So wait for `#drawTask` before closing `readable`
+                await this.#drawTask;
+                // `#nextFrame` must be `undefined` at this point
+
+                // Propagate `writable` close to `readable`
                 this.#readableController.close();
+
                 this.#counter.dispose();
+
                 // Don't close `#captureFrame` to allow using `snapshot` on the last frame
-                // Don't close `#nextFrame` to make sure all frames are rendered
             },
-            abort: (reason) => {
+            abort: async (reason) => {
+                // See `close` above
+                await this.#drawTask;
+
+                // Propagate `writable` error to `readable`
                 this.#readableController.error(reason);
+
                 this.#counter.dispose();
-                // Don't close `#captureFrame` to allow using `snapshot` on the last frame
-                // Don't close `#nextFrame` to make sure all frames are rendered
             },
         });
     }
 
-    async #draw() {
-        if (this.#drawing) {
-            return;
-        }
-        this.#drawing = true;
-
+    async #draw(): Promise<undefined> {
         // PERF: Draw every frame to minimize latency at cost of performance.
         // When multiple frames are drawn in one vertical sync interval,
         // only the last one is visible to users.
@@ -132,11 +144,23 @@ export class RendererController
                 // The consumer is responsible for closing `frame`
                 this.#counter.increaseFramesRendered();
             } else {
+                // `enqueue` returning `false` means the consumer has called `readable.cancel()`,
+                // before consuming the `frame`. So close it here.
                 frame.close();
+
+                // Continue looping to close all `#nextFrame`s
+                // In the mean time the `writable` is erroring out its source
+                // so no more frames will arrive
             }
         }
 
-        this.#drawing = false;
+        this.#drawTask = undefined;
+    }
+
+    async #tryStartDrawing() {
+        if (!this.#drawTask) {
+            this.#drawTask = this.#draw();
+        }
     }
 
     dispose() {
@@ -148,8 +172,9 @@ export class RendererController
 
         this.#counter.dispose();
 
-        this.#readableController.close();
-        // Throw a similar error to native TransformStream
+        tryClose(this.#readableController);
+
+        // Throw an error similar to native TransformStream
         this.#writableController.error(
             new TypeError("The transform stream has been terminated"),
         );

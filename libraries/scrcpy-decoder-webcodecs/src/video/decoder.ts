@@ -240,7 +240,9 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         const renderer = new BitmapVideoFrameRenderer();
         try {
             const writer = renderer.writable.getWriter();
-            await writer.write(frame);
+            // Draw the frame
+            // `renderer` will close the passed in `frame`, so make a clone
+            await writer.write(frame.clone());
             await writer.close();
             // BitmapVideoFrameRenderer.snapshot will definitely return a value
             return await renderer.snapshot(options);

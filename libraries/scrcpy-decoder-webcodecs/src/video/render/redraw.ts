@@ -1,4 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
+import { TaskQueue } from "@yume-chan/stream-extra";
 
 /**
  * Manages drawing and redrawing of video frames.
@@ -6,9 +7,8 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 export class RedrawController {
     #draw: (frame: VideoFrame) => MaybePromiseLike<undefined>;
 
-    #ready = Promise.resolve(undefined);
+    #queue = new TaskQueue();
     #pendingRedraw: AbortController | undefined;
-    #error: unknown;
 
     #lastFrame: VideoFrame | undefined;
     get lastFrame() {
@@ -30,29 +30,19 @@ export class RedrawController {
      * @param frame A `VideoFrame` to draw. The frame will be closed after drawing.
      */
     draw(frame: VideoFrame) {
-        if (this.#error) {
-            // eslint-disable-next-line @typescript-eslint/only-throw-error
-            throw this.#error;
-        }
-
         this.#pendingRedraw?.abort();
         this.#pendingRedraw = undefined;
 
         this.#lastFrame?.close();
         this.#lastFrame = frame.clone();
 
-        this.#ready = this.#ready.then(async (): Promise<undefined> => {
+        return this.#queue.enqueue(async (): Promise<undefined> => {
             try {
                 await this.#draw(frame);
-            } catch (e) {
-                this.#error = e;
-                throw e;
             } finally {
                 frame.close();
             }
-        });
-
-        return this.#ready;
+        }, true);
     }
 
     /**
@@ -68,15 +58,10 @@ export class RedrawController {
             return;
         }
 
-        if (this.#error) {
-            // eslint-disable-next-line @typescript-eslint/only-throw-error
-            throw this.#error;
-        }
-
         const abortController = new AbortController();
         this.#pendingRedraw = abortController;
 
-        this.#ready = this.#ready.then(async (): Promise<undefined> => {
+        this.#queue.enqueue(async (): Promise<undefined> => {
             if (abortController.signal.aborted) {
                 return;
             }
@@ -86,12 +71,10 @@ export class RedrawController {
             const frame = this.#lastFrame!.clone();
             try {
                 await this.#draw(frame);
-            } catch (e) {
-                this.#error = e;
             } finally {
                 frame.close();
             }
-        });
+        }, true);
     }
 
     dispose() {
@@ -100,6 +83,6 @@ export class RedrawController {
         this.#lastFrame?.close();
         this.#lastFrame = undefined;
 
-        this.#error = new Error("Can't write to a closed renderer");
+        this.#queue.dispose();
     }
 }

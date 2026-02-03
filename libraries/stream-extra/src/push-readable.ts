@@ -7,10 +7,28 @@ import type {
     ReadableStreamDefaultController,
 } from "./stream.js";
 import { AbortController, ReadableStream } from "./stream.js";
+import { TaskQueue } from "./task-queue.js";
 
 export interface PushReadableStreamController<T> {
     abortSignal: AbortSignal;
 
+    /**
+     * Enqueue `chunk` into the stream.
+     *
+     * - If the stream is already cancelled by consumer before calling `enqueue`,
+     * the call will return `false`.
+     * - If the stream is already closed or errored by producer before calling `enqueue`,
+     * the call will throw an error.
+     * - If the stream has enough buffer space, the call will return `true`.
+     *
+     * Otherwise it returns a `Promise`:
+     *
+     * - If the stream is cancelled by consumer, or closed or errored by producer,
+     *   while the `Promise` is pending, the `Promise` will be resolved to `false`.
+     * - When the stream has enough buffer space, the `Promise` will be resolved to `true`.
+     *
+     * @param chunk The value to be enqueued
+     */
     enqueue(chunk: T): Promise<boolean>;
 
     close(): void;
@@ -57,7 +75,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
         logger?: PushReadableLogger<T>,
     ) {
         let controller!: ReadableStreamDefaultController<T>;
-        let ready: Promise<boolean> | undefined;
+        let tasks = new TaskQueue();
 
         let zeroHighWaterMarkAllowEnqueue = false;
         // Resolves when consumer calls `reader.read`.
@@ -66,6 +84,8 @@ export class PushReadableStream<T> extends ReadableStream<T> {
         let waterMarkLow: PromiseResolver<undefined> | undefined;
 
         const abortController = new AbortController();
+        // Whether either the consumer has called `stream.cancel()`,
+        // or the producer has called `controller.close` or `controller.error`.
         let stopped = false;
 
         const enqueue = (chunk: T): MaybePromise<boolean> => {
@@ -190,7 +210,7 @@ export class PushReadableStream<T> extends ReadableStream<T> {
             });
 
             // Allow calling `controller.close` on cancelled stream as `enqueue` does
-            // Ignore inexplicit close on any stopped state
+            // Ignore implicit close on any stopped state
             // But don't allow calling `controller.close` multiple times
             if (abortController.signal.aborted || (stopped && !explicit)) {
                 logger?.({
@@ -202,8 +222,10 @@ export class PushReadableStream<T> extends ReadableStream<T> {
                 return;
             }
 
-            stopped = true;
+            // This will throw for us if the stream is not in `readable` state
             controller.close();
+
+            stopped = true;
             // Wake up pending `enqueue`
             waterMarkLow?.reject();
 
@@ -245,22 +267,10 @@ export class PushReadableStream<T> extends ReadableStream<T> {
 
                     const result = source({
                         abortSignal: abortController.signal,
-                        enqueue: async (chunk) => {
-                            if (!ready) {
-                                // If all `enqueue` calls are synchronous,
-                                // `ready` will always be `undefined`.
-                                // This avoid an extra microtask for each `enqueue` call.
-                                const result = enqueue(chunk);
-                                if (result instanceof Promise) {
-                                    ready = result;
-                                }
-                                return result;
-                            } else {
-                                // Chain `enqueue` calls
-                                ready = ready.then(() => enqueue(chunk));
-                            }
-                            return ready;
-                        },
+                        enqueue: async (chunk) =>
+                            // Run `enqueue`s in serial
+                            // Use `async/await` to always return a `Promise`
+                            await tasks.enqueue(() => enqueue(chunk)),
                         close() {
                             close(true);
                         },
