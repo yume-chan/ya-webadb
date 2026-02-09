@@ -1,8 +1,9 @@
 import type { TangoKey, TangoKeyStorage } from "../type.js";
+
 import { createTransaction, openDatabase, waitRequest } from "./shared.js";
 import { DefaultDatabaseName, DefaultStoreName, getAllKeysV1 } from "./v1.js";
 
-const Version2 = 2;
+const Version = 2;
 
 export class TangoIndexedDbStorage implements TangoKeyStorage {
     readonly #databaseName: string;
@@ -15,18 +16,20 @@ export class TangoIndexedDbStorage implements TangoKeyStorage {
         return this.#storeName;
     }
 
+    #openDatabasePromise: Promise<IDBDatabase> | undefined;
+
     constructor(options?: { databaseName?: string; storeName?: string }) {
         this.#databaseName = options?.databaseName ?? DefaultDatabaseName;
         this.#storeName = options?.storeName ?? DefaultStoreName;
     }
 
-    async #migrateDatabase() {
+    async #openDatabaseCore() {
         const v1Keys = await getAllKeysV1();
         if (v1Keys) {
             await waitRequest(indexedDB.deleteDatabase(DefaultDatabaseName));
         }
 
-        return await openDatabase(this.#databaseName, Version2, (db) => {
+        return await openDatabase(this.#databaseName, Version, (db) => {
             const store = db.createObjectStore(this.#storeName, {
                 autoIncrement: true,
             });
@@ -42,11 +45,15 @@ export class TangoIndexedDbStorage implements TangoKeyStorage {
         });
     }
 
+    async #openDatabase() {
+        return (this.#openDatabasePromise ??= this.#openDatabaseCore());
+    }
+
     async save(
         privateKey: Uint8Array,
         name: string | undefined,
     ): Promise<undefined> {
-        const db = await this.#migrateDatabase();
+        const db = await this.#openDatabase();
 
         try {
             await createTransaction(db, this.#storeName, (tx) => {
@@ -59,12 +66,12 @@ export class TangoIndexedDbStorage implements TangoKeyStorage {
     }
 
     async *load(): AsyncGenerator<TangoKey, void, void> {
-        const db = await this.#migrateDatabase();
+        const db = await this.#openDatabase();
 
         try {
             const keys = await createTransaction(db, this.#storeName, (tx) => {
                 const store = tx.objectStore(this.#storeName);
-                return waitRequest<TangoKey[]>(store.getAll());
+                return waitRequest(store.getAll() as IDBRequest<TangoKey[]>);
             });
 
             yield* keys;
@@ -74,7 +81,7 @@ export class TangoIndexedDbStorage implements TangoKeyStorage {
     }
 
     async clear() {
-        const db = await this.#migrateDatabase();
+        const db = await this.#openDatabase();
 
         try {
             await createTransaction(db, this.#storeName, (tx) => {

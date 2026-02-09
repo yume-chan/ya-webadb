@@ -34,6 +34,8 @@ export function createTransaction<T>(
         transaction.onerror = () => {
             reject(transaction.error!);
         };
+
+        let result!: T;
         transaction.oncomplete = () => {
             resolve(result);
         };
@@ -41,6 +43,20 @@ export function createTransaction<T>(
             reject(transaction.error ?? new Error("Transaction aborted"));
         };
 
-        const result = callback(transaction);
+        try {
+            result = callback(transaction);
+            if (result instanceof Promise) {
+                throw new Error("callback must not be an async function");
+            }
+        } catch (e) {
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+            reject(e);
+
+            try {
+                transaction.abort();
+            } catch {
+                // ignore
+            }
+        }
     });
 }

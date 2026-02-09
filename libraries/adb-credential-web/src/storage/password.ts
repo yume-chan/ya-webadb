@@ -12,10 +12,17 @@ import {
 
 import type { TangoKey, TangoKeyStorage } from "./type.js";
 
-const DefaultPbkdf2SaltLength = 16;
-const DefaultPbkdf2Iterations = 1_000_000;
-// AES-GCM recommends 12-byte (96-bit) IV for performance and interoperability
-const DefaultAesIvLength = 12;
+const DefaultPbkdf2SaltLength = 16; // Recommended
+const MinimalPbkdf2SaltLength = 8; // Not recommended but still could be considered secure
+const MaximalPbkdf2SaltLength = 255; // Max length can be stored in `Bundle`
+
+const DefaultPbkdf2Iterations = 1_000_000; // Very secure according to OWASP Cheat Sheet
+const MinimalPbkdf2Iterations = 10_000; // Not recommended but still could be considered secure
+const MaximalPbkdf2Iterations = 4294967296; // 2^32, max value can be stored in `Bundle`
+
+const DefaultAesIvLength = 12; // 12 bytes (96 bits) is the native IV length
+const MinimalAesIvLength = 1; // Any value except 12 is not recommended, but could work
+const MaximalAesIvLength = 255; // Max length can be stored in `Bundle`
 
 const Bundle = struct(
     {
@@ -40,15 +47,18 @@ async function deriveAesKey(
         ["deriveKey"],
     );
 
+    let salt: Uint8Array<ArrayBuffer>;
     if (typeof saltOrLength === "number") {
-        saltOrLength = new Uint8Array(saltOrLength);
-        crypto.getRandomValues(saltOrLength);
+        salt = new Uint8Array(saltOrLength);
+        crypto.getRandomValues(salt);
+    } else {
+        salt = saltOrLength;
     }
 
     const aesKey = await crypto.subtle.deriveKey(
         {
             name: "PBKDF2",
-            salt: saltOrLength,
+            salt,
             iterations,
             hash: "SHA-256",
         },
@@ -58,7 +68,7 @@ async function deriveAesKey(
         ["encrypt", "decrypt"],
     );
 
-    return { salt: saltOrLength, aesKey };
+    return { salt, aesKey };
 }
 
 class PasswordIncorrectError extends Error {
@@ -73,6 +83,23 @@ class PasswordIncorrectError extends Error {
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/max-params
+function assertRange(
+    name: string,
+    value: number | undefined,
+    defaultValue: number,
+    min: number,
+    max: number,
+): number {
+    if (value === undefined) {
+        return defaultValue;
+    }
+    if (value < min || value > max) {
+        throw new Error(`${name} must be between ${min} and ${max}`);
+    }
+    return value;
+}
+
 export class TangoPasswordProtectedStorage implements TangoKeyStorage {
     static PasswordIncorrectError = PasswordIncorrectError;
 
@@ -85,17 +112,36 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
     constructor(options: {
         storage: TangoKeyStorage;
         requestPassword: TangoPasswordProtectedStorage.RequestPassword;
-        pbkdf2SaltLength?: number;
-        pbkdf2Iterations?: number;
-        aesIvLength?: number;
+        pbkdf2SaltLength?: number | undefined;
+        pbkdf2Iterations?: number | undefined;
+        aesIvLength?: number | undefined;
     }) {
         this.#storage = options.storage;
         this.#requestPassword = options.requestPassword;
-        this.#pbkdf2SaltLength =
-            options.pbkdf2SaltLength ?? DefaultPbkdf2SaltLength;
-        this.#pbkdf2Iterations =
-            options.pbkdf2Iterations ?? DefaultPbkdf2Iterations;
-        this.#aesIvLength = options.aesIvLength ?? DefaultAesIvLength;
+
+        this.#pbkdf2SaltLength = assertRange(
+            "pbkdf2SaltLength",
+            options.pbkdf2SaltLength,
+            DefaultPbkdf2SaltLength,
+            MinimalPbkdf2SaltLength,
+            MaximalPbkdf2SaltLength,
+        );
+
+        this.#pbkdf2Iterations = assertRange(
+            "pbkdf2Iterations",
+            options.pbkdf2Iterations,
+            DefaultPbkdf2Iterations,
+            MinimalPbkdf2Iterations,
+            MaximalPbkdf2Iterations,
+        );
+
+        this.#aesIvLength = assertRange(
+            "aesIvLength",
+            options.aesIvLength,
+            DefaultAesIvLength,
+            MinimalAesIvLength,
+            MaximalAesIvLength,
+        );
     }
 
     async save(

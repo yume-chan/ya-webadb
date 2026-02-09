@@ -21,7 +21,7 @@ export async function getAllKeysV1() {
     try {
         return await createTransaction(db, DefaultStoreName, (tx) => {
             const store = tx.objectStore(DefaultStoreName);
-            return waitRequest<Uint8Array[]>(store.getAll());
+            return waitRequest(store.getAll() as IDBRequest<Uint8Array[]>);
         });
     } finally {
         db.close();

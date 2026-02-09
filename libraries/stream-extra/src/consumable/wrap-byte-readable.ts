@@ -16,13 +16,18 @@ export class ConsumableWrapByteReadableStream extends ReadableStream<
         super({
             async pull(controller) {
                 const { done, value } = await reader.read(array, { min });
+
+                // `value` might be defined even when `done` is true
+                if (value) {
+                    await ConsumableReadableStream.enqueue(controller, value);
+                }
+
                 if (done) {
                     controller.close();
                     return;
                 }
 
-                await ConsumableReadableStream.enqueue(controller, value);
-
+                // old `array` is not usable after `reader.read`
                 array = new Uint8Array(value.buffer);
             },
             cancel(reason) {
