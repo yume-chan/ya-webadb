@@ -18,7 +18,7 @@ const MaximalPbkdf2SaltLength = 255; // Max length can be stored in `Bundle`
 
 const DefaultPbkdf2Iterations = 1_000_000; // Very secure according to OWASP Cheat Sheet
 const MinimalPbkdf2Iterations = 10_000; // Not recommended but still could be considered secure
-const MaximalPbkdf2Iterations = 4294967296; // 2^32, max value can be stored in `Bundle`
+const MaximalPbkdf2Iterations = 4294967295; // 2^32 - 1, max value can be stored in `Bundle`
 
 const DefaultAesIvLength = 12; // 12 bytes (96 bits) is the native IV length
 const MinimalAesIvLength = 1; // Any value except 12 is not recommended, but could work

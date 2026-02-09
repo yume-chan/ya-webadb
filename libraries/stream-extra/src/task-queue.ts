@@ -36,9 +36,9 @@ export class TaskQueue {
             } catch (e) {
                 if (bail) {
                     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                    this.#ready = Promise.reject(e)
-                        // The `.catch` prevents the unhandled rejection error
-                        .catch(() => {});
+                    this.#ready = Promise.reject(e);
+                    // Suppress unhandled-rejection without resolving `#ready`
+                    void (this.#ready as Promise<unknown>).catch(() => {});
                 }
                 throw e;
             }
