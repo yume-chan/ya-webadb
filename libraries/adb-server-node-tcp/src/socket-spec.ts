@@ -12,12 +12,12 @@ function findIndices(str: string, char: string): number[] {
  *
  * Negatives are also supported.
  */
-function decimalToNumber(
+export function decimalToNumber(
     input: string,
     start = 0,
     end = input.length,
 ): number | undefined {
-    if (start >= end - 1) {
+    if (start >= end) {
         return undefined;
     }
 
@@ -84,7 +84,6 @@ export function parseTcpSocketSpec(spec: string): {
     } else if (colons.length === 1) {
         // 1.2.3.4:123 or some.accidental.domain.com:123
         host = spec.substring(0, colons[0]);
-        console.log("port", spec.substring(colons[0]! + 1));
         port = decimalToNumber(spec, colons[0]! + 1);
         if (port === undefined || port <= 0 || port > 65535) {
             throw new Error(`bad port number ${port} in ${spec}`);

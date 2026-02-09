@@ -18,7 +18,7 @@ import {
     tryClose,
 } from "@yume-chan/stream-extra";
 
-import { parseTcpSocketSpec } from "./socket-spec.js";
+import { decimalToNumber, parseTcpSocketSpec } from "./socket-spec.js";
 
 function nodeSocketToConnection(
     socket: Socket,
@@ -121,17 +121,17 @@ function getServerSocketSpec() {
 }
 
 function getServerAddress() {
-    return process.env["ADB_SERVER_ADDRESS"] ?? "localhost";
+    return process.env["ANDROID_ADB_SERVER_ADDRESS"] ?? "localhost";
 }
 
 function getServerPort() {
-    const value = process.env["ADB_SERVER_PORT"];
+    const value = process.env["ANDROID_ADB_SERVER_PORT"];
     if (!value) {
         return DefaultServerPort;
     }
 
-    const port = Number.parseInt(value, 10);
-    if (Number.isNaN(port) || port <= 0 || port > 65536) {
+    const port = decimalToNumber(value);
+    if (port === undefined || port <= 0 || port > 65535) {
         throw new Error(
             `$ANDROID_ADB_SERVER_PORT must be a positive number less than 65535: got "${value}"`,
         );
@@ -329,13 +329,18 @@ export class AdbServerNodeTcpConnector
         });
 
         if (address) {
-            const url = new URL(address);
-            if (url.protocol === "tcp:") {
-                server.listen(Number.parseInt(url.port, 10), url.hostname);
-            } else if (url.protocol === "unix:") {
-                server.listen(url.pathname);
+            if (address.startsWith("tcp:")) {
+                const spec = parseTcpSocketSpec(address.substring(4));
+                if (!spec.port) {
+                    throw new Error(
+                        `Invalid destination port: '${address.substring(4)}'`,
+                    );
+                }
+                server.listen(spec.port, spec.host);
+            } else if (address.startsWith("unix:")) {
+                server.listen(address.substring(5));
             } else {
-                throw new TypeError(`Unsupported protocol ${url.protocol}`);
+                throw new TypeError(`Unsupported protocol ${address}`);
             }
         } else {
             server.listen();
