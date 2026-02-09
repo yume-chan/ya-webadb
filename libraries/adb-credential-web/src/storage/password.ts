@@ -84,7 +84,7 @@ class PasswordIncorrectError extends Error {
 }
 
 // eslint-disable-next-line @typescript-eslint/max-params
-function assertRange(
+function checkIntegerRange(
     name: string,
     value: number | undefined,
     defaultValue: number,
@@ -94,8 +94,8 @@ function assertRange(
     if (value === undefined) {
         return defaultValue;
     }
-    if (value < min || value > max) {
-        throw new Error(`${name} must be between ${min} and ${max}`);
+    if (!Number.isInteger(value) || value < min || value > max) {
+        throw new Error(`${name} must be an integer between ${min} and ${max}`);
     }
     return value;
 }
@@ -119,7 +119,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
         this.#storage = options.storage;
         this.#requestPassword = options.requestPassword;
 
-        this.#pbkdf2SaltLength = assertRange(
+        this.#pbkdf2SaltLength = checkIntegerRange(
             "pbkdf2SaltLength",
             options.pbkdf2SaltLength,
             DefaultPbkdf2SaltLength,
@@ -127,7 +127,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
             MaximalPbkdf2SaltLength,
         );
 
-        this.#pbkdf2Iterations = assertRange(
+        this.#pbkdf2Iterations = checkIntegerRange(
             "pbkdf2Iterations",
             options.pbkdf2Iterations,
             DefaultPbkdf2Iterations,
@@ -135,7 +135,7 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
             MaximalPbkdf2Iterations,
         );
 
-        this.#aesIvLength = assertRange(
+        this.#aesIvLength = checkIntegerRange(
             "aesIvLength",
             options.aesIvLength,
             DefaultAesIvLength,

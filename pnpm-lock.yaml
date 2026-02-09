@@ -243,6 +243,9 @@ importers:
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
+      '@yume-chan/test-runner':
+        specifier: workspace:^
+        version: link:../../toolchain/test-runner
       '@yume-chan/tsconfig':
         specifier: workspace:^
         version: link:../../toolchain/tsconfig
