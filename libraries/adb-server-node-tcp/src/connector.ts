@@ -11,7 +11,6 @@ import { Server, Socket } from "node:net";
 import { platform } from "node:os";
 
 import type { AdbIncomingSocketHandler, AdbServerClient } from "@yume-chan/adb";
-import type { MaybePromiseLike } from "@yume-chan/async";
 import {
     MaybeConsumable,
     PushReadableStream,
@@ -26,7 +25,7 @@ function nodeSocketToConnection(
     socket.setNoDelay(true);
 
     const closed = new Promise<undefined>((resolve) => {
-        socket.on("close", resolve);
+        socket.once("close", resolve);
     });
 
     return {
@@ -43,11 +42,19 @@ function nodeSocketToConnection(
                 await controller.enqueue(data as Buffer<ArrayBuffer>);
                 socket.resume();
             });
+            socket.on("error", (e) => {
+                controller.error(e);
+            });
             socket.on("end", () => {
                 tryClose(controller);
             });
         }),
         writable: new MaybeConsumable.WritableStream<Uint8Array>({
+            start(controller) {
+                socket.on("error", (e) => {
+                    controller.error(e);
+                });
+            },
             write: (chunk) => {
                 return new Promise<void>((resolve, reject) => {
                     socket.write(chunk, (err) => {
@@ -360,7 +367,7 @@ export class AdbServerNodeTcpConnector
         return address;
     }
 
-    removeReverseTunnel(address: string): MaybePromiseLike<void> {
+    removeReverseTunnel(address: string): void {
         const server = this.#listeners.get(address);
         if (!server) {
             return;
@@ -369,7 +376,7 @@ export class AdbServerNodeTcpConnector
         this.#listeners.delete(address);
     }
 
-    clearReverseTunnels(): MaybePromiseLike<void> {
+    clearReverseTunnels(): void {
         for (const server of this.#listeners.values()) {
             server.close();
         }
