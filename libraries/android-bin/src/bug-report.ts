@@ -13,24 +13,6 @@ import {
     WritableStream,
 } from "@yume-chan/stream-extra";
 
-export interface BugReportCapabilities {
-    supportsBugReport: boolean;
-    bugReportZVersion?: string | undefined;
-    supportsBugReportZ: boolean;
-    supportsBugReportZProgress: boolean;
-    supportsBugReportZStream: boolean;
-}
-
-export interface BugReportZOptions {
-    signal?: AbortSignal;
-    /**
-     * A callback that will be called when progress is updated.
-     *
-     * Specify `onProgress` when `supportsBugReportZProgress` is `false` will throw an error.
-     */
-    onProgress?: ((completed: string, total: string) => void) | undefined;
-}
-
 export class BugReport extends AdbServiceBase {
     static VERSION_REGEX: RegExp = /(\d+)\.(\d+)/;
 
@@ -145,7 +127,7 @@ export class BugReport extends AdbServiceBase {
         return this.#supportsBugReportZStream;
     }
 
-    constructor(adb: Adb, capabilities: BugReportCapabilities) {
+    constructor(adb: Adb, capabilities: BugReport.Capabilities) {
         super(adb);
 
         this.#supportsBugReport = capabilities.supportsBugReport;
@@ -184,7 +166,7 @@ export class BugReport extends AdbServiceBase {
      *
      * @returns The path to the generated bugreport file on device filesystem.
      */
-    async bugReportZ(options?: BugReportZOptions): Promise<string> {
+    async bugReportZ(options?: BugReport.BugReportZOptions): Promise<string> {
         if (options?.signal?.aborted) {
             throw options?.signal.reason as Error;
         }
@@ -340,5 +322,25 @@ export class BugReport extends AdbServiceBase {
         }
 
         return { type: "bugreport", stream: this.bugReport() };
+    }
+}
+
+export namespace BugReport {
+    export interface Capabilities {
+        supportsBugReport: boolean;
+        bugReportZVersion?: string | undefined;
+        supportsBugReportZ: boolean;
+        supportsBugReportZProgress: boolean;
+        supportsBugReportZStream: boolean;
+    }
+
+    export interface BugReportZOptions {
+        signal?: AbortSignal;
+        /**
+         * A callback that will be called when progress is updated.
+         *
+         * Specify `onProgress` when `supportsBugReportZProgress` is `false` will throw an error.
+         */
+        onProgress?: ((completed: string, total: string) => void) | undefined;
     }
 }

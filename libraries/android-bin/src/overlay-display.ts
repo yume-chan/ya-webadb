@@ -4,19 +4,6 @@ import { AdbServiceBase } from "@yume-chan/adb";
 import { Settings } from "./settings.js";
 import { p } from "./string-format.js";
 
-export interface OverlayDisplayDeviceMode {
-    width: number;
-    height: number;
-    density: number;
-}
-
-export interface OverlayDisplayDevice {
-    modes: OverlayDisplayDeviceMode[];
-    secure: boolean;
-    ownContentOnly: boolean;
-    showSystemDecorations: boolean;
-}
-
 export class OverlayDisplay extends AdbServiceBase {
     #settings: Settings;
 
@@ -81,7 +68,7 @@ export class OverlayDisplay extends AdbServiceBase {
         }));
     }
 
-    async set(devices: readonly OverlayDisplayDevice[]): Promise<void> {
+    async set(devices: readonly OverlayDisplay.Device[]): Promise<void> {
         await this.#settings.put(
             "global",
             OverlayDisplay.SETTING_KEY,
@@ -108,5 +95,22 @@ export class OverlayDisplay extends AdbServiceBase {
                 }),
             ),
         );
+    }
+}
+
+export namespace OverlayDisplay {
+    export interface Device {
+        modes: Device.Mode[];
+        secure: boolean;
+        ownContentOnly: boolean;
+        showSystemDecorations: boolean;
+    }
+
+    export namespace Device {
+        export interface Mode {
+            width: number;
+            height: number;
+            density: number;
+        }
     }
 }
