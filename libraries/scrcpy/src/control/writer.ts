@@ -67,7 +67,7 @@ export class ScrcpyControlMessageWriter {
         }
     }
 
-    setScreenPowerMode(mode: AndroidScreenPowerMode) {
+    setDisplayPower(mode: AndroidScreenPowerMode) {
         return this.write(this.#serializer.setDisplayPower(mode));
     }
 
