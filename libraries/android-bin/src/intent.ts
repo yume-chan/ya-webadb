@@ -172,7 +172,7 @@ export function serializeIntent(intent: Intent) {
                 case "number":
                     if (value % 1 !== 0) {
                         throw new Error(
-                            `Extra \`${key}\` is not an integer, must use \`IntentNumberExtra\` type instead`,
+                            `Extra \`${key}\` is not an integer, must use \`Intent.Extra.Number\` type instead`,
                         );
                     }
                     // Infer type from value

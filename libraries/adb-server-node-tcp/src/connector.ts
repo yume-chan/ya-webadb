@@ -182,9 +182,9 @@ export class AdbServerNodeTcpConnector
      * - `"tcp:<port>"`: connects to the specified TCP port on default host
      * - `"tcp:<host>:<port>"`: connects to the specified port on the specified host
      *
-     * The default host is `localhost`, or the value of the environment variable `ADB_SERVER_ADDRESS`.
+     * The default host is `localhost`, or the value of the environment variable `ANDROID_ADB_SERVER_ADDRESS`.
      *
-     * The default port is `5037`, or the value of the environment variable `ADB_SERVER_PORT`.
+     * The default port is `5037`, or the value of the environment variable `ANDROID_ADB_SERVER_PORT`.
      *
      * Unix domain sockets:
      *

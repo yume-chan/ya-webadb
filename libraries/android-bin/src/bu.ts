@@ -60,9 +60,9 @@ export class AdbBackup extends AdbServiceBase {
 
 export namespace AdbBackup {
     export interface BackupOptions {
-        user: number;
-        saveSharedStorage?: boolean;
-        saveWidgets?: boolean;
+        user?: number | undefined;
+        saveSharedStorage?: boolean | undefined;
+        saveWidgets?: boolean | undefined;
         packages: readonly string[] | "user" | "all";
         savePackageApk: boolean;
         savePackageObb: boolean;
