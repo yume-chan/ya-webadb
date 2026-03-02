@@ -92,7 +92,7 @@ export class RendererController
                 // Skip frame B and queue frame C
                 if (this.#nextFrame) {
                     this.#nextFrame.close();
-                    this.#counter.increaseFramesSkipped();
+                    this.#counter.increaseFramesSkippedRendering();
                 }
                 this.#nextFrame = frame;
 

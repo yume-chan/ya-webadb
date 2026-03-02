@@ -1,5 +1,14 @@
 export interface ScrcpyVideoDecoderPerformanceCounterInterface {
     /**
+     * Gets the number of frames decoded by the decoder.
+     */
+    readonly framesDecoded: number;
+    /**
+     * Gets the number of frames skipped by the decoder.
+     */
+    readonly framesSkippedDecoding: number;
+
+    /**
      * Gets the number of frames that have been drawn on the renderer.
      */
     readonly framesRendered: number;
