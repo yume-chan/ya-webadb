@@ -180,7 +180,6 @@ function encodeForward(
         /* cspell: disable-next-line */
         // aaaaaabb
         const x = input[inputIndex]!;
-        inputIndex += 1;
 
         output[outputIndex] = indexToChar[x >> 2]!;
         outputIndex += 1;
@@ -201,7 +200,6 @@ function encodeForward(
         /* cspell: disable-next-line */
         // bbbbcccc
         const y = input[inputIndex]!;
-        inputIndex += 1;
 
         output[outputIndex] = indexToChar[x >> 2]!;
         outputIndex += 1;

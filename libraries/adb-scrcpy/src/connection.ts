@@ -138,7 +138,6 @@ export class AdbScrcpyForwardConnection extends AdbScrcpyConnection {
         if (this.options.control) {
             const stream = await this.#connectAndRetry(sendDummyByte);
             streams.control = stream;
-            sendDummyByte = false;
         }
 
         return streams;

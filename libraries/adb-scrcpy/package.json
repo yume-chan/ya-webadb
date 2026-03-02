@@ -13,11 +13,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/adb-scrcpy#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-scrcpy#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/adb-scrcpy"
+        "directory": "libraries/adb-scrcpy"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"

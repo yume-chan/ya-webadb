@@ -9,11 +9,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/no-data-view#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/no-data-view#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/no-data-view"
+        "directory": "libraries/no-data-view"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"

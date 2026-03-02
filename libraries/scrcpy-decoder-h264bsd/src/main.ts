@@ -18,7 +18,7 @@ import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 import * as Comlink from "comlink";
 
-import { DecoderRenderer } from "./decoder-renderer.js";
+import { DecoderRenderer } from "./core.js";
 
 export const noop = () => {
     // no-op
@@ -249,9 +249,16 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
                 );
                 if (framesDecoded) {
                     this.#decoderCounter.addFramesDecoded(framesDecoded);
-                    this.#rendererCounter.addFramesSkippedRendering(
-                        framesDecoded - 1,
-                    );
+                    if (chunk.skipRendering) {
+                        this.#rendererCounter.addFramesSkippedRendering(
+                            framesDecoded,
+                        );
+                    } else {
+                        this.#rendererCounter.increaseFramesRendered();
+                        this.#rendererCounter.addFramesSkippedRendering(
+                            framesDecoded - 1,
+                        );
+                    }
                 }
             }
         } catch (e) {

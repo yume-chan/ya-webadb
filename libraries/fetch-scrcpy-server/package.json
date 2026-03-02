@@ -11,11 +11,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/fetch-scrcpy-server#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/fetch-scrcpy-server#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/fetch-scrcpy-server"
+        "directory": "libraries/fetch-scrcpy-server"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"

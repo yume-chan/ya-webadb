@@ -87,7 +87,6 @@ export function adbGeneratePublicKey(
 
     // exponent
     outputView.setUint32(outputOffset, 65537, true);
-    outputOffset += 4;
 
     if (outputType === "Uint8Array") {
         return output;

@@ -14,11 +14,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/scrcpy-decoder-h264bsd#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/scrcpy-decoder-h264bsd#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/scrcpy-decoder-h264bsd"
+        "directory": "libraries/scrcpy-decoder-h264bsd"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"

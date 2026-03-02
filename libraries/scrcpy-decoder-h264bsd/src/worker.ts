@@ -1,5 +1,5 @@
 import * as Comlink from "comlink";
 
-import { DecoderRenderer } from "./decoder-renderer.js";
+import { DecoderRenderer } from "./core.js";
 
 Comlink.expose(DecoderRenderer);

@@ -14,11 +14,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/struct#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/struct#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/struct"
+        "directory": "libraries/struct"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
