@@ -1,7 +1,7 @@
 {
     "name": "@yume-chan/scrcpy-decoder-h264bsd",
     "version": "2.1.0",
-    "description": "Raw H.264 stream decoder and renderer wrapping TinyH264 and YUVCanvas packages (software decoding).",
+    "description": "Raw H.264 stream decoder and renderer wrapping H264BSD and YUVCanvas packages (software decoding).",
     "keywords": [
         "adb",
         "android-phone",

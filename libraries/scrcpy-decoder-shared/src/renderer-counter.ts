@@ -1,13 +1,4 @@
-export interface ScrcpyVideoDecoderPerformanceCounterInterface {
-    /**
-     * Gets the number of frames decoded by the decoder.
-     */
-    readonly framesDecoded: number;
-    /**
-     * Gets the number of frames skipped by the decoder.
-     */
-    readonly framesSkippedDecoding: number;
-
+export interface ScrcpyVideoRendererPerformanceCounterInterface {
     /**
      * Gets the number of frames that have been drawn on the renderer.
      */
@@ -30,23 +21,7 @@ export interface ScrcpyVideoDecoderPerformanceCounterInterface {
     readonly framesSkippedRendering: number;
 }
 
-export class ScrcpyVideoDecoderPerformanceCounter implements ScrcpyVideoDecoderPerformanceCounterInterface {
-    #framesDecoded = 0;
-    /**
-     * Gets the number of frames decoded by the decoder.
-     */
-    get framesDecoded() {
-        return this.#framesDecoded;
-    }
-
-    #framesSkippedDecoding = 0;
-    /**
-     * Gets the number of frames skipped by the decoder.
-     */
-    get framesSkippedDecoding() {
-        return this.#framesSkippedDecoding;
-    }
-
+export class ScrcpyVideoRendererPerformanceCounter implements ScrcpyVideoRendererPerformanceCounterInterface {
     #framesRendered = 0;
     /**
      * Gets the number of frames that have been drawn on the renderer.
@@ -114,18 +89,6 @@ export class ScrcpyVideoDecoderPerformanceCounter implements ScrcpyVideoDecoderP
             this.#handleAnimationFrame,
         );
     };
-
-    increaseFramesDecoded() {
-        this.#framesDecoded += 1;
-    }
-
-    addFramesDecoded(count: number) {
-        this.#framesDecoded += count;
-    }
-
-    addFramesSkippedDecoding(count: number) {
-        this.#framesSkippedDecoding += count;
-    }
 
     increaseFramesRendered() {
         this.#framesRendered += 1;

@@ -5,7 +5,7 @@
 <h1 align="center">@yume-chan/scrcpy-decoder-h264bsd</h1>
 
 <p align="center">
-    Raw H.264 stream decoder and renderer wrapping TinyH264 and YUVCanvas packages (software decoding).
+    Raw H.264 stream decoder and renderer wrapping H264BSD and YUVCanvas packages (software decoding).
 </p>
 
 <p align="center">
@@ -37,7 +37,7 @@ Check the latest documentation at https://tangoadb.dev/scrcpy/video/tiny-h264/
 
 ## Sponsors
 
-[Become a backer](https://opencollective.com/ya-webadb) and get your image on our README on Github with a link to your site.
+[Become a backer](https://opencollective.com/ya-webadb) and get your image on our README on GitHub with a link to your site.
 
 <a href="https://opencollective.com/ya-webadb/backer/0/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/0/avatar.svg?requireActive=false"></a>
 <a href="https://opencollective.com/ya-webadb/backer/1/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/1/avatar.svg?requireActive=false"></a>

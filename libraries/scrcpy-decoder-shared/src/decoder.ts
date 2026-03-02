@@ -6,8 +6,9 @@ import type {
 } from "@yume-chan/scrcpy";
 import type { WritableStream } from "@yume-chan/stream-extra";
 
+import type { ScrcpyVideoDecoderPerformanceCounterInterface } from "./decoder-counter.js";
 import type { ScrcpyVideoDecoderPauseControllerInterface } from "./pause-controller.js";
-import type { ScrcpyVideoDecoderPerformanceCounterInterface } from "./performance-counter.js";
+import type { ScrcpyVideoRendererPerformanceCounterInterface } from "./renderer-counter.js";
 
 export interface ScrcpyVideoDecoderCapability {
     maxProfile?: number;
@@ -17,6 +18,7 @@ export interface ScrcpyVideoDecoderCapability {
 export interface ScrcpyVideoDecoder
     extends
         ScrcpyVideoDecoderPerformanceCounterInterface,
+        ScrcpyVideoRendererPerformanceCounterInterface,
         ScrcpyVideoDecoderPauseControllerInterface,
         ScrcpyVideoSize {
     readonly type: "software" | "hardware";

@@ -1,5 +1,5 @@
-import type { ScrcpyVideoDecoderPerformanceCounterInterface } from "@yume-chan/scrcpy-decoder-shared";
-import { ScrcpyVideoDecoderPerformanceCounter } from "@yume-chan/scrcpy-decoder-shared";
+import type { ScrcpyVideoRendererPerformanceCounterInterface } from "@yume-chan/scrcpy-decoder-shared";
+import { ScrcpyVideoRendererPerformanceCounter } from "@yume-chan/scrcpy-decoder-shared";
 import type {
     PushReadableStreamController,
     ReadableStream,
@@ -15,7 +15,7 @@ import {
 export class RendererController
     implements
         TransformStream<VideoFrame, VideoFrame>,
-        ScrcpyVideoDecoderPerformanceCounterInterface
+        ScrcpyVideoRendererPerformanceCounterInterface
 {
     #readable: ReadableStream<VideoFrame>;
     #readableController!: PushReadableStreamController<VideoFrame>;
@@ -38,7 +38,7 @@ export class RendererController
 
     #drawTask: Promise<undefined> | undefined;
 
-    #counter = new ScrcpyVideoDecoderPerformanceCounter();
+    #counter = new ScrcpyVideoRendererPerformanceCounter();
     /**
      * Gets the number of frames that have been drawn on the renderer.
      */

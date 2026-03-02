@@ -12,7 +12,9 @@ import {
     glIsSupported,
     ScrcpyVideoDecoderPauseController,
     ScrcpyVideoDecoderPerformanceCounter,
+    ScrcpyVideoRendererPerformanceCounter,
 } from "@yume-chan/scrcpy-decoder-shared";
+import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 import * as Comlink from "comlink";
 
@@ -55,6 +57,7 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
         return this.#pause.writable;
     }
 
+    #writableController!: WritableStreamDefaultController;
     #queue: (ScrcpyVideoDecoderPauseController.Output & { type: "data" })[] =
         [];
     #enqueuing = false;
@@ -70,24 +73,31 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
         return this.#size.sizeChanged;
     }
 
-    #counter = new ScrcpyVideoDecoderPerformanceCounter();
+    #decoderCounter = new ScrcpyVideoDecoderPerformanceCounter();
+    /**
+     * Gets the number of times the decoder has been reset to catch up new keyframes.
+     */
+    get decoderResetCount() {
+        return this.#decoderCounter.decoderResetCount;
+    }
     /**
      * Gets the number of frames decoded by the decoder.
      */
     get framesDecoded() {
-        return this.#counter.framesDecoded;
+        return this.#decoderCounter.framesDecoded;
     }
     /**
      * Gets the number of frames skipped by the decoder.
      */
     get framesSkippedDecoding() {
-        return this.#counter.framesSkippedDecoding;
+        return this.#decoderCounter.framesSkippedDecoding;
     }
+    #rendererCounter = new ScrcpyVideoRendererPerformanceCounter();
     /**
      * Gets the number of frames that have been drawn on the renderer.
      */
     get framesRendered() {
-        return this.#counter.framesRendered;
+        return this.#rendererCounter.framesRendered;
     }
     /**
      * Gets the number of frames that's visible to the user.
@@ -100,14 +110,14 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
      * https://issues.chromium.org/issues/41483010
      */
     get framesDisplayed() {
-        return this.#counter.framesDisplayed;
+        return this.#rendererCounter.framesDisplayed;
     }
     /**
      * Gets the number of frames that wasn't drawn on the renderer
      * because the renderer can't keep up
      */
     get framesSkippedRendering() {
-        return this.#counter.framesSkippedRendering;
+        return this.#rendererCounter.framesSkippedRendering;
     }
 
     #worker: Worker | undefined;
@@ -116,9 +126,8 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
     constructor({ canvas, worker }: H264BsdDecoder.Options = {}) {
         switch (worker) {
             case "auto":
-                if (isMainThread) {
-                    worker = true;
-                }
+            case undefined:
+                worker = isMainThread;
                 break;
             case true:
                 if (!isMainThread && !canvas) {
@@ -173,9 +182,12 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
         void this.#pause.readable
             .pipeTo(
                 new WritableStream({
+                    start: (controller) => {
+                        this.#writableController = controller;
+                    },
                     write: async (packet) => {
                         if (packet.type === "configuration") {
-                            this.#counter.addFramesSkippedDecoding(
+                            this.#decoderCounter.addFramesSkippedDecoding(
                                 this.#queue.length,
                             );
                             this.#queue.length = 0;
@@ -183,17 +195,20 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
                             const decoder = await this.#decoder;
 
                             const frames = await decoder.flush(true);
-                            this.#counter.addFramesSkippedRendering(frames);
+                            this.#rendererCounter.addFramesSkippedRendering(
+                                frames,
+                            );
 
                             // Shouldn't produce any frames
                             await decoder.decode(packet.data, false);
                             return;
                         }
 
-                        if (packet.keyframe) {
-                            this.#counter.addFramesSkippedDecoding(
+                        if (packet.keyframe && this.#queue.length) {
+                            this.#decoderCounter.addFramesSkippedDecoding(
                                 this.#queue.length,
                             );
+                            this.#decoderCounter.increaseResetCount();
                             this.#queue.length = 0;
                         }
 
@@ -221,23 +236,29 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
         }
         this.#enqueuing = true;
 
-        const decoder = await this.#decoder;
+        try {
+            const decoder = await this.#decoder;
 
-        let chunk:
-            | (ScrcpyVideoDecoderPauseController.Output & { type: "data" })
-            | undefined;
-        while ((chunk = this.#queue.shift())) {
-            const framesDecoded = await decoder.decode(
-                chunk.data,
-                chunk.skipRendering,
-            );
-            if (framesDecoded) {
-                this.#counter.addFramesDecoded(framesDecoded);
-                this.#counter.addFramesSkippedRendering(framesDecoded - 1);
+            let chunk:
+                | (ScrcpyVideoDecoderPauseController.Output & { type: "data" })
+                | undefined;
+            while ((chunk = this.#queue.shift())) {
+                const framesDecoded = await decoder.decode(
+                    chunk.data,
+                    chunk.skipRendering,
+                );
+                if (framesDecoded) {
+                    this.#decoderCounter.addFramesDecoded(framesDecoded);
+                    this.#rendererCounter.addFramesSkippedRendering(
+                        framesDecoded - 1,
+                    );
+                }
             }
+        } catch (e) {
+            this.#writableController.error(e);
+        } finally {
+            this.#enqueuing = false;
         }
-
-        this.#enqueuing = false;
     }
 
     pause(): void {
@@ -263,7 +284,7 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
 
         this.#worker?.terminate();
 
-        this.#counter.dispose();
+        this.#rendererCounter.dispose();
         this.#size.dispose();
 
         this.#canvas.width = 0;

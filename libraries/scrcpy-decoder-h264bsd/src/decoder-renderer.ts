@@ -120,5 +120,6 @@ export class DecoderRenderer {
 
     dispose() {
         this.#decoder.delete();
+        this.#size.dispose();
     }
 }

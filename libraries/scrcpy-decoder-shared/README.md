@@ -15,11 +15,11 @@
     <a href="https://github.com/yume-chan/ya-webadb/releases">
         <img alt="GitHub release" src="https://img.shields.io/github/v/release/yume-chan/ya-webadb?logo=github">
     </a>
-    <a href="https://bundlephobia.com/package/@yume-chan/scrcpy-decoder-h264bsd">
-        <img alt="Package Size" src="https://img.shields.io/bundlephobia/minzip/%40yume-chan%2Fscrcpy-decoder-h264bsd">
+    <a href="https://bundlephobia.com/package/@yume-chan/scrcpy-decoder-shared">
+        <img alt="Package Size" src="https://img.shields.io/bundlephobia/minzip/%40yume-chan%2Fscrcpy-decoder-shared">
     </a>
-    <a href="https://www.npmjs.com/package/@yume-chan/scrcpy-decoder-h264bsd">
-        <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/scrcpy-decoder-h264bsd?logo=npm">
+    <a href="https://www.npmjs.com/package/@yume-chan/scrcpy-decoder-shared">
+        <img alt="npm" src="https://img.shields.io/npm/dm/%40yume-chan/scrcpy-decoder-shared?logo=npm">
     </a>
     <a href="https://tangoadb.dev/discord">
         <img alt="Discord" src="https://img.shields.io/discord/1120215514732564502?logo=discord&logoColor=%23ffffff&label=Discord">
@@ -37,7 +37,7 @@ Check the latest documentation at https://tangoadb.dev/scrcpy/video/tiny-h264/
 
 ## Sponsors
 
-[Become a backer](https://opencollective.com/ya-webadb) and get your image on our README on Github with a link to your site.
+[Become a backer](https://opencollective.com/ya-webadb) and get your image on our README on GitHub with a link to your site.
 
 <a href="https://opencollective.com/ya-webadb/backer/0/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/0/avatar.svg?requireActive=false"></a>
 <a href="https://opencollective.com/ya-webadb/backer/1/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/1/avatar.svg?requireActive=false"></a>

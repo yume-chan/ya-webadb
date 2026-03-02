@@ -98,6 +98,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#rawDecoder.onDequeue;
     }
     /**
+     * Gets the number of times the decoder has been reset to catch up new keyframes.
+     */
+    get decoderResetCount() {
+        return this.#rawDecoder.decoderResetCount;
+    }
+    /**
      * Gets the number of frames decoded by the decoder.
      */
     get framesDecoded() {
@@ -107,7 +113,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
      * Gets the number of frames skipped by the decoder.
      */
     get framesSkippedDecoding() {
-        return this.#rawDecoder.framesSkipped;
+        return this.#rawDecoder.framesSkippedDecoding;
     }
 
     // #endregion raw decoder

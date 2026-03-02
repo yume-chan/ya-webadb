@@ -1,12 +1,17 @@
 import { EventEmitter } from "@yume-chan/event";
+import type { ScrcpyVideoDecoderPerformanceCounterInterface } from "@yume-chan/scrcpy-decoder-shared";
+import { ScrcpyVideoDecoderPerformanceCounter } from "@yume-chan/scrcpy-decoder-shared";
 import { concatBuffers, TransformStream } from "@yume-chan/stream-extra";
 
 import type { CodecTransformStream } from "../codec/type.js";
 
-export class VideoDecoderStream extends TransformStream<
-    CodecTransformStream.Config | CodecTransformStream.VideoChunk,
-    VideoFrame
-> {
+export class VideoDecoderStream
+    extends TransformStream<
+        CodecTransformStream.Config | CodecTransformStream.VideoChunk,
+        VideoFrame
+    >
+    implements ScrcpyVideoDecoderPerformanceCounterInterface
+{
     /**
      * The native decoder.
      *
@@ -36,28 +41,24 @@ export class VideoDecoderStream extends TransformStream<
         return this.#onDequeue.event;
     }
 
-    #framesDecoded = 0;
+    #counter = new ScrcpyVideoDecoderPerformanceCounter();
     /**
      * Gets the number of frames decoded by the decoder.
      */
     get framesDecoded() {
-        return this.#framesDecoded;
+        return this.#counter.framesDecoded;
     }
-
-    #framesSkipped = 0;
     /**
      * Gets the number of frames skipped by the decoder.
      */
-    get framesSkipped() {
-        return this.#framesSkipped;
+    get framesSkippedDecoding() {
+        return this.#counter.framesSkippedDecoding;
     }
-
-    #decoderResetCount = 0;
     /**
      * Gets the number of times the decoder has been reset to catch up new keyframes.
      */
     get decoderResetCount() {
-        return this.#decoderResetCount;
+        return this.#counter.decoderResetCount;
     }
 
     /**
@@ -76,7 +77,7 @@ export class VideoDecoderStream extends TransformStream<
 
                 decoder = new VideoDecoder({
                     output: (frame) => {
-                        this.#framesDecoded += 1;
+                        this.#counter.increaseFramesDecoded();
                         controller.enqueue(frame);
                     },
                     error: (error) => {
@@ -127,8 +128,10 @@ export class VideoDecoderStream extends TransformStream<
                 // (decoding can only start from keyframes)
                 // This limits the maximum latency to 1 keyframe interval
                 // (60 frames by default).
-                this.#framesSkipped += this.#decoder.decodeQueueSize;
-                this.#decoderResetCount += 1;
+                this.#counter.addFramesSkippedDecoding(
+                    this.#decoder.decodeQueueSize,
+                );
+                this.#counter.increaseResetCount();
                 this.#decoder.reset();
 
                 // `reset` also resets the decoder configuration

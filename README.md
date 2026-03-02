@@ -42,7 +42,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to run and develop this project
 
 This project is tested with BrowserStack
 
-[Become a backer](https://opencollective.com/ya-webadb) and get your image on our README on Github with a link to your site.
+[Become a backer](https://opencollective.com/ya-webadb) and get your image on our README on GitHub with a link to your site.
 
 <a href="https://opencollective.com/ya-webadb/backer/0/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/0/avatar.svg?requireActive=false"></a>
 <a href="https://opencollective.com/ya-webadb/backer/1/website?requireActive=false" target="_blank"><img src="https://opencollective.com/ya-webadb/backer/1/avatar.svg?requireActive=false"></a>
