@@ -1,4 +1,4 @@
-import type { PauseController } from "@yume-chan/scrcpy-decoder-tinyh264";
+import type { ScrcpyVideoDecoderPauseController } from "@yume-chan/scrcpy-decoder-shared";
 import { TransformStream } from "@yume-chan/stream-extra";
 
 import type { CodecTransformStream } from "../codec/type.js";
@@ -48,7 +48,7 @@ export class TimestampTransforms {
     #skipFramesUntil = 0;
 
     #addTimestamp = new TransformStream<
-        PauseController.Output,
+        ScrcpyVideoDecoderPauseController.Output,
         CodecTransformStream.Input
     >({
         transform: (packet, controller) => {

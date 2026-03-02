@@ -1,5 +1,5 @@
 {
-    "name": "@yume-chan/scrcpy-decoder-tinyh264",
+    "name": "@yume-chan/scrcpy-decoder-h264bsd",
     "version": "2.1.0",
     "description": "Raw H.264 stream decoder and renderer wrapping TinyH264 and YUVCanvas packages (software decoding).",
     "keywords": [
@@ -14,11 +14,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/scrcpy-decoder-tinyh264#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/scrcpy-decoder-h264bsd#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/scrcpy-decoder-tinyh264"
+        "directory": "packages/scrcpy-decoder-h264bsd"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
@@ -35,17 +35,19 @@
     "dependencies": {
         "@yume-chan/async": "^4.1.3",
         "@yume-chan/event": "workspace:^",
+        "@yume-chan/h264bsd": "^1.1.1",
         "@yume-chan/media-codec": "workspace:^",
         "@yume-chan/scrcpy": "workspace:^",
+        "@yume-chan/scrcpy-decoder-shared": "workspace:^",
         "@yume-chan/stream-extra": "workspace:^",
-        "tinyh264": "^0.0.7",
+        "comlink": "^4.4.2",
         "yuv-buffer": "^1.0.1",
         "yuv-canvas": "^1.3.0"
     },
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.7.4",
+        "prettier": "^3.8.1",
         "typescript": "^5.9.3"
     }
 }

@@ -1,3 +1,4 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
 import { PromiseResolver } from "@yume-chan/async";
 import type {
     ScrcpyMediaStreamConfigurationPacket,
@@ -7,13 +8,41 @@ import type {
 import type { TransformStreamDefaultController } from "@yume-chan/stream-extra";
 import { TransformStream } from "@yume-chan/stream-extra";
 
-import type { ScrcpyVideoDecoderPauseController } from "../types.js";
+export interface ScrcpyVideoDecoderPauseControllerInterface {
+    readonly paused: boolean;
 
-export class PauseController
-    extends TransformStream<PauseController.Input, PauseController.Output>
-    implements ScrcpyVideoDecoderPauseController
+    /**
+     * Pause the decoder.
+     *
+     * It has a higher priority than {@link trackDocumentVisibility}.
+     * After calling `pause`, the decoder can only be resumed by calling {@link resume}.
+     */
+    pause(): void;
+
+    /**
+     * Resume the decoder if it was paused.
+     */
+    resume(): MaybePromiseLike<undefined>;
+
+    /**
+     * Pause the decoder when the document becomes invisible,
+     * and resume when the document becomes visible,
+     * to save system resources and battery.
+     *
+     * @param document A document to track
+     * @returns A function to stop tracking, and resume the decoder (if it was not explicitly paused)
+     */
+    trackDocumentVisibility(document: Document): () => undefined;
+}
+
+export class ScrcpyVideoDecoderPauseController
+    extends TransformStream<
+        ScrcpyVideoDecoderPauseController.Input,
+        ScrcpyVideoDecoderPauseController.Output
+    >
+    implements ScrcpyVideoDecoderPauseControllerInterface
 {
-    #controller: TransformStreamDefaultController<PauseController.Output>;
+    #controller: TransformStreamDefaultController<ScrcpyVideoDecoderPauseController.Output>;
 
     #paused = false;
     #pausedExplicitly = false;
@@ -48,7 +77,7 @@ export class PauseController
     #disposed = false;
 
     constructor() {
-        let controller!: TransformStreamDefaultController<PauseController.Output>;
+        let controller!: TransformStreamDefaultController<ScrcpyVideoDecoderPauseController.Output>;
 
         super({
             start: (controller_) => {
@@ -220,7 +249,7 @@ export class PauseController
     }
 }
 
-export namespace PauseController {
+export namespace ScrcpyVideoDecoderPauseController {
     export type Input = ScrcpyMediaStreamPacket;
     export type Output =
         | ScrcpyMediaStreamConfigurationPacket

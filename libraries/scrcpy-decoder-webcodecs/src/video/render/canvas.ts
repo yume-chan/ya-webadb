@@ -1,5 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
-import { createCanvas } from "@yume-chan/scrcpy-decoder-tinyh264";
+import { createCanvas } from "@yume-chan/scrcpy-decoder-shared";
 import { WritableStream } from "@yume-chan/stream-extra";
 
 import { canvasToBlob } from "../utils/index.js";

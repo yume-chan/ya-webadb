@@ -1,4 +1,4 @@
-# Change Log - @yume-chan/scrcpy-decoder-tinyh264
+# Change Log - @yume-chan/scrcpy-decoder-h264bsd
 
 ## 2.1.0
 

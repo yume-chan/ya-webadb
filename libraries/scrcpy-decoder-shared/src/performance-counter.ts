@@ -1,6 +1,43 @@
-import type { ScrcpyVideoDecoderPerformanceCounter } from "../types.js";
+export interface ScrcpyVideoDecoderPerformanceCounterInterface {
+    /**
+     * Gets the number of frames that have been drawn on the renderer.
+     */
+    readonly framesRendered: number;
+    /**
+     * Gets the number of frames that's visible to the user.
+     *
+     * Multiple frames might be rendered during one vertical sync interval,
+     * but only the last of them is represented to the user.
+     * This costs some performance but reduces latency by 1 frame.
+     *
+     * Might be `0` if the renderer is in a nested Web Worker on Chrome due to a Chrome bug.
+     * https://issues.chromium.org/issues/41483010
+     */
+    readonly framesDisplayed: number;
+    /**
+     * Gets the number of frames that wasn't drawn on the renderer
+     * because the renderer can't keep up
+     */
+    readonly framesSkippedRendering: number;
+}
 
-export class PerformanceCounter implements ScrcpyVideoDecoderPerformanceCounter {
+export class ScrcpyVideoDecoderPerformanceCounter implements ScrcpyVideoDecoderPerformanceCounterInterface {
+    #framesDecoded = 0;
+    /**
+     * Gets the number of frames decoded by the decoder.
+     */
+    get framesDecoded() {
+        return this.#framesDecoded;
+    }
+
+    #framesSkippedDecoding = 0;
+    /**
+     * Gets the number of frames skipped by the decoder.
+     */
+    get framesSkippedDecoding() {
+        return this.#framesSkippedDecoding;
+    }
+
     #framesRendered = 0;
     /**
      * Gets the number of frames that have been drawn on the renderer.
@@ -69,13 +106,29 @@ export class PerformanceCounter implements ScrcpyVideoDecoderPerformanceCounter 
         );
     };
 
-    increaseFramesSkipped() {
-        this.#framesSkippedRendering += 1;
+    increaseFramesDecoded() {
+        this.#framesDecoded += 1;
+    }
+
+    addFramesDecoded(count: number) {
+        this.#framesDecoded += count;
+    }
+
+    addFramesSkippedDecoding(count: number) {
+        this.#framesSkippedDecoding += count;
     }
 
     increaseFramesRendered() {
         this.#framesRendered += 1;
         this.#hasNewFrame = true;
+    }
+
+    increaseFramesSkippedRendering() {
+        this.#framesSkippedRendering += 1;
+    }
+
+    addFramesSkippedRendering(count: number) {
+        this.#framesSkippedRendering += count;
     }
 
     dispose() {

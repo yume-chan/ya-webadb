@@ -7,7 +7,7 @@
 - Updated dependencies [40a60ca]
     - @yume-chan/stream-extra@2.1.0
     - @yume-chan/scrcpy@2.1.0
-    - @yume-chan/scrcpy-decoder-tinyh264@2.1.0
+    - @yume-chan/scrcpy-decoder-h264bsd@2.1.0
 
 ## 2.0.1
 
@@ -15,7 +15,7 @@
 
 - @yume-chan/scrcpy@2.0.1
 - @yume-chan/stream-extra@2.0.1
-- @yume-chan/scrcpy-decoder-tinyh264@2.0.1
+- @yume-chan/scrcpy-decoder-h264bsd@2.0.1
 
 ## 2.0.0
 
@@ -28,7 +28,7 @@
     - @yume-chan/scrcpy@2.0.0
     - @yume-chan/event@2.0.0
     - @yume-chan/no-data-view@2.0.0
-    - @yume-chan/scrcpy-decoder-tinyh264@2.0.0
+    - @yume-chan/scrcpy-decoder-h264bsd@2.0.0
     - @yume-chan/stream-extra@2.0.0
 
 ## 1.1.0
@@ -46,7 +46,7 @@
 - Updated dependencies [7f2a09c]
 - Updated dependencies [cb44b63]
     - @yume-chan/scrcpy@1.1.0
-    - @yume-chan/scrcpy-decoder-tinyh264@1.1.0
+    - @yume-chan/scrcpy-decoder-h264bsd@1.1.0
 
 ## 1.0.1
 
@@ -65,7 +65,7 @@
 - Updated dependencies [ea5002b]
 - Updated dependencies [ea5002b]
 - Updated dependencies [db8466f]
-    - @yume-chan/scrcpy-decoder-tinyh264@1.0.1
+    - @yume-chan/scrcpy-decoder-h264bsd@1.0.1
     - @yume-chan/no-data-view@1.0.1
     - @yume-chan/stream-extra@1.0.1
     - @yume-chan/scrcpy@1.0.1
