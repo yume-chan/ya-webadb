@@ -287,7 +287,7 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
 
         const decoder = await this.#decoder;
         await decoder.flush(false);
-        await decoder?.dispose();
+        await decoder.dispose();
 
         this.#worker?.terminate();
 
