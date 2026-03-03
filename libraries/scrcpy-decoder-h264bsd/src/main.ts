@@ -18,7 +18,7 @@ import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 import * as Comlink from "comlink";
 
-import { DecoderRenderer } from "./core.js";
+import type { DecoderRenderer } from "./core.js";
 
 export const noop = () => {
     // no-op
@@ -122,7 +122,7 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
     }
 
     #worker: Worker | undefined;
-    #decoder: DecoderRenderer | Promise<Comlink.Remote<DecoderRenderer>>;
+    #decoder: Promise<DecoderRenderer | Comlink.Remote<DecoderRenderer>>;
 
     constructor({ canvas, worker }: H264BsdDecoder.Options = {}) {
         switch (worker) {
@@ -152,27 +152,9 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
         this.#rendererType = webGl ? "hardware" : "software";
 
         if (worker) {
-            this.#worker = new Worker(new URL("./worker.js", import.meta.url), {
-                type: "module",
-            });
-
-            canvas = this.#canvas;
-            if (isMainThread && canvas instanceof HTMLCanvasElement) {
-                canvas = canvas.transferControlToOffscreen();
-                this.#canvasTransferred = true;
-            }
-
-            this.#decoder = this.#createRemoteDecoder(
-                this.#worker,
-                webGl,
-                canvas as OffscreenCanvas,
-            );
+            this.#decoder = this.#createRemoteDecoder(webGl);
         } else {
-            this.#decoder = new DecoderRenderer(
-                this.#canvas,
-                webGl,
-                this.#handleSizeChange,
-            );
+            this.#decoder = this.#createLocalDecoder(webGl);
         }
 
         void this.#pause.readable
@@ -216,29 +198,40 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
             .catch(noop);
     }
 
-    async #createRemoteDecoder(
-        worker: Worker,
-        webGl: boolean,
-        canvas: OffscreenCanvas,
-    ) {
+    async #createRemoteDecoder(webGl: boolean) {
+        let canvas = this.#canvas;
+        if (isMainThread && canvas instanceof HTMLCanvasElement) {
+            canvas = canvas.transferControlToOffscreen();
+            this.#canvasTransferred = true;
+        }
+
+        const worker = new Worker(new URL("./worker.js", import.meta.url), {
+            type: "module",
+        });
+        this.#worker = worker;
+
         await new Promise<void>((resolve) => {
             const handleReady = (e: MessageEvent) => {
                 if (e.data === "ready") {
                     resolve();
-                    this.#worker?.removeEventListener("message", handleReady);
+                    worker.removeEventListener("message", handleReady);
                 }
             };
             worker.addEventListener("message", handleReady);
         });
 
-        const RemoteDecoderRenderer =
-            Comlink.wrap<typeof DecoderRenderer>(worker);
+        const Constructor = Comlink.wrap<typeof DecoderRenderer>(worker);
 
-        return new RemoteDecoderRenderer(
+        return new Constructor(
             Comlink.transfer(canvas, [canvas]),
             webGl,
             Comlink.proxy(this.#handleSizeChange),
         );
+    }
+
+    async #createLocalDecoder(webGl: boolean) {
+        const { DecoderRenderer } = await import("./core.js");
+        return new DecoderRenderer(this.#canvas, webGl, this.#handleSizeChange);
     }
 
     #handleSizeChange = ({
