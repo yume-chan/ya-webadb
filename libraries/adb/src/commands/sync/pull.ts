@@ -19,6 +19,8 @@ export async function* adbSyncPullGenerator(
     path: string,
 ): AsyncGenerator<Uint8Array, void, void> {
     const locked = await socket.lock();
+    // False positive, see https://github.com/eslint/eslint/issues/20583
+    // eslint-disable-next-line no-useless-assignment
     let done = false;
     try {
         await adbSyncWriteRequest(locked, AdbSyncRequestId.Receive, path);
@@ -30,6 +32,9 @@ export async function* adbSyncPullGenerator(
             yield packet.data;
         }
         done = true;
+    } catch (e) {
+        done = true;
+        throw e;
     } finally {
         if (!done) {
             // sync pull can't be cancelled, so we have to read all data
