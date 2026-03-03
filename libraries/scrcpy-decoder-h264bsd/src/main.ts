@@ -210,14 +210,21 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
         });
         this.#worker = worker;
 
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
             const handleReady = (e: MessageEvent) => {
                 if (e.data === "ready") {
-                    resolve();
                     worker.removeEventListener("message", handleReady);
+                    worker.removeEventListener("error", handleError);
+                    resolve();
                 }
             };
+            const handleError = (e: ErrorEvent) => {
+                worker.removeEventListener("message", handleReady);
+                worker.removeEventListener("error", handleError);
+                reject(e.error);
+            };
             worker.addEventListener("message", handleReady);
+            worker.addEventListener("error", handleError);
         });
 
         const Constructor = Comlink.wrap<typeof DecoderRenderer>(worker);
