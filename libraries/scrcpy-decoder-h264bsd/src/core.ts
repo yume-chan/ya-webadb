@@ -8,6 +8,7 @@ const Module = await initialize();
 export class DecoderRenderer {
     #decoder: Decoder;
 
+    #canvas: HTMLCanvasElement | OffscreenCanvas;
     #renderer: YUVCanvas;
 
     #size: ScrcpyVideoSizeImpl;
@@ -19,6 +20,7 @@ export class DecoderRenderer {
     ) {
         this.#decoder = new Module.Decoder();
 
+        this.#canvas = canvas;
         // yuv-canvas supports detecting WebGL support by creating a <canvas> itself
         // But this doesn't work in Web Worker (with OffscreenCanvas)
         // so we implement our own check here
@@ -121,5 +123,8 @@ export class DecoderRenderer {
     dispose() {
         this.#decoder.delete();
         this.#size.dispose();
+
+        this.#canvas.width = 0;
+        this.#canvas.height = 0;
     }
 }

@@ -40,6 +40,7 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
     }
 
     #canvas: HTMLCanvasElement | OffscreenCanvas;
+    #canvasTransferred = false;
     get canvas() {
         return this.#canvas;
     }
@@ -151,25 +152,20 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
         this.#rendererType = webGl ? "hardware" : "software";
 
         if (worker) {
-            this.#worker = new Worker(
-                new URL("./wrapper.js", import.meta.url),
-                {
-                    type: "module",
-                },
-            );
-            const RemoteDecoderRenderer = Comlink.wrap<typeof DecoderRenderer>(
-                this.#worker,
-            );
+            this.#worker = new Worker(new URL("./worker.js", import.meta.url), {
+                type: "module",
+            });
 
             canvas = this.#canvas;
             if (isMainThread && canvas instanceof HTMLCanvasElement) {
                 canvas = canvas.transferControlToOffscreen();
+                this.#canvasTransferred = true;
             }
 
-            this.#decoder = new RemoteDecoderRenderer(
-                Comlink.transfer(canvas, [canvas]),
+            this.#decoder = this.#createRemoteDecoder(
+                this.#worker,
                 webGl,
-                Comlink.proxy(this.#handleSizeChange),
+                canvas as OffscreenCanvas,
             );
         } else {
             this.#decoder = new DecoderRenderer(
@@ -218,6 +214,31 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
                 }),
             )
             .catch(noop);
+    }
+
+    async #createRemoteDecoder(
+        worker: Worker,
+        webGl: boolean,
+        canvas: OffscreenCanvas,
+    ) {
+        await new Promise<void>((resolve) => {
+            const handleReady = (e: MessageEvent) => {
+                if (e.data === "ready") {
+                    resolve();
+                    this.#worker?.removeEventListener("message", handleReady);
+                }
+            };
+            worker.addEventListener("message", handleReady);
+        });
+
+        const RemoteDecoderRenderer =
+            Comlink.wrap<typeof DecoderRenderer>(worker);
+
+        return new RemoteDecoderRenderer(
+            Comlink.transfer(canvas, [canvas]),
+            webGl,
+            Comlink.proxy(this.#handleSizeChange),
+        );
     }
 
     #handleSizeChange = ({
@@ -294,8 +315,11 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
         this.#rendererCounter.dispose();
         this.#size.dispose();
 
-        this.#canvas.width = 0;
-        this.#canvas.height = 0;
+        if (!this.#canvasTransferred) {
+            // Can't change a transferred canvas
+            this.#canvas.width = 0;
+            this.#canvas.height = 0;
+        }
     }
 }
 
