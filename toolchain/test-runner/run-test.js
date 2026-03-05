@@ -61,7 +61,7 @@ const test = run({
 test.on("test:fail", (e) => {
     if (e.details.type === "test" && IsGitHubActions && NodeVersion[0] >= 24) {
         console.log(
-            `::error file=${e.file},line=${e.line}::${e.details.error.stack.replace(/\n/g, "%0A")}`,
+            `::error file=${e.file},line=${e.line},col=${e.column}::${e.details.error.stack.replace(/\n/g, "%0A")}`,
         );
     }
 

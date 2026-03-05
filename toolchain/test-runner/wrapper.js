@@ -14,6 +14,8 @@ const child = spawn(
         stdio: "inherit",
         env: {
             ...process.env,
+            // Enable color output when running in `pnpm recursive run`
+            FORCE_COLOR: "true",
         },
     },
 );
