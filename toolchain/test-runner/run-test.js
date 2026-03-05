@@ -59,4 +59,12 @@ const coverageFolder = resolve(process.cwd(), "coverage");
 await mkdir(coverageFolder, { recursive: true });
 
 test.pipe(spec()).pipe(process.stdout);
-test.pipe(lcov()).pipe(createWriteStream(resolve(coverageFolder, "lcov.info")));
+const NodeVersion = process.version
+    .substring(1)
+    .split(".")
+    .map((value) => parseInt(value, 10));
+if (NodeVersion[0] >= 24) {
+    test.pipe(lcov()).pipe(
+        createWriteStream(resolve(coverageFolder, "lcov.info")),
+    );
+}
