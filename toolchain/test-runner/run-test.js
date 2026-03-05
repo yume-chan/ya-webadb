@@ -9,6 +9,12 @@ import { run } from "node:test";
 import { lcov, spec } from "node:test/reporters";
 import { fileURLToPath } from "node:url";
 
+const NodeVersion = process.version
+    .substring(1)
+    .split(".")
+    .map((value) => parseInt(value, 10));
+const IsGitHubActions = process.env.GITHUB_ACTIONS === "true";
+
 let tsc = resolve(
     fileURLToPath(import.meta.url),
     "..",
@@ -52,17 +58,19 @@ const test = run({
     coverage: true,
     coverageExcludeGlobs: ["**/*.spec.ts"],
 });
-test.on("test:fail", () => {
+test.on("test:fail", (e) => {
+    if (e.details.type === "test" && IsGitHubActions && NodeVersion[0] >= 24) {
+        console.log(
+            `::error file=${e.file},line=${e.line}::${e.details.error.stack.replace(/\n/g, "%0A")}`,
+        );
+    }
+
     process.exitCode = 1;
 });
 const coverageFolder = resolve(process.cwd(), "coverage");
 await mkdir(coverageFolder, { recursive: true });
 
 test.pipe(spec()).pipe(process.stdout);
-const NodeVersion = process.version
-    .substring(1)
-    .split(".")
-    .map((value) => parseInt(value, 10));
 if (NodeVersion[0] >= 24) {
     test.pipe(lcov()).pipe(
         createWriteStream(resolve(coverageFolder, "lcov.info")),
