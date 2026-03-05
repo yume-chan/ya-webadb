@@ -7,11 +7,10 @@ const child = spawn(
     process.execPath,
     [
         "--enable-source-maps",
-        // Disable code coverage until https://github.com/nodejs/node/pull/54444 is released
-        // "--experimental-test-coverage",
         fileURLToPath(import.meta.resolve("./run-test.js", import.meta.url)),
     ],
     {
+        shell: false,
         stdio: "inherit",
         env: {
             ...process.env,
