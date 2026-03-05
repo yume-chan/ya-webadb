@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { createWriteStream } from "node:fs";
 import { mkdir, opendir } from "node:fs/promises";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { run } from "node:test";
 import { lcov, spec } from "node:test/reporters";
 import { fileURLToPath } from "node:url";
@@ -60,8 +60,12 @@ const test = run({
 });
 test.on("test:fail", (e) => {
     if (e.details.type === "test" && IsGitHubActions && NodeVersion[0] >= 24) {
+        const relativePath = relative(process.env.GITHUB_WORKSPACE, e.file);
+        const message = e.details.error.cause.stack
+            .replace(/%/g, "%25")
+            .replace(/\n/g, "%0A");
         console.log(
-            `::error file=${e.file},line=${e.line},col=${e.column}::${e.details.error.stack.replace(/\n/g, "%0A")}`,
+            `::error file=${relativePath},line=${e.line},col=${e.column}::${message}`,
         );
     }
 
