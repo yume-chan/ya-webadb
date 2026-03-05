@@ -5,8 +5,5 @@
         "build": "pnpm recursive run build",
         "test": "pnpm recursive run test",
         "lint": "pnpm recursive --no-sort --workspace-concurrency=1 run lint"
-    },
-    "devDependencies": {
-        "@changesets/cli": "^2.29.8"
     }
 }

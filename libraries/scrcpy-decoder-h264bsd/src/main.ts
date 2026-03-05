@@ -221,6 +221,7 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
             const handleError = (e: ErrorEvent) => {
                 worker.removeEventListener("message", handleReady);
                 worker.removeEventListener("error", handleError);
+                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
                 reject(e.error);
             };
             worker.addEventListener("message", handleReady);
