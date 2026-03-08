@@ -14,11 +14,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/scrcpy-decoder-webcodecs#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/scrcpy-decoder-webcodecs#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/scrcpy-decoder-webcodecs"
+        "directory": "libraries/scrcpy-decoder-webcodecs"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
@@ -38,13 +38,13 @@
         "@yume-chan/media-codec": "workspace:^",
         "@yume-chan/no-data-view": "workspace:^",
         "@yume-chan/scrcpy": "workspace:^",
-        "@yume-chan/scrcpy-decoder-tinyh264": "workspace:^",
+        "@yume-chan/scrcpy-decoder-shared": "workspace:^",
         "@yume-chan/stream-extra": "workspace:^"
     },
     "devDependencies": {
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.7.4",
+        "prettier": "^3.8.1",
         "typescript": "^5.9.3"
     }
 }

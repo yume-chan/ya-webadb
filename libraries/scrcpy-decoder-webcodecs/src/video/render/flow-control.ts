@@ -1,5 +1,5 @@
-import type { ScrcpyVideoDecoderPerformanceCounter } from "@yume-chan/scrcpy-decoder-tinyh264";
-import { PerformanceCounter } from "@yume-chan/scrcpy-decoder-tinyh264";
+import type { ScrcpyVideoRendererPerformanceCounterInterface } from "@yume-chan/scrcpy-decoder-shared";
+import { ScrcpyVideoRendererPerformanceCounter } from "@yume-chan/scrcpy-decoder-shared";
 import type {
     PushReadableStreamController,
     ReadableStream,
@@ -15,7 +15,7 @@ import {
 export class RendererController
     implements
         TransformStream<VideoFrame, VideoFrame>,
-        ScrcpyVideoDecoderPerformanceCounter
+        ScrcpyVideoRendererPerformanceCounterInterface
 {
     #readable: ReadableStream<VideoFrame>;
     #readableController!: PushReadableStreamController<VideoFrame>;
@@ -38,7 +38,7 @@ export class RendererController
 
     #drawTask: Promise<undefined> | undefined;
 
-    #counter = new PerformanceCounter();
+    #counter = new ScrcpyVideoRendererPerformanceCounter();
     /**
      * Gets the number of frames that have been drawn on the renderer.
      */
@@ -92,7 +92,7 @@ export class RendererController
                 // Skip frame B and queue frame C
                 if (this.#nextFrame) {
                     this.#nextFrame.close();
-                    this.#counter.increaseFramesSkipped();
+                    this.#counter.increaseFramesSkippedRendering();
                 }
                 this.#nextFrame = frame;
 

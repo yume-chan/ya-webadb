@@ -2,8 +2,8 @@ import { ScrcpyVideoCodecId, ScrcpyVideoSizeImpl } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
     ScrcpyVideoDecoderCapability,
-} from "@yume-chan/scrcpy-decoder-tinyh264";
-import { noop, PauseController } from "@yume-chan/scrcpy-decoder-tinyh264";
+} from "@yume-chan/scrcpy-decoder-shared";
+import { ScrcpyVideoDecoderPauseController } from "@yume-chan/scrcpy-decoder-shared";
 import { InspectStream } from "@yume-chan/stream-extra";
 
 import {
@@ -57,7 +57,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
     // #region pause controller
 
-    #pause = new PauseController();
+    #pause = new ScrcpyVideoDecoderPauseController();
     get paused() {
         return this.#pause.paused;
     }
@@ -98,6 +98,12 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         return this.#rawDecoder.onDequeue;
     }
     /**
+     * Gets the number of times the decoder has been reset to catch up new keyframes.
+     */
+    get decoderResetCount() {
+        return this.#rawDecoder.decoderResetCount;
+    }
+    /**
      * Gets the number of frames decoded by the decoder.
      */
     get framesDecoded() {
@@ -107,7 +113,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
      * Gets the number of frames skipped by the decoder.
      */
     get framesSkippedDecoding() {
-        return this.#rawDecoder.framesSkipped;
+        return this.#rawDecoder.framesSkippedDecoding;
     }
 
     // #endregion raw decoder
@@ -209,7 +215,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             // Render
             .pipeTo(renderer.writable)
             // Errors will be handled by source stream
-            .catch(noop);
+            .catch(() => {});
     }
 
     pause(): void {
@@ -251,7 +257,7 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         }
     }
 
-    dispose() {
+    dispose(): undefined {
         // Most cleanup happens automatically when `writable` ends
         // (in each stream's `close` callback).
         // This method cleanup things that still available after `writable` ends

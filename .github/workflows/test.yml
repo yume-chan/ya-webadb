@@ -4,34 +4,37 @@
 name: Test
 
 on:
-  push:
-    branches: [main]
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
 
-env:
-  BASE_PATH: /ya-webadb
+permissions:
+    contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [20.x]
+        strategy:
+            matrix:
+                node-version: [20, 22, 24]
+            fail-fast: false
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v5
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v6
+              with:
+                  node-version: ${{ matrix.node-version }}
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.20.0
-          run_install: true
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 10.20.0
+                  run_install: true
 
-      - run: pnpm run build
-      - run: pnpm run test
-      - run: pnpm run lint
+            - run: pnpm run build
+            - run: pnpm run test
+            - run: pnpm run lint

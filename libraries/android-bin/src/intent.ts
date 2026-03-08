@@ -4,28 +4,6 @@
 // cspell: ignore esal
 // cspell: ignore edal
 
-export interface IntentNumberExtra {
-    type: "long" | "float" | "double";
-    value: number;
-}
-
-export interface IntentStringExtra {
-    type: "uri";
-    value: string;
-}
-
-export interface IntentNumberArrayExtra {
-    type: "array" | "arrayList";
-    itemType: "int" | IntentNumberExtra["type"];
-    value: number[];
-}
-
-export interface IntentStringArrayExtra {
-    type: "array" | "arrayList";
-    itemType: "string";
-    value: string[];
-}
-
 export interface ComponentName {
     packageName: string;
     className: string;
@@ -44,11 +22,11 @@ export interface Intent {
               | null
               | number
               | bigint
-              | IntentStringExtra
+              | Intent.Extra.String
               | ComponentName
-              | IntentNumberArrayExtra
-              | IntentStringArrayExtra
-              | IntentNumberExtra
+              | Intent.Extra.NumberArray
+              | Intent.Extra.StringArray
+              | Intent.Extra.Number
               | boolean
           >
         | undefined;
@@ -57,7 +35,33 @@ export interface Intent {
     component?: ComponentName | undefined;
 }
 
-function getNumberType(type: "int" | IntentNumberExtra["type"]) {
+export namespace Intent {
+    export namespace Extra {
+        export interface Number {
+            type: "long" | "float" | "double";
+            value: number;
+        }
+
+        export interface String {
+            type: "uri";
+            value: string;
+        }
+
+        export interface NumberArray {
+            type: "array" | "arrayList";
+            itemType: "int" | Number["type"];
+            value: number[];
+        }
+
+        export interface StringArray {
+            type: "array" | "arrayList";
+            itemType: "string";
+            value: string[];
+        }
+    }
+}
+
+function getNumberType(type: "int" | Intent.Extra.Number["type"]) {
     switch (type) {
         case "int":
             return "--ei";
@@ -73,7 +77,7 @@ function getNumberType(type: "int" | IntentNumberExtra["type"]) {
 }
 
 function serializeExtraArray(
-    array: IntentNumberArrayExtra | IntentStringArrayExtra,
+    array: Intent.Extra.NumberArray | Intent.Extra.StringArray,
 ): [type: string, value: string] {
     let type: string;
     let value: string;
@@ -168,7 +172,7 @@ export function serializeIntent(intent: Intent) {
                 case "number":
                     if (value % 1 !== 0) {
                         throw new Error(
-                            `Extra \`${key}\` is not an integer, must use \`IntentNumberExtra\` type instead`,
+                            `Extra \`${key}\` is not an integer, must use \`Intent.Extra.Number\` type instead`,
                         );
                     }
                     // Infer type from value

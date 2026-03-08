@@ -8,16 +8,8 @@ import { serializeIntent } from "./intent.js";
 import type { SingleUser, SingleUserOrAll } from "./utils.js";
 import { buildCommand } from "./utils.js";
 
-export interface ActivityManagerStartActivityOptions {
-    displayId?: number;
-    windowingMode?: number;
-    forceStop?: boolean;
-    user?: SingleUser;
-    intent: Intent;
-}
-
 const START_ACTIVITY_OPTIONS_MAP: Partial<
-    Record<keyof ActivityManagerStartActivityOptions, string>
+    Record<keyof ActivityManager.StartActivityOptions, string>
 > = {
     displayId: "--display",
     windowingMode: "--windowingMode",
@@ -40,7 +32,7 @@ export class ActivityManager extends AdbServiceBase {
     }
 
     async startActivity(
-        options: ActivityManagerStartActivityOptions,
+        options: ActivityManager.StartActivityOptions,
     ): Promise<void> {
         // Android 8 added "start-activity" alias to "start"
         // but we want to use the most compatible one.
@@ -117,5 +109,15 @@ export class ActivityManager extends AdbServiceBase {
         } else {
             await this.#cmd.spawn(command).wait();
         }
+    }
+}
+
+export namespace ActivityManager {
+    export interface StartActivityOptions {
+        displayId?: number;
+        windowingMode?: number;
+        forceStop?: boolean;
+        user?: SingleUser;
+        intent: Intent;
     }
 }

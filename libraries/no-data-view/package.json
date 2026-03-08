@@ -9,11 +9,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/no-data-view#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/no-data-view#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/no-data-view"
+        "directory": "libraries/no-data-view"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
@@ -30,12 +30,12 @@
         "test": "run-test"
     },
     "devDependencies": {
-        "@types/node": "^25.0.3",
+        "@types/node": "^25.3.3",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.7.4",
-        "tinybench": "^5.0.1",
+        "prettier": "^3.8.1",
+        "tinybench": "^6.0.0",
         "typescript": "^5.9.3"
     }
 }

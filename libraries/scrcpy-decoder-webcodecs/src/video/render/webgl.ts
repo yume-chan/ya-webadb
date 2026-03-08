@@ -5,7 +5,7 @@ import {
     glCreateContext,
     glIsSupported,
     glLoseContext,
-} from "@yume-chan/scrcpy-decoder-tinyh264";
+} from "@yume-chan/scrcpy-decoder-shared";
 
 import { CanvasVideoFrameRenderer } from "./canvas.js";
 

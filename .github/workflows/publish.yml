@@ -1,35 +1,33 @@
 name: Publish Package to npm
 
 on:
-  push:
-    tags:
-      - "v**"
+    push:
+        tags:
+            - "v**"
 
 permissions:
-  id-token: write
-  
+    id-token: write
+
 jobs:
-  publish:
-    name: Publish
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+    publish:
+        runs-on: ubuntu-latest
 
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.20.0
-          run_install: true
+            - name: Setup node
+              uses: actions/setup-node@v6
+              with:
+                  node-version: 24
 
-      - run: pnpm run build
-      
-      - run: pnpm recursive publish --access public --no-git-checks
-        env:
-          NPM_CONFIG_PROVENANCE: true
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 10.20.0
+                  run_install: true
+
+            - run: pnpm run build
+
+            - run: pnpm recursive publish --access public --no-git-checks
+              env:
+                  NPM_CONFIG_PROVENANCE: true

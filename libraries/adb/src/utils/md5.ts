@@ -79,9 +79,9 @@ export class Md5 {
         let c = this.#state[2]!;
         let d = this.#state[3]!;
 
-        let t = 0;
-        let f = 0;
-        let r = 0;
+        let t: number;
+        let f: number;
+        let r: number;
         let i = 0;
 
         // round 1

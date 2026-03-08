@@ -164,8 +164,8 @@ export class AdbServerNodeTcpConnector
      * it will be parsed as an ADB socket spec and used.
      *
      * Otherwise, a TCP socket spec is used,
-     * where the host is `localhost` or the value of the environment variable `ADB_SERVER_ADDRESS`,
-     * and the port is `5037` or the value of the environment variable `ADB_SERVER_PORT`.
+     * where the host is `localhost` or the value of the environment variable `ANDROID_ADB_SERVER_ADDRESS`,
+     * and the port is `5037` or the value of the environment variable `ANDROID_ADB_SERVER_PORT`.
      */
     constructor();
 
@@ -182,9 +182,9 @@ export class AdbServerNodeTcpConnector
      * - `"tcp:<port>"`: connects to the specified TCP port on default host
      * - `"tcp:<host>:<port>"`: connects to the specified port on the specified host
      *
-     * The default host is `localhost`, or the value of the environment variable `ADB_SERVER_ADDRESS`.
+     * The default host is `localhost`, or the value of the environment variable `ANDROID_ADB_SERVER_ADDRESS`.
      *
-     * The default port is `5037`, or the value of the environment variable `ADB_SERVER_PORT`.
+     * The default port is `5037`, or the value of the environment variable `ANDROID_ADB_SERVER_PORT`.
      *
      * Unix domain sockets:
      *
@@ -211,9 +211,9 @@ export class AdbServerNodeTcpConnector
      *
      * Otherwise,
      * if the `host` field is `undefined`, the default value is `localhost`,
-     * or the value of the environment variable `ADB_SERVER_ADDRESS`.
+     * or the value of the environment variable `ANDROID_ADB_SERVER_ADDRESS`.
      * If the `port` field is `undefined`, the default value is `5037`,
-     * or the value of the environment variable `ADB_SERVER_PORT`.
+     * or the value of the environment variable `ANDROID_ADB_SERVER_PORT`.
      */
     constructor(
         spec: Omit<TcpSocketConnectOpts, "port"> & {

@@ -13,11 +13,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/packages/adb-scrcpy#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-scrcpy#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "packages/adb-scrcpy"
+        "directory": "libraries/adb-scrcpy"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
@@ -42,11 +42,11 @@
         "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^25.0.3",
+        "@types/node": "^25.3.3",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.7.4",
+        "prettier": "^3.8.1",
         "typescript": "^5.9.3"
     }
 }

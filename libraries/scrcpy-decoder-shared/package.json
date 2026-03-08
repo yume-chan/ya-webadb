@@ -1,0 +1,46 @@
+{
+    "name": "@yume-chan/scrcpy-decoder-shared",
+    "version": "2.1.0",
+    "description": "Shared types and utilities for Scrcpy video decoders.",
+    "keywords": [
+        "adb",
+        "android-phone",
+        "scrcpy",
+        "scrcpy-decoder"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/scrcpy-decoder-shared#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "libraries/scrcpy-decoder-shared"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "sideEffects": false,
+    "scripts": {
+        "build": "tsc -b tsconfig.build.json",
+        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@yume-chan/async": "^4.1.3",
+        "@yume-chan/scrcpy": "workspace:^",
+        "@yume-chan/stream-extra": "workspace:^"
+    },
+    "devDependencies": {
+        "@yume-chan/eslint-config": "workspace:^",
+        "@yume-chan/tsconfig": "workspace:^",
+        "prettier": "^3.8.1",
+        "typescript": "^5.9.3"
+    }
+}

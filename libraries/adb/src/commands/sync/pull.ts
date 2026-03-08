@@ -19,6 +19,8 @@ export async function* adbSyncPullGenerator(
     path: string,
 ): AsyncGenerator<Uint8Array, void, void> {
     const locked = await socket.lock();
+    // False positive, see https://github.com/eslint/eslint/issues/20583
+    // eslint-disable-next-line no-useless-assignment
     let done = false;
     try {
         await adbSyncWriteRequest(locked, AdbSyncRequestId.Receive, path);

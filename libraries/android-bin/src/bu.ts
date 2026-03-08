@@ -1,28 +1,12 @@
 import { AdbServiceBase } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 
-export interface AdbBackupOptions {
-    user: number;
-    saveSharedStorage?: boolean;
-    saveWidgets?: boolean;
-    packages: readonly string[] | "user" | "all";
-    savePackageApk: boolean;
-    savePackageObb: boolean;
-    savePackageKeyValue: boolean;
-    compress: boolean;
-}
-
-export interface AdbRestoreOptions {
-    user?: number | undefined;
-    file: ReadableStream<MaybeConsumable<Uint8Array>>;
-}
-
 export class AdbBackup extends AdbServiceBase {
     /**
      * User must confirm backup on device within 60 seconds.
      */
     async backup(
-        options: AdbBackupOptions,
+        options: AdbBackup.BackupOptions,
     ): Promise<ReadableStream<Uint8Array>> {
         const args = ["bu", "backup"];
 
@@ -62,7 +46,7 @@ export class AdbBackup extends AdbServiceBase {
      * User must enter the password (if any) and
      * confirm restore on device within 60 seconds.
      */
-    restore(options: AdbRestoreOptions): Promise<string> {
+    restore(options: AdbBackup.RestoreOptions): Promise<string> {
         const args = ["bu", "restore"];
         if (options.user !== undefined) {
             args.push("--user", options.user.toString());
@@ -71,5 +55,23 @@ export class AdbBackup extends AdbServiceBase {
             .spawn(args)
             .wait({ stdin: options.file })
             .toString();
+    }
+}
+
+export namespace AdbBackup {
+    export interface BackupOptions {
+        user?: number | undefined;
+        saveSharedStorage?: boolean | undefined;
+        saveWidgets?: boolean | undefined;
+        packages: readonly string[] | "user" | "all";
+        savePackageApk: boolean;
+        savePackageObb: boolean;
+        savePackageKeyValue: boolean;
+        compress: boolean;
+    }
+
+    export interface RestoreOptions {
+        user?: number | undefined;
+        file: ReadableStream<MaybeConsumable<Uint8Array>>;
     }
 }

@@ -693,7 +693,7 @@ export class Av1 extends BitReader {
             matrix_coefficients = this.f(8) as Av1.MatrixCoefficients;
         }
 
-        let color_range = false;
+        let color_range: boolean;
         let subsampling_x: boolean;
         let subsampling_y: boolean;
         let chroma_sample_position = 0;

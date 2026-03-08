@@ -715,8 +715,8 @@ export function parseShortTermReferencePictureSet(
     let abs_delta_rps_minus1 = 0;
     const used_by_curr_pic_flag: boolean[] = [];
     const use_delta_flag: boolean[] = [];
-    let num_negative_pics = 0;
-    let num_positive_pics = 0;
+    let num_negative_pics: number;
+    let num_positive_pics: number;
     const delta_poc_s0_minus1: number[] = [];
     const used_by_curr_pic_s0_flag: boolean[] = [];
     const delta_poc_s1_minus1: number[] = [];

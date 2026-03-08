@@ -53,7 +53,7 @@ function option<T>(
 }
 
 // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/services/core/java/com/android/server/pm/PackageManagerShellCommand.java;l=3046;drc=6d14d35d0241f6fee145f8e54ffd77252e8d29fd
-export const PackageManagerInstallOptions = {
+const InstallOptionsDefinitions = {
     forwardLock: option<boolean>("-l", undefined, 28),
     replaceExisting: option<boolean>("-r", undefined, 27),
     skipExisting: option<boolean>("-R", 28),
@@ -108,29 +108,8 @@ export const PackageManagerInstallOptions = {
     ),
 } as const;
 
-export type PackageManagerInstallOptions = {
-    [K in keyof typeof PackageManagerInstallOptions]?:
-        | (typeof PackageManagerInstallOptions)[K]["type"]
-        | undefined;
-};
-
-export interface PackageManagerListPackagesOptions {
-    listDisabled: boolean;
-    listEnabled: boolean;
-    showSourceDir: boolean;
-    showInstaller: boolean;
-    listSystem: boolean;
-    showUid: boolean;
-    listThirdParty: boolean;
-    showVersionCode: boolean;
-    listApexOnly: boolean;
-    user: SingleUserOrAll;
-    uid: number;
-    filter: string;
-}
-
-export const PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP: Record<
-    keyof PackageManagerListPackagesOptions,
+const ListPackagesOptionsMap: Record<
+    keyof PackageManager.ListPackagesOptions,
     string
 > = {
     listDisabled: "-d",
@@ -147,28 +126,8 @@ export const PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP: Record<
     filter: "",
 };
 
-export interface PackageManagerListPackagesResult {
-    packageName: string;
-    sourceDir?: string | undefined;
-    versionCode?: number | undefined;
-    installer?: string | undefined;
-    uid?: number | undefined;
-}
-
-export interface PackageManagerUninstallOptions {
-    keepData: boolean;
-    user: SingleUserOrAll;
-    versionCode: number;
-    /**
-     * Only remove the specified splits, not the entire app
-     *
-     * On Android 10 and lower, only one split name can be specified.
-     */
-    splitNames: readonly string[];
-}
-
-const PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP: Record<
-    keyof PackageManagerUninstallOptions,
+const UninstallOptionsMap: Record<
+    keyof PackageManager.UninstallOptions,
     string
 > = {
     keepData: "-k",
@@ -177,20 +136,15 @@ const PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP: Record<
     splitNames: "",
 };
 
-export interface PackageManagerResolveActivityOptions {
-    user?: SingleUserOrAll;
-    intent: Intent;
-}
-
-const PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP: Partial<
-    Record<keyof PackageManagerResolveActivityOptions, string>
+const ResolveActivityOptionsMap: Partial<
+    Record<keyof PackageManager.ResolveActivityOptions, string>
 > = {
     user: "--user",
 };
 
 function buildInstallCommand(
     command: string,
-    options: PackageManagerInstallOptions | undefined,
+    options: PackageManager.InstallOptions | undefined,
     apiLevel: number | undefined,
 ): string[] {
     const args = [PackageManager.ServiceName, command];
@@ -220,8 +174,8 @@ function buildInstallCommand(
         }
 
         const option =
-            PackageManagerInstallOptions[
-                key as keyof PackageManagerInstallOptions
+            InstallOptionsDefinitions[
+                key as keyof PackageManager.InstallOptions
             ];
 
         if (option === undefined) {
@@ -286,7 +240,7 @@ export class PackageManager extends AdbServiceBase {
      */
     async install(
         apks: readonly string[],
-        options?: PackageManagerInstallOptions,
+        options?: PackageManager.InstallOptions,
     ): Promise<void> {
         const command = buildInstallCommand("install", options, this.#apiLevel);
 
@@ -319,7 +273,7 @@ export class PackageManager extends AdbServiceBase {
 
     async pushAndInstallStream(
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
-        options?: PackageManagerInstallOptions,
+        options?: PackageManager.InstallOptions,
     ): Promise<void> {
         const fileName = Math.random().toString().substring(2);
         const filePath = `/data/local/tmp/${fileName}.apk`;
@@ -345,7 +299,7 @@ export class PackageManager extends AdbServiceBase {
     async installStream(
         size: number,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
-        options?: PackageManagerInstallOptions,
+        options?: PackageManager.InstallOptions,
     ): Promise<void> {
         // Technically, support for `cmd` and streaming install are unrelated,
         // but it's impossible to detect streaming install support without actually trying it.
@@ -378,9 +332,7 @@ export class PackageManager extends AdbServiceBase {
 
     static readonly PackageListItemPrefix = "package:";
 
-    static parsePackageListItem(
-        line: string,
-    ): PackageManagerListPackagesResult {
+    static parsePackageListItem(line: string): PackageManager.PackageInfo {
         line = line.substring(PackageManager.PackageListItemPrefix.length);
 
         let packageName: string;
@@ -432,12 +384,12 @@ export class PackageManager extends AdbServiceBase {
     }
 
     async *listPackages(
-        options?: Optional<PackageManagerListPackagesOptions>,
-    ): AsyncGenerator<PackageManagerListPackagesResult, void, void> {
+        options?: Optional<PackageManager.ListPackagesOptions>,
+    ): AsyncGenerator<PackageManager.PackageInfo, void, void> {
         const command = buildCommand(
             ["package", "list", "packages"],
             options,
-            PACKAGE_MANAGER_LIST_PACKAGES_OPTIONS_MAP,
+            ListPackagesOptionsMap,
         );
 
         if (options?.filter) {
@@ -517,12 +469,12 @@ export class PackageManager extends AdbServiceBase {
 
     async uninstall(
         packageName: string,
-        options?: Optional<PackageManagerUninstallOptions>,
+        options?: Optional<PackageManager.UninstallOptions>,
     ): Promise<void> {
         const command = buildCommand(
             [PackageManager.ServiceName, "uninstall"],
             options,
-            PACKAGE_MANAGER_UNINSTALL_OPTIONS_MAP,
+            UninstallOptionsMap,
         );
 
         command.push(packageName);
@@ -544,12 +496,12 @@ export class PackageManager extends AdbServiceBase {
     }
 
     async resolveActivity(
-        options: PackageManagerResolveActivityOptions,
+        options: PackageManager.ResolveActivityOptions,
     ): Promise<string | undefined> {
         const command = buildCommand(
             [PackageManager.ServiceName, "resolve-activity", "--components"],
             options,
-            PACKAGE_MANAGER_RESOLVE_ACTIVITY_OPTIONS_MAP,
+            ResolveActivityOptionsMap,
         );
 
         for (const arg of serializeIntent(options.intent)) {
@@ -580,7 +532,7 @@ export class PackageManager extends AdbServiceBase {
      * @returns ID of the new install session
      */
     async sessionCreate(
-        options?: PackageManagerInstallOptions,
+        options?: PackageManager.InstallOptions,
     ): Promise<number> {
         const command = buildInstallCommand(
             "install-create",
@@ -697,10 +649,58 @@ export class PackageManager extends AdbServiceBase {
     }
 }
 
+export namespace PackageManager {
+    export type InstallOptions = {
+        [K in keyof typeof InstallOptionsDefinitions]?:
+            | (typeof InstallOptionsDefinitions)[K]["type"]
+            | undefined;
+    };
+
+    export interface ListPackagesOptions {
+        listDisabled: boolean;
+        listEnabled: boolean;
+        showSourceDir: boolean;
+        showInstaller: boolean;
+        listSystem: boolean;
+        showUid: boolean;
+        listThirdParty: boolean;
+        showVersionCode: boolean;
+        listApexOnly: boolean;
+        user: SingleUserOrAll;
+        uid: number;
+        filter: string;
+    }
+
+    export interface PackageInfo {
+        packageName: string;
+        sourceDir?: string | undefined;
+        versionCode?: number | undefined;
+        installer?: string | undefined;
+        uid?: number | undefined;
+    }
+
+    export interface UninstallOptions {
+        keepData: boolean;
+        user: SingleUserOrAll;
+        versionCode: number;
+        /**
+         * Only remove the specified splits, not the entire app
+         *
+         * On Android 10 and lower, only one split name can be specified.
+         */
+        splitNames: readonly string[];
+    }
+
+    export interface ResolveActivityOptions {
+        user?: SingleUserOrAll;
+        intent: Intent;
+    }
+}
+
 export class PackageManagerInstallSession {
     static async create(
         packageManager: PackageManager,
-        options?: PackageManagerInstallOptions,
+        options?: PackageManager.InstallOptions,
     ): Promise<PackageManagerInstallSession> {
         const id = await packageManager.sessionCreate(options);
         return new PackageManagerInstallSession(packageManager, id);
