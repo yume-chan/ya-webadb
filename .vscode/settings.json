@@ -1,4 +1,17 @@
 {
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "cSpell.ignoreRegExpList": [
+        "0x[0-9a-f_]+"
+    ],
+    "cSpell.numSuggestions": 4,
     "cSpell.words": [
         "ADB's",
         "adbd",
@@ -19,6 +32,7 @@
         "Demuxer",
         "Deserialization",
         "DESERIALIZERS",
+        "devpath",
         "diskstats",
         "dumpsys",
         "ebml",
@@ -32,6 +46,7 @@
         "Golomb",
         "keyof",
         "laggy",
+        "libusb",
         "localabstract",
         "Logcat",
         "lstat",
@@ -74,19 +89,33 @@
         "yume",
         "zstd"
     ],
-    "editor.tabSize": 4,
     "editor.codeActionsOnSave": {
-        "source.organizeImports": "explicit",
-        "source.fixAll": "explicit"
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "eslint.debug": true,
+    "eslint.nodePath": "./toolchain/eslint-config/node_modules/eslint",
+    "eslint.options": {
+        "overrideConfigFile": "./node_modules/@yume-chan/eslint-config/eslint.config.js"
+    },
+    "eslint.problems.shortenToSingleLine": true,
+    "eslint.workingDirectories": [
+        {
+            "pattern": "libraries/*"
+        }
+    ],
+    "explorer.sortOrder": "mixed",
+    "files.associations": {
+        "*.json": "jsonc",
+        "*.mdx": "markdown"
     },
     "jest.rootPath": "packages/struct",
     "jest.showCoverageOnLoad": true,
-    "markdown.extension.toc.levels": "2..6",
-    "files.associations": {
-        "*.mdx": "markdown",
-        "*.json": "jsonc"
-    },
-    "prettier.tabWidth": 4,
+    "js/ts.format.semicolons": "insert",
+    "js/ts.preferences.quoteStyle": "single",
+    "js/ts.tsdk.path": "libraries/adb/node_modules/typescript/lib",
     "json.schemas": [
         {
             "fileMatch": [
@@ -95,34 +124,7 @@
             "url": "https://developer.microsoft.com/json-schemas/rush/v5/version-policies.schema.json"
         }
     ],
-    "typescript.preferences.quoteStyle": "single",
-    "typescript.format.semicolons": "insert",
-    "editor.formatOnSave": true,
-    "eslint.nodePath": "./toolchain/eslint-config/node_modules/eslint",
-    "eslint.options": {
-        "overrideConfigFile": "./node_modules/@yume-chan/eslint-config/eslint.config.js"
-    },
-    "eslint.workingDirectories": [
-        {
-            "pattern": "libraries/*",
-        }
-    ],
-    "eslint.debug": true,
-    "[javascript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[typescriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "explorer.sortOrder": "mixed",
+    "markdown.extension.toc.levels": "2..6",
     "prettier.prettierPath": "./toolchain/eslint-config/node_modules/prettier/index.cjs",
-    "cSpell.numSuggestions": 4,
-    "cSpell.ignoreRegExpList": [
-        "0x[0-9a-f_]+"
-    ],
-    "typescript.tsdk": "libraries/adb/node_modules/typescript/lib",
-    "eslint.problems.shortenToSingleLine": true,
+    "prettier.tabWidth": 4
 }

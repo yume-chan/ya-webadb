@@ -4,7 +4,7 @@
 
 import "source-map-support/register.js";
 
-import { Adb, AdbServerClient, Ref } from "@yume-chan/adb";
+import { AdbServerClient, Ref } from "@yume-chan/adb";
 import { AdbServerNodeTcpConnector } from "@yume-chan/adb-server-node-tcp";
 import { WritableStream } from "@yume-chan/stream-extra";
 import { program } from "commander";
@@ -102,7 +102,7 @@ function createDeviceCommand(nameAndArgs: string) {
 
 async function createAdb(options: DeviceCommandOptions) {
     const client = createClient();
-    const transport = await client.createTransport(
+    return await client.createAdb(
         options.d
             ? {
                   usb: true,
@@ -121,8 +121,6 @@ async function createAdb(options: DeviceCommandOptions) {
                     }
                   : undefined,
     );
-    const adb = new Adb(transport);
-    return adb;
 }
 
 createDeviceCommand("shell [args...]")

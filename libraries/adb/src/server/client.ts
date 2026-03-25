@@ -117,7 +117,8 @@ export class AdbServerClient {
             let state: AdbServerClient.ConnectionState;
             do {
                 // devpath or state
-                // devpath doesn't have a fixed pattern (for example in libusb driver it could be something like `5-1.4`)
+                // devpath doesn't have a fixed pattern
+                // (for example, libusb driver gives plain strings like `5-1.4`)
                 // so keep parsing until we get a valid state
                 [end, state] = parseDeviceLineItem(line, end, " ");
             } while (!AdbServerClient.ConnectionState.includes(state));
@@ -401,11 +402,7 @@ export class AdbServerClient {
         options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<void> {
         let type: string;
-        if (!device) {
-            type = "any";
-        } else if ("transportId" in device) {
-            type = "any";
-        } else if ("serial" in device) {
+        if (!device || "transportId" in device || "serial" in device) {
             type = "any";
         } else if ("usb" in device) {
             type = "usb";
