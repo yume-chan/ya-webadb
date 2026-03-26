@@ -25,8 +25,8 @@ import {
     NetworkError as _NetworkError,
     UnauthorizedError as _UnauthorizedError,
 } from "./commands/index.js";
+import { AdbServerDataConnection } from "./data-connection.js";
 import { AdbServerDeviceObserverOwner } from "./observer.js";
-import { AdbServerDataConnection } from "./stream.js";
 import { AdbServerTransport } from "./transport.js";
 
 const KeyTransportId = " transport_id:";

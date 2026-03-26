@@ -93,8 +93,8 @@ export class AdbServerDataConnection {
     }
 
     async dispose() {
-        void tryCancel(this.#buffered);
-        void tryClose(this.#writer);
+        await tryCancel(this.#buffered);
+        await tryClose(this.#writer);
         await this.#connection.close();
     }
 }

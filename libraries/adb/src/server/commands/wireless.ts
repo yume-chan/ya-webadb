@@ -2,7 +2,7 @@
 
 import { hexToNumber, sequenceEqual } from "../../utils/index.js";
 import type { AdbServerClient } from "../client.js";
-import { FAIL } from "../stream.js";
+import { FAIL } from "../data-connection.js";
 
 export class NetworkError extends Error {
     constructor(message: string) {

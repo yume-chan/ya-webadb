@@ -3,7 +3,7 @@ import { EventEmitter, StickyEventEmitter } from "@yume-chan/event";
 import { Ref } from "../utils/index.js";
 
 import { AdbServerClient } from "./client.js";
-import type { AdbServerDataConnection } from "./stream.js";
+import type { AdbServerDataConnection } from "./data-connection.js";
 
 export function unorderedRemove<T>(array: T[], index: number) {
     if (index < 0 || index >= array.length) {
@@ -75,7 +75,7 @@ export class AdbServerDeviceObserverOwner {
         if (removed.length) {
             for (const observer of this.#observers) {
                 const filtered = filterDeviceStates(
-                    added,
+                    removed,
                     observer.includeStates,
                 );
                 if (filtered.length) {
