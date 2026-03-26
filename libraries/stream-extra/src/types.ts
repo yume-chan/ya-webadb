@@ -11,7 +11,7 @@
  *
  * @public
  */
-export declare interface AbortSignal {
+declare interface _AbortSignal {
     /**
      * Whether the request is aborted.
      */
@@ -23,13 +23,26 @@ export declare interface AbortSignal {
     /**
      * Add an event listener to be triggered when this signal becomes aborted.
      */
-    addEventListener(type: "abort", listener: () => void): void;
+    addEventListener(
+        type: "abort",
+        listener: () => void,
+        options?: {
+            once?: boolean | undefined;
+            signal?: AbortSignal | undefined;
+        },
+    ): void;
     /**
      * Remove an event listener that was previously added with {@link AbortSignal.addEventListener}.
      */
     removeEventListener(type: "abort", listener: () => void): void;
     throwIfAborted(): void;
 }
+
+export type AbortSignal = typeof globalThis extends {
+    AbortSignal: { prototype: infer T };
+}
+    ? T
+    : _AbortSignal;
 
 /**
  * A queuing strategy that counts the number of bytes in each chunk.

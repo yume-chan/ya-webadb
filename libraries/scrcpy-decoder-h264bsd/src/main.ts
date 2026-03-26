@@ -211,21 +211,30 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
         this.#worker = worker;
 
         await new Promise<void>((resolve, reject) => {
-            const handleReady = (e: MessageEvent) => {
-                if (e.data === "ready") {
-                    worker.removeEventListener("message", handleReady);
-                    worker.removeEventListener("error", handleError);
-                    resolve();
-                }
-            };
-            const handleError = (e: ErrorEvent) => {
-                worker.removeEventListener("message", handleReady);
-                worker.removeEventListener("error", handleError);
-                // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-                reject(e.error);
-            };
-            worker.addEventListener("message", handleReady);
-            worker.addEventListener("error", handleError);
+            const abortController = new AbortController();
+            worker.addEventListener(
+                "message",
+                (e: MessageEvent) => {
+                    if (e.data === "ready") {
+                        abortController.abort();
+                        resolve();
+                    }
+                },
+                {
+                    signal: abortController.signal,
+                },
+            );
+            worker.addEventListener(
+                "error",
+                (e: ErrorEvent) => {
+                    abortController.abort();
+                    // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+                    reject(e.error);
+                },
+                {
+                    signal: abortController.signal,
+                },
+            );
         });
 
         const Constructor = Comlink.wrap<typeof DecoderRenderer>(worker);

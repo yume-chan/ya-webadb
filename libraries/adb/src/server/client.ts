@@ -538,25 +538,22 @@ export async function raceSignal<T>(
         abortPromise.reject(this.reason);
     }
 
+    const abortListenerAbortController = new AbortController();
+
     try {
         for (const signal of signals) {
             if (!signal) {
                 continue;
             }
-            if (signal.aborted) {
-                throw signal.reason;
-            }
-            signal.addEventListener("abort", abort);
+            signal.throwIfAborted();
+            signal.addEventListener("abort", abort, {
+                signal: abortListenerAbortController.signal,
+            });
         }
 
         return await Promise.race([callback(), abortPromise.promise]);
     } finally {
-        for (const signal of signals) {
-            if (!signal) {
-                continue;
-            }
-            signal.removeEventListener("abort", abort);
-        }
+        abortListenerAbortController.abort();
     }
 }
 
