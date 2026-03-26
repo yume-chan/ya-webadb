@@ -3,7 +3,7 @@ import { EventEmitter, StickyEventEmitter } from "@yume-chan/event";
 import { Ref } from "../utils/index.js";
 
 import { AdbServerClient } from "./client.js";
-import type { AdbServerStream } from "./stream.js";
+import type { AdbServerDataConnection } from "./stream.js";
 
 export function unorderedRemove<T>(array: T[], index: number) {
     if (index < 0 || index >= array.length) {
@@ -33,14 +33,14 @@ export class AdbServerDeviceObserverOwner {
 
     readonly #client: AdbServerClient;
 
-    #stream: Promise<AdbServerStream> | undefined;
+    #stream: Promise<AdbServerDataConnection> | undefined;
     #observers: Observer[] = [];
 
     constructor(client: AdbServerClient) {
         this.#client = client;
     }
 
-    async #receive(stream: AdbServerStream) {
+    async #receive(stream: AdbServerDataConnection) {
         const response = await stream.readString();
         const next = AdbServerClient.parseDeviceList(response);
 
@@ -93,7 +93,7 @@ export class AdbServerDeviceObserverOwner {
         }
     }
 
-    async #receiveLoop(stream: AdbServerStream) {
+    async #receiveLoop(stream: AdbServerDataConnection) {
         try {
             while (true) {
                 await this.#receive(stream);
@@ -123,10 +123,10 @@ export class AdbServerDeviceObserverOwner {
         return stream;
     }
 
-    async #handleObserverStop(stream: AdbServerStream) {
+    async #handleObserverStop(connection: AdbServerDataConnection) {
         if (this.#observers.length === 0) {
             this.#stream = undefined;
-            await stream.dispose();
+            await connection.dispose();
         }
     }
 
@@ -165,7 +165,7 @@ export class AdbServerDeviceObserverOwner {
         // Read the filtered `current` value from `onListChange` event
         onListChange.event((value) => (current = value));
 
-        let stream: AdbServerStream;
+        let stream: AdbServerDataConnection;
         if (!this.#stream) {
             // `#connect` will initialize `onListChange` and `current`
             this.#stream = this.#connect();

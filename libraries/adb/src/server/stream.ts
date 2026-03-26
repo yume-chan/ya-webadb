@@ -19,7 +19,7 @@ import type { AdbServerClient } from "./client.js";
 const OKAY = encodeUtf8("OKAY");
 export const FAIL = encodeUtf8("FAIL");
 
-export class AdbServerStream {
+export class AdbServerDataConnection {
     #connection: AdbServerClient.ServerConnection;
     #buffered: BufferedReadableStream;
     #writer: WritableStreamDefaultWriter<Uint8Array>;
@@ -34,7 +34,7 @@ export class AdbServerStream {
         return this.#buffered.readExactly(length);
     }
 
-    readString = bipedal(function* (this: AdbServerStream, then) {
+    readString = bipedal(function* (this: AdbServerDataConnection, then) {
         const data = yield* then(this.readExactly(4));
         const length = hexToNumber(data);
         if (length === 0) {
