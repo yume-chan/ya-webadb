@@ -29,7 +29,7 @@ export interface TextEncoderStream extends TransformStream<string, Uint8Array> {
 
 interface TextEncoderStreamConstructor {
     prototype: TextEncoderStream;
-    new (label?: string): TextEncoderStream;
+    new (): TextEncoderStream;
 }
 
 export const TextEncoderStream =

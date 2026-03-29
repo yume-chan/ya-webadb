@@ -217,6 +217,5 @@ type EventTargetConstructor = GlobalValueOr<
     _EventTargetConstructor
 >;
 
-export const EventTarget = (
-    globalThis as unknown as { EventTarget: EventTargetConstructor }
-).EventTarget;
+export const EventTarget =
+    getGlobalValue<EventTargetConstructor>("EventTarget");

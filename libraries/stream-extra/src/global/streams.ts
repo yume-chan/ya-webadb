@@ -351,7 +351,7 @@ export interface ReadableStreamBYOBReader {
 
 interface ReadableStreamBYOBReaderConstructor {
     prototype: ReadableStreamBYOBReader;
-    new (stream: ReadableStream<Uint8Array>): ReadableByteStreamController;
+    new (stream: ReadableStream<Uint8Array>): ReadableStreamBYOBReader;
 }
 
 export const ReadableStreamBYOBReader =
