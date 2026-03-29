@@ -1,7 +1,6 @@
 // cspell:ignore tport
 
 import type { MaybePromiseLike } from "@yume-chan/async";
-import { PromiseResolver } from "@yume-chan/async";
 import type { Event } from "@yume-chan/event";
 import { getUint64LittleEndian } from "@yume-chan/no-data-view";
 import type {
@@ -511,37 +510,6 @@ export class AdbServerClient {
     async createAdb(device: AdbServerClient.DeviceSelector) {
         const transport = await this.createTransport(device);
         return new Adb(transport);
-    }
-}
-
-export async function raceSignal<T>(
-    callback: () => PromiseLike<T>,
-    ...signals: (AbortSignal | undefined)[]
-): Promise<T> {
-    const abortPromise = new PromiseResolver<never>();
-    function abort(this: AbortSignal) {
-        abortPromise.reject(this.reason);
-    }
-
-    try {
-        for (const signal of signals) {
-            if (!signal) {
-                continue;
-            }
-            if (signal.aborted) {
-                throw signal.reason;
-            }
-            signal.addEventListener("abort", abort);
-        }
-
-        return await Promise.race([callback(), abortPromise.promise]);
-    } finally {
-        for (const signal of signals) {
-            if (!signal) {
-                continue;
-            }
-            signal.removeEventListener("abort", abort);
-        }
     }
 }
 

@@ -299,7 +299,7 @@ export class AdbServerNodeTcpConnector
             unref: false,
         },
     ): Promise<AdbServerClient.ServerConnection> {
-        const socket = new Socket({ signal: signal as globalThis.AbortSignal });
+        const socket = new Socket({ signal });
         if (unref) {
             socket.unref();
         }

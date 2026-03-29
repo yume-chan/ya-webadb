@@ -44,6 +44,8 @@ export class AdbDaemonWebUsbDeviceObserver implements DeviceObserver<AdbDaemonWe
 
     current: readonly AdbDaemonWebUsbDevice[] = [];
 
+    #stopAbortController = new AbortController();
+
     constructor(
         usb: USB,
         initial: USBDevice[],
@@ -59,8 +61,14 @@ export class AdbDaemonWebUsbDeviceObserver implements DeviceObserver<AdbDaemonWe
         // Fire `onListChange` to set the sticky value
         this.#onListChange.fire(this.current);
 
-        this.#usbManager.addEventListener("connect", this.#handleConnect);
-        this.#usbManager.addEventListener("disconnect", this.#handleDisconnect);
+        this.#usbManager.addEventListener("connect", this.#handleConnect, {
+            signal: this.#stopAbortController.signal,
+        });
+        this.#usbManager.addEventListener(
+            "disconnect",
+            this.#handleDisconnect,
+            { signal: this.#stopAbortController.signal },
+        );
     }
 
     #convertDevice(device: USBDevice): AdbDaemonWebUsbDevice | undefined {
@@ -113,12 +121,7 @@ export class AdbDaemonWebUsbDeviceObserver implements DeviceObserver<AdbDaemonWe
     };
 
     stop(): void {
-        this.#usbManager.removeEventListener("connect", this.#handleConnect);
-        this.#usbManager.removeEventListener(
-            "disconnect",
-            this.#handleDisconnect,
-        );
-
+        this.#stopAbortController.abort();
         this.#onDeviceAdd.dispose();
         this.#onDeviceRemove.dispose();
         this.#onListChange.dispose();

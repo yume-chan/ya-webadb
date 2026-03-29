@@ -68,6 +68,8 @@ export class VideoDecoderStream
 
     #configured = false;
 
+    #abortController = new AbortController();
+
     constructor() {
         let decoder!: VideoDecoder;
 
@@ -113,7 +115,11 @@ export class VideoDecoderStream
         });
 
         this.#decoder = decoder;
-        this.#decoder.addEventListener("dequeue", this.#handleDequeue);
+        this.#decoder.addEventListener(
+            "dequeue",
+            () => this.#onDequeue.fire(undefined),
+            { signal: this.#abortController.signal },
+        );
     }
 
     #handleVideoChunk(chunk: CodecTransformStream.VideoChunk) {
@@ -203,12 +209,8 @@ export class VideoDecoderStream
         );
     }
 
-    #handleDequeue = () => {
-        this.#onDequeue.fire(undefined);
-    };
-
     #dispose() {
-        this.#decoder.removeEventListener("dequeue", this.#handleDequeue);
+        this.#abortController.abort();
         this.#onDequeue.dispose();
 
         if (this.#decoder.state !== "closed") {

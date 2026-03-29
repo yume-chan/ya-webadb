@@ -39,6 +39,8 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         return this.#stream;
     }
 
+    #abortController = new AbortController();
+
     constructor(
         element?: HTMLVideoElement,
         options?: InsertableStreamVideoFrameRenderer.Options,
@@ -60,7 +62,14 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
 
         this.#options = options;
         if (options?.updateSize) {
-            this.#element.addEventListener("resize", this.#handleResize);
+            this.#element.addEventListener(
+                "resize",
+                () => {
+                    this.#element.width = this.#element.videoWidth;
+                    this.#element.height = this.#element.videoHeight;
+                },
+                { signal: this.#abortController.signal },
+            );
         }
 
         // The spec replaced `MediaStreamTrackGenerator` with `VideoTrackGenerator`.
@@ -73,15 +82,8 @@ export class InsertableStreamVideoFrameRenderer implements VideoFrameRenderer {
         this.#element.srcObject = this.#stream;
     }
 
-    #handleResize = () => {
-        this.#element.width = this.#element.videoWidth;
-        this.#element.height = this.#element.videoHeight;
-    };
-
     dispose(): undefined {
-        if (this.#options?.updateSize) {
-            this.#element.removeEventListener("resize", this.#handleResize);
-        }
+        this.#abortController.abort();
         this.#generator.stop();
         this.#stream.removeTrack(this.#generator);
         this.#element.srcObject = null;

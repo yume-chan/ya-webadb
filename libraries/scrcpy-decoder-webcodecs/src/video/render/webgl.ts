@@ -171,6 +171,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
     #texelSizeLocation!: WebGLUniformLocation;
     #zoomLocation!: WebGLUniformLocation;
 
+    #abortController = new AbortController();
+
     /**
      * Create a new WebGL frame renderer.
      * @param canvas The canvas to render frames to.
@@ -238,11 +240,19 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
 
         this.canvas.addEventListener(
             "webglcontextlost",
-            this.#handleContextLost,
+            (e) => {
+                // Notify WebGL we want to handle context restoration
+                e.preventDefault();
+            },
+            { signal: this.#abortController.signal },
         );
         this.canvas.addEventListener(
             "webglcontextrestored",
-            this.#handleContextRestored,
+            () => {
+                this.#initialize();
+                void this.redraw();
+            },
+            { signal: this.#abortController.signal },
         );
     }
 
@@ -284,16 +294,6 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     }
 
-    #handleContextLost = (e: Event) => {
-        // Notify WebGL we want to handle context restoration
-        e.preventDefault();
-    };
-
-    #handleContextRestored = () => {
-        this.#initialize();
-        void this.redraw();
-    };
-
     override async snapshot(
         options?: ImageEncodeOptions,
     ): Promise<Blob | undefined> {
@@ -304,18 +304,11 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
     }
 
     override dispose(): undefined {
+        this.#abortController.abort();
+
         this.#context.deleteBuffer(this.#vertexBuffer);
         this.#context.deleteTexture(this.#texture);
         this.#context.deleteProgram(this.#program);
-
-        this.canvas.removeEventListener(
-            "webglcontextlost",
-            this.#handleContextLost,
-        );
-        this.canvas.removeEventListener(
-            "webglcontextrestored",
-            this.#handleContextRestored,
-        );
 
         // Lose contexts eagerly
         // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#lose_contexts_eagerly

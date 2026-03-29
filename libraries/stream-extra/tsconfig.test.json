@@ -1,6 +1,10 @@
 {
     "extends": "./tsconfig.build.json",
     "compilerOptions": {
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
         "types": [
             "node"
         ],
