@@ -2,13 +2,13 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import { StructEmptyError } from "@yume-chan/struct";
 
 import { BufferedReadableStream } from "./buffered.js";
-import type { PushReadableStreamController } from "./push-readable.js";
-import { PushReadableStream } from "./push-readable.js";
 import type {
     ReadableWritablePair,
     WritableStreamDefaultController,
-} from "./stream.js";
-import { ReadableStream, WritableStream } from "./stream.js";
+} from "./global/index.js";
+import { ReadableStream, WritableStream } from "./global/index.js";
+import type { PushReadableStreamController } from "./push-readable.js";
+import { PushReadableStream } from "./push-readable.js";
 
 // TODO: BufferedTransformStream: find better implementation
 export class BufferedTransformStream<T> implements ReadableWritablePair<

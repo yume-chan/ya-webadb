@@ -1,8 +1,8 @@
 import { PromiseResolver } from "@yume-chan/async";
 import { EmptyUint8Array } from "@yume-chan/struct";
 
-import type { ReadableWritablePair } from "./stream.js";
-import { ReadableStream, WritableStream } from "./stream.js";
+import type { ReadableWritablePair } from "./global/index.js";
+import { ReadableStream, WritableStream } from "./global/index.js";
 
 // `TransformStream` only calls its `source.flush` method when its `readable` is being read.
 // If the user wants to use the `Promise` interface, the `flush` method will never be called,

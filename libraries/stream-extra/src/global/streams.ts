@@ -1,152 +1,145 @@
 /// <reference lib="es2018.asynciterable" />
 
-/**
- * A signal object that allows you to communicate with a request and abort it if required
- * via its associated `AbortController` object.
- *
- * @remarks
- *   This interface is compatible with the `AbortSignal` interface defined in TypeScript's DOM types.
- *   It is redefined here, so it can be polyfilled without a DOM, for example with
- *   {@link https://www.npmjs.com/package/abortcontroller-polyfill | abortcontroller-polyfill} in a Node environment.
- *
- * @public
- */
-export declare interface AbortSignal {
-    /**
-     * Whether the request is aborted.
-     */
-    readonly aborted: boolean;
-    /**
-     * If aborted, returns the reason for aborting.
-     */
-    readonly reason?: unknown;
-    /**
-     * Add an event listener to be triggered when this signal becomes aborted.
-     */
-    addEventListener(type: "abort", listener: () => void): void;
-    /**
-     * Remove an event listener that was previously added with {@link AbortSignal.addEventListener}.
-     */
-    removeEventListener(type: "abort", listener: () => void): void;
-    throwIfAborted(): void;
+import type { AbortSignal } from "./abort-signal.js";
+import type { GlobalPrototypeOr, GlobalValueOr } from "./utils.js";
+import { getGlobalValue } from "./utils.js";
+
+export interface QueuingStrategySize<T = unknown> {
+    (chunk: T): number;
 }
 
-/**
- * A queuing strategy that counts the number of bytes in each chunk.
- *
- * @public
- */
-export declare class ByteLengthQueuingStrategy implements QueuingStrategy<ArrayBufferView> {
-    constructor(options: QueuingStrategyInit);
-    /**
-     * Returns the high water mark provided to the constructor.
-     */
-    get highWaterMark(): number;
-    /**
-     * Measures the size of `chunk` by returning the value of its `byteLength` property.
-     */
-    get size(): (chunk: ArrayBufferView) => number;
-}
-
-/**
- * A queuing strategy that counts the number of chunks.
- *
- * @public
- */
-export declare class CountQueuingStrategy implements QueuingStrategy<unknown> {
-    constructor(options: QueuingStrategyInit);
-    /**
-     * Returns the high water mark provided to the constructor.
-     */
-    get highWaterMark(): number;
-    /**
-     * Measures the size of `chunk` by always returning 1.
-     * This ensures that the total queue size is a count of the number of chunks in the queue.
-     */
-    get size(): (chunk: unknown) => 1;
-}
-
-/**
- * A queuing strategy.
- *
- * @public
- */
-export declare interface QueuingStrategy<T> {
-    /**
-     * A non-negative number indicating the high water mark of the stream using this queuing strategy.
-     */
+export interface QueuingStrategy<T = unknown> {
     highWaterMark?: number;
-    /**
-     * A function that computes and returns the finite non-negative size of the given chunk value.
-     */
-    size?: QueuingStrategySizeCallback<T>;
+    size?: QueuingStrategySize<T>;
 }
 
 /**
- * @public
+ * The **`ByteLengthQueuingStrategy`** interface of the Streams API provides a built-in byte length queuing strategy that can be used when constructing streams.
+ *
+ * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy)
  */
-export declare interface QueuingStrategyInit {
+interface _ByteLengthQueuingStrategy extends QueuingStrategy<ArrayBufferView> {
     /**
-     * {@inheritDoc QueuingStrategy.highWaterMark}
+     * The read-only **`ByteLengthQueuingStrategy.highWaterMark`** property returns the total number of bytes that can be contained in the internal queue before backpressure is applied.
+     *
+     * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy/highWaterMark)
+     */
+    readonly highWaterMark: number;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ByteLengthQueuingStrategy/size) */
+    readonly size: QueuingStrategySize<ArrayBufferView>;
+}
+
+export type ByteLengthQueuingStrategy = GlobalPrototypeOr<
+    "ByteLengthQueuingStrategy",
+    _ByteLengthQueuingStrategy
+>;
+
+export interface QueuingStrategyInit {
+    /**
+     * Creates a new ByteLengthQueuingStrategy with the provided high water mark.
+     *
+     * Note that the provided high water mark will not be validated ahead of time. Instead, if it is negative, NaN, or not a number, the resulting ByteLengthQueuingStrategy will cause the corresponding stream constructor to throw.
      */
     highWaterMark: number;
 }
 
-/**
- * {@inheritDoc QueuingStrategy.size}
- * @public
- */
-export declare type QueuingStrategySizeCallback<T> = (chunk: T) => number;
+interface _ByteLengthQueuingStrategyConstructor {
+    prototype: ByteLengthQueuingStrategy;
+    new (options: QueuingStrategyInit): ByteLengthQueuingStrategy;
+}
+
+type ByteLengthQueuingStrategyConstructor = GlobalValueOr<
+    "ByteLengthQueuingStrategy",
+    _ByteLengthQueuingStrategyConstructor
+>;
+
+export const ByteLengthQueuingStrategy =
+    getGlobalValue<ByteLengthQueuingStrategyConstructor>(
+        "ByteLengthQueuingStrategy",
+    );
 
 /**
- * Allows control of a {@link ReadableStream | readable byte stream}'s state and internal queue.
+ * The **`CountQueuingStrategy`** interface of the Streams API provides a built-in chunk counting queuing strategy that can be used when constructing streams.
  *
- * @public
+ * [MDN Reference](https://developer.mozilla.org/docs/Web/API/CountQueuingStrategy)
  */
-export declare class ReadableByteStreamController {
-    private constructor();
+interface _CountQueuingStrategy extends QueuingStrategy {
     /**
-     * Returns the current BYOB pull request, or `null` if there isn't one.
+     * The read-only **`CountQueuingStrategy.highWaterMark`** property returns the total number of chunks that can be contained in the internal queue before backpressure is applied.
+     *
+     * [MDN Reference](https://developer.mozilla.org/docs/Web/API/CountQueuingStrategy/highWaterMark)
      */
-    get byobRequest(): ReadableStreamBYOBRequest | null;
+    readonly highWaterMark: number;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CountQueuingStrategy/size) */
+    readonly size: QueuingStrategySize;
+}
+
+export type CountQueuingStrategy = GlobalPrototypeOr<
+    "CountQueuingStrategy",
+    _CountQueuingStrategy
+>;
+
+interface _CountQueuingStrategyConstructor {
+    prototype: CountQueuingStrategy;
+    new (options?: QueuingStrategyInit): CountQueuingStrategy;
+}
+
+type CountQueuingStrategyConstructor = GlobalValueOr<
+    "CountQueuingStrategy",
+    _CountQueuingStrategyConstructor
+>;
+
+export const CountQueuingStrategy =
+    getGlobalValue<CountQueuingStrategyConstructor>("CountQueuingStrategy");
+
+/**
+ * The **`ReadableByteStreamController`** interface of the Streams API represents a controller for a readable byte stream. It allows control of the state and internal queue of a ReadableStream with an underlying byte source, and enables efficient zero-copy transfer of data from the underlying source to a consumer when the stream's internal queue is empty.
+ *
+ * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ReadableByteStreamController)
+ */
+interface _ReadableByteStreamController {
     /**
-     * Returns the desired size to fill the controlled stream's internal queue. It can be negative, if the queue is
-     * over-full. An underlying byte source ought to use this information to determine when and how to apply backpressure.
+     * The **`byobRequest`** read-only property of the ReadableByteStreamController interface returns the current BYOB request, or null if there are no pending requests.
+     *
+     * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ReadableByteStreamController/byobRequest)
      */
-    get desiredSize(): number | null;
+    readonly byobRequest: ReadableStreamBYOBRequest | null;
     /**
-     * Closes the controlled readable stream. Consumers will still be able to read any previously-enqueued chunks from
-     * the stream, but once those are read, the stream will become closed.
+     * The **`desiredSize`** read-only property of the ReadableByteStreamController interface returns the number of bytes required to fill the stream's internal queue to its "desired size".
+     *
+     * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ReadableByteStreamController/desiredSize)
+     */
+    readonly desiredSize: number | null;
+    /**
+     * The **`close()`** method of the ReadableByteStreamController interface closes the associated stream.
+     *
+     * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ReadableByteStreamController/close)
      */
     close(): void;
     /**
-     * Enqueues the given chunk chunk in the controlled readable stream.
-     * The chunk has to be an `ArrayBufferView` instance, or else a `TypeError` will be thrown.
+     * The **`enqueue()`** method of the ReadableByteStreamController interface enqueues a given chunk on the associated readable byte stream (the chunk is transferred into the stream's internal queues).
+     *
+     * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ReadableByteStreamController/enqueue)
      */
-    enqueue(chunk: ArrayBufferView): void;
+    enqueue(chunk: ArrayBufferView<ArrayBuffer>): void;
     /**
-     * Errors the controlled readable stream, making all future interactions with it fail with the given error `e`.
+     * The **`error()`** method of the ReadableByteStreamController interface causes any future interactions with the associated stream to error with the specified reason.
+     *
+     * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ReadableByteStreamController/error)
      */
     error(e?: unknown): void;
 }
 
+export type ReadableByteStreamController = GlobalPrototypeOr<
+    "ReadableByteStreamController",
+    _ReadableByteStreamController
+>;
+
+// Can't use built-in definition: https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/1265
 /**
  * A readable stream represents a source of data, from which you can read.
- *
- * @public
  */
-export declare class ReadableStream<out R> implements AsyncIterable<R> {
-    constructor(
-        underlyingSource: UnderlyingByteSource,
-        strategy?: {
-            highWaterMark?: number;
-            size?: undefined;
-        },
-    );
-    constructor(
-        underlyingSource?: UnderlyingSource<R>,
-        strategy?: QueuingStrategy<R>,
-    );
+export interface ReadableStream<out R> extends AsyncIterable<R> {
     /**
      * Whether or not the readable stream is locked to a {@link ReadableStreamDefaultReader | reader}.
      */
@@ -225,45 +218,107 @@ export declare class ReadableStream<out R> implements AsyncIterable<R> {
      * cancel the stream. To prevent this, use the stream's {@link ReadableStream.values | values()} method, passing
      * `true` for the `preventCancel` option.
      */
-    values(
-        options?: ReadableStreamIteratorOptions,
-    ): ReadableStreamAsyncIterator<R>;
+    values(options?: ReadableStreamIteratorOptions): AsyncIterator<R>;
     /**
      * {@inheritDoc ReadableStream.values}
      */
     [Symbol.asyncIterator](
         options?: ReadableStreamIteratorOptions,
-    ): ReadableStreamAsyncIterator<R>;
+    ): AsyncIterator<R>;
+}
+
+// Can't use built-in definition: https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/2456
+interface ReadableStreamConstructor {
+    prototype: ReadableStream<unknown>;
+    new <R = Uint8Array<ArrayBuffer>>(
+        underlyingSource: UnderlyingByteSource,
+        strategy?: {
+            highWaterMark?: number;
+            size?: undefined;
+        },
+    ): ReadableStream<R>;
+    new <R>(
+        underlyingSource?: UnderlyingSource<R>,
+        strategy?: QueuingStrategy<R>,
+    ): ReadableStream<R>;
     /**
      * Creates a new ReadableStream wrapping the provided iterable or async iterable.
      *
      * This can be used to adapt various kinds of objects into a readable stream,
      * such as an array, an async generator, or a Node.js readable stream.
      */
-    static from<R>(
-        asyncIterable: Iterable<R> | AsyncIterable<R>,
-    ): ReadableStream<R>;
+    from<R>(asyncIterable: Iterable<R> | AsyncIterable<R>): ReadableStream<R>;
 }
 
-/**
- * An async iterator returned by {@link ReadableStream.values}.
- *
- * @public
- */
-export declare interface ReadableStreamAsyncIterator<
-    R,
-> extends AsyncIterableIterator<R> {
-    next(): Promise<IteratorResult<R, void>>;
-    return(value?: R): Promise<IteratorResult<R>>;
-}
+export const ReadableStream = /* #__PURE__ */ (() => {
+    const ReadableStream =
+        getGlobalValue<ReadableStreamConstructor>("ReadableStream");
+
+    /* node:coverage disable */
+    if (!ReadableStream.from) {
+        ReadableStream.from = function (iterable) {
+            const iterator =
+                Symbol.asyncIterator in iterable
+                    ? iterable[Symbol.asyncIterator]()
+                    : iterable[Symbol.iterator]();
+
+            return new ReadableStream({
+                async pull(controller) {
+                    const result = await iterator.next();
+                    if (result.done) {
+                        controller.close();
+                        return;
+                    }
+                    controller.enqueue(result.value);
+                },
+                async cancel(reason) {
+                    await iterator.return?.(reason);
+                },
+            });
+        };
+    }
+
+    if (
+        !ReadableStream.prototype[Symbol.asyncIterator] ||
+        !ReadableStream.prototype.values
+    ) {
+        ReadableStream.prototype.values = async function* <R>(
+            this: ReadableStream<R>,
+            options?: ReadableStreamIteratorOptions,
+        ) {
+            const reader = this.getReader();
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        return;
+                    }
+                    yield value;
+                }
+            } finally {
+                // Calling `iterator.return` will enter this `finally` block.
+                // We don't need to care about the parameter to `iterator.return`,
+                // it will be returned as the final `result.value` automatically.
+                if (!options?.preventCancel) {
+                    await reader.cancel();
+                }
+                reader.releaseLock();
+            }
+        };
+
+        ReadableStream.prototype[Symbol.asyncIterator] =
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            ReadableStream.prototype.values;
+    }
+    /* node:coverage enable */
+
+    return ReadableStream;
+})();
 
 /**
  * A BYOB reader vended by a {@link ReadableStream}.
- *
- * @public
  */
-export declare class ReadableStreamBYOBReader {
-    constructor(stream: ReadableStream<Uint8Array>);
+export interface ReadableStreamBYOBReader {
     /**
      * Returns a promise that will be fulfilled when the stream becomes closed, or rejected if the stream ever errors or
      * the reader's lock is released before the stream finishes closing.
@@ -294,20 +349,26 @@ export declare class ReadableStreamBYOBReader {
     releaseLock(): void;
 }
 
+interface ReadableStreamBYOBReaderConstructor {
+    prototype: ReadableStreamBYOBReader;
+    new (stream: ReadableStream<Uint8Array>): ReadableByteStreamController;
+}
+
+export const ReadableStreamBYOBReader =
+    getGlobalValue<ReadableStreamBYOBReaderConstructor>(
+        "ReadableStreamBYOBReader",
+    );
+
 /**
  * Options for {@link ReadableStreamBYOBReader.read | reading} a stream
  * with a {@link ReadableStreamBYOBReader | BYOB reader}.
- *
- * @public
  */
-export declare interface ReadableStreamBYOBReaderReadOptions {
+export interface ReadableStreamBYOBReaderReadOptions {
     min?: number | undefined;
 }
 
 /**
  * A result returned by {@link ReadableStreamBYOBReader.read}.
- *
- * @public
  */
 export declare type ReadableStreamBYOBReadResult<T extends ArrayBufferView> =
     | {
@@ -321,11 +382,8 @@ export declare type ReadableStreamBYOBReadResult<T extends ArrayBufferView> =
 
 /**
  * A pull-into request in a {@link ReadableByteStreamController}.
- *
- * @public
  */
-export declare class ReadableStreamBYOBRequest {
-    private constructor();
+export interface ReadableStreamBYOBRequest {
     /**
      * Returns the view for writing in to, or `null` if the BYOB request has already been responded to.
      */
@@ -350,11 +408,8 @@ export declare class ReadableStreamBYOBRequest {
 
 /**
  * Allows control of a {@link ReadableStream | readable stream}'s state and internal queue.
- *
- * @public
  */
-export declare class ReadableStreamDefaultController<R> {
-    private constructor();
+export interface ReadableStreamDefaultController<R> {
     /**
      * Returns the desired size to fill the controlled stream's internal queue. It can be negative, if the queue is
      * over-full. An underlying source ought to use this information to determine when and how to apply backpressure.
@@ -377,11 +432,8 @@ export declare class ReadableStreamDefaultController<R> {
 
 /**
  * A default reader vended by a {@link ReadableStream}.
- *
- * @public
  */
-export declare class ReadableStreamDefaultReader<out R> {
-    constructor(stream: ReadableStream<R>);
+export interface ReadableStreamDefaultReader<out R> {
     /**
      * Returns a promise that will be fulfilled when the stream becomes closed,
      * or rejected if the stream ever errors or the reader's lock is released before the stream finishes closing.
@@ -409,22 +461,18 @@ export declare class ReadableStreamDefaultReader<out R> {
     releaseLock(): void;
 }
 
-/**
- * A common interface for a `ReadableStreamDefaultReader` implementation.
- *
- * @public
- */
-export declare interface ReadableStreamDefaultReaderLike<R> {
-    readonly closed: Promise<undefined>;
-    cancel(reason?: unknown): Promise<void>;
-    read(): Promise<ReadableStreamDefaultReadResult<R>>;
-    releaseLock(): void;
+interface ReadableStreamDefaultReaderConstructor {
+    prototype: ReadableStreamDefaultReader<never>;
+    new <R>(stream: ReadableStream<R>): ReadableStreamDefaultReader<R>;
 }
+
+export const ReadableStreamDefaultReader =
+    getGlobalValue<ReadableStreamDefaultReaderConstructor>(
+        "ReadableStreamDefaultReader",
+    );
 
 /**
  * A result returned by {@link ReadableStreamDefaultReader.read}.
- *
- * @public
  */
 export declare type ReadableStreamDefaultReadResult<T> =
     | {
@@ -433,45 +481,29 @@ export declare type ReadableStreamDefaultReadResult<T> =
       }
     | {
           done: true;
-          value?: undefined;
+          value: undefined;
       };
 
 /**
  * Options for {@link ReadableStream.values | async iterating} a stream.
- *
- * @public
  */
-export declare interface ReadableStreamIteratorOptions {
+export interface ReadableStreamIteratorOptions {
     preventCancel?: boolean;
-}
-
-/**
- * A common interface for a `ReadableStream` implementation.
- *
- * @public
- */
-export declare interface ReadableStreamLike<R> {
-    readonly locked: boolean;
-    getReader(): ReadableStreamDefaultReaderLike<R>;
 }
 
 /**
  * A pair of a {@link ReadableStream | readable stream} and {@link WritableStream | writable stream} that can be passed
  * to {@link ReadableStream.pipeThrough}.
- *
- * @public
  */
-export declare interface ReadableWritablePair<R, W> {
+export interface ReadableWritablePair<R, W> {
     readable: ReadableStream<R>;
     writable: WritableStream<W>;
 }
 
 /**
  * Options for {@link ReadableStream.pipeTo | piping} a stream.
- *
- * @public
  */
-export declare interface StreamPipeOptions {
+export interface StreamPipeOptions {
     /**
      * If set to true, {@link ReadableStream.pipeTo} will not abort the writable stream if the readable stream errors.
      */
@@ -495,10 +527,8 @@ export declare interface StreamPipeOptions {
 
 /**
  * A transformer for constructing a {@link TransformStream}.
- *
- * @public
  */
-export declare interface Transformer<I, O> {
+export interface Transformer<I, O> {
     /**
      * A function that is called immediately during creation of the {@link TransformStream}.
      */
@@ -520,23 +550,19 @@ export declare interface Transformer<I, O> {
     writableType?: undefined;
 }
 
-/** @public */
-export declare type TransformerCancelCallback = (
+export type TransformerCancelCallback = (
     reason: unknown,
 ) => void | PromiseLike<void>;
 
-/** @public */
-export declare type TransformerFlushCallback<O> = (
+export type TransformerFlushCallback<O> = (
     controller: TransformStreamDefaultController<O>,
 ) => void | PromiseLike<void>;
 
-/** @public */
-export declare type TransformerStartCallback<O> = (
+export type TransformerStartCallback<O> = (
     controller: TransformStreamDefaultController<O>,
 ) => void | PromiseLike<void>;
 
-/** @public */
-export declare type TransformerTransformCallback<I, O> = (
+export type TransformerTransformCallback<I, O> = (
     chunk: I,
     controller: TransformStreamDefaultController<O>,
 ) => void | PromiseLike<void>;
@@ -546,15 +572,8 @@ export declare type TransformerTransformCallback<I, O> = (
  * known as its writable side, and a {@link ReadableStream | readable stream}, known as its readable side.
  * In a manner specific to the transform stream in question, writes to the writable side result in new data being
  * made available for reading from the readable side.
- *
- * @public
  */
-export declare class TransformStream<I, O> {
-    constructor(
-        transformer?: Transformer<I, O>,
-        writableStrategy?: QueuingStrategy<I>,
-        readableStrategy?: QueuingStrategy<O>,
-    );
+export interface TransformStream<I, O> {
     /**
      * The readable side of the transform stream.
      */
@@ -565,13 +584,23 @@ export declare class TransformStream<I, O> {
     get writable(): WritableStream<I>;
 }
 
+interface TransformStreamConstructor {
+    prototype: TransformStream<never, unknown>;
+
+    new <I, O>(
+        transformer?: Transformer<I, O>,
+        writableStrategy?: QueuingStrategy<I>,
+        readableStrategy?: QueuingStrategy<O>,
+    ): TransformStream<I, O>;
+}
+
+export const TransformStream =
+    getGlobalValue<TransformStreamConstructor>("TransformStream");
+
 /**
  * Allows control of the {@link ReadableStream} and {@link WritableStream} of the associated {@link TransformStream}.
- *
- * @public
  */
-export declare class TransformStreamDefaultController<O> {
-    private constructor();
+export interface TransformStreamDefaultController<O> {
     /**
      * Returns the desired size to fill the readable side’s internal queue. It can be negative, if the queue is over-full.
      */
@@ -594,10 +623,8 @@ export declare class TransformStreamDefaultController<O> {
 
 /**
  * An underlying byte source for constructing a {@link ReadableStream}.
- *
- * @public
  */
-export declare interface UnderlyingByteSource {
+export interface UnderlyingByteSource {
     /**
      * {@inheritDoc UnderlyingSource.start}
      */
@@ -628,22 +655,18 @@ export declare interface UnderlyingByteSource {
     autoAllocateChunkSize?: number;
 }
 
-/** @public */
-export declare type UnderlyingByteSourcePullCallback = (
+export type UnderlyingByteSourcePullCallback = (
     controller: ReadableByteStreamController,
 ) => void | PromiseLike<void>;
 
-/** @public */
-export declare type UnderlyingByteSourceStartCallback = (
+export type UnderlyingByteSourceStartCallback = (
     controller: ReadableByteStreamController,
 ) => void | PromiseLike<void>;
 
 /**
  * An underlying sink for constructing a {@link WritableStream}.
- *
- * @public
  */
-export declare interface UnderlyingSink<in W> {
+export interface UnderlyingSink<in W> {
     /**
      * A function that is called immediately during creation of the {@link WritableStream}.
      */
@@ -682,32 +705,25 @@ export declare interface UnderlyingSink<in W> {
     type?: undefined;
 }
 
-/** @public */
-export declare type UnderlyingSinkAbortCallback = (
+export type UnderlyingSinkAbortCallback = (
     reason: unknown,
 ) => void | PromiseLike<void>;
 
-/** @public */
-export declare type UnderlyingSinkCloseCallback =
-    () => void | PromiseLike<void>;
+export type UnderlyingSinkCloseCallback = () => void | PromiseLike<void>;
 
-/** @public */
-export declare type UnderlyingSinkStartCallback = (
+export type UnderlyingSinkStartCallback = (
     controller: WritableStreamDefaultController,
 ) => void | PromiseLike<void>;
 
-/** @public */
-export declare type UnderlyingSinkWriteCallback<W> = (
+export type UnderlyingSinkWriteCallback<W> = (
     chunk: W,
     controller: WritableStreamDefaultController,
 ) => void | PromiseLike<void>;
 
 /**
  * An underlying source for constructing a {@link ReadableStream}.
- *
- * @public
  */
-export declare interface UnderlyingSource<R> {
+export interface UnderlyingSource<R> {
     /**
      * A function that is called immediately during creation of the {@link ReadableStream}.
      */
@@ -729,31 +745,22 @@ export declare interface UnderlyingSource<R> {
     type?: undefined;
 }
 
-/** @public */
-export declare type UnderlyingSourceCancelCallback = (
+export type UnderlyingSourceCancelCallback = (
     reason: unknown,
 ) => void | PromiseLike<void>;
 
-/** @public */
-export declare type UnderlyingSourcePullCallback<R> = (
+export type UnderlyingSourcePullCallback<R> = (
     controller: ReadableStreamDefaultController<R>,
 ) => void | PromiseLike<void>;
 
-/** @public */
-export declare type UnderlyingSourceStartCallback<R> = (
+export type UnderlyingSourceStartCallback<R> = (
     controller: ReadableStreamDefaultController<R>,
 ) => void | PromiseLike<void>;
 
 /**
  * A writable stream represents a destination for data, into which you can write.
- *
- * @public
  */
-export declare class WritableStream<in W> {
-    constructor(
-        underlyingSink?: UnderlyingSink<W>,
-        strategy?: QueuingStrategy<W>,
-    );
+export interface WritableStream<in W> {
     /**
      * Returns whether or not the writable stream is locked to a writer.
      */
@@ -788,13 +795,22 @@ export declare class WritableStream<in W> {
     getWriter(): WritableStreamDefaultWriter<W>;
 }
 
+interface WritableStreamConstructor {
+    prototype: WritableStream<never>;
+
+    new <W>(
+        underlyingSink?: UnderlyingSink<W>,
+        strategy?: QueuingStrategy<W>,
+    ): WritableStream<W>;
+}
+
+export const WritableStream =
+    getGlobalValue<WritableStreamConstructor>("WritableStream");
+
 /**
  * Allows control of a {@link WritableStream | writable stream}'s state and internal queue.
- *
- * @public
  */
-export declare class WritableStreamDefaultController {
-    private constructor();
+export interface WritableStreamDefaultController {
     /**
      * The reason which was passed to `WritableStream.abort(reason)` when the stream was aborted.
      *
@@ -819,11 +835,8 @@ export declare class WritableStreamDefaultController {
 
 /**
  * A default writer vended by a {@link WritableStream}.
- *
- * @public
  */
-export declare class WritableStreamDefaultWriter<in W> {
-    constructor(stream: WritableStream<W>);
+export interface WritableStreamDefaultWriter<in W> {
     /**
      * Returns a promise that will be fulfilled when the stream becomes closed, or rejected if the stream ever errors or
      * the writer’s lock is released before the stream finishes closing.
@@ -878,4 +891,12 @@ export declare class WritableStreamDefaultWriter<in W> {
     write(chunk: W): Promise<void>;
 }
 
-export {};
+interface WritableStreamDefaultWriterConstructor {
+    prototype: WritableStreamDefaultWriter<never>;
+    new <W>(stream: WritableStream<W>): WritableStreamDefaultWriter<W>;
+}
+
+export const WritableStreamDefaultWriter =
+    getGlobalValue<WritableStreamDefaultWriterConstructor>(
+        "WritableStreamDefaultWriter",
+    );

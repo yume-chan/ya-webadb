@@ -2,7 +2,7 @@ import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { Consumable } from "../consumable.js";
-import { WritableStream } from "../stream.js";
+import { WritableStream } from "../global/index.js";
 
 import { MaybeConsumableWrapWritableStream } from "./wrap-writable.js";
 

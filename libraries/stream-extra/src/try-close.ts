@@ -2,7 +2,10 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import { isPromiseLike } from "@yume-chan/async";
 
 import type { BufferedReadableStream } from "./buffered.js";
-import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
+import type {
+    ReadableStream,
+    ReadableStreamDefaultReader,
+} from "./global/index.js";
 
 export function tryClose(value: {
     close(): PromiseLike<void>;

@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import { describe, it, mock } from "node:test";
 
-import { WritableStream } from "./stream.js";
+import { WritableStream } from "./global/index.js";
 import { WrapWritableStream } from "./wrap-writable.js";
 
 describe("WrapWritableStream", () => {

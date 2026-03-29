@@ -3,8 +3,8 @@ import type {
     QueuingStrategy,
     WritableStreamDefaultController,
     WritableStreamDefaultWriter,
-} from "../stream.js";
-import { WritableStream } from "../stream.js";
+} from "../global/index.js";
+import { WritableStream } from "../global/index.js";
 
 export interface ConsumableWritableStreamSink<in T> {
     start?(

@@ -1,5 +1,5 @@
-import type { TransformStreamDefaultController } from "./stream.js";
-import { TransformStream } from "./stream.js";
+import type { TransformStreamDefaultController } from "./global/index.js";
+import { TransformStream } from "./global/index.js";
 
 export class SplitStringStream extends TransformStream<string, string> {
     constructor(

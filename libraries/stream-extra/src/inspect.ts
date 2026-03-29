@@ -1,6 +1,6 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 
-import { TransformStream } from "./stream.js";
+import { TransformStream } from "./global/index.js";
 
 export class InspectStream<T> extends TransformStream<T, T> {
     constructor(

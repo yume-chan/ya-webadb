@@ -2,8 +2,11 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import type { AsyncExactReadable } from "@yume-chan/struct";
 import { bipedal, ExactReadableEndedError } from "@yume-chan/struct";
 
+import type {
+    ReadableStream,
+    ReadableStreamDefaultReader,
+} from "./global/index.js";
 import { PushReadableStream } from "./push-readable.js";
-import type { ReadableStream, ReadableStreamDefaultReader } from "./stream.js";
 import { tryCancel } from "./try-close.js";
 
 export class BufferedReadableStream implements AsyncExactReadable {

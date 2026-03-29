@@ -1,6 +1,6 @@
 import { Consumable } from "./consumable.js";
+import { TransformStream } from "./global/index.js";
 import { MaybeConsumable } from "./maybe-consumable.js";
-import { TransformStream } from "./stream.js";
 
 /**
  * Splits or combines buffers to specified size.

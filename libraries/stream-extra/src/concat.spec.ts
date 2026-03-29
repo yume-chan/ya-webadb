@@ -2,7 +2,7 @@ import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { ConcatBufferStream, ConcatStringStream } from "./concat.js";
-import { ReadableStream } from "./stream.js";
+import { ReadableStream } from "./global/index.js";
 
 describe("ConcatStringStream", () => {
     it("should have Promise interface", () => {
