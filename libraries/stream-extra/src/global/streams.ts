@@ -45,7 +45,7 @@ export interface QueuingStrategyInit {
 
 interface _ByteLengthQueuingStrategyConstructor {
     prototype: ByteLengthQueuingStrategy;
-    new (options: QueuingStrategyInit): ByteLengthQueuingStrategy;
+    new (init: QueuingStrategyInit): ByteLengthQueuingStrategy;
 }
 
 type ByteLengthQueuingStrategyConstructor = GlobalValueOr<
@@ -81,7 +81,7 @@ export type CountQueuingStrategy = GlobalPrototypeOr<
 
 interface _CountQueuingStrategyConstructor {
     prototype: CountQueuingStrategy;
-    new (options?: QueuingStrategyInit): CountQueuingStrategy;
+    new (init: QueuingStrategyInit): CountQueuingStrategy;
 }
 
 type CountQueuingStrategyConstructor = GlobalValueOr<

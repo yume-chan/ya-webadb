@@ -1,20 +1,18 @@
 #!/usr/bin/env node
 
+/// <reference types="node" />
+
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
-const __dirname = resolve(fileURLToPath(import.meta.url), "..");
-
-let eslint = resolve(__dirname, "node_modules", ".bin", "eslint");
+let eslint = resolve(import.meta.dirname, "node_modules", ".bin", "eslint");
 if (process.platform === "win32") {
     eslint += ".cmd";
 }
 
 const child = spawn(
-    eslint,
-    ["--config", resolve(__dirname, "eslint.config.js"), "--fix", "."],
+    `${eslint} --config ${resolve(import.meta.dirname, "eslint.config.js")} --fix .`,
     {
         // https://github.com/nodejs/node/issues/52554
         shell: true,
