@@ -1,5 +1,7 @@
 /// <reference lib="es2018.asynciterable" />
 
+import { tryCancel } from "../try-close.js";
+
 import type { AbortSignal } from "./abort-signal.js";
 import type { GlobalPrototypeOr, GlobalValueOr } from "./utils.js";
 import { getGlobalValue } from "./utils.js";
@@ -218,13 +220,13 @@ export interface ReadableStream<out R> extends AsyncIterable<R> {
      * cancel the stream. To prevent this, use the stream's {@link ReadableStream.values | values()} method, passing
      * `true` for the `preventCancel` option.
      */
-    values(options?: ReadableStreamIteratorOptions): AsyncIterator<R>;
+    values(options?: ReadableStreamIteratorOptions): AsyncIterableIterator<R>;
     /**
      * {@inheritDoc ReadableStream.values}
      */
     [Symbol.asyncIterator](
         options?: ReadableStreamIteratorOptions,
-    ): AsyncIterator<R>;
+    ): AsyncIterableIterator<R>;
 }
 
 // Can't use built-in definition: https://github.com/microsoft/TypeScript-DOM-lib-generator/issues/2456
@@ -300,7 +302,7 @@ export const ReadableStream = /* #__PURE__ */ (() => {
                 // We don't need to care about the parameter to `iterator.return`,
                 // it will be returned as the final `result.value` automatically.
                 if (!options?.preventCancel) {
-                    await reader.cancel();
+                    await tryCancel(reader);
                 }
                 reader.releaseLock();
             }
