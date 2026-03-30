@@ -56,6 +56,7 @@ const test = run({
     concurrency: true,
     files: tests,
     coverage: true,
+    coverageIncludeGlobs: [`${process.cwd().replace(/\\/g, "/")}/**/*`],
     coverageExcludeGlobs: ["**/*.spec.ts"],
 });
 test.on("test:fail", (e) => {

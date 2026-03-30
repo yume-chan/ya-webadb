@@ -5,8 +5,8 @@ import type {
     AbortSignal,
     QueuingStrategy,
     ReadableStreamDefaultController,
-} from "./stream.js";
-import { AbortController, ReadableStream } from "./stream.js";
+} from "./global/index.js";
+import { AbortController, ReadableStream } from "./global/index.js";
 import { TaskQueue } from "./task-queue.js";
 
 export interface PushReadableStreamController<T> {

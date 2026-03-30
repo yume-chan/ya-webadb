@@ -1,22 +1,25 @@
+import type { MaybePromiseLike } from "@yume-chan/async";
+import { isPromiseLike } from "@yume-chan/async";
+
 import type { BufferedReadableStream } from "./buffered.js";
-import type { PushReadableStreamController } from "./push-readable.js";
 import type {
     ReadableStream,
-    ReadableStreamDefaultController,
     ReadableStreamDefaultReader,
-    WritableStreamDefaultWriter,
-} from "./stream.js";
+} from "./global/index.js";
 
-export function tryClose(
-    controller: PushReadableStreamController<unknown>,
-): boolean;
-export function tryClose(
-    controller: ReadableStreamDefaultController<unknown>,
-): boolean;
-export function tryClose(writer: WritableStreamDefaultWriter<never>): boolean;
-export function tryClose(controller: { close(): void }) {
+export function tryClose(value: {
+    close(): PromiseLike<void>;
+}): Promise<boolean>;
+export function tryClose(value: { close(): void }): boolean;
+export function tryClose(value: { close(): MaybePromiseLike<void> }) {
     try {
-        controller.close();
+        const result = value.close();
+        if (isPromiseLike(result)) {
+            return result.then(
+                () => true,
+                () => false,
+            );
+        }
         return true;
     } catch {
         return false;

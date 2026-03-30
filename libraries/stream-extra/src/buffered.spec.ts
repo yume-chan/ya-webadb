@@ -2,7 +2,7 @@ import * as assert from "node:assert";
 import { describe, it } from "node:test";
 
 import { BufferedReadableStream } from "./buffered.js";
-import { ReadableStream } from "./stream.js";
+import { ReadableStream } from "./global/index.js";
 
 function randomUint8Array(length: number) {
     const array = new Uint8Array(length);

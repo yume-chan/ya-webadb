@@ -1,5 +1,5 @@
 import type { Consumable } from "../consumable.js";
-import { WritableStream } from "../stream.js";
+import { WritableStream } from "../global/index.js";
 
 export class ConsumableWrapWritableStream<in T> extends WritableStream<
     Consumable<T>

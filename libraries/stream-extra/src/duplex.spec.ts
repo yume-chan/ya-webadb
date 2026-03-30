@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 
 import { DuplexStreamFactory } from "./duplex.js";
-import { ReadableStream } from "./stream.js";
+import { ReadableStream } from "./global/index.js";
 
 describe("DuplexStreamFactory", () => {
     it("should close all readable", async () => {

@@ -1,6 +1,6 @@
 import { Consumable } from "../consumable.js";
-import type { QueuingStrategy } from "../stream.js";
-import { ReadableStream } from "../stream.js";
+import type { QueuingStrategy } from "../global/index.js";
+import { ReadableStream } from "../global/index.js";
 
 export interface ConsumableReadableStreamController<T> {
     enqueue(chunk: T): Promise<void>;

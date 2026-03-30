@@ -2,13 +2,14 @@
 
 import eslint from "@eslint/js";
 import eslintImportX from "eslint-plugin-import-x";
+import { defineConfig } from "eslint/config";
 import { dirname, resolve } from "path";
 import tslint from "typescript-eslint";
 import { fileURLToPath } from "url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-export default tslint.config(
+export default defineConfig(
     {
         ignores: ["**/*.js", "**/*.mjs", "**/*.d.ts"],
     },

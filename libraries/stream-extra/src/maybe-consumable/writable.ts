@@ -1,10 +1,10 @@
 import { Consumable } from "../consumable.js";
-import type { MaybeConsumable } from "../maybe-consumable.js";
 import type {
     QueuingStrategy,
     WritableStreamDefaultController,
-} from "../stream.js";
-import { WritableStream } from "../stream.js";
+} from "../global/index.js";
+import { WritableStream } from "../global/index.js";
+import type { MaybeConsumable } from "../maybe-consumable.js";
 
 import { tryConsume } from "./utils.js";
 

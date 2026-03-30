@@ -1,7 +1,10 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 
-import type { TransformStream, WritableStreamDefaultWriter } from "./stream.js";
-import { WritableStream } from "./stream.js";
+import type {
+    TransformStream,
+    WritableStreamDefaultWriter,
+} from "./global/index.js";
+import { WritableStream } from "./global/index.js";
 
 export type WrapWritableStreamStart<T> = () => MaybePromiseLike<
     WritableStream<T>

@@ -4,8 +4,8 @@ import type {
     QueuingStrategy,
     ReadableStreamDefaultController,
     ReadableStreamDefaultReader,
-} from "./stream.js";
-import { ReadableStream } from "./stream.js";
+} from "./global/index.js";
+import { ReadableStream } from "./global/index.js";
 
 export type WrapReadableStreamStart<T> = (
     controller: ReadableStreamDefaultController<T>,

@@ -1,5 +1,5 @@
+import { WritableStream } from "../global/index.js";
 import type { MaybeConsumable } from "../maybe-consumable.js";
-import { WritableStream } from "../stream.js";
 
 import { tryConsume } from "./utils.js";
 

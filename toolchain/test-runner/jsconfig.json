@@ -2,6 +2,9 @@
     "compilerOptions": {
         "target": "ESNext",
         "module": "nodenext",
-        "checkJs": true
+        "checkJs": true,
+        "types": [
+            "node"
+        ]
     },
 }

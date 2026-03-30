@@ -1,5 +1,5 @@
-import type { ReadableWritablePair } from "./stream.js";
-import { WritableStream } from "./stream.js";
+import type { ReadableWritablePair } from "./global/index.js";
+import { WritableStream } from "./global/index.js";
 
 /**
  * Pipe `pair.readable` to `writable`, then returns `pair.writable`.

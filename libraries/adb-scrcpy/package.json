@@ -42,7 +42,7 @@
         "@yume-chan/struct": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^25.3.3",
+        "@types/node": "^25.5.0",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",

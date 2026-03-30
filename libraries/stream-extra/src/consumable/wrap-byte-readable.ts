@@ -1,5 +1,5 @@
 import type { Consumable } from "../consumable.js";
-import { ReadableStream } from "../stream.js";
+import { ReadableStream } from "../global/index.js";
 
 import { ConsumableReadableStream } from "./readable.js";
 

@@ -1,6 +1,6 @@
 import type { StructInit, StructSerializer } from "@yume-chan/struct";
 
-import { TransformStream } from "./stream.js";
+import { TransformStream } from "./global/index.js";
 
 export class StructSerializeStream<
     T extends StructSerializer<unknown>,

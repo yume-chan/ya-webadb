@@ -1,7 +1,6 @@
 // cspell:ignore tport
 
 import type { MaybePromiseLike } from "@yume-chan/async";
-import { PromiseResolver } from "@yume-chan/async";
 import type { Event } from "@yume-chan/event";
 import { getUint64LittleEndian } from "@yume-chan/no-data-view";
 import type {
@@ -25,8 +24,8 @@ import {
     NetworkError as _NetworkError,
     UnauthorizedError as _UnauthorizedError,
 } from "./commands/index.js";
+import { AdbServerDataConnection } from "./data-connection.js";
 import { AdbServerDeviceObserverOwner } from "./observer.js";
-import { AdbServerStream } from "./stream.js";
 import { AdbServerTransport } from "./transport.js";
 
 const KeyTransportId = " transport_id:";
@@ -117,7 +116,8 @@ export class AdbServerClient {
             let state: AdbServerClient.ConnectionState;
             do {
                 // devpath or state
-                // devpath doesn't have a fixed pattern (for example in libusb driver it could be something like `5-1.4`)
+                // devpath doesn't have a fixed pattern
+                // (for example, libusb driver gives plain strings like `5-1.4`)
                 // so keep parsing until we get a valid state
                 [end, state] = parseDeviceLineItem(line, end, " ");
             } while (!AdbServerClient.ConnectionState.includes(state));
@@ -176,24 +176,16 @@ export class AdbServerClient {
     async createConnection(
         request: string,
         options?: AdbServerClient.ServerConnectionOptions,
-    ): Promise<AdbServerStream> {
+    ): Promise<AdbServerDataConnection> {
         const connection = await this.connector.connect(options);
-        const stream = new AdbServerStream(connection);
+        const dataConnection = new AdbServerDataConnection(connection);
 
         try {
-            await stream.writeString(request);
+            await dataConnection.writeString(request);
+            await dataConnection.readOkay();
+            return dataConnection;
         } catch (e) {
-            await stream.dispose();
-            throw e;
-        }
-
-        try {
-            // `raceSignal` throws when the signal is aborted,
-            // so the `catch` block can close the connection.
-            await raceSignal(() => stream.readOkay(), options?.signal);
-            return stream;
-        } catch (e) {
-            await stream.dispose();
+            await dataConnection.dispose();
             throw e;
         }
     }
@@ -318,13 +310,13 @@ export class AdbServerClient {
             "host:features",
         );
         // Luckily `AdbServerClient.Socket` is compatible with `AdbServerClient.ServerConnection`
-        const stream = new AdbServerStream(connection);
+        const dataConnection = new AdbServerDataConnection(connection);
         try {
-            const featuresString = await stream.readString();
+            const featuresString = await dataConnection.readString();
             const features = featuresString.split(",") as AdbFeature[];
             return { transportId: connection.transportId, features };
         } finally {
-            await stream.dispose();
+            await dataConnection.dispose();
         }
     }
 
@@ -363,12 +355,7 @@ export class AdbServerClient {
 
         try {
             await connection.writeString(service);
-        } catch (e) {
-            await connection.dispose();
-            throw e;
-        }
 
-        try {
             if (transportId === undefined) {
                 const array = await connection.readExactly(8);
                 transportId = getUint64LittleEndian(array, 0);
@@ -395,17 +382,14 @@ export class AdbServerClient {
             throw e;
         }
     }
+
     async #waitForUnchecked(
         device: AdbServerClient.DeviceSelector,
         state: "device" | "disconnect",
         options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<void> {
         let type: string;
-        if (!device) {
-            type = "any";
-        } else if ("transportId" in device) {
-            type = "any";
-        } else if ("serial" in device) {
+        if (!device || "transportId" in device || "serial" in device) {
             type = "any";
         } else if ("usb" in device) {
             type = "usb";
@@ -526,37 +510,6 @@ export class AdbServerClient {
     async createAdb(device: AdbServerClient.DeviceSelector) {
         const transport = await this.createTransport(device);
         return new Adb(transport);
-    }
-}
-
-export async function raceSignal<T>(
-    callback: () => PromiseLike<T>,
-    ...signals: (AbortSignal | undefined)[]
-): Promise<T> {
-    const abortPromise = new PromiseResolver<never>();
-    function abort(this: AbortSignal) {
-        abortPromise.reject(this.reason);
-    }
-
-    try {
-        for (const signal of signals) {
-            if (!signal) {
-                continue;
-            }
-            if (signal.aborted) {
-                throw signal.reason;
-            }
-            signal.addEventListener("abort", abort);
-        }
-
-        return await Promise.race([callback(), abortPromise.promise]);
-    } finally {
-        for (const signal of signals) {
-            if (!signal) {
-                continue;
-            }
-            signal.removeEventListener("abort", abort);
-        }
     }
 }
 

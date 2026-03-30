@@ -6,8 +6,8 @@ import type {
     ReadableStream,
     ReadableStreamDefaultController,
     WritableStreamDefaultWriter,
-} from "./stream.js";
-import { WritableStream } from "./stream.js";
+} from "./global/index.js";
+import { WritableStream } from "./global/index.js";
 import { tryClose } from "./try-close.js";
 import { WrapReadableStream } from "./wrap-readable.js";
 
