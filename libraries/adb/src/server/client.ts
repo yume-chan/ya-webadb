@@ -482,6 +482,7 @@ export class AdbServerClient {
         );
 
         const banner = new AdbBanner(
+            info?.state,
             info?.product,
             info?.model,
             info?.device,
