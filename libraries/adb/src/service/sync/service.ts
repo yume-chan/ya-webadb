@@ -1,4 +1,8 @@
-import type { AbortSignal, MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
+import type {
+    AbortSignal,
+    MaybeConsumable,
+    ReadableStream,
+} from "@yume-chan/stream-extra";
 
 import type { Adb } from "../../adb.js";
 import { AdbFeature } from "../../features.js";
@@ -9,6 +13,7 @@ import { Compression } from "./compression/index.js";
 import { OpenDir, Receive, Send, Stat } from "./request/index.js";
 import { SocketPool } from "./socket-pool.js";
 import type { Socket } from "./socket.js";
+import { Error as AdbSyncError } from "./socket.js";
 
 export interface ServiceOptions {
     /**
@@ -63,7 +68,7 @@ export interface WriteOptions {
      * {@link Compression.canUseFormat} can be used to check if
      * the device and current runtime both supports the format.
      */
-    compression?: Compression.Type | undefined;
+    compression?: Compression.Format | undefined;
     dryRun?: boolean | undefined;
 }
 
@@ -173,8 +178,12 @@ export class Service {
         try {
             await this.lstat(path + "/");
             return true;
-        } catch {
-            return false;
+        } catch (e) {
+            if (e instanceof AdbSyncError) {
+                return false;
+            } else {
+                throw e;
+            }
         }
     }
 

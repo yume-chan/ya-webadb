@@ -150,6 +150,7 @@ export class Socket implements AsyncExactReadable {
             case id:
                 return await type.deserialize(this.#readable);
             default:
+                // non-recoverable
                 throw new Error(
                     `Expected '${id}', but got '${decodeUtf8(buffer)}'`,
                 );
@@ -179,6 +180,7 @@ export class Socket implements AsyncExactReadable {
                     yield await type.deserialize(this.#readable);
                     break;
                 default:
+                    // non-recoverable
                     throw new Error(
                         `Expected '${id}' or '${ResponseId.Done}', but got '${decodeUtf8(buffer)}'`,
                     );

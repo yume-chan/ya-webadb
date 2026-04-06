@@ -21,7 +21,7 @@ export const LstatResponse = struct(
         },
         postDeserialize(value) {
             if (value.mode === 0 && value.size === 0 && value.mtime === 0) {
-                throw new Error("lstat error");
+                throw new AdbSyncError("lstat error");
             }
             return value;
         },
@@ -30,20 +30,14 @@ export const LstatResponse = struct(
 
 export type LstatResponse = StructValue<typeof LstatResponse>;
 
-export async function lstatV1(
+export function lstatV1(
     pool: SocketPool,
     path: string,
 ): Promise<LstatResponse> {
-    const socket = await pool.acquire();
-    try {
+    return pool.withSocket(async (socket) => {
         await socket.writeRequest(RequestId.Lstat, path);
-        const result = await socket.readResponse(ResponseId.Lstat, LstatResponse);
-        await pool.release(socket);
-        return result;
-    } catch (e) {
-        await pool.release(socket, !(e instanceof AdbSyncError));
-        throw e;
-    }
+        return await socket.readResponse(ResponseId.Lstat, LstatResponse);
+    });
 }
 
 export const StatResponse = struct(
@@ -72,7 +66,7 @@ export const StatResponse = struct(
         },
         postDeserialize(value) {
             if (value.error) {
-                throw new Error(AndroidSyscallErrorNameMap[value.error]);
+                throw new AdbSyncError(AndroidSyscallErrorNameMap[value.error]);
             }
             return value;
         },
@@ -81,17 +75,11 @@ export const StatResponse = struct(
 
 export type StatResponse = StructValue<typeof StatResponse>;
 
-export async function lstatV2(pool: SocketPool, path: string) {
-    const socket = await pool.acquire();
-    try {
+export function lstatV2(pool: SocketPool, path: string) {
+    return pool.withSocket(async (socket) => {
         await socket.writeRequest(RequestId.LstatV2, path);
-        const result = await socket.readResponse(ResponseId.LstatV2, StatResponse);
-        await pool.release(socket);
-        return result;
-    } catch (e) {
-        await pool.release(socket, !(e instanceof AdbSyncError));
-        throw e;
-    }
+        return await socket.readResponse(ResponseId.LstatV2, StatResponse);
+    });
 }
 
 export async function lstat(
@@ -131,15 +119,9 @@ export interface Stat {
     ctime?: bigint;
 }
 
-export async function stat(pool: SocketPool, path: string): Promise<StatResponse> {
-    const socket = await pool.acquire();
-    try {
+export function stat(pool: SocketPool, path: string): Promise<StatResponse> {
+    return pool.withSocket(async (socket) => {
         await socket.writeRequest(RequestId.Stat, path);
-        const result = await socket.readResponse(ResponseId.Stat, StatResponse);
-        await pool.release(socket);
-        return result;
-    } catch (e) {
-        await pool.release(socket, !(e instanceof AdbSyncError));
-        throw e;
-    }
+        return await socket.readResponse(ResponseId.Stat, StatResponse);
+    });
 }

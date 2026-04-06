@@ -1,7 +1,6 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     AbortController,
-    CompressionStream,
     DistributionStream,
     MaybeConsumable,
 } from "@yume-chan/stream-extra";
@@ -12,8 +11,8 @@ import { LinuxFileType } from "../android.js";
 import { Compression } from "../compression/index.js";
 import { RequestId, ResponseId } from "../id/index.js";
 import type { SocketPool } from "../socket-pool.js";
-import { Error as AdbSyncError } from "../socket.js";
 import type { Socket } from "../socket.js";
+import { Error as AdbSyncError } from "../socket.js";
 
 export const MaxPacketSize = 64 * 1024;
 
@@ -25,39 +24,14 @@ async function pipeFileData(
     file: ReadableStream<MaybeConsumable<Uint8Array>>,
     packetSize: number,
     mtime: number,
-    compression: Compression.Type,
+    compression: Compression.Format,
 ): Promise<void> {
-    switch (compression) {
-        case Compression.Type.Brotli: {
-            const stream = new CompressionStream("brotli");
-            void file
-                .pipeTo(
-                    new MaybeConsumable.WrapWritableStream(stream.writable),
-                )
-                .catch(NOOP);
-            file = stream.readable;
-            break;
-        }
-        case Compression.Type.Lz4: {
-            const stream = new CompressionStream("lz4");
-            void file
-                .pipeTo(
-                    new MaybeConsumable.WrapWritableStream(stream.writable),
-                )
-                .catch(NOOP);
-            file = stream.readable;
-            break;
-        }
-        case Compression.Type.Zstd: {
-            const stream = new CompressionStream("zstd");
-            void file
-                .pipeTo(
-                    new MaybeConsumable.WrapWritableStream(stream.writable),
-                )
-                .catch(NOOP);
-            file = stream.readable;
-            break;
-        }
+    if (compression !== Compression.Format.None) {
+        const stream = Compression.createCompressionStream(compression);
+        void file
+            .pipeTo(new MaybeConsumable.WrapWritableStream(stream.writable))
+            .catch(NOOP);
+        file = stream.readable;
     }
 
     // Read and write in parallel,
@@ -72,13 +46,10 @@ async function pipeFileData(
             }),
             { signal: abortController.signal },
         )
-        .then(
-            async () => {
-                await socket.writeRequest(RequestId.Done, mtime);
-                await socket.flush();
-            },
-            NOOP,
-        );
+        .then(async () => {
+            await socket.writeRequest(RequestId.Done, mtime);
+            await socket.flush();
+        }, NOOP);
 
     try {
         await socket.readResponse(ResponseId.Ok, OkResponse);
@@ -98,7 +69,7 @@ export interface SendV1Options {
     packetSize?: number | undefined;
 }
 
-export async function sendV1({
+export function sendV1({
     pool,
     filename,
     file,
@@ -107,8 +78,7 @@ export async function sendV1({
     mtime = (Date.now() / 1000) | 0,
     packetSize = MaxPacketSize,
 }: SendV1Options) {
-    const socket = await pool.acquire();
-    try {
+    return pool.withSocket(async (socket) => {
         const mode = (type << 12) | permission;
         const pathAndMode = `${filename},${mode.toString()}`;
         await socket.writeRequest(RequestId.Send, pathAndMode);
@@ -117,13 +87,9 @@ export async function sendV1({
             file,
             packetSize,
             mtime,
-            Compression.Type.None,
+            Compression.Format.None,
         );
-        await pool.release(socket);
-    } catch (e) {
-        await pool.release(socket, !(e instanceof AdbSyncError));
-        throw e;
-    }
+    });
 }
 
 export const SendV2Flags = {
@@ -142,7 +108,7 @@ export const SendV2Request = struct(
 );
 
 export interface SendV2Options extends SendV1Options {
-    compression?: Compression.Type | undefined;
+    compression?: Compression.Format | undefined;
 
     /**
      * Don't write the file to disk. Requires the `sendrecv_v2` feature.
@@ -153,7 +119,7 @@ export interface SendV2Options extends SendV1Options {
     dryRun?: boolean | undefined;
 }
 
-export async function sendV2({
+export function sendV2({
     pool,
     filename,
     file,
@@ -161,43 +127,37 @@ export async function sendV2({
     permission = 0o666,
     mtime = (Date.now() / 1000) | 0,
     packetSize = MaxPacketSize,
-    compression = Compression.Type.None,
+    compression = Compression.Format.None,
     dryRun = false,
 }: SendV2Options) {
-    const socket = await pool.acquire();
-    try {
-        await socket.writeRequest(RequestId.SendV2, filename);
-
-        const mode = (type << 12) | permission;
+    return pool.withSocket(async (socket) => {
         let flags: SendV2Flags = SendV2Flags.None;
         switch (compression) {
-            case Compression.Type.Brotli:
+            case Compression.Format.Brotli:
                 flags |= SendV2Flags.Brotli;
                 break;
-            case Compression.Type.Lz4:
+            case Compression.Format.Lz4:
                 flags |= SendV2Flags.Lz4;
                 break;
-            case Compression.Type.Zstd:
+            case Compression.Format.Zstd:
                 flags |= SendV2Flags.Zstd;
                 break;
         }
         if (dryRun) {
             flags |= SendV2Flags.DryRun;
         }
+
+        await socket.writeRequest(RequestId.SendV2, filename);
         await socket.write(
             SendV2Request.serialize({
                 id: RequestId.SendV2,
-                mode,
+                mode: (type << 12) | permission,
                 flags,
             }),
         );
 
         await pipeFileData(socket, file, packetSize, mtime, compression);
-        await pool.release(socket);
-    } catch (e) {
-        await pool.release(socket, !(e instanceof AdbSyncError));
-        throw e;
-    }
+    });
 }
 
 export interface SendOptions extends SendV2Options {
@@ -210,14 +170,14 @@ export function send(options: SendOptions) {
     }
 
     if (options.dryRun) {
-        throw new Error("dryRun is not supported in v1");
+        throw new AdbSyncError("dryRun is not supported in v1");
     }
 
     if (
         options.compression !== undefined &&
-        options.compression !== Compression.Type.None
+        options.compression !== Compression.Format.None
     ) {
-        throw new Error("compression is not supported in v1");
+        throw new AdbSyncError("compression is not supported in v1");
     }
 
     return sendV1(options);

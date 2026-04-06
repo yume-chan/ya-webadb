@@ -1,6 +1,6 @@
 import type { Adb } from "../../adb.js";
 
-import { Socket } from "./socket.js";
+import { Error as AdbSyncError, Socket } from "./socket.js";
 
 export class SocketPool {
     readonly #adb: Adb;
@@ -34,6 +34,18 @@ export class SocketPool {
         const socket = new Socket(adbSocket, this.#adb.maxPayloadSize);
         this.#inUseSockets.add(socket);
         return socket;
+    }
+
+    async withSocket<T>(fn: (socket: Socket) => Promise<T>): Promise<T> {
+        const socket = await this.acquire();
+        try {
+            const result = await fn(socket);
+            await this.release(socket);
+            return result;
+        } catch (e) {
+            await this.release(socket, !(e instanceof AdbSyncError));
+            throw e;
+        }
     }
 
     async release(socket: Socket, discard = false): Promise<void> {
@@ -71,8 +83,8 @@ export class SocketPool {
         this.#availableSockets.length = 0;
 
         // Force close all in-use sockets immediately
-        const inUseClosePromises = Array.from(this.#inUseSockets).map((socket) =>
-            socket.close(),
+        const inUseClosePromises = Array.from(this.#inUseSockets).map(
+            (socket) => socket.close(),
         );
         this.#inUseSockets.clear();
 

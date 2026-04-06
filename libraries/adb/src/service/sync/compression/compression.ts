@@ -1,20 +1,21 @@
 import {
     CompressionStream,
     DecompressionStream,
+    TransformStream,
 } from "@yume-chan/stream-extra";
 
 import type { Adb } from "../../../adb.js";
 import { AdbFeature } from "../../../features.js";
 import { NOOP } from "../../../utils/no-op.js";
 
-export const Type = {
+export const Format = {
     None: 0,
     Brotli: 2,
     Lz4: 3,
     Zstd: 4,
 } as const;
 
-export type Type = (typeof Type)[keyof typeof Type];
+export type Format = (typeof Format)[keyof typeof Format];
 
 export const Mode = {
     Compress: 0,
@@ -23,14 +24,22 @@ export const Mode = {
 
 export type Mode = (typeof Mode)[keyof typeof Mode];
 
-const CompressionFormatCache = new Map<string, boolean>();
-const DecompressionFormatCache = new Map<string, boolean>();
+const FormatMap: Record<Format, string> = {
+    [Format.None]: "",
+    // https://github.com/whatwg/compression/pull/80
+    [Format.Zstd]: "zstd",
+    // placeholder
+    [Format.Lz4]: "lz4",
+    // https://github.com/whatwg/compression/pull/80
+    [Format.Brotli]: "brotli",
+};
 
-export function hasRuntimeSupport(format: string, mode: Mode) {
-    const Stream =
-        mode === Mode.Compress ? CompressionStream : DecompressionStream;
-    if (!Stream) {
-        return false;
+const CompressionFormatCache = new Map<Format, boolean>();
+const DecompressionFormatCache = new Map<Format, boolean>();
+
+export function hasRuntimeSupport(format: Format, mode: Mode) {
+    if (format === Format.None) {
+        return true;
     }
 
     const Cache =
@@ -41,8 +50,14 @@ export function hasRuntimeSupport(format: string, mode: Mode) {
         return Cache.get(format)!;
     }
 
+    const Stream =
+        mode === Mode.Compress ? CompressionStream : DecompressionStream;
+    if (!Stream) {
+        return false;
+    }
+
     try {
-        const stream = new Stream(format as never);
+        const stream = new Stream(FormatMap[format]);
         void stream.writable.abort().catch(NOOP);
         Cache.set(format, true);
         return true;
@@ -55,36 +70,33 @@ export function hasRuntimeSupport(format: string, mode: Mode) {
 export function canUseBrotli(adb: Adb, mode: Mode) {
     return (
         adb.canUseFeature(AdbFeature.SendReceive2Brotli) &&
-        // https://github.com/whatwg/compression/pull/80
-        hasRuntimeSupport("brotli", mode)
+        hasRuntimeSupport(Format.Brotli, mode)
     );
 }
 
 export function canUseLz4(adb: Adb, mode: Mode) {
     return (
         adb.canUseFeature(AdbFeature.SendReceive2Lz4) &&
-        // placeholder
-        hasRuntimeSupport("lz4", mode)
+        hasRuntimeSupport(Format.Lz4, mode)
     );
 }
 
 export function canUseZstd(adb: Adb, mode: Mode) {
     return (
         adb.canUseFeature(AdbFeature.SendReceive2Zstd) &&
-        // https://github.com/whatwg/compression/issues/54
-        hasRuntimeSupport("zstd", mode)
+        hasRuntimeSupport(Format.Zstd, mode)
     );
 }
 
-export function canUseFormat(adb: Adb, format: Type, mode: Mode) {
+export function canUseFormat(adb: Adb, format: Format, mode: Mode) {
     switch (format) {
-        case Type.None:
+        case Format.None:
             return true;
-        case Type.Brotli:
+        case Format.Brotli:
             return canUseBrotli(adb, mode);
-        case Type.Lz4:
+        case Format.Lz4:
             return canUseLz4(adb, mode);
-        case Type.Zstd:
+        case Format.Zstd:
             return canUseZstd(adb, mode);
         default:
             return false;
@@ -96,16 +108,24 @@ export function chooseFormat(adb: Adb, mode: Mode) {
     // https://android.googlesource.com/platform/packages/modules/adb/+/3da39565cad412a743a58b94b875a43ed3c640d3/client/file_sync_client.cpp#277
 
     if (canUseZstd(adb, mode)) {
-        return Type.Zstd;
+        return Format.Zstd;
     }
 
     if (canUseLz4(adb, mode)) {
-        return Type.Lz4;
+        return Format.Lz4;
     }
 
     if (canUseBrotli(adb, mode)) {
-        return Type.Brotli;
+        return Format.Brotli;
     }
 
-    return Type.None;
+    return Format.None;
+}
+
+export function createCompressionStream(format: Format): CompressionStream {
+    if (format === Format.None) {
+        return new TransformStream();
+    }
+
+    return new CompressionStream(FormatMap[format]);
 }
