@@ -3,7 +3,7 @@
     "private": true,
     "scripts": {
         "build": "pnpm recursive run build",
-        "test": "pnpm recursive run test",
+        "test": "pnpm recursive --reporter=append-only --aggregate-output --reporter-hide-prefix run test",
         "lint": "pnpm recursive --no-sort --workspace-concurrency=Infinity run lint"
     },
     "devDependencies": {
