@@ -9,6 +9,7 @@ import {
     clearTimeout,
     Consumable,
     setTimeout,
+    tryCancel,
 } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable, StructDeserializer } from "@yume-chan/struct";
 import { decodeUtf8, string, struct, u32 } from "@yume-chan/struct";
@@ -187,7 +188,7 @@ export class Socket implements AsyncExactReadable {
 
     async close() {
         this.clearIdleTimer();
-        await this.#readable.cancel();
+        await tryCancel(this.#readable);
         await this.#socket.close();
     }
 }
