@@ -3,7 +3,8 @@ import { extend, string, u32 } from "@yume-chan/struct";
 
 import { AndroidSyscallErrorCode } from "../android.js";
 import { RequestId, ResponseId } from "../id/index.js";
-import type { Socket } from "../socket.js";
+import type { SocketPool } from "../socket-pool.js";
+import { Error as AdbSyncError } from "../socket.js";
 
 import type { Stat } from "./stat.js";
 import { LstatResponse, StatResponse } from "./stat.js";
@@ -15,15 +16,22 @@ export const EntryResponse = extend(LstatResponse, {
 export type EntryResponse = StructValue<typeof EntryResponse>;
 
 export async function* v1(
-    socket: Socket,
+    pool: SocketPool,
     path: string,
 ): AsyncGenerator<EntryResponse, void, void> {
-    const locked = await socket.lock();
+    const socket = await pool.acquire();
+    let completed = false;
+    let error: unknown;
+
     try {
-        await locked.writeRequest(RequestId.List, path);
-        yield* locked.readResponses(ResponseId.Entry, EntryResponse);
+        await socket.writeRequest(RequestId.List, path);
+        yield* socket.readResponses(ResponseId.Entry, EntryResponse);
+        completed = true;
+    } catch (e) {
+        error = e;
+        throw e;
     } finally {
-        locked.release();
+        await pool.release(socket, !(completed || error instanceof AdbSyncError));
     }
 }
 
@@ -34,13 +42,16 @@ export const EntryV2Response = extend(StatResponse, {
 export type EntryV2Response = StructValue<typeof EntryV2Response>;
 
 export async function* v2(
-    socket: Socket,
+    pool: SocketPool,
     path: string,
 ): AsyncGenerator<EntryV2Response, void, void> {
-    const locked = await socket.lock();
+    const socket = await pool.acquire();
+    let completed = false;
+    let error: unknown;
+
     try {
-        await locked.writeRequest(RequestId.ListV2, path);
-        for await (const item of locked.readResponses(
+        await socket.writeRequest(RequestId.ListV2, path);
+        for await (const item of socket.readResponses(
             ResponseId.EntryV2,
             EntryV2Response,
         )) {
@@ -52,8 +63,12 @@ export async function* v2(
             }
             yield item;
         }
+        completed = true;
+    } catch (e) {
+        error = e;
+        throw e;
     } finally {
-        locked.release();
+        await pool.release(socket, !(completed || error instanceof AdbSyncError));
     }
 }
 
@@ -62,14 +77,14 @@ export interface Entry extends Stat {
 }
 
 export async function* opendir(
-    socket: Socket,
+    pool: SocketPool,
     path: string,
     { version }: { version: 1 | 2 },
 ): AsyncGenerator<Entry, void, void> {
     if (version === 2) {
-        yield* v2(socket, path);
+        yield* v2(pool, path);
     } else {
-        for await (const item of v1(socket, path)) {
+        for await (const item of v1(pool, path)) {
             // Convert to same format as `AdbSyncEntry2Response` for easier consumption.
             // However it will add some overhead.
             yield {

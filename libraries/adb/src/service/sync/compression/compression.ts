@@ -95,7 +95,7 @@ export function chooseFormat(adb: Adb, mode: Mode) {
     // The order follows
     // https://android.googlesource.com/platform/packages/modules/adb/+/3da39565cad412a743a58b94b875a43ed3c640d3/client/file_sync_client.cpp#277
 
-    if (canUseLz4(adb, mode)) {
+    if (canUseZstd(adb, mode)) {
         return Type.Zstd;
     }
 

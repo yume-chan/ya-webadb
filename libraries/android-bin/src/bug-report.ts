@@ -1,7 +1,7 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import type { Adb, AdbSync } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 import type { AbortSignal, ReadableStream } from "@yume-chan/stream-extra";
 import {
     AbortController,
@@ -293,11 +293,9 @@ export class BugReport {
 
         if (this.#supportsBugReportZ) {
             let path: string | undefined;
-            let sync: AdbSync.Service | undefined;
             const controller = new AbortController();
             const cleanup = async () => {
                 controller.abort();
-                await sync?.dispose();
                 if (path) {
                     await this.#adb.rm(path);
                 }
@@ -313,8 +311,7 @@ export class BugReport {
                                 ? onProgress
                                 : undefined,
                         });
-                        sync = await this.#adb.sync();
-                        return sync.read(path);
+                        return this.#adb.sync.read(path);
                     },
                     cancel: cleanup,
                     close: cleanup,

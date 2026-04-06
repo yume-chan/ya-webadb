@@ -108,15 +108,10 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
         file: ReadableStream<MaybeConsumable<Uint8Array>>,
         filename = DefaultServerPath,
     ) {
-        const sync = await adb.sync();
-        try {
-            await sync.write({
-                filename,
-                file,
-            });
-        } finally {
-            await sync.dispose();
-        }
+        await adb.sync.write({
+            filename,
+            file,
+        });
     }
 
     static async start<

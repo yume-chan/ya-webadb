@@ -278,16 +278,10 @@ export class PackageManager {
         const fileName = Math.random().toString().substring(2);
         const filePath = `/data/local/tmp/${fileName}.apk`;
 
-        const sync = await this.#adb.sync();
-
-        try {
-            await sync.write({
-                filename: filePath,
-                file: stream,
-            });
-        } finally {
-            await sync.dispose();
-        }
+        await this.#adb.sync.write({
+            filename: filePath,
+            file: stream,
+        });
 
         try {
             await this.install([filePath], options);

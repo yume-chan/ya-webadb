@@ -4,7 +4,8 @@ import { struct, u32, u64 } from "@yume-chan/struct";
 import type { AndroidSyscallErrorCode, LinuxFileType } from "../android.js";
 import { AndroidSyscallErrorNameMap } from "../android.js";
 import { RequestId, ResponseId } from "../id/index.js";
-import type { Socket } from "../socket.js";
+import type { SocketPool } from "../socket-pool.js";
+import { Error as AdbSyncError } from "../socket.js";
 
 export const LstatResponse = struct(
     { mode: u32, size: u32, mtime: u32 },
@@ -30,15 +31,18 @@ export const LstatResponse = struct(
 export type LstatResponse = StructValue<typeof LstatResponse>;
 
 export async function lstatV1(
-    socket: Socket,
+    pool: SocketPool,
     path: string,
 ): Promise<LstatResponse> {
-    const locked = await socket.lock();
+    const socket = await pool.acquire();
     try {
-        await locked.writeRequest(RequestId.Lstat, path);
-        return await locked.readResponse(ResponseId.Lstat, LstatResponse);
-    } finally {
-        locked.release();
+        await socket.writeRequest(RequestId.Lstat, path);
+        const result = await socket.readResponse(ResponseId.Lstat, LstatResponse);
+        await pool.release(socket);
+        return result;
+    } catch (e) {
+        await pool.release(socket, !(e instanceof AdbSyncError));
+        throw e;
     }
 }
 
@@ -77,25 +81,28 @@ export const StatResponse = struct(
 
 export type StatResponse = StructValue<typeof StatResponse>;
 
-export async function lstatV2(socket: Socket, path: string) {
-    const locked = await socket.lock();
+export async function lstatV2(pool: SocketPool, path: string) {
+    const socket = await pool.acquire();
     try {
-        await locked.writeRequest(RequestId.LstatV2, path);
-        return await locked.readResponse(ResponseId.LstatV2, StatResponse);
-    } finally {
-        locked.release();
+        await socket.writeRequest(RequestId.LstatV2, path);
+        const result = await socket.readResponse(ResponseId.LstatV2, StatResponse);
+        await pool.release(socket);
+        return result;
+    } catch (e) {
+        await pool.release(socket, !(e instanceof AdbSyncError));
+        throw e;
     }
 }
 
 export async function lstat(
-    socket: Socket,
+    pool: SocketPool,
     path: string,
     { version }: { version: 1 | 2 },
 ): Promise<Stat> {
     if (version === 2) {
-        return await lstatV2(socket, path);
+        return await lstatV2(pool, path);
     } else {
-        const response = await lstatV1(socket, path);
+        const response = await lstatV1(pool, path);
         return {
             mode: response.mode,
             // Convert to `BigInt` to make it compatible with `StatResponse`
@@ -124,15 +131,15 @@ export interface Stat {
     ctime?: bigint;
 }
 
-export async function stat(
-    socket: Socket,
-    path: string,
-): Promise<StatResponse> {
-    const locked = await socket.lock();
+export async function stat(pool: SocketPool, path: string): Promise<StatResponse> {
+    const socket = await pool.acquire();
     try {
-        await locked.writeRequest(RequestId.Stat, path);
-        return await locked.readResponse(ResponseId.Stat, StatResponse);
-    } finally {
-        locked.release();
+        await socket.writeRequest(RequestId.Stat, path);
+        const result = await socket.readResponse(ResponseId.Stat, StatResponse);
+        await pool.release(socket);
+        return result;
+    } catch (e) {
+        await pool.release(socket, !(e instanceof AdbSyncError));
+        throw e;
     }
 }

@@ -1,3 +1,4 @@
+import { clearTimeout, setTimeout } from "@yume-chan/stream-extra";
 import { getUint32LittleEndian } from "@yume-chan/no-data-view";
 import type {
     MaybeConsumable,
@@ -31,30 +32,51 @@ const FailResponse = struct(
     },
 );
 
-export class SocketLocked implements AsyncExactReadable {
+export class Socket implements AsyncExactReadable {
     static readonly NumberRequest = NumberRequest;
     static readonly FailResponse = FailResponse;
 
+    readonly #socket: Adb.Socket;
     readonly #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
     readonly #readable: BufferedReadableStream;
-    readonly #socketLock: AutoResetEvent;
     readonly #writeLock = new AutoResetEvent();
     readonly #combiner: BufferCombiner;
+    #idleTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
     get position() {
         return this.#readable.position;
     }
 
-    constructor(
-        writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>,
-        readable: BufferedReadableStream,
-        bufferSize: number,
-        lock: AutoResetEvent,
-    ) {
-        this.#writer = writer;
-        this.#readable = readable;
-        this.#socketLock = lock;
+    get closed(): Promise<undefined> {
+        return this.#socket.closed;
+    }
+
+    constructor(socket: Adb.Socket, bufferSize: number) {
+        this.#socket = socket;
+        this.#writer = socket.writable.getWriter();
+        this.#readable = new BufferedReadableStream(socket.readable);
         this.#combiner = new BufferCombiner(bufferSize);
+    }
+
+    /**
+     * Start an idle timer that will close the socket after the specified duration.
+     * The timer is automatically cancelled when the socket is used.
+     * @param timeout The timeout in milliseconds
+     * @param callback The callback to invoke when the timeout expires
+     */
+    startIdleTimer(timeout: number, callback: () => void) {
+        this.clearIdleTimer();
+        this.#idleTimeoutId = setTimeout(callback, timeout);
+    }
+
+    /**
+     * Clear the idle timer.
+     */
+    clearIdleTimer() {
+        if (this.#idleTimeoutId !== null) {
+            clearTimeout(this.#idleTimeoutId);
+            this.#idleTimeoutId = null;
+        }
     }
 
     /**
@@ -159,40 +181,9 @@ export class SocketLocked implements AsyncExactReadable {
         }
     }
 
-    release(): void {
-        // In theory, the writer shouldn't leave anything in the buffer,
-        // but to be safe, call `flush` to throw away any remaining data.
-        this.#combiner.flush();
-        this.#socketLock.notifyOne();
-    }
-
     async close() {
+        this.clearIdleTimer();
         await this.#readable.cancel();
-    }
-}
-
-export class Socket {
-    readonly #lock = new AutoResetEvent();
-    readonly #socket: Adb.Socket;
-    readonly #locked: SocketLocked;
-
-    constructor(socket: Adb.Socket, bufferSize: number) {
-        this.#socket = socket;
-        this.#locked = new SocketLocked(
-            socket.writable.getWriter(),
-            new BufferedReadableStream(socket.readable),
-            bufferSize,
-            this.#lock,
-        );
-    }
-
-    async lock() {
-        await this.#lock.wait();
-        return this.#locked;
-    }
-
-    async close() {
-        await this.#locked.close();
         await this.#socket.close();
     }
 }

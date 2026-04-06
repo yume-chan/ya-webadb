@@ -11,7 +11,9 @@ import { NOOP } from "../../../utils/index.js";
 import { LinuxFileType } from "../android.js";
 import { Compression } from "../compression/index.js";
 import { RequestId, ResponseId } from "../id/index.js";
-import type { Socket, SocketLocked } from "../socket.js";
+import type { SocketPool } from "../socket-pool.js";
+import { Error as AdbSyncError } from "../socket.js";
+import type { Socket } from "../socket.js";
 
 export const MaxPacketSize = 64 * 1024;
 
@@ -19,17 +21,19 @@ export const OkResponse = struct({ unused: u32 }, { littleEndian: true });
 
 // eslint-disable-next-line @typescript-eslint/max-params
 async function pipeFileData(
-    locked: SocketLocked,
+    socket: Socket,
     file: ReadableStream<MaybeConsumable<Uint8Array>>,
     packetSize: number,
     mtime: number,
     compression: Compression.Type,
-) {
+): Promise<void> {
     switch (compression) {
         case Compression.Type.Brotli: {
             const stream = new CompressionStream("brotli");
             void file
-                .pipeTo(new MaybeConsumable.WrapWritableStream(stream.writable))
+                .pipeTo(
+                    new MaybeConsumable.WrapWritableStream(stream.writable),
+                )
                 .catch(NOOP);
             file = stream.readable;
             break;
@@ -37,7 +41,9 @@ async function pipeFileData(
         case Compression.Type.Lz4: {
             const stream = new CompressionStream("lz4");
             void file
-                .pipeTo(new MaybeConsumable.WrapWritableStream(stream.writable))
+                .pipeTo(
+                    new MaybeConsumable.WrapWritableStream(stream.writable),
+                )
                 .catch(NOOP);
             file = stream.readable;
             break;
@@ -45,7 +51,9 @@ async function pipeFileData(
         case Compression.Type.Zstd: {
             const stream = new CompressionStream("zstd");
             void file
-                .pipeTo(new MaybeConsumable.WrapWritableStream(stream.writable))
+                .pipeTo(
+                    new MaybeConsumable.WrapWritableStream(stream.writable),
+                )
                 .catch(NOOP);
             file = stream.readable;
             break;
@@ -59,18 +67,21 @@ async function pipeFileData(
         .pipeTo(
             new MaybeConsumable.WritableStream({
                 write(chunk) {
-                    return locked.writeRequest(RequestId.Data, chunk);
+                    return socket.writeRequest(RequestId.Data, chunk);
                 },
             }),
             { signal: abortController.signal },
         )
-        .then(async () => {
-            await locked.writeRequest(RequestId.Done, mtime);
-            await locked.flush();
-        }, NOOP);
+        .then(
+            async () => {
+                await socket.writeRequest(RequestId.Done, mtime);
+                await socket.flush();
+            },
+            NOOP,
+        );
 
     try {
-        await locked.readResponse(ResponseId.Ok, OkResponse);
+        await socket.readResponse(ResponseId.Ok, OkResponse);
     } catch (e) {
         abortController.abort(e);
         throw e;
@@ -78,7 +89,7 @@ async function pipeFileData(
 }
 
 export interface SendV1Options {
-    socket: Socket;
+    pool: SocketPool;
     filename: string;
     file: ReadableStream<MaybeConsumable<Uint8Array>>;
     type?: LinuxFileType | undefined;
@@ -88,7 +99,7 @@ export interface SendV1Options {
 }
 
 export async function sendV1({
-    socket,
+    pool,
     filename,
     file,
     type = LinuxFileType.File,
@@ -96,20 +107,22 @@ export async function sendV1({
     mtime = (Date.now() / 1000) | 0,
     packetSize = MaxPacketSize,
 }: SendV1Options) {
-    const locked = await socket.lock();
+    const socket = await pool.acquire();
     try {
         const mode = (type << 12) | permission;
         const pathAndMode = `${filename},${mode.toString()}`;
-        await locked.writeRequest(RequestId.Send, pathAndMode);
+        await socket.writeRequest(RequestId.Send, pathAndMode);
         await pipeFileData(
-            locked,
+            socket,
             file,
             packetSize,
             mtime,
             Compression.Type.None,
         );
-    } finally {
-        locked.release();
+        await pool.release(socket);
+    } catch (e) {
+        await pool.release(socket, !(e instanceof AdbSyncError));
+        throw e;
     }
 }
 
@@ -141,7 +154,7 @@ export interface SendV2Options extends SendV1Options {
 }
 
 export async function sendV2({
-    socket,
+    pool,
     filename,
     file,
     type = LinuxFileType.File,
@@ -151,9 +164,9 @@ export async function sendV2({
     compression = Compression.Type.None,
     dryRun = false,
 }: SendV2Options) {
-    const locked = await socket.lock();
+    const socket = await pool.acquire();
     try {
-        await locked.writeRequest(RequestId.SendV2, filename);
+        await socket.writeRequest(RequestId.SendV2, filename);
 
         const mode = (type << 12) | permission;
         let flags: SendV2Flags = SendV2Flags.None;
@@ -171,7 +184,7 @@ export async function sendV2({
         if (dryRun) {
             flags |= SendV2Flags.DryRun;
         }
-        await locked.write(
+        await socket.write(
             SendV2Request.serialize({
                 id: RequestId.SendV2,
                 mode,
@@ -179,9 +192,11 @@ export async function sendV2({
             }),
         );
 
-        await pipeFileData(locked, file, packetSize, mtime, compression);
-    } finally {
-        locked.release();
+        await pipeFileData(socket, file, packetSize, mtime, compression);
+        await pool.release(socket);
+    } catch (e) {
+        await pool.release(socket, !(e instanceof AdbSyncError));
+        throw e;
     }
 }
 

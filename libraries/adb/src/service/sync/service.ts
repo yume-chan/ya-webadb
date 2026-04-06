@@ -1,4 +1,4 @@
-import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
+import type { AbortSignal, MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 
 import type { Adb } from "../../adb.js";
 import { AdbFeature } from "../../features.js";
@@ -7,8 +7,29 @@ import { escapeArg } from "../subprocess/index.js";
 import type { LinuxFileType } from "./android.js";
 import { Compression } from "./compression/index.js";
 import { OpenDir, Receive, Send, Stat } from "./request/index.js";
-import type { SocketLocked } from "./socket.js";
-import { Socket } from "./socket.js";
+import { SocketPool } from "./socket-pool.js";
+import type { Socket } from "./socket.js";
+
+export interface ServiceOptions {
+    /**
+     * Maximum number of sockets to keep in the pool for reuse.
+     * Extra sockets beyond this limit will be closed when released.
+     * @default 4
+     */
+    maxPoolSize?: number | undefined;
+
+    /**
+     * Time in milliseconds to keep idle sockets in the pool before closing them.
+     * Set to 0 to disable idle timeout (sockets will remain until pool is disposed).
+     * @default 60000 (1 minute)
+     */
+    idleTimeout?: number | undefined;
+
+    /**
+     * Abort signal to dispose the socket pool when aborted.
+     */
+    signal?: AbortSignal | undefined;
+}
 
 /**
  * A simplified `dirname` function that only handles absolute unix paths.
@@ -32,13 +53,23 @@ export interface WriteOptions {
     type?: LinuxFileType | undefined;
     permission?: number | undefined;
     mtime?: number | undefined;
+    /**
+     * The format to compress the file stream for sending.
+     *
+     * If the device doesn't support compressed sending, it will be ignored.
+     *
+     * If the device or current runtime doesn't support the specified format,
+     * an Error will be thrown.
+     * {@link Compression.canUseFormat} can be used to check if
+     * the device and current runtime both supports the format.
+     */
     compression?: Compression.Type | undefined;
     dryRun?: boolean | undefined;
 }
 
 export class Service {
     protected _adb: Adb;
-    protected _socket: Socket;
+    readonly #socketPool: SocketPool;
 
     readonly #supportsStat2: boolean;
     readonly #supportsLs2: boolean;
@@ -66,9 +97,18 @@ export class Service {
         return this.#needPushMkdirWorkaround;
     }
 
-    constructor(adb: Adb, socket: Adb.Socket) {
+    constructor(adb: Adb, options?: ServiceOptions) {
         this._adb = adb;
-        this._socket = new Socket(socket, adb.maxPayloadSize);
+        this.#socketPool = new SocketPool(
+            adb,
+            options?.maxPoolSize,
+            options?.idleTimeout,
+        );
+
+        // Dispose the socket pool when the abort signal is triggered
+        options?.signal?.addEventListener("abort", () => {
+            void this.#socketPool.dispose();
+        });
 
         this.#supportsStat2 = adb.canUseFeature(AdbFeature.Stat2);
         this.#supportsLs2 = adb.canUseFeature(AdbFeature.Ls2);
@@ -80,12 +120,33 @@ export class Service {
     }
 
     /**
+     * Acquires a socket from the pool for direct use.
+     *
+     * The socket must be returned to the pool using {@link releaseSocket} after use.
+     *
+     * @returns A socket from the pool
+     */
+    async acquireSocket() {
+        return await this.#socketPool.acquire();
+    }
+
+    /**
+     * Returns a socket to the pool after use.
+     *
+     * @param socket The socket to return to the pool
+     * @param discard Whether to discard the socket instead of returning it to the pool
+     */
+    async releaseSocket(socket: Socket, discard = false) {
+        await this.#socketPool.release(socket, discard);
+    }
+
+    /**
      * Gets information of a file or folder.
      *
      * If `path` points to a symbolic link, the returned information is about the link itself (with `type` being `LinuxFileType.Link`).
      */
     lstat(path: string): Promise<Stat.Stat> {
-        return Stat.lstat(this._socket, path, {
+        return Stat.lstat(this.#socketPool, path, {
             version: this.#supportsStat2 ? 2 : 1,
         });
     }
@@ -100,7 +161,7 @@ export class Service {
             throw new Error("Not supported");
         }
 
-        return Stat.stat(this._socket, path);
+        return Stat.stat(this.#socketPool, path);
     }
 
     /**
@@ -118,7 +179,7 @@ export class Service {
     }
 
     opendir(path: string): AsyncGenerator<OpenDir.Entry, void, void> {
-        return OpenDir.opendir(this._socket, path, {
+        return OpenDir.opendir(this.#socketPool, path, {
             version: this.supportsLs2 ? 2 : 1,
         });
     }
@@ -139,7 +200,7 @@ export class Service {
      * @returns A `ReadableStream` that contains the file content.
      */
     read(filename: string): ReadableStream<Uint8Array> {
-        return Receive.stream(this._socket, filename);
+        return Receive.stream(this.#socketPool, filename);
     }
 
     /**
@@ -178,16 +239,8 @@ export class Service {
 
         await Send.send({
             version: this.supportsSendReceive2 ? 2 : 1,
-            socket: this._socket,
+            pool: this.#socketPool,
             ...options,
         });
-    }
-
-    lockSocket(): Promise<SocketLocked> {
-        return this._socket.lock();
-    }
-
-    dispose() {
-        return this._socket.close();
     }
 }

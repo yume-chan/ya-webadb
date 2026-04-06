@@ -79,6 +79,7 @@ export class Adb implements Closeable {
     readonly power: AdbPowerService;
     readonly reverse: AdbReverseService;
     readonly tcpip: AdbTcpIpService;
+    readonly sync: AdbSync.Service;
 
     constructor(transport: AdbTransport) {
         this.#transport = transport;
@@ -87,6 +88,7 @@ export class Adb implements Closeable {
         this.power = new AdbPowerService(this);
         this.reverse = new AdbReverseService(this);
         this.tcpip = new AdbTcpIpService(this);
+        this.sync = new AdbSync.Service(this);
     }
 
     canUseFeature(feature: AdbFeature): boolean {
@@ -146,11 +148,6 @@ export class Adb implements Closeable {
             .wait()
             .toString()
             .then((output) => output.trim());
-    }
-
-    async sync(): Promise<AdbSync.Service> {
-        const socket = await this.createSocket("sync:");
-        return new AdbSync.Service(this, socket);
     }
 
     async framebuffer(): Promise<AdbFrameBuffer> {

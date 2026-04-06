@@ -3,7 +3,8 @@ import type { StructValue } from "@yume-chan/struct";
 import { buffer, struct, u32 } from "@yume-chan/struct";
 
 import { RequestId, ResponseId } from "../id/index.js";
-import type { Socket } from "../socket.js";
+import type { SocketPool } from "../socket-pool.js";
+import { Error as AdbSyncError } from "../socket.js";
 
 export const DataResponse = struct(
     { data: buffer(u32) },
@@ -13,42 +14,33 @@ export const DataResponse = struct(
 export type DataResponse = StructValue<typeof DataResponse>;
 
 export async function* generator(
-    socket: Socket,
+    pool: SocketPool,
     path: string,
 ): AsyncGenerator<Uint8Array, void, void> {
-    const locked = await socket.lock();
-    // False positive, see https://github.com/eslint/eslint/issues/20583
-    // eslint-disable-next-line no-useless-assignment
-    let done = false;
+    const socket = await pool.acquire();
+    let completed = false;
+    let error: unknown;
+
     try {
-        await locked.writeRequest(RequestId.Receive, path);
-        for await (const packet of locked.readResponses(
+        await socket.writeRequest(RequestId.Receive, path);
+        for await (const packet of socket.readResponses(
             ResponseId.Data,
             DataResponse,
         )) {
             yield packet.data;
         }
-        done = true;
+        completed = true;
     } catch (e) {
-        done = true;
+        error = e;
         throw e;
     } finally {
-        if (!done) {
-            // sync pull can't be cancelled, so we have to read all data
-            for await (const packet of locked.readResponses(
-                ResponseId.Data,
-                DataResponse,
-            )) {
-                void packet;
-            }
-        }
-        locked.release();
+        await pool.release(socket, !(completed || error instanceof AdbSyncError));
     }
 }
 
 export function stream(
-    socket: Socket,
+    pool: SocketPool,
     path: string,
 ): ReadableStream<Uint8Array> {
-    return ReadableStream.from(generator(socket, path));
+    return ReadableStream.from(generator(pool, path));
 }
