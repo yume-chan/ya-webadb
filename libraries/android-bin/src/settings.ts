@@ -1,5 +1,4 @@
 import type { Adb } from "@yume-chan/adb";
-import { AdbServiceBase } from "@yume-chan/adb";
 
 import { Cmd } from "./cmd/index.js";
 import type { SingleUser } from "./utils.js";
@@ -25,14 +24,13 @@ export interface SettingsPutOptions extends SettingsOptions {
 }
 
 // frameworks/base/packages/SettingsProvider/src/com/android/providers/settings/SettingsService.java
-export class Settings extends AdbServiceBase {
+export class Settings {
     static ServiceName = "settings";
     static CommandName = "settings";
 
-    #cmd: Cmd.NoneProtocolService;
+    readonly #cmd: Cmd.NoneProtocolService;
 
     constructor(adb: Adb) {
-        super(adb);
         this.#cmd = Cmd.createNoneProtocol(adb, Settings.CommandName);
     }
 

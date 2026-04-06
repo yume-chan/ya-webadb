@@ -3,7 +3,7 @@
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { createWriteStream } from "node:fs";
-import { mkdir, opendir } from "node:fs/promises";
+import { mkdir, opendir, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import { run } from "node:test";
 import { lcov, spec } from "node:test/reporters";
@@ -14,6 +14,9 @@ const NodeVersion = process.version
     .split(".")
     .map((value) => parseInt(value, 10));
 const IsGitHubActions = process.env.GITHUB_ACTIONS === "true";
+
+// 1. Cleanup output directory
+await rm(resolve(process.cwd(), "esm"), { recursive: true, force: true });
 
 let tsc = resolve(
     fileURLToPath(import.meta.url),
@@ -26,6 +29,7 @@ if (process.platform === "win32") {
     tsc += ".cmd";
 }
 
+// 2. Run `tsc -p tsconfig.test.json`
 const child = spawn(`${tsc} -p tsconfig.test.json`, {
     shell: true,
     stdio: "inherit",
@@ -50,8 +54,11 @@ async function findTests(path) {
         }
     }
 }
+
+// 3. Find tests
 await findTests(resolve(process.cwd(), "esm"));
 
+// 4. Run tests
 const test = run({
     concurrency: true,
     files: tests,

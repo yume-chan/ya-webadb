@@ -1,11 +1,7 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import type { Consumable, ReadableWritablePair } from "@yume-chan/stream-extra";
 
-import type {
-    AdbIncomingSocketHandler,
-    AdbSocket,
-    AdbTransport,
-} from "../adb.js";
+import type { Adb, AdbTransport } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import { AdbDeviceFeatures, AdbFeature } from "../features.js";
 
@@ -151,12 +147,12 @@ export class AdbDaemonTransport implements AdbTransport {
         this.#protocolVersion = version;
     }
 
-    connect(service: string): MaybePromiseLike<AdbSocket> {
+    connect(service: string): MaybePromiseLike<Adb.Socket> {
         return this.#dispatcher.createSocket(service);
     }
 
     addReverseTunnel(
-        handler: AdbIncomingSocketHandler,
+        handler: Adb.IncomingSocketHandler,
         address?: string,
     ): string {
         if (!address) {

@@ -5,6 +5,9 @@
         },
         {
             "path": "./tsconfig.test.json"
+        },
+        {
+            "path": "../struct/tsconfig.build.json"
         }
     ]
 }

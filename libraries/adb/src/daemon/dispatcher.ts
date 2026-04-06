@@ -19,7 +19,7 @@ import {
 } from "@yume-chan/stream-extra";
 import { EmptyUint8Array, decodeUtf8, encodeUtf8 } from "@yume-chan/struct";
 
-import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
+import type { Adb, Closeable } from "../adb.js";
 
 import type { AdbPacketData, AdbPacketInit } from "./packet.js";
 import { AdbCommand, calculateChecksum } from "./packet.js";
@@ -114,7 +114,7 @@ export class AdbPacketDispatcher implements Closeable {
 
     readonly #incomingSocketHandlers = new Map<
         string,
-        AdbIncomingSocketHandler
+        Adb.IncomingSocketHandler
     >();
     readonly #readAbortController = new AbortController();
 
@@ -399,7 +399,7 @@ export class AdbPacketDispatcher implements Closeable {
         await Promise.race(promises);
     }
 
-    async createSocket(service: string): Promise<AdbSocket> {
+    async createSocket(service: string): Promise<Adb.Socket> {
         if (this.options.appendNullToServiceString) {
             service += "\0";
         }
@@ -428,7 +428,7 @@ export class AdbPacketDispatcher implements Closeable {
         return controller.socket;
     }
 
-    addReverseTunnel(service: string, handler: AdbIncomingSocketHandler) {
+    addReverseTunnel(service: string, handler: Adb.IncomingSocketHandler) {
         this.#incomingSocketHandlers.set(service, handler);
     }
 

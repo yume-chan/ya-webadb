@@ -1,7 +1,13 @@
-import { AdbServiceBase } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 
-export class AdbBackup extends AdbServiceBase {
+export class AdbBackup {
+    readonly #adb: Adb;
+
+    constructor(adb: Adb) {
+        this.#adb = adb;
+    }
+
     /**
      * User must confirm backup on device within 60 seconds.
      */
@@ -38,7 +44,7 @@ export class AdbBackup extends AdbServiceBase {
             args.push(...options.packages);
         }
 
-        const process = await this.adb.subprocess.noneProtocol.spawn(args);
+        const process = await this.#adb.subprocess.noneProtocol.spawn(args);
         return process.output;
     }
 
@@ -51,7 +57,7 @@ export class AdbBackup extends AdbServiceBase {
         if (options.user !== undefined) {
             args.push("--user", options.user.toString());
         }
-        return this.adb.subprocess.noneProtocol
+        return this.#adb.subprocess.noneProtocol
             .spawn(args)
             .wait({ stdin: options.file })
             .toString();

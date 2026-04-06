@@ -1,10 +1,6 @@
 import { PromiseResolver } from "@yume-chan/async";
 
-import type {
-    AdbIncomingSocketHandler,
-    AdbSocket,
-    AdbTransport,
-} from "../adb.js";
+import type { Adb, AdbTransport } from "../adb.js";
 import type { AdbBanner } from "../banner.js";
 import { AdbDeviceFeatures } from "../features.js";
 
@@ -21,7 +17,7 @@ export class AdbServerTransport implements AdbTransport {
 
     readonly banner: AdbBanner;
 
-    #sockets: AdbSocket[] = [];
+    #sockets: Adb.Socket[] = [];
 
     #closed = new PromiseResolver<void>();
     #disconnected: Promise<void>;
@@ -56,7 +52,7 @@ export class AdbServerTransport implements AdbTransport {
         this.#disconnected = Promise.race([this.#closed.promise, disconnected]);
     }
 
-    async connect(service: string): Promise<AdbSocket> {
+    async connect(service: string): Promise<Adb.Socket> {
         const socket = await this.#client.createDeviceConnection(
             { transportId: this.transportId },
             service,
@@ -66,7 +62,7 @@ export class AdbServerTransport implements AdbTransport {
     }
 
     async addReverseTunnel(
-        handler: AdbIncomingSocketHandler,
+        handler: Adb.IncomingSocketHandler,
         address?: string,
     ): Promise<string> {
         return await this.#client.connector.addReverseTunnel(handler, address);

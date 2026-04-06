@@ -10,7 +10,7 @@ import type {
 import { Server, Socket } from "node:net";
 import { platform } from "node:os";
 
-import type { AdbIncomingSocketHandler, AdbServerClient } from "@yume-chan/adb";
+import type { Adb, AdbServerClient } from "@yume-chan/adb";
 import {
     MaybeConsumable,
     PushReadableStream,
@@ -312,7 +312,7 @@ export class AdbServerNodeTcpConnector
     }
 
     async addReverseTunnel(
-        handler: AdbIncomingSocketHandler,
+        handler: Adb.IncomingSocketHandler,
         address?: string,
     ): Promise<string> {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises

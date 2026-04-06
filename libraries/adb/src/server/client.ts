@@ -10,7 +10,7 @@ import type {
 } from "@yume-chan/stream-extra";
 import { AbortController } from "@yume-chan/stream-extra";
 
-import type { AdbIncomingSocketHandler, AdbSocket, Closeable } from "../adb.js";
+import type { Closeable } from "../adb.js";
 import { Adb } from "../adb.js";
 import { AdbBanner } from "../banner.js";
 import type { DeviceObserver as DeviceObserverBase } from "../device-observer.js";
@@ -456,12 +456,12 @@ export class AdbServerClient {
                             (device) => device.transportId === transportId,
                         )
                     ) {
-                        observer.stop();
+                        observer.close();
                         resolve();
                     }
                 });
                 observer.onError((e) => {
-                    observer.stop();
+                    observer.close();
                     reject(e);
                 });
             });
@@ -533,7 +533,7 @@ export namespace AdbServerClient {
         ): MaybePromiseLike<ServerConnection>;
 
         addReverseTunnel(
-            handler: AdbIncomingSocketHandler,
+            handler: Adb.IncomingSocketHandler,
             address?: string,
         ): MaybePromiseLike<string>;
 
@@ -542,7 +542,7 @@ export namespace AdbServerClient {
         clearReverseTunnels(): MaybePromiseLike<void>;
     }
 
-    export interface Socket extends AdbSocket {
+    export interface Socket extends Adb.Socket {
         transportId: bigint;
     }
 

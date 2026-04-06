@@ -1,12 +1,9 @@
 import type { Adb } from "@yume-chan/adb";
-import { AdbServiceBase } from "@yume-chan/adb";
 
 import { Settings } from "./settings.js";
 import { p } from "./string-format.js";
 
-export class OverlayDisplay extends AdbServiceBase {
-    #settings: Settings;
-
+export class OverlayDisplay {
     static readonly SETTING_KEY = "overlay_display_devices";
 
     static readonly SETTING_FORMAT = p.separated(
@@ -46,8 +43,9 @@ export class OverlayDisplay extends AdbServiceBase {
         ),
     );
 
+    readonly #settings: Settings;
+
     constructor(adb: Adb) {
-        super(adb);
         this.#settings = new Settings(adb);
     }
 
