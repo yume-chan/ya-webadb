@@ -15,7 +15,9 @@ describe("SocketPool", () => {
                 maxPayloadSize: 1024,
                 createSocket: () => {
                     createCount += 1;
-                    let closedResolve: ((value: PromiseLike<undefined> | undefined) => void) | undefined;
+                    let closedResolve:
+                        | ((value: PromiseLike<undefined> | undefined) => void)
+                        | undefined;
                     const closedPromise = new Promise<undefined>((resolve) => {
                         closedResolve = resolve;
                     });
@@ -36,12 +38,12 @@ describe("SocketPool", () => {
             const socket1 = await pool.acquire();
             assert.strictEqual(createCount, 1);
 
-            pool.release(socket1);
+            await pool.release(socket1);
             const socket2 = await pool.acquire();
             assert.strictEqual(createCount, 1);
             assert.strictEqual(socket1, socket2);
 
-            pool.release(socket2);
+            await pool.release(socket2);
             await pool.dispose();
         });
 
@@ -52,7 +54,9 @@ describe("SocketPool", () => {
                 maxPayloadSize: 1024,
                 createSocket: () => {
                     createCount += 1;
-                    let closedResolve: ((value: PromiseLike<undefined> | undefined) => void) | undefined;
+                    let closedResolve:
+                        | ((value: PromiseLike<undefined> | undefined) => void)
+                        | undefined;
                     const closedPromise = new Promise<undefined>((resolve) => {
                         closedResolve = resolve;
                     });
@@ -95,7 +99,9 @@ describe("SocketPool", () => {
             const adb = {
                 maxPayloadSize: 1024,
                 createSocket: () => {
-                    let closedResolve: ((value: PromiseLike<undefined> | undefined) => void) | undefined;
+                    let closedResolve:
+                        | ((value: PromiseLike<undefined> | undefined) => void)
+                        | undefined;
                     const closedPromise = new Promise<undefined>((resolve) => {
                         closedResolve = resolve;
                     });
@@ -128,7 +134,9 @@ describe("SocketPool", () => {
             const adb = {
                 maxPayloadSize: 1024,
                 createSocket: () => {
-                    let closedResolve: ((value: PromiseLike<undefined> | undefined) => void) | undefined;
+                    let closedResolve:
+                        | ((value: PromiseLike<undefined> | undefined) => void)
+                        | undefined;
                     const closedPromise = new Promise<undefined>((resolve) => {
                         closedResolve = resolve;
                     });
@@ -159,7 +167,9 @@ describe("SocketPool", () => {
             const adb = {
                 maxPayloadSize: 1024,
                 createSocket: () => {
-                    let closedResolve: ((value: PromiseLike<undefined> | undefined) => void) | undefined;
+                    let closedResolve:
+                        | ((value: PromiseLike<undefined> | undefined) => void)
+                        | undefined;
                     const closedPromise = new Promise<undefined>((resolve) => {
                         closedResolve = resolve;
                     });

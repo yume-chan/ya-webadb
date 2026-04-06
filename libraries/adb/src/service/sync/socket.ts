@@ -1,4 +1,3 @@
-import { clearTimeout, setTimeout } from "@yume-chan/stream-extra";
 import { getUint32LittleEndian } from "@yume-chan/no-data-view";
 import type {
     MaybeConsumable,
@@ -7,7 +6,9 @@ import type {
 import {
     BufferCombiner,
     BufferedReadableStream,
+    clearTimeout,
     Consumable,
+    setTimeout,
 } from "@yume-chan/stream-extra";
 import type { AsyncExactReadable, StructDeserializer } from "@yume-chan/struct";
 import { decodeUtf8, string, struct, u32 } from "@yume-chan/struct";
@@ -88,15 +89,19 @@ export class Socket implements AsyncExactReadable {
         return Consumable.WritableStream.write(this.#writer, packet);
     }
 
+    async #withWriteLock(callback: () => Promise<void>) {
+        try {
+            await this.#writeLock.wait();
+            await callback();
+        } finally {
+            this.#writeLock.notifyOne();
+        }
+    }
+
     async flush() {
         const buffer = this.#combiner.flush();
         if (buffer) {
-            try {
-                await this.#writeLock.wait();
-                await this.#writeOne(buffer);
-            } finally {
-                this.#writeLock.notifyOne();
-            }
+            await this.#withWriteLock(() => this.#writeOne(buffer));
         }
     }
 
@@ -106,27 +111,26 @@ export class Socket implements AsyncExactReadable {
         }
     }
 
-    async write(data: Uint8Array) {
-        try {
-            await this.#writeLock.wait();
-            await this.#write(data);
-        } finally {
-            this.#writeLock.notifyOne();
-        }
+    write(data: Uint8Array) {
+        return this.#withWriteLock(() => this.#write(data));
     }
 
     async writeRequest(id: number, value: number | string | Uint8Array) {
-        if (typeof value === "number") {
-            await this.#write(NumberRequest.serialize({ id, arg: value }));
-            return;
-        }
+        return this.#withWriteLock(async () => {
+            if (typeof value === "number") {
+                await this.#write(NumberRequest.serialize({ id, arg: value }));
+                return;
+            }
 
-        if (typeof value === "string") {
-            value = encodeUtf8(value);
-        }
+            if (typeof value === "string") {
+                value = encodeUtf8(value);
+            }
 
-        await this.#write(NumberRequest.serialize({ id, arg: value.length }));
-        await this.#write(value);
+            await this.#write(
+                NumberRequest.serialize({ id, arg: value.length }),
+            );
+            await this.#write(value);
+        });
     }
 
     async readExactly(length: number) {
