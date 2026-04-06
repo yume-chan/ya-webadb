@@ -1,4 +1,5 @@
 import type { AdbFeature } from "./features.js";
+import type { AdbServerClient } from "./server/client.js";
 
 export const AdbBannerKey = {
     Product: "ro.product.name",
@@ -11,6 +12,7 @@ export type AdbBannerKey = (typeof AdbBannerKey)[keyof typeof AdbBannerKey];
 
 export class AdbBanner {
     static parse(banner: string) {
+        let state: AdbServerClient.ConnectionState | undefined;
         let product: string | undefined;
         let model: string | undefined;
         let device: string | undefined;
@@ -18,6 +20,9 @@ export class AdbBanner {
 
         const pieces = banner.split("::");
         if (pieces.length > 1) {
+            state = (pieces[0]!.trim() || undefined) as
+                | AdbServerClient.ConnectionState
+                | undefined;
             const props = pieces[1]!;
             for (const prop of props.split(";")) {
                 // istanbul ignore if
@@ -48,7 +53,12 @@ export class AdbBanner {
             }
         }
 
-        return new AdbBanner(product, model, device, features);
+        return new AdbBanner(state, product, model, device, features);
+    }
+
+    readonly #state: AdbServerClient.ConnectionState | undefined;
+    get state() {
+        return this.#state;
     }
 
     readonly #product: string | undefined;
@@ -71,12 +81,15 @@ export class AdbBanner {
         return this.#features;
     }
 
+    // eslint-disable-next-line @typescript-eslint/max-params
     constructor(
+        state: AdbServerClient.ConnectionState | undefined,
         product: string | undefined,
         model: string | undefined,
         device: string | undefined,
         features: readonly AdbFeature[],
     ) {
+        this.#state = state;
         this.#product = product;
         this.#model = model;
         this.#device = device;
