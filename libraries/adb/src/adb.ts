@@ -6,37 +6,21 @@ import type {
 import { ConcatStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 import type { AdbBanner } from "./banner.js";
-import type { AdbFrameBuffer } from "./commands/index.js";
+import type { AdbFeature } from "./features.js";
+import type { AdbFrameBuffer } from "./service/index.js";
 import {
-    AdbPower,
+    AdbPowerService,
     AdbReverseService,
     AdbSubprocessService,
     AdbSync,
     AdbTcpIpService,
     escapeArg,
     framebuffer,
-} from "./commands/index.js";
-import type { AdbFeature } from "./features.js";
+} from "./service/index.js";
 
 export interface Closeable {
     close(): MaybePromiseLike<void>;
 }
-
-/**
- * Represents an ADB socket.
- */
-export interface AdbSocket
-    extends
-        ReadableWritablePair<Uint8Array, MaybeConsumable<Uint8Array>>,
-        Closeable {
-    get service(): string;
-
-    get closed(): Promise<undefined>;
-}
-
-export type AdbIncomingSocketHandler = (
-    socket: AdbSocket,
-) => MaybePromiseLike<void>;
 
 export interface AdbTransport extends Closeable {
     readonly serial: string;
@@ -49,10 +33,10 @@ export interface AdbTransport extends Closeable {
 
     readonly clientFeatures: readonly AdbFeature[];
 
-    connect(service: string): MaybePromiseLike<AdbSocket>;
+    connect(service: string): MaybePromiseLike<Adb.Socket>;
 
     addReverseTunnel(
-        handler: AdbIncomingSocketHandler,
+        handler: Adb.IncomingSocketHandler,
         address?: string,
     ): MaybePromiseLike<string>;
 
@@ -92,17 +76,19 @@ export class Adb implements Closeable {
     }
 
     readonly subprocess: AdbSubprocessService;
-    readonly power: AdbPower;
+    readonly power: AdbPowerService;
     readonly reverse: AdbReverseService;
     readonly tcpip: AdbTcpIpService;
+    readonly sync: AdbSync.Service;
 
     constructor(transport: AdbTransport) {
         this.#transport = transport;
 
         this.subprocess = new AdbSubprocessService(this);
-        this.power = new AdbPower(this);
+        this.power = new AdbPowerService(this);
         this.reverse = new AdbReverseService(this);
         this.tcpip = new AdbTcpIpService(this);
+        this.sync = new AdbSync.Service(this);
     }
 
     canUseFeature(feature: AdbFeature): boolean {
@@ -115,7 +101,7 @@ export class Adb implements Closeable {
     /**
      * Creates a new ADB Socket to the specified service or socket address.
      */
-    async createSocket(service: string): Promise<AdbSocket> {
+    async createSocket(service: string): Promise<Adb.Socket> {
         return this.#transport.connect(service);
     }
 
@@ -164,16 +150,33 @@ export class Adb implements Closeable {
             .then((output) => output.trim());
     }
 
-    async sync(): Promise<AdbSync> {
-        const socket = await this.createSocket("sync:");
-        return new AdbSync(this, socket);
-    }
-
     async framebuffer(): Promise<AdbFrameBuffer> {
         return framebuffer(this);
+    }
+
+    [Symbol.asyncDispose]() {
+        return this.close();
     }
 
     async close(): Promise<void> {
         await this.#transport.close();
     }
+}
+
+export namespace Adb {
+    /**
+     * Represents an ADB socket.
+     */
+    export interface Socket
+        extends
+            ReadableWritablePair<Uint8Array, MaybeConsumable<Uint8Array>>,
+            Closeable {
+        get service(): string;
+
+        get closed(): Promise<undefined>;
+    }
+
+    export type IncomingSocketHandler = (
+        socket: Socket,
+    ) => MaybePromiseLike<void>;
 }

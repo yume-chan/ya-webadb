@@ -1,8 +1,7 @@
 // cspell: ignore bugreport
 // cspell: ignore bugreportz
 
-import type { Adb, AdbSync } from "@yume-chan/adb";
-import { AdbServiceBase } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 import type { AbortSignal, ReadableStream } from "@yume-chan/stream-extra";
 import {
     AbortController,
@@ -13,7 +12,7 @@ import {
     WritableStream,
 } from "@yume-chan/stream-extra";
 
-export class BugReport extends AdbServiceBase {
+export class BugReport {
     static VERSION_REGEX: RegExp = /(\d+)\.(\d+)/;
 
     static BEGIN_REGEX: RegExp = /BEGIN:(.*)/;
@@ -77,6 +76,8 @@ export class BugReport extends AdbServiceBase {
         });
     }
 
+    readonly #adb: Adb;
+
     #supportsBugReport: boolean;
     /**
      * Gets whether the device supports flat (text file, non-zipped) bugreport.
@@ -128,7 +129,7 @@ export class BugReport extends AdbServiceBase {
     }
 
     constructor(adb: Adb, capabilities: BugReport.Capabilities) {
-        super(adb);
+        this.#adb = adb;
 
         this.#supportsBugReport = capabilities.supportsBugReport;
         this.#bugReportZVersion = capabilities.bugReportZVersion;
@@ -153,7 +154,7 @@ export class BugReport extends AdbServiceBase {
         return new WrapReadableStream(async () => {
             // https://cs.android.com/android/platform/superproject/+/master:frameworks/native/cmds/bugreport/bugreport.cpp;drc=9b73bf07d73dbab5b792632e1e233edbad77f5fd;bpv=0;bpt=0
             const process =
-                await this.adb.subprocess.noneProtocol.spawn("bugreport");
+                await this.#adb.subprocess.noneProtocol.spawn("bugreport");
             return process.output;
         });
     }
@@ -184,7 +185,7 @@ export class BugReport extends AdbServiceBase {
         }
 
         // `subprocess.shellProtocol` must be defined when `this.#supportsBugReportZ` is `true`
-        const process = await this.adb.subprocess.shellProtocol!.spawn(args);
+        const process = await this.#adb.subprocess.shellProtocol!.spawn(args);
 
         options?.signal?.addEventListener("abort", () => {
             void process.kill();
@@ -240,7 +241,7 @@ export class BugReport extends AdbServiceBase {
      */
     bugReportZStream(): ReadableStream<Uint8Array> {
         return new PushReadableStream(async (controller) => {
-            const process = await this.adb.subprocess.shellProtocol!.spawn(
+            const process = await this.#adb.subprocess.shellProtocol!.spawn(
                 ["bugreportz", "-s"],
                 controller.abortSignal,
             );
@@ -292,13 +293,11 @@ export class BugReport extends AdbServiceBase {
 
         if (this.#supportsBugReportZ) {
             let path: string | undefined;
-            let sync: AdbSync | undefined;
             const controller = new AbortController();
             const cleanup = async () => {
                 controller.abort();
-                await sync?.dispose();
                 if (path) {
-                    await this.adb.rm(path);
+                    await this.#adb.rm(path);
                 }
             };
 
@@ -312,8 +311,7 @@ export class BugReport extends AdbServiceBase {
                                 ? onProgress
                                 : undefined,
                         });
-                        sync = await this.adb.sync();
-                        return sync.read(path);
+                        return this.#adb.sync.read(path);
                     },
                     cancel: cleanup,
                     close: cleanup,

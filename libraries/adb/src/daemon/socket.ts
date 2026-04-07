@@ -9,7 +9,7 @@ import type {
 import { MaybeConsumable, PushReadableStream } from "@yume-chan/stream-extra";
 import { EmptyUint8Array } from "@yume-chan/struct";
 
-import type { AdbSocket } from "../adb.js";
+import type { Adb } from "../adb.js";
 
 import type { AdbPacketDispatcher } from "./dispatcher.js";
 import { AdbCommand } from "./packet.js";
@@ -34,7 +34,7 @@ export interface AdbDaemonSocketInit extends AdbDaemonSocketInfo {
 }
 
 export class AdbDaemonSocketController
-    implements AdbDaemonSocketInfo, AdbSocket, Disposable
+    implements AdbDaemonSocketInfo, Adb.Socket, Disposable
 {
     readonly #dispatcher!: AdbPacketDispatcher;
 
@@ -177,7 +177,7 @@ export class AdbDaemonSocketController
 /**
  * A duplex stream representing a socket to ADB daemon.
  */
-export class AdbDaemonSocket implements AdbDaemonSocketInfo, AdbSocket {
+export class AdbDaemonSocket implements AdbDaemonSocketInfo, Adb.Socket {
     readonly #controller: AdbDaemonSocketController;
 
     get localId(): number {

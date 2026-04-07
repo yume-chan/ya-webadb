@@ -1,4 +1,4 @@
-import { AdbServiceBase } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 
 const BatteryDumpFields: Record<
     string,
@@ -54,11 +54,17 @@ const Battery = {
     Health,
 };
 
-export class DumpSys extends AdbServiceBase {
+export class DumpSys {
     static readonly Battery = Battery;
 
+    readonly #adb: Adb;
+
+    constructor(adb: Adb) {
+        this.#adb = adb;
+    }
+
     async diskStats() {
-        const result = await this.adb.subprocess.noneProtocol
+        const result = await this.#adb.subprocess.noneProtocol
             .spawn(["dumpsys", "diskstats"])
             .wait()
             .toString();
@@ -91,7 +97,7 @@ export class DumpSys extends AdbServiceBase {
     }
 
     async battery(): Promise<DumpSys.Battery.Info> {
-        const result = await this.adb.subprocess.noneProtocol
+        const result = await this.#adb.subprocess.noneProtocol
             .spawn(["dumpsys", "battery"])
             .wait()
             .toString();

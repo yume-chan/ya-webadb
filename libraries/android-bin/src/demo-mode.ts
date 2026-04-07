@@ -5,7 +5,6 @@
 // cspell: ignore sysui
 
 import type { Adb } from "@yume-chan/adb";
-import { AdbServiceBase } from "@yume-chan/adb";
 
 import { ActivityManager } from "./am.js";
 import { Settings } from "./settings.js";
@@ -52,12 +51,11 @@ export const DemoModeStatusBarModes = [
 
 export type DemoModeStatusBarMode = (typeof DemoModeStatusBarModes)[number];
 
-export class DemoMode extends AdbServiceBase {
+export class DemoMode {
     #am: ActivityManager;
     #settings: Settings;
 
     constructor(adb: Adb, apiLevel?: number) {
-        super(adb);
         this.#am = new ActivityManager(adb, apiLevel);
         this.#settings = new Settings(adb);
     }

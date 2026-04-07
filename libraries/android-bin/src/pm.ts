@@ -5,7 +5,7 @@
 // cspell:ignore dexopt
 
 import type { Adb, AdbNoneProtocolProcess } from "@yume-chan/adb";
-import { AdbServiceBase, escapeArg } from "@yume-chan/adb";
+import { escapeArg } from "@yume-chan/adb";
 import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
 import {
     ConcatStringStream,
@@ -219,16 +219,16 @@ function buildInstallCommand(
     return args;
 }
 
-export class PackageManager extends AdbServiceBase {
+export class PackageManager {
     static readonly ServiceName = "package";
     static readonly CommandName = "pm";
 
-    #apiLevel: number | undefined;
-    #cmd: Cmd.NoneProtocolService;
+    readonly #adb: Adb;
+    readonly #apiLevel: number | undefined;
+    readonly #cmd: Cmd.NoneProtocolService;
 
     constructor(adb: Adb, apiLevel?: number) {
-        super(adb);
-
+        this.#adb = adb;
         this.#apiLevel = apiLevel;
         this.#cmd = Cmd.createNoneProtocol(adb, PackageManager.CommandName);
     }
@@ -260,7 +260,7 @@ export class PackageManager extends AdbServiceBase {
         // (and many other places) due to SELinux policies,
         // so installing from files must still use `pm`.
         // (the starting executable file decides which SELinux policies to apply)
-        const output = await this.adb.subprocess.noneProtocol
+        const output = await this.#adb.subprocess.noneProtocol
             .spawn(command.map(escapeArg))
             .wait()
             .toString()
@@ -278,21 +278,15 @@ export class PackageManager extends AdbServiceBase {
         const fileName = Math.random().toString().substring(2);
         const filePath = `/data/local/tmp/${fileName}.apk`;
 
-        const sync = await this.adb.sync();
-
-        try {
-            await sync.write({
-                filename: filePath,
-                file: stream,
-            });
-        } finally {
-            await sync.dispose();
-        }
+        await this.#adb.sync.write({
+            filename: filePath,
+            file: stream,
+        });
 
         try {
             await this.install([filePath], options);
         } finally {
-            await this.adb.rm(filePath);
+            await this.#adb.rm(filePath);
         }
     }
 
@@ -442,7 +436,7 @@ export class PackageManager extends AdbServiceBase {
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 27) {
             command[0] = PackageManager.CommandName;
-            process = await this.adb.subprocess.noneProtocol.spawn(
+            process = await this.#adb.subprocess.noneProtocol.spawn(
                 command.map(escapeArg),
             );
         } else {
@@ -581,7 +575,7 @@ export class PackageManager extends AdbServiceBase {
         ];
 
         // Similar to `install`, must use `adb.subprocess` so it can read `path`
-        const process = await this.adb.subprocess.noneProtocol.spawn(
+        const process = await this.#adb.subprocess.noneProtocol.spawn(
             command.map(escapeArg),
         );
         await this.checkResult(process.output);
@@ -628,7 +622,7 @@ export class PackageManager extends AdbServiceBase {
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
             command[0] = PackageManager.CommandName;
-            process = await this.adb.subprocess.noneProtocol.spawn(
+            process = await this.#adb.subprocess.noneProtocol.spawn(
                 command.map(escapeArg),
             );
         } else {

@@ -5,6 +5,9 @@
         },
         {
             "path": "./tsconfig.test.json"
+        },
+        {
+            "path": "../no-data-view/tsconfig.build.json"
         }
     ]
 }

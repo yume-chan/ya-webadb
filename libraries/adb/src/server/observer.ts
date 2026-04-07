@@ -123,7 +123,7 @@ export class AdbServerDeviceObserverOwner {
         return stream;
     }
 
-    async #handleObserverStop(connection: AdbServerDataConnection) {
+    async #handleObserverClose(connection: AdbServerDataConnection) {
         if (this.#observers.length === 0) {
             this.#stream = undefined;
             await connection.dispose();
@@ -184,19 +184,19 @@ export class AdbServerDeviceObserverOwner {
 
         const ref = new Ref(options);
 
-        const stop = async () => {
+        const close = async () => {
             unorderedRemove(this.#observers, this.#observers.indexOf(observer));
-            await this.#handleObserverStop(stream);
+            await this.#handleObserverClose(stream);
             ref.unref();
         };
 
         if (options?.signal) {
             if (options.signal.aborted) {
-                await stop();
+                await close();
                 throw options.signal.reason;
             }
 
-            options.signal.addEventListener("abort", () => void stop());
+            options.signal.addEventListener("abort", () => void close());
         }
 
         return {
@@ -207,7 +207,7 @@ export class AdbServerDeviceObserverOwner {
             get current() {
                 return current;
             },
-            stop,
+            close,
         };
     }
 }

@@ -1,7 +1,7 @@
 // cspell: ignore logcat
 // cspell: ignore usec
 
-import { AdbServiceBase } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import {
     BufferedTransformStream,
@@ -405,7 +405,7 @@ export interface LogSize {
     maxPayloadSize: number;
 }
 
-export class Logcat extends AdbServiceBase {
+export class Logcat {
     static logIdToName(id: LogId): string {
         return LogIdName[id]!;
     }
@@ -434,8 +434,14 @@ export class Logcat extends AdbServiceBase {
     static readonly LOG_SIZE_REGEX_11: RegExp =
         /(.*): ring buffer is (.*) (.*)B \((.*) (.*)B consumed, (.*) (.*)B readable\), max entry is (.*) B, max payload is (.*) B/;
 
+    readonly #adb: Adb;
+
+    constructor(adb: Adb) {
+        this.#adb = adb;
+    }
+
     async getLogSize(ids?: readonly LogId[]): Promise<LogSize[]> {
-        const process = await this.adb.subprocess.noneProtocol.spawn([
+        const process = await this.#adb.subprocess.noneProtocol.spawn([
             "logcat",
             "-g",
             ...(ids ? ["-b", Logcat.joinLogId(ids)] : []),
@@ -494,7 +500,7 @@ export class Logcat extends AdbServiceBase {
             args.push("-b", Logcat.joinLogId(ids));
         }
 
-        await this.adb.subprocess.noneProtocol.spawn(args).wait();
+        await this.#adb.subprocess.noneProtocol.spawn(args).wait();
     }
 
     binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {
@@ -520,7 +526,7 @@ export class Logcat extends AdbServiceBase {
 
             // TODO: make `spawn` return synchronously with streams pending
             // so it's easier to chain them.
-            const process = await this.adb.subprocess.noneProtocol.spawn(args);
+            const process = await this.#adb.subprocess.noneProtocol.spawn(args);
             return process.output;
         }).pipeThrough(
             new BufferedTransformStream((stream) => {

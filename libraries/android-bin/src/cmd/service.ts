@@ -3,12 +3,11 @@ import type {
     AdbNoneProtocolSpawner,
     AdbShellProtocolSpawner,
 } from "@yume-chan/adb";
-import { AdbServiceBase } from "@yume-chan/adb";
 
 import { createNoneProtocol } from "./none.js";
 import { createShellProtocol } from "./shell.js";
 
-export class Cmd extends AdbServiceBase {
+export class Cmd {
     static readonly Mode = {
         Abb: 0,
         Cmd: 1,
@@ -29,8 +28,6 @@ export class Cmd extends AdbServiceBase {
     }
 
     constructor(adb: Adb, fallback?: Cmd.Fallback) {
-        super(adb);
-
         this.#noneProtocol = createNoneProtocol(adb, fallback);
         this.#shellProtocol = createShellProtocol(adb, fallback);
     }

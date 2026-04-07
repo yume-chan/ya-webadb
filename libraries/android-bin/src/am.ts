@@ -1,5 +1,5 @@
 import type { Adb, AdbNoneProtocolProcess } from "@yume-chan/adb";
-import { AdbServiceBase, escapeArg } from "@yume-chan/adb";
+import { escapeArg } from "@yume-chan/adb";
 import { SplitStringStream, TextDecoderStream } from "@yume-chan/stream-extra";
 
 import { Cmd } from "./cmd/index.js";
@@ -17,16 +17,17 @@ const START_ACTIVITY_OPTIONS_MAP: Partial<
     user: "--user",
 };
 
-export class ActivityManager extends AdbServiceBase {
+export class ActivityManager {
     static readonly ServiceName = "activity";
     static readonly CommandName = "am";
+
+    readonly #adb: Adb;
 
     #apiLevel: number | undefined;
     #cmd: Cmd.NoneProtocolService;
 
     constructor(adb: Adb, apiLevel?: number) {
-        super(adb);
-
+        this.#adb = adb;
         this.#apiLevel = apiLevel;
         this.#cmd = Cmd.createNoneProtocol(adb, ActivityManager.CommandName);
     }
@@ -50,7 +51,7 @@ export class ActivityManager extends AdbServiceBase {
         let process: AdbNoneProtocolProcess;
         if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
             command[0] = ActivityManager.CommandName;
-            process = await this.adb.subprocess.noneProtocol.spawn(
+            process = await this.#adb.subprocess.noneProtocol.spawn(
                 command.map(escapeArg),
             );
         } else {
@@ -103,7 +104,7 @@ export class ActivityManager extends AdbServiceBase {
         // Android 7 supports `cmd activity` but not `cmd activity broadcast` command
         if (this.#apiLevel !== undefined && this.#apiLevel <= 25) {
             command[0] = ActivityManager.CommandName;
-            await this.adb.subprocess.noneProtocol
+            await this.#adb.subprocess.noneProtocol
                 .spawn(command.map(escapeArg))
                 .wait();
         } else {

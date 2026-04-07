@@ -1,4 +1,4 @@
-import type { Adb, AdbSocket } from "@yume-chan/adb";
+import type { Adb } from "@yume-chan/adb";
 import { AdbReverseNotSupportedError, NOOP } from "@yume-chan/adb";
 import type { MaybePromiseLike } from "@yume-chan/async";
 import { delay } from "@yume-chan/async";
@@ -165,8 +165,8 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
             // Ignore other errors when unbinding
         });
 
-        let queueController: PushReadableStreamController<AdbSocket>;
-        const queue = new PushReadableStream<AdbSocket>((controller) => {
+        let queueController: PushReadableStreamController<Adb.Socket>;
+        const queue = new PushReadableStream<Adb.Socket>((controller) => {
             queueController = controller;
         });
         this.#streams = queue.getReader();

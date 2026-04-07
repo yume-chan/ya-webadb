@@ -120,7 +120,7 @@ export class AdbDaemonWebUsbDeviceObserver implements DeviceObserver<AdbDaemonWe
         }
     };
 
-    stop(): void {
+    close(): void {
         this.#stopAbortController.abort();
         this.#onDeviceAdd.dispose();
         this.#onDeviceRemove.dispose();
