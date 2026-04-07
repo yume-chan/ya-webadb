@@ -31,6 +31,10 @@ export class SocketPool {
 
         // Create a new socket
         const adbSocket = await this.#adb.createSocket("sync:");
+        if (this.#closed) {
+            await adbSocket.close();
+            throw new Error("SocketPool is closed");
+        }
         const socket = new Socket(adbSocket, this.#adb.maxPayloadSize);
         this.#inUseSockets.add(socket);
         return socket;
