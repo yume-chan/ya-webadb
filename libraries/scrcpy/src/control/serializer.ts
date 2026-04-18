@@ -22,10 +22,10 @@ import {
 } from "./uhid.js";
 
 export class ScrcpyControlMessageSerializer {
-    #options: ScrcpyOptions<object>;
+    #options: ScrcpyOptions<object, object>;
     #scrollController: ScrcpyScrollController;
 
-    constructor(options: ScrcpyOptions<object>) {
+    constructor(options: ScrcpyOptions<object, object>) {
         this.#options = options;
         this.#scrollController = options.createScrollController();
     }

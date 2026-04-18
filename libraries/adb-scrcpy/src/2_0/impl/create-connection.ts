@@ -13,11 +13,9 @@ import {
 
 export function createConnection(
     adb: Adb,
-    options: Required<
-        Pick<
-            ScrcpyOptions2_0.Init,
-            "tunnelForward" | "control" | "sendDummyByte" | "scid" | "audio"
-        >
+    options: Pick<
+        ScrcpyOptions2_0.Value,
+        "tunnelForward" | "control" | "sendDummyByte" | "scid" | "audio"
     >,
 ): AdbScrcpyConnection {
     const connectionOptions: AdbScrcpyConnectionOptions = {

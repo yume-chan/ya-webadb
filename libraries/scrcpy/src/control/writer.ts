@@ -23,7 +23,7 @@ export class ScrcpyControlMessageWriter {
 
     constructor(
         writer: WritableStreamDefaultWriter<Consumable<Uint8Array>>,
-        options: ScrcpyOptions<object>,
+        options: ScrcpyOptions<object, object>,
     ) {
         this.#writer = writer;
         this.#serializer = new ScrcpyControlMessageSerializer(options);

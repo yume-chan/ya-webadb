@@ -5,13 +5,14 @@ import {
     PushReadableStream,
 } from "@yume-chan/stream-extra";
 
-import type { Init } from "../../2_3/impl/init.js";
+import type { ScrcpyOptions2_3 } from "../../2_3/index.js";
 import type { ScrcpyAudioStreamMetadata } from "../../base/index.js";
 import { ScrcpyAudioCodec } from "../../base/index.js";
 
 export async function parseAudioStreamMetadata(
     stream: ReadableStream<Uint8Array>,
-    options: Pick<Required<Init<boolean>>, "sendCodecMeta" | "audioCodec">,
+    // Have to use `ScrcpyOptions2_3` because `audioCodec: "flac"` was added in 2.3
+    options: Pick<ScrcpyOptions2_3.Value, "audioCodec" | "sendCodecMeta">,
 ): Promise<ScrcpyAudioStreamMetadata> {
     const buffered = new BufferedReadableStream(stream);
 
@@ -59,7 +60,7 @@ export async function parseAudioStreamMetadata(
 
     // Infer codec from `audioCodec` option
     let codec: ScrcpyAudioCodec;
-    switch (options.audioCodec as string) {
+    switch (options.audioCodec) {
         case "raw":
             codec = ScrcpyAudioCodec.Raw;
             break;

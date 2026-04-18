@@ -18,9 +18,9 @@ export interface Init extends Omit<
     PrevImpl.Init,
     "logLevel" | "lockVideoOrientation"
 > {
-    logLevel?: LogLevel;
+    logLevel?: LogLevel | undefined;
 
-    lockVideoOrientation?: VideoOrientation;
+    lockVideoOrientation?: VideoOrientation | undefined;
 
-    powerOffOnClose?: boolean;
+    powerOffOnClose?: boolean | undefined;
 }

@@ -79,6 +79,7 @@ import {
     ScrcpyVideoSizeImpl,
     clamp,
     isScrcpyOptionValue,
+    mergeDefaults,
     omit,
     toScrcpyOptionValue
 } from "@yume-chan/scrcpy";
@@ -160,6 +161,7 @@ export default () => {
         ScrcpyVideoSizeImpl,
         clamp,
         isScrcpyOptionValue,
+        mergeDefaults,
         omit,
         toScrcpyOptionValue
     )

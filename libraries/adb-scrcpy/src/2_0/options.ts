@@ -14,7 +14,10 @@ import { createConnection, getDisplays, getEncoders } from "./impl/index.js";
 export class AdbScrcpyOptions2_0
     extends ScrcpyOptions2_0
     implements
-        AdbScrcpyOptions<ScrcpyOptions2_0.Init>,
+        AdbScrcpyOptions<
+            ScrcpyOptions2_0.Init,
+            typeof ScrcpyOptions2_0.Defaults
+        >,
         AdbScrcpyOptionsGetEncoders
 {
     readonly version: string;

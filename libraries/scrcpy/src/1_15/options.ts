@@ -5,10 +5,11 @@ import type {
     ScrcpyDisplay,
     ScrcpyMediaStreamPacket,
     ScrcpyOptions,
+    ScrcpyOptionsInitWithDefaults,
     ScrcpyScrollController,
     ScrcpyVideoStream,
 } from "../base/index.js";
-import { ScrcpyDeviceMessageParsers } from "../base/index.js";
+import { mergeDefaults, ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -32,10 +33,10 @@ import {
     setListDisplays,
 } from "./impl/index.js";
 
-export class ScrcpyOptions1_15 implements ScrcpyOptions<Init> {
+export class ScrcpyOptions1_15 implements ScrcpyOptions<Init, typeof Defaults> {
     static readonly Defaults = Defaults;
 
-    readonly value: Required<Init>;
+    readonly value: ScrcpyOptionsInitWithDefaults<Init, typeof Defaults>;
 
     get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
@@ -52,7 +53,7 @@ export class ScrcpyOptions1_15 implements ScrcpyOptions<Init> {
     }
 
     constructor(init: Init) {
-        this.value = { ...Defaults, ...init };
+        this.value = mergeDefaults(Defaults, init);
 
         if (this.value.control) {
             this.#clipboard = this.#deviceMessageParsers.add(
@@ -113,4 +114,5 @@ type Init_ = Init;
 
 export namespace ScrcpyOptions1_15 {
     export type Init = Init_;
+    export type Value = ScrcpyOptionsInitWithDefaults<Init, typeof Defaults>;
 }

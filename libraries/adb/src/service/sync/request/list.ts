@@ -31,7 +31,10 @@ export async function* v1(
         error = e;
         throw e;
     } finally {
-        await pool.release(socket, !(completed || error instanceof AdbSyncError));
+        await pool.release(
+            socket,
+            !(completed || error instanceof AdbSyncError),
+        );
     }
 }
 
@@ -68,7 +71,10 @@ export async function* v2(
         error = e;
         throw e;
     } finally {
-        await pool.release(socket, !(completed || error instanceof AdbSyncError));
+        await pool.release(
+            socket,
+            !(completed || error instanceof AdbSyncError),
+        );
     }
 }
 

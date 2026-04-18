@@ -14,7 +14,10 @@ import type { AdbScrcpyOptions, AdbScrcpyOptionsGetEncoders } from "./types.js";
 export class AdbScrcpyOptions2_5<TVideo extends boolean>
     extends ScrcpyOptions2_5<TVideo>
     implements
-        AdbScrcpyOptions<ScrcpyOptions2_5.Init<TVideo>>,
+        AdbScrcpyOptions<
+            ScrcpyOptions2_5.Init<TVideo>,
+            typeof ScrcpyOptions2_5.Defaults
+        >,
         AdbScrcpyOptionsGetEncoders
 {
     readonly version: string;

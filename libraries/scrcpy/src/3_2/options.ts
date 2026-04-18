@@ -7,11 +7,12 @@ import type {
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
     ScrcpyOptions,
+    ScrcpyOptionsInitWithDefaults,
     ScrcpyOptionsListEncoders,
     ScrcpyScrollController,
     ScrcpyVideoStream,
 } from "../base/index.js";
-import { ScrcpyDeviceMessageParsers } from "../base/index.js";
+import { mergeDefaults, ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -43,11 +44,16 @@ import {
 } from "./impl/index.js";
 
 export class ScrcpyOptions3_2<TVideo extends boolean>
-    implements ScrcpyOptions<Init<TVideo>>, ScrcpyOptionsListEncoders
+    implements
+        ScrcpyOptions<Init<TVideo>, typeof Defaults>,
+        ScrcpyOptionsListEncoders
 {
     static readonly Defaults = Defaults;
 
-    readonly value: Required<Init<TVideo>>;
+    readonly value: ScrcpyOptionsInitWithDefaults<
+        Init<TVideo>,
+        typeof Defaults
+    >;
 
     get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
@@ -73,7 +79,7 @@ export class ScrcpyOptions3_2<TVideo extends boolean>
     }
 
     constructor(init: Init<TVideo>) {
-        this.value = { ...Defaults, ...init } as never;
+        this.value = mergeDefaults(Defaults, init) as never;
 
         if (this.value.videoSource === "camera") {
             this.value.control = false;
@@ -175,4 +181,6 @@ type Init_<TVideo extends boolean> = Init<TVideo>;
 
 export namespace ScrcpyOptions3_2 {
     export type Init<TVideo extends boolean = boolean> = Init_<TVideo>;
+    export type Value<TVideo extends boolean = boolean> =
+        ScrcpyOptionsInitWithDefaults<Init<TVideo>, typeof Defaults>;
 }

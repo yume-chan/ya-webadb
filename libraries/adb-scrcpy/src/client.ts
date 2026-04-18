@@ -78,7 +78,9 @@ export class AdbScrcpyExitedError extends Error {
     }
 }
 
-interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
+interface AdbScrcpyClientInit<
+    TOptions extends AdbScrcpyOptions<object, object>,
+> {
     options: TOptions;
     process: AdbNoneProtocolProcess;
     output: ReadableStream<string>;
@@ -102,7 +104,9 @@ export type AdbScrcpyAudioStreamMetadata =
     | ScrcpyAudioStreamErroredMetadata
     | AdbScrcpyAudioStreamSuccessMetadata;
 
-export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
+export class AdbScrcpyClient<
+    TOptions extends AdbScrcpyOptions<object, object>,
+> {
     static async pushServer(
         adb: Adb,
         file: ReadableStream<MaybeConsumable<Uint8Array>>,
@@ -116,7 +120,8 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
 
     static async start<
         TOptions extends AdbScrcpyOptions<
-            Pick<ScrcpyOptions1_15.Init, "tunnelForward">
+            Pick<ScrcpyOptions1_15.Init, "tunnelForward">,
+            object
         >,
     >(
         adb: Adb,
@@ -218,7 +223,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     static getEncoders(
         adb: Adb,
         path: string,
-        options: AdbScrcpyOptions<object> & AdbScrcpyOptionsGetEncoders,
+        options: AdbScrcpyOptions<object, object> & AdbScrcpyOptionsGetEncoders,
     ): Promise<ScrcpyEncoder[]> {
         options.setListEncoders();
         return options.getEncoders(adb, path);
@@ -231,7 +236,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     static getDisplays(
         adb: Adb,
         path: string,
-        options: AdbScrcpyOptions<object>,
+        options: AdbScrcpyOptions<object, object>,
     ): Promise<ScrcpyDisplay[]> {
         options.setListDisplays();
         return options.getDisplays(adb, path);

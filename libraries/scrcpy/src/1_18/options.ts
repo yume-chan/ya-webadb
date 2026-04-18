@@ -6,11 +6,12 @@ import type {
     ScrcpyEncoder,
     ScrcpyMediaStreamPacket,
     ScrcpyOptions,
+    ScrcpyOptionsInitWithDefaults,
     ScrcpyOptionsListEncoders,
     ScrcpyScrollController,
     ScrcpyVideoStream,
 } from "../base/index.js";
-import { ScrcpyDeviceMessageParsers } from "../base/index.js";
+import { mergeDefaults, ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -38,11 +39,11 @@ import {
 } from "./impl/index.js";
 
 export class ScrcpyOptions1_18
-    implements ScrcpyOptions<Init>, ScrcpyOptionsListEncoders
+    implements ScrcpyOptions<Init, typeof Defaults>, ScrcpyOptionsListEncoders
 {
     static readonly Defaults = Defaults;
 
-    readonly value: Required<Init>;
+    readonly value: ScrcpyOptionsInitWithDefaults<Init, typeof Defaults>;
 
     get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
@@ -59,7 +60,7 @@ export class ScrcpyOptions1_18
     }
 
     constructor(init: Init) {
-        this.value = { ...Defaults, ...init };
+        this.value = mergeDefaults(Defaults, init);
 
         if (this.value.control) {
             this.#clipboard = this.#deviceMessageParsers.add(
@@ -128,4 +129,5 @@ type Init_ = Init;
 
 export namespace ScrcpyOptions1_18 {
     export type Init = Init_;
+    export type Value = ScrcpyOptionsInitWithDefaults<Init, typeof Defaults>;
 }

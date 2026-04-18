@@ -14,7 +14,10 @@ import { createConnection, getDisplays, getEncoders } from "./impl/index.js";
 export class AdbScrcpyOptions2_1<TVideo extends boolean>
     extends ScrcpyOptions2_1<TVideo>
     implements
-        AdbScrcpyOptions<ScrcpyOptions2_1.Init<TVideo>>,
+        AdbScrcpyOptions<
+            ScrcpyOptions2_1.Init<TVideo>,
+            typeof ScrcpyOptions2_1.Defaults
+        >,
         AdbScrcpyOptionsGetEncoders
 {
     readonly version: string;

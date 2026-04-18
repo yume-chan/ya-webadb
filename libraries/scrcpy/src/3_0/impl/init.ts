@@ -111,14 +111,14 @@ export interface Init<TVideo extends boolean> extends Omit<
     "lockVideoOrientation"
 > {
     captureOrientation?: CaptureOrientation | string | undefined;
-    angle?: number;
+    angle?: number | undefined;
     screenOffTimeout?: number | undefined;
 
-    listApps?: boolean;
+    listApps?: boolean | undefined;
 
     // `display_id` and `new_display` can't be specified at the same time
     // but `serialize` method will exclude options that are same as the default value
     // so `displayId: 0` will be ignored
     newDisplay?: NewDisplay | string | undefined;
-    vdSystemDecorations?: boolean;
+    vdSystemDecorations?: boolean | undefined;
 }

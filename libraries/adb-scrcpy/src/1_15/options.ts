@@ -10,7 +10,11 @@ import { createConnection, getDisplays } from "./impl/index.js";
 
 export class AdbScrcpyOptions1_15
     extends ScrcpyOptions1_15
-    implements AdbScrcpyOptions<ScrcpyOptions1_15.Init>
+    implements
+        AdbScrcpyOptions<
+            ScrcpyOptions1_15.Init,
+            typeof ScrcpyOptions1_15.Defaults
+        >
 {
     readonly version: string;
 

@@ -13,7 +13,8 @@ export interface Init<TVideo extends boolean> extends Omit<
         | "voice-call"
         | "voice-call-uplink"
         | "voice-call-downlink"
-        | "voice-performance";
+        | "voice-performance"
+        | undefined;
 
     displayImePolicy?: "local" | "fallback" | "hide" | undefined;
 }

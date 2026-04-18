@@ -11,7 +11,7 @@ import { InspectStream } from "@yume-chan/stream-extra";
 import type { AdbScrcpyOptions } from "./types.js";
 
 export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
-    #options: AdbScrcpyOptions<object>;
+    #options: AdbScrcpyOptions<object, object>;
 
     #metadata: ScrcpyVideoStreamMetadata;
     get metadata(): ScrcpyVideoStreamMetadata {
@@ -35,7 +35,7 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
     }
 
     constructor(
-        options: AdbScrcpyOptions<object>,
+        options: AdbScrcpyOptions<object, object>,
         metadata: ScrcpyVideoStreamMetadata,
         stream: ReadableStream<Uint8Array>,
     ) {

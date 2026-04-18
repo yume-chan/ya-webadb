@@ -11,7 +11,10 @@ import type { AdbScrcpyOptions } from "../../types.js";
 export async function getEncoders(
     adb: Adb,
     path: string,
-    options: AdbScrcpyOptions<Pick<ScrcpyOptions1_17.Init, "tunnelForward">> &
+    options: AdbScrcpyOptions<
+        Pick<ScrcpyOptions1_17.Init, "tunnelForward">,
+        object
+    > &
         ScrcpyOptionsListEncoders,
 ): Promise<ScrcpyEncoder[]> {
     const client = await AdbScrcpyClient.start(adb, path, options);

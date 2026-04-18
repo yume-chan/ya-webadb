@@ -4,8 +4,8 @@ import { BufferedReadableStream } from "@yume-chan/stream-extra";
 
 import type { ScrcpyVideoStream } from "../../base/video.js";
 import { ScrcpyVideoCodecId } from "../../base/video.js";
+import type { ScrcpyOptions2_0 } from "../options.js";
 
-import type { Init } from "./init.js";
 import { PrevImpl } from "./prev.js";
 
 function toCodecId(codec: string): ScrcpyVideoCodecId {
@@ -23,7 +23,7 @@ function toCodecId(codec: string): ScrcpyVideoCodecId {
 
 async function parseAsync(
     options: Pick<
-        Required<Init>,
+        ScrcpyOptions2_0.Value,
         "sendDeviceMeta" | "sendCodecMeta" | "videoCodec"
     >,
     stream: ReadableStream<Uint8Array>,
@@ -56,7 +56,7 @@ async function parseAsync(
 
 export function parseVideoStreamMetadata(
     options: Pick<
-        Required<Init>,
+        ScrcpyOptions2_0.Value,
         "sendDeviceMeta" | "sendCodecMeta" | "videoCodec"
     >,
     stream: ReadableStream<Uint8Array>,

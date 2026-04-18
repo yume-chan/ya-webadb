@@ -9,7 +9,11 @@ import type { AdbScrcpyOptions } from "./types.js";
 
 export class AdbScrcpyOptions1_16
     extends ScrcpyOptions1_16
-    implements AdbScrcpyOptions<ScrcpyOptions1_16.Init>
+    implements
+        AdbScrcpyOptions<
+            ScrcpyOptions1_16.Init,
+            typeof ScrcpyOptions1_16.Defaults
+        >
 {
     readonly version: string;
 

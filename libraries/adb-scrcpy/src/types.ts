@@ -8,7 +8,10 @@ import type {
 
 import type { AdbScrcpyConnection } from "./connection.js";
 
-export interface AdbScrcpyOptions<T extends object> extends ScrcpyOptions<T> {
+export interface AdbScrcpyOptions<
+    T extends object,
+    TDefaults extends object,
+> extends ScrcpyOptions<T, TDefaults> {
     readonly version: string;
 
     readonly spawner: AdbNoneProtocolSpawner | undefined;

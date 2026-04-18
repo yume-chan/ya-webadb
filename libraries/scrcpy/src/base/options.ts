@@ -22,10 +22,10 @@ export type ScrcpyControlMessageTypeMap = Partial<
     Record<ScrcpyControlMessageType, number>
 >;
 
-export interface ScrcpyOptions<T extends object> {
+export interface ScrcpyOptions<T extends object, TDefaults extends object> {
     get controlMessageTypes(): ScrcpyControlMessageTypeMap;
 
-    value: Required<T>;
+    value: ScrcpyOptionsInitWithDefaults<T, TDefaults>;
 
     readonly clipboard?: ReadableStream<string> | undefined;
 
@@ -77,4 +77,53 @@ export interface ScrcpyOptionsListEncoders {
     setListEncoders(): void;
 
     parseEncoder(line: string): ScrcpyEncoder | undefined;
+}
+
+/**
+ * Merge an Init interface with a Defaults object and produce a required
+ * type where fields with non-undefined defaults exclude `undefined` from
+ * their types.
+ */
+export type ScrcpyOptionsInitWithDefaults<
+    TInit extends object,
+    TDefaults extends object,
+> = {
+    [K in keyof TInit]-?: K extends keyof TDefaults
+        ? TDefaults[K] extends undefined
+            ? TInit[K]
+            : Exclude<TInit[K], undefined>
+        : Exclude<TInit[K], undefined>;
+};
+
+/**
+ * Merge defaults and init values at runtime.
+ * For keys present in defaults, use init[key] when it is provided (not undefined),
+ * otherwise fall back to defaults[key]. For keys only present in init, keep init[key].
+ */
+export function mergeDefaults<TInit extends object, TDefaults extends object>(
+    defaults: TDefaults,
+    init: Partial<TInit>,
+): ScrcpyOptionsInitWithDefaults<TInit, TDefaults> {
+    const result: Record<string, unknown> = {};
+
+    // Keys from defaults: prefer init[key] when it's not undefined
+    for (const key of Object.keys(defaults)) {
+        if (
+            Object.prototype.hasOwnProperty.call(init, key) &&
+            init[key as keyof TInit] !== undefined
+        ) {
+            result[key] = init[key as keyof TInit];
+        } else {
+            result[key] = defaults[key as keyof TDefaults];
+        }
+    }
+
+    // Include keys present only in init
+    for (const key of Object.keys(init)) {
+        if (!(key in result)) {
+            result[key] = init[key as keyof TInit];
+        }
+    }
+
+    return result as ScrcpyOptionsInitWithDefaults<TInit, TDefaults>;
 }

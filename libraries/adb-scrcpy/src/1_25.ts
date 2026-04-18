@@ -14,7 +14,10 @@ import type { AdbScrcpyOptions, AdbScrcpyOptionsGetEncoders } from "./types.js";
 export class AdbScrcpyOptions1_25
     extends ScrcpyOptions1_25
     implements
-        AdbScrcpyOptions<ScrcpyOptions1_25.Init>,
+        AdbScrcpyOptions<
+            ScrcpyOptions1_25.Init,
+            typeof ScrcpyOptions1_25.Defaults
+        >,
         AdbScrcpyOptionsGetEncoders
 {
     readonly version: string;

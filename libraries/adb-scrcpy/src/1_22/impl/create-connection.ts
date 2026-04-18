@@ -12,11 +12,9 @@ import {
 
 export function createConnection(
     adb: Adb,
-    options: Required<
-        Pick<
-            ScrcpyOptions1_22.Init,
-            "tunnelForward" | "control" | "sendDummyByte"
-        >
+    options: Pick<
+        ScrcpyOptions1_22.Value,
+        "tunnelForward" | "control" | "sendDummyByte"
     >,
 ): AdbScrcpyConnection {
     const connectionOptions: AdbScrcpyConnectionOptions = {

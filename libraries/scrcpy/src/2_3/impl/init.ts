@@ -4,5 +4,5 @@ export interface Init<TVideo extends boolean> extends Omit<
     PrevImpl.Init<TVideo>,
     "audioCodec"
 > {
-    audioCodec?: PrevImpl.Init<TVideo>["audioCodec"] | "flac";
+    audioCodec?: PrevImpl.Init<TVideo>["audioCodec"] | "flac" | undefined;
 }

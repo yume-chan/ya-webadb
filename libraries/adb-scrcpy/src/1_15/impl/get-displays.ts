@@ -7,7 +7,10 @@ import type { AdbScrcpyOptions } from "../../types.js";
 export async function getDisplays(
     adb: Adb,
     path: string,
-    options: AdbScrcpyOptions<Pick<ScrcpyOptions1_15.Init, "tunnelForward">>,
+    options: AdbScrcpyOptions<
+        Pick<ScrcpyOptions1_15.Init, "tunnelForward">,
+        object
+    >,
 ): Promise<ScrcpyDisplay[]> {
     try {
         // Server will exit before opening connections when an invalid display id was given
