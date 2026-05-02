@@ -309,18 +309,9 @@ export class PackageManager {
         command.push("-S", size.toString());
         const process = await this.#cmd.spawn(command);
 
-        const output = process.output
-            .pipeThrough(new TextDecoderStream())
-            .pipeThrough(new ConcatStringStream())
-            .then((output) => output.trim());
-
         await Promise.all([
             stream.pipeTo(process.stdin),
-            output.then((output) => {
-                if (output !== "Success") {
-                    throw new Error(output);
-                }
-            }),
+            this.checkResult(process.output),
         ]);
     }
 
