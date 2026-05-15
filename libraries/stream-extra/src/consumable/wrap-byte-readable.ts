@@ -9,17 +9,26 @@ export class ConsumableWrapByteReadableStream extends ReadableStream<
     constructor(
         stream: ReadableStream<Uint8Array>,
         chunkSize: number,
-        min?: number,
+        options?: {
+            min?: number | undefined;
+            onRead?: ((size: number) => void) | undefined;
+        },
     ) {
         const reader = stream.getReader({ mode: "byob" });
-        let array = new Uint8Array(chunkSize);
+        let buffer = new ArrayBuffer(chunkSize);
         super({
             async pull(controller) {
-                const { done, value } = await reader.read(array, { min });
+                const { done, value } = await reader.read(
+                    new Uint8Array(buffer),
+                    {
+                        min: options?.min,
+                    },
+                );
 
                 // `value` might be defined even when `done` is true
                 if (value) {
                     await ConsumableReadableStream.enqueue(controller, value);
+                    options?.onRead?.(value.byteLength);
                 }
 
                 if (done) {
@@ -27,8 +36,7 @@ export class ConsumableWrapByteReadableStream extends ReadableStream<
                     return;
                 }
 
-                // old `array` is not usable after `reader.read`
-                array = new Uint8Array(value.buffer);
+                buffer = value.buffer;
             },
             cancel(reason) {
                 return reader.cancel(reason);

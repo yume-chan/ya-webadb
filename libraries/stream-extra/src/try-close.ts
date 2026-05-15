@@ -1,12 +1,6 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 import { isPromiseLike } from "@yume-chan/async";
 
-import type { BufferedReadableStream } from "./buffered.js";
-import type {
-    ReadableStream,
-    ReadableStreamDefaultReader,
-} from "./global/index.js";
-
 export function tryClose(value: {
     close(): PromiseLike<void>;
 }): Promise<boolean>;
@@ -26,15 +20,6 @@ export function tryClose(value: { close(): MaybePromiseLike<void> }) {
     }
 }
 
-export async function tryCancel(
-    stream: ReadableStream<unknown>,
-): Promise<boolean>;
-export async function tryCancel(
-    stream: BufferedReadableStream,
-): Promise<boolean>;
-export async function tryCancel(
-    reader: ReadableStreamDefaultReader<unknown>,
-): Promise<boolean>;
 export async function tryCancel(stream: {
     cancel(): Promise<void>;
 }): Promise<boolean> {
