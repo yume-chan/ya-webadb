@@ -34,6 +34,10 @@ const FailResponse = struct(
     },
 );
 
+function i32ToHex(i: number) {
+    return "0x" + i.toString(16).padStart(8, "0");
+}
+
 export class Socket implements AsyncExactReadable {
     static readonly NumberRequest = NumberRequest;
     static readonly FailResponse = FailResponse;
@@ -158,14 +162,15 @@ export class Socket implements AsyncExactReadable {
     }
 
     async *readResponses<T>(
-        id: number,
+        expectedId: number,
         type: StructDeserializer<T>,
     ): AsyncGenerator<T, void, void> {
         await this.flush();
 
         while (true) {
             const buffer = await this.#readable.readExactly(4);
-            switch (getUint32LittleEndian(buffer, 0)) {
+            const actualId = getUint32LittleEndian(buffer, 0);
+            switch (actualId) {
                 case ResponseId.Fail:
                     await FailResponse.deserialize(this.#readable);
                     unreachable();
@@ -176,13 +181,13 @@ export class Socket implements AsyncExactReadable {
                     // but `DONE` responses for `STAT` requests are 12 bytes (same as `STAT` responses).
                     await this.#readable.readExactly(type.size);
                     return;
-                case id:
+                case expectedId:
                     yield await type.deserialize(this.#readable);
                     break;
                 default:
                     // non-recoverable
                     throw new Error(
-                        `Expected '${id}' or '${ResponseId.Done}', but got '${decodeUtf8(buffer)}'`,
+                        `Expected ${i32ToHex(expectedId)} or ${i32ToHex(ResponseId.Done)}, but got ${i32ToHex(actualId)}`,
                     );
             }
         }
