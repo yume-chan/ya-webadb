@@ -289,34 +289,51 @@ export class AdbServerClient {
     async getDeviceFeatures(
         device: AdbServerClient.DeviceSelector,
     ): Promise<{ transportId: bigint; features: readonly AdbFeature[] }> {
-        // On paper, `host:features` is a host service (device features are cached in host),
-        // so it shouldn't use `createDeviceConnection`,
-        // which is used to forward the service to the device.
+        // Use one-shot format (e.g. `host-serial:S:features` or
+        // `host-transport-id:N:features`) instead of the two-step protocol
+        // (`host:transport-id:N` then `host:features`).
         //
-        // However, `createDeviceConnection` is a two step process:
-        //
-        //    1. Send a switch device service to host, to switch the connection to the device.
-        //    2. Send the actual service to host, let it forward the service to the device.
-        //
-        // In step 2, the host only forward the service to device if the service is unknown to host.
-        // If the service is a host service, it's still handled by host.
-        //
-        // Even better, if the service needs a device selector, but the selector is not provided,
-        // the service will be executed against the device selected by the switch device service.
-        // So we can use all device selector formats for the host service,
-        // and get the transport ID in the same time.
-        const connection = await this.createDeviceConnection(
+        // The two-step protocol fails in multi-device environments because
+        // ADB server does not inherit the device context for host-level
+        // services (like `host:features`) after a transport switch command.
+        // Device-level services (shell, sync, reverse) work after the switch,
+        // but `host:features` still requires an explicit device qualifier.
+        const service = AdbServerClient.formatDeviceService(
             device,
-            "host:features",
+            "features",
         );
-        // Luckily `AdbServerClient.Socket` is compatible with `AdbServerClient.ServerConnection`
-        const dataConnection = new AdbServerDataConnection(connection);
+        const connection = await this.createConnection(service);
         try {
-            const featuresString = await dataConnection.readString();
+            const featuresString = await connection.readString();
             const features = featuresString.split(",") as AdbFeature[];
-            return { transportId: connection.transportId, features };
+
+            let transportId: bigint;
+            if (device && "transportId" in device) {
+                transportId = device.transportId;
+            } else {
+                const devices = await this.getDevices();
+                if (device && "serial" in device) {
+                    const info = devices.find(
+                        (d) => d.serial === device.serial,
+                    );
+                    if (!info) {
+                        throw new Error(
+                            `Device with serial ${device.serial} not found`,
+                        );
+                    }
+                    transportId = info.transportId;
+                } else if (devices.length === 1) {
+                    transportId = devices[0]!.transportId;
+                } else {
+                    throw new Error(
+                        "Cannot determine transport ID: multiple devices connected and no specific device selected",
+                    );
+                }
+            }
+
+            return { transportId, features };
         } finally {
-            await dataConnection.dispose();
+            await connection.dispose();
         }
     }
 
