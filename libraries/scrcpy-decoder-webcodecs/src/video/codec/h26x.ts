@@ -1,7 +1,5 @@
 import { TransformStream } from "@yume-chan/stream-extra";
 
-import { convertFrameType } from "../utils/frame-type.js";
-
 import type { CodecTransformStream } from "./type.js";
 
 export abstract class H26xTransformStream
@@ -20,13 +18,18 @@ export abstract class H26xTransformStream
                 }
 
                 controller.enqueue({
-                    type: convertFrameType(packet.keyframe),
+                    type: this.convertFrameType(packet.keyframe, packet.data),
                     timestamp: packet.timestamp,
                     data: packet.data,
                 });
             },
         });
     }
+
+    abstract convertFrameType(
+        keyframe: boolean | undefined,
+        data: Uint8Array,
+    ): EncodedVideoChunkType;
 
     abstract configure(data: Uint8Array): H26xTransformStream.Config;
 

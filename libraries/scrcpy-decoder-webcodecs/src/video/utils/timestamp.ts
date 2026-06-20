@@ -45,7 +45,7 @@ export class TimestampTransforms {
     /**
      * Timestamp of the last frame to be skipped by pause controller.
      */
-    #skipFramesUntil = 0;
+    #skipFramesUntil = -1;
 
     #addTimestamp = new TransformStream<
         ScrcpyVideoDecoderPauseController.Output,

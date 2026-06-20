@@ -217,6 +217,17 @@ export function searchConfiguration(buffer: Uint8Array) {
     throw new Error("Invalid data");
 }
 
+export function containsKeyFrame(buffer: Uint8Array) {
+    for (const nalu of annexBSplitNalu(buffer)) {
+        const naluType = nalu[0]! & 0x1f;
+        if (naluType === 5) {
+            // Coded slice of an IDR picture
+            return true;
+        }
+    }
+    return false;
+}
+
 export interface Configuration {
     pictureParameterSet: Uint8Array;
     sequenceParameterSet: Uint8Array;

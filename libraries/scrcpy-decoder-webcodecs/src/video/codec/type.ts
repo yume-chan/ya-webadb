@@ -9,13 +9,6 @@ export type CodecTransformStream = TransformStream<
     CodecTransformStream.Output
 >;
 
-type PartialPlusUndefined<T> = {
-    [P in keyof T]?: T[P] | undefined;
-};
-
-type Optional<T extends object, Keys extends keyof T> = Omit<T, Keys> &
-    PartialPlusUndefined<Pick<T, Keys>>;
-
 export namespace CodecTransformStream {
     export type Input =
         | ScrcpyMediaStreamConfigurationPacket
@@ -34,7 +27,7 @@ export namespace CodecTransformStream {
         raw?: AllowSharedBufferSource;
     };
 
-    export type VideoChunk = Optional<EncodedVideoChunkInit, "type">;
+    export type VideoChunk = EncodedVideoChunkInit;
 
     export type Output = Config | VideoChunk;
 }
