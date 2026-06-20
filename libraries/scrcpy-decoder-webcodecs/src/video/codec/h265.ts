@@ -3,6 +3,13 @@ import { H265 } from "@yume-chan/media-codec";
 import { H26xTransformStream } from "./h26x.js";
 
 export class H265TransformStream extends H26xTransformStream {
+    override convertFrameType(
+        keyframe: boolean | undefined,
+    ): EncodedVideoChunkType {
+        // H.265 was added in Scrcpy 2.0 which must have `keyframe` property.
+        return keyframe ? "key" : "delta";
+    }
+
     override configure(data: Uint8Array): H26xTransformStream.Config {
         const configuration = H265.parseConfiguration(data);
 
