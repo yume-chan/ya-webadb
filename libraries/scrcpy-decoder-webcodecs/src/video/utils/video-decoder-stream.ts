@@ -174,7 +174,7 @@ export class VideoDecoderStream
                     "decoder" in this.#state &&
                     this.#state.decoder.state === "configured"
                 ) {
-                    // This also delays closing `readable` and `writeable` streams
+                    // This also delays closing `readable` and `writable` streams
                     // (if they are not in error state) until all frames are decoded.
                     await this.#state.decoder.flush();
                 }
