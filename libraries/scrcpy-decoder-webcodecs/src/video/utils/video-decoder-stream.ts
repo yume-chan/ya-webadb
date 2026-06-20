@@ -12,6 +12,8 @@ export class VideoDecoderStream
     >
     implements ScrcpyVideoDecoderPerformanceCounterInterface
 {
+    #controller!: TransformStreamDefaultController<VideoFrame>;
+
     /**
      * The native decoder.
      *
@@ -24,13 +26,13 @@ export class VideoDecoderStream
      *   - Calling `close` manually: this only happens in `flush` and `cancel`,
      *     so no more transformer callbacks will be called.
      */
-    #decoder!: VideoDecoder;
+    #decoder: VideoDecoder | undefined;
 
     /**
      * Gets the number of frames waiting to be decoded.
      */
     get decodeQueueSize() {
-        return this.#decoder.decodeQueueSize;
+        return this.#decoder?.decodeQueueSize ?? 0;
     }
 
     #onDequeue = new EventEmitter<undefined>();
@@ -71,23 +73,12 @@ export class VideoDecoderStream
     #abortController = new AbortController();
 
     constructor() {
-        let decoder!: VideoDecoder;
+        let controller!: TransformStreamDefaultController<VideoFrame>;
 
         super({
-            start: (controller) => {
+            start: (controller_) => {
                 // WARN: can't use `this` here
-
-                decoder = new VideoDecoder({
-                    output: (frame) => {
-                        this.#counter.increaseFramesDecoded();
-                        controller.enqueue(frame);
-                    },
-                    error: (error) => {
-                        // Propagate decoder error to stream.
-                        controller.error(error);
-                        this.#dispose();
-                    },
-                });
+                controller = controller_;
             },
             transform: (chunk) => {
                 if ("codec" in chunk) {
@@ -100,7 +91,7 @@ export class VideoDecoderStream
             },
             flush: async () => {
                 // `flush` can only be called when `state` is "configured".
-                if (this.#decoder.state === "configured") {
+                if (this.#decoder?.state === "configured") {
                     // Wait for all queued frames to be decoded when
                     // `writable` side ends without exception.
                     // The `readable` side will wait for `flush` to complete before closing.
@@ -114,12 +105,41 @@ export class VideoDecoderStream
             },
         });
 
-        this.#decoder = decoder;
-        this.#decoder.addEventListener(
+        this.#controller = controller;
+        this.#createVideoDecoder();
+    }
+
+    #createVideoDecoder() {
+        const decoder = new VideoDecoder({
+            output: (frame) => {
+                this.#counter.increaseFramesDecoded();
+                this.#controller.enqueue(frame);
+            },
+            error: (error) => {
+                if (error.name === "QuotaExceededError") {
+                    // Chrome reclaims inactive `VideoDecoder`'s after 90 seconds
+                    // (for example due to pausing decoding when the document is hidden).
+                    // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webcodecs/reclaimable_codec.cc;l=181;drc=aba14550ed0b4620deb59e7c5f551cbde8970fb3
+                    // Reset states, it will be recreated in next `transform` call.
+                    this.#decoder = undefined;
+                    this.#configured = false;
+                    return;
+                }
+
+                // Propagate other decoder errors to stream.
+                this.#controller.error(error);
+                this.#dispose();
+            },
+        });
+
+        decoder.addEventListener(
             "dequeue",
             () => this.#onDequeue.fire(undefined),
             { signal: this.#abortController.signal },
         );
+
+        this.#decoder = decoder;
+        return decoder;
     }
 
     #handleVideoChunk(chunk: CodecTransformStream.VideoChunk) {
@@ -128,7 +148,7 @@ export class VideoDecoderStream
         }
 
         if (chunk.type === "key") {
-            if (this.#decoder.decodeQueueSize) {
+            if (this.#decoder?.decodeQueueSize) {
                 // If the device is too slow to decode all frames,
                 // discard queued frames when next keyframe arrives.
                 // (decoding can only start from keyframes)
@@ -142,16 +162,16 @@ export class VideoDecoderStream
 
                 // `reset` also resets the decoder configuration
                 // so we need to re-configure it again.
-                this.#configureAndDecodeFirstKeyFrame(this.#config, chunk);
+                this.#configureAndDecodeFirstKeyFrame(chunk);
                 return;
             }
 
             if (!this.#configured) {
-                this.#configureAndDecodeFirstKeyFrame(this.#config, chunk);
+                this.#configureAndDecodeFirstKeyFrame(chunk);
                 return;
             }
 
-            this.#decoder.decode(
+            this.#decoder!.decode(
                 // `type` has been checked to be "key"
                 new EncodedVideoChunk(chunk as EncodedVideoChunkInit),
             );
@@ -162,14 +182,16 @@ export class VideoDecoderStream
             if (chunk.type === undefined) {
                 // Infer the first frame after configuration as keyframe
                 // (`VideoDecoder` will throw error if it's not)
-                this.#configureAndDecodeFirstKeyFrame(this.#config, chunk);
+                this.#configureAndDecodeFirstKeyFrame(chunk);
                 return;
             }
 
             throw new Error("Expect a keyframe but got a delta frame");
         }
 
-        this.#decoder.decode(
+        // Can't decode B-frames without a configured decoder
+        // Ignore them until next keyframe arrives
+        this.#decoder?.decode(
             new EncodedVideoChunk({
                 // Treat `undefined` as "key" otherwise it won't decode
                 type: chunk.type ?? "key",
@@ -180,10 +202,17 @@ export class VideoDecoderStream
         );
     }
 
-    #configureAndDecodeFirstKeyFrame(
-        config: CodecTransformStream.Config,
-        chunk: CodecTransformStream.VideoChunk,
-    ) {
+    #configureAndDecodeFirstKeyFrame(chunk: CodecTransformStream.VideoChunk) {
+        // Lazily create the decoder
+        // Or re-create it if it has been closed due to `QuotaExceededError`
+        if (!this.#decoder) {
+            // Assigning the return value only for TypeScript to narrow
+            // `#decoder` type to non-nullable
+            this.#decoder = this.#createVideoDecoder();
+        }
+
+        const config = this.#config!;
+
         this.#decoder.configure(config);
         this.#configured = true;
 
@@ -213,7 +242,7 @@ export class VideoDecoderStream
         this.#abortController.abort();
         this.#onDequeue.dispose();
 
-        if (this.#decoder.state !== "closed") {
+        if (this.#decoder && this.#decoder.state !== "closed") {
             this.#decoder.close();
         }
     }
