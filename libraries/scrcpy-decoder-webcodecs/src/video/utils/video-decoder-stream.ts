@@ -180,17 +180,26 @@ export class VideoDecoderStream
 
         if (!this.#configured) {
             if (chunk.type === undefined) {
-                // Infer the first frame after configuration as keyframe
+                // Older Scrcpy versions don't have frame type flag,
+                // but the first frame after configuration should be a keyframe
                 // (`VideoDecoder` will throw error if it's not)
                 this.#configureAndDecodeFirstKeyFrame(chunk);
+                return;
+            }
+
+            if (!this.#decoder) {
+                // When decoder is reclaimed, ignore delta frames until next keyframe arrives.
                 return;
             }
 
             throw new Error("Expect a keyframe but got a delta frame");
         }
 
-        // Can't decode B-frames without a configured decoder
-        // Ignore them until next keyframe arrives
+        if (!this.#decoder) {
+            // When decoder is reclaimed, ignore delta frames until next keyframe arrives.
+            return;
+        }
+
         this.#decoder?.decode(
             new EncodedVideoChunk({
                 // Treat `undefined` as "key" otherwise it won't decode
