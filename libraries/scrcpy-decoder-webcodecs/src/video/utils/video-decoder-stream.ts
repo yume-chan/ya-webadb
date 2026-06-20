@@ -287,9 +287,14 @@ export class VideoDecoderStream
                     switch (this.#state.type) {
                         case "unconfigured":
                         case "reclaimed":
-                            throw new Error(
-                                "Unexpected state when reclaiming decoder",
+                            // Don't throw, report errors to stream
+                            this.#controller.error(
+                                new Error(
+                                    "Unexpected state when reclaiming decoder",
+                                ),
                             );
+                            this.#dispose();
+                            return;
                         case "configured":
                             // Unlike `transform` callback,
                             // this doesn't re-create the decoder immediately,

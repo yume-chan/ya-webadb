@@ -220,7 +220,10 @@ export function searchConfiguration(buffer: Uint8Array) {
 export function containsKeyFrame(buffer: Uint8Array) {
     for (const nalu of annexBSplitNalu(buffer)) {
         const naluType = nalu[0]! & 0x1f;
-        return naluType === 5; // Coded slice of an IDR picture
+        if (naluType === 5) {
+            // Coded slice of an IDR picture
+            return true;
+        }
     }
     return false;
 }
