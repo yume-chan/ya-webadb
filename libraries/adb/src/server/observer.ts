@@ -135,7 +135,6 @@ export class AdbServerDeviceObserverOwner {
     ): Promise<AdbServerClient.DeviceObserver> {
         options?.signal?.throwIfAborted();
 
-        let current: readonly AdbServerClient.Device[] = [];
         const onDeviceAdd = new EventEmitter<
             readonly AdbServerClient.Device[]
         >();
@@ -162,12 +161,9 @@ export class AdbServerDeviceObserverOwner {
         // So `#handleObserverStop` knows if there is any observer.
         this.#observers.push(observer);
 
-        // Read the filtered `current` value from `onListChange` event
-        onListChange.event((value) => (current = value));
-
         let stream: AdbServerDataConnection;
         if (!this.#stream) {
-            // `#connect` will initialize `onListChange` and `current`
+            // `#connect` will initialize `onListChange`
             this.#stream = this.#connect();
 
             try {
@@ -178,7 +174,7 @@ export class AdbServerDeviceObserverOwner {
             }
         } else {
             stream = await this.#stream;
-            // Initialize `onListChange` and `current` ourselves
+            // Initialize `onListChange` ourselves
             onListChange.fire(filterDeviceStates(this.current, includeStates));
         }
 
@@ -205,7 +201,7 @@ export class AdbServerDeviceObserverOwner {
             onListChange: onListChange.event,
             onError: onError.event,
             get current() {
-                return current;
+                return onListChange.value;
             },
             close,
         };
