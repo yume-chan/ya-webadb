@@ -23,11 +23,9 @@ jobs:
 
             - uses: pnpm/action-setup@v4
               with:
-                  version: 10.20.0
+                  version: 11.3
                   run_install: true
 
             - run: pnpm run build
 
-            - run: pnpm recursive publish --access public --no-git-checks
-              env:
-                  NPM_CONFIG_PROVENANCE: true
+            - run: pnpm recursive publish --access public --no-git-checks --provenance
