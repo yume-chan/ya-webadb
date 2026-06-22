@@ -1,8 +1,9 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
+import type { ScrcpyVideoDecoder } from "@yume-chan/scrcpy-decoder-shared";
 import type { WritableStream } from "@yume-chan/stream-extra";
 
 export interface VideoFrameRenderer {
-    readonly type: "software" | "hardware";
+    readonly type: ScrcpyVideoDecoder.RendererType;
 
     readonly writable: WritableStream<VideoFrame>;
 

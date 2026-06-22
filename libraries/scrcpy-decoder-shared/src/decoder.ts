@@ -1,4 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
+import type { Event } from "@yume-chan/event";
 import type {
     ScrcpyMediaStreamPacket,
     ScrcpyVideoCodecId,
@@ -21,13 +22,21 @@ export interface ScrcpyVideoDecoder
         ScrcpyVideoRendererPerformanceCounterInterface,
         ScrcpyVideoDecoderPauseControllerInterface,
         ScrcpyVideoSize {
-    readonly type: "software" | "hardware";
+    readonly type: ScrcpyVideoDecoder.Type;
 
-    readonly rendererType: "software" | "hardware";
+    readonly onTypeChange: Event<ScrcpyVideoDecoder.Type>;
+
+    readonly rendererType: ScrcpyVideoDecoder.RendererType;
 
     readonly writable: WritableStream<ScrcpyMediaStreamPacket>;
 
     dispose?(): MaybePromiseLike<undefined>;
+}
+
+export namespace ScrcpyVideoDecoder {
+    export type Type = "software" | "hardware";
+
+    export type RendererType = "software" | "hardware";
 }
 
 export interface ScrcpyVideoDecoderConstructor {

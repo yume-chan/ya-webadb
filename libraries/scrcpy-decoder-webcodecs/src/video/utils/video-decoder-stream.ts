@@ -1,4 +1,4 @@
-import { EventEmitter } from "@yume-chan/event";
+import { EventEmitter, StickyEventEmitter } from "@yume-chan/event";
 import type { ScrcpyVideoDecoderPerformanceCounterInterface } from "@yume-chan/scrcpy-decoder-shared";
 import { ScrcpyVideoDecoderPerformanceCounter } from "@yume-chan/scrcpy-decoder-shared";
 import { concatBuffers, TransformStream } from "@yume-chan/stream-extra";
@@ -87,6 +87,19 @@ export class VideoDecoderStream
 
     #state: State = { type: "unconfigured" };
 
+    #hardwareAcceleration = new StickyEventEmitter<
+        Exclude<CodecTransformStream.Config["hardwareAcceleration"], undefined>
+    >({
+        initialValue: "no-preference",
+        equals: (a, b) => a === b,
+    });
+    get hardwareAcceleration() {
+        return this.#hardwareAcceleration.value;
+    }
+    get onHardwareAccelerationChange() {
+        return this.#hardwareAcceleration.event;
+    }
+
     /**
      * Gets the number of frames waiting to be decoded.
      */
@@ -139,7 +152,10 @@ export class VideoDecoderStream
             },
             transform: async (chunk) => {
                 if ("codec" in chunk) {
-                    // We want to validate the configuration right now
+                    this.#hardwareAcceleration.fire(
+                        chunk.hardwareAcceleration ?? "no-preference",
+                    );
+                    // Validate the config by creating decoder right away
                     switch (this.#state.type) {
                         case "unconfigured":
                         case "reclaimed":
@@ -154,7 +170,10 @@ export class VideoDecoderStream
                             await this.#state.decoder.flush();
                         // fallthrough
                         case "configured":
-                            // Reuse the existing decoder
+                            // Reuse the existing decoder.
+                            // `decoder` is definitely in "configured" state,
+                            // otherwise the stream is in error state
+                            // and no `transform` callbacks will be called.
                             this.#state.decoder.configure(chunk);
                             this.#state = {
                                 type: "configured",
@@ -169,7 +188,7 @@ export class VideoDecoderStream
                 this.#handleVideoChunk(chunk);
             },
             flush: async () => {
-                // `flush` can only be called when `state` is "configured".
+                // only call `flush` when `decoder.state` is "configured".
                 if (
                     "decoder" in this.#state &&
                     this.#state.decoder.state === "configured"
@@ -276,7 +295,12 @@ export class VideoDecoderStream
                 }
 
                 this.#counter.increaseFramesDecoded();
-                this.#controller.enqueue(frame);
+                try {
+                    this.#controller.enqueue(frame);
+                } catch {
+                    // `controller` is closed
+                    frame.close();
+                }
             },
             error: (error) => {
                 if (error.name === "QuotaExceededError") {
@@ -303,19 +327,51 @@ export class VideoDecoderStream
                             // we don't want to undo that by creating a new decoder immediately.
                             this.#state = {
                                 type: "reclaimed",
-                                config: this.#state.config,
+                                config,
                                 frames: undefined,
                             };
                             break;
                         case "decoding":
                             this.#state = {
                                 type: "reclaimed",
-                                config: this.#state.config,
+                                config,
                                 frames: this.#state.frames,
                             };
                             break;
                     }
                     return;
+                }
+
+                // Maybe the decoder is hardware accelerated but the hardware has an issue,
+                // retry with software decoder.
+                if (
+                    error.name === "EncodingError" &&
+                    this.#state.type === "decoding" &&
+                    config.hardwareAcceleration !== "prefer-software"
+                ) {
+                    try {
+                        config.hardwareAcceleration = "prefer-software";
+                        this.#hardwareAcceleration.fire("prefer-software");
+                        const decoder = this.#createDecoder(config);
+
+                        // Replay frames with rendering skipping
+                        this.#skipFramesBefore =
+                            this.#state.frames.at(-1)!.timestamp;
+                        decodeFirstKeyFrame(
+                            decoder,
+                            config,
+                            this.#state.frames[0]!,
+                        );
+                        for (const frame of this.#state.frames.slice(1)) {
+                            decodeFrame(decoder, frame);
+                        }
+
+                        // Update state
+                        this.#state.decoder = decoder;
+                        return;
+                    } catch {
+                        // ignore, report original error to stream
+                    }
                 }
 
                 // Propagate other decoder errors to stream.
