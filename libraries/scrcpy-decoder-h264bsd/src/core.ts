@@ -16,7 +16,7 @@ export class DecoderRenderer {
     constructor(
         canvas: HTMLCanvasElement | OffscreenCanvas,
         webGl: boolean,
-        onSizeChanged: (size: { width: number; height: number }) => void,
+        onSizeChanged: (size: { width: number; height: number }) => undefined,
     ) {
         this.#decoder = new Module.Decoder();
 

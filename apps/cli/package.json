@@ -26,7 +26,7 @@
     "main": "esm/index.js",
     "types": "esm/index.d.ts",
     "scripts": {
-        "build": "tsc -b tsconfig.build.json",
+        "build": "tsc -p tsconfig.build.json",
         "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4"
     },
     "bin": {
