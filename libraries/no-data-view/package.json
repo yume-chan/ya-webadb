@@ -30,12 +30,12 @@
         "test": "run-test"
     },
     "devDependencies": {
-        "@types/node": "^25.5.2",
+        "@types/node": "^26.0.0",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.8.1",
-        "tinybench": "^6.0.0",
-        "typescript": "^5.9.3"
+        "prettier": "^3.8.4",
+        "tinybench": "^6.0.2",
+        "typescript": "^6.0.3"
     }
 }

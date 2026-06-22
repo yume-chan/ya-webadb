@@ -8,14 +8,9 @@ import type { Adb } from "../../../adb.js";
 import { AdbFeature } from "../../../features.js";
 import { NOOP } from "../../../utils/no-op.js";
 
-export const Format = {
-    None: 0,
-    Brotli: 2,
-    Lz4: 3,
-    Zstd: 4,
-} as const;
+import { Format } from "./format.js";
 
-export type Format = (typeof Format)[keyof typeof Format];
+export { Format };
 
 export const Mode = {
     Compress: 0,

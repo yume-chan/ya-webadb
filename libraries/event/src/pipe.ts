@@ -10,7 +10,7 @@ export function pipe<TSource, TNew>(
     source: Event<TSource>,
     transform: (value: TSource) => TNew,
 ): Event<TNew> {
-    return ((
+    return (
         listener: (value: TNew, ...args: unknown[]) => undefined,
         thisArg?: unknown,
         ...args: unknown[]
@@ -18,5 +18,5 @@ export function pipe<TSource, TNew>(
         return source((value) => {
             return listener.call(thisArg, transform(value), ...args);
         });
-    }) as never;
+    };
 }

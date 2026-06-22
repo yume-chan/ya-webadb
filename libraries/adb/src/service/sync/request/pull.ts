@@ -34,7 +34,10 @@ export async function* generator(
         error = e;
         throw e;
     } finally {
-        await pool.release(socket, !(completed || error instanceof AdbSyncError));
+        await pool.release(
+            socket,
+            !(completed || error instanceof AdbSyncError),
+        );
     }
 }
 
