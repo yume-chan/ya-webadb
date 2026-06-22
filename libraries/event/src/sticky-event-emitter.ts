@@ -30,7 +30,7 @@ export class StickyEventEmitter<TEvent> extends EventEmitter<TEvent> {
         super();
 
         if ("initialValue" in options) {
-            this.#value = options.initialValue!;
+            this.#value = options.initialValue;
         } else {
             this.#value = Absence;
         }
