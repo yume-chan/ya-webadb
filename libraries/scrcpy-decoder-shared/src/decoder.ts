@@ -23,10 +23,12 @@ export interface ScrcpyVideoDecoder
         ScrcpyVideoDecoderPauseControllerInterface,
         ScrcpyVideoSize {
     readonly type: ScrcpyVideoDecoder.Type;
-
-    readonly onTypeChange: Event<ScrcpyVideoDecoder.Type>;
+    readonly onTypeChange?: Event<ScrcpyVideoDecoder.Type> | undefined;
 
     readonly rendererType: ScrcpyVideoDecoder.RendererType;
+    readonly onRendererTypeChange?:
+        | Event<ScrcpyVideoDecoder.RendererType>
+        | undefined;
 
     readonly writable: WritableStream<ScrcpyMediaStreamPacket>;
 

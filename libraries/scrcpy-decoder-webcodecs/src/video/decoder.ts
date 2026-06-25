@@ -44,9 +44,11 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     get renderer() {
         return this.#renderer;
     }
-
     get rendererType() {
         return this.#renderer.type;
+    }
+    get onRendererTypeChange() {
+        return this.#renderer.onTypeChanged;
     }
 
     // #endregion parameters

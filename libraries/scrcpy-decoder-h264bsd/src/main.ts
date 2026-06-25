@@ -1,4 +1,3 @@
-import type { Event } from "@yume-chan/event";
 import {
     AndroidAvcLevel,
     AndroidAvcProfile,
@@ -25,11 +24,6 @@ export const noop = () => {
     // no-op
 };
 
-const noopEvent = () => {
-    // no-op
-};
-noopEvent.dispose = noopEvent;
-
 const isMainThread = typeof window !== "undefined";
 
 export class H264BsdDecoder implements ScrcpyVideoDecoder {
@@ -44,7 +38,6 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
     get type() {
         return "software" as const;
     }
-    readonly onTypeChange: Event<ScrcpyVideoDecoder.Type> = () => noopEvent;
 
     #canvas: HTMLCanvasElement | OffscreenCanvas;
     #canvasTransferred = false;

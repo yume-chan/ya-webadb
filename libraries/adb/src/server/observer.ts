@@ -181,8 +181,14 @@ export class AdbServerDeviceObserverOwner {
         const ref = new Ref(options);
 
         const close = async () => {
+            onDeviceAdd.dispose();
+            onDeviceRemove.dispose();
+            onListChange.dispose();
+            onError.dispose();
+
             unorderedRemove(this.#observers, this.#observers.indexOf(observer));
             await this.#handleObserverClose(stream);
+
             ref.unref();
         };
 

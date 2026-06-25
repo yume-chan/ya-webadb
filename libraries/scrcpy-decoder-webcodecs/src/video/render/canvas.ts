@@ -1,4 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
+import type { ScrcpyVideoDecoder } from "@yume-chan/scrcpy-decoder-shared";
 import { createCanvas } from "@yume-chan/scrcpy-decoder-shared";
 import { WritableStream } from "@yume-chan/stream-extra";
 
@@ -11,7 +12,7 @@ export abstract class CanvasVideoFrameRenderer<
     TOptions extends CanvasVideoFrameRenderer.Options =
         CanvasVideoFrameRenderer.Options,
 > implements VideoFrameRenderer {
-    abstract get type(): "software" | "hardware";
+    abstract get type(): ScrcpyVideoDecoder.RendererType;
 
     #canvas: HTMLCanvasElement | OffscreenCanvas;
     get canvas() {
