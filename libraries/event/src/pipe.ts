@@ -11,7 +11,7 @@ export function pipe<TSource, TNew>(
     transform: (value: TSource) => TNew,
 ): Event<TNew> {
     return (
-        listener: (value: TNew, ...args: unknown[]) => undefined,
+        listener: (value: TNew, ...args: unknown[]) => void,
         thisArg?: unknown,
         ...args: unknown[]
     ) => {

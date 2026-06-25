@@ -1,7 +1,7 @@
 import type { Disposable } from "./disposable.js";
 
 export interface EventListener<TEvent, TThis, TArgs extends unknown[]> {
-    (this: TThis, e: TEvent, ...args: TArgs): undefined;
+    (this: TThis, e: TEvent, ...args: TArgs): void;
 }
 
 export interface RemoveEventListener extends Disposable {
