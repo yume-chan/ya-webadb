@@ -1,3 +1,4 @@
+import { pipe } from "@yume-chan/event";
 import { ScrcpyVideoCodecId, ScrcpyVideoSizeImpl } from "@yume-chan/scrcpy";
 import type {
     ScrcpyVideoDecoder,
@@ -34,11 +35,6 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
 
     // #region parameters
 
-    #type: "software" | "hardware";
-    get type() {
-        return this.#type;
-    }
-
     #codec: ScrcpyVideoCodecId;
     get codec() {
         return this.#codec;
@@ -48,9 +44,11 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     get renderer() {
         return this.#renderer;
     }
-
     get rendererType() {
         return this.#renderer.type;
+    }
+    get onRendererTypeChange() {
+        return this.#renderer.onTypeChanged;
     }
 
     // #endregion parameters
@@ -85,6 +83,18 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
     // #region raw decoder
 
     #rawDecoder = new VideoDecoderStream();
+    get type() {
+        return this.#rawDecoder.hardwareAcceleration !== "prefer-software"
+            ? "hardware"
+            : "software";
+    }
+    #onTypeChange = pipe(
+        this.#rawDecoder.onHardwareAccelerationChange,
+        (value) => (value !== "prefer-software" ? "hardware" : "software"),
+    );
+    get onTypeChange() {
+        return this.#onTypeChange;
+    }
     /**
      * Gets the number of frames waiting to be decoded.
      */
@@ -167,10 +177,6 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
         hardwareAcceleration = "no-preference",
         optimizeForLatency = true,
     }: WebCodecsVideoDecoder.Options) {
-        this.#type =
-            hardwareAcceleration !== "prefer-software"
-                ? "hardware"
-                : "software";
         this.#codec = codec;
         this.#renderer = renderer;
 

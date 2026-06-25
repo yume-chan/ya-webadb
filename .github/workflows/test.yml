@@ -18,7 +18,7 @@ jobs:
 
         strategy:
             matrix:
-                node-version: [20, 22, 24]
+                node-version: [22, 24]
             fail-fast: false
 
         steps:
@@ -32,7 +32,7 @@ jobs:
 
             - uses: pnpm/action-setup@v4
               with:
-                  version: 10.20.0
+                  version: 11.3.0
                   run_install: true
 
             - run: pnpm run build

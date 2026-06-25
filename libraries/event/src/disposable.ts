@@ -21,6 +21,10 @@ export class AutoDisposable implements Disposable {
 
         this.#disposables = [];
     }
+
+    [Symbol.dispose]() {
+        this.dispose();
+    }
 }
 
 export class DisposableList extends AutoDisposable {

@@ -26,7 +26,7 @@
     "main": "esm/index.js",
     "types": "esm/index.d.ts",
     "scripts": {
-        "build": "tsc -b tsconfig.build.json",
+        "build": "tsc -p tsconfig.build.json",
         "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4"
     },
     "bin": {
@@ -37,14 +37,14 @@
         "@yume-chan/adb-server-node-tcp": "workspace:^",
         "@yume-chan/android-bin": "workspace:^",
         "@yume-chan/stream-extra": "workspace:^",
-        "commander": "^14.0.3",
+        "commander": "^15.0.0",
         "source-map-support": "^0.5.21"
     },
     "devDependencies": {
-        "@types/node": "^25.5.0",
+        "@types/node": "^26.0.0",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.8.1",
-        "typescript": "^5.9.3"
+        "prettier": "^3.8.4",
+        "typescript": "^6.0.3"
     }
 }

@@ -5,7 +5,10 @@ import { TransformStream } from "./global/index.js";
 export class InspectStream<T> extends TransformStream<T, T> {
     constructor(
         write: (value: T) => MaybePromiseLike<undefined>,
-        extras?: { close: () => void; cancel: () => void },
+        extras?: {
+            close?: (() => void) | undefined;
+            cancel?: (() => void) | undefined;
+        },
     ) {
         super({
             async transform(chunk, controller) {

@@ -1,23 +1,23 @@
 import type { Disposable } from "./disposable.js";
 import type { Event, EventListener, RemoveEventListener } from "./event.js";
 
-export interface EventListenerInfo<TEvent, TResult = unknown> {
-    listener: EventListener<TEvent, unknown, unknown[], TResult>;
+export interface EventListenerInfo<TEvent> {
+    listener: EventListener<TEvent, unknown, unknown[]>;
 
     thisArg: unknown;
 
     args: unknown[];
 }
 
-export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
-    protected readonly listeners: EventListenerInfo<TEvent, TResult>[] = [];
+export class EventEmitter<TEvent> implements Disposable {
+    protected readonly listeners: EventListenerInfo<TEvent>[] = [];
 
     constructor() {
         this.event = this.event.bind(this);
     }
 
     protected addEventListener(
-        info: EventListenerInfo<TEvent, TResult>,
+        info: EventListenerInfo<TEvent>,
     ): RemoveEventListener {
         this.listeners.push(info);
 
@@ -31,18 +31,13 @@ export class EventEmitter<TEvent, TResult = unknown> implements Disposable {
         return remove;
     }
 
-    event: Event<TEvent, TResult> = <TThis, TArgs extends unknown[]>(
-        listener: EventListener<TEvent, TThis, TArgs, TResult>,
+    event: Event<TEvent> = <TThis, TArgs extends unknown[]>(
+        listener: EventListener<TEvent, TThis, TArgs>,
         thisArg?: TThis,
         ...args: TArgs
     ) => {
-        const info: EventListenerInfo<TEvent, TResult> = {
-            listener: listener as EventListener<
-                TEvent,
-                unknown,
-                unknown[],
-                TResult
-            >,
+        const info: EventListenerInfo<TEvent> = {
+            listener: listener as EventListener<TEvent, unknown, unknown[]>,
             thisArg,
             args,
         };

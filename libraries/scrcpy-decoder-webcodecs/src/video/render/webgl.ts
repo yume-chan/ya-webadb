@@ -1,6 +1,7 @@
 // cspell: ignore highp
 // cspell: ignore mediump
 
+import { StickyEventEmitter } from "@yume-chan/event";
 import {
     glCreateContext,
     glIsSupported,
@@ -164,6 +165,17 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         return "hardware" as const;
     }
 
+    #contextLostTimer: number | undefined;
+    #onContextLost = new StickyEventEmitter<void>();
+    /**
+     * Fired when the WebGL context is lost and cannot be restored.
+     *
+     * The current renderer will be automatically disposed.
+     */
+    get onContextLost() {
+        return this.#onContextLost.event;
+    }
+
     #context: WebGLRenderingContext;
     #program!: WebGLProgram;
     #vertexBuffer!: WebGLBuffer;
@@ -184,6 +196,7 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         super((frame): undefined => {
             const gl = this.#context;
             if (gl.isContextLost()) {
+                // The base class will close the frame.
                 return;
             }
 
@@ -241,14 +254,34 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
         this.canvas.addEventListener(
             "webglcontextlost",
             (e) => {
+                if (options?.contextRestoreTimeout === 0) {
+                    this.#onContextLost.fire();
+                    this.dispose();
+                    return;
+                }
+
                 // Notify WebGL we want to handle context restoration
                 e.preventDefault();
+
+                this.#contextLostTimer = globalThis.setTimeout(() => {
+                    this.#onContextLost.fire();
+                    this.dispose();
+                }, options?.contextRestoreTimeout ?? 3000);
             },
             { signal: this.#abortController.signal },
         );
         this.canvas.addEventListener(
             "webglcontextrestored",
             () => {
+                if (this.#onContextLost.hasValue) {
+                    // Don't restore context if `onContextLost` has been fired,
+                    // which means the caller will handle the context loss.
+                    return;
+                }
+
+                globalThis.clearTimeout(this.#contextLostTimer);
+                this.#contextLostTimer = undefined;
+
                 this.#initialize();
                 void this.redraw();
             },
@@ -304,15 +337,20 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
     }
 
     override dispose(): undefined {
+        globalThis.clearTimeout(this.#contextLostTimer);
+        this.#onContextLost.dispose();
+
         this.#abortController.abort();
 
         this.#context.deleteBuffer(this.#vertexBuffer);
         this.#context.deleteTexture(this.#texture);
         this.#context.deleteProgram(this.#program);
 
-        // Lose contexts eagerly
-        // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#lose_contexts_eagerly
-        glLoseContext(this.#context);
+        if (!this.#context.isContextLost()) {
+            // Lose contexts eagerly
+            // https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices#lose_contexts_eagerly
+            glLoseContext(this.#context);
+        }
 
         super.dispose();
     }
@@ -321,10 +359,22 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
 export namespace WebGLVideoFrameRenderer {
     export interface Options extends CanvasVideoFrameRenderer.Options {
         /**
-         * Whether to allow capturing the canvas content using APIs like `readPixels` and `toDataURL`.
+         * Whether to allow capturing the canvas content using APIs
+         * like `readPixels` and `toDataURL`.
          *
          * Enabling this option may reduce performance.
          */
         enableCapture?: boolean;
+
+        /**
+         * The timeout in milliseconds to wait for context restoration
+         * before firing `onContextLost`.
+         *
+         * When set to 0, also disables automatic context restoration,
+         * `onContextLost` will be fired immediately when the context is lost.
+         *
+         * Default is 3000.
+         */
+        contextRestoreTimeout?: number;
     }
 }
