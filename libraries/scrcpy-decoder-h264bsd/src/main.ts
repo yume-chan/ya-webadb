@@ -253,7 +253,7 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
     }: {
         width: number;
         height: number;
-    }): undefined => {
+    }) => {
         this.#size.setSize(width, height);
     };
 

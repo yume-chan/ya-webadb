@@ -169,6 +169,8 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
     #onContextLost = new StickyEventEmitter<void>();
     /**
      * Fired when the WebGL context is lost and cannot be restored.
+     *
+     * The current renderer will be automatically disposed.
      */
     get onContextLost() {
         return this.#onContextLost.event;
@@ -254,16 +256,17 @@ export class WebGLVideoFrameRenderer extends CanvasVideoFrameRenderer<WebGLVideo
             (e) => {
                 if (options?.contextRestoreTimeout === 0) {
                     this.#onContextLost.fire();
+                    this.dispose();
                     return;
                 }
 
                 // Notify WebGL we want to handle context restoration
                 e.preventDefault();
 
-                this.#contextLostTimer = globalThis.setTimeout(
-                    () => this.#onContextLost.fire(),
-                    options?.contextRestoreTimeout ?? 3000,
-                );
+                this.#contextLostTimer = globalThis.setTimeout(() => {
+                    this.#onContextLost.fire();
+                    this.dispose();
+                }, options?.contextRestoreTimeout ?? 3000);
             },
             { signal: this.#abortController.signal },
         );
