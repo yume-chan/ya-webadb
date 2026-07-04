@@ -26,9 +26,9 @@ export class AdbShellProtocolPty implements AdbPty<number> {
         return this.#input;
     }
 
-    readonly #stdout: ReadableStream<Uint8Array>;
+    readonly #output: ReadableStream<Uint8Array>;
     get output() {
-        return this.#stdout;
+        return this.#output;
     }
 
     readonly #exited = new PromiseResolver<number>();
@@ -39,9 +39,9 @@ export class AdbShellProtocolPty implements AdbPty<number> {
     constructor(socket: Adb.Socket) {
         this.#socket = socket;
 
-        let stdoutController!: PushReadableStreamController<Uint8Array>;
-        this.#stdout = new PushReadableStream<Uint8Array>((controller) => {
-            stdoutController = controller;
+        let outputController!: PushReadableStreamController<Uint8Array>;
+        this.#output = new PushReadableStream<Uint8Array>((controller) => {
+            outputController = controller;
         });
 
         socket.readable
@@ -54,7 +54,7 @@ export class AdbShellProtocolPty implements AdbPty<number> {
                                 this.#exited.resolve(chunk.data[0]!);
                                 break;
                             case AdbShellProtocolId.Stdout:
-                                await stdoutController.enqueue(chunk.data);
+                                await outputController.enqueue(chunk.data);
                                 break;
                             // PTY mode doesn't have stderr
                         }
@@ -63,14 +63,14 @@ export class AdbShellProtocolPty implements AdbPty<number> {
             )
             .then(
                 () => {
-                    stdoutController.close();
+                    outputController.close();
                     // If `#exit` has already resolved, this will be a no-op
                     this.#exited.reject(
                         new Error("Socket ended without exit message"),
                     );
                 },
                 (e) => {
-                    stdoutController.error(e);
+                    outputController.error(e);
                     // If `#exit` has already resolved, this will be a no-op
                     this.#exited.reject(e);
                 },
