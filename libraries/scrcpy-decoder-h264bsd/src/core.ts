@@ -1,12 +1,26 @@
-import type { Decoder, FlushResult, Picture } from "@yume-chan/h264bsd";
+import type {
+    Decoder,
+    FlushResult,
+    MainModule,
+    Picture,
+} from "@yume-chan/h264bsd";
 import initialize from "@yume-chan/h264bsd";
 import { ScrcpyVideoSizeImpl } from "@yume-chan/scrcpy";
 import YUVCanvas from "yuv-canvas";
 
-const Module = await initialize();
+let h264bsdModulePromise: Promise<MainModule> | undefined;
+let h264bsdModule: MainModule | undefined;
+async function initializeH264bsd(): Promise<MainModule> {
+    if (!h264bsdModulePromise) {
+        h264bsdModulePromise = initialize().then(
+            (module) => (h264bsdModule = module),
+        );
+    }
+    return h264bsdModulePromise;
+}
 
 export class DecoderRenderer {
-    #decoder: Decoder;
+    #decoder!: Decoder;
 
     #canvas: HTMLCanvasElement | OffscreenCanvas;
     #renderer: YUVCanvas;
@@ -18,8 +32,6 @@ export class DecoderRenderer {
         webGl: boolean,
         onSizeChanged: (size: { width: number; height: number }) => unknown,
     ) {
-        this.#decoder = new Module.Decoder();
-
         this.#canvas = canvas;
         // yuv-canvas supports detecting WebGL support by creating a <canvas> itself
         // But this doesn't work in Web Worker (with OffscreenCanvas)
@@ -28,6 +40,11 @@ export class DecoderRenderer {
 
         this.#size = new ScrcpyVideoSizeImpl();
         this.#size.sizeChanged(onSizeChanged);
+    }
+
+    async initialize() {
+        const h264bsd = await initializeH264bsd();
+        this.#decoder = new h264bsd.Decoder();
     }
 
     #draw(picture: Picture) {
@@ -90,7 +107,7 @@ export class DecoderRenderer {
 
         while (length) {
             const result = this.#decoder.decode(data.subarray(offset), 0);
-            if (result.code >= Module.DecodeResultCode.Error) {
+            if (result.code >= h264bsdModule!.DecodeResultCode.Error) {
                 throw new Error("Decode failed. Code: " + result.code);
             }
 

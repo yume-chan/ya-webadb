@@ -18,7 +18,7 @@ import type { WritableStreamDefaultController } from "@yume-chan/stream-extra";
 import { WritableStream } from "@yume-chan/stream-extra";
 import * as Comlink from "comlink";
 
-import type { DecoderRenderer } from "./core.js";
+import { DecoderRenderer } from "./core.js";
 
 export const noop = () => {
     // no-op
@@ -235,16 +235,23 @@ export class H264BsdDecoder implements ScrcpyVideoDecoder {
 
         const Constructor = Comlink.wrap<typeof DecoderRenderer>(worker);
 
-        return new Constructor(
+        const decoder = await new Constructor(
             Comlink.transfer(canvas, [canvas]),
             webGl,
             Comlink.proxy(this.#handleSizeChange),
         );
+        await decoder.initialize();
+        return decoder;
     }
 
     async #createLocalDecoder(webGl: boolean) {
-        const { DecoderRenderer } = await import("./core.js");
-        return new DecoderRenderer(this.#canvas, webGl, this.#handleSizeChange);
+        const decoder = new DecoderRenderer(
+            this.#canvas,
+            webGl,
+            this.#handleSizeChange,
+        );
+        await decoder.initialize();
+        return decoder;
     }
 
     #handleSizeChange = ({
