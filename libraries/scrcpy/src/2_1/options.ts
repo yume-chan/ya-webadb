@@ -2,6 +2,7 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
 
 import type {
+    MapBoolean,
     ScrcpyAudioStreamMetadata,
     ScrcpyDisplay,
     ScrcpyEncoder,
@@ -18,10 +19,11 @@ import type {
     ScrcpySetClipboardControlMessage,
 } from "../latest.js";
 
-import type { Init } from "./impl/index.js";
+import type { ComputeOptionTypes, Init } from "./impl/index.js";
 import {
     AckClipboardHandler,
     ClipboardStream,
+    computeOptionValues,
     ControlMessageTypes,
     createMediaStreamTransformer,
     createScrollController,
@@ -38,20 +40,26 @@ import {
     setListEncoders,
 } from "./impl/index.js";
 
-export class ScrcpyOptions2_1<TVideo extends boolean>
-    implements ScrcpyOptions<Init<TVideo>>, ScrcpyOptionsListEncoders
+export class ScrcpyOptions2_1<TInit extends Init = Init>
+    implements
+        ScrcpyOptions<ScrcpyOptions2_1.Value<TInit>>,
+        ScrcpyOptionsListEncoders
 {
     static readonly Defaults = Defaults;
 
-    readonly value: Required<Init<TVideo>>;
+    readonly value: ScrcpyOptions2_1.Value<TInit>;
 
     get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
     }
 
     #clipboard: ClipboardStream | undefined;
-    get clipboard(): ReadableStream<string> | undefined {
-        return this.#clipboard;
+    get clipboard(): MapBoolean<
+        this["value"]["control"],
+        ReadableStream<string>,
+        undefined
+    > {
+        return this.#clipboard as never;
     }
 
     #ackClipboardHandler: AckClipboardHandler | undefined;
@@ -61,8 +69,8 @@ export class ScrcpyOptions2_1<TVideo extends boolean>
         return this.#deviceMessageParsers;
     }
 
-    constructor(init: Init<TVideo>) {
-        this.value = { ...Defaults, ...init } as never;
+    constructor(init: TInit) {
+        this.value = computeOptionValues(init, Defaults);
 
         if (this.value.control) {
             if (this.value.clipboardAutosync) {
@@ -78,7 +86,7 @@ export class ScrcpyOptions2_1<TVideo extends boolean>
     }
 
     serialize(): string[] {
-        return serialize<Init<boolean>>(this.value, Defaults);
+        return serialize(this.value, Defaults);
     }
 
     setListDisplays(): void {
@@ -100,13 +108,22 @@ export class ScrcpyOptions2_1<TVideo extends boolean>
     parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): MaybePromiseLike<ScrcpyVideoStream> {
-        return parseVideoStreamMetadata(this.value, stream);
+        return parseVideoStreamMetadata(
+            stream,
+            this.value.sendDeviceMeta as never,
+            this.value.sendCodecMeta as never,
+            this.value.videoCodec as never,
+        );
     }
 
     parseAudioStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): MaybePromiseLike<ScrcpyAudioStreamMetadata> {
-        return parseAudioStreamMetadata(stream, this.value);
+        return parseAudioStreamMetadata(
+            stream,
+            this.value.sendCodecMeta as never,
+            this.value.audioCodec as never,
+        );
     }
 
     createMediaStreamTransformer(): TransformStream<
@@ -119,18 +136,27 @@ export class ScrcpyOptions2_1<TVideo extends boolean>
     serializeInjectTouchControlMessage(
         message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
         return serializeInjectTouchControlMessage(message);
     }
 
     serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnControlMessage,
     ): Uint8Array | undefined {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
         return serializeBackOrScreenOnControlMessage(message);
     }
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): Uint8Array | [Uint8Array, Promise<void>] {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
         return serializeSetClipboardControlMessage(
             message,
             this.#ackClipboardHandler,
@@ -138,12 +164,20 @@ export class ScrcpyOptions2_1<TVideo extends boolean>
     }
 
     createScrollController(): ScrcpyScrollController {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
         return createScrollController();
     }
 }
 
-type Init_<TVideo extends boolean> = Init<TVideo>;
+type Init_ = Init;
 
 export namespace ScrcpyOptions2_1 {
-    export type Init<TVideo extends boolean = boolean> = Init_<TVideo>;
+    export type Init = Init_;
+
+    export type Value<TInit extends Init> = ComputeOptionTypes<
+        TInit,
+        typeof Defaults
+    >;
 }

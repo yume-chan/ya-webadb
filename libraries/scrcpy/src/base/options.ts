@@ -22,10 +22,16 @@ export type ScrcpyControlMessageTypeMap = Partial<
     Record<ScrcpyControlMessageType, number>
 >;
 
+export type MapBoolean<
+    T extends boolean | undefined,
+    TTrue,
+    TFalse,
+> = boolean extends T ? TTrue | TFalse : true extends T ? TTrue : TFalse;
+
 export interface ScrcpyOptions<T extends object> {
     get controlMessageTypes(): ScrcpyControlMessageTypeMap;
 
-    value: Required<T>;
+    value: T;
 
     readonly clipboard?: ReadableStream<string> | undefined;
 

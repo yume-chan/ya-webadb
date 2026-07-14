@@ -34,21 +34,21 @@ export class Crop implements ScrcpyOptionValue {
 }
 
 export interface Init {
-    logLevel?: LogLevel;
+    logLevel?: LogLevel | undefined;
 
     /**
      * The maximum value of both width and height.
      */
-    maxSize?: number;
+    maxSize?: number | undefined;
 
-    bitRate?: number;
+    bitRate?: number | undefined;
 
     /**
      * 0 for unlimited.
      *
      * @default 0
      */
-    maxFps?: number;
+    maxFps?: number | undefined;
 
     /**
      * The orientation of the video stream.
@@ -56,7 +56,7 @@ export interface Init {
      * It will not keep the device screen in specific orientation,
      * only the captured video will in this orientation.
      */
-    lockVideoOrientation?: VideoOrientation;
+    lockVideoOrientation?: VideoOrientation | undefined;
 
     /**
      * Use ADB forward tunnel instead of reverse tunnel.
@@ -66,7 +66,7 @@ export interface Init {
      *
      * When using `AdbScrcpyClient`, it can detect this situation and enable this option automatically.
      */
-    tunnelForward?: boolean;
+    tunnelForward?: boolean | undefined;
 
     crop?: Crop | string | undefined;
 
@@ -81,18 +81,18 @@ export interface Init {
      *
      * @default true
      */
-    sendFrameMeta?: boolean;
+    sendFrameMeta?: boolean | undefined;
 
     /**
      * @default true
      */
-    control?: boolean;
+    control?: boolean | undefined;
 
-    displayId?: number;
+    displayId?: number | undefined;
 
-    showTouches?: boolean;
+    showTouches?: boolean | undefined;
 
-    stayAwake?: boolean;
+    stayAwake?: boolean | undefined;
 
     codecOptions?: CodecOptions | string | undefined;
 }

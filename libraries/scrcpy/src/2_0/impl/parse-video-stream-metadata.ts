@@ -22,30 +22,29 @@ function toCodecId(codec: string): ScrcpyVideoCodecId {
 }
 
 async function parseAsync(
-    options: Pick<
-        Required<Init>,
-        "sendDeviceMeta" | "sendCodecMeta" | "videoCodec"
-    >,
     stream: ReadableStream<Uint8Array>,
+    sendDeviceMeta: Exclude<Init["sendDeviceMeta"], undefined>,
+    sendCodecMeta: Exclude<Init["sendCodecMeta"], undefined>,
+    videoCodec: Exclude<Init["videoCodec"], undefined>,
 ) {
     const buffered = new BufferedReadableStream(stream);
 
     // `sendDeviceMeta` now only contains device name,
     // can't use `super.parseVideoStreamMetadata` here
     let deviceName: string | undefined;
-    if (options.sendDeviceMeta) {
+    if (sendDeviceMeta) {
         deviceName = await PrevImpl.readString(buffered, 64);
     }
 
     let codec: ScrcpyVideoCodecId;
     let width: number | undefined;
     let height: number | undefined;
-    if (options.sendCodecMeta) {
+    if (sendCodecMeta) {
         codec = (await PrevImpl.readU32(buffered)) as ScrcpyVideoCodecId;
         width = await PrevImpl.readU32(buffered);
         height = await PrevImpl.readU32(buffered);
     } else {
-        codec = toCodecId(options.videoCodec);
+        codec = toCodecId(videoCodec);
     }
 
     return {
@@ -55,18 +54,17 @@ async function parseAsync(
 }
 
 export function parseVideoStreamMetadata(
-    options: Pick<
-        Required<Init>,
-        "sendDeviceMeta" | "sendCodecMeta" | "videoCodec"
-    >,
     stream: ReadableStream<Uint8Array>,
+    sendDeviceMeta: Exclude<Init["sendDeviceMeta"], undefined>,
+    sendCodecMeta: Exclude<Init["sendCodecMeta"], undefined>,
+    videoCodec: Exclude<Init["videoCodec"], undefined>,
 ): MaybePromiseLike<ScrcpyVideoStream> {
-    if (!options.sendDeviceMeta && !options.sendCodecMeta) {
+    if (!sendDeviceMeta && !sendCodecMeta) {
         return {
             stream,
-            metadata: { codec: toCodecId(options.videoCodec) },
+            metadata: { codec: toCodecId(videoCodec) },
         };
     }
 
-    return parseAsync(options, stream);
+    return parseAsync(stream, sendDeviceMeta, sendCodecMeta, videoCodec);
 }

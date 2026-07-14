@@ -11,7 +11,8 @@ import { ScrcpyAudioCodec } from "../../base/index.js";
 
 export async function parseAudioStreamMetadata(
     stream: ReadableStream<Uint8Array>,
-    options: Pick<Required<Init<boolean>>, "sendCodecMeta" | "audioCodec">,
+    sendCodecMeta: Exclude<Init["sendCodecMeta"], undefined>,
+    audioCodec: Exclude<Init["audioCodec"], undefined>,
 ): Promise<ScrcpyAudioStreamMetadata> {
     const buffered = new BufferedReadableStream(stream);
 
@@ -30,7 +31,7 @@ export async function parseAudioStreamMetadata(
             };
     }
 
-    if (options.sendCodecMeta) {
+    if (sendCodecMeta) {
         let codec: ScrcpyAudioCodec;
         switch (codecMetadataValue) {
             case ScrcpyAudioCodec.Raw.metadataValue:
@@ -59,7 +60,7 @@ export async function parseAudioStreamMetadata(
 
     // Infer codec from `audioCodec` option
     let codec: ScrcpyAudioCodec;
-    switch (options.audioCodec as string) {
+    switch (audioCodec) {
         case "raw":
             codec = ScrcpyAudioCodec.Raw;
             break;

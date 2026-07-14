@@ -1,6 +1,7 @@
 export * from "./back-or-screen-on.js";
 export * from "./clipboard-stream.js";
 export * from "./codec-options.js";
+export * from "./compute-option-values.js";
 export * from "./control-message-types.js";
 export * from "./defaults.js";
 export * from "./init.js";

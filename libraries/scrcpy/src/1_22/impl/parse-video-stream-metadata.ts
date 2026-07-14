@@ -7,10 +7,10 @@ import type { Init } from "./init.js";
 import { PrevImpl } from "./prev.js";
 
 export async function parseVideoStreamMetadata(
-    options: Pick<Init, "sendDeviceMeta">,
     stream: ReadableStream<Uint8Array>,
+    sendDeviceMeta: Exclude<Init["sendDeviceMeta"], undefined>,
 ): Promise<ScrcpyVideoStream> {
-    if (!options.sendDeviceMeta) {
+    if (!sendDeviceMeta) {
         return { stream, metadata: { codec: ScrcpyVideoCodecId.H264 } };
     } else {
         return PrevImpl.parseVideoStreamMetadata(stream);
