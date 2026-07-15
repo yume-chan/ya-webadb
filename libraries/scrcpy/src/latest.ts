@@ -1,4 +1,4 @@
-export { ScrcpyOptions4_0 as ScrcpyOptionsLatest } from "./4_0/index.js";
+export { ScrcpyOptions4_1 as ScrcpyOptionsLatest } from "./4_1/index.js";
 
 export {
     BackOrScreenOnControlMessage as ScrcpyBackOrScreenOnControlMessage,
@@ -17,4 +17,4 @@ export {
     UHidCreateControlMessage as ScrcpyUHidCreateControlMessage,
     UHidOutputDeviceMessage as ScrcpyUHidOutputDeviceMessage,
     VideoCodecOptions as ScrcpyVideoCodecOptions,
-} from "./4_0/impl/index.js";
+} from "./4_1/impl/index.js";

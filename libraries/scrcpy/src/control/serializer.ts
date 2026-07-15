@@ -194,4 +194,11 @@ export class ScrcpyControlMessageSerializer {
             this.#addType(message, ScrcpyControlMessageType.ResizeDisplay),
         );
     }
+
+    scanFile(path: string) {
+        return ScrcpyInjectTextControlMessage.serialize({
+            text: path,
+            type: this.getType(ScrcpyControlMessageType.ScanFile),
+        });
+    }
 }

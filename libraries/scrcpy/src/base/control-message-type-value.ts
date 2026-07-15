@@ -20,3 +20,4 @@ export const CameraSetTorch = 18;
 export const CameraZoomIn = 19;
 export const CameraZoomOut = 20;
 export const ResizeDisplay = 21;
+export const ScanFile = 22;

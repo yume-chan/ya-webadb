@@ -2,8 +2,8 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 
-import type { ScrcpyVideoStream } from "../../base/video.js";
-import { ScrcpyVideoCodecId } from "../../base/video.js";
+import type { ScrcpyVideoStream } from "../../base/index.js";
+import { ScrcpyVideoCodecId } from "../../video/index.js";
 
 import type { Init } from "./init.js";
 import { PrevImpl } from "./prev.js";
@@ -17,7 +17,7 @@ export function parseVideoCodecOption(
         case "h265":
             return ScrcpyVideoCodecId.H265;
         case "av1":
-            return ScrcpyVideoCodecId.AV1;
+            return ScrcpyVideoCodecId.Av1;
         default:
             // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             throw new Error(`Unknown video codec: ${codec}`);

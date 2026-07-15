@@ -136,6 +136,10 @@ export class ScrcpyControlMessageWriter {
         return this.write(this.#serializer.resizeDisplay(message));
     }
 
+    scanFile(path: string) {
+        return this.write(this.#serializer.scanFile(path));
+    }
+
     releaseLock() {
         this.#writer.releaseLock();
     }

@@ -11,7 +11,7 @@ import type {
     ScrcpyVideoStream,
     ScrcpyVideoStreamMetadata,
 } from "../../base/index.js";
-import { ScrcpyVideoCodecId } from "../../base/index.js";
+import { ScrcpyVideoCodecId } from "../../video/index.js";
 
 /**
  * Parse a fixed-length, null-terminated string.

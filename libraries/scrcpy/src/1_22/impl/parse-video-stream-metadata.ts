@@ -1,7 +1,7 @@
 import type { ReadableStream } from "@yume-chan/stream-extra";
 
-import type { ScrcpyVideoStream } from "../../base/video.js";
-import { ScrcpyVideoCodecId } from "../../base/video.js";
+import type { ScrcpyVideoStream } from "../../base/index.js";
+import { ScrcpyVideoCodecId } from "../../video/index.js";
 
 import type { Init } from "./init.js";
 import { PrevImpl } from "./prev.js";

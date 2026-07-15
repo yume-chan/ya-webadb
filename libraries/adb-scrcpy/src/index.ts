@@ -29,6 +29,7 @@ export * from "./3_3_2.js";
 export * from "./3_3_3.js";
 export * from "./3_3_4.js";
 export * from "./4_0.js";
+export * from "./4_1.js";
 export * from "./client-options.js";
 export * from "./client.js";
 export * from "./connection.js";
