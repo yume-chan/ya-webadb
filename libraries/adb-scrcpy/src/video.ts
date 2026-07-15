@@ -75,7 +75,7 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
                     case ScrcpyVideoCodecId.H265:
                         this.#configureH265(packet.data);
                         break;
-                    case ScrcpyVideoCodecId.AV1:
+                    case ScrcpyVideoCodecId.Av1:
                         // AV1 configuration is in data packet
                         break;
                 }
@@ -86,7 +86,7 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
                     break;
                 }
 
-                if (this.#metadata.codec === ScrcpyVideoCodecId.AV1) {
+                if (this.#metadata.codec === ScrcpyVideoCodecId.Av1) {
                     this.#configureAv1(packet.data);
                 }
 

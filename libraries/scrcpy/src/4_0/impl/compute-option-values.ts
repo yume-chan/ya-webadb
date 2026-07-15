@@ -6,7 +6,9 @@ import { PrevImpl } from "./prev.js";
 export type ComputeOptionTypes<
     T extends object,
     TDefaults extends object,
-> = PrevImpl.OverrideAudioSource<ComputeOptionTypes1_15<T, TDefaults>>;
+> = PrevImpl.OverrideAudioSource<
+    PrevImpl.OverrideClipboardAutosync<ComputeOptionTypes1_15<T, TDefaults>>
+>;
 
 export function computeOptionValues<
     T extends {
@@ -23,6 +25,7 @@ export function computeOptionValues<
     },
 >(options: T, defaults: TDefaults): ComputeOptionTypes<T, TDefaults> {
     const value = computeOptionValues1_15(options, defaults);
+    PrevImpl.overrideClipboardAutosync(value as never);
     PrevImpl.overrideAudioSource(value as never);
     return value as never;
 }

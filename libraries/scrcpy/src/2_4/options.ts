@@ -65,7 +65,7 @@ export class ScrcpyOptions2_4<TInit extends Init = Init>
 
     #clipboard: ClipboardStream | undefined;
     get clipboard(): MapBoolean<
-        this["value"]["control"],
+        this["value"]["clipboardAutosync"],
         ReadableStream<string>,
         undefined
     > {

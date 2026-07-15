@@ -1,0 +1,976 @@
+import type { ScrcpyOptions2_6 } from "./options.js";
+
+type Equal<X, Y> =
+    (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
+        ? true
+        : false;
+
+function expectTrue<T extends true>(value?: T) {
+    void value;
+}
+
+// #region audioDup: true
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "output";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "output" | "playback";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "output" | "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "output" | "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "output" | "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "output" | "mic";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "output" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "output" | undefined;
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "playback";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "mic";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true;
+            audioSource: undefined;
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+// #endregion
+
+// #region audioDup: true | false
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "output";
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "output" | "playback";
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "output" | "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "output" | "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "output" | "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "output" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "output" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "output" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "playback";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "mic";
+        }>["value"]["audioSource"],
+        "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false;
+            audioSource: undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+// #endregion
+
+// #region audioDup: true | false | undefined
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "output";
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "output" | "playback";
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "output" | "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "output" | "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "output" | "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "output" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "output" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "output" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "playback";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "mic";
+        }>["value"]["audioSource"],
+        "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | false | undefined;
+            audioSource: undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+// #endregion
+
+// #region audioDup: true | undefined
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "output";
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "output" | "playback";
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "output" | "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "output" | "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "output" | "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "output" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "output" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "output" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "playback";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "mic";
+        }>["value"]["audioSource"],
+        "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: true | undefined;
+            audioSource: undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+// #endregion
+
+// #region audioDup: false
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "output";
+        }>["value"]["audioSource"],
+        "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "output" | "playback";
+        }>["value"]["audioSource"],
+        "output" | "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "output" | "playback" | "mic";
+        }>["value"]["audioSource"],
+        "output" | "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "output" | "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "output" | "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "output" | "playback" | undefined;
+        }>["value"]["audioSource"],
+        "output" | "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "output" | "mic";
+        }>["value"]["audioSource"],
+        "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "output" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "output" | undefined;
+        }>["value"]["audioSource"],
+        "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "playback";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "mic";
+        }>["value"]["audioSource"],
+        "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: "mic" | undefined;
+        }>["value"]["audioSource"],
+        "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false;
+            audioSource: undefined;
+        }>["value"]["audioSource"],
+        "output"
+    >
+>();
+// #endregion
+
+// #region audioDup: false | undefined
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "output";
+        }>["value"]["audioSource"],
+        "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "output" | "playback";
+        }>["value"]["audioSource"],
+        "output" | "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "output" | "playback" | "mic";
+        }>["value"]["audioSource"],
+        "output" | "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "output" | "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "output" | "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "output" | "playback" | undefined;
+        }>["value"]["audioSource"],
+        "output" | "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "output" | "mic";
+        }>["value"]["audioSource"],
+        "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "output" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "output" | undefined;
+        }>["value"]["audioSource"],
+        "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "playback";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "mic";
+        }>["value"]["audioSource"],
+        "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: "mic" | undefined;
+        }>["value"]["audioSource"],
+        "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: false | undefined;
+            audioSource: undefined;
+        }>["value"]["audioSource"],
+        "output"
+    >
+>();
+// #endregion
+
+// #region audioDup: undefined
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "output";
+        }>["value"]["audioSource"],
+        "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "output" | "playback";
+        }>["value"]["audioSource"],
+        "output" | "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "output" | "playback" | "mic";
+        }>["value"]["audioSource"],
+        "output" | "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "output" | "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "output" | "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "output" | "playback" | undefined;
+        }>["value"]["audioSource"],
+        "output" | "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "output" | "mic";
+        }>["value"]["audioSource"],
+        "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "output" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "output" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "output" | undefined;
+        }>["value"]["audioSource"],
+        "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "playback";
+        }>["value"]["audioSource"],
+        "playback"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "playback" | "mic";
+        }>["value"]["audioSource"],
+        "playback" | "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "playback" | "mic" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "playback" | undefined;
+        }>["value"]["audioSource"],
+        "playback" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "mic";
+        }>["value"]["audioSource"],
+        "mic"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: "mic" | undefined;
+        }>["value"]["audioSource"],
+        "mic" | "output"
+    >
+>();
+expectTrue<
+    Equal<
+        ScrcpyOptions2_6<{
+            audioDup: undefined;
+            audioSource: undefined;
+        }>["value"]["audioSource"],
+        "output"
+    >
+>();
+// #endregion

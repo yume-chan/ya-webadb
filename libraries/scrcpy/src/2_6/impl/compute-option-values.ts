@@ -1,7 +1,7 @@
 import { PrevImpl } from "./prev.js";
 
-type ComputeAudioSource<TAudioDup, TAudioSource> = TAudioDup extends true
-    ? true extends TAudioDup
+type ComputeAudioSource<TAudioDup, TAudioSource> = true extends TAudioDup
+    ? [TAudioDup] extends [true]
         ? "playback"
         : TAudioSource | "playback"
     : TAudioSource;
@@ -30,12 +30,14 @@ export function computeOptionValues<
     T extends {
         videoSource?: string | undefined;
         control?: boolean | undefined;
+        clipboardAutosync?: boolean | undefined;
         audioDup?: boolean | undefined;
         audioSource?: string | undefined;
     },
     TDefaults extends {
         videoSource: string;
         control: boolean;
+        clipboardAutosync: boolean;
         audioDup: boolean;
         audioSource: string;
     },

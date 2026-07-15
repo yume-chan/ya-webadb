@@ -11,7 +11,9 @@ export const ScrcpyVideoCodecNameMap = /* #__PURE__ */ (() => {
     for (const key in ScrcpyVideoCodecId) {
         const value =
             ScrcpyVideoCodecId[key as keyof typeof ScrcpyVideoCodecId];
-        result.set(value, key);
+        if (typeof value === "number") {
+            result.set(value, key);
+        }
     }
     return result;
 })();

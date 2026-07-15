@@ -1,4 +1,4 @@
-export * from "../../3_2/impl/index.js";
+export * from "../../4_0/impl/index.js";
 
 export { ControlMessageTypes } from "./control-message-types.js";
 export { Defaults } from "./defaults.js";
