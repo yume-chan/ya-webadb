@@ -1,8 +1,8 @@
 import { Av1, H264, H265 } from "@yume-chan/media-codec";
 import type {
-    ScrcpyMediaStreamPacket,
     ScrcpyVideoSize,
     ScrcpyVideoStreamMetadata,
+    ScrcpyVideoStreamPacket,
 } from "@yume-chan/scrcpy";
 import { ScrcpyVideoCodecId, ScrcpyVideoSizeImpl } from "@yume-chan/scrcpy";
 import type { ReadableStream } from "@yume-chan/stream-extra";
@@ -18,8 +18,8 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
         return this.#metadata;
     }
 
-    #stream: ReadableStream<ScrcpyMediaStreamPacket>;
-    get stream(): ReadableStream<ScrcpyMediaStreamPacket> {
+    #stream: ReadableStream<ScrcpyVideoStreamPacket>;
+    get stream(): ReadableStream<ScrcpyVideoStreamPacket> {
         return this.#stream;
     }
 
@@ -45,33 +45,54 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
         this.#stream = stream
             .pipeThrough(this.#options.createMediaStreamTransformer())
             .pipeThrough(
-                new InspectStream(
-                    (packet): undefined => {
-                        if (packet.type === "configuration") {
-                            switch (this.#metadata.codec) {
-                                case ScrcpyVideoCodecId.H264:
-                                    this.#configureH264(packet.data);
-                                    break;
-                                case ScrcpyVideoCodecId.H265:
-                                    this.#configureH265(packet.data);
-                                    break;
-                                case ScrcpyVideoCodecId.AV1:
-                                    // AV1 configuration is in data packet
-                                    break;
-                            }
-                        } else if (
-                            this.#metadata.codec === ScrcpyVideoCodecId.AV1
-                        ) {
-                            this.#configureAv1(packet.data);
-                        }
-                    },
-                    {
-                        close: () => this.#size.dispose(),
-                        cancel: () => this.#size.dispose(),
-                    },
-                ),
+                new InspectStream(this.#handlePacket, {
+                    close: () => this.#size.dispose(),
+                    cancel: () => this.#size.dispose(),
+                }),
             );
     }
+
+    #supportSessionPackets = false;
+    #handlePacket = (packet: ScrcpyVideoStreamPacket): undefined => {
+        switch (packet.type) {
+            case "session":
+                this.#supportSessionPackets = true;
+                this.#size.setSize(
+                    packet.width,
+                    packet.height,
+                    packet.isClientResize,
+                );
+                break;
+            case "configuration":
+                if (this.#supportSessionPackets) {
+                    break;
+                }
+
+                switch (this.#metadata.codec) {
+                    case ScrcpyVideoCodecId.H264:
+                        this.#configureH264(packet.data);
+                        break;
+                    case ScrcpyVideoCodecId.H265:
+                        this.#configureH265(packet.data);
+                        break;
+                    case ScrcpyVideoCodecId.AV1:
+                        // AV1 configuration is in data packet
+                        break;
+                }
+
+                break;
+            case "data":
+                if (this.#supportSessionPackets) {
+                    break;
+                }
+
+                if (this.#metadata.codec === ScrcpyVideoCodecId.AV1) {
+                    this.#configureAv1(packet.data);
+                }
+
+                break;
+        }
+    };
 
     #configureH264(data: Uint8Array) {
         const { croppedWidth, croppedHeight } = H264.parseConfiguration(data);

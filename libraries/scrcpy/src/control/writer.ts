@@ -1,11 +1,9 @@
 import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
 import { Consumable } from "@yume-chan/stream-extra";
 
-import type {
-    AndroidKeyEventAction,
-    AndroidScreenPowerMode,
-} from "../android/index.js";
+import type { AndroidKeyEventAction } from "../android/index.js";
 import type { ScrcpyOptions } from "../base/index.js";
+import type { ScrcpyResizeDisplayControlMessage } from "../index.js";
 import type {
     ScrcpyInjectScrollControlMessage,
     ScrcpyInjectTouchControlMessage,
@@ -67,8 +65,8 @@ export class ScrcpyControlMessageWriter {
         }
     }
 
-    setDisplayPower(mode: AndroidScreenPowerMode) {
-        return this.write(this.#serializer.setDisplayPower(mode));
+    setDisplayPower(on: boolean) {
+        return this.write(this.#serializer.setDisplayPower(on));
     }
 
     expandNotificationPanel() {
@@ -120,6 +118,22 @@ export class ScrcpyControlMessageWriter {
 
     resetVideo() {
         return this.write(this.#serializer.resetVideo());
+    }
+
+    cameraSetTorch(enabled: boolean) {
+        return this.write(this.#serializer.cameraSetTorch(enabled));
+    }
+
+    cameraZoomIn() {
+        return this.write(this.#serializer.cameraZoomIn());
+    }
+
+    cameraZoomOut() {
+        return this.write(this.#serializer.cameraZoomOut());
+    }
+
+    resizeDisplay(message: Omit<ScrcpyResizeDisplayControlMessage, "type">) {
+        return this.write(this.#serializer.resizeDisplay(message));
     }
 
     releaseLock() {

@@ -16,3 +16,7 @@ export const UHidDestroy = 14;
 export const OpenHardKeyboardSettings = 15;
 export const StartApp = 16;
 export const ResetVideo = 17;
+export const CameraSetTorch = 18;
+export const CameraZoomIn = 19;
+export const CameraZoomOut = 20;
+export const ResizeDisplay = 21;

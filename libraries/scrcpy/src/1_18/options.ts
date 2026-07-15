@@ -5,17 +5,18 @@ import type {
     MapBoolean,
     ScrcpyDisplay,
     ScrcpyEncoder,
-    ScrcpyMediaStreamPacket,
     ScrcpyOptions,
     ScrcpyOptionsListEncoders,
     ScrcpyScrollController,
     ScrcpyVideoStream,
+    ScrcpyVideoStreamPacket,
 } from "../base/index.js";
 import { ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
     ScrcpySetClipboardControlMessage,
+    ScrcpySetDisplayPowerControlMessage,
 } from "../latest.js";
 
 import type { ComputeOptionTypes, Init } from "./impl/index.js";
@@ -35,6 +36,7 @@ import {
     serializeInjectTouchControlMessage,
     SerializeOrder,
     serializeSetClipboardControlMessage,
+    serializeSetDisplayPowerControlMessage,
     setListDisplays,
     setListEncoders,
 } from "./impl/index.js";
@@ -104,7 +106,7 @@ export class ScrcpyOptions1_18<TInit extends Init = Init>
 
     createMediaStreamTransformer(): TransformStream<
         Uint8Array,
-        ScrcpyMediaStreamPacket
+        ScrcpyVideoStreamPacket
     > {
         return createMediaStreamTransformer(this.value);
     }
@@ -134,6 +136,15 @@ export class ScrcpyOptions1_18<TInit extends Init = Init>
             throw new Error("control is disabled");
         }
         return serializeSetClipboardControlMessage(message);
+    }
+
+    serializeSetDisplayPowerControlMessage(
+        message: ScrcpySetDisplayPowerControlMessage,
+    ): Uint8Array {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
+        return serializeSetDisplayPowerControlMessage(message);
     }
 
     createScrollController(): ScrcpyScrollController {

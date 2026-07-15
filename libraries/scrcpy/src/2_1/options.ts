@@ -6,17 +6,18 @@ import type {
     ScrcpyAudioStreamMetadata,
     ScrcpyDisplay,
     ScrcpyEncoder,
-    ScrcpyMediaStreamPacket,
     ScrcpyOptions,
     ScrcpyOptionsListEncoders,
     ScrcpyScrollController,
     ScrcpyVideoStream,
+    ScrcpyVideoStreamPacket,
 } from "../base/index.js";
 import { ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
     ScrcpySetClipboardControlMessage,
+    ScrcpySetDisplayPowerControlMessage,
 } from "../latest.js";
 
 import type { ComputeOptionTypes, Init } from "./impl/index.js";
@@ -28,14 +29,19 @@ import {
     createMediaStreamTransformer,
     createScrollController,
     Defaults,
+    parseAudioCodecOption,
+    parseAudioMetadataCodec,
     parseAudioStreamMetadata,
     parseDisplay,
     parseEncoder,
+    parseVideoCodecOption,
     parseVideoStreamMetadata,
+    parseVideoStreamMetadataAsync,
     serialize,
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
     serializeSetClipboardControlMessage,
+    serializeSetDisplayPowerControlMessage,
     setListDisplays,
     setListEncoders,
 } from "./impl/index.js";
@@ -110,9 +116,10 @@ export class ScrcpyOptions2_1<TInit extends Init = Init>
     ): MaybePromiseLike<ScrcpyVideoStream> {
         return parseVideoStreamMetadata(
             stream,
-            this.value.sendDeviceMeta as never,
-            this.value.sendCodecMeta as never,
-            this.value.videoCodec as never,
+            this.value.sendDeviceMeta!,
+            this.value.sendCodecMeta!,
+            parseVideoCodecOption(this.value.videoCodec!),
+            parseVideoStreamMetadataAsync,
         );
     }
 
@@ -121,14 +128,15 @@ export class ScrcpyOptions2_1<TInit extends Init = Init>
     ): MaybePromiseLike<ScrcpyAudioStreamMetadata> {
         return parseAudioStreamMetadata(
             stream,
-            this.value.sendCodecMeta as never,
-            this.value.audioCodec as never,
+            this.value.sendCodecMeta!,
+            parseAudioMetadataCodec,
+            parseAudioCodecOption(this.value.audioCodec!),
         );
     }
 
     createMediaStreamTransformer(): TransformStream<
         Uint8Array,
-        ScrcpyMediaStreamPacket
+        ScrcpyVideoStreamPacket
     > {
         return createMediaStreamTransformer(this.value);
     }
@@ -161,6 +169,15 @@ export class ScrcpyOptions2_1<TInit extends Init = Init>
             message,
             this.#ackClipboardHandler,
         );
+    }
+
+    serializeSetDisplayPowerControlMessage(
+        message: ScrcpySetDisplayPowerControlMessage,
+    ): Uint8Array {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
+        return serializeSetDisplayPowerControlMessage(message);
     }
 
     createScrollController(): ScrcpyScrollController {

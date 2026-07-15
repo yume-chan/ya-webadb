@@ -4,10 +4,10 @@ import type {
     MapBoolean,
     ScrcpyAudioStreamDisabledMetadata,
     ScrcpyAudioStreamErroredMetadata,
+    ScrcpyAudioStreamPacket,
     ScrcpyAudioStreamSuccessMetadata,
     ScrcpyDisplay,
     ScrcpyEncoder,
-    ScrcpyMediaStreamPacket,
     ScrcpyOptions1_15,
 } from "@yume-chan/scrcpy";
 import {
@@ -95,7 +95,7 @@ export interface AdbScrcpyAudioStreamSuccessMetadata extends Omit<
     ScrcpyAudioStreamSuccessMetadata,
     "stream"
 > {
-    readonly stream: ReadableStream<ScrcpyMediaStreamPacket>;
+    readonly stream: ReadableStream<ScrcpyAudioStreamPacket>;
 }
 
 export type AdbScrcpyAudioStreamMetadata =
@@ -239,6 +239,10 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     }
 
     #options: TOptions;
+    get options() {
+        return this.#options;
+    }
+
     #process: AdbNoneProtocolProcess;
 
     #output: ReadableStream<string>;
@@ -392,7 +396,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
                     ...metadata,
                     stream: metadata.stream.pipeThrough(
                         this.#options.createMediaStreamTransformer(),
-                    ),
+                    ) as ReadableStream<ScrcpyAudioStreamPacket>,
                 };
             default:
                 throw new Error(

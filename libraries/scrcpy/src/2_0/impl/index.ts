@@ -8,6 +8,10 @@ export {
 export * from "./parse-audio-stream-metadata.js";
 export { parseDisplay } from "./parse-display.js";
 export { parseEncoder } from "./parse-encoder.js";
-export { parseVideoStreamMetadata } from "./parse-video-stream-metadata.js";
+export {
+    parseVideoCodecOption,
+    parseVideoStreamMetadata,
+    parseVideoStreamMetadataAsync,
+} from "./parse-video-stream-metadata.js";
 export { setListDisplays } from "./set-list-display.js";
 export { setListEncoders } from "./set-list-encoder.js";

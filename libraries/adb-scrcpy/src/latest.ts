@@ -1,14 +1,14 @@
-import { AdbScrcpyOptions3_3_4 } from "./3_3_4.js";
+import { AdbScrcpyOptions4_0 } from "./4_0.js";
 import type { AdbScrcpyClientOptions } from "./client-options.js";
 
 export class AdbScrcpyOptionsLatest<
-    TInit extends AdbScrcpyOptions3_3_4.Init = AdbScrcpyOptions3_3_4.Init,
-> extends AdbScrcpyOptions3_3_4<TInit> {
+    TInit extends AdbScrcpyOptions4_0.Init = AdbScrcpyOptions4_0.Init,
+> extends AdbScrcpyOptions4_0<TInit> {
     constructor(init: TInit, clientOptions?: AdbScrcpyClientOptions) {
         super(init, clientOptions);
     }
 }
 
 export namespace AdbScrcpyOptionsLatest {
-    export type Init = AdbScrcpyOptions3_3_4.Init;
+    export type Init = AdbScrcpyOptions4_0.Init;
 }

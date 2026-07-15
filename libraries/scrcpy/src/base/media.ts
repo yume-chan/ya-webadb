@@ -10,6 +10,17 @@ export interface ScrcpyMediaStreamDataPacket {
     data: Uint8Array;
 }
 
-export type ScrcpyMediaStreamPacket =
+export interface ScrcpyVideoStreamSessionPacket {
+    type: "session";
+    isClientResize: boolean;
+    width: number;
+    height: number;
+}
+
+export type ScrcpyAudioStreamPacket =
     | ScrcpyMediaStreamConfigurationPacket
     | ScrcpyMediaStreamDataPacket;
+
+export type ScrcpyVideoStreamPacket =
+    | ScrcpyAudioStreamPacket
+    | ScrcpyVideoStreamSessionPacket;

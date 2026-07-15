@@ -45,9 +45,9 @@ export async function parseVideoStreamMetadata(
     const buffered = new BufferedReadableStream(stream);
     const metadata: ScrcpyVideoStreamMetadata = {
         codec: ScrcpyVideoCodecId.H264,
+        deviceName: await readString(buffered, 64),
+        width: await readU16(buffered),
+        height: await readU16(buffered),
     };
-    metadata.deviceName = await readString(buffered, 64);
-    metadata.width = await readU16(buffered);
-    metadata.height = await readU16(buffered);
     return { stream: buffered.release(), metadata };
 }

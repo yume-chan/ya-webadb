@@ -1,10 +1,9 @@
-export { ScrcpyOptions3_3_2 as ScrcpyOptionsLatest } from "./3_3_2.js";
+export { ScrcpyOptions4_0 as ScrcpyOptionsLatest } from "./4_0/index.js";
 
 export {
     BackOrScreenOnControlMessage as ScrcpyBackOrScreenOnControlMessage,
     CaptureOrientation as ScrcpyCaptureOrientation,
     CodecOptions as ScrcpyCodecOptions,
-    VideoCodecOptions as ScrcpyVideoCodecOptions,
     Crop as ScrcpyCrop,
     InjectScrollControlMessage as ScrcpyInjectScrollControlMessage,
     InjectTouchControlMessage as ScrcpyInjectTouchControlMessage,
@@ -14,6 +13,8 @@ export {
     Orientation as ScrcpyOrientation,
     PointerId as ScrcpyPointerId,
     SetClipboardControlMessage as ScrcpySetClipboardControlMessage,
+    SetDisplayPowerControlMessage as ScrcpySetDisplayPowerControlMessage,
     UHidCreateControlMessage as ScrcpyUHidCreateControlMessage,
     UHidOutputDeviceMessage as ScrcpyUHidOutputDeviceMessage,
-} from "./3_3_1/impl/index.js";
+    VideoCodecOptions as ScrcpyVideoCodecOptions,
+} from "./4_0/impl/index.js";

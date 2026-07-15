@@ -5,7 +5,11 @@ export interface ScrcpyVideoSize {
     readonly width: number;
     readonly height: number;
 
-    readonly sizeChanged: Event<{ width: number; height: number }>;
+    readonly sizeChanged: Event<{
+        width: number;
+        height: number;
+        isClientResize?: boolean | undefined;
+    }>;
 }
 
 export class ScrcpyVideoSizeImpl implements ScrcpyVideoSize {
@@ -19,19 +23,23 @@ export class ScrcpyVideoSizeImpl implements ScrcpyVideoSize {
         return this.#height;
     }
 
-    #sizeChanged = new StickyEventEmitter<{ width: number; height: number }>();
+    #sizeChanged = new StickyEventEmitter<{
+        width: number;
+        height: number;
+        isClientResize?: boolean | undefined;
+    }>();
     get sizeChanged() {
         return this.#sizeChanged.event;
     }
 
-    setSize(width: number, height: number) {
+    setSize(width: number, height: number, isClientResize?: boolean) {
         if (this.#width === width && this.#height === height) {
             return;
         }
 
         this.#width = width;
         this.#height = height;
-        this.#sizeChanged.fire({ width, height });
+        this.#sizeChanged.fire({ width, height, isClientResize });
     }
 
     dispose() {

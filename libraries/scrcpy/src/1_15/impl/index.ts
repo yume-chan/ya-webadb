@@ -13,4 +13,5 @@ export * from "./scroll-controller.js";
 export * from "./serialize-order.js";
 export * from "./serialize.js";
 export * from "./set-clipboard.js";
+export * from "./set-display-power.js";
 export * from "./set-list-display.js";
