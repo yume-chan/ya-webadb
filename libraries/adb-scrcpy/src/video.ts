@@ -1,4 +1,4 @@
-import { Av1, H264, H265 } from "@yume-chan/media-codec";
+import { Av1, H264, H265, Vp8, Vp9 } from "@yume-chan/media-codec";
 import type {
     ScrcpyVideoSize,
     ScrcpyVideoStreamMetadata,
@@ -75,9 +75,7 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
                     case ScrcpyVideoCodecId.H265:
                         this.#configureH265(packet.data);
                         break;
-                    case ScrcpyVideoCodecId.Av1:
-                        // AV1 configuration is in data packet
-                        break;
+                    // AV1, VP8 and VP9 don't have configuration packets
                 }
 
                 break;
@@ -86,8 +84,20 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
                     break;
                 }
 
-                if (this.#metadata.codec === ScrcpyVideoCodecId.Av1) {
-                    this.#configureAv1(packet.data);
+                switch (this.#metadata.codec) {
+                    case ScrcpyVideoCodecId.Av1:
+                        if (packet.keyframe !== false) {
+                            this.#configureAv1(packet.data);
+                        }
+                        break;
+                    case ScrcpyVideoCodecId.Vp8:
+                        if (packet.keyframe !== false) {
+                            this.#configureVp8(packet.data);
+                        }
+                        break;
+                    case ScrcpyVideoCodecId.Vp9:
+                        this.#configureVp9(packet.data);
+                        break;
                 }
 
                 break;
@@ -118,5 +128,22 @@ export class AdbScrcpyVideoStream implements ScrcpyVideoSize {
         const height = max_frame_height_minus_1 + 1;
 
         this.#size.setSize(width, height);
+    }
+
+    #configureVp8(data: Uint8Array) {
+        const { key_frame, width, height } = Vp8.parseFrameTag(data);
+        if (key_frame) {
+            this.#size.setSize(width, height);
+        }
+    }
+
+    #configureVp9(data: Uint8Array) {
+        const { render_size } = Vp9.parseFrameHeader(data);
+        if (render_size) {
+            this.#size.setSize(
+                render_size.RenderWidth,
+                render_size.RenderHeight,
+            );
+        }
     }
 }
