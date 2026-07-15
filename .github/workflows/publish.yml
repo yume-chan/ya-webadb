@@ -28,4 +28,14 @@ jobs:
 
             - run: pnpm run build
 
-            - run: pnpm recursive publish --access public --no-git-checks --provenance
+            - name: Determine npm dist-tag
+              id: dist_tag
+              run: |
+                  if [[ "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(.+)$ ]]; then
+                      tag="${BASH_REMATCH[1]%%.*}"
+                      echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "tag=latest" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - run: pnpm recursive publish --access public --no-git-checks --provenance --tag ${{ steps.dist_tag.outputs.tag }}
