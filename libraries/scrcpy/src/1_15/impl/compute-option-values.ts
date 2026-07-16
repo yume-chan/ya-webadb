@@ -1,6 +1,6 @@
-type ComputeOptionType<T, TDefault> = undefined extends T
-    ? Exclude<T, undefined> | TDefault
-    : T;
+// Distributive Conditional Types
+// (https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types)
+type ComputeOptionType<T, TDefault> = T extends undefined ? TDefault : T;
 
 export type ComputeOptionTypes<T extends object, TDefaults extends object> = {
     [K in keyof TDefaults]: K extends keyof T

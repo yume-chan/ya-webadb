@@ -1,9 +1,9 @@
 import { PrevImpl } from "./prev.js";
 
-type ComputeAudioSource<TAudioDup, TAudioSource> = true extends TAudioDup
-    ? [TAudioDup] extends [true]
-        ? "playback"
-        : TAudioSource | "playback"
+// Distributive Conditional Types
+// (https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types)
+type ComputeAudioSource<TAudioDup, TAudioSource> = TAudioDup extends true
+    ? "playback"
     : TAudioSource;
 
 export type OverrideAudioSource<T> = Omit<T, "audioSource"> & {

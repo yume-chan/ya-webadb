@@ -1,5 +1,7 @@
 import { PrevImpl } from "./prev.js";
 
+// Distributive Conditional Types
+// (https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types)
 type ComputeClipboardAutosync<TControl, TClipboardAutosync> =
     TControl extends false ? false : TClipboardAutosync;
 

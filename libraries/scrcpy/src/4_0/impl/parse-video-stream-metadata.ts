@@ -15,8 +15,6 @@ export async function parseVideoStreamMetadataAsync(
 ): Promise<ScrcpyVideoStream> {
     const buffered = new BufferedReadableStream(stream);
 
-    // `sendDeviceMeta` now only contains device name,
-    // can't use `PrevImpl.parseVideoStreamMetadata` here
     let deviceName: string | undefined;
     if (sendDeviceMeta) {
         deviceName = await PrevImpl.readString(buffered, 64);

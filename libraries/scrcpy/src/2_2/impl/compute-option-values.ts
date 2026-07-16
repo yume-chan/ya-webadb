@@ -3,10 +3,10 @@ import { computeOptionValues as computeOptionValues1_15 } from "../../1_15/impl/
 
 import { PrevImpl } from "./prev.js";
 
+// Distributive Conditional Types
+// (https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types)
 type ComputeControl<TVideoSource, TControl> = TVideoSource extends "camera"
-    ? "camera" extends TVideoSource
-        ? false
-        : TControl | false
+    ? false
     : TControl;
 
 type OverrideControl<T> = Omit<T, "control"> & {

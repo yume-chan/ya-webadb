@@ -1,15 +1,17 @@
 import type { Event } from "@yume-chan/event";
 import { StickyEventEmitter } from "@yume-chan/event";
 
+export interface ScrcpyVideoSizeChangedEvent {
+    width: number;
+    height: number;
+    isClientResize?: boolean | undefined;
+}
+
 export interface ScrcpyVideoSize {
     readonly width: number;
     readonly height: number;
 
-    readonly sizeChanged: Event<{
-        width: number;
-        height: number;
-        isClientResize?: boolean | undefined;
-    }>;
+    readonly sizeChanged: Event<ScrcpyVideoSizeChangedEvent>;
 }
 
 export class ScrcpyVideoSizeImpl implements ScrcpyVideoSize {
@@ -23,11 +25,7 @@ export class ScrcpyVideoSizeImpl implements ScrcpyVideoSize {
         return this.#height;
     }
 
-    #sizeChanged = new StickyEventEmitter<{
-        width: number;
-        height: number;
-        isClientResize?: boolean | undefined;
-    }>();
+    #sizeChanged = new StickyEventEmitter<ScrcpyVideoSizeChangedEvent>();
     get sizeChanged() {
         return this.#sizeChanged.event;
     }

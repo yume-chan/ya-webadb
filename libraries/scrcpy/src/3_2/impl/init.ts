@@ -10,8 +10,7 @@ export interface Init extends Omit<PrevImpl.Init, "audioSource"> {
         | "voice-call"
         | "voice-call-uplink"
         | "voice-call-downlink"
-        | "voice-performance"
-        | undefined;
+        | "voice-performance";
 
     displayImePolicy?: "local" | "fallback" | "hide" | undefined;
 }
