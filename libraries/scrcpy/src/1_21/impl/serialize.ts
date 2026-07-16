@@ -5,9 +5,9 @@ function toSnakeCase(input: string): string {
 }
 
 // 1.21 changed the format of arguments
-export function serialize<T extends object>(
+export function serialize<T extends object, TDefaults extends object>(
     options: T,
-    defaults: Required<T>,
+    defaults: TDefaults,
 ): string[] {
     const result: string[] = [];
     for (const [key, value] of Object.entries(options)) {
@@ -18,7 +18,7 @@ export function serialize<T extends object>(
         }
 
         const defaultValue = toScrcpyOptionValue(
-            defaults[key as keyof T],
+            defaults[key as keyof TDefaults],
             undefined,
         );
         if (serializedValue === defaultValue) {

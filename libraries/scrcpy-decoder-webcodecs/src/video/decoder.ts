@@ -11,6 +11,8 @@ import {
     Av1TransformStream,
     H264TransformStream,
     H265TransformStream,
+    Vp8TransformStream,
+    Vp9TransformStream,
 } from "./codec/index.js";
 import type { CodecTransformStream } from "./codec/type.js";
 import type { VideoFrameRenderer } from "./render/index.js";
@@ -188,12 +190,18 @@ export class WebCodecsVideoDecoder implements ScrcpyVideoDecoder {
             case ScrcpyVideoCodecId.H265:
                 codecTransform = new H265TransformStream();
                 break;
-            case ScrcpyVideoCodecId.AV1:
+            case ScrcpyVideoCodecId.Av1:
                 codecTransform = new Av1TransformStream();
+                break;
+            case ScrcpyVideoCodecId.Vp8:
+                codecTransform = new Vp8TransformStream();
+                break;
+            case ScrcpyVideoCodecId.Vp9:
+                codecTransform = new Vp9TransformStream();
                 break;
             default:
                 // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                throw new Error(`Unsupported codec: ${this.#codec}`);
+                throw new Error(`Unknown codec: ${this.#codec}`);
         }
 
         void this.#pause.readable

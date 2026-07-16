@@ -1,6 +1,7 @@
 export * from "./back-or-screen-on.js";
 export * from "./clipboard-stream.js";
 export * from "./codec-options.js";
+export * from "./compute-option-values.js";
 export * from "./control-message-types.js";
 export * from "./defaults.js";
 export * from "./init.js";
@@ -12,4 +13,5 @@ export * from "./scroll-controller.js";
 export * from "./serialize-order.js";
 export * from "./serialize.js";
 export * from "./set-clipboard.js";
+export * from "./set-display-power.js";
 export * from "./set-list-display.js";

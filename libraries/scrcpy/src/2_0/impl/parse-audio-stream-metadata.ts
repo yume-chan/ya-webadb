@@ -9,9 +9,39 @@ import type { Init } from "../../2_3/impl/init.js";
 import type { ScrcpyAudioStreamMetadata } from "../../base/index.js";
 import { ScrcpyAudioCodec } from "../../base/index.js";
 
+export function parseAudioMetadataCodec(codec: number): ScrcpyAudioCodec {
+    switch (codec) {
+        case ScrcpyAudioCodec.Raw.metadataValue:
+            return ScrcpyAudioCodec.Raw;
+        case ScrcpyAudioCodec.Opus.metadataValue:
+            return ScrcpyAudioCodec.Opus;
+        case ScrcpyAudioCodec.Aac.metadataValue:
+            return ScrcpyAudioCodec.Aac;
+        default:
+            throw new Error(`Unknown audio codec metadata value: ${codec}`);
+    }
+}
+
+export function parseAudioCodecOption(
+    audioCodec: Exclude<Init["audioCodec"], undefined>,
+): ScrcpyAudioCodec {
+    switch (audioCodec) {
+        case "raw":
+            return ScrcpyAudioCodec.Raw;
+        case "opus":
+            return ScrcpyAudioCodec.Opus;
+        case "aac":
+            return ScrcpyAudioCodec.Aac;
+        default:
+            throw new Error(`Unknown audio codec: ${audioCodec}`);
+    }
+}
+
 export async function parseAudioStreamMetadata(
     stream: ReadableStream<Uint8Array>,
-    options: Pick<Required<Init<boolean>>, "sendCodecMeta" | "audioCodec">,
+    sendCodecMeta: Exclude<Init["sendCodecMeta"], undefined>,
+    parseMetadataCodec: (codec: number) => ScrcpyAudioCodec,
+    fallbackCodec: ScrcpyAudioCodec,
 ): Promise<ScrcpyAudioStreamMetadata> {
     const buffered = new BufferedReadableStream(stream);
 
@@ -30,57 +60,17 @@ export async function parseAudioStreamMetadata(
             };
     }
 
-    if (options.sendCodecMeta) {
-        let codec: ScrcpyAudioCodec;
-        switch (codecMetadataValue) {
-            case ScrcpyAudioCodec.Raw.metadataValue:
-                codec = ScrcpyAudioCodec.Raw;
-                break;
-            case ScrcpyAudioCodec.Opus.metadataValue:
-                codec = ScrcpyAudioCodec.Opus;
-                break;
-            case ScrcpyAudioCodec.Aac.metadataValue:
-                codec = ScrcpyAudioCodec.Aac;
-                break;
-            case ScrcpyAudioCodec.Flac.metadataValue:
-                codec = ScrcpyAudioCodec.Flac;
-                break;
-            default:
-                throw new Error(
-                    `Unknown audio codec metadata value: ${codecMetadataValue}`,
-                );
-        }
+    if (sendCodecMeta) {
         return {
             type: "success",
-            codec,
+            codec: parseMetadataCodec(codecMetadataValue),
             stream: buffered.release(),
         };
     }
 
-    // Infer codec from `audioCodec` option
-    let codec: ScrcpyAudioCodec;
-    switch (options.audioCodec as string) {
-        case "raw":
-            codec = ScrcpyAudioCodec.Raw;
-            break;
-        case "opus":
-            codec = ScrcpyAudioCodec.Opus;
-            break;
-        case "aac":
-            codec = ScrcpyAudioCodec.Aac;
-            break;
-        case "flac":
-            codec = ScrcpyAudioCodec.Flac;
-            break;
-        default:
-            throw new Error(
-                `Unknown audio codec metadata value: ${codecMetadataValue}`,
-            );
-    }
-
     return {
         type: "success",
-        codec,
+        codec: fallbackCodec,
         stream: new PushReadableStream<Uint8Array>(async (controller) => {
             // Put the first 4 bytes back
             await controller.enqueue(buffer);

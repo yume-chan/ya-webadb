@@ -106,19 +106,16 @@ export class NewDisplay implements ScrcpyOptionValue {
     }
 }
 
-export interface Init<TVideo extends boolean> extends Omit<
-    PrevImpl.Init<TVideo>,
-    "lockVideoOrientation"
-> {
+export interface Init extends Omit<PrevImpl.Init, "lockVideoOrientation"> {
     captureOrientation?: CaptureOrientation | string | undefined;
     angle?: number;
     screenOffTimeout?: number | undefined;
 
-    listApps?: boolean;
+    listApps?: boolean | undefined;
 
     // `display_id` and `new_display` can't be specified at the same time
     // but `serialize` method will exclude options that are same as the default value
     // so `displayId: 0` will be ignored
     newDisplay?: NewDisplay | string | undefined;
-    vdSystemDecorations?: boolean;
+    vdSystemDecorations?: boolean | undefined;
 }

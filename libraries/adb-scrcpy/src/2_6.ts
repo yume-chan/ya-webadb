@@ -11,20 +11,19 @@ import type { AdbScrcpyClientOptions } from "./client-options.js";
 import type { AdbScrcpyConnection } from "./connection.js";
 import type { AdbScrcpyOptions, AdbScrcpyOptionsGetEncoders } from "./types.js";
 
-export class AdbScrcpyOptions2_6<TVideo extends boolean>
-    extends ScrcpyOptions2_6<TVideo>
+export class AdbScrcpyOptions2_6<
+    TInit extends ScrcpyOptions2_6.Init = ScrcpyOptions2_6.Init,
+>
+    extends ScrcpyOptions2_6<TInit>
     implements
-        AdbScrcpyOptions<ScrcpyOptions2_6.Init<TVideo>>,
+        AdbScrcpyOptions<ScrcpyOptions2_6.Value<TInit>>,
         AdbScrcpyOptionsGetEncoders
 {
     readonly version: string;
 
     readonly spawner: AdbNoneProtocolSpawner | undefined;
 
-    constructor(
-        init: ScrcpyOptions2_6.Init<TVideo>,
-        clientOptions?: AdbScrcpyClientOptions,
-    ) {
+    constructor(init: TInit, clientOptions?: AdbScrcpyClientOptions) {
         super(init);
 
         this.version = clientOptions?.version ?? "2.6";
@@ -45,6 +44,5 @@ export class AdbScrcpyOptions2_6<TVideo extends boolean>
 }
 
 export namespace AdbScrcpyOptions2_6 {
-    export type Init<TVideo extends boolean = boolean> =
-        ScrcpyOptions2_6.Init<TVideo>;
+    export type Init = ScrcpyOptions2_6.Init;
 }

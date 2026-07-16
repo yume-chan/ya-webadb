@@ -15,7 +15,7 @@ export function createConnection(
     adb: Adb,
     options: Required<
         Pick<
-            ScrcpyOptions2_1.Init<boolean>,
+            ScrcpyOptions2_1.Init,
             | "tunnelForward"
             | "control"
             | "sendDummyByte"
@@ -27,10 +27,10 @@ export function createConnection(
 ): AdbScrcpyConnection {
     const connectionOptions: AdbScrcpyConnectionOptions = {
         scid: toScrcpyOptionValue(options.scid, undefined),
-        video: options.video,
-        audio: options.audio,
-        control: options.control,
-        sendDummyByte: options.sendDummyByte,
+        video: options.video!,
+        audio: options.audio!,
+        control: options.control!,
+        sendDummyByte: options.sendDummyByte!,
     };
     if (options.tunnelForward) {
         return new AdbScrcpyForwardConnection(adb, connectionOptions);

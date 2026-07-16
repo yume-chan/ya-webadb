@@ -30,18 +30,18 @@ export interface Init extends Omit<
 > {
     scid?: InstanceId | string | undefined;
 
-    videoCodec?: "h264" | "h265" | "av1";
-    videoBitRate?: number;
+    videoCodec?: "h264" | "h265" | "av1" | undefined;
+    videoBitRate?: number | undefined;
     videoCodecOptions?: PrevImpl.CodecOptions | string | undefined;
     videoEncoder?: string | undefined;
 
-    audio?: boolean;
-    audioCodec?: "raw" | "opus" | "aac";
-    audioBitRate?: number;
+    audio?: boolean | undefined;
+    audioCodec?: "raw" | "opus" | "aac" | undefined;
+    audioBitRate?: number | undefined;
     audioCodecOptions?: PrevImpl.CodecOptions | string | undefined;
     audioEncoder?: string | undefined;
 
-    listEncoders?: boolean;
-    listDisplays?: boolean;
-    sendCodecMeta?: boolean;
+    listEncoders?: boolean | undefined;
+    listDisplays?: boolean | undefined;
+    sendCodecMeta?: boolean | undefined;
 }

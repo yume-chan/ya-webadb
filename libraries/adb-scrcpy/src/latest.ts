@@ -1,18 +1,14 @@
-import { AdbScrcpyOptions3_3_4 } from "./3_3_4.js";
+import { AdbScrcpyOptions4_1 } from "./4_1.js";
 import type { AdbScrcpyClientOptions } from "./client-options.js";
 
 export class AdbScrcpyOptionsLatest<
-    TVideo extends boolean,
-> extends AdbScrcpyOptions3_3_4<TVideo> {
-    constructor(
-        init: AdbScrcpyOptions3_3_4.Init<TVideo>,
-        clientOptions?: AdbScrcpyClientOptions,
-    ) {
+    TInit extends AdbScrcpyOptions4_1.Init = AdbScrcpyOptions4_1.Init,
+> extends AdbScrcpyOptions4_1<TInit> {
+    constructor(init: TInit, clientOptions?: AdbScrcpyClientOptions) {
         super(init, clientOptions);
     }
 }
 
 export namespace AdbScrcpyOptionsLatest {
-    export type Init<TVideo extends boolean = boolean> =
-        AdbScrcpyOptions3_3_4.Init<TVideo>;
+    export type Init = AdbScrcpyOptions4_1.Init;
 }
