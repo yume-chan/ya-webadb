@@ -1,8 +1,9 @@
 class BitReader {
     #data: Uint8Array;
-    #byteOffset = 0;
-    #bitOffset = 0;
 
+    #byteOffset = 0;
+    // Trigger load on first read
+    #bitOffset = 8;
     #cache!: number;
 
     constructor(data: Uint8Array) {
@@ -24,9 +25,9 @@ class BitReader {
     }
 
     readBit(): number {
-        const value = (this.#cache >> this.#bitOffset) & 0x01;
-        this.#bitOffset += 1;
         this.#load();
+        const value = (this.#cache >> (7 - this.#bitOffset)) & 0x01;
+        this.#bitOffset += 1;
         return value;
     }
 
