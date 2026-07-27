@@ -26,9 +26,7 @@ export class CmdNoneProtocolService extends AdbNoneProtocolSpawner {
     constructor(
         adb: Adb,
         fallback?:
-            | string
-            | Record<string, string>
-            | ((service: string) => string),
+            string | Record<string, string> | ((service: string) => string),
     ) {
         super(async (command) => {
             if (this.#supportsAbbExec) {
@@ -86,9 +84,7 @@ export class CmdShellProtocolService extends AdbShellProtocolSpawner {
     constructor(
         adb: Adb,
         fallback?:
-            | string
-            | Record<string, string>
-            | ((service: string) => string),
+            string | Record<string, string> | ((service: string) => string),
     ) {
         super(async (command): Promise<AdbShellProtocolProcess> => {
             if (this.#supportsAbb) {
@@ -142,9 +138,7 @@ export class Cmd extends AdbServiceBase {
     constructor(
         adb: Adb,
         fallback?:
-            | string
-            | Record<string, string>
-            | ((service: string) => string),
+            string | Record<string, string> | ((service: string) => string),
     ) {
         super(adb);
 

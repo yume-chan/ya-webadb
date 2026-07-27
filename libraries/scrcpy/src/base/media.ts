@@ -11,5 +11,4 @@ export interface ScrcpyMediaStreamDataPacket {
 }
 
 export type ScrcpyMediaStreamPacket =
-    | ScrcpyMediaStreamConfigurationPacket
-    | ScrcpyMediaStreamDataPacket;
+    ScrcpyMediaStreamConfigurationPacket | ScrcpyMediaStreamDataPacket;

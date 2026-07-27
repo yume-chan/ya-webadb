@@ -87,14 +87,12 @@ interface TinyH264DecoderReadyMessage extends TinyH264MessageBase {
 }
 
 interface TinyH264PictureReadyMessage
-    extends TinyH264MessageBase,
-        PictureReadyEventArgs {
+    extends TinyH264MessageBase, PictureReadyEventArgs {
     type: "pictureReady";
 }
 
 type TinyH264Message =
-    | TinyH264DecoderReadyMessage
-    | TinyH264PictureReadyMessage;
+    TinyH264DecoderReadyMessage | TinyH264PictureReadyMessage;
 
 export function createTinyH264Wrapper(): Promise<TinyH264Wrapper> {
     if (!worker) {

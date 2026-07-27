@@ -14,8 +14,10 @@ export const VideoOrientation = {
 export type VideoOrientation =
     (typeof VideoOrientation)[keyof typeof VideoOrientation];
 
-export interface Init
-    extends Omit<PrevImpl.Init, "logLevel" | "lockVideoOrientation"> {
+export interface Init extends Omit<
+    PrevImpl.Init,
+    "logLevel" | "lockVideoOrientation"
+> {
     logLevel?: LogLevel;
 
     lockVideoOrientation?: VideoOrientation;

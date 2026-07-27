@@ -74,12 +74,13 @@ interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
     videoStream: ReadableStream<Uint8Array> | undefined;
     audioStream: ReadableStream<Uint8Array> | undefined;
     controlStream:
-        | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-        | undefined;
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>> | undefined;
 }
 
-export interface AdbScrcpyAudioStreamSuccessMetadata
-    extends Omit<ScrcpyAudioStreamSuccessMetadata, "stream"> {
+export interface AdbScrcpyAudioStreamSuccessMetadata extends Omit<
+    ScrcpyAudioStreamSuccessMetadata,
+    "stream"
+> {
     readonly stream: ReadableStream<ScrcpyMediaStreamPacket>;
 }
 

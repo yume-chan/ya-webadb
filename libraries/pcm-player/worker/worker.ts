@@ -138,7 +138,7 @@ abstract class SourceProcessor<T>
 
         while (this.#chunks.length > 0 && outputIndex < outputLength) {
             let source: T | undefined = this.#chunks[0];
-            let consumedSampleCount = 0;
+            let consumedSampleCount: number;
             [source, consumedSampleCount, outputIndex] = this.copyChunk(
                 source!,
                 outputs,

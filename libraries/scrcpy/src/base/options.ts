@@ -26,8 +26,7 @@ export interface ScrcpyOptions<T extends object> {
     readonly clipboard?: ReadableStream<string> | undefined;
 
     readonly uHidOutput?:
-        | ReadableStream<ScrcpyUHidOutputDeviceMessage>
-        | undefined;
+        ReadableStream<ScrcpyUHidOutputDeviceMessage> | undefined;
 
     readonly deviceMessageParsers: ScrcpyDeviceMessageParsers;
 

@@ -14,9 +14,7 @@ import { matchFilters } from "./utils.js";
  * A watcher that listens for new WebUSB devices and notifies the callback when
  * a new device is connected or disconnected.
  */
-export class AdbDaemonWebUsbDeviceObserver
-    implements DeviceObserver<AdbDaemonWebUsbDevice>
-{
+export class AdbDaemonWebUsbDeviceObserver implements DeviceObserver<AdbDaemonWebUsbDevice> {
     static async create(
         usb: USB,
         options: AdbDaemonWebUsbDeviceManager.RequestDeviceOptions = {},

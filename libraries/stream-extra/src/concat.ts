@@ -5,8 +5,7 @@ import type { ReadableStreamDefaultController } from "./stream.js";
 import { ReadableStream, WritableStream } from "./stream.js";
 
 export interface ConcatStringReadableStream
-    extends ReadableStream<string>,
-        Promise<string> {}
+    extends ReadableStream<string>, Promise<string> {}
 
 // `TransformStream` only calls its `source.flush` method when its `readable` is being read.
 // If the user want to use the `Promise` interface, the `flush` method will never be called,
@@ -75,8 +74,7 @@ export class ConcatStringStream {
 }
 
 export interface ConcatBufferReadableStream
-    extends ReadableStream<Uint8Array>,
-        Promise<Uint8Array> {}
+    extends ReadableStream<Uint8Array>, Promise<Uint8Array> {}
 
 /**
  * A `TransformStream` that concatenates `Uint8Array`s.

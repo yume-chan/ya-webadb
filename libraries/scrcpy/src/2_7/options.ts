@@ -62,8 +62,7 @@ export class ScrcpyOptions2_7<TVideo extends boolean>
 
     #uHidOutput: UHidOutputStream | undefined;
     get uHidOutput():
-        | ReadableStream<ScrcpyUHidOutputDeviceMessage>
-        | undefined {
+        ReadableStream<ScrcpyUHidOutputDeviceMessage> | undefined {
         return this.#uHidOutput;
     }
 

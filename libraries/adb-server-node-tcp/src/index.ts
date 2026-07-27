@@ -12,6 +12,7 @@ import {
 function nodeSocketToConnection(
     socket: Socket,
 ): AdbServerClient.ServerConnection {
+    socket.setEncoding("binary");
     socket.setNoDelay(true);
 
     const closed = new Promise<undefined>((resolve) => {
@@ -27,7 +28,7 @@ function nodeSocketToConnection(
                 }
 
                 socket.pause();
-                await controller.enqueue(data);
+                await controller.enqueue(data as Buffer);
                 socket.resume();
             });
             socket.on("end", () => {
@@ -71,7 +72,9 @@ export class AdbServerNodeTcpConnector
     }
 
     async connect(
-        { unref, signal }: AdbServerClient.ServerConnectionOptions = { unref: false },
+        { unref, signal }: AdbServerClient.ServerConnectionOptions = {
+            unref: false,
+        },
     ): Promise<AdbServerClient.ServerConnection> {
         const socket = new Socket({ signal: signal as globalThis.AbortSignal });
         if (unref) {

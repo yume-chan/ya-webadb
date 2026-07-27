@@ -30,15 +30,16 @@ type UnionResult<T extends readonly Format<unknown>[]> = Exclude<
 
 type SequenceResult<
     T extends readonly (
-        | Format<unknown>
-        | { name: string; format: Format<unknown> }
+        Format<unknown> | { name: string; format: Format<unknown> }
     )[],
 > = {
-    [K in keyof T as K extends `${number}`
-        ? T[K] extends { name: infer N extends string }
-            ? N
+    [
+        K in keyof T as K extends `${number}`
+            ? T[K] extends { name: infer N extends string }
+                ? N
+                : never
             : never
-        : never]: T[K] extends { format: Format<infer F> } ? F : never;
+    ]: T[K] extends { format: Format<infer F> } ? F : never;
 } extends infer R extends Record<string, unknown>
     ? R
     : never;
@@ -153,8 +154,7 @@ export const p = {
     }),
     sequence: <
         const T extends readonly (
-            | Format<unknown>
-            | { name: string; format: Format<unknown> }
+            Format<unknown> | { name: string; format: Format<unknown> }
         )[],
     >(
         ...args: T

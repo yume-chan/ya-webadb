@@ -33,5 +33,5 @@ export function extend<
         littleEndian: options?.littleEndian ?? base.littleEndian,
         extra: base.extra as never,
         postDeserialize: options?.postDeserialize,
-    }) as never;
+    });
 }

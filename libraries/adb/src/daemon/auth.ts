@@ -26,8 +26,7 @@ export interface AdbPrivateKey {
 }
 
 export type AdbKeyIterable =
-    | Iterable<AdbPrivateKey>
-    | AsyncIterable<AdbPrivateKey>;
+    Iterable<AdbPrivateKey> | AsyncIterable<AdbPrivateKey>;
 
 export interface AdbCredentialStore {
     /**

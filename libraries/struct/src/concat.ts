@@ -74,5 +74,5 @@ export function concat<
                 {},
             ) as never,
         },
-    ) as never;
+    );
 }

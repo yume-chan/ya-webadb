@@ -128,7 +128,7 @@ describe("AdbScrcpyClient", () => {
                 const client = await AdbScrcpyClient.start(
                     adb,
                     DefaultServerPath,
-                    new AdbScrcpyOptions2_1({ video: true as boolean }),
+                    new AdbScrcpyOptions2_1({ video: Math.random() > 0.5 }),
                 );
                 expect(
                     equal<Promise<AdbScrcpyVideoStream> | undefined>()(
@@ -141,7 +141,7 @@ describe("AdbScrcpyClient", () => {
                 const client = await AdbScrcpyClient.start(
                     adb,
                     DefaultServerPath,
-                    new AdbScrcpyOptions3_1({ video: true as boolean }),
+                    new AdbScrcpyOptions3_1({ video: Math.random() > 0.5 }),
                 );
                 expect(
                     equal<Promise<AdbScrcpyVideoStream> | undefined>()(

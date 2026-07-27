@@ -26,7 +26,8 @@ export interface Closeable {
  * Represents an ADB socket.
  */
 export interface AdbSocket
-    extends ReadableWritablePair<Uint8Array, MaybeConsumable<Uint8Array>>,
+    extends
+        ReadableWritablePair<Uint8Array, MaybeConsumable<Uint8Array>>,
         Closeable {
     get service(): string;
 

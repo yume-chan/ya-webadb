@@ -6,8 +6,7 @@ export interface FieldDefaultSerializeContext {
     littleEndian: boolean;
 }
 
-export interface FieldByobSerializeContext
-    extends FieldDefaultSerializeContext {
+export interface FieldByobSerializeContext extends FieldDefaultSerializeContext {
     buffer: Uint8Array;
     index?: number;
 }
@@ -21,8 +20,7 @@ export interface FieldSerializer<T> {
 }
 
 export interface Field<T, OmitInit extends string, D, Raw = T>
-    extends FieldSerializer<Raw>,
-        FieldDeserializer<T, D> {
+    extends FieldSerializer<Raw>, FieldDeserializer<T, D> {
     omitInit: OmitInit | undefined;
 
     /**

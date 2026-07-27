@@ -21,8 +21,7 @@ export class AdbBanner {
         const pieces = banner.split("::");
         if (pieces.length > 1) {
             state = (pieces[0]!.trim() || undefined) as
-                | AdbServerClient.ConnectionState
-                | undefined;
+                AdbServerClient.ConnectionState | undefined;
             const props = pieces[1]!;
             for (const prop of props.split(";")) {
                 // istanbul ignore if
