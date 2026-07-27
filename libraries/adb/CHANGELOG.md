@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/adb
 
+## 2.6.2
+
+### Patch Changes
+
+- Fix a typo in webusb error message (#855)
+
 ## 2.5.1
 
 ### Patch Changes
