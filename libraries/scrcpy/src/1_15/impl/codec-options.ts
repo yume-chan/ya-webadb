@@ -30,6 +30,9 @@ export class CodecOptions implements ScrcpyOptionValue {
     }
 
     setInt(key: string, value: number): this {
+        if (value < -2147483648 || value > 2147483647) {
+            throw new Error(`Value ${value} is out of range for int type`);
+        }
         this.#values.set(key, { type: "int", value: value | 0 });
         return this;
     }
@@ -42,7 +45,9 @@ export class CodecOptions implements ScrcpyOptionValue {
     setLong(key: string, value: number | bigint): this {
         this.#values.set(key, {
             type: "long",
-            value: typeof value === "bigint" ? value : value | 0,
+            // Can't use `value | 0` here because the value may be out of int32 range,
+            // use `Math.floor` instead
+            value: typeof value === "bigint" ? value : Math.floor(value),
         });
         return this;
     }
