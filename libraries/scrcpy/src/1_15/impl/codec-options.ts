@@ -10,7 +10,7 @@ export interface NumberCodecOption {
 
 export interface BigIntCodecOption {
     type: "long";
-    value: bigint;
+    value: bigint | number;
 }
 
 export interface StringCodecOption {
@@ -19,9 +19,7 @@ export interface StringCodecOption {
 }
 
 export type CodecOption =
-    | NumberCodecOption
-    | BigIntCodecOption
-    | StringCodecOption;
+    NumberCodecOption | BigIntCodecOption | StringCodecOption;
 
 export class CodecOptions implements ScrcpyOptionValue {
     static Empty = /* #__PURE__ */ new CodecOptions();
@@ -32,7 +30,10 @@ export class CodecOptions implements ScrcpyOptionValue {
     }
 
     setInt(key: string, value: number): this {
-        this.#values.set(key, { type: "int", value });
+        if (value < -2147483648 || value > 2147483647) {
+            throw new Error(`Value ${value} is out of range for int type`);
+        }
+        this.#values.set(key, { type: "int", value: value | 0 });
         return this;
     }
 
@@ -41,8 +42,13 @@ export class CodecOptions implements ScrcpyOptionValue {
         return this;
     }
 
-    setLong(key: string, value: bigint): this {
-        this.#values.set(key, { type: "long", value });
+    setLong(key: string, value: number | bigint): this {
+        this.#values.set(key, {
+            type: "long",
+            // Can't use `value | 0` here because the value may be out of int32 range,
+            // use `Math.floor` instead
+            value: typeof value === "bigint" ? value : Math.floor(value),
+        });
         return this;
     }
 
@@ -76,7 +82,11 @@ export class CodecOptions implements ScrcpyOptionValue {
      * to understand the realtime requirements of the application;
      * however, due to the nature of media components, performance is not guaranteed.
      */
-    setPriority(priority: number): this {
+    setPriority(priority: number | undefined): this {
+        if (priority === undefined) {
+            this.delete("priority");
+            return this;
+        }
         return this.setInt("priority", priority);
     }
 
@@ -115,7 +125,11 @@ export class VideoCodecOptions extends CodecOptions {
      * [`MediaCodec`](https://developer.android.com/reference/android/media/MediaCodec)
      * describes the semantics.
      */
-    setAllowFrameDrop(value: boolean): this {
+    setAllowFrameDrop(value: boolean | undefined): this {
+        if (value === undefined) {
+            this.delete("allow-frame-drop");
+            return this;
+        }
         return this.setInt("allow-frame-drop", value ? 1 : 0);
     }
 
@@ -131,7 +145,11 @@ export class VideoCodecOptions extends CodecOptions {
      * This key is ignored if the video encoder does not support the intra refresh feature.
      * The associated value is an integer.
      */
-    setIntraRefreshPeriod(value: number): this {
+    setIntraRefreshPeriod(value: number | undefined): this {
+        if (value === undefined) {
+            this.delete("intra-refresh-period");
+            return this;
+        }
         return this.setInt("intra-refresh-period", value);
     }
 
@@ -144,7 +162,16 @@ export class VideoCodecOptions extends CodecOptions {
      *
      * The associated value is an integer (or float since `Build.VERSION_CODES.N_MR1`).
      */
-    setIFrameInterval(value: number, type: "int" | "float" = "int"): this {
+    setIFrameInterval(value: undefined): this;
+    setIFrameInterval(value: number, type?: "int" | "float"): this;
+    setIFrameInterval(
+        value: number | undefined,
+        type: "int" | "float" = "int",
+    ): this {
+        if (value === undefined) {
+            this.delete("i-frame-interval");
+            return this;
+        }
         return type === "int"
             ? this.setInt("i-frame-interval", value)
             : this.setFloat("i-frame-interval", value);
@@ -163,7 +190,11 @@ export class VideoCodecOptions extends CodecOptions {
      * If the key is not specified, the default latency will be implementation specific.
      * The associated value is an integer.
      */
-    setLatency(value: number): this {
+    setLatency(value: number | undefined): this {
+        if (value === undefined) {
+            this.delete("latency");
+            return this;
+        }
         return this.setInt("latency", value);
     }
 
@@ -178,7 +209,11 @@ export class VideoCodecOptions extends CodecOptions {
      * This key is ignored if the {@link setProfile | `profile`} is not specified.
      * Otherwise, the value should be a level compatible with the configured encoding parameters.
      */
-    setLevel(value: number): this {
+    setLevel(value: number | undefined): this {
+        if (value === undefined) {
+            this.delete("level");
+            return this;
+        }
         return this.setInt("level", value);
     }
 
@@ -189,7 +224,11 @@ export class VideoCodecOptions extends CodecOptions {
      * The default value is 0, which means that no B frames are allowed.
      * Note that non-zero value does not guarantee B frames; it's up to the encoder to decide.
      */
-    setMaxBFrames(value: number): this {
+    setMaxBFrames(value: number | undefined): this {
+        if (value === undefined) {
+            this.delete("max-bframes");
+            return this;
+        }
         return this.setInt("max-bframes", value);
     }
 
@@ -198,7 +237,11 @@ export class VideoCodecOptions extends CodecOptions {
      * so that the input frame rate to the encoder does not exceed the specified fps.
      * The associated value is a float, representing the max frame rate to feed the encoder at.
      */
-    setMaxFpsToEncoder(value: number): this {
+    setMaxFpsToEncoder(value: number | undefined): this {
+        if (value === undefined) {
+            this.delete("max-fps-to-encoder");
+            return this;
+        }
         return this.setFloat("max-fps-to-encoder", value);
     }
 
@@ -220,7 +263,11 @@ export class VideoCodecOptions extends CodecOptions {
      * [`MediaCodec`](https://developer.android.com/reference/android/media/MediaCodec)
      * API reference.
      */
-    setProfile(value: number): this {
+    setProfile(value: number | undefined): this {
+        if (value === undefined) {
+            this.delete("profile");
+            return this;
+        }
         return this.setInt("profile", value);
     }
 
@@ -230,7 +277,11 @@ export class VideoCodecOptions extends CodecOptions {
      * after which the frame previously submitted to the encoder will be repeated (once)
      * if no new frame became available since.
      */
-    setRepeatPreviousFrameAfter(value: bigint): this {
+    setRepeatPreviousFrameAfter(value: bigint | undefined): this {
+        if (value === undefined) {
+            this.delete("repeat-previous-frame-after");
+            return this;
+        }
         return this.setLong("repeat-previous-frame-after", value);
     }
 }

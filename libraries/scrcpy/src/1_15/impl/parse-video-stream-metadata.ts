@@ -44,10 +44,10 @@ export async function parseVideoStreamMetadata(
 ): Promise<ScrcpyVideoStream> {
     const buffered = new BufferedReadableStream(stream);
     const metadata: ScrcpyVideoStreamMetadata = {
-        codec: ScrcpyVideoCodecId.H264,
         deviceName: await readString(buffered, 64),
         width: await readU16(buffered),
         height: await readU16(buffered),
+        codec: ScrcpyVideoCodecId.H264,
     };
     return { stream: buffered.release(), metadata };
 }
