@@ -116,8 +116,7 @@ export function parseFrameHeader(data: Uint8Array): { Profile: number } & (
     }
 
     const frame_type = reader.readBit() as
-        | typeof FrameTypeKeyFrame
-        | typeof FrameTypeNonKeyFrame;
+        typeof FrameTypeKeyFrame | typeof FrameTypeNonKeyFrame;
     const show_frame = !!reader.readBit();
     const error_resilient_mode = reader.readBit();
 

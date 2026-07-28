@@ -352,8 +352,7 @@ export class Av1 extends BitReader {
         }
 
         let sequence_header_obu:
-            | ReturnType<Av1["sequenceHeaderObu"]>
-            | undefined;
+            ReturnType<Av1["sequenceHeaderObu"]> | undefined;
         switch (obu_header.obu_type) {
             case Av1.ObuType.SequenceHeader:
                 sequence_header_obu = this.sequenceHeaderObu();
@@ -392,8 +391,7 @@ export class Av1 extends BitReader {
         this.f1();
 
         let obu_extension_header:
-            | ReturnType<Av1["obuExtensionHeader"]>
-            | undefined;
+            ReturnType<Av1["obuExtensionHeader"]> | undefined;
         if (obu_extension_flag) {
             obu_extension_header = this.obuExtensionHeader();
         }
@@ -433,8 +431,7 @@ export class Av1 extends BitReader {
         const decoder_model_present_for_this_op: boolean[] = [];
         const initial_display_delay_present_for_this_op: boolean[] = [];
         let operating_parameters_info:
-            | ReturnType<Av1["operatingParametersInfo"]>[]
-            | undefined;
+            ReturnType<Av1["operatingParametersInfo"]>[] | undefined;
         let initial_display_delay_minus_1: number[] | undefined;
         if (reduced_still_picture_header) {
             operating_point_idc[0] = 0;

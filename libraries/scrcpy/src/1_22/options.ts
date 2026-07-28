@@ -109,7 +109,7 @@ export class ScrcpyOptions1_22<TInit extends Init = Init>
     parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): MaybePromiseLike<ScrcpyVideoStream> {
-        return parseVideoStreamMetadata(stream, this.value.sendDeviceMeta!);
+        return parseVideoStreamMetadata(stream, this.value.sendDeviceMeta);
     }
 
     createMediaStreamTransformer(): TransformStream<

@@ -13,6 +13,5 @@ export interface TangoKeyStorage {
     ): MaybePromiseLike<undefined>;
 
     load():
-        | Iterable<MaybeError<TangoKey>>
-        | AsyncIterable<MaybeError<TangoKey>>;
+        Iterable<MaybeError<TangoKey>> | AsyncIterable<MaybeError<TangoKey>>;
 }

@@ -27,8 +27,7 @@ export interface ScrcpyVideoDecoder
 
     readonly rendererType: ScrcpyVideoDecoder.RendererType;
     readonly onRendererTypeChange?:
-        | Event<ScrcpyVideoDecoder.RendererType>
-        | undefined;
+        Event<ScrcpyVideoDecoder.RendererType> | undefined;
 
     readonly writable: WritableStream<ScrcpyVideoStreamPacket>;
 

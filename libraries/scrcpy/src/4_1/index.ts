@@ -133,9 +133,9 @@ export class ScrcpyOptions4_1<TInit extends Init = Init>
     ): MaybePromiseLike<ScrcpyVideoStream> {
         return parseVideoStreamMetadata(
             stream,
-            this.value.sendDeviceMeta!,
-            this.value.sendStreamMeta!,
-            parseVideoCodecOption(this.value.videoCodec!),
+            this.value.sendDeviceMeta,
+            this.value.sendStreamMeta,
+            parseVideoCodecOption(this.value.videoCodec),
             parseVideoStreamMetadataAsync,
         );
     }
@@ -145,9 +145,9 @@ export class ScrcpyOptions4_1<TInit extends Init = Init>
     ): MaybePromiseLike<ScrcpyAudioStreamMetadata> {
         return parseAudioStreamMetadata(
             stream,
-            this.value.sendStreamMeta!,
+            this.value.sendStreamMeta,
             parseAudioMetadataCodec,
-            parseAudioCodecOption(this.value.audioCodec!),
+            parseAudioCodecOption(this.value.audioCodec),
         );
     }
 
