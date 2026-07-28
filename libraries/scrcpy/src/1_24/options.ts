@@ -2,25 +2,28 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream, TransformStream } from "@yume-chan/stream-extra";
 
 import type {
+    MapBoolean,
     ScrcpyDisplay,
     ScrcpyEncoder,
-    ScrcpyMediaStreamPacket,
     ScrcpyOptions,
     ScrcpyOptionsListEncoders,
     ScrcpyScrollController,
     ScrcpyVideoStream,
+    ScrcpyVideoStreamPacket,
 } from "../base/index.js";
 import { ScrcpyDeviceMessageParsers } from "../base/index.js";
 import type {
     ScrcpyBackOrScreenOnControlMessage,
     ScrcpyInjectTouchControlMessage,
     ScrcpySetClipboardControlMessage,
+    ScrcpySetDisplayPowerControlMessage,
 } from "../latest.js";
 
-import type { Init } from "./impl/index.js";
+import type { ComputeOptionTypes, Init } from "./impl/index.js";
 import {
     AckClipboardHandler,
     ClipboardStream,
+    computeOptionValues,
     ControlMessageTypes,
     createMediaStreamTransformer,
     createScrollController,
@@ -33,24 +36,31 @@ import {
     serializeBackOrScreenOnControlMessage,
     serializeInjectTouchControlMessage,
     serializeSetClipboardControlMessage,
+    serializeSetDisplayPowerControlMessage,
     setListDisplays,
     setListEncoders,
 } from "./impl/index.js";
 
-export class ScrcpyOptions1_24
-    implements ScrcpyOptions<Init>, ScrcpyOptionsListEncoders
+export class ScrcpyOptions1_24<TInit extends Init = Init>
+    implements
+        ScrcpyOptions<ScrcpyOptions1_24.Value<TInit>>,
+        ScrcpyOptionsListEncoders
 {
     static readonly Defaults = Defaults;
 
-    readonly value: Required<Init>;
+    readonly value: ScrcpyOptions1_24.Value<TInit>;
 
     get controlMessageTypes(): typeof ControlMessageTypes {
         return ControlMessageTypes;
     }
 
     #clipboard: ClipboardStream | undefined;
-    get clipboard(): ReadableStream<string> | undefined {
-        return this.#clipboard;
+    get clipboard(): MapBoolean<
+        this["value"]["clipboardAutosync"],
+        ReadableStream<string>,
+        undefined
+    > {
+        return this.#clipboard as never;
     }
 
     #ackClipboardHandler: AckClipboardHandler | undefined;
@@ -60,8 +70,8 @@ export class ScrcpyOptions1_24
         return this.#deviceMessageParsers;
     }
 
-    constructor(init: Init) {
-        this.value = { ...Defaults, ...init };
+    constructor(init: TInit) {
+        this.value = computeOptionValues(init, Defaults);
 
         if (this.value.control) {
             if (this.value.clipboardAutosync) {
@@ -99,12 +109,12 @@ export class ScrcpyOptions1_24
     parseVideoStreamMetadata(
         stream: ReadableStream<Uint8Array>,
     ): MaybePromiseLike<ScrcpyVideoStream> {
-        return parseVideoStreamMetadata(this.value, stream);
+        return parseVideoStreamMetadata(stream, this.value.sendDeviceMeta!);
     }
 
     createMediaStreamTransformer(): TransformStream<
         Uint8Array,
-        ScrcpyMediaStreamPacket
+        ScrcpyVideoStreamPacket
     > {
         return createMediaStreamTransformer(this.value);
     }
@@ -112,25 +122,46 @@ export class ScrcpyOptions1_24
     serializeInjectTouchControlMessage(
         message: ScrcpyInjectTouchControlMessage,
     ): Uint8Array {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
         return serializeInjectTouchControlMessage(message);
     }
 
     serializeBackOrScreenOnControlMessage(
         message: ScrcpyBackOrScreenOnControlMessage,
     ): Uint8Array | undefined {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
         return serializeBackOrScreenOnControlMessage(message);
     }
 
     serializeSetClipboardControlMessage(
         message: ScrcpySetClipboardControlMessage,
     ): Uint8Array | [Uint8Array, Promise<void>] {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
         return serializeSetClipboardControlMessage(
             message,
             this.#ackClipboardHandler,
         );
     }
 
+    serializeSetDisplayPowerControlMessage(
+        message: ScrcpySetDisplayPowerControlMessage,
+    ): Uint8Array {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
+        return serializeSetDisplayPowerControlMessage(message);
+    }
+
     createScrollController(): ScrcpyScrollController {
+        if (!this.value.control) {
+            throw new Error("control is disabled");
+        }
         return createScrollController();
     }
 }
@@ -139,4 +170,9 @@ type Init_ = Init;
 
 export namespace ScrcpyOptions1_24 {
     export type Init = Init_;
+
+    export type Value<TInit extends Init> = ComputeOptionTypes<
+        TInit,
+        typeof Defaults
+    >;
 }

@@ -1,7 +1,4 @@
-import type {
-    AndroidKeyEventAction,
-    AndroidScreenPowerMode,
-} from "../android/index.js";
+import type { AndroidKeyEventAction } from "../android/index.js";
 import type { ScrcpyOptions, ScrcpyScrollController } from "../base/index.js";
 import { ScrcpyControlMessageType } from "../base/index.js";
 import type {
@@ -11,10 +8,11 @@ import type {
     ScrcpyUHidCreateControlMessage,
 } from "../latest.js";
 
+import { BooleanControlMessage } from "./boolean.js";
 import { EmptyControlMessage } from "./empty.js";
 import { ScrcpyInjectKeyCodeControlMessage } from "./inject-key-code.js";
 import { ScrcpyInjectTextControlMessage } from "./inject-text.js";
-import { ScrcpySetDisplayPowerControlMessage } from "./set-screen-power-mode.js";
+import { ScrcpyResizeDisplayControlMessage } from "./resize-display.js";
 import { ScrcpyStartAppControlMessage } from "./start-app.js";
 import {
     ScrcpyUHidDestroyControlMessage,
@@ -84,9 +82,9 @@ export class ScrcpyControlMessageSerializer {
         });
     }
 
-    setDisplayPower(mode: AndroidScreenPowerMode) {
-        return ScrcpySetDisplayPowerControlMessage.serialize({
-            mode,
+    setDisplayPower(on: boolean) {
+        return this.#options.serializeSetDisplayPowerControlMessage({
+            on,
             type: this.getType(ScrcpyControlMessageType.SetDisplayPower),
         });
     }
@@ -169,6 +167,38 @@ export class ScrcpyControlMessageSerializer {
     resetVideo() {
         return EmptyControlMessage.serialize({
             type: this.getType(ScrcpyControlMessageType.ResetVideo),
+        });
+    }
+
+    cameraSetTorch(enabled: boolean) {
+        return BooleanControlMessage.serialize({
+            type: this.getType(ScrcpyControlMessageType.CameraSetTorch),
+            value: enabled,
+        });
+    }
+
+    cameraZoomIn() {
+        return EmptyControlMessage.serialize({
+            type: this.getType(ScrcpyControlMessageType.CameraZoomIn),
+        });
+    }
+
+    cameraZoomOut() {
+        return EmptyControlMessage.serialize({
+            type: this.getType(ScrcpyControlMessageType.CameraZoomOut),
+        });
+    }
+
+    resizeDisplay(message: Omit<ScrcpyResizeDisplayControlMessage, "type">) {
+        return ScrcpyResizeDisplayControlMessage.serialize(
+            this.#addType(message, ScrcpyControlMessageType.ResizeDisplay),
+        );
+    }
+
+    scanFile(path: string) {
+        return ScrcpyInjectTextControlMessage.serialize({
+            text: path,
+            type: this.getType(ScrcpyControlMessageType.ScanFile),
         });
     }
 }

@@ -1,11 +1,8 @@
 import type { PrevImpl } from "./prev.js";
 
-export interface Init<TVideo extends boolean> extends Omit<
-    PrevImpl.Init<TVideo>,
-    "audioSource"
-> {
+export interface Init extends Omit<PrevImpl.Init, "audioSource"> {
     audioSource?:
-        | PrevImpl.Init<TVideo>["audioSource"]
+        | PrevImpl.Init["audioSource"]
         | "mic-unprocessed"
         | "mic-camcorder"
         | "mic-voice-recognition"

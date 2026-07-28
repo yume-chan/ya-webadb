@@ -2,50 +2,52 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import type { ReadableStream } from "@yume-chan/stream-extra";
 import { BufferedReadableStream } from "@yume-chan/stream-extra";
 
-import type { ScrcpyVideoStream } from "../../base/video.js";
-import { ScrcpyVideoCodecId } from "../../base/video.js";
+import type { ScrcpyVideoStream } from "../../base/index.js";
+import { ScrcpyVideoCodecId } from "../../video/index.js";
 
 import type { Init } from "./init.js";
 import { PrevImpl } from "./prev.js";
 
-function toCodecId(codec: string): ScrcpyVideoCodecId {
+export function parseVideoCodecOption(
+    codec: Exclude<Init["videoCodec"], undefined>,
+): ScrcpyVideoCodecId {
     switch (codec) {
         case "h264":
             return ScrcpyVideoCodecId.H264;
         case "h265":
             return ScrcpyVideoCodecId.H265;
         case "av1":
-            return ScrcpyVideoCodecId.AV1;
+            return ScrcpyVideoCodecId.Av1;
         default:
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             throw new Error(`Unknown video codec: ${codec}`);
     }
 }
 
-async function parseAsync(
-    options: Pick<
-        Required<Init>,
-        "sendDeviceMeta" | "sendCodecMeta" | "videoCodec"
-    >,
+export async function parseVideoStreamMetadataAsync(
     stream: ReadableStream<Uint8Array>,
-) {
+    sendDeviceMeta: Exclude<Init["sendDeviceMeta"], undefined>,
+    sendCodecMeta: Exclude<Init["sendCodecMeta"], undefined>,
+    fallbackCodec: ScrcpyVideoCodecId,
+): Promise<ScrcpyVideoStream> {
     const buffered = new BufferedReadableStream(stream);
 
     // `sendDeviceMeta` now only contains device name,
-    // can't use `super.parseVideoStreamMetadata` here
+    // can't use `PrevImpl.parseVideoStreamMetadata` here
     let deviceName: string | undefined;
-    if (options.sendDeviceMeta) {
+    if (sendDeviceMeta) {
         deviceName = await PrevImpl.readString(buffered, 64);
     }
 
     let codec: ScrcpyVideoCodecId;
     let width: number | undefined;
     let height: number | undefined;
-    if (options.sendCodecMeta) {
+    if (sendCodecMeta) {
         codec = (await PrevImpl.readU32(buffered)) as ScrcpyVideoCodecId;
         width = await PrevImpl.readU32(buffered);
         height = await PrevImpl.readU32(buffered);
     } else {
-        codec = toCodecId(options.videoCodec);
+        codec = fallbackCodec;
     }
 
     return {
@@ -54,19 +56,20 @@ async function parseAsync(
     };
 }
 
+// eslint-disable-next-line @typescript-eslint/max-params
 export function parseVideoStreamMetadata(
-    options: Pick<
-        Required<Init>,
-        "sendDeviceMeta" | "sendCodecMeta" | "videoCodec"
-    >,
     stream: ReadableStream<Uint8Array>,
+    sendDeviceMeta: Exclude<Init["sendDeviceMeta"], undefined>,
+    sendCodecMeta: Exclude<Init["sendCodecMeta"], undefined>,
+    fallbackCodec: ScrcpyVideoCodecId,
+    parseAsync: typeof parseVideoStreamMetadataAsync,
 ): MaybePromiseLike<ScrcpyVideoStream> {
-    if (!options.sendDeviceMeta && !options.sendCodecMeta) {
+    if (!sendDeviceMeta && !sendCodecMeta) {
         return {
             stream,
-            metadata: { codec: toCodecId(options.videoCodec) },
+            metadata: { codec: fallbackCodec },
         };
     }
 
-    return parseAsync(options, stream);
+    return parseAsync(stream, sendDeviceMeta, sendCodecMeta, fallbackCodec);
 }

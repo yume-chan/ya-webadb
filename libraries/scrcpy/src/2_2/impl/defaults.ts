@@ -13,4 +13,4 @@ export const Defaults = {
     cameraHighSpeed: false,
     listCameras: false,
     listCameraSizes: false,
-} as const satisfies Required<Init<true>>;
+} as const satisfies Required<Init>;

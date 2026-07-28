@@ -7,18 +7,17 @@ import type { AdbScrcpyClientOptions } from "./client-options.js";
 import type { AdbScrcpyConnection } from "./connection.js";
 import type { AdbScrcpyOptions } from "./types.js";
 
-export class AdbScrcpyOptions1_16
-    extends ScrcpyOptions1_16
-    implements AdbScrcpyOptions<ScrcpyOptions1_16.Init>
+export class AdbScrcpyOptions1_16<
+    TInit extends ScrcpyOptions1_16.Init = ScrcpyOptions1_16.Init,
+>
+    extends ScrcpyOptions1_16<TInit>
+    implements AdbScrcpyOptions<ScrcpyOptions1_16.Value<TInit>>
 {
     readonly version: string;
 
     readonly spawner: AdbNoneProtocolSpawner | undefined;
 
-    constructor(
-        init: ScrcpyOptions1_16.Init,
-        clientOptions?: AdbScrcpyClientOptions,
-    ) {
+    constructor(init: TInit, clientOptions?: AdbScrcpyClientOptions) {
         super(init);
 
         this.version = clientOptions?.version ?? "1.16";

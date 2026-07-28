@@ -23,9 +23,9 @@ export function createConnection(
     const connectionOptions: AdbScrcpyConnectionOptions = {
         scid: toScrcpyOptionValue(options.scid, undefined),
         video: true, // Always enabled
-        audio: options.audio,
-        control: options.control,
-        sendDummyByte: options.sendDummyByte,
+        audio: options.audio!,
+        control: options.control!,
+        sendDummyByte: options.sendDummyByte!,
     };
     if (options.tunnelForward) {
         return new AdbScrcpyForwardConnection(adb, connectionOptions);

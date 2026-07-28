@@ -11,20 +11,19 @@ import type { AdbScrcpyClientOptions } from "./client-options.js";
 import type { AdbScrcpyConnection } from "./connection.js";
 import type { AdbScrcpyOptions, AdbScrcpyOptionsGetEncoders } from "./types.js";
 
-export class AdbScrcpyOptions1_23
-    extends ScrcpyOptions1_23
+export class AdbScrcpyOptions1_23<
+    TInit extends ScrcpyOptions1_23.Init = ScrcpyOptions1_23.Init,
+>
+    extends ScrcpyOptions1_23<TInit>
     implements
-        AdbScrcpyOptions<ScrcpyOptions1_23.Init>,
+        AdbScrcpyOptions<ScrcpyOptions1_23.Value<TInit>>,
         AdbScrcpyOptionsGetEncoders
 {
     readonly version: string;
 
     readonly spawner: AdbNoneProtocolSpawner | undefined;
 
-    constructor(
-        init: ScrcpyOptions1_23.Init,
-        clientOptions?: AdbScrcpyClientOptions,
-    ) {
+    constructor(init: TInit, clientOptions?: AdbScrcpyClientOptions) {
         super(init);
 
         this.version = clientOptions?.version ?? "1.23";

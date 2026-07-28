@@ -1,8 +1,5 @@
 import type { PrevImpl } from "./prev.js";
 
-export interface Init<TVideo extends boolean> extends Omit<
-    PrevImpl.Init<TVideo>,
-    "audioCodec"
-> {
-    audioCodec?: PrevImpl.Init<TVideo>["audioCodec"] | "flac";
+export interface Init extends Omit<PrevImpl.Init, "audioCodec"> {
+    audioCodec?: PrevImpl.Init["audioCodec"] | "flac";
 }

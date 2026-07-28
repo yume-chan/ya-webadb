@@ -23,8 +23,8 @@ export function createConnection(
         scid: undefined, // Not Supported
         video: true, // Always enabled
         audio: false, // Not Supported
-        control: options.control,
-        sendDummyByte: options.sendDummyByte,
+        control: options.control!,
+        sendDummyByte: options.sendDummyByte!,
     };
     if (options.tunnelForward) {
         return new AdbScrcpyForwardConnection(adb, connectionOptions);

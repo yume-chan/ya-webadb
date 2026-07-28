@@ -30,14 +30,27 @@ export class BufferedTransformStream<T> implements ReadableWritablePair<
     ) {
         // Convert incoming chunks to a `BufferedReadableStream`
         let bufferedStreamController!: PushReadableStreamController<Uint8Array>;
-
-        let writableStreamController!: WritableStreamDefaultController;
-
         const buffered = new BufferedReadableStream(
             new PushReadableStream<Uint8Array>((controller) => {
                 bufferedStreamController = controller;
             }),
         );
+
+        let writableStreamController!: WritableStreamDefaultController;
+        this.#writable = new WritableStream({
+            start(controller) {
+                writableStreamController = controller;
+            },
+            async write(chunk) {
+                await bufferedStreamController.enqueue(chunk);
+            },
+            abort() {
+                bufferedStreamController.close();
+            },
+            close() {
+                bufferedStreamController.close();
+            },
+        });
 
         this.#readable = new ReadableStream<T>({
             async pull(controller) {
@@ -61,21 +74,6 @@ export class BufferedTransformStream<T> implements ReadableWritablePair<
                 // If upstream is writing using `#writable`'s writer, this will
                 // throw errors for any future writes
                 return writableStreamController.error(reason);
-            },
-        });
-
-        this.#writable = new WritableStream({
-            start(controller) {
-                writableStreamController = controller;
-            },
-            async write(chunk) {
-                await bufferedStreamController.enqueue(chunk);
-            },
-            abort() {
-                bufferedStreamController.close();
-            },
-            close() {
-                bufferedStreamController.close();
             },
         });
     }

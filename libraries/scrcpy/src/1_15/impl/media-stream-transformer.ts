@@ -4,7 +4,7 @@ import {
 } from "@yume-chan/stream-extra";
 import { buffer, struct, u32, u64 } from "@yume-chan/struct";
 
-import type { ScrcpyMediaStreamPacket } from "../../base/index.js";
+import type { ScrcpyVideoStreamPacket } from "../../base/index.js";
 
 import type { Init } from "./init.js";
 
@@ -17,8 +17,8 @@ export const PtsConfig = 1n << 63n;
 
 export function createMediaStreamTransformer(
     options: Pick<Init, "sendFrameMeta">,
-): TransformStream<Uint8Array, ScrcpyMediaStreamPacket> {
-    // Optimized path for video frames only
+): TransformStream<Uint8Array, ScrcpyVideoStreamPacket> {
+    // Quick path for raw stream without frame meta
     if (!options.sendFrameMeta) {
         return new TransformStream({
             transform(chunk, controller) {

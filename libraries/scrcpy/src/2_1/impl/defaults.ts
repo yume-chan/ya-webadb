@@ -5,4 +5,4 @@ export const Defaults = {
     ...PrevImpl.Defaults,
     video: true,
     audioSource: "output",
-} as const satisfies Required<Init<true>>;
+} as const satisfies Required<Init>;

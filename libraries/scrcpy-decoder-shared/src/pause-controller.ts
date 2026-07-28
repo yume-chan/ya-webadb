@@ -3,7 +3,7 @@ import { PromiseResolver } from "@yume-chan/async";
 import type {
     ScrcpyMediaStreamConfigurationPacket,
     ScrcpyMediaStreamDataPacket,
-    ScrcpyMediaStreamPacket,
+    ScrcpyVideoStreamPacket,
 } from "@yume-chan/scrcpy";
 import type { TransformStreamDefaultController } from "@yume-chan/stream-extra";
 import { TransformStream } from "@yume-chan/stream-extra";
@@ -250,7 +250,7 @@ export class ScrcpyVideoDecoderPauseController
 }
 
 export namespace ScrcpyVideoDecoderPauseController {
-    export type Input = ScrcpyMediaStreamPacket;
+    export type Input = ScrcpyVideoStreamPacket;
     export type Output =
         | ScrcpyMediaStreamConfigurationPacket
         | (ScrcpyMediaStreamDataPacket & { skipRendering: boolean });
