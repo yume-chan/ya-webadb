@@ -641,6 +641,13 @@ importers:
       json5:
         specifier: ^2.2.3
         version: 2.2.3
+      semver:
+        specifier: ^7.8.5
+        version: 7.8.5
+    devDependencies:
+      '@types/semver':
+        specifier: ^7.7.1
+        version: 7.7.1
 
   toolchain/side-effect-test:
     dependencies:
@@ -1004,6 +1011,9 @@ packages:
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
+
+  '@types/semver@7.7.1':
+    resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
 
   '@types/w3c-web-usb@1.0.14':
     resolution: {integrity: sha512-Qu3Nn6JFuF4+sHKYl+IcX9vYiI40ogleXzFFSxoE1W94rG98o/kXs8uJ0QSfFzuwBCZWlGfUGpPkgwuuX4PchA==}
@@ -2133,6 +2143,8 @@ snapshots:
       undici-types: 8.3.0
 
   '@types/resolve@1.20.2': {}
+
+  '@types/semver@7.7.1': {}
 
   '@types/w3c-web-usb@1.0.14': {}
 
