@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-credential-nodejs",
-    "version": "2.0.0",
+    "version": "3.0.0-beta.0",
     "description": "ADB credential store for Node.js",
     "keywords": [
         "typescript"
@@ -31,8 +31,8 @@
         "test": "run-test"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^",
-        "@yume-chan/adb-credential-web": "workspace:^"
+        "@yume-chan/adb": "workspace:*",
+        "@yume-chan/adb-credential-web": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "^26.0.0",

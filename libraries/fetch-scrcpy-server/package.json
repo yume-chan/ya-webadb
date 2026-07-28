@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/fetch-scrcpy-server",
-    "version": "1.0.0",
+    "version": "3.0.0-beta.0",
     "description": "A script to download Scrcpy server binary.",
     "keywords": [
         "scrcpy"
