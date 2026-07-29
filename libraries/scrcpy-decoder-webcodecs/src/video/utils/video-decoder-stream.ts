@@ -380,11 +380,15 @@ export class VideoDecoderStream
             },
         });
 
-        decoder.addEventListener(
-            "dequeue",
-            () => this.#onDequeue.fire(undefined),
-            { signal: this.#abortController.signal },
-        );
+        // `dequeue` event added in Chrome 106,
+        // before that `VideoDecoder` is not a `EventTarget`
+        if (typeof decoder.addEventListener === "function") {
+            decoder.addEventListener(
+                "dequeue",
+                () => this.#onDequeue.fire(undefined),
+                { signal: this.#abortController.signal },
+            );
+        }
 
         decoder.configure(config);
 
