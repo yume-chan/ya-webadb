@@ -86,4 +86,82 @@ describe("AdbServerClient", () => {
         ]);
         await socket.close();
     });
+
+    it("forwards connection options through waitFor version preflight", async () => {
+        const abortController = new AbortController();
+        const options: AdbServerClient.ServerConnectionOptions = {
+            signal: abortController.signal,
+            unref: true,
+        };
+        const receivedOptions: (
+            AdbServerClient.ServerConnectionOptions | undefined
+        )[] = [];
+        const responses = [encodeUtf8("OKAY00040029"), encodeUtf8("OKAYOKAY")];
+        let connectionIndex = 0;
+        const connector: AdbServerClient.ServerConnector = {
+            connect(received) {
+                receivedOptions.push(received);
+                const response = responses[connectionIndex]!;
+                connectionIndex += 1;
+                return createConnection(response, []);
+            },
+            addReverseTunnel() {
+                throw new Error("Not implemented");
+            },
+            removeReverseTunnel() {
+                throw new Error("Not implemented");
+            },
+            clearReverseTunnels() {
+                throw new Error("Not implemented");
+            },
+        };
+        const client = new AdbServerClient(connector);
+
+        await client.waitFor({ serial: "serial" }, "disconnect", options);
+
+        assert.strictEqual(receivedOptions.length, 2);
+        for (const received of receivedOptions) {
+            assert.strictEqual(received?.signal, abortController.signal);
+            assert.strictEqual(received?.unref, true);
+        }
+    });
+
+    it("forwards connection options through waitForDisconnect version preflight", async () => {
+        const abortController = new AbortController();
+        const options: AdbServerClient.ServerConnectionOptions = {
+            signal: abortController.signal,
+            unref: true,
+        };
+        const receivedOptions: (
+            AdbServerClient.ServerConnectionOptions | undefined
+        )[] = [];
+        const responses = [encodeUtf8("OKAY00040029"), encodeUtf8("OKAYOKAY")];
+        let connectionIndex = 0;
+        const connector: AdbServerClient.ServerConnector = {
+            connect(received) {
+                receivedOptions.push(received);
+                const response = responses[connectionIndex]!;
+                connectionIndex += 1;
+                return createConnection(response, []);
+            },
+            addReverseTunnel() {
+                throw new Error("Not implemented");
+            },
+            removeReverseTunnel() {
+                throw new Error("Not implemented");
+            },
+            clearReverseTunnels() {
+                throw new Error("Not implemented");
+            },
+        };
+        const client = new AdbServerClient(connector);
+
+        await client.waitForDisconnect(42n, options);
+
+        assert.strictEqual(receivedOptions.length, 2);
+        for (const received of receivedOptions) {
+            assert.strictEqual(received?.signal, abortController.signal);
+            assert.strictEqual(received?.unref, true);
+        }
+    });
 });

@@ -437,7 +437,7 @@ export class AdbServerClient {
         options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<void> {
         if (state === "disconnect") {
-            await this.validateVersion(41);
+            await this.validateVersion(41, options);
         }
 
         return this.#waitForUnchecked(device, state, options);
@@ -447,7 +447,7 @@ export class AdbServerClient {
         transportId: bigint,
         options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<void> {
-        const serverVersion = await this.getVersion();
+        const serverVersion = await this.getVersion(options);
         if (serverVersion >= 41) {
             return this.#waitForUnchecked(
                 { transportId },
