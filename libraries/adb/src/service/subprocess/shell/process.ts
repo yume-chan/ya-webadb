@@ -98,16 +98,13 @@ export class AdbShellProtocolProcessImpl implements AdbShellProtocolProcess {
                 },
             );
 
-        if (signal) {
-            // `signal` won't affect `this.stdout` and `this.stderr`
-            // So remaining data can still be read
-            // (call `controller.error` will discard all pending data)
-
-            signal.addEventListener("abort", () => {
-                exited.reject(signal.reason);
-                this.#socket.close();
-            });
-        }
+        // `signal` won't affect `this.stdout` and `this.stderr`
+        // So remaining data can still be read
+        // (call `controller.error` will discard all pending data)
+        signal?.addEventListener("abort", () => {
+            exited.reject(signal.reason);
+            this.#socket.close();
+        });
 
         this.#writer = this.#socket.writable.getWriter();
         this.#stdin = new MaybeConsumable.WritableStream<Uint8Array>({
