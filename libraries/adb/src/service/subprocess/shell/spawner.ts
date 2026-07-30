@@ -67,17 +67,21 @@ export function adbShellProtocolSpawner(
 
         processPromise.wait = (options) => {
             const waitPromise = processPromise.then(async (process) => {
-                const [, stdout, stderr, exitCode] = await Promise.all([
-                    options?.stdin?.pipeTo(process.stdin),
-                    process.stdout.pipeThrough(new ToArrayStream()),
-                    process.stderr.pipeThrough(new ToArrayStream()),
-                    process.exited,
-                ]);
-                return {
-                    stdout,
-                    stderr,
-                    exitCode,
-                } satisfies AdbShellProtocolSpawner.WaitResult<Uint8Array[]>;
+                try {
+                    const [, stdout, stderr, exitCode] = await Promise.all([
+                        options?.stdin?.pipeTo(process.stdin),
+                        process.stdout.pipeThrough(new ToArrayStream()),
+                        process.stderr.pipeThrough(new ToArrayStream()),
+                        process.exited,
+                    ]);
+                    return {
+                        stdout,
+                        stderr,
+                        exitCode,
+                    } satisfies AdbShellProtocolSpawner.WaitResult<Uint8Array[]>;
+                } finally {
+                    await process.kill();
+                }
             });
 
             return createLazyPromise(
