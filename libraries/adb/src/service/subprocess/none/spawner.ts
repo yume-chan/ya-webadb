@@ -55,11 +55,15 @@ export function adbNoneProtocolSpawner(
 
         processPromise.wait = (options) => {
             const waitPromise = processPromise.then(async (process) => {
-                const [, output] = await Promise.all([
-                    options?.stdin?.pipeTo(process.stdin),
-                    process.output.pipeThrough(new ToArrayStream()),
-                ]);
-                return output;
+                try {
+                    const [, output] = await Promise.all([
+                        options?.stdin?.pipeTo(process.stdin),
+                        process.output.pipeThrough(new ToArrayStream()),
+                    ]);
+                    return output;
+                } finally {
+                    await process.kill();
+                }
             });
 
             return createLazyPromise(
