@@ -1,6 +1,3 @@
-// cspell: ignore vsock
-// cspell: ignore localfilesystem
-
 import type {
     AddressInfo,
     IpcSocketConnectOpts,
@@ -147,7 +144,7 @@ function getServerPort() {
 }
 
 /**
- * An `AdbServerClient.ServerConnector` implementation for Node.js.
+ * An {@link AdbServerClient.ServerConnector} implementation for Node.js.
  */
 export class AdbServerNodeTcpConnector
     implements AdbServerClient.ServerConnector
