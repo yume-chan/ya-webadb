@@ -193,8 +193,10 @@ export class AdbServerClient {
     /**
      * `adb version`
      */
-    async getVersion(): Promise<number> {
-        const connection = await this.createConnection("host:version");
+    async getVersion(
+        options?: AdbServerClient.ServerConnectionOptions,
+    ): Promise<number> {
+        const connection = await this.createConnection("host:version", options);
         try {
             const length = hexToNumber(await connection.readExactly(4));
             const version = hexToNumber(await connection.readExactly(length));
@@ -204,8 +206,11 @@ export class AdbServerClient {
         }
     }
 
-    async validateVersion(minimalVersion: number) {
-        const version = await this.getVersion();
+    async validateVersion(
+        minimalVersion: number,
+        options?: AdbServerClient.ServerConnectionOptions,
+    ) {
+        const version = await this.getVersion(options);
         if (version < minimalVersion) {
             throw new Error(
                 `adb server version (${version}) doesn't match this client (${minimalVersion})`,
@@ -324,34 +329,36 @@ export class AdbServerClient {
      * Creates a connection that will forward the service to device.
      * @param device The device selector
      * @param service The service to forward
+     * @param options The server connection options
      * @returns An `AdbServerClient.Socket` that can be used to communicate with the service
      */
     async createDeviceConnection(
         device: AdbServerClient.DeviceSelector,
         service: string,
+        options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<AdbServerClient.Socket> {
         let switchService: string;
         let transportId: bigint | undefined;
         if (!device) {
-            await this.validateVersion(41);
+            await this.validateVersion(41, options);
             switchService = `host:tport:any`;
         } else if ("transportId" in device) {
             switchService = `host:transport-id:${device.transportId}`;
             transportId = device.transportId;
         } else if ("serial" in device) {
-            await this.validateVersion(41);
+            await this.validateVersion(41, options);
             switchService = `host:tport:serial:${device.serial}`;
         } else if ("usb" in device) {
-            await this.validateVersion(41);
+            await this.validateVersion(41, options);
             switchService = `host:tport:usb`;
         } else if ("tcp" in device) {
-            await this.validateVersion(41);
+            await this.validateVersion(41, options);
             switchService = `host:tport:local`;
         } else {
             throw new TypeError("Invalid device selector");
         }
 
-        const connection = await this.createConnection(switchService);
+        const connection = await this.createConnection(switchService, options);
 
         try {
             await connection.writeString(service);
@@ -430,7 +437,7 @@ export class AdbServerClient {
         options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<void> {
         if (state === "disconnect") {
-            await this.validateVersion(41);
+            await this.validateVersion(41, options);
         }
 
         return this.#waitForUnchecked(device, state, options);
@@ -440,7 +447,7 @@ export class AdbServerClient {
         transportId: bigint,
         options?: AdbServerClient.ServerConnectionOptions,
     ): Promise<void> {
-        const serverVersion = await this.getVersion();
+        const serverVersion = await this.getVersion(options);
         if (serverVersion >= 41) {
             return this.#waitForUnchecked(
                 { transportId },
