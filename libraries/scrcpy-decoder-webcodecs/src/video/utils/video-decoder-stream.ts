@@ -302,7 +302,8 @@ export class VideoDecoderStream
                     frame.close();
                 }
             },
-            error: (error) => {
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            error: async (error) => {
                 if (error.name === "QuotaExceededError") {
                     // Chrome reclaims inactive `VideoDecoder`'s after 90 seconds
                     // (for example due to pausing decoding when the document is hidden).
@@ -349,9 +350,12 @@ export class VideoDecoderStream
                     this.#state.type === "decoding" &&
                     config.hardwareAcceleration !== "prefer-software"
                 ) {
-                    try {
-                        config.hardwareAcceleration = "prefer-software";
-                        this.#hardwareAcceleration.fire("prefer-software");
+                    config.hardwareAcceleration = "prefer-software";
+                    // Codecs like H.265 only support hardware acceleration,
+                    // so we need to check if the software decoder is supported.
+                    const support =
+                        await VideoDecoder.isConfigSupported(config);
+                    if (support.supported) {
                         const decoder = this.#createDecoder(config);
 
                         // Replay frames with rendering skipping
@@ -367,10 +371,9 @@ export class VideoDecoderStream
                         }
 
                         // Update state
+                        this.#hardwareAcceleration.fire("prefer-software");
                         this.#state.decoder = decoder;
                         return;
-                    } catch {
-                        // ignore, report original error to stream
                     }
                 }
 
