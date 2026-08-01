@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-server-node-tcp",
-    "version": "3.0.0-beta.0",
+    "version": "3.0.0-beta.1",
     "description": "ADB server connector for `@yume-chan/adb` using Node.js' `net` module",
     "keywords": [
         "adb",

@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-credential-nodejs",
-    "version": "3.0.0-beta.0",
+    "version": "3.0.0-beta.1",
     "description": "ADB credential store for Node.js",
     "keywords": [
         "typescript"

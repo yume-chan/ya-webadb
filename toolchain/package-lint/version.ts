@@ -1,22 +1,37 @@
 /// <reference types="node" />
 
 import { execSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { readdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { inc, parse, SemVer } from "semver";
 
-const root = resolve(import.meta.dirname, "..", "..", "libraries");
-const packageNames = await readdir(root);
+function findRootFolder(current: string): string {
+    const root = resolve(current, "..");
+    if (root === current) {
+        throw new Error("Could not find root folder");
+    }
+    if (existsSync(resolve(root, "pnpm-workspace.yaml"))) {
+        return root;
+    }
+    return findRootFolder(root);
+}
+
+const root = findRootFolder(fileURLToPath(import.meta.url));
+const librariesRoot = resolve(root, "libraries");
+const packageNames = await readdir(librariesRoot);
 
 let maxVersion: SemVer = parse("0.0.0")!;
 
 const packages = await Promise.all(
     packageNames.map(async (name) => {
-        const folder = resolve(root, name);
+        const folder = resolve(librariesRoot, name);
         const packageJsonPath = resolve(folder, "package.json");
-        const { default: packageJson } = await import(packageJsonPath, {
-            with: { type: "json" },
-        });
+        const { default: packageJson } = await import(
+            pathToFileURL(packageJsonPath).href,
+            { with: { type: "json" } }
+        );
         const version = parse(packageJson.version, true, true);
         if (version.compare(maxVersion) > 0) {
             maxVersion = version;
@@ -136,5 +151,6 @@ if (process.argv.includes("dry-run")) {
 }
 
 for (const command of commands) {
+    console.log("Run", command);
     execSync(command);
 }
