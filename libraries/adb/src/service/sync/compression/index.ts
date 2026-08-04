@@ -1,1 +1,1 @@
-export * as Compression from "./compression.js";
+export * as Compression from "./adapters.js";

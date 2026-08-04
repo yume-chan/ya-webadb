@@ -1,0 +1,48 @@
+{
+    "name": "@yume-chan/adb-compression-zstd",
+    "version": "3.0.0-beta.1",
+    "description": "Zstandard compression adapter for @yume-chan/adb",
+    "keywords": [
+        "adb",
+        "android-phone"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-compression-zstd#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "libraries/adb-compression-zstd"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "sideEffects": false,
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+        "prepublishOnly": "npm run build",
+        "test": "run-test"
+    },
+    "dependencies": {
+        "@structured-world/structured-zstd": "^0.0.49",
+        "@yume-chan/adb": "workspace:*",
+        "@yume-chan/stream-extra": "workspace:*",
+        "comlink": "^4.4.2"
+    },
+    "devDependencies": {
+        "@types/node": "^26.1.1",
+        "@yume-chan/eslint-config": "workspace:^",
+        "@yume-chan/test-runner": "workspace:^",
+        "@yume-chan/tsconfig": "workspace:^",
+        "prettier": "^3.9.6",
+        "typescript": "^6.0.3"
+    }
+}

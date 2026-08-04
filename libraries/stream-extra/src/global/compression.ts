@@ -21,7 +21,7 @@ export type DecompressionStream = TransformStream<
 
 interface DecompressionStreamConstructor {
     prototype: DecompressionStream;
-    new (): DecompressionStream;
+    new (format: string): DecompressionStream;
 }
 
 export const DecompressionStream =

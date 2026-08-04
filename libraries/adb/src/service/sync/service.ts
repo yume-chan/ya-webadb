@@ -241,7 +241,7 @@ export class Service {
                 )
             ) {
                 throw new Error(
-                    `Compression type ${options.compression} is not supported`,
+                    `Compression type ${Compression.FormatNameMap[options.compression]} is not supported`,
                 );
             }
         }
