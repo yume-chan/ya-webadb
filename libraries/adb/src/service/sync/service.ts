@@ -61,12 +61,13 @@ export interface WriteOptions {
     /**
      * The format to compress the file stream for sending.
      *
-     * If the device doesn't support compressed sending, it will be ignored.
+     * If the device doesn't support compressed sending, the value will be ignored.
      *
-     * If the device or current runtime doesn't support the specified format,
+     * Otherwise, if the device or current runtime doesn't support the specified format,
      * an Error will be thrown.
-     * {@link Compression.canUseFormat} can be used to check if
-     * the device and current runtime both supports the format.
+     *
+     * If `undefined` is specified, automatically choose the best format
+     * supported by both device and current runtime.
      */
     compression?: Compression.Format | undefined;
     dryRun?: boolean | undefined;
@@ -217,7 +218,7 @@ export class Service {
      *
      * @param options The content and options of the file to write.
      */
-    async write(options: WriteOptions): Promise<void> {
+    async write(options: WriteOptions): Promise<Send.SendResult> {
         if (this.needPushMkdirWorkaround) {
             // It may fail if `filename` already exists.
             // Ignore the result.
@@ -246,7 +247,7 @@ export class Service {
             }
         }
 
-        await Send.send({
+        return await Send.send({
             version: this.supportsSendReceive2 ? 2 : 1,
             pool: this.#socketPool,
             ...options,
