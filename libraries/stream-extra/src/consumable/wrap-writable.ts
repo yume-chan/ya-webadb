@@ -1,4 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
+
 import type { Consumable } from "../consumable.js";
 import { WritableStream } from "../global/index.js";
 
@@ -20,7 +21,7 @@ export class ConsumableWrapWritableStream<in T> extends WritableStream<
                 // because `writer.write` resolves after the inner `write` callback finishes
                 return chunk.tryConsume(async (chunk) => {
                     if (hooks?.write) {
-                        await hooks.write(chunk as T);
+                        await hooks.write(chunk);
                     }
                     await writer.write(chunk);
                 });

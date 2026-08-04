@@ -1,4 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
+
 import { WritableStream } from "../global/index.js";
 import type { MaybeConsumable } from "../maybe-consumable.js";
 
