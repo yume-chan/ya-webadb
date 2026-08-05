@@ -33,7 +33,10 @@ export interface AdbTransport extends Closeable {
 
     readonly clientFeatures: readonly AdbFeature[];
 
-    connect(service: string): MaybePromiseLike<Adb.Socket>;
+    connect(
+        service: string,
+        options?: AdbTransport.ConnectOptions,
+    ): MaybePromiseLike<Adb.Socket>;
 
     addReverseTunnel(
         handler: Adb.IncomingSocketHandler,
@@ -43,6 +46,12 @@ export interface AdbTransport extends Closeable {
     removeReverseTunnel(address: string): MaybePromiseLike<void>;
 
     clearReverseTunnels(): MaybePromiseLike<void>;
+}
+
+export namespace AdbTransport {
+    export interface ConnectOptions {
+        unref?: boolean | undefined;
+    }
 }
 
 export class Adb implements Closeable {
@@ -101,8 +110,11 @@ export class Adb implements Closeable {
     /**
      * Creates a new ADB Socket to the specified service or socket address.
      */
-    async createSocket(service: string): Promise<Adb.Socket> {
-        return this.#transport.connect(service);
+    async createSocket(
+        service: string,
+        options?: AdbTransport.ConnectOptions,
+    ): Promise<Adb.Socket> {
+        return await this.#transport.connect(service, options);
     }
 
     async createSocketAndWait(service: string): Promise<string> {

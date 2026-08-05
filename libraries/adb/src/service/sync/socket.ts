@@ -38,16 +38,23 @@ function i32ToHex(i: number) {
     return "0x" + i.toString(16).padStart(8, "0");
 }
 
+let NextId = 0;
+
 export class Socket implements AsyncExactReadable {
     static readonly NumberRequest = NumberRequest;
     static readonly FailResponse = FailResponse;
 
+    #id: number;
     readonly #socket: Adb.Socket;
     readonly #writer: WritableStreamDefaultWriter<MaybeConsumable<Uint8Array>>;
     readonly #readable: BufferedReadableStream;
     readonly #writeLock = new AutoResetEvent();
     readonly #combiner: BufferCombiner;
     #idleTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    get id() {
+        return this.#id;
+    }
 
     get position() {
         return this.#readable.position;
@@ -58,6 +65,9 @@ export class Socket implements AsyncExactReadable {
     }
 
     constructor(socket: Adb.Socket, bufferSize: number) {
+        this.#id = NextId;
+        NextId += 1;
+
         this.#socket = socket;
         this.#writer = socket.writable.getWriter();
         this.#readable = new BufferedReadableStream(socket.readable);
@@ -73,6 +83,10 @@ export class Socket implements AsyncExactReadable {
     startIdleTimer(timeout: number, callback: () => void) {
         this.clearIdleTimer();
         this.#idleTimeoutId = setTimeout(callback, timeout);
+        if (typeof this.#idleTimeoutId === "object") {
+            // Node.js: unref the timer so that it won't keep the process alive
+            (this.#idleTimeoutId as { unref?: () => void }).unref?.();
+        }
     }
 
     /**

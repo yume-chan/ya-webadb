@@ -24,6 +24,9 @@ export class Ref {
     }
 
     ref() {
+        if (this.#intervalId !== undefined) {
+            return;
+        }
         // `setInterval` can keep current Node.js alive, the delay value doesn't matter
         this.#intervalId = setInterval(() => {}, 60 * 1000);
     }

@@ -1,4 +1,5 @@
 import type { Adb } from "../../adb.js";
+import { Ref } from "../../utils/ref.js";
 
 import { Error as AdbSyncError, Socket } from "./socket.js";
 
@@ -8,6 +9,7 @@ export class SocketPool {
     readonly #idleTimeout: number;
     readonly #availableSockets: Socket[] = [];
     readonly #inUseSockets = new Set<Socket>();
+    #ref = new Ref({ unref: true });
     #closed = false;
 
     constructor(adb: Adb, maxSize = 4, idleTimeout = 60000) {
@@ -26,18 +28,31 @@ export class SocketPool {
             // Clear the idle timeout
             socket.clearIdleTimer();
             this.#inUseSockets.add(socket);
+            this.#ref.ref();
             return socket;
         }
 
         // Create a new socket
-        const adbSocket = await this.#adb.createSocket("sync:");
-        if (this.#closed) {
-            await adbSocket.close();
-            throw new Error("SocketPool is closed");
+        try {
+            this.#ref.ref();
+
+            const adbSocket = await this.#adb.createSocket("sync:", {
+                unref: true,
+            });
+
+            if (this.#closed) {
+                await adbSocket.close();
+                throw new Error("SocketPool is closed");
+            }
+
+            const socket = new Socket(adbSocket, this.#adb.maxPayloadSize);
+            this.#inUseSockets.add(socket);
+
+            return socket;
+        } catch (e) {
+            this.#ref.unref();
+            throw e;
         }
-        const socket = new Socket(adbSocket, this.#adb.maxPayloadSize);
-        this.#inUseSockets.add(socket);
-        return socket;
     }
 
     async withSocket<T>(fn: (socket: Socket) => Promise<T>): Promise<T> {
@@ -75,6 +90,10 @@ export class SocketPool {
     async release(socket: Socket, discard = false): Promise<void> {
         if (!this.#inUseSockets.delete(socket)) {
             return;
+        }
+
+        if (this.#inUseSockets.size === 0) {
+            this.#ref.unref();
         }
 
         // If discarding or we already have enough sockets in the pool, close this socket

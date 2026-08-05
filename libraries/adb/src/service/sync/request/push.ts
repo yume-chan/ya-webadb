@@ -260,10 +260,19 @@ export async function sendV2({
     const sendStream = new SendWritableStream(pool, socket, mtime);
 
     if (!compressStream) {
-        void distributeStream.readable.pipeTo(sendStream).catch(NOOP);
+        const pipe = distributeStream.readable.pipeTo(sendStream);
 
+        const writer = distributeStream.writable.getWriter();
         return {
-            writable: distributeStream.writable,
+            writable: new MaybeConsumable.WritableStream({
+                write(chunk) {
+                    return writer.write(chunk);
+                },
+                async close() {
+                    await writer.close();
+                    await pipe;
+                },
+            }),
             get bytesWritten() {
                 return sendStream.bytesWritten;
             },
@@ -274,21 +283,23 @@ export async function sendV2({
         };
     }
 
-    void compressStream.readable
+    const pipe = compressStream.readable
         .pipeThrough(distributeStream)
-        .pipeTo(sendStream)
-        .catch(NOOP);
+        .pipeTo(sendStream);
 
+    const writer = compressStream.writable.getWriter();
     let bytesWritten = 0;
     return {
-        writable: new MaybeConsumable.WrapWritableStream(
-            compressStream.writable,
-            {
-                write(chunk) {
-                    bytesWritten += chunk.length;
-                },
+        writable: new MaybeConsumable.WritableStream({
+            write(chunk) {
+                bytesWritten += chunk.length;
+                return writer.write(chunk);
             },
-        ),
+            async close() {
+                await writer.close();
+                await pipe;
+            },
+        }),
         get bytesWritten() {
             return bytesWritten;
         },

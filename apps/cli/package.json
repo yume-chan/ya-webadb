@@ -38,10 +38,12 @@
         "@yume-chan/android-bin": "workspace:^",
         "@yume-chan/stream-extra": "workspace:^",
         "commander": "^15.0.0",
-        "source-map-support": "^0.5.21"
+        "source-map-support": "^0.5.21",
+        "wtfnode": "^0.10.1"
     },
     "devDependencies": {
         "@types/node": "^26.1.1",
+        "@types/wtfnode": "^0.10.0",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.9.6",
