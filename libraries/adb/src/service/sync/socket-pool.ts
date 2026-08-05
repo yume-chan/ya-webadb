@@ -32,10 +32,11 @@ export class SocketPool {
             return socket;
         }
 
-        // Create a new socket
         try {
+            // Add ref early to keep the process alive while initializing the new socket
             this.#ref.ref();
 
+            // Create a new socket
             const adbSocket = await this.#adb.createSocket("sync:", {
                 unref: true,
             });
@@ -92,9 +93,7 @@ export class SocketPool {
             return;
         }
 
-        if (this.#inUseSockets.size === 0) {
-            this.#ref.unref();
-        }
+        this.#ref.unref();
 
         // If discarding or we already have enough sockets in the pool, close this socket
         if (discard || this.#availableSockets.length >= this.#maxSize) {
