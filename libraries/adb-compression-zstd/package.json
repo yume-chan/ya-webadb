@@ -1,11 +1,10 @@
 {
-    "name": "@yume-chan/adb-cli",
-    "private": true,
-    "version": "0.0.19",
-    "description": "Re-implement `adb`",
+    "name": "@yume-chan/adb-compression-zstd",
+    "version": "3.0.0-beta.1",
+    "description": "Zstandard compression adapter for @yume-chan/adb",
     "keywords": [
         "adb",
-        "cli"
+        "android-phone"
     ],
     "license": "MIT",
     "author": {
@@ -13,11 +12,11 @@
         "email": "cnsimonchan@live.com",
         "url": "https://chensi.moe/blog"
     },
-    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/apps/adb-cli#readme",
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-compression-zstd#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/yume-chan/ya-webadb.git",
-        "directory": "apps/adb-cli"
+        "directory": "libraries/adb-compression-zstd"
     },
     "bugs": {
         "url": "https://github.com/yume-chan/ya-webadb/issues"
@@ -25,26 +24,23 @@
     "type": "module",
     "main": "esm/index.js",
     "types": "esm/index.d.ts",
+    "sideEffects": false,
     "scripts": {
         "build": "tsc -p tsconfig.build.json",
-        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4"
-    },
-    "bin": {
-        "tango-cli": "esm/index.js"
+        "lint": "run-eslint && prettier src/**/*.ts --write --tab-width 4",
+        "prepublishOnly": "npm run build",
+        "test": "run-test"
     },
     "dependencies": {
-        "@yume-chan/adb": "workspace:^",
-        "@yume-chan/adb-server-node-tcp": "workspace:^",
-        "@yume-chan/android-bin": "workspace:^",
-        "@yume-chan/stream-extra": "workspace:^",
-        "commander": "^15.0.0",
-        "source-map-support": "^0.5.21",
-        "wtfnode": "^0.10.1"
+        "@structured-world/structured-zstd": "^0.0.49",
+        "@yume-chan/adb": "workspace:*",
+        "@yume-chan/stream-extra": "workspace:*",
+        "comlink": "^4.4.2"
     },
     "devDependencies": {
         "@types/node": "^26.1.1",
-        "@types/wtfnode": "^0.10.0",
         "@yume-chan/eslint-config": "workspace:^",
+        "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
         "prettier": "^3.9.6",
         "typescript": "^6.0.3"

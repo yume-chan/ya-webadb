@@ -87,8 +87,7 @@ interface AdbScrcpyClientInit<TOptions extends AdbScrcpyOptions<object>> {
     videoStream: ReadableStream<Uint8Array> | undefined;
     audioStream: ReadableStream<Uint8Array> | undefined;
     controlStream:
-        | ReadableWritablePair<Uint8Array, Consumable<Uint8Array>>
-        | undefined;
+        ReadableWritablePair<Uint8Array, Consumable<Uint8Array>> | undefined;
 }
 
 export interface AdbScrcpyAudioStreamSuccessMetadata extends Omit<
@@ -107,11 +106,11 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
     static async pushServer(
         adb: Adb,
         file: ReadableStream<MaybeConsumable<Uint8Array>>,
-        filename = DefaultServerPath,
+        path = DefaultServerPath,
     ) {
         await adb.sync.write({
-            filename,
-            file,
+            path,
+            readable: file,
         });
     }
 

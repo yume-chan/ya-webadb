@@ -28,10 +28,16 @@ importers:
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
+      wtfnode:
+        specifier: ^0.10.1
+        version: 0.10.1
     devDependencies:
       '@types/node':
         specifier: ^26.1.1
         version: 26.1.1
+      '@types/wtfnode':
+        specifier: ^0.10.0
+        version: 0.10.0
       '@yume-chan/eslint-config':
         specifier: workspace:^
         version: link:../../toolchain/eslint-config
@@ -62,6 +68,40 @@ importers:
       '@yume-chan/struct':
         specifier: workspace:*
         version: link:../struct
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.1
+        version: 26.1.1
+      '@yume-chan/eslint-config':
+        specifier: workspace:^
+        version: link:../../toolchain/eslint-config
+      '@yume-chan/test-runner':
+        specifier: workspace:^
+        version: link:../../toolchain/test-runner
+      '@yume-chan/tsconfig':
+        specifier: workspace:^
+        version: link:../../toolchain/tsconfig
+      prettier:
+        specifier: ^3.9.6
+        version: 3.9.6
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  libraries/adb-compression-zstd:
+    dependencies:
+      '@structured-world/structured-zstd':
+        specifier: ^0.0.49
+        version: 0.0.49
+      '@yume-chan/adb':
+        specifier: workspace:*
+        version: link:../adb
+      '@yume-chan/stream-extra':
+        specifier: workspace:*
+        version: link:../stream-extra
+      comlink:
+        specifier: ^4.4.2
+        version: 4.4.2
     devDependencies:
       '@types/node':
         specifier: ^26.1.1
@@ -981,6 +1021,10 @@ packages:
     resolution: {integrity: sha512-TV7t8GKYaJWsn00tFDqBw8+Uqmr8A0fRU1tvTQhyZzGv0sJCGRQL3JGMI3ucuKo3XIZdUP+Lx7/gh2t3lewy7g==}
     engines: {node: '>=14.16'}
 
+  '@structured-world/structured-zstd@0.0.49':
+    resolution: {integrity: sha512-AUITSGSbxAu9C2nsj8HPTBsyjvzp+0Tn+kWvXcsvhg7UwmFdXvLJ7C39qDXW1Jy7z3Ei0u6mtem1fwgLDmqnsQ==}
+    engines: {node: '>=18'}
+
   '@szmarczak/http-timer@5.0.1':
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
     engines: {node: '>=14.16'}
@@ -1017,6 +1061,9 @@ packages:
 
   '@types/w3c-web-usb@1.0.14':
     resolution: {integrity: sha512-Qu3Nn6JFuF4+sHKYl+IcX9vYiI40ogleXzFFSxoE1W94rG98o/kXs8uJ0QSfFzuwBCZWlGfUGpPkgwuuX4PchA==}
+
+  '@types/wtfnode@0.10.0':
+    resolution: {integrity: sha512-ItEhqP60vy3o3cXYapNHOPNyKE0SiDteX0hf3LdJbGbH0F7Il50G4N7Zr+VLiBWvh8hSR2e6EZ8xRHcO2zqoLQ==}
 
   '@typescript-eslint/eslint-plugin@8.65.0':
     resolution: {integrity: sha512-IEgob78X12rHpUmtcwFsXhZdVGJtwTVP8FiCLZkR6GlYVrl2PcuB+KhCE5BlVC/eQpQnu8WXRtkHZuPar+gCRA==}
@@ -1888,6 +1935,9 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  wasm-feature-detect@1.8.0:
+    resolution: {integrity: sha512-zksaLKM2fVlnB5jQQDqKXXwYHLQUVH9es+5TOOHwGOVJOCeRBCiPjwSg+3tN2AdTCzjgli4jijCH290kXb/zWQ==}
+
   web-streams-polyfill@3.3.3:
     resolution: {integrity: sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==}
     engines: {node: '>= 8'}
@@ -1900,6 +1950,11 @@ packages:
   word-wrap@1.2.5:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
+
+  wtfnode@0.10.1:
+    resolution: {integrity: sha512-4mcHdlvcdSytsbFueN6QYZxmh5K7REawBk//ZOrJrtVOe548Qsq4GNEm/OUfZATqDnsX4g8uBbzmN7NdEZx09Q==}
+    engines: {node: '>=0.10.0'}
+    hasBin: true
 
   yauzl@2.10.0:
     resolution: {integrity: sha512-p4a9I6X6nu6IhoGmBqAcbJy1mlC4j27vEPZX9F4L4/vZT3Lyq1VkFHw/V/PUcB9Buo+DG3iHkT0x3Qya58zc3g==}
@@ -2132,6 +2187,10 @@ snapshots:
 
   '@sindresorhus/is@5.6.0': {}
 
+  '@structured-world/structured-zstd@0.0.49':
+    dependencies:
+      wasm-feature-detect: 1.8.0
+
   '@szmarczak/http-timer@5.0.1':
     dependencies:
       defer-to-connect: 2.0.1
@@ -2162,6 +2221,8 @@ snapshots:
   '@types/semver@7.7.1': {}
 
   '@types/w3c-web-usb@1.0.14': {}
+
+  '@types/wtfnode@0.10.0': {}
 
   '@typescript-eslint/eslint-plugin@8.65.0(@typescript-eslint/parser@8.65.0(eslint@10.8.0)(typescript@6.0.3))(eslint@10.8.0)(typescript@6.0.3)':
     dependencies:
@@ -3034,6 +3095,8 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
+  wasm-feature-detect@1.8.0: {}
+
   web-streams-polyfill@3.3.3: {}
 
   which@2.0.2:
@@ -3041,6 +3104,8 @@ snapshots:
       isexe: 2.0.0
 
   word-wrap@1.2.5: {}
+
+  wtfnode@0.10.1: {}
 
   yauzl@2.10.0:
     dependencies:

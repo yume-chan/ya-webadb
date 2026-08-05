@@ -1,10 +1,14 @@
-import { ReadableStream } from "@yume-chan/stream-extra";
+import type { TransformStream } from "@yume-chan/stream-extra";
+import { InspectStream, ReadableStream } from "@yume-chan/stream-extra";
 import type { StructValue } from "@yume-chan/struct";
 import { buffer, struct, u32 } from "@yume-chan/struct";
 
 import { RequestId, ResponseId } from "../id/index.js";
+import { Compression } from "../index-ns.js";
 import type { SocketPool } from "../socket-pool.js";
 import { Error as AdbSyncError } from "../socket.js";
+
+import { SyncFlag } from "./flag.js";
 
 export const DataResponse = struct(
     { data: buffer(u32) },
@@ -13,37 +17,141 @@ export const DataResponse = struct(
 
 export type DataResponse = StructValue<typeof DataResponse>;
 
-export async function* generator(
-    pool: SocketPool,
-    path: string,
-): AsyncGenerator<Uint8Array, void, void> {
-    const socket = await pool.acquire();
-    let completed = false;
-    let error: unknown;
-
-    try {
-        await socket.writeRequest(RequestId.Receive, path);
-        for await (const packet of socket.readResponses(
-            ResponseId.Data,
-            DataResponse,
-        )) {
-            yield packet.data;
-        }
-        completed = true;
-    } catch (e) {
-        error = e;
-        throw e;
-    } finally {
-        await pool.release(
-            socket,
-            !(completed || error instanceof AdbSyncError),
-        );
-    }
+export interface PullSession {
+    /**
+     * The readable stream to read the file content from.
+     */
+    readable: ReadableStream<Uint8Array>;
+    /**
+     * Gets the number of bytes read from {@link readable}.
+     */
+    bytesRead: number;
+    /**
+     * When using Pull v2, gets the compression format used (might be `None`).
+     *
+     * When using Pull v1, this will always be `undefined`.
+     */
+    compression?: Compression.Format | undefined;
+    /**
+     * When using Pull v2, gets the size of the compressed data received from the device.
+     * Might be same as {@link bytesRead} if no compression was applied.
+     */
+    bytesCompressed: number;
 }
 
-export function stream(
+export function pullV1(pool: SocketPool, path: string): PullSession {
+    let bytesReceived = 0;
+    return {
+        readable: ReadableStream.from(
+            pool.withSocketGenerator(async function* (socket) {
+                await socket.writeRequest(RequestId.Receive, path);
+
+                for await (const packet of socket.readResponses(
+                    ResponseId.Data,
+                    DataResponse,
+                )) {
+                    bytesReceived += packet.data.length;
+                    yield packet.data;
+                }
+            }),
+        ),
+        get bytesRead() {
+            return bytesReceived;
+        },
+        compression: undefined,
+        get bytesCompressed() {
+            return bytesReceived;
+        },
+    };
+}
+
+export function pullV2(
     pool: SocketPool,
     path: string,
-): ReadableStream<Uint8Array> {
-    return ReadableStream.from(generator(pool, path));
+    compression?: Compression.Format,
+): PullSession {
+    let flags: SyncFlag = SyncFlag.None;
+    let decompressStream: TransformStream<Uint8Array, Uint8Array> | undefined;
+    switch (compression) {
+        case Compression.Format.Brotli:
+            flags |= SyncFlag.Brotli;
+            decompressStream = Compression.createDecompressionStream(
+                Compression.Format.Brotli,
+            );
+            break;
+        case Compression.Format.Lz4:
+            flags |= SyncFlag.Lz4;
+            decompressStream = Compression.createDecompressionStream(
+                Compression.Format.Lz4,
+            );
+            break;
+        case Compression.Format.Zstd:
+            flags |= SyncFlag.Zstd;
+            decompressStream = Compression.createDecompressionStream(
+                Compression.Format.Zstd,
+            );
+            break;
+    }
+
+    let bytesReceived = 0;
+    const raw = ReadableStream.from(
+        pool.withSocketGenerator(async function* (socket) {
+            await socket.writeRequest(RequestId.ReceiveV2, path);
+            await socket.writeRequest(RequestId.ReceiveV2, flags);
+
+            for await (const packet of socket.readResponses(
+                ResponseId.Data,
+                DataResponse,
+            )) {
+                bytesReceived += packet.data.length;
+                yield packet.data;
+            }
+        }),
+    );
+
+    if (decompressStream) {
+        let bytesRead = 0;
+        return {
+            readable: raw.pipeThrough(decompressStream).pipeThrough(
+                new InspectStream((chunk) => {
+                    bytesRead += chunk.length;
+                }),
+            ),
+            get bytesRead() {
+                return bytesRead;
+            },
+            compression,
+            get bytesCompressed() {
+                return bytesReceived;
+            },
+        };
+    }
+
+    return {
+        readable: raw,
+        get bytesRead() {
+            return bytesReceived;
+        },
+        compression: Compression.Format.None,
+        get bytesCompressed() {
+            return bytesReceived;
+        },
+    };
+}
+
+export function pull(
+    version: 1 | 2,
+    pool: SocketPool,
+    path: string,
+    compression?: Compression.Format,
+) {
+    if (version === 2) {
+        return pullV2(pool, path, compression);
+    }
+
+    if (compression !== undefined && compression !== Compression.Format.None) {
+        throw new AdbSyncError("compression is not supported in v1");
+    }
+
+    return pullV1(pool, path);
 }

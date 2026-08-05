@@ -52,10 +52,14 @@ export class AdbServerTransport implements AdbTransport {
         this.#disconnected = Promise.race([this.#closed.promise, disconnected]);
     }
 
-    async connect(service: string): Promise<Adb.Socket> {
+    async connect(
+        service: string,
+        options?: AdbTransport.ConnectOptions,
+    ): Promise<Adb.Socket> {
         const socket = await this.#client.createDeviceConnection(
             { transportId: this.transportId },
             service,
+            options,
         );
         this.#sockets.push(socket);
         return socket;
