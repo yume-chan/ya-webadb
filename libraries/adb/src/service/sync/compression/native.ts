@@ -11,7 +11,7 @@ import { Mode } from "./mode.js";
 
 export const FormatMap: Record<Format, string> = {
     [Format.None]: "",
-    // https://github.com/whatwg/compression/pull/80
+    // https://github.com/whatwg/compression/issues/54
     [Format.Zstd]: "zstd",
     // placeholder
     [Format.Lz4]: "lz4",

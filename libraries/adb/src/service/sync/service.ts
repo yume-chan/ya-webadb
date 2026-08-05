@@ -1,8 +1,5 @@
-import type {
-    AbortSignal,
-    MaybeConsumable,
-    ReadableStream,
-} from "@yume-chan/stream-extra";
+import type { AbortSignal, ReadableStream } from "@yume-chan/stream-extra";
+import { MaybeConsumable } from "@yume-chan/stream-extra";
 
 import type { Adb } from "../../adb.js";
 import { AdbFeature } from "../../features.js";
@@ -53,8 +50,7 @@ export function dirname(path: string): string {
 }
 
 export interface WriteOptions {
-    filename: string;
-    file: ReadableStream<MaybeConsumable<Uint8Array>>;
+    path: string;
     type?: LinuxFileType | undefined;
     permission?: number | undefined;
     mtime?: number | undefined;
@@ -204,27 +200,45 @@ export class Service {
     }
 
     /**
-     * Reads the content of a file on device.
-     *
-     * @param filename The full path of the file on device to read.
-     * @returns A `ReadableStream` that contains the file content.
+     * Creates a readable stream to read the content of a file on device.
+     * @param path The full path of the file on device to read.
+     * @param compression The compression format to use for reading the file. If the device doesn't support compressed reading, the value will be ignored.
+     * @returns A {@link Receive.PullSession} object that contains a readable stream to read the file content.
      */
-    read(filename: string): ReadableStream<Uint8Array> {
-        return Receive.stream(this.#socketPool, filename);
+    createReadable(
+        path: string,
+        compression?: Compression.Format,
+    ): Receive.PullSession {
+        if (this.#supportsSendReceive2) {
+            return Receive.pullV2(this.#socketPool, path, compression);
+        } else {
+            return Receive.pullV1(this.#socketPool, path);
+        }
     }
 
     /**
-     * Writes a file on device. If the file name already exists, it will be overwritten.
+     * Creates a readable stream to read the content of a file on device.
      *
-     * @param options The content and options of the file to write.
+     * @param path The full path of the file on device to read.
+     * @returns A readable stream to read the file content.
      */
-    async write(options: WriteOptions): Promise<Send.SendResult> {
+    read(path: string): ReadableStream<Uint8Array> {
+        const session = this.createReadable(path);
+        return session.readable;
+    }
+
+    /**
+     * Creates a writable stream to write a file
+     * @param options The options for writing the file, including the path, type, permission, mtime, and compression format.
+     * @returns A {@link SendSession} object that contains a writable stream to write the file content.
+     */
+    async createWritable(options: WriteOptions): Promise<Send.SendSession> {
         if (this.needPushMkdirWorkaround) {
             // It may fail if `filename` already exists.
             // Ignore the result.
             // TODO: sync: test push mkdir workaround (need an Android 8 device)
             await this._adb.subprocess.noneProtocol
-                .spawn(["mkdir", "-p", escapeArg(dirname(options.filename))])
+                .spawn(["mkdir", "-p", escapeArg(dirname(options.path))])
                 .wait();
         }
 
@@ -245,6 +259,8 @@ export class Service {
                     `Compression type ${Compression.FormatNameMap[options.compression]} is not supported`,
                 );
             }
+        } else {
+            delete options.compression;
         }
 
         return await Send.send({
@@ -252,5 +268,26 @@ export class Service {
             pool: this.#socketPool,
             ...options,
         });
+    }
+
+    /**
+     * Writes a file to the device using a readable stream.
+     * @param options The options for writing the file, including the path, type, permission, mtime, compression format, and a readable stream to read the file content.
+     * @returns An object that contains the number of bytes written, the compression format used (if any), and the size of the compressed data written (if any).
+     */
+    async write(
+        options: WriteOptions & {
+            readable: ReadableStream<MaybeConsumable<Uint8Array>>;
+        },
+    ): Promise<Omit<Send.SendSession, "writable">> {
+        const session = await this.createWritable(options);
+        await options.readable.pipeTo(
+            new MaybeConsumable.WrapWritableStream(session.writable),
+        );
+        return {
+            bytesWritten: session.bytesWritten,
+            compression: session.compression,
+            bytesCompressed: session.bytesCompressed,
+        };
     }
 }

@@ -52,8 +52,25 @@ export class SocketPool {
         }
     }
 
+    async *withSocketGenerator<T>(
+        fn: (socket: Socket) => AsyncGenerator<T, void, void>,
+    ): AsyncGenerator<T, void, void> {
+        const socket = await this.acquire();
+        try {
+            for await (const value of fn(socket)) {
+                yield value;
+            }
+            await this.release(socket);
+        } catch (e) {
+            await this.release(socket, !(e instanceof AdbSyncError));
+            throw e;
+        }
+    }
+
     async release(socket: Socket, discard = false): Promise<void> {
-        this.#inUseSockets.delete(socket);
+        if (!this.#inUseSockets.delete(socket)) {
+            return;
+        }
 
         // If discarding or we already have enough sockets in the pool, close this socket
         if (discard || this.#availableSockets.length >= this.#maxSize) {

@@ -10,3 +10,4 @@ export const ListV2 = encodeId("LIS2");
 export const Send = encodeId("SEND");
 export const SendV2 = encodeId("SND2");
 export const Receive = encodeId("RECV");
+export const ReceiveV2 = encodeId("RCV2");

@@ -8,10 +8,10 @@ const isMainThread = typeof window !== "undefined";
 
 type MaybeRemote<T> = T | Comlink.Remote<T>;
 
-function getCore<T>(
+async function getCore<T>(
     core: T,
     worker: "auto" | boolean | undefined,
-): Promise<MaybeRemote<T>> {
+): Promise<{ worker: Worker | undefined; core: MaybeRemote<T> }> {
     switch (worker) {
         case "auto":
         case undefined:
@@ -23,7 +23,7 @@ function getCore<T>(
         const worker = new Worker(new URL("./worker.js", import.meta.url), {
             type: "module",
         });
-        return new Promise<Comlink.Remote<T>>((resolve, reject) => {
+        const core = await new Promise<Comlink.Remote<T>>((resolve, reject) => {
             const abortController = new AbortController();
             worker.addEventListener(
                 "message",
@@ -45,8 +45,9 @@ function getCore<T>(
                 { signal: abortController.signal },
             );
         });
+        return { worker, core };
     } else {
-        return Promise.resolve(core);
+        return { worker: undefined, core };
     }
 }
 
@@ -58,11 +59,13 @@ export function registerZstdCompression(
     AdbSync.Compression.registerCompressionAdapter(
         AdbSync.Compression.Format.Zstd,
         () => {
+            let worker: Worker | undefined;
             let rawStream!: MaybeRemote<Core.CompressStream>;
             return new TransformStream({
                 async start() {
-                    const core = await getCore(Core, options.worker);
-                    rawStream = await core.createCompressStream();
+                    const result = await getCore(Core, options.worker);
+                    worker = result.worker;
+                    rawStream = await result.core.createCompressStream();
                 },
                 async transform(chunk, controller) {
                     const output = await rawStream.push(chunk);
@@ -73,6 +76,10 @@ export function registerZstdCompression(
                 async flush(controller) {
                     const output = await rawStream.finish();
                     controller.enqueue(output);
+                    worker?.terminate();
+                },
+                cancel() {
+                    worker?.terminate();
                 },
             });
         },
@@ -81,11 +88,13 @@ export function registerZstdCompression(
     AdbSync.Compression.registerDecompressionAdapter(
         AdbSync.Compression.Format.Zstd,
         () => {
+            let worker: Worker | undefined;
             let rawStream!: MaybeRemote<Core.DecompressStream>;
             return new TransformStream({
                 async start() {
-                    const core = await getCore(Core, options.worker);
-                    rawStream = await core.createDecompressStream();
+                    const result = await getCore(Core, options.worker);
+                    worker = result.worker;
+                    rawStream = await result.core.createDecompressStream();
                 },
                 async transform(chunk, controller) {
                     const output = await rawStream.push(chunk);
@@ -98,6 +107,10 @@ export function registerZstdCompression(
                     if (output.length) {
                         controller.enqueue(output);
                     }
+                    worker?.terminate();
+                },
+                cancel() {
+                    worker?.terminate();
                 },
             });
         },
