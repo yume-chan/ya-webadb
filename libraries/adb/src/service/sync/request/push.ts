@@ -1,5 +1,9 @@
 import { PromiseResolver } from "@yume-chan/async";
-import type { TransformStream, WritableStream } from "@yume-chan/stream-extra";
+import type {
+    TransformStream,
+    WritableStream,
+    WritableStreamDefaultController,
+} from "@yume-chan/stream-extra";
 import { DistributionStream, MaybeConsumable } from "@yume-chan/stream-extra";
 import { struct, u32 } from "@yume-chan/struct";
 
@@ -96,6 +100,8 @@ class SendWritableStream extends MaybeConsumable.WritableStream<Uint8Array> {
         this.#socket = socket;
 
         this.#controller = controller;
+        // Suppress unhandled rejection warning when the promise is not awaited.
+        this.#resolver.promise.catch(NOOP);
     }
 
     #trySetError(reason: unknown) {
@@ -147,7 +153,12 @@ export async function sendV1({
     const request = path + "," + mode;
 
     const socket = await pool.acquire();
-    await socket.writeRequest(RequestId.Send, request);
+    try {
+        await socket.writeRequest(RequestId.Send, request);
+    } catch (e) {
+        await pool.release(socket, !(e instanceof AdbSyncError));
+        throw e;
+    }
 
     const distributeStream = new DistributionStream(packetSize, true);
     const sendStream = new SendWritableStream(pool, socket, mtime);
@@ -230,14 +241,19 @@ export async function sendV2({
     }
 
     const socket = await pool.acquire();
-    await socket.writeRequest(RequestId.SendV2, path);
-    await socket.write(
-        SendV2Request.serialize({
-            id: RequestId.SendV2,
-            mode: (type << 12) | permission,
-            flags,
-        }),
-    );
+    try {
+        await socket.writeRequest(RequestId.SendV2, path);
+        await socket.write(
+            SendV2Request.serialize({
+                id: RequestId.SendV2,
+                mode: (type << 12) | permission,
+                flags,
+            }),
+        );
+    } catch (e) {
+        await pool.release(socket, !(e instanceof AdbSyncError));
+        throw e;
+    }
 
     const distributeStream = new DistributionStream(packetSize, true);
     const sendStream = new SendWritableStream(pool, socket, mtime);

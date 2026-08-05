@@ -56,14 +56,19 @@ export class SocketPool {
         fn: (socket: Socket) => AsyncGenerator<T, void, void>,
     ): AsyncGenerator<T, void, void> {
         const socket = await this.acquire();
+        let discard = true;
         try {
             for await (const value of fn(socket)) {
                 yield value;
             }
-            await this.release(socket);
+            discard = false;
         } catch (e) {
-            await this.release(socket, !(e instanceof AdbSyncError));
+            discard = !(e instanceof AdbSyncError);
             throw e;
+        } finally {
+            // When the generator is retuned early, `discard` will have the default value of `true`,
+            // the socket needs to be closed, so the server will stop sending data.
+            await this.release(socket, discard);
         }
     }
 

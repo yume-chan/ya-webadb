@@ -210,6 +210,22 @@ export class Service {
         compression?: Compression.Format,
     ): Receive.PullSession {
         if (this.#supportsSendReceive2) {
+            if (compression === undefined) {
+                compression = Compression.chooseFormat(
+                    this._adb,
+                    Compression.Mode.Decompress,
+                );
+            } else if (
+                !Compression.canUseFormat(
+                    this._adb,
+                    compression,
+                    Compression.Mode.Decompress,
+                )
+            ) {
+                throw new Error(
+                    `Compression type ${Compression.FormatNameMap[compression]} is not supported`,
+                );
+            }
             return Receive.pullV2(this.#socketPool, path, compression);
         } else {
             return Receive.pullV1(this.#socketPool, path);
@@ -244,10 +260,13 @@ export class Service {
 
         if (this.supportsSendReceive2) {
             if (options.compression === undefined) {
-                options.compression = Compression.chooseFormat(
-                    this._adb,
-                    Compression.Mode.Compress,
-                );
+                options = {
+                    ...options,
+                    compression: Compression.chooseFormat(
+                        this._adb,
+                        Compression.Mode.Compress,
+                    ),
+                };
             } else if (
                 !Compression.canUseFormat(
                     this._adb,
@@ -260,7 +279,10 @@ export class Service {
                 );
             }
         } else {
-            delete options.compression;
+            options = {
+                ...options,
+                compression: undefined,
+            };
         }
 
         return await Send.send({
