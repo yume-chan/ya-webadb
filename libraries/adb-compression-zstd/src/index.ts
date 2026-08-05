@@ -51,6 +51,26 @@ async function getCore<T>(
     }
 }
 
+function cleanupOnError<T>(worker: Worker | undefined, callback: () => T): T {
+    if (!worker) {
+        return callback();
+    }
+
+    try {
+        const result = callback();
+        if (result instanceof Promise) {
+            return result.catch((e) => {
+                worker.terminate();
+                throw e;
+            }) as T;
+        }
+        return result;
+    } catch (e) {
+        worker.terminate();
+        throw e;
+    }
+}
+
 export function registerZstdCompression(
     options: {
         worker?: "auto" | boolean | undefined;
@@ -66,20 +86,26 @@ export function registerZstdCompression(
                 async start() {
                     const result = await getCore(Core, options.worker);
                     worker = result.worker;
-                    rawStream = await result.core.createCompressStream(
-                        // Default level 1
-                        // https://android.googlesource.com/platform/packages/modules/adb/+/bdebc9b22cee5b2aec2e919d176d915725188fc8/compression_utils.h#442
-                        options.compressionLevel ?? 1,
+                    rawStream = await cleanupOnError(worker, () =>
+                        result.core.createCompressStream(
+                            // Default level 1
+                            // https://android.googlesource.com/platform/packages/modules/adb/+/bdebc9b22cee5b2aec2e919d176d915725188fc8/compression_utils.h#442
+                            options.compressionLevel ?? 1,
+                        ),
                     );
                 },
                 async transform(chunk, controller) {
-                    const output = await rawStream.push(chunk);
+                    const output = await cleanupOnError(worker, () =>
+                        rawStream.push(chunk),
+                    );
                     if (output.length) {
                         controller.enqueue(output);
                     }
                 },
                 async flush(controller) {
-                    const output = await rawStream.finish();
+                    const output = await cleanupOnError(worker, () =>
+                        rawStream.finish(),
+                    );
                     controller.enqueue(output);
                     worker?.terminate();
                 },
@@ -99,16 +125,22 @@ export function registerZstdCompression(
                 async start() {
                     const result = await getCore(Core, options.worker);
                     worker = result.worker;
-                    rawStream = await result.core.createDecompressStream();
+                    rawStream = await cleanupOnError(worker, () =>
+                        result.core.createDecompressStream(),
+                    );
                 },
                 async transform(chunk, controller) {
-                    const output = await rawStream.push(chunk);
+                    const output = await cleanupOnError(worker, () =>
+                        rawStream.push(chunk),
+                    );
                     if (output.length) {
                         controller.enqueue(output);
                     }
                 },
                 async flush(controller) {
-                    const output = await rawStream.finish();
+                    const output = await cleanupOnError(worker, () =>
+                        rawStream.finish(),
+                    );
                     if (output.length) {
                         controller.enqueue(output);
                     }

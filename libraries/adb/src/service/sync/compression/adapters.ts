@@ -13,30 +13,26 @@ import {
 
 export { Format, FormatNameMap, Mode };
 
+export type Adapter = () => TransformStream<Uint8Array, Uint8Array>;
+
 const CompressionRegistry: Partial<
-    Record<
-        Exclude<Format, typeof Format.None>,
-        () => TransformStream<Uint8Array, Uint8Array>
-    >
+    Record<Exclude<Format, typeof Format.None>, Adapter>
 > = {};
 
 const DecompressionRegistry: Partial<
-    Record<
-        Exclude<Format, typeof Format.None>,
-        () => TransformStream<Uint8Array, Uint8Array>
-    >
+    Record<Exclude<Format, typeof Format.None>, Adapter>
 > = {};
 
 export function registerCompressionAdapter(
     format: Exclude<Format, typeof Format.None>,
-    adapter: () => TransformStream<Uint8Array, Uint8Array>,
+    adapter: Adapter,
 ) {
     CompressionRegistry[format] = adapter;
 }
 
 export function registerDecompressionAdapter(
     format: Exclude<Format, typeof Format.None>,
-    adapter: () => TransformStream<Uint8Array, Uint8Array>,
+    adapter: Adapter,
 ) {
     DecompressionRegistry[format] = adapter;
 }
