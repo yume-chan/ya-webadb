@@ -3,15 +3,16 @@
 /// <reference types="node" />
 
 import "source-map-support/register.js";
-import { dump } from "wtfnode";
+
+import { createReadStream } from "node:fs";
+import { release, type } from "node:os";
+import { basename } from "node:path";
 
 import { AdbServerClient, AdbSync, LinuxFileType, Ref } from "@yume-chan/adb";
 import { AdbServerNodeTcpConnector } from "@yume-chan/adb-server-node-tcp";
 import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 import { Option, program } from "commander";
-import { createReadStream } from "node:fs";
-import { release, type } from "node:os";
-import { basename } from "node:path";
+import { dump } from "wtfnode";
 
 program
     .name("tango-cli")
@@ -183,7 +184,9 @@ program
             const result = await adb.sync.write({
                 path: destination,
                 type: LinuxFileType.File,
-                readable: ReadableStream.from(createReadStream(source)),
+                readable: ReadableStream.from<Uint8Array>(
+                    createReadStream(source),
+                ),
                 compression: options.Z
                     ? AdbSync.Compression.Format.None
                     : (
