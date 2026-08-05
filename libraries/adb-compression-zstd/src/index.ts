@@ -54,6 +54,7 @@ async function getCore<T>(
 export function registerZstdCompression(
     options: {
         worker?: "auto" | boolean | undefined;
+        compressionLevel?: number | undefined;
     } = {},
 ) {
     AdbSync.Compression.registerCompressionAdapter(
@@ -65,7 +66,11 @@ export function registerZstdCompression(
                 async start() {
                     const result = await getCore(Core, options.worker);
                     worker = result.worker;
-                    rawStream = await result.core.createCompressStream();
+                    rawStream = await result.core.createCompressStream(
+                        // Default level 1
+                        // https://android.googlesource.com/platform/packages/modules/adb/+/bdebc9b22cee5b2aec2e919d176d915725188fc8/compression_utils.h#442
+                        options.compressionLevel ?? 1,
+                    );
                 },
                 async transform(chunk, controller) {
                     const output = await rawStream.push(chunk);

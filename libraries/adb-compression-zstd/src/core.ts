@@ -8,8 +8,8 @@ export type {
 } from "@structured-world/structured-zstd";
 import * as Comlink from "comlink";
 
-export async function createCompressStream() {
-    return Comlink.proxy(await createCompressStreamRaw());
+export async function createCompressStream(level?: number) {
+    return Comlink.proxy(await createCompressStreamRaw(level));
 }
 
 export async function createDecompressStream() {

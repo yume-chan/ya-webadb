@@ -80,6 +80,7 @@ class SendWritableStream extends MaybeConsumable.WritableStream<Uint8Array> {
             close: async () => {
                 try {
                     await socket.writeRequest(RequestId.Done, mtime);
+                    await socket.flush();
                 } catch (e) {
                     await this.#finish(e);
                     return;
