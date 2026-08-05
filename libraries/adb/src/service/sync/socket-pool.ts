@@ -131,7 +131,7 @@ export class SocketPool {
             (socket) => socket.close(),
         );
         this.#inUseSockets.clear();
-        this.#ref.unref();
+        this.#ref.dispose();
 
         await Promise.all([...closePromises, ...inUseClosePromises]);
     }
