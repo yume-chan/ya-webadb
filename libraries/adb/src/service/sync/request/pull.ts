@@ -17,7 +17,7 @@ export const DataResponse = struct(
 
 export type DataResponse = StructValue<typeof DataResponse>;
 
-export interface PullSession {
+export interface ReceiveSession {
     /**
      * The readable stream to read the file content from.
      */
@@ -39,7 +39,7 @@ export interface PullSession {
     bytesCompressed: number;
 }
 
-export function pullV1(pool: SocketPool, path: string): PullSession {
+export function receiveV1(pool: SocketPool, path: string): ReceiveSession {
     let bytesReceived = 0;
     return {
         readable: ReadableStream.from(
@@ -65,11 +65,11 @@ export function pullV1(pool: SocketPool, path: string): PullSession {
     };
 }
 
-export function pullV2(
+export function receiveV2(
     pool: SocketPool,
     path: string,
     compression?: Compression.Format,
-): PullSession {
+): ReceiveSession {
     let flags: SyncFlag = SyncFlag.None;
     let decompressStream: TransformStream<Uint8Array, Uint8Array> | undefined;
     switch (compression) {
@@ -139,19 +139,19 @@ export function pullV2(
     };
 }
 
-export function pull(
+export function receive(
     version: 1 | 2,
     pool: SocketPool,
     path: string,
     compression?: Compression.Format,
 ) {
     if (version === 2) {
-        return pullV2(pool, path, compression);
+        return receiveV2(pool, path, compression);
     }
 
     if (compression !== undefined && compression !== Compression.Format.None) {
         throw new AdbSyncError("compression is not supported in v1");
     }
 
-    return pullV1(pool, path);
+    return receiveV1(pool, path);
 }

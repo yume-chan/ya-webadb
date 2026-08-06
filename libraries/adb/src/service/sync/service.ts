@@ -203,12 +203,12 @@ export class Service {
      * Creates a readable stream to read the content of a file on device.
      * @param path The full path of the file on device to read.
      * @param compression The compression format to use for reading the file. If the device doesn't support compressed reading, the value will be ignored.
-     * @returns A {@link Receive.PullSession} object that contains a readable stream to read the file content.
+     * @returns A {@link Receive.ReceiveSession} object that contains a readable stream to read the file content.
      */
     createReadable(
         path: string,
         compression?: Compression.Format,
-    ): Receive.PullSession {
+    ): Receive.ReceiveSession {
         if (this.#supportsSendReceive2) {
             if (compression === undefined) {
                 compression = Compression.chooseFormat(
@@ -226,9 +226,9 @@ export class Service {
                     `Compression type ${Compression.FormatNameMap[compression]} is not supported`,
                 );
             }
-            return Receive.pullV2(this.#socketPool, path, compression);
+            return Receive.receiveV2(this.#socketPool, path, compression);
         } else {
-            return Receive.pullV1(this.#socketPool, path);
+            return Receive.receiveV1(this.#socketPool, path);
         }
     }
 
