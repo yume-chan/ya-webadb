@@ -291,7 +291,7 @@ export class PackageManager {
     }
 
     async installStream(
-        size: number,
+        size: number | bigint,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
         options?: PackageManager.InstallOptions,
     ): Promise<void> {
@@ -584,7 +584,7 @@ export class PackageManager {
     async sessionAddSplitStream(
         sessionId: number,
         splitName: string,
-        size: number,
+        size: number | bigint,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
     ): Promise<void> {
         const command: string[] = [
@@ -717,7 +717,7 @@ export class PackageManagerInstallSession {
 
     addSplitStream(
         splitName: string,
-        size: number,
+        size: number | bigint,
         stream: ReadableStream<MaybeConsumable<Uint8Array>>,
     ): Promise<void> {
         return this.#packageManager.sessionAddSplitStream(
