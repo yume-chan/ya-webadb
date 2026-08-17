@@ -472,7 +472,11 @@ export class AdbServerClient {
             disconnected,
         );
 
-        void transport.disconnected.finally(() => waitAbortController.abort());
+        const abortDisconnectWait = () => waitAbortController.abort();
+        void transport.disconnected.then(
+            abortDisconnectWait,
+            abortDisconnectWait,
+        );
 
         return transport;
     }
