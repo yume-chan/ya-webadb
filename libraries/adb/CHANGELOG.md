@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/adb
 
+## 2.6.3
+
+### Patch Changes
+
+- 06cf53d: Prevent disconnect monitor failures from leaking an unhandled promise rejection.
+
 ## 2.6.2
 
 ### Patch Changes
