@@ -18,10 +18,12 @@ export function getBigUint(
 ): bigint {
     let result = 0n;
 
-    // Currently `length` must be a multiplication of 8
-    // Support for arbitrary length can be easily added
+    // The leading bytes that do not fill a whole 64-bit word.
+    for (let j = 0; j < length % 8; j += 1) {
+        result = (result << 8n) | BigInt(array[byteOffset + j]!);
+    }
 
-    for (let i = byteOffset; i < byteOffset + length; i += 8) {
+    for (let i = byteOffset + (length % 8); i < byteOffset + length; i += 8) {
         result <<= 64n;
         const value = getUint64BigEndian(array, i);
         result |= value;
@@ -63,14 +65,6 @@ export function setBigUint(
     }
 }
 
-// These values are correct only if
-// modulus length is 2048 and
-// public exponent (e) is 65537
-// Anyway, that's how this library generates keys
-
-// To support other parameters,
-// a proper ASN.1 parser can be used
-
 // References:
 //
 //   https://tools.ietf.org/html/rfc8017#appendix-A.1.2
@@ -84,14 +78,68 @@ export function setBigUint(
 //   https://www.itu.int/rec/T-REC-X.690-201508-I/en
 //   X.690: Specification of Distinguished Encoding Rules (DER)
 
-const RsaPrivateKeyNOffset = 38;
-const RsaPrivateKeyNLength = 2048 / 8;
-const RsaPrivateKeyDOffset = 303;
-const RsaPrivateKeyDLength = 2048 / 8;
+/**
+ * One DER tag-length-value header: where its content starts and how long it is.
+ * @param data The DER-encoded data.
+ * @param offset The offset of the header in the data.
+ * @returns The content offset and length.
+ */
+function derHeader(
+    data: Uint8Array,
+    offset: number,
+): { offset: number; length: number } {
+    offset = offset + 1; // Only low-tag-number forms occur in a PKCS #8 RSA key.
+
+    let length = data[offset]!;
+    offset += 1;
+
+    if (length & 0x80) {
+        const lengthBytes = length & 0x7f;
+        length = 0;
+        for (let i = 0; i < lengthBytes; i += 1) {
+            length = (length << 8) | data[offset]!;
+            offset += 1;
+        }
+    }
+
+    return { offset, length };
+}
 
 export function rsaParsePrivateKey(key: Uint8Array): [n: bigint, d: bigint] {
-    const n = getBigUint(key, RsaPrivateKeyNOffset, RsaPrivateKeyNLength);
-    const d = getBigUint(key, RsaPrivateKeyDOffset, RsaPrivateKeyDLength);
+    // PrivateKeyInfo ::= SEQUENCE {
+    //     version             INTEGER,
+    //     privateKeyAlgorithm AlgorithmIdentifier,
+    //     privateKey          OCTET STRING -- wrapping an RSAPrivateKey
+    // }
+    // RSAPrivateKey ::= SEQUENCE {
+    //     version         Version,
+    //     modulus         INTEGER, -- n
+    //     publicExponent  INTEGER, -- e
+    //     privateExponent INTEGER  -- d
+    //     -- ... other fields omitted
+    // }
+
+    let offset = derHeader(key, 0).offset; // into PrivateKeyInfo
+
+    let header = derHeader(key, offset); // skip version
+    offset = header.offset + header.length;
+    header = derHeader(key, offset); // skip privateKeyAlgorithm
+    offset = header.offset + header.length;
+
+    offset = derHeader(key, offset).offset; // into OCTET STRING
+    offset = derHeader(key, offset).offset; // into RSAPrivateKey
+
+    header = derHeader(key, offset); // skip version
+    offset = header.offset + header.length;
+
+    const nHeader = derHeader(key, offset); // get modulus
+    offset = nHeader.offset + nHeader.length;
+    const eHeader = derHeader(key, offset); // skip publicExponent
+    offset = eHeader.offset + eHeader.length;
+    const dHeader = derHeader(key, offset); // get privateExponent
+
+    const n = getBigUint(key, nHeader.offset, nHeader.length);
+    const d = getBigUint(key, dHeader.offset, dHeader.length);
     return [n, d];
 }
 
