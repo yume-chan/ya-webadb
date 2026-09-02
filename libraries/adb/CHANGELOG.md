@@ -1,5 +1,11 @@
 # Change Log - @yume-chan/adb
 
+## 2.6.4
+
+### Patch Changes
+
+- 16f1d76: Fix rsaParsePrivateKey for private keys whose DER-encoded private exponent is not 256 bytes long.
+
 ## 2.6.3
 
 ### Patch Changes
