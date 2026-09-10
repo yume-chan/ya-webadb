@@ -163,10 +163,24 @@ export async function sendV1({
 
     const distributeStream = new DistributionStream(packetSize, true);
     const sendStream = new SendWritableStream(pool, socket, mtime);
-    void distributeStream.readable.pipeTo(sendStream).catch(NOOP);
+    const pipe = distributeStream.readable.pipeTo(sendStream);
+    void pipe.catch(NOOP);
+    const writer = distributeStream.writable.getWriter();
 
     return {
-        writable: distributeStream.writable,
+        writable: new MaybeConsumable.WritableStream({
+            write(chunk) {
+                return writer.write(chunk);
+            },
+            async close() {
+                await writer.close();
+                await pipe;
+            },
+            async abort(reason) {
+                await writer.abort(reason);
+                await pipe.catch(NOOP);
+            },
+        }),
         get bytesWritten() {
             return sendStream.bytesWritten;
         },
