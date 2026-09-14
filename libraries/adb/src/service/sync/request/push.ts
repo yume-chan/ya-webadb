@@ -130,12 +130,13 @@ class SendWritableStream extends MaybeConsumable.WritableStream<Uint8Array> {
                 this.#resolver.resolve();
             }
         } catch (e) {
-            this.#trySetError(
+            const finalError =
+                // Use SuppressedError if available and there is an existing error.
                 error && typeof SuppressedError !== "undefined"
                     ? new SuppressedError(e, error)
-                    : e,
-            );
-            this.#resolver.reject(e);
+                    : e;
+            this.#trySetError(finalError);
+            this.#resolver.reject(finalError);
         }
     }
 }
