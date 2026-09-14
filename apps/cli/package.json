@@ -42,7 +42,7 @@
         "wtfnode": "^0.10.1"
     },
     "devDependencies": {
-        "@types/node": "^26.1.1",
+        "@types/node": "^26.5.1",
         "@types/wtfnode": "^0.10.0",
         "@yume-chan/eslint-config": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",

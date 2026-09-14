@@ -8,13 +8,13 @@
     "scripts": {},
     "keywords": [],
     "dependencies": {
-        "@types/node": "^26.1.1",
+        "@types/node": "^26.5.1",
         "json5": "^2.2.3",
         "semver": "^7.8.5"
     },
     "author": "",
     "license": "MIT",
     "devDependencies": {
-        "@types/semver": "^7.7.1"
+        "@types/semver": "^7.8.0"
     }
 }
