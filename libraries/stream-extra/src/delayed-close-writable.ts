@@ -16,7 +16,7 @@ export class DelayedCloseWritableStream<T> extends WritableStream<T> {
                     try {
                         await promise;
                     } catch (e2) {
-                        throw typeof SuppressedError !== "undefined"
+                        throw e2 !== e && typeof SuppressedError !== "undefined"
                             ? new SuppressedError(e, e2)
                             : e;
                     }
@@ -24,18 +24,26 @@ export class DelayedCloseWritableStream<T> extends WritableStream<T> {
                 }
             },
             async close() {
-                const results = await Promise.allSettled([
+                const [closeResult, promiseResult] = await Promise.allSettled([
                     writer.close(),
                     promise,
                 ]);
-                const errors = results
-                    .filter((r) => r.status === "rejected")
-                    .map((r) => r.reason as unknown);
-                if (errors.length) {
-                    throw errors.length > 1 &&
+                if (closeResult.status === "rejected") {
+                    if (
+                        promiseResult.status === "rejected" &&
+                        // Ignore promise rejection if the reason is known
+                        promiseResult.reason !== closeResult.reason &&
                         typeof AggregateError !== "undefined"
-                        ? new AggregateError(errors)
-                        : errors[0];
+                    ) {
+                        throw new AggregateError([
+                            closeResult.reason,
+                            promiseResult.reason,
+                        ]);
+                    }
+                    throw closeResult.reason;
+                }
+                if (promiseResult.status === "rejected") {
+                    throw promiseResult.reason;
                 }
             },
             async abort(reason) {
