@@ -15,10 +15,10 @@ import type {
     WritableStream,
 } from "@yume-chan/stream-extra";
 import {
+    DelayedCloseWritableStream,
     DuplexStreamFactory,
     MaybeConsumable,
     ReadableStream,
-    pipeFrom,
 } from "@yume-chan/stream-extra";
 import { EmptyUint8Array, Uint8ArrayExactReadable } from "@yume-chan/struct";
 
@@ -138,39 +138,45 @@ export class AdbDaemonWebUsbConnection implements ReadableWritablePair<
             ),
         );
 
+        const serializeStream = new AdbPacketSerializeStream();
         const zeroMask = outEndpoint.packetSize - 1;
-        this.#writable = pipeFrom(
-            duplex.createWritable(
-                new MaybeConsumable.WritableStream({
-                    write: async (chunk) => {
-                        try {
-                            await device.raw.transferOut(
-                                outEndpoint.endpointNumber,
-                                // WebUSB doesn't support SharedArrayBuffer
-                                // https://github.com/WICG/webusb/issues/243
-                                toLocalUint8Array(chunk),
-                            );
-
-                            // In USB protocol, a not-full packet indicates the end of a transfer.
-                            // If the payload size is a multiple of the packet size,
-                            // we need to send an empty packet to indicate the end,
-                            // so the OS will send it to the device immediately.
-                            if (zeroMask && (chunk.length & zeroMask) === 0) {
+        this.#writable = new DelayedCloseWritableStream(
+            serializeStream.writable,
+            serializeStream.readable.pipeTo(
+                duplex.createWritable(
+                    new MaybeConsumable.WritableStream({
+                        write: async (chunk) => {
+                            try {
                                 await device.raw.transferOut(
                                     outEndpoint.endpointNumber,
-                                    EmptyUint8Array,
+                                    // WebUSB doesn't support SharedArrayBuffer
+                                    // https://github.com/WICG/webusb/issues/243
+                                    toLocalUint8Array(chunk),
                                 );
+
+                                // In USB protocol, a not-full packet indicates the end of a transfer.
+                                // If the payload size is a multiple of the packet size,
+                                // we need to send an empty packet to indicate the end,
+                                // so the OS will send it to the device immediately.
+                                if (
+                                    zeroMask &&
+                                    (chunk.length & zeroMask) === 0
+                                ) {
+                                    await device.raw.transferOut(
+                                        outEndpoint.endpointNumber,
+                                        EmptyUint8Array,
+                                    );
+                                }
+                            } catch (e) {
+                                if (closed) {
+                                    return;
+                                }
+                                throw e;
                             }
-                        } catch (e) {
-                            if (closed) {
-                                return;
-                            }
-                            throw e;
-                        }
-                    },
-                }),
+                        },
+                    }),
+                ),
             ),
-            new AdbPacketSerializeStream(),
         );
     }
 

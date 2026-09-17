@@ -4,7 +4,11 @@ import type {
     WritableStream,
     WritableStreamDefaultController,
 } from "@yume-chan/stream-extra";
-import { DistributionStream, MaybeConsumable } from "@yume-chan/stream-extra";
+import {
+    DelayedCloseWritableStream,
+    DistributionStream,
+    MaybeConsumable,
+} from "@yume-chan/stream-extra";
 import { struct, u32 } from "@yume-chan/struct";
 
 import { NOOP } from "../../../utils/no-op.js";
@@ -63,7 +67,7 @@ class SendWritableStream extends MaybeConsumable.WritableStream<Uint8Array> {
                 controller = controller_;
 
                 // Start reading response immediately,
-                // the server can send error response before the whole file is sent.
+                // the server may send error response before the whole file is sent.
                 socket.readResponse(ResponseId.Ok, OkResponse).then(
                     () => this.#finish(),
                     (e) => this.#finish(e),
@@ -126,9 +130,13 @@ class SendWritableStream extends MaybeConsumable.WritableStream<Uint8Array> {
                 this.#resolver.resolve();
             }
         } catch (e) {
-            // TOOD: use `SuppressedError` when universally supported
-            this.#trySetError(e);
-            this.#resolver.reject(e);
+            const finalError =
+                // Use SuppressedError if available and there is an existing error.
+                error && typeof SuppressedError !== "undefined"
+                    ? new SuppressedError(e, error)
+                    : e;
+            this.#trySetError(finalError);
+            this.#resolver.reject(finalError);
         }
     }
 }
@@ -163,10 +171,12 @@ export async function sendV1({
 
     const distributeStream = new DistributionStream(packetSize, true);
     const sendStream = new SendWritableStream(pool, socket, mtime);
-    void distributeStream.readable.pipeTo(sendStream).catch(NOOP);
 
     return {
-        writable: distributeStream.writable,
+        writable: new DelayedCloseWritableStream(
+            distributeStream.writable,
+            distributeStream.readable.pipeTo(sendStream),
+        ),
         get bytesWritten() {
             return sendStream.bytesWritten;
         },
@@ -260,19 +270,11 @@ export async function sendV2({
     const sendStream = new SendWritableStream(pool, socket, mtime);
 
     if (!compressStream) {
-        const pipe = distributeStream.readable.pipeTo(sendStream);
-
-        const writer = distributeStream.writable.getWriter();
         return {
-            writable: new MaybeConsumable.WritableStream({
-                write(chunk) {
-                    return writer.write(chunk);
-                },
-                async close() {
-                    await writer.close();
-                    await pipe;
-                },
-            }),
+            writable: new DelayedCloseWritableStream(
+                distributeStream.writable,
+                distributeStream.readable.pipeTo(sendStream),
+            ),
             get bytesWritten() {
                 return sendStream.bytesWritten;
             },
@@ -283,23 +285,18 @@ export async function sendV2({
         };
     }
 
-    const pipe = compressStream.readable
-        .pipeThrough(distributeStream)
-        .pipeTo(sendStream);
-
-    const writer = compressStream.writable.getWriter();
     let bytesWritten = 0;
     return {
-        writable: new MaybeConsumable.WritableStream({
-            write(chunk) {
-                bytesWritten += chunk.length;
-                return writer.write(chunk);
-            },
-            async close() {
-                await writer.close();
-                await pipe;
-            },
-        }),
+        writable: new DelayedCloseWritableStream(
+            new MaybeConsumable.WrapWritableStream(compressStream.writable, {
+                write(chunk) {
+                    bytesWritten += chunk.length;
+                },
+            }),
+            compressStream.readable
+                .pipeThrough(distributeStream)
+                .pipeTo(sendStream),
+        ),
         get bytesWritten() {
             return bytesWritten;
         },
