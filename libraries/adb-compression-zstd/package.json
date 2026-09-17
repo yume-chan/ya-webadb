@@ -1,6 +1,6 @@
 {
     "name": "@yume-chan/adb-compression-zstd",
-    "version": "3.0.0-beta.2",
+    "version": "3.0.0-beta.3",
     "description": "Zstandard compression adapter for @yume-chan/adb",
     "keywords": [
         "adb",
