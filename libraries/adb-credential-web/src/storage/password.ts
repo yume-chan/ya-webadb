@@ -233,6 +233,10 @@ export class TangoPasswordProtectedStorage implements TangoKeyStorage {
             }
         }
     }
+
+    close() {
+        return this.#storage.close?.();
+    }
 }
 
 export namespace TangoPasswordProtectedStorage {

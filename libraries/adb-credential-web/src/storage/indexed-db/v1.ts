@@ -1,4 +1,4 @@
-import { createTransaction, openDatabase, waitRequest } from "./shared.js";
+import { createTransaction, openDatabase } from "./shared.js";
 
 export const DefaultDatabaseName = "Tango";
 export const DefaultStoreName = "Authentication";
@@ -16,14 +16,19 @@ export async function getAllKeysV1() {
         return undefined;
     }
 
-    const db = await openDatabase(DefaultDatabaseName, Version1, () => {});
-
-    try {
-        return await createTransaction(db, DefaultStoreName, (tx) => {
-            const store = tx.objectStore(DefaultStoreName);
-            return waitRequest(store.getAll() as IDBRequest<Uint8Array[]>);
-        });
-    } finally {
-        db.close();
-    }
+    return await openDatabase(
+        DefaultDatabaseName,
+        Version1,
+        () => {},
+        (db) =>
+            createTransaction(
+                db,
+                DefaultStoreName,
+                function* (_, store, waitRequest) {
+                    return yield* waitRequest(
+                        store.getAll() as IDBRequest<Uint8Array[]>,
+                    );
+                },
+            ),
+    );
 }

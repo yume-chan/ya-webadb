@@ -2,7 +2,7 @@ import type { MaybePromiseLike } from "@yume-chan/async";
 import { isPromiseLike } from "@yume-chan/async";
 
 function advance<T>(
-    iterator: Iterator<unknown, T, unknown>,
+    iterator: Generator<unknown, T, unknown>,
     next: unknown,
 ): MaybePromiseLike<T> {
     while (true) {
@@ -12,17 +12,25 @@ function advance<T>(
         }
         if (isPromiseLike(value)) {
             return value.then(
-                (value) => advance(iterator, { resolved: value }),
-                (error: unknown) => advance(iterator, { error }),
+                (value) => advance(iterator, value),
+                (error: unknown) => {
+                    iterator.throw(error);
+                    throw error;
+                },
             );
         }
         next = value;
     }
 }
 
+export type BipedalThen = <T>(
+    value: MaybePromiseLike<T>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+) => Iterable<PromiseLike<any>, T, unknown>;
+
 export type BipedalGenerator<This, T, A extends unknown[]> = (
     this: This,
-    then: <U>(value: MaybePromiseLike<U>) => Iterable<unknown, U, unknown>,
+    then: BipedalThen,
     ...args: A
 ) => Generator<unknown, MaybePromiseLike<T>, unknown>;
 
@@ -30,31 +38,22 @@ export type BipedalGenerator<This, T, A extends unknown[]> = (
 export function bipedal<This, T, A extends unknown[]>(
     fn: BipedalGenerator<This, T, A>,
     bindThis?: This,
-): { (this: This, ...args: A): MaybePromiseLike<T> } {
+): { (...args: A): MaybePromiseLike<T> } {
     function result(this: This, ...args: A): MaybePromiseLike<T> {
-        const iterator = fn.call(
+        const generator = fn.call(
             this,
             function* <U>(
                 value: MaybePromiseLike<U>,
-            ): Generator<
-                PromiseLike<U>,
-                U,
-                { resolved: U } | { error: unknown }
-            > {
+            ): Generator<PromiseLike<U>, U, U> {
                 if (isPromiseLike(value)) {
-                    const result = yield value;
-                    if ("resolved" in result) {
-                        return result.resolved;
-                    } else {
-                        throw result.error;
-                    }
+                    return yield value;
                 }
 
                 return value;
             },
             ...args,
         ) as never;
-        return advance(iterator, undefined);
+        return advance(generator, undefined);
     }
 
     if (bindThis) {
