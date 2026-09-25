@@ -97,6 +97,11 @@ export class TangoIndexedDbStorage implements TangoKeyStorage {
     }
 
     close() {
-        return this.#openDatabasePromise?.then((db) => void db.close());
+        const promise = this.#openDatabasePromise;
+        if (promise) {
+            this.#openDatabasePromise = undefined;
+            return promise.then((db) => void db.close());
+        }
+        return undefined;
     }
 }

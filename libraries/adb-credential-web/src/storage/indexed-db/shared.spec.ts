@@ -28,18 +28,32 @@ describe("waitRequest", () => {
         const request = indexedDB.open(dbName, 1);
         await assert.rejects(waitRequest(request), /VersionError/);
     });
+
+    it("should throw if used inside a transaction", async () => {
+        const db = await openDatabase(nextDatabaseName(), 1, (db) => {
+            db.createObjectStore("store", { autoIncrement: true });
+        });
+        const tx = db.transaction("store", "readwrite");
+        const store = tx.objectStore("store");
+        const request = store.put({ value: 1 });
+        await assert.rejects(
+            () => waitRequest(request),
+            /Cannot wait for a request inside a transaction/,
+        );
+        db.close();
+    });
 });
 
 describe("openDatabase", () => {
     it("should close the database when callback finishes", async () => {
-        let db: IDBDatabase;
+        let db!: IDBDatabase;
         await openDatabase(
             nextDatabaseName(),
             1,
             () => {},
             (db_) => {
                 db = db_;
-                return new Promise((resolve) => setTimeout(resolve, 2000));
+                return new Promise((resolve) => setTimeout(resolve, 0));
             },
         );
         assert.throws(() => db.transaction("store"), /InvalidStateError/);
@@ -53,7 +67,6 @@ describe("transaction", () => {
         });
         const tx = db.transaction("store", "readwrite");
         const store = tx.objectStore("store");
-        await waitRequest(store.put({ value: 1 }));
         await new Promise(setImmediate);
         assert.throws(
             () => store.put({ value: 2 }),

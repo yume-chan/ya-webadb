@@ -8,6 +8,12 @@
  * or rejects with the request's error.
  */
 export function waitRequest<T>(request: IDBRequest<T>): Promise<T> {
+    if (request.transaction) {
+        return Promise.reject(
+            new Error("Cannot wait for a request inside a transaction."),
+        );
+    }
+
     return new Promise<T>((resolve, reject) => {
         request.onerror = () => {
             reject(request.error!);
@@ -27,13 +33,13 @@ export async function openDatabase<T>(
     name: string,
     version: number,
     onUpgrade: (db: IDBDatabase) => undefined,
-    callback: (db: IDBDatabase) => T,
+    callback: (db: IDBDatabase) => T | Promise<T>,
 ): Promise<T>;
 export async function openDatabase<T>(
     name: string,
     version: number,
     onUpgrade: (db: IDBDatabase) => undefined,
-    callback?: (db: IDBDatabase) => T,
+    callback?: (db: IDBDatabase) => T | Promise<T>,
 ): Promise<IDBDatabase | T> {
     const request = indexedDB.open(name, version);
 
@@ -83,7 +89,7 @@ function advance<T>(
                     // https://w3c.github.io/IndexedDB/#ref-for-canceled-flag%E2%91%A0
                     e.preventDefault();
 
-                    // Prevent event buddles to transaction's `onerror`
+                    // Prevent the event from bubbling to the transaction's `onerror`
                     // https://w3c.github.io/IndexedDB/#ref-for-get-the-parent%E2%91%A1
                     e.stopPropagation();
 

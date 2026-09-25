@@ -83,6 +83,20 @@ describe("bipedal", () => {
             });
             assert.strictEqual(await func(), 42);
         });
+
+        it("generator should be able to catch the error", async () => {
+            const func = bipedal(function* () {
+                try {
+                    yield Promise.reject(new Error("test"));
+                    return undefined;
+                } catch (e) {
+                    return e;
+                }
+            });
+            const result = await func();
+            assert.ok(result instanceof Error);
+            assert.strictEqual(result.message, "test");
+        });
     });
 
     it("should have target as `this` if not bound", () => {
