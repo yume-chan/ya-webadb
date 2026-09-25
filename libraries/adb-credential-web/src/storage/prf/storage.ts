@@ -188,4 +188,8 @@ export class TangoPrfStorage implements TangoKeyStorage {
             }
         }
     }
+
+    close() {
+        return this.#storage.close?.();
+    }
 }

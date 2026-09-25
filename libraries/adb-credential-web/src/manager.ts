@@ -79,4 +79,8 @@ export class AdbWebCryptoCredentialManager implements AdbCredentialManager {
             }
         }
     }
+
+    close() {
+        return this.#storage.close?.();
+    }
 }

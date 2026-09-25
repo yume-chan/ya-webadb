@@ -26,6 +26,8 @@ export class TangoIndexedDbStorage implements TangoKeyStorage {
     async #openDatabaseCore() {
         const v1Keys = await getAllKeysV1();
         if (v1Keys) {
+            // V1 uses hardcoded database name,
+            // Delete the database for recreation
             await waitRequest(indexedDB.deleteDatabase(DefaultDatabaseName));
         }
 
@@ -55,41 +57,51 @@ export class TangoIndexedDbStorage implements TangoKeyStorage {
     ): Promise<undefined> {
         const db = await this.#openDatabase();
 
-        try {
-            await createTransaction(db, this.#storeName, (tx) => {
-                const store = tx.objectStore(this.#storeName);
-                store.add({ privateKey, name } satisfies TangoKey);
-            });
-        } finally {
-            db.close();
-        }
+        await createTransaction(
+            db,
+            this.#storeName,
+            function* (_, store) {
+                yield store.add({ privateKey, name } satisfies TangoKey);
+            },
+            { mode: "readwrite" },
+        );
     }
 
     async *load(): AsyncGenerator<TangoKey, void, void> {
         const db = await this.#openDatabase();
 
-        try {
-            const keys = await createTransaction(db, this.#storeName, (tx) => {
-                const store = tx.objectStore(this.#storeName);
-                return waitRequest(store.getAll() as IDBRequest<TangoKey[]>);
-            });
+        const keys = await createTransaction(
+            db,
+            this.#storeName,
+            function* (_, store, waitRequest) {
+                return yield* waitRequest(
+                    store.getAll() as IDBRequest<TangoKey[]>,
+                );
+            },
+        );
 
-            yield* keys;
-        } finally {
-            db.close();
-        }
+        yield* keys;
     }
 
     async clear() {
         const db = await this.#openDatabase();
 
-        try {
-            await createTransaction(db, this.#storeName, (tx) => {
-                const store = tx.objectStore(this.#storeName);
-                store.clear();
-            });
-        } finally {
-            db.close();
+        await createTransaction(
+            db,
+            this.#storeName,
+            function* (_, store) {
+                yield store.clear();
+            },
+            { mode: "readwrite" },
+        );
+    }
+
+    close() {
+        const promise = this.#openDatabasePromise;
+        if (promise) {
+            this.#openDatabasePromise = undefined;
+            return promise.then((db) => void db.close());
         }
+        return undefined;
     }
 }
