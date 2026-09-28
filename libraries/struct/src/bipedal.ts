@@ -3,22 +3,20 @@ import { isPromiseLike } from "@yume-chan/async";
 
 function advance<T>(
     iterator: Generator<unknown, T, unknown>,
-    { done, value }: IteratorResult<unknown, T>,
+    result: IteratorResult<unknown, T>,
 ): MaybePromiseLike<T> {
-    if (done) {
-        return value;
-    }
-    if (isPromiseLike(value)) {
-        return value.then(
-            (value) => advance(iterator, iterator.next(value)),
-            (error: unknown) => advance(iterator, iterator.throw(error)),
-        );
-    }
-    return advance(iterator, iterator.next(value));
-}
-
-function start<T>(generator: Generator<unknown, T, unknown>) {
-    return advance(generator, generator.next(undefined));
+    do {
+        if (result.done) {
+            return result.value;
+        }
+        if (isPromiseLike(result.value)) {
+            return result.value.then(
+                (value) => advance(iterator, iterator.next(value)),
+                (error: unknown) => advance(iterator, iterator.throw(error)),
+            );
+        }
+        result = iterator.next(result.value);
+    } while (true);
 }
 
 export type BipedalThen = <T>(
@@ -57,8 +55,8 @@ export function bipedal<This, T, A extends unknown[]>(
                 return value;
             },
             ...args,
-        ) as never;
-        return start(generator);
+        ) as Generator<unknown, T, unknown>;
+        return advance(generator, generator.next(undefined));
     }
 
     if (bindThis) {

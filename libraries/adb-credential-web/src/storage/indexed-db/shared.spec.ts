@@ -77,6 +77,20 @@ describe("transaction", () => {
 });
 
 describe("createTransaction", () => {
+    it("should reject async generators", async () => {
+        const db = await openDatabase(nextDatabaseName(), 1, (db) => {
+            db.createObjectStore("store", { autoIncrement: true });
+        });
+        await assert.rejects(
+            // @ts-expect-error unit test
+            createTransaction(db, "store", async function* () {
+                yield new Promise((resolve) => setTimeout(resolve, 0));
+            }),
+            /Async generators are not supported/,
+        );
+        db.close();
+    });
+
     it("should throw if callback throws", async () => {
         const db = await openDatabase(nextDatabaseName(), 1, (db) => {
             db.createObjectStore("store", { autoIncrement: true });
@@ -247,11 +261,11 @@ describe("createTransaction", () => {
                     "store",
                     function* (tx) {
                         tx.commit();
-                        throw new Error("Transaction aborted");
+                        throw new Error("test error");
                     },
                     { mode: "readwrite" },
                 ),
-            /Transaction aborted/,
+            /test error/,
         );
         db.close();
     });
