@@ -47,7 +47,7 @@ export class TangoIndexedDbStorage implements TangoKeyStorage {
         });
     }
 
-    async #openDatabase() {
+    #openDatabase() {
         return (this.#openDatabasePromise ??= this.#openDatabaseCore());
     }
 
