@@ -1,4 +1,3 @@
-import type { MaybePromiseLike } from "@yume-chan/async";
 import {
     getInt16,
     getInt32,
@@ -15,6 +14,7 @@ import {
     setUint64,
 } from "@yume-chan/no-data-view";
 
+import type { BipedalThen } from "./bipedal.js";
 import type {
     Field,
     FieldByobSerializeContext,
@@ -35,7 +35,7 @@ function number<T>(
         context: FieldByobSerializeContext & { index: number },
     ) => void,
     deserialize: (
-        then: <U>(value: MaybePromiseLike<U>) => Iterable<unknown, U, unknown>,
+        then: BipedalThen,
         reader: AsyncExactReadable,
         context: FieldDeserializeContext<never>,
     ) => Generator<unknown, T, unknown>,

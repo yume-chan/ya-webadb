@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "description": "",
+    "type": "module",
     "main": "index.js",
     "scripts": {
         "start": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript --watch",
@@ -21,6 +22,7 @@
     },
     "dependencies": {
         "@yume-chan/adb": "workspace:^",
+        "@yume-chan/adb-credential-web": "workspace:^",
         "@yume-chan/scrcpy": "workspace:^",
         "@yume-chan/scrcpy-decoder-h264bsd": "workspace:^",
         "@yume-chan/struct": "workspace:^"

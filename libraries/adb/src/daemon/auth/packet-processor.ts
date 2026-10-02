@@ -35,6 +35,8 @@ export interface AdbCredentialManager {
      * Each call to `iterateKeys` must return a different iterator that iterate through all stored keys.
      */
     iterateKeys(): AdbKeyIterable;
+
+    close?(): MaybePromiseLike<undefined>;
 }
 
 export interface AdbKeyInfo {
