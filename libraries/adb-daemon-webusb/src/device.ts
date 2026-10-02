@@ -235,6 +235,11 @@ export class AdbDaemonWebUsbConnection implements ReadableWritablePair<
                 }
             }
 
+            // https://github.com/whatwg/usb/issues/219#issuecomment-5937803105
+            if (isErrorName(e, "NotFoundError")) {
+                return undefined;
+            }
+
             throw e;
         }
     }
