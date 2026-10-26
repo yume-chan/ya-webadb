@@ -14,6 +14,7 @@ import { ReadableStream, WritableStream } from "@yume-chan/stream-extra";
 import { AdbScrcpyOptions3_3_3 } from "./3_3_3.js";
 import { AdbScrcpyClient } from "./client.js";
 
+/** Runs the launcher in a real shell with controlled id, su, and app_process commands. */
 async function fixture(t: TestContext, uid: number) {
     const directory = await mkdtemp(join(tmpdir(), "adb-scrcpy-uid-"));
     t.after(() => rm(directory, { recursive: true, force: true }));
@@ -74,9 +75,18 @@ async function fixture(t: TestContext, uid: number) {
             clientOptions?: ConstructorParameters<
                 typeof AdbScrcpyOptions3_3_3
             >[1],
+            path = DefaultServerPath,
+            serverOptions: ConstructorParameters<
+                typeof AdbScrcpyOptions3_3_3
+            >[0] = {},
         ) {
             const options = new AdbScrcpyOptions3_3_3(
-                { video: false, audio: false, control: false },
+                {
+                    ...serverOptions,
+                    video: false,
+                    audio: false,
+                    control: false,
+                },
                 clientOptions,
             );
             t.mock.method(
@@ -89,7 +99,7 @@ async function fixture(t: TestContext, uid: number) {
                         dispose,
                     }) as never,
             );
-            return AdbScrcpyClient.start(adb, DefaultServerPath, options);
+            return AdbScrcpyClient.start(adb, path, options);
         },
     };
 }
@@ -125,6 +135,32 @@ for (const uid of [0, 2000]) {
                     });
                 }
                 assert.equal(device.dispose.mock.callCount(), 1);
+            } finally {
+                await client.close();
+            }
+        },
+    );
+
+    test(
+        `AdbScrcpyClient preserves literal paths and options when adbd UID is ${uid}`,
+        { skip: process.platform === "win32" },
+        async (t) => {
+            const device = await fixture(t, uid);
+            const marker = join(device.directory, "injected");
+            const special = `space 'quoted' "$(touch ${marker})"; value`;
+            const path = `/data/local/tmp/${special}.jar`;
+            const client = await device.start(undefined, path, {
+                videoEncoder: special,
+            });
+            try {
+                assert.deepEqual(device.output().trimEnd().split("\n"), [
+                    path,
+                    "/",
+                    "com.genymobile.scrcpy.Server",
+                    client.options.version,
+                    ...client.options.serialize(),
+                ]);
+                await assert.rejects(access(marker), { code: "ENOENT" });
             } finally {
                 await client.close();
             }

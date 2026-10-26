@@ -156,7 +156,12 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
                 process = await options.spawner(args);
             } else {
                 // ClipboardService checks that the caller owns com.android.shell (UID 2000).
-                const command = escapeArg(args.join(" "));
+                const command = escapeArg(
+                    [
+                        `CLASSPATH=${escapeArg(path)}`,
+                        ...args.slice(1).map(escapeArg),
+                    ].join(" "),
+                );
                 process = await adb.subprocess.noneProtocol.spawn(
                     `if [ "$(id -u)" = 0 ]; then exec su 2000 sh -c ${command}; else exec sh -c ${command}; fi`,
                 );
