@@ -1,5 +1,5 @@
 import type { Adb, AdbNoneProtocolProcess } from "@yume-chan/adb";
-import { AdbReverseNotSupportedError } from "@yume-chan/adb";
+import { AdbReverseNotSupportedError, escapeArg } from "@yume-chan/adb";
 import type {
     MapBoolean,
     ScrcpyAudioStreamDisabledMetadata,
@@ -155,7 +155,11 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             if (options.spawner) {
                 process = await options.spawner(args);
             } else {
-                process = await adb.subprocess.noneProtocol.spawn(args);
+                // ClipboardService checks that the caller owns com.android.shell (UID 2000).
+                const command = escapeArg(args.join(" "));
+                process = await adb.subprocess.noneProtocol.spawn(
+                    `if [ "$(id -u)" = 0 ]; then exec su 2000 sh -c ${command}; else exec sh -c ${command}; fi`,
+                );
             }
 
             const output = process.output
