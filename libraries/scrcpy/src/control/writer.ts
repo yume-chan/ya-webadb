@@ -1,7 +1,8 @@
+import { delay } from "@yume-chan/async";
 import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
 import { Consumable } from "@yume-chan/stream-extra";
 
-import type { AndroidKeyEventAction } from "../android/index.js";
+import { AndroidKeyEventAction } from "../android/index.js";
 import type { ScrcpyOptions } from "../base/index.js";
 import type { ScrcpyResizeDisplayControlMessage } from "../index.js";
 import type {
@@ -33,6 +34,33 @@ export class ScrcpyControlMessageWriter {
 
     injectKeyCode(message: Omit<ScrcpyInjectKeyCodeControlMessage, "type">) {
         return this.write(this.#serializer.injectKeyCode(message));
+    }
+
+    injectKeyDown(
+        message: Omit<ScrcpyInjectKeyCodeControlMessage, "type" | "action">,
+    ) {
+        return this.injectKeyCode({
+            ...message,
+            action: AndroidKeyEventAction.Down,
+        });
+    }
+
+    injectKeyUp(
+        message: Omit<ScrcpyInjectKeyCodeControlMessage, "type" | "action">,
+    ) {
+        return this.injectKeyCode({
+            ...message,
+            action: AndroidKeyEventAction.Up,
+        });
+    }
+
+    async injectKeyPress(
+        message: Omit<ScrcpyInjectKeyCodeControlMessage, "type" | "action">,
+        hold: number = 100,
+    ) {
+        await this.injectKeyDown(message);
+        await delay(hold);
+        await this.injectKeyUp(message);
     }
 
     injectText(text: string) {
