@@ -36,7 +36,7 @@
         "@yume-chan/async": "^4.1.3"
     },
     "devDependencies": {
-        "@types/node": "^26.6.4",
+        "@types/node": "^26.6.5",
         "@yume-chan/lint": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",

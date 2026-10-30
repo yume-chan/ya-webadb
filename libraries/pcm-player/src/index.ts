@@ -106,7 +106,7 @@ export abstract class PcmPlayer<T> {
         this.#buffers.length = 0;
     }
 
-    async stop() {
+    stop() {
         if (this.#stopped) {
             return;
         }

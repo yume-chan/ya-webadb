@@ -99,7 +99,7 @@
     "editor.formatOnSave": true,
     "editor.tabSize": 4,
     "eslint.debug": true,
-    "eslint.nodePath": "./toolchain/eslint-config/node_modules/eslint",
+    "eslint.nodePath": "./toolchain/lint/node_modules/eslint",
     "eslint.options": {
         "overrideConfigFile": "./node_modules/@yume-chan/lint/eslint.config.js"
     },

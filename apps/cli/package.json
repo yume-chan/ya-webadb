@@ -42,11 +42,11 @@
         "wtfnode": "^0.10.1"
     },
     "devDependencies": {
-        "@types/node": "^26.6.4",
+        "@types/node": "^26.6.5",
         "@types/wtfnode": "^0.10.0",
         "@yume-chan/lint": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "prettier": "^3.9.9",
+        "prettier": "^3.9.10",
         "typescript": "^6.0.3"
     }
 }

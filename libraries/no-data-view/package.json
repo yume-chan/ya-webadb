@@ -30,11 +30,11 @@
         "test": "run-test"
     },
     "devDependencies": {
-        "@types/node": "^26.6.4",
+        "@types/node": "^26.6.5",
         "@yume-chan/lint": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
-        "tinybench": "^6.2.1",
+        "tinybench": "^6.2.2",
         "typescript": "^6.0.3"
     }
 }

@@ -32,13 +32,13 @@
         "test": "run-test"
     },
     "dependencies": {
-        "@structured-world/structured-zstd": "^0.0.58",
+        "@structured-world/structured-zstd": "^0.2.6",
         "@yume-chan/adb": "workspace:*",
         "@yume-chan/stream-extra": "workspace:*",
         "comlink": "^4.4.2"
     },
     "devDependencies": {
-        "@types/node": "^26.6.4",
+        "@types/node": "^26.6.5",
         "@yume-chan/lint": "workspace:^",
         "@yume-chan/test-runner": "workspace:^",
         "@yume-chan/tsconfig": "workspace:^",
