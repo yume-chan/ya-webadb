@@ -1,3 +1,32 @@
+const SharedContexts = new Map<number, AudioContext>();
+
+function getSharedContext(sampleRate: number) {
+    if (!SharedContexts.has(sampleRate)) {
+        SharedContexts.set(
+            sampleRate,
+            new AudioContext({
+                latencyHint: "interactive",
+                sampleRate,
+            }),
+        );
+    }
+    return SharedContexts.get(sampleRate)!;
+}
+
+const AddModulePromises = new WeakMap<AudioContext, Promise<void>>();
+
+function addWorkletModule(context: AudioContext) {
+    if (!AddModulePromises.has(context)) {
+        AddModulePromises.set(
+            context,
+            context.audioWorklet.addModule(
+                new URL("./worker.js", import.meta.url),
+            ),
+        );
+    }
+    return AddModulePromises.get(context)!;
+}
+
 export abstract class PcmPlayer<T> {
     protected abstract sourceName: string;
 
@@ -7,19 +36,34 @@ export abstract class PcmPlayer<T> {
     }
 
     #channelCount: number;
+
     #worklet: AudioWorkletNode | undefined;
+
     #buffers: T[] = [];
     #stopped = false;
 
-    constructor(sampleRate: number, channelCount: number) {
-        this.#context = new AudioContext({
-            latencyHint: "interactive",
-            sampleRate,
-        });
+    constructor(
+        sampleRate: number,
+        channelCount: number,
+        context?: AudioContext,
+    ) {
+        this.#context = context ?? getSharedContext(sampleRate);
         this.#channelCount = channelCount;
     }
 
     protected abstract feedCore(worklet: AudioWorkletNode, source: T): void;
+
+    /**
+     * Starting the AudioContext if it is suspended and the user has interacted with the page.
+     */
+    #tryResuming() {
+        if (
+            this.#context.state === "suspended" &&
+            navigator.userActivation.hasBeenActive
+        ) {
+            void this.#context.resume().catch(() => {});
+        }
+    }
 
     /**
      * Feed the samples to the player.
@@ -36,13 +80,12 @@ export abstract class PcmPlayer<T> {
             return;
         }
 
+        this.#tryResuming();
         this.feedCore(this.#worklet, source);
     }
 
     async start() {
-        await this.#context.audioWorklet.addModule(
-            new URL("./worker.js", import.meta.url),
-        );
+        await addWorkletModule(this.#context);
 
         if (this.#stopped) {
             return;
@@ -54,6 +97,8 @@ export abstract class PcmPlayer<T> {
             outputChannelCount: [this.#channelCount],
         });
         this.#worklet.connect(this.#context.destination);
+
+        this.#tryResuming();
 
         for (const source of this.#buffers) {
             this.feedCore(this.#worklet, source);
@@ -70,7 +115,9 @@ export abstract class PcmPlayer<T> {
         this.#worklet?.disconnect();
         this.#worklet = undefined;
 
-        await this.#context.close();
+        this.#buffers.length = 0;
+
+        // Do not close the AudioContext as it might be shared.
     }
 }
 
