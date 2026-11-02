@@ -1,0 +1,48 @@
+{
+    "name": "@yume-chan/adb-daemon-webusb",
+    "version": "3.0.0-beta.4",
+    "description": "Adb daemon transport connection for `@yume-chan/adb` using WebUSB API.",
+    "keywords": [
+        "webusb",
+        "adb"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/adb-daemon-webusb#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "libraries/adb-daemon-webusb"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "sideEffects": false,
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "lint": "run-lint",
+        "prepublishOnly": "npm run build",
+        "test": "run-test"
+    },
+    "dependencies": {
+        "@types/w3c-web-usb": "^1.0.14",
+        "@yume-chan/adb": "workspace:*",
+        "@yume-chan/event": "workspace:*",
+        "@yume-chan/stream-extra": "workspace:*",
+        "@yume-chan/struct": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/node": "^26.6.5",
+        "@yume-chan/lint": "workspace:^",
+        "@yume-chan/test-runner": "workspace:^",
+        "@yume-chan/tsconfig": "workspace:^",
+        "typescript": "^6.0.3"
+    }
+}

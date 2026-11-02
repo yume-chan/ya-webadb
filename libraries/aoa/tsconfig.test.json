@@ -1,0 +1,9 @@
+{
+    "extends": "./tsconfig.build.json",
+    "compilerOptions": {
+        "types": [
+            "w3c-web-usb",
+        ],
+    },
+    "exclude": []
+}

@@ -1,0 +1,46 @@
+{
+    "name": "@yume-chan/android-bin",
+    "version": "3.0.0-beta.4",
+    "description": "Wrappers for Android built-in executables.",
+    "keywords": [
+        "adb",
+        "Android"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/android-bin#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "libraries/android-bin"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "sideEffects": false,
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "lint": "run-lint",
+        "prepublishOnly": "npm run build",
+        "test": "run-test"
+    },
+    "dependencies": {
+        "@yume-chan/adb": "workspace:*",
+        "@yume-chan/stream-extra": "workspace:*",
+        "@yume-chan/struct": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/node": "^26.6.5",
+        "@yume-chan/lint": "workspace:^",
+        "@yume-chan/test-runner": "workspace:^",
+        "@yume-chan/tsconfig": "workspace:^",
+        "typescript": "^6.0.3"
+    }
+}

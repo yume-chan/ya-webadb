@@ -1,0 +1,52 @@
+{
+    "name": "@yume-chan/adb-cli",
+    "private": true,
+    "version": "0.0.19",
+    "description": "Re-implement `adb`",
+    "keywords": [
+        "adb",
+        "cli"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/apps/adb-cli#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "apps/adb-cli"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "type": "module",
+    "main": "esm/index.js",
+    "types": "esm/index.d.ts",
+    "scripts": {
+        "build": "tsc -p tsconfig.build.json",
+        "lint": "run-lint"
+    },
+    "bin": {
+        "tango-cli": "esm/index.js"
+    },
+    "dependencies": {
+        "@yume-chan/adb": "workspace:^",
+        "@yume-chan/adb-server-node-tcp": "workspace:^",
+        "@yume-chan/android-bin": "workspace:^",
+        "@yume-chan/stream-extra": "workspace:^",
+        "commander": "^15.0.0",
+        "source-map-support": "^0.5.21",
+        "wtfnode": "^0.10.1"
+    },
+    "devDependencies": {
+        "@types/node": "^26.6.5",
+        "@types/wtfnode": "^0.10.0",
+        "@yume-chan/lint": "workspace:^",
+        "@yume-chan/tsconfig": "workspace:^",
+        "prettier": "^3.9.10",
+        "typescript": "^6.0.3"
+    }
+}

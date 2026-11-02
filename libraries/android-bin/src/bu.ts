@@ -1,0 +1,83 @@
+import type { Adb } from "@yume-chan/adb";
+import type { MaybeConsumable, ReadableStream } from "@yume-chan/stream-extra";
+
+export class AdbBackup {
+    readonly #adb: Adb;
+
+    constructor(adb: Adb) {
+        this.#adb = adb;
+    }
+
+    /**
+     * User must confirm backup on device within 60 seconds.
+     */
+    async backup(
+        options: AdbBackup.BackupOptions,
+    ): Promise<ReadableStream<Uint8Array>> {
+        const args = ["bu", "backup"];
+
+        if (options.user !== undefined) {
+            args.push("--user", options.user.toString());
+        }
+
+        args.push(options.saveSharedStorage ? "--shared" : "--no-shared");
+        args.push(options.saveWidgets ? "--widgets" : "--no-widgets");
+
+        args.push(options.savePackageApk ? "--apk" : "--no-apk");
+        args.push(options.savePackageObb ? "--obb" : "--no-obb");
+        args.push(
+            options.savePackageKeyValue ? "--key-value" : "--no-key-value",
+        );
+
+        args.push(options.compress ? "--compress" : "--no-compress");
+
+        if (typeof options.packages === "string") {
+            switch (options.packages) {
+                case "user":
+                    args.push("--all", "--no-system");
+                    break;
+                case "all":
+                    args.push("--all", "--system");
+                    break;
+            }
+        } else {
+            args.push(...options.packages);
+        }
+
+        const process = await this.#adb.subprocess.noneProtocol.spawn(args);
+        return process.output;
+    }
+
+    /**
+     * User must enter the password (if any) and
+     * confirm restore on device within 60 seconds.
+     */
+    restore(options: AdbBackup.RestoreOptions): Promise<string> {
+        const args = ["bu", "restore"];
+        if (options.user !== undefined) {
+            args.push("--user", options.user.toString());
+        }
+        return this.#adb.subprocess.noneProtocol
+            .spawn(args)
+            .wait({ stdin: options.file })
+            .toString();
+    }
+}
+
+export namespace AdbBackup {
+    export interface BackupOptions {
+        user?: number | undefined;
+        saveSharedStorage?: boolean | undefined;
+        saveWidgets?: boolean | undefined;
+        packages: readonly string[] | "user" | "all";
+        savePackageApk: boolean;
+        savePackageObb: boolean;
+        savePackageKeyValue: boolean;
+        compress: boolean;
+    }
+
+    export interface RestoreOptions {
+        user?: number | undefined;
+        file: ReadableStream<MaybeConsumable<Uint8Array>>;
+    }
+}

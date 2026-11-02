@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and Discussion
+    url: https://github.com/yume-chan/ya-webadb/discussions/new
+    about: Ask questions about usage or integration
+
+  - name: Issue about Tango Web app
+    url: https://github.com/yume-chan/tango-feedback/issues/new/choose
+    about: Bug reports and features requests for the new Tango Web app

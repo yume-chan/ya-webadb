@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - libraries/*
+  - toolchain/*
+
+allowBuilds:
+  unrs-resolver: true
+
+onlyBuiltDependencies:
+  - unrs-resolver

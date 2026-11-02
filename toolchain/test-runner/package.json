@@ -1,0 +1,12 @@
+{
+    "name": "@yume-chan/test-runner",
+    "version": "1.0.0",
+    "type": "module",
+    "bin": {
+        "run-test": "wrapper.js"
+    },
+    "devDependencies": {
+        "@types/node": "^26.6.5",
+        "typescript": "^6.0.3"
+    }
+}

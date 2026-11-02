@@ -1,0 +1,33 @@
+{
+    "name": "@yume-chan/fetch-scrcpy-server",
+    "version": "3.0.0-beta.4",
+    "description": "A script to download Scrcpy server binary.",
+    "keywords": [
+        "scrcpy"
+    ],
+    "license": "MIT",
+    "author": {
+        "name": "Simon Chan",
+        "email": "cnsimonchan@live.com",
+        "url": "https://chensi.moe/blog"
+    },
+    "homepage": "https://github.com/yume-chan/ya-webadb/tree/main/libraries/fetch-scrcpy-server#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yume-chan/ya-webadb.git",
+        "directory": "libraries/fetch-scrcpy-server"
+    },
+    "bugs": {
+        "url": "https://github.com/yume-chan/ya-webadb/issues"
+    },
+    "bin": {
+        "fetch-scrcpy-server": "bin/fetch-server.js"
+    },
+    "type": "module",
+    "main": "index.js",
+    "types": "index.d.ts",
+    "sideEffects": false,
+    "devDependencies": {
+        "@types/node": "^26.6.5"
+    }
+}

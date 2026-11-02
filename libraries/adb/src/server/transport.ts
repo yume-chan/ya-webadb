@@ -1,0 +1,90 @@
+import { PromiseResolver } from "@yume-chan/async";
+
+import type { Adb, AdbTransport } from "../adb.js";
+import type { AdbBanner } from "../banner.js";
+import { AdbDeviceFeatures } from "../features.js";
+
+import type { AdbServerClient } from "./client.js";
+
+export class AdbServerTransport implements AdbTransport {
+    #client: AdbServerClient;
+
+    readonly serial: string;
+
+    readonly transportId: bigint;
+
+    readonly maxPayloadSize: number = 1 * 1024 * 1024;
+
+    readonly banner: AdbBanner;
+
+    #sockets: Adb.Socket[] = [];
+
+    #closed = new PromiseResolver<void>();
+    #disconnected: Promise<void>;
+    get disconnected() {
+        return this.#disconnected;
+    }
+
+    get clientFeatures() {
+        // This list tells the `Adb` instance how to invoke some commands.
+        //
+        // Because all device commands are created by the `Adb` instance, not ADB server,
+        // we don't need to fetch current server's feature list using `host-features` command.
+        //
+        // And because all server commands are created by the `AdbServerClient` instance, not `Adb`,
+        // we don't need to pass server-only features to `Adb` in this list.
+        return AdbDeviceFeatures;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/max-params
+    constructor(
+        client: AdbServerClient,
+        serial: string,
+        banner: AdbBanner,
+        transportId: bigint,
+        disconnected: Promise<void>,
+    ) {
+        this.#client = client;
+        this.serial = serial;
+        this.banner = banner;
+        this.transportId = transportId;
+
+        this.#disconnected = Promise.race([this.#closed.promise, disconnected]);
+    }
+
+    async connect(
+        service: string,
+        options?: AdbTransport.ConnectOptions,
+    ): Promise<Adb.Socket> {
+        const socket = await this.#client.createDeviceConnection(
+            { transportId: this.transportId },
+            service,
+            options,
+        );
+        this.#sockets.push(socket);
+        return socket;
+    }
+
+    async addReverseTunnel(
+        handler: Adb.IncomingSocketHandler,
+        address?: string,
+    ): Promise<string> {
+        return await this.#client.connector.addReverseTunnel(handler, address);
+    }
+
+    async removeReverseTunnel(address: string): Promise<void> {
+        await this.#client.connector.removeReverseTunnel(address);
+    }
+
+    async clearReverseTunnels(): Promise<void> {
+        await this.#client.connector.clearReverseTunnels();
+    }
+
+    async close(): Promise<void> {
+        for (const socket of this.#sockets) {
+            await socket.close();
+        }
+        this.#sockets.length = 0;
+        this.#closed.resolve();
+    }
+}

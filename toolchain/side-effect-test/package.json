@@ -1,0 +1,30 @@
+{
+    "name": "side-effect-test",
+    "version": "1.0.0",
+    "private": true,
+    "description": "",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "start": "rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript --watch",
+        "test": "node generate.mjs && rollup -c rollup.config.ts --configPlugin @rollup/plugin-typescript"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@rollup/plugin-commonjs": "^29.0.3",
+        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@rollup/plugin-terser": "^1.0.2",
+        "@rollup/plugin-typescript": "^12.3.1",
+        "rollup": "^4.65.1",
+        "tslib": "^2.8.1"
+    },
+    "dependencies": {
+        "@yume-chan/adb": "workspace:^",
+        "@yume-chan/adb-credential-web": "workspace:^",
+        "@yume-chan/scrcpy": "workspace:^",
+        "@yume-chan/scrcpy-decoder-h264bsd": "workspace:^",
+        "@yume-chan/struct": "workspace:^"
+    }
+}

@@ -1,0 +1,133 @@
+{
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "cSpell.ignoreRegExpList": [
+        "0x[0-9a-f_]+"
+    ],
+    "cSpell.numSuggestions": 4,
+    "cSpell.words": [
+        "ADB's",
+        "adbd",
+        "addrs",
+        "allowlist",
+        "arraybuffer",
+        "autorun",
+        "Autosync",
+        "Backquote",
+        "Bframes",
+        "Bitstream",
+        "bootloader",
+        "brotli",
+        "CLSE",
+        "CNXN",
+        "colour",
+        "comlink",
+        "concat",
+        "Demuxer",
+        "Deserialization",
+        "DESERIALIZERS",
+        "devpath",
+        "diskstats",
+        "dumpsys",
+        "ebml",
+        "Embedder",
+        "entrypoints",
+        "fflate",
+        "flac",
+        "genymobile",
+        "Genymobile's",
+        "getprop",
+        "Golomb",
+        "keyof",
+        "laggy",
+        "libusb",
+        "localabstract",
+        "localfilesystem",
+        "Logcat",
+        "lstat",
+        "luma",
+        "Matroska",
+        "mdns",
+        "muxer",
+        "Muxing",
+        "Nalu",
+        "opendir",
+        "PKCS",
+        "ponyfill",
+        "runtimes",
+        "scid",
+        "Scrcpy",
+        "sendrecv",
+        "sideload",
+        "sideloading",
+        "Sodb",
+        "struct",
+        "struct's",
+        "subsampling",
+        "tcpip",
+        "tinyh",
+        "transferables",
+        "tsbuildinfo",
+        "unconfigured",
+        "undici",
+        "versioncode",
+        "vsock",
+        "webadb",
+        "webcodecs",
+        "webglcontextlost",
+        "webglcontextrestored",
+        "webm",
+        "websockify",
+        "webusb",
+        "wifi",
+        "wirelessly",
+        "WRTE",
+        "yume",
+        "zstd"
+    ],
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4,
+    "eslint.debug": true,
+    "eslint.nodePath": "./toolchain/lint/node_modules/eslint",
+    "eslint.options": {
+        "overrideConfigFile": "./node_modules/@yume-chan/lint/eslint.config.js"
+    },
+    "eslint.problems.shortenToSingleLine": true,
+    "eslint.workingDirectories": [
+        {
+            "pattern": "libraries/*"
+        }
+    ],
+    "explorer.sortOrder": "mixed",
+    "files.associations": {
+        "*.json": "jsonc",
+        "*.mdx": "markdown"
+    },
+    "jest.rootPath": "packages/struct",
+    "jest.showCoverageOnLoad": true,
+    "js/ts.format.semicolons": "insert",
+    "js/ts.preferences.quoteStyle": "single",
+    "js/ts.tsdk.path": "libraries/adb/node_modules/typescript/lib",
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "version-policies.json"
+            ],
+            "url": "https://developer.microsoft.com/json-schemas/rush/v5/version-policies.schema.json"
+        }
+    ],
+    "markdown.extension.toc.levels": "2..6",
+    "prettier.prettierPath": "./toolchain/eslint-config/node_modules/prettier/index.cjs",
+    "prettier.tabWidth": 4
+}

@@ -1,0 +1,19 @@
+{
+    "references": [
+        {
+            "path": "./tsconfig.build.json"
+        },
+        {
+            "path": "./tsconfig.test.json"
+        },
+        {
+            "path": "../media-codec/tsconfig.build.json"
+        },
+        {
+            "path": "../scrcpy/tsconfig.build.json"
+        },
+        {
+            "path": "../stream-extra/tsconfig.build.json"
+        },
+    ]
+}

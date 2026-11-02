@@ -1,0 +1,52 @@
+name: Bug Report
+description: File a bug in the library
+labels:
+  - "type:bug"
+body:
+  - type: checkboxes
+    attributes:
+      label: Issue Checklist
+      options:
+        - label: I'm using the library programmatically
+          required: true
+        - label: For Scrcpy related issues, I have searched in [Genymobile/scrcpy](https://github.com/Genymobile/scrcpy/issues) repository.
+          required: true
+
+  - type: input
+    attributes:
+      label: Library version
+      placeholder: 0.0.21
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Environment
+      description: Operating system, runtime name and version
+      placeholder: e.g. macOS 13.0, Chrome 105
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Device
+      description: Device model and Android version
+      placeholder: e.g. Pixel 5, Android 12
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Describe the bug
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true

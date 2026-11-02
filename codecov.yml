@@ -1,0 +1,13 @@
+coverage:
+  status:
+    project:
+      default: false
+      struct:
+        target: 80%
+        flags:
+          - struct
+
+flags:
+  struct:
+    paths:
+      - libraries/struct

@@ -1,0 +1,47 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
+name: Test
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: read
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                node-version: [22, 24]
+            fail-fast: false
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v7
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - name: Cache PNPM store
+              uses: actions/cache@v6
+              with:
+                  path: |
+                      ~/.pnpm-store/v11
+                  key: ${{ runner.os }}-pnpm
+
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.3.0
+                  run_install: true
+
+            - run: pnpm run build
+            - run: pnpm run test
+            - run: pnpm run lint
