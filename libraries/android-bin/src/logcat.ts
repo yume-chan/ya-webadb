@@ -513,24 +513,25 @@ export class Logcat {
             if (options.dump) {
                 args.push("-d");
             }
-            if (options.pid) {
+
+            if (options.pid !== undefined) {
                 if (!Number.isInteger(options.pid) || options.pid < 0) {
                     throw new Error("PID must be a non-negative integer");
                 }
                 args.push("--pid", options.pid.toString());
             }
+
             if (options.ids) {
                 args.push("-b", Logcat.joinLogId(options.ids));
             }
-            if (options.tail) {
-                if (typeof options.tail === "number") {
-                    if (!Number.isInteger(options.tail) || options.tail <= 0) {
-                        throw new Error("Tail must be a positive integer");
-                    }
-                    args.push("-t", options.tail.toString());
-                } else {
-                    args.push("-t", formatTailTime(options.tail));
+
+            if (typeof options.tail === "number") {
+                if (!Number.isInteger(options.tail) || options.tail <= 0) {
+                    throw new Error("Tail must be a positive integer");
                 }
+                args.push("-t", options.tail.toString());
+            } else if (options.tail) {
+                args.push("-t", formatTailTime(options.tail));
             }
         }
 

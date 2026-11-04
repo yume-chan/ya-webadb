@@ -10,6 +10,9 @@ import { AbortController, ReadableStream } from "./global/index.js";
 import { TaskQueue } from "./task-queue.js";
 
 export interface PushReadableStreamController<T> {
+    /**
+     * An {@link AbortSignal} that aborts when the stream is cancelled by the consumer
+     */
     abortSignal: AbortSignal;
 
     /**

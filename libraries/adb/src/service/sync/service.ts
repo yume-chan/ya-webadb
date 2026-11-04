@@ -3,6 +3,7 @@ import { MaybeConsumable } from "@yume-chan/stream-extra";
 
 import type { Adb } from "../../adb.js";
 import { AdbFeature } from "../../features.js";
+import "../../utils/array-from-async.js";
 import { escapeArg } from "../subprocess/index.js";
 
 import type { LinuxFileType } from "./android.js";
@@ -190,13 +191,8 @@ export class Service {
         });
     }
 
-    async readdir(path: string) {
-        // TODO: Convert to `Array.fromAsync`
-        const results: OpenDir.Entry[] = [];
-        for await (const entry of this.opendir(path)) {
-            results.push(entry);
-        }
-        return results;
+    readdir(path: string) {
+        return Array.fromAsync(this.opendir(path));
     }
 
     /**

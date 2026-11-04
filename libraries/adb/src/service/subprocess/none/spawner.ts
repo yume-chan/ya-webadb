@@ -7,6 +7,7 @@ import type {
 } from "@yume-chan/stream-extra";
 import { concatUint8Arrays } from "@yume-chan/stream-extra";
 
+import "../../../utils/array-from-async.js";
 import type { AdbSubprocessSpawner } from "../types.js";
 import {
     createLazyPromise,
