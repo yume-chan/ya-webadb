@@ -1,3 +1,5 @@
+import { suppressUnhandledRejection } from "@yume-chan/async";
+
 import { Consumable } from "../consumable.js";
 import type {
     QueuingStrategy,
@@ -26,9 +28,7 @@ export class ConsumableWritableStream<in T> extends WritableStream<
         value: T,
     ) {
         const consumable = new Consumable(value);
-        // Suppress unhandled-rejection when `writer.write` rejects
-        // before `consumable.consumed` is awaited
-        void consumable.consumed.catch(() => {});
+        suppressUnhandledRejection(consumable.consumed);
         await writer.write(consumable);
         await consumable.consumed;
     }

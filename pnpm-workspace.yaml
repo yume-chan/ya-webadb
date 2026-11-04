@@ -1,10 +1,13 @@
 packages:
-  - apps/*
-  - libraries/*
-  - toolchain/*
+    - apps/*
+    - libraries/*
+    - toolchain/*
 
 allowBuilds:
-  unrs-resolver: true
+    unrs-resolver: true
+
+minimumReleaseAgeExclude:
+    - "@yume-chan/async@4.2.2"
 
 onlyBuiltDependencies:
-  - unrs-resolver
+    - unrs-resolver

@@ -258,24 +258,37 @@ export const ReadableStream = /* #__PURE__ */ (() => {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     ReadableStream.from ??= function (iterable) {
-        const iterator =
-            Symbol.asyncIterator in iterable
-                ? iterable[Symbol.asyncIterator]()
-                : iterable[Symbol.iterator]();
-
-        return new ReadableStream({
-            async pull(controller) {
-                const result = await iterator.next();
-                if (result.done) {
-                    controller.close();
-                    return;
-                }
-                controller.enqueue(result.value);
-            },
-            async cancel(reason) {
-                await iterator.return?.(reason);
-            },
-        });
+        if (Symbol.asyncIterator in iterable) {
+            const iterator = iterable[Symbol.asyncIterator]();
+            return new ReadableStream({
+                async pull(controller) {
+                    const result = await iterator.next();
+                    if (result.done) {
+                        controller.close();
+                        return;
+                    }
+                    controller.enqueue(result.value);
+                },
+                async cancel(reason) {
+                    await iterator.return?.(reason);
+                },
+            });
+        } else {
+            const iterator = iterable[Symbol.iterator]();
+            return new ReadableStream({
+                pull(controller) {
+                    const result = iterator.next();
+                    if (result.done) {
+                        controller.close();
+                        return;
+                    }
+                    controller.enqueue(result.value);
+                },
+                cancel(reason) {
+                    iterator.return?.(reason);
+                },
+            });
+        }
     };
 
     // eslint-disable-next-line @typescript-eslint/unbound-method

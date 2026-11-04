@@ -1,5 +1,5 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
-import { PromiseResolver } from "@yume-chan/async";
+import { noop, PromiseResolver } from "@yume-chan/async";
 
 import type {
     QueuingStrategy,
@@ -10,10 +10,6 @@ import type {
 import { WritableStream } from "./global/index.js";
 import { tryClose } from "./try-close.js";
 import { WrapReadableStream } from "./wrap-readable.js";
-
-const NOOP = () => {
-    // no-op
-};
 
 export interface DuplexStreamFactoryOptions {
     /**
@@ -106,7 +102,7 @@ export class DuplexStreamFactory<R, W> {
             },
             close: async () => {
                 // NOOP: the writer is already closed
-                await writer.close().catch(NOOP);
+                await writer.close().catch(noop);
                 await this.close();
             },
         });
@@ -126,7 +122,7 @@ export class DuplexStreamFactory<R, W> {
 
         for (const writer of this.#writers) {
             // NOOP: the writer is already closed
-            writer.close().catch(NOOP);
+            writer.close().catch(noop);
         }
     }
 

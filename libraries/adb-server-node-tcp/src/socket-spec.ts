@@ -64,7 +64,7 @@ export function parseTcpSocketSpec(spec: string): {
 
         // [::1]:123
         const host = spec.substring(1, end);
-        const port = decimalToNumber(spec, end + 2);
+        port = decimalToNumber(spec, end + 2);
         if (port === undefined || port <= 0 || port > 65535) {
             throw new Error(`bad port number ${port} in ${spec}`);
         }
@@ -72,7 +72,6 @@ export function parseTcpSocketSpec(spec: string): {
     }
 
     let host: string | undefined;
-    port = undefined;
 
     const colons = findIndices(spec, ":");
     if (!spec.includes(".") && colons.length >= 2 && colons.length <= 7) {

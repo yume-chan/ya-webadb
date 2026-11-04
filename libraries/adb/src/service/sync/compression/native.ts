@@ -1,10 +1,9 @@
+import { noop } from "@yume-chan/async";
 import {
     CompressionStream,
     DecompressionStream,
     TransformStream,
 } from "@yume-chan/stream-extra";
-
-import { NOOP } from "../../../utils/no-op.js";
 
 import { Format } from "./format.js";
 import { Mode } from "./mode.js";
@@ -43,7 +42,7 @@ export function hasNativeSupport(format: Format, mode: Mode) {
 
     try {
         const stream = new Stream(FormatMap[format]);
-        void stream.writable.abort().catch(NOOP);
+        void stream.writable.abort().catch(noop);
         Cache.set(format, true);
         return true;
     } catch {

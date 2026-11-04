@@ -407,7 +407,11 @@ export interface LogSize {
 
 export class Logcat {
     static logIdToName(id: LogId): string {
-        return LogIdName[id]!;
+        const value = LogIdName[id];
+        if (!value) {
+            throw new Error(`Unknown LogId: ${id}`);
+        }
+        return value;
     }
 
     static logNameToId(name: string): LogId {
@@ -504,28 +508,34 @@ export class Logcat {
     }
 
     binary(options?: LogcatOptions): ReadableStream<AndroidLogEntry> {
-        return new WrapReadableStream(async () => {
-            const args = ["logcat", "-B"];
-            if (options?.dump) {
+        const args = ["logcat", "-B"];
+        if (options) {
+            if (options.dump) {
                 args.push("-d");
             }
-            if (options?.pid) {
+
+            if (options.pid !== undefined) {
+                if (!Number.isSafeInteger(options.pid) || options.pid <= 0) {
+                    throw new Error("PID must be a positive integer");
+                }
                 args.push("--pid", options.pid.toString());
             }
-            if (options?.ids) {
+
+            if (options.ids) {
                 args.push("-b", Logcat.joinLogId(options.ids));
             }
-            if (options?.tail) {
-                args.push(
-                    "-t",
-                    typeof options.tail === "number"
-                        ? options.tail.toString()
-                        : formatTailTime(options.tail),
-                );
-            }
 
-            // TODO: make `spawn` return synchronously with streams pending
-            // so it's easier to chain them.
+            if (typeof options.tail === "number") {
+                if (!Number.isSafeInteger(options.tail) || options.tail <= 0) {
+                    throw new Error("Tail must be a positive integer");
+                }
+                args.push("-t", options.tail.toString());
+            } else if (options.tail) {
+                args.push("-t", formatTailTime(options.tail));
+            }
+        }
+
+        return new WrapReadableStream(async () => {
             const process = await this.#adb.subprocess.noneProtocol.spawn(args);
             return process.output;
         }).pipeThrough(

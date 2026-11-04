@@ -1,4 +1,4 @@
-import { delay } from "@yume-chan/async";
+import { delay, suppressUnhandledRejection } from "@yume-chan/async";
 import type { WritableStreamDefaultWriter } from "@yume-chan/stream-extra";
 import { Consumable } from "@yume-chan/stream-extra";
 
@@ -120,6 +120,7 @@ export class ScrcpyControlMessageWriter {
         if (result instanceof Uint8Array) {
             await this.write(result);
         } else {
+            suppressUnhandledRejection(result[1]);
             await this.write(result[0]);
             await result[1];
         }

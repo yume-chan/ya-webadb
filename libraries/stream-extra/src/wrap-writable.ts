@@ -1,9 +1,6 @@
 import type { MaybePromiseLike } from "@yume-chan/async";
 
-import type {
-    TransformStream,
-    WritableStreamDefaultWriter,
-} from "./global/index.js";
+import type { WritableStreamDefaultWriter } from "./global/index.js";
 import { WritableStream } from "./global/index.js";
 
 export type WrapWritableStreamStart<T> = () => MaybePromiseLike<
@@ -69,19 +66,6 @@ export class WrapWritableStream<T> extends WritableStream<T> {
                 if (start !== this.writable && "close" in start) {
                     await start.close?.();
                 }
-            },
-        });
-    }
-
-    bePipedThroughFrom<U>(transformer: TransformStream<U, T>) {
-        let promise: Promise<void>;
-        return new WrapWritableStream<U>({
-            start: () => {
-                promise = transformer.readable.pipeTo(this);
-                return transformer.writable;
-            },
-            async close() {
-                await promise;
             },
         });
     }

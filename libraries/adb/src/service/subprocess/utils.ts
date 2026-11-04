@@ -1,4 +1,3 @@
-import { AccumulateStream } from "@yume-chan/stream-extra";
 import { TextDecoder } from "@yume-chan/struct";
 
 export function escapeArg(s: string) {
@@ -138,19 +137,6 @@ export function createLazyPromise<
     }
 
     return result;
-}
-
-export class ToArrayStream<T> extends AccumulateStream<T, T[]> {
-    constructor() {
-        super(
-            [],
-            (chunk, current) => {
-                current.push(chunk);
-                return current;
-            },
-            (output) => output,
-        );
-    }
 }
 
 export function decodeUtf8Chunked(chunks: Uint8Array[]): string {

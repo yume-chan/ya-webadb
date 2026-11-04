@@ -6,13 +6,11 @@ import type {
 } from "node:net";
 import { Server, Socket } from "node:net";
 import { platform } from "node:os";
+import { Readable, Writable } from "node:stream";
 
 import type { Adb, AdbServerClient } from "@yume-chan/adb";
-import {
-    MaybeConsumable,
-    PushReadableStream,
-    tryClose,
-} from "@yume-chan/stream-extra";
+import { PromiseResolver, suppressUnhandledRejection } from "@yume-chan/async";
+import { MaybeConsumable } from "@yume-chan/stream-extra";
 
 import { decimalToNumber, parseTcpSocketSpec } from "./socket-spec.js";
 
@@ -21,51 +19,34 @@ function nodeSocketToConnection(
 ): AdbServerClient.ServerConnection {
     socket.setNoDelay(true);
 
-    const closed = new Promise<undefined>((resolve) => {
-        socket.once("close", resolve);
-    });
+    const closedResolver = new PromiseResolver<undefined>();
+
+    const handleClose = () => {
+        closedResolver.resolve(undefined);
+        cleanup();
+    };
+    const handleError = (e: Error) => {
+        closedResolver.reject(e);
+        cleanup();
+    };
+
+    const cleanup = () => {
+        socket.removeListener("close", handleClose);
+        socket.removeListener("error", handleError);
+    };
+
+    socket.addListener("close", handleClose);
+    socket.addListener("error", handleError);
+
+    suppressUnhandledRejection(closedResolver.promise);
 
     return {
-        readable: new PushReadableStream<Uint8Array>((controller) => {
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            socket.on("data", async (data) => {
-                if (controller.abortSignal.aborted) {
-                    return;
-                }
-
-                socket.pause();
-                // `socket.encoding` is not set,
-                // so `data` is `Buffer<ArrayBuffer>`
-                await controller.enqueue(data as Buffer<ArrayBuffer>);
-                socket.resume();
-            });
-            socket.on("error", (e) => {
-                controller.error(e);
-            });
-            socket.on("end", () => {
-                tryClose(controller);
-            });
-        }),
-        writable: new MaybeConsumable.WritableStream<Uint8Array>({
-            start(controller) {
-                socket.on("error", (e) => {
-                    controller.error(e);
-                });
-            },
-            write: (chunk) => {
-                return new Promise<void>((resolve, reject) => {
-                    socket.write(chunk, (err) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
-            },
-        }),
+        readable: Readable.toWeb(socket) as never,
+        writable: new MaybeConsumable.WrapWritableStream<Uint8Array>(
+            Writable.toWeb(socket) as never,
+        ),
         get closed() {
-            return closed;
+            return closedResolver.promise;
         },
         close() {
             socket.end();

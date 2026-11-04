@@ -33,7 +33,7 @@ export class AdbNoneProtocolProcessImpl implements AdbNoneProtocolProcess {
         if (signal) {
             // `signal` won't affect `this.output`
             // So remaining data can still be read
-            // (call `controller.error` will discard all pending data)
+            // (calling `controller.error()` will discard all pending data)
 
             const exited = new PromiseResolver<undefined>();
             this.#socket.closed.then(

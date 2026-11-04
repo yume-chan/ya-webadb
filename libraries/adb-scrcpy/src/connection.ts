@@ -1,7 +1,7 @@
 import type { Adb } from "@yume-chan/adb";
-import { AdbReverseNotSupportedError, NOOP } from "@yume-chan/adb";
+import { AdbReverseNotSupportedError } from "@yume-chan/adb";
 import type { MaybePromiseLike } from "@yume-chan/async";
-import { delay } from "@yume-chan/async";
+import { delay, noop } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
     Consumable,
@@ -206,10 +206,7 @@ export class AdbScrcpyReverseConnection extends AdbScrcpyConnection {
     }
 
     override dispose() {
-        // Don't await this!
-        // `reverse.remove`'s response will never arrive
-        // before we read all pending data from Scrcpy streams
         // NOOP: failed to remove reverse tunnel is not a big deal
-        this.adb.reverse.remove(this.#address).catch(NOOP);
+        this.adb.reverse.remove(this.#address).catch(noop);
     }
 }

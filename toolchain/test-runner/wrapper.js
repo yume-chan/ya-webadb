@@ -8,6 +8,7 @@ const child = spawn(
     [
         "--enable-source-maps",
         fileURLToPath(import.meta.resolve("./run-test.js", import.meta.url)),
+        ...process.argv.slice(2),
     ],
     {
         shell: false,

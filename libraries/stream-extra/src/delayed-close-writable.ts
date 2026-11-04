@@ -1,12 +1,11 @@
+import { suppressUnhandledRejection } from "@yume-chan/async";
+
 import { WritableStream } from "./global/index.js";
 
 export class DelayedCloseWritableStream<T> extends WritableStream<T> {
     constructor(stream: WritableStream<T>, promise: Promise<unknown>) {
         const writer = stream.getWriter();
-
-        // Suppress unhandled promise warning when
-        // the promise is never awaited
-        void promise.catch(() => {});
+        suppressUnhandledRejection(promise);
 
         super({
             async write(chunk) {

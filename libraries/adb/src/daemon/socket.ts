@@ -1,4 +1,4 @@
-import { PromiseResolver } from "@yume-chan/async";
+import { noop, PromiseResolver } from "@yume-chan/async";
 import type { Disposable } from "@yume-chan/event";
 import type {
     PushReadableStreamController,
@@ -11,7 +11,6 @@ import { EmptyUint8Array } from "@yume-chan/struct";
 
 import type { Adb } from "../adb.js";
 
-import type { AdbPacketDispatcher } from "./dispatcher.js";
 import { AdbCommand } from "./packet.js";
 
 export interface AdbDaemonSocketInfo {
@@ -22,8 +21,21 @@ export interface AdbDaemonSocketInfo {
     service: string;
 }
 
+export interface AdbDaemonSocketDispatcher {
+    options: {
+        maxPayloadSize: number;
+    };
+
+    sendPacket(
+        command: AdbCommand,
+        arg0: number,
+        arg1: number,
+        payload: string | Uint8Array,
+    ): Promise<void>;
+}
+
 export interface AdbDaemonSocketInit extends AdbDaemonSocketInfo {
-    dispatcher: AdbPacketDispatcher;
+    dispatcher: AdbDaemonSocketDispatcher;
 
     highWaterMark?: number | undefined;
 
@@ -36,7 +48,7 @@ export interface AdbDaemonSocketInit extends AdbDaemonSocketInfo {
 export class AdbDaemonSocketController
     implements AdbDaemonSocketInfo, Adb.Socket, Disposable
 {
-    readonly #dispatcher!: AdbPacketDispatcher;
+    readonly #dispatcher!: AdbDaemonSocketDispatcher;
 
     readonly localId!: number;
     readonly remoteId!: number;
@@ -84,6 +96,12 @@ export class AdbDaemonSocketController
 
         this.#readable = new PushReadableStream((controller) => {
             this.#readableController = controller;
+
+            controller.abortSignal.addEventListener(
+                "abort",
+                () => void this.close().catch(noop),
+                { once: true },
+            );
         });
 
         this.writable = new MaybeConsumable.WritableStream<Uint8Array>({
@@ -138,6 +156,9 @@ export class AdbDaemonSocketController
     }
 
     async enqueue(data: Uint8Array) {
+        if (this.#closed) {
+            return;
+        }
         await this.#readableController.enqueue(data);
     }
 
@@ -152,7 +173,10 @@ export class AdbDaemonSocketController
         }
         this.#closed = true;
 
-        this.#availableWriteBytesChanged?.reject(new Error("Socket closed"));
+        if (this.#availableWriteBytesChanged) {
+            this.#availableWriteBytesChanged.reject(new Error("Socket closed"));
+            this.#availableWriteBytesChanged = undefined;
+        }
 
         try {
             this.#writableController.error(new Error("Socket closed"));

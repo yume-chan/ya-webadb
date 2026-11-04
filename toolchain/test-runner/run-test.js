@@ -65,6 +65,7 @@ const test = run({
     coverage: true,
     coverageIncludeGlobs: [`${process.cwd().replace(/\\/g, "/")}/**/*`],
     coverageExcludeGlobs: ["**/*.spec.ts"],
+    testNamePatterns: process.argv.slice(2),
 });
 test.on("test:fail", (e) => {
     if (e.details.type === "test" && IsGitHubActions && NodeVersion[0] >= 24) {

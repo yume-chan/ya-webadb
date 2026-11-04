@@ -7,12 +7,12 @@ import type {
 } from "@yume-chan/stream-extra";
 import { concatUint8Arrays } from "@yume-chan/stream-extra";
 
+import { arrayFromAsync } from "../../../utils/array-from-async.js";
 import type { AdbSubprocessSpawner } from "../types.js";
 import {
     createLazyPromise,
     decodeUtf8Chunked,
     splitCommand,
-    ToArrayStream,
 } from "../utils.js";
 
 export interface AdbShellProtocolProcess {
@@ -70,8 +70,8 @@ export function adbShellProtocolSpawner(
                 try {
                     const [, stdout, stderr, exitCode] = await Promise.all([
                         options?.stdin?.pipeTo(process.stdin),
-                        process.stdout.pipeThrough(new ToArrayStream()),
-                        process.stderr.pipeThrough(new ToArrayStream()),
+                        arrayFromAsync(process.stdout),
+                        arrayFromAsync(process.stderr),
                         process.exited,
                     ]);
                     return {

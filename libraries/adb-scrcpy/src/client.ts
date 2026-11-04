@@ -17,13 +17,12 @@ import {
 import type {
     Consumable,
     MaybeConsumable,
-    ReadableStream,
     ReadableWritablePair,
 } from "@yume-chan/stream-extra";
 import {
     AbortController,
     BufferedReadableStream,
-    PushReadableStream,
+    ReadableStream,
     SplitStringStream,
     TextDecoderStream,
     tryCancel,
@@ -35,27 +34,17 @@ import type { AdbScrcpyConnection } from "./connection.js";
 import type { AdbScrcpyOptions, AdbScrcpyOptionsGetEncoders } from "./types.js";
 import { AdbScrcpyVideoStream } from "./video.js";
 
-function arrayToStream<T>(array: T[]): ReadableStream<T> {
-    return new PushReadableStream(async (controller) => {
-        for (const item of array) {
-            await controller.enqueue(item);
-        }
-    });
-}
-
-function concatStreams<T>(...streams: ReadableStream<T>[]): ReadableStream<T> {
-    return new PushReadableStream(async (controller) => {
-        for (const stream of streams) {
-            const reader = stream.getReader();
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) {
-                    break;
-                }
-                await controller.enqueue(value);
-            }
-        }
-    });
+/**
+ * Polyfill for `Iterator.concat()`
+ *
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/concat
+ */
+async function* concatIterables<T>(
+    ...iterables: (Iterable<T> | AsyncIterable<T>)[]
+): AsyncIterable<T> {
+    for (const iterable of iterables) {
+        yield* iterable;
+    }
 }
 
 export const AdbScrcpyExitedErrorBrand = Symbol.for(
@@ -198,7 +187,7 @@ export class AdbScrcpyClient<TOptions extends AdbScrcpyOptions<object>> {
             return new AdbScrcpyClient({
                 options,
                 process,
-                output: concatStreams(arrayToStream(lines), output),
+                output: ReadableStream.from(concatIterables(lines, output)),
                 videoStream: streams.video,
                 audioStream: streams.audio,
                 controlStream: streams.control,

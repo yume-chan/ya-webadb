@@ -43,7 +43,9 @@ export class AckClipboardHandler implements ScrcpyDeviceMessageParser {
 
     close(): void {
         for (const resolver of this.#resolvers.values()) {
-            resolver.reject();
+            resolver.reject(
+                new Error("Control socket closed before acknowledgment"),
+            );
         }
         this.#resolvers.clear();
         this.#closed = true;
