@@ -515,7 +515,7 @@ export class Logcat {
             }
 
             if (options.pid !== undefined) {
-                if (!Number.isInteger(options.pid) || options.pid < 0) {
+                if (!Number.isSafeInteger(options.pid) || options.pid < 0) {
                     throw new Error("PID must be a non-negative integer");
                 }
                 args.push("--pid", options.pid.toString());
@@ -526,7 +526,7 @@ export class Logcat {
             }
 
             if (typeof options.tail === "number") {
-                if (!Number.isInteger(options.tail) || options.tail <= 0) {
+                if (!Number.isSafeInteger(options.tail) || options.tail <= 0) {
                     throw new Error("Tail must be a positive integer");
                 }
                 args.push("-t", options.tail.toString());

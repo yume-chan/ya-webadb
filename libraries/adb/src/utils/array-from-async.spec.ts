@@ -36,4 +36,23 @@ describe("arrayFromAsync", () => {
         const result = await arrayFromAsync(syncGeneratorWithPromises());
         assert.deepStrictEqual(result, [7, 8, 9]);
     });
+
+    it("should convert an Array-like", async () => {
+        const arrayLike = { 0: 10, 1: 11, 2: 12, length: 3 };
+        const result = await arrayFromAsync(arrayLike);
+        assert.deepStrictEqual(result, [10, 11, 12]);
+    });
+
+    it("should convert with a mapper function", async () => {
+        const result = await arrayFromAsync([1, 2, 3], (x) => x * 2);
+        assert.deepStrictEqual(result, [2, 4, 6]);
+    });
+
+    it("should convert with an async mapper function", async () => {
+        const result = await arrayFromAsync([1, 2, 3], async (x) => {
+            await Promise.resolve();
+            return x * 2;
+        });
+        assert.deepStrictEqual(result, [2, 4, 6]);
+    });
 });
